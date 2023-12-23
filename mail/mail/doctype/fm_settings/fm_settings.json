@@ -1,0 +1,56 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-12-23 17:19:24.940511",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "domain_name",
+  "section_break_svf9",
+  "smtp_servers"
+ ],
+ "fields": [
+  {
+   "description": "ex. frappemail.com",
+   "fieldname": "domain_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Domain Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_svf9",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "smtp_servers",
+   "fieldtype": "Table",
+   "label": "SMTP Servers",
+   "options": "FM SMTP Server",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2023-12-23 17:34:12.754478",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "FM Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
