@@ -10,18 +10,20 @@
   "column_break_lr3y",
   "domain_owner",
   "dkim_selector",
-  "sending_records_section",
-  "sending_records",
-  "receiving_records_section",
-  "receiving_records",
-  "tracking_records_section",
-  "tracking_records"
+  "dkim_bits",
+  "dns_records_section",
+  "dns_records",
+  "dkim_keys_section",
+  "dkim_private_key",
+  "column_break_z83x",
+  "dkim_public_key"
  ],
  "fields": [
   {
    "fieldname": "domain_name",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Domain Name",
    "no_copy": 1,
    "reqd": 1,
@@ -33,12 +35,16 @@
    "depends_on": "eval: !doc.__islocal",
    "fieldname": "is_active",
    "fieldtype": "Check",
-   "label": "Is Active"
+   "in_list_view": 1,
+   "label": "Is Active",
+   "search_index": 1
   },
   {
    "fieldname": "domain_owner",
    "fieldtype": "Link",
-   "label": "Owner",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Domain Owner",
    "options": "User",
    "reqd": 1
   },
@@ -47,50 +53,56 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "sending_records",
-   "description": "TXT records (known as SPF & DKIM) are required to send and receive email.",
-   "fieldname": "sending_records",
-   "fieldtype": "Table",
-   "options": "FM DNS Record"
-  },
-  {
-   "depends_on": "receiving_records",
-   "description": "MX records are recommended for all domains, even if you are only sending messages. Unless you already have MX records for your domain pointing to another email provider (e.g. Gmail), you should update the following records.",
-   "fieldname": "receiving_records",
-   "fieldtype": "Table",
-   "options": "FM DNS Record"
-  },
-  {
-   "depends_on": "tracking_records",
-   "description": "The CNAME record is necessary for tracking opens, clicks, and unsubscribes.",
-   "fieldname": "tracking_records",
-   "fieldtype": "Table",
-   "options": "FM DNS Record"
-  },
-  {
    "fieldname": "dkim_selector",
    "fieldtype": "Data",
    "label": "DKIM Selector"
   },
   {
-   "fieldname": "sending_records_section",
-   "fieldtype": "Section Break",
-   "label": "Sending Records"
+   "depends_on": "dns_records",
+   "fieldname": "dns_records",
+   "fieldtype": "Table",
+   "label": "DNS Records",
+   "no_copy": 1,
+   "options": "FM DNS Record",
+   "read_only": 1
   },
   {
-   "fieldname": "receiving_records_section",
-   "fieldtype": "Section Break",
-   "label": "Receiving Records"
+   "fieldname": "dns_records_section",
+   "fieldtype": "Section Break"
   },
   {
-   "fieldname": "tracking_records_section",
+   "fieldname": "dkim_keys_section",
    "fieldtype": "Section Break",
-   "label": "Tracking Records"
+   "hidden": 1
+  },
+  {
+   "fieldname": "column_break_z83x",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dkim_private_key",
+   "fieldtype": "Password",
+   "label": "Private Key",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "dkim_public_key",
+   "fieldtype": "Text",
+   "label": "Public Key",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "dkim_bits",
+   "fieldtype": "Int",
+   "label": "DKIM Bits",
+   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-23 22:55:56.574292",
+ "modified": "2023-12-24 22:33:36.319638",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Domain",
@@ -112,5 +124,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }

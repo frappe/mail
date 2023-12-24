@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "category",
   "type",
   "host",
   "priority",
@@ -67,12 +68,21 @@
    "fieldtype": "Check",
    "label": "Verified",
    "read_only": 1
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "label": "Category",
+   "no_copy": 1,
+   "options": "\nSending Record\nReceiving Record\nTracking Record",
+   "read_only": 1,
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-12-23 22:06:37.485463",
+ "modified": "2023-12-24 20:31:48.648346",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM DNS Record",
