@@ -95,14 +95,15 @@
   },
   {
    "fieldname": "dkim_bits",
-   "fieldtype": "Int",
+   "fieldtype": "Select",
    "label": "DKIM Bits",
-   "non_negative": 1
+   "non_negative": 1,
+   "options": "\n1024\n2048"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-24 22:33:36.319638",
+ "modified": "2023-12-25 19:11:24.739927",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Domain",

@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from frappe.utils import cint
 from frappe.model.document import Document
 
 
@@ -11,5 +12,5 @@ class FMSettings(Document):
 		self.validate_default_dkim_bits()
 
 	def validate_default_dkim_bits(self):
-		if self.default_dkim_bits < 1024:
+		if cint(self.default_dkim_bits) < 1024:
 			frappe.throw(_("DKIM Bits must be greater than 1024."))

@@ -8,13 +8,14 @@
   "domain_name",
   "column_break_3hud",
   "spf_host",
+  "section_break_svf9",
+  "smtp_servers",
   "defaults_section",
   "default_dkim_selector",
   "default_ttl",
   "column_break_xlun",
   "default_dkim_bits",
-  "section_break_svf9",
-  "smtp_servers"
+  "dns_nameservers"
  ],
  "fields": [
   {
@@ -75,16 +76,24 @@
   {
    "default": "2048",
    "fieldname": "default_dkim_bits",
-   "fieldtype": "Int",
+   "fieldtype": "Select",
    "label": "DKIM Bits",
    "non_negative": 1,
+   "options": "1024\n2048",
+   "reqd": 1
+  },
+  {
+   "default": "8.8.8.8",
+   "fieldname": "dns_nameservers",
+   "fieldtype": "Text",
+   "label": "DNS Nameservers",
    "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-12-24 19:52:08.742626",
+ "modified": "2023-12-25 21:48:34.293165",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Settings",
