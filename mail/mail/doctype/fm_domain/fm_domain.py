@@ -1,12 +1,14 @@
 # Copyright (c) 2023, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import rsa
 import frappe
 import dns.resolver
 from frappe import _
 from frappe.utils import cint
 from frappe.model.document import Document
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from mail.mail.doctype.fm_dns_record.fm_dns_record import FMDNSRecord
 from mail.mail.doctype.fm_smtp_server.fm_smtp_server import FMSMTPServer
 
@@ -20,6 +22,8 @@ class FMDomain(Document):
 			self.generate_dns_records()
 		elif self.dkim_selector != self.get_doc_before_save().get("dkim_selector"):
 			self.refresh_dns_records()
+		elif not self.is_active:
+			self.is_verified = 0
 
 	def validate_dkim_selector(self) -> None:
 		if not self.dkim_selector:
@@ -36,6 +40,7 @@ class FMDomain(Document):
 
 	@frappe.whitelist()
 	def generate_dns_records(self, save=False) -> None:
+		self.is_verified = 0
 		self.generate_dkim_key()
 		self.refresh_dns_records()
 
@@ -43,14 +48,26 @@ class FMDomain(Document):
 			self.save()
 
 	def generate_dkim_key(self) -> None:
-		public_key, private_key = rsa.newkeys(cint(self.dkim_bits))
-		private_key_pem = private_key.save_pkcs1().decode("utf-8")
-		public_key_pem = public_key.save_pkcs1().decode("utf-8")
+		private_key = rsa.generate_private_key(
+			public_exponent=65537, key_size=cint(self.dkim_bits), backend=default_backend()
+		)
+		public_key = private_key.public_key()
+
+		private_key_pem = private_key.private_bytes(
+			encoding=serialization.Encoding.PEM,
+			format=serialization.PrivateFormat.TraditionalOpenSSL,
+			encryption_algorithm=serialization.NoEncryption(),
+		).decode()
+		public_key_pem = public_key.public_bytes(
+			encoding=serialization.Encoding.PEM,
+			format=serialization.PublicFormat.SubjectPublicKeyInfo,
+		).decode()
 
 		self.dkim_private_key = get_filtered_dkim_key(private_key_pem)
 		self.dkim_public_key = get_filtered_dkim_key(public_key_pem)
 
 	def refresh_dns_records(self) -> None:
+		self.is_verified = 0
 		self.dns_records.clear()
 		fm_settings = frappe.get_single("FM Settings")
 
@@ -86,7 +103,7 @@ class FMDomain(Document):
 				"category": category,
 				"type": type,
 				"host": f"{self.dkim_selector}._domainkey.{self.domain_name}",
-				"value": f"v=DKIM1; k=rsa; p={self.dkim_public_key}",
+				"value": f"v=DKIM1;k=rsa;p={self.dkim_public_key}",
 				"ttl": ttl,
 			}
 		)
@@ -123,6 +140,8 @@ class FMDomain(Document):
 
 	@frappe.whitelist()
 	def verify_dns_records(self, save=False) -> None:
+		self.is_verified = 1
+		
 		for record in self.dns_records:
 			if verify_dns_record(record):
 				record.verified = 1
@@ -135,6 +154,7 @@ class FMDomain(Document):
 				)
 			else:
 				record.verified = 0
+				self.is_verified = 0
 				frappe.msgprint(
 					_("Row #{0}: Could not verify {1}:{2} record.").format(
 						frappe.bold(record.idx), frappe.bold(record.type), frappe.bold(record.host)
@@ -147,16 +167,16 @@ class FMDomain(Document):
 			self.save()
 
 
-def get_filtered_dkim_key(public_key_pem) -> str:
-	public_key_pem = "".join(public_key_pem.split())
-	public_key_pem = (
-		public_key_pem.replace("-----BEGINRSAPUBLICKEY-----", "")
-		.replace("-----ENDRSAPUBLICKEY-----", "")
+def get_filtered_dkim_key(key_pem) -> str:
+	key_pem = "".join(key_pem.split())
+	key_pem = (
+		key_pem.replace("-----BEGINPUBLICKEY-----", "")
+		.replace("-----ENDPUBLICKEY-----", "")
 		.replace("-----BEGINRSAPRIVATEKEY-----", "")
 		.replace("----ENDRSAPRIVATEKEY-----", "")
 	)
 
-	return public_key_pem
+	return key_pem
 
 
 def verify_dns_record(record: FMDNSRecord, debug=False) -> bool:
@@ -167,6 +187,9 @@ def verify_dns_record(record: FMDNSRecord, debug=False) -> bool:
 					data = data.exchange
 
 				data = data.to_text().replace('"', "")
+
+				if record.type == "TXT" and "._domainkey." in record.host:
+					data = data.replace(" ", "")
 
 				if data == record.value:
 					return True

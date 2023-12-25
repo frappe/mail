@@ -7,6 +7,7 @@
  "field_order": [
   "domain_name",
   "is_active",
+  "is_verified",
   "column_break_lr3y",
   "domain_owner",
   "dkim_selector",
@@ -99,11 +100,21 @@
    "label": "DKIM Bits",
    "non_negative": 1,
    "options": "\n1024\n2048"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "is_verified",
+   "fieldtype": "Check",
+   "label": "Is Verified",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-25 19:11:24.739927",
+ "modified": "2023-12-26 10:59:51.435942",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Domain",
