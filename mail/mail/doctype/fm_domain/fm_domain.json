@@ -6,8 +6,8 @@
  "engine": "InnoDB",
  "field_order": [
   "domain_name",
-  "is_active",
-  "is_verified",
+  "active",
+  "verified",
   "column_break_lr3y",
   "domain_owner",
   "dkim_selector",
@@ -30,15 +30,6 @@
    "reqd": 1,
    "set_only_once": 1,
    "unique": 1
-  },
-  {
-   "default": "1",
-   "depends_on": "eval: !doc.__islocal",
-   "fieldname": "is_active",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Is Active",
-   "search_index": 1
   },
   {
    "fieldname": "domain_owner",
@@ -102,11 +93,20 @@
    "options": "\n1024\n2048"
   },
   {
+   "default": "1",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Active",
+   "search_index": 1
+  },
+  {
    "default": "0",
    "depends_on": "eval: !doc.__islocal",
-   "fieldname": "is_verified",
+   "fieldname": "verified",
    "fieldtype": "Check",
-   "label": "Is Verified",
+   "label": "Verified",
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
@@ -114,7 +114,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-26 10:59:51.435942",
+ "modified": "2023-12-26 19:16:19.923209",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Domain",

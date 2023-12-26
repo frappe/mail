@@ -22,8 +22,8 @@ class FMDomain(Document):
 			self.generate_dns_records()
 		elif self.dkim_selector != self.get_doc_before_save().get("dkim_selector"):
 			self.refresh_dns_records()
-		elif not self.is_active:
-			self.is_verified = 0
+		elif not self.active:
+			self.verified = 0
 
 	def validate_dkim_selector(self) -> None:
 		if not self.dkim_selector:
@@ -40,7 +40,7 @@ class FMDomain(Document):
 
 	@frappe.whitelist()
 	def generate_dns_records(self, save=False) -> None:
-		self.is_verified = 0
+		self.verified = 0
 		self.generate_dkim_key()
 		self.refresh_dns_records()
 
@@ -67,7 +67,7 @@ class FMDomain(Document):
 		self.dkim_public_key = get_filtered_dkim_key(public_key_pem)
 
 	def refresh_dns_records(self) -> None:
-		self.is_verified = 0
+		self.verified = 0
 		self.dns_records.clear()
 		fm_settings = frappe.get_single("FM Settings")
 
@@ -140,7 +140,7 @@ class FMDomain(Document):
 
 	@frappe.whitelist()
 	def verify_dns_records(self, save=False) -> None:
-		self.is_verified = 1
+		self.verified = 1
 		
 		for record in self.dns_records:
 			if verify_dns_record(record):
@@ -154,7 +154,7 @@ class FMDomain(Document):
 				)
 			else:
 				record.verified = 0
-				self.is_verified = 0
+				self.verified = 0
 				frappe.msgprint(
 					_("Row #{0}: Could not verify {1}:{2} record.").format(
 						frappe.bold(record.idx), frappe.bold(record.type), frappe.bold(record.host)
