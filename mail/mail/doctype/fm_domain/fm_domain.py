@@ -121,7 +121,9 @@ class FMDomain(Document):
 
 		return records
 
-	def get_receiving_records(self, incoming_servers: list[FMIncomingServer], ttl) -> list[dict]:
+	def get_receiving_records(
+		self, incoming_servers: list[FMIncomingServer], ttl
+	) -> list[dict]:
 		records = []
 
 		for row in incoming_servers:
@@ -141,7 +143,7 @@ class FMDomain(Document):
 	@frappe.whitelist()
 	def verify_dns_records(self, save=False) -> None:
 		self.verified = 1
-		
+
 		for record in self.dns_records:
 			if verify_dns_record(record):
 				record.verified = 1
