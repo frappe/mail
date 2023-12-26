@@ -10,7 +10,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from mail.mail.doctype.fm_dns_record.fm_dns_record import FMDNSRecord
-from mail.mail.doctype.fm_smtp_server.fm_smtp_server import FMSMTPServer
+from mail.mail.doctype.fm_incoming_server.fm_incoming_server import FMIncomingServer
 
 
 class FMDomain(Document):
@@ -75,7 +75,7 @@ class FMDomain(Document):
 			fm_settings.spf_host, fm_settings.default_ttl
 		)
 		receiving_records = self.get_receiving_records(
-			fm_settings.smtp_servers, fm_settings.default_ttl
+			fm_settings.incoming_servers, fm_settings.default_ttl
 		)
 
 		self.extend("dns_records", sending_records)
@@ -121,16 +121,16 @@ class FMDomain(Document):
 
 		return records
 
-	def get_receiving_records(self, smtp_servers: list[FMSMTPServer], ttl) -> list[dict]:
+	def get_receiving_records(self, incoming_servers: list[FMIncomingServer], ttl) -> list[dict]:
 		records = []
 
-		for row in smtp_servers:
+		for row in incoming_servers:
 			records.append(
 				{
 					"category": "Receiving Record",
 					"type": "MX",
 					"host": self.domain_name,
-					"value": f"{row.smtp_server}.",
+					"value": f"{row.server}.",
 					"priority": row.priority,
 					"ttl": ttl,
 				}

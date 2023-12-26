@@ -9,7 +9,7 @@
   "column_break_3hud",
   "spf_host",
   "section_break_svf9",
-  "smtp_servers",
+  "incoming_servers",
   "defaults_section",
   "default_dkim_selector",
   "default_ttl",
@@ -29,13 +29,6 @@
   {
    "fieldname": "section_break_svf9",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "smtp_servers",
-   "fieldtype": "Table",
-   "label": "SMTP Servers",
-   "options": "FM SMTP Server",
-   "reqd": 1
   },
   {
    "description": "ex. _spf.frappemail.com",
@@ -75,6 +68,7 @@
   },
   {
    "default": "2048",
+   "description": "Recommended: 2048",
    "fieldname": "default_dkim_bits",
    "fieldtype": "Select",
    "label": "DKIM Bits",
@@ -88,12 +82,19 @@
    "fieldtype": "Text",
    "label": "DNS Nameservers",
    "reqd": 1
+  },
+  {
+   "fieldname": "incoming_servers",
+   "fieldtype": "Table",
+   "label": "Incoming Servers",
+   "options": "FM Incoming Server",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-12-25 21:48:34.293165",
+ "modified": "2023-12-26 16:37:16.670549",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Settings",
@@ -112,5 +113,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "track_changes": 1
 }
