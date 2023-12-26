@@ -1,0 +1,126 @@
+{
+ "actions": [],
+ "autoname": "field:email",
+ "creation": "2023-12-26 17:49:28.087416",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "status",
+  "column_break_1jeq",
+  "last_login",
+  "section_break_yute",
+  "domain_name",
+  "column_break_9etf",
+  "user",
+  "email",
+  "display_name",
+  "email_signature"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fetch_from": "user.email",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "no_copy": 1,
+   "options": "Email",
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "display_name",
+   "fieldtype": "Data",
+   "label": "Display Name"
+  },
+  {
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Active\nInactive\nSuspended\nPending Activation\nForwarding Only\nFull",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "last_login",
+   "fieldtype": "Datetime",
+   "label": "Last Login",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_9etf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "user.email_signature",
+   "fetch_if_empty": 1,
+   "fieldname": "email_signature",
+   "fieldtype": "Small Text",
+   "label": "Email Signature",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "domain_name",
+   "fieldtype": "Link",
+   "label": "Domain Name",
+   "no_copy": 1,
+   "options": "FM Domain",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "section_break_yute",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_1jeq",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2023-12-26 18:58:26.130108",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "FM Mailbox",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
