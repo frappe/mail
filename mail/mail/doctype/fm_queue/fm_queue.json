@@ -1,65 +1,84 @@
 {
  "actions": [],
- "autoname": "hash",
  "creation": "2024-01-01 11:56:26.316031",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "sender",
-  "recipients",
+  "column_break_9ywf",
   "subject",
-  "status",
-  "priority",
-  "attachments",
+  "section_break_baaa",
+  "recipients",
+  "section_break_ijwo",
+  "body",
+  "section_break_lgaa",
   "error"
  ],
  "fields": [
   {
    "fieldname": "sender",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Sender",
-   "options": "Email"
+   "no_copy": 1,
+   "options": "FM Mailbox",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "recipients",
    "fieldtype": "Table",
    "label": "Recipients",
+   "no_copy": 1,
    "options": "FM Recipient",
-   "reqd": 1
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "subject",
    "fieldtype": "Data",
-   "label": "Subject"
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Data",
-   "label": "Status"
-  },
-  {
-   "fieldname": "priority",
-   "fieldtype": "Data",
-   "label": "Priority"
-  },
-  {
-   "fieldname": "attachments",
-   "fieldtype": "Data",
-   "label": "Attachments"
+   "in_standard_filter": 1,
+   "label": "Subject",
+   "set_only_once": 1
   },
   {
    "fieldname": "error",
-   "fieldtype": "Data",
-   "label": "Error"
+   "fieldtype": "Small Text",
+   "label": "Error",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "body",
+   "fieldtype": "Long Text",
+   "label": "Body",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_9ywf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_baaa",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_ijwo",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_lgaa",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-01 12:08:04.552914",
+ "modified": "2024-01-03 15:02:54.355040",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Queue",
- "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {

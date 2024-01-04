@@ -6,7 +6,10 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "recipient"
+  "recipient",
+  "sent",
+  "column_break_iqoo",
+  "error"
  ],
  "fields": [
   {
@@ -14,15 +17,37 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Recipient",
+   "no_copy": 1,
    "options": "Email",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "sent",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Sent",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "error",
+   "fieldtype": "Small Text",
+   "label": "Error",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_iqoo",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-01-01 11:59:27.321252",
+ "modified": "2024-01-03 13:25:41.565662",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Recipient",
