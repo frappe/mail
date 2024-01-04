@@ -37,6 +37,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Domain Owner",
+   "no_copy": 1,
    "options": "User",
    "reqd": 1
   },
@@ -114,7 +115,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-26 19:16:19.923209",
+ "modified": "2024-01-03 13:01:37.516023",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Domain",

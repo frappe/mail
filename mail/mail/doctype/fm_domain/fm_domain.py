@@ -72,7 +72,7 @@ class FMDomain(Document):
 		fm_settings = frappe.get_single("FM Settings")
 
 		sending_records = self.get_sending_records(
-			fm_settings.spf_host, fm_settings.default_ttl
+			fm_settings.primary_domain_name, fm_settings.spf_host, fm_settings.default_ttl
 		)
 		receiving_records = self.get_receiving_records(
 			fm_settings.incoming_servers, fm_settings.default_ttl
@@ -81,23 +81,25 @@ class FMDomain(Document):
 		self.extend("dns_records", sending_records)
 		self.extend("dns_records", receiving_records)
 
-	def get_sending_records(self, spf_host: str, ttl: str) -> list[dict]:
+	def get_sending_records(
+		self, primary_domain_name: str, spf_host: str, ttl: str
+	) -> list[dict]:
 		records = []
 		type = "TXT"
 		category = "Sending Record"
 
-		# SPF
+		# SPF Record
 		records.append(
 			{
 				"category": category,
 				"type": type,
 				"host": self.domain_name,
-				"value": f"v=spf1 include:{spf_host} ~all",
+				"value": f"v=spf1 include:{spf_host}.{primary_domain_name} ~all",
 				"ttl": ttl,
 			},
 		)
 
-		# DKIM
+		# DKIM Record
 		records.append(
 			{
 				"category": category,
@@ -108,7 +110,7 @@ class FMDomain(Document):
 			}
 		)
 
-		# DMARC
+		# DMARC Record
 		records.append(
 			{
 				"category": category,

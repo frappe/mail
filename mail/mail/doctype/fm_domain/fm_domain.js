@@ -14,15 +14,17 @@ frappe.ui.form.on("FM Domain", {
     },
 
     add_custom_buttons(frm) {
-        frm.add_custom_button(__("Regenerate"), () => {
-            frappe.confirm(
-                __("Are you certain you wish to proceed?"),
-                () => frm.trigger("generate_dns_records")
-            )
-        }, __("DNS Records"));
-        frm.add_custom_button(__("Verify"), () => {
-            frm.trigger("verify_dns_records");
-        }, __("DNS Records"));
+        if (!frm.doc.__islocal) {
+            frm.add_custom_button(__("Regenerate"), () => {
+                frappe.confirm(
+                    __("Are you certain you wish to proceed?"),
+                    () => frm.trigger("generate_dns_records")
+                )
+            }, __("DNS Records"));
+            frm.add_custom_button(__("Verify"), () => {
+                frm.trigger("verify_dns_records");
+            }, __("DNS Records"));
+        }
     },
 
     generate_dns_records(frm) {
