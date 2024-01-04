@@ -5,33 +5,30 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "domain_name",
+  "primary_domain_name",
   "column_break_3hud",
   "spf_host",
-  "section_break_svf9",
+  "outgoing_tab",
+  "smtp_server",
+  "public_ip",
+  "column_break_tslh",
+  "smtp_port",
+  "use_tls",
+  "incoming_tab",
   "incoming_servers",
-  "defaults_section",
+  "defaults_tab",
   "default_dkim_selector",
   "default_ttl",
   "column_break_xlun",
   "default_dkim_bits",
-  "dns_nameservers"
+  "dns_nameservers",
+  "dns_records_tab",
+  "dns_records"
  ],
  "fields": [
   {
-   "description": "ex. frappemail.com",
-   "fieldname": "domain_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Domain Name",
-   "reqd": 1
-  },
-  {
-   "fieldname": "section_break_svf9",
-   "fieldtype": "Section Break"
-  },
-  {
-   "description": "ex. _spf.frappemail.com",
+   "default": "_spf",
+   "description": "ex. _spf",
    "fieldname": "spf_host",
    "fieldtype": "Data",
    "label": "SPF Host",
@@ -48,11 +45,6 @@
    "fieldtype": "Data",
    "label": "DKIM Selector",
    "reqd": 1
-  },
-  {
-   "fieldname": "defaults_section",
-   "fieldtype": "Section Break",
-   "label": "Defaults"
   },
   {
    "fieldname": "column_break_xlun",
@@ -86,15 +78,79 @@
   {
    "fieldname": "incoming_servers",
    "fieldtype": "Table",
-   "label": "Incoming Servers",
-   "options": "FM Incoming Server",
+   "label": "Servers",
+   "options": "FM Incoming Server"
+  },
+  {
+   "default": "1",
+   "fieldname": "use_tls",
+   "fieldtype": "Check",
+   "label": "Use TLS"
+  },
+  {
+   "fieldname": "column_break_tslh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "587",
+   "fieldname": "smtp_port",
+   "fieldtype": "Int",
+   "label": "Port",
+   "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "default": "localhost",
+   "description": "ex. smtp.frappemail.com",
+   "fieldname": "smtp_server",
+   "fieldtype": "Data",
+   "label": "Server",
+   "reqd": 1
+  },
+  {
+   "description": "ex. frappemail.com",
+   "fieldname": "primary_domain_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Primary Domain Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "outgoing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Outgoing"
+  },
+  {
+   "fieldname": "incoming_tab",
+   "fieldtype": "Tab Break",
+   "label": "Incoming"
+  },
+  {
+   "fieldname": "defaults_tab",
+   "fieldtype": "Tab Break",
+   "label": "Defaults"
+  },
+  {
+   "fieldname": "dns_records_tab",
+   "fieldtype": "Tab Break",
+   "label": "DNS Records"
+  },
+  {
+   "fieldname": "dns_records",
+   "fieldtype": "Table",
+   "options": "FM DNS Record",
+   "read_only": 1
+  },
+  {
+   "fieldname": "public_ip",
+   "fieldtype": "Data",
+   "label": "Public IP"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-12-26 16:37:16.670549",
+ "modified": "2024-01-02 15:05:48.470251",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Settings",
