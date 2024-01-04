@@ -2,8 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
-import dns.resolver
 from frappe import _
+from mail.utils import Utils
 from frappe.utils import cint
 from frappe.model.document import Document
 from cryptography.hazmat.backends import default_backend
@@ -184,7 +184,7 @@ def get_filtered_dkim_key(key_pem) -> str:
 
 
 def verify_dns_record(record: FMDNSRecord, debug=False) -> bool:
-	if result := get_dns_record(record.host, record.type):
+	if result := Utils.get_dns_record(record.host, record.type):
 		for data in result:
 			if data:
 				if record.type == "MX":
@@ -202,26 +202,3 @@ def verify_dns_record(record: FMDNSRecord, debug=False) -> bool:
 				frappe.msgprint(f"Expected: {record.value} Got: {data}")
 
 	return False
-
-
-def get_dns_record(
-	host: str, type: str, raise_exception=False
-) -> dns.resolver.Answer | None:
-	err_msg = None
-
-	try:
-		resolver = dns.resolver.Resolver(configure=False)
-		resolver.nameservers = frappe.db.get_single_value(
-			"FM Settings", "dns_nameservers"
-		).split()
-
-		return resolver.resolve(host, type)
-	except dns.resolver.NXDOMAIN:
-		err_msg = "Host does not exist."
-	except dns.resolver.NoAnswer:
-		err_msg = "No record found."
-	except dns.exception.DNSException as e:
-		err_msg = e
-
-	if raise_exception and err_msg:
-		frappe.throw(err_msg)

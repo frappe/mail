@@ -10,10 +10,11 @@
   "spf_host",
   "outgoing_tab",
   "smtp_server",
-  "public_ip",
   "column_break_tslh",
   "smtp_port",
   "use_tls",
+  "public_ipv4",
+  "public_ipv6",
   "incoming_tab",
   "incoming_servers",
   "defaults_tab",
@@ -142,15 +143,22 @@
    "read_only": 1
   },
   {
-   "fieldname": "public_ip",
+   "fieldname": "public_ipv4",
    "fieldtype": "Data",
-   "label": "Public IP"
+   "label": "Public IPv4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "public_ipv6",
+   "fieldtype": "Data",
+   "label": "Public IPv6",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-01-02 15:05:48.470251",
+ "modified": "2024-01-05 12:51:02.943822",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Settings",
