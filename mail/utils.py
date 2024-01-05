@@ -3,6 +3,7 @@ import socket
 import ipaddress
 from frappe import _
 import dns.resolver
+from mail.constants import NAMESERVERS
 
 
 class Utils:
@@ -14,9 +15,7 @@ class Utils:
 
 		try:
 			resolver = dns.resolver.Resolver(configure=False)
-			resolver.nameservers = frappe.db.get_single_value(
-				"FM Settings", "dns_nameservers"
-			).split()
+			resolver.nameservers = NAMESERVERS
 
 			return resolver.resolve(fqdn, type)
 		except dns.resolver.NXDOMAIN:

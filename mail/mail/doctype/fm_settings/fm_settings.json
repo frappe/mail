@@ -22,7 +22,6 @@
   "default_ttl",
   "column_break_xlun",
   "default_dkim_bits",
-  "dns_nameservers",
   "dns_records_tab",
   "dns_records"
  ],
@@ -67,13 +66,6 @@
    "label": "DKIM Bits",
    "non_negative": 1,
    "options": "1024\n2048",
-   "reqd": 1
-  },
-  {
-   "default": "8.8.8.8",
-   "fieldname": "dns_nameservers",
-   "fieldtype": "Text",
-   "label": "DNS Nameservers",
    "reqd": 1
   },
   {
@@ -158,7 +150,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-01-05 12:51:02.943822",
+ "modified": "2024-01-05 16:50:12.755801",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Settings",
