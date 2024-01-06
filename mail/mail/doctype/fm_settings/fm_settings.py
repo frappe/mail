@@ -21,6 +21,8 @@ class FMSettings(Document):
 		self.generate_dns_records()
 
 	def validate_primary_domain_name(self):
+		self.primary_domain_name = self.primary_domain_name.lower()
+		
 		if not Utils.is_valid_domain(self.primary_domain_name):
 			frappe.throw(
 				_(
@@ -29,9 +31,9 @@ class FMSettings(Document):
 			)
 
 	def validate_spf_host(self):
-		pattern = re.compile(r"^[a-zA-Z0-9_]+$")
+		self.spf_host = self.spf_host.lower()
 
-		if not pattern.match(self.spf_host):
+		if not Utils.is_valid_host(self.spf_host):
 			msg = _(
 				"SPF Host {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores.".format(
 					frappe.bold(self.spf_host)
@@ -40,6 +42,8 @@ class FMSettings(Document):
 			frappe.throw(msg)
 
 	def validate_smtp_server(self):
+		self.smtp_server = self.smtp_server.lower()
+
 		public_ipv4 = Utils.get_dns_record(self.smtp_server, "A")
 		public_ipv6 = Utils.get_dns_record(self.smtp_server, "AAAA")
 
@@ -71,6 +75,8 @@ class FMSettings(Document):
 
 		if self.incoming_servers:
 			for incoming_server in self.incoming_servers:
+				incoming_server.server = incoming_server.server.lower()
+
 				if incoming_server.server in server_list:
 					frappe.throw(
 						_(
@@ -111,9 +117,9 @@ class FMSettings(Document):
 						)
 
 	def validate_default_dkim_selector(self):
-		pattern = re.compile(r"^[a-zA-Z0-9_]+$")
+		self.default_dkim_selector = self.default_dkim_selector.lower()
 
-		if not pattern.match(self.default_dkim_selector):
+		if not Utils.is_valid_host(self.default_dkim_selector):
 			msg = _(
 				"DKIM Selector {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores.".format(
 					frappe.bold(self.default_dkim_selector)

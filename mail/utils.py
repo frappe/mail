@@ -1,3 +1,4 @@
+import re
 import frappe
 import socket
 import ipaddress
@@ -31,6 +32,12 @@ class Utils:
 	@staticmethod
 	def is_valid_domain(domain: str, raise_exception: bool = False) -> bool:
 		return bool(Utils.get_dns_record(domain, "SOA", raise_exception=raise_exception))
+
+	@staticmethod
+	def is_valid_host(host: str) -> bool:
+		pattern = re.compile(r"^[a-zA-Z0-9_]+$")
+
+		return bool(pattern.match(host))
 
 	@staticmethod
 	def is_valid_ip(ip: str, category: str = None) -> bool:
