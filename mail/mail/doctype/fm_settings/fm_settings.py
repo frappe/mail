@@ -10,7 +10,7 @@ from frappe.model.document import Document
 
 
 class FMSettings(Document):
-	def validate(self):
+	def validate(self) -> None:
 		self.validate_primary_domain_name()
 		self.validate_spf_host()
 		self.validate_smtp_server()
@@ -20,9 +20,9 @@ class FMSettings(Document):
 		self.validate_default_dkim_bits()
 		self.generate_dns_records()
 
-	def validate_primary_domain_name(self):
+	def validate_primary_domain_name(self) -> None:
 		self.primary_domain_name = self.primary_domain_name.lower()
-		
+
 		if not Utils.is_valid_domain(self.primary_domain_name):
 			frappe.throw(
 				_(
@@ -30,7 +30,7 @@ class FMSettings(Document):
 				)
 			)
 
-	def validate_spf_host(self):
+	def validate_spf_host(self) -> None:
 		self.spf_host = self.spf_host.lower()
 
 		if not Utils.is_valid_host(self.spf_host):
@@ -41,7 +41,7 @@ class FMSettings(Document):
 			)
 			frappe.throw(msg)
 
-	def validate_smtp_server(self):
+	def validate_smtp_server(self) -> None:
 		self.smtp_server = self.smtp_server.lower()
 
 		public_ipv4 = Utils.get_dns_record(self.smtp_server, "A")
@@ -59,7 +59,7 @@ class FMSettings(Document):
 				)
 			)
 
-	def validate_smtp_port(self):
+	def validate_smtp_port(self) -> None:
 		if not Utils.is_port_open(self.smtp_server, self.smtp_port):
 			frappe.throw(
 				_(
@@ -69,7 +69,7 @@ class FMSettings(Document):
 				)
 			)
 
-	def validate_incoming_servers(self):
+	def validate_incoming_servers(self) -> None:
 		server_list = []
 		priority_list = []
 
@@ -116,7 +116,7 @@ class FMSettings(Document):
 							)
 						)
 
-	def validate_default_dkim_selector(self):
+	def validate_default_dkim_selector(self) -> None:
 		self.default_dkim_selector = self.default_dkim_selector.lower()
 
 		if not Utils.is_valid_host(self.default_dkim_selector):
@@ -127,11 +127,11 @@ class FMSettings(Document):
 			)
 			frappe.throw(msg)
 
-	def validate_default_dkim_bits(self):
+	def validate_default_dkim_bits(self) -> None:
 		if cint(self.default_dkim_bits) < 1024:
 			frappe.throw(_("DKIM Bits must be greater than 1024."))
 
-	def generate_dns_records(self):
+	def generate_dns_records(self) -> None:
 		self.dns_records.clear()
 
 		records = []

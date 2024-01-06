@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart
 
 class FMQueue(Document):
 	def autoname(self):
-		self.name = f"{0}.{1}".format(
+		self.name = "{0}.{1}".format(
 			datetime.now().strftime("%Y%m%d%H%M%S"),
 			"".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(11)),
 		)

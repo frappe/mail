@@ -14,7 +14,12 @@ from mail.mail.doctype.fm_incoming_server.fm_incoming_server import FMIncomingSe
 
 
 class FMDomain(Document):
+	def autoname(self) -> None:
+		self.domain_name = self.domain_name.lower()
+		self.name = self.domain_name
+
 	def validate(self) -> None:
+		self.validate_domain_name()
 		self.validate_dkim_selector()
 		self.validate_dkim_bits()
 
@@ -25,8 +30,22 @@ class FMDomain(Document):
 		elif not self.active:
 			self.verified = 0
 
+	def validate_domain_name(self) -> None:
+		if not Utils.is_valid_domain(self.domain_name):
+			frappe.throw(_("Domain Name {0} is invalid.".format(frappe.bold(self.domain_name))))
+
 	def validate_dkim_selector(self) -> None:
-		if not self.dkim_selector:
+		if self.dkim_selector:
+			self.dkim_selector = self.dkim_selector.lower()
+
+			if not Utils.is_valid_host(self.dkim_selector):
+				msg = _(
+					"DKIM Selector {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores.".format(
+						frappe.bold(self.dkim_selector)
+					)
+				)
+				frappe.throw(msg)
+		else:
 			self.dkim_selector = frappe.db.get_single_value(
 				"FM Settings", "default_dkim_selector"
 			)
@@ -39,7 +58,7 @@ class FMDomain(Document):
 			self.dkim_bits = frappe.db.get_single_value("FM Settings", "default_dkim_bits")
 
 	@frappe.whitelist()
-	def generate_dns_records(self, save=False) -> None:
+	def generate_dns_records(self, save: bool = False) -> None:
 		self.verified = 0
 		self.generate_dkim_key()
 		self.refresh_dns_records()
@@ -143,7 +162,7 @@ class FMDomain(Document):
 		return records
 
 	@frappe.whitelist()
-	def verify_dns_records(self, save=False) -> None:
+	def verify_dns_records(self, save: bool = False) -> None:
 		self.verified = 1
 
 		for record in self.dns_records:
@@ -171,7 +190,7 @@ class FMDomain(Document):
 			self.save()
 
 
-def get_filtered_dkim_key(key_pem) -> str:
+def get_filtered_dkim_key(key_pem: str) -> str:
 	key_pem = "".join(key_pem.split())
 	key_pem = (
 		key_pem.replace("-----BEGINPUBLICKEY-----", "")
@@ -183,7 +202,7 @@ def get_filtered_dkim_key(key_pem) -> str:
 	return key_pem
 
 
-def verify_dns_record(record: FMDNSRecord, debug=False) -> bool:
+def verify_dns_record(record: FMDNSRecord, debug: bool = False) -> bool:
 	if result := Utils.get_dns_record(record.host, record.type):
 		for data in result:
 			if data:
