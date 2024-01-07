@@ -17,7 +17,6 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Recipient",
-   "no_copy": 1,
    "options": "Email",
    "reqd": 1,
    "search_index": 1
@@ -47,7 +46,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-01-03 13:25:41.565662",
+ "modified": "2024-01-11 11:01:03.409465",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Recipient",

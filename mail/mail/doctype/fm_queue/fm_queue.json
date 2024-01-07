@@ -4,6 +4,10 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "status",
+  "column_break_d6p9",
+  "domain_name",
+  "section_break_quhp",
   "sender",
   "column_break_9ywf",
   "subject",
@@ -12,7 +16,7 @@
   "section_break_ijwo",
   "body",
   "section_break_lgaa",
-  "error"
+  "error_message"
  ],
  "fields": [
   {
@@ -31,7 +35,6 @@
    "fieldname": "recipients",
    "fieldtype": "Table",
    "label": "Recipients",
-   "no_copy": 1,
    "options": "FM Recipient",
    "reqd": 1,
    "set_only_once": 1
@@ -44,15 +47,8 @@
    "set_only_once": 1
   },
   {
-   "fieldname": "error",
-   "fieldtype": "Small Text",
-   "label": "Error",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "body",
-   "fieldtype": "Long Text",
+   "fieldtype": "Text Editor",
    "label": "Body",
    "set_only_once": 1
   },
@@ -71,11 +67,47 @@
   {
    "fieldname": "section_break_lgaa",
    "fieldtype": "Section Break"
+  },
+  {
+   "default": "Draft",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft\nQueued\nPartially Sent\nSent\nFailed",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Small Text",
+   "label": "Error Message",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_quhp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "sender.domain_name",
+   "fieldname": "domain_name",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Domain Name",
+   "options": "FM Domain",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_d6p9",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-03 15:02:54.355040",
+ "modified": "2024-01-11 11:09:06.419281",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Queue",

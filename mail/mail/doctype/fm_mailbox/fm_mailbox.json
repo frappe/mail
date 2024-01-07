@@ -81,6 +81,8 @@
   {
    "fieldname": "domain_name",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Domain Name",
    "no_copy": 1,
    "options": "FM Domain",
@@ -99,7 +101,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-12-26 18:58:26.130108",
+ "modified": "2024-01-07 18:15:26.873885",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Mailbox",

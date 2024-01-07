@@ -82,7 +82,7 @@ class FMDomain(Document):
 			format=serialization.PublicFormat.SubjectPublicKeyInfo,
 		).decode()
 
-		self.dkim_private_key = get_filtered_dkim_key(private_key_pem)
+		self.dkim_private_key = private_key_pem
 		self.dkim_public_key = get_filtered_dkim_key(public_key_pem)
 
 	def refresh_dns_records(self) -> None:
