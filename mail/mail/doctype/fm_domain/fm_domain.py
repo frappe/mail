@@ -22,6 +22,7 @@ class FMDomain(Document):
 		self.validate_domain_name()
 		self.validate_dkim_selector()
 		self.validate_dkim_bits()
+		self.validate_primary()
 
 		if self.is_new() or (self.dkim_bits != self.get_doc_before_save().get("dkim_bits")):
 			self.generate_dns_records()
@@ -56,6 +57,14 @@ class FMDomain(Document):
 				frappe.throw(_("DKIM Bits must be greater than 1024."))
 		else:
 			self.dkim_bits = frappe.db.get_single_value("FM Settings", "default_dkim_bits")
+
+	def validate_primary(self) -> None:
+		self.primary = (
+			1
+			if self.domain_name
+			== frappe.db.get_single_value("FM Settings", "primary_domain_name")
+			else 0
+		)
 
 	@frappe.whitelist()
 	def generate_dns_records(self, save: bool = False) -> None:
