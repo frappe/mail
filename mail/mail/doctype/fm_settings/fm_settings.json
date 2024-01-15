@@ -13,7 +13,13 @@
   "column_break_tslh",
   "smtp_port",
   "use_tls",
+  "section_break_11k8",
+  "smtp_username",
+  "column_break_dzy6",
+  "smtp_password",
+  "section_break_th0v",
   "public_ipv4",
+  "column_break_vszm",
   "public_ipv6",
   "incoming_tab",
   "incoming_servers",
@@ -144,12 +150,38 @@
    "fieldtype": "Data",
    "label": "Public IPv6",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_11k8",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_th0v",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dzy6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_vszm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "smtp_username",
+   "fieldtype": "Data",
+   "label": "Username"
+  },
+  {
+   "fieldname": "smtp_password",
+   "fieldtype": "Password",
+   "label": "Password"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-01-15 13:01:18.649276",
+ "modified": "2024-01-15 18:35:48.105804",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Settings",

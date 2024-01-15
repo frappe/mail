@@ -68,6 +68,9 @@ class FMQueue(Document):
 			if fm_settings.use_tls:
 				server.starttls()
 
+			if fm_settings.smtp_username and fm_settings.smtp_password:
+				server.login(fm_settings.smtp_username, fm_settings.get_password("smtp_password"))
+
 			server.ehlo(self.domain_name)
 			server.send_message(message)
 			self.db_set("status", "Queued")
