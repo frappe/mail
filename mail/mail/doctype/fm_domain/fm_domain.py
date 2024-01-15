@@ -144,7 +144,7 @@ class FMDomain(Document):
 				"category": category,
 				"type": type,
 				"host": f"_dmarc.{self.domain_name}",
-				"value": "v=DMARC1; p=none;",
+				"value": f"v=DMARC1; p=reject; sp=reject; pct=100; rua=mailto:dmarc@{self.domain_name}; ri=86400; aspf=s; adkim=s; fo=1",
 				"ttl": ttl,
 			}
 		)
