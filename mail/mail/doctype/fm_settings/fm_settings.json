@@ -65,7 +65,7 @@
    "fieldtype": "Select",
    "label": "DKIM Bits",
    "non_negative": 1,
-   "options": "1024\n2048",
+   "options": "1024\n2048\n4096",
    "reqd": 1
   },
   {
@@ -149,7 +149,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-01-15 12:26:54.855027",
+ "modified": "2024-01-15 13:01:18.649276",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Settings",

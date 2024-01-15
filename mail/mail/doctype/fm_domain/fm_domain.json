@@ -90,7 +90,7 @@
    "fieldtype": "Select",
    "label": "DKIM Bits",
    "non_negative": 1,
-   "options": "\n1024\n2048"
+   "options": "\n1024\n2048\n4096"
   },
   {
    "default": "1",
@@ -125,7 +125,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-11 12:24:55.186658",
+ "modified": "2024-01-15 13:01:52.775901",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Domain",
