@@ -24,7 +24,7 @@ class FMMailbox(Document):
 
 	def validate_domain(self) -> None:
 		active, verified = frappe.db.get_value(
-			"FM Domain", self.domain_name, ["active", "verified"]
+			"FM Domain", self.domain_name, ["is_active", "is_verified"]
 		)
 
 		if not active:

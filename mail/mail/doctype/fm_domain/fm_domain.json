@@ -6,9 +6,9 @@
  "engine": "InnoDB",
  "field_order": [
   "domain_name",
-  "active",
-  "verified",
-  "primary",
+  "is_active",
+  "is_verified",
+  "is_primary_domain",
   "column_break_lr3y",
   "domain_owner",
   "dkim_selector",
@@ -95,7 +95,7 @@
   {
    "default": "1",
    "depends_on": "eval: !doc.__islocal",
-   "fieldname": "active",
+   "fieldname": "is_active",
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Active",
@@ -104,7 +104,7 @@
   {
    "default": "0",
    "depends_on": "eval: !doc.__islocal",
-   "fieldname": "verified",
+   "fieldname": "is_verified",
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Verified",
@@ -114,8 +114,8 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.primary",
-   "fieldname": "primary",
+   "depends_on": "eval: doc.is_primary_domain",
+   "fieldname": "is_primary_domain",
    "fieldtype": "Check",
    "label": "Primary",
    "no_copy": 1,

@@ -9,6 +9,7 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     "dnspython~=2.4.2",
+    "dkimpy~=1.1.5",
 ]
 
 [build-system]

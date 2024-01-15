@@ -39,7 +39,9 @@ class FMQueue(Document):
 		display_name = frappe.get_cached_value("FM Mailbox", self.sender, "display_name")
 
 		message = MIMEMultipart("alternative")
-		message["From"] = "{0} <{1}>".format(display_name, self.sender) if display_name else self.sender
+		message["From"] = (
+			"{0} <{1}>".format(display_name, self.sender) if display_name else self.sender
+		)
 		message["To"] = ", ".join(self.get_recipients())
 		message["Subject"] = self.subject
 		message["Date"] = email.utils.formatdate()

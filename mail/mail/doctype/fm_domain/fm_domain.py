@@ -22,14 +22,14 @@ class FMDomain(Document):
 		self.validate_domain_name()
 		self.validate_dkim_selector()
 		self.validate_dkim_bits()
-		self.validate_primary()
+		self.validate_is_primary_domain()
 
 		if self.is_new() or (self.dkim_bits != self.get_doc_before_save().get("dkim_bits")):
 			self.generate_dns_records()
 		elif self.dkim_selector != self.get_doc_before_save().get("dkim_selector"):
 			self.refresh_dns_records()
-		elif not self.active:
-			self.verified = 0
+		elif not self.is_active:
+			self.is_verified = 0
 
 	def validate_domain_name(self) -> None:
 		if not Utils.is_valid_domain(self.domain_name):
@@ -58,8 +58,8 @@ class FMDomain(Document):
 		else:
 			self.dkim_bits = frappe.db.get_single_value("FM Settings", "default_dkim_bits")
 
-	def validate_primary(self) -> None:
-		self.primary = (
+	def validate_is_primary_domain(self) -> None:
+		self.is_primary_domain = (
 			1
 			if self.domain_name
 			== frappe.db.get_single_value("FM Settings", "primary_domain_name")
@@ -68,7 +68,7 @@ class FMDomain(Document):
 
 	@frappe.whitelist()
 	def generate_dns_records(self, save: bool = False) -> None:
-		self.verified = 0
+		self.is_verified = 0
 		self.generate_dkim_key()
 		self.refresh_dns_records()
 
@@ -95,7 +95,7 @@ class FMDomain(Document):
 		self.dkim_public_key = get_filtered_dkim_key(public_key_pem)
 
 	def refresh_dns_records(self) -> None:
-		self.verified = 0
+		self.is_verified = 0
 		self.dns_records.clear()
 		fm_settings = frappe.get_single("FM Settings")
 
@@ -172,11 +172,11 @@ class FMDomain(Document):
 
 	@frappe.whitelist()
 	def verify_dns_records(self, save: bool = False) -> None:
-		self.verified = 1
+		self.is_verified = 1
 
 		for record in self.dns_records:
 			if verify_dns_record(record):
-				record.verified = 1
+				record.is_verified = 1
 				frappe.msgprint(
 					_("Row #{0}: Verified {1}:{2} record.").format(
 						frappe.bold(record.idx), frappe.bold(record.type), frappe.bold(record.host)
@@ -185,8 +185,8 @@ class FMDomain(Document):
 					alert=True,
 				)
 			else:
-				record.verified = 0
-				self.verified = 0
+				record.is_verified = 0
+				self.is_verified = 0
 				frappe.msgprint(
 					_("Row #{0}: Could not verify {1}:{2} record.").format(
 						frappe.bold(record.idx), frappe.bold(record.type), frappe.bold(record.host)

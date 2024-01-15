@@ -93,7 +93,6 @@
    "reqd": 1
   },
   {
-   "default": "localhost",
    "description": "ex. smtp.frappemail.com",
    "fieldname": "smtp_server",
    "fieldtype": "Data",
@@ -150,7 +149,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-01-05 16:50:12.755801",
+ "modified": "2024-01-15 12:26:54.855027",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Settings",

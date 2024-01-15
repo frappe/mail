@@ -13,7 +13,7 @@
   "column_break_fywh",
   "value",
   "ttl",
-  "verified"
+  "is_verified"
  ],
  "fields": [
   {
@@ -68,15 +68,6 @@
    "reqd": 1
   },
   {
-   "default": "0",
-   "depends_on": "eval: doc.parenttype != \"FM Settings\"",
-   "fieldname": "verified",
-   "fieldtype": "Check",
-   "label": "Verified",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "category",
    "fieldtype": "Select",
    "label": "Category",
@@ -84,12 +75,21 @@
    "options": "\nSending Record\nReceiving Record\nTracking Record\nServer Record",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.parenttype != \"FM Settings\"",
+   "fieldname": "is_verified",
+   "fieldtype": "Check",
+   "label": "Verified",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-01-03 13:15:13.436412",
+ "modified": "2024-01-15 12:40:28.702920",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM DNS Record",
