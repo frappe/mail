@@ -13,8 +13,7 @@ class FMSettings(Document):
 	def validate(self) -> None:
 		self.validate_primary_domain_name()
 		self.validate_spf_host()
-		self.validate_smtp_server()
-		self.validate_smtp_port()
+		self.validate_outgoing_servers()
 		self.validate_incoming_servers()
 		self.validate_default_dkim_selector()
 		self.validate_default_dkim_bits()
@@ -41,37 +40,60 @@ class FMSettings(Document):
 			)
 			frappe.throw(msg)
 
-	def validate_smtp_server(self) -> None:
-		self.smtp_server = self.smtp_server.lower()
+	def validate_outgoing_servers(self) -> None:
+		server_list = []
 
-		public_ipv4 = Utils.get_dns_record(self.smtp_server, "A")
-		public_ipv6 = Utils.get_dns_record(self.smtp_server, "AAAA")
+		for outgoing_server in self.outgoing_servers:
+			outgoing_server.server = outgoing_server.server.lower()
 
-		self.public_ipv4 = public_ipv4[0].address if public_ipv4 else None
-		self.public_ipv6 = public_ipv6[0].address if public_ipv6 else None
-
-		if not public_ipv4 and not public_ipv6:
-			frappe.throw(
-				_(
-					"An A or AAAA record not found for the outgoing server {0}.".format(
-						frappe.bold(self.smtp_server)
+			if outgoing_server.server in server_list:
+				frappe.throw(
+					_(
+						"{0} Row #{1}: Duplicate server {2}.".format(
+							frappe.bold("Outgoing Server"),
+							outgoing_server.idx,
+							frappe.bold(outgoing_server.server),
+						)
 					)
 				)
-			)
 
-	def validate_smtp_port(self) -> None:
-		if not Utils.is_port_open(self.smtp_server, self.smtp_port):
-			frappe.throw(
-				_(
-					"Port {0} is not open on the outgoing server {1}.".format(
-						frappe.bold(self.smtp_port), frappe.bold(self.smtp_server)
+			server_list.append(outgoing_server.server)
+
+			public_ipv4 = Utils.get_dns_record(outgoing_server.server, "A")
+			public_ipv6 = Utils.get_dns_record(outgoing_server.server, "AAAA")
+
+			outgoing_server.public_ipv4 = public_ipv4[0].address if public_ipv4 else None
+			outgoing_server.public_ipv6 = public_ipv6[0].address if public_ipv6 else None
+
+			if not public_ipv4 and not public_ipv6:
+				frappe.throw(
+					_(
+						"{0} Row #{1}: An A or AAAA record not found for the server {2}.".format(
+							frappe.bold("Outgoing Server"),
+							outgoing_server.idx,
+							frappe.bold(outgoing_server.server),
+						)
 					)
 				)
-			)
+
+			if not Utils.is_port_open(outgoing_server.server, outgoing_server.port):
+				frappe.throw(
+					_(
+						"{0} Row #{1}: Port {2} is not open on the server {3}.".format(
+							frappe.bold("Outgoing Server"),
+							outgoing_server.idx,
+							frappe.bold(outgoing_server.port),
+							frappe.bold(outgoing_server.server),
+						)
+					)
+				)
 
 	def validate_incoming_servers(self) -> None:
 		server_list = []
 		priority_list = []
+		outgoing_servers = [
+			outgoing_server.server for outgoing_server in self.outgoing_servers
+		]
 
 		if self.incoming_servers:
 			for incoming_server in self.incoming_servers:
@@ -80,7 +102,7 @@ class FMSettings(Document):
 				if incoming_server.server in server_list:
 					frappe.throw(
 						_(
-							"{0} Row #{1}: Duplicate incoming server {2}.".format(
+							"{0} Row #{1}: Duplicate server {2}.".format(
 								frappe.bold("Incoming Server"),
 								incoming_server.idx,
 								frappe.bold(incoming_server.server),
@@ -102,13 +124,13 @@ class FMSettings(Document):
 				server_list.append(incoming_server.server)
 				priority_list.append(incoming_server.priority)
 
-				if incoming_server.server != self.smtp_server:
+				if incoming_server.server not in outgoing_servers:
 					if not Utils.get_dns_record(
 						incoming_server.server, "A"
 					) or not Utils.get_dns_record(incoming_server.server, "AAAA"):
 						frappe.throw(
 							_(
-								"{0} Row #{1}: An A or AAAA record not found for the incoming server {2}.".format(
+								"{0} Row #{1}: An A or AAAA record not found for the server {2}.".format(
 									frappe.bold("Incoming Server"),
 									incoming_server.idx,
 									frappe.bold(incoming_server.server),
@@ -135,31 +157,35 @@ class FMSettings(Document):
 		self.dns_records.clear()
 
 		records = []
+		outgoing_servers = []
 		category = "Server Record"
 
-		# A Record
-		if self.public_ipv4:
-			records.append(
-				{
-					"category": category,
-					"type": "A",
-					"host": self.smtp_server,
-					"value": self.public_ipv4,
-					"ttl": self.default_ttl,
-				}
-			)
+		for outgoing_server in self.outgoing_servers:
+			# A Record
+			if outgoing_server.public_ipv4:
+				records.append(
+					{
+						"category": category,
+						"type": "A",
+						"host": outgoing_server.server,
+						"value": outgoing_server.public_ipv4,
+						"ttl": self.default_ttl,
+					}
+				)
 
-		# AAAA Record
-		if self.public_ipv6:
-			records.append(
-				{
-					"category": category,
-					"type": "AAAA",
-					"host": self.smtp_server,
-					"value": self.public_ipv6,
-					"ttl": self.default_ttl,
-				}
-			)
+			# AAAA Record
+			if outgoing_server.public_ipv6:
+				records.append(
+					{
+						"category": category,
+						"type": "AAAA",
+						"host": outgoing_server.server,
+						"value": outgoing_server.public_ipv6,
+						"ttl": self.default_ttl,
+					}
+				)
+
+			outgoing_servers.append(f"a:{outgoing_server.server}")
 
 		# TXT Record
 		records.append(
@@ -167,7 +193,7 @@ class FMSettings(Document):
 				"category": category,
 				"type": "TXT",
 				"host": f"{self.spf_host}.{self.primary_domain_name}",
-				"value": f"v=spf1 a:{self.smtp_server} ~all",
+				"value": f"v=spf1 {' '.join(outgoing_servers)} ~all",
 				"ttl": self.default_ttl,
 			}
 		)

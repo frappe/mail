@@ -1,4 +1,5 @@
 import re
+import random
 import frappe
 import socket
 import ipaddress
@@ -61,3 +62,10 @@ class Utils:
 				return True
 		except (socket.timeout, socket.error):
 			return False
+
+	@staticmethod
+	def get_smtp_server(fm_settings: object = None) -> object:
+		if not fm_settings:
+			fm_settings = frappe.get_cached_doc("FM Settings")
+
+		return random.choice(fm_settings.outgoing_servers)

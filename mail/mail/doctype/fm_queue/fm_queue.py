@@ -7,6 +7,7 @@ import string
 import secrets
 import smtplib
 import email.utils
+from mail.utils import Utils
 from datetime import datetime
 from email.mime.text import MIMEText
 from frappe.model.document import Document
@@ -34,7 +35,7 @@ class FMQueue(Document):
 		if self.status != "Draft" and not ignore_status:
 			return
 
-		fm_settings = frappe.get_cached_doc("FM Settings")
+		smtp_server = Utils.get_smtp_server()
 		fm_domain = frappe.get_cached_doc("FM Domain", self.domain_name)
 		display_name = frappe.get_cached_value("FM Mailbox", self.sender, "display_name")
 
@@ -45,7 +46,7 @@ class FMQueue(Document):
 		message["To"] = ", ".join(self.get_recipients())
 		message["Subject"] = self.subject
 		message["Date"] = email.utils.formatdate()
-		message["Message-ID"] = "<{0}@{1}>".format(self.name, fm_settings.smtp_server)
+		message["Message-ID"] = "<{0}@{1}>".format(self.name, smtp_server.server)
 
 		if self.body:
 			if isinstance(self.body, bytes):
@@ -64,12 +65,12 @@ class FMQueue(Document):
 		)
 		message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
 
-		with smtplib.SMTP(fm_settings.smtp_server, fm_settings.smtp_port) as server:
-			if fm_settings.use_tls:
+		with smtplib.SMTP(smtp_server.server, smtp_server.port) as server:
+			if smtp_server.use_tls:
 				server.starttls()
 
-			if fm_settings.smtp_username and fm_settings.smtp_password:
-				server.login(fm_settings.smtp_username, fm_settings.get_password("smtp_password"))
+			if smtp_server.username and smtp_server.password:
+				server.login(smtp_server.username, smtp_server.get_password("password"))
 
 			server.ehlo(self.domain_name)
 			server.send_message(message)

@@ -9,18 +9,7 @@
   "column_break_3hud",
   "spf_host",
   "outgoing_tab",
-  "smtp_server",
-  "column_break_tslh",
-  "smtp_port",
-  "use_tls",
-  "section_break_11k8",
-  "smtp_username",
-  "column_break_dzy6",
-  "smtp_password",
-  "section_break_th0v",
-  "public_ipv4",
-  "column_break_vszm",
-  "public_ipv6",
+  "outgoing_servers",
   "incoming_tab",
   "incoming_servers",
   "defaults_tab",
@@ -81,31 +70,6 @@
    "options": "FM Incoming Server"
   },
   {
-   "default": "1",
-   "fieldname": "use_tls",
-   "fieldtype": "Check",
-   "label": "Use TLS"
-  },
-  {
-   "fieldname": "column_break_tslh",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "587",
-   "fieldname": "smtp_port",
-   "fieldtype": "Int",
-   "label": "Port",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "description": "ex. smtp.frappemail.com",
-   "fieldname": "smtp_server",
-   "fieldtype": "Data",
-   "label": "Server",
-   "reqd": 1
-  },
-  {
    "description": "ex. frappemail.com",
    "fieldname": "primary_domain_name",
    "fieldtype": "Data",
@@ -140,48 +104,17 @@
    "read_only": 1
   },
   {
-   "fieldname": "public_ipv4",
-   "fieldtype": "Data",
-   "label": "Public IPv4",
-   "read_only": 1
-  },
-  {
-   "fieldname": "public_ipv6",
-   "fieldtype": "Data",
-   "label": "Public IPv6",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_11k8",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "section_break_th0v",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_dzy6",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_vszm",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "smtp_username",
-   "fieldtype": "Data",
-   "label": "Username"
-  },
-  {
-   "fieldname": "smtp_password",
-   "fieldtype": "Password",
-   "label": "Password"
+   "fieldname": "outgoing_servers",
+   "fieldtype": "Table",
+   "label": "Servers",
+   "options": "FM Outgoing Server",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-01-15 18:35:48.105804",
+ "modified": "2024-01-16 11:09:34.007716",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Settings",

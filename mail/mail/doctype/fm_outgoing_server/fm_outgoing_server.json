@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-01-16 10:57:36.157015",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "server",
+  "column_break_h1aa",
+  "port",
+  "use_tls",
+  "section_break_2ead",
+  "username",
+  "column_break_uqxt",
+  "password",
+  "section_break_ejwa",
+  "public_ipv4",
+  "column_break_mz08",
+  "public_ipv6"
+ ],
+ "fields": [
+  {
+   "fieldname": "server",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Server",
+   "reqd": 1
+  },
+  {
+   "default": "587",
+   "fieldname": "port",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Port",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "use_tls",
+   "fieldtype": "Check",
+   "label": " Use TLS"
+  },
+  {
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "label": "Username"
+  },
+  {
+   "fieldname": "password",
+   "fieldtype": "Password",
+   "label": "Password"
+  },
+  {
+   "fieldname": "public_ipv4",
+   "fieldtype": "Data",
+   "label": "Public IPv4",
+   "read_only": 1
+  },
+  {
+   "fieldname": "public_ipv6",
+   "fieldtype": "Data",
+   "label": "Public IPv6",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_h1aa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_2ead",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_uqxt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ejwa",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_mz08",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-01-16 11:12:07.945424",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "FM Outgoing Server",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
