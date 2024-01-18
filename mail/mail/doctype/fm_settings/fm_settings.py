@@ -21,13 +21,6 @@ class FMSettings(Document):
 	def validate_primary_domain_name(self) -> None:
 		self.primary_domain_name = self.primary_domain_name.lower()
 
-		if not Utils.is_valid_domain(self.primary_domain_name):
-			frappe.throw(
-				_(
-					"Primary Domain Name {0} is invalid.".format(frappe.bold(self.primary_domain_name))
-				)
-			)
-
 	def validate_spf_host(self) -> None:
 		self.spf_host = self.spf_host.lower()
 

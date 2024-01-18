@@ -20,7 +20,6 @@ class FMDomain(Document):
 		self.name = self.domain_name
 
 	def validate(self) -> None:
-		self.validate_domain_name()
 		self.validate_dkim_selector()
 		self.validate_dkim_bits()
 		self.validate_is_primary_domain()
@@ -31,10 +30,6 @@ class FMDomain(Document):
 			self.refresh_dns_records()
 		elif not self.is_active:
 			self.is_verified = 0
-
-	def validate_domain_name(self) -> None:
-		if not Utils.is_valid_domain(self.domain_name):
-			frappe.throw(_("Domain Name {0} is invalid.".format(frappe.bold(self.domain_name))))
 
 	def validate_dkim_selector(self) -> None:
 		if self.dkim_selector:

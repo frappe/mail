@@ -33,10 +33,6 @@ class Utils:
 			frappe.throw(err_msg)
 
 	@staticmethod
-	def is_valid_domain(domain: str, raise_exception: bool = False) -> bool:
-		return bool(Utils.get_dns_record(domain, "SOA", raise_exception=raise_exception))
-
-	@staticmethod
 	def is_valid_host(host: str) -> bool:
 		import re
 
