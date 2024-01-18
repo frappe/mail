@@ -23,7 +23,7 @@
  "fields": [
   {
    "default": "_spf",
-   "description": "ex. _spf",
+   "description": "e.g. _spf",
    "fieldname": "spf_host",
    "fieldtype": "Data",
    "label": "SPF Host",
@@ -35,7 +35,7 @@
   },
   {
    "default": "default",
-   "description": "ex. frappemail",
+   "description": "e.g. frappemail",
    "fieldname": "default_dkim_selector",
    "fieldtype": "Data",
    "label": "DKIM Selector",
@@ -70,7 +70,7 @@
    "options": "FM Incoming Server"
   },
   {
-   "description": "ex. frappemail.com",
+   "description": "e.g. frappemail.com",
    "fieldname": "primary_domain_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -114,7 +114,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-01-16 11:09:34.007716",
+ "modified": "2024-01-17 18:46:15.515073",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Settings",

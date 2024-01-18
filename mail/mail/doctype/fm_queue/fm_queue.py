@@ -3,12 +3,9 @@
 
 import dkim
 import frappe
-import string
-import secrets
 import smtplib
-import email.utils
 from mail.utils import Utils
-from datetime import datetime
+from email.utils import formatdate
 from email.mime.text import MIMEText
 from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
@@ -16,6 +13,10 @@ from email.mime.multipart import MIMEMultipart
 
 class FMQueue(Document):
 	def autoname(self) -> None:
+		import string
+		import secrets
+		from datetime import datetime
+
 		self.name = "{0}.{1}".format(
 			datetime.now().strftime("%Y%m%d%H%M%S"),
 			"".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(11)),
@@ -45,27 +46,23 @@ class FMQueue(Document):
 		)
 		message["To"] = ", ".join(self.get_recipients())
 		message["Subject"] = self.subject
-		message["Date"] = email.utils.formatdate()
+		message["Date"] = formatdate()
 		message["Message-ID"] = "<{0}@{1}>".format(self.name, smtp_server.server)
 
 		if self.body:
-			if isinstance(self.body, bytes):
-				self.body = self.body.decode()
-
 			message.attach(MIMEText(self.body, "html"))
 
-		msg_data = message.as_bytes()
 		headers = [b"To", b"From", b"Subject"]
 		signature = dkim.sign(
-			message=msg_data,
-			selector=str(fm_domain.dkim_selector).encode(),
+			message=message.as_bytes(),
 			domain=fm_domain.domain_name.encode(),
+			selector=fm_domain.dkim_selector.encode(),
 			privkey=fm_domain.get_password("dkim_private_key").encode(),
 			include_headers=headers,
 		)
 		message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
 
-		with smtplib.SMTP(smtp_server.server, smtp_server.port) as server:
+		with smtplib.SMTP(smtp_server.host or smtp_server.server, smtp_server.port) as server:
 			if smtp_server.use_tls:
 				server.starttls()
 

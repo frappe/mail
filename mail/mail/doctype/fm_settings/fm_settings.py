@@ -1,7 +1,6 @@
 # Copyright (c) 2023, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import re
 import frappe
 from frappe import _
 from mail.utils import Utils
@@ -41,6 +40,7 @@ class FMSettings(Document):
 			frappe.throw(msg)
 
 	def validate_outgoing_servers(self) -> None:
+		host_list = []
 		server_list = []
 
 		for outgoing_server in self.outgoing_servers:
@@ -58,6 +58,22 @@ class FMSettings(Document):
 				)
 
 			server_list.append(outgoing_server.server)
+
+			if outgoing_server.host:
+				outgoing_server.host = outgoing_server.host.lower()
+
+				if outgoing_server.host in host_list:
+					frappe.throw(
+						_(
+							"{0} Row #{1}: Duplicate host {2}.".format(
+								frappe.bold("Outgoing Server"),
+								outgoing_server.idx,
+								frappe.bold(outgoing_server.host),
+							)
+						)
+					)
+
+				host_list.append(outgoing_server.host)
 
 			public_ipv4 = Utils.get_dns_record(outgoing_server.server, "A")
 			public_ipv6 = Utils.get_dns_record(outgoing_server.server, "AAAA")
@@ -87,6 +103,18 @@ class FMSettings(Document):
 						)
 					)
 				)
+
+			if outgoing_server.host and outgoing_server.host != "localhost":
+				if not Utils.is_valid_ip(outgoing_server.host):
+					frappe.throw(
+						_(
+							"{0} Row #{1}: Unable to connect to the host {2}.".format(
+								frappe.bold("Outgoing Server"),
+								outgoing_server.idx,
+								frappe.bold(outgoing_server.host),
+							)
+						)
+					)
 
 	def validate_incoming_servers(self) -> None:
 		server_list = []

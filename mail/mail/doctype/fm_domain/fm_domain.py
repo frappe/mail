@@ -6,11 +6,12 @@ from frappe import _
 from mail.utils import Utils
 from frappe.utils import cint
 from frappe.model.document import Document
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from mail.mail.doctype.fm_dns_record.fm_dns_record import FMDNSRecord
-from mail.mail.doctype.fm_incoming_server.fm_incoming_server import FMIncomingServer
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+	from mail.mail.doctype.fm_dns_record.fm_dns_record import FMDNSRecord
+	from mail.mail.doctype.fm_incoming_server.fm_incoming_server import FMIncomingServer
 
 
 class FMDomain(Document):
@@ -76,6 +77,10 @@ class FMDomain(Document):
 			self.save()
 
 	def generate_dkim_key(self) -> None:
+		from cryptography.hazmat.backends import default_backend
+		from cryptography.hazmat.primitives import serialization
+		from cryptography.hazmat.primitives.asymmetric import rsa
+
 		private_key = rsa.generate_private_key(
 			public_exponent=65537, key_size=cint(self.dkim_bits), backend=default_backend()
 		)
@@ -152,7 +157,7 @@ class FMDomain(Document):
 		return records
 
 	def get_receiving_records(
-		self, incoming_servers: list[FMIncomingServer], ttl
+		self, incoming_servers: list["FMIncomingServer"], ttl
 	) -> list[dict]:
 		records = []
 
@@ -211,7 +216,7 @@ def get_filtered_dkim_key(key_pem: str) -> str:
 	return key_pem
 
 
-def verify_dns_record(record: FMDNSRecord, debug: bool = False) -> bool:
+def verify_dns_record(record: "FMDNSRecord", debug: bool = False) -> bool:
 	if result := Utils.get_dns_record(record.host, record.type):
 		for data in result:
 			if data:
