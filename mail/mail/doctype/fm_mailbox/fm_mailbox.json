@@ -13,8 +13,7 @@
   "column_break_9etf",
   "user",
   "email",
-  "display_name",
-  "email_signature"
+  "display_name"
  ],
  "fields": [
   {
@@ -71,14 +70,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fetch_from": "user.email_signature",
-   "fetch_if_empty": 1,
-   "fieldname": "email_signature",
-   "fieldtype": "Small Text",
-   "label": "Email Signature",
-   "no_copy": 1
-  },
-  {
    "fieldname": "domain_name",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -101,7 +92,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-07 18:15:26.873885",
+ "modified": "2024-01-20 07:57:48.782714",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Mailbox",

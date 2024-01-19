@@ -22,8 +22,15 @@ class FMQueue(Document):
 			"".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(11)),
 		)
 
+	def validate(self) -> None:
+		self.validate_server()
+
 	def after_insert(self) -> None:
 		self.sendmail()
+
+	def validate_server(self) -> None:
+		if not self.server:
+			self.server = Utils.get_outgoing_server()
 
 	def add_recipients(self, recipients: list) -> None:
 		for recipient in recipients:
@@ -36,7 +43,7 @@ class FMQueue(Document):
 		if self.status != "Draft" and not ignore_status:
 			return
 
-		smtp_server = Utils.get_smtp_server()
+		smtp_server = frappe.get_cached_doc("FM Server", self.server)
 		fm_domain = frappe.get_cached_doc("FM Domain", self.domain_name)
 		display_name = frappe.get_cached_value("FM Mailbox", self.sender, "display_name")
 
@@ -47,7 +54,7 @@ class FMQueue(Document):
 		message["To"] = ", ".join(self.get_recipients())
 		message["Subject"] = self.subject
 		message["Date"] = formatdate()
-		message["Message-ID"] = "<{0}@{1}>".format(self.name, smtp_server.server)
+		message["Message-ID"] = "<{0}@{1}>".format(self.name, smtp_server.name)
 
 		if self.body:
 			message.attach(MIMEText(self.body, "html"))
@@ -62,7 +69,7 @@ class FMQueue(Document):
 		)
 		message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
 
-		with smtplib.SMTP(smtp_server.host or smtp_server.server, smtp_server.port) as server:
+		with smtplib.SMTP(smtp_server.host or smtp_server.name, smtp_server.port) as server:
 			if smtp_server.use_tls:
 				server.starttls()
 
@@ -71,4 +78,4 @@ class FMQueue(Document):
 
 			server.ehlo(self.domain_name)
 			server.send_message(message)
-			self.db_set("status", "Queued")
+			self.db_set("status", "Sent")

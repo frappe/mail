@@ -5,13 +5,11 @@ import frappe
 from frappe import _
 from mail.utils import Utils
 from frappe.utils import cint
-from frappe.model.document import Document
-
 from typing import TYPE_CHECKING
+from frappe.model.document import Document
 
 if TYPE_CHECKING:
 	from mail.mail.doctype.fm_dns_record.fm_dns_record import FMDNSRecord
-	from mail.mail.doctype.fm_incoming_server.fm_incoming_server import FMIncomingServer
 
 
 class FMDomain(Document):
@@ -102,9 +100,7 @@ class FMDomain(Document):
 		sending_records = self.get_sending_records(
 			fm_settings.primary_domain_name, fm_settings.spf_host, fm_settings.default_ttl
 		)
-		receiving_records = self.get_receiving_records(
-			fm_settings.incoming_servers, fm_settings.default_ttl
-		)
+		receiving_records = self.get_receiving_records(fm_settings.default_ttl)
 
 		self.extend("dns_records", sending_records)
 		self.extend("dns_records", receiving_records)
@@ -151,22 +147,27 @@ class FMDomain(Document):
 
 		return records
 
-	def get_receiving_records(
-		self, incoming_servers: list["FMIncomingServer"], ttl
-	) -> list[dict]:
+	def get_receiving_records(self, ttl: str) -> list[dict]:
 		records = []
+		incoming_servers = frappe.db.get_all(
+			"FM Server",
+			filters={"is_active": 1, "is_incoming": 1},
+			fields=["name", "priority"],
+			order_by="priority",
+		)
 
-		for row in incoming_servers:
-			records.append(
-				{
-					"category": "Receiving Record",
-					"type": "MX",
-					"host": self.domain_name,
-					"value": f"{row.server}.",
-					"priority": row.priority,
-					"ttl": ttl,
-				}
-			)
+		if incoming_servers:
+			for server in incoming_servers:
+				records.append(
+					{
+						"category": "Receiving Record",
+						"type": "MX",
+						"host": self.domain_name,
+						"value": f"{server.name}.",
+						"priority": server.priority,
+						"ttl": ttl,
+					}
+				)
 
 		return records
 

@@ -1,11 +1,6 @@
 import frappe
 import dns.resolver
 from frappe import _
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-	from mail.mail.doctype.fm_settings.fm_settings import FMSettings
-	from mail.mail.doctype.fm_outgoing_server.fm_outgoing_server import FMOutgoingServer
 
 
 class Utils:
@@ -68,10 +63,10 @@ class Utils:
 			return False
 
 	@staticmethod
-	def get_smtp_server(fm_settings: "FMSettings" = None) -> "FMOutgoingServer":
+	def get_outgoing_server() -> str:
 		import random
 
-		if not fm_settings:
-			fm_settings = frappe.get_cached_doc("FM Settings")
-
-		return random.choice(fm_settings.outgoing_servers)
+		servers = frappe.db.get_all(
+			"FM Server", filters={"is_active": 1, "is_outgoing": 1}, pluck="name"
+		)
+		return random.choice(servers)

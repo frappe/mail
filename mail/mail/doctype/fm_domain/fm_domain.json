@@ -13,6 +13,7 @@
   "domain_owner",
   "dkim_selector",
   "dkim_bits",
+  "outgoing_server",
   "dns_records_section",
   "dns_records",
   "dkim_keys_section",
@@ -121,11 +122,18 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "outgoing_server",
+   "fieldtype": "Link",
+   "label": "Outgoing Server",
+   "no_copy": 1,
+   "options": "FM Server"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-15 13:01:52.775901",
+ "modified": "2024-01-20 09:10:04.723218",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Domain",

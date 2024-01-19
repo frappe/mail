@@ -7,6 +7,7 @@
   "status",
   "column_break_d6p9",
   "domain_name",
+  "server",
   "section_break_quhp",
   "sender",
   "column_break_9ywf",
@@ -97,17 +98,28 @@
    "fieldtype": "Link",
    "hidden": 1,
    "label": "Domain Name",
+   "no_copy": 1,
    "options": "FM Domain",
    "read_only": 1
   },
   {
    "fieldname": "column_break_d6p9",
    "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: !doc.__islocal",
+   "fetch_from": "domain_name.outgoing_server",
+   "fieldname": "server",
+   "fieldtype": "Link",
+   "label": "Server",
+   "no_copy": 1,
+   "options": "FM Server",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-11 11:09:06.419281",
+ "modified": "2024-01-20 09:30:48.322363",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Queue",
