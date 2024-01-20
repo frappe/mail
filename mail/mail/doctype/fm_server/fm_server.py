@@ -26,6 +26,15 @@ class FMServer(Document):
 		self.update_server_dns_records()
 
 	def validate_server(self) -> None:
+		if self.is_new() and frappe.db.exists("FM Server", self.server):
+			frappe.throw(
+				_(
+					"FM Server {0} already exists.".format(
+						frappe.bold(self.server),
+					)
+				)
+			)
+
 		ipv4 = Utils.get_dns_record(self.server, "A")
 		ipv6 = Utils.get_dns_record(self.server, "AAAA")
 
@@ -44,8 +53,8 @@ class FMServer(Document):
 	def validate_incoming(self) -> None:
 		if self.is_incoming:
 			if self.priority:
-				if frappe.db.get_all(
-					"FM Server", filters={"priority": self.priority, "name": ["!=", self.name]}
+				if frappe.db.exists(
+					"FM Server", {"priority": self.priority, "name": ["!=", self.name]}
 				):
 					frappe.throw(
 						_(
