@@ -20,6 +20,7 @@ class FMDomain(Document):
 	def validate(self) -> None:
 		self.validate_dkim_selector()
 		self.validate_dkim_bits()
+		self.validate_outgoing_server()
 		self.validate_is_primary_domain()
 
 		if self.is_new() or (self.dkim_bits != self.get_doc_before_save().get("dkim_bits")):
@@ -51,6 +52,26 @@ class FMDomain(Document):
 				frappe.throw(_("DKIM Bits must be greater than 1024."))
 		else:
 			self.dkim_bits = frappe.db.get_single_value("FM Settings", "default_dkim_bits")
+
+	def validate_outgoing_server(self) -> None:
+		if self.outgoing_server:
+			is_active, is_outgoing = frappe.db.get_value(
+				"FM Server", self.outgoing_server, ["is_active", "is_outgoing"]
+			)
+
+			if not is_active:
+				frappe.throw(
+					_("Outgoing Server {0} is not active.".format(frappe.bold(self.outgoing_server)))
+				)
+
+			if not is_outgoing:
+				frappe.throw(
+					_(
+						"Outgoing Server {0} is not an valid outgoing server.".format(
+							frappe.bold(self.outgoing_server)
+						)
+					)
+				)
 
 	def validate_is_primary_domain(self) -> None:
 		self.is_primary_domain = (

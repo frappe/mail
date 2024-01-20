@@ -14,6 +14,7 @@ class FMServer(Document):
 
 	def validate(self) -> None:
 		self.validate_server()
+		self.validate_is_active()
 		self.validate_incoming()
 		self.validate_outgoing()
 		self.validate_host()
@@ -50,36 +51,43 @@ class FMServer(Document):
 				)
 			)
 
+	def validate_is_active(self) -> None:
+		if self.is_active and not self.is_incoming and not self.is_outgoing:
+			self.is_active = 0
+
+		if not self.is_new() and not self.is_active:
+			self.remove_linked_domains()
+
 	def validate_incoming(self) -> None:
 		if self.is_incoming:
-			if self.priority:
-				if frappe.db.exists(
-					"FM Server", {"priority": self.priority, "name": ["!=", self.name]}
-				):
-					frappe.throw(
-						_(
-							"Priority {0} is already assigned to another server.".format(
-								frappe.bold(self.priority),
-							)
+			if not self.priority:
+				frappe.throw(_("Priority is required for incoming servers."))
+			elif frappe.db.exists(
+				"FM Server", {"priority": self.priority, "name": ["!=", self.server]}
+			):
+				frappe.throw(
+					_(
+						"Priority {0} is already assigned to another server.".format(
+							frappe.bold(self.priority),
 						)
 					)
-			else:
-				frappe.throw(_("Priority is required for incoming servers."))
+				)
 
 	def validate_outgoing(self) -> None:
 		if self.is_outgoing:
-			if self.port:
-				if not Utils.is_port_open(self.server, self.port):
-					frappe.throw(
-						_(
-							"Port {0} is not open on the server {1}.".format(
-								frappe.bold(self.port),
-								frappe.bold(self.server),
-							)
+			if not self.port:
+				frappe.throw(_("Port is required for outgoing servers."))
+			elif not Utils.is_port_open(self.server, self.port):
+				frappe.throw(
+					_(
+						"Port {0} is not open on the server {1}.".format(
+							frappe.bold(self.port),
+							frappe.bold(self.server),
 						)
 					)
-			else:
-				frappe.throw(_("Port is required for outgoing servers."))
+				)
+		elif not self.is_new():
+			self.remove_linked_domains()
 
 	def validate_host(self) -> None:
 		if hasattr(self, "host") and self.host:
@@ -93,6 +101,12 @@ class FMServer(Document):
 						)
 					)
 				)
+
+	def remove_linked_domains(self) -> None:
+		DOMAIN = frappe.qb.DocType("FM Domain")
+		frappe.qb.update(DOMAIN).set(DOMAIN.outgoing_server, None).where(
+			DOMAIN.outgoing_server == self.server
+		).run()
 
 	def update_server_dns_records(self) -> None:
 		frappe.get_doc("FM Settings").generate_dns_records(save=True)

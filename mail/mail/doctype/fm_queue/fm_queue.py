@@ -69,7 +69,7 @@ class FMQueue(Document):
 		)
 		message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
 
-		with smtplib.SMTP(smtp_server.host or smtp_server.name, smtp_server.port) as server:
+		with smtplib.SMTP(smtp_server.name, smtp_server.port) as server:
 			if smtp_server.use_tls:
 				server.starttls()
 

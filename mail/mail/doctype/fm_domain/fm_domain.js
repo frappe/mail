@@ -2,10 +2,25 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("FM Domain", {
+    setup(frm) {
+        frm.trigger("set_queries");
+    },
+
 	refresh(frm) {
         frm.trigger("set_domain_owner");
         frm.trigger("add_custom_buttons");
 	},
+
+    set_queries(frm) {
+        frm.set_query("outgoing_server", () => {
+            return {
+                filters: {
+                    "is_active": 1,
+                    "is_outgoing": 1,
+                }
+            }
+        });
+    },
 
     set_domain_owner(frm) {
         if (frm.doc.__islocal && !frm.doc.domain_owner && frappe.session.user) {
