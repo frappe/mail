@@ -133,23 +133,28 @@ app_license = "agpl-3.0"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"mail.tasks.all"
-# 	],
-# 	"daily": [
-# 		"mail.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"mail.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"mail.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"mail.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"cron": {
+		"0/5 * * * *": [
+			"mail.mail.doctype.fm_outgoing_email.sendmail.enqueue",
+		],
+	},
+	# 	"all": [
+	# 		"mail.tasks.all"
+	# 	],
+	# 	"daily": [
+	# 		"mail.tasks.daily"
+	# 	],
+	# 	"hourly": [
+	# 		"mail.tasks.hourly"
+	# 	],
+	# 	"weekly": [
+	# 		"mail.tasks.weekly"
+	# 	],
+	# 	"monthly": [
+	# 		"mail.tasks.monthly"
+	# 	],
+}
 
 # Testing
 # -------

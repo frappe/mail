@@ -17,7 +17,7 @@
   "section_break_ijwo",
   "body",
   "section_break_lgaa",
-  "error_message"
+  "error_log"
  ],
  "fields": [
   {
@@ -82,13 +82,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "error_message",
-   "fieldtype": "Small Text",
-   "label": "Error Message",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "section_break_quhp",
    "fieldtype": "Section Break"
   },
@@ -115,11 +108,19 @@
    "no_copy": 1,
    "options": "FM Server",
    "read_only": 1
+  },
+  {
+   "fieldname": "error_log",
+   "fieldtype": "Link",
+   "label": "Error Log",
+   "no_copy": 1,
+   "options": "Error Log",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-20 09:30:48.322363",
+ "modified": "2024-01-23 10:51:26.700594",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Outgoing Email",
