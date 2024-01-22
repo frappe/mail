@@ -11,7 +11,7 @@ from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
 
 
-class FMQueue(Document):
+class FMOutgoingEmail(Document):
 	def autoname(self) -> None:
 		import string
 		import secrets

@@ -7,7 +7,7 @@ def get_data():
 		"transactions": [
 			{
 				"label": _("Reference"),
-				"items": ["FM Queue"],
+				"items": ["FM Outgoing Email"],
 			}
 		],
 	}

@@ -122,7 +122,7 @@
  "modified": "2024-01-20 09:30:48.322363",
  "modified_by": "Administrator",
  "module": "Mail",
- "name": "FM Queue",
+ "name": "FM Outgoing Email",
  "owner": "Administrator",
  "permissions": [
   {

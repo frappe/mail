@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestFMQueue(FrappeTestCase):
+class TestFMOutgoingEmail(FrappeTestCase):
 	pass

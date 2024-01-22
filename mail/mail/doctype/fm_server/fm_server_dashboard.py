@@ -6,7 +6,7 @@ def get_data():
 		"fieldname": "server",
 		"non_standard_fieldnames": {
 			"FM Domain": "outgoing_server",
-			"FM Queue": "server",
+			"FM Outgoing Email": "server",
 		},
-		"transactions": [{"items": ["FM Domain", "FM Queue"]}],
+		"transactions": [{"items": ["FM Domain", "FM Outgoing Email"]}],
 	}
