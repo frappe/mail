@@ -90,7 +90,7 @@ class FMServer(Document):
 			self.remove_linked_domains()
 
 	def validate_host(self) -> None:
-		if hasattr(self, "host") and self.host:
+		if self.host:
 			self.host = self.host.lower()
 
 			if self.host != "localhost" and not Utils.is_valid_ip(self.host):

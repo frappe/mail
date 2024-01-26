@@ -11,6 +11,7 @@
   "is_outgoing",
   "section_break_syxq",
   "server",
+  "host",
   "section_break_s7ce",
   "priority",
   "section_break_2dgn",
@@ -140,11 +141,17 @@
    "label": "IPv6",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "description": "e.g. localhost or Private IP",
+   "fieldname": "host",
+   "fieldtype": "Data",
+   "label": "Host"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-19 21:58:21.466921",
+ "modified": "2024-01-26 18:38:28.739660",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Server",

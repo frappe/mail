@@ -68,7 +68,9 @@ def sendmail(server: str, emails: list):
 		message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
 
 		try:
-			with smtplib.SMTP(outgoing_server.name, outgoing_server.port) as server:
+			with smtplib.SMTP(
+				outgoing_server.host or outgoing_server.name, outgoing_server.port
+			) as server:
 				if outgoing_server.use_tls:
 					server.starttls()
 
