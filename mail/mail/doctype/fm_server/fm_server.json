@@ -12,6 +12,10 @@
   "section_break_syxq",
   "server",
   "host",
+  "section_break_ejwa",
+  "ipv4",
+  "column_break_mz08",
+  "ipv6",
   "section_break_s7ce",
   "priority",
   "section_break_2dgn",
@@ -20,10 +24,10 @@
   "column_break_uqxt",
   "username",
   "password",
-  "section_break_ejwa",
-  "ipv4",
-  "column_break_mz08",
-  "ipv6"
+  "section_break_pzk7",
+  "agent_port",
+  "column_break_g6p5",
+  "agent_password"
  ],
  "fields": [
   {
@@ -38,7 +42,6 @@
   },
   {
    "default": "587",
-   "depends_on": "eval: doc.is_outgoing",
    "fieldname": "port",
    "fieldtype": "Int",
    "label": "Port",
@@ -47,13 +50,11 @@
   },
   {
    "default": "1",
-   "depends_on": "eval: doc.is_outgoing",
    "fieldname": "use_tls",
    "fieldtype": "Check",
    "label": " Use TLS"
   },
   {
-   "depends_on": "eval: doc.is_outgoing",
    "fieldname": "username",
    "fieldtype": "Data",
    "label": "Username",
@@ -65,7 +66,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.is_outgoing",
    "fieldname": "password",
    "fieldtype": "Password",
    "label": "Password",
@@ -110,7 +110,6 @@
    "search_index": 1
   },
   {
-   "depends_on": "eval: doc.is_incoming",
    "fieldname": "priority",
    "fieldtype": "Int",
    "label": "Priority",
@@ -119,12 +118,16 @@
    "non_negative": 1
   },
   {
+   "depends_on": "eval: doc.is_incoming",
    "fieldname": "section_break_s7ce",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": " Incoming"
   },
   {
+   "depends_on": "eval: doc.is_outgoing",
    "fieldname": "section_break_2dgn",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Outgoing"
   },
   {
    "fieldname": "ipv4",
@@ -147,11 +150,35 @@
    "fieldname": "host",
    "fieldtype": "Data",
    "label": "Host"
+  },
+  {
+   "fieldname": "section_break_pzk7",
+   "fieldtype": "Section Break",
+   "label": "Mail Agent"
+  },
+  {
+   "fieldname": "agent_password",
+   "fieldtype": "Password",
+   "label": "Agent Password",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "default": "443",
+   "fieldname": "agent_port",
+   "fieldtype": "Int",
+   "label": "Agent Port",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_g6p5",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-26 18:38:28.739660",
+ "modified": "2024-01-26 20:06:25.025382",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Server",
