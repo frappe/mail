@@ -1,7 +1,9 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import frappe
 from mail.utils import Utils
+from mail.send import sendmail
 from frappe.model.document import Document
 
 
@@ -18,6 +20,9 @@ class FMOutgoingEmail(Document):
 
 	def validate(self) -> None:
 		self.validate_server()
+
+	def after_insert(self) -> None:
+		self.enqueue_sendmail()
 
 	def validate_server(self) -> None:
 		if not self.server:
@@ -40,3 +45,20 @@ class FMOutgoingEmail(Document):
 
 		self.status = status
 		self.db_update()
+
+	def enqueue_sendmail(self) -> None:
+		frappe.enqueue_doc(
+			self.doctype,
+			self.name,
+			"sendmail",
+			timeout=600,
+			enqueue_after_commit=True,
+		)
+
+	def sendmail(self) -> None:
+		try:
+			sendmail(self)
+			self.update_status("Sent")
+		except Exception:
+			error_log = frappe.log_error(title="FM Outgoing Email")
+			self.update_status(status="Failed", error_log=error_log.name)

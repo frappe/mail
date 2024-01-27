@@ -4,9 +4,7 @@
 frappe.listview_settings["FM Outgoing Email"] = {
 	get_indicator: function (doc) {
 		const status_colors = {
-			"Draft": "orange",
 			"Queued": "blue",
-			"Partially Sent": "yellow",
 			"Sent": "green",
 			"Failed": "red",
 		};

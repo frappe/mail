@@ -70,13 +70,13 @@
    "fieldtype": "Section Break"
   },
   {
-   "default": "Draft",
+   "default": "Queued",
    "depends_on": "eval: !doc.__islocal",
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nQueued\nPartially Sent\nSent\nFailed",
+   "options": "Queued\nSent\nFailed",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
@@ -120,7 +120,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-23 10:51:26.700594",
+ "modified": "2024-01-28 16:22:09.863496",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Outgoing Email",
