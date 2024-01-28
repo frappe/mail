@@ -6,9 +6,9 @@
  "engine": "InnoDB",
  "field_order": [
   "domain_name",
-  "is_active",
-  "is_verified",
-  "is_primary_domain",
+  "enabled",
+  "verified",
+  "primary_domain",
   "column_break_lr3y",
   "domain_owner",
   "dkim_selector",
@@ -94,18 +94,24 @@
    "options": "\n1024\n2048\n4096"
   },
   {
+   "fieldname": "outgoing_server",
+   "fieldtype": "Link",
+   "label": "Outgoing Server",
+   "no_copy": 1,
+   "options": "FM Server"
+  },
+  {
    "default": "1",
    "depends_on": "eval: !doc.__islocal",
-   "fieldname": "is_active",
+   "fieldname": "enabled",
    "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Active",
+   "label": "Enabled",
    "search_index": 1
   },
   {
    "default": "0",
    "depends_on": "eval: !doc.__islocal",
-   "fieldname": "is_verified",
+   "fieldname": "verified",
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Verified",
@@ -115,25 +121,18 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.is_primary_domain",
-   "fieldname": "is_primary_domain",
+   "depends_on": "eval: doc.primary_domain",
+   "fieldname": "primary_domain",
    "fieldtype": "Check",
    "label": "Primary",
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
-  },
-  {
-   "fieldname": "outgoing_server",
-   "fieldtype": "Link",
-   "label": "Outgoing Server",
-   "no_copy": 1,
-   "options": "FM Server"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-20 09:10:04.723218",
+ "modified": "2024-01-28 15:07:02.079560",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Domain",

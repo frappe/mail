@@ -67,10 +67,10 @@ class Utils:
 		import random
 
 		servers = frappe.db.get_all(
-			"FM Server", filters={"is_active": 1, "is_outgoing": 1}, pluck="name"
+			"FM Server", filters={"enabled": 1, "outgoing": 1}, pluck="name"
 		)
 
 		if not servers:
-			frappe.throw(_("No active outgoing server found."))
+			frappe.throw(_("No enabled outgoing server found."))
 
 		return random.choice(servers)

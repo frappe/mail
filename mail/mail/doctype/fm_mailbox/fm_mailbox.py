@@ -23,12 +23,12 @@ class FMMailbox(Document):
 			)
 
 	def validate_domain(self) -> None:
-		active, verified = frappe.db.get_value(
-			"FM Domain", self.domain_name, ["is_active", "is_verified"]
+		enabled, verified = frappe.db.get_value(
+			"FM Domain", self.domain_name, ["enabled", "verified"]
 		)
 
-		if not active:
-			frappe.throw(_("Domain {0} is inactive.").format(frappe.bold(self.domain_name)))
+		if not enabled:
+			frappe.throw(_("Domain {0} is disabled.").format(frappe.bold(self.domain_name)))
 		if not verified:
 			frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(self.domain_name)))
 

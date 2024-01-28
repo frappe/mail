@@ -14,7 +14,7 @@ class FMServer(Document):
 
 	def validate(self) -> None:
 		self.validate_server()
-		self.validate_is_active()
+		self.validate_enabled()
 		self.validate_incoming()
 		self.validate_outgoing()
 		self.validate_host()
@@ -23,7 +23,7 @@ class FMServer(Document):
 		self.update_server_dns_records()
 
 	def on_trash(self) -> None:
-		self.db_set("is_active", 0)
+		self.db_set("enabled", 0)
 		self.update_server_dns_records()
 
 	def validate_server(self) -> None:
@@ -51,15 +51,15 @@ class FMServer(Document):
 				)
 			)
 
-	def validate_is_active(self) -> None:
-		if self.is_active and not self.is_incoming and not self.is_outgoing:
-			self.is_active = 0
+	def validate_enabled(self) -> None:
+		if self.enabled and not self.incoming and not self.outgoing:
+			self.enabled = 0
 
-		if not self.is_new() and not self.is_active:
+		if not self.is_new() and not self.enabled:
 			self.remove_linked_domains()
 
 	def validate_incoming(self) -> None:
-		if self.is_incoming:
+		if self.incoming:
 			if not self.priority:
 				frappe.throw(_("Priority is required for incoming servers."))
 			elif frappe.db.exists(
@@ -74,7 +74,7 @@ class FMServer(Document):
 				)
 
 	def validate_outgoing(self) -> None:
-		if self.is_outgoing:
+		if self.outgoing:
 			if not self.port:
 				frappe.throw(_("Port is required for outgoing servers."))
 			elif not Utils.is_port_open(self.server, self.port):

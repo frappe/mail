@@ -15,8 +15,7 @@ frappe.ui.form.on("FM Domain", {
         frm.set_query("outgoing_server", () => {
             return {
                 filters: {
-                    "is_active": 1,
-                    "is_outgoing": 1,
+                    "outgoing": 1,
                 }
             }
         });

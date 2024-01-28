@@ -50,8 +50,8 @@ class FMSettings(Document):
 
 		servers = frappe.db.get_all(
 			"FM Server",
-			filters={"is_active": 1, "is_outgoing": 1},
-			fields=["name", "is_outgoing", "ipv4", "ipv6"],
+			filters={"enabled": 1, "outgoing": 1},
+			fields=["name", "outgoing", "ipv4", "ipv6"],
 			order_by="creation asc",
 		)
 
@@ -61,7 +61,7 @@ class FMSettings(Document):
 			category = "Server Record"
 
 			for server in servers:
-				if server.is_outgoing:
+				if server.outgoing:
 					# A Record
 					if server.ipv4:
 						records.append(
