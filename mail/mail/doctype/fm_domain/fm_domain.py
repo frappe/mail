@@ -21,7 +21,7 @@ class FMDomain(Document):
 		self.validate_dkim_selector()
 		self.validate_dkim_bits()
 		self.validate_outgoing_server()
-		self.validate_primary_domain()
+		self.validate_root_domain()
 
 		if self.is_new() or (self.dkim_bits != self.get_doc_before_save().get("dkim_bits")):
 			self.generate_dns_records()
@@ -73,11 +73,10 @@ class FMDomain(Document):
 					)
 				)
 
-	def validate_primary_domain(self) -> None:
-		self.primary_domain = (
+	def validate_root_domain(self) -> None:
+		self.root_domain = (
 			1
-			if self.domain_name
-			== frappe.db.get_single_value("FM Settings", "primary_domain_name")
+			if self.domain_name == frappe.db.get_single_value("FM Settings", "root_domain_name")
 			else 0
 		)
 
@@ -119,7 +118,7 @@ class FMDomain(Document):
 		fm_settings = frappe.get_single("FM Settings")
 
 		sending_records = self.get_sending_records(
-			fm_settings.primary_domain_name, fm_settings.spf_host, fm_settings.default_ttl
+			fm_settings.root_domain_name, fm_settings.spf_host, fm_settings.default_ttl
 		)
 		receiving_records = self.get_receiving_records(fm_settings.default_ttl)
 
@@ -127,7 +126,7 @@ class FMDomain(Document):
 		self.extend("dns_records", receiving_records)
 
 	def get_sending_records(
-		self, primary_domain_name: str, spf_host: str, ttl: str
+		self, root_domain_name: str, spf_host: str, ttl: str
 	) -> list[dict]:
 		records = []
 		type = "TXT"
@@ -139,7 +138,7 @@ class FMDomain(Document):
 				"category": category,
 				"type": type,
 				"host": self.domain_name,
-				"value": f"v=spf1 include:{spf_host}.{primary_domain_name} ~all",
+				"value": f"v=spf1 include:{spf_host}.{root_domain_name} ~all",
 				"ttl": ttl,
 			},
 		)

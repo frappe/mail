@@ -10,14 +10,14 @@ from frappe.model.document import Document
 
 class FMSettings(Document):
 	def validate(self) -> None:
-		self.validate_primary_domain_name()
+		self.validate_root_domain_name()
 		self.validate_spf_host()
 		self.validate_default_dkim_selector()
 		self.validate_default_dkim_bits()
 		self.generate_dns_records()
 
-	def validate_primary_domain_name(self) -> None:
-		self.primary_domain_name = self.primary_domain_name.lower()
+	def validate_root_domain_name(self) -> None:
+		self.root_domain_name = self.root_domain_name.lower()
 
 	def validate_spf_host(self) -> None:
 		self.spf_host = self.spf_host.lower()
@@ -94,7 +94,7 @@ class FMSettings(Document):
 					{
 						"category": category,
 						"type": "TXT",
-						"host": f"{self.spf_host}.{self.primary_domain_name}",
+						"host": f"{self.spf_host}.{self.root_domain_name}",
 						"value": f"v=spf1 {' '.join(outgoing_servers)} ~all",
 						"ttl": self.default_ttl,
 					}
