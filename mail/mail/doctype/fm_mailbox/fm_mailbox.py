@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from pypika.terms import ExistsCriterion
 from frappe.model.document import Document
 
 
@@ -35,3 +36,29 @@ class FMMailbox(Document):
 	def validate_display_name(self) -> None:
 		if self.is_new() and not self.display_name:
 			self.display_name = frappe.db.get_value("User", self.user, "full_name")
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_user(doctype, txt, searchfield, start, page_len, filters) -> list:
+	domain_name = filters.get("domain_name")
+
+	if not domain_name:
+		return []
+
+	USER = frappe.qb.DocType("User")
+	MAILBOX = frappe.qb.DocType("FM Mailbox")
+
+	return (
+		frappe.qb.from_(USER)
+		.select(USER.name)
+		.where(
+			(USER.enabled == 1)
+			& (USER[searchfield].like(f"%{txt}%"))
+			& (USER.name.like(f"%@{domain_name}"))
+			& ExistsCriterion(
+				frappe.qb.from_(MAILBOX).select(MAILBOX.name).where(MAILBOX.name == USER.name)
+			).negate()
+		)
+		.limit(page_len)
+	).run(as_dict=False)
