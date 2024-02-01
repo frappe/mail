@@ -62,16 +62,6 @@ class FMServer(Document):
 		if self.incoming:
 			if not self.priority:
 				frappe.throw(_("Priority is required for incoming servers."))
-			elif frappe.db.exists(
-				"FM Server", {"priority": self.priority, "name": ["!=", self.server]}
-			):
-				frappe.throw(
-					_(
-						"Priority {0} is already assigned to another server.".format(
-							frappe.bold(self.priority),
-						)
-					)
-				)
 
 	def validate_outgoing(self) -> None:
 		if self.outgoing:
