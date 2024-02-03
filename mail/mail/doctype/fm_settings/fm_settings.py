@@ -3,8 +3,8 @@
 
 import frappe
 from frappe import _
-from mail.utils import Utils
 from frappe.utils import cint
+from mail.utils import is_valid_host
 from frappe.model.document import Document
 
 
@@ -22,7 +22,7 @@ class FMSettings(Document):
 	def validate_spf_host(self) -> None:
 		self.spf_host = self.spf_host.lower()
 
-		if not Utils.is_valid_host(self.spf_host):
+		if not is_valid_host(self.spf_host):
 			msg = _(
 				"SPF Host {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores.".format(
 					frappe.bold(self.spf_host)
@@ -33,7 +33,7 @@ class FMSettings(Document):
 	def validate_default_dkim_selector(self) -> None:
 		self.default_dkim_selector = self.default_dkim_selector.lower()
 
-		if not Utils.is_valid_host(self.default_dkim_selector):
+		if not is_valid_host(self.default_dkim_selector):
 			msg = _(
 				"DKIM Selector {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores.".format(
 					frappe.bold(self.default_dkim_selector)

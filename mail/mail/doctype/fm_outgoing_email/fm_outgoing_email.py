@@ -2,8 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
-from mail.utils import Utils
 from mail.send import sendmail
+from mail.utils import get_outgoing_server
 from frappe.model.document import Document
 
 
@@ -26,7 +26,7 @@ class FMOutgoingEmail(Document):
 
 	def validate_server(self) -> None:
 		if not self.server:
-			self.server = Utils.get_outgoing_server()
+			self.server = get_outgoing_server()
 
 	def add_recipients(self, recipients: list) -> None:
 		for recipient in recipients:

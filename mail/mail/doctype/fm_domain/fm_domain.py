@@ -3,10 +3,10 @@
 
 import frappe
 from frappe import _
-from mail.utils import Utils
 from frappe.utils import cint
 from typing import TYPE_CHECKING
 from frappe.model.document import Document
+from mail.utils import get_dns_record, is_valid_host
 
 if TYPE_CHECKING:
 	from mail.mail.doctype.fm_dns_record.fm_dns_record import FMDNSRecord
@@ -34,7 +34,7 @@ class FMDomain(Document):
 		if self.dkim_selector:
 			self.dkim_selector = self.dkim_selector.lower()
 
-			if not Utils.is_valid_host(self.dkim_selector):
+			if not is_valid_host(self.dkim_selector):
 				msg = _(
 					"DKIM Selector {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores.".format(
 						frappe.bold(self.dkim_selector)
@@ -233,7 +233,7 @@ def get_filtered_dkim_key(key_pem: str) -> str:
 
 
 def verify_dns_record(record: "FMDNSRecord", debug: bool = False) -> bool:
-	if result := Utils.get_dns_record(record.host, record.type):
+	if result := get_dns_record(record.host, record.type):
 		for data in result:
 			if data:
 				if record.type == "MX":

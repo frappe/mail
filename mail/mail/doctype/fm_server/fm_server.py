@@ -3,8 +3,8 @@
 
 import frappe
 from frappe import _
-from mail.utils import Utils
 from frappe.model.document import Document
+from mail.utils import get_dns_record, is_port_open, is_valid_ip
 
 
 class FMServer(Document):
@@ -36,8 +36,8 @@ class FMServer(Document):
 				)
 			)
 
-		ipv4 = Utils.get_dns_record(self.server, "A")
-		ipv6 = Utils.get_dns_record(self.server, "AAAA")
+		ipv4 = get_dns_record(self.server, "A")
+		ipv6 = get_dns_record(self.server, "AAAA")
 
 		self.ipv4 = ipv4[0].address if ipv4 else None
 		self.ipv6 = ipv6[0].address if ipv6 else None
@@ -67,7 +67,7 @@ class FMServer(Document):
 		if self.outgoing:
 			if not self.port:
 				frappe.throw(_("Port is required for outgoing servers."))
-			elif not Utils.is_port_open(self.server, self.port):
+			elif not is_port_open(self.server, self.port):
 				frappe.throw(
 					_(
 						"Port {0} is not open on the server {1}.".format(
@@ -83,7 +83,7 @@ class FMServer(Document):
 		if self.host:
 			self.host = self.host.lower()
 
-			if self.host != "localhost" and not Utils.is_valid_ip(self.host):
+			if self.host != "localhost" and not is_valid_ip(self.host):
 				frappe.throw(
 					_(
 						"Unable to connect to the host {0}.".format(
