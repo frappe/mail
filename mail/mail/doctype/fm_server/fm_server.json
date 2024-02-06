@@ -18,12 +18,6 @@
   "ipv6",
   "section_break_s7ce",
   "priority",
-  "section_break_2dgn",
-  "port",
-  "use_tls",
-  "column_break_uqxt",
-  "username",
-  "password",
   "section_break_pzk7",
   "agent_port",
   "column_break_g6p5",
@@ -39,38 +33,6 @@
    "reqd": 1,
    "set_only_once": 1,
    "unique": 1
-  },
-  {
-   "default": "587",
-   "fieldname": "port",
-   "fieldtype": "Int",
-   "label": "Port",
-   "mandatory_depends_on": "eval: doc.outgoing",
-   "non_negative": 1
-  },
-  {
-   "default": "1",
-   "fieldname": "use_tls",
-   "fieldtype": "Check",
-   "label": " Use TLS"
-  },
-  {
-   "fieldname": "username",
-   "fieldtype": "Data",
-   "label": "Username",
-   "mandatory_depends_on": "eval: doc.password",
-   "no_copy": 1
-  },
-  {
-   "fieldname": "column_break_uqxt",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "password",
-   "fieldtype": "Password",
-   "label": "Password",
-   "mandatory_depends_on": "eval: doc.username",
-   "no_copy": 1
   },
   {
    "fieldname": "section_break_ejwa",
@@ -97,12 +59,6 @@
    "fieldname": "section_break_s7ce",
    "fieldtype": "Section Break",
    "label": " Incoming"
-  },
-  {
-   "depends_on": "eval: doc.outgoing",
-   "fieldname": "section_break_2dgn",
-   "fieldtype": "Section Break",
-   "label": "Outgoing"
   },
   {
    "fieldname": "ipv4",
@@ -177,7 +133,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-01-30 10:48:23.272359",
+ "modified": "2024-02-06 15:15:49.901645",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Server",

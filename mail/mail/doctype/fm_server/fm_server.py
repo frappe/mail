@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from mail.utils import get_dns_record, is_port_open, is_valid_ip
+from mail.utils import get_dns_record, is_valid_ip
 
 
 class FMServer(Document):
@@ -64,19 +64,7 @@ class FMServer(Document):
 				frappe.throw(_("Priority is required for incoming servers."))
 
 	def validate_outgoing(self) -> None:
-		if self.outgoing:
-			if not self.port:
-				frappe.throw(_("Port is required for outgoing servers."))
-			elif not is_port_open(self.server, self.port):
-				frappe.throw(
-					_(
-						"Port {0} is not open on the server {1}.".format(
-							frappe.bold(self.port),
-							frappe.bold(self.server),
-						)
-					)
-				)
-		elif not self.is_new():
+		if not self.outgoing and not self.is_new():
 			self.remove_linked_domains()
 
 	def validate_host(self) -> None:
