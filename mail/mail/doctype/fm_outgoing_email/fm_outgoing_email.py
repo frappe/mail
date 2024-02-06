@@ -61,8 +61,11 @@ class FMOutgoingEmail(Document):
 		message["Date"] = formatdate()
 		message["Message-ID"] = "<{0}@{1}>".format(self.name, self.server)
 
-		if self.body:
-			message.attach(MIMEText(self.body, "html"))
+		if self.body_plain:
+			message.attach(MIMEText(self.body_plain, "plain"))
+
+		if self.body_html:
+			message.attach(MIMEText(self.body_html, "html"))
 
 		headers = [b"To", b"From", b"Subject"]
 		signature = dkim.sign(
