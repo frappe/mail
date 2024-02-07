@@ -12,6 +12,10 @@ class FMServer(Document):
 		self.server = self.server.lower()
 		self.name = self.server
 
+	def before_validate(self) -> None:
+		if self.is_new():
+			self.validate_fm_settings()
+
 	def validate(self) -> None:
 		self.validate_server()
 		self.validate_enabled()
@@ -25,6 +29,23 @@ class FMServer(Document):
 	def on_trash(self) -> None:
 		self.db_set("enabled", 0)
 		self.update_server_dns_records()
+
+	def validate_fm_settings(self) -> None:
+		fm_settings = frappe.get_doc("FM Settings")
+		mandatory_fields = [
+			"root_domain_name",
+			"spf_host",
+			"default_dkim_selector",
+			"default_dkim_bits",
+			"default_ttl",
+		]
+
+		for field in mandatory_fields:
+			if not fm_settings.get(field):
+				field_label = frappe.get_meta("FM Settings").get_label(field)
+				frappe.throw(
+					_("Please set the {0} in the FM Settings.".format(frappe.bold(field_label)))
+				)
 
 	def validate_server(self) -> None:
 		if self.is_new() and frappe.db.exists("FM Server", self.server):
