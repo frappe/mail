@@ -111,3 +111,11 @@ def update_delivery_status(agent_job: "FMAgentJob") -> None:
 		outgoing_mail,
 		{"status": status, "error_log": agent_job.error_log},
 	)
+
+	if status == "Sent":
+		RECIPIENT = frappe.qb.DocType("FM Recipient")
+		(
+			frappe.qb.update(RECIPIENT)
+			.set("sent", 1)
+			.where((RECIPIENT.parent == outgoing_mail) & (RECIPIENT.sent == 0))
+		).run()
