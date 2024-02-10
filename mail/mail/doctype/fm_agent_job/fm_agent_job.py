@@ -94,7 +94,7 @@ class MailAgent:
 		url = f"http://{self.host or self.server}:{self.port}/mail-agent/{path}"
 		password = get_decrypted_password("FM Server", self.server, "agent_password")
 		headers = {"Authorization": f"bearer {password}"}
-		response = requests.request(method, url, headers=headers, json=data)
+		response = requests.request(method, url, headers=headers, json=data, timeout=(10, 30))
 
 		return response
 
