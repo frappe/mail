@@ -14,6 +14,8 @@
   "subject",
   "section_break_baaa",
   "recipients",
+  "section_break_atoq",
+  "custom_headers",
   "section_break_ijwo",
   "body_plain",
   "body_html",
@@ -135,11 +137,23 @@
    "fieldtype": "Code",
    "label": "Body HTML",
    "set_only_once": 1
+  },
+  {
+   "fieldname": "custom_headers",
+   "fieldtype": "Table",
+   "label": "Custom Headers",
+   "no_copy": 1,
+   "options": "FM Headers",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "section_break_atoq",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-06 12:49:15.062262",
+ "modified": "2024-02-13 11:00:01.645338",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Outgoing Email",

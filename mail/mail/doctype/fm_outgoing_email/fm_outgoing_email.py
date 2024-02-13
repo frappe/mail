@@ -61,6 +61,10 @@ class FMOutgoingEmail(Document):
 		message["Date"] = formatdate()
 		message["Message-ID"] = "<{0}@{1}>".format(self.name, self.server)
 
+		if self.custom_headers:
+			for header in self.custom_headers:
+				message.add_header(header.key, header.value)
+
 		if self.body_plain:
 			message.attach(MIMEText(self.body_plain, "plain"))
 
