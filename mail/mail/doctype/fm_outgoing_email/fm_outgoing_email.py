@@ -31,6 +31,7 @@ class FMOutgoingEmail(Document):
 
 	def validate(self) -> None:
 		self.validate_server()
+		self.validate_recipients()
 		self.set_original_message()
 
 	def after_insert(self) -> None:
@@ -39,6 +40,18 @@ class FMOutgoingEmail(Document):
 	def validate_server(self) -> None:
 		if not self.server:
 			self.server = get_outgoing_server()
+
+	def validate_recipients(self) -> None:
+		recipients = []
+		for recipient in self.recipients:
+			if recipient.recipient not in recipients:
+				recipients.append(recipient.recipient)
+			else:
+				frappe.throw(
+					"Row #{0}: Duplicate recipient {1}.".format(
+						recipient.idx, frappe.bold(recipient.recipient)
+					)
+				)
 
 	def set_original_message(self) -> None:
 		self.original_message = self.get_signed_message()
