@@ -1,0 +1,159 @@
+{
+ "actions": [],
+ "autoname": "field:domain_name",
+ "creation": "2023-12-23 15:18:36.906960",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "domain_name",
+  "enabled",
+  "verified",
+  "root_domain",
+  "column_break_lr3y",
+  "domain_owner",
+  "dkim_selector",
+  "dkim_bits",
+  "outgoing_server",
+  "dns_records_section",
+  "dns_records",
+  "dkim_keys_section",
+  "dkim_private_key",
+  "column_break_z83x",
+  "dkim_public_key"
+ ],
+ "fields": [
+  {
+   "fieldname": "domain_name",
+   "fieldtype": "Data",
+   "label": "Domain Name",
+   "no_copy": 1,
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "domain_owner",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Domain Owner",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_lr3y",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dkim_selector",
+   "fieldtype": "Data",
+   "label": "DKIM Selector"
+  },
+  {
+   "depends_on": "dns_records",
+   "fieldname": "dns_records",
+   "fieldtype": "Table",
+   "label": "DNS Records",
+   "no_copy": 1,
+   "options": "DNS Record",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dns_records_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "dkim_keys_section",
+   "fieldtype": "Section Break",
+   "hidden": 1
+  },
+  {
+   "fieldname": "column_break_z83x",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dkim_private_key",
+   "fieldtype": "Password",
+   "label": "Private Key",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "dkim_public_key",
+   "fieldtype": "Text",
+   "label": "Public Key",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "dkim_bits",
+   "fieldtype": "Select",
+   "label": "DKIM Bits",
+   "non_negative": 1,
+   "options": "\n1024\n2048\n4096"
+  },
+  {
+   "fieldname": "outgoing_server",
+   "fieldtype": "Link",
+   "label": "Outgoing Server",
+   "no_copy": 1,
+   "options": "Mail Server"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled",
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "verified",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Verified",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.root_domain",
+   "fieldname": "root_domain",
+   "fieldtype": "Check",
+   "label": "Root Domain",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-02-14 18:53:47.889445",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "Mail Domain",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

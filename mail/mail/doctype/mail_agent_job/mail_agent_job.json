@@ -1,0 +1,193 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2024-01-27 18:30:58.789259",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "server",
+  "status",
+  "column_break_ahbz",
+  "job_type",
+  "request_path",
+  "request_method",
+  "section_break_hmet",
+  "started_at",
+  "ended_at",
+  "duration",
+  "column_break_nfms",
+  "execute_on_start",
+  "execute_on_end",
+  "section_break_gfsx",
+  "request_data",
+  "section_break_iznx",
+  "response_data",
+  "section_break_flxw",
+  "error_log"
+ ],
+ "fields": [
+  {
+   "default": "Queued",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Queued\nRunning\nCompleted\nFailed",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "server",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Server",
+   "options": "Mail Server",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fetch_from": "job_type.request_path",
+   "fieldname": "request_path",
+   "fieldtype": "Data",
+   "label": "Request Path",
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fetch_from": "job_type.request_method",
+   "fieldname": "request_method",
+   "fieldtype": "Data",
+   "label": "Request Method",
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "request_data",
+   "fieldtype": "Code",
+   "label": "Request Data (JSON)",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "response_data",
+   "fieldtype": "Code",
+   "label": "Response Data (JSON)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_log",
+   "fieldtype": "Code",
+   "label": "Error Log",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "job_type",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Job Type",
+   "options": "Mail Agent Job Type",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_ahbz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_hmet",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_nfms",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_gfsx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_flxw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_iznx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "job_type.execute_on_start",
+   "fieldname": "execute_on_start",
+   "fieldtype": "Data",
+   "label": "Execute On Start",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fetch_from": "job_type.execute_on_end",
+   "fieldname": "execute_on_end",
+   "fieldtype": "Data",
+   "label": "Execute On End",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "ended_at",
+   "fieldtype": "Datetime",
+   "label": "Ended At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.started_at && doc.ended_at",
+   "fieldname": "duration",
+   "fieldtype": "Float",
+   "label": "Duration (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-02-14 22:04:59.843649",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "Mail Agent Job",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "job_type",
+ "track_changes": 1
+}

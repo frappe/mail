@@ -58,7 +58,7 @@ def is_port_open(fqdn: str, port: int) -> bool:
 
 def get_outgoing_server() -> str:
 	servers = frappe.db.get_all(
-		"FM Server", filters={"enabled": 1, "outgoing": 1}, pluck="name"
+		"Mail Server", filters={"enabled": 1, "outgoing": 1}, pluck="name"
 	)
 
 	if not servers:
