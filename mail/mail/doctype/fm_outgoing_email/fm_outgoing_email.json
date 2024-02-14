@@ -17,8 +17,8 @@
   "section_break_atoq",
   "custom_headers",
   "section_break_ijwo",
-  "body_plain",
   "body_html",
+  "body_plain",
   "section_break_lgaa",
   "original_message",
   "section_break_kops",
@@ -130,7 +130,8 @@
    "fieldname": "body_plain",
    "fieldtype": "Code",
    "label": "Body Plain",
-   "set_only_once": 1
+   "no_copy": 1,
+   "read_only": 1
   },
   {
    "fieldname": "body_html",
@@ -153,7 +154,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-13 11:00:01.645338",
+ "modified": "2024-02-14 12:43:56.505486",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "FM Outgoing Email",

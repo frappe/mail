@@ -12,6 +12,7 @@ from email.parser import Parser
 from typing import TYPE_CHECKING
 from email.utils import formatdate
 from email.mime.text import MIMEText
+from frappe.core.utils import html2text
 from mail.utils import get_outgoing_server
 from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
@@ -32,6 +33,8 @@ class FMOutgoingEmail(Document):
 	def validate(self) -> None:
 		self.validate_server()
 		self.validate_recipients()
+		self.validate_body_html()
+		self.validate_body_plain()
 		self.set_original_message()
 
 	def after_insert(self) -> None:
@@ -52,6 +55,13 @@ class FMOutgoingEmail(Document):
 						recipient.idx, frappe.bold(recipient.recipient)
 					)
 				)
+
+	def validate_body_html(self) -> None:
+		if not self.body_html:
+			self.body_html = ""
+
+	def validate_body_plain(self) -> None:
+		self.body_plain = html2text(self.body_html)
 
 	def set_original_message(self) -> None:
 		self.original_message = self.get_signed_message()
@@ -78,11 +88,11 @@ class FMOutgoingEmail(Document):
 			for header in self.custom_headers:
 				message.add_header(header.key, header.value)
 
-		if self.body_plain:
-			message.attach(MIMEText(self.body_plain, "plain"))
-
 		if self.body_html:
 			message.attach(MIMEText(self.body_html, "html"))
+
+		if self.body_plain:
+			message.attach(MIMEText(self.body_plain, "plain"))
 
 		headers = [b"To", b"From", b"Subject"]
 		signature = dkim.sign(
