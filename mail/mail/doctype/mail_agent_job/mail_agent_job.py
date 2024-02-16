@@ -35,7 +35,7 @@ class MailAgentJob(Document):
 		update_modified: bool = True,
 		commit: bool = False,
 		notify_update: bool = False,
-		**kwargs
+		**kwargs,
 	) -> None:
 		self.db_set(kwargs, update_modified=update_modified, commit=commit)
 
@@ -77,7 +77,10 @@ class MailAgentJob(Document):
 
 		ended_at = now()
 		self._db_set(
-			ended_at=ended_at, duration=time_diff_in_seconds(ended_at, started_at), commit=True
+			ended_at=ended_at,
+			duration=time_diff_in_seconds(ended_at, started_at),
+			commit=True,
+			notify_update=True,
 		)
 		self.execute_on_end_method()
 
@@ -90,6 +93,11 @@ class MailAgentJob(Document):
 		if self.execute_on_end:
 			method = frappe.get_attr(self.execute_on_end)
 			method(self)
+
+	@frappe.whitelist()
+	def rerun(self) -> None:
+		self._db_set(status="Queued", error_log=None)
+		self.enqueue_job()
 
 
 class MailAgent:

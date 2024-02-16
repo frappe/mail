@@ -29,15 +29,15 @@ frappe.ui.form.on("Mail Domain", {
 
     add_custom_buttons(frm) {
         if (!frm.doc.__islocal) {
-            frm.add_custom_button(__("Regenerate"), () => {
+            frm.add_custom_button(__("Verify DNS Records"), () => {
+                frm.trigger("verify_dns_records");
+            }, __("Actions"));
+            frm.add_custom_button(__("Regenerate DNS Records"), () => {
                 frappe.confirm(
                     __("Are you certain you wish to proceed?"),
                     () => frm.trigger("generate_dns_records")
                 )
-            }, __("DNS Records"));
-            frm.add_custom_button(__("Verify"), () => {
-                frm.trigger("verify_dns_records");
-            }, __("DNS Records"));
+            }, __("Actions"));
         }
     },
 
