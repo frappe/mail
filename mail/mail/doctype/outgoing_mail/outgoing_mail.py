@@ -124,6 +124,11 @@ class OutgoingMail(Document):
 		if notify_update:
 			self.notify_update()
 
+	@frappe.whitelist()
+	def resend(self) -> None:
+		self._db_set(status="Queued", error_log=None)
+		self.sendmail()
+
 
 def update_delivery_status(agent_job: "MailAgentJob") -> None:
 	if agent_job.job_type != "Send Mail":
