@@ -42,8 +42,8 @@
    "fieldtype": "Table",
    "label": "Recipients",
    "options": "Mail Recipient",
-   "reqd": 1,
-   "set_only_once": 1
+   "read_only_depends_on": "eval: !doc.__islocal",
+   "reqd": 1
   },
   {
    "fieldname": "subject",
@@ -154,7 +154,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-14 18:53:48.211156",
+ "modified": "2024-02-16 10:31:16.994008",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

@@ -109,39 +109,42 @@ class OutgoingMail(Document):
 	def sendmail(self) -> None:
 		create_agent_job(self.server, "Send Mail", self.original_message)
 
-	def update_status(self, status: str, error_log: str = None) -> None:
-		if status == "Sent":
-			for recipient in self.recipients:
-				recipient.db_set("sent", 1)
-
-		if status == "Failed":
-			self.error_log = error_log
-
-		self.status = status
-		self.db_update()
-
 	def get_recipients(self) -> None:
 		return [d.recipient for d in self.recipients]
+
+	def _db_set(
+		self,
+		update_modified: bool = True,
+		commit: bool = False,
+		notify_update: bool = False,
+		**kwargs
+	) -> None:
+		self.db_set(kwargs, update_modified=update_modified, commit=commit)
+
+		if notify_update:
+			self.notify_update()
 
 
 def update_delivery_status(agent_job: "MailAgentJob") -> None:
 	if agent_job.job_type != "Send Mail":
 		return
 
+	status = "Sent" if agent_job.status == "Completed" else "Failed"
 	original_message = json.loads(agent_job.request_data).get("data")
 	parsed_message = Parser(policy=policy.default).parsestr(original_message)
-	outgoing_mail = parsed_message["Message-ID"].split("@")[0].replace("<", "")
-	status = "Sent" if agent_job.status == "Completed" else "Failed"
+	message_id = parsed_message["Message-ID"].split("@")[0].replace("<", "")
 
-	frappe.db.set_value(
-		"Outgoing Mail",
-		outgoing_mail,
-		{"status": status, "error_log": agent_job.error_log},
-	)
+	if status == "Sent":
+		RECIPIENT = frappe.qb.DocType("Mail Recipient")
+		(
+			frappe.qb.update(RECIPIENT)
+			.set("sent", 1)
+			.where(
+				(RECIPIENT.sent == 0)
+				& (RECIPIENT.parent == message_id)
+				& (RECIPIENT.parenttype == "Outgoing Mail")
+			)
+		).run()
 
-	RECIPIENT = frappe.qb.DocType("Mail Recipient")
-	(
-		frappe.qb.update(RECIPIENT)
-		.set("sent", 1 if status == "Sent" else 0)
-		.where((RECIPIENT.parent == outgoing_mail))
-	).run()
+	outgoing_mail = frappe.get_doc("Outgoing Mail", message_id)
+	outgoing_mail._db_set(status=status, error_log=agent_job.error_log, notify_update=True)

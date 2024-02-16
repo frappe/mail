@@ -30,10 +30,17 @@ class MailAgentJob(Document):
 		if not self.request_data:
 			self.request_data = "{}"
 
-	def __db_set(
-		self, update_modified: bool = True, commit: bool = False, **kwargs
+	def _db_set(
+		self,
+		update_modified: bool = True,
+		commit: bool = False,
+		notify_update: bool = False,
+		**kwargs
 	) -> None:
 		self.db_set(kwargs, update_modified=update_modified, commit=commit)
+
+		if notify_update:
+			self.notify_update()
 
 	def enqueue_job(self) -> None:
 		frappe.enqueue_doc(
@@ -48,7 +55,7 @@ class MailAgentJob(Document):
 		try:
 			self.execute_on_start_method()
 			started_at = now()
-			self.__db_set(status="Running", started_at=started_at, commit=True)
+			self._db_set(status="Running", started_at=started_at, commit=True)
 
 			agent = MailAgent(self.server)
 			data = json.loads(self.request_data)
@@ -60,16 +67,16 @@ class MailAgentJob(Document):
 
 			if response.status_code == 200:
 				response_data = json.dumps(response.json())
-				self.__db_set(status="Completed", response_data=response_data)
+				self._db_set(status="Completed", response_data=response_data)
 			else:
 				raise Exception(response.text)
 
 		except Exception:
 			error_log = frappe.get_traceback(with_context=False)
-			self.__db_set(status="Failed", error_log=error_log)
+			self._db_set(status="Failed", error_log=error_log)
 
 		ended_at = now()
-		self.__db_set(
+		self._db_set(
 			ended_at=ended_at, duration=time_diff_in_seconds(ended_at, started_at), commit=True
 		)
 		self.execute_on_end_method()
