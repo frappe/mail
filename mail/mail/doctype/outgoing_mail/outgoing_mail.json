@@ -22,7 +22,8 @@
   "section_break_lgaa",
   "original_message",
   "section_break_kops",
-  "error_log"
+  "error_log",
+  "amended_from"
  ],
  "fields": [
   {
@@ -34,23 +35,20 @@
    "no_copy": 1,
    "options": "Mailbox",
    "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
+   "search_index": 1
   },
   {
    "fieldname": "recipients",
    "fieldtype": "Table",
    "label": "Recipients",
    "options": "Mail Recipient",
-   "read_only_depends_on": "eval: !doc.__islocal",
    "reqd": 1
   },
   {
    "fieldname": "subject",
    "fieldtype": "Data",
    "in_standard_filter": 1,
-   "label": "Subject",
-   "set_only_once": 1
+   "label": "Subject"
   },
   {
    "fieldname": "column_break_9ywf",
@@ -69,13 +67,13 @@
    "fieldtype": "Section Break"
   },
   {
-   "default": "Queued",
-   "depends_on": "eval: !doc.__islocal",
+   "default": "Draft",
+   "depends_on": "eval: doc.docstatus != 0",
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
    "no_copy": 1,
-   "options": "Queued\nSent\nFailed",
+   "options": "Draft\nQueued\nSent\nFailed",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
@@ -136,25 +134,34 @@
   {
    "fieldname": "body_html",
    "fieldtype": "Code",
-   "label": "Body HTML",
-   "set_only_once": 1
+   "label": "Body HTML"
   },
   {
    "fieldname": "custom_headers",
    "fieldtype": "Table",
    "label": "Custom Headers",
    "no_copy": 1,
-   "options": "Mail Header",
-   "set_only_once": 1
+   "options": "Mail Header"
   },
   {
    "fieldname": "section_break_atoq",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Outgoing Mail",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2024-02-16 10:31:16.994008",
+ "modified": "2024-02-18 20:56:43.745365",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

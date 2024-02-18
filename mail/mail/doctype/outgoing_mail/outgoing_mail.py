@@ -6,6 +6,7 @@ import json
 import frappe
 import string
 import secrets
+from frappe import _
 from email import policy
 from datetime import datetime
 from email.parser import Parser
@@ -31,18 +32,24 @@ class OutgoingMail(Document):
 		)
 
 	def validate(self) -> None:
-		self.validate_server()
+		self.validate_amended_doc()
 		self.validate_recipients()
 		self.validate_body_html()
-		self.validate_body_plain()
-		self.set_original_message()
 
-	def after_insert(self) -> None:
+		if self.get("_action") == "submit":
+			self.validate_server()
+			self.set_body_plain()
+			self.set_original_message()
+
+	def on_submit(self) -> None:
 		self.sendmail()
 
-	def validate_server(self) -> None:
-		if not self.server:
-			self.server = get_outgoing_server()
+	def on_cancel(self) -> None:
+		frappe.throw(_("Cancelling {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
+
+	def validate_amended_doc(self) -> None:
+		if self.amended_from:
+			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
 
 	def validate_recipients(self) -> None:
 		recipients = []
@@ -60,7 +67,11 @@ class OutgoingMail(Document):
 		if not self.body_html:
 			self.body_html = ""
 
-	def validate_body_plain(self) -> None:
+	def validate_server(self) -> None:
+		if not self.server:
+			self.server = get_outgoing_server()
+
+	def set_body_plain(self) -> None:
 		self.body_plain = html2text(self.body_html)
 
 	def set_original_message(self) -> None:
@@ -107,6 +118,7 @@ class OutgoingMail(Document):
 		return message.as_string()
 
 	def sendmail(self) -> None:
+		self._db_set(status="Queued", notify_update=True)
 		create_agent_job(self.server, "Send Mail", self.original_message)
 
 	def get_recipients(self) -> None:
@@ -126,7 +138,7 @@ class OutgoingMail(Document):
 
 	@frappe.whitelist()
 	def resend(self) -> None:
-		self._db_set(status="Queued", error_log=None)
+		self._db_set(error_log=None)
 		self.sendmail()
 
 

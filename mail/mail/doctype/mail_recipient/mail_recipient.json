@@ -19,8 +19,7 @@
    "label": "Recipient",
    "options": "Email",
    "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
+   "search_index": 1
   },
   {
    "default": "0",
@@ -47,7 +46,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-02-16 10:19:42.495579",
+ "modified": "2024-02-18 19:47:33.378234",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Recipient",
