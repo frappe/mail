@@ -103,14 +103,15 @@ class MailAgentJob(Document):
 class MailAgent:
 	def __init__(self, server: str) -> None:
 		self.server = server
-		self.host, self.port = frappe.db.get_value(
-			"Mail Server", server, ["host", "agent_port"]
-		)
+		self.host = frappe.db.get_value("Mail Server", server, "host")
 
 	def request(self, method, path, data=None) -> "Response":
-		url = f"http://{self.host or self.server}:{self.port}/mail-agent/{path}"
-		password = get_decrypted_password("Mail Server", self.server, "agent_password")
-		headers = {"Authorization": f"bearer {password}"}
+		url = f"http://{self.host or self.server}/api/method/{path}"
+
+		key = frappe.get_cached_value("Mail Server", self.server, "agent_api_key")
+		secret = get_decrypted_password("Mail Server", self.server, "agent_api_secret")
+
+		headers = {"Authorization": f"token {key}:{secret}"}
 		response = requests.request(method, url, headers=headers, json=data, timeout=(10, 30))
 
 		return response

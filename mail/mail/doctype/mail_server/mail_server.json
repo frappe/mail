@@ -19,9 +19,9 @@
   "section_break_s7ce",
   "priority",
   "section_break_pzk7",
-  "agent_port",
+  "agent_api_key",
   "column_break_g6p5",
-  "agent_password"
+  "agent_api_secret"
  ],
  "fields": [
   {
@@ -88,20 +88,6 @@
    "label": "Mail Agent"
   },
   {
-   "fieldname": "agent_password",
-   "fieldtype": "Password",
-   "label": "Agent Password",
-   "no_copy": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "agent_port",
-   "fieldtype": "Int",
-   "label": "Agent Port",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
    "fieldname": "column_break_g6p5",
    "fieldtype": "Column Break"
   },
@@ -128,11 +114,23 @@
    "in_list_view": 1,
    "label": "Outgoing",
    "search_index": 1
+  },
+  {
+   "fieldname": "agent_api_key",
+   "fieldtype": "Data",
+   "label": "Agent API Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "agent_api_secret",
+   "fieldtype": "Password",
+   "label": "Agent API Secret",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-15 07:14:32.655195",
+ "modified": "2024-02-22 16:48:45.828338",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",

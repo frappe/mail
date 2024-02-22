@@ -3,8 +3,8 @@
 
 import frappe
 from frappe import _
+from mail.utils import get_dns_record
 from frappe.model.document import Document
-from mail.utils import get_dns_record, is_valid_ip
 
 
 class MailServer(Document):
@@ -91,15 +91,6 @@ class MailServer(Document):
 	def validate_host(self) -> None:
 		if self.host:
 			self.host = self.host.lower()
-
-			if self.host != "localhost" and not is_valid_ip(self.host):
-				frappe.throw(
-					_(
-						"Unable to connect to the host {0}.".format(
-							frappe.bold(self.host),
-						)
-					)
-				)
 
 	def remove_linked_domains(self) -> None:
 		DOMAIN = frappe.qb.DocType("Mail Domain")
