@@ -3,7 +3,14 @@
 
 frappe.ui.form.on("Outgoing Mail", {
 	refresh(frm) {
+        frm.trigger("hide_amend_button");
         frm.trigger("add_custom_buttons");
+	},
+
+    hide_amend_button(frm) {
+		if (frm.doc.docstatus == 2) {
+			frm.page.btn_primary.hide()
+		}
 	},
 
     add_custom_buttons(frm) {

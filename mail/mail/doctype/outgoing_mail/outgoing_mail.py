@@ -44,9 +44,6 @@ class OutgoingMail(Document):
 	def on_submit(self) -> None:
 		self.sendmail()
 
-	def on_cancel(self) -> None:
-		frappe.throw(_("Cancelling {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
-
 	def validate_amended_doc(self) -> None:
 		if self.amended_from:
 			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
