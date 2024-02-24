@@ -20,10 +20,11 @@
   "execute_on_end",
   "section_break_gfsx",
   "request_data",
-  "section_break_iznx",
   "response_data",
   "section_break_flxw",
-  "error_log"
+  "on_start_error_log",
+  "error_log",
+  "on_end_error_log"
  ],
  "fields": [
   {
@@ -71,6 +72,7 @@
    "fieldname": "request_data",
    "fieldtype": "Code",
    "label": "Request Data (JSON)",
+   "options": "JSON",
    "set_only_once": 1
   },
   {
@@ -78,6 +80,7 @@
    "fieldtype": "Code",
    "label": "Response Data (JSON)",
    "no_copy": 1,
+   "options": "JSON",
    "read_only": 1
   },
   {
@@ -119,10 +122,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "section_break_iznx",
-   "fieldtype": "Section Break"
-  },
-  {
    "fetch_from": "job_type.execute_on_start",
    "fieldname": "execute_on_start",
    "fieldtype": "Data",
@@ -160,11 +159,25 @@
    "no_copy": 1,
    "non_negative": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "on_start_error_log",
+   "fieldtype": "Code",
+   "label": "On Start Error Log",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "on_end_error_log",
+   "fieldtype": "Code",
+   "label": "On End Error Log",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-14 22:04:59.843649",
+ "modified": "2024-02-25 16:12:26.345017",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Agent Job",

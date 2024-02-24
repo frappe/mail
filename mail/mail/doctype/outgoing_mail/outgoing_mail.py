@@ -10,10 +10,10 @@ from frappe import _
 from email import policy
 from datetime import datetime
 from email.parser import Parser
-from typing import TYPE_CHECKING
 from email.utils import formatdate
 from email.mime.text import MIMEText
 from frappe.core.utils import html2text
+from typing import TYPE_CHECKING, Optional
 from mail.utils import get_outgoing_server
 from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
@@ -39,6 +39,7 @@ class OutgoingMail(Document):
 		if self.get("_action") == "submit":
 			self.validate_server()
 			self.set_body_plain()
+			self.set_message_id()
 			self.set_original_message()
 
 	def on_submit(self) -> None:
@@ -71,6 +72,9 @@ class OutgoingMail(Document):
 	def set_body_plain(self) -> None:
 		self.body_plain = html2text(self.body_html)
 
+	def set_message_id(self) -> None:
+		self.message_id = f"<{self.name}@{self.domain_name}>"
+
 	def set_original_message(self) -> None:
 		self.original_message = self.get_signed_message()
 
@@ -90,7 +94,7 @@ class OutgoingMail(Document):
 		message["To"] = ", ".join(self.get_recipients())
 		message["Subject"] = self.subject
 		message["Date"] = formatdate()
-		message["Message-ID"] = "<{0}@{1}>".format(self.name, self.server)
+		message["Message-ID"] = self.message_id
 
 		if self.custom_headers:
 			for header in self.custom_headers:
@@ -115,8 +119,13 @@ class OutgoingMail(Document):
 		return message.as_string()
 
 	def sendmail(self) -> None:
+		request_data = {
+			"outgoing_mail": self.name,
+			"message": self.original_message,
+			"callback_url": get_callback_url(),
+		}
 		self._db_set(status="Queued", notify_update=True)
-		create_agent_job(self.server, "Send Mail", self.original_message)
+		create_agent_job(self.server, "Send Mail", request_data=request_data)
 
 	def get_recipients(self) -> None:
 		return [d.recipient for d in self.recipients]
@@ -126,7 +135,7 @@ class OutgoingMail(Document):
 		update_modified: bool = True,
 		commit: bool = False,
 		notify_update: bool = False,
-		**kwargs
+		**kwargs,
 	) -> None:
 		self.db_set(kwargs, update_modified=update_modified, commit=commit)
 
@@ -139,26 +148,54 @@ class OutgoingMail(Document):
 		self.sendmail()
 
 
-def update_delivery_status(agent_job: "MailAgentJob") -> None:
-	if agent_job.job_type != "Send Mail":
-		return
+def get_callback_url() -> str:
+	return f"{frappe.utils.get_url()}/api/method/mail.mail.doctype.outgoing_mail.outgoing_mail.update_delivery_status"
 
-	status = "Sent" if agent_job.status == "Completed" else "Failed"
-	original_message = json.loads(agent_job.request_data).get("data")
-	parsed_message = Parser(policy=policy.default).parsestr(original_message)
-	message_id = parsed_message["Message-ID"].split("@")[0].replace("<", "")
 
-	if status == "Sent":
-		RECIPIENT = frappe.qb.DocType("Mail Recipient")
-		(
-			frappe.qb.update(RECIPIENT)
-			.set("sent", 1)
-			.where(
-				(RECIPIENT.sent == 0)
-				& (RECIPIENT.parent == message_id)
-				& (RECIPIENT.parenttype == "Outgoing Mail")
+@frappe.whitelist(allow_guest=True)
+def update_delivery_status(agent_job: Optional["MailAgentJob"] = None) -> None:
+	def validate_request_data(data: dict) -> None:
+		if data:
+			fields = ["message_id", "token", "status"]
+
+			for field in fields:
+				if not data.get(field):
+					frappe.throw(_("{0} is required.").format(frappe.bold(field)))
+		else:
+			frappe.throw(_("Invalid Request Data."))
+
+	if agent_job and agent_job.job_type == "Send Mail":
+		kwargs = {}
+
+		if agent_job.status == "Running":
+			kwargs.update({"status": "Transferring"})
+			outgoing_mail = frappe.get_doc(
+				"Outgoing Mail", json.loads(agent_job.request_data).get("outgoing_mail")
 			)
-		).run()
+			outgoing_mail._db_set(**kwargs, commit=True)
+			return
 
-	outgoing_mail = frappe.get_doc("Outgoing Mail", message_id)
-	outgoing_mail._db_set(status=status, error_log=agent_job.error_log, notify_update=True)
+		elif agent_job.status == "Failed":
+			kwargs.update({"status": "Failed", "error_log": agent_job.error_log})
+
+		elif agent_job.status == "Completed":
+			if response_data := json.loads(agent_job.response_data)["message"]:
+				kwargs.update({"status": "Transferred", "token": response_data["token"]})
+
+		if kwargs:
+			outgoing_mail = frappe.get_doc(
+				"Outgoing Mail", json.loads(agent_job.request_data)["outgoing_mail"]
+			)
+			outgoing_mail._db_set(**kwargs, notify_update=True)
+
+	else:
+		data = json.loads(frappe.request.data.decode())
+
+		for d in data:
+			validate_request_data(d)
+			frappe.db.set_value(
+				"Outgoing Mail",
+				{"message_id": d.get("message_id"), "token": d.get("token")},
+				"status",
+				d.get("status"),
+			)

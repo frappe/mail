@@ -14,7 +14,7 @@ def create_agent_job_types() -> None:
 		{
 			"enabled": 1,
 			"job_name": "Send Mail",
-			"request_path": "mail_agent.mail.send",
+			"request_path": "mail_agent.api.sendmail",
 			"request_method": "POST",
 			"execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_delivery_status",
 		},

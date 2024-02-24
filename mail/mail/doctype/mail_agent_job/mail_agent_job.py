@@ -5,7 +5,7 @@ import json
 import frappe
 import requests
 from frappe import _
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from frappe.model.document import Document
 from frappe.utils import now, time_diff_in_seconds
 from frappe.utils.password import get_decrypted_password
@@ -52,11 +52,16 @@ class MailAgentJob(Document):
 		)
 
 	def run(self) -> None:
+		started_at = now()
+		self._db_set(status="Running", started_at=started_at, commit=True)
+
 		try:
 			self.execute_on_start_method()
-			started_at = now()
-			self._db_set(status="Running", started_at=started_at, commit=True)
+		except Exception:
+			error_log = frappe.get_traceback(with_context=False)
+			self._db_set(on_start_error_log=error_log)
 
+		try:
 			agent = MailAgent(self.server)
 			data = json.loads(self.request_data)
 			response = agent.request(
@@ -70,10 +75,15 @@ class MailAgentJob(Document):
 				self._db_set(status="Completed", response_data=response_data)
 			else:
 				raise Exception(response.text)
-
 		except Exception:
 			error_log = frappe.get_traceback(with_context=False)
 			self._db_set(status="Failed", error_log=error_log)
+
+		try:
+			self.execute_on_end_method()
+		except Exception:
+			error_log = frappe.get_traceback(with_context=False)
+			self._db_set(on_end_error_log=error_log)
 
 		ended_at = now()
 		self._db_set(
@@ -82,7 +92,6 @@ class MailAgentJob(Document):
 			commit=True,
 			notify_update=True,
 		)
-		self.execute_on_end_method()
 
 	def execute_on_start_method(self) -> None:
 		if self.execute_on_start:
@@ -118,12 +127,12 @@ class MailAgent:
 
 
 def create_agent_job(
-	server: str, job_type: str, request_data: str | list | dict = None
+	server: str, job_type: str, request_data: Optional[dict] = None
 ) -> "MailAgentJob":
 	agent_job = frappe.new_doc("Mail Agent Job")
 	agent_job.server = server
 	agent_job.job_type = job_type
-	agent_job.request_data = frappe.as_json({"data": request_data})
+	agent_job.request_data = json.dumps(request_data or {})
 	agent_job.insert()
 
 	return agent_job
