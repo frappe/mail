@@ -51,7 +51,6 @@
    "fieldtype": "Int",
    "label": "Priority",
    "mandatory_depends_on": "eval: doc.incoming",
-   "no_copy": 1,
    "non_negative": 1
   },
   {
@@ -119,18 +118,20 @@
    "fieldname": "agent_api_key",
    "fieldtype": "Data",
    "label": "Agent API Key",
+   "no_copy": 1,
    "reqd": 1
   },
   {
    "fieldname": "agent_api_secret",
    "fieldtype": "Password",
    "label": "Agent API Secret",
+   "no_copy": 1,
    "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-22 16:48:45.828338",
+ "modified": "2024-02-26 11:04:41.991595",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",
