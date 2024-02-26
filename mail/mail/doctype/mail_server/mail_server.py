@@ -57,6 +57,9 @@ class MailServer(Document):
 				)
 			)
 
+		if frappe.conf.developer_mode or frappe.session.user == "Administrator":
+			return
+
 		ipv4 = get_dns_record(self.server, "A")
 		ipv6 = get_dns_record(self.server, "AAAA")
 
