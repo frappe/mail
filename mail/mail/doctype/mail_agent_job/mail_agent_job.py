@@ -114,7 +114,7 @@ class MailAgent:
 		self.server = server
 		self.host = frappe.db.get_value("Mail Server", server, "host")
 
-	def request(self, method, path, data=None) -> "Response":
+	def request(self, method: str, path: str, data: Optional[dict] = None) -> "Response":
 		url = f"http://{self.host or self.server}/api/method/{path}"
 
 		key = frappe.get_cached_value("Mail Server", self.server, "agent_api_key")

@@ -3,10 +3,10 @@
 
 frappe.ui.form.on("Mail Agent Job", {
 	refresh(frm) {
-        frm.trigger("add_custom_buttons");
+        frm.trigger("add_actions");
 	},
 
-    add_custom_buttons(frm) {
+    add_actions(frm) {
         if (frm.doc.status === "Failed") {
             frm.add_custom_button(__("Retry"), () => {
                 frm.trigger("retry");

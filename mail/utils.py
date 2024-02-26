@@ -5,12 +5,13 @@ import socket
 import ipaddress
 import dns.resolver
 from frappe import _
+from typing import Optional
 from mail.constants import NAMESERVERS
 
 
 def get_dns_record(
 	fqdn: str, type: str = "A", raise_exception: bool = False
-) -> dns.resolver.Answer | None:
+) -> Optional[dns.resolver.Answer]:
 	err_msg = None
 
 	try:
@@ -33,7 +34,7 @@ def is_valid_host(host: str) -> bool:
 	return bool(re.compile(r"^[a-zA-Z0-9_]+$").match(host))
 
 
-def is_valid_ip(ip: str, category: str = None) -> bool:
+def is_valid_ip(ip: str, category: Optional[str] = None) -> bool:
 	try:
 		ip_obj = ipaddress.ip_address(ip)
 

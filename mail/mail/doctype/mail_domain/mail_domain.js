@@ -8,7 +8,7 @@ frappe.ui.form.on("Mail Domain", {
 
 	refresh(frm) {
         frm.trigger("set_domain_owner");
-        frm.trigger("add_custom_buttons");
+        frm.trigger("add_actions");
 	},
 
     set_queries(frm) {
@@ -27,7 +27,7 @@ frappe.ui.form.on("Mail Domain", {
         }
     },
 
-    add_custom_buttons(frm) {
+    add_actions(frm) {
         if (!frm.doc.__islocal) {
             frm.add_custom_button(__("Verify DNS Records"), () => {
                 frm.trigger("verify_dns_records");

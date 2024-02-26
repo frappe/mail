@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from typing import Optional
 from pypika.terms import ExistsCriterion
 from frappe.model.document import Document
 
@@ -40,7 +41,14 @@ class Mailbox(Document):
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
-def get_user(doctype, txt, searchfield, start, page_len, filters) -> list:
+def get_user(
+	doctype: Optional[str] = None,
+	txt: Optional[str] = None,
+	searchfield: Optional[str] = None,
+	start: Optional[int] = 0,
+	page_len: Optional[int] = 20,
+	filters: Optional[dict] = None,
+) -> list:
 	domain_name = filters.get("domain_name")
 
 	if not domain_name:

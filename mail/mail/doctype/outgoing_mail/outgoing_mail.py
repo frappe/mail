@@ -7,9 +7,7 @@ import frappe
 import string
 import secrets
 from frappe import _
-from email import policy
 from datetime import datetime
-from email.parser import Parser
 from email.utils import formatdate
 from email.mime.text import MIMEText
 from frappe.core.utils import html2text

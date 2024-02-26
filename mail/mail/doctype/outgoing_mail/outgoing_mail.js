@@ -4,7 +4,7 @@
 frappe.ui.form.on("Outgoing Mail", {
 	refresh(frm) {
         frm.trigger("hide_amend_button");
-        frm.trigger("add_custom_buttons");
+        frm.trigger("add_actions");
 	},
 
     hide_amend_button(frm) {
@@ -13,7 +13,7 @@ frappe.ui.form.on("Outgoing Mail", {
 		}
 	},
 
-    add_custom_buttons(frm) {
+    add_actions(frm) {
         if (frm.doc.docstatus === 1) {
             if (frm.doc.status === "Failed") {
                 frm.add_custom_button(__("Retry"), () => {

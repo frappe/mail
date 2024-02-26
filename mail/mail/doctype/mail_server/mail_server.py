@@ -14,7 +14,7 @@ class MailServer(Document):
 
 	def before_validate(self) -> None:
 		if self.is_new():
-			self.validate_mail_settings()
+			validate_mail_settings()
 
 	def validate(self) -> None:
 		self.validate_server()
@@ -29,23 +29,6 @@ class MailServer(Document):
 	def on_trash(self) -> None:
 		self.db_set("enabled", 0)
 		self.update_server_dns_records()
-
-	def validate_mail_settings(self) -> None:
-		mail_settings = frappe.get_doc("Mail Settings")
-		mandatory_fields = [
-			"root_domain_name",
-			"spf_host",
-			"default_dkim_selector",
-			"default_dkim_bits",
-			"default_ttl",
-		]
-
-		for field in mandatory_fields:
-			if not mail_settings.get(field):
-				field_label = frappe.get_meta("Mail Settings").get_label(field)
-				frappe.throw(
-					_("Please set the {0} in the Mail Settings.".format(frappe.bold(field_label)))
-				)
 
 	def validate_server(self) -> None:
 		if self.is_new() and frappe.db.exists("Mail Server", self.server):
@@ -103,3 +86,21 @@ class MailServer(Document):
 
 	def update_server_dns_records(self) -> None:
 		frappe.get_doc("Mail Settings").generate_dns_records(save=True)
+
+
+def validate_mail_settings() -> None:
+	mail_settings = frappe.get_doc("Mail Settings")
+	mandatory_fields = [
+		"root_domain_name",
+		"spf_host",
+		"default_dkim_selector",
+		"default_dkim_bits",
+		"default_ttl",
+	]
+
+	for field in mandatory_fields:
+		if not mail_settings.get(field):
+			field_label = frappe.get_meta("Mail Settings").get_label(field)
+			frappe.throw(
+				_("Please set the {0} in the Mail Settings.".format(frappe.bold(field_label)))
+			)
