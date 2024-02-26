@@ -144,8 +144,9 @@ class OutgoingMail(Document):
 
 	@frappe.whitelist()
 	def resend(self) -> None:
-		self._db_set(error_log=None)
-		self.sendmail()
+		if self.docstatus == 1:
+			self._db_set(error_log=None)
+			self.sendmail()
 
 
 def get_callback_url() -> str:

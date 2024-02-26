@@ -14,10 +14,12 @@ frappe.ui.form.on("Outgoing Mail", {
 	},
 
     add_custom_buttons(frm) {
-        if (frm.doc.status === "Failed") {
-            frm.add_custom_button(__("Retry"), () => {
-                frm.trigger("retry");
-            }, __("Actions"));
+        if (frm.doc.docstatus === 1) {
+            if (frm.doc.status === "Failed") {
+                frm.add_custom_button(__("Retry"), () => {
+                    frm.trigger("retry");
+                }, __("Actions"));
+            }
         }
     },
 
