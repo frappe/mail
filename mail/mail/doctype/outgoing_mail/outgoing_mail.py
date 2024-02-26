@@ -190,6 +190,7 @@ def update_delivery_status(agent_job: Optional["MailAgentJob"] = None) -> None:
 			outgoing_mail._db_set(**kwargs, notify_update=True)
 
 	else:
+		frappe.set_user("daemon@frappemail.com")
 		data = json.loads(frappe.request.data.decode())
 
 		for d in data:
