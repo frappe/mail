@@ -79,7 +79,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nQueued\nTransferring\nFailed\nTransferred\nPartially Sent\nSent",
+   "options": "Draft\nQueued\nTransferring\nFailed\nTransferred\nBounced\nPartially Sent\nSent",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
@@ -192,7 +192,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-02-26 19:52:29.016194",
+ "modified": "2024-03-04 20:26:34.001643",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
