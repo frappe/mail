@@ -159,7 +159,7 @@ def get_callback_url() -> str:
 def update_delivery_status(agent_job: Optional["MailAgentJob"] = None) -> None:
 	def validate_request_data(data: dict) -> None:
 		if data:
-			fields = ["message_id", "token", "status"]
+			fields = ["message_id", "token", "status", "recipients"]
 
 			for field in fields:
 				if not data.get(field):
@@ -197,9 +197,14 @@ def update_delivery_status(agent_job: Optional["MailAgentJob"] = None) -> None:
 
 		for d in data:
 			validate_request_data(d)
-			frappe.db.set_value(
-				"Outgoing Mail",
-				{"message_id": d.get("message_id"), "token": d.get("token")},
-				"status",
-				d.get("status"),
-			)
+			if outgoing_mail := frappe.get_doc(
+				"Outgoing Mail", {"message_id": d.get("message_id"), "token": d.get("token")}
+			):
+				outgoing_mail.status = d["status"]
+
+				for recipient in outgoing_mail.recipients:
+					recipient.sent = d["recipients"][recipient.recipient]["sent"]
+					recipient.description = d["recipients"][recipient.recipient]["description"]
+					recipient.db_update()
+
+				outgoing_mail.db_update()
