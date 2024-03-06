@@ -35,6 +35,7 @@ class OutgoingMail(Document):
 		self.validate_body_html()
 
 		if self.get("_action") == "submit":
+			self.set_from_ip()
 			self.validate_server()
 			self.set_body_plain()
 			self.set_message_id()
@@ -62,6 +63,9 @@ class OutgoingMail(Document):
 	def validate_body_html(self) -> None:
 		if not self.body_html:
 			self.body_html = ""
+
+	def set_from_ip(self) -> None:
+		self.from_ip = frappe.local.request_ip
 
 	def validate_server(self) -> None:
 		if not self.server:

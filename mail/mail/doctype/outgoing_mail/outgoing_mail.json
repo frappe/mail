@@ -10,6 +10,7 @@
   "server",
   "section_break_quhp",
   "sender",
+  "from_ip",
   "column_break_9ywf",
   "subject",
   "section_break_baaa",
@@ -187,12 +188,19 @@
   {
    "fieldname": "section_break_4dyb",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "from_ip",
+   "fieldtype": "Data",
+   "label": "IP",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-04 20:26:34.001643",
+ "modified": "2024-03-06 12:21:42.385213",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
