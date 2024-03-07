@@ -121,7 +121,9 @@ class MailAgent:
 		secret = get_decrypted_password("Mail Server", self.server, "agent_api_secret")
 
 		headers = {"Authorization": f"token {key}:{secret}"}
-		response = requests.request(method, url, headers=headers, json=data, timeout=(10, 30))
+		response = requests.request(
+			method, url, headers=headers, json=data, timeout=(30, 100)
+		)
 
 		return response
 
