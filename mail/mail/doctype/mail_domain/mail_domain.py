@@ -184,7 +184,7 @@ class MailDomain(Document):
 						"category": "Receiving Record",
 						"type": "MX",
 						"host": self.domain_name,
-						"value": f"{server.name}.",
+						"value": f"{server.name.split(':')[0]}.",
 						"priority": server.priority,
 						"ttl": ttl,
 					}
