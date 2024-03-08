@@ -44,6 +44,10 @@ class OutgoingMail(Document):
 	def on_submit(self) -> None:
 		self.sendmail()
 
+	def on_trash(self) -> None:
+		if self.docstatus != 0 and frappe.session.user != "Administrator":
+			frappe.throw(_("Only Administrator can delete Outgoing Mail."))
+
 	def validate_amended_doc(self) -> None:
 		if self.amended_from:
 			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
