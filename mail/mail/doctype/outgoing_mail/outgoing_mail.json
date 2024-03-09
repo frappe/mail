@@ -141,10 +141,8 @@
   },
   {
    "fieldname": "body_html",
-   "fieldtype": "Code",
-   "label": "Body HTML",
-   "options": "HTML",
-   "reqd": 1
+   "fieldtype": "Text Editor",
+   "label": "Body HTML"
   },
   {
    "fieldname": "custom_headers",
@@ -201,7 +199,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-09 12:00:14.200531",
+ "modified": "2024-03-09 12:09:14.514239",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
