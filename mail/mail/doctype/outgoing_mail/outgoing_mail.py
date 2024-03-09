@@ -23,12 +23,6 @@ if TYPE_CHECKING:
 
 
 class OutgoingMail(Document):
-	def autoname(self) -> None:
-		self.name = "{0}.{1}".format(
-			datetime.now().strftime("%Y%m%d%H%M%S"),
-			"".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(11)),
-		)
-
 	def validate(self) -> None:
 		self.validate_amended_doc()
 		self.validate_recipients()
@@ -79,7 +73,11 @@ class OutgoingMail(Document):
 		self.body_plain = html2text(self.body_html)
 
 	def set_message_id(self) -> None:
-		self.message_id = f"<{self.name}@{self.domain_name}>"
+		self.message_id = "<{0}.{1}@{2}>".format(
+			datetime.now().strftime("%Y%m%d%H%M%S"),
+			"".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(11)),
+			self.domain_name,
+		)
 
 	def set_original_message(self) -> None:
 		self.original_message = self.get_signed_message()

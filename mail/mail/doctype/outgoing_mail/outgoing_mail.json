@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "autoname": "OM.#####",
  "creation": "2024-01-01 11:56:26.316031",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -175,7 +176,7 @@
    "label": "Token",
    "no_copy": 1,
    "read_only": 1,
-   "search_index": 1
+   "unique": 1
   },
   {
    "fieldname": "message_id",
@@ -183,7 +184,7 @@
    "label": "Message ID",
    "no_copy": 1,
    "read_only": 1,
-   "search_index": 1
+   "unique": 1
   },
   {
    "fieldname": "section_break_4dyb",
@@ -200,10 +201,11 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-06 12:21:42.385213",
+ "modified": "2024-03-09 12:00:14.200531",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
+ "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
