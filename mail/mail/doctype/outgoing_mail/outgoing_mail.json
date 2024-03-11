@@ -179,6 +179,7 @@
   {
    "fieldname": "message_id",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Message ID",
    "no_copy": 1,
    "read_only": 1,
@@ -199,7 +200,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-09 12:09:14.514239",
+ "modified": "2024-03-11 11:12:19.339219",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
