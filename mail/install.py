@@ -35,6 +35,18 @@ def create_agent_job_types() -> None:
 			"request_method": "POST",
 			"execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_delivery_status",
 		},
+		{
+			"enabled": 1,
+			"job_name": "Update Virtual Domains",
+			"request_path": "mail_agent.api.update_virtual_domains",
+			"request_method": "POST",
+		},
+		{
+			"enabled": 1,
+			"job_name": "Update Virtual Mailboxes",
+			"request_path": "mail_agent.api.update_virtual_mailboxes",
+			"request_method": "POST",
+		},
 	]
 
 	for agent_job_type in agent_job_types:

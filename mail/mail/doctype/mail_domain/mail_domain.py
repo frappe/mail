@@ -4,9 +4,10 @@
 import frappe
 from frappe import _
 from frappe.utils import cint
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from frappe.model.document import Document
 from mail.utils import get_dns_record, is_valid_host
+from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 
 if TYPE_CHECKING:
 	from mail.mail.doctype.dns_record.dns_record import DNSRecord
@@ -29,6 +30,17 @@ class MailDomain(Document):
 			self.refresh_dns_records()
 		elif not self.enabled:
 			self.verified = 0
+
+	def on_update(self) -> None:
+		previous = self.get_doc_before_save()
+
+		if not previous or self.enabled != previous.get("enabled"):
+			virtual_domains = [{"domain": self.domain_name, "enabled": self.enabled}]
+			update_virtual_domains(virtual_domains)
+
+	def on_trash(self) -> None:
+		virtual_domains = [{"domain": self.domain_name, "enabled": 0}]
+		update_virtual_domains(virtual_domains)
 
 	def validate_dkim_selector(self) -> None:
 		if self.dkim_selector:
@@ -252,3 +264,26 @@ def verify_dns_record(record: "DNSRecord", debug: bool = False) -> bool:
 				frappe.msgprint(f"Expected: {record.value} Got: {data}")
 
 	return False
+
+
+@frappe.whitelist()
+def update_virtual_domains(
+	virtual_domains: Optional[list[dict]] = None, servers: Optional[str | list] = None
+) -> None:
+	if not virtual_domains:
+		virtual_domains = frappe.db.get_all(
+			"Mail Domain", {"enabled": 1}, ["name AS domain", "enabled"]
+		)
+
+	if virtual_domains:
+		if not servers:
+			servers = frappe.db.get_all(
+				"Mail Server", {"enabled": 1, "incoming": 1}, pluck="name"
+			)
+		elif isinstance(servers, str):
+			servers = [servers]
+
+		for server in servers:
+			create_agent_job(
+				server, "Update Virtual Domains", request_data={"virtual_domains": virtual_domains}
+			)

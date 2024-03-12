@@ -6,6 +6,7 @@ from frappe import _
 from typing import Optional
 from pypika.terms import ExistsCriterion
 from frappe.model.document import Document
+from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 
 
 class Mailbox(Document):
@@ -13,6 +14,17 @@ class Mailbox(Document):
 		self.validate_email()
 		self.validate_domain()
 		self.validate_display_name()
+
+	def on_update(self) -> None:
+		previous = self.get_doc_before_save()
+
+		if not previous or self.enabled != previous.get("enabled"):
+			virtual_mailboxes = [{"mailbox": self.email, "enabled": self.enabled}]
+			update_virtual_mailboxes(virtual_mailboxes)
+
+	def on_trash(self) -> None:
+		virtual_mailboxes = [{"mailbox": self.email, "enabled": 0}]
+		update_virtual_mailboxes(virtual_mailboxes)
 
 	def validate_email(self) -> None:
 		email_domain = self.email.split("@")[1]
@@ -25,6 +37,9 @@ class Mailbox(Document):
 			)
 
 	def validate_domain(self) -> None:
+		if frappe.session.user == "Administrator":
+			return
+
 		enabled, verified = frappe.db.get_value(
 			"Mail Domain", self.domain_name, ["enabled", "verified"]
 		)
@@ -70,3 +85,28 @@ def get_user(
 		)
 		.limit(page_len)
 	).run(as_dict=False)
+
+
+@frappe.whitelist()
+def update_virtual_mailboxes(
+	virtual_mailboxes: Optional[list[dict]] = None, servers: Optional[str | list] = None
+) -> None:
+	if not virtual_mailboxes:
+		virtual_mailboxes = frappe.db.get_all(
+			"Mailbox", {"enabled": 1}, ["name AS mailbox", "enabled"]
+		)
+
+	if virtual_mailboxes:
+		if not servers:
+			servers = frappe.db.get_all(
+				"Mail Server", {"enabled": 1, "incoming": 1}, pluck="name"
+			)
+		elif isinstance(servers, str):
+			servers = [servers]
+
+		for server in servers:
+			create_agent_job(
+				server,
+				"Update Virtual Mailboxes",
+				request_data={"virtual_mailboxes": virtual_mailboxes},
+			)
