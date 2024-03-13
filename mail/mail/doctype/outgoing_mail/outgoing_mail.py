@@ -157,18 +157,7 @@ def get_callback_url() -> str:
 	return f"{frappe.utils.get_url()}/api/method/mail.mail.doctype.outgoing_mail.outgoing_mail.update_delivery_status"
 
 
-@frappe.whitelist(allow_guest=True)
-def update_delivery_status(agent_job: Optional["MailAgentJob"] = None) -> None:
-	def validate_request_data(data: dict) -> None:
-		if data:
-			fields = ["message_id", "token", "status", "recipients"]
-
-			for field in fields:
-				if not data.get(field):
-					frappe.throw(_("{0} is required.").format(frappe.bold(field)))
-		else:
-			frappe.throw(_("Invalid Request Data."))
-
+def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
 	if agent_job and agent_job.job_type == "Send Mail":
 		kwargs = {}
 
@@ -193,20 +182,34 @@ def update_delivery_status(agent_job: Optional["MailAgentJob"] = None) -> None:
 			)
 			outgoing_mail._db_set(**kwargs, notify_update=True)
 
-	else:
-		frappe.set_user("daemon@frappemail.com")
-		data = json.loads(frappe.request.data.decode())
 
-		for d in data:
-			validate_request_data(d)
-			if outgoing_mail := frappe.get_doc(
-				"Outgoing Mail", {"message_id": d.get("message_id"), "token": d.get("token")}
-			):
-				outgoing_mail.status = d["status"]
+@frappe.whitelist(allow_guest=True)
+def update_delivery_status() -> None:
+	"""Called by the mail agent to update the delivery status of outgoing mails."""
 
-				for recipient in outgoing_mail.recipients:
-					recipient.sent = d["recipients"][recipient.recipient]["sent"]
-					recipient.description = d["recipients"][recipient.recipient]["description"]
-					recipient.db_update()
+	def __validate_request_data(data: dict) -> None:
+		if data:
+			fields = ["message_id", "token", "status", "recipients"]
 
-				outgoing_mail.db_update()
+			for field in fields:
+				if not data.get(field):
+					frappe.throw(_("{0} is required.").format(frappe.bold(field)))
+		else:
+			frappe.throw(_("Invalid Request Data."))
+
+	frappe.set_user("daemon@frappemail.com")
+	data = json.loads(frappe.request.data.decode())
+
+	for d in data:
+		__validate_request_data(d)
+		if outgoing_mail := frappe.get_doc(
+			"Outgoing Mail", {"message_id": d.get("message_id"), "token": d.get("token")}
+		):
+			outgoing_mail.status = d["status"]
+
+			for recipient in outgoing_mail.recipients:
+				recipient.sent = d["recipients"][recipient.recipient]["sent"]
+				recipient.description = d["recipients"][recipient.recipient]["description"]
+				recipient.db_update()
+
+			outgoing_mail.db_update()
