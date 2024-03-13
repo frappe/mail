@@ -8,6 +8,9 @@ frappe.ui.form.on("Mail Server", {
 
 	add_actions(frm) {
         if (frm.doc.incoming) {
+			frm.add_custom_button(__("Sync Incoming Mails"), () => {
+                frm.trigger("sync_incoming_mails");
+            }, __("Actions"));
             frm.add_custom_button(__("Update Virtual Domains"), () => {
                 frm.trigger("update_virtual_domains");
             }, __("Actions"));
@@ -15,6 +18,17 @@ frappe.ui.form.on("Mail Server", {
                 frm.trigger("update_virtual_mailboxes");
             }, __("Actions"));
         }
+    },
+
+	sync_incoming_mails(frm) {
+        frappe.call({
+			method: "mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails",
+			args: {
+				servers: frm.doc.server,
+			},
+			freeze: true,
+			freeze_message: __("Syncing Incoming Mails..."),
+		});
     },
 
 	update_virtual_domains(frm) {

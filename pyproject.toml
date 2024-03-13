@@ -10,6 +10,7 @@ dynamic = ["version"]
 dependencies = [
     "dnspython~=2.4.2",
     "dkimpy~=1.1.5",
+    "pyspf~=2.0.14",
 ]
 
 [build-system]

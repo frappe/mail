@@ -21,14 +21,14 @@
   "section_break_ijwo",
   "body_html",
   "body_plain",
-  "section_break_lgaa",
-  "original_message",
-  "section_break_kops",
-  "error_log",
   "section_break_4dyb",
+  "error_log",
+  "original_message_tab",
   "message_id",
   "column_break_fvyv",
   "token",
+  "section_break_kops",
+  "original_message",
   "amended_from"
  ],
  "fields": [
@@ -67,10 +67,6 @@
   },
   {
    "fieldname": "section_break_ijwo",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "section_break_lgaa",
    "fieldtype": "Section Break"
   },
   {
@@ -195,12 +191,17 @@
    "label": "IP",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "original_message_tab",
+   "fieldtype": "Tab Break",
+   "label": "Original Message"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-11 11:12:19.339219",
+ "modified": "2024-03-15 13:19:25.099956",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

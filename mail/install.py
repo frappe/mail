@@ -31,8 +31,9 @@ def create_agent_job_types() -> None:
 		{
 			"enabled": 1,
 			"job_name": "Send Mail",
-			"request_path": "mail_agent.api.sendmail",
+			"request_path": "mail_agent.api.send_mail",
 			"request_method": "POST",
+			"execute_on_start": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mail_status",
 			"execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mail_status",
 		},
 		{
@@ -46,6 +47,13 @@ def create_agent_job_types() -> None:
 			"job_name": "Update Virtual Mailboxes",
 			"request_path": "mail_agent.api.update_virtual_mailboxes",
 			"request_method": "POST",
+		},
+		{
+			"enabled": 1,
+			"job_name": "Receive Mails",
+			"request_path": "mail_agent.api.receive_mails",
+			"request_method": "POST",
+			"execute_on_end": "mail.mail.doctype.incoming_mail.incoming_mail.insert_incoming_mails",
 		},
 	]
 

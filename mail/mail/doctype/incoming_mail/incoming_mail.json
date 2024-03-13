@@ -1,0 +1,226 @@
+{
+ "actions": [],
+ "autoname": "IM.#####",
+ "creation": "2024-03-13 11:35:29.489049",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "status",
+  "column_break_htgl",
+  "server",
+  "section_break_0jgu",
+  "display_name",
+  "sender",
+  "column_break_hpzu",
+  "subject",
+  "spf",
+  "dkim",
+  "dmarc",
+  "section_break_eomq",
+  "body_html",
+  "body_plain",
+  "original_message_tab",
+  "message_id",
+  "column_break_epvd",
+  "spf_error",
+  "dkim_error",
+  "dmarc_error",
+  "section_break_5me5",
+  "original_message",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "server",
+   "fieldtype": "Link",
+   "label": "Server",
+   "no_copy": 1,
+   "options": "Mail Server",
+   "read_only": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Incoming Mail",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "label": "Subject",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "body_html",
+   "fieldtype": "Text Editor",
+   "label": "Body HTML",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "body_plain",
+   "fieldtype": "Code",
+   "label": "Body Plain",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "original_message",
+   "fieldtype": "Code",
+   "label": "Original Message",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "message_id",
+   "fieldtype": "Data",
+   "label": "Message ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_htgl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_0jgu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_hpzu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_eomq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.docstatus != 0",
+   "fieldname": "spf",
+   "fieldtype": "Check",
+   "label": "SPF",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.docstatus != 0",
+   "fieldname": "dkim",
+   "fieldtype": "Check",
+   "label": "DKIM",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.docstatus != 0",
+   "fieldname": "dmarc",
+   "fieldtype": "Check",
+   "label": "DMARC",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "spf_error",
+   "fieldtype": "Data",
+   "label": "SPF Error",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "dkim_error",
+   "fieldtype": "Data",
+   "label": "DKIM Error",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "dmarc_error",
+   "fieldtype": "Data",
+   "label": "DMARC Error",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "display_name",
+   "fieldtype": "Data",
+   "label": "Display Name",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "sender",
+   "fieldtype": "Data",
+   "label": "Sender",
+   "no_copy": 1,
+   "options": "Email",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "original_message_tab",
+   "fieldtype": "Tab Break",
+   "label": "Original Message"
+  },
+  {
+   "fieldname": "section_break_5me5",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_epvd",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-03-15 13:15:03.742462",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "Incoming Mail",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

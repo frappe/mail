@@ -7,5 +7,14 @@ def get_data():
 		"non_standard_fieldnames": {
 			"Mail Domain": "outgoing_server",
 		},
-		"transactions": [{"items": ["Mail Domain", "Mail Agent Job", "Outgoing Mail"]}],
+		"transactions": [
+			{
+				"items": [
+					"Mail Domain",
+					"Incoming Mail",
+					"Outgoing Mail",
+					"Mail Agent Job",
+				]
+			}
+		],
 	}

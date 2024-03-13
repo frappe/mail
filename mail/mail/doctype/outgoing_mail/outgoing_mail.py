@@ -8,10 +8,10 @@ import string
 import secrets
 from frappe import _
 from datetime import datetime
+from typing import TYPE_CHECKING
 from email.utils import formatdate
 from email.mime.text import MIMEText
 from frappe.core.utils import html2text
-from typing import TYPE_CHECKING, Optional
 from mail.utils import get_outgoing_server
 from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
@@ -36,7 +36,7 @@ class OutgoingMail(Document):
 			self.set_original_message()
 
 	def on_submit(self) -> None:
-		self.sendmail()
+		self.send_mail()
 
 	def on_trash(self) -> None:
 		if self.docstatus != 0 and frappe.session.user != "Administrator":
@@ -122,7 +122,7 @@ class OutgoingMail(Document):
 
 		return message.as_string()
 
-	def sendmail(self) -> None:
+	def send_mail(self) -> None:
 		request_data = {
 			"outgoing_mail": self.name,
 			"message": self.original_message,
@@ -150,7 +150,7 @@ class OutgoingMail(Document):
 	def resend(self) -> None:
 		if self.docstatus == 1:
 			self._db_set(error_log=None)
-			self.sendmail()
+			self.send_mail()
 
 
 def get_callback_url() -> str:
