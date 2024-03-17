@@ -23,6 +23,7 @@ class MailDomain(Document):
 		self.validate_dkim_selector()
 		self.validate_dkim_bits()
 		self.validate_outgoing_server()
+		self.validate_subdomain()
 		self.validate_root_domain()
 
 		if self.is_new() or (self.dkim_bits != self.get_doc_before_save().get("dkim_bits")):
@@ -86,6 +87,10 @@ class MailDomain(Document):
 						)
 					)
 				)
+
+	def validate_subdomain(self) -> None:
+		if len(self.domain_name.split(".")) > 2:
+			self.subdomain = 1
 
 	def validate_root_domain(self) -> None:
 		self.root_domain = (

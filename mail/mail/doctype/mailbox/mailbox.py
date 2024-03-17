@@ -80,6 +80,7 @@ def create_mailbox(
 		if not frappe.db.exists("User", user):
 			mailbox_user = frappe.new_doc("User")
 			mailbox_user.email = user
+			mailbox_user.username = user
 			mailbox_user.first_name = display_name
 			mailbox_user.user_type = "System User"
 			mailbox_user.send_welcome_email = 0

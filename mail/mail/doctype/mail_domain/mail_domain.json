@@ -8,6 +8,7 @@
   "domain_name",
   "enabled",
   "verified",
+  "subdomain",
   "root_domain",
   "column_break_lr3y",
   "domain_owner",
@@ -128,11 +129,21 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "subdomain",
+   "fieldtype": "Check",
+   "label": "Subdomain",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-14 18:53:47.889445",
+ "modified": "2024-03-17 14:58:58.933241",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",
