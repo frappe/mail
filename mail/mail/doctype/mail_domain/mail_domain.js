@@ -32,6 +32,11 @@ frappe.ui.form.on("Mail Domain", {
             frm.add_custom_button(__("Verify DNS Records"), () => {
                 frm.trigger("verify_dns_records");
             }, __("Actions"));
+
+            frm.add_custom_button(__("Create DMARC Mailbox"), () => {
+                frm.trigger("create_dmarc_mailbox");
+            }, __("Actions"));
+
             frm.add_custom_button(__("Regenerate DNS Records"), () => {
                 frappe.confirm(
                     __("Are you certain you wish to proceed?"),
@@ -39,23 +44,6 @@ frappe.ui.form.on("Mail Domain", {
                 )
             }, __("Actions"));
         }
-    },
-
-    generate_dns_records(frm) {
-        frappe.call({
-            doc: frm.doc,
-            method: "generate_dns_records",
-            args: {
-                save: true,
-            },
-            freeze: true,
-            freeze_message: __("Generating DNS Records..."),
-            callback: (r) => {
-                if (!r.exc) {
-                    frm.refresh();
-                }
-            }
-        });
     },
 
     verify_dns_records(frm) {
@@ -67,6 +55,34 @@ frappe.ui.form.on("Mail Domain", {
             },
             freeze: true,
             freeze_message: __("Verifying DNS Records..."),
+            callback: (r) => {
+                if (!r.exc) {
+                    frm.refresh();
+                }
+            }
+        });
+    },
+
+    create_dmarc_mailbox(frm) {
+        frappe.call({
+			method: "mail.mail.doctype.mailbox.mailbox.create_dmarc_mailbox",
+			args: {
+				domain_name: frm.doc.domain_name,
+			},
+			freeze: true,
+			freeze_message: __("Creating DMARC Mailbox..."),
+		});
+    },
+
+    generate_dns_records(frm) {
+        frappe.call({
+            doc: frm.doc,
+            method: "generate_dns_records",
+            args: {
+                save: true,
+            },
+            freeze: true,
+            freeze_message: __("Generating DNS Records..."),
             callback: (r) => {
                 if (!r.exc) {
                     frm.refresh();

@@ -7,6 +7,7 @@ from frappe.utils import cint
 from typing import TYPE_CHECKING, Optional
 from frappe.model.document import Document
 from mail.utils import get_dns_record, is_valid_host
+from mail.mail.doctype.mailbox.mailbox import create_dmarc_mailbox
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 
 if TYPE_CHECKING:
@@ -34,13 +35,14 @@ class MailDomain(Document):
 	def on_update(self) -> None:
 		previous = self.get_doc_before_save()
 
-		if not previous or self.enabled != previous.get("enabled"):
-			virtual_domains = [{"domain": self.domain_name, "enabled": self.enabled}]
-			update_virtual_domains(virtual_domains)
+		if not previous:
+			create_dmarc_mailbox(self.domain_name)
+			self.update_virtual_domain(enabled=self.enabled)
+		elif self.enabled != previous.get("enabled"):
+			self.update_virtual_domain(enabled=self.enabled)
 
 	def on_trash(self) -> None:
-		virtual_domains = [{"domain": self.domain_name, "enabled": 0}]
-		update_virtual_domains(virtual_domains)
+		self.update_virtual_domain(enabled=False)
 
 	def validate_dkim_selector(self) -> None:
 		if self.dkim_selector:
@@ -231,6 +233,10 @@ class MailDomain(Document):
 
 		if save:
 			self.save()
+
+	def update_virtual_domain(self, enabled: bool | int) -> None:
+		virtual_domains = [{"domain": self.domain_name, "enabled": 1 if enabled else 0}]
+		update_virtual_domains(virtual_domains)
 
 
 def get_filtered_dkim_key(key_pem: str) -> str:

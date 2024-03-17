@@ -19,12 +19,10 @@ class Mailbox(Document):
 		previous = self.get_doc_before_save()
 
 		if not previous or self.enabled != previous.get("enabled"):
-			virtual_mailboxes = [{"mailbox": self.email, "enabled": self.enabled}]
-			update_virtual_mailboxes(virtual_mailboxes)
+			self.update_virtual_mailbox(enabled=self.enabled)
 
 	def on_trash(self) -> None:
-		virtual_mailboxes = [{"mailbox": self.email, "enabled": 0}]
-		update_virtual_mailboxes(virtual_mailboxes)
+		self.update_virtual_mailbox(enabled=False)
 
 	def validate_email(self) -> None:
 		email_domain = self.email.split("@")[1]
@@ -37,7 +35,7 @@ class Mailbox(Document):
 			)
 
 	def validate_domain(self) -> None:
-		if frappe.session.user == "Administrator":
+		if frappe.session.user == "Administrator" or frappe.flags.ingore_domain_validation:
 			return
 
 		enabled, verified = frappe.db.get_value(
@@ -52,6 +50,41 @@ class Mailbox(Document):
 	def validate_display_name(self) -> None:
 		if self.is_new() and not self.display_name:
 			self.display_name = frappe.db.get_value("User", self.user, "full_name")
+
+	def update_virtual_mailbox(self, enabled: bool | int) -> None:
+		virtual_mailboxes = [{"mailbox": self.email, "enabled": 1 if enabled else 0}]
+		update_virtual_mailboxes(virtual_mailboxes)
+
+
+@frappe.whitelist()
+def create_dmarc_mailbox(domain_name: str) -> "Mailbox":
+	dmarc_email = f"dmarc@{domain_name}"
+	frappe.flags.ingore_domain_validation = True
+	return create_mailbox(domain_name, dmarc_email, "DMARC")
+
+
+def create_mailbox(
+	domain_name: str, user: str, display_name: Optional[str] = None
+) -> "Mailbox":
+	if not frappe.db.exists("Mailbox", user):
+		if not frappe.db.exists("User", user):
+			mailbox_user = frappe.new_doc("User")
+			mailbox_user.email = user
+			mailbox_user.first_name = display_name
+			mailbox_user.user_type = "System User"
+			mailbox_user.send_welcome_email = 0
+			mailbox_user.add_roles("System Manager")  # TODO: Role Permissions
+			mailbox_user.save(ignore_permissions=True)
+
+		mailbox = frappe.new_doc("Mailbox")
+		mailbox.domain_name = domain_name
+		mailbox.user = user
+		mailbox.display_name = display_name
+		mailbox.save(ignore_permissions=True)
+
+		return mailbox
+
+	return frappe.get_doc("Mailbox", user)
 
 
 @frappe.whitelist()
