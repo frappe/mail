@@ -3,7 +3,11 @@
 
 frappe.ui.form.on("Mailbox", {
 	setup(frm) {
-        frm.set_query("user", function(doc) {
+        frm.trigger("set_queries");
+    },
+
+	set_queries(frm) {
+        frm.set_query("user", (doc) => {
 			return {
 				query: "mail.mail.doctype.mailbox.mailbox.get_user",
 				filters: {
@@ -11,5 +15,5 @@ frappe.ui.form.on("Mailbox", {
 				}
 			};
 		});
-	},
+    },
 });

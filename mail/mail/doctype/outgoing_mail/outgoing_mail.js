@@ -2,10 +2,22 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Outgoing Mail", {
+    setup(frm) {
+        frm.trigger("set_queries");
+    },
+
 	refresh(frm) {
         frm.trigger("hide_amend_button");
         frm.trigger("add_actions");
 	},
+
+    set_queries(frm) {
+        frm.set_query("sender", (doc) => {
+            return {
+                query: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_sender",
+            };
+        });
+    },
 
     hide_amend_button(frm) {
 		if (frm.doc.docstatus == 2) {

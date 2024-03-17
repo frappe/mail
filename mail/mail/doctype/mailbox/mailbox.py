@@ -3,7 +3,7 @@
 
 import frappe
 from frappe import _
-from typing import Optional
+from typing import Literal, Optional
 from pypika.terms import ExistsCriterion
 from frappe.model.document import Document
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
@@ -17,9 +17,14 @@ class Mailbox(Document):
 
 	def on_update(self) -> None:
 		previous = self.get_doc_before_save()
+		enabled = self.enabled and self.mailbox_type in ["Incoming", "Incoming and Outgoing"]
 
-		if not previous or self.enabled != previous.get("enabled"):
-			self.update_virtual_mailbox(enabled=self.enabled)
+		if (
+			not previous
+			or self.enabled != previous.get("enabled")
+			or self.mailbox_type != previous.get("mailbox_type")
+		):
+			self.update_virtual_mailbox(enabled=enabled)
 
 	def on_trash(self) -> None:
 		self.update_virtual_mailbox(enabled=False)
@@ -60,11 +65,16 @@ class Mailbox(Document):
 def create_dmarc_mailbox(domain_name: str) -> "Mailbox":
 	dmarc_email = f"dmarc@{domain_name}"
 	frappe.flags.ingore_domain_validation = True
-	return create_mailbox(domain_name, dmarc_email, "DMARC")
+	return create_mailbox(domain_name, dmarc_email, "Incoming", "DMARC")
 
 
 def create_mailbox(
-	domain_name: str, user: str, display_name: Optional[str] = None
+	domain_name: str,
+	user: str,
+	mailbox_type: Literal[
+		"Incoming", "Outgoing", "Incoming and Outgoing"
+	] = "Incoming and Outgoing",
+	display_name: Optional[str] = None,
 ) -> "Mailbox":
 	if not frappe.db.exists("Mailbox", user):
 		if not frappe.db.exists("User", user):
@@ -78,6 +88,7 @@ def create_mailbox(
 
 		mailbox = frappe.new_doc("Mailbox")
 		mailbox.domain_name = domain_name
+		mailbox.mailbox_type = mailbox_type
 		mailbox.user = user
 		mailbox.display_name = display_name
 		mailbox.save(ignore_permissions=True)
@@ -126,7 +137,9 @@ def update_virtual_mailboxes(
 ) -> None:
 	if not virtual_mailboxes:
 		virtual_mailboxes = frappe.db.get_all(
-			"Mailbox", {"enabled": 1}, ["name AS mailbox", "enabled"]
+			"Mailbox",
+			{"enabled": 1, "mailbox_type": ["in", ["Incoming", "Incoming and Outgoing"]]},
+			["name AS mailbox", "enabled"],
 		)
 
 	if virtual_mailboxes:

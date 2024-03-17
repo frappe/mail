@@ -7,6 +7,7 @@ import frappe
 import string
 import secrets
 from frappe import _
+from typing import Optional
 from datetime import datetime
 from typing import TYPE_CHECKING
 from email.utils import formatdate
@@ -24,6 +25,8 @@ if TYPE_CHECKING:
 
 class OutgoingMail(Document):
 	def validate(self) -> None:
+		self.validate_domain()
+		self.validate_sender()
 		self.validate_amended_doc()
 		self.validate_recipients()
 		self.validate_body_html()
@@ -41,6 +44,33 @@ class OutgoingMail(Document):
 	def on_trash(self) -> None:
 		if self.docstatus != 0 and frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Outgoing Mail."))
+
+	def validate_domain(self) -> None:
+		if frappe.session.user == "Administrator":
+			return
+
+		enabled, verified = frappe.db.get_value(
+			"Mail Domain", self.domain_name, ["enabled", "verified"]
+		)
+
+		if not enabled:
+			frappe.throw(_("Domain {0} is disabled.").format(frappe.bold(self.domain_name)))
+		if not verified:
+			frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(self.domain_name)))
+
+	def validate_sender(self) -> None:
+		enabled, status, mailbox_type = frappe.db.get_value(
+			"Mailbox", self.sender, ["enabled", "status", "mailbox_type"]
+		)
+
+		if not enabled:
+			frappe.throw(_("Mailbox {0} is disabled.").format(frappe.bold(self.sender)))
+		elif status != "Active":
+			frappe.throw(_("Mailbox {0} is not active.").format(frappe.bold(self.sender)))
+		elif mailbox_type not in ["Outgoing", "Incoming and Outgoing"]:
+			frappe.throw(
+				_("Mailbox {0} is not allowed for Outgoing Mail.").format(frappe.bold(self.sender))
+			)
 
 	def validate_amended_doc(self) -> None:
 		if self.amended_from:
@@ -181,6 +211,30 @@ def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
 				"Outgoing Mail", json.loads(agent_job.request_data)["outgoing_mail"]
 			)
 			outgoing_mail._db_set(**kwargs, notify_update=True)
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_sender(
+	doctype: Optional[str] = None,
+	txt: Optional[str] = None,
+	searchfield: Optional[str] = None,
+	start: Optional[int] = 0,
+	page_len: Optional[int] = 20,
+	filters: Optional[dict] = None,
+) -> list:
+	MAILBOX = frappe.qb.DocType("Mailbox")
+	return (
+		frappe.qb.from_(MAILBOX)
+		.select(MAILBOX.name)
+		.where(
+			(MAILBOX.enabled == 1)
+			& (MAILBOX.status == "Active")
+			& (MAILBOX[searchfield].like(f"%{txt}%"))
+			& (MAILBOX.mailbox_type.isin(["Outgoing", "Incoming and Outgoing"]))
+		)
+		.limit(page_len)
+	).run(as_dict=False)
 
 
 @frappe.whitelist(allow_guest=True)
