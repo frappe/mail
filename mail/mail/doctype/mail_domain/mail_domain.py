@@ -175,12 +175,17 @@ class MailDomain(Document):
 		)
 
 		# DMARC Record
+		dmarc_value = (
+			f"v=DMARC1; p=none; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name};"
+			if self.root_domain
+			else f"v=DMARC1; p=reject; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name};"
+		)
 		records.append(
 			{
 				"category": category,
 				"type": type,
 				"host": f"_dmarc.{self.domain_name}",
-				"value": f"v=DMARC1; p=reject; sp=reject; pct=100; rua=mailto:dmarc@{self.domain_name}; ri=86400; aspf=s; adkim=s; fo=1",
+				"value": dmarc_value,
 				"ttl": ttl,
 			}
 		)
