@@ -134,23 +134,26 @@ after_migrate = "mail.install.after_migrate"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 		"all": [
-# 			"mail.tasks.all"
-# 		],
-# 		"daily": [
-# 			"mail.tasks.daily"
-# 		],
-# 		"hourly": [
-# 			"mail.tasks.hourly"
-# 		],
-# 		"weekly": [
-# 			"mail.tasks.weekly"
-# 		],
-# 		"monthly": [
-# 			"mail.tasks.monthly"
-# 		],
-# }
+scheduler_events = {
+	# "all": [
+	#     "mail.tasks.all"
+	# ],
+	# "daily": [
+	#     "mail.tasks.daily"
+	# ],
+	# "hourly": [
+	#     "mail.tasks.hourly"
+	# ],
+	# "weekly": [
+	#     "mail.tasks.weekly"
+	# ],
+	# "monthly": [
+	#     "mail.tasks.monthly"
+	# ],
+	"cron": {
+		"* * * * *": ["mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails"],
+	}
+}
 
 # Testing
 # -------
