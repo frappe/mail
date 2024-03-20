@@ -13,19 +13,22 @@
   "sender",
   "column_break_hpzu",
   "subject",
-  "spf",
-  "dkim",
-  "dmarc",
   "section_break_eomq",
   "body_html",
   "body_plain",
   "original_message_tab",
   "message_id",
   "column_break_epvd",
-  "spf_error",
-  "dkim_error",
-  "dmarc_error",
+  "eml_filename",
   "section_break_5me5",
+  "spf",
+  "dkim",
+  "dmarc",
+  "column_break_ytzm",
+  "spf_description",
+  "dkim_description",
+  "dmarc_description",
+  "section_break_qijk",
   "original_message",
   "amended_from"
  ],
@@ -35,9 +38,10 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft",
+   "options": "Draft\nSubmitted",
    "read_only": 1,
    "search_index": 1
   },
@@ -64,6 +68,7 @@
   {
    "fieldname": "subject",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Subject",
    "no_copy": 1,
    "read_only": 1
@@ -93,6 +98,7 @@
   {
    "fieldname": "message_id",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Message ID",
    "no_copy": 1,
    "read_only": 1,
@@ -145,27 +151,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "spf_error",
-   "fieldtype": "Data",
-   "label": "SPF Error",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "dkim_error",
-   "fieldtype": "Data",
-   "label": "DKIM Error",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "dmarc_error",
-   "fieldtype": "Data",
-   "label": "DMARC Error",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "display_name",
    "fieldtype": "Data",
    "label": "Display Name",
@@ -175,6 +160,8 @@
   {
    "fieldname": "sender",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Sender",
    "no_copy": 1,
    "options": "Email",
@@ -193,13 +180,51 @@
   {
    "fieldname": "column_break_epvd",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "eml_filename",
+   "fieldtype": "Data",
+   "label": "EML File",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "section_break_qijk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "spf_description",
+   "fieldtype": "Small Text",
+   "label": "SPF Description",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "dkim_description",
+   "fieldtype": "Small Text",
+   "label": "DKIM Description",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "dmarc_description",
+   "fieldtype": "Small Text",
+   "label": "DMARC Description",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ytzm",
+   "fieldtype": "Column Break"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-15 13:15:03.742462",
+ "modified": "2024-03-20 19:06:03.475393",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
@@ -220,6 +245,7 @@
    "write": 1
   }
  ],
+ "queue_in_background": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

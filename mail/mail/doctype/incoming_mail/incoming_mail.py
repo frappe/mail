@@ -1,17 +1,16 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import re
-import spf
-import dkim
 import json
 import email
 import frappe
 from frappe import _
 from typing import Optional
+from frappe.utils import cint
 from typing import TYPE_CHECKING
 from frappe.model.document import Document
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
+from frappe.core.doctype.submission_queue.submission_queue import queue_submission
 
 if TYPE_CHECKING:
 	from email.message import Message
@@ -20,12 +19,24 @@ if TYPE_CHECKING:
 
 class IncomingMail(Document):
 	def validate(self) -> None:
+		self.validate_mandatory_fields()
 		if self.get("_action") == "submit":
 			self.process()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Incoming Mail."))
+
+	def validate_mandatory_fields(self) -> None:
+		mandatory_fields = [
+			"original_message",
+			"eml_filename",
+			"status",
+		]
+
+		for field in mandatory_fields:
+			if not self.get(field):
+				frappe.throw(f"{field} is mandatory")
 
 	def process(self) -> None:
 		def __get_body(parsed_message: "Message") -> tuple[str, str]:
@@ -44,47 +55,6 @@ class IncomingMail(Document):
 
 			return body_html, body_plain
 
-		def __spf_check(
-			sender: str, received_header: str | list
-		) -> tuple[bool, Optional[str]]:
-			try:
-				if not received_header:
-					return False, "No Received headers found"
-
-				if isinstance(received_header, list):
-					received_header = received_header[0]
-
-				ip, server = None, None
-
-				if i_match := re.search(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", received_header):
-					if ip := i_match.group(0):
-						ip = ip.replace("[", "").replace("]", "").strip()
-				else:
-					return False, "No IP address found"
-
-				if s_match := re.search(r"(?<=from\s)[^\s()]+(?=\s)", received_header):
-					server = s_match.group(0)
-				else:
-					return False, "No mail server found"
-
-				result = spf.check2(i=ip, s=sender, h=server)
-
-				return True if result and result[0] == "pass" else False, None
-
-			except Exception as e:
-				return False, str(e)
-
-		def __dkim_check(original_message: str) -> tuple[bool, Optional[str]]:
-			try:
-				return (
-					dkim.DKIM(
-						original_message.encode("utf-8"), minkey=1024, timeout=5, tlsrpt=False
-					).verify(),
-					None,
-				)
-			except Exception as e:
-				return False, str(e)
-
 		parsed_message = email.message_from_string(self.original_message)
 		sender = email.utils.parseaddr(parsed_message["From"])
 
@@ -94,10 +64,30 @@ class IncomingMail(Document):
 		self.subject = parsed_message["Subject"]
 		self.message_id = parsed_message["Message-ID"]
 		self.body_html, self.body_plain = __get_body(parsed_message)
-		self.spf, self.spf_error = __spf_check(
-			self.sender, parsed_message.get_all("Received")
+
+		self.spf_description = parsed_message.get("Received-SPF") or parsed_message.get(
+			"X-Comment"
 		)
-		self.dkim, self.dkim_error = __dkim_check(self.original_message)
+		if self.spf_description:
+			spf_description_lower = self.spf_description.lower()
+			self.spf = cint(
+				"pass" in spf_description_lower
+				or "SPF check N/A for local connections".lower() in spf_description_lower
+			)
+
+		if headers := parsed_message.get_all("Authentication-Results"):
+			for header in headers:
+				header_lower = header.lower()
+
+				if "dkim=" in header_lower:
+					if "pass" in header_lower:
+						self.dkim = 1
+					self.dkim_description = header
+
+				elif "dmarc=" in header_lower:
+					if "pass" in header_lower:
+						self.dmarc = 1
+					self.dmarc_description = header
 
 
 def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
@@ -107,8 +97,10 @@ def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
 				for mail in mails:
 					doc = frappe.new_doc("Incoming Mail")
 					doc.server = agent_job.server
+					doc.eml_filename = mail["eml_filename"]
 					doc.original_message = mail["original_message"]
 					doc.save()
+					queue_submission(doc, "submit", alert=False)
 
 
 @frappe.whitelist()
