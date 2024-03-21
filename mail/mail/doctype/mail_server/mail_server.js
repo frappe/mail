@@ -8,26 +8,31 @@ frappe.ui.form.on("Mail Server", {
 
 	add_actions(frm) {
         if (frm.doc.incoming) {
-			frm.add_custom_button(__("Sync Incoming Mails"), () => {
-                frm.trigger("sync_incoming_mails");
+			frm.add_custom_button(__("Receive Mails"), () => {
+                frm.trigger("trigger_receive_mails");
             }, __("Actions"));
+
             frm.add_custom_button(__("Update Virtual Domains"), () => {
                 frm.trigger("update_virtual_domains");
             }, __("Actions"));
+
             frm.add_custom_button(__("Update Virtual Mailboxes"), () => {
                 frm.trigger("update_virtual_mailboxes");
             }, __("Actions"));
         }
     },
 
-	sync_incoming_mails(frm) {
+	trigger_receive_mails(frm) {
         frappe.call({
-			method: "mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails",
+			method: "mail.mail.doctype.incoming_mail.incoming_mail.trigger_receive_mails",
 			args: {
 				servers: frm.doc.server,
 			},
 			freeze: true,
-			freeze_message: __("Syncing Incoming Mails..."),
+			freeze_message: __("Receiving Mails..."),
+			callback: function() {
+                frappe.msgprint(__("Receive Mails Job has been started in the background."));
+            }
 		});
     },
 

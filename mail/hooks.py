@@ -151,7 +151,7 @@ scheduler_events = {
 	#     "mail.tasks.monthly"
 	# ],
 	"cron": {
-		"* * * * *": ["mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails"],
+		"* * * * *": ["mail.mail.doctype.incoming_mail.incoming_mail.receive_mails"],
 	}
 }
 

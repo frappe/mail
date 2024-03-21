@@ -184,7 +184,7 @@ class OutgoingMail(Document):
 
 
 def get_callback_url() -> str:
-	return f"{frappe.utils.get_url()}/api/method/mail.mail.doctype.outgoing_mail.outgoing_mail.update_delivery_status"
+	return f"{frappe.utils.get_url()}/api/method/mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mail_delivery_status"
 
 
 def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
@@ -238,7 +238,7 @@ def get_sender(
 
 
 @frappe.whitelist(allow_guest=True)
-def update_delivery_status() -> None:
+def update_outgoing_mail_delivery_status() -> None:
 	"""Called by the mail agent to update the delivery status of outgoing mails."""
 
 	def __validate_request_data(data: dict) -> None:
