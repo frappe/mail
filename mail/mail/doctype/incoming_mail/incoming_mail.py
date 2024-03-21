@@ -60,7 +60,8 @@ class IncomingMail(Document):
 
 		self.sender = sender[1]
 		self.display_name = sender[0]
-		self.recipient = parsed_message["To"]
+		self.receiver = parsed_message["Delivered-To"]
+		self.recipients = parsed_message["To"]
 		self.subject = parsed_message["Subject"]
 		self.message_id = parsed_message["Message-ID"]
 		self.body_html, self.body_plain = __get_body(parsed_message)
