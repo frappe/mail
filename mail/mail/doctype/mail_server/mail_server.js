@@ -9,7 +9,11 @@ frappe.ui.form.on("Mail Server", {
 	add_actions(frm) {
         if (frm.doc.incoming) {
 			frm.add_custom_button(__("Receive Mails"), () => {
-                frm.trigger("trigger_receive_mails");
+                frm.trigger("receive_mails");
+            }, __("Actions"));
+
+			frm.add_custom_button(__("Get Delivery Status"), () => {
+                frm.trigger("get_delivery_status");
             }, __("Actions"));
 
             frm.add_custom_button(__("Update Virtual Domains"), () => {
@@ -22,9 +26,9 @@ frappe.ui.form.on("Mail Server", {
         }
     },
 
-	trigger_receive_mails(frm) {
+	receive_mails(frm) {
         frappe.call({
-			method: "mail.mail.doctype.incoming_mail.incoming_mail.trigger_receive_mails",
+			method: "mail.mail.doctype.incoming_mail.incoming_mail.receive_mails",
 			args: {
 				servers: frm.doc.server,
 			},
@@ -35,6 +39,20 @@ frappe.ui.form.on("Mail Server", {
             }
 		});
     },
+
+	get_delivery_status(frm) {
+		frappe.call({
+			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_delivery_status",
+			args: {
+				servers: frm.doc.server,
+			},
+			freeze: true,
+			freeze_message: __("Getting Delivery Status..."),
+			callback: function() {
+                frappe.msgprint(__("Get Delivery Status Job has been started in the background."));
+            }
+		});
+	},
 
 	update_virtual_domains(frm) {
         frappe.call({

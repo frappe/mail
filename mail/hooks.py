@@ -152,6 +152,7 @@ scheduler_events = {
 	# ],
 	"cron": {
 		"* * * * *": ["mail.mail.doctype.incoming_mail.incoming_mail.receive_mails"],
+		"*/2 * * * *": ["mail.mail.doctype.outgoing_mail.outgoing_mail.get_delivery_status"],
 	}
 }
 

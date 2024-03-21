@@ -38,6 +38,13 @@ def create_agent_job_types() -> None:
 		},
 		{
 			"enabled": 1,
+			"job_name": "Get Delivery Status",
+			"request_path": "mail_agent.api.get_delivery_status",
+			"request_method": "POST",
+			"execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_delivery_status",
+		},
+		{
+			"enabled": 1,
 			"job_name": "Update Virtual Domains",
 			"request_path": "mail_agent.api.update_virtual_domains",
 			"request_method": "POST",

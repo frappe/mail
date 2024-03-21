@@ -156,7 +156,6 @@ class OutgoingMail(Document):
 		request_data = {
 			"outgoing_mail": self.name,
 			"message": self.original_message,
-			"callback_url": get_callback_url(),
 		}
 		self._db_set(status="Queued", notify_update=True)
 		create_agent_job(self.server, "Send Mail", request_data=request_data)
@@ -183,8 +182,28 @@ class OutgoingMail(Document):
 			self.send_mail()
 
 
-def get_callback_url() -> str:
-	return f"{frappe.utils.get_url()}/api/method/mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mail_delivery_status"
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_sender(
+	doctype: Optional[str] = None,
+	txt: Optional[str] = None,
+	searchfield: Optional[str] = None,
+	start: Optional[int] = 0,
+	page_len: Optional[int] = 20,
+	filters: Optional[dict] = None,
+) -> list:
+	MAILBOX = frappe.qb.DocType("Mailbox")
+	return (
+		frappe.qb.from_(MAILBOX)
+		.select(MAILBOX.name)
+		.where(
+			(MAILBOX.enabled == 1)
+			& (MAILBOX.status == "Active")
+			& (MAILBOX[searchfield].like(f"%{txt}%"))
+			& (MAILBOX.mailbox_type.isin(["Outgoing", "Incoming and Outgoing"]))
+		)
+		.limit(page_len)
+	).run(as_dict=False)
 
 
 def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
@@ -214,34 +233,20 @@ def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
 
 
 @frappe.whitelist()
-@frappe.validate_and_sanitize_search_inputs
-def get_sender(
-	doctype: Optional[str] = None,
-	txt: Optional[str] = None,
-	searchfield: Optional[str] = None,
-	start: Optional[int] = 0,
-	page_len: Optional[int] = 20,
-	filters: Optional[dict] = None,
-) -> list:
-	MAILBOX = frappe.qb.DocType("Mailbox")
-	return (
-		frappe.qb.from_(MAILBOX)
-		.select(MAILBOX.name)
-		.where(
-			(MAILBOX.enabled == 1)
-			& (MAILBOX.status == "Active")
-			& (MAILBOX[searchfield].like(f"%{txt}%"))
-			& (MAILBOX.mailbox_type.isin(["Outgoing", "Incoming and Outgoing"]))
+def get_delivery_status(servers: Optional[str | list] = None) -> None:
+	if not servers:
+		servers = frappe.db.get_all(
+			"Mail Server", {"enabled": 1, "outgoing": 1}, pluck="name"
 		)
-		.limit(page_len)
-	).run(as_dict=False)
+	elif isinstance(servers, str):
+		servers = [servers]
+
+	for server in servers:
+		create_agent_job(server, "Get Delivery Status")
 
 
-@frappe.whitelist(allow_guest=True)
-def update_outgoing_mail_delivery_status() -> None:
-	"""Called by the mail agent to update the delivery status of outgoing mails."""
-
-	def __validate_request_data(data: dict) -> None:
+def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
+	def __validate_data(data: dict) -> None:
 		if data:
 			fields = ["message_id", "token", "status", "recipients"]
 
@@ -251,19 +256,19 @@ def update_outgoing_mail_delivery_status() -> None:
 		else:
 			frappe.throw(_("Invalid Request Data."))
 
-	frappe.set_user("daemon@frappemail.com")
-	data = json.loads(frappe.request.data.decode())
+	if agent_job and agent_job.job_type == "Get Delivery Status":
+		if agent_job.status == "Completed":
+			if data := json.loads(agent_job.response_data)["message"]:
+				for d in data:
+					__validate_data(d)
 
-	for d in data:
-		__validate_request_data(d)
-		if outgoing_mail := frappe.get_doc(
-			"Outgoing Mail", {"message_id": d.get("message_id"), "token": d.get("token")}
-		):
-			outgoing_mail.status = d["status"]
+					if outgoing_mail := frappe.get_doc(
+						"Outgoing Mail", {"message_id": d.get("message_id"), "token": d.get("token")}
+					):
+						outgoing_mail.status = d["status"]
+						for recipient in outgoing_mail.recipients:
+							recipient.sent = d["recipients"][recipient.recipient]["sent"]
+							recipient.description = d["recipients"][recipient.recipient]["description"]
+							recipient.db_update()
 
-			for recipient in outgoing_mail.recipients:
-				recipient.sent = d["recipients"][recipient.recipient]["sent"]
-				recipient.description = d["recipients"][recipient.recipient]["description"]
-				recipient.db_update()
-
-			outgoing_mail.db_update()
+						outgoing_mail.db_update()

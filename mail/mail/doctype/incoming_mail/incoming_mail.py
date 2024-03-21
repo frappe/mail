@@ -89,13 +89,6 @@ class IncomingMail(Document):
 
 
 @frappe.whitelist()
-def trigger_receive_mails():
-	frappe.get_doc(
-		"Scheduled Job Type",
-		{"method": "mail.mail.doctype.incoming_mail.incoming_mail.receive_mails"},
-	).enqueue(force=True)
-
-
 def receive_mails(servers: Optional[str | list] = None) -> None:
 	if not servers:
 		servers = frappe.db.get_all(
