@@ -137,7 +137,7 @@
   },
   {
    "fieldname": "body_html",
-   "fieldtype": "Text Editor",
+   "fieldtype": "HTML Editor",
    "label": "Body HTML"
   },
   {
@@ -201,7 +201,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-15 13:19:25.099956",
+ "modified": "2024-03-21 16:06:16.547589",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
