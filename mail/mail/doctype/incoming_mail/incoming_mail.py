@@ -65,27 +65,24 @@ class IncomingMail(Document):
 		self.message_id = parsed_message["Message-ID"]
 		self.body_html, self.body_plain = __get_body(parsed_message)
 
-		self.spf_description = parsed_message.get("Received-SPF") or parsed_message.get(
-			"X-Comment"
-		)
+		self.spf_description = parsed_message.get("Received-SPF")
 		if self.spf_description:
-			spf_description_lower = self.spf_description.lower()
-			self.spf = cint(
-				"pass" in spf_description_lower
-				or "SPF check N/A for local connections".lower() in spf_description_lower
-			)
+			self.spf = cint("pass" in self.spf_description.lower())
+		else:
+			self.spf = 1
+			self.spf_description = "Internal Network"
 
 		if headers := parsed_message.get_all("Authentication-Results"):
 			for header in headers:
 				header_lower = header.lower()
 
 				if "dkim=" in header_lower:
-					if "pass" in header_lower:
+					if "dkim=pass" in header_lower:
 						self.dkim = 1
 					self.dkim_description = header
 
 				elif "dmarc=" in header_lower:
-					if "pass" in header_lower:
+					if "dmarc=pass" in header_lower:
 						self.dmarc = 1
 					self.dmarc_description = header
 
