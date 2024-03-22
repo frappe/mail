@@ -89,7 +89,7 @@ class IncomingMail(Document):
 
 
 @frappe.whitelist()
-def receive_mails(servers: Optional[str | list] = None) -> None:
+def get_incoming_mails(servers: Optional[str | list] = None) -> None:
 	if not servers:
 		servers = frappe.db.get_all(
 			"Mail Server", {"enabled": 1, "incoming": 1}, pluck="name"
@@ -98,11 +98,11 @@ def receive_mails(servers: Optional[str | list] = None) -> None:
 		servers = [servers]
 
 	for server in servers:
-		create_agent_job(server, "Receive Mails")
+		create_agent_job(server, "Get Incoming Mails")
 
 
 def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
-	if agent_job and agent_job.job_type == "Receive Mails":
+	if agent_job and agent_job.job_type == "Get Incoming Mails":
 		if agent_job.status == "Completed":
 			if mails := json.loads(agent_job.response_data)["message"]:
 				for mail in mails:

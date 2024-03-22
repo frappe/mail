@@ -57,8 +57,8 @@ def create_agent_job_types() -> None:
 		},
 		{
 			"enabled": 1,
-			"job_name": "Receive Mails",
-			"request_path": "mail_agent.api.receive_mails",
+			"job_name": "Get Incoming Mails",
+			"request_path": "mail_agent.api.get_incoming_mails",
 			"request_method": "POST",
 			"execute_on_end": "mail.mail.doctype.incoming_mail.incoming_mail.insert_incoming_mails",
 		},

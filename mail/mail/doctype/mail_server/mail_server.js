@@ -8,12 +8,12 @@ frappe.ui.form.on("Mail Server", {
 
 	add_actions(frm) {
         if (frm.doc.incoming) {
-			frm.add_custom_button(__("Receive Mails"), () => {
-                frm.trigger("receive_mails");
-            }, __("Actions"));
-
 			frm.add_custom_button(__("Get Delivery Status"), () => {
                 frm.trigger("get_delivery_status");
+            }, __("Actions"));
+
+			frm.add_custom_button(__("Get Incoming Mails"), () => {
+                frm.trigger("get_incoming_mails");
             }, __("Actions"));
 
             frm.add_custom_button(__("Update Virtual Domains"), () => {
@@ -24,20 +24,6 @@ frappe.ui.form.on("Mail Server", {
                 frm.trigger("update_virtual_mailboxes");
             }, __("Actions"));
         }
-    },
-
-	receive_mails(frm) {
-        frappe.call({
-			method: "mail.mail.doctype.incoming_mail.incoming_mail.receive_mails",
-			args: {
-				servers: frm.doc.server,
-			},
-			freeze: true,
-			freeze_message: __("Receiving Mails..."),
-			callback: function() {
-                frappe.msgprint(__("Receive Mails Job has been started in the background."));
-            }
-		});
     },
 
 	get_delivery_status(frm) {
@@ -53,6 +39,20 @@ frappe.ui.form.on("Mail Server", {
             }
 		});
 	},
+
+	get_incoming_mails(frm) {
+        frappe.call({
+			method: "mail.mail.doctype.incoming_mail.incoming_mail.get_incoming_mails",
+			args: {
+				servers: frm.doc.server,
+			},
+			freeze: true,
+			freeze_message: __("Receiving Mails..."),
+			callback: function() {
+                frappe.msgprint(__("Get Incoming Mails Job has been started in the background."));
+            }
+		});
+    },
 
 	update_virtual_domains(frm) {
         frappe.call({
