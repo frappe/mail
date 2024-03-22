@@ -62,6 +62,9 @@ frappe.ui.form.on("Mail Server", {
 			},
 			freeze: true,
 			freeze_message: __("Updating Virtual Domains..."),
+			callback: function() {
+				frappe.msgprint(__("Update Virtual Domains Job has been started in the background."));
+			}
 		});
     },
 
@@ -73,6 +76,9 @@ frappe.ui.form.on("Mail Server", {
 			},
 			freeze: true,
 			freeze_message: __("Updating Virtual Mailboxes..."),
+			callback: function() {
+				frappe.msgprint(__("Update Virtual Mailboxes Job has been started in the background."));
+			}
 		});
     },
 });

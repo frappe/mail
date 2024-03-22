@@ -176,8 +176,8 @@ class OutgoingMail(Document):
 			self.notify_update()
 
 	@frappe.whitelist()
-	def resend(self) -> None:
-		if self.docstatus == 1:
+	def retry_send_mail(self) -> None:
+		if self.docstatus == 1 and self.status == "Failed":
 			self._db_set(error_log=None)
 			self.send_mail()
 
