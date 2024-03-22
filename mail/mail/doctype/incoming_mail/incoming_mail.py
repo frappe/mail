@@ -6,9 +6,9 @@ import email
 import frappe
 from frappe import _
 from typing import Optional
-from frappe.utils import cint
 from typing import TYPE_CHECKING
 from frappe.model.document import Document
+from frappe.utils import cint, get_datetime_str
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.core.doctype.submission_queue.submission_queue import queue_submission
 
@@ -65,6 +65,9 @@ class IncomingMail(Document):
 		self.subject = parsed_message["Subject"]
 		self.message_id = parsed_message["Message-ID"]
 		self.body_html, self.body_plain = __get_body(parsed_message)
+		self.created_at = get_datetime_str(
+			email.utils.parsedate_to_datetime(parsed_message["Date"])
+		)
 
 		self.spf_description = parsed_message.get("Received-SPF")
 		if self.spf_description:

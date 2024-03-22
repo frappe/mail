@@ -127,7 +127,7 @@ class OutgoingMail(Document):
 		)
 		message["To"] = ", ".join(self.get_recipients())
 		message["Subject"] = self.subject
-		message["Date"] = formatdate()
+		message["Date"] = formatdate(localtime=True)
 		message["Message-ID"] = self.message_id
 
 		if self.custom_headers:

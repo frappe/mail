@@ -20,6 +20,7 @@
   "body_plain",
   "original_message_tab",
   "message_id",
+  "created_at",
   "column_break_epvd",
   "eml_filename",
   "section_break_5me5",
@@ -237,13 +238,21 @@
    "label": "Recipients",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-21 16:05:43.101884",
+ "modified": "2024-03-22 16:18:42.052527",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
