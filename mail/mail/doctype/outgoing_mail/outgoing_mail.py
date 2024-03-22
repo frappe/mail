@@ -134,11 +134,11 @@ class OutgoingMail(Document):
 			for header in self.custom_headers:
 				message.add_header(header.key, header.value)
 
-		if self.body_html:
-			message.attach(MIMEText(self.body_html, "html"))
-
 		if self.body_plain:
 			message.attach(MIMEText(self.body_plain, "plain"))
+
+		if self.body_html:
+			message.attach(MIMEText(self.body_html, "html"))
 
 		headers = [b"To", b"From", b"Subject"]
 		signature = dkim.sign(
