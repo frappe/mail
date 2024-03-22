@@ -235,9 +235,22 @@ def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
 @frappe.whitelist()
 def get_delivery_status(servers: Optional[str | list] = None) -> None:
 	if not servers:
-		servers = frappe.db.get_all(
-			"Mail Server", {"enabled": 1, "outgoing": 1}, pluck="name"
-		)
+		MS = frappe.qb.DocType("Mail Server")
+		OM = frappe.qb.DocType("Outgoing Mail")
+		servers = (
+			frappe.qb.from_(MS)
+			.left_join(OM)
+			.on(OM.server == MS.name)
+			.select(MS.name)
+			.distinct()
+			.where(
+				(MS.enabled == 1)
+				& (MS.outgoing == 1)
+				& (OM.docstatus == 1)
+				& (OM.status == "Transferred")
+			)
+		).run(pluck="name")
+
 	elif isinstance(servers, str):
 		servers = [servers]
 
