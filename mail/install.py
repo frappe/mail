@@ -2,28 +2,11 @@ import frappe
 
 
 def after_install() -> None:
-	create_daemon_user()
 	create_agent_job_types()
 
 
 def after_migrate() -> None:
-	create_daemon_user()
 	create_agent_job_types()
-
-
-def create_daemon_user() -> None:
-	if not frappe.db.exists("User", "daemon@frappemail.com"):
-		user = frappe.get_doc(
-			{
-				"doctype": "User",
-				"email": "daemon@frappemail.com",
-				"first_name": "Daemon",
-				"user_type": "System User",
-				"send_welcome_email": 0,
-			}
-		)
-		user.add_roles("System Manager")
-		user.save(ignore_permissions=True)
 
 
 def create_agent_job_types() -> None:
