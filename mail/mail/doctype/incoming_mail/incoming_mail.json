@@ -101,6 +101,7 @@
   {
    "fieldname": "message_id",
    "fieldtype": "Data",
+   "ignore_xss_filter": 1,
    "in_standard_filter": 1,
    "label": "Message ID",
    "no_copy": 1,
@@ -252,7 +253,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-22 16:18:42.052527",
+ "modified": "2024-03-25 08:42:11.579847",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
