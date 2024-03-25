@@ -8,7 +8,13 @@ from frappe import _
 from typing import Optional
 from typing import TYPE_CHECKING
 from frappe.model.document import Document
-from frappe.utils import cint, get_datetime_str
+from frappe.utils import (
+	now,
+	cint,
+	format_duration,
+	get_datetime_str,
+	time_diff_in_seconds,
+)
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.core.doctype.submission_queue.submission_queue import queue_submission
 
@@ -18,6 +24,10 @@ if TYPE_CHECKING:
 
 
 class IncomingMail(Document):
+	def onload(self):
+		self.received_in = format_duration(self.received_after, hide_days=True)
+		self.delivered_in = format_duration(self.delivered_after, hide_days=True)
+
 	def validate(self) -> None:
 		self.validate_mandatory_fields()
 		if self.get("_action") == "submit":
@@ -90,6 +100,10 @@ class IncomingMail(Document):
 						self.dmarc = 1
 					self.dmarc_description = header
 
+		self.delivered_at = now()
+		self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
+		self.delivered_after = time_diff_in_seconds(self.delivered_at, self.received_at)
+
 
 @frappe.whitelist()
 def get_incoming_mails(servers: Optional[str | list] = None) -> None:
@@ -111,6 +125,7 @@ def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
 				for mail in mails:
 					doc = frappe.new_doc("Incoming Mail")
 					doc.server = agent_job.server
+					doc.received_at = mail["received_at"]
 					doc.eml_filename = mail["eml_filename"]
 					doc.original_message = mail["original_message"]
 					doc.save()

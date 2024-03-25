@@ -20,9 +20,18 @@
   "body_plain",
   "original_message_tab",
   "message_id",
-  "created_at",
   "column_break_epvd",
   "eml_filename",
+  "section_break_z08o",
+  "created_at",
+  "received_at",
+  "delivered_at",
+  "column_break_x0zs",
+  "received_after",
+  "delivered_after",
+  "column_break_wqvt",
+  "received_in",
+  "delivered_in",
   "section_break_5me5",
   "spf",
   "dkim",
@@ -247,13 +256,69 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivered_at",
+   "fieldtype": "Datetime",
+   "label": "Delivered At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_z08o",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_x0zs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "received_after",
+   "fieldtype": "Int",
+   "label": "Received After (Seconds)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivered_after",
+   "fieldtype": "Int",
+   "label": "Delivered After (Seconds)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_in",
+   "fieldtype": "Data",
+   "is_virtual": 1,
+   "label": "Received In",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivered_in",
+   "fieldtype": "Data",
+   "is_virtual": 1,
+   "label": "Delivered In",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_wqvt",
+   "fieldtype": "Column Break"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-25 08:42:11.579847",
+ "modified": "2024-03-25 11:54:55.217468",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
