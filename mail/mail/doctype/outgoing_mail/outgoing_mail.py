@@ -8,6 +8,7 @@ import frappe
 import string
 import secrets
 from frappe import _
+from uuid import uuid4
 from typing import Optional
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -38,6 +39,7 @@ class OutgoingMail(Document):
 			self.validate_server()
 			self.set_body_plain()
 			self.set_message_id()
+			self.set_token()
 			self.set_original_message()
 
 	def on_submit(self) -> None:
@@ -110,6 +112,9 @@ class OutgoingMail(Document):
 			"".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(11)),
 			self.domain_name,
 		)
+
+	def set_token(self) -> None:
+		self.token = uuid4().hex
 
 	def set_original_message(self) -> None:
 		self.original_message = self.get_signed_message()
@@ -225,8 +230,7 @@ def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
 			kwargs.update({"status": "Failed", "error_log": agent_job.error_log})
 
 		elif agent_job.status == "Completed":
-			if response_data := json.loads(agent_job.response_data)["message"]:
-				kwargs.update({"status": "Transferred", "token": response_data["token"]})
+			kwargs.update({"status": "Transferred"})
 
 		if kwargs:
 			outgoing_mail = frappe.get_doc(
@@ -264,7 +268,7 @@ def get_delivery_status(servers: Optional[str | list] = None) -> None:
 def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 	def __validate_data(data: dict) -> None:
 		if data:
-			fields = ["message_id", "token", "status", "recipients"]
+			fields = ["message_id", "outgoing_mail", "status", "recipients"]
 
 			for field in fields:
 				if not data.get(field):
@@ -279,7 +283,8 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 					__validate_data(d)
 
 					if outgoing_mail := frappe.get_doc(
-						"Outgoing Mail", {"message_id": d.get("message_id"), "token": d.get("token")}
+						"Outgoing Mail",
+						{"name": d.get("outgoing_mail"), "message_id": d.get("message_id")},
 					):
 						outgoing_mail.status = d["status"]
 						for recipient in outgoing_mail.recipients:
