@@ -9,6 +9,7 @@
   "recipient",
   "sent",
   "column_break_iqoo",
+  "sent_at",
   "description"
  ],
  "fields": [
@@ -41,12 +42,19 @@
    "label": "Description",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "sent_at",
+   "fieldtype": "Datetime",
+   "label": "Sent At",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-03-06 19:06:24.853644",
+ "modified": "2024-03-25 15:20:07.188951",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Recipient",

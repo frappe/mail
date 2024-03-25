@@ -25,6 +25,7 @@
   "error_log",
   "original_message_tab",
   "message_id",
+  "created_at",
   "column_break_fvyv",
   "token",
   "section_break_kops",
@@ -198,12 +199,19 @@
    "fieldname": "original_message_tab",
    "fieldtype": "Tab Break",
    "label": "Original Message"
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created At",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-25 08:42:00.604582",
+ "modified": "2024-03-25 14:47:57.390835",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
