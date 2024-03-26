@@ -8,6 +8,7 @@ from frappe import _
 from typing import Optional
 from typing import TYPE_CHECKING
 from frappe.model.document import Document
+from mail.utils import parsedate_to_datetime
 from frappe.utils import (
 	now,
 	cint,
@@ -75,9 +76,7 @@ class IncomingMail(Document):
 		self.subject = parsed_message["Subject"]
 		self.message_id = parsed_message["Message-ID"]
 		self.body_html, self.body_plain = __get_body(parsed_message)
-		self.created_at = get_datetime_str(
-			email.utils.parsedate_to_datetime(parsed_message["Date"])
-		)
+		self.created_at = get_datetime_str(parsedate_to_datetime(parsed_message["Date"]))
 
 		self.spf_description = parsed_message.get("Received-SPF")
 		if self.spf_description:

@@ -1,4 +1,5 @@
 import re
+import pytz
 import frappe
 import random
 import socket
@@ -6,7 +7,9 @@ import ipaddress
 import dns.resolver
 from frappe import _
 from typing import Optional
+from datetime import datetime
 from mail.constants import NAMESERVERS
+from frappe.utils import get_system_timezone
 
 
 def get_dns_record(
@@ -66,3 +69,15 @@ def get_outgoing_server() -> str:
 		frappe.throw(_("No enabled outgoing server found."))
 
 	return random.choice(servers)
+
+
+def parsedate_to_datetime(
+	date_header: str, to_timezone: Optional[str] = None
+) -> datetime:
+	date_header = re.sub(r"\s+\([A-Z]+\)", "", date_header)
+	dt = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S %z")
+
+	if not to_timezone:
+		to_timezone = get_system_timezone()
+
+	return dt.astimezone(pytz.timezone(to_timezone))

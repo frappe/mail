@@ -3,7 +3,6 @@
 
 import dkim
 import json
-import email
 import frappe
 import string
 import secrets
@@ -16,10 +15,10 @@ from email.utils import formatdate
 from email.mime.text import MIMEText
 from frappe.core.utils import html2text
 from frappe.utils import get_datetime_str
-from mail.utils import get_outgoing_server
 from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
 from frappe.utils.password import get_decrypted_password
+from mail.utils import get_outgoing_server, parsedate_to_datetime
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 
 if TYPE_CHECKING:
@@ -156,7 +155,7 @@ class OutgoingMail(Document):
 			include_headers=headers,
 		)
 		message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
-		self.created_at = get_datetime_str(email.utils.parsedate_to_datetime(message["Date"]))
+		self.created_at = get_datetime_str(parsedate_to_datetime(message["Date"]))
 
 		return message.as_string()
 
