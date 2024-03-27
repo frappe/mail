@@ -4,18 +4,15 @@
 import dkim
 import json
 import frappe
-import string
-import secrets
 from frappe import _
 from uuid import uuid4
 from typing import Optional
-from datetime import datetime
 from typing import TYPE_CHECKING
-from email.utils import formatdate
 from email.mime.text import MIMEText
 from frappe.core.utils import html2text
 from frappe.utils import get_datetime_str
 from frappe.model.document import Document
+from email.utils import make_msgid, formatdate
 from email.mime.multipart import MIMEMultipart
 from frappe.utils.password import get_decrypted_password
 from mail.utils import get_outgoing_server, parsedate_to_datetime
@@ -106,11 +103,7 @@ class OutgoingMail(Document):
 		self.body_plain = html2text(self.body_html)
 
 	def set_message_id(self) -> None:
-		self.message_id = "<{0}.{1}@{2}>".format(
-			datetime.now().strftime("%Y%m%d%H%M%S"),
-			"".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(11)),
-			self.domain_name,
-		)
+		self.message_id = make_msgid(domain=self.domain_name)
 
 	def set_token(self) -> None:
 		self.token = uuid4().hex
