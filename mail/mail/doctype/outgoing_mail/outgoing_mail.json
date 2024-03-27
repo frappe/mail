@@ -53,7 +53,7 @@
   },
   {
    "fieldname": "subject",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "in_standard_filter": 1,
    "label": "Subject",
    "reqd": 1

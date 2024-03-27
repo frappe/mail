@@ -79,7 +79,7 @@
   },
   {
    "fieldname": "subject",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "in_standard_filter": 1,
    "label": "Subject",
    "no_copy": 1,
@@ -320,7 +320,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-25 16:47:25.014363",
+ "modified": "2024-03-27 21:27:40.895161",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
