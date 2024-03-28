@@ -1,22 +1,29 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import dkim
-import json
 import frappe
 from frappe import _
 from uuid import uuid4
-from typing import Optional
-from typing import TYPE_CHECKING
+from secrets import token_hex
+from mimetypes import guess_type
+from dkim import sign as dkim_sign
+from json import loads as json_loads
+from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
+from email.mime.audio import MIMEAudio
+from email.mime.image import MIMEImage
 from frappe.core.utils import html2text
+from email.encoders import encode_base64
 from frappe.utils import get_datetime_str
+from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
-from email.utils import make_msgid, formatdate
 from email.mime.multipart import MIMEMultipart
+from email.utils import make_msgid, formatdate
+from frappe.desk.form.load import get_attachments
 from frappe.utils.password import get_decrypted_password
 from mail.utils import get_outgoing_server, parsedate_to_datetime
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
+
 
 if TYPE_CHECKING:
 	from mail.mail.doctype.mail_agent_job.mail_agent_job import MailAgentJob
@@ -32,7 +39,7 @@ class OutgoingMail(Document):
 
 		if self.get("_action") == "submit":
 			self.set_from_ip()
-			self.validate_server()
+			self.set_server()
 			self.set_body_plain()
 			self.set_message_id()
 			self.set_token()
@@ -95,7 +102,7 @@ class OutgoingMail(Document):
 	def set_from_ip(self) -> None:
 		self.from_ip = frappe.local.request_ip
 
-	def validate_server(self) -> None:
+	def set_server(self) -> None:
 		if not self.server:
 			self.server = get_outgoing_server()
 
@@ -109,48 +116,90 @@ class OutgoingMail(Document):
 		self.token = uuid4().hex
 
 	def set_original_message(self) -> None:
-		self.original_message = self.get_signed_message()
+		def __get_message() -> "MIMEMultipart":
+			message = MIMEMultipart("alternative")
+			display_name = frappe.get_cached_value("Mailbox", self.sender, "display_name")
+			message["From"] = (
+				"{0} <{1}>".format(display_name, self.sender) if display_name else self.sender
+			)
+			message["To"] = self.get_recipients()
+			message["Subject"] = self.subject
+			message["Date"] = formatdate(localtime=True)
+			message["Message-ID"] = self.message_id
 
-	def get_signed_message(self) -> str:
-		display_name = frappe.get_cached_value("Mailbox", self.sender, "display_name")
-		dkim_selector = frappe.get_cached_value(
-			"Mail Domain", self.domain_name, "dkim_selector"
-		)
-		dkim_private_key = get_decrypted_password(
-			"Mail Domain", self.domain_name, "dkim_private_key"
-		)
+			message.attach(MIMEText(self.body_plain, "plain", "utf-8"))
+			message.attach(MIMEText(self.body_html, "html", "utf-8"))
 
-		message = MIMEMultipart("alternative")
-		message["From"] = (
-			"{0} <{1}>".format(display_name, self.sender) if display_name else self.sender
-		)
-		message["To"] = ", ".join(self.get_recipients())
-		message["Subject"] = self.subject
-		message["Date"] = formatdate(localtime=True)
-		message["Message-ID"] = self.message_id
+			return message
 
-		if self.custom_headers:
-			for header in self.custom_headers:
-				message.add_header(header.key, header.value)
+		def __add_custom_headers(message: "MIMEMultipart") -> None:
+			if self.custom_headers:
+				for header in self.custom_headers:
+					message.add_header(header.key, header.value)
 
-		if self.body_plain:
-			message.attach(MIMEText(self.body_plain, "plain"))
+		def __add_attachments(message: "MIMEMultipart") -> None:
+			for attachment in get_attachments(self.doctype, self.name):
+				file = frappe.get_doc("File", attachment.get("name"))
+				content_type = guess_type(file.file_name)[0]
 
-		if self.body_html:
-			message.attach(MIMEText(self.body_html, "html"))
+				if content_type is None:
+					content_type = "application/octet-stream"
 
-		headers = [b"To", b"From", b"Subject"]
-		signature = dkim.sign(
-			message=message.as_bytes(),
-			domain=self.domain_name.encode(),
-			selector=dkim_selector.encode(),
-			privkey=dkim_private_key.encode(),
-			include_headers=headers,
-		)
-		message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
+				content = file.get_content()
+				maintype, subtype = content_type.split("/", 1)
+
+				if maintype == "text":
+					if isinstance(content, str):
+						content = content.encode("utf-8")
+					part = MIMEText(content, _subtype=subtype, _charset="utf-8")
+
+				elif maintype == "image":
+					part = MIMEImage(content, _subtype=subtype)
+
+				elif maintype == "audio":
+					part = MIMEAudio(content, _subtype=subtype)
+
+				else:
+					part = MIMEBase(maintype, subtype)
+					part.set_payload(content)
+					encode_base64(part)
+
+				part.add_header("Content-Disposition", f'attachment; filename="{file.file_name}"')
+				part.add_header("Content-ID", f"<{'f_' + token_hex(5)}>")
+
+				message.attach(part)
+
+		def __add_dkim_signature(message: "MIMEMultipart") -> None:
+			headers = [
+				b"To",
+				b"From",
+				b"Date",
+				b"Subject",
+				b"Reply-To",
+				b"Message-ID",
+			]
+			dkim_selector = frappe.get_cached_value(
+				"Mail Domain", self.domain_name, "dkim_selector"
+			)
+			dkim_private_key = get_decrypted_password(
+				"Mail Domain", self.domain_name, "dkim_private_key"
+			)
+			signature = dkim_sign(
+				message=message.as_string().split("\n", 1)[-1].encode("utf-8"),
+				domain=self.domain_name.encode(),
+				selector=dkim_selector.encode(),
+				privkey=dkim_private_key.encode(),
+				include_headers=headers,
+			)
+			message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
+
+		message = __get_message()
+		__add_custom_headers(message)
+		__add_attachments(message)
+		__add_dkim_signature(message)
+
+		self.original_message = message.as_string()
 		self.created_at = get_datetime_str(parsedate_to_datetime(message["Date"]))
-
-		return message.as_string()
 
 	def send_mail(self) -> None:
 		request_data = {
@@ -160,8 +209,9 @@ class OutgoingMail(Document):
 		self._db_set(status="Queued", notify_update=True)
 		create_agent_job(self.server, "Send Mail", request_data=request_data)
 
-	def get_recipients(self) -> None:
-		return [d.recipient for d in self.recipients]
+	def get_recipients(self, as_list: bool = False) -> str | list[str]:
+		recipients = [d.recipient for d in self.recipients]
+		return recipients if as_list else ", ".join(recipients)
 
 	def _db_set(
 		self,
@@ -213,7 +263,7 @@ def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
 		if agent_job.status == "Running":
 			kwargs.update({"status": "Transferring"})
 			outgoing_mail = frappe.get_doc(
-				"Outgoing Mail", json.loads(agent_job.request_data).get("outgoing_mail")
+				"Outgoing Mail", json_loads(agent_job.request_data).get("outgoing_mail")
 			)
 			outgoing_mail._db_set(**kwargs, commit=True)
 			return
@@ -226,7 +276,7 @@ def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
 
 		if kwargs:
 			outgoing_mail = frappe.get_doc(
-				"Outgoing Mail", json.loads(agent_job.request_data)["outgoing_mail"]
+				"Outgoing Mail", json_loads(agent_job.request_data)["outgoing_mail"]
 			)
 			outgoing_mail._db_set(**kwargs, notify_update=True)
 
@@ -270,7 +320,7 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 
 	if agent_job and agent_job.job_type == "Get Delivery Status":
 		if agent_job.status == "Completed":
-			if data := json.loads(agent_job.response_data)["message"]:
+			if data := json_loads(agent_job.response_data)["message"]:
 				for d in data:
 					__validate_data(d)
 
