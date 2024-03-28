@@ -63,7 +63,10 @@ frappe.ui.form.on("Outgoing Mail", {
 			freeze: true,
 			freeze_message: __("Getting Delivery Status..."),
 			callback: function() {
-                frappe.msgprint(__("Get Delivery Status Job has been started in the background."));
+                frappe.show_alert({
+                    message: __("Get Delivery Status Job has been started in the background."),
+                    indicator: "green",
+                });
             }
 		});
 	},

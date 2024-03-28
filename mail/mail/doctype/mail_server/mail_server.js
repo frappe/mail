@@ -35,7 +35,10 @@ frappe.ui.form.on("Mail Server", {
 			freeze: true,
 			freeze_message: __("Getting Delivery Status..."),
 			callback: function() {
-                frappe.msgprint(__("Get Delivery Status Job has been started in the background."));
+				frappe.show_alert({
+                    message: __("Get Delivery Status Job has been started in the background."),
+                    indicator: "green",
+                });
             }
 		});
 	},
@@ -49,7 +52,10 @@ frappe.ui.form.on("Mail Server", {
 			freeze: true,
 			freeze_message: __("Receiving Mails..."),
 			callback: function() {
-                frappe.msgprint(__("Get Incoming Mails Job has been started in the background."));
+				frappe.show_alert({
+                    message: __("Get Incoming Mails Job has been started in the background."),
+                    indicator: "green",
+                });
             }
 		});
     },
@@ -63,7 +69,10 @@ frappe.ui.form.on("Mail Server", {
 			freeze: true,
 			freeze_message: __("Updating Virtual Domains..."),
 			callback: function() {
-				frappe.msgprint(__("Update Virtual Domains Job has been started in the background."));
+				frappe.show_alert({
+                    message: __("Update Virtual Domains Job has been started in the background."),
+                    indicator: "green",
+                });
 			}
 		});
     },
@@ -77,7 +86,10 @@ frappe.ui.form.on("Mail Server", {
 			freeze: true,
 			freeze_message: __("Updating Virtual Mailboxes..."),
 			callback: function() {
-				frappe.msgprint(__("Update Virtual Mailboxes Job has been started in the background."));
+				frappe.show_alert({
+                    message: __("Update Virtual Mailboxes Job has been started in the background."),
+                    indicator: "green",
+                });
 			}
 		});
     },
