@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from uuid import uuid4
-from secrets import token_hex
+from re import finditer
 from mimetypes import guess_type
 from dkim import sign as dkim_sign
 from json import loads as json_loads
@@ -41,6 +41,7 @@ class OutgoingMail(Document):
 			self.set_from_ip()
 			self.set_server()
 			self.validate_use_raw_html()
+			self.set_attachments()
 			self.set_body_plain()
 			self.set_message_id()
 			self.set_token()
@@ -96,12 +97,6 @@ class OutgoingMail(Document):
 					)
 				)
 
-	def validate_use_raw_html(self) -> None:
-		if self.use_raw_html:
-			self.body_html = self.raw_html
-
-		self.raw_html = ""
-
 	def validate_body_html(self) -> None:
 		if not self.body_html:
 			self.body_html = ""
@@ -112,6 +107,17 @@ class OutgoingMail(Document):
 	def set_server(self) -> None:
 		if not self.server:
 			self.server = get_outgoing_server()
+
+	def validate_use_raw_html(self) -> None:
+		if self.use_raw_html:
+			self.body_html = self.raw_html
+
+		self.raw_html = ""
+
+	def set_attachments(self) -> None:
+		self.attachments = get_attachments(self.doctype, self.name)
+		for attachment in self.attachments:
+			attachment.type = "attachment"
 
 	def set_body_plain(self) -> None:
 		self.body_plain = html2text(self.body_html)
@@ -134,8 +140,11 @@ class OutgoingMail(Document):
 			message["Date"] = formatdate(localtime=True)
 			message["Message-ID"] = self.message_id
 
-			message.attach(MIMEText(self.body_plain, "plain", "utf-8"))
-			message.attach(MIMEText(self.body_html, "html", "utf-8"))
+			body_html = self._replace_image_url_with_content_id()
+			body_plain = html2text(body_html)
+
+			message.attach(MIMEText(body_plain, "plain", "utf-8"))
+			message.attach(MIMEText(body_html, "html", "utf-8"))
 
 			return message
 
@@ -145,7 +154,7 @@ class OutgoingMail(Document):
 					message.add_header(header.key, header.value)
 
 		def __add_attachments(message: "MIMEMultipart") -> None:
-			for attachment in get_attachments(self.doctype, self.name):
+			for attachment in self.attachments:
 				file = frappe.get_doc("File", attachment.get("name"))
 				content_type = guess_type(file.file_name)[0]
 
@@ -171,8 +180,10 @@ class OutgoingMail(Document):
 					part.set_payload(content)
 					encode_base64(part)
 
-				part.add_header("Content-Disposition", f'attachment; filename="{file.file_name}"')
-				part.add_header("Content-ID", f"<{'f_' + token_hex(5)}>")
+				part.add_header(
+					"Content-Disposition", f'{attachment.type}; filename="{file.file_name}"'
+				)
+				part.add_header("Content-ID", f"<{attachment.name}>")
 
 				message.attach(part)
 
@@ -219,6 +230,35 @@ class OutgoingMail(Document):
 	def get_recipients(self, as_list: bool = False) -> str | list[str]:
 		recipients = [d.recipient for d in self.recipients]
 		return recipients if as_list else ", ".join(recipients)
+
+	def _replace_image_url_with_content_id(self) -> str:
+		body_html = self.body_html or ""
+
+		if body_html and self.attachments:
+			img_src_pattern = r'<img.*?src="(.*?)".*?>'
+
+			for img_src_match in finditer(img_src_pattern, body_html):
+				img_src = img_src_match.group(1)
+
+				if content_id := self._get_attachment_content_id(img_src, set_as_inline=True):
+					body_html = body_html.replace(img_src, f"cid:{content_id}")
+
+		return body_html
+
+	def _get_attachment_content_id(
+		self, file_url: str, set_as_inline: bool = False
+	) -> Optional[str]:
+		for attachment in self.attachments:
+			if file_url in attachment.file_url:
+				if set_as_inline:
+					attachment.type = "inline"
+
+				return attachment.name
+
+	def _get_attachment_file_url(self, content_id: str) -> Optional[str]:
+		for attachment in self.attachments:
+			if content_id == attachment.name:
+				return attachment.file_url
 
 	def _db_set(
 		self,
