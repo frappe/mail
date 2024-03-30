@@ -40,6 +40,7 @@ class OutgoingMail(Document):
 		if self.get("_action") == "submit":
 			self.set_from_ip()
 			self.set_server()
+			self.validate_use_raw_html()
 			self.set_body_plain()
 			self.set_message_id()
 			self.set_token()
@@ -94,6 +95,12 @@ class OutgoingMail(Document):
 						recipient.idx, frappe.bold(recipient.recipient)
 					)
 				)
+
+	def validate_use_raw_html(self) -> None:
+		if self.use_raw_html:
+			self.body_html = self.raw_html
+
+		self.raw_html = ""
 
 	def validate_body_html(self) -> None:
 		if not self.body_html:

@@ -87,7 +87,7 @@
   },
   {
    "fieldname": "body_html",
-   "fieldtype": "HTML Editor",
+   "fieldtype": "Text Editor",
    "label": "Body HTML",
    "no_copy": 1,
    "read_only": 1
@@ -320,7 +320,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-27 21:27:40.895161",
+ "modified": "2024-03-30 14:50:22.444144",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
