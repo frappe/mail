@@ -10,4 +10,24 @@ frappe.listview_settings["Incoming Mail"] = {
 		};
 		return [__(doc.status), status_colors[doc.status], "status,=," + doc.status];
 	},
+
+	refresh: function(listview) {
+        listview.page.add_inner_button("Refresh", function() {
+            get_incoming_mails(listview);
+        });;
+    },
 };
+
+function get_incoming_mails(listview) {
+	frappe.call({
+		method: "mail.mail.doctype.incoming_mail.incoming_mail.get_incoming_mails",
+		freeze: true,
+		freeze_message: __("Receiving Mails..."),
+		callback: function() {
+			frappe.show_alert({
+				message: __("Get Incoming Mails Job has been started in the background."),
+				indicator: "green",
+			});
+		}
+	});
+}
