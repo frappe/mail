@@ -220,14 +220,14 @@
   {
    "depends_on": "eval: doc.docstatus == 0 && doc.use_raw_html ",
    "fieldname": "raw_html",
-   "fieldtype": "HTML Editor"
+   "fieldtype": "Code"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
  "max_attachments": 10,
- "modified": "2024-03-30 14:02:44.737785",
+ "modified": "2024-03-31 19:21:18.464991",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
