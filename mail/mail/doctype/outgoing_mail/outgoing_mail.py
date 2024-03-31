@@ -375,11 +375,10 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 						"Outgoing Mail",
 						{"name": d.get("outgoing_mail"), "message_id": d.get("message_id")},
 					):
-						outgoing_mail.status = d["status"]
 						for recipient in outgoing_mail.recipients:
 							recipient.sent = d["recipients"][recipient.recipient]["sent"]
 							recipient.sent_at = d["recipients"][recipient.recipient]["sent_at"]
 							recipient.description = d["recipients"][recipient.recipient]["description"]
 							recipient.db_update()
 
-						outgoing_mail.db_update()
+						outgoing_mail._db_set(status=d["status"], notify_update=True)
