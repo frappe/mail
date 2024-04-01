@@ -1,8 +1,10 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import re
 import json
 import email
+import base64
 import frappe
 from frappe import _
 from typing import Optional
@@ -51,8 +53,23 @@ class IncomingMail(Document):
 				frappe.throw(f"{field} is mandatory")
 
 	def process(self) -> None:
-		def __add_attachment(filename: str, content: bytes) -> dict:
-			file = save_file(filename, content, self.doctype, self.name, df="file", is_private=1)
+		def __add_attachment(
+			filename: str, content: bytes, is_private: bool = 1, for_doc: bool = True
+		) -> dict:
+			kwargs = {
+				"fname": filename,
+				"content": content,
+				"is_private": is_private,
+				"dt": None,
+				"dn": None,
+			}
+
+			if for_doc:
+				kwargs["dt"] = self.doctype
+				kwargs["dn"] = self.name
+				kwargs["df"] = "file"
+
+			file = save_file(**kwargs)
 
 			return {
 				"name": file.name,
@@ -61,18 +78,28 @@ class IncomingMail(Document):
 				"is_private": file.is_private,
 			}
 
-		def __get_body(parsed_message: "Message") -> tuple[str, str, list]:
-			attachments = []
+		def __get_body(parsed_message: "Message") -> tuple[str, str]:
 			body_html, body_plain = "", ""
 
 			for part in parsed_message.walk():
+				filename = part.get_filename()
 				content_type = part.get_content_type()
 				disposition = part.get("Content-Disposition")
 
-				if disposition and disposition.startswith("attachment"):
-					if filename := part.get_filename():
-						attachment = __add_attachment(filename, part.get_payload(decode=True))
-						attachments.append(attachment)
+				if disposition and filename:
+					disposition = disposition.lower()
+
+					if disposition.startswith("inline"):
+						if content_id := re.sub(r"[<>]", "", part.get("Content-ID", "")):
+							if payload := part.get_payload(decode=True):
+								if part.get_content_charset():
+									payload = payload.decode(part.get_content_charset(), "ignore")
+
+								file = __add_attachment(filename, payload, is_private=0, for_doc=False)
+								body_html = body_html.replace("cid:" + content_id, file["file_url"])
+
+					elif disposition.startswith("attachment"):
+						__add_attachment(filename, part.get_payload(decode=True))
 
 				elif content_type == "text/html":
 					body_html += part.get_payload(decode=True).decode(
@@ -84,7 +111,7 @@ class IncomingMail(Document):
 						part.get_content_charset(), "ignore"
 					)
 
-			return body_html, body_plain, attachments
+			return body_html, body_plain
 
 		parsed_message = email.message_from_string(self.original_message)
 		sender = email.utils.parseaddr(parsed_message["From"])
@@ -95,7 +122,7 @@ class IncomingMail(Document):
 		self.recipients = parsed_message["To"]
 		self.subject = parsed_message["Subject"]
 		self.message_id = parsed_message["Message-ID"]
-		self.body_html, self.body_plain, self.attachments = __get_body(parsed_message)
+		self.body_html, self.body_plain = __get_body(parsed_message)
 		self.created_at = get_datetime_str(parsedate_to_datetime(parsed_message["Date"]))
 
 		self.spf_description = parsed_message.get("Received-SPF")
