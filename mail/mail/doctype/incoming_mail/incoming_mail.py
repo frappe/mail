@@ -9,6 +9,7 @@ from typing import Optional
 from typing import TYPE_CHECKING
 from frappe.model.document import Document
 from mail.utils import parsedate_to_datetime
+from frappe.utils.file_manager import save_file
 from frappe.utils import (
 	now,
 	cint,
@@ -50,21 +51,40 @@ class IncomingMail(Document):
 				frappe.throw(f"{field} is mandatory")
 
 	def process(self) -> None:
-		def __get_body(parsed_message: "Message") -> tuple[str, str]:
+		def __add_attachment(filename: str, content: bytes) -> dict:
+			file = save_file(filename, content, self.doctype, self.name, df="file", is_private=1)
+
+			return {
+				"name": file.name,
+				"file_name": file.file_name,
+				"file_url": file.file_url,
+				"is_private": file.is_private,
+			}
+
+		def __get_body(parsed_message: "Message") -> tuple[str, str, list]:
+			attachments = []
 			body_html, body_plain = "", ""
 
 			for part in parsed_message.walk():
 				content_type = part.get_content_type()
+				disposition = part.get("Content-Disposition")
 
-				if content_type == "text/html":
-					if payload := part.get_payload(decode=True):
-						body_html += payload.decode(part.get_content_charset(), "ignore")
+				if disposition and disposition.startswith("attachment"):
+					if filename := part.get_filename():
+						attachment = __add_attachment(filename, part.get_payload(decode=True))
+						attachments.append(attachment)
+
+				elif content_type == "text/html":
+					body_html += part.get_payload(decode=True).decode(
+						part.get_content_charset(), "ignore"
+					)
 
 				elif content_type == "text/plain":
-					if payload := part.get_payload(decode=True):
-						body_plain += payload.decode(part.get_content_charset(), "ignore")
+					body_plain += part.get_payload(decode=True).decode(
+						part.get_content_charset(), "ignore"
+					)
 
-			return body_html, body_plain
+			return body_html, body_plain, attachments
 
 		parsed_message = email.message_from_string(self.original_message)
 		sender = email.utils.parseaddr(parsed_message["From"])
@@ -75,7 +95,7 @@ class IncomingMail(Document):
 		self.recipients = parsed_message["To"]
 		self.subject = parsed_message["Subject"]
 		self.message_id = parsed_message["Message-ID"]
-		self.body_html, self.body_plain = __get_body(parsed_message)
+		self.body_html, self.body_plain, self.attachments = __get_body(parsed_message)
 		self.created_at = get_datetime_str(parsedate_to_datetime(parsed_message["Date"]))
 
 		self.spf_description = parsed_message.get("Received-SPF")

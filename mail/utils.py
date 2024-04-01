@@ -7,6 +7,7 @@ import ipaddress
 import dns.resolver
 from frappe import _
 from typing import Optional
+from bs4 import BeautifulSoup
 from datetime import datetime
 from mail.constants import NAMESERVERS
 from frappe.utils import get_system_timezone
@@ -81,3 +82,14 @@ def parsedate_to_datetime(
 		to_timezone = get_system_timezone()
 
 	return dt.astimezone(pytz.timezone(to_timezone))
+
+
+def convert_html_to_text(self, html: str) -> str:
+	text = ""
+
+	if html:
+		soup = BeautifulSoup(html, "html.parser")
+		text = soup.get_text()
+		text = re.sub(r"\s+", " ", text).strip()
+
+	return text
