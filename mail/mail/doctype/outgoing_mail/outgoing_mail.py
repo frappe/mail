@@ -86,6 +86,17 @@ class OutgoingMail(Document):
 			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
 
 	def validate_recipients(self) -> None:
+		recipient_limit = frappe.db.get_single_value(
+			"Mail Settings", "recipient_limit", cache=True
+		)
+
+		if len(self.recipients) > recipient_limit:
+			frappe.throw(
+				"Recipient limit exceeded. Maximum {0} recipients allowed.".format(
+					frappe.bold(recipient_limit)
+				)
+			)
+
 		recipients = []
 		for recipient in self.recipients:
 			if recipient.recipient not in recipients:

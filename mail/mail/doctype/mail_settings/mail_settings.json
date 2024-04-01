@@ -14,7 +14,9 @@
   "column_break_xlun",
   "default_dkim_bits",
   "section_break_kplw",
-  "dns_records"
+  "dns_records",
+  "outgoing_tab",
+  "recipient_limit"
  ],
  "fields": [
   {
@@ -77,12 +79,25 @@
   {
    "fieldname": "section_break_kplw",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "outgoing_tab",
+   "fieldtype": "Tab Break",
+   "label": "Outgoing"
+  },
+  {
+   "default": "100",
+   "fieldname": "recipient_limit",
+   "fieldtype": "Int",
+   "label": "Recipient Limit",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-02-14 18:20:16.480374",
+ "modified": "2024-04-01 15:26:49.985165",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
