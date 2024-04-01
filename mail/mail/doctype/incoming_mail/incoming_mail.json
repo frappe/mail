@@ -29,9 +29,6 @@
   "column_break_x0zs",
   "received_after",
   "delivered_after",
-  "column_break_wqvt",
-  "received_in",
-  "delivered_in",
   "section_break_5me5",
   "spf",
   "dkim",
@@ -244,7 +241,7 @@
    "search_index": 1
   },
   {
-   "depends_on": "eval: doc.receiver != doc.recipients",
+   "depends_on": "eval: doc.recipients && doc.receiver != doc.recipients",
    "fieldname": "recipients",
    "fieldtype": "Text",
    "label": "Recipients",
@@ -282,6 +279,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Received At - Created At",
    "fieldname": "received_after",
    "fieldtype": "Int",
    "label": "Received After (Seconds)",
@@ -289,38 +287,19 @@
    "read_only": 1
   },
   {
+   "description": "Delivered At - Received At",
    "fieldname": "delivered_after",
    "fieldtype": "Int",
    "label": "Delivered After (Seconds)",
    "no_copy": 1,
    "read_only": 1
-  },
-  {
-   "fieldname": "received_in",
-   "fieldtype": "Data",
-   "is_virtual": 1,
-   "label": "Received In",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "delivered_in",
-   "fieldtype": "Data",
-   "is_virtual": 1,
-   "label": "Delivered In",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_wqvt",
-   "fieldtype": "Column Break"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-03-30 14:50:22.444144",
+ "modified": "2024-04-01 14:01:35.680296",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

@@ -14,13 +14,13 @@ from email.mime.audio import MIMEAudio
 from email.mime.image import MIMEImage
 from frappe.core.utils import html2text
 from email.encoders import encode_base64
-from frappe.utils import get_datetime_str
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid, formatdate
 from frappe.desk.form.load import get_attachments
 from frappe.utils.password import get_decrypted_password
+from frappe.utils import get_datetime_str, time_diff_in_seconds
 from mail.utils import get_outgoing_server, parsedate_to_datetime
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 
@@ -377,7 +377,13 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 					):
 						for recipient in outgoing_mail.recipients:
 							recipient.sent = d["recipients"][recipient.recipient]["sent"]
-							recipient.sent_at = d["recipients"][recipient.recipient]["sent_at"]
+
+							if recipient.sent:
+								recipient.sent_at = d["recipients"][recipient.recipient]["sent_at"]
+								recipient.sent_after = time_diff_in_seconds(
+									recipient.sent_at, outgoing_mail.created_at
+								)
+
 							recipient.description = d["recipients"][recipient.recipient]["description"]
 							recipient.db_update()
 

@@ -10,6 +10,7 @@
   "sent",
   "column_break_iqoo",
   "sent_at",
+  "sent_after",
   "description"
  ],
  "fields": [
@@ -44,9 +45,19 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval: doc.sent",
    "fieldname": "sent_at",
    "fieldtype": "Datetime",
    "label": "Sent At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.sent",
+   "description": "Sent At - Created At",
+   "fieldname": "sent_after",
+   "fieldtype": "Int",
+   "label": "Sent After (Seconds)",
    "no_copy": 1,
    "read_only": 1
   }
@@ -54,7 +65,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-03-25 15:20:07.188951",
+ "modified": "2024-04-01 13:59:54.268051",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Recipient",
