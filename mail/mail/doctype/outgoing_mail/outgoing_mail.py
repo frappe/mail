@@ -20,8 +20,8 @@ from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid, formatdate
 from frappe.desk.form.load import get_attachments
 from frappe.utils.password import get_decrypted_password
-from frappe.utils import get_datetime_str, time_diff_in_seconds
 from mail.utils import get_outgoing_server, parsedate_to_datetime
+from frappe.utils import now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 
 
@@ -319,12 +319,18 @@ def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
 			kwargs.update({"status": "Failed", "error_log": agent_job.error_log})
 
 		elif agent_job.status == "Completed":
-			kwargs.update({"status": "Transferred"})
+			kwargs.update({"status": "Transferred", "transferred_at": now()})
 
 		if kwargs:
 			outgoing_mail = frappe.get_doc(
 				"Outgoing Mail", json_loads(agent_job.request_data)["outgoing_mail"]
 			)
+
+			if kwargs.get("status") == "Transferred":
+				kwargs["transferred_after"] = time_diff_in_seconds(
+					kwargs["transferred_at"], outgoing_mail.created_at
+				)
+
 			outgoing_mail._db_set(**kwargs, notify_update=True)
 
 

@@ -28,8 +28,10 @@
   "original_message_tab",
   "message_id",
   "created_at",
+  "transferred_at",
   "column_break_fvyv",
   "token",
+  "transferred_after",
   "section_break_kops",
   "original_message",
   "amended_from"
@@ -221,13 +223,29 @@
    "depends_on": "eval: doc.docstatus == 0 && doc.use_raw_html ",
    "fieldname": "raw_html",
    "fieldtype": "Code"
+  },
+  {
+   "fieldname": "transferred_at",
+   "fieldtype": "Datetime",
+   "label": "Transferred At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.transferred_at",
+   "description": "Transferred At - Created At",
+   "fieldname": "transferred_after",
+   "fieldtype": "Int",
+   "label": "Transferred After (Seconds)",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
  "max_attachments": 10,
- "modified": "2024-03-31 19:21:18.464991",
+ "modified": "2024-04-01 15:16:44.876943",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
