@@ -5,8 +5,10 @@ import json
 import frappe
 import requests
 from frappe import _
+from frappe.query_builder import Interval
 from typing import TYPE_CHECKING, Optional
 from frappe.model.document import Document
+from frappe.query_builder.functions import Now
 from frappe.utils import now, time_diff_in_seconds
 from frappe.utils.password import get_decrypted_password
 
@@ -15,6 +17,15 @@ if TYPE_CHECKING:
 
 
 class MailAgentJob(Document):
+	@staticmethod
+	def clear_old_logs(days=14):
+		table = frappe.qb.DocType("Mail Agent Job")
+		frappe.db.delete(
+			table,
+			filters=((table.modified < (Now() - Interval(days=days))))
+			& (table.status == "Completed"),
+		)
+
 	def validate(self) -> None:
 		self.validate_job_type()
 		self.validate_request_data()

@@ -4,7 +4,6 @@
 import re
 import json
 import email
-import base64
 import frappe
 from frappe import _
 from typing import Optional
