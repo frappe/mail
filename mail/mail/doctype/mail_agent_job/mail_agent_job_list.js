@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 frappe.listview_settings["Mail Agent Job"] = {
-	get_indicator: function (doc) {
+	get_indicator: (doc) => {
 		const status_colors = {
 			"Queued": "blue",
 			"Running": "yellow",
