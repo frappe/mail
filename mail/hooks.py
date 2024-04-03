@@ -123,13 +123,13 @@ after_migrate = "mail.install.after_migrate"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"File": {
+		"validate": "mail.overrides.validate_file",
+		"on_update": "mail.overrides.validate_file",
+		"on_trash": "mail.overrides.validate_file",
+	}
+}
 
 # Scheduled Tasks
 # ---------------

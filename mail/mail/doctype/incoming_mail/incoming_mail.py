@@ -49,7 +49,7 @@ class IncomingMail(Document):
 
 		for field in mandatory_fields:
 			if not self.get(field):
-				frappe.throw(f"{field} is mandatory")
+				frappe.throw(_("{0} is mandatory").format(frappe.bold(field)))
 
 	def process(self) -> None:
 		def __add_attachment(

@@ -16,7 +16,11 @@
   "section_break_kplw",
   "dns_records",
   "outgoing_tab",
-  "recipient_limit"
+  "max_recipients",
+  "column_break_sf4n",
+  "outgoing_max_attachments",
+  "outgoing_max_attachment_size",
+  "outgoing_total_attachments_size"
  ],
  "fields": [
   {
@@ -86,18 +90,42 @@
    "label": "Outgoing"
   },
   {
+   "fieldname": "column_break_sf4n",
+   "fieldtype": "Column Break"
+  },
+  {
    "default": "100",
-   "fieldname": "recipient_limit",
+   "fieldname": "max_recipients",
    "fieldtype": "Int",
-   "label": "Recipient Limit",
-   "non_negative": 1,
-   "reqd": 1
+   "label": "Max Recipients",
+   "non_negative": 1
+  },
+  {
+   "default": "20",
+   "fieldname": "outgoing_max_attachments",
+   "fieldtype": "Int",
+   "label": "Max Attachments (Count)",
+   "non_negative": 1
+  },
+  {
+   "default": "20",
+   "fieldname": "outgoing_max_attachment_size",
+   "fieldtype": "Int",
+   "label": "Max Attachment Size (MB)",
+   "non_negative": 1
+  },
+  {
+   "default": "20",
+   "fieldname": "outgoing_total_attachments_size",
+   "fieldtype": "Int",
+   "label": "Total Attachments Size (MB)",
+   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-04-01 15:26:49.985165",
+ "modified": "2024-04-03 16:48:36.611617",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

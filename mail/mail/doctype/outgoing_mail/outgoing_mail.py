@@ -18,7 +18,6 @@ from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid, formatdate
-from frappe.desk.form.load import get_attachments
 from frappe.utils.password import get_decrypted_password
 from mail.utils import get_outgoing_server, parsedate_to_datetime
 from frappe.utils import now, get_datetime_str, time_diff_in_seconds
@@ -36,12 +35,13 @@ class OutgoingMail(Document):
 		self.validate_amended_doc()
 		self.validate_recipients()
 		self.validate_body_html()
+		self.load_attachments()
+		self.validate_attachments()
 
 		if self.get("_action") == "submit":
 			self.set_from_ip()
 			self.set_server()
 			self.validate_use_raw_html()
-			self.set_attachments()
 			self.set_body_plain()
 			self.set_message_id()
 			self.set_token()
@@ -86,14 +86,14 @@ class OutgoingMail(Document):
 			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
 
 	def validate_recipients(self) -> None:
-		recipient_limit = frappe.db.get_single_value(
-			"Mail Settings", "recipient_limit", cache=True
+		max_recipients = frappe.db.get_single_value(
+			"Mail Settings", "max_recipients", cache=True
 		)
 
-		if len(self.recipients) > recipient_limit:
+		if len(self.recipients) > max_recipients:
 			frappe.throw(
-				"Recipient limit exceeded. Maximum {0} recipients allowed.".format(
-					frappe.bold(recipient_limit)
+				_("Recipient limit exceeded. Maximum {0} recipients allowed.").format(
+					frappe.bold(max_recipients)
 				)
 			)
 
@@ -103,7 +103,7 @@ class OutgoingMail(Document):
 				recipients.append(recipient.recipient)
 			else:
 				frappe.throw(
-					"Row #{0}: Duplicate recipient {1}.".format(
+					_("Row #{0}: Duplicate recipient {1}.").format(
 						recipient.idx, frappe.bold(recipient.recipient)
 					)
 				)
@@ -111,6 +111,46 @@ class OutgoingMail(Document):
 	def validate_body_html(self) -> None:
 		if not self.body_html:
 			self.body_html = ""
+
+	def load_attachments(self) -> None:
+		self.attachments = frappe.db.get_all(
+			"File",
+			fields=["name", "file_name", "file_url", "is_private", "file_size"],
+			filters={"attached_to_doctype": self.doctype, "attached_to_name": self.name},
+		)
+
+		for attachment in self.attachments:
+			attachment.type = "attachment"
+
+	def validate_attachments(self) -> None:
+		if self.attachments:
+			mail_settings = frappe.get_cached_doc("Mail Settings")
+
+			if len(self.attachments) > mail_settings.outgoing_max_attachments:
+				frappe.throw(
+					_("Attachment limit exceeded. Maximum {0} attachment(s) allowed.").format(
+						frappe.bold(mail_settings.outgoing_max_attachments)
+					)
+				)
+
+			total_attachments_size = 0
+			for attachment in self.attachments:
+				file_size = attachment.file_size / 1024 / 1024
+				if file_size > mail_settings.outgoing_max_attachment_size:
+					frappe.throw(
+						_("Attachment size limit exceeded. Maximum {0} MB allowed.").format(
+							frappe.bold(mail_settings.outgoing_max_attachment_size)
+						)
+					)
+
+				total_attachments_size += file_size
+
+			if total_attachments_size > mail_settings.outgoing_total_attachments_size:
+				frappe.throw(
+					_("Attachments size limit exceeded. Maximum {0} MB allowed.").format(
+						frappe.bold(mail_settings.outgoing_total_attachments_size)
+					)
+				)
 
 	def set_from_ip(self) -> None:
 		self.from_ip = frappe.local.request_ip
@@ -124,11 +164,6 @@ class OutgoingMail(Document):
 			self.body_html = self.raw_html
 
 		self.raw_html = ""
-
-	def set_attachments(self) -> None:
-		self.attachments = get_attachments(self.doctype, self.name)
-		for attachment in self.attachments:
-			attachment.type = "attachment"
 
 	def set_body_plain(self) -> None:
 		self.body_plain = html2text(self.body_html)
