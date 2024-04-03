@@ -96,6 +96,7 @@ class IncomingMail(Document):
 
 								file = __add_attachment(filename, payload, is_private=0, for_doc=False)
 								body_html = body_html.replace("cid:" + content_id, file["file_url"])
+								body_plain = body_plain.replace("cid:" + content_id, file["file_url"])
 
 					elif disposition.startswith("attachment"):
 						__add_attachment(filename, part.get_payload(decode=True))
