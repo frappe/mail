@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from frappe.utils import flt
 
 
 def validate_file(doc, method):
@@ -24,15 +25,15 @@ def validate_file(doc, method):
 				)
 
 			if doc.attached_to_doctype == "Outgoing Mail":
-				file_size = doc.file_size / 1024 / 1024
+				file_size = flt(doc.file_size / 1024 / 1024, 3)
 				max_attachment_size = frappe.db.get_single_value(
 					"Mail Settings", "outgoing_max_attachment_size"
 				)
 
 				if file_size > max_attachment_size:
 					throw(
-						_("Attachment size limit exceeded. Maximum {0} MB allowed.").format(
-							frappe.bold(max_attachment_size)
+						_("Attachment size limit exceeded ({0} MB). Maximum {1} MB allowed.").format(
+							frappe.bold(file_size), frappe.bold(max_attachment_size)
 						)
 					)
 

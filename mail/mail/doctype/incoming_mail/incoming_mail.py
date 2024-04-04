@@ -148,6 +148,7 @@ class IncomingMail(Document):
 
 		self.status = "Delivered"
 		self.delivered_at = now()
+		self.message_size = len(parsed_message.as_bytes())
 		self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
 		self.delivered_after = time_diff_in_seconds(self.delivered_at, self.received_at)
 

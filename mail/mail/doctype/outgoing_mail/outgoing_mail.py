@@ -20,7 +20,7 @@ from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid, formatdate
 from frappe.utils.password import get_decrypted_password
 from mail.utils import get_outgoing_server, parsedate_to_datetime
-from frappe.utils import now, get_datetime_str, time_diff_in_seconds
+from frappe.utils import flt, now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 
 
@@ -46,6 +46,7 @@ class OutgoingMail(Document):
 			self.set_message_id()
 			self.set_token()
 			self.set_original_message()
+			self.validate_max_message_size()
 
 	def on_submit(self) -> None:
 		self.send_mail()
@@ -92,8 +93,8 @@ class OutgoingMail(Document):
 
 		if len(self.recipients) > max_recipients:
 			frappe.throw(
-				_("Recipient limit exceeded. Maximum {0} recipients allowed.").format(
-					frappe.bold(max_recipients)
+				_("Recipient limit exceeded ({0}). Maximum {0} recipients allowed.").format(
+					frappe.bold(len(self.recipients)), frappe.bold(max_recipients)
 				)
 			)
 
@@ -128,18 +129,19 @@ class OutgoingMail(Document):
 
 			if len(self.attachments) > mail_settings.outgoing_max_attachments:
 				frappe.throw(
-					_("Attachment limit exceeded. Maximum {0} attachment(s) allowed.").format(
-						frappe.bold(mail_settings.outgoing_max_attachments)
+					_("Attachment limit exceeded ({0}). Maximum {1} attachment(s) allowed.").format(
+						frappe.bold(len(self.attachments)),
+						frappe.bold(mail_settings.outgoing_max_attachments),
 					)
 				)
 
 			total_attachments_size = 0
 			for attachment in self.attachments:
-				file_size = attachment.file_size / 1024 / 1024
+				file_size = flt(attachment.file_size / 1024 / 1024, 3)
 				if file_size > mail_settings.outgoing_max_attachment_size:
 					frappe.throw(
-						_("Attachment size limit exceeded. Maximum {0} MB allowed.").format(
-							frappe.bold(mail_settings.outgoing_max_attachment_size)
+						_("Attachment size limit exceeded ({0} MB). Maximum {1} MB allowed.").format(
+							frappe.bold(file_size), frappe.bold(mail_settings.outgoing_max_attachment_size)
 						)
 					)
 
@@ -147,8 +149,9 @@ class OutgoingMail(Document):
 
 			if total_attachments_size > mail_settings.outgoing_total_attachments_size:
 				frappe.throw(
-					_("Attachments size limit exceeded. Maximum {0} MB allowed.").format(
-						frappe.bold(mail_settings.outgoing_total_attachments_size)
+					_("Attachments size limit exceeded ({0} MB). Maximum {1} MB allowed.").format(
+						frappe.bold(total_attachments_size),
+						frappe.bold(mail_settings.outgoing_total_attachments_size),
 					)
 				)
 
@@ -263,7 +266,21 @@ class OutgoingMail(Document):
 		__add_dkim_signature(message)
 
 		self.original_message = message.as_string()
+		self.message_size = len(message.as_bytes())
 		self.created_at = get_datetime_str(parsedate_to_datetime(message["Date"]))
+
+	def validate_max_message_size(self) -> None:
+		message_size = flt(self.message_size / 1024 / 1024, 3)
+		max_message_size = frappe.db.get_single_value(
+			"Mail Settings", "max_message_size", cache=True
+		)
+
+		if message_size > max_message_size:
+			frappe.throw(
+				_("Message size limit exceeded ({0} MB). Maximum {1} MB allowed.").format(
+					frappe.bold(message_size), frappe.bold(max_message_size)
+				)
+			)
 
 	def send_mail(self) -> None:
 		request_data = {
