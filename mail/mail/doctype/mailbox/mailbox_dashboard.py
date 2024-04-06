@@ -8,7 +8,7 @@ def get_data():
 		"transactions": [
 			{
 				"label": _("Reference"),
-				"items": ["Incoming Mail", "Outgoing Mail"],
+				"items": ["Mail Alias", "Incoming Mail", "Outgoing Mail"],
 			}
 		],
 	}

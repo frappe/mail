@@ -288,13 +288,13 @@ def update_virtual_domains(
 ) -> None:
 	if not virtual_domains:
 		virtual_domains = frappe.db.get_all(
-			"Mail Domain", {"enabled": 1}, ["name AS domain", "enabled"]
+			"Mail Domain", filters={"enabled": 1}, fields=["name AS domain", "enabled"]
 		)
 
 	if virtual_domains:
 		if not servers:
 			servers = frappe.db.get_all(
-				"Mail Server", {"enabled": 1, "incoming": 1}, pluck="name"
+				"Mail Server", filters={"enabled": 1, "incoming": 1}, pluck="name"
 			)
 		elif isinstance(servers, str):
 			servers = [servers]

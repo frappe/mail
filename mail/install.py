@@ -40,6 +40,12 @@ def create_agent_job_types() -> None:
 		},
 		{
 			"enabled": 1,
+			"job_name": "Update Virtual Aliases",
+			"request_path": "mail_agent.api.update_virtual_aliases",
+			"request_method": "POST",
+		},
+		{
+			"enabled": 1,
 			"job_name": "Get Incoming Mails",
 			"request_path": "mail_agent.api.get_incoming_mails",
 			"request_method": "POST",

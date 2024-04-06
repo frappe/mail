@@ -93,3 +93,64 @@ def convert_html_to_text(self, html: str) -> str:
 		text = re.sub(r"\s+", " ", text).strip()
 
 	return text
+
+
+def is_valid_email_for_domain(
+	email: str, domain_name: str, raise_exception: bool = False
+) -> bool:
+	email_domain = email.split("@")[1]
+
+	if not email_domain == domain_name:
+		if raise_exception:
+			frappe.throw(
+				_("Email domain {0} does not match with domain {1}.").format(
+					frappe.bold(email_domain), frappe.bold(domain_name)
+				)
+			)
+
+		return False
+	return True
+
+
+def validate_active_domain(domain_name: str) -> None:
+	if frappe.session.user == "Administrator" or frappe.flags.ingore_domain_validation:
+		return
+
+	enabled, verified = frappe.db.get_value(
+		"Mail Domain", domain_name, ["enabled", "verified"]
+	)
+
+	if not enabled:
+		frappe.throw(_("Domain {0} is disabled.").format(frappe.bold(domain_name)))
+	if not verified:
+		frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(domain_name)))
+
+
+def validate_mailbox_for_outgoing(mailbox: str) -> None:
+	enabled, status, mailbox_type = frappe.db.get_value(
+		"Mailbox", mailbox, ["enabled", "status", "mailbox_type"]
+	)
+
+	if not enabled:
+		frappe.throw(_("Mailbox {0} is disabled.").format(frappe.bold(mailbox)))
+	elif status != "Active":
+		frappe.throw(_("Mailbox {0} is not active.").format(frappe.bold(mailbox)))
+	elif mailbox_type not in ["Outgoing", "Incoming and Outgoing"]:
+		frappe.throw(
+			_("Mailbox {0} is not allowed for Outgoing Mail.").format(frappe.bold(mailbox))
+		)
+
+
+def validate_mailbox_for_incoming(mailbox: str) -> None:
+	enabled, status, mailbox_type = frappe.db.get_value(
+		"Mailbox", mailbox, ["enabled", "status", "mailbox_type"]
+	)
+
+	if not enabled:
+		frappe.throw(_("Mailbox {0} is disabled.").format(frappe.bold(mailbox)))
+	elif status != "Active":
+		frappe.throw(_("Mailbox {0} is not active.").format(frappe.bold(mailbox)))
+	elif mailbox_type not in ["Incoming", "Incoming and Outgoing"]:
+		frappe.throw(
+			_("Mailbox {0} is not allowed for Incoming Mail.").format(frappe.bold(mailbox))
+		)

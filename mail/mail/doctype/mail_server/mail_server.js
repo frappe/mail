@@ -7,11 +7,13 @@ frappe.ui.form.on("Mail Server", {
 	},
 
 	add_actions(frm) {
-        if (frm.doc.incoming) {
+		if (frm.doc.outgoing) {
 			frm.add_custom_button(__("Get Delivery Status"), () => {
                 frm.trigger("get_delivery_status");
             }, __("Actions"));
+		}
 
+		if (frm.doc.incoming) {
 			frm.add_custom_button(__("Get Incoming Mails"), () => {
                 frm.trigger("get_incoming_mails");
             }, __("Actions"));
@@ -22,6 +24,10 @@ frappe.ui.form.on("Mail Server", {
 
             frm.add_custom_button(__("Update Virtual Mailboxes"), () => {
                 frm.trigger("update_virtual_mailboxes");
+            }, __("Actions"));
+
+			frm.add_custom_button(__("Update Virtual Aliases"), () => {
+                frm.trigger("update_virtual_aliases");
             }, __("Actions"));
         }
     },
@@ -88,6 +94,23 @@ frappe.ui.form.on("Mail Server", {
 			callback: () => {
 				frappe.show_alert({
 					message: __("Update Virtual Mailboxes Job has been started in the background."),
+					indicator: "green",
+				});
+			}
+		});
+    },
+
+	update_virtual_aliases(frm) {
+        frappe.call({
+			method: "mail.mail.doctype.mail_alias.mail_alias.update_virtual_aliases",
+			args: {
+				servers: frm.doc.server,
+			},
+			freeze: true,
+			freeze_message: __("Updating Virtual Aliases..."),
+			callback: () => {
+				frappe.show_alert({
+					message: __("Update Virtual Aliases Job has been started in the background."),
 					indicator: "green",
 				});
 			}

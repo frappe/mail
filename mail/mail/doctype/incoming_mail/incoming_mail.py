@@ -157,7 +157,7 @@ class IncomingMail(Document):
 def get_incoming_mails(servers: Optional[str | list] = None) -> None:
 	if not servers:
 		servers = frappe.db.get_all(
-			"Mail Server", {"enabled": 1, "incoming": 1}, pluck="name"
+			"Mail Server", filters={"enabled": 1, "incoming": 1}, pluck="name"
 		)
 	elif isinstance(servers, str):
 		servers = [servers]

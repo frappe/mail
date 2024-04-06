@@ -19,9 +19,13 @@ from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid, formatdate
 from frappe.utils.password import get_decrypted_password
-from mail.utils import get_outgoing_server, parsedate_to_datetime
 from frappe.utils import flt, now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
+from mail.utils import (
+	get_outgoing_server,
+	parsedate_to_datetime,
+	validate_mailbox_for_outgoing,
+)
 
 
 if TYPE_CHECKING:
@@ -69,18 +73,7 @@ class OutgoingMail(Document):
 			frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(self.domain_name)))
 
 	def validate_sender(self) -> None:
-		enabled, status, mailbox_type = frappe.db.get_value(
-			"Mailbox", self.sender, ["enabled", "status", "mailbox_type"]
-		)
-
-		if not enabled:
-			frappe.throw(_("Mailbox {0} is disabled.").format(frappe.bold(self.sender)))
-		elif status != "Active":
-			frappe.throw(_("Mailbox {0} is not active.").format(frappe.bold(self.sender)))
-		elif mailbox_type not in ["Outgoing", "Incoming and Outgoing"]:
-			frappe.throw(
-				_("Mailbox {0} is not allowed for Outgoing Mail.").format(frappe.bold(self.sender))
-			)
+		validate_mailbox_for_outgoing(self.sender)
 
 	def validate_amended_doc(self) -> None:
 		if self.amended_from:
