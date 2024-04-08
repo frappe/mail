@@ -346,11 +346,16 @@ def get_sender(
 	filters: Optional[dict] = None,
 ) -> list:
 	MAILBOX = frappe.qb.DocType("Mailbox")
+	DOMAIN = frappe.qb.DocType("Mail Domain")
 	return (
-		frappe.qb.from_(MAILBOX)
+		frappe.qb.from_(DOMAIN)
+		.left_join(MAILBOX)
+		.on(DOMAIN.name == MAILBOX.domain_name)
 		.select(MAILBOX.name)
 		.where(
-			(MAILBOX.enabled == 1)
+			(DOMAIN.enabled == 1)
+			& (DOMAIN.verified == 1)
+			& (MAILBOX.enabled == 1)
 			& (MAILBOX.status == "Active")
 			& (MAILBOX[searchfield].like(f"%{txt}%"))
 			& (MAILBOX.mailbox_type.isin(["Outgoing", "Incoming and Outgoing"]))
