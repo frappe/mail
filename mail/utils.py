@@ -127,30 +127,30 @@ def validate_active_domain(domain_name: str) -> None:
 
 
 def validate_mailbox_for_outgoing(mailbox: str) -> None:
-	enabled, status, mailbox_type = frappe.db.get_value(
-		"Mailbox", mailbox, ["enabled", "status", "mailbox_type"]
+	enabled, status, outgoing = frappe.db.get_value(
+		"Mailbox", mailbox, ["enabled", "status", "outgoing"]
 	)
 
 	if not enabled:
 		frappe.throw(_("Mailbox {0} is disabled.").format(frappe.bold(mailbox)))
 	elif status != "Active":
 		frappe.throw(_("Mailbox {0} is not active.").format(frappe.bold(mailbox)))
-	elif mailbox_type not in ["Outgoing", "Incoming and Outgoing"]:
+	elif not outgoing:
 		frappe.throw(
 			_("Mailbox {0} is not allowed for Outgoing Mail.").format(frappe.bold(mailbox))
 		)
 
 
 def validate_mailbox_for_incoming(mailbox: str) -> None:
-	enabled, status, mailbox_type = frappe.db.get_value(
-		"Mailbox", mailbox, ["enabled", "status", "mailbox_type"]
+	enabled, status, incoming = frappe.db.get_value(
+		"Mailbox", mailbox, ["enabled", "status", "incoming"]
 	)
 
 	if not enabled:
 		frappe.throw(_("Mailbox {0} is disabled.").format(frappe.bold(mailbox)))
 	elif status != "Active":
 		frappe.throw(_("Mailbox {0} is not active.").format(frappe.bold(mailbox)))
-	elif mailbox_type not in ["Incoming", "Incoming and Outgoing"]:
+	elif not incoming:
 		frappe.throw(
 			_("Mailbox {0} is not allowed for Incoming Mail.").format(frappe.bold(mailbox))
 		)

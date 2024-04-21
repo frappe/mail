@@ -6,9 +6,10 @@
  "engine": "InnoDB",
  "field_order": [
   "enabled",
+  "incoming",
+  "outgoing",
   "column_break_1jeq",
   "status",
-  "mailbox_type",
   "section_break_yute",
   "domain_name",
   "column_break_9etf",
@@ -92,19 +93,25 @@
    "search_index": 1
   },
   {
-   "default": "Incoming and Outgoing",
-   "fieldname": "mailbox_type",
-   "fieldtype": "Select",
-   "label": "Mailbox Type",
-   "no_copy": 1,
-   "options": "Incoming\nOutgoing\nIncoming and Outgoing",
-   "reqd": 1,
-   "search_index": 1
+   "default": "0",
+   "fieldname": "incoming",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Incoming",
+   "no_copy": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "outgoing",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Outgoing",
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-03-17 11:54:41.846007",
+ "modified": "2024-04-21 13:43:55.171640",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",

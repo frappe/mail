@@ -10,7 +10,7 @@ frappe.ui.form.on("Mail Alias", {
         frm.set_query("mailbox", "mailboxes", (doc) => {
 			let filters = {
 				"domain_name": doc.domain_name || " ",
-				"mailbox_type": ["in", ["Incoming", "Incoming and Outgoing"]],
+				"incoming": 1,
 			};
 
 			let selected_mailboxes = frm.doc.mailboxes.map((d) => d.mailbox);

@@ -18,12 +18,12 @@ class Mailbox(Document):
 
 	def on_update(self) -> None:
 		previous = self.get_doc_before_save()
-		enabled = self.enabled and self.mailbox_type in ["Incoming", "Incoming and Outgoing"]
+		enabled = self.enabled and self.incoming
 
 		if (
 			not previous
 			or self.enabled != previous.get("enabled")
-			or self.mailbox_type != previous.get("mailbox_type")
+			or self.incoming != previous.get("incoming")
 		):
 			if not enabled:
 				self.validate_against_mail_alias()
@@ -71,15 +71,14 @@ class Mailbox(Document):
 def create_dmarc_mailbox(domain_name: str) -> "Mailbox":
 	dmarc_email = f"dmarc@{domain_name}"
 	frappe.flags.ingore_domain_validation = True
-	return create_mailbox(domain_name, dmarc_email, "Incoming", "DMARC")
+	return create_mailbox(domain_name, dmarc_email, outgoing=False, display_name="DMARC")
 
 
 def create_mailbox(
 	domain_name: str,
 	user: str,
-	mailbox_type: Literal[
-		"Incoming", "Outgoing", "Incoming and Outgoing"
-	] = "Incoming and Outgoing",
+	incoming: bool = True,
+	outgoing: bool = True,
 	display_name: Optional[str] = None,
 ) -> "Mailbox":
 	if not frappe.db.exists("Mailbox", user):
@@ -95,7 +94,8 @@ def create_mailbox(
 
 		mailbox = frappe.new_doc("Mailbox")
 		mailbox.domain_name = domain_name
-		mailbox.mailbox_type = mailbox_type
+		mailbox.incoming = incoming
+		mailbox.outgoing = outgoing
 		mailbox.user = user
 		mailbox.display_name = display_name
 		mailbox.save(ignore_permissions=True)
@@ -147,7 +147,7 @@ def update_virtual_mailboxes(
 			"Mailbox",
 			filters={
 				"enabled": 1,
-				"mailbox_type": ["in", ["Incoming", "Incoming and Outgoing"]],
+				"incoming": 1,
 			},
 			fields=["name AS mailbox", "enabled"],
 		)
