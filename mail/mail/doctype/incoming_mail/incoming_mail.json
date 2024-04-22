@@ -312,7 +312,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-20 19:58:09.285246",
+ "modified": "2024-04-22 18:42:06.115727",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
@@ -333,7 +333,6 @@
    "write": 1
   }
  ],
- "queue_in_background": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

@@ -8,6 +8,7 @@ import frappe
 from frappe import _
 from typing import Optional
 from typing import TYPE_CHECKING
+from email.header import decode_header
 from frappe.model.document import Document
 from mail.utils import parsedate_to_datetime
 from frappe.utils.file_manager import save_file
@@ -120,7 +121,7 @@ class IncomingMail(Document):
 		self.display_name = sender[0]
 		self.receiver = parsed_message["Delivered-To"]
 		self.recipients = parsed_message["To"]
-		self.subject = parsed_message["Subject"]
+		self.subject = decode_header(parsed_message["Subject"])[0][0]
 		self.message_id = parsed_message["Message-ID"]
 		self.body_html, self.body_plain = _get_body(parsed_message)
 		self.created_at = get_datetime_str(parsedate_to_datetime(parsed_message["Date"]))
