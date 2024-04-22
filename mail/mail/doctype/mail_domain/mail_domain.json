@@ -14,7 +14,7 @@
   "domain_owner",
   "dkim_selector",
   "dkim_bits",
-  "outgoing_server",
+  "outgoing_agent",
   "dns_records_section",
   "dns_records",
   "dkim_keys_section",
@@ -95,11 +95,11 @@
    "options": "\n1024\n2048\n4096"
   },
   {
-   "fieldname": "outgoing_server",
+   "fieldname": "outgoing_agent",
    "fieldtype": "Link",
-   "label": "Outgoing Server",
+   "label": "Outgoing Agent",
    "no_copy": 1,
-   "options": "Mail Server"
+   "options": "Mail Agent"
   },
   {
    "default": "1",
@@ -143,7 +143,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-03-17 14:58:58.933241",
+ "modified": "2024-04-17 13:03:42.815183",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",

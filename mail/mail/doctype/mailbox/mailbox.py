@@ -140,7 +140,7 @@ def get_user(
 
 @frappe.whitelist()
 def update_virtual_mailboxes(
-	virtual_mailboxes: Optional[list[dict]] = None, servers: Optional[str | list] = None
+	virtual_mailboxes: Optional[list[dict]] = None, agents: Optional[str | list] = None
 ) -> None:
 	if not virtual_mailboxes:
 		virtual_mailboxes = frappe.db.get_all(
@@ -153,16 +153,16 @@ def update_virtual_mailboxes(
 		)
 
 	if virtual_mailboxes:
-		if not servers:
-			servers = frappe.db.get_all(
-				"Mail Server", filters={"enabled": 1, "incoming": 1}, pluck="name"
+		if not agents:
+			agents = frappe.db.get_all(
+				"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
 			)
-		elif isinstance(servers, str):
-			servers = [servers]
+		elif isinstance(agents, str):
+			agents = [agents]
 
-		for server in servers:
+		for agent in agents:
 			create_agent_job(
-				server,
+				agent,
 				"Update Virtual Mailboxes",
 				request_data={"virtual_mailboxes": virtual_mailboxes},
 			)

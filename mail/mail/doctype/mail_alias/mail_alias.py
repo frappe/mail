@@ -56,7 +56,7 @@ class MailAlias(Document):
 
 @frappe.whitelist()
 def update_virtual_aliases(
-	virtual_aliases: Optional[list[dict]] = None, servers: Optional[str | list] = None
+	virtual_aliases: Optional[list[dict]] = None, agents: Optional[str | list] = None
 ) -> None:
 	if not virtual_aliases:
 		virtual_aliases = frappe.db.get_all(
@@ -73,16 +73,16 @@ def update_virtual_aliases(
 			)
 
 	if virtual_aliases:
-		if not servers:
-			servers = frappe.db.get_all(
-				"Mail Server", filters={"enabled": 1, "incoming": 1}, pluck="name"
+		if not agents:
+			agents = frappe.db.get_all(
+				"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
 			)
-		elif isinstance(servers, str):
-			servers = [servers]
+		elif isinstance(agents, str):
+			agents = [agents]
 
-		for server in servers:
+		for agent in agents:
 			create_agent_job(
-				server,
+				agent,
 				"Update Virtual Aliases",
 				request_data={"virtual_aliases": virtual_aliases},
 			)

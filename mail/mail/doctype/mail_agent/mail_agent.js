@@ -1,7 +1,7 @@
 // Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on("Mail Server", {
+frappe.ui.form.on("Mail Agent", {
 	refresh(frm) {
 		frm.trigger("add_actions");
 	},
@@ -36,7 +36,7 @@ frappe.ui.form.on("Mail Server", {
 		frappe.call({
 			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_delivery_status",
 			args: {
-				servers: frm.doc.server,
+				agents: frm.doc.agent,
 			},
 			freeze: true,
 			freeze_message: __("Getting Delivery Status..."),
@@ -53,7 +53,7 @@ frappe.ui.form.on("Mail Server", {
         frappe.call({
 			method: "mail.mail.doctype.incoming_mail.incoming_mail.get_incoming_mails",
 			args: {
-				servers: frm.doc.server,
+				agents: frm.doc.agent,
 			},
 			freeze: true,
 			freeze_message: __("Receiving Mails..."),
@@ -70,7 +70,7 @@ frappe.ui.form.on("Mail Server", {
         frappe.call({
 			method: "mail.mail.doctype.mail_domain.mail_domain.update_virtual_domains",
 			args: {
-				servers: frm.doc.server,
+				agents: frm.doc.agent,
 			},
 			freeze: true,
 			freeze_message: __("Updating Virtual Domains..."),
@@ -87,7 +87,7 @@ frappe.ui.form.on("Mail Server", {
         frappe.call({
 			method: "mail.mail.doctype.mailbox.mailbox.update_virtual_mailboxes",
 			args: {
-				servers: frm.doc.server,
+				agents: frm.doc.agent,
 			},
 			freeze: true,
 			freeze_message: __("Updating Virtual Mailboxes..."),
@@ -104,7 +104,7 @@ frappe.ui.form.on("Mail Server", {
         frappe.call({
 			method: "mail.mail.doctype.mail_alias.mail_alias.update_virtual_aliases",
 			args: {
-				servers: frm.doc.server,
+				agents: frm.doc.agent,
 			},
 			freeze: true,
 			freeze_message: __("Updating Virtual Aliases..."),

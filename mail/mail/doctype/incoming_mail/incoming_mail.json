@@ -7,7 +7,7 @@
  "field_order": [
   "status",
   "column_break_htgl",
-  "server",
+  "agent",
   "section_break_0jgu",
   "display_name",
   "sender",
@@ -56,11 +56,11 @@
    "search_index": 1
   },
   {
-   "fieldname": "server",
+   "fieldname": "agent",
    "fieldtype": "Link",
-   "label": "Server",
+   "label": "Agent",
    "no_copy": 1,
-   "options": "Mail Server",
+   "options": "Mail Agent",
    "read_only": 1,
    "search_index": 1,
    "set_only_once": 1
@@ -208,6 +208,7 @@
   {
    "fieldname": "spf_description",
    "fieldtype": "Small Text",
+   "ignore_xss_filter": 1,
    "label": "SPF Description",
    "no_copy": 1,
    "read_only": 1
@@ -215,6 +216,7 @@
   {
    "fieldname": "dkim_description",
    "fieldtype": "Small Text",
+   "ignore_xss_filter": 1,
    "label": "DKIM Description",
    "no_copy": 1,
    "read_only": 1
@@ -222,6 +224,7 @@
   {
    "fieldname": "dmarc_description",
    "fieldtype": "Small Text",
+   "ignore_xss_filter": 1,
    "label": "DMARC Description",
    "no_copy": 1,
    "read_only": 1
@@ -309,7 +312,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-04 11:52:12.162239",
+ "modified": "2024-04-20 19:58:09.285246",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

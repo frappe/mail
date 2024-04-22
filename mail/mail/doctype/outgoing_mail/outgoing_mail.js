@@ -65,7 +65,7 @@ frappe.ui.form.on("Outgoing Mail", {
 		frappe.call({
 			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_delivery_status",
 			args: {
-				servers: frm.doc.server,
+				agents: frm.doc.agent,
 			},
 			freeze: true,
 			freeze_message: __("Getting Delivery Status..."),

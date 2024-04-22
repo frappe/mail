@@ -7,17 +7,17 @@ from mail.utils import get_dns_record
 from frappe.model.document import Document
 
 
-class MailServer(Document):
+class MailAgent(Document):
 	def autoname(self) -> None:
-		self.server = self.server.lower()
-		self.name = self.server
+		self.agent = self.agent.lower()
+		self.name = self.agent
 
 	def before_validate(self) -> None:
 		if self.is_new():
 			validate_mail_settings()
 
 	def validate(self) -> None:
-		self.validate_server()
+		self.validate_agent()
 		self.validate_enabled()
 		self.validate_incoming()
 		self.validate_outgoing()
@@ -30,12 +30,12 @@ class MailServer(Document):
 		self.db_set("enabled", 0)
 		self.update_server_dns_records()
 
-	def validate_server(self) -> None:
-		if self.is_new() and frappe.db.exists("Mail Server", self.server):
+	def validate_agent(self) -> None:
+		if self.is_new() and frappe.db.exists("Mail Agent", self.agent):
 			frappe.throw(
 				_(
-					"Mail Server {0} already exists.".format(
-						frappe.bold(self.server),
+					"Mail Agent {0} already exists.".format(
+						frappe.bold(self.agent),
 					)
 				)
 			)
@@ -43,8 +43,8 @@ class MailServer(Document):
 		if frappe.conf.developer_mode or frappe.session.user == "Administrator":
 			return
 
-		ipv4 = get_dns_record(self.server, "A")
-		ipv6 = get_dns_record(self.server, "AAAA")
+		ipv4 = get_dns_record(self.agent, "A")
+		ipv6 = get_dns_record(self.agent, "AAAA")
 
 		self.ipv4 = ipv4[0].address if ipv4 else None
 		self.ipv6 = ipv6[0].address if ipv6 else None
@@ -52,8 +52,8 @@ class MailServer(Document):
 		if not self.ipv4 and not self.ipv6:
 			frappe.throw(
 				_(
-					"An A or AAAA record not found for the server {0}.".format(
-						frappe.bold(self.server),
+					"An A or AAAA record not found for the agent {0}.".format(
+						frappe.bold(self.agent),
 					)
 				)
 			)
@@ -68,7 +68,7 @@ class MailServer(Document):
 	def validate_incoming(self) -> None:
 		if self.incoming:
 			if not self.priority:
-				frappe.throw(_("Priority is required for incoming servers."))
+				frappe.throw(_("Priority is required for incoming agents."))
 
 	def validate_outgoing(self) -> None:
 		if not self.outgoing and not self.is_new():
@@ -80,8 +80,8 @@ class MailServer(Document):
 
 	def remove_linked_domains(self) -> None:
 		DOMAIN = frappe.qb.DocType("Mail Domain")
-		frappe.qb.update(DOMAIN).set(DOMAIN.outgoing_server, None).where(
-			DOMAIN.outgoing_server == self.server
+		frappe.qb.update(DOMAIN).set(DOMAIN.outgoing_agent, None).where(
+			DOMAIN.outgoing_agent == self.agent
 		).run()
 
 	def update_server_dns_records(self) -> None:

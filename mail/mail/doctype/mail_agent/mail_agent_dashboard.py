@@ -3,9 +3,9 @@ from frappe import _
 
 def get_data():
 	return {
-		"fieldname": "server",
+		"fieldname": "agent",
 		"non_standard_fieldnames": {
-			"Mail Domain": "outgoing_server",
+			"Mail Domain": "outgoing_agent",
 		},
 		"transactions": [
 			{

@@ -12,7 +12,7 @@ frappe.ui.form.on("Mail Domain", {
 	},
 
     set_queries(frm) {
-        frm.set_query("outgoing_server", () => {
+        frm.set_query("outgoing_agent", () => {
             return {
                 filters: {
                     "outgoing": 1,

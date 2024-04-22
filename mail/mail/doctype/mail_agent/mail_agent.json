@@ -10,7 +10,8 @@
   "incoming",
   "outgoing",
   "section_break_syxq",
-  "server",
+  "protocol",
+  "agent",
   "host",
   "section_break_ejwa",
   "ipv4",
@@ -25,10 +26,10 @@
  ],
  "fields": [
   {
-   "fieldname": "server",
+   "fieldname": "agent",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Server",
+   "label": "Agent",
    "no_copy": 1,
    "reqd": 1,
    "set_only_once": 1,
@@ -127,14 +128,22 @@
    "label": "Agent API Secret",
    "no_copy": 1,
    "reqd": 1
+  },
+  {
+   "default": "HTTPS",
+   "fieldname": "protocol",
+   "fieldtype": "Select",
+   "label": "Protocol",
+   "options": "HTTP\nHTTPS",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-26 11:04:41.991595",
+ "modified": "2024-04-16 14:43:49.399234",
  "modified_by": "Administrator",
  "module": "Mail",
- "name": "Mail Server",
+ "name": "Mail Agent",
  "owner": "Administrator",
  "permissions": [
   {

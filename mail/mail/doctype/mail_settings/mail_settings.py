@@ -51,54 +51,54 @@ class MailSettings(Document):
 	def generate_dns_records(self, save: bool = False) -> None:
 		self.dns_records.clear()
 
-		servers = frappe.db.get_all(
-			"Mail Server",
+		agents = frappe.db.get_all(
+			"Mail Agent",
 			filters={"enabled": 1, "outgoing": 1},
 			fields=["name", "outgoing", "ipv4", "ipv6"],
 			order_by="creation asc",
 		)
 
-		if servers:
+		if agents:
 			records = []
-			outgoing_servers = []
+			outgoing_agents = []
 			category = "Server Record"
 
-			for server in servers:
-				if server.outgoing:
+			for agent in agents:
+				if agent.outgoing:
 					# A Record
-					if server.ipv4:
+					if agent.ipv4:
 						records.append(
 							{
 								"category": category,
 								"type": "A",
-								"host": server.name,
-								"value": server.ipv4,
+								"host": agent.name,
+								"value": agent.ipv4,
 								"ttl": self.default_ttl,
 							}
 						)
 
 					# AAAA Record
-					if server.ipv6:
+					if agent.ipv6:
 						records.append(
 							{
 								"category": category,
 								"type": "AAAA",
-								"host": server.name,
-								"value": server.ipv6,
+								"host": agent.name,
+								"value": agent.ipv6,
 								"ttl": self.default_ttl,
 							}
 						)
 
-					outgoing_servers.append(f"a:{server.name}")
+					outgoing_agents.append(f"a:{agent.name}")
 
 			# TXT Record
-			if outgoing_servers:
+			if outgoing_agents:
 				records.append(
 					{
 						"category": category,
 						"type": "TXT",
 						"host": f"{self.spf_host}.{self.root_domain_name}",
-						"value": f"v=spf1 {' '.join(outgoing_servers)} ~all",
+						"value": f"v=spf1 {' '.join(outgoing_agents)} ~all",
 						"ttl": self.default_ttl,
 					}
 				)

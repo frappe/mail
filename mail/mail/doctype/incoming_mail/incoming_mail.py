@@ -52,7 +52,7 @@ class IncomingMail(Document):
 				frappe.throw(_("{0} is mandatory").format(frappe.bold(field)))
 
 	def process(self) -> None:
-		def __add_attachment(
+		def _add_attachment(
 			filename: str, content: bytes, is_private: bool = 1, for_doc: bool = True
 		) -> dict:
 			kwargs = {
@@ -77,7 +77,7 @@ class IncomingMail(Document):
 				"is_private": file.is_private,
 			}
 
-		def __get_body(parsed_message: "Message") -> tuple[str, str]:
+		def _get_body(parsed_message: "Message") -> tuple[str, str]:
 			body_html, body_plain = "", ""
 
 			for part in parsed_message.walk():
@@ -94,12 +94,12 @@ class IncomingMail(Document):
 								if part.get_content_charset():
 									payload = payload.decode(part.get_content_charset(), "ignore")
 
-								file = __add_attachment(filename, payload, is_private=0, for_doc=False)
+								file = _add_attachment(filename, payload, is_private=0, for_doc=False)
 								body_html = body_html.replace("cid:" + content_id, file["file_url"])
 								body_plain = body_plain.replace("cid:" + content_id, file["file_url"])
 
 					elif disposition.startswith("attachment"):
-						__add_attachment(filename, part.get_payload(decode=True))
+						_add_attachment(filename, part.get_payload(decode=True))
 
 				elif content_type == "text/html":
 					body_html += part.get_payload(decode=True).decode(
@@ -122,29 +122,42 @@ class IncomingMail(Document):
 		self.recipients = parsed_message["To"]
 		self.subject = parsed_message["Subject"]
 		self.message_id = parsed_message["Message-ID"]
-		self.body_html, self.body_plain = __get_body(parsed_message)
+		self.body_html, self.body_plain = _get_body(parsed_message)
 		self.created_at = get_datetime_str(parsedate_to_datetime(parsed_message["Date"]))
 
-		self.spf_description = parsed_message.get("Received-SPF")
-		if self.spf_description:
-			self.spf = cint("pass" in self.spf_description.lower())
-		else:
-			self.spf = 1
-			self.spf_description = "Internal Network"
-
 		if headers := parsed_message.get_all("Authentication-Results"):
+			if len(headers) == 1:
+				headers = headers[0].split(";")
+
 			for header in headers:
+				header = header.replace("\n", "").replace("\t", "")
 				header_lower = header.lower()
 
-				if "dkim=" in header_lower:
+				if "spf=" in header_lower:
+					self.spf_description = header
+					if "spf=pass" in header_lower:
+						self.spf = 1
+
+				elif "dkim=" in header_lower:
+					self.dkim_description = header
 					if "dkim=pass" in header_lower:
 						self.dkim = 1
-					self.dkim_description = header
 
 				elif "dmarc=" in header_lower:
+					self.dmarc_description = header
 					if "dmarc=pass" in header_lower:
 						self.dmarc = 1
-					self.dmarc_description = header
+
+		no_header = "Header not found."
+		if not self.spf_description:
+			self.spf = 0
+			self.spf_description = no_header
+		if not self.dkim_description:
+			self.dkim = 0
+			self.dkim_description = no_header
+		if not self.dmarc_description:
+			self.dmarc = 0
+			self.dmarc_description = no_header
 
 		self.status = "Delivered"
 		self.delivered_at = now()
@@ -154,16 +167,16 @@ class IncomingMail(Document):
 
 
 @frappe.whitelist()
-def get_incoming_mails(servers: Optional[str | list] = None) -> None:
-	if not servers:
-		servers = frappe.db.get_all(
-			"Mail Server", filters={"enabled": 1, "incoming": 1}, pluck="name"
+def get_incoming_mails(agents: Optional[str | list] = None) -> None:
+	if not agents:
+		agents = frappe.db.get_all(
+			"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
 		)
-	elif isinstance(servers, str):
-		servers = [servers]
+	elif isinstance(agents, str):
+		agents = [agents]
 
-	for server in servers:
-		create_agent_job(server, "Get Incoming Mails")
+	for agent in agents:
+		create_agent_job(agent, "Get Incoming Mails")
 
 
 def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
@@ -172,7 +185,7 @@ def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
 			if mails := json.loads(agent_job.response_data)["message"]:
 				for mail in mails:
 					doc = frappe.new_doc("Incoming Mail")
-					doc.server = agent_job.server
+					doc.agent = agent_job.agent
 					doc.received_at = mail["received_at"]
 					doc.eml_filename = mail["eml_filename"]
 					doc.original_message = mail["original_message"]

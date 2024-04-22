@@ -93,7 +93,7 @@
    "search_index": 1
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "incoming",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -101,7 +101,7 @@
    "no_copy": 1
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "outgoing",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -111,7 +111,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-21 13:43:55.171640",
+ "modified": "2024-04-22 16:09:18.427370",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",

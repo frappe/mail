@@ -73,7 +73,7 @@ class MailAgentJob(Document):
 			self._db_set(on_start_error_log=error_log)
 
 		try:
-			agent = MailAgent(self.server)
+			agent = MailAgent(self.agent)
 			data = json.loads(self.request_data)
 			response = agent.request(
 				self.request_method,
@@ -121,15 +121,18 @@ class MailAgentJob(Document):
 
 
 class MailAgent:
-	def __init__(self, server: str) -> None:
-		self.server = server
-		self.host = frappe.db.get_value("Mail Server", server, "host")
+	def __init__(self, agent: str) -> None:
+		self.agent = agent
+		self.protocol, self.host = frappe.db.get_value(
+			"Mail Agent", agent, ["protocol", "host"]
+		)
+		self.protocol = self.protocol.lower()
 
 	def request(self, method: str, path: str, data: Optional[dict] = None) -> "Response":
-		url = f"http://{self.host or self.server}/api/method/{path}"
+		url = f"{self.protocol}://{self.host or self.agent}/api/method/{path}"
 
-		key = frappe.get_cached_value("Mail Server", self.server, "agent_api_key")
-		secret = get_decrypted_password("Mail Server", self.server, "agent_api_secret")
+		key = frappe.get_cached_value("Mail Agent", self.agent, "agent_api_key")
+		secret = get_decrypted_password("Mail Agent", self.agent, "agent_api_secret")
 
 		headers = {"Authorization": f"token {key}:{secret}"}
 		response = requests.request(
@@ -140,10 +143,10 @@ class MailAgent:
 
 
 def create_agent_job(
-	server: str, job_type: str, request_data: Optional[dict] = None
+	agent: str, job_type: str, request_data: Optional[dict] = None
 ) -> "MailAgentJob":
 	agent_job = frappe.new_doc("Mail Agent Job")
-	agent_job.server = server
+	agent_job.agent = agent
 	agent_job.job_type = job_type
 	agent_job.request_data = json.dumps(request_data or {})
 	agent_job.insert()

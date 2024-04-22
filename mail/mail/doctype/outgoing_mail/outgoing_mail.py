@@ -22,7 +22,7 @@ from frappe.utils.password import get_decrypted_password
 from frappe.utils import flt, now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.utils import (
-	get_outgoing_server,
+	get_outgoing_agent,
 	parsedate_to_datetime,
 	validate_mailbox_for_outgoing,
 )
@@ -44,7 +44,7 @@ class OutgoingMail(Document):
 
 		if self.get("_action") == "submit":
 			self.set_from_ip()
-			self.set_server()
+			self.set_agent()
 			self.validate_use_raw_html()
 			self.set_body_plain()
 			self.set_message_id()
@@ -151,9 +151,9 @@ class OutgoingMail(Document):
 	def set_from_ip(self) -> None:
 		self.from_ip = frappe.local.request_ip
 
-	def set_server(self) -> None:
-		if not self.server:
-			self.server = get_outgoing_server()
+	def set_agent(self) -> None:
+		if not self.agent:
+			self.agent = get_outgoing_agent()
 
 	def validate_use_raw_html(self) -> None:
 		if self.use_raw_html:
@@ -171,7 +171,7 @@ class OutgoingMail(Document):
 		self.token = uuid4().hex
 
 	def set_original_message(self) -> None:
-		def __get_message() -> "MIMEMultipart":
+		def _get_message() -> "MIMEMultipart":
 			message = MIMEMultipart("alternative")
 			display_name = frappe.get_cached_value("Mailbox", self.sender, "display_name")
 			message["From"] = (
@@ -190,12 +190,12 @@ class OutgoingMail(Document):
 
 			return message
 
-		def __add_custom_headers(message: "MIMEMultipart") -> None:
+		def _add_custom_headers(message: "MIMEMultipart") -> None:
 			if self.custom_headers:
 				for header in self.custom_headers:
 					message.add_header(header.key, header.value)
 
-		def __add_attachments(message: "MIMEMultipart") -> None:
+		def _add_attachments(message: "MIMEMultipart") -> None:
 			for attachment in self.attachments:
 				file = frappe.get_doc("File", attachment.get("name"))
 				content_type = guess_type(file.file_name)[0]
@@ -229,7 +229,7 @@ class OutgoingMail(Document):
 
 				message.attach(part)
 
-		def __add_dkim_signature(message: "MIMEMultipart") -> None:
+		def _add_dkim_signature(message: "MIMEMultipart") -> None:
 			headers = [
 				b"To",
 				b"From",
@@ -253,10 +253,10 @@ class OutgoingMail(Document):
 			)
 			message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
 
-		message = __get_message()
-		__add_custom_headers(message)
-		__add_attachments(message)
-		__add_dkim_signature(message)
+		message = _get_message()
+		_add_custom_headers(message)
+		_add_attachments(message)
+		_add_dkim_signature(message)
 
 		self.original_message = message.as_string()
 		self.message_size = len(message.as_bytes())
@@ -281,7 +281,7 @@ class OutgoingMail(Document):
 			"message": self.original_message,
 		}
 		self._db_set(status="Queued", notify_update=True)
-		create_agent_job(self.server, "Send Mail", request_data=request_data)
+		create_agent_job(self.agent, "Send Mail", request_data=request_data)
 
 	def get_recipients(self, as_list: bool = False) -> str | list[str]:
 		recipients = [d.recipient for d in self.recipients]
@@ -396,14 +396,14 @@ def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
 
 
 @frappe.whitelist()
-def get_delivery_status(servers: Optional[str | list] = None) -> None:
-	if not servers:
-		MS = frappe.qb.DocType("Mail Server")
+def get_delivery_status(agents: Optional[str | list] = None) -> None:
+	if not agents:
+		MS = frappe.qb.DocType("Mail Agent")
 		OM = frappe.qb.DocType("Outgoing Mail")
-		servers = (
+		agents = (
 			frappe.qb.from_(MS)
 			.left_join(OM)
-			.on(OM.server == MS.name)
+			.on(OM.agent == MS.name)
 			.select(MS.name)
 			.distinct()
 			.where(
@@ -414,15 +414,15 @@ def get_delivery_status(servers: Optional[str | list] = None) -> None:
 			)
 		).run(pluck="name")
 
-	elif isinstance(servers, str):
-		servers = [servers]
+	elif isinstance(agents, str):
+		agents = [agents]
 
-	for server in servers:
-		create_agent_job(server, "Get Delivery Status")
+	for agent in agents:
+		create_agent_job(agent, "Get Delivery Status")
 
 
 def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
-	def __validate_data(data: dict) -> None:
+	def _validate_data(data: dict) -> None:
 		if data:
 			fields = ["message_id", "outgoing_mail", "status", "recipients"]
 
@@ -436,7 +436,7 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 		if agent_job.status == "Completed":
 			if data := json_loads(agent_job.response_data)["message"]:
 				for d in data:
-					__validate_data(d)
+					_validate_data(d)
 
 					if outgoing_mail := frappe.get_doc(
 						"Outgoing Mail",
@@ -450,8 +450,13 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 								recipient.sent_after = time_diff_in_seconds(
 									recipient.sent_at, outgoing_mail.created_at
 								)
+							else:
+								recipient.bounce_at = d["recipients"][recipient.recipient]["bounce_at"]
+								recipient.bounce_after = time_diff_in_seconds(
+									recipient.bounce_at, outgoing_mail.created_at
+								)
 
-							recipient.description = d["recipients"][recipient.recipient]["description"]
+							recipient.details = d["recipients"][recipient.recipient]["details"]
 							recipient.db_update()
 
 						outgoing_mail._db_set(status=d["status"], notify_update=True)

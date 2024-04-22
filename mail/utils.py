@@ -28,7 +28,7 @@ def get_dns_record(
 	except dns.resolver.NoAnswer:
 		err_msg = _("No answer for {0}.".format(frappe.bold(fqdn)))
 	except dns.exception.DNSException as e:
-		err_msg = _(e)
+		err_msg = _(str(e))
 
 	if raise_exception and err_msg:
 		frappe.throw(err_msg)
@@ -61,15 +61,15 @@ def is_port_open(fqdn: str, port: int) -> bool:
 		return False
 
 
-def get_outgoing_server() -> str:
-	servers = frappe.db.get_all(
-		"Mail Server", filters={"enabled": 1, "outgoing": 1}, pluck="name"
+def get_outgoing_agent() -> str:
+	agents = frappe.db.get_all(
+		"Mail Agent", filters={"enabled": 1, "outgoing": 1}, pluck="name"
 	)
 
-	if not servers:
-		frappe.throw(_("No enabled outgoing server found."))
+	if not agents:
+		frappe.throw(_("No enabled outgoing agent found."))
 
-	return random.choice(servers)
+	return random.choice(agents)
 
 
 def parsedate_to_datetime(
@@ -77,11 +77,7 @@ def parsedate_to_datetime(
 ) -> datetime:
 	date_header = re.sub(r"\s+\([A-Z]+\)", "", date_header)
 	dt = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S %z")
-
-	if not to_timezone:
-		to_timezone = get_system_timezone()
-
-	return dt.astimezone(pytz.timezone(to_timezone))
+	return dt.astimezone(pytz.timezone(to_timezone or get_system_timezone()))
 
 
 def convert_html_to_text(self, html: str) -> str:

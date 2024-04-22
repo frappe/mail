@@ -5,7 +5,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "server",
+  "agent",
   "status",
   "column_break_ahbz",
   "job_type",
@@ -42,12 +42,12 @@
    "search_index": 1
   },
   {
-   "fieldname": "server",
+   "fieldname": "agent",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Server",
-   "options": "Mail Server",
+   "label": "Agent",
+   "options": "Mail Agent",
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
@@ -177,7 +177,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-25 16:12:26.345017",
+ "modified": "2024-04-17 13:03:42.433786",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Agent Job",

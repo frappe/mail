@@ -22,7 +22,7 @@ class MailDomain(Document):
 	def validate(self) -> None:
 		self.validate_dkim_selector()
 		self.validate_dkim_bits()
-		self.validate_outgoing_server()
+		self.validate_outgoing_agent()
 		self.validate_subdomain()
 		self.validate_root_domain()
 
@@ -68,22 +68,22 @@ class MailDomain(Document):
 		else:
 			self.dkim_bits = frappe.db.get_single_value("Mail Settings", "default_dkim_bits")
 
-	def validate_outgoing_server(self) -> None:
-		if self.outgoing_server:
+	def validate_outgoing_agent(self) -> None:
+		if self.outgoing_agent:
 			enabled, outgoing = frappe.db.get_value(
-				"Mail Server", self.outgoing_server, ["enabled", "outgoing"]
+				"Mail Agent", self.outgoing_agent, ["enabled", "outgoing"]
 			)
 
 			if not enabled:
 				frappe.throw(
-					_("Outgoing Server {0} is disabled.".format(frappe.bold(self.outgoing_server)))
+					_("Outgoing Agent {0} is disabled.".format(frappe.bold(self.outgoing_agent)))
 				)
 
 			if not outgoing:
 				frappe.throw(
 					_(
-						"Outgoing Server {0} is not an valid outgoing server.".format(
-							frappe.bold(self.outgoing_server)
+						"Outgoing Agent {0} is not an valid outgoing agent.".format(
+							frappe.bold(self.outgoing_agent)
 						)
 					)
 				)
@@ -194,22 +194,22 @@ class MailDomain(Document):
 
 	def get_receiving_records(self, ttl: str) -> list[dict]:
 		records = []
-		incoming_servers = frappe.db.get_all(
-			"Mail Server",
+		incoming_agents = frappe.db.get_all(
+			"Mail Agent",
 			filters={"enabled": 1, "incoming": 1},
 			fields=["name", "priority"],
 			order_by="priority",
 		)
 
-		if incoming_servers:
-			for server in incoming_servers:
+		if incoming_agents:
+			for agent in incoming_agents:
 				records.append(
 					{
 						"category": "Receiving Record",
 						"type": "MX",
 						"host": self.domain_name,
-						"value": f"{server.name.split(':')[0]}.",
-						"priority": server.priority,
+						"value": f"{agent.name.split(':')[0]}.",
+						"priority": agent.priority,
 						"ttl": ttl,
 					}
 				)
@@ -284,7 +284,7 @@ def verify_dns_record(record: "DNSRecord", debug: bool = False) -> bool:
 
 @frappe.whitelist()
 def update_virtual_domains(
-	virtual_domains: Optional[list[dict]] = None, servers: Optional[str | list] = None
+	virtual_domains: Optional[list[dict]] = None, agents: Optional[str | list] = None
 ) -> None:
 	if not virtual_domains:
 		virtual_domains = frappe.db.get_all(
@@ -292,14 +292,14 @@ def update_virtual_domains(
 		)
 
 	if virtual_domains:
-		if not servers:
-			servers = frappe.db.get_all(
-				"Mail Server", filters={"enabled": 1, "incoming": 1}, pluck="name"
+		if not agents:
+			agents = frappe.db.get_all(
+				"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
 			)
-		elif isinstance(servers, str):
-			servers = [servers]
+		elif isinstance(agents, str):
+			agents = [agents]
 
-		for server in servers:
+		for agent in agents:
 			create_agent_job(
-				server, "Update Virtual Domains", request_data={"virtual_domains": virtual_domains}
+				agent, "Update Virtual Domains", request_data={"virtual_domains": virtual_domains}
 			)
