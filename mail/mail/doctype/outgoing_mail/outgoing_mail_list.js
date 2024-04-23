@@ -12,6 +12,7 @@ frappe.listview_settings["Outgoing Mail"] = {
 			"Bounced": "pink",
 			"Partially Sent": "purple",
 			"Sent": "green",
+			"Opened": "green",
 			"Cancelled": "red",
 		};
 		return [__(doc.status), status_colors[doc.status], "status,=," + doc.status];

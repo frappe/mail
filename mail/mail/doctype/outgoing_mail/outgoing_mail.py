@@ -5,6 +5,7 @@ import frappe
 from frappe import _
 from uuid import uuid4
 from re import finditer
+from bs4 import BeautifulSoup
 from mimetypes import guess_type
 from dkim import sign as dkim_sign
 from json import loads as json_loads
@@ -48,7 +49,7 @@ class OutgoingMail(Document):
 			self.validate_use_raw_html()
 			self.set_body_plain()
 			self.set_message_id()
-			self.set_token()
+			self.set_tracking_id()
 			self.set_original_message()
 			self.validate_max_message_size()
 
@@ -167,8 +168,8 @@ class OutgoingMail(Document):
 	def set_message_id(self) -> None:
 		self.message_id = make_msgid(domain=self.domain_name)
 
-	def set_token(self) -> None:
-		self.token = uuid4().hex
+	def set_tracking_id(self) -> None:
+		self.tracking_id = uuid4().hex
 
 	def set_original_message(self) -> None:
 		def _get_message() -> "MIMEMultipart":
@@ -184,6 +185,7 @@ class OutgoingMail(Document):
 
 			body_html = self._replace_image_url_with_content_id()
 			body_plain = html2text(body_html)
+			body_html = add_tracking_pixel(body_html, self.tracking_id)
 
 			message.attach(MIMEText(body_plain, "plain", "utf-8"))
 			message.attach(MIMEText(body_html, "html", "utf-8"))
@@ -333,6 +335,23 @@ class OutgoingMail(Document):
 		if self.docstatus == 1 and self.status == "Failed":
 			self._db_set(error_log=None)
 			self.send_mail()
+
+
+def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
+	soup = BeautifulSoup(body_html, "html.parser")
+	src = (
+		f"{frappe.utils.get_url()}/api/method/mail.api.track_open?tracking_id={tracking_id}"
+	)
+	tracking_pixel = soup.new_tag(
+		"img", src=src, width="1", height="1", style="display:none;"
+	)
+
+	if not soup.body:
+		body_html = f"<html><body>{body_html}</body></html>"
+		soup = BeautifulSoup(body_html, "html.parser")
+
+	soup.body.insert(0, tracking_pixel)
+	return str(soup)
 
 
 @frappe.whitelist()
