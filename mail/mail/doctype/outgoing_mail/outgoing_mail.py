@@ -179,7 +179,7 @@ class OutgoingMail(Document):
 			message["From"] = (
 				"{0} <{1}>".format(display_name, self.sender) if display_name else self.sender
 			)
-			message["To"] = self.get_recipients()
+			message["To"] = self._get_recipients()
 			message["Subject"] = self.subject
 			message["Date"] = formatdate(localtime=True)
 			message["Message-ID"] = self.message_id
@@ -284,6 +284,7 @@ class OutgoingMail(Document):
 				mail_contact = frappe.new_doc("Mail Contact")
 				mail_contact.user = frappe.session.user
 				mail_contact.email = recipient.recipient
+				mail_contact.display_name = recipient.display_name
 				mail_contact.save()
 
 	def send_mail(self) -> None:
@@ -294,8 +295,11 @@ class OutgoingMail(Document):
 		self._db_set(status="Queued", notify_update=True)
 		create_agent_job(self.agent, "Send Mail", request_data=request_data)
 
-	def get_recipients(self, as_list: bool = False) -> str | list[str]:
-		recipients = [d.recipient for d in self.recipients]
+	def _get_recipients(self, as_list: bool = False) -> str | list[str]:
+		recipients = [
+			f"{r.display_name} <{r.recipient}>" if r.display_name else r.recipient
+			for r in self.recipients
+		]
 		return recipients if as_list else ", ".join(recipients)
 
 	def _replace_image_url_with_content_id(self) -> str:
