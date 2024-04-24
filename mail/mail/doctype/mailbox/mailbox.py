@@ -3,7 +3,7 @@
 
 import frappe
 from frappe import _
-from typing import Literal, Optional
+from typing import Optional
 from pypika.terms import ExistsCriterion
 from frappe.model.document import Document
 from mail.utils import validate_active_domain, is_valid_email_for_domain

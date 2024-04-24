@@ -54,6 +54,7 @@ class OutgoingMail(Document):
 			self.validate_max_message_size()
 
 	def on_submit(self) -> None:
+		self.create_mail_contacts()
 		self.send_mail()
 
 	def on_trash(self) -> None:
@@ -276,6 +277,14 @@ class OutgoingMail(Document):
 					frappe.bold(message_size), frappe.bold(max_message_size)
 				)
 			)
+
+	def create_mail_contacts(self) -> None:
+		for recipient in self.recipients:
+			if not frappe.db.exists("Mail Contact", recipient.recipient):
+				mail_contact = frappe.new_doc("Mail Contact")
+				mail_contact.user = frappe.session.user
+				mail_contact.email = recipient.recipient
+				mail_contact.save()
 
 	def send_mail(self) -> None:
 		request_data = {
