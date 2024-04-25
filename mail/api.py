@@ -14,7 +14,6 @@ def track_open(tracking_id: str) -> None:
 		(
 			frappe.qb.update(OM)
 			.set(OM.opened, 1)
-			.set(OM.status, "Opened")
 			.set(OM.first_opened_at, first_opened_at_condition)
 			.set(OM.last_opened_at, now)
 			.set(OM.opened_count, OM.opened_count + 1)
