@@ -2,9 +2,15 @@
 # For license information, please see license.txt
 
 import frappe
+import requests
 from frappe import _
 from mail.utils import get_dns_record
+from typing import TYPE_CHECKING, Optional
 from frappe.model.document import Document
+
+
+if TYPE_CHECKING:
+	from requests import Response
 
 
 class MailAgent(Document):
@@ -86,6 +92,21 @@ class MailAgent(Document):
 
 	def update_server_dns_records(self) -> None:
 		frappe.get_doc("Mail Settings").generate_dns_records(save=True)
+
+	def request(
+		self,
+		method: str,
+		path: str,
+		data: Optional[dict] = None,
+		timeout: int | tuple[int, int] = (60, 120),
+	) -> "Response":
+		url = f"{self.protocol}://{self.host or self.agent}/api/method/{path}"
+		headers = {
+			"Authorization": f"token {self.agent_api_key}:{self.get_password('agent_api_secret')}"
+		}
+		response = requests.request(method, url, headers=headers, json=data, timeout=timeout)
+
+		return response
 
 
 def validate_mail_settings() -> None:

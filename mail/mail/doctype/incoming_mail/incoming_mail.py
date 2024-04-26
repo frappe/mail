@@ -190,5 +190,5 @@ def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
 					doc.received_at = mail["received_at"]
 					doc.eml_filename = mail["eml_filename"]
 					doc.original_message = mail["original_message"]
-					doc.save()
+					doc.insert()
 					queue_submission(doc, "submit", alert=False)

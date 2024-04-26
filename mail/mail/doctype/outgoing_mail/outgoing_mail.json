@@ -34,6 +34,7 @@
   "transferred_at",
   "column_break_fvyv",
   "transferred_after",
+  "send_in_batch",
   "section_break_aafd",
   "tracking_id",
   "opened",
@@ -91,7 +92,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nQueued\nTransferring\nFailed\nTransferred\nBounced\nPartially Sent\nSent\nOpened",
+   "options": "Draft\nPending\nTransferring\nFailed\nTransferred\nBounced\nPartially Sent\nSent\nOpened",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
@@ -310,12 +311,22 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.send_in_batch",
+   "fieldname": "send_in_batch",
+   "fieldtype": "Check",
+   "label": "Send in Batch",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-23 16:15:34.248157",
+ "modified": "2024-04-25 10:55:45.120523",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

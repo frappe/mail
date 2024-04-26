@@ -14,10 +14,20 @@ def create_agent_job_types() -> None:
 		{
 			"enabled": 1,
 			"job_name": "Send Mail",
-			"request_path": "mail_agent.api.send_mail",
+			"request_path": "mail_agent.api.send_mails",
 			"request_method": "POST",
-			"execute_on_start": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mail_status",
-			"execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mail_status",
+			"queue": "short",
+			"execute_on_start": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
+			"execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
+		},
+		{
+			"enabled": 1,
+			"job_name": "Send Mails",
+			"request_path": "mail_agent.api.send_mails",
+			"request_method": "POST",
+			"queue": "long",
+			"execute_on_start": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
+			"execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
 		},
 		{
 			"enabled": 1,

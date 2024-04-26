@@ -18,7 +18,9 @@
   "column_break_nfms",
   "execute_on_start",
   "execute_on_end",
-  "section_break_gfsx",
+  "queue",
+  "timeout",
+  "request_and_response_section",
   "request_data",
   "response_data",
   "section_break_flxw",
@@ -114,10 +116,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "section_break_gfsx",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "section_break_flxw",
    "fieldtype": "Section Break"
   },
@@ -173,11 +171,37 @@
    "label": "On End Error Log",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "request_and_response_section",
+   "fieldtype": "Section Break",
+   "label": "Request and Response"
+  },
+  {
+   "depends_on": "eval: doc.queue",
+   "fetch_from": "job_type.queue",
+   "fieldname": "queue",
+   "fieldtype": "Data",
+   "label": "Queue",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.timeout",
+   "fetch_from": "job_type.timeout",
+   "fieldname": "timeout",
+   "fieldtype": "Int",
+   "label": "Timeout",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-17 13:03:42.433786",
+ "modified": "2024-04-25 13:38:01.138133",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Agent Job",

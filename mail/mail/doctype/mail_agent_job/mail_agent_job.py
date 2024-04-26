@@ -3,17 +3,12 @@
 
 import json
 import frappe
-import requests
 from frappe import _
+from typing import Optional
 from frappe.query_builder import Interval
-from typing import TYPE_CHECKING, Optional
 from frappe.model.document import Document
 from frappe.query_builder.functions import Now
 from frappe.utils import now, time_diff_in_seconds
-from frappe.utils.password import get_decrypted_password
-
-if TYPE_CHECKING:
-	from requests import Response
 
 
 class MailAgentJob(Document):
@@ -54,11 +49,15 @@ class MailAgentJob(Document):
 			self.notify_update()
 
 	def enqueue_job(self) -> None:
+		queue = self.queue or "default"
+		timeout = self.timeout or None
+
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
 			"run",
-			timeout=600,
+			queue=queue,
+			timeout=timeout,
 			enqueue_after_commit=True,
 		)
 
@@ -73,7 +72,7 @@ class MailAgentJob(Document):
 			self._db_set(on_start_error_log=error_log)
 
 		try:
-			agent = MailAgent(self.agent)
+			agent = frappe.get_cached_doc("Mail Agent", self.agent)
 			data = json.loads(self.request_data)
 			response = agent.request(
 				self.request_method,
@@ -118,28 +117,6 @@ class MailAgentJob(Document):
 	def rerun(self) -> None:
 		self._db_set(status="Queued", error_log=None)
 		self.enqueue_job()
-
-
-class MailAgent:
-	def __init__(self, agent: str) -> None:
-		self.agent = agent
-		self.protocol, self.host = frappe.db.get_value(
-			"Mail Agent", agent, ["protocol", "host"]
-		)
-		self.protocol = self.protocol.lower()
-
-	def request(self, method: str, path: str, data: Optional[dict] = None) -> "Response":
-		url = f"{self.protocol}://{self.host or self.agent}/api/method/{path}"
-
-		key = frappe.get_cached_value("Mail Agent", self.agent, "agent_api_key")
-		secret = get_decrypted_password("Mail Agent", self.agent, "agent_api_secret")
-
-		headers = {"Authorization": f"token {key}:{secret}"}
-		response = requests.request(
-			method, url, headers=headers, json=data, timeout=(30, 100)
-		)
-
-		return response
 
 
 def create_agent_job(

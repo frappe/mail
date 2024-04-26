@@ -29,7 +29,9 @@
    "label": "Email",
    "no_copy": 1,
    "options": "Email",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "display_name",
@@ -44,7 +46,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-24 10:28:38.677078",
+ "modified": "2024-04-25 12:32:39.044708",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Contact",

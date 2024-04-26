@@ -55,7 +55,10 @@ class OutgoingMail(Document):
 
 	def on_submit(self) -> None:
 		self.create_mail_contacts()
-		self.send_mail()
+		self._db_set(status="Pending", notify_update=True)
+
+		if not self.send_in_batch:
+			self.send_mail()
 
 	def on_trash(self) -> None:
 		if self.docstatus != 0 and frappe.session.user != "Administrator":
@@ -279,20 +282,30 @@ class OutgoingMail(Document):
 			)
 
 	def create_mail_contacts(self) -> None:
+		if frappe.session.user == "Administrator":
+			return
+
 		for recipient in self.recipients:
-			if not frappe.db.exists("Mail Contact", recipient.recipient):
-				mail_contact = frappe.new_doc("Mail Contact")
-				mail_contact.user = frappe.session.user
-				mail_contact.email = recipient.recipient
-				mail_contact.display_name = recipient.display_name
-				mail_contact.save()
+			mail_contact = frappe.db.exists(
+				"Mail Contact", {"user": frappe.session.user, "email": recipient.recipient}
+			)
+
+			if mail_contact:
+				frappe.db.set_value(
+					"Mail Contact", mail_contact, "display_name", recipient.display_name
+				)
+			else:
+				doc = frappe.new_doc("Mail Contact")
+				doc.user = frappe.session.user
+				doc.email = recipient.recipient
+				doc.display_name = recipient.display_name
+				doc.insert()
 
 	def send_mail(self) -> None:
 		request_data = {
 			"outgoing_mail": self.name,
 			"message": self.original_message,
 		}
-		self._db_set(status="Queued", notify_update=True)
 		create_agent_job(self.agent, "Send Mail", request_data=request_data)
 
 	def _get_recipients(self, as_list: bool = False) -> str | list[str]:
@@ -346,7 +359,13 @@ class OutgoingMail(Document):
 	@frappe.whitelist()
 	def retry_send_mail(self) -> None:
 		if self.docstatus == 1 and self.status == "Failed":
-			self._db_set(error_log=None)
+			kwargs = {}
+			if self.send_in_batch:
+				kwargs["send_in_batch"] = 0
+
+			kwargs["error_log"] = None
+			kwargs["status"] = "Pending"
+			self._db_set(**kwargs, commit=True)
 			self.send_mail()
 
 
@@ -396,35 +415,40 @@ def get_sender(
 	).run(as_dict=False)
 
 
-def update_outgoing_mail_status(agent_job: "MailAgentJob") -> None:
-	if agent_job and agent_job.job_type == "Send Mail":
-		kwargs = {}
+def update_outgoing_mails_status(agent_job: "MailAgentJob") -> None:
+	if agent_job and agent_job.job_type in ["Send Mail", "Send Mails"]:
+		data = json_loads(agent_job.request_data)
 
-		if agent_job.status == "Running":
-			kwargs.update({"status": "Transferring"})
-			outgoing_mail = frappe.get_doc(
-				"Outgoing Mail", json_loads(agent_job.request_data).get("outgoing_mail")
-			)
-			outgoing_mail._db_set(**kwargs, commit=True)
-			return
+		if isinstance(data, dict):
+			if agent_job.status == "Running":
+				outgoing_mail = frappe.get_doc("Outgoing Mail", data.get("outgoing_mail"))
+				return outgoing_mail._db_set(status="Transferring", commit=True, notify_update=True)
 
-		elif agent_job.status == "Failed":
-			kwargs.update({"status": "Failed", "error_log": agent_job.error_log})
+			data = [data]
+
+		if agent_job.status == "Failed":
+			OM = frappe.qb.DocType("Outgoing Mail")
+			outgoing_mails = [d["outgoing_mail"] for d in data]
+			(
+				frappe.qb.update(OM)
+				.set(OM.status, "Failed")
+				.set(OM.error_log, agent_job.error_log)
+				.where((OM.docstatus == 1) & (OM.name.isin(outgoing_mails)))
+			).run()
 
 		elif agent_job.status == "Completed":
-			kwargs.update({"status": "Transferred", "transferred_at": now()})
+			OM = frappe.qb.DocType("Outgoing Mail")
+			outgoing_mails = [d["outgoing_mail"] for d in data]
+			transferred_at = now()
+			(
+				frappe.qb.update(OM)
+				.set(OM.status, "Transferred")
+				.set(OM.transferred_at, transferred_at)
+				.set(OM.transferred_after, OM.transferred_at - OM.created_at)
+				.where((OM.docstatus == 1) & (OM.name.isin(outgoing_mails)))
+			).run()
 
-		if kwargs:
-			outgoing_mail = frappe.get_doc(
-				"Outgoing Mail", json_loads(agent_job.request_data)["outgoing_mail"]
-			)
-
-			if kwargs.get("status") == "Transferred":
-				kwargs["transferred_after"] = time_diff_in_seconds(
-					kwargs["transferred_at"], outgoing_mail.created_at
-				)
-
-			outgoing_mail._db_set(**kwargs, notify_update=True)
+		frappe.db.commit()
 
 
 @frappe.whitelist()
@@ -470,10 +494,7 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 				for d in data:
 					_validate_data(d)
 
-					if outgoing_mail := frappe.get_doc(
-						"Outgoing Mail",
-						{"name": d.get("outgoing_mail"), "message_id": d.get("message_id")},
-					):
+					if outgoing_mail := frappe.get_doc("Outgoing Mail", d["outgoing_mail"]):
 						for recipient in outgoing_mail.recipients:
 							recipient.sent = d["recipients"][recipient.recipient]["sent"]
 
@@ -492,3 +513,51 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 							recipient.db_update()
 
 						outgoing_mail._db_set(status=d["status"], notify_update=True)
+
+
+def send_mails(batch_size: int = 100) -> None:
+	def _get_outgoing_mails() -> list[dict]:
+		OM = frappe.qb.DocType("Outgoing Mail")
+		return (
+			frappe.qb.from_(OM)
+			.select(OM.name, OM.agent, OM.original_message)
+			.where((OM.docstatus == 1) & (OM.send_in_batch == 1) & (OM.status == "Pending"))
+			.orderby(OM.creation)
+		).run(as_dict=True)
+
+	def _create_and_transfer_batch(
+		agent: str, outgoing_mails: list, batch_size: int
+	) -> None:
+		for i in range(0, len(outgoing_mails), batch_size):
+			create_agent_job(
+				agent, "Send Mails", request_data=outgoing_mails[i : i + batch_size]
+			)
+
+	def _update_outgoing_mails_status(oms: list[str], commit: bool = False) -> None:
+		OM = frappe.qb.DocType("Outgoing Mail")
+		(
+			frappe.qb.update(OM)
+			.set(OM.status, "Transferring")
+			.where((OM.docstatus == 1) & (OM.name.isin(oms)))
+		).run()
+
+		if commit:
+			frappe.db.commit()
+
+	if outgoing_mails := _get_outgoing_mails():
+		outgoing_mail_list = []
+		agent_wise_outgoing_mails = {}
+
+		for mail in outgoing_mails:
+			outgoing_mail_list.append(mail["name"])
+			agent_wise_outgoing_mails.setdefault(mail.agent, []).append(
+				{
+					"outgoing_mail": mail.name,
+					"message": mail.original_message,
+				}
+			)
+
+		for agent, outgoing_mails in agent_wise_outgoing_mails.items():
+			_create_and_transfer_batch(agent, outgoing_mails, batch_size)
+
+		_update_outgoing_mails_status(outgoing_mail_list)

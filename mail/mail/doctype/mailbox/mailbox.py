@@ -90,7 +90,7 @@ def create_mailbox(
 			mailbox_user.user_type = "System User"
 			mailbox_user.send_welcome_email = 0
 			mailbox_user.add_roles("System Manager")  # TODO: Role Permissions
-			mailbox_user.save(ignore_permissions=True)
+			mailbox_user.insert(ignore_permissions=True)
 
 		mailbox = frappe.new_doc("Mailbox")
 		mailbox.domain_name = domain_name
@@ -98,7 +98,7 @@ def create_mailbox(
 		mailbox.outgoing = outgoing
 		mailbox.user = user
 		mailbox.display_name = display_name
-		mailbox.save(ignore_permissions=True)
+		mailbox.insert(ignore_permissions=True)
 
 		return mailbox
 

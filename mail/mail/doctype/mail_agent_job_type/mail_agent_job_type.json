@@ -12,6 +12,10 @@
   "request_path",
   "column_break_3ewd",
   "request_method",
+  "section_break_ldod",
+  "queue",
+  "column_break_9rbu",
+  "timeout",
   "section_break_nere",
   "execute_on_start",
   "column_break_bx6t",
@@ -76,11 +80,31 @@
   {
    "fieldname": "column_break_bx6t",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ldod",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "queue",
+   "fieldtype": "Data",
+   "label": "Queue"
+  },
+  {
+   "fieldname": "column_break_9rbu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "timeout",
+   "fieldtype": "Int",
+   "label": "Timeout",
+   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-02-07 13:12:41.254306",
+ "modified": "2024-04-25 13:38:15.825361",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Agent Job Type",
