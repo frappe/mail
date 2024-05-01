@@ -2,19 +2,21 @@ import frappe
 
 
 def after_install() -> None:
-	create_agent_job_types()
+	create_mail_agent_job_types()
 
 
 def after_migrate() -> None:
-	create_agent_job_types()
+	create_mail_agent_job_types()
 
 
-def create_agent_job_types() -> None:
+def create_mail_agent_job_types() -> None:
+	"""Creates default Mail Agent Job Types."""
+
 	agent_job_types = [
 		{
 			"enabled": 1,
-			"job_name": "Send Mail",
-			"request_path": "mail_agent.api.send_mails",
+			"job_name": "Transfer Mail",
+			"request_path": "mail_agent.api.outgoing.send",
 			"request_method": "POST",
 			"queue": "short",
 			"execute_on_start": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
@@ -22,8 +24,8 @@ def create_agent_job_types() -> None:
 		},
 		{
 			"enabled": 1,
-			"job_name": "Send Mails",
-			"request_path": "mail_agent.api.send_mails",
+			"job_name": "Transfer Mails",
+			"request_path": "mail_agent.api.outgoing.send",
 			"request_method": "POST",
 			"queue": "long",
 			"execute_on_start": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
@@ -31,33 +33,33 @@ def create_agent_job_types() -> None:
 		},
 		{
 			"enabled": 1,
-			"job_name": "Get Delivery Status",
-			"request_path": "mail_agent.api.get_delivery_status",
+			"job_name": "Sync Outgoing Mails Status",
+			"request_path": "mail_agent.api.outgoing.sync_status",
 			"request_method": "POST",
 			"execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_delivery_status",
 		},
 		{
 			"enabled": 1,
-			"job_name": "Update Virtual Domains",
-			"request_path": "mail_agent.api.update_virtual_domains",
+			"job_name": "Sync Mail Domains",
+			"request_path": "mail_agent.api.domain.sync",
 			"request_method": "POST",
 		},
 		{
 			"enabled": 1,
-			"job_name": "Update Virtual Mailboxes",
-			"request_path": "mail_agent.api.update_virtual_mailboxes",
+			"job_name": "Sync Mailboxes",
+			"request_path": "mail_agent.api.mailbox.sync",
 			"request_method": "POST",
 		},
 		{
 			"enabled": 1,
-			"job_name": "Update Virtual Aliases",
-			"request_path": "mail_agent.api.update_virtual_aliases",
+			"job_name": "Sync Mail Aliases",
+			"request_path": "mail_agent.api.alias.sync",
 			"request_method": "POST",
 		},
 		{
 			"enabled": 1,
-			"job_name": "Get Incoming Mails",
-			"request_path": "mail_agent.api.get_incoming_mails",
+			"job_name": "Sync Incoming Mails",
+			"request_path": "mail_agent.api.incoming.sync",
 			"request_method": "POST",
 			"execute_on_end": "mail.mail.doctype.incoming_mail.incoming_mail.insert_incoming_mails",
 		},

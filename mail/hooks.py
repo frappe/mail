@@ -152,8 +152,9 @@ scheduler_events = {
 	# ],
 	"cron": {
 		"*/3 * * * *": [
-			"mail.mail.doctype.incoming_mail.incoming_mail.get_incoming_mails",
-			"mail.mail.doctype.outgoing_mail.outgoing_mail.get_delivery_status",
+			"mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails",
+			"mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails",
+			"mail.mail.doctype.outgoing_mail.outgoing_mail.sync_outgoing_mails_status",
 		],
 	}
 }
@@ -230,4 +231,4 @@ scheduler_events = {
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True
 
-default_log_clearing_doctypes = {"Mail Agent Job": 14}
+default_log_clearing_doctypes = {"Mail Agent Job": 7}

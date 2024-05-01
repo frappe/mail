@@ -6,16 +6,13 @@ import json
 import email
 import frappe
 from frappe import _
-from typing import Optional
-from typing import TYPE_CHECKING
 from email.header import decode_header
+from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
-from mail.utils import parsedate_to_datetime
 from frappe.utils.file_manager import save_file
+from mail.utils import get_parsed_message, parsedate_to_datetime
 from frappe.utils import (
 	now,
-	cint,
-	format_duration,
 	get_datetime_str,
 	time_diff_in_seconds,
 )
@@ -28,12 +25,9 @@ if TYPE_CHECKING:
 
 
 class IncomingMail(Document):
-	def onload(self):
-		self.received_in = format_duration(self.received_after, hide_days=True)
-		self.delivered_in = format_duration(self.delivered_after, hide_days=True)
-
 	def validate(self) -> None:
 		self.validate_mandatory_fields()
+
 		if self.get("_action") == "submit":
 			self.process()
 
@@ -42,10 +36,11 @@ class IncomingMail(Document):
 			frappe.throw(_("Only Administrator can delete Incoming Mail."))
 
 	def validate_mandatory_fields(self) -> None:
+		"""Validates mandatory fields."""
+
 		mandatory_fields = [
-			"original_message",
-			"eml_filename",
 			"status",
+			"original_message",
 		]
 
 		for field in mandatory_fields:
@@ -53,9 +48,13 @@ class IncomingMail(Document):
 				frappe.throw(_("{0} is mandatory").format(frappe.bold(field)))
 
 	def process(self) -> None:
+		"""Processes the Incoming Mail."""
+
 		def _add_attachment(
 			filename: str, content: bytes, is_private: bool = 1, for_doc: bool = True
 		) -> dict:
+			"""Add attachment to the Incoming Mail."""
+
 			kwargs = {
 				"fname": filename,
 				"content": content,
@@ -79,6 +78,8 @@ class IncomingMail(Document):
 			}
 
 		def _get_body(parsed_message: "Message") -> tuple[str, str]:
+			"""Returns the HTML and plain text body from the parsed message."""
+
 			body_html, body_plain = "", ""
 
 			for part in parsed_message.walk():
@@ -114,7 +115,7 @@ class IncomingMail(Document):
 
 			return body_html, body_plain
 
-		parsed_message = email.message_from_string(self.original_message)
+		parsed_message = get_parsed_message(self.original_message)
 		sender = email.utils.parseaddr(parsed_message["From"])
 
 		self.sender = sender[1]
@@ -168,7 +169,9 @@ class IncomingMail(Document):
 
 
 @frappe.whitelist()
-def get_incoming_mails(agents: Optional[str | list] = None) -> None:
+def sync_incoming_mails(agents: Optional[str | list] = None) -> None:
+	"""Gets incoming mails from the mail agents."""
+
 	if not agents:
 		agents = frappe.db.get_all(
 			"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
@@ -177,11 +180,13 @@ def get_incoming_mails(agents: Optional[str | list] = None) -> None:
 		agents = [agents]
 
 	for agent in agents:
-		create_agent_job(agent, "Get Incoming Mails")
+		create_agent_job(agent, "Sync Incoming Mails")
 
 
 def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
-	if agent_job and agent_job.job_type == "Get Incoming Mails":
+	"""Called by the Mail Agent Job to insert incoming mails."""
+
+	if agent_job and agent_job.job_type == "Sync Incoming Mails":
 		if agent_job.status == "Completed":
 			if mails := json.loads(agent_job.response_data)["message"]:
 				for mail in mails:

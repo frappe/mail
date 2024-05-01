@@ -4,7 +4,9 @@ from frappe.utils import flt
 
 
 def validate_file(doc, method):
-	def throw(msg, raise_exception=True, indicator="red", alert=True):
+	"""Validates attachment attached to Outgoing Mail and Incoming Mail."""
+
+	def _throw(msg, raise_exception=True, indicator="red", alert=True):
 		frappe.msgprint(
 			msg, raise_exception=raise_exception, indicator=indicator, alert=alert
 		)
@@ -18,7 +20,7 @@ def validate_file(doc, method):
 
 		if method == "validate":
 			if doc.is_new() and docstatus > 0:
-				throw(
+				_throw(
 					_("Cannot attach file to a submitted/cancelled {0} {1}.").format(
 						doc.attached_to_doctype, frappe.bold(doc.attached_to_name)
 					)
@@ -31,7 +33,7 @@ def validate_file(doc, method):
 				)
 
 				if file_size > max_attachment_size:
-					throw(
+					_throw(
 						_("Attachment size limit exceeded ({0} MB). Maximum {1} MB allowed.").format(
 							frappe.bold(file_size), frappe.bold(max_attachment_size)
 						)
@@ -39,7 +41,7 @@ def validate_file(doc, method):
 
 		elif method == "on_update":
 			if docstatus > 0:
-				throw(
+				_throw(
 					_("Cannot update attachment as it is linked with {0} {1}.").format(
 						doc.attached_to_doctype, frappe.bold(doc.attached_to_name)
 					)
@@ -47,7 +49,7 @@ def validate_file(doc, method):
 
 		elif method == "on_trash":
 			if docstatus > 0:
-				throw(
+				_throw(
 					_("Cannot delete attachment as it is linked with {0} {1}.").format(
 						doc.attached_to_doctype, frappe.bold(doc.attached_to_name)
 					)

@@ -23,7 +23,7 @@ from frappe.utils.password import get_decrypted_password
 from frappe.utils import flt, now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.utils import (
-	get_outgoing_agent,
+	get_random_outgoing_agent,
 	parsedate_to_datetime,
 	validate_mailbox_for_outgoing,
 )
@@ -58,13 +58,15 @@ class OutgoingMail(Document):
 		self._db_set(status="Pending", notify_update=True)
 
 		if not self.send_in_batch:
-			self.send_mail()
+			self.transfer_mail()
 
 	def on_trash(self) -> None:
 		if self.docstatus != 0 and frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Outgoing Mail."))
 
 	def validate_domain(self) -> None:
+		"""Validates the domain."""
+
 		if frappe.session.user == "Administrator":
 			return
 
@@ -78,13 +80,19 @@ class OutgoingMail(Document):
 			frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(self.domain_name)))
 
 	def validate_sender(self) -> None:
+		"""Validates the sender."""
+
 		validate_mailbox_for_outgoing(self.sender)
 
 	def validate_amended_doc(self) -> None:
+		"""Validates the amended document."""
+
 		if self.amended_from:
 			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
 
 	def validate_recipients(self) -> None:
+		"""Validates the recipients."""
+
 		max_recipients = frappe.db.get_single_value(
 			"Mail Settings", "max_recipients", cache=True
 		)
@@ -108,10 +116,14 @@ class OutgoingMail(Document):
 				)
 
 	def validate_body_html(self) -> None:
+		"""Validates the HTML body."""
+
 		if not self.body_html:
 			self.body_html = ""
 
 	def load_attachments(self) -> None:
+		"""Loads the attachments."""
+
 		self.attachments = frappe.db.get_all(
 			"File",
 			fields=["name", "file_name", "file_url", "is_private", "file_size"],
@@ -122,6 +134,8 @@ class OutgoingMail(Document):
 			attachment.type = "attachment"
 
 	def validate_attachments(self) -> None:
+		"""Validates the attachments."""
+
 		if self.attachments:
 			mail_settings = frappe.get_cached_doc("Mail Settings")
 
@@ -154,29 +168,45 @@ class OutgoingMail(Document):
 				)
 
 	def set_from_ip(self) -> None:
+		"""Sets the From IP."""
+
 		self.from_ip = frappe.local.request_ip
 
 	def set_agent(self) -> None:
+		"""Sets the Agent."""
+
 		if not self.agent:
-			self.agent = get_outgoing_agent()
+			self.agent = get_random_outgoing_agent()
 
 	def validate_use_raw_html(self) -> None:
+		"""Validates the Use Raw HTML."""
+
 		if self.use_raw_html:
 			self.body_html = self.raw_html
 
 		self.raw_html = ""
 
 	def set_body_plain(self) -> None:
+		"""Sets the Plain Body."""
+
 		self.body_plain = html2text(self.body_html)
 
 	def set_message_id(self) -> None:
+		"""Sets the Message ID."""
+
 		self.message_id = make_msgid(domain=self.domain_name)
 
 	def set_tracking_id(self) -> None:
+		"""Sets the Tracking ID."""
+
 		self.tracking_id = uuid4().hex
 
 	def set_original_message(self) -> None:
+		"""Sets the Original Message."""
+
 		def _get_message() -> "MIMEMultipart":
+			"""Returns the MIME message."""
+
 			message = MIMEMultipart("alternative")
 			display_name = frappe.get_cached_value("Mailbox", self.sender, "display_name")
 			message["From"] = (
@@ -197,11 +227,15 @@ class OutgoingMail(Document):
 			return message
 
 		def _add_custom_headers(message: "MIMEMultipart") -> None:
+			"""Adds the custom headers to the message."""
+
 			if self.custom_headers:
 				for header in self.custom_headers:
 					message.add_header(header.key, header.value)
 
 		def _add_attachments(message: "MIMEMultipart") -> None:
+			"""Adds the attachments to the message."""
+
 			for attachment in self.attachments:
 				file = frappe.get_doc("File", attachment.get("name"))
 				content_type = guess_type(file.file_name)[0]
@@ -236,6 +270,8 @@ class OutgoingMail(Document):
 				message.attach(part)
 
 		def _add_dkim_signature(message: "MIMEMultipart") -> None:
+			"""Adds the DKIM signature to the message."""
+
 			headers = [
 				b"To",
 				b"From",
@@ -269,6 +305,8 @@ class OutgoingMail(Document):
 		self.created_at = get_datetime_str(parsedate_to_datetime(message["Date"]))
 
 	def validate_max_message_size(self) -> None:
+		"""Validates the maximum message size."""
+
 		message_size = flt(self.message_size / 1024 / 1024, 3)
 		max_message_size = frappe.db.get_single_value(
 			"Mail Settings", "max_message_size", cache=True
@@ -282,6 +320,8 @@ class OutgoingMail(Document):
 			)
 
 	def create_mail_contacts(self) -> None:
+		"""Creates the mail contacts."""
+
 		if frappe.session.user == "Administrator":
 			return
 
@@ -301,14 +341,18 @@ class OutgoingMail(Document):
 				doc.display_name = recipient.display_name
 				doc.insert()
 
-	def send_mail(self) -> None:
+	def transfer_mail(self) -> None:
+		"""Sends the mail."""
+
 		request_data = {
 			"outgoing_mail": self.name,
 			"message": self.original_message,
 		}
-		create_agent_job(self.agent, "Send Mail", request_data=request_data)
+		create_agent_job(self.agent, "Transfer Mail", request_data=request_data)
 
 	def _get_recipients(self, as_list: bool = False) -> str | list[str]:
+		"""Returns the recipients."""
+
 		recipients = [
 			f"{r.display_name} <{r.recipient}>" if r.display_name else r.recipient
 			for r in self.recipients
@@ -316,6 +360,8 @@ class OutgoingMail(Document):
 		return recipients if as_list else ", ".join(recipients)
 
 	def _replace_image_url_with_content_id(self) -> str:
+		"""Replaces the image URL with content ID."""
+
 		body_html = self.body_html or ""
 
 		if body_html and self.attachments:
@@ -332,6 +378,8 @@ class OutgoingMail(Document):
 	def _get_attachment_content_id(
 		self, file_url: str, set_as_inline: bool = False
 	) -> Optional[str]:
+		"""Returns the attachment content ID."""
+
 		for attachment in self.attachments:
 			if file_url in attachment.file_url:
 				if set_as_inline:
@@ -340,6 +388,8 @@ class OutgoingMail(Document):
 				return attachment.name
 
 	def _get_attachment_file_url(self, content_id: str) -> Optional[str]:
+		"""Returns the attachment file URL."""
+
 		for attachment in self.attachments:
 			if content_id == attachment.name:
 				return attachment.file_url
@@ -351,13 +401,17 @@ class OutgoingMail(Document):
 		notify_update: bool = False,
 		**kwargs,
 	) -> None:
+		"""Updates the document with the given key-value pairs."""
+
 		self.db_set(kwargs, update_modified=update_modified, commit=commit)
 
 		if notify_update:
 			self.notify_update()
 
 	@frappe.whitelist()
-	def retry_send_mail(self) -> None:
+	def retry_transfer_mail(self) -> None:
+		"""Retries sending the mail."""
+
 		if self.docstatus == 1 and self.status == "Failed":
 			kwargs = {}
 			if self.send_in_batch:
@@ -366,24 +420,7 @@ class OutgoingMail(Document):
 			kwargs["error_log"] = None
 			kwargs["status"] = "Pending"
 			self._db_set(**kwargs, commit=True)
-			self.send_mail()
-
-
-def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
-	soup = BeautifulSoup(body_html, "html.parser")
-	src = (
-		f"{frappe.utils.get_url()}/api/method/mail.api.track_open?tracking_id={tracking_id}"
-	)
-	tracking_pixel = soup.new_tag(
-		"img", src=src, width="1", height="1", style="display:none;"
-	)
-
-	if not soup.body:
-		body_html = f"<html><body>{body_html}</body></html>"
-		soup = BeautifulSoup(body_html, "html.parser")
-
-	soup.body.insert(0, tracking_pixel)
-	return str(soup)
+			self.transfer_mail()
 
 
 @frappe.whitelist()
@@ -396,6 +433,8 @@ def get_sender(
 	page_len: Optional[int] = 20,
 	filters: Optional[dict] = None,
 ) -> list:
+	"""Returns the sender."""
+
 	MAILBOX = frappe.qb.DocType("Mailbox")
 	DOMAIN = frappe.qb.DocType("Mail Domain")
 	return (
@@ -415,8 +454,38 @@ def get_sender(
 	).run(as_dict=False)
 
 
+@frappe.whitelist()
+def sync_outgoing_mails_status(agents: Optional[str | list] = None) -> None:
+	"""Gets the delivery status from agents."""
+
+	if not agents:
+		MS = frappe.qb.DocType("Mail Agent")
+		OM = frappe.qb.DocType("Outgoing Mail")
+		agents = (
+			frappe.qb.from_(MS)
+			.left_join(OM)
+			.on(OM.agent == MS.name)
+			.select(MS.name)
+			.distinct()
+			.where(
+				(MS.enabled == 1)
+				& (MS.outgoing == 1)
+				& (OM.docstatus == 1)
+				& (OM.status == "Transferred")
+			)
+		).run(pluck="name")
+
+	elif isinstance(agents, str):
+		agents = [agents]
+
+	for agent in agents:
+		create_agent_job(agent, "Sync Outgoing Mails Status")
+
+
 def update_outgoing_mails_status(agent_job: "MailAgentJob") -> None:
-	if agent_job and agent_job.job_type in ["Send Mail", "Send Mails"]:
+	"""Called by the Mail Agent Job to update the outgoing mails status."""
+
+	if agent_job and agent_job.job_type in ["Transfer Mail", "Transfer Mails"]:
 		data = json_loads(agent_job.request_data)
 
 		if isinstance(data, dict):
@@ -448,74 +517,62 @@ def update_outgoing_mails_status(agent_job: "MailAgentJob") -> None:
 				.where((OM.docstatus == 1) & (OM.name.isin(outgoing_mails)))
 			).run()
 
-		frappe.db.commit()
-
-
-@frappe.whitelist()
-def get_delivery_status(agents: Optional[str | list] = None) -> None:
-	if not agents:
-		MS = frappe.qb.DocType("Mail Agent")
-		OM = frappe.qb.DocType("Outgoing Mail")
-		agents = (
-			frappe.qb.from_(MS)
-			.left_join(OM)
-			.on(OM.agent == MS.name)
-			.select(MS.name)
-			.distinct()
-			.where(
-				(MS.enabled == 1)
-				& (MS.outgoing == 1)
-				& (OM.docstatus == 1)
-				& (OM.status == "Transferred")
-			)
-		).run(pluck="name")
-
-	elif isinstance(agents, str):
-		agents = [agents]
-
-	for agent in agents:
-		create_agent_job(agent, "Get Delivery Status")
-
 
 def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
+	"""Called by the Mail Agent Job to update the outgoing mails delivery status."""
+
 	def _validate_data(data: dict) -> None:
+		"""Validates the data."""
+
 		if data:
-			fields = ["message_id", "outgoing_mail", "status", "recipients"]
+			fields = ["outgoing_mail", "status", "recipients"]
 
 			for field in fields:
 				if not data.get(field):
 					frappe.throw(_("{0} is required.").format(frappe.bold(field)))
 		else:
-			frappe.throw(_("Invalid Request Data."))
+			frappe.throw(_("Invalid Data."))
 
-	if agent_job and agent_job.job_type == "Get Delivery Status":
+	if agent_job and agent_job.job_type == "Sync Outgoing Mails Status":
 		if agent_job.status == "Completed":
 			if data := json_loads(agent_job.response_data)["message"]:
 				for d in data:
 					_validate_data(d)
 
-					if outgoing_mail := frappe.get_doc("Outgoing Mail", d["outgoing_mail"]):
-						for recipient in outgoing_mail.recipients:
-							recipient.sent = d["recipients"][recipient.recipient]["sent"]
+					if doc := frappe.get_doc("Outgoing Mail", d["outgoing_mail"]):
+						if d["status"] != "Queued":
+							for recipient in doc.recipients:
+								recipient_data = d["recipients"][recipient.recipient]
+								recipient.status = recipient_data["status"]
+								recipient.at = recipient_data["at"]
+								recipient.after = time_diff_in_seconds(recipient.at, doc.created_at)
+								recipient.retry_attempts = recipient_data["retry_attempts"]
+								recipient.details = recipient_data["details"]
+								recipient.db_update()
 
-							if recipient.sent:
-								recipient.sent_at = d["recipients"][recipient.recipient]["sent_at"]
-								recipient.sent_after = time_diff_in_seconds(
-									recipient.sent_at, outgoing_mail.created_at
-								)
-							else:
-								recipient.bounce_at = d["recipients"][recipient.recipient]["bounce_at"]
-								recipient.bounce_after = time_diff_in_seconds(
-									recipient.bounce_at, outgoing_mail.created_at
-								)
-
-							recipient.details = d["recipients"][recipient.recipient]["details"]
-							recipient.db_update()
-
-						outgoing_mail._db_set(status=d["status"], notify_update=True)
+						doc._db_set(status=d["status"], notify_update=True)
 
 
-def send_mails(batch_size: int = 100) -> None:
+def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
+	"""Adds the tracking pixel to the HTML body."""
+
+	soup = BeautifulSoup(body_html, "html.parser")
+	src = f"{frappe.utils.get_url()}/api/method/mail.api.track.open?id={tracking_id}"
+	tracking_pixel = soup.new_tag(
+		"img", src=src, width="1", height="1", style="display:none;"
+	)
+
+	if not soup.body:
+		body_html = f"<html><body>{body_html}</body></html>"
+		soup = BeautifulSoup(body_html, "html.parser")
+
+	soup.body.insert(0, tracking_pixel)
+	return str(soup)
+
+
+def transfer_mails() -> None:
+	"""Sends the mails in batch."""
+
 	def _get_outgoing_mails() -> list[dict]:
 		OM = frappe.qb.DocType("Outgoing Mail")
 		return (
@@ -530,7 +587,7 @@ def send_mails(batch_size: int = 100) -> None:
 	) -> None:
 		for i in range(0, len(outgoing_mails), batch_size):
 			create_agent_job(
-				agent, "Send Mails", request_data=outgoing_mails[i : i + batch_size]
+				agent, "Transfer Mails", request_data=outgoing_mails[i : i + batch_size]
 			)
 
 	def _update_outgoing_mails_status(oms: list[str], commit: bool = False) -> None:
@@ -547,6 +604,7 @@ def send_mails(batch_size: int = 100) -> None:
 	if outgoing_mails := _get_outgoing_mails():
 		outgoing_mail_list = []
 		agent_wise_outgoing_mails = {}
+		batch_size = frappe.db.get_single_value("Mail Settings", "max_batch_size") or 150
 
 		for mail in outgoing_mails:
 			outgoing_mail_list.append(mail["name"])

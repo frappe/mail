@@ -5,7 +5,7 @@ import frappe
 import requests
 from frappe import _
 from mail.utils import get_dns_record
-from typing import TYPE_CHECKING, Optional
+from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 
 
@@ -25,8 +25,7 @@ class MailAgent(Document):
 	def validate(self) -> None:
 		self.validate_agent()
 		self.validate_enabled()
-		self.validate_incoming()
-		self.validate_outgoing()
+		self.validate_incoming_and_outgoing()
 		self.validate_host()
 
 	def on_update(self) -> None:
@@ -37,6 +36,8 @@ class MailAgent(Document):
 		self.update_server_dns_records()
 
 	def validate_agent(self) -> None:
+		"""Validates the agent and checks if the agent already exists."""
+
 		if self.is_new() and frappe.db.exists("Mail Agent", self.agent):
 			frappe.throw(
 				_(
@@ -65,32 +66,41 @@ class MailAgent(Document):
 			)
 
 	def validate_enabled(self) -> None:
+		"""Disables the agent if incoming and outgoing are disabled."""
+
 		if self.enabled and not self.incoming and not self.outgoing:
 			self.enabled = 0
 
-		if not self.is_new() and not self.enabled:
-			self.remove_linked_domains()
+	def validate_incoming_and_outgoing(self) -> None:
+		"""Validates the incoming and outgoing fields."""
 
-	def validate_incoming(self) -> None:
+		if self.incoming and self.outgoing:
+			frappe.throw(_("Incoming and Outgoing cannot be enabled at the same time."))
+
 		if self.incoming:
 			if not self.priority:
 				frappe.throw(_("Priority is required for incoming agents."))
 
-	def validate_outgoing(self) -> None:
-		if not self.outgoing and not self.is_new():
-			self.remove_linked_domains()
+		if not self.is_new() and not self.outgoing:
+			self.remove_from_linked_domains()
 
 	def validate_host(self) -> None:
+		"""Validates the host and converts it to lowercase."""
+
 		if self.host:
 			self.host = self.host.lower()
 
-	def remove_linked_domains(self) -> None:
+	def remove_from_linked_domains(self) -> None:
+		"""Removes the agent from the linked domains."""
+
 		DOMAIN = frappe.qb.DocType("Mail Domain")
 		frappe.qb.update(DOMAIN).set(DOMAIN.outgoing_agent, None).where(
 			DOMAIN.outgoing_agent == self.agent
 		).run()
 
 	def update_server_dns_records(self) -> None:
+		"""Updates the DNS records on the server."""
+
 		frappe.get_doc("Mail Settings").generate_dns_records(save=True)
 
 	def request(
@@ -100,6 +110,8 @@ class MailAgent(Document):
 		data: Optional[dict] = None,
 		timeout: int | tuple[int, int] = (60, 120),
 	) -> "Response":
+		"""Makes an HTTP request to the mail agent API."""
+
 		url = f"{self.protocol}://{self.host or self.agent}/api/method/{path}"
 		headers = {
 			"Authorization": f"token {self.agent_api_key}:{self.get_password('agent_api_secret')}"
@@ -110,6 +122,8 @@ class MailAgent(Document):
 
 
 def validate_mail_settings() -> None:
+	"""Validates the mandatory fields in the Mail Settings."""
+
 	mail_settings = frappe.get_doc("Mail Settings")
 	mandatory_fields = [
 		"root_domain_name",

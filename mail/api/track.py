@@ -4,8 +4,10 @@ from frappe.utils.response import redirect
 
 
 @frappe.whitelist(methods=["GET"], allow_guest=True)
-def track_open(tracking_id: str) -> None:
-	if tracking_id:
+def open(id: str) -> None:
+	"""Updates Outgoing Mail opened status."""
+
+	if id:
 		now = frappe.utils.now()
 		OM = frappe.qb.DocType("Outgoing Mail")
 		first_opened_at_condition = (
@@ -17,7 +19,7 @@ def track_open(tracking_id: str) -> None:
 			.set(OM.first_opened_at, first_opened_at_condition)
 			.set(OM.last_opened_at, now)
 			.set(OM.opened_count, OM.opened_count + 1)
-			.where((OM.docstatus == 1) & (OM.tracking_id == tracking_id))
+			.where((OM.docstatus == 1) & (OM.tracking_id == id))
 		).run()
 		frappe.db.commit()
 

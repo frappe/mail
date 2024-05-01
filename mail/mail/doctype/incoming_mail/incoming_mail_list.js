@@ -4,7 +4,7 @@
 frappe.listview_settings["Incoming Mail"] = {
 	refresh: (listview) => {
 		listview.page.add_inner_button("Refresh", () => {
-			get_incoming_mails(listview);
+			sync_incoming_mails(listview);
 		});;
 	},
 
@@ -18,14 +18,14 @@ frappe.listview_settings["Incoming Mail"] = {
 	},
 };
 
-function get_incoming_mails(listview) {
+function sync_incoming_mails(listview) {
 	frappe.call({
-		method: "mail.mail.doctype.incoming_mail.incoming_mail.get_incoming_mails",
+		method: "mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails",
 		freeze: true,
 		freeze_message: __("Receiving Mails..."),
 		callback: () => {
 			frappe.show_alert({
-				message: __("Get Incoming Mails Job has been started in the background."),
+				message: __("Sync Incoming Mails Job has been started in the background."),
 				indicator: "green",
 			});
 		}

@@ -6,111 +6,123 @@ frappe.ui.form.on("Mail Agent", {
 		frm.trigger("add_actions");
 	},
 
+	incoming(frm) {
+		if (frm.doc.incoming) {
+			frm.set_value("outgoing", 0);
+		}
+	},
+
+	outgoing(frm) {
+		if (frm.doc.outgoing) {
+			frm.set_value("incoming", 0);
+		}
+	},
+
 	add_actions(frm) {
 		if (frm.doc.outgoing) {
-			frm.add_custom_button(__("Get Delivery Status"), () => {
-                frm.trigger("get_delivery_status");
+			frm.add_custom_button(__("Sync Outgoing Mails Status"), () => {
+                frm.trigger("sync_outgoing_mails_status");
             }, __("Actions"));
 		}
 
 		if (frm.doc.incoming) {
-			frm.add_custom_button(__("Get Incoming Mails"), () => {
-                frm.trigger("get_incoming_mails");
+			frm.add_custom_button(__("Sync Incoming Mails"), () => {
+                frm.trigger("sync_incoming_mails");
             }, __("Actions"));
 
-            frm.add_custom_button(__("Update Virtual Domains"), () => {
-                frm.trigger("update_virtual_domains");
+            frm.add_custom_button(__("Sync Mail Domains"), () => {
+                frm.trigger("sync_mail_domains");
             }, __("Actions"));
 
-            frm.add_custom_button(__("Update Virtual Mailboxes"), () => {
-                frm.trigger("update_virtual_mailboxes");
+            frm.add_custom_button(__("Sync Mailboxes"), () => {
+                frm.trigger("sync_mailboxes");
             }, __("Actions"));
 
-			frm.add_custom_button(__("Update Virtual Aliases"), () => {
-                frm.trigger("update_virtual_aliases");
+			frm.add_custom_button(__("Sync Mail Aliases"), () => {
+                frm.trigger("sync_mail_aliases");
             }, __("Actions"));
         }
     },
 
-	get_delivery_status(frm) {
+	sync_outgoing_mails_status(frm) {
 		frappe.call({
-			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_delivery_status",
+			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.sync_outgoing_mails_status",
 			args: {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Getting Delivery Status..."),
+			freeze_message: __("Syncing Outgoing Mails Status..."),
 			callback: () => {
 				frappe.show_alert({
-					message: __("Get Delivery Status Job has been started in the background."),
+					message: __("Sync Outgoing Mails Status Job has been started in the background."),
 					indicator: "green",
 				});
 			}
 		});
 	},
 
-	get_incoming_mails(frm) {
+	sync_incoming_mails(frm) {
         frappe.call({
-			method: "mail.mail.doctype.incoming_mail.incoming_mail.get_incoming_mails",
+			method: "mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails",
 			args: {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Receiving Mails..."),
+			freeze_message: __("Syncing Incoming Mails..."),
 			callback: () => {
 				frappe.show_alert({
-					message: __("Get Incoming Mails Job has been started in the background."),
+					message: __("Sync Incoming Mails Job has been started in the background."),
 					indicator: "green",
 				});
 			}
 		});
     },
 
-	update_virtual_domains(frm) {
+	sync_mail_domains(frm) {
         frappe.call({
-			method: "mail.mail.doctype.mail_domain.mail_domain.update_virtual_domains",
+			method: "mail.mail.doctype.mail_domain.mail_domain.sync_mail_domains",
 			args: {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Updating Virtual Domains..."),
+			freeze_message: __("Syncing Mail Domains..."),
 			callback: () => {
 				frappe.show_alert({
-					message: __("Update Virtual Domains Job has been started in the background."),
+					message: __("Sync Mail Domains Job has been started in the background."),
 					indicator: "green",
 				});
 			}
 		});
     },
 
-	update_virtual_mailboxes(frm) {
+	sync_mailboxes(frm) {
         frappe.call({
-			method: "mail.mail.doctype.mailbox.mailbox.update_virtual_mailboxes",
+			method: "mail.mail.doctype.mailbox.mailbox.sync_mailboxes",
 			args: {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Updating Virtual Mailboxes..."),
+			freeze_message: __("Syncing Mailboxes..."),
 			callback: () => {
 				frappe.show_alert({
-					message: __("Update Virtual Mailboxes Job has been started in the background."),
+					message: __("Sync Mailboxes Job has been started in the background."),
 					indicator: "green",
 				});
 			}
 		});
     },
 
-	update_virtual_aliases(frm) {
+	sync_mail_aliases(frm) {
         frappe.call({
-			method: "mail.mail.doctype.mail_alias.mail_alias.update_virtual_aliases",
+			method: "mail.mail.doctype.mail_alias.mail_alias.sync_mail_aliases",
 			args: {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Updating Virtual Aliases..."),
+			freeze_message: __("Syncing Mail Aliases..."),
 			callback: () => {
 				frappe.show_alert({
-					message: __("Update Virtual Aliases Job has been started in the background."),
+					message: __("Sync Mail Aliases Job has been started in the background."),
 					indicator: "green",
 				});
 			}

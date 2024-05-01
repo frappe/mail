@@ -8,12 +8,11 @@
  "field_order": [
   "recipient",
   "display_name",
-  "sent",
   "column_break_iqoo",
-  "sent_at",
-  "sent_after",
-  "bounce_at",
-  "bounce_after",
+  "status",
+  "at",
+  "after",
+  "retry_attempts",
   "details"
  ],
  "fields": [
@@ -27,35 +26,8 @@
    "search_index": 1
   },
   {
-   "default": "0",
-   "fieldname": "sent",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Sent",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "column_break_iqoo",
    "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: doc.sent",
-   "fieldname": "sent_at",
-   "fieldtype": "Datetime",
-   "label": "Sent At",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval: doc.sent",
-   "description": "Sent At - Created At",
-   "fieldname": "sent_after",
-   "fieldtype": "Int",
-   "label": "Sent After (Seconds)",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "fieldname": "details",
@@ -65,33 +37,53 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: !doc.sent",
-   "fieldname": "bounce_at",
-   "fieldtype": "Datetime",
-   "label": "Bounce At",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval: !doc.sent && doc.bounce_at",
-   "description": "Bounce At - Created At",
-   "fieldname": "bounce_after",
-   "fieldtype": "Int",
-   "label": "Bounce After (Seconds)",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "display_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Display Name"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "\nDeferred\nDeferred Bounced\nBounced\nSent",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "depends_on": "eval: doc.status",
+   "fieldname": "at",
+   "fieldtype": "Datetime",
+   "label": "At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.status",
+   "description": "At - Created At",
+   "fieldname": "after",
+   "fieldtype": "Int",
+   "label": "After (Seconds)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.retry_attempts",
+   "fieldname": "retry_attempts",
+   "fieldtype": "Int",
+   "label": "Retry Attempts",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-04-24 10:38:57.911267",
+ "modified": "2024-04-29 16:03:52.888119",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Recipient",

@@ -39,9 +39,9 @@ frappe.ui.form.on("Outgoing Mail", {
                     frm.trigger("retry");
                 }, __("Actions"));
             }
-            else if (frm.doc.status === "Transferred") {
-                frm.add_custom_button(__("Get Delivery Status"), () => {
-                    frm.trigger("get_delivery_status");
+            else if (["Transferred", "Deferred"].includes(frm.doc.status)) {
+                frm.add_custom_button(__("Sync Status"), () => {
+                    frm.trigger("sync_outgoing_mails_status");
                 }, __("Actions"));
             }
         }
@@ -50,7 +50,7 @@ frappe.ui.form.on("Outgoing Mail", {
     retry(frm) {
         frappe.call({
             doc: frm.doc,
-            method: "retry_send_mail",
+            method: "retry_transfer_mail",
             freeze: true,
             freeze_message: __("Retrying..."),
             callback: (r) => {
@@ -61,9 +61,9 @@ frappe.ui.form.on("Outgoing Mail", {
         });
     },
 
-    get_delivery_status(frm) {
+    sync_outgoing_mails_status(frm) {
 		frappe.call({
-			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_delivery_status",
+			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.sync_outgoing_mails_status",
 			args: {
 				agents: frm.doc.agent,
 			},
@@ -71,7 +71,7 @@ frappe.ui.form.on("Outgoing Mail", {
 			freeze_message: __("Getting Delivery Status..."),
 			callback: () => {
                 frappe.show_alert({
-                    message: __("Get Delivery Status Job has been started in the background."),
+                    message: __("Sync Outgoing Mails Status Job has been started in the background."),
                     indicator: "green",
                 });
             }

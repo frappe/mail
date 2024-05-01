@@ -27,22 +27,30 @@ class Mailbox(Document):
 		):
 			if not enabled:
 				self.validate_against_mail_alias()
-			self.update_virtual_mailbox(enabled=enabled)
+			self.sync_mailbox(enabled=enabled)
 
 	def on_trash(self) -> None:
-		self.update_virtual_mailbox(enabled=False)
+		self.sync_mailbox(enabled=False)
 
 	def validate_email(self) -> None:
+		"""Validates the email address."""
+
 		is_valid_email_for_domain(self.email, self.domain_name, raise_exception=True)
 
 	def validate_domain(self) -> None:
+		"""Validates the domain."""
+
 		validate_active_domain(self.domain_name)
 
 	def validate_display_name(self) -> None:
+		"""Validates the display name."""
+
 		if self.is_new() and not self.display_name:
 			self.display_name = frappe.db.get_value("User", self.user, "full_name")
 
 	def validate_against_mail_alias(self) -> None:
+		"""Validates if the mailbox is linked with an active Mail Alias."""
+
 		MA = frappe.qb.DocType("Mail Alias")
 		MAM = frappe.qb.DocType("Mail Alias Mailbox")
 
@@ -62,13 +70,17 @@ class Mailbox(Document):
 				)
 			)
 
-	def update_virtual_mailbox(self, enabled: bool | int) -> None:
-		virtual_mailboxes = [{"mailbox": self.email, "enabled": 1 if enabled else 0}]
-		update_virtual_mailboxes(virtual_mailboxes)
+	def sync_mailbox(self, enabled: bool | int) -> None:
+		"""Updates the mailbox in the agents."""
+
+		mailboxes = [{"mailbox": self.email, "enabled": 1 if enabled else 0}]
+		sync_mailboxes(mailboxes)
 
 
 @frappe.whitelist()
 def create_dmarc_mailbox(domain_name: str) -> "Mailbox":
+	"""Creates a DMARC mailbox for the domain."""
+
 	dmarc_email = f"dmarc@{domain_name}"
 	frappe.flags.ingore_domain_validation = True
 	return create_mailbox(domain_name, dmarc_email, outgoing=False, display_name="DMARC")
@@ -81,6 +93,8 @@ def create_mailbox(
 	outgoing: bool = True,
 	display_name: Optional[str] = None,
 ) -> "Mailbox":
+	"""Creates a user and mailbox if not exists."""
+
 	if not frappe.db.exists("Mailbox", user):
 		if not frappe.db.exists("User", user):
 			mailbox_user = frappe.new_doc("User")
@@ -115,6 +129,8 @@ def get_user(
 	page_len: Optional[int] = 20,
 	filters: Optional[dict] = None,
 ) -> list:
+	"""Returns the users for the domain."""
+
 	domain_name = filters.get("domain_name")
 
 	if not domain_name:
@@ -139,11 +155,13 @@ def get_user(
 
 
 @frappe.whitelist()
-def update_virtual_mailboxes(
-	virtual_mailboxes: Optional[list[dict]] = None, agents: Optional[str | list] = None
+def sync_mailboxes(
+	mailboxes: Optional[list[dict]] = None, agents: Optional[str | list] = None
 ) -> None:
-	if not virtual_mailboxes:
-		virtual_mailboxes = frappe.db.get_all(
+	"""Updates the mailboxes in the agents."""
+
+	if not mailboxes:
+		mailboxes = frappe.db.get_all(
 			"Mailbox",
 			filters={
 				"enabled": 1,
@@ -152,7 +170,7 @@ def update_virtual_mailboxes(
 			fields=["name AS mailbox", "enabled"],
 		)
 
-	if virtual_mailboxes:
+	if mailboxes:
 		if not agents:
 			agents = frappe.db.get_all(
 				"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
@@ -163,6 +181,6 @@ def update_virtual_mailboxes(
 		for agent in agents:
 			create_agent_job(
 				agent,
-				"Update Virtual Mailboxes",
-				request_data={"virtual_mailboxes": virtual_mailboxes},
+				"Sync Mailboxes",
+				request_data={"mailboxes": mailboxes},
 			)

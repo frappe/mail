@@ -18,6 +18,7 @@
   "outgoing_tab",
   "max_recipients",
   "max_message_size",
+  "max_batch_size",
   "column_break_sf4n",
   "outgoing_max_attachments",
   "outgoing_max_attachment_size",
@@ -128,12 +129,18 @@
    "fieldtype": "Int",
    "label": "Max Message Size (MB)",
    "non_negative": 1
+  },
+  {
+   "default": "150",
+   "fieldname": "max_batch_size",
+   "fieldtype": "Int",
+   "label": "Max Batch Size (Count)"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-04-04 10:56:25.011600",
+ "modified": "2024-04-27 09:32:30.891835",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.utils import cint
-from typing import TYPE_CHECKING, Optional
+from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 from mail.utils import get_dns_record, is_valid_host
 from mail.mail.doctype.mailbox.mailbox import create_dmarc_mailbox
@@ -38,14 +38,16 @@ class MailDomain(Document):
 
 		if not previous:
 			create_dmarc_mailbox(self.domain_name)
-			self.update_virtual_domain(enabled=self.enabled)
+			self.sync_mail_domain(enabled=self.enabled)
 		elif self.enabled != previous.get("enabled"):
-			self.update_virtual_domain(enabled=self.enabled)
+			self.sync_mail_domain(enabled=self.enabled)
 
 	def on_trash(self) -> None:
-		self.update_virtual_domain(enabled=False)
+		self.sync_mail_domain(enabled=False)
 
 	def validate_dkim_selector(self) -> None:
+		"""Validates the DKIM Selector."""
+
 		if self.dkim_selector:
 			self.dkim_selector = self.dkim_selector.lower()
 
@@ -62,6 +64,8 @@ class MailDomain(Document):
 			)
 
 	def validate_dkim_bits(self) -> None:
+		"""Validates the DKIM Bits."""
+
 		if self.dkim_bits:
 			if cint(self.dkim_bits) < 1024:
 				frappe.throw(_("DKIM Bits must be greater than 1024."))
@@ -69,6 +73,8 @@ class MailDomain(Document):
 			self.dkim_bits = frappe.db.get_single_value("Mail Settings", "default_dkim_bits")
 
 	def validate_outgoing_agent(self) -> None:
+		"""Validates the Outgoing Agent."""
+
 		if self.outgoing_agent:
 			enabled, outgoing = frappe.db.get_value(
 				"Mail Agent", self.outgoing_agent, ["enabled", "outgoing"]
@@ -89,10 +95,14 @@ class MailDomain(Document):
 				)
 
 	def validate_subdomain(self) -> None:
+		"""Validates if the domain is a subdomain."""
+
 		if len(self.domain_name.split(".")) > 2:
 			self.subdomain = 1
 
 	def validate_root_domain(self) -> None:
+		"""Validates if the domain is the root domain."""
+
 		self.root_domain = (
 			1
 			if self.domain_name
@@ -102,6 +112,8 @@ class MailDomain(Document):
 
 	@frappe.whitelist()
 	def generate_dns_records(self, save: bool = False) -> None:
+		"""Generates the DNS Records."""
+
 		self.verified = 0
 		self.generate_dkim_key()
 		self.refresh_dns_records()
@@ -110,6 +122,8 @@ class MailDomain(Document):
 			self.save()
 
 	def generate_dkim_key(self) -> None:
+		"""Generates the DKIM Key."""
+
 		from cryptography.hazmat.backends import default_backend
 		from cryptography.hazmat.primitives import serialization
 		from cryptography.hazmat.primitives.asymmetric import rsa
@@ -133,6 +147,8 @@ class MailDomain(Document):
 		self.dkim_public_key = get_filtered_dkim_key(public_key_pem)
 
 	def refresh_dns_records(self) -> None:
+		"""Refreshes the DNS Records."""
+
 		self.verified = 0
 		self.dns_records.clear()
 		mail_settings = frappe.get_single("Mail Settings")
@@ -148,6 +164,8 @@ class MailDomain(Document):
 	def get_sending_records(
 		self, root_domain_name: str, spf_host: str, ttl: str
 	) -> list[dict]:
+		"""Returns the Sending Records."""
+
 		records = []
 		type = "TXT"
 		category = "Sending Record"
@@ -193,6 +211,8 @@ class MailDomain(Document):
 		return records
 
 	def get_receiving_records(self, ttl: str) -> list[dict]:
+		"""Returns the Receiving Records."""
+
 		records = []
 		incoming_agents = frappe.db.get_all(
 			"Mail Agent",
@@ -218,6 +238,8 @@ class MailDomain(Document):
 
 	@frappe.whitelist()
 	def verify_dns_records(self, save: bool = False) -> None:
+		"""Verifies the DNS Records."""
+
 		self.verified = 1
 
 		for record in self.dns_records:
@@ -244,12 +266,16 @@ class MailDomain(Document):
 		if save:
 			self.save()
 
-	def update_virtual_domain(self, enabled: bool | int) -> None:
-		virtual_domains = [{"domain": self.domain_name, "enabled": 1 if enabled else 0}]
-		update_virtual_domains(virtual_domains)
+	def sync_mail_domain(self, enabled: bool | int) -> None:
+		"""Updates the domain in the agents."""
+
+		domains = [{"domain": self.domain_name, "enabled": 1 if enabled else 0}]
+		sync_mail_domains(domains)
 
 
 def get_filtered_dkim_key(key_pem: str) -> str:
+	"""Returns the filtered DKIM Key."""
+
 	key_pem = "".join(key_pem.split())
 	key_pem = (
 		key_pem.replace("-----BEGINPUBLICKEY-----", "")
@@ -262,6 +288,8 @@ def get_filtered_dkim_key(key_pem: str) -> str:
 
 
 def verify_dns_record(record: "DNSRecord", debug: bool = False) -> bool:
+	"""Verifies the DNS Record."""
+
 	if result := get_dns_record(record.host, record.type):
 		for data in result:
 			if data:
@@ -283,15 +311,17 @@ def verify_dns_record(record: "DNSRecord", debug: bool = False) -> bool:
 
 
 @frappe.whitelist()
-def update_virtual_domains(
-	virtual_domains: Optional[list[dict]] = None, agents: Optional[str | list] = None
+def sync_mail_domains(
+	mail_domains: Optional[list[dict]] = None, agents: Optional[str | list] = None
 ) -> None:
-	if not virtual_domains:
-		virtual_domains = frappe.db.get_all(
+	"""Updates the domains in the agents."""
+
+	if not mail_domains:
+		mail_domains = frappe.db.get_all(
 			"Mail Domain", filters={"enabled": 1}, fields=["name AS domain", "enabled"]
 		)
 
-	if virtual_domains:
+	if mail_domains:
 		if not agents:
 			agents = frappe.db.get_all(
 				"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
@@ -301,5 +331,5 @@ def update_virtual_domains(
 
 		for agent in agents:
 			create_agent_job(
-				agent, "Update Virtual Domains", request_data={"virtual_domains": virtual_domains}
+				agent, "Sync Mail Domains", request_data={"mail_domains": mail_domains}
 			)

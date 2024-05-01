@@ -20,9 +20,13 @@ class MailSettings(Document):
 		self.validate_outgoing_total_attachments_size()
 
 	def validate_root_domain_name(self) -> None:
+		"""Validates the Root Domain Name."""
+
 		self.root_domain_name = self.root_domain_name.lower()
 
 	def validate_spf_host(self) -> None:
+		"""Validates the SPF Host."""
+
 		self.spf_host = self.spf_host.lower()
 
 		if not is_valid_host(self.spf_host):
@@ -34,6 +38,8 @@ class MailSettings(Document):
 			frappe.throw(msg)
 
 	def validate_default_dkim_selector(self) -> None:
+		"""Validates the DKIM Selector."""
+
 		self.default_dkim_selector = self.default_dkim_selector.lower()
 
 		if not is_valid_host(self.default_dkim_selector):
@@ -45,10 +51,14 @@ class MailSettings(Document):
 			frappe.throw(msg)
 
 	def validate_default_dkim_bits(self) -> None:
+		"""Validates the DKIM Bits."""
+
 		if cint(self.default_dkim_bits) < 1024:
 			frappe.throw(_("DKIM Bits must be greater than 1024."))
 
 	def generate_dns_records(self, save: bool = False) -> None:
+		"""Generates the DNS Records."""
+
 		self.dns_records.clear()
 
 		agents = frappe.db.get_all(
@@ -109,6 +119,8 @@ class MailSettings(Document):
 			self.save()
 
 	def validate_outgoing_max_attachment_size(self) -> None:
+		"""Validates the Outgoing Max Attachment Size."""
+
 		max_file_size = cint(get_max_file_size() / 1024 / 1024)
 
 		if self.outgoing_max_attachment_size > max_file_size:
@@ -119,6 +131,8 @@ class MailSettings(Document):
 			)
 
 	def validate_outgoing_total_attachments_size(self) -> None:
+		"""Validates the Outgoing Total Attachments Size."""
+
 		if self.outgoing_max_attachment_size > self.outgoing_total_attachments_size:
 			frappe.throw(
 				_("{0} should be greater than or equal to {1}.").format(

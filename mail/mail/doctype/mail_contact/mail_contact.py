@@ -10,4 +10,6 @@ class MailContact(Document):
 		self.set_user()
 
 	def set_user(self) -> None:
+		"""Set user as current user if not set."""
+
 		self.user = self.user or frappe.session.user

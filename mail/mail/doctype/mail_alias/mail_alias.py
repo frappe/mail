@@ -20,15 +20,21 @@ class MailAlias(Document):
 		self.validate_mailboxes()
 
 	def on_update(self) -> None:
-		self.update_virtual_alias(enabled=self.enabled)
+		self.sync_mail_alias(enabled=self.enabled)
 
 	def validate_email(self) -> None:
+		"""Validates the email address."""
+
 		is_valid_email_for_domain(self.alias, self.domain_name, raise_exception=True)
 
 	def validate_domain(self) -> None:
+		"""Validates the domain."""
+
 		validate_active_domain(self.domain_name)
 
 	def validate_mailboxes(self) -> None:
+		"""Validates the mailboxes."""
+
 		mailboxes = []
 
 		for mailbox in self.mailboxes:
@@ -46,33 +52,37 @@ class MailAlias(Document):
 			validate_mailbox_for_incoming(mailbox.mailbox)
 			mailboxes.append(mailbox.mailbox)
 
-	def update_virtual_alias(self, enabled: bool | int) -> None:
+	def sync_mail_alias(self, enabled: bool | int) -> None:
+		"""Updates the alias in the agents."""
+
 		mailboxes = [m.mailbox for m in self.mailboxes]
-		virtual_aliases = [
+		aliases = [
 			{"alias": self.alias, "enabled": 1 if enabled else 0, "mailboxes": mailboxes}
 		]
-		update_virtual_aliases(virtual_aliases)
+		sync_mail_aliases(aliases)
 
 
 @frappe.whitelist()
-def update_virtual_aliases(
-	virtual_aliases: Optional[list[dict]] = None, agents: Optional[str | list] = None
+def sync_mail_aliases(
+	mail_aliases: Optional[list[dict]] = None, agents: Optional[str | list] = None
 ) -> None:
-	if not virtual_aliases:
-		virtual_aliases = frappe.db.get_all(
+	"""Updates the aliases in the agents."""
+
+	if not mail_aliases:
+		mail_aliases = frappe.db.get_all(
 			"Mail Alias",
 			filters={"enabled": 1},
 			fields=["name AS alias", "enabled"],
 		)
 
-		for alias in virtual_aliases:
+		for alias in mail_aliases:
 			alias["mailboxes"] = frappe.db.get_all(
 				"Mail Alias Mailbox",
 				filters={"parenttype": "Mail Alias", "parent": alias["alias"]},
 				pluck="mailbox",
 			)
 
-	if virtual_aliases:
+	if mail_aliases:
 		if not agents:
 			agents = frappe.db.get_all(
 				"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
@@ -83,6 +93,6 @@ def update_virtual_aliases(
 		for agent in agents:
 			create_agent_job(
 				agent,
-				"Update Virtual Aliases",
-				request_data={"virtual_aliases": virtual_aliases},
+				"Sync Mail Aliases",
+				request_data={"mail_aliases": mail_aliases},
 			)
