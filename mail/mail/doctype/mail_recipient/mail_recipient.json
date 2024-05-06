@@ -10,8 +10,8 @@
   "display_name",
   "column_break_iqoo",
   "status",
-  "at",
-  "after",
+  "action_at",
+  "action_after",
   "retries",
   "details"
  ],
@@ -53,23 +53,6 @@
    "search_index": 1
   },
   {
-   "depends_on": "eval: doc.status",
-   "fieldname": "at",
-   "fieldtype": "Datetime",
-   "label": "At",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval: doc.status",
-   "description": "At - Created At",
-   "fieldname": "after",
-   "fieldtype": "Int",
-   "label": "After (Seconds)",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "default": "0",
    "depends_on": "eval: doc.retries",
    "fieldname": "retries",
@@ -78,12 +61,29 @@
    "no_copy": 1,
    "non_negative": 1,
    "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.status",
+   "fieldname": "action_at",
+   "fieldtype": "Datetime",
+   "label": "Action At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.status",
+   "description": "Action At - Created At",
+   "fieldname": "action_after",
+   "fieldtype": "Int",
+   "label": "Action After (Seconds)",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-05-03 18:10:41.514952",
+ "modified": "2024-05-06 16:02:44.907597",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Recipient",

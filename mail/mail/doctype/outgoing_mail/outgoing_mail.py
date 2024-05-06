@@ -544,8 +544,8 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 							for recipient in doc.recipients:
 								recipient_data = d["recipients"][recipient.recipient]
 								recipient.status = recipient_data["status"]
-								recipient.at = recipient_data["at"]
-								recipient.after = time_diff_in_seconds(recipient.at, doc.created_at)
+								recipient.action_at = recipient_data["action_at"]
+								recipient.action_after = time_diff_in_seconds(recipient.at, doc.created_at)
 								recipient.retries = recipient_data["retries"]
 								recipient.details = recipient_data["details"]
 								recipient.db_update()
