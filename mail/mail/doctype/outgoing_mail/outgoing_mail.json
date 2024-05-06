@@ -109,7 +109,8 @@
    "label": "Domain Name",
    "no_copy": 1,
    "options": "Mail Domain",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "column_break_d6p9",
@@ -200,7 +201,8 @@
    "fieldtype": "Data",
    "label": "IP",
    "no_copy": 1,
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "original_message_tab",
@@ -212,7 +214,8 @@
    "fieldtype": "Datetime",
    "label": "Created At",
    "no_copy": 1,
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "default": "1",
@@ -326,7 +329,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-30 15:37:42.957692",
+ "modified": "2024-05-06 19:21:23.589577",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
