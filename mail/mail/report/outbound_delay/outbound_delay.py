@@ -3,67 +3,14 @@
 
 import frappe
 from frappe import _
+from typing import Tuple
 from frappe.query_builder import Order
 from frappe.query_builder.functions import Date
 
 
-def execute(filters=None):
-	columns, data = [], []
-
-	OM = frappe.qb.DocType("Outgoing Mail")
-	MR = frappe.qb.DocType("Mail Recipient")
-
-	query = (
-		frappe.qb.from_(OM)
-		.left_join(MR)
-		.on(OM.name == MR.parent)
-		.select(
-			OM.name,
-			OM.creation,
-			MR.status,
-			MR.retries,
-			OM.message_size,
-			OM.send_in_batch,
-			OM.transferred_after,
-			MR.action_after,
-			OM.agent,
-			OM.domain_name,
-			OM.from_ip,
-			OM.sender,
-			MR.recipient,
-			OM.message_id,
-			OM.created_at,
-			OM.transferred_at,
-			MR.action_at,
-		)
-		.where((OM.docstatus > 0))
-		.orderby(OM.creation, OM.created_at, order=Order.desc)
-		.orderby(MR.idx, order=Order.asc)
-	)
-
-	if not filters.get("name") and not filters.get("message_id"):
-		query = query.where(
-			(Date(OM.creation) >= Date(filters.get("from_date")))
-			& (Date(OM.creation) <= Date(filters.get("to_date")))
-		)
-
-	for field in [
-		"name",
-		"agent",
-		"domain_name",
-		"from_ip",
-		"sender",
-		"message_id",
-	]:
-		if filters.get(field):
-			query = query.where(OM[field] == filters.get(field))
-
-	for field in ["status", "recipient"]:
-		if filters.get(field):
-			query = query.where(MR[field] == filters.get(field))
-
+def execute(filters=None) -> Tuple[list, list]:
 	columns = get_columns()
-	data = query.run(as_dict=True)
+	data = get_data(filters)
 
 	return columns, data
 
@@ -115,7 +62,7 @@ def get_columns() -> list:
 		},
 		{
 			"label": _("Action After"),
-			"fieldname": "after",
+			"fieldname": "action_after",
 			"fieldtype": "Int",
 			"width": 110,
 		},
@@ -172,8 +119,66 @@ def get_columns() -> list:
 		},
 		{
 			"label": _("Action At"),
-			"fieldname": "at",
+			"fieldname": "action_at",
 			"fieldtype": "Datetime",
 			"width": 180,
 		},
 	]
+
+
+def get_data(filters=None) -> list:
+	filters = filters or {}
+
+	OM = frappe.qb.DocType("Outgoing Mail")
+	MR = frappe.qb.DocType("Mail Recipient")
+
+	query = (
+		frappe.qb.from_(OM)
+		.left_join(MR)
+		.on(OM.name == MR.parent)
+		.select(
+			OM.name,
+			OM.creation,
+			MR.status,
+			MR.retries,
+			OM.message_size,
+			OM.send_in_batch,
+			OM.transferred_after,
+			MR.action_after,
+			OM.agent,
+			OM.domain_name,
+			OM.from_ip,
+			OM.sender,
+			MR.recipient,
+			OM.message_id,
+			OM.created_at,
+			OM.transferred_at,
+			MR.action_at,
+		)
+		.where((OM.docstatus == 1))
+		.orderby(OM.creation, OM.created_at, order=Order.desc)
+		.orderby(MR.idx, order=Order.asc)
+	)
+
+	if not filters.get("name") and not filters.get("message_id"):
+		query = query.where(
+			(Date(OM.created_at) >= Date(filters.get("from_date")))
+			& (Date(OM.created_at) <= Date(filters.get("to_date")))
+		)
+
+	for field in [
+		"name",
+		"agent",
+		"domain_name",
+		"from_ip",
+		"sender",
+		"message_id",
+	]:
+		if filters.get(field):
+			query = query.where(OM[field] == filters.get(field))
+
+	for field in ["status", "recipient"]:
+		if filters.get(field):
+			query = query.where(MR[field] == filters.get(field))
+
+	return query.run(as_dict=True)
