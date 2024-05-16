@@ -73,20 +73,6 @@
   "docstatus": 0,
   "doctype": "Mail Agent Job Type",
   "enabled": 1,
-  "execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
-  "execute_on_start": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
-  "job_name": "Transfer Mail",
-  "modified": "2024-05-15 12:23:59.631379",
-  "name": "Transfer Mail",
-  "queue": "short",
-  "request_method": "POST",
-  "request_path": "mail_agent.api.outgoing.send",
-  "timeout": 0
- },
- {
-  "docstatus": 0,
-  "doctype": "Mail Agent Job Type",
-  "enabled": 1,
   "execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_delivery_status",
   "execute_on_start": null,
   "job_name": "Sync Outgoing Mails Status",
@@ -95,6 +81,20 @@
   "queue": null,
   "request_method": "POST",
   "request_path": "mail_agent.api.outgoing.sync_status",
+  "timeout": 0
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Mail Agent Job Type",
+  "enabled": 1,
+  "execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
+  "execute_on_start": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
+  "job_name": "Transfer Mail",
+  "modified": "2024-05-15 12:23:59.631379",
+  "name": "Transfer Mail",
+  "queue": "short",
+  "request_method": "POST",
+  "request_path": "mail_agent.api.outgoing.send",
   "timeout": 0
  }
 ]

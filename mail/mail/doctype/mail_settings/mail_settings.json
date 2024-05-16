@@ -6,6 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "root_domain_name",
+  "postmaster",
   "column_break_3hud",
   "spf_host",
   "defaults_section",
@@ -135,12 +136,19 @@
    "fieldname": "max_batch_size",
    "fieldtype": "Int",
    "label": "Max Batch Size (Count)"
+  },
+  {
+   "fieldname": "postmaster",
+   "fieldtype": "Link",
+   "label": "Postmaster",
+   "options": "User",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-04-27 09:32:30.891835",
+ "modified": "2024-05-16 15:39:26.452775",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

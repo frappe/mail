@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _
+from typing import Optional
 from frappe.utils import cint
 from mail.utils import is_valid_host
 from frappe.model.document import Document
@@ -13,6 +14,7 @@ class MailSettings(Document):
 	def validate(self) -> None:
 		self.validate_root_domain_name()
 		self.validate_spf_host()
+		self.validate_postmaster()
 		self.validate_default_dkim_selector()
 		self.validate_default_dkim_bits()
 		self.generate_dns_records()
@@ -36,6 +38,22 @@ class MailSettings(Document):
 				)
 			)
 			frappe.throw(msg)
+
+	def validate_postmaster(self) -> None:
+		"""Validates the Postmaster."""
+
+		if not frappe.db.exists("User", self.postmaster):
+			frappe.throw(_("User {0} does not exist.").format(frappe.bold(self.postmaster)))
+		elif not frappe.db.get_value("User", self.postmaster, "enabled"):
+			frappe.throw(_("User {0} is disabled.").format(frappe.bold(self.postmaster)))
+		elif not frappe.db.exists(
+			"Has Role", {"parent": self.postmaster, "role": "Postmaster", "parenttype": "User"}
+		):
+			frappe.throw(
+				_("User {0} does not have the Postmaster role.").format(
+					frappe.bold(self.postmaster)
+				)
+			)
 
 	def validate_default_dkim_selector(self) -> None:
 		"""Validates the DKIM Selector."""
@@ -139,3 +157,31 @@ class MailSettings(Document):
 					frappe.bold("Total Attachments Size"), frappe.bold("Max Attachment Size")
 				)
 			)
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_postmaster(
+	doctype: Optional[str] = None,
+	txt: Optional[str] = None,
+	searchfield: Optional[str] = None,
+	start: Optional[int] = 0,
+	page_len: Optional[int] = 20,
+	filters: Optional[dict] = None,
+) -> list:
+	"""Returns the Postmaster."""
+
+	USER = frappe.qb.DocType("User")
+	HAS_ROLE = frappe.qb.DocType("Has Role")
+	return (
+		frappe.qb.from_(USER)
+		.left_join(HAS_ROLE)
+		.on(USER.name == HAS_ROLE.parent)
+		.select(USER.name)
+		.where(
+			(USER.enabled == 1)
+			& (USER.name.like(f"%{txt}%"))
+			& (HAS_ROLE.role == "Postmaster")
+			& (HAS_ROLE.parenttype == "User")
+		)
+	).run(as_dict=False)

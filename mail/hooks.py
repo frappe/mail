@@ -68,7 +68,7 @@ app_license = "agpl-3.0"
 # ------------
 
 # before_install = "mail.install.before_install"
-# after_install = "mail.install.after_install"
+after_install = "mail.install.after_install"
 # after_migrate = "mail.install.after_migrate"
 
 # Uninstallation
@@ -235,4 +235,5 @@ default_log_clearing_doctypes = {"Mail Agent Job": 7}
 
 fixtures = [
 	"Mail Agent Job Type",
+	{"dt": "Role", "filters": [["role_name", "in", ["Postmaster"]]]},
 ]

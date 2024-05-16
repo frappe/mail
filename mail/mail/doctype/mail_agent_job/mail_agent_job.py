@@ -60,6 +60,10 @@ class MailAgentJob(Document):
 		queue = self.queue or "default"
 		timeout = self.timeout or None
 
+		frappe.session.user = (
+			frappe.db.get_single_value("Mail Settings", "postmaster") or "Administrator"
+		)
+
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
@@ -143,6 +147,6 @@ def create_agent_job(
 	agent_job.agent = agent
 	agent_job.job_type = job_type
 	agent_job.request_data = json.dumps(request_data or {})
-	agent_job.insert()
+	agent_job.insert(ignore_permissions=True)
 
 	return agent_job
