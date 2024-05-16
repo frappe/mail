@@ -68,8 +68,8 @@ app_license = "agpl-3.0"
 # ------------
 
 # before_install = "mail.install.before_install"
-after_install = "mail.install.after_install"
-after_migrate = "mail.install.after_migrate"
+# after_install = "mail.install.after_install"
+# after_migrate = "mail.install.after_migrate"
 
 # Uninstallation
 # ------------
@@ -232,3 +232,7 @@ scheduler_events = {
 # export_python_type_annotations = True
 
 default_log_clearing_doctypes = {"Mail Agent Job": 7}
+
+fixtures = [
+	"Mail Agent Job Type",
+]
