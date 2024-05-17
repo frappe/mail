@@ -480,7 +480,7 @@ def sync_outgoing_mails_status(agents: Optional[str | list] = None) -> None:
 				(MS.enabled == 1)
 				& (MS.outgoing == 1)
 				& (OM.docstatus == 1)
-				& (OM.status == "Transferred")
+				& (OM.status.isin(["Transferred", "Queued", "Deferred"]))
 			)
 		).run(pluck="name")
 
