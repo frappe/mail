@@ -313,7 +313,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-16 19:11:49.280265",
+ "modified": "2024-05-17 12:36:37.382116",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
@@ -333,6 +333,13 @@
    "write": 1
   },
   {
+   "create": 1,
+   "read": 1,
+   "role": "Postmaster",
+   "submit": 1,
+   "write": 1
+  },
+  {
    "cancel": 1,
    "delete": 1,
    "export": 1,
@@ -346,7 +353,14 @@
   {
    "permlevel": 1,
    "read": 1,
-   "role": "System Manager"
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Postmaster",
+   "write": 1
   }
  ],
  "sort_field": "modified",

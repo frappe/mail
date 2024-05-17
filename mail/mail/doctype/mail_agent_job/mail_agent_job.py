@@ -5,6 +5,7 @@ import json
 import frappe
 from frappe import _
 from typing import Optional
+from mail.utils import get_postmaster
 from frappe.query_builder import Interval
 from frappe.model.document import Document
 from frappe.query_builder.functions import Now
@@ -60,10 +61,7 @@ class MailAgentJob(Document):
 		queue = self.queue or "default"
 		timeout = self.timeout or None
 
-		frappe.session.user = (
-			frappe.db.get_single_value("Mail Settings", "postmaster") or "Administrator"
-		)
-
+		frappe.session.user = get_postmaster()
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,

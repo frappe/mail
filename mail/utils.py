@@ -189,3 +189,15 @@ def is_system_manager(user: str) -> bool:
 	"""Returns True if the user is Administrator or System Manager else False."""
 
 	return user == "Administrator" or "System User" in frappe.get_roles(user)
+
+
+def get_postmaster() -> str:
+	"""Returns the Postmaster from Mail Settings."""
+
+	return frappe.db.get_single_value("Mail Settings", "postmaster") or "Administrator"
+
+
+def is_postmaster(user: str) -> bool:
+	"""Returns True if the user is Postmaster else False."""
+
+	return user == get_postmaster()

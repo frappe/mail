@@ -17,7 +17,12 @@ from frappe.utils import (
 )
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.core.doctype.submission_queue.submission_queue import queue_submission
-from mail.utils import is_system_manager, get_parsed_message, parsedate_to_datetime
+from mail.utils import (
+	is_postmaster,
+	is_system_manager,
+	get_parsed_message,
+	parsedate_to_datetime,
+)
 
 if TYPE_CHECKING:
 	from email.message import Message
@@ -203,7 +208,7 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Incoming Mail":
 		return False
 
-	user_is_system_manager = is_system_manager(user)
+	user_is_system_manager = is_postmaster(user) or is_system_manager(user)
 
 	if ptype in ["create", "submit"]:
 		return user_is_system_manager
