@@ -183,3 +183,9 @@ def get_parsed_message(original_message: str) -> "Message":
 	"""Returns parsed email message object from string."""
 
 	return message_from_string(original_message)
+
+
+def is_system_manager(user: str) -> bool:
+	"""Returns True if the user is Administrator or System Manager else False."""
+
+	return user == "Administrator" or "System User" in frappe.get_roles(user)

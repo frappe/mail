@@ -6,8 +6,8 @@ from frappe import _
 from frappe.utils import cint
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
-from mail.utils import get_dns_record, is_valid_host
 from mail.mail.doctype.mailbox.mailbox import create_dmarc_mailbox
+from mail.utils import is_system_manager, get_dns_record, is_valid_host
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 
 if TYPE_CHECKING:
@@ -333,3 +333,20 @@ def sync_mail_domains(
 			create_agent_job(
 				agent, "Sync Mail Domains", request_data={"mail_domains": mail_domains}
 			)
+
+
+def has_permission(doc: "Document", ptype: str, user: str) -> bool:
+	if doc.doctype != "Mail Domain":
+		return False
+
+	return is_system_manager(user) or (user == doc.owner)
+
+
+def get_permission_query_condition(user: Optional[str]) -> str:
+	if not user:
+		user = frappe.session.user
+
+	if is_system_manager(user):
+		return ""
+
+	return f"(`tabMail Domain`.`owner` = {frappe.db.escape(user)}) OR (`tabMail Domain`.`domain_name` = {frappe.db.escape(user.split('@')[1].lower())})"

@@ -148,7 +148,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-16 15:39:26.452775",
+ "modified": "2024-05-16 17:00:01.962889",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
@@ -157,11 +157,9 @@
   {
    "create": 1,
    "delete": 1,
-   "email": 1,
    "print": 1,
    "read": 1,
    "role": "System Manager",
-   "share": 1,
    "write": 1
   }
  ],

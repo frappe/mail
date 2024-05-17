@@ -39,7 +39,7 @@ frappe.query_reports["Open Mail Tracker"] = {
 		{
 			fieldname: "agent",
 			label: __("Agent"),
-			fieldtype: "Link",
+			fieldtype: frappe.user.has_role("System Manager") ? "Link" : "Data",
 			options: "Mail Agent",
 		},
 		{

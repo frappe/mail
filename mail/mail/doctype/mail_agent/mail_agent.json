@@ -100,7 +100,7 @@
    "search_index": 1
   },
   {
-   "default": "1",
+   "default": "0",
    "fieldname": "incoming",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -140,7 +140,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-16 14:43:49.399234",
+ "modified": "2024-05-17 10:18:40.901796",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Agent",
@@ -149,14 +149,16 @@
   {
    "create": 1,
    "delete": 1,
-   "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "System Manager",
-   "share": 1,
    "write": 1
+  },
+  {
+   "role": "Mailbox User",
+   "select": 1
   }
  ],
  "sort_field": "modified",

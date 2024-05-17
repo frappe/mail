@@ -103,13 +103,23 @@ after_install = "mail.install.after_install"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
-#
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+permission_query_conditions = {
+	"User": "mail.overrides.get_user_permission_query_condition",
+	"Mailbox": "mail.mail.doctype.mailbox.mailbox.get_permission_query_condition",
+	"Mail Domain": "mail.mail.doctype.mail_domain.mail_domain.get_permission_query_condition",
+	"Mail Contact": "mail.mail.doctype.mail_contact.mail_contact.get_permission_query_condition",
+	"Outgoing Mail": "mail.mail.doctype.outgoing_mail.outgoing_mail.get_permission_query_condition",
+	"Incoming Mail": "mail.mail.doctype.incoming_mail.incoming_mail.get_permission_query_condition",
+}
+
+has_permission = {
+	"User": "mail.overrides.user_has_permission",
+	"Mailbox": "mail.mail.doctype.mailbox.mailbox.has_permission",
+	"Mail Domain": "mail.mail.doctype.mail_domain.mail_domain.has_permission",
+	"Mail Contact": "mail.mail.doctype.mail_contact.mail_contact.has_permission",
+	"Outgoing Mail": "mail.mail.doctype.outgoing_mail.outgoing_mail.has_permission",
+	"Incoming Mail": "mail.mail.doctype.incoming_mail.incoming_mail.has_permission",
+}
 
 # DocType Class
 # ---------------
@@ -235,5 +245,5 @@ default_log_clearing_doctypes = {"Mail Agent Job": 7}
 
 fixtures = [
 	"Mail Agent Job Type",
-	{"dt": "Role", "filters": [["role_name", "in", ["Postmaster"]]]},
+	{"dt": "Role", "filters": [["role_name", "in", ["Postmaster", "Mailbox User"]]]},
 ]

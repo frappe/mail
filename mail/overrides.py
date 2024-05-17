@@ -1,6 +1,11 @@
 import frappe
 from frappe import _
 from frappe.utils import flt
+from mail.utils import is_system_manager
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+	from frappe.model.document import Document
 
 
 def validate_file(doc, method):
@@ -54,3 +59,20 @@ def validate_file(doc, method):
 						doc.attached_to_doctype, frappe.bold(doc.attached_to_name)
 					)
 				)
+
+
+def user_has_permission(doc: "Document", ptype: str, user: str) -> bool:
+	if doc.doctype != "User":
+		return False
+
+	return is_system_manager(user) or (user == doc.name)
+
+
+def get_user_permission_query_condition(user: Optional[str]) -> str:
+	if not user:
+		user = frappe.session.user
+
+	if is_system_manager(user):
+		return ""
+
+	return f"(`tabUser`.`name` = {frappe.db.escape(user)})"

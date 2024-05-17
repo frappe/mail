@@ -6,7 +6,11 @@ from frappe import _
 from typing import Optional
 from pypika.terms import ExistsCriterion
 from frappe.model.document import Document
-from mail.utils import validate_active_domain, is_valid_email_for_domain
+from mail.utils import (
+	is_system_manager,
+	validate_active_domain,
+	is_valid_email_for_domain,
+)
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 
 
@@ -103,7 +107,7 @@ def create_mailbox(
 			mailbox_user.first_name = display_name
 			mailbox_user.user_type = "System User"
 			mailbox_user.send_welcome_email = 0
-			mailbox_user.add_roles("System Manager")  # TODO: Role Permissions
+			mailbox_user.add_roles("Mailbox User")
 			mailbox_user.insert(ignore_permissions=True)
 
 		mailbox = frappe.new_doc("Mailbox")
@@ -184,3 +188,20 @@ def sync_mailboxes(
 				"Sync Mailboxes",
 				request_data={"mailboxes": mailboxes},
 			)
+
+
+def has_permission(doc: "Document", ptype: str, user: str) -> bool:
+	if doc.doctype != "Mailbox":
+		return False
+
+	return is_system_manager(user) or (user == doc.user)
+
+
+def get_permission_query_condition(user: Optional[str]) -> str:
+	if not user:
+		user = frappe.session.user
+
+	if is_system_manager(user):
+		return ""
+
+	return f"(`tabMailbox`.`user` = {frappe.db.escape(user)})"

@@ -143,7 +143,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-17 13:03:42.815183",
+ "modified": "2024-05-16 18:27:49.980977",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",
@@ -153,14 +153,16 @@
   {
    "create": 1,
    "delete": 1,
-   "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "System Manager",
-   "share": 1,
    "write": 1
+  },
+  {
+   "role": "Mailbox User",
+   "select": 1
   }
  ],
  "sort_field": "modified",

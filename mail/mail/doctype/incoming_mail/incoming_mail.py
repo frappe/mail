@@ -10,7 +10,6 @@ from email.header import decode_header
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 from frappe.utils.file_manager import save_file
-from mail.utils import get_parsed_message, parsedate_to_datetime
 from frappe.utils import (
 	now,
 	get_datetime_str,
@@ -18,6 +17,7 @@ from frappe.utils import (
 )
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.core.doctype.submission_queue.submission_queue import queue_submission
+from mail.utils import is_system_manager, get_parsed_message, parsedate_to_datetime
 
 if TYPE_CHECKING:
 	from email.message import Message
@@ -197,3 +197,27 @@ def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
 					doc.original_message = mail["original_message"]
 					doc.insert()
 					queue_submission(doc, "submit", alert=False)
+
+
+def has_permission(doc: "Document", ptype: str, user: str) -> bool:
+	if doc.doctype != "Incoming Mail":
+		return False
+
+	user_is_system_manager = is_system_manager(user)
+
+	if ptype in ["create", "submit"]:
+		return user_is_system_manager
+	elif ptype in ["write", "cancel"]:
+		return user_is_system_manager or (user == doc.receiver)
+	else:
+		return user_is_system_manager or (user == doc.receiver and doc.docstatus == 1)
+
+
+def get_permission_query_condition(user: Optional[str]) -> str:
+	if not user:
+		user = frappe.session.user
+
+	if is_system_manager(user):
+		return ""
+
+	return f"(`tabIncoming Mail`.`receiver` = {frappe.db.escape(user)}) AND (`tabIncoming Mail`.`docstatus` = 1)"

@@ -40,7 +40,7 @@ frappe.query_reports["Outbound Delay"] = {
 		{
 			fieldname: "agent",
 			label: __("Agent"),
-			fieldtype: "Link",
+			fieldtype: frappe.user.has_role("System Manager") ? "Link" : "Data",
 			options: "Mail Agent",
 		},
 		{

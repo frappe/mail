@@ -3,20 +3,6 @@
   "docstatus": 0,
   "doctype": "Mail Agent Job Type",
   "enabled": 1,
-  "execute_on_end": "mail.mail.doctype.incoming_mail.incoming_mail.insert_incoming_mails",
-  "execute_on_start": null,
-  "job_name": "Sync Incoming Mails",
-  "modified": "2024-04-27 15:27:40.675005",
-  "name": "Sync Incoming Mails",
-  "queue": null,
-  "request_method": "POST",
-  "request_path": "mail_agent.api.incoming.sync",
-  "timeout": 0
- },
- {
-  "docstatus": 0,
-  "doctype": "Mail Agent Job Type",
-  "enabled": 1,
   "execute_on_end": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
   "execute_on_start": "mail.mail.doctype.outgoing_mail.outgoing_mail.update_outgoing_mails_status",
   "job_name": "Transfer Mails",
@@ -67,6 +53,20 @@
   "queue": null,
   "request_method": "POST",
   "request_path": "mail_agent.api.alias.sync",
+  "timeout": 0
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Mail Agent Job Type",
+  "enabled": 1,
+  "execute_on_end": "mail.mail.doctype.incoming_mail.incoming_mail.insert_incoming_mails",
+  "execute_on_start": null,
+  "job_name": "Sync Incoming Mails",
+  "modified": "2024-04-27 15:27:40.675005",
+  "name": "Sync Incoming Mails",
+  "queue": null,
+  "request_method": "POST",
+  "request_path": "mail_agent.api.incoming.sync",
   "timeout": 0
  },
  {

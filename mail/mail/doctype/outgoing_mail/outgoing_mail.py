@@ -23,6 +23,7 @@ from frappe.utils.password import get_decrypted_password
 from frappe.utils import flt, now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.utils import (
+	is_system_manager,
 	get_random_outgoing_agent,
 	parsedate_to_datetime,
 	validate_mailbox_for_outgoing,
@@ -175,8 +176,10 @@ class OutgoingMail(Document):
 	def set_agent(self) -> None:
 		"""Sets the Agent."""
 
-		if not self.agent:
-			self.agent = get_random_outgoing_agent()
+		outgoing_agent = frappe.db.get_value(
+			"Mail Domain", self.domain_name, "outgoing_agent"
+		)
+		self.agent = outgoing_agent or get_random_outgoing_agent()
 
 	def validate_use_raw_html(self) -> None:
 		"""Validates the Use Raw HTML."""
@@ -437,7 +440,7 @@ def get_sender(
 
 	MAILBOX = frappe.qb.DocType("Mailbox")
 	DOMAIN = frappe.qb.DocType("Mail Domain")
-	return (
+	query = (
 		frappe.qb.from_(DOMAIN)
 		.left_join(MAILBOX)
 		.on(DOMAIN.name == MAILBOX.domain_name)
@@ -451,7 +454,13 @@ def get_sender(
 			& (MAILBOX[searchfield].like(f"%{txt}%"))
 		)
 		.limit(page_len)
-	).run(as_dict=False)
+	)
+
+	user = frappe.session.user
+	if not is_system_manager(user):
+		query = query.where(MAILBOX.user == user)
+
+	return query.run(as_dict=False)
 
 
 @frappe.whitelist()
@@ -621,3 +630,27 @@ def transfer_mails() -> None:
 			_create_and_transfer_batch(agent, outgoing_mails, batch_size)
 
 		_update_outgoing_mails_status(outgoing_mail_list)
+
+
+def has_permission(doc: "Document", ptype: str, user: str) -> bool:
+	if doc.doctype != "Outgoing Mail":
+		return False
+
+	user_is_system_manager = is_system_manager(user)
+
+	if ptype == "create":
+		return True
+	elif ptype in ["write", "cancel"]:
+		return user_is_system_manager or (user == doc.sender)
+	else:
+		return user_is_system_manager or (user == doc.sender and doc.docstatus != 2)
+
+
+def get_permission_query_condition(user: Optional[str]) -> str:
+	if not user:
+		user = frappe.session.user
+
+	if is_system_manager(user):
+		return ""
+
+	return f"(`tabOutgoing Mail`.`sender` = {frappe.db.escape(user)}) AND (`tabOutgoing Mail`.`docstatus` != 2)"

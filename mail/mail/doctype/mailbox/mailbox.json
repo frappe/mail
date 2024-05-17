@@ -90,6 +90,7 @@
    "fieldname": "enabled",
    "fieldtype": "Check",
    "label": "Enabled",
+   "permlevel": 1,
    "search_index": 1
   },
   {
@@ -98,7 +99,8 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Incoming",
-   "no_copy": 1
+   "no_copy": 1,
+   "permlevel": 1
   },
   {
    "default": "1",
@@ -106,12 +108,13 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Outgoing",
-   "no_copy": 1
+   "no_copy": 1,
+   "permlevel": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-04-22 16:09:18.427370",
+ "modified": "2024-05-17 10:38:18.010491",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",
@@ -121,14 +124,31 @@
   {
    "create": 1,
    "delete": 1,
-   "email": 1,
    "export": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "System Manager",
-   "share": 1,
    "write": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Mailbox User",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Mailbox User"
   }
  ],
  "sort_field": "modified",
