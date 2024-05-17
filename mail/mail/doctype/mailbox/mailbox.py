@@ -150,9 +150,6 @@ def get_user(
 			(USER.enabled == 1)
 			& (USER[searchfield].like(f"%{txt}%"))
 			& (USER.name.like(f"%@{domain_name}"))
-			& ExistsCriterion(
-				frappe.qb.from_(MAILBOX).select(MAILBOX.name).where(MAILBOX.name == USER.name)
-			).negate()
 		)
 		.limit(page_len)
 	).run(as_dict=False)

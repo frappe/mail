@@ -201,3 +201,23 @@ def is_postmaster(user: str) -> bool:
 	"""Returns True if the user is Postmaster else False."""
 
 	return user == get_postmaster()
+
+
+def get_user_mailboxes(user: str) -> list:
+	"""Returns the list of mailboxes associated with the user."""
+
+	return frappe.db.get_all("Mailbox", filters={"user": user}, pluck="name")
+
+
+def is_mailbox_user(mailbox: str, user: str) -> bool:
+	"""Returns True if the mailbox is associated with the user else False."""
+
+	return frappe.db.get_value("Mailbox", mailbox, "user") == user
+
+
+def get_user_domains(user: str) -> list:
+	"""Returns the list of domains associated with the user."""
+
+	return list(
+		set(frappe.db.get_all("Mailbox", filters={"user": user}, pluck="domain_name"))
+	)

@@ -24,20 +24,18 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "User",
-   "no_copy": 1,
    "options": "User",
-   "reqd": 1,
-   "set_only_once": 1,
-   "unique": 1
+   "permlevel": 1,
+   "reqd": 1
   },
   {
    "fetch_from": "user.email",
+   "fetch_if_empty": 1,
    "fieldname": "email",
    "fieldtype": "Data",
    "label": "Email",
    "no_copy": 1,
    "options": "Email",
-   "read_only": 1,
    "reqd": 1,
    "set_only_once": 1,
    "unique": 1
@@ -114,7 +112,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-17 10:38:18.010491",
+ "modified": "2024-05-17 20:56:38.095127",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",

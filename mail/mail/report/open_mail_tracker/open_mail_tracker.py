@@ -5,8 +5,8 @@ import frappe
 from frappe import _
 from typing import Tuple
 from frappe.query_builder import Order
-from mail.utils import is_system_manager
 from frappe.query_builder.functions import Date
+from mail.utils import is_system_manager, get_user_mailboxes
 
 
 def execute(filters=None) -> Tuple[list, list]:
@@ -152,6 +152,9 @@ def get_data(filters=None) -> list:
 
 	user = frappe.session.user
 	if not is_system_manager(user):
-		query = query.where(OM.sender == user)
+		if mailboxes := get_user_mailboxes(user):
+			query = query.where(OM.sender.isin(mailboxes))
+		else:
+			return []
 
 	return query.run(as_dict=True)

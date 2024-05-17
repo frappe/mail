@@ -23,9 +23,11 @@ from frappe.utils.password import get_decrypted_password
 from frappe.utils import flt, now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.utils import (
+	is_mailbox_user,
 	is_system_manager,
-	get_random_outgoing_agent,
+	get_user_mailboxes,
 	parsedate_to_datetime,
+	get_random_outgoing_agent,
 	validate_mailbox_for_outgoing,
 )
 
@@ -185,7 +187,7 @@ class OutgoingMail(Document):
 		"""Validates the Use Raw HTML."""
 
 		if self.use_raw_html:
-			self.body_html = self.raw_html
+			self.body_html = self.raw_html or ""
 
 		self.raw_html = ""
 
@@ -325,12 +327,11 @@ class OutgoingMail(Document):
 	def create_mail_contacts(self) -> None:
 		"""Creates the mail contacts."""
 
-		if frappe.session.user == "Administrator":
-			return
+		user = frappe.session.user
 
 		for recipient in self.recipients:
 			mail_contact = frappe.db.exists(
-				"Mail Contact", {"user": frappe.session.user, "email": recipient.recipient}
+				"Mail Contact", {"user": user, "email": recipient.recipient}
 			)
 
 			if mail_contact:
@@ -339,7 +340,7 @@ class OutgoingMail(Document):
 				)
 			else:
 				doc = frappe.new_doc("Mail Contact")
-				doc.user = frappe.session.user
+				doc.user = user
 				doc.email = recipient.recipient
 				doc.display_name = recipient.display_name
 				doc.insert()
@@ -637,13 +638,14 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 		return False
 
 	user_is_system_manager = is_system_manager(user)
+	user_is_mailbox_user = is_mailbox_user(doc.sender, user)
 
 	if ptype == "create":
 		return True
 	elif ptype in ["write", "cancel"]:
-		return user_is_system_manager or (user == doc.sender)
+		return user_is_system_manager or user_is_mailbox_user
 	else:
-		return user_is_system_manager or (user == doc.sender and doc.docstatus != 2)
+		return user_is_system_manager or (user_is_mailbox_user and doc.docstatus != 2)
 
 
 def get_permission_query_condition(user: Optional[str]) -> str:
@@ -653,4 +655,6 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 	if is_system_manager(user):
 		return ""
 
-	return f"(`tabOutgoing Mail`.`sender` = {frappe.db.escape(user)}) AND (`tabOutgoing Mail`.`docstatus` != 2)"
+	mailboxes = ", ".join(repr(m) for m in get_user_mailboxes(user))
+
+	return f"(`tabOutgoing Mail`.`sender` IN ({mailboxes})) AND (`tabOutgoing Mail`.`docstatus` != 2)"

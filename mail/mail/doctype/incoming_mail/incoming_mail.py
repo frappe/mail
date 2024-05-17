@@ -19,7 +19,9 @@ from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.core.doctype.submission_queue.submission_queue import queue_submission
 from mail.utils import (
 	is_postmaster,
+	is_mailbox_user,
 	is_system_manager,
+	get_user_mailboxes,
 	get_parsed_message,
 	parsedate_to_datetime,
 )
@@ -208,14 +210,15 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Incoming Mail":
 		return False
 
+	user_is_mailbox_user = is_mailbox_user(doc.receiver, user)
 	user_is_system_manager = is_postmaster(user) or is_system_manager(user)
 
 	if ptype in ["create", "submit"]:
 		return user_is_system_manager
 	elif ptype in ["write", "cancel"]:
-		return user_is_system_manager or (user == doc.receiver)
+		return user_is_system_manager or user_is_mailbox_user
 	else:
-		return user_is_system_manager or (user == doc.receiver and doc.docstatus == 1)
+		return user_is_system_manager or (user_is_mailbox_user and doc.docstatus == 1)
 
 
 def get_permission_query_condition(user: Optional[str]) -> str:
@@ -225,4 +228,6 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 	if is_system_manager(user):
 		return ""
 
-	return f"(`tabIncoming Mail`.`receiver` = {frappe.db.escape(user)}) AND (`tabIncoming Mail`.`docstatus` = 1)"
+	mailboxes = ", ".join(repr(m) for m in get_user_mailboxes(user))
+
+	return f"(`tabIncoming Mail`.`receiver` IN ({mailboxes})) AND (`tabIncoming Mail`.`docstatus` = 1)"
