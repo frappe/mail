@@ -343,9 +343,12 @@ class OutgoingMail(Document):
 			)
 
 			if mail_contact:
-				frappe.db.set_value(
-					"Mail Contact", mail_contact, "display_name", recipient.display_name
-				)
+				if recipient.display_name != frappe.db.get_value(
+					"Mail Contact", mail_contact, "display_name"
+				):
+					frappe.db.set_value(
+						"Mail Contact", mail_contact, "display_name", recipient.display_name
+					)
 			else:
 				doc = frappe.new_doc("Mail Contact")
 				doc.user = user
