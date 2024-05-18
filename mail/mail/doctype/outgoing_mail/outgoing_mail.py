@@ -85,6 +85,14 @@ class OutgoingMail(Document):
 	def validate_sender(self) -> None:
 		"""Validates the sender."""
 
+		user = frappe.session.user
+		if not is_mailbox_user(self.sender, user) and not is_system_manager(user):
+			frappe.throw(
+				_("You are not allowed to send mail from mailbox {0}.").format(
+					frappe.bold(self.sender)
+				)
+			)
+
 		validate_mailbox_for_outgoing(self.sender)
 
 	def validate_amended_doc(self) -> None:
