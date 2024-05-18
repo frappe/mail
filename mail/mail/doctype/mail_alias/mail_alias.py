@@ -7,6 +7,8 @@ from typing import Optional
 from frappe.model.document import Document
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.utils import (
+	get_user_owned_domains,
+	is_system_manager,
 	validate_active_domain,
 	is_valid_email_for_domain,
 	validate_mailbox_for_incoming,
@@ -96,3 +98,23 @@ def sync_mail_aliases(
 				"Sync Mail Aliases",
 				request_data={"mail_aliases": mail_aliases},
 			)
+
+
+def has_permission(doc: "Document", ptype: str, user: str) -> bool:
+	if doc.doctype != "Mail Alias":
+		return False
+
+	return is_system_manager(user) or (doc.domain_name in get_user_owned_domains(user))
+
+
+def get_permission_query_condition(user: Optional[str]) -> str:
+	if not user:
+		user = frappe.session.user
+
+	if is_system_manager(user):
+		return ""
+
+	if domains := ", ".join(repr(d) for d in get_user_owned_domains(user)):
+		return f"(`tabMail Alias`.domain_name IN ({domains}))"
+	else:
+		return "1=0"

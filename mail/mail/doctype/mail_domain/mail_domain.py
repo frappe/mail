@@ -12,7 +12,7 @@ from mail.utils import (
 	is_system_manager,
 	get_dns_record,
 	is_valid_host,
-	get_user_domains,
+	get_user_mailbox_domains,
 )
 
 if TYPE_CHECKING:
@@ -344,16 +344,22 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Mail Domain":
 		return False
 
-	return is_system_manager(user) or (user == doc.owner)
+	return is_system_manager(user) or (user == doc.domain_owner)
 
 
 def get_permission_query_condition(user: Optional[str]) -> str:
+	conditions = []
+
 	if not user:
 		user = frappe.session.user
 
-	if is_system_manager(user):
-		return ""
+	if not is_system_manager(user):
+		user_roles = frappe.get_roles(user)
+		if "Domain Owner" in user_roles:
+			conditions.append(f"(`tabMail Domain`.`domain_owner` = {frappe.db.escape(user)})")
 
-	domains = ", ".join(repr(d) for d in get_user_domains(user))
+		if "Mailbox User" in user_roles:
+			if domains := ", ".join(repr(d) for d in get_user_mailbox_domains(user)):
+				conditions.append(f"(`tabMail Domain`.`domain_name` IN ({domains}))")
 
-	return f"(`tabMail Domain`.`owner` = {frappe.db.escape(user)}) OR (`tabMail Domain`.`domain_name` IN ({domains}))"
+	return " OR ".join(conditions)

@@ -7,12 +7,15 @@ frappe.ui.form.on("Mailbox", {
     },
 
 	set_queries(frm) {
+		frm.set_query("domain_name", () => {
+			return {
+				query: "mail.mail.doctype.mailbox.mailbox.get_domain",
+			};
+		});
+
         frm.set_query("user", (doc) => {
 			return {
 				query: "mail.mail.doctype.mailbox.mailbox.get_user",
-				filters: {
-					"domain_name": doc.domain_name || " "
-				}
 			};
 		});
     },

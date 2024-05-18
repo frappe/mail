@@ -4,9 +4,10 @@
 import frappe
 from frappe import _
 from typing import Optional
-from pypika.terms import ExistsCriterion
 from frappe.model.document import Document
+from frappe.query_builder import Criterion
 from mail.utils import (
+	get_user_owned_domains,
 	is_system_manager,
 	validate_active_domain,
 	is_valid_email_for_domain,
@@ -125,6 +126,33 @@ def create_mailbox(
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
+def get_domain(
+	doctype: Optional[str] = None,
+	txt: Optional[str] = None,
+	searchfield: Optional[str] = None,
+	start: Optional[int] = 0,
+	page_len: Optional[int] = 20,
+	filters: Optional[dict] = None,
+) -> list:
+	"""Returns the domains for the user."""
+
+	MAIL_DOMAIN = frappe.qb.DocType("Mail Domain")
+	query = (
+		frappe.qb.from_(MAIL_DOMAIN)
+		.select(MAIL_DOMAIN.name)
+		.where((MAIL_DOMAIN.enabled == 1) & (MAIL_DOMAIN[searchfield].like(f"%{txt}%")))
+		.limit(page_len)
+	)
+
+	user = frappe.session.user
+	if not is_system_manager(user):
+		query = query.where(MAIL_DOMAIN.domain_owner == user)
+
+	return query.run(as_dict=False)
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
 def get_user(
 	doctype: Optional[str] = None,
 	txt: Optional[str] = None,
@@ -133,26 +161,26 @@ def get_user(
 	page_len: Optional[int] = 20,
 	filters: Optional[dict] = None,
 ) -> list:
-	"""Returns the users for the domain."""
+	"""Returns the users."""
 
-	domain_name = filters.get("domain_name")
+	user = frappe.session.user
+	domains = get_user_owned_domains(user)
 
-	if not domain_name:
+	if not domains and not is_system_manager(user):
 		return []
 
 	USER = frappe.qb.DocType("User")
-	MAILBOX = frappe.qb.DocType("Mailbox")
-
-	return (
+	query = (
 		frappe.qb.from_(USER)
 		.select(USER.name)
-		.where(
-			(USER.enabled == 1)
-			& (USER[searchfield].like(f"%{txt}%"))
-			& (USER.name.like(f"%@{domain_name}"))
-		)
+		.where((USER.enabled == 1) & (USER[searchfield].like(f"%{txt}%")))
 		.limit(page_len)
-	).run(as_dict=False)
+	)
+
+	if domains:
+		query = query.where(Criterion.any([USER.name.like(f"%@{d}") for d in domains]))
+
+	return query.run(as_dict=False)
 
 
 @frappe.whitelist()
@@ -191,14 +219,26 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Mailbox":
 		return False
 
-	return is_system_manager(user) or (user == doc.user)
+	return (
+		is_system_manager(user)
+		or (user == doc.user)
+		or (doc.domain_name in get_user_owned_domains(user))
+	)
 
 
 def get_permission_query_condition(user: Optional[str]) -> str:
+	conditions = []
+
 	if not user:
 		user = frappe.session.user
 
-	if is_system_manager(user):
-		return ""
+	if not is_system_manager(user):
+		user_roles = frappe.get_roles(user)
+		if "Domain Owner" in user_roles:
+			if domains := ", ".join(repr(d) for d in get_user_owned_domains(user)):
+				conditions.append(f"(`tabMailbox`.`domain_name` IN ({domains}))")
 
-	return f"(`tabMailbox`.`user` = {frappe.db.escape(user)})"
+		if "Mailbox User" in user_roles:
+			conditions.append(f"(`tabMailbox`.`user` = {frappe.db.escape(user)})")
+
+	return " OR ".join(conditions)

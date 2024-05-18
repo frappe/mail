@@ -24,9 +24,7 @@ frappe.query_reports["Open Mail Tracker"] = {
 			options: "Outgoing Mail",
 			get_query: () => {
 				return {
-					filters: {
-						docstatus: 1,
-					},
+					query: "mail.utils.get_outgoing_mails_for_report",
 				};
 			},
 		},

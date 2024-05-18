@@ -106,6 +106,7 @@ after_install = "mail.install.after_install"
 permission_query_conditions = {
 	"User": "mail.overrides.get_user_permission_query_condition",
 	"Mailbox": "mail.mail.doctype.mailbox.mailbox.get_permission_query_condition",
+	"Mail Alias": "mail.mail.doctype.mail_alias.mail_alias.get_permission_query_condition",
 	"Mail Domain": "mail.mail.doctype.mail_domain.mail_domain.get_permission_query_condition",
 	"Mail Contact": "mail.mail.doctype.mail_contact.mail_contact.get_permission_query_condition",
 	"Outgoing Mail": "mail.mail.doctype.outgoing_mail.outgoing_mail.get_permission_query_condition",
@@ -115,6 +116,7 @@ permission_query_conditions = {
 has_permission = {
 	"User": "mail.overrides.user_has_permission",
 	"Mailbox": "mail.mail.doctype.mailbox.mailbox.has_permission",
+	"Mail Alias": "mail.mail.doctype.mail_alias.mail_alias.has_permission",
 	"Mail Domain": "mail.mail.doctype.mail_domain.mail_domain.has_permission",
 	"Mail Contact": "mail.mail.doctype.mail_contact.mail_contact.has_permission",
 	"Outgoing Mail": "mail.mail.doctype.outgoing_mail.outgoing_mail.has_permission",
@@ -245,5 +247,8 @@ default_log_clearing_doctypes = {"Mail Agent Job": 7}
 
 fixtures = [
 	"Mail Agent Job Type",
-	{"dt": "Role", "filters": [["role_name", "in", ["Postmaster", "Mailbox User"]]]},
+	{
+		"dt": "Role",
+		"filters": [["role_name", "in", ["Postmaster", "Mailbox User", "Domain Owner"]]],
+	},
 ]

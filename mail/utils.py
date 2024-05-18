@@ -12,6 +12,7 @@ from email import message_from_string
 from typing import Optional, TYPE_CHECKING
 from frappe.utils import get_system_timezone
 from mail.config.constants import NAMESERVERS
+from frappe.query_builder import Order, Criterion
 
 if TYPE_CHECKING:
 	from email.message import Message
@@ -215,9 +216,58 @@ def is_mailbox_user(mailbox: str, user: str) -> bool:
 	return frappe.db.get_value("Mailbox", mailbox, "user") == user
 
 
-def get_user_domains(user: str) -> list:
-	"""Returns the list of domains associated with the user."""
+def get_user_mailbox_domains(user: str) -> list:
+	"""Returns the list of domains associated with the user's mailboxes."""
 
 	return list(
 		set(frappe.db.get_all("Mailbox", filters={"user": user}, pluck="domain_name"))
 	)
+
+
+def get_user_owned_domains(user: str) -> list:
+	"""Returns the list of domains associated with the user."""
+
+	return frappe.db.get_all(
+		"Mail Domain", filters={"domain_owner": user}, pluck="domain_name"
+	)
+
+
+@frappe.whitelist()
+def get_outgoing_mails_for_report(
+	doctype: Optional[str] = None,
+	txt: Optional[str] = None,
+	searchfield: Optional[str] = None,
+	start: Optional[int] = 0,
+	page_len: Optional[int] = 20,
+	filters: Optional[dict] = None,
+) -> list:
+	user = frappe.session.user
+
+	OM = frappe.qb.DocType("Outgoing Mail")
+	query = (
+		frappe.qb.from_(OM)
+		.select(OM.name)
+		.where((OM.docstatus == 1) & (OM[searchfield].like(f"%{txt}%")))
+		.orderby(OM.creation, OM.created_at, order=Order.desc)
+		.offset(start)
+		.limit(page_len)
+	)
+
+	if not is_system_manager(user):
+		conditions = []
+		user_roles = frappe.get_roles(user)
+		domains = get_user_owned_domains(user)
+		mailboxes = get_user_mailboxes(user)
+
+		if "Domain Owner" in user_roles and domains:
+			conditions.append(OM.domain_name.isin(domains))
+
+		if "Mailbox User" in user_roles and mailboxes:
+			conditions.append(OM.sender.isin(mailboxes))
+
+		if not conditions:
+			return []
+
+		query = query.where((Criterion.any(conditions)))
+
+	return query.run(as_dict=False)

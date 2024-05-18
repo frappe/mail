@@ -24,10 +24,7 @@ frappe.query_reports["Outbound Delay"] = {
 			options: "Outgoing Mail",
 			get_query: () => {
 				return {
-					filters: {
-						docstatus: 1,
-						status: ["not in", ["Pending", "Transferring"]]
-					},
+					query: "mail.utils.get_outgoing_mails_for_report",
 				};
 			},
 		},

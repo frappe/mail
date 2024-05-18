@@ -331,7 +331,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-17 11:59:20.963491",
+ "modified": "2024-05-19 14:59:04.436042",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
@@ -354,6 +354,11 @@
    "read": 1,
    "role": "Postmaster",
    "write": 1
+  },
+  {
+   "report": 1,
+   "role": "Domain Owner",
+   "select": 1
   },
   {
    "cancel": 1,

@@ -40,6 +40,7 @@
    "label": "Domain Owner",
    "no_copy": 1,
    "options": "User",
+   "permlevel": 1,
    "reqd": 1
   },
   {
@@ -99,7 +100,8 @@
    "fieldtype": "Link",
    "label": "Outgoing Agent",
    "no_copy": 1,
-   "options": "Mail Agent"
+   "options": "Mail Agent",
+   "permlevel": 1
   },
   {
    "default": "1",
@@ -143,7 +145,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-16 18:27:49.980977",
+ "modified": "2024-05-19 10:53:58.599466",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",
@@ -163,6 +165,26 @@
   {
    "role": "Mailbox User",
    "select": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Domain Owner",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Domain Owner"
   }
  ],
  "sort_field": "modified",

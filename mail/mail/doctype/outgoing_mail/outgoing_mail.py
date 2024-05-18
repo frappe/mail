@@ -465,6 +465,7 @@ def get_sender(
 			& (MAILBOX.status == "Active")
 			& (MAILBOX[searchfield].like(f"%{txt}%"))
 		)
+		.offset(start)
 		.limit(page_len)
 	)
 
@@ -666,6 +667,7 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 	if is_system_manager(user):
 		return ""
 
-	mailboxes = ", ".join(repr(m) for m in get_user_mailboxes(user))
-
-	return f"(`tabOutgoing Mail`.`sender` IN ({mailboxes})) AND (`tabOutgoing Mail`.`docstatus` != 2)"
+	if mailboxes := ", ".join(repr(m) for m in get_user_mailboxes(user)):
+		return f"(`tabOutgoing Mail`.`sender` IN ({mailboxes})) AND (`tabOutgoing Mail`.`docstatus` != 2)"
+	else:
+		return "1=0"

@@ -112,7 +112,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-17 20:56:38.095127",
+ "modified": "2024-05-19 11:32:22.982907",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",
@@ -130,6 +130,16 @@
    "write": 1
   },
   {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Domain Owner",
+   "write": 1
+  },
+  {
    "export": 1,
    "print": 1,
    "read": 1,
@@ -141,6 +151,12 @@
    "permlevel": 1,
    "read": 1,
    "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Domain Owner",
    "write": 1
   },
   {
