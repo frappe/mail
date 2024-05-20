@@ -29,8 +29,6 @@
    "reqd": 1
   },
   {
-   "fetch_from": "user.email",
-   "fetch_if_empty": 1,
    "fieldname": "email",
    "fieldtype": "Data",
    "label": "Email",
@@ -112,7 +110,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-19 11:32:22.982907",
+ "modified": "2024-05-20 14:20:32.908133",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",
