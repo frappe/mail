@@ -2,7 +2,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 from typing import Optional, TYPE_CHECKING
-from mail.utils import is_system_manager, get_user_owned_domains
+from mail.utils import has_role, is_system_manager, get_user_owned_domains
 
 if TYPE_CHECKING:
 	from frappe.model.document import Document
@@ -65,13 +65,11 @@ def user_has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "User":
 		return False
 
-	user_roles = frappe.get_roles(user)
-
 	return (
-		is_system_manager(user)
-		or (user == doc.name)
+		(user == doc.name)
+		or is_system_manager(user)
 		or (
-			("Domain Owner" in user_roles)
+			has_role(user, "Domain Owner")
 			and (doc.email.split("@")[1] in get_user_owned_domains(user))
 		)
 	)
@@ -86,7 +84,7 @@ def get_user_permission_query_condition(user: Optional[str]) -> str:
 	if not is_system_manager(user):
 		conditions.append(f"(`tabUser`.`name` = {frappe.db.escape(user)})")
 
-		if "Domain Owner" in frappe.get_roles(user):
+		if has_role(user, "Domain Owner"):
 			for domain in get_user_owned_domains(user):
 				conditions.append(f"(`tabUser`.`email` LIKE '%@{domain}')")
 

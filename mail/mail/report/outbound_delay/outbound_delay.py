@@ -6,7 +6,12 @@ from frappe import _
 from typing import Tuple
 from frappe.query_builder.functions import Date
 from frappe.query_builder import Order, Criterion
-from mail.utils import is_system_manager, get_user_owned_domains, get_user_mailboxes
+from mail.utils import (
+	has_role,
+	is_system_manager,
+	get_user_mailboxes,
+	get_user_owned_domains,
+)
 
 
 def execute(filters=None) -> Tuple[list, list]:
@@ -185,14 +190,13 @@ def get_data(filters=None) -> list:
 	user = frappe.session.user
 	if not is_system_manager(user):
 		conditions = []
-		user_roles = frappe.get_roles(user)
 		domains = get_user_owned_domains(user)
 		mailboxes = get_user_mailboxes(user)
 
-		if "Domain Owner" in user_roles and domains:
+		if has_role(user, "Domain Owner") and domains:
 			conditions.append(OM.domain_name.isin(domains))
 
-		if "Mailbox User" in user_roles and mailboxes:
+		if has_role(user, "Mailbox User") and mailboxes:
 			conditions.append(OM.sender.isin(mailboxes))
 
 		if not conditions:

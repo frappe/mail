@@ -23,7 +23,7 @@ from frappe.utils.password import get_decrypted_password
 from frappe.utils import flt, now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.utils import (
-	is_mailbox_user,
+	is_mailbox_owner,
 	is_system_manager,
 	get_user_mailboxes,
 	parsedate_to_datetime,
@@ -86,7 +86,7 @@ class OutgoingMail(Document):
 		"""Validates the sender."""
 
 		user = frappe.session.user
-		if not is_mailbox_user(self.sender, user) and not is_system_manager(user):
+		if not is_mailbox_owner(self.sender, user) and not is_system_manager(user):
 			frappe.throw(
 				_("You are not allowed to send mail from mailbox {0}.").format(
 					frappe.bold(self.sender)
@@ -650,7 +650,7 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 		return False
 
 	user_is_system_manager = is_system_manager(user)
-	user_is_mailbox_user = is_mailbox_user(doc.sender, user)
+	user_is_mailbox_user = is_mailbox_owner(doc.sender, user)
 
 	if ptype == "create":
 		return True

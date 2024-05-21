@@ -189,7 +189,7 @@ def get_parsed_message(original_message: str) -> "Message":
 def is_system_manager(user: str) -> bool:
 	"""Returns True if the user is Administrator or System Manager else False."""
 
-	return user == "Administrator" or "System User" in frappe.get_roles(user)
+	return user == "Administrator" or has_role(user, "System Manager")
 
 
 def get_postmaster() -> str:
@@ -210,7 +210,7 @@ def get_user_mailboxes(user: str) -> list:
 	return frappe.db.get_all("Mailbox", filters={"user": user}, pluck="name")
 
 
-def is_mailbox_user(mailbox: str, user: str) -> bool:
+def is_mailbox_owner(mailbox: str, user: str) -> bool:
 	"""Returns True if the mailbox is associated with the user else False."""
 
 	return frappe.db.get_value("Mailbox", mailbox, "user") == user
@@ -225,15 +225,30 @@ def get_user_mailbox_domains(user: str) -> list:
 
 
 def get_user_owned_domains(user: str) -> list:
-	"""Returns the list of domains associated with the user."""
+	"""Returns the list of domains owned by the user."""
 
 	return frappe.db.get_all(
 		"Mail Domain", filters={"domain_owner": user}, pluck="domain_name"
 	)
 
 
+def has_role(user: str, roles: str | list) -> bool:
+	"""Returns True if the user has any of the given roles else False."""
+
+	if isinstance(roles, str):
+		roles = [roles]
+
+	user_roles = frappe.get_roles(user)
+	for r in roles:
+		if r in user_roles:
+			return True
+
+	return False
+
+
 @frappe.whitelist()
-def get_outgoing_mails_for_report(
+@frappe.validate_and_sanitize_search_inputs
+def get_outgoing_mails(
 	doctype: Optional[str] = None,
 	txt: Optional[str] = None,
 	searchfield: Optional[str] = None,
@@ -241,6 +256,8 @@ def get_outgoing_mails_for_report(
 	page_len: Optional[int] = 20,
 	filters: Optional[dict] = None,
 ) -> list:
+	"""Returns Outgoing Mails on which the user has select permission."""
+
 	user = frappe.session.user
 
 	OM = frappe.qb.DocType("Outgoing Mail")
@@ -255,14 +272,13 @@ def get_outgoing_mails_for_report(
 
 	if not is_system_manager(user):
 		conditions = []
-		user_roles = frappe.get_roles(user)
 		domains = get_user_owned_domains(user)
 		mailboxes = get_user_mailboxes(user)
 
-		if "Domain Owner" in user_roles and domains:
+		if has_role(user, "Domain Owner") and domains:
 			conditions.append(OM.domain_name.isin(domains))
 
-		if "Mailbox User" in user_roles and mailboxes:
+		if has_role(user, "Mailbox User") and mailboxes:
 			conditions.append(OM.sender.isin(mailboxes))
 
 		if not conditions:

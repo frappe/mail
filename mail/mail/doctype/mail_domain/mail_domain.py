@@ -9,9 +9,10 @@ from frappe.model.document import Document
 from mail.mail.doctype.mailbox.mailbox import create_dmarc_mailbox
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.utils import (
-	is_system_manager,
-	get_dns_record,
+	has_role,
 	is_valid_host,
+	get_dns_record,
+	is_system_manager,
 	get_user_mailbox_domains,
 )
 
@@ -354,11 +355,10 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 		user = frappe.session.user
 
 	if not is_system_manager(user):
-		user_roles = frappe.get_roles(user)
-		if "Domain Owner" in user_roles:
+		if has_role(user, "Domain Owner"):
 			conditions.append(f"(`tabMail Domain`.`domain_owner` = {frappe.db.escape(user)})")
 
-		if "Mailbox User" in user_roles:
+		if has_role(user, "Mailbox User"):
 			if domains := ", ".join(repr(d) for d in get_user_mailbox_domains(user)):
 				conditions.append(f"(`tabMail Domain`.`domain_name` IN ({domains}))")
 

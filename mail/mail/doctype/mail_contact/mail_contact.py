@@ -23,6 +23,8 @@ class MailContact(Document):
 			self.user = user
 
 	def validate_duplicate_contact(self) -> None:
+		"""Validates if the contact is duplicate."""
+
 		if frappe.db.exists("Mail Contact", {"email": self.email, "user": self.user}):
 			frappe.throw(
 				_("Mail Contact with email {0} already exists.").format(frappe.bold(self.email))
