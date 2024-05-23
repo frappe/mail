@@ -14,5 +14,5 @@ def create_postmaster() -> None:
 		user.first_name = "Postmaster"
 		user.user_type = "System User"
 		user.send_welcome_email = 0
-		user.add_roles("Postmaster")
+		user.append_roles("Postmaster")
 		user.insert(ignore_permissions=True)
