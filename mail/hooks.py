@@ -251,4 +251,10 @@ fixtures = [
 		"dt": "Role",
 		"filters": [["role_name", "in", ["Postmaster", "Mailbox User", "Domain Owner"]]],
 	},
+	{
+		"dt": "Custom DocPerm",
+		"filters": {
+			"parent": "User",
+		},
+	},
 ]
