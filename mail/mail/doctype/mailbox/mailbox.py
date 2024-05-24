@@ -109,7 +109,7 @@ def create_mailbox(
 			mailbox_user.first_name = display_name
 			mailbox_user.user_type = "System User"
 			mailbox_user.send_welcome_email = 0
-			mailbox_user.add_roles("Mailbox User")
+			mailbox_user.append_roles("Mailbox User")
 			mailbox_user.insert(ignore_permissions=True)
 
 		mailbox = frappe.new_doc("Mailbox")
@@ -117,6 +117,7 @@ def create_mailbox(
 		mailbox.incoming = incoming
 		mailbox.outgoing = outgoing
 		mailbox.user = user
+		mailbox.email = user
 		mailbox.display_name = display_name
 		mailbox.insert(ignore_permissions=True)
 
