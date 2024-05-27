@@ -6,6 +6,7 @@ import json
 import email
 import frappe
 from frappe import _
+from uuid_utils import uuid7
 from email.header import decode_header
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
@@ -32,6 +33,9 @@ if TYPE_CHECKING:
 
 
 class IncomingMail(Document):
+	def autoname(self) -> None:
+		self.name = str(uuid7())
+
 	def validate(self) -> None:
 		self.validate_mandatory_fields()
 

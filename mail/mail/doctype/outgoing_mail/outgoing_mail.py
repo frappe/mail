@@ -3,8 +3,8 @@
 
 import frappe
 from frappe import _
-from uuid import uuid4
 from re import finditer
+from uuid_utils import uuid7
 from bs4 import BeautifulSoup
 from mimetypes import guess_type
 from dkim import sign as dkim_sign
@@ -37,6 +37,9 @@ if TYPE_CHECKING:
 
 
 class OutgoingMail(Document):
+	def autoname(self) -> None:
+		self.name = str(uuid7())
+
 	def validate(self) -> None:
 		self.validate_domain()
 		self.validate_sender()
@@ -212,7 +215,7 @@ class OutgoingMail(Document):
 	def set_tracking_id(self) -> None:
 		"""Sets the Tracking ID."""
 
-		self.tracking_id = uuid4().hex
+		self.tracking_id = uuid7().hex
 
 	def set_original_message(self) -> None:
 		"""Sets the Original Message."""

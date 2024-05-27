@@ -1,6 +1,5 @@
 {
  "actions": [],
- "autoname": "IM.#####",
  "creation": "2024-03-13 11:35:29.489049",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -313,11 +312,10 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-17 12:36:37.382116",
+ "modified": "2024-05-27 11:12:30.584741",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
- "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
