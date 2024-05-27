@@ -47,8 +47,8 @@ frappe.query_reports["Outbound Delay"] = {
 			options: "Mail Domain",
 		},
 		{
-			fieldname: "from_ip",
-			label: __("From IP"),
+			fieldname: "ip_address",
+			label: __("IP Address"),
 			fieldtype: "Data",
 		},
 		{

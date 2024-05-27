@@ -10,7 +10,7 @@
   "agent",
   "section_break_quhp",
   "sender",
-  "from_ip",
+  "ip_address",
   "column_break_9ywf",
   "subject",
   "section_break_baaa",
@@ -197,14 +197,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "from_ip",
-   "fieldtype": "Data",
-   "label": "IP",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "original_message_tab",
    "fieldtype": "Tab Break",
    "label": "Original Message"
@@ -325,12 +317,20 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "ip_address",
+   "fieldtype": "Data",
+   "label": "IP Address",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-27 10:45:11.430963",
+ "modified": "2024-05-27 15:03:52.412165",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

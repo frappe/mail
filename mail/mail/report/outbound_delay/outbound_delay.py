@@ -87,8 +87,8 @@ def get_columns() -> list:
 			"width": 150,
 		},
 		{
-			"label": _("From IP"),
-			"fieldname": "from_ip",
+			"label": _("IP Address"),
+			"fieldname": "ip_address",
 			"fieldtype": "Data",
 			"width": 120,
 		},
@@ -153,7 +153,7 @@ def get_data(filters=None) -> list:
 			MR.action_after,
 			OM.agent,
 			OM.domain_name,
-			OM.from_ip,
+			OM.ip_address,
 			OM.sender,
 			MR.recipient,
 			OM.message_id,
@@ -176,7 +176,7 @@ def get_data(filters=None) -> list:
 		"name",
 		"agent",
 		"domain_name",
-		"from_ip",
+		"ip_address",
 		"sender",
 		"message_id",
 	]:

@@ -50,7 +50,7 @@ class OutgoingMail(Document):
 		self.validate_attachments()
 
 		if self.get("_action") == "submit":
-			self.set_from_ip()
+			self.set_ip_address()
 			self.set_agent()
 			self.validate_use_raw_html()
 			self.set_body_plain()
@@ -181,10 +181,10 @@ class OutgoingMail(Document):
 					)
 				)
 
-	def set_from_ip(self) -> None:
-		"""Sets the From IP."""
+	def set_ip_address(self) -> None:
+		"""Sets the IP Address."""
 
-		self.from_ip = frappe.local.request_ip
+		self.ip_address = frappe.local.request_ip
 
 	def set_agent(self) -> None:
 		"""Sets the Agent."""
