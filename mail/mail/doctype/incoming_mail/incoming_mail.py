@@ -121,7 +121,7 @@ class IncomingMail(Document):
 
 				elif content_type == "text/plain":
 					body_plain += part.get_payload(decode=True).decode(
-						part.get_content_charset(), "ignore"
+						part.get_content_charset() or "utf-8", "ignore"
 					)
 
 			return body_html, body_plain
