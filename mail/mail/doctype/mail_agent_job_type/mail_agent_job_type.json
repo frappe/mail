@@ -103,8 +103,13 @@
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2024-05-16 17:04:04.326207",
+ "links": [
+  {
+   "link_doctype": "Mail Agent Job",
+   "link_fieldname": "job_type"
+  }
+ ],
+ "modified": "2024-05-27 13:47:44.319084",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Agent Job Type",

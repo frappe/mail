@@ -144,8 +144,19 @@
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2024-05-19 10:53:58.599466",
+ "links": [
+  {
+   "group": "General",
+   "link_doctype": "Mailbox",
+   "link_fieldname": "domain_name"
+  },
+  {
+   "group": "General",
+   "link_doctype": "Mail Alias",
+   "link_fieldname": "domain_name"
+  }
+ ],
+ "modified": "2024-05-27 13:58:18.391569",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",

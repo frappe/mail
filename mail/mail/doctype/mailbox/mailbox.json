@@ -109,8 +109,24 @@
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2024-05-20 14:20:32.908133",
+ "links": [
+  {
+   "group": "General",
+   "link_doctype": "Mail Alias",
+   "link_fieldname": "mailbox"
+  },
+  {
+   "group": "General",
+   "link_doctype": "Incoming Mail",
+   "link_fieldname": "receiver"
+  },
+  {
+   "group": "General",
+   "link_doctype": "Outgoing Mail",
+   "link_fieldname": "sender"
+  }
+ ],
+ "modified": "2024-05-27 13:56:45.934938",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",
