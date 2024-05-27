@@ -23,14 +23,9 @@ class Mailbox(Document):
 		self.validate_display_name()
 
 	def on_update(self) -> None:
-		previous = self.get_doc_before_save()
 		enabled = self.enabled and self.incoming
 
-		if (
-			not previous
-			or self.enabled != previous.get("enabled")
-			or self.incoming != previous.get("incoming")
-		):
+		if self.has_value_changed("enabled") or self.has_value_changed("incoming"):
 			if not enabled:
 				self.validate_against_mail_alias()
 			self.sync_mailbox(enabled=enabled)

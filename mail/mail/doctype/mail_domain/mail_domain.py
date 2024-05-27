@@ -32,20 +32,18 @@ class MailDomain(Document):
 		self.validate_subdomain()
 		self.validate_root_domain()
 
-		if self.is_new() or (self.dkim_bits != self.get_doc_before_save().get("dkim_bits")):
+		if self.is_new() or self.has_value_changed("dkim_bits"):
 			self.generate_dns_records()
-		elif self.dkim_selector != self.get_doc_before_save().get("dkim_selector"):
+		elif self.has_value_changed("dkim_selector"):
 			self.refresh_dns_records()
 		elif not self.enabled:
 			self.verified = 0
 
-	def on_update(self) -> None:
-		previous = self.get_doc_before_save()
+	def after_insert(self) -> None:
+		create_dmarc_mailbox(self.domain_name)
 
-		if not previous:
-			create_dmarc_mailbox(self.domain_name)
-			self.sync_mail_domain(enabled=self.enabled)
-		elif self.enabled != previous.get("enabled"):
+	def on_update(self) -> None:
+		if self.has_value_changed("enabled"):
 			self.sync_mail_domain(enabled=self.enabled)
 
 	def on_trash(self) -> None:
