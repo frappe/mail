@@ -1,6 +1,7 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import json
 import frappe
 from frappe import _
 from re import finditer
@@ -8,7 +9,6 @@ from uuid_utils import uuid7
 from bs4 import BeautifulSoup
 from mimetypes import guess_type
 from dkim import sign as dkim_sign
-from json import loads as json_loads
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email.mime.audio import MIMEAudio
@@ -20,8 +20,14 @@ from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid, formatdate
 from frappe.utils.password import get_decrypted_password
-from frappe.utils import flt, now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
+from frappe.utils import (
+	flt,
+	now,
+	get_datetime_str,
+	time_diff_in_seconds,
+	validate_email_address,
+)
 from mail.utils import (
 	is_mailbox_owner,
 	is_system_manager,
@@ -121,6 +127,12 @@ class OutgoingMail(Document):
 		recipients = []
 		for recipient in self.recipients:
 			if recipient.recipient not in recipients:
+				if validate_email_address(recipient.recipient) != recipient.recipient:
+					frappe.throw(
+						_("Row #{0}: Invalid recipient {1}.").format(
+							recipient.idx, frappe.bold(recipient.recipient)
+						)
+					)
 				recipients.append(recipient.recipient)
 			else:
 				frappe.throw(
@@ -368,6 +380,28 @@ class OutgoingMail(Document):
 		}
 		create_agent_job(self.agent, "Transfer Mail", request_data=request_data)
 
+	def _add_recipients(self, recipients: Optional[str | list[str]] = None) -> None:
+		"""Adds the recipients."""
+
+		if recipients:
+			if isinstance(recipients, str):
+				recipients = [recipients]
+
+			for r in recipients:
+				parts = r.split("<")
+				recipient, display_name = "", ""
+
+				if len(parts) == 1:
+					recipient = parts[0]
+				else:
+					display_name = parts[0].strip()
+					recipient = parts[1].replace(">", "").strip()
+
+				if not recipient:
+					frappe.throw(_("Invalid format for recipient {0}.").format(frappe.bold(r)))
+
+				self.append("recipients", {"recipient": recipient, "display_name": display_name})
+
 	def _get_recipients(self, as_list: bool = False) -> str | list[str]:
 		"""Returns the recipients."""
 
@@ -376,6 +410,16 @@ class OutgoingMail(Document):
 			for r in self.recipients
 		]
 		return recipients if as_list else ", ".join(recipients)
+
+	def _add_custom_headers(self, headers: Optional[dict | list[dict]] = None) -> None:
+		"""Adds the custom headers."""
+
+		if headers:
+			if isinstance(headers, dict):
+				headers = [headers]
+
+			for h in headers:
+				self.append("custom_headers", h)
 
 	def _replace_image_url_with_content_id(self) -> str:
 		"""Replaces the image URL with content ID."""
@@ -511,7 +555,7 @@ def update_outgoing_mails_status(agent_job: "MailAgentJob") -> None:
 	"""Called by the Mail Agent Job to update the outgoing mails status."""
 
 	if agent_job and agent_job.job_type in ["Transfer Mail", "Transfer Mails"]:
-		data = json_loads(agent_job.request_data)
+		data = json.loads(agent_job.request_data)
 
 		if isinstance(data, dict):
 			if agent_job.status == "Running":
@@ -560,7 +604,7 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 
 	if agent_job and agent_job.job_type == "Sync Outgoing Mails Status":
 		if agent_job.status == "Completed":
-			if data := json_loads(agent_job.response_data)["message"]:
+			if data := json.loads(agent_job.response_data)["message"]:
 				for d in data:
 					_validate_data(d)
 
@@ -646,6 +690,32 @@ def transfer_mails() -> None:
 			_create_and_transfer_batch(agent, outgoing_mails, batch_size)
 
 		_update_outgoing_mails_status(outgoing_mail_list)
+
+
+def create_outgoing_mail(
+	sender: str,
+	subject: str,
+	recipients: str | list[str],
+	raw_html: Optional[str] = None,
+	custom_headers: Optional[dict | list[dict]] = None,
+	send_in_batch: int = 0,
+	do_not_save: bool = False,
+	do_not_submit=False,
+) -> "OutgoingMail":
+	doc = frappe.new_doc("Outgoing Mail")
+	doc.sender = sender
+	doc.subject = subject
+	doc.raw_html = raw_html
+	doc._add_recipients(recipients)
+	doc._add_custom_headers(custom_headers)
+	doc.send_in_batch = send_in_batch
+
+	if not do_not_save:
+		doc.save()
+		if not do_not_submit:
+			doc.submit()
+
+	return doc
 
 
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
