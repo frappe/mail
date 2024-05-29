@@ -19,6 +19,7 @@ from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid, formatdate
+from frappe.utils.file_manager import save_file
 from frappe.utils.password import get_decrypted_password
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.utils import (
@@ -411,6 +412,25 @@ class OutgoingMail(Document):
 		]
 		return recipients if as_list else ", ".join(recipients)
 
+	def _add_attachments(self, attachments: Optional[dict | list[dict]] = None) -> None:
+		"""Adds the attachments."""
+
+		if attachments:
+			if isinstance(attachments, dict):
+				attachments = [attachments]
+
+			for a in attachments:
+				kwargs = {
+					"dt": self.doctype,
+					"dn": self.name,
+					"df": "file",
+					"fname": a["filename"],
+					"content": a["content"],
+					"is_private": 1,
+					"decode": True,
+				}
+				save_file(**kwargs)
+
 	def _add_custom_headers(self, headers: Optional[dict | list[dict]] = None) -> None:
 		"""Adds the custom headers."""
 
@@ -427,7 +447,7 @@ class OutgoingMail(Document):
 		body_html = self.body_html or ""
 
 		if body_html and self.attachments:
-			img_src_pattern = r'<img.*?src="(.*?)".*?>'
+			img_src_pattern = r'<img.*?src=[\'"](.*?)[\'"].*?>'
 
 			for img_src_match in finditer(img_src_pattern, body_html):
 				img_src = img_src_match.group(1)
@@ -438,12 +458,12 @@ class OutgoingMail(Document):
 		return body_html
 
 	def _get_attachment_content_id(
-		self, file_url: str, set_as_inline: bool = False
+		self, src: str, set_as_inline: bool = False
 	) -> Optional[str]:
 		"""Returns the attachment content ID."""
 
 		for attachment in self.attachments:
-			if file_url in attachment.file_url:
+			if src in [attachment.file_name, attachment.file_url]:
 				if set_as_inline:
 					attachment.type = "inline"
 
@@ -697,6 +717,7 @@ def create_outgoing_mail(
 	subject: str,
 	recipients: str | list[str],
 	raw_html: Optional[str] = None,
+	attachments: Optional[list[dict]] = None,
 	custom_headers: Optional[dict | list[dict]] = None,
 	send_in_batch: int = 0,
 	do_not_save: bool = False,
@@ -706,12 +727,13 @@ def create_outgoing_mail(
 	doc.sender = sender
 	doc.subject = subject
 	doc.raw_html = raw_html
+	doc.send_in_batch = send_in_batch
 	doc._add_recipients(recipients)
 	doc._add_custom_headers(custom_headers)
-	doc.send_in_batch = send_in_batch
 
 	if not do_not_save:
 		doc.save()
+		doc._add_attachments(attachments)
 		if not do_not_submit:
 			doc.submit()
 

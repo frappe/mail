@@ -19,10 +19,9 @@ def send() -> list[str]:
 		sender = mail.get("from") or mail.get("sender")
 		subject = mail.get("subject")
 		raw_html = mail.get("html") or mail.get("raw_html")
+		attachments = mail.get("attachments") or mail.get("attachment")
 		recipients = mail.get("to") or mail.get("recipient") or mail.get("recipients")
-		custom_headers = (
-			mail.get("header") or mail.get("headers") or mail.get("custom_headers")
-		)
+		custom_headers = mail.get("headers") or mail.get("header")
 
 		if (
 			mail.get("mode") == "individual"
@@ -31,12 +30,18 @@ def send() -> list[str]:
 		):
 			for recipient in recipients:
 				doc = create_outgoing_mail(
-					sender, subject, recipient, raw_html, custom_headers, send_in_batch=1
+					sender, subject, recipient, raw_html, attachments, custom_headers, send_in_batch=1
 				)
 				docs.append(doc.name)
 		else:
 			doc = create_outgoing_mail(
-				sender, subject, recipients, raw_html, custom_headers, send_in_batch=send_in_batch
+				sender,
+				subject,
+				recipients,
+				raw_html,
+				attachments,
+				custom_headers,
+				send_in_batch=send_in_batch,
 			)
 			docs.append(doc.name)
 
