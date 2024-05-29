@@ -38,7 +38,7 @@
   "tracking_id",
   "opened",
   "column_break_32ea",
-  "opened_count",
+  "open_count",
   "first_opened_at",
   "last_opened_at",
   "section_break_kops",
@@ -281,16 +281,6 @@
    "search_index": 1
   },
   {
-   "default": "0",
-   "depends_on": "eval: doc.opened",
-   "fieldname": "opened_count",
-   "fieldtype": "Int",
-   "label": "Opened Count",
-   "no_copy": 1,
-   "non_negative": 1,
-   "read_only": 1
-  },
-  {
    "depends_on": "eval: doc.opened",
    "fieldname": "first_opened_at",
    "fieldtype": "Datetime",
@@ -325,12 +315,22 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.opened",
+   "fieldname": "open_count",
+   "fieldtype": "Int",
+   "label": "Open Count",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-27 15:03:52.412165",
+ "modified": "2024-05-29 05:59:38.617751",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

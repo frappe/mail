@@ -21,7 +21,7 @@ def open(id: str) -> None:
 				Case().when(OM.first_opened_at.isnull(), now).else_(OM.first_opened_at),
 			)
 			.set(OM.last_opened_at, now)
-			.set(OM.opened_count, OM.opened_count + 1)
+			.set(OM.open_count, OM.open_count + 1)
 			.where((OM.docstatus == 1) & (OM.tracking_id == id))
 		).run()
 		frappe.db.commit()
