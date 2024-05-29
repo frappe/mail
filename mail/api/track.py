@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 from frappe.query_builder import Case
 
 
@@ -7,6 +8,9 @@ def open(id: str) -> None:
 	"""Updates Outgoing Mail opened status."""
 
 	try:
+		if not id:
+			frappe.throw(_("Tracking ID is required."))
+
 		now = frappe.utils.now()
 		OM = frappe.qb.DocType("Outgoing Mail")
 		(
@@ -20,10 +24,8 @@ def open(id: str) -> None:
 			.set(OM.opened_count, OM.opened_count + 1)
 			.where((OM.docstatus == 1) & (OM.tracking_id == id))
 		).run()
-	except Exception:
-		frappe.log_error(
-			title="Error Updating Outgoing Mail Opened Status", message=frappe.get_traceback()
-		)
-	finally:
 		frappe.db.commit()
+	except Exception:
+		frappe.log_error(title="mail.api.track.open", message=frappe.get_traceback())
+	finally:
 		frappe.response.update(frappe.utils.get_imaginary_pixel_response())
