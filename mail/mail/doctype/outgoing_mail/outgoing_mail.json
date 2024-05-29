@@ -41,6 +41,7 @@
   "open_count",
   "first_opened_at",
   "last_opened_at",
+  "last_opened_from_ip",
   "section_break_kops",
   "original_message",
   "amended_from"
@@ -325,12 +326,20 @@
    "no_copy": 1,
    "non_negative": 1,
    "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.opened",
+   "fieldname": "last_opened_from_ip",
+   "fieldtype": "Data",
+   "label": "Last Opened From IP",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-29 05:59:38.617751",
+ "modified": "2024-05-29 06:28:46.331178",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

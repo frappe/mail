@@ -105,6 +105,12 @@ def get_columns() -> list:
 			"fieldtype": "Datetime",
 			"width": 180,
 		},
+		{
+			"label": _("Last Opened From IP"),
+			"fieldname": "last_opened_from_ip",
+			"fieldtype": "Data",
+			"width": 120,
+		},
 	]
 
 
@@ -128,6 +134,7 @@ def get_data(filters=None) -> list:
 			OM.created_at,
 			OM.first_opened_at,
 			OM.last_opened_at,
+			OM.last_opened_from_ip,
 		)
 		.where((OM.docstatus == 1))
 		.orderby(OM.creation, OM.created_at, order=Order.desc)
