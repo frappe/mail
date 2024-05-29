@@ -223,7 +223,7 @@ class OutgoingMail(Document):
 		"""Sets the Agent."""
 
 		outgoing_agent = frappe.db.get_value(
-			"Mail Domain", self.domain_name, "outgoing_agent"
+			"Mail Domain", self.domain_name, "outgoing_agent", cache=True
 		)
 		self.agent = outgoing_agent or get_random_outgoing_agent()
 
@@ -715,7 +715,7 @@ def transfer_mails() -> None:
 	if outgoing_mails := _get_outgoing_mails():
 		outgoing_mail_list = []
 		agent_wise_outgoing_mails = {}
-		batch_size = frappe.db.get_single_value("Mail Settings", "max_batch_size")
+		batch_size = frappe.db.get_single_value("Mail Settings", "max_batch_size", cache=True)
 
 		for mail in outgoing_mails:
 			outgoing_mail_list.append(mail["name"])

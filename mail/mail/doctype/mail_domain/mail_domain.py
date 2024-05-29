@@ -64,7 +64,7 @@ class MailDomain(Document):
 				frappe.throw(msg)
 		else:
 			self.dkim_selector = frappe.db.get_single_value(
-				"Mail Settings", "default_dkim_selector"
+				"Mail Settings", "default_dkim_selector", cache=True
 			)
 
 	def validate_dkim_bits(self) -> None:
@@ -74,7 +74,9 @@ class MailDomain(Document):
 			if cint(self.dkim_bits) < 1024:
 				frappe.throw(_("DKIM Bits must be greater than 1024."))
 		else:
-			self.dkim_bits = frappe.db.get_single_value("Mail Settings", "default_dkim_bits")
+			self.dkim_bits = frappe.db.get_single_value(
+				"Mail Settings", "default_dkim_bits", cache=True
+			)
 
 	def validate_outgoing_agent(self) -> None:
 		"""Validates the Outgoing Agent."""
@@ -110,7 +112,7 @@ class MailDomain(Document):
 		self.root_domain = (
 			1
 			if self.domain_name
-			== frappe.db.get_single_value("Mail Settings", "root_domain_name")
+			== frappe.db.get_single_value("Mail Settings", "root_domain_name", cache=True)
 			else 0
 		)
 

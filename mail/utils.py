@@ -195,7 +195,10 @@ def is_system_manager(user: str) -> bool:
 def get_postmaster() -> str:
 	"""Returns the Postmaster from Mail Settings."""
 
-	return frappe.db.get_single_value("Mail Settings", "postmaster") or "Administrator"
+	return (
+		frappe.db.get_single_value("Mail Settings", "postmaster", cache=True)
+		or "Administrator"
+	)
 
 
 def is_postmaster(user: str) -> bool:

@@ -32,7 +32,9 @@ class MailAgentJob(Document):
 	def validate_job_type(self) -> None:
 		"""Validates if the job type is enabled."""
 
-		if not frappe.db.get_value("Mail Agent Job Type", self.job_type, "enabled"):
+		if not frappe.db.get_value(
+			"Mail Agent Job Type", self.job_type, "enabled", cache=True
+		):
 			frappe.throw(_("Job Type {0} is disabled.".format(frappe.bold(self.job_type))))
 
 	def validate_request_data(self) -> None:
