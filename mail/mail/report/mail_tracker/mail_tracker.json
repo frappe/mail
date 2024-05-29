@@ -12,11 +12,11 @@
  "modified": "2024-05-17 09:38:31.590692",
  "modified_by": "Administrator",
  "module": "Mail",
- "name": "Open Mail Tracker",
+ "name": "Mail Tracker",
  "owner": "Administrator",
  "prepared_report": 0,
  "ref_doctype": "Outgoing Mail",
- "report_name": "Open Mail Tracker",
+ "report_name": "Mail Tracker",
  "report_type": "Script Report",
  "roles": [
   {
