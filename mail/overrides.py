@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import flt, cint
 from typing import Optional, TYPE_CHECKING
 from mail.utils import has_role, is_system_manager, get_user_owned_domains
 
@@ -19,8 +19,8 @@ def validate_file(doc, method):
 	if (
 		doc.attached_to_doctype in ["Outgoing Mail", "Incoming Mail"] and doc.attached_to_name
 	):
-		docstatus = frappe.db.get_value(
-			doc.attached_to_doctype, doc.attached_to_name, "docstatus"
+		docstatus = cint(
+			frappe.db.get_value(doc.attached_to_doctype, doc.attached_to_name, "docstatus")
 		)
 
 		if method == "validate":
