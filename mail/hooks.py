@@ -6,6 +6,16 @@ app_email = "developers@frappe.io"
 app_license = "agpl-3.0"
 # required_apps = []
 
+
+website_redirects = [
+	{
+		"source": "/outbound/send",
+		"target": "/api/method/mail.api.outbound.send",
+		"redirect_http_status": 307,
+	},
+]
+
+
 # Includes in <head>
 # ------------------
 
