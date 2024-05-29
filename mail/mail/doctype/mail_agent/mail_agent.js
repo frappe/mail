@@ -19,29 +19,31 @@ frappe.ui.form.on("Mail Agent", {
 	},
 
 	add_actions(frm) {
-		if (frm.doc.outgoing) {
-			frm.add_custom_button(__("Sync Outgoing Mails Status"), () => {
-                frm.trigger("sync_outgoing_mails_status");
-            }, __("Actions"));
+		if (!frm.doc.__islocal) {
+			if (frm.doc.outgoing) {
+				frm.add_custom_button(__("Sync Outgoing Mails Status"), () => {
+					frm.trigger("sync_outgoing_mails_status");
+				}, __("Actions"));
+			}
+
+			if (frm.doc.incoming) {
+				frm.add_custom_button(__("Sync Incoming Mails"), () => {
+					frm.trigger("sync_incoming_mails");
+				}, __("Actions"));
+
+				frm.add_custom_button(__("Sync Mail Domains"), () => {
+					frm.trigger("sync_mail_domains");
+				}, __("Actions"));
+
+				frm.add_custom_button(__("Sync Mailboxes"), () => {
+					frm.trigger("sync_mailboxes");
+				}, __("Actions"));
+
+				frm.add_custom_button(__("Sync Mail Aliases"), () => {
+					frm.trigger("sync_mail_aliases");
+				}, __("Actions"));
+			}
 		}
-
-		if (frm.doc.incoming) {
-			frm.add_custom_button(__("Sync Incoming Mails"), () => {
-                frm.trigger("sync_incoming_mails");
-            }, __("Actions"));
-
-            frm.add_custom_button(__("Sync Mail Domains"), () => {
-                frm.trigger("sync_mail_domains");
-            }, __("Actions"));
-
-            frm.add_custom_button(__("Sync Mailboxes"), () => {
-                frm.trigger("sync_mailboxes");
-            }, __("Actions"));
-
-			frm.add_custom_button(__("Sync Mail Aliases"), () => {
-                frm.trigger("sync_mail_aliases");
-            }, __("Actions"));
-        }
     },
 
 	sync_outgoing_mails_status(frm) {
