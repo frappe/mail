@@ -11,6 +11,7 @@
   "section_break_quhp",
   "sender",
   "ip_address",
+  "via_api",
   "column_break_9ywf",
   "subject",
   "section_break_baaa",
@@ -334,12 +335,22 @@
    "label": "Last Opened From IP",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.via_api",
+   "fieldname": "via_api",
+   "fieldtype": "Check",
+   "label": "API",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-29 06:28:46.331178",
+ "modified": "2024-05-29 19:56:56.028449",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

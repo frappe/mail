@@ -17,6 +17,7 @@ from frappe.core.utils import html2text
 from email.encoders import encode_base64
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
+from urllib.parse import urlparse, parse_qs
 from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid, formatdate
 from frappe.utils.file_manager import save_file
@@ -53,14 +54,13 @@ class OutgoingMail(Document):
 		self.validate_amended_doc()
 		self.validate_recipients()
 		self.validate_custom_headers()
-		self.validate_body_html()
 		self.load_attachments()
 		self.validate_attachments()
 
 		if self.get("_action") == "submit":
 			self.set_ip_address()
 			self.set_agent()
-			self.validate_use_raw_html()
+			self.set_body_html()
 			self.set_body_plain()
 			self.set_message_id()
 			self.set_tracking_id()
@@ -162,12 +162,6 @@ class OutgoingMail(Document):
 						_("Custom header {0} is not allowed.").format(frappe.bold(header.key))
 					)
 
-	def validate_body_html(self) -> None:
-		"""Validates the HTML body."""
-
-		if not self.body_html:
-			self.body_html = ""
-
 	def load_attachments(self) -> None:
 		"""Loads the attachments."""
 
@@ -227,13 +221,17 @@ class OutgoingMail(Document):
 		)
 		self.agent = outgoing_agent or get_random_outgoing_agent()
 
-	def validate_use_raw_html(self) -> None:
-		"""Validates the Use Raw HTML."""
+	def set_body_html(self) -> None:
+		"""Sets the HTML Body."""
 
 		if self.use_raw_html:
-			self.body_html = self.raw_html or ""
+			self.body_html = self.raw_html
 
 		self.raw_html = ""
+		self.body_html = self.body_html or ""
+
+		if self.via_api:
+			self._correct_attachments_file_url()
 
 	def set_body_plain(self) -> None:
 		"""Sets the Plain Body."""
@@ -478,22 +476,44 @@ class OutgoingMail(Document):
 		return body_html
 
 	def _get_attachment_content_id(
-		self, src: str, set_as_inline: bool = False
+		self, file_url: str, set_as_inline: bool = False
 	) -> Optional[str]:
 		"""Returns the attachment content ID."""
 
-		for attachment in self.attachments:
-			if src in [attachment.file_name, attachment.file_url]:
-				if set_as_inline:
-					attachment.type = "inline"
+		if file_url:
+			field = "file_url"
+			parsed_url = urlparse(file_url)
+			value = parsed_url.path
 
-				return attachment.name
+			if query_params := parse_qs(parsed_url.query):
+				if fid := query_params.get("fid", [None])[0]:
+					field = "name"
+					value = fid
 
-	def _get_attachment_file_url(self, content_id: str) -> Optional[str]:
+			for attachment in self.attachments:
+				if attachment[field] == value:
+					if set_as_inline:
+						attachment.type = "inline"
+
+					return attachment.name
+
+	def _correct_attachments_file_url(self) -> None:
+		"""Corrects the attachments file URL."""
+
+		if self.body_html and self.attachments:
+			img_src_pattern = r'<img.*?src=[\'"](.*?)[\'"].*?>'
+
+			for img_src_match in finditer(img_src_pattern, self.body_html):
+				img_src = img_src_match.group(1)
+
+				if file_url := self._get_attachment_file_url(img_src):
+					self.body_html = self.body_html.replace(img_src, file_url)
+
+	def _get_attachment_file_url(self, src: str) -> Optional[str]:
 		"""Returns the attachment file URL."""
 
 		for attachment in self.attachments:
-			if content_id == attachment.name:
+			if src == attachment.file_name:
 				return attachment.file_url
 
 	def _db_set(
@@ -739,6 +759,7 @@ def create_outgoing_mail(
 	raw_html: Optional[str] = None,
 	attachments: Optional[list[dict]] = None,
 	custom_headers: Optional[dict | list[dict]] = None,
+	via_api: int = 1,
 	send_in_batch: int = 0,
 	do_not_save: bool = False,
 	do_not_submit=False,
@@ -747,6 +768,7 @@ def create_outgoing_mail(
 	doc.sender = sender
 	doc.subject = subject
 	doc.raw_html = raw_html
+	doc.via_api = via_api
 	doc.send_in_batch = send_in_batch
 	doc._add_recipients(recipients)
 	doc._add_custom_headers(custom_headers)
