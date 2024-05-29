@@ -52,6 +52,7 @@ class OutgoingMail(Document):
 		self.validate_sender()
 		self.validate_amended_doc()
 		self.validate_recipients()
+		self.validate_custom_headers()
 		self.validate_body_html()
 		self.load_attachments()
 		self.validate_attachments()
@@ -120,7 +121,7 @@ class OutgoingMail(Document):
 
 		if len(self.recipients) > max_recipients:
 			frappe.throw(
-				_("Recipient limit exceeded ({0}). Maximum {0} recipients allowed.").format(
+				_("Recipient limit exceeded ({0}). Maximum {0} recipient(s) allowed.").format(
 					frappe.bold(len(self.recipients)), frappe.bold(max_recipients)
 				)
 			)
@@ -141,6 +142,25 @@ class OutgoingMail(Document):
 						recipient.idx, frappe.bold(recipient.recipient)
 					)
 				)
+
+	def validate_custom_headers(self) -> None:
+		if self.custom_headers:
+			max_headers = frappe.db.get_single_value("Mail Settings", "max_headers", cache=True)
+
+			if len(self.custom_headers) > max_headers:
+				frappe.throw(
+					_(
+						"Custom Headers limit exceeded ({0}). Maximum {1} custom header(s) allowed."
+					).format(
+						frappe.bold(len(self.custom_headers)), frappe.bold(max_headers)
+					)
+				)
+
+			for header in self.custom_headers:
+				if header.key.startswith("X-FM-"):
+					frappe.throw(
+						_("Custom header {0} is not allowed.").format(frappe.bold(header.key))
+					)
 
 	def validate_body_html(self) -> None:
 		"""Validates the HTML body."""
@@ -695,7 +715,7 @@ def transfer_mails() -> None:
 	if outgoing_mails := _get_outgoing_mails():
 		outgoing_mail_list = []
 		agent_wise_outgoing_mails = {}
-		batch_size = frappe.db.get_single_value("Mail Settings", "max_batch_size") or 150
+		batch_size = frappe.db.get_single_value("Mail Settings", "max_batch_size")
 
 		for mail in outgoing_mails:
 			outgoing_mail_list.append(mail["name"])

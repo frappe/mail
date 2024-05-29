@@ -18,10 +18,13 @@
   "dns_records",
   "outgoing_tab",
   "max_recipients",
-  "max_message_size",
-  "max_batch_size",
+  "max_headers",
   "column_break_sf4n",
+  "max_batch_size",
+  "max_message_size",
+  "attachments_section",
   "outgoing_max_attachments",
+  "column_break_l9fc",
   "outgoing_max_attachment_size",
   "outgoing_total_attachments_size"
  ],
@@ -101,41 +104,47 @@
    "fieldname": "max_recipients",
    "fieldtype": "Int",
    "label": "Max Recipients",
-   "non_negative": 1
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "default": "20",
    "fieldname": "outgoing_max_attachments",
    "fieldtype": "Int",
    "label": "Max Attachments (Count)",
-   "non_negative": 1
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "default": "20",
    "fieldname": "outgoing_max_attachment_size",
    "fieldtype": "Int",
    "label": "Max Attachment Size (MB)",
-   "non_negative": 1
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "default": "20",
    "fieldname": "outgoing_total_attachments_size",
    "fieldtype": "Int",
    "label": "Total Attachments Size (MB)",
-   "non_negative": 1
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "default": "25",
    "fieldname": "max_message_size",
    "fieldtype": "Int",
    "label": "Max Message Size (MB)",
-   "non_negative": 1
+   "non_negative": 1,
+   "reqd": 1
   },
   {
    "default": "150",
    "fieldname": "max_batch_size",
    "fieldtype": "Int",
-   "label": "Max Batch Size (Count)"
+   "label": "Max Batch Size (Count)",
+   "reqd": 1
   },
   {
    "fieldname": "postmaster",
@@ -143,12 +152,29 @@
    "label": "Postmaster",
    "options": "User",
    "reqd": 1
+  },
+  {
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "column_break_l9fc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "10",
+   "fieldname": "max_headers",
+   "fieldtype": "Int",
+   "label": "Max Headers",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-16 17:00:01.962889",
+ "modified": "2024-05-29 15:32:03.587139",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
