@@ -438,16 +438,22 @@ class OutgoingMail(Document):
 				attachments = [attachments]
 
 			for a in attachments:
+				filename = a.get("filename")
+				content = a["content"]
+
 				kwargs = {
 					"dt": self.doctype,
 					"dn": self.name,
 					"df": "file",
-					"fname": a["filename"],
-					"content": a["content"],
+					"fname": filename,
+					"content": content,
 					"is_private": 1,
 					"decode": True,
 				}
-				save_file(**kwargs)
+				file = save_file(**kwargs)
+
+				if filename and filename != file.file_name:
+					file.db_set("file_name", filename, update_modified=False)
 
 	def _add_custom_headers(self, headers: Optional[dict | list[dict]] = None) -> None:
 		"""Adds the custom headers."""
