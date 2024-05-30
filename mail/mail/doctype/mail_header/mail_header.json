@@ -16,7 +16,6 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Key",
-   "no_copy": 1,
    "reqd": 1
   },
   {
@@ -24,8 +23,7 @@
    "fieldtype": "Text",
    "ignore_xss_filter": 1,
    "in_list_view": 1,
-   "label": "Value",
-   "no_copy": 1
+   "label": "Value"
   },
   {
    "fieldname": "column_break_79v8",
@@ -35,7 +33,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-03-29 09:29:35.512356",
+ "modified": "2024-05-30 11:19:00.360587",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Header",
