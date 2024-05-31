@@ -4,10 +4,6 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "status",
-  "column_break_htgl",
-  "agent",
-  "section_break_0jgu",
   "display_name",
   "sender",
   "column_break_hpzu",
@@ -17,7 +13,11 @@
   "section_break_eomq",
   "body_html",
   "body_plain",
-  "original_message_tab",
+  "more_info_tab",
+  "status",
+  "column_break_htgl",
+  "agent",
+  "section_break_0jgu",
   "message_id",
   "column_break_epvd",
   "eml_filename",
@@ -180,11 +180,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "original_message_tab",
-   "fieldtype": "Tab Break",
-   "label": "Original Message"
-  },
-  {
    "fieldname": "section_break_5me5",
    "fieldtype": "Section Break"
   },
@@ -306,13 +301,18 @@
    "no_copy": 1,
    "non_negative": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "more_info_tab",
+   "fieldtype": "Tab Break",
+   "label": "More Info"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-27 11:12:30.584741",
+ "modified": "2024-05-31 15:24:31.825522",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

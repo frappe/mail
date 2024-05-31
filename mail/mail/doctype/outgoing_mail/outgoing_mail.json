@@ -4,14 +4,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "status",
-  "column_break_d6p9",
-  "domain_name",
-  "agent",
-  "section_break_quhp",
   "sender",
-  "ip_address",
-  "via_api",
   "column_break_9ywf",
   "subject",
   "section_break_baaa",
@@ -25,7 +18,14 @@
   "body_plain",
   "section_break_4dyb",
   "error_log",
-  "original_message_tab",
+  "more_info_tab",
+  "status",
+  "ip_address",
+  "via_api",
+  "column_break_d6p9",
+  "domain_name",
+  "agent",
+  "section_break_quhp",
   "message_id",
   "column_break_4zfa",
   "message_size",
@@ -37,14 +37,14 @@
   "send_in_batch",
   "section_break_aafd",
   "tracking_id",
-  "opened",
+  "first_opened_at",
   "column_break_32ea",
   "open_count",
-  "first_opened_at",
   "last_opened_at",
   "last_opened_from_ip",
   "section_break_kops",
   "original_message",
+  "section_break_eh7n",
   "amended_from"
  ],
  "fields": [
@@ -102,10 +102,10 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "eval: doc.docstatus != 0",
    "fetch_from": "sender.domain_name",
    "fieldname": "domain_name",
    "fieldtype": "Link",
-   "hidden": 1,
    "in_standard_filter": 1,
    "label": "Domain Name",
    "no_copy": 1,
@@ -199,11 +199,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "original_message_tab",
-   "fieldtype": "Tab Break",
-   "label": "Original Message"
-  },
-  {
    "fieldname": "created_at",
    "fieldtype": "Datetime",
    "label": "Created At",
@@ -273,17 +268,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "0",
-   "depends_on": "eval: doc.opened",
-   "fieldname": "opened",
-   "fieldtype": "Check",
-   "label": "Opened",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "depends_on": "eval: doc.opened",
+   "depends_on": "eval: doc.first_opened_at",
    "fieldname": "first_opened_at",
    "fieldtype": "Datetime",
    "label": "First Opened At",
@@ -292,7 +277,7 @@
    "search_index": 1
   },
   {
-   "depends_on": "eval: doc.opened",
+   "depends_on": "eval: doc.last_opened_at",
    "fieldname": "last_opened_at",
    "fieldtype": "Datetime",
    "label": "Last Opened At",
@@ -320,7 +305,7 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.opened",
+   "depends_on": "eval: doc.open_count",
    "fieldname": "open_count",
    "fieldtype": "Int",
    "label": "Open Count",
@@ -329,7 +314,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.opened",
+   "depends_on": "eval: doc.last_opened_from_ip",
    "fieldname": "last_opened_from_ip",
    "fieldtype": "Data",
    "label": "Last Opened From IP",
@@ -345,12 +330,21 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_break_eh7n",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "more_info_tab",
+   "fieldtype": "Tab Break",
+   "label": "More Info"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-30 11:21:19.597079",
+ "modified": "2024-05-31 15:23:05.069039",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

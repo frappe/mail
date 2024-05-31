@@ -43,12 +43,6 @@ def get_columns() -> list:
 			"width": 100,
 		},
 		{
-			"label": _("Opened"),
-			"fieldname": "opened",
-			"fieldtype": "Check",
-			"width": 80,
-		},
-		{
 			"label": _("Open Count"),
 			"fieldname": "open_count",
 			"fieldtype": "Int",
@@ -124,7 +118,6 @@ def get_data(filters=None) -> list:
 			OM.name,
 			OM.creation,
 			OM.status,
-			OM.opened,
 			OM.open_count,
 			OM.agent,
 			OM.domain_name,

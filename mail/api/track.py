@@ -15,7 +15,6 @@ def open(id: str) -> None:
 		OM = frappe.qb.DocType("Outgoing Mail")
 		(
 			frappe.qb.update(OM)
-			.set(OM.opened, 1)
 			.set(
 				OM.first_opened_at,
 				Case().when(OM.first_opened_at.isnull(), now).else_(OM.first_opened_at),
