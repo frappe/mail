@@ -12,6 +12,7 @@
   "section_break_atoq",
   "custom_headers",
   "section_break_ijwo",
+  "track",
   "use_raw_html",
   "raw_html",
   "body_html",
@@ -216,7 +217,8 @@
   {
    "depends_on": "eval: doc.docstatus == 0 && doc.use_raw_html ",
    "fieldname": "raw_html",
-   "fieldtype": "Code"
+   "fieldtype": "Code",
+   "label": "Raw HTML"
   },
   {
    "fieldname": "transferred_at",
@@ -339,12 +341,20 @@
    "fieldname": "more_info_tab",
    "fieldtype": "Tab Break",
    "label": "More Info"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.docstatus == 0",
+   "fieldname": "track",
+   "fieldtype": "Check",
+   "label": "Track",
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-31 15:23:05.069039",
+ "modified": "2024-05-31 15:38:16.849245",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

@@ -1,5 +1,6 @@
 import json
 import frappe
+from frappe.utils import cint
 from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
 
 
@@ -19,6 +20,7 @@ def send() -> list[str]:
 		sender = mail.get("from") or mail.get("sender")
 		subject = mail.get("subject")
 		raw_html = mail.get("html") or mail.get("raw_html")
+		track = cint(mail.get("track") or mail.get("enable_tracking"))
 		attachments = mail.get("attachments") or mail.get("attachment")
 		recipients = mail.get("to") or mail.get("recipient") or mail.get("recipients")
 		custom_headers = mail.get("headers") or mail.get("header")
@@ -39,6 +41,7 @@ def send() -> list[str]:
 				subject,
 				recipients,
 				raw_html,
+				track,
 				attachments,
 				custom_headers,
 				send_in_batch=send_in_batch,

@@ -63,7 +63,6 @@ class OutgoingMail(Document):
 			self.set_body_html()
 			self.set_body_plain()
 			self.set_message_id()
-			self.set_tracking_id()
 			self.set_original_message()
 			self.validate_max_message_size()
 
@@ -243,11 +242,6 @@ class OutgoingMail(Document):
 
 		self.message_id = make_msgid(domain=self.domain_name)
 
-	def set_tracking_id(self) -> None:
-		"""Sets the Tracking ID."""
-
-		self.tracking_id = uuid7().hex
-
 	def set_original_message(self) -> None:
 		"""Sets the Original Message."""
 
@@ -266,9 +260,12 @@ class OutgoingMail(Document):
 
 			body_html = self._replace_image_url_with_content_id()
 			body_plain = html2text(body_html)
-			body_html = add_tracking_pixel(body_html, self.tracking_id)
-
 			message.attach(MIMEText(body_plain, "plain", "utf-8"))
+
+			if self.track:
+				self.tracking_id = uuid7().hex
+				body_html = add_tracking_pixel(body_html, self.tracking_id)
+
 			message.attach(MIMEText(body_html, "html", "utf-8"))
 
 			return message
@@ -763,17 +760,19 @@ def create_outgoing_mail(
 	subject: str,
 	recipients: str | list[str],
 	raw_html: Optional[str] = None,
+	track: int = 0,
 	attachments: Optional[list[dict]] = None,
 	custom_headers: Optional[dict | list[dict]] = None,
 	via_api: int = 1,
 	send_in_batch: int = 0,
 	do_not_save: bool = False,
-	do_not_submit=False,
+	do_not_submit: bool = False,
 ) -> "OutgoingMail":
 	doc = frappe.new_doc("Outgoing Mail")
 	doc.sender = sender
 	doc.subject = subject
 	doc.raw_html = raw_html
+	doc.track = track
 	doc.via_api = via_api
 	doc.send_in_batch = send_in_batch
 	doc._add_recipients(recipients)
