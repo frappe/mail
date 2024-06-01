@@ -17,6 +17,10 @@ from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 
 
 class Mailbox(Document):
+	def autoname(self) -> None:
+		self.email = self.email.strip().lower()
+		self.name = self.email
+
 	def validate(self) -> None:
 		self.validate_email()
 		self.validate_domain()

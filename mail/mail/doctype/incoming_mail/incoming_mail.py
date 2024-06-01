@@ -7,6 +7,7 @@ import email
 import frappe
 from frappe import _
 from uuid_utils import uuid7
+from email.utils import parseaddr
 from email.header import decode_header
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
@@ -127,7 +128,7 @@ class IncomingMail(Document):
 			return body_html, body_plain
 
 		parsed_message = get_parsed_message(self.original_message)
-		sender = email.utils.parseaddr(parsed_message["From"])
+		sender = parseaddr(parsed_message["From"])
 
 		self.sender = sender[1]
 		self.display_name = sender[0]

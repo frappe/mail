@@ -16,6 +16,10 @@ from mail.utils import (
 
 
 class MailAlias(Document):
+	def autoname(self) -> None:
+		self.alias = self.alias.strip().lower()
+		self.name = self.alias
+
 	def validate(self) -> None:
 		self.validate_email()
 		self.validate_domain()

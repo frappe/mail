@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 class MailDomain(Document):
 	def autoname(self) -> None:
-		self.domain_name = self.domain_name.lower()
+		self.domain_name = self.domain_name.strip().lower()
 		self.name = self.domain_name
 
 	def validate(self) -> None:

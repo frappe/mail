@@ -22,7 +22,7 @@
   "column_break_sf4n",
   "max_batch_size",
   "max_message_size",
-  "attachments_section",
+  "section_break_xudp",
   "outgoing_max_attachments",
   "column_break_l9fc",
   "outgoing_max_attachment_size",
@@ -154,11 +154,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "attachments_section",
-   "fieldtype": "Section Break",
-   "label": "Attachments"
-  },
-  {
    "fieldname": "column_break_l9fc",
    "fieldtype": "Column Break"
   },
@@ -169,12 +164,16 @@
    "label": "Max Headers",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "section_break_xudp",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-05-29 15:32:03.587139",
+ "modified": "2024-06-01 11:46:19.490403",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

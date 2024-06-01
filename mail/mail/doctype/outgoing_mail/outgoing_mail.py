@@ -19,9 +19,9 @@ from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 from urllib.parse import urlparse, parse_qs
 from email.mime.multipart import MIMEMultipart
-from email.utils import make_msgid, formatdate
 from frappe.utils.file_manager import save_file
 from frappe.utils.password import get_decrypted_password
+from email.utils import parseaddr, make_msgid, formatdate
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.utils import (
 	flt,
@@ -120,27 +120,30 @@ class OutgoingMail(Document):
 
 		if len(self.recipients) > max_recipients:
 			frappe.throw(
-				_("Recipient limit exceeded ({0}). Maximum {0} recipient(s) allowed.").format(
+				_("Recipient limit exceeded ({0}). Maximum {1} recipient(s) allowed.").format(
 					frappe.bold(len(self.recipients)), frappe.bold(max_recipients)
 				)
 			)
 
 		recipients = []
-		for recipient in self.recipients:
-			if recipient.recipient not in recipients:
-				if validate_email_address(recipient.recipient) != recipient.recipient:
-					frappe.throw(
-						_("Row #{0}: Invalid recipient {1}.").format(
-							recipient.idx, frappe.bold(recipient.recipient)
-						)
-					)
-				recipients.append(recipient.recipient)
-			else:
+		for r in self.recipients:
+			r.recipient = r.recipient.strip().lower()
+
+			if validate_email_address(r.recipient) != r.recipient:
 				frappe.throw(
-					_("Row #{0}: Duplicate recipient {1}.").format(
-						recipient.idx, frappe.bold(recipient.recipient)
+					_("Row #{0}: Invalid recipient {1}.").format(r.idx, frappe.bold(r.recipient))
+				)
+
+			tr = (r.type, r.recipient)
+
+			if tr in recipients:
+				frappe.throw(
+					_("Row #{0}: Duplicate recipient {1} of type {2}.").format(
+						r.idx, frappe.bold(r.recipient), frappe.bold(r.type)
 					)
 				)
+
+			recipients.append(tr)
 
 	def validate_custom_headers(self) -> None:
 		if self.custom_headers:
@@ -253,7 +256,9 @@ class OutgoingMail(Document):
 			message["From"] = (
 				"{0} <{1}>".format(display_name, self.sender) if display_name else self.sender
 			)
-			message["To"] = self._get_recipients()
+			message["To"] = self._get_recipients(type="To")
+			message["Cc"] = self._get_recipients(type="Cc")
+			message["Bcc"] = self._get_recipients(type="Bcc")
 			message["Subject"] = self.subject
 			message["Date"] = formatdate(localtime=True)
 			message["Message-ID"] = self.message_id
@@ -367,24 +372,22 @@ class OutgoingMail(Document):
 		"""Creates the mail contacts."""
 
 		user = frappe.session.user
+		recipient_map = {r.recipient: r.display_name for r in self.recipients}
 
-		for recipient in self.recipients:
-			mail_contact = frappe.db.exists(
-				"Mail Contact", {"user": user, "email": recipient.recipient}
-			)
+		for recipient, display_name in recipient_map.items():
+			mail_contact = frappe.db.exists("Mail Contact", {"user": user, "email": recipient})
 
 			if mail_contact:
-				if recipient.display_name != frappe.db.get_value(
+				current_display_name = frappe.db.get_value(
 					"Mail Contact", mail_contact, "display_name"
-				):
-					frappe.db.set_value(
-						"Mail Contact", mail_contact, "display_name", recipient.display_name
-					)
+				)
+				if display_name != current_display_name:
+					frappe.db.set_value("Mail Contact", mail_contact, "display_name", display_name)
 			else:
 				doc = frappe.new_doc("Mail Contact")
 				doc.user = user
-				doc.email = recipient.recipient
-				doc.display_name = recipient.display_name
+				doc.email = recipient
+				doc.display_name = display_name
 				doc.insert()
 
 	def transfer_mail(self) -> None:
@@ -404,27 +407,27 @@ class OutgoingMail(Document):
 				recipients = [recipients]
 
 			for r in recipients:
-				parts = r.split("<")
-				recipient, display_name = "", ""
-
-				if len(parts) == 1:
-					recipient = parts[0]
-				else:
-					display_name = parts[0].strip()
-					recipient = parts[1].replace(">", "").strip()
+				display_name, recipient = parseaddr(r)
 
 				if not recipient:
 					frappe.throw(_("Invalid format for recipient {0}.").format(frappe.bold(r)))
 
 				self.append("recipients", {"recipient": recipient, "display_name": display_name})
 
-	def _get_recipients(self, as_list: bool = False) -> str | list[str]:
+	def _get_recipients(
+		self, type: Optional[str] = None, as_list: bool = False
+	) -> str | list[str]:
 		"""Returns the recipients."""
 
-		recipients = [
-			f"{r.display_name} <{r.recipient}>" if r.display_name else r.recipient
-			for r in self.recipients
-		]
+		recipients = []
+		for r in self.recipients:
+			if type and r.type != type:
+				continue
+
+			recipients.append(
+				f"{r.display_name} <{r.recipient}>" if r.display_name else r.recipient
+			)
+
 		return recipients if as_list else ", ".join(recipients)
 
 	def _add_attachments(self, attachments: Optional[dict | list[dict]] = None) -> None:
@@ -668,23 +671,22 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 	if agent_job and agent_job.job_type == "Sync Outgoing Mails Status":
 		if agent_job.status == "Completed":
 			if data := json.loads(agent_job.response_data)["message"]:
-				for d in data:
-					_validate_data(d)
+				for oml in data:
+					_validate_data(oml)
 
-					if doc := frappe.get_doc("Outgoing Mail", d["outgoing_mail"]):
-						if d["status"] != "Queued":
-							for recipient in doc.recipients:
-								recipient_data = d["recipients"][recipient.recipient]
-								recipient.status = recipient_data["status"]
-								recipient.action_at = recipient_data["action_at"]
-								recipient.action_after = time_diff_in_seconds(
-									recipient.action_at, doc.created_at
-								)
-								recipient.retries = recipient_data["retries"]
-								recipient.details = recipient_data["details"]
-								recipient.db_update()
+					if doc := frappe.get_doc("Outgoing Mail", oml["outgoing_mail"]):
+						if oml["status"] != "Queued":
+							for r in doc.recipients:
+								key = (r.type, r.recipient)
+								oml_recipient = oml["recipients"][str(key)]
+								r.status = oml_recipient["status"]
+								r.action_at = oml_recipient["action_at"]
+								r.action_after = time_diff_in_seconds(r.action_at, doc.created_at)
+								r.retries = oml_recipient["retries"]
+								r.details = oml_recipient["details"]
+								r.db_update()
 
-						doc._db_set(status=d["status"], notify_update=True)
+						doc._db_set(status=oml["status"], notify_update=True)
 
 
 def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
