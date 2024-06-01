@@ -21,7 +21,7 @@ from urllib.parse import urlparse, parse_qs
 from email.mime.multipart import MIMEMultipart
 from frappe.utils.file_manager import save_file
 from frappe.utils.password import get_decrypted_password
-from email.utils import parseaddr, make_msgid, formatdate
+from email.utils import parseaddr, make_msgid, formataddr, formatdate
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.utils import (
 	flt,
@@ -424,9 +424,7 @@ class OutgoingMail(Document):
 			if type and r.type != type:
 				continue
 
-			recipients.append(
-				f"{r.display_name} <{r.recipient}>" if r.display_name else r.recipient
-			)
+			recipients.append(formataddr((r.display_name, r.recipient)))
 
 		return recipients if as_list else ", ".join(recipients)
 
