@@ -9,6 +9,7 @@
   "column_break_hpzu",
   "subject",
   "receiver",
+  "section_break_s2hp",
   "recipients",
   "section_break_eomq",
   "body_html",
@@ -240,11 +241,11 @@
    "search_index": 1
   },
   {
-   "depends_on": "eval: doc.recipients && doc.receiver != doc.recipients",
    "fieldname": "recipients",
-   "fieldtype": "Text",
+   "fieldtype": "Table",
    "label": "Recipients",
    "no_copy": 1,
+   "options": "Mail Recipient",
    "read_only": 1
   },
   {
@@ -306,13 +307,17 @@
    "fieldname": "more_info_tab",
    "fieldtype": "Tab Break",
    "label": "More Info"
+  },
+  {
+   "fieldname": "section_break_s2hp",
+   "fieldtype": "Section Break"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-31 15:24:31.825522",
+ "modified": "2024-06-01 13:25:22.874805",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

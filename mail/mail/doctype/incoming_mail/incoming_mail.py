@@ -3,7 +3,6 @@
 
 import re
 import json
-import email
 import frappe
 from frappe import _
 from uuid_utils import uuid7
@@ -133,7 +132,7 @@ class IncomingMail(Document):
 		self.sender = sender[1]
 		self.display_name = sender[0]
 		self.receiver = parsed_message["Delivered-To"]
-		self.recipients = parsed_message["To"]
+		self._add_recipients(parsed_message)
 		self.subject = decode_header(parsed_message["Subject"])[0][0]
 		self.message_id = parsed_message["Message-ID"]
 		self.body_html, self.body_plain = _get_body(parsed_message)
@@ -178,6 +177,23 @@ class IncomingMail(Document):
 		self.message_size = len(parsed_message.as_bytes())
 		self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
 		self.delivered_after = time_diff_in_seconds(self.delivered_at, self.received_at)
+
+	def _add_recipients(
+		self, parsed_message: "Message", types: Optional[str | list] = None
+	) -> None:
+		if not types:
+			types = ["To", "Cc", "Bcc"]
+		elif isinstance(types, str):
+			types = [types]
+
+		for type in types:
+			if recipients := parsed_message.get(type):
+				for recipient in recipients.split(","):
+					display_name, email = parseaddr(recipient)
+					if email:
+						self.append(
+							"recipients", {"type": type, "recipient": email, "display_name": display_name}
+						)
 
 
 @frappe.whitelist()
