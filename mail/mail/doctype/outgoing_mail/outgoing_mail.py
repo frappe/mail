@@ -159,7 +159,10 @@ class OutgoingMail(Document):
 				)
 
 			for header in self.custom_headers:
-				if header.key.startswith("X-FM-"):
+				if not header.key.upper().startswith("X-"):
+					header.key = f"X-{header.key}"
+
+				if header.key.upper().startswith("X-FM-"):
 					frappe.throw(
 						_("Custom header {0} is not allowed.").format(frappe.bold(header.key))
 					)
