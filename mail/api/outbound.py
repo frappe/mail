@@ -17,33 +17,44 @@ def send() -> list[str]:
 
 	docs = []
 	for mail in mails:
-		sender = mail.get("from") or mail.get("sender")
+		to = mail.get("to")
+		cc = mail.get("cc")
+		bcc = mail.get("bcc")
+		sender = mail.get("from")
 		subject = mail.get("subject")
-		raw_html = mail.get("html") or mail.get("raw_html")
+		raw_html = mail.get("html")
+		custom_headers = mail.get("headers")
+		attachments = mail.get("attachments")
 		track = cint(mail.get("track") or mail.get("enable_tracking"))
-		attachments = mail.get("attachments") or mail.get("attachment")
-		recipients = mail.get("to") or mail.get("recipient") or mail.get("recipients")
-		custom_headers = mail.get("headers") or mail.get("header")
 
-		if (
-			mail.get("mode") == "individual"
-			and isinstance(recipients, list)
-			and len(recipients) > 1
-		):
-			for recipient in recipients:
+		if mail.get("mode") == "individual" and isinstance(to, list) and len(to) > 1:
+			for recipient in to:
 				doc = create_outgoing_mail(
-					sender, subject, recipient, raw_html, attachments, custom_headers, send_in_batch=1
+					sender,
+					subject,
+					recipient,
+					cc,
+					bcc,
+					raw_html,
+					track,
+					attachments,
+					custom_headers,
+					via_api=1,
+					send_in_batch=1,
 				)
 				docs.append(doc.name)
 		else:
 			doc = create_outgoing_mail(
 				sender,
 				subject,
-				recipients,
+				to,
+				cc,
+				bcc,
 				raw_html,
 				track,
 				attachments,
 				custom_headers,
+				via_api=1,
 				send_in_batch=send_in_batch,
 			)
 			docs.append(doc.name)
@@ -51,6 +62,6 @@ def send() -> list[str]:
 	frappe.get_doc(
 		"Scheduled Job Type",
 		{"method": "mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails"},
-	).enqueue()
+	).enqueue(force=True)
 
 	return docs

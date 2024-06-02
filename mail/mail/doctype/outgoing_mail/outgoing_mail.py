@@ -399,7 +399,9 @@ class OutgoingMail(Document):
 		}
 		create_agent_job(self.agent, "Transfer Mail", request_data=request_data)
 
-	def _add_recipients(self, recipients: Optional[str | list[str]] = None) -> None:
+	def _add_recipients(
+		self, type: str, recipients: Optional[str | list[str]] = None
+	) -> None:
 		"""Adds the recipients."""
 
 		if recipients:
@@ -412,7 +414,9 @@ class OutgoingMail(Document):
 				if not recipient:
 					frappe.throw(_("Invalid format for recipient {0}.").format(frappe.bold(r)))
 
-				self.append("recipients", {"recipient": recipient, "display_name": display_name})
+				self.append(
+					"recipients", {"type": type, "recipient": recipient, "display_name": display_name}
+				)
 
 	def _get_recipients(
 		self, type: Optional[str] = None, as_list: bool = False
@@ -758,12 +762,14 @@ def transfer_mails() -> None:
 def create_outgoing_mail(
 	sender: str,
 	subject: str,
-	recipients: str | list[str],
+	to: Optional[str | list[str]],
+	cc: Optional[str | list[str]],
+	bcc: Optional[str | list[str]],
 	raw_html: Optional[str] = None,
 	track: int = 0,
 	attachments: Optional[list[dict]] = None,
 	custom_headers: Optional[dict | list[dict]] = None,
-	via_api: int = 1,
+	via_api: int = 0,
 	send_in_batch: int = 0,
 	do_not_save: bool = False,
 	do_not_submit: bool = False,
@@ -775,7 +781,9 @@ def create_outgoing_mail(
 	doc.track = track
 	doc.via_api = via_api
 	doc.send_in_batch = send_in_batch
-	doc._add_recipients(recipients)
+	doc._add_recipients("To", to)
+	doc._add_recipients("Cc", cc)
+	doc._add_recipients("Bcc", bcc)
 	doc._add_custom_headers(custom_headers)
 
 	if not do_not_save:
