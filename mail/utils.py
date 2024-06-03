@@ -180,10 +180,10 @@ def validate_mailbox_for_incoming(mailbox: str) -> None:
 		)
 
 
-def get_parsed_message(original_message: str) -> "Message":
+def get_parsed_message(message: str) -> "Message":
 	"""Returns parsed email message object from string."""
 
-	return message_from_string(original_message)
+	return message_from_string(message)
 
 
 def is_system_manager(user: str) -> bool:

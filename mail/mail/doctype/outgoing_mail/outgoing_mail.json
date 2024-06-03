@@ -44,7 +44,7 @@
   "last_opened_at",
   "last_opened_from_ip",
   "section_break_kops",
-  "original_message",
+  "message",
   "section_break_eh7n",
   "amended_from"
  ],
@@ -139,13 +139,6 @@
   {
    "fieldname": "section_break_kops",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "original_message",
-   "fieldtype": "Code",
-   "label": "Original Message",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "fieldname": "body_plain",
@@ -349,12 +342,19 @@
    "fieldtype": "Check",
    "label": "Track",
    "search_index": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Code",
+   "label": "Message",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-31 15:38:16.849245",
+ "modified": "2024-06-03 13:44:56.715171",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

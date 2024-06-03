@@ -63,7 +63,7 @@ class OutgoingMail(Document):
 			self.set_body_html()
 			self.set_body_plain()
 			self.set_message_id()
-			self.set_original_message()
+			self.generate_message()
 			self.validate_max_message_size()
 
 	def on_submit(self) -> None:
@@ -250,8 +250,8 @@ class OutgoingMail(Document):
 
 		self.message_id = make_msgid(domain=self.domain_name)
 
-	def set_original_message(self) -> None:
-		"""Sets the Original Message."""
+	def generate_message(self) -> None:
+		"""Sets the Message."""
 
 		def _get_message() -> "MIMEMultipart":
 			"""Returns the MIME message."""
@@ -357,7 +357,7 @@ class OutgoingMail(Document):
 		_add_attachments(message)
 		_add_dkim_signature(message)
 
-		self.original_message = message.as_string()
+		self.message = message.as_string()
 		self.message_size = len(message.as_bytes())
 		self.created_at = get_datetime_str(parsedate_to_datetime(message["Date"]))
 
@@ -405,7 +405,7 @@ class OutgoingMail(Document):
 
 		request_data = {
 			"outgoing_mail": self.name,
-			"message": self.original_message,
+			"message": self.message,
 		}
 		create_agent_job(self.agent, "Transfer Mail", request_data=request_data)
 
@@ -727,7 +727,7 @@ def transfer_mails() -> None:
 		OM = frappe.qb.DocType("Outgoing Mail")
 		return (
 			frappe.qb.from_(OM)
-			.select(OM.name, OM.agent, OM.original_message)
+			.select(OM.name, OM.agent, OM.message)
 			.where((OM.docstatus == 1) & (OM.send_in_batch == 1) & (OM.status == "Pending"))
 			.orderby(OM.creation)
 		).run(as_dict=True)
@@ -761,7 +761,7 @@ def transfer_mails() -> None:
 			agent_wise_outgoing_mails.setdefault(mail.agent, []).append(
 				{
 					"outgoing_mail": mail.name,
-					"message": mail.original_message,
+					"message": mail.message,
 				}
 			)
 

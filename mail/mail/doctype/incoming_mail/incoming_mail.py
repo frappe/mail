@@ -51,7 +51,7 @@ class IncomingMail(Document):
 
 		mandatory_fields = [
 			"status",
-			"original_message",
+			"message",
 		]
 
 		for field in mandatory_fields:
@@ -126,7 +126,7 @@ class IncomingMail(Document):
 
 			return body_html, body_plain
 
-		parsed_message = get_parsed_message(self.original_message)
+		parsed_message = get_parsed_message(self.message)
 		sender = parseaddr(parsed_message["From"])
 
 		self.sender = sender[1]
@@ -222,7 +222,7 @@ def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
 					doc.agent = agent_job.agent
 					doc.received_at = mail["received_at"]
 					doc.eml_filename = mail["eml_filename"]
-					doc.original_message = mail["original_message"]
+					doc.message = mail["message"]
 					doc.insert()
 					queue_submission(doc, "submit", alert=False)
 

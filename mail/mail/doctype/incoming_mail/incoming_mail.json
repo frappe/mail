@@ -39,7 +39,7 @@
   "dkim_description",
   "dmarc_description",
   "section_break_qijk",
-  "original_message",
+  "message",
   "amended_from"
  ],
  "fields": [
@@ -97,14 +97,6 @@
    "label": "Body Plain",
    "no_copy": 1,
    "read_only": 1
-  },
-  {
-   "fieldname": "original_message",
-   "fieldtype": "Code",
-   "label": "Original Message",
-   "no_copy": 1,
-   "read_only": 1,
-   "set_only_once": 1
   },
   {
    "fieldname": "message_id",
@@ -311,13 +303,21 @@
   {
    "fieldname": "section_break_s2hp",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Code",
+   "label": "Message",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-01 13:25:22.874805",
+ "modified": "2024-06-03 13:45:16.015221",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
