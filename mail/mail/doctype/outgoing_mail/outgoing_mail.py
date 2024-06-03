@@ -259,9 +259,11 @@ class OutgoingMail(Document):
 			message["From"] = (
 				"{0} <{1}>".format(display_name, self.sender) if display_name else self.sender
 			)
-			message["To"] = self._get_recipients(type="To")
-			message["Cc"] = self._get_recipients(type="Cc")
-			message["Bcc"] = self._get_recipients(type="Bcc")
+
+			for type in ["To", "Cc", "Bcc"]:
+				if recipients := self._get_recipients(type):
+					message[type] = recipients
+
 			message["Subject"] = self.subject
 			message["Date"] = formatdate(localtime=True)
 			message["Message-ID"] = self.message_id
@@ -326,6 +328,7 @@ class OutgoingMail(Document):
 
 			headers = [
 				b"To",
+				b"Cc",
 				b"From",
 				b"Date",
 				b"Subject",
