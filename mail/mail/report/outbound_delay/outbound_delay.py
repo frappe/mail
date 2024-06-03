@@ -155,7 +155,7 @@ def get_data(filters=None) -> list:
 			OM.domain_name,
 			OM.ip_address,
 			OM.sender,
-			MR.recipient,
+			MR.email.as_("recipient"),
 			OM.message_id,
 			OM.created_at,
 			OM.transferred_at,
@@ -183,7 +183,7 @@ def get_data(filters=None) -> list:
 		if filters.get(field):
 			query = query.where(OM[field] == filters.get(field))
 
-	for field in ["status", "recipient"]:
+	for field in ["status", "email"]:
 		if filters.get(field):
 			query = query.where(MR[field] == filters.get(field))
 

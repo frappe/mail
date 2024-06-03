@@ -192,7 +192,7 @@ class IncomingMail(Document):
 					display_name, email = parseaddr(recipient)
 					if email:
 						self.append(
-							"recipients", {"type": type, "recipient": email, "display_name": display_name}
+							"recipients", {"type": type, "email": email, "display_name": display_name}
 						)
 
 

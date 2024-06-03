@@ -126,24 +126,26 @@ class OutgoingMail(Document):
 			)
 
 		recipients = []
-		for r in self.recipients:
-			r.recipient = r.recipient.strip().lower()
+		for recipient in self.recipients:
+			recipient.email = recipient.email.strip().lower()
 
-			if validate_email_address(r.recipient) != r.recipient:
+			if validate_email_address(recipient.email) != recipient.email:
 				frappe.throw(
-					_("Row #{0}: Invalid recipient {1}.").format(r.idx, frappe.bold(r.recipient))
-				)
-
-			tr = (r.type, r.recipient)
-
-			if tr in recipients:
-				frappe.throw(
-					_("Row #{0}: Duplicate recipient {1} of type {2}.").format(
-						r.idx, frappe.bold(r.recipient), frappe.bold(r.type)
+					_("Row #{0}: Invalid recipient {1}.").format(
+						recipient.idx, frappe.bold(recipient.email)
 					)
 				)
 
-			recipients.append(tr)
+			type_email = (recipient.type, recipient.email)
+
+			if type_email in recipients:
+				frappe.throw(
+					_("Row #{0}: Duplicate recipient {1} of type {2}.").format(
+						recipient.idx, frappe.bold(recipient.email), frappe.bold(recipient.type)
+					)
+				)
+
+			recipients.append(type_email)
 
 	def validate_custom_headers(self) -> None:
 		if self.custom_headers:
@@ -378,10 +380,12 @@ class OutgoingMail(Document):
 		"""Creates the mail contacts."""
 
 		user = frappe.session.user
-		recipient_map = {r.recipient: r.display_name for r in self.recipients}
+		recipient_map = {
+			recipient.email: recipient.display_name for recipient in self.recipients
+		}
 
-		for recipient, display_name in recipient_map.items():
-			mail_contact = frappe.db.exists("Mail Contact", {"user": user, "email": recipient})
+		for email, display_name in recipient_map.items():
+			mail_contact = frappe.db.exists("Mail Contact", {"user": user, "email": email})
 
 			if mail_contact:
 				current_display_name = frappe.db.get_value(
@@ -392,7 +396,7 @@ class OutgoingMail(Document):
 			else:
 				doc = frappe.new_doc("Mail Contact")
 				doc.user = user
-				doc.email = recipient
+				doc.email = email
 				doc.display_name = display_name
 				doc.insert()
 
@@ -414,14 +418,14 @@ class OutgoingMail(Document):
 			if isinstance(recipients, str):
 				recipients = [recipients]
 
-			for r in recipients:
-				display_name, recipient = parseaddr(r)
+			for recipient in recipients:
+				display_name, email = parseaddr(recipient)
 
-				if not recipient:
-					frappe.throw(_("Invalid format for recipient {0}.").format(frappe.bold(r)))
+				if not email:
+					frappe.throw(_("Invalid format for recipient {0}.").format(frappe.bold(recipient)))
 
 				self.append(
-					"recipients", {"type": type, "recipient": recipient, "display_name": display_name}
+					"recipients", {"type": type, "email": email, "display_name": display_name}
 				)
 
 	def _get_recipients(
@@ -430,11 +434,11 @@ class OutgoingMail(Document):
 		"""Returns the recipients."""
 
 		recipients = []
-		for r in self.recipients:
-			if type and r.type != type:
+		for recipient in self.recipients:
+			if type and recipient.type != type:
 				continue
 
-			recipients.append(formataddr((r.display_name, r.recipient)))
+			recipients.append(formataddr((recipient.display_name, recipient.email)))
 
 		return recipients if as_list else ", ".join(recipients)
 
@@ -684,15 +688,17 @@ def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
 
 					if doc := frappe.get_doc("Outgoing Mail", oml["outgoing_mail"]):
 						if oml["status"] != "Queued":
-							for r in doc.recipients:
-								key = (r.type, r.recipient)
+							for recipient in doc.recipients:
+								key = (recipient.type, recipient.email)
 								oml_recipient = oml["recipients"][str(key)]
-								r.status = oml_recipient["status"]
-								r.action_at = oml_recipient["action_at"]
-								r.action_after = time_diff_in_seconds(r.action_at, doc.created_at)
-								r.retries = oml_recipient["retries"]
-								r.details = oml_recipient["details"]
-								r.db_update()
+								recipient.status = oml_recipient["status"]
+								recipient.action_at = oml_recipient["action_at"]
+								recipient.action_after = time_diff_in_seconds(
+									recipient.action_at, doc.created_at
+								)
+								recipient.retries = oml_recipient["retries"]
+								recipient.details = oml_recipient["details"]
+								recipient.db_update()
 
 						doc._db_set(status=oml["status"], notify_update=True)
 

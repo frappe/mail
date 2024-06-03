@@ -58,7 +58,7 @@ frappe.query_reports["Outbound Delay"] = {
 			options: "Mailbox",
 		},
 		{
-			fieldname: "recipient",
+			fieldname: "email",
 			label: __("Recipient"),
 			fieldtype: "Data",
 			options: "Email",
