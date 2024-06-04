@@ -46,7 +46,10 @@ frappe.ui.form.on("Outgoing Mail", {
             }
             else if (frm.doc.status === "Sent") {
                 frm.add_custom_button(__("Reply"), () => {
-                    frm.trigger("reply");
+                    frm.events.reply(frm, all=false);
+                }, __("Actions"));
+                frm.add_custom_button(__("Reply All"), () => {
+                    frm.events.reply(frm, all=true);
                 }, __("Actions"));
             }
 
@@ -85,13 +88,13 @@ frappe.ui.form.on("Outgoing Mail", {
 		});
 	},
 
-    reply(frm) {
+    reply(frm, all) {
         frappe.model.open_mapped_doc({
 			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.reply_to_mail",
 			frm: frm,
             args: {
-                reply_to_mail_type: frm.doc.doctype,
-            }
+                all: all,
+            },
 		});
     }
 });

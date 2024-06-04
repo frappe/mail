@@ -631,6 +631,19 @@ def reply_to_mail(source_name, target_doc=None):
 	target_doc.reply_to_mail_type = source_doc.doctype
 	target_doc.reply_to_mail = source_name
 	target_doc.sender = source_doc.sender
+	target_doc.subject = f"Re: {source_doc.subject}"
+
+	recipient_types = ["To", "Cc"] if frappe.flags.args.all else ["To"]
+	for recipient in source_doc.recipients:
+		if recipient.type in recipient_types:
+			target_doc.append(
+				"recipients",
+				{
+					"type": recipient.type,
+					"email": recipient.email,
+					"display_name": recipient.display_name,
+				},
+			)
 
 	return target_doc
 
