@@ -44,6 +44,13 @@ frappe.ui.form.on("Outgoing Mail", {
                     frm.trigger("sync_outgoing_mails_status");
                 }, __("Actions"));
             }
+            else if (frm.doc.status === "Sent") {
+                frm.add_custom_button(__("Reply"), () => {
+                    frm.trigger("reply");
+                }, __("Actions"));
+            }
+
+            frm.page.set_inner_btn_group_as_primary(__("Actions"));
         }
     },
 
@@ -77,4 +84,14 @@ frappe.ui.form.on("Outgoing Mail", {
             }
 		});
 	},
+
+    reply(frm) {
+        frappe.model.open_mapped_doc({
+			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.reply_to_mail",
+			frm: frm,
+            args: {
+                reply_to_mail_type: frm.doc.doctype,
+            }
+		});
+    }
 });

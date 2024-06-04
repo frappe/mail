@@ -7,6 +7,8 @@
   "display_name",
   "sender",
   "column_break_hpzu",
+  "reply_to_mail_type",
+  "reply_to_mail",
   "subject",
   "receiver",
   "section_break_s2hp",
@@ -311,13 +313,33 @@
    "no_copy": 1,
    "read_only": 1,
    "set_only_once": 1
+  },
+  {
+   "depends_on": "eval: doc.docstatus == 0",
+   "fieldname": "reply_to_mail_type",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Reply To Mail Type",
+   "no_copy": 1,
+   "options": "\nIncoming Mail\nOutgoing Mail",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "reply_to_mail",
+   "fieldtype": "Dynamic Link",
+   "label": "In Reply To",
+   "no_copy": 1,
+   "options": "reply_to_mail_type",
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-03 13:45:16.015221",
+ "modified": "2024-06-04 15:21:27.111127",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

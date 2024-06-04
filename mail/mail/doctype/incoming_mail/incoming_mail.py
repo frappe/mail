@@ -138,6 +138,14 @@ class IncomingMail(Document):
 		self.body_html, self.body_plain = _get_body(parsed_message)
 		self.created_at = get_datetime_str(parsedate_to_datetime(parsed_message["Date"]))
 
+		if in_reply_to := parsed_message["In-Reply-To"]:
+			if reply_to_mail := frappe.db.get_value("Outgoing Mail", in_reply_to, "name"):
+				self.reply_to_mail_type = "Outgoing Mail"
+				self.reply_to_mail = reply_to_mail
+			elif reply_to_mail := frappe.db.get_value("Incoming Mail", in_reply_to, "name"):
+				self.reply_to_mail_type = "Incoming Mail"
+				self.reply_to_mail = reply_to_mail
+
 		if headers := parsed_message.get_all("Authentication-Results"):
 			if len(headers) == 1:
 				headers = headers[0].split(";")
@@ -194,6 +202,23 @@ class IncomingMail(Document):
 						self.append(
 							"recipients", {"type": type, "email": email, "display_name": display_name}
 						)
+
+
+@frappe.whitelist()
+def reply_to_mail(source_name, target_doc=None):
+	reply_to_mail_type = "Incoming Mail"
+	source_doc = frappe.get_doc(reply_to_mail_type, source_name)
+	target_doc = target_doc or frappe.new_doc("Outgoing Mail")
+
+	target_doc.reply_to_mail_type = source_doc.doctype
+	target_doc.reply_to_mail = source_name
+	target_doc.sender = source_doc.receiver
+	target_doc.append(
+		"recipients",
+		{"type": "To", "email": source_doc.sender, "display_name": source_doc.display_name},
+	)
+
+	return target_doc
 
 
 @frappe.whitelist()

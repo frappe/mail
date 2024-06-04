@@ -49,9 +49,10 @@ class OutgoingMail(Document):
 		self.name = str(uuid7())
 
 	def validate(self) -> None:
+		self.validate_amended_doc()
 		self.validate_domain()
 		self.validate_sender()
-		self.validate_amended_doc()
+		self.validate_reply_to_mail()
 		self.validate_recipients()
 		self.validate_custom_headers()
 		self.load_attachments()
@@ -76,6 +77,12 @@ class OutgoingMail(Document):
 	def on_trash(self) -> None:
 		if self.docstatus != 0 and frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Outgoing Mail."))
+
+	def validate_amended_doc(self) -> None:
+		"""Validates the amended document."""
+
+		if self.amended_from:
+			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
 
 	def validate_domain(self) -> None:
 		"""Validates the domain."""
@@ -105,11 +112,18 @@ class OutgoingMail(Document):
 
 		validate_mailbox_for_outgoing(self.sender)
 
-	def validate_amended_doc(self) -> None:
-		"""Validates the amended document."""
+	def validate_reply_to_mail(self) -> None:
+		"""Validates the Reply To Mail."""
 
-		if self.amended_from:
-			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
+		if self.reply_to_mail:
+			if not self.reply_to_mail_type:
+				frappe.throw(_("Reply To Mail Type is required."))
+			elif self.reply_to_mail_type not in ["Incoming Mail", "Outgoing Mail"]:
+				frappe.throw(
+					_("{0} must be either Incoming Mail or Outgoing Mail.").format(
+						frappe.bold("Reply To Mail Type")
+					)
+				)
 
 	def validate_recipients(self) -> None:
 		"""Validates the recipients."""
@@ -257,6 +271,13 @@ class OutgoingMail(Document):
 			"""Returns the MIME message."""
 
 			message = MIMEMultipart("alternative")
+
+			if self.reply_to_mail:
+				if in_reply_to := frappe.db.get_value(
+					self.reply_to_mail_type, self.reply_to_mail, "message_id"
+				):
+					message["In-Reply-To"] = in_reply_to
+
 			display_name = frappe.get_cached_value("Mailbox", self.sender, "display_name")
 			message["From"] = (
 				"{0} <{1}>".format(display_name, self.sender) if display_name else self.sender
@@ -599,6 +620,19 @@ def get_sender(
 		query = query.where(MAILBOX.user == user)
 
 	return query.run(as_dict=False)
+
+
+@frappe.whitelist()
+def reply_to_mail(source_name, target_doc=None):
+	reply_to_mail_type = "Outgoing Mail"
+	source_doc = frappe.get_doc(reply_to_mail_type, source_name)
+	target_doc = target_doc or frappe.new_doc("Outgoing Mail")
+
+	target_doc.reply_to_mail_type = source_doc.doctype
+	target_doc.reply_to_mail = source_name
+	target_doc.sender = source_doc.sender
+
+	return target_doc
 
 
 @frappe.whitelist()
