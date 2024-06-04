@@ -279,9 +279,10 @@ class OutgoingMail(Document):
 					message["In-Reply-To"] = in_reply_to
 
 			display_name = frappe.get_cached_value("Mailbox", self.sender, "display_name")
-			message["From"] = (
-				"{0} <{1}>".format(display_name, self.sender) if display_name else self.sender
-			)
+			message["From"] = formataddr((display_name, self.sender))
+
+			if self.reply_to:
+				message["Reply-To"] = self.reply_to
 
 			for type in ["To", "Cc", "Bcc"]:
 				if recipients := self._get_recipients(type):
@@ -357,6 +358,7 @@ class OutgoingMail(Document):
 				b"Subject",
 				b"Reply-To",
 				b"Message-ID",
+				b"In-Reply-To",
 			]
 			dkim_selector = frappe.get_cached_value(
 				"Mail Domain", self.domain_name, "dkim_selector"

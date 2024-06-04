@@ -131,6 +131,7 @@ class IncomingMail(Document):
 
 		self.sender = sender[1]
 		self.display_name = sender[0]
+		self.reply_to = parsed_message["Reply-To"]
 		self.receiver = parsed_message["Delivered-To"]
 		self._add_recipients(parsed_message)
 		self.subject = decode_header(parsed_message["Subject"])[0][0]
@@ -215,20 +216,21 @@ def reply_to_mail(source_name, target_doc=None):
 	target_doc.sender = source_doc.receiver
 	target_doc.subject = f"Re: {source_doc.subject}"
 
-	reply_to = "" or source_doc.sender
+	email = source_doc.sender
+	display_name = source_doc.display_name
+
+	if source_doc.reply_to:
+		display_name, email = parseaddr(source_doc.reply_to)
+
 	target_doc.append(
 		"recipients",
-		{"type": "To", "email": reply_to, "display_name": source_doc.display_name},
+		{"type": "To", "email": email, "display_name": display_name},
 	)
 
 	if frappe.flags.args.all:
-		recipients = []
+		recipients = [email, source_doc.receiver]
 		for recipient in source_doc.recipients:
-			if (
-				(recipient.email != source_doc.receiver)
-				and (recipient.type in ["To", "Cc"])
-				and (recipient.email not in recipients)
-			):
+			if (recipient.type in ["To", "Cc"]) and (recipient.email not in recipients):
 				recipients.append(recipient.email)
 				target_doc.append(
 					"recipients",

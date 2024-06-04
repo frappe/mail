@@ -6,6 +6,7 @@
  "field_order": [
   "display_name",
   "sender",
+  "reply_to",
   "column_break_hpzu",
   "reply_to_mail_type",
   "reply_to_mail",
@@ -333,13 +334,22 @@
    "options": "reply_to_mail_type",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "reply_to",
+   "fieldtype": "Data",
+   "ignore_xss_filter": 1,
+   "label": "Reply To",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-04 15:21:27.111127",
+ "modified": "2024-06-04 18:38:22.453634",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
