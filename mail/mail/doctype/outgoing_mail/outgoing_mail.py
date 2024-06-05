@@ -827,6 +827,7 @@ def create_outgoing_mail(
 	cc: Optional[str | list[str]],
 	bcc: Optional[str | list[str]],
 	raw_html: Optional[str] = None,
+	reply_to: Optional[str] = None,
 	track: int = 0,
 	attachments: Optional[list[dict]] = None,
 	custom_headers: Optional[dict | list[dict]] = None,
@@ -838,7 +839,9 @@ def create_outgoing_mail(
 	doc = frappe.new_doc("Outgoing Mail")
 	doc.sender = sender
 	doc.subject = subject
+	doc.use_raw_html = 1
 	doc.raw_html = raw_html
+	doc.reply_to = reply_to
 	doc.track = track
 	doc.via_api = via_api
 	doc.send_in_batch = send_in_batch

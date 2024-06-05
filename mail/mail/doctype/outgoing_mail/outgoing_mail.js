@@ -4,7 +4,6 @@
 frappe.ui.form.on("Outgoing Mail", {
     setup(frm) {
         frm.trigger("set_queries");
-        frm.trigger("disable_use_raw_html");
     },
 
 	refresh(frm) {
@@ -18,12 +17,6 @@ frappe.ui.form.on("Outgoing Mail", {
                 query: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_sender",
             };
         });
-    },
-
-    disable_use_raw_html(frm) {
-        if (frm.is_new()) {
-            frm.set_value("use_raw_html", 0);
-        }
     },
 
     hide_amend_button(frm) {
