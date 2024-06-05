@@ -377,17 +377,18 @@
   },
   {
    "fieldname": "reply_to",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "ignore_xss_filter": 1,
    "label": "Reply To",
    "no_copy": 1,
+   "options": "Mailbox",
    "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-05 10:07:50.661102",
+ "modified": "2024-06-05 18:29:46.944253",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
@@ -433,8 +434,10 @@
    "role": "System Manager"
   }
  ],
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "title_field": "subject",
  "track_changes": 1
 }

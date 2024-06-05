@@ -349,7 +349,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-04 18:38:22.453634",
+ "modified": "2024-06-05 18:31:18.927369",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
@@ -398,7 +398,9 @@
    "write": 1
   }
  ],
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "subject"
 }
