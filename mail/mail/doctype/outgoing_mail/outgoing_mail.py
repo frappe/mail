@@ -5,6 +5,7 @@ import json
 import frappe
 from frappe import _
 from re import finditer
+from email import policy
 from uuid_utils import uuid7
 from bs4 import BeautifulSoup
 from mimetypes import guess_type
@@ -13,7 +14,6 @@ from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email.mime.audio import MIMEAudio
 from email.mime.image import MIMEImage
-from frappe.core.utils import html2text
 from email.encoders import encode_base64
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
@@ -34,6 +34,7 @@ from mail.utils import (
 	is_mailbox_owner,
 	is_system_manager,
 	get_user_mailboxes,
+	convert_html_to_text,
 	parsedate_to_datetime,
 	get_random_outgoing_agent,
 	validate_mailbox_for_outgoing,
@@ -257,7 +258,7 @@ class OutgoingMail(Document):
 	def set_body_plain(self) -> None:
 		"""Sets the Plain Body."""
 
-		self.body_plain = html2text(self.body_html)
+		self.body_plain = convert_html_to_text(self.body_html)
 
 	def set_message_id(self) -> None:
 		"""Sets the Message ID."""
@@ -270,7 +271,7 @@ class OutgoingMail(Document):
 		def _get_message() -> "MIMEMultipart":
 			"""Returns the MIME message."""
 
-			message = MIMEMultipart("alternative")
+			message = MIMEMultipart("alternative", policy=policy.SMTP)
 
 			if self.reply_to_mail:
 				if in_reply_to := frappe.db.get_value(
@@ -293,14 +294,14 @@ class OutgoingMail(Document):
 			message["Message-ID"] = self.message_id
 
 			body_html = self._replace_image_url_with_content_id()
-			body_plain = html2text(body_html)
-			message.attach(MIMEText(body_plain, "plain", "utf-8"))
+			body_plain = convert_html_to_text(body_html)
 
 			if self.track:
 				self.tracking_id = uuid7().hex
 				body_html = add_tracking_pixel(body_html, self.tracking_id)
 
-			message.attach(MIMEText(body_html, "html", "utf-8"))
+			message.attach(MIMEText(body_plain, "plain", "utf-8", policy=policy.SMTP))
+			message.attach(MIMEText(body_html, "html", "utf-8", policy=policy.SMTP))
 
 			return message
 
@@ -327,16 +328,16 @@ class OutgoingMail(Document):
 				if maintype == "text":
 					if isinstance(content, str):
 						content = content.encode("utf-8")
-					part = MIMEText(content, _subtype=subtype, _charset="utf-8")
+					part = MIMEText(content, _subtype=subtype, _charset="utf-8", policy=policy.SMTP)
 
 				elif maintype == "image":
-					part = MIMEImage(content, _subtype=subtype)
+					part = MIMEImage(content, _subtype=subtype, policy=policy.SMTP)
 
 				elif maintype == "audio":
-					part = MIMEAudio(content, _subtype=subtype)
+					part = MIMEAudio(content, _subtype=subtype, policy=policy.SMTP)
 
 				else:
-					part = MIMEBase(maintype, subtype)
+					part = MIMEBase(maintype, subtype, policy=policy.SMTP)
 					part.set_payload(content)
 					encode_base64(part)
 
@@ -350,7 +351,7 @@ class OutgoingMail(Document):
 		def _add_dkim_signature(message: "MIMEMultipart") -> None:
 			"""Adds the DKIM signature to the message."""
 
-			headers = [
+			include_headers = [
 				b"To",
 				b"Cc",
 				b"From",
@@ -366,14 +367,16 @@ class OutgoingMail(Document):
 			dkim_private_key = get_decrypted_password(
 				"Mail Domain", self.domain_name, "dkim_private_key"
 			)
-			signature = dkim_sign(
+			dkim_signature = dkim_sign(
 				message=message.as_string().split("\n", 1)[-1].encode("utf-8"),
 				domain=self.domain_name.encode(),
 				selector=dkim_selector.encode(),
 				privkey=dkim_private_key.encode(),
-				include_headers=headers,
+				include_headers=include_headers,
 			)
-			message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
+			dkim_header = dkim_signature.decode().replace("\n", "").replace("\r", "")
+
+			message["DKIM-Signature"] = dkim_header[len("DKIM-Signature: ") :]
 
 		message = _get_message()
 		_add_custom_headers(message)

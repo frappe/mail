@@ -213,7 +213,6 @@ def reply_to_mail(source_name, target_doc=None):
 
 	target_doc.reply_to_mail_type = source_doc.doctype
 	target_doc.reply_to_mail = source_name
-	target_doc.sender = source_doc.receiver
 	target_doc.subject = f"Re: {source_doc.subject}"
 
 	email = source_doc.sender

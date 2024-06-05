@@ -98,7 +98,7 @@ def parsedate_to_datetime(
 	return dt.astimezone(pytz.timezone(to_timezone or get_system_timezone()))
 
 
-def convert_html_to_text(self, html: str) -> str:
+def convert_html_to_text(html: str) -> str:
 	"""Returns plain text from HTML content."""
 
 	text = ""
