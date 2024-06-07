@@ -83,7 +83,7 @@ class MailAgentJob(Document):
 			self.execute_on_start_method()
 		except Exception:
 			error_log = frappe.get_traceback(with_context=False)
-			self._db_set(on_start_error_log=error_log)
+			self._db_set(status="Failed On Start", on_start_error_log=error_log)
 
 		try:
 			agent = frappe.get_cached_doc("Mail Agent", self.agent)
@@ -107,7 +107,7 @@ class MailAgentJob(Document):
 			self.execute_on_end_method()
 		except Exception:
 			error_log = frappe.get_traceback(with_context=False)
-			self._db_set(on_end_error_log=error_log)
+			self._db_set(status="Failed On End", on_end_error_log=error_log)
 
 		ended_at = now()
 		self._db_set(
@@ -131,11 +131,27 @@ class MailAgentJob(Document):
 			method(self)
 
 	@frappe.whitelist()
-	def rerun(self) -> None:
-		"""Reruns the job."""
+	def retry(self) -> None:
+		"""Retries the job."""
 
-		self._db_set(status="Queued", error_log=None)
-		self.enqueue_job()
+		if self.status == "Failed":
+			frappe.only_for("System Manager")
+			self._db_set(status="Queued", error_log=None)
+			self.enqueue_job()
+
+	@frappe.whitelist()
+	def retry_execute_on_end(self):
+		"""Retries the job's on end method."""
+
+		if self.status == "Failed On End":
+			frappe.only_for("System Manager")
+
+			try:
+				self._db_set(status="Completed", on_end_error_log=None)
+				self.execute_on_end_method()
+			except Exception:
+				error_log = frappe.get_traceback(with_context=False)
+				self._db_set(status="Failed On End", on_end_error_log=error_log)
 
 
 def create_agent_job(

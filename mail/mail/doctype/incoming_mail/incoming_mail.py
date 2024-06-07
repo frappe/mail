@@ -190,6 +190,8 @@ class IncomingMail(Document):
 	def _add_recipients(
 		self, parsed_message: "Message", types: Optional[str | list] = None
 	) -> None:
+		"""Adds recipients to the Incoming Mail."""
+
 		if not types:
 			types = ["To", "Cc", "Bcc"]
 		elif isinstance(types, str):
@@ -243,37 +245,6 @@ def reply_to_mail(source_name, target_doc=None):
 	return target_doc
 
 
-@frappe.whitelist()
-def sync_incoming_mails(agents: Optional[str | list] = None) -> None:
-	"""Gets incoming mails from the mail agents."""
-
-	if not agents:
-		agents = frappe.db.get_all(
-			"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
-		)
-	elif isinstance(agents, str):
-		agents = [agents]
-
-	for agent in agents:
-		create_agent_job(agent, "Sync Incoming Mails")
-
-
-def insert_incoming_mails(agent_job: "MailAgentJob") -> None:
-	"""Called by the Mail Agent Job to insert incoming mails."""
-
-	if agent_job and agent_job.job_type == "Sync Incoming Mails":
-		if agent_job.status == "Completed":
-			if mails := json.loads(agent_job.response_data)["message"]:
-				for mail in mails:
-					doc = frappe.new_doc("Incoming Mail")
-					doc.agent = agent_job.agent
-					doc.received_at = mail["received_at"]
-					doc.eml_filename = mail["eml_filename"]
-					doc.message = mail["message"]
-					doc.insert()
-					queue_submission(doc, "submit", alert=False)
-
-
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Incoming Mail":
 		return False
@@ -300,3 +271,34 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 		return f"(`tabIncoming Mail`.`receiver` IN ({mailboxes})) AND (`tabIncoming Mail`.`docstatus` = 1)"
 	else:
 		return "1=0"
+
+
+@frappe.whitelist()
+def sync_incoming_mails(agents: Optional[str | list] = None) -> None:
+	"""Syncs incoming mails from the given agents."""
+
+	if not agents:
+		agents = frappe.db.get_all(
+			"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
+		)
+	elif isinstance(agents, str):
+		agents = [agents]
+
+	for agent in agents:
+		create_agent_job(agent, "Sync Incoming Mails")
+
+
+def sync_incoming_mails_on_end(agent_job: "MailAgentJob") -> None:
+	"""Called on the end of the `Sync Incoming Mails` job."""
+
+	if agent_job and agent_job.job_type == "Sync Incoming Mails":
+		if agent_job.status == "Completed":
+			if mails := json.loads(agent_job.response_data)["message"]:
+				for mail in mails:
+					doc = frappe.new_doc("Incoming Mail")
+					doc.agent = agent_job.agent
+					doc.received_at = mail["received_at"]
+					doc.eml_filename = mail["eml_filename"]
+					doc.message = mail["message"]
+					doc.insert()
+					queue_submission(doc, "submit", alert=False)

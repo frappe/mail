@@ -74,7 +74,7 @@ class OutgoingMail(Document):
 		self._db_set(status="Pending", notify_update=True)
 
 		if not self.send_in_batch:
-			self.transfer_mail()
+			transfer_mail(outgoing_mail=self)
 
 	def on_trash(self) -> None:
 		if self.docstatus != 0 and frappe.session.user != "Administrator":
@@ -439,15 +439,6 @@ class OutgoingMail(Document):
 				doc.display_name = display_name
 				doc.insert()
 
-	def transfer_mail(self) -> None:
-		"""Sends the mail."""
-
-		request_data = {
-			"outgoing_mail": self.name,
-			"message": self.message,
-		}
-		create_agent_job(self.agent, "Transfer Mail", request_data=request_data)
-
 	def _add_recipients(
 		self, type: str, recipients: Optional[str | list[str]] = None
 	) -> None:
@@ -599,7 +590,7 @@ class OutgoingMail(Document):
 			kwargs["error_log"] = None
 			kwargs["status"] = "Pending"
 			self._db_set(**kwargs, commit=True)
-			self.transfer_mail()
+			transfer_mail(outgoing_mail=self)
 
 
 @frappe.whitelist()
@@ -704,108 +695,6 @@ def reply_to_mail(source_name, target_doc=None):
 	return target_doc
 
 
-@frappe.whitelist()
-def sync_outgoing_mails_status(agents: Optional[str | list] = None) -> None:
-	"""Gets the delivery status from agents."""
-
-	if not agents:
-		MS = frappe.qb.DocType("Mail Agent")
-		OM = frappe.qb.DocType("Outgoing Mail")
-		agents = (
-			frappe.qb.from_(MS)
-			.left_join(OM)
-			.on(OM.agent == MS.name)
-			.select(MS.name)
-			.distinct()
-			.where(
-				(MS.enabled == 1)
-				& (MS.outgoing == 1)
-				& (OM.docstatus == 1)
-				& (OM.status.isin(["Transferred", "Queued", "Deferred"]))
-			)
-		).run(pluck="name")
-
-	elif isinstance(agents, str):
-		agents = [agents]
-
-	for agent in agents:
-		create_agent_job(agent, "Sync Outgoing Mails Status")
-
-
-def update_outgoing_mails_status(agent_job: "MailAgentJob") -> None:
-	"""Called by the Mail Agent Job to update the outgoing mails status."""
-
-	if agent_job and agent_job.job_type in ["Transfer Mail", "Transfer Mails"]:
-		data = json.loads(agent_job.request_data)
-
-		if isinstance(data, dict):
-			if agent_job.status == "Running":
-				outgoing_mail = frappe.get_doc("Outgoing Mail", data.get("outgoing_mail"))
-				return outgoing_mail._db_set(status="Transferring", commit=True, notify_update=True)
-
-			data = [data]
-
-		if agent_job.status == "Failed":
-			OM = frappe.qb.DocType("Outgoing Mail")
-			outgoing_mails = [d["outgoing_mail"] for d in data]
-			(
-				frappe.qb.update(OM)
-				.set(OM.status, "Failed")
-				.set(OM.error_log, agent_job.error_log)
-				.where((OM.docstatus == 1) & (OM.name.isin(outgoing_mails)))
-			).run()
-
-		elif agent_job.status == "Completed":
-			OM = frappe.qb.DocType("Outgoing Mail")
-			outgoing_mails = [d["outgoing_mail"] for d in data]
-			transferred_at = now()
-			(
-				frappe.qb.update(OM)
-				.set(OM.status, "Transferred")
-				.set(OM.transferred_at, transferred_at)
-				.set(OM.transferred_after, OM.transferred_at - OM.created_at)
-				.where((OM.docstatus == 1) & (OM.name.isin(outgoing_mails)))
-			).run()
-
-
-def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
-	"""Called by the Mail Agent Job to update the outgoing mails delivery status."""
-
-	def _validate_data(data: dict) -> None:
-		"""Validates the data."""
-
-		if data:
-			fields = ["outgoing_mail", "status", "recipients"]
-
-			for field in fields:
-				if not data.get(field):
-					frappe.throw(_("{0} is required.").format(frappe.bold(field)))
-		else:
-			frappe.throw(_("Invalid Data."))
-
-	if agent_job and agent_job.job_type == "Sync Outgoing Mails Status":
-		if agent_job.status == "Completed":
-			if data := json.loads(agent_job.response_data)["message"]:
-				for oml in data:
-					_validate_data(oml)
-
-					if doc := frappe.get_doc("Outgoing Mail", oml["outgoing_mail"]):
-						if oml["status"] != "Queued":
-							for recipient in doc.recipients:
-								key = (recipient.type, recipient.email)
-								oml_recipient = oml["recipients"][str(key)]
-								recipient.status = oml_recipient["status"]
-								recipient.action_at = oml_recipient["action_at"]
-								recipient.action_after = time_diff_in_seconds(
-									recipient.action_at, doc.created_at
-								)
-								recipient.retries = oml_recipient["retries"]
-								recipient.details = oml_recipient["details"]
-								recipient.db_update()
-
-						doc._db_set(status=oml["status"], notify_update=True)
-
-
 def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
 	"""Adds the tracking pixel to the HTML body."""
 
@@ -821,57 +710,6 @@ def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
 
 	soup.body.insert(0, tracking_pixel)
 	return str(soup)
-
-
-def transfer_mails() -> None:
-	"""Sends the mails in batch."""
-
-	def _get_outgoing_mails() -> list[dict]:
-		OM = frappe.qb.DocType("Outgoing Mail")
-		return (
-			frappe.qb.from_(OM)
-			.select(OM.name, OM.agent, OM.message)
-			.where((OM.docstatus == 1) & (OM.send_in_batch == 1) & (OM.status == "Pending"))
-			.orderby(OM.creation)
-		).run(as_dict=True)
-
-	def _create_and_transfer_batch(
-		agent: str, outgoing_mails: list, batch_size: int
-	) -> None:
-		for i in range(0, len(outgoing_mails), batch_size):
-			create_agent_job(
-				agent, "Transfer Mails", request_data=outgoing_mails[i : i + batch_size]
-			)
-
-	def _update_outgoing_mails_status(oms: list[str], commit: bool = False) -> None:
-		OM = frappe.qb.DocType("Outgoing Mail")
-		(
-			frappe.qb.update(OM)
-			.set(OM.status, "Transferring")
-			.where((OM.docstatus == 1) & (OM.name.isin(oms)))
-		).run()
-
-		if commit:
-			frappe.db.commit()
-
-	if outgoing_mails := _get_outgoing_mails():
-		outgoing_mail_list = []
-		agent_wise_outgoing_mails = {}
-		batch_size = frappe.db.get_single_value("Mail Settings", "max_batch_size", cache=True)
-
-		for mail in outgoing_mails:
-			outgoing_mail_list.append(mail["name"])
-			agent_wise_outgoing_mails.setdefault(mail.agent, []).append(
-				{
-					"outgoing_mail": mail.name,
-					"message": mail.message,
-				}
-			)
-
-		for agent, outgoing_mails in agent_wise_outgoing_mails.items():
-			_create_and_transfer_batch(agent, outgoing_mails, batch_size)
-
-		_update_outgoing_mails_status(outgoing_mail_list)
 
 
 def create_outgoing_mail(
@@ -939,3 +777,198 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 		return f"(`tabOutgoing Mail`.`sender` IN ({mailboxes})) AND (`tabOutgoing Mail`.`docstatus` != 2)"
 	else:
 		return "1=0"
+
+
+def transfer_mail(outgoing_mail: "OutgoingMail") -> None:
+	"""Transfers the mail to the agent."""
+
+	if outgoing_mail:
+		request_data = {
+			"outgoing_mail": outgoing_mail.name,
+			"message": outgoing_mail.message,
+		}
+		create_agent_job(outgoing_mail.agent, "Transfer Mail", request_data=request_data)
+		outgoing_mail._db_set(status="Transferring", commit=True)
+
+
+def transfer_mails() -> None:
+	"""Called by the scheduler to transfer the mails in batch."""
+
+	def _get_outgoing_mails() -> list[dict]:
+		OM = frappe.qb.DocType("Outgoing Mail")
+		return (
+			frappe.qb.from_(OM)
+			.select(OM.name, OM.agent, OM.message)
+			.where((OM.docstatus == 1) & (OM.send_in_batch == 1) & (OM.status == "Pending"))
+			.orderby(OM.creation)
+		).run(as_dict=True)
+
+	def _create_and_transfer_batch(
+		agent: str, outgoing_mails: list, batch_size: int
+	) -> None:
+		for i in range(0, len(outgoing_mails), batch_size):
+			create_agent_job(
+				agent, "Transfer Mails", request_data=outgoing_mails[i : i + batch_size]
+			)
+
+	def _update_outgoing_mails_status(
+		outgoing_mail_list: list[str], commit: bool = False
+	) -> None:
+		OM = frappe.qb.DocType("Outgoing Mail")
+		(
+			frappe.qb.update(OM)
+			.set(OM.status, "Transferring")
+			.where(
+				(OM.docstatus == 1)
+				& (OM.send_in_batch == 1)
+				& (OM.status == "Pending")
+				& (OM.name.isin(outgoing_mail_list))
+			)
+		).run()
+
+		if commit:
+			frappe.db.commit()
+
+	if outgoing_mails := _get_outgoing_mails():
+		outgoing_mail_list = []
+		agent_wise_outgoing_mails = {}
+		batch_size = frappe.db.get_single_value("Mail Settings", "max_batch_size", cache=True)
+
+		for mail in outgoing_mails:
+			outgoing_mail_list.append(mail["name"])
+			agent_wise_outgoing_mails.setdefault(mail.agent, []).append(
+				{
+					"outgoing_mail": mail.name,
+					"message": mail.message,
+				}
+			)
+
+		del outgoing_mails
+
+		for agent, outgoing_mails in agent_wise_outgoing_mails.items():
+			_create_and_transfer_batch(agent, outgoing_mails, batch_size)
+
+		_update_outgoing_mails_status(outgoing_mail_list)
+
+
+@frappe.whitelist()
+def sync_outgoing_mails_status(agents: Optional[str | list] = None) -> None:
+	"""Gets the delivery status from agents."""
+
+	if not agents:
+		MS = frappe.qb.DocType("Mail Agent")
+		OM = frappe.qb.DocType("Outgoing Mail")
+		agents = (
+			frappe.qb.from_(MS)
+			.left_join(OM)
+			.on(OM.agent == MS.name)
+			.select(MS.name)
+			.distinct()
+			.where(
+				(MS.enabled == 1)
+				& (MS.outgoing == 1)
+				& (OM.docstatus == 1)
+				& (OM.status.isin(["Transferred", "RQ", "Queued", "Deferred"]))
+			)
+		).run(pluck="name")
+
+	elif isinstance(agents, str):
+		agents = [agents]
+
+	for agent in agents:
+		create_agent_job(agent, "Sync Outgoing Mails Status")
+
+
+def transfer_mail_on_end(agent_job: "MailAgentJob") -> None:
+	"""Called on the end of the `Transfer Mail` job."""
+
+	if agent_job and agent_job.job_type == "Transfer Mail":
+		if agent_job.status in ["Completed", "Failed"]:
+			kwargs = {}
+			outgoing_mail = None
+
+			if agent_job.status == "Completed":
+				data = json.loads(agent_job.response_data)["message"][0]
+				outgoing_mail = frappe.get_doc("Outgoing Mail", data["outgoing_mail"])
+
+				transferred_at = now()
+				transferred_after = time_diff_in_seconds(transferred_at, outgoing_mail.created_at)
+				kwargs.update(
+					{
+						"status": "Transferred",
+						"transferred_at": transferred_at,
+						"transferred_after": transferred_after,
+					}
+				)
+			else:
+				data = json.loads(agent_job.request_data)
+				outgoing_mail = frappe.get_doc("Outgoing Mail", data["outgoing_mail"])
+				kwargs.update({"status": "Failed", "error_log": agent_job.error_log})
+
+			outgoing_mail._db_set(**kwargs, notify_update=True)
+
+
+def transfer_mails_on_end(agent_job: "MailAgentJob") -> None:
+	"""Called on the end of the `Transfer Mails` job."""
+
+	if agent_job and agent_job.job_type == "Transfer Mails":
+		if agent_job.status in ["Completed", "Failed"]:
+			outgoing_mails = []
+			OM = frappe.qb.DocType("Outgoing Mail")
+			query = frappe.qb.update(OM).where(OM.docstatus == 1)
+
+			if agent_job.status == "Completed":
+				data = json.loads(agent_job.response_data)["message"]
+				outgoing_mails = [d["outgoing_mail"] for d in data]
+
+				transferred_at = now()
+				query = (
+					query.set(OM.status, "Transferred")
+					.set(OM.transferred_at, transferred_at)
+					.set(OM.transferred_after, OM.transferred_at - OM.created_at)
+				)
+			else:
+				data = json.loads(agent_job.request_data)
+				outgoing_mails = [d["outgoing_mail"] for d in data]
+				query = query.set(OM.status, "Failed").set(OM.error_log, agent_job.error_log)
+
+			query = query.where(OM.name.isin(outgoing_mails))
+			query.run()
+
+
+def sync_outgoing_mails_status_on_end(agent_job: "MailAgentJob") -> None:
+	"""Called on the end of the `Sync Outgoing Mails Status` job."""
+
+	def _validate_data(oml: dict) -> None:
+		"""Validates the data."""
+
+		if oml:
+			fields = ["outgoing_mail", "status", "recipients"]
+
+			for field in fields:
+				if not oml.get(field):
+					frappe.throw(_("{0} is required.").format(frappe.bold(field)))
+		else:
+			frappe.throw(_("Invalid Data."))
+
+	if agent_job and agent_job.job_type == "Sync Outgoing Mails Status":
+		if agent_job.status == "Completed":
+			if data := json.loads(agent_job.response_data)["message"]:
+				for oml in data:
+					_validate_data(oml)
+
+					if doc := frappe.get_doc("Outgoing Mail", oml["outgoing_mail"]):
+						if oml["status"] not in ["RQ", "Queued"]:
+							for recipient in doc.recipients:
+								key = (recipient.type, recipient.email)
+								oml_recipient = oml["recipients"][str(key)]
+								recipient.status = oml_recipient["status"]
+								recipient.action_at = oml_recipient["action_at"]
+								recipient.action_after = time_diff_in_seconds(
+									recipient.action_at, doc.created_at
+								)
+								recipient.retries = oml_recipient["retries"]
+								recipient.details = oml_recipient["details"]
+								recipient.db_update()
+
+						doc._db_set(status=oml["status"], notify_update=True)

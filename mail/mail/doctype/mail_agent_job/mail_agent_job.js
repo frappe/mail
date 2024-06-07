@@ -12,12 +12,33 @@ frappe.ui.form.on("Mail Agent Job", {
                 frm.trigger("retry");
             }, __("Actions"));
         }
+        else if (frm.doc.status === "Failed On End") {
+            frm.add_custom_button(__("Retry Execute On End"), () => {
+                frm.trigger("retry_execute_on_end");
+            }, __("Actions"));
+        }
+
+        frm.page.set_inner_btn_group_as_primary(__("Actions"));
     },
 
     retry(frm) {
         frappe.call({
             doc: frm.doc,
-            method: "rerun",
+            method: "retry",
+            freeze: true,
+            freeze_message: __("Retrying..."),
+            callback: (r) => {
+                if (!r.exc) {
+                    frm.refresh();
+                }
+            }
+        });
+    },
+
+    retry_execute_on_end(frm) {
+        frappe.call({
+            doc: frm.doc,
+            method: "retry_execute_on_end",
             freeze: true,
             freeze_message: __("Retrying..."),
             callback: (r) => {

@@ -9,6 +9,7 @@ frappe.listview_settings["Outgoing Mail"] = {
 			"Transferring": "orange",
 			"Failed": "red",
 			"Transferred": "blue",
+			"RQ": "red",
 			"Queued": "yellow",
 			"Deferred": "orange",
 			"Bounced": "pink",

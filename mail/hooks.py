@@ -173,8 +173,8 @@ scheduler_events = {
 	#     "mail.tasks.monthly"
 	# ],
 	"cron": {
+		"*/1 * * * *": ["mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails"],
 		"*/3 * * * *": [
-			"mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails",
 			"mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails",
 			"mail.mail.doctype.outgoing_mail.outgoing_mail.sync_outgoing_mails_status",
 		],

@@ -62,9 +62,4 @@ def send() -> list[str]:
 			)
 			docs.append(doc.name)
 
-	frappe.get_doc(
-		"Scheduled Job Type",
-		{"method": "mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails"},
-	).enqueue(force=True)
-
 	return docs

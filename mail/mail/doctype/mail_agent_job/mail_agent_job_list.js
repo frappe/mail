@@ -7,7 +7,9 @@ frappe.listview_settings["Mail Agent Job"] = {
 			"Queued": "blue",
 			"Running": "yellow",
 			"Completed": "green",
+			"Failed On Start": "orange",
 			"Failed": "red",
+			"Failed On End": "orange",
 		};
 		return [__(doc.status), status_colors[doc.status], "status,=," + doc.status];
 	},

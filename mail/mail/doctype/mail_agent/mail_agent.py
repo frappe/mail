@@ -2,12 +2,11 @@
 # For license information, please see license.txt
 
 import frappe
-import requests
 from frappe import _
-from mail.utils import get_dns_record
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
-
+from mail.utils import get_dns_record, get_agent_client
+from mail.mail.doctype.mail_settings.mail_settings import validate_mail_settings
 
 if TYPE_CHECKING:
 	from requests import Response
@@ -18,11 +17,10 @@ class MailAgent(Document):
 		self.agent = self.agent.lower()
 		self.name = self.agent
 
-	def before_validate(self) -> None:
+	def validate(self) -> None:
 		if self.is_new():
 			validate_mail_settings()
 
-	def validate(self) -> None:
 		self.validate_agent()
 		self.validate_enabled()
 		self.validate_incoming_and_outgoing()
@@ -113,29 +111,8 @@ class MailAgent(Document):
 		"""Makes an HTTP request to the mail agent API."""
 
 		url = f"{self.protocol}://{self.host or self.agent}/api/method/{path}"
-		headers = {
-			"Authorization": f"token {self.agent_api_key}:{self.get_password('agent_api_secret')}"
-		}
-		response = requests.request(method, url, headers=headers, json=data, timeout=timeout)
-
+		client = get_agent_client(self.agent)
+		response = client.session.request(
+			method=method, url=url, headers=client.headers, json=data, timeout=timeout
+		)
 		return response
-
-
-def validate_mail_settings() -> None:
-	"""Validates the mandatory fields in the Mail Settings."""
-
-	mail_settings = frappe.get_doc("Mail Settings")
-	mandatory_fields = [
-		"root_domain_name",
-		"spf_host",
-		"default_dkim_selector",
-		"default_dkim_bits",
-		"default_ttl",
-	]
-
-	for field in mandatory_fields:
-		if not mail_settings.get(field):
-			field_label = frappe.get_meta("Mail Settings").get_label(field)
-			frappe.throw(
-				_("Please set the {0} in the Mail Settings.".format(frappe.bold(field_label)))
-			)
