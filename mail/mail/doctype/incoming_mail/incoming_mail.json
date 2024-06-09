@@ -4,6 +4,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "folder",
   "display_name",
   "sender",
   "reply_to",
@@ -343,13 +344,25 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Inbox",
+   "depends_on": "eval: doc.docstatus != 0",
+   "fieldname": "folder",
+   "fieldtype": "Link",
+   "label": "Folder",
+   "no_copy": 1,
+   "options": "Mail Folder",
+   "reqd": 1,
+   "search_index": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-05 18:31:18.927369",
+ "modified": "2024-06-09 17:56:20.004772",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

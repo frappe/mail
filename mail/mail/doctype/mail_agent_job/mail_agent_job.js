@@ -17,8 +17,6 @@ frappe.ui.form.on("Mail Agent Job", {
                 frm.trigger("retry_execute_on_end");
             }, __("Actions"));
         }
-
-        frm.page.set_inner_btn_group_as_primary(__("Actions"));
     },
 
     retry(frm) {

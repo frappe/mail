@@ -24,6 +24,7 @@ from mail.utils import (
 	is_system_manager,
 	get_user_mailboxes,
 	get_parsed_message,
+	validate_mail_folder,
 	parsedate_to_datetime,
 )
 
@@ -38,9 +39,13 @@ class IncomingMail(Document):
 
 	def validate(self) -> None:
 		self.validate_mandatory_fields()
+		self.validate_folder()
 
 		if self.get("_action") == "submit":
 			self.process()
+
+	def on_update_after_submit(self) -> None:
+		self.validate_folder()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
@@ -57,6 +62,12 @@ class IncomingMail(Document):
 		for field in mandatory_fields:
 			if not self.get(field):
 				frappe.throw(_("{0} is mandatory").format(frappe.bold(field)))
+
+	def validate_folder(self) -> None:
+		"""Validates the folder"""
+
+		if self.has_value_changed("folder"):
+			validate_mail_folder(self.folder, validate_for="inbound")
 
 	def process(self) -> None:
 		"""Processes the Incoming Mail."""

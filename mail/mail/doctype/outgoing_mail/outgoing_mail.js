@@ -12,17 +12,17 @@ frappe.ui.form.on("Outgoing Mail", {
 	},
 
     set_queries(frm) {
-        frm.set_query("sender", (doc) => {
-            return {
-                query: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_sender",
-            };
-        });
+        frm.set_query("sender", () => ({
+            query: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_sender",
+        }));
 
-        frm.set_query("reply_to", (doc) => {
-            return {
-                query: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_reply_to",
-            };
-        });
+        frm.set_query("reply_to", () => ({
+            query: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_reply_to"
+        }));
+
+        frm.set_query("folder", () => ({
+            filters: { outbound: 1 }
+        }));
     },
 
     hide_amend_button(frm) {
@@ -51,8 +51,6 @@ frappe.ui.form.on("Outgoing Mail", {
                     frm.events.reply(frm, all=true);
                 }, __("Actions"));
             }
-
-            frm.page.set_inner_btn_group_as_primary(__("Actions"));
         }
     },
 

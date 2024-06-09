@@ -3,8 +3,15 @@
 
 frappe.ui.form.on("Incoming Mail", {
 	refresh(frm) {
+        frm.trigger("set_queries");
         frm.trigger("add_actions");
 	},
+
+    set_queries(frm) {
+        frm.set_query("folder", () => ({
+            filters: { inbound: 1 }
+        }));
+    },
 
     add_actions(frm) {
         if (frm.doc.docstatus === 1) {
@@ -14,8 +21,6 @@ frappe.ui.form.on("Incoming Mail", {
             frm.add_custom_button(__("Reply All"), () => {
                 frm.events.reply(frm, all=true);
             }, __("Actions"));
-
-            frm.page.set_inner_btn_group_as_primary(__("Actions"));
         }
     },
 

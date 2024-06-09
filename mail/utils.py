@@ -2,8 +2,8 @@ import re
 import frappe
 import dns.resolver
 from frappe import _
-from typing import Optional, TYPE_CHECKING
 from frappe.frappeclient import FrappeClient
+from typing import Literal, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
 	from datetime import datetime
@@ -319,3 +319,15 @@ def get_agent_client(agent: str):
 	)
 
 	return get_agent_client(agent.agent)
+
+
+def validate_mail_folder(
+	folder: str, validate_for: Literal["inbound", "outbound"]
+) -> None:
+	"""Validates if the folder is an inbound or outbound folder."""
+
+	if not frappe.get_cached_value("Mail Folder", folder, validate_for):
+		folder_name = frappe.get_cached_value("Mail Folder", folder, "folder_name")
+		frappe.throw(
+			_("Folder {0} is not an {1} folder.").format(frappe.bold(folder_name), validate_for)
+		)

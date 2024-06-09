@@ -34,6 +34,7 @@ from mail.utils import (
 	is_mailbox_owner,
 	is_system_manager,
 	get_user_mailboxes,
+	validate_mail_folder,
 	convert_html_to_text,
 	parsedate_to_datetime,
 	get_random_outgoing_agent,
@@ -52,6 +53,7 @@ class OutgoingMail(Document):
 
 	def validate(self) -> None:
 		self.validate_amended_doc()
+		self.validate_folder()
 		self.validate_domain()
 		self.validate_sender()
 		self.validate_reply_to_mail()
@@ -76,6 +78,9 @@ class OutgoingMail(Document):
 		if not self.send_in_batch:
 			transfer_mail(outgoing_mail=self)
 
+	def on_update_after_submit(self) -> None:
+		self.validate_folder()
+
 	def on_trash(self) -> None:
 		if self.docstatus != 0 and frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Outgoing Mail."))
@@ -85,6 +90,16 @@ class OutgoingMail(Document):
 
 		if self.amended_from:
 			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
+
+	def validate_folder(self) -> None:
+		"""Validates the folder"""
+
+		if self.docstatus == 0:
+			self.folder = "Drafts"
+		elif self.docstatus == 1 and self.folder == "Drafts":
+			self.folder = "Sent"
+		elif self.has_value_changed("folder"):
+			validate_mail_folder(self.folder, validate_for="outbound")
 
 	def validate_domain(self) -> None:
 		"""Validates the domain."""
