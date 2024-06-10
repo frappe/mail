@@ -378,12 +378,10 @@
   },
   {
    "fieldname": "reply_to",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "ignore_xss_filter": 1,
    "label": "Reply To",
-   "no_copy": 1,
-   "options": "Mailbox",
-   "search_index": 1
+   "length": 255
   },
   {
    "allow_on_submit": 1,
@@ -401,7 +399,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-09 18:01:12.814994",
+ "modified": "2024-06-10 11:53:43.633230",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

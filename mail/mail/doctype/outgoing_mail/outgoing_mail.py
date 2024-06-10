@@ -39,7 +39,6 @@ from mail.utils import (
 	parsedate_to_datetime,
 	get_random_outgoing_agent,
 	validate_mailbox_for_outgoing,
-	validate_mailbox_for_incoming,
 )
 
 
@@ -128,15 +127,6 @@ class OutgoingMail(Document):
 			)
 
 		validate_mailbox_for_outgoing(self.sender)
-
-	def validate_reply_to(self) -> None:
-		"""Validates the reply to mailbox."""
-
-		user = frappe.session.user
-		if not is_mailbox_owner(self.reply_to, user) and not is_system_manager(user):
-			self.reply_to = None
-
-		validate_mailbox_for_incoming(self.sender)
 
 	def validate_reply_to_mail(self) -> None:
 		"""Validates the Reply To Mail."""
@@ -299,10 +289,7 @@ class OutgoingMail(Document):
 			message = MIMEMultipart("alternative", policy=policy.SMTP)
 
 			if self.reply_to:
-				reply_to_display_name = frappe.get_cached_value(
-					"Mailbox", self.reply_to, "display_name"
-				)
-				message["Reply-To"] = formataddr((reply_to_display_name, self.reply_to))
+				message["Reply-To"] = self.reply_to
 
 			if self.reply_to_mail:
 				if in_reply_to := frappe.db.get_value(
@@ -632,44 +619,6 @@ def get_sender(
 			& (DOMAIN.verified == 1)
 			& (MAILBOX.enabled == 1)
 			& (MAILBOX.outgoing == 1)
-			& (MAILBOX.status == "Active")
-			& (MAILBOX[searchfield].like(f"%{txt}%"))
-		)
-		.offset(start)
-		.limit(page_len)
-	)
-
-	user = frappe.session.user
-	if not is_system_manager(user):
-		query = query.where(MAILBOX.user == user)
-
-	return query.run(as_dict=False)
-
-
-@frappe.whitelist()
-@frappe.validate_and_sanitize_search_inputs
-def get_reply_to(
-	doctype: Optional[str] = None,
-	txt: Optional[str] = None,
-	searchfield: Optional[str] = None,
-	start: Optional[int] = 0,
-	page_len: Optional[int] = 20,
-	filters: Optional[dict] = None,
-) -> list:
-	"""Returns the reply to mailbox."""
-
-	MAILBOX = frappe.qb.DocType("Mailbox")
-	DOMAIN = frappe.qb.DocType("Mail Domain")
-	query = (
-		frappe.qb.from_(DOMAIN)
-		.left_join(MAILBOX)
-		.on(DOMAIN.name == MAILBOX.domain_name)
-		.select(MAILBOX.name)
-		.where(
-			(DOMAIN.enabled == 1)
-			& (DOMAIN.verified == 1)
-			& (MAILBOX.enabled == 1)
-			& (MAILBOX.incoming == 1)
 			& (MAILBOX.status == "Active")
 			& (MAILBOX[searchfield].like(f"%{txt}%"))
 		)
