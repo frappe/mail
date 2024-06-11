@@ -58,7 +58,8 @@ class IncomingMail(Document):
 			"status",
 			"message",
 		]
-
+		print(self.as_dict())
+		print(self.doctype)
 		for field in mandatory_fields:
 			if not self.get(field):
 				frappe.throw(_("{0} is mandatory").format(frappe.bold(field)))
