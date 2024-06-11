@@ -9,9 +9,11 @@ from email import policy
 from uuid_utils import uuid7
 from bs4 import BeautifulSoup
 from mimetypes import guess_type
+from email.message import Message
 from dkim import sign as dkim_sign
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
+from email.header import decode_header
 from email.mime.audio import MIMEAudio
 from email.mime.image import MIMEImage
 from email.encoders import encode_base64
@@ -34,6 +36,7 @@ from mail.utils import (
 	is_mailbox_owner,
 	is_system_manager,
 	get_user_mailboxes,
+	get_parsed_message,
 	validate_mail_folder,
 	convert_html_to_text,
 	parsedate_to_datetime,
@@ -64,9 +67,12 @@ class OutgoingMail(Document):
 		if self.get("_action") == "submit":
 			self.set_ip_address()
 			self.set_agent()
-			self.set_body_html()
-			self.set_body_plain()
 			self.set_message_id()
+
+			if not self.raw_message:
+				self.set_body_html()
+				self.set_body_plain()
+
 			self.generate_message()
 			self.validate_max_message_size()
 
@@ -258,13 +264,18 @@ class OutgoingMail(Document):
 		)
 		self.agent = outgoing_agent or get_random_outgoing_agent()
 
+	def set_message_id(self) -> None:
+		"""Sets the Message ID."""
+
+		self.message_id = make_msgid(domain=self.domain_name)
+
 	def set_body_html(self) -> None:
 		"""Sets the HTML Body."""
 
-		if self.use_raw_html:
+		if self.raw_html:
 			self.body_html = self.raw_html
+			self.raw_html = None
 
-		self.raw_html = ""
 		self.body_html = self.body_html or ""
 
 		if self.via_api:
@@ -275,16 +286,57 @@ class OutgoingMail(Document):
 
 		self.body_plain = convert_html_to_text(self.body_html)
 
-	def set_message_id(self) -> None:
-		"""Sets the Message ID."""
-
-		self.message_id = make_msgid(domain=self.domain_name)
-
 	def generate_message(self) -> None:
 		"""Sets the Message."""
 
-		def _get_message() -> "MIMEMultipart":
+		def _get_body(message: "Message") -> tuple[str, str]:
+			"""Returns the HTML and plain text body from the parsed message."""
+
+			body_html, body_plain = "", ""
+
+			for part in message.walk():
+				content_type = part.get_content_type()
+
+				if content_type == "text/html":
+					body_html += part.get_payload(decode=True).decode(
+						part.get_content_charset(), "ignore"
+					)
+
+				elif content_type == "text/plain":
+					body_plain += part.get_payload(decode=True).decode(
+						part.get_content_charset() or "utf-8", "ignore"
+					)
+
+			return body_html, body_plain
+
+		def _get_message() -> MIMEMultipart | Message:
 			"""Returns the MIME message."""
+
+			if self.raw_message:
+				message = get_parsed_message(self.raw_message)
+				self.raw_html = self.body_html = self.body_plain = self.raw_message = None
+
+				if message_id := message["Message-ID"]:
+					if frappe.db.exists(
+						"Outgoing Mail", {"message_id": message_id, "name": ("!=", self.name)}
+					):
+						del message["Message-ID"]
+						message["Message-ID"] = self.message_id
+					else:
+						self.message_id = message_id
+
+				self.reply_to = message["Reply-To"]
+				self.subject = decode_header(message["Subject"])[0][0]
+				self.body_html, self.body_plain = _get_body(message)
+
+				if in_reply_to := message["In-Reply-To"]:
+					for mail_type in ["Outgoing Mail", "Incoming Mail"]:
+						if reply_to_mail := frappe.db.get_value(mail_type, in_reply_to, "name"):
+							self.reply_to_mail_type = mail_type
+							self.reply_to_mail = reply_to_mail
+							break
+
+				return message
 
 			message = MIMEMultipart("alternative", policy=policy.SMTP)
 
@@ -320,14 +372,14 @@ class OutgoingMail(Document):
 
 			return message
 
-		def _add_custom_headers(message: "MIMEMultipart") -> None:
+		def _add_custom_headers(message: MIMEMultipart | Message) -> None:
 			"""Adds the custom headers to the message."""
 
 			if self.custom_headers:
 				for header in self.custom_headers:
 					message.add_header(header.key, header.value)
 
-		def _add_attachments(message: "MIMEMultipart") -> None:
+		def _add_attachments(message: MIMEMultipart | Message) -> None:
 			"""Adds the attachments to the message."""
 
 			for attachment in self.attachments:
@@ -363,7 +415,7 @@ class OutgoingMail(Document):
 
 				message.attach(part)
 
-		def _add_dkim_signature(message: "MIMEMultipart") -> None:
+		def _add_dkim_signature(message: MIMEMultipart | Message) -> None:
 			"""Adds the DKIM signature to the message."""
 
 			include_headers = [
@@ -401,6 +453,7 @@ class OutgoingMail(Document):
 		self.message = message.as_string()
 		self.message_size = len(message.as_bytes())
 		self.created_at = get_datetime_str(parsedate_to_datetime(message["Date"]))
+		self.created_after = time_diff_in_seconds(self.creation, self.created_at)
 
 	def validate_max_message_size(self) -> None:
 		"""Validates the maximum message size."""
@@ -683,6 +736,7 @@ def create_outgoing_mail(
 	cc: Optional[str | list[str]],
 	bcc: Optional[str | list[str]],
 	raw_html: Optional[str] = None,
+	raw_message: Optional[str] = None,
 	reply_to: Optional[str] = None,
 	track: int = 0,
 	attachments: Optional[list[dict]] = None,
@@ -695,8 +749,8 @@ def create_outgoing_mail(
 	doc = frappe.new_doc("Outgoing Mail")
 	doc.sender = sender
 	doc.subject = subject
-	doc.use_raw_html = 1
 	doc.raw_html = raw_html
+	doc.raw_message = raw_message
 	doc.reply_to = reply_to
 	doc.track = track
 	doc.via_api = via_api

@@ -151,12 +151,11 @@ class IncomingMail(Document):
 		self.created_at = get_datetime_str(parsedate_to_datetime(parsed_message["Date"]))
 
 		if in_reply_to := parsed_message["In-Reply-To"]:
-			if reply_to_mail := frappe.db.get_value("Outgoing Mail", in_reply_to, "name"):
-				self.reply_to_mail_type = "Outgoing Mail"
-				self.reply_to_mail = reply_to_mail
-			elif reply_to_mail := frappe.db.get_value("Incoming Mail", in_reply_to, "name"):
-				self.reply_to_mail_type = "Incoming Mail"
-				self.reply_to_mail = reply_to_mail
+			for mail_type in ["Outgoing Mail", "Incoming Mail"]:
+				if reply_to_mail := frappe.db.get_value(mail_type, in_reply_to, "name"):
+					self.reply_to_mail_type = mail_type
+					self.reply_to_mail = reply_to_mail
+					break
 
 		if headers := parsed_message.get_all("Authentication-Results"):
 			if len(headers) == 1:
