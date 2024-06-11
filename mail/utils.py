@@ -302,7 +302,9 @@ def get_outgoing_mails(
 	return query.run(as_dict=False)
 
 
-def get_agent_client(agent: str):
+def get_agent_client(agent: str) -> FrappeClient:
+	"""Returns FrappeClient object for the given agent."""
+
 	if hasattr(frappe.local, "agent_clients"):
 		if client := frappe.local.agent_clients.get(agent):
 			return client
