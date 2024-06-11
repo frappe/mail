@@ -215,10 +215,19 @@ def is_postmaster(user: str) -> bool:
 	return user == get_postmaster()
 
 
-def get_user_mailboxes(user: str) -> list:
+def get_user_mailboxes(
+	user: str, type: Optional[Literal["Incoming", "Outgoing"]] = None
+) -> list:
 	"""Returns the list of mailboxes associated with the user."""
 
-	return frappe.db.get_all("Mailbox", filters={"user": user}, pluck="name")
+	filters = {
+		"user": user,
+	}
+
+	if type:
+		filters[type.lower()] = 1
+
+	return frappe.db.get_all("Mailbox", filters=filters, pluck="name")
 
 
 def is_mailbox_owner(mailbox: str, user: str) -> bool:
