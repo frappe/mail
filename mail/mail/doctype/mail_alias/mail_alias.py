@@ -5,10 +5,9 @@ import frappe
 from frappe import _
 from typing import Optional
 from frappe.model.document import Document
+from mail.utils.user import get_user_owned_domains, is_system_manager
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
-from mail.utils import (
-	get_user_owned_domains,
-	is_system_manager,
+from mail.utils.validation import (
 	validate_active_domain,
 	is_valid_email_for_domain,
 	validate_mailbox_for_incoming,

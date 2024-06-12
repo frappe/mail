@@ -6,7 +6,7 @@ from frappe import _
 from typing import Tuple
 from frappe.query_builder.functions import Date
 from frappe.query_builder import Order, Criterion
-from mail.utils import (
+from mail.utils.user import (
 	has_role,
 	is_system_manager,
 	get_user_mailboxes,

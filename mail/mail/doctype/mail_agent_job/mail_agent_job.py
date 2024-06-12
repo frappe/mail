@@ -5,8 +5,8 @@ import json
 import frappe
 from frappe import _
 from typing import Optional
-from mail.utils import get_postmaster
 from frappe.query_builder import Interval
+from mail.utils.user import get_postmaster
 from frappe.model.document import Document
 from frappe.query_builder.functions import Now
 from frappe.utils import now, time_diff_in_seconds

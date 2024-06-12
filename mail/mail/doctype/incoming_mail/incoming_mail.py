@@ -10,23 +10,20 @@ from email.utils import parseaddr
 from email.header import decode_header
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
+from mail.utils import parsedate_to_datetime
 from frappe.utils.file_manager import save_file
-from frappe.utils import (
-	now,
-	get_datetime_str,
-	time_diff_in_seconds,
-)
+from mail.utils.validation import validate_mail_folder
+from mail.utils.email_parser import get_parsed_message
+from frappe.utils import now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.core.doctype.submission_queue.submission_queue import queue_submission
-from mail.utils import (
+from mail.utils.user import (
 	is_postmaster,
-	is_mailbox_owner,
 	is_system_manager,
+	is_mailbox_owner,
 	get_user_mailboxes,
-	get_parsed_message,
-	validate_mail_folder,
-	parsedate_to_datetime,
 )
+
 
 if TYPE_CHECKING:
 	from email.message import Message

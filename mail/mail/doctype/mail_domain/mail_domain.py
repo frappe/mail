@@ -4,17 +4,13 @@
 import frappe
 from frappe import _
 from frappe.utils import cint
+from mail.utils import get_dns_record
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
+from mail.utils.validation import is_valid_host
 from mail.mail.doctype.mailbox.mailbox import create_dmarc_mailbox
+from mail.utils.user import has_role, is_system_manager, get_user_domains
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
-from mail.utils import (
-	has_role,
-	is_valid_host,
-	get_dns_record,
-	is_system_manager,
-	get_user_domains,
-)
 
 if TYPE_CHECKING:
 	from mail.mail.doctype.dns_record.dns_record import DNSRecord

@@ -3,9 +3,10 @@
 
 import frappe
 from frappe import _
+from mail.utils import get_dns_record
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
-from mail.utils import get_dns_record, get_agent_client
+from mail.utils.agent import get_agent_client
 from mail.mail.doctype.mail_settings.mail_settings import validate_mail_settings
 
 if TYPE_CHECKING:

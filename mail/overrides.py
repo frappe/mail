@@ -3,7 +3,7 @@ from frappe import _
 from typing import Optional
 from frappe.utils import flt, cint
 from frappe.model.document import Document
-from mail.utils import has_role, is_system_manager, get_user_owned_domains
+from mail.utils.user import has_role, is_system_manager, get_user_owned_domains
 
 
 def validate_file(doc, method):

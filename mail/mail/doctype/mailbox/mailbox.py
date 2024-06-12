@@ -6,14 +6,9 @@ from frappe import _
 from typing import Optional
 from frappe.model.document import Document
 from frappe.query_builder import Criterion
-from mail.utils import (
-	has_role,
-	is_system_manager,
-	validate_active_domain,
-	get_user_owned_domains,
-	is_valid_email_for_domain,
-)
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
+from mail.utils.user import has_role, is_system_manager, get_user_owned_domains
+from mail.utils.validation import validate_active_domain, is_valid_email_for_domain
 
 
 class Mailbox(Document):

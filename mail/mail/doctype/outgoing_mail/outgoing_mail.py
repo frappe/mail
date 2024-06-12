@@ -22,9 +22,14 @@ from frappe.model.document import Document
 from urllib.parse import urlparse, parse_qs
 from email.mime.multipart import MIMEMultipart
 from frappe.utils.file_manager import save_file
+from mail.utils.agent import get_random_outgoing_agent
+from mail.utils.email_parser import get_parsed_message
 from frappe.utils.password import get_decrypted_password
+from mail.utils import convert_html_to_text, parsedate_to_datetime
 from email.utils import parseaddr, make_msgid, formataddr, formatdate
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
+from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
+from mail.utils.validation import validate_mail_folder, validate_mailbox_for_outgoing
 from frappe.utils import (
 	flt,
 	now,
@@ -32,18 +37,6 @@ from frappe.utils import (
 	time_diff_in_seconds,
 	validate_email_address,
 )
-from mail.utils import (
-	is_mailbox_owner,
-	is_system_manager,
-	get_user_mailboxes,
-	get_parsed_message,
-	validate_mail_folder,
-	convert_html_to_text,
-	parsedate_to_datetime,
-	get_random_outgoing_agent,
-	validate_mailbox_for_outgoing,
-)
-
 
 if TYPE_CHECKING:
 	from mail.mail.doctype.mail_agent_job.mail_agent_job import MailAgentJob

@@ -24,7 +24,7 @@ frappe.query_reports["Mail Tracker"] = {
 			options: "Outgoing Mail",
 			get_query: () => {
 				return {
-					query: "mail.utils.get_outgoing_mails",
+					query: "mail.utils.query.get_outgoing_mails",
 				};
 			},
 		},

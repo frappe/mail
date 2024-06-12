@@ -5,8 +5,8 @@ import frappe
 from frappe import _
 from typing import Optional
 from frappe.utils import cint
-from mail.utils import is_valid_host
 from frappe.model.document import Document
+from mail.utils.validation import is_valid_host
 from frappe.core.api.file import get_max_file_size
 
 

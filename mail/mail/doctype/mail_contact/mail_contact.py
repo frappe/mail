@@ -4,8 +4,8 @@
 import frappe
 from frappe import _
 from typing import Optional
-from mail.utils import is_system_manager
 from frappe.model.document import Document
+from mail.utils.user import is_system_manager
 
 
 class MailContact(Document):
