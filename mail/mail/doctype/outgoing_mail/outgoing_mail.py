@@ -13,7 +13,6 @@ from email.message import Message
 from dkim import sign as dkim_sign
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
-from email.header import decode_header
 from email.mime.audio import MIMEAudio
 from email.mime.image import MIMEImage
 from email.encoders import encode_base64
@@ -21,13 +20,13 @@ from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 from urllib.parse import urlparse, parse_qs
 from email.mime.multipart import MIMEMultipart
+from mail.utils.email_parser import EmailParser
 from frappe.utils.file_manager import save_file
 from mail.utils.agent import get_random_outgoing_agent
-from mail.utils.email_parser import get_parsed_message
 from frappe.utils.password import get_decrypted_password
-from mail.utils import convert_html_to_text, parsedate_to_datetime
 from email.utils import parseaddr, make_msgid, formataddr, formatdate
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
+from mail.utils import get_in_reply_to, convert_html_to_text, parsedate_to_datetime
 from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
 from mail.utils.validation import validate_mail_folder, validate_mailbox_for_outgoing
 from frappe.utils import (
@@ -282,54 +281,31 @@ class OutgoingMail(Document):
 	def generate_message(self) -> None:
 		"""Sets the Message."""
 
-		def _get_body(message: "Message") -> tuple[str, str]:
-			"""Returns the HTML and plain text body from the parsed message."""
-
-			body_html, body_plain = "", ""
-
-			for part in message.walk():
-				content_type = part.get_content_type()
-
-				if content_type == "text/html":
-					body_html += part.get_payload(decode=True).decode(
-						part.get_content_charset(), "ignore"
-					)
-
-				elif content_type == "text/plain":
-					body_plain += part.get_payload(decode=True).decode(
-						part.get_content_charset() or "utf-8", "ignore"
-					)
-
-			return body_html, body_plain
-
 		def _get_message() -> MIMEMultipart | Message:
 			"""Returns the MIME message."""
 
 			if self.raw_message:
-				message = get_parsed_message(self.raw_message)
+				parser = EmailParser(self.raw_message)
 				self.raw_html = self.body_html = self.body_plain = self.raw_message = None
 
-				if message_id := message["Message-ID"]:
+				if message_id := parser.get_header("Message-ID"):
 					if frappe.db.exists(
 						"Outgoing Mail", {"message_id": message_id, "name": ("!=", self.name)}
 					):
-						del message["Message-ID"]
-						message["Message-ID"] = self.message_id
+						parser.update_header("Message-ID", self.message_id)
 					else:
 						self.message_id = message_id
 
-				self.reply_to = message["Reply-To"]
-				self.subject = decode_header(message["Subject"])[0][0]
-				self.body_html, self.body_plain = _get_body(message)
+				self.subject = parser.get_subject()
+				self.reply_to = parser.get_header("Reply-To")
+				self.reply_to_mail_type, self.reply_to_mail = get_in_reply_to(
+					parser.get_header("In-Reply-To")
+				)
 
-				if in_reply_to := message["In-Reply-To"]:
-					for mail_type in ["Outgoing Mail", "Incoming Mail"]:
-						if reply_to_mail := frappe.db.get_value(mail_type, in_reply_to, "name"):
-							self.reply_to_mail_type = mail_type
-							self.reply_to_mail = reply_to_mail
-							break
+				parser.save_attachments(self.doctype, self.name, is_private=True)
+				self.body_html, self.body_plain = parser.get_body()
 
-				return message
+				return parser.message
 
 			message = MIMEMultipart("alternative", policy=policy.SMTP)
 

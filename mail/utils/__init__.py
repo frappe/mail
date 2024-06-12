@@ -61,3 +61,16 @@ def convert_html_to_text(html: str) -> str:
 		text = re.sub(r"\s+", " ", text).strip()
 
 	return text
+
+
+def get_in_reply_to(message_id: str) -> tuple[str, str] | tuple[None, None]:
+	"""Returns mail type and name of the mail to which the given message is a reply to."""
+
+	if message_id:
+		for mail_type in ["Outgoing Mail", "Incoming Mail"]:
+			if reply_to_mail := frappe.db.get_value(
+				mail_type, {"message_id": message_id}, "name"
+			):
+				return mail_type, reply_to_mail
+
+	return None, None

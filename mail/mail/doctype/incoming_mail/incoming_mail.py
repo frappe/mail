@@ -1,20 +1,16 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import re
 import json
 import frappe
 from frappe import _
 from uuid_utils import uuid7
 from email.utils import parseaddr
-from email.header import decode_header
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
-from mail.utils import parsedate_to_datetime
-from frappe.utils.file_manager import save_file
+from mail.utils.email_parser import EmailParser
+from frappe.utils import now, time_diff_in_seconds
 from mail.utils.validation import validate_mail_folder
-from mail.utils.email_parser import get_parsed_message
-from frappe.utils import now, get_datetime_str, time_diff_in_seconds
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.core.doctype.submission_queue.submission_queue import queue_submission
 from mail.utils.user import (
@@ -26,7 +22,6 @@ from mail.utils.user import (
 
 
 if TYPE_CHECKING:
-	from email.message import Message
 	from mail.mail.doctype.mail_agent_job.mail_agent_job import MailAgentJob
 
 
@@ -69,149 +64,36 @@ class IncomingMail(Document):
 	def process(self) -> None:
 		"""Processes the Incoming Mail."""
 
-		def _add_attachment(
-			filename: str, content: bytes, is_private: bool = 1, for_doc: bool = True
-		) -> dict:
-			"""Add attachment to the Incoming Mail."""
+		parser = EmailParser(self.message)
 
-			kwargs = {
-				"fname": filename,
-				"content": content,
-				"is_private": is_private,
-				"dt": None,
-				"dn": None,
-			}
+		self.display_name, self.sender = parser.get_sender()
+		self.subject = parser.get_subject()
+		self.reply_to = parser.get_header("Reply-To")
+		self.receiver = parser.get_header("Delivered-To")
+		self.message_id = parser.get_header("Message-ID")
+		self.created_at = parser.get_date()
+		self.message_size = parser.get_size()
 
-			if for_doc:
-				kwargs["dt"] = self.doctype
-				kwargs["dn"] = self.name
-				kwargs["df"] = "file"
+		parser.save_attachments(self.doctype, self.name, is_private=True)
+		self.body_html, self.body_plain = parser.get_body()
 
-			file = save_file(**kwargs)
+		for recipient in parser.get_recipients():
+			self.append("recipients", recipient)
 
-			return {
-				"name": file.name,
-				"file_name": file.file_name,
-				"file_url": file.file_url,
-				"is_private": file.is_private,
-			}
+		for key, value in parser.get_authentication_results().items():
+			setattr(self, key, value)
 
-		def _get_body(parsed_message: "Message") -> tuple[str, str]:
-			"""Returns the HTML and plain text body from the parsed message."""
-
-			body_html, body_plain = "", ""
-
-			for part in parsed_message.walk():
-				filename = part.get_filename()
-				content_type = part.get_content_type()
-				disposition = part.get("Content-Disposition")
-
-				if disposition and filename:
-					disposition = disposition.lower()
-
-					if disposition.startswith("inline"):
-						if content_id := re.sub(r"[<>]", "", part.get("Content-ID", "")):
-							if payload := part.get_payload(decode=True):
-								if part.get_content_charset():
-									payload = payload.decode(part.get_content_charset(), "ignore")
-
-								file = _add_attachment(filename, payload, is_private=0, for_doc=False)
-								body_html = body_html.replace("cid:" + content_id, file["file_url"])
-								body_plain = body_plain.replace("cid:" + content_id, file["file_url"])
-
-					elif disposition.startswith("attachment"):
-						_add_attachment(filename, part.get_payload(decode=True))
-
-				elif content_type == "text/html":
-					body_html += part.get_payload(decode=True).decode(
-						part.get_content_charset(), "ignore"
-					)
-
-				elif content_type == "text/plain":
-					body_plain += part.get_payload(decode=True).decode(
-						part.get_content_charset() or "utf-8", "ignore"
-					)
-
-			return body_html, body_plain
-
-		parsed_message = get_parsed_message(self.message)
-		sender = parseaddr(parsed_message["From"])
-
-		self.sender = sender[1]
-		self.display_name = sender[0]
-		self.reply_to = parsed_message["Reply-To"]
-		self.receiver = parsed_message["Delivered-To"]
-		self._add_recipients(parsed_message)
-		self.subject = decode_header(parsed_message["Subject"])[0][0]
-		self.message_id = parsed_message["Message-ID"]
-		self.body_html, self.body_plain = _get_body(parsed_message)
-		self.created_at = get_datetime_str(parsedate_to_datetime(parsed_message["Date"]))
-
-		if in_reply_to := parsed_message["In-Reply-To"]:
+		if in_reply_to := parser.get_header("In-Reply-To"):
 			for mail_type in ["Outgoing Mail", "Incoming Mail"]:
 				if reply_to_mail := frappe.db.get_value(mail_type, in_reply_to, "name"):
 					self.reply_to_mail_type = mail_type
 					self.reply_to_mail = reply_to_mail
 					break
 
-		if headers := parsed_message.get_all("Authentication-Results"):
-			if len(headers) == 1:
-				headers = headers[0].split(";")
-
-			for header in headers:
-				header = header.replace("\n", "").replace("\t", "")
-				header_lower = header.lower()
-
-				if "spf=" in header_lower:
-					self.spf_description = header
-					if "spf=pass" in header_lower:
-						self.spf = 1
-
-				elif "dkim=" in header_lower:
-					self.dkim_description = header
-					if "dkim=pass" in header_lower:
-						self.dkim = 1
-
-				elif "dmarc=" in header_lower:
-					self.dmarc_description = header
-					if "dmarc=pass" in header_lower:
-						self.dmarc = 1
-
-		no_header = "Header not found."
-		if not self.spf_description:
-			self.spf = 0
-			self.spf_description = no_header
-		if not self.dkim_description:
-			self.dkim = 0
-			self.dkim_description = no_header
-		if not self.dmarc_description:
-			self.dmarc = 0
-			self.dmarc_description = no_header
-
 		self.status = "Delivered"
 		self.delivered_at = now()
-		self.message_size = len(parsed_message.as_bytes())
 		self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
 		self.delivered_after = time_diff_in_seconds(self.delivered_at, self.received_at)
-
-	def _add_recipients(
-		self, parsed_message: "Message", types: Optional[str | list] = None
-	) -> None:
-		"""Adds recipients to the Incoming Mail."""
-
-		if not types:
-			types = ["To", "Cc", "Bcc"]
-		elif isinstance(types, str):
-			types = [types]
-
-		for type in types:
-			if recipients := parsed_message.get(type):
-				for recipient in recipients.split(","):
-					display_name, email = parseaddr(recipient)
-					if email:
-						self.append(
-							"recipients", {"type": type, "email": email, "display_name": display_name}
-						)
 
 
 @frappe.whitelist()
