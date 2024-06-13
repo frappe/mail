@@ -398,7 +398,7 @@
    "fieldtype": "Section Break"
   },
   {
-   "description": "Creation - Created At",
+   "description": "Created At - Creation",
    "fieldname": "created_after",
    "fieldtype": "Int",
    "label": "Created After (Seconds)",
@@ -409,7 +409,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-13 14:43:18.543240",
+ "modified": "2024-06-13 16:56:40.731091",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

@@ -415,7 +415,7 @@ class OutgoingMail(Document):
 		self.message = message.as_string()
 		self.message_size = len(message.as_bytes())
 		self.created_at = get_datetime_str(parsedate_to_datetime(message["Date"]))
-		self.created_after = time_diff_in_seconds(self.creation, self.created_at)
+		self.created_after = time_diff_in_seconds(self.created_at, self.creation)
 
 	def validate_max_message_size(self) -> None:
 		"""Validates the maximum message size."""
