@@ -17,8 +17,9 @@ from mail.utils.user import (
 def execute(filters=None) -> Tuple[list, list]:
 	columns = get_columns()
 	data = get_data(filters)
+	summary = get_summary(data)
 
-	return columns, data
+	return columns, data, None, None, summary
 
 
 def get_data(filters=None) -> list:
@@ -95,6 +96,36 @@ def get_data(filters=None) -> list:
 		query = query.where(Criterion.any(conditions))
 
 	return query.run(as_dict=True)
+
+
+def get_summary(data: dict) -> list[dict]:
+	status_count = {}
+	for row in data:
+		status = row["status"]
+		if status in ["Sent", "Deferred", "Bounced"]:
+			status_count.setdefault(status, 0)
+			status_count[status] += 1
+
+	return [
+		{
+			"value": status_count.get("Sent", 0),
+			"indicator": "green",
+			"label": "Total Sent",
+			"datatype": "Int",
+		},
+		{
+			"value": status_count.get("Deferred", 0),
+			"indicator": "blue",
+			"label": "Total Deferred",
+			"datatype": "Int",
+		},
+		{
+			"value": status_count.get("Bounced", 0),
+			"indicator": "red",
+			"label": "Total Bounced",
+			"datatype": "Int",
+		},
+	]
 
 
 def get_columns() -> list:
