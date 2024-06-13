@@ -38,6 +38,7 @@ def get_data(filters=None) -> list:
 			MR.retries,
 			OM.message_size,
 			OM.send_in_batch,
+			OM.created_after,
 			OM.transferred_after,
 			MR.action_after,
 			OM.agent,
@@ -133,6 +134,12 @@ def get_columns() -> list:
 			"label": _("Send in Batch"),
 			"fieldname": "send_in_batch",
 			"fieldtype": "Check",
+			"width": 120,
+		},
+		{
+			"label": _("Created After"),
+			"fieldname": "created_after",
+			"fieldtype": "Int",
 			"width": 120,
 		},
 		{
