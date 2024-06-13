@@ -191,7 +191,7 @@
    "label": "Message ID",
    "no_copy": 1,
    "read_only": 1,
-   "unique": 1
+   "search_index": 1
   },
   {
    "fieldname": "section_break_4dyb",
@@ -409,7 +409,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-11 18:08:45.459615",
+ "modified": "2024-06-13 14:43:18.543240",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

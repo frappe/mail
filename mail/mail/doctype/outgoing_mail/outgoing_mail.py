@@ -176,6 +176,8 @@ class OutgoingMail(Document):
 			recipients.append(type_email)
 
 	def validate_custom_headers(self) -> None:
+		"""Validates the custom headers."""
+
 		if self.custom_headers:
 			max_headers = frappe.db.get_single_value("Mail Settings", "max_headers", cache=True)
 
@@ -287,21 +289,12 @@ class OutgoingMail(Document):
 			if self.raw_message:
 				parser = EmailParser(self.raw_message)
 				self.raw_html = self.body_html = self.body_plain = self.raw_message = None
-
-				if message_id := parser.get_header("Message-ID"):
-					if frappe.db.exists(
-						"Outgoing Mail", {"message_id": message_id, "name": ("!=", self.name)}
-					):
-						parser.update_header("Message-ID", self.message_id)
-					else:
-						self.message_id = message_id
-
 				self.subject = parser.get_subject()
 				self.reply_to = parser.get_header("Reply-To")
+				self.message_id = parser.get_header("Message-ID") or self.message_id
 				self.reply_to_mail_type, self.reply_to_mail = get_in_reply_to(
 					parser.get_header("In-Reply-To")
 				)
-
 				parser.save_attachments(self.doctype, self.name, is_private=True)
 				self.body_html, self.body_plain = parser.get_body()
 
@@ -656,7 +649,9 @@ def get_sender(
 
 
 @frappe.whitelist()
-def reply_to_mail(source_name, target_doc=None):
+def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":
+	"""Returns the reply to mail."""
+
 	reply_to_mail_type = "Outgoing Mail"
 	source_doc = frappe.get_doc(reply_to_mail_type, source_name)
 	target_doc = target_doc or frappe.new_doc("Outgoing Mail")
@@ -715,6 +710,8 @@ def create_outgoing_mail(
 	do_not_save: bool = False,
 	do_not_submit: bool = False,
 ) -> "OutgoingMail":
+	"""Creates the outgoing mail."""
+
 	doc = frappe.new_doc("Outgoing Mail")
 	doc.sender = sender
 	doc.subject = subject
@@ -770,8 +767,10 @@ def transfer_mail(outgoing_mail: "OutgoingMail") -> None:
 	"""Transfers the mail to the agent."""
 
 	if outgoing_mail:
+		recipients = [{"type": r.type, "email": r.email} for r in outgoing_mail.recipients]
 		request_data = {
 			"outgoing_mail": outgoing_mail.name,
+			"recipients": recipients,
 			"message": outgoing_mail.message,
 		}
 		create_agent_job(outgoing_mail.agent, "Transfer Mail", request_data=request_data)
