@@ -100,11 +100,17 @@ def get_data(filters=None) -> list:
 
 def get_summary(data: dict) -> list[dict]:
 	status_count = {}
+	total_message_size = 0
+	total_transfer_delay = 0
+
 	for row in data:
 		status = row["status"]
 		if status in ["Sent", "Deferred", "Bounced"]:
 			status_count.setdefault(status, 0)
 			status_count[status] += 1
+
+		total_message_size += row["message_size"]
+		total_transfer_delay += row["transferred_after"]
 
 	return [
 		{
@@ -123,6 +129,18 @@ def get_summary(data: dict) -> list[dict]:
 			"value": status_count.get("Bounced", 0),
 			"indicator": "red",
 			"label": "Total Bounced",
+			"datatype": "Int",
+		},
+		{
+			"value": total_message_size / len(data) if data else 0,
+			"indicator": "blue",
+			"label": "Average Message Size",
+			"datatype": "Int",
+		},
+		{
+			"value": total_transfer_delay / len(data) if data else 0,
+			"indicator": "green",
+			"label": "Average Transfer Delay",
 			"datatype": "Int",
 		},
 	]
