@@ -4,8 +4,8 @@
 import frappe
 from frappe import _
 from typing import Tuple
-from frappe.query_builder.functions import Date
 from frappe.query_builder import Order, Criterion
+from frappe.query_builder.functions import Date, IfNull
 from mail.utils.user import (
 	has_role,
 	is_system_manager,
@@ -52,7 +52,7 @@ def get_data(filters=None) -> list:
 			OM.transferred_at,
 			MR.action_at,
 		)
-		.where((OM.docstatus == 1))
+		.where((OM.docstatus == 1) & (IfNull(MR.status, "") != ""))
 		.orderby(OM.creation, OM.created_at, order=Order.desc)
 		.orderby(MR.idx, order=Order.asc)
 	)
