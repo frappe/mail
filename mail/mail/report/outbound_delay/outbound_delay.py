@@ -99,7 +99,7 @@ def get_data(filters=None) -> list:
 	return query.run(as_dict=True)
 
 
-def get_summary(data: dict) -> list[dict]:
+def get_summary(data: list) -> list[dict]:
 	status_count = {}
 	total_message_size = 0
 	total_transfer_delay = 0

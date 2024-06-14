@@ -17,8 +17,9 @@ from mail.utils.user import (
 def execute(filters=None) -> Tuple[list, list]:
 	columns = get_columns()
 	data = get_data(filters)
+	summary = get_summary(data)
 
-	return columns, data
+	return columns, data, None, None, summary
 
 
 def get_data(filters=None) -> list:
@@ -86,6 +87,28 @@ def get_data(filters=None) -> list:
 		query = query.where(Criterion.any(conditions))
 
 	return query.run(as_dict=True)
+
+
+def get_summary(data: dict) -> list[dict]:
+	total_open_count = 0
+	for row in data:
+		if row["open_count"] > 0:
+			total_open_count += 1
+
+	return [
+		{
+			"value": len(data),
+			"indicator": "green",
+			"label": "Total Sent",
+			"datatype": "Int",
+		},
+		{
+			"value": total_open_count,
+			"indicator": "blue",
+			"label": "Total Opened",
+			"datatype": "Int",
+		},
+	]
 
 
 def get_columns() -> list:
