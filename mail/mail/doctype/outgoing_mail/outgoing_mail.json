@@ -37,9 +37,10 @@
   "message_size",
   "section_break_093p",
   "created_at",
+  "submitted_at",
   "transferred_at",
   "column_break_fvyv",
-  "created_after",
+  "submitted_after",
   "transferred_after",
   "send_in_batch",
   "section_break_aafd",
@@ -220,11 +221,12 @@
   },
   {
    "depends_on": "eval: doc.transferred_at",
-   "description": "Transferred At - Created At",
+   "description": "Transferred At - Submitted At",
    "fieldname": "transferred_after",
    "fieldtype": "Int",
    "label": "Transferred After (Seconds)",
    "no_copy": 1,
+   "non_negative": 1,
    "read_only": 1
   },
   {
@@ -398,18 +400,27 @@
    "fieldtype": "Section Break"
   },
   {
-   "description": "Created At - Creation",
-   "fieldname": "created_after",
-   "fieldtype": "Int",
-   "label": "Created After (Seconds)",
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
    "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "description": "Submitted At - Created At",
+   "fieldname": "submitted_after",
+   "fieldtype": "Int",
+   "label": "Submitted After (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-13 16:56:40.731091",
+ "modified": "2024-06-14 15:08:20.724700",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

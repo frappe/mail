@@ -49,6 +49,7 @@ def get_data(filters=None) -> list:
 			MR.email.as_("recipient"),
 			OM.message_id,
 			OM.created_at,
+			OM.submitted_at,
 			OM.transferred_at,
 			MR.action_at,
 		)
@@ -245,6 +246,12 @@ def get_columns() -> list:
 		{
 			"label": _("Created At"),
 			"fieldname": "created_at",
+			"fieldtype": "Datetime",
+			"width": 180,
+		},
+		{
+			"label": _("Submitted At"),
+			"fieldname": "submitted_at",
 			"fieldtype": "Datetime",
 			"width": 180,
 		},

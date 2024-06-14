@@ -415,7 +415,8 @@ class OutgoingMail(Document):
 		self.message = message.as_string()
 		self.message_size = len(message.as_bytes())
 		self.created_at = get_datetime_str(parsedate_to_datetime(message["Date"]))
-		self.created_after = time_diff_in_seconds(self.created_at, self.creation)
+		self.submitted_at = now()
+		self.submitted_after = time_diff_in_seconds(self.submitted_at, self.created_at)
 
 	def validate_max_message_size(self) -> None:
 		"""Validates the maximum message size."""
@@ -878,7 +879,7 @@ def transfer_mail_on_end(agent_job: "MailAgentJob") -> None:
 				outgoing_mail = frappe.get_doc("Outgoing Mail", data["outgoing_mail"])
 
 				transferred_at = now()
-				transferred_after = time_diff_in_seconds(transferred_at, outgoing_mail.created_at)
+				transferred_after = time_diff_in_seconds(transferred_at, outgoing_mail.submitted_at)
 				kwargs.update(
 					{
 						"status": "Transferred",
@@ -911,7 +912,7 @@ def transfer_mails_on_end(agent_job: "MailAgentJob") -> None:
 				query = (
 					query.set(OM.status, "Transferred")
 					.set(OM.transferred_at, transferred_at)
-					.set(OM.transferred_after, OM.transferred_at - OM.created_at)
+					.set(OM.transferred_after, OM.transferred_at - OM.submitted_at)
 				)
 			else:
 				data = json.loads(agent_job.request_data)
@@ -951,7 +952,7 @@ def sync_outgoing_mails_status_on_end(agent_job: "MailAgentJob") -> None:
 								recipient.status = oml_recipient["status"]
 								recipient.action_at = oml_recipient["action_at"]
 								recipient.action_after = time_diff_in_seconds(
-									recipient.action_at, doc.created_at
+									recipient.action_at, doc.submitted_at
 								)
 								recipient.retries = oml_recipient["retries"]
 								recipient.details = oml_recipient["details"]
