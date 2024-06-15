@@ -289,6 +289,10 @@ class OutgoingMail(Document):
 			if self.raw_message:
 				parser = EmailParser(self.raw_message)
 				self.raw_html = self.body_html = self.body_plain = self.raw_message = None
+
+				if parser.get_date() > now():
+					frappe.throw(_("Invalid date in the email."))
+
 				self.subject = parser.get_subject()
 				self.reply_to = parser.get_header("Reply-To")
 				self.message_id = parser.get_header("Message-ID") or self.message_id
