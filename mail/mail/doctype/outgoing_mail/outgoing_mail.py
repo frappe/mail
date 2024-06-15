@@ -515,15 +515,12 @@ class OutgoingMail(Document):
 				if filename and filename != file.file_name:
 					file.db_set("file_name", filename, update_modified=False)
 
-	def _add_custom_headers(self, headers: Optional[dict | list[dict]] = None) -> None:
+	def _add_custom_headers(self, headers: Optional[dict] = None) -> None:
 		"""Adds the custom headers."""
 
-		if headers:
-			if isinstance(headers, dict):
-				headers = [headers]
-
-			for h in headers:
-				self.append("custom_headers", h)
+		if headers and isinstance(headers, dict):
+			for key, value in headers.items():
+				self.append("custom_headers", {"key": key, "value": value})
 
 	def _replace_image_url_with_content_id(self) -> str:
 		"""Replaces the image URL with content ID."""
@@ -705,7 +702,7 @@ def create_outgoing_mail(
 	reply_to: Optional[str] = None,
 	track: int = 0,
 	attachments: Optional[list[dict]] = None,
-	custom_headers: Optional[dict | list[dict]] = None,
+	custom_headers: Optional[dict] = None,
 	via_api: int = 0,
 	send_in_batch: int = 0,
 	do_not_save: bool = False,
