@@ -129,7 +129,7 @@ class OutgoingMail(Document):
 	def validate_reply_to_mail(self) -> None:
 		"""Validates the Reply To Mail."""
 
-		if self.reply_to_mail:
+		if self.reply_to_mail_name:
 			if not self.reply_to_mail_type:
 				frappe.throw(_("Reply To Mail Type is required."))
 			elif self.reply_to_mail_type not in ["Incoming Mail", "Outgoing Mail"]:
@@ -292,7 +292,7 @@ class OutgoingMail(Document):
 				self.subject = parser.get_subject()
 				self.reply_to = parser.get_header("Reply-To")
 				self.message_id = parser.get_header("Message-ID") or self.message_id
-				self.reply_to_mail_type, self.reply_to_mail = get_in_reply_to(
+				self.reply_to_mail_type, self.reply_to_mail_name = get_in_reply_to(
 					parser.get_header("In-Reply-To")
 				)
 				parser.save_attachments(self.doctype, self.name, is_private=True)
@@ -305,9 +305,9 @@ class OutgoingMail(Document):
 			if self.reply_to:
 				message["Reply-To"] = self.reply_to
 
-			if self.reply_to_mail:
+			if self.reply_to_mail_name:
 				if in_reply_to := frappe.db.get_value(
-					self.reply_to_mail_type, self.reply_to_mail, "message_id"
+					self.reply_to_mail_type, self.reply_to_mail_name, "message_id"
 				):
 					message["In-Reply-To"] = in_reply_to
 
@@ -652,7 +652,7 @@ def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":
 	target_doc = target_doc or frappe.new_doc("Outgoing Mail")
 
 	target_doc.reply_to_mail_type = source_doc.doctype
-	target_doc.reply_to_mail = source_name
+	target_doc.reply_to_mail_name = source_name
 	target_doc.sender = source_doc.sender
 	target_doc.subject = f"Re: {source_doc.subject}"
 

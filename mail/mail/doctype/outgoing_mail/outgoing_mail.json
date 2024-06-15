@@ -9,7 +9,7 @@
   "reply_to",
   "column_break_9ywf",
   "reply_to_mail_type",
-  "reply_to_mail",
+  "reply_to_mail_name",
   "subject",
   "section_break_baaa",
   "recipients",
@@ -362,15 +362,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "reply_to_mail",
-   "fieldtype": "Dynamic Link",
-   "label": "In Reply To",
-   "no_copy": 1,
-   "options": "reply_to_mail_type",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "reply_to",
    "fieldtype": "Data",
    "ignore_xss_filter": 1,
@@ -415,12 +406,21 @@
    "no_copy": 1,
    "non_negative": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "reply_to_mail_name",
+   "fieldtype": "Dynamic Link",
+   "label": "In Reply To",
+   "no_copy": 1,
+   "options": "reply_to_mail_type",
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-14 15:08:20.724700",
+ "modified": "2024-06-15 16:04:05.796633",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

@@ -84,10 +84,12 @@ class IncomingMail(Document):
 			setattr(self, key, value)
 
 		if in_reply_to := parser.get_header("In-Reply-To"):
-			for mail_type in ["Outgoing Mail", "Incoming Mail"]:
-				if reply_to_mail := frappe.db.get_value(mail_type, in_reply_to, "name"):
-					self.reply_to_mail_type = mail_type
-					self.reply_to_mail = reply_to_mail
+			for reply_to_mail_type in ["Outgoing Mail", "Incoming Mail"]:
+				if reply_to_mail_name := frappe.db.get_value(
+					reply_to_mail_type, in_reply_to, "name"
+				):
+					self.reply_to_mail_type = reply_to_mail_type
+					self.reply_to_mail_name = reply_to_mail_name
 					break
 
 		self.status = "Delivered"
@@ -103,7 +105,7 @@ def reply_to_mail(source_name, target_doc=None):
 	target_doc = target_doc or frappe.new_doc("Outgoing Mail")
 
 	target_doc.reply_to_mail_type = source_doc.doctype
-	target_doc.reply_to_mail = source_name
+	target_doc.reply_to_mail_name = source_name
 	target_doc.subject = f"Re: {source_doc.subject}"
 
 	email = source_doc.sender

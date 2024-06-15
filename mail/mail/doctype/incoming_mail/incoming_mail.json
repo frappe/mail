@@ -10,7 +10,7 @@
   "reply_to",
   "column_break_hpzu",
   "reply_to_mail_type",
-  "reply_to_mail",
+  "reply_to_mail_name",
   "subject",
   "receiver",
   "section_break_s2hp",
@@ -328,15 +328,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "reply_to_mail",
-   "fieldtype": "Dynamic Link",
-   "label": "In Reply To",
-   "no_copy": 1,
-   "options": "reply_to_mail_type",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "reply_to",
    "fieldtype": "Data",
    "ignore_xss_filter": 1,
@@ -356,13 +347,22 @@
    "options": "Mail Folder",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "reply_to_mail_name",
+   "fieldtype": "Dynamic Link",
+   "label": "In Reply To",
+   "no_copy": 1,
+   "options": "reply_to_mail_type",
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-09 17:56:20.004772",
+ "modified": "2024-06-15 16:04:17.979966",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
