@@ -490,13 +490,10 @@ class OutgoingMail(Document):
 
 		return recipients if as_list else ", ".join(recipients)
 
-	def _add_attachments(self, attachments: Optional[dict | list[dict]] = None) -> None:
+	def _add_attachments(self, attachments: Optional[list[dict]] = None) -> None:
 		"""Adds the attachments."""
 
 		if attachments:
-			if isinstance(attachments, dict):
-				attachments = [attachments]
-
 			for a in attachments:
 				filename = a.get("filename")
 				content = a["content"]
@@ -693,16 +690,16 @@ def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
 
 def create_outgoing_mail(
 	sender: str,
-	subject: str,
-	to: Optional[str | list[str]],
-	cc: Optional[str | list[str]],
-	bcc: Optional[str | list[str]],
+	to: str | list[str],
+	cc: Optional[str | list[str]] = None,
+	bcc: Optional[str | list[str]] = None,
+	subject: Optional[str] = None,
 	raw_html: Optional[str] = None,
-	raw_message: Optional[str] = None,
-	reply_to: Optional[str] = None,
 	track: int = 0,
-	attachments: Optional[list[dict]] = None,
+	reply_to: Optional[str | list[str]] = None,
 	custom_headers: Optional[dict] = None,
+	attachments: Optional[list[dict]] = None,
+	raw_message: Optional[str] = None,
 	via_api: int = 0,
 	send_in_batch: int = 0,
 	do_not_save: bool = False,
@@ -710,19 +707,19 @@ def create_outgoing_mail(
 ) -> "OutgoingMail":
 	"""Creates the outgoing mail."""
 
-	doc = frappe.new_doc("Outgoing Mail")
+	doc: OutgoingMail = frappe.new_doc("Outgoing Mail")
 	doc.sender = sender
-	doc.subject = subject
-	doc.raw_html = raw_html
-	doc.raw_message = raw_message
-	doc.reply_to = reply_to
-	doc.track = track
-	doc.via_api = via_api
-	doc.send_in_batch = send_in_batch
 	doc._add_recipients("To", to)
 	doc._add_recipients("Cc", cc)
 	doc._add_recipients("Bcc", bcc)
+	doc.subject = subject
+	doc.raw_html = raw_html
+	doc.track = track
+	doc.reply_to = reply_to
 	doc._add_custom_headers(custom_headers)
+	doc.raw_message = raw_message
+	doc.via_api = via_api
+	doc.send_in_batch = send_in_batch
 
 	if not do_not_save:
 		doc.save()

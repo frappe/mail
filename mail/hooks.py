@@ -13,6 +13,16 @@ website_redirects = [
 		"target": "/api/method/mail.api.outbound.send",
 		"redirect_http_status": 307,
 	},
+	{
+		"source": "/outbound/send-batch",
+		"target": "/api/method/mail.api.outbound.send_batch",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/outbound/send-raw",
+		"target": "/api/method/mail.api.outbound.send_raw",
+		"redirect_http_status": 307,
+	},
 ]
 
 
