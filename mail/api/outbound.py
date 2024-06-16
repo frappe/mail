@@ -76,6 +76,8 @@ def validate_batch(data: Any) -> None:
 
 
 def validate_raw(data: Any) -> None:
+	"""Validates the raw data."""
+
 	if not data or not isinstance(data, dict):
 		raise frappe.ValidationError("Invalid Data")
 

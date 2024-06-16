@@ -38,13 +38,12 @@
    "fieldname": "last_sync_at",
    "fieldtype": "Datetime",
    "in_list_view": 1,
-   "label": "Last Sync At",
-   "reqd": 1
+   "label": "Last Sync At"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-16 16:55:26.421631",
+ "modified": "2024-06-16 17:02:36.095428",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Sync History",

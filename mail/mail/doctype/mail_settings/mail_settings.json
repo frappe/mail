@@ -26,7 +26,9 @@
   "outgoing_max_attachments",
   "column_break_l9fc",
   "outgoing_max_attachment_size",
-  "outgoing_total_attachments_size"
+  "outgoing_total_attachments_size",
+  "incoming_tab",
+  "max_sync_via_api"
  ],
  "fields": [
   {
@@ -168,12 +170,25 @@
   {
    "fieldname": "section_break_xudp",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "incoming_tab",
+   "fieldtype": "Tab Break",
+   "label": "Incoming"
+  },
+  {
+   "default": "100",
+   "fieldname": "max_sync_via_api",
+   "fieldtype": "Int",
+   "label": "Max Sync via API (Count)",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-06-01 11:46:19.490403",
+ "modified": "2024-06-16 18:08:06.423201",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
