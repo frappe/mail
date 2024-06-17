@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import _
 from typing import Optional
 from frappe.model.document import Document
 
@@ -14,13 +15,14 @@ class MailSyncHistory(Document):
 		"""Validate if the Mail Sync History already exists."""
 
 		if frappe.db.exists(
-			"Mail Sync History", {"site": self.site, "user": self.user, "mailbox": self.mailbox}
+			"Mail Sync History",
+			{"source": self.source, "user": self.user, "mailbox": self.mailbox},
 		):
-			frappe.throw("Mail Sync History already exists for this site, user and mailbox")
+			frappe.throw(_("Mail Sync History already exists for this source, user and mailbox"))
 
 
 def create_mail_sync_history(
-	site: str,
+	source: str,
 	user: str,
 	mailbox: str,
 	last_sync_at: Optional[str] = None,
@@ -29,7 +31,7 @@ def create_mail_sync_history(
 	"""Create a Mail Sync History."""
 
 	doc = frappe.new_doc("Mail Sync History")
-	doc.site = site
+	doc.source = source
 	doc.user = user
 	doc.mailbox = mailbox
 	doc.last_sync_at = last_sync_at
@@ -41,12 +43,12 @@ def create_mail_sync_history(
 	return doc
 
 
-def get_mail_sync_history(site: str, user: str, mailbox: str) -> "MailSyncHistory":
-	"""Returns the Mail Sync History for the given site, user and mailbox."""
+def get_mail_sync_history(source: str, user: str, mailbox: str) -> "MailSyncHistory":
+	"""Returns the Mail Sync History for the given source, user and mailbox."""
 
 	if name := frappe.db.exists(
-		"Mail Sync History", {"site": site, "user": user, "mailbox": mailbox}
+		"Mail Sync History", {"source": source, "user": user, "mailbox": mailbox}
 	):
 		return frappe.get_doc("Mail Sync History", name)
 
-	return create_mail_sync_history(site, user, mailbox, commit=True)
+	return create_mail_sync_history(source, user, mailbox, commit=True)

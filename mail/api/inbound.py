@@ -10,9 +10,7 @@ from mail.mail.doctype.mail_sync_history.mail_sync_history import get_mail_sync_
 def pull(mailbox: str, limit: int = 50) -> list[str]:
 	"""Returns the emails for the given mailbox."""
 
-	site = frappe.request.headers.get("X-Site")
-	if not site:
-		frappe.throw("X-Site header is required.")
+	source = frappe.request.headers.get("X-Site") or frappe.local.request_ip
 
 	max_sync_via_api = cint(
 		frappe.db.get_single_value("Mail Settings", "max_sync_via_api")
@@ -28,7 +26,7 @@ def pull(mailbox: str, limit: int = 50) -> list[str]:
 
 	validate_mailbox_for_incoming(mailbox)
 
-	sync_history = get_mail_sync_history(site, user, mailbox)
+	sync_history = get_mail_sync_history(source, user, mailbox)
 
 	IM = frappe.qb.DocType("Incoming Mail")
 	query = (

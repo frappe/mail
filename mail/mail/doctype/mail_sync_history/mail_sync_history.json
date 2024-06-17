@@ -5,26 +5,21 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "site",
   "user",
+  "source",
+  "column_break_6jsu",
   "mailbox",
   "last_sync_at"
  ],
  "fields": [
-  {
-   "fieldname": "site",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Site",
-   "reqd": 1
-  },
   {
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "User",
    "options": "User",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "mailbox",
@@ -32,18 +27,32 @@
    "in_list_view": 1,
    "label": "Mailbox",
    "options": "Mailbox",
-   "reqd": 1
+   "reqd": 1,
+   "search_index": 1
   },
   {
    "fieldname": "last_sync_at",
    "fieldtype": "Datetime",
    "in_list_view": 1,
-   "label": "Last Sync At"
+   "label": "Last Sync At",
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_6jsu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Source",
+   "reqd": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-16 17:02:36.095428",
+ "modified": "2024-06-17 13:24:01.467424",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Sync History",
