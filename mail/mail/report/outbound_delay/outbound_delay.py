@@ -38,6 +38,7 @@ def get_data(filters=None) -> list:
 			MR.status,
 			MR.retries,
 			OM.message_size,
+			OM.via_api,
 			OM.send_in_batch,
 			OM.created_after,
 			OM.transferred_after,
@@ -179,6 +180,12 @@ def get_columns() -> list:
 			"fieldname": "message_size",
 			"fieldtype": "Int",
 			"width": 120,
+		},
+		{
+			"label": _("API"),
+			"fieldname": "via_api",
+			"fieldtype": "Check",
+			"width": 60,
 		},
 		{
 			"label": _("Send in Batch"),
