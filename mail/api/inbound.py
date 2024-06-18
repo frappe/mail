@@ -31,20 +31,20 @@ def pull(mailbox: str, limit: int = 50) -> list[str]:
 	IM = frappe.qb.DocType("Incoming Mail")
 	query = (
 		frappe.qb.from_(IM)
-		.select(IM.delivered_at, IM.message)
+		.select(IM.processed_at, IM.message)
 		.where((IM.docstatus == 1) & (IM.receiver == mailbox))
 		.orderby(IM.created_at)
 		.limit(limit)
 	)
 
 	if sync_history.last_sync_at:
-		query = query.where(IM.delivered_at > sync_history.last_sync_at)
+		query = query.where(IM.processed_at > sync_history.last_sync_at)
 
 	result = []
 	last_sync_at = None
 	for mail in query.run(as_dict=True):
-		if not last_sync_at or mail.delivered_at > last_sync_at:
-			last_sync_at = mail.delivered_at
+		if not last_sync_at or mail.processed_at > last_sync_at:
+			last_sync_at = mail.processed_at
 
 		result.append(mail.message)
 

@@ -30,10 +30,10 @@
   "section_break_z08o",
   "created_at",
   "received_at",
-  "delivered_at",
+  "processed_at",
   "column_break_x0zs",
   "received_after",
-  "delivered_after",
+  "processed_after",
   "section_break_5me5",
   "spf",
   "dkim",
@@ -260,13 +260,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "delivered_at",
-   "fieldtype": "Datetime",
-   "label": "Delivered At",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "section_break_z08o",
    "fieldtype": "Section Break"
   },
@@ -279,14 +272,6 @@
    "fieldname": "received_after",
    "fieldtype": "Int",
    "label": "Received After (Seconds)",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "description": "Delivered At - Received At",
-   "fieldname": "delivered_after",
-   "fieldtype": "Int",
-   "label": "Delivered After (Seconds)",
    "no_copy": 1,
    "read_only": 1
   },
@@ -356,13 +341,28 @@
    "options": "reply_to_mail_type",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "processed_at",
+   "fieldtype": "Datetime",
+   "label": "Processed At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "Processed At - Received At",
+   "fieldname": "processed_after",
+   "fieldtype": "Int",
+   "label": "Processed After (Seconds)",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-15 16:04:17.979966",
+ "modified": "2024-06-18 09:52:31.439837",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

@@ -93,9 +93,9 @@ class IncomingMail(Document):
 					break
 
 		self.status = "Delivered"
-		self.delivered_at = now()
+		self.processed_at = now()
 		self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
-		self.delivered_after = time_diff_in_seconds(self.delivered_at, self.received_at)
+		self.processed_after = time_diff_in_seconds(self.processed_at, self.received_at)
 
 
 @frappe.whitelist()
