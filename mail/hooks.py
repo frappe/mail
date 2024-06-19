@@ -9,6 +9,11 @@ app_license = "agpl-3.0"
 
 website_redirects = [
 	{
+		"source": "/auth/validate",
+		"target": "/api/method/mail.api.auth.validate",
+		"redirect_http_status": 307,
+	},
+	{
 		"source": "/outbound/send",
 		"target": "/api/method/mail.api.outbound.send",
 		"redirect_http_status": 307,
