@@ -9,7 +9,7 @@
   "source",
   "column_break_6jsu",
   "mailbox",
-  "last_sync_at"
+  "last_synced_at"
  ],
  "fields": [
   {
@@ -31,13 +31,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "last_sync_at",
-   "fieldtype": "Datetime",
-   "in_list_view": 1,
-   "label": "Last Sync At",
-   "search_index": 1
-  },
-  {
    "fieldname": "column_break_6jsu",
    "fieldtype": "Column Break"
   },
@@ -48,11 +41,18 @@
    "label": "Source",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "last_synced_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Last Synced At",
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-06-17 13:24:01.467424",
+ "modified": "2024-06-19 10:32:14.558356",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Sync History",
