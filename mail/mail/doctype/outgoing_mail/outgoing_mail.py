@@ -315,8 +315,7 @@ class OutgoingMail(Document):
 				):
 					message["In-Reply-To"] = in_reply_to
 
-			display_name = frappe.get_cached_value("Mailbox", self.sender, "display_name")
-			message["From"] = formataddr((display_name, self.sender))
+			message["From"] = formataddr((self.display_name, self.sender))
 
 			for type in ["To", "Cc", "Bcc"]:
 				if recipients := self._get_recipients(type):
@@ -695,6 +694,7 @@ def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
 def create_outgoing_mail(
 	sender: str,
 	to: str | list[str],
+	display_name: Optional[str] = None,
 	cc: Optional[str | list[str]] = None,
 	bcc: Optional[str | list[str]] = None,
 	subject: Optional[str] = None,
@@ -713,6 +713,7 @@ def create_outgoing_mail(
 
 	doc: OutgoingMail = frappe.new_doc("Outgoing Mail")
 	doc.sender = sender
+	doc.display_name = display_name
 	doc._add_recipients("To", to)
 	doc._add_recipients("Cc", cc)
 	doc._add_recipients("Bcc", bcc)

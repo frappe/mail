@@ -96,11 +96,13 @@ def validate_mandatory_fields(data: dict, fields: list[str]) -> None:
 def get_mail_dict(data: dict, send_in_batch: int = 0) -> dict:
 	"""Returns the mail dict."""
 
+	display_name, sender = parseaddr(data["from"])
 	mail = {
 		# Mandatory Fields
-		"sender": parseaddr(data["from"])[1],
+		"sender": sender,
 		"to": data["to"],
 		# Optional Fields
+		"display_name": display_name,
 		"cc": data.get("cc"),
 		"bcc": data.get("bcc"),
 		"raw_message": data.get("raw_message"),
