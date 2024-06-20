@@ -15,22 +15,35 @@ def validate(
 	"""Validates the mailbox for inbound and outbound emails."""
 
 	if mailbox:
-		user = frappe.session.user
-
-		if not has_role(user, "Mailbox User"):
-			frappe.throw(
-				_("User {0} is not allowed to access mailboxes.").format(frappe.bold(user))
-			)
-
-		if not is_mailbox_owner(mailbox, user):
-			frappe.throw(
-				_("Mailbox {0} is not associated with user {1}").format(
-					frappe.bold(mailbox), frappe.bold(user)
-				)
-			)
+		validate_user()
+		validate_mailbox(mailbox)
 
 		if for_inbound:
 			validate_mailbox_for_incoming(mailbox)
 
 		if for_outbound:
 			validate_mailbox_for_outgoing(mailbox)
+
+
+def validate_user() -> None:
+	"""Validates if the user has the required role to access mailboxes."""
+
+	user = frappe.session.user
+
+	if not has_role(user, "Mailbox User"):
+		frappe.throw(
+			_("User {0} is not allowed to access mailboxes.").format(frappe.bold(user))
+		)
+
+
+def validate_mailbox(mailbox: str) -> None:
+	"""Validates if the mailbox is associated with the user."""
+
+	user = frappe.session.user
+
+	if not is_mailbox_owner(mailbox, user):
+		frappe.throw(
+			_("Mailbox {0} is not associated with user {1}").format(
+				frappe.bold(mailbox), frappe.bold(user)
+			)
+		)

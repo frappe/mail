@@ -1,8 +1,9 @@
 import frappe
 from frappe import _
+from email.utils import formataddr
 from typing import Optional, TYPE_CHECKING
-from mail.utils.user import is_mailbox_owner
 from frappe.utils import now, cint, get_datetime
+from mail.api.auth import validate_user, validate_mailbox
 from mail.utils.validation import validate_mailbox_for_incoming
 from mail.mail.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
 
@@ -15,15 +16,17 @@ def pull(
 	mailbox: str,
 	limit: int = 50,
 	last_synced_at: Optional[str] = None,
-) -> dict[str, list[str] | str]:
+) -> dict[str, list[dict] | str]:
 	"""Returns the emails for the given mailbox."""
 
+	validate_user()
 	validate_mailbox(mailbox)
+	validate_mailbox_for_incoming(mailbox)
 	validate_max_sync_limit(limit)
 	validate_last_synced_at(last_synced_at)
 
 	result = []
-	source = frappe.request.headers.get("X-Site") or frappe.local.request_ip
+	source = get_source()
 	sync_history = get_mail_sync_history(source, frappe.session.user, mailbox)
 	result = get_incoming_mails(
 		mailbox, limit, last_synced_at or sync_history.last_synced_at
@@ -33,15 +36,29 @@ def pull(
 	return result
 
 
-def validate_mailbox(mailbox: str) -> None:
-	"""Validates if the mailbox is associated with the user and is valid for incoming emails."""
+@frappe.whitelist(methods=["GET"])
+def pull_raw(
+	mailbox: str,
+	limit: int = 50,
+	last_synced_at: Optional[str] = None,
+) -> dict[str, list[str] | str]:
+	"""Returns the raw-emails for the given mailbox."""
 
-	user = frappe.session.user
-
-	if not is_mailbox_owner(mailbox, user):
-		frappe.throw(_("Mailbox {0} is not associated with user {1}").format(mailbox, user))
-
+	validate_user()
+	validate_mailbox(mailbox)
 	validate_mailbox_for_incoming(mailbox)
+	validate_max_sync_limit(limit)
+	validate_last_synced_at(last_synced_at)
+
+	result = []
+	source = get_source()
+	sync_history = get_mail_sync_history(source, frappe.session.user, mailbox)
+	result = get_raw_incoming_mails(
+		mailbox, limit, last_synced_at or sync_history.last_synced_at
+	)
+	update_last_synced_at(sync_history, result["last_synced_at"])
+
+	return result
 
 
 def validate_max_sync_limit(limit: int) -> None:
@@ -62,12 +79,59 @@ def validate_last_synced_at(last_synced_at: str) -> None:
 		frappe.throw(_("Invalid datetime format for last_synced_at."))
 
 
+def get_source() -> str:
+	"""Returns the source of the request."""
+
+	return frappe.request.headers.get("X-Site") or frappe.local.request_ip
+
+
 def get_incoming_mails(
 	mailbox: str,
 	limit: int,
 	last_synced_at: Optional[str] = None,
-) -> dict[str, list[str] | str]:
+) -> dict[str, list[dict] | str]:
 	"""Returns the incoming mails for the given mailbox."""
+
+	IM = frappe.qb.DocType("Incoming Mail")
+	query = (
+		frappe.qb.from_(IM)
+		.select(
+			IM.processed_at,
+			IM.name.as_("id"),
+			IM.folder,
+			IM.display_name,
+			IM.sender,
+			IM.created_at,
+			IM.subject,
+			IM.body_html.as_("html"),
+			IM.body_plain.as_("text"),
+			IM.reply_to,
+		)
+		.where((IM.docstatus == 1) & (IM.receiver == mailbox))
+		.orderby(IM.processed_at)
+		.limit(limit)
+	)
+
+	if last_synced_at:
+		query = query.where(IM.processed_at > last_synced_at)
+
+	mails = query.run(as_dict=True)
+	last_synced_at = mails[-1].processed_at if mails else now()
+
+	for mail in mails:
+		mail.pop("processed_at")
+		mail["from"] = formataddr((mail.pop("display_name"), mail.pop("sender")))
+		mail["to"], mail["cc"] = get_recipients(mail)
+
+	return {"mails": mails, "last_synced_at": last_synced_at}
+
+
+def get_raw_incoming_mails(
+	mailbox: str,
+	limit: int,
+	last_synced_at: Optional[str] = None,
+) -> dict[str, list[str] | str]:
+	"""Returns the raw incoming mails for the given mailbox."""
 
 	IM = frappe.qb.DocType("Incoming Mail")
 	query = (
@@ -95,3 +159,22 @@ def update_last_synced_at(sync_history: "MailSyncHistory", last_synced_at: str) 
 		sync_history.doctype, sync_history.name, "last_synced_at", last_synced_at or now()
 	)
 	frappe.db.commit()
+
+
+def get_recipients(mail: dict) -> tuple[list[str], list[str]]:
+	"""Returns the recipients for the given mail."""
+
+	to, cc = [], []
+	recipients = frappe.db.get_all(
+		"Mail Recipient",
+		filters={"parenttype": "Incoming Mail", "parent": mail.id},
+		fields=["type", "display_name", "email"],
+	)
+
+	for recipient in recipients:
+		if recipient.type == "To":
+			to.append(formataddr((recipient.display_name, recipient.email)))
+		elif recipient.type == "Cc":
+			cc.append(formataddr((recipient.display_name, recipient.email)))
+
+	return to, cc

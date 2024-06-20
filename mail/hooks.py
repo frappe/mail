@@ -33,6 +33,11 @@ website_redirects = [
 		"target": "/api/method/mail.api.inbound.pull",
 		"redirect_http_status": 307,
 	},
+	{
+		"source": "/inbound/pull-raw",
+		"target": "/api/method/mail.api.inbound.pull_raw",
+		"redirect_http_status": 307,
+	},
 ]
 
 

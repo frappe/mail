@@ -23,10 +23,10 @@ class EmailParser:
 
 		return message_from_string(message)
 
-	def get_subject(self) -> str:
+	def get_subject(self) -> Optional[str]:
 		"""Returns the decoded subject of the email."""
 
-		return decode_header(self.message["Subject"])[0][0]
+		return decode_header(self.message["Subject"])[0][0] or None
 
 	def get_sender(self) -> tuple[str, str]:
 		"""Returns the display name and email of the sender."""
@@ -120,7 +120,7 @@ class EmailParser:
 						filename, part.get_payload(decode=True), doctype, docname, is_private
 					)
 
-	def get_body(self) -> tuple[str, str]:
+	def get_body(self) -> tuple[str | None, str | None]:
 		"""Returns the HTML and plain text body of the email."""
 
 		body_html, body_plain = "", ""
@@ -143,7 +143,7 @@ class EmailParser:
 				body_html = body_html.replace("cid:" + content_id, file_url)
 				body_plain = body_plain.replace("cid:" + content_id, file_url)
 
-		return body_html, body_plain
+		return body_html or None, body_plain or None
 
 	def get_authentication_results(self) -> dict[str, int | str]:
 		"""Returns the authentication results of the email."""
