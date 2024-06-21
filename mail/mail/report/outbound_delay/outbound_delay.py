@@ -40,7 +40,7 @@ def get_data(filters=None) -> list:
 			OM.message_size,
 			OM.via_api,
 			OM.send_in_batch,
-			OM.created_after,
+			OM.submitted_after,
 			OM.transferred_after,
 			MR.action_after,
 			OM.agent,
@@ -195,7 +195,7 @@ def get_columns() -> list:
 		},
 		{
 			"label": _("Created After"),
-			"fieldname": "created_after",
+			"fieldname": "submitted_after",
 			"fieldtype": "Int",
 			"width": 120,
 		},
