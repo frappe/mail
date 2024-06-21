@@ -1,10 +1,12 @@
 import frappe
 from frappe import _
+from datetime import datetime
 from email.utils import formataddr
+from mail.utils import convert_to_utc
 from typing import Optional, TYPE_CHECKING
-from frappe.utils import now, cint, get_datetime
 from mail.api.auth import validate_user, validate_mailbox
 from mail.utils.validation import validate_mailbox_for_incoming
+from frappe.utils import now, cint, get_datetime, convert_utc_to_system_timezone
 from mail.mail.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
 
 if TYPE_CHECKING:
@@ -23,15 +25,16 @@ def pull(
 	validate_mailbox(mailbox)
 	validate_mailbox_for_incoming(mailbox)
 	validate_max_sync_limit(limit)
-	validate_last_synced_at(last_synced_at)
 
 	result = []
 	source = get_source()
+	last_synced_at = convert_utc_to_stz(last_synced_at)
 	sync_history = get_mail_sync_history(source, frappe.session.user, mailbox)
 	result = get_incoming_mails(
 		mailbox, limit, last_synced_at or sync_history.last_synced_at
 	)
 	update_last_synced_at(sync_history, result["last_synced_at"])
+	result["last_synced_at"] = convert_to_utc(result["last_synced_at"])
 
 	return result
 
@@ -48,15 +51,16 @@ def pull_raw(
 	validate_mailbox(mailbox)
 	validate_mailbox_for_incoming(mailbox)
 	validate_max_sync_limit(limit)
-	validate_last_synced_at(last_synced_at)
 
 	result = []
 	source = get_source()
+	last_synced_at = convert_utc_to_stz(last_synced_at)
 	sync_history = get_mail_sync_history(source, frappe.session.user, mailbox)
 	result = get_raw_incoming_mails(
 		mailbox, limit, last_synced_at or sync_history.last_synced_at
 	)
 	update_last_synced_at(sync_history, result["last_synced_at"])
+	result["last_synced_at"] = convert_to_utc(result["last_synced_at"])
 
 	return result
 
@@ -72,11 +76,11 @@ def validate_max_sync_limit(limit: int) -> None:
 		frappe.throw(_("Cannot fetch more than {0} emails at a time.").format(max_sync_limit))
 
 
-def validate_last_synced_at(last_synced_at: str) -> None:
-	"""Validates the datetime format for last_synced_at."""
+def convert_utc_to_stz(last_synced_at: str) -> Optional["datetime"]:
+	"""Converts the last_synced_at to system timezone."""
 
-	if not get_datetime(last_synced_at):
-		frappe.throw(_("Invalid datetime format for last_synced_at."))
+	if last_synced_at:
+		return convert_utc_to_system_timezone(get_datetime(last_synced_at))
 
 
 def get_source() -> str:
@@ -122,6 +126,7 @@ def get_incoming_mails(
 		mail.pop("processed_at")
 		mail["from"] = formataddr((mail.pop("display_name"), mail.pop("sender")))
 		mail["to"], mail["cc"] = get_recipients(mail)
+		mail["created_at"] = convert_to_utc(mail.created_at)
 
 	return {"mails": mails, "last_synced_at": last_synced_at}
 

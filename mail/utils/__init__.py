@@ -1,11 +1,11 @@
 import re
+import pytz
 import frappe
 import dns.resolver
 from frappe import _
-from typing import Optional, TYPE_CHECKING
-
-if TYPE_CHECKING:
-	from datetime import datetime
+from typing import Optional
+from datetime import datetime
+from frappe.utils import get_system_timezone
 
 
 def get_dns_record(
@@ -38,14 +38,24 @@ def parsedate_to_datetime(
 ) -> "datetime":
 	"""Returns datetime object from parsed date header."""
 
-	import pytz
-	from datetime import datetime
-	from frappe.utils import get_system_timezone
-
 	date_header = re.sub(r"\s+\([A-Z]+\)", "", date_header)
 	dt = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S %z")
 
 	return dt.astimezone(pytz.timezone(to_timezone or get_system_timezone()))
+
+
+def convert_to_utc(
+	date_time: datetime | str, from_timezone: Optional[str] = None
+) -> "datetime":
+	"""Converts the given datetime to UTC timezone."""
+
+	from frappe.utils import get_datetime
+
+	return (
+		pytz.timezone(from_timezone or get_system_timezone())
+		.localize(get_datetime(date_time))
+		.astimezone(pytz.utc)
+	)
 
 
 def convert_html_to_text(html: str) -> str:
