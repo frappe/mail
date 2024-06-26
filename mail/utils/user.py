@@ -32,7 +32,7 @@ def get_user_mailboxes(
 def is_mailbox_owner(mailbox: str, user: str) -> bool:
 	"""Returns True if the mailbox is associated with the user else False."""
 
-	return frappe.db.get_value("Mailbox", mailbox, "user") == user
+	return frappe.get_cached_value("Mailbox", mailbox, "user") == user
 
 
 def get_user_domains(user: str) -> list:

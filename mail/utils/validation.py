@@ -66,7 +66,7 @@ def validate_active_domain(domain_name: str) -> None:
 	if frappe.session.user == "Administrator" or frappe.flags.ingore_domain_validation:
 		return
 
-	enabled, verified = frappe.db.get_value(
+	enabled, verified = frappe.get_cached_value(
 		"Mail Domain", domain_name, ["enabled", "verified"]
 	)
 
@@ -79,7 +79,7 @@ def validate_active_domain(domain_name: str) -> None:
 def validate_mailbox_for_outgoing(mailbox: str) -> None:
 	"""Validates if the mailbox is enabled and allowed for outgoing mail."""
 
-	enabled, status, outgoing = frappe.db.get_value(
+	enabled, status, outgoing = frappe.get_cached_value(
 		"Mailbox", mailbox, ["enabled", "status", "outgoing"]
 	)
 
@@ -96,7 +96,7 @@ def validate_mailbox_for_outgoing(mailbox: str) -> None:
 def validate_mailbox_for_incoming(mailbox: str) -> None:
 	"""Validates if the mailbox is enabled and allowed for incoming mail."""
 
-	enabled, status, incoming = frappe.db.get_value(
+	enabled, status, incoming = frappe.get_cached_value(
 		"Mailbox", mailbox, ["enabled", "status", "incoming"]
 	)
 

@@ -78,7 +78,7 @@ class MailDomain(Document):
 		"""Validates the Outgoing Agent."""
 
 		if self.outgoing_agent:
-			enabled, outgoing = frappe.db.get_value(
+			enabled, outgoing = frappe.get_cached_value(
 				"Mail Agent", self.outgoing_agent, ["enabled", "outgoing"]
 			)
 

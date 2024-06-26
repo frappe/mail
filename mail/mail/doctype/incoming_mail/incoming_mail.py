@@ -85,7 +85,7 @@ class IncomingMail(Document):
 
 		if in_reply_to := parser.get_header("In-Reply-To"):
 			for reply_to_mail_type in ["Outgoing Mail", "Incoming Mail"]:
-				if reply_to_mail_name := frappe.db.get_value(
+				if reply_to_mail_name := frappe.get_cached_value(
 					reply_to_mail_type, in_reply_to, "name"
 				):
 					self.reply_to_mail_type = reply_to_mail_type
