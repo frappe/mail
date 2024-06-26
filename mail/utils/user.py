@@ -19,14 +19,13 @@ def get_user_mailboxes(
 ) -> list:
 	"""Returns the list of mailboxes associated with the user."""
 
-	filters = {
-		"user": user,
-	}
+	MAILBOX = frappe.qb.DocType("Mailbox")
+	query = frappe.qb.from_(MAILBOX).select("name").where(MAILBOX.user == user)
 
 	if type:
-		filters[type.lower()] = 1
+		query.where(MAILBOX[type.lower()] == 1)
 
-	return frappe.db.get_all("Mailbox", filters=filters, pluck="name")
+	return query.run(pluck="name")
 
 
 def is_mailbox_owner(mailbox: str, user: str) -> bool:

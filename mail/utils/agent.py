@@ -8,9 +8,10 @@ def get_random_outgoing_agent() -> str:
 
 	import random
 
-	agents = frappe.db.get_all(
-		"Mail Agent", filters={"enabled": 1, "outgoing": 1}, pluck="name"
-	)
+	MA = frappe.qb.DocType("Mail Agent")
+	agents = (
+		frappe.qb.from_(MA).select(MA.name).where((MA.enabled == 1) & (MA.outgoing == 1))
+	).run(pluck="name")
 
 	if not agents:
 		frappe.throw(_("No enabled outgoing agent found."))
