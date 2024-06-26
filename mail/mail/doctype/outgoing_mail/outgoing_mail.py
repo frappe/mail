@@ -7,7 +7,6 @@ from frappe import _
 from re import finditer
 from email import policy
 from uuid_utils import uuid7
-from bs4 import BeautifulSoup
 from mimetypes import guess_type
 from email.message import Message
 from dkim import sign as dkim_sign
@@ -104,7 +103,7 @@ class OutgoingMail(Document):
 		if frappe.session.user == "Administrator":
 			return
 
-		enabled, verified = frappe.db.get_value(
+		enabled, verified = frappe.get_cached_value(
 			"Mail Domain", self.domain_name, ["enabled", "verified"]
 		)
 
@@ -202,11 +201,14 @@ class OutgoingMail(Document):
 	def load_attachments(self) -> None:
 		"""Loads the attachments."""
 
-		self.attachments = frappe.db.get_all(
-			"File",
-			fields=["name", "file_name", "file_url", "is_private", "file_size"],
-			filters={"attached_to_doctype": self.doctype, "attached_to_name": self.name},
-		)
+		FILE = frappe.qb.DocType("File")
+		self.attachments = (
+			frappe.qb.from_(FILE)
+			.select(FILE.name, FILE.file_name, FILE.file_url, FILE.is_private, FILE.file_size)
+			.where(
+				(FILE.attached_to_doctype == self.doctype) & (FILE.attached_to_name == self.name)
+			)
+		).run(as_dict=True)
 
 		for attachment in self.attachments:
 			attachment.type = "attachment"
@@ -253,8 +255,8 @@ class OutgoingMail(Document):
 	def set_agent(self) -> None:
 		"""Sets the Agent."""
 
-		outgoing_agent = frappe.db.get_value(
-			"Mail Domain", self.domain_name, "outgoing_agent", cache=True
+		outgoing_agent = frappe.get_cached_value(
+			"Mail Domain", self.domain_name, "outgoing_agent"
 		)
 		self.agent = outgoing_agent or get_random_outgoing_agent()
 
@@ -291,7 +293,7 @@ class OutgoingMail(Document):
 				self.raw_html = self.body_html = self.body_plain = self.raw_message = None
 
 				if parser.get_date() > now():
-					frappe.throw(_("Invalid date in the email."))
+					frappe.throw(_("Future date is not allowed."))
 
 				self.subject = parser.get_subject()
 				self.reply_to = parser.get_header("Reply-To")
@@ -310,7 +312,7 @@ class OutgoingMail(Document):
 				message["Reply-To"] = self.reply_to
 
 			if self.reply_to_mail_name:
-				if in_reply_to := frappe.db.get_value(
+				if in_reply_to := frappe.get_cached_value(
 					self.reply_to_mail_type, self.reply_to_mail_name, "message_id"
 				):
 					message["In-Reply-To"] = in_reply_to
@@ -407,7 +409,6 @@ class OutgoingMail(Document):
 				include_headers=include_headers,
 			)
 			dkim_header = dkim_signature.decode().replace("\n", "").replace("\r", "")
-
 			message["DKIM-Signature"] = dkim_header[len("DKIM-Signature: ") :]
 
 		message = _get_message()
@@ -448,7 +449,7 @@ class OutgoingMail(Document):
 			mail_contact = frappe.db.exists("Mail Contact", {"user": user, "email": email})
 
 			if mail_contact:
-				current_display_name = frappe.db.get_value(
+				current_display_name = frappe.get_cached_value(
 					"Mail Contact", mail_contact, "display_name"
 				)
 				if display_name != current_display_name:
@@ -460,20 +461,16 @@ class OutgoingMail(Document):
 				doc.display_name = display_name
 				doc.insert()
 
-	def _add_recipients(
-		self, type: str, recipients: Optional[str | list[str]] = None
-	) -> None:
+	def _add_recipient(self, type: str, recipient: str | list[str]) -> None:
 		"""Adds the recipients."""
 
-		if recipients:
-			if isinstance(recipients, str):
-				recipients = [recipients]
-
-			for recipient in recipients:
-				display_name, email = parseaddr(recipient)
+		if recipient:
+			recipients = [recipient] if isinstance(recipient, str) else recipient
+			for rcpt in recipients:
+				display_name, email = parseaddr(rcpt)
 
 				if not email:
-					frappe.throw(_("Invalid format for recipient {0}.").format(frappe.bold(recipient)))
+					frappe.throw(_("Invalid format for recipient {0}.").format(frappe.bold(rcpt)))
 
 				self.append(
 					"recipients", {"type": type, "email": email, "display_name": display_name}
@@ -493,10 +490,11 @@ class OutgoingMail(Document):
 
 		return recipients if as_list else ", ".join(recipients)
 
-	def _add_attachments(self, attachments: Optional[list[dict]] = None) -> None:
+	def _add_attachment(self, attachment: dict | list[dict]) -> None:
 		"""Adds the attachments."""
 
-		if attachments:
+		if attachment:
+			attachments = [attachment] if isinstance(attachment, dict) else attachment
 			for a in attachments:
 				filename = a.get("filename")
 				content = a["content"]
@@ -515,7 +513,7 @@ class OutgoingMail(Document):
 				if filename and filename != file.file_name:
 					file.db_set("file_name", filename, update_modified=False)
 
-	def _add_custom_headers(self, headers: Optional[dict] = None) -> None:
+	def _add_custom_headers(self, headers: dict) -> None:
 		"""Adds the custom headers."""
 
 		if headers and isinstance(headers, dict):
@@ -677,18 +675,15 @@ def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":
 def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
 	"""Adds the tracking pixel to the HTML body."""
 
-	soup = BeautifulSoup(body_html, "html.parser")
 	src = f"{frappe.utils.get_url()}/api/method/mail.api.track.open?id={tracking_id}"
-	tracking_pixel = soup.new_tag(
-		"img", src=src, width="1", height="1", style="display:none;"
-	)
+	tracking_pixel = f'<img src="{src}" width="1" height="1" style="display:none;">'
 
-	if not soup.body:
-		body_html = f"<html><body>{body_html}</body></html>"
-		soup = BeautifulSoup(body_html, "html.parser")
+	if "<body>" in body_html:
+		body_html = body_html.replace("<body>", f"<body>{tracking_pixel}", 1)
+	else:
+		body_html = f"<html><body>{tracking_pixel}{body_html}</body></html>"
 
-	soup.body.insert(0, tracking_pixel)
-	return str(soup)
+	return body_html
 
 
 def create_outgoing_mail(
@@ -714,9 +709,9 @@ def create_outgoing_mail(
 	doc: OutgoingMail = frappe.new_doc("Outgoing Mail")
 	doc.sender = sender
 	doc.display_name = display_name
-	doc._add_recipients("To", to)
-	doc._add_recipients("Cc", cc)
-	doc._add_recipients("Bcc", bcc)
+	doc._add_recipient("To", to)
+	doc._add_recipient("Cc", cc)
+	doc._add_recipient("Bcc", bcc)
 	doc.subject = subject
 	doc.raw_html = raw_html
 	doc.track = track
@@ -728,7 +723,7 @@ def create_outgoing_mail(
 
 	if not do_not_save:
 		doc.save()
-		doc._add_attachments(attachments)
+		doc._add_attachment(attachments)
 		if not do_not_submit:
 			doc.submit()
 
