@@ -11,7 +11,7 @@ def send() -> str:
 	"""Send Mail."""
 
 	data = get_decoded_data()
-	validate_mail(data)
+	validate_mail(data, mandatory_fields=["from", "to", "subject"])
 	mail = get_mail_dict(data)
 	doc = create_outgoing_mail(**mail)
 
@@ -39,7 +39,7 @@ def send_raw() -> str:
 	"""Send Raw Mail."""
 
 	data = get_decoded_data()
-	validate_raw(data)
+	validate_mail(data, mandatory_fields=["from", "to", "raw_message"])
 	mail = get_mail_dict(data)
 	doc = create_outgoing_mail(**mail)
 
@@ -52,13 +52,12 @@ def get_decoded_data() -> Any:
 	return json.loads(frappe.request.data.decode())
 
 
-def validate_mail(data: Any) -> None:
+def validate_mail(data: Any, mandatory_fields: list) -> None:
 	"""Validates the mail data."""
 
 	if not data or not isinstance(data, dict):
 		raise frappe.ValidationError("Invalid Data")
 
-	mandatory_fields = ["from", "to", "subject"]
 	validate_mandatory_fields(data, mandatory_fields)
 
 
@@ -72,17 +71,7 @@ def validate_batch(data: Any) -> None:
 		raise frappe.ValidationError("Batch size cannot exceed 100.")
 
 	for mail in data:
-		validate_mail(mail)
-
-
-def validate_raw(data: Any) -> None:
-	"""Validates the raw data."""
-
-	if not data or not isinstance(data, dict):
-		raise frappe.ValidationError("Invalid Data")
-
-	mandatory_fields = ["from", "to", "raw_message"]
-	validate_mandatory_fields(data, mandatory_fields)
+		validate_mail(mail, ["from", "to"])
 
 
 def validate_mandatory_fields(data: dict, fields: list[str]) -> None:
