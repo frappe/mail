@@ -3,9 +3,10 @@ import pytz
 import frappe
 import dns.resolver
 from frappe import _
-from typing import Optional
 from datetime import datetime
+from typing import Callable, Optional
 from frappe.utils import get_system_timezone
+from frappe.utils.background_jobs import get_jobs
 
 
 def get_dns_record(
@@ -84,3 +85,11 @@ def get_in_reply_to(message_id: str) -> tuple[str, str] | tuple[None, None]:
 				return reply_to_mail_type, reply_to_mail_name
 
 	return None, None
+
+
+def enqueue_job(method: str | Callable, **kwargs) -> None:
+	"""Enqueues a background job."""
+
+	jobs = get_jobs()
+	if not jobs or method not in jobs[frappe.local.site]:
+		frappe.enqueue(method, **kwargs)

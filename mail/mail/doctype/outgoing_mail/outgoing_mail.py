@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import json
+import redis
 import frappe
 from frappe import _
 from re import finditer
@@ -953,3 +954,32 @@ def sync_outgoing_mails_status_on_end(agent_job: "MailAgentJob") -> None:
 								recipient.db_update()
 
 						doc._db_set(status=oml["status"], notify_update=True)
+
+
+def process_mail_submission_queue(batch_size: int = 500):
+	"""Called by the scheduler to process the mail submission queue."""
+
+	rclient = redis.Redis.from_url(frappe.local.conf.redis_queue)
+	while True:
+		mails_processed = 0
+
+		for x in range(min(batch_size, 500)):
+			mail = rclient.rpop("mail_submission_queue")
+
+			if not mail:
+				break
+
+			mail = json.loads(mail)
+			try:
+				create_outgoing_mail(**mail)
+			except Exception:
+				frappe.log_error(
+					title="process_mail_submission_queue", message=frappe.get_traceback()
+				)
+
+			mails_processed += 1
+
+		if mails_processed == 0:
+			break
+
+		frappe.db.commit()
