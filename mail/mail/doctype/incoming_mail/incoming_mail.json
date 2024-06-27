@@ -5,8 +5,8 @@
  "engine": "InnoDB",
  "field_order": [
   "folder",
-  "display_name",
   "sender",
+  "display_name",
   "reply_to",
   "column_break_hpzu",
   "reply_to_mail_type",
@@ -279,7 +279,7 @@
    "depends_on": "eval: doc.message_size",
    "fieldname": "message_size",
    "fieldtype": "Int",
-   "label": "Message Size",
+   "label": "Message Size (Bytes)",
    "no_copy": 1,
    "non_negative": 1,
    "read_only": 1
@@ -362,7 +362,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-18 09:52:31.439837",
+ "modified": "2024-06-27 21:30:05.005576",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

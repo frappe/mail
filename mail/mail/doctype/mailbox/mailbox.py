@@ -20,6 +20,7 @@ class Mailbox(Document):
 		self.validate_email()
 		self.validate_domain()
 		self.validate_display_name()
+		self.validate_default_mailbox()
 
 	def on_update(self) -> None:
 		enabled = self.enabled and self.incoming
@@ -47,6 +48,16 @@ class Mailbox(Document):
 
 		if self.is_new() and not self.display_name:
 			self.display_name = frappe.db.get_value("User", self.user, "full_name")
+
+	def validate_default_mailbox(self) -> None:
+		filters = {"user": self.user, "default": 1, "name": ["!=", self.name]}
+		has_default_mailbox = frappe.db.exists("Mailbox", filters)
+
+		if self.default:
+			if has_default_mailbox:
+				frappe.db.set_value("Mailbox", filters, "default", 0)
+		elif not has_default_mailbox:
+			self.default = 1
 
 	def validate_against_mail_alias(self) -> None:
 		"""Validates if the mailbox is linked with an active Mail Alias."""

@@ -441,6 +441,9 @@ class OutgoingMail(Document):
 	def create_mail_contacts(self) -> None:
 		"""Creates the mail contacts."""
 
+		if not frappe.get_cached_value("Mailbox", self.sender, "create_mail_contact"):
+			return
+
 		user = frappe.session.user
 		recipient_map = {
 			recipient.email: recipient.display_name for recipient in self.recipients
@@ -643,6 +646,24 @@ def get_sender(
 		query = query.where(MAILBOX.user == user)
 
 	return query.run(as_dict=False)
+
+
+@frappe.whitelist()
+def get_default_sender() -> Optional[str]:
+	"""Returns the default sender."""
+
+	user = frappe.session.user
+	return frappe.db.get_value(
+		"Mailbox",
+		{
+			"user": user,
+			"enabled": 1,
+			"default": 1,
+			"outgoing": 1,
+			"status": "Active",
+		},
+		"name",
+	)
 
 
 @frappe.whitelist()

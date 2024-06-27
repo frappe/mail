@@ -5,9 +5,10 @@
  "engine": "InnoDB",
  "field_order": [
   "folder",
-  "display_name",
   "sender",
+  "display_name",
   "reply_to",
+  "track",
   "column_break_9ywf",
   "reply_to_mail_type",
   "reply_to_mail_name",
@@ -17,12 +18,10 @@
   "section_break_atoq",
   "custom_headers",
   "section_break_ijwo",
-  "track",
   "body_html",
   "raw_html",
-  "body_plain",
-  "section_break_4dyb",
   "raw_message",
+  "body_plain",
   "section_break_ubzr",
   "error_log",
   "more_info_tab",
@@ -155,7 +154,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: !doc.raw_html",
+   "depends_on": "eval: !doc.raw_html && !doc.raw_message",
    "fieldname": "body_html",
    "fieldtype": "Text Editor",
    "label": "Body HTML",
@@ -196,10 +195,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "section_break_4dyb",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "created_at",
    "fieldtype": "Datetime",
    "label": "Created At",
@@ -208,6 +203,7 @@
    "search_index": 1
   },
   {
+   "depends_on": "eval: !doc.raw_message",
    "fieldname": "raw_html",
    "fieldtype": "Code",
    "label": "Raw HTML",
@@ -234,7 +230,7 @@
    "depends_on": "eval: doc.message_size",
    "fieldname": "message_size",
    "fieldtype": "Int",
-   "label": "Message Size",
+   "label": "Message Size (Bytes)",
    "no_copy": 1,
    "non_negative": 1,
    "read_only": 1
@@ -339,8 +335,11 @@
   {
    "default": "0",
    "depends_on": "eval: doc.docstatus == 0",
+   "fetch_from": "sender.track_outgoing_mail",
+   "fetch_if_empty": 1,
    "fieldname": "track",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Track",
    "search_index": 1
   },
@@ -363,6 +362,9 @@
    "search_index": 1
   },
   {
+   "depends_on": "eval: doc.sender",
+   "fetch_from": "sender.reply_to",
+   "fetch_if_empty": 1,
    "fieldname": "reply_to",
    "fieldtype": "Data",
    "ignore_xss_filter": 1,
@@ -400,6 +402,7 @@
    "search_index": 1
   },
   {
+   "depends_on": "eval: doc.submitted_at",
    "description": "Submitted At - Created At",
    "fieldname": "submitted_after",
    "fieldtype": "Int",
@@ -429,7 +432,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-20 17:31:03.326730",
+ "modified": "2024-06-27 23:06:17.072405",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

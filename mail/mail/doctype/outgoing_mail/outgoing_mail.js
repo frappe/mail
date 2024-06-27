@@ -9,6 +9,7 @@ frappe.ui.form.on("Outgoing Mail", {
 	refresh(frm) {
         frm.trigger("hide_amend_button");
         frm.trigger("add_actions");
+        frm.trigger("set_sender");
 	},
 
     set_queries(frm) {
@@ -47,6 +48,19 @@ frappe.ui.form.on("Outgoing Mail", {
                     frm.events.reply(frm, all=true);
                 }, __("Actions"));
             }
+        }
+    },
+
+    set_sender(frm) {
+        if (!frm.doc.sender) {
+            frappe.call({
+                method: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_default_sender",
+                callback: (r) => {
+                    if (r.message) {
+                        frm.set_value("sender", r.message);
+                    }
+                }
+            });
         }
     },
 

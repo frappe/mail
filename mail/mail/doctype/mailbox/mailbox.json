@@ -11,11 +11,15 @@
   "column_break_1jeq",
   "status",
   "section_break_yute",
-  "domain_name",
+  "default",
+  "track_outgoing_mail",
+  "create_mail_contact",
   "column_break_9etf",
+  "domain_name",
   "user",
   "email",
-  "display_name"
+  "display_name",
+  "reply_to"
  ],
  "fields": [
   {
@@ -106,6 +110,32 @@
    "label": "Outgoing",
    "no_copy": 1,
    "permlevel": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "track_outgoing_mail",
+   "fieldtype": "Check",
+   "label": "Track Outgoing Mail"
+  },
+  {
+   "default": "0",
+   "fieldname": "create_mail_contact",
+   "fieldtype": "Check",
+   "label": "Create Mail Contact"
+  },
+  {
+   "default": "0",
+   "fieldname": "default",
+   "fieldtype": "Check",
+   "label": "Default Mailbox",
+   "search_index": 1
+  },
+  {
+   "fieldname": "reply_to",
+   "fieldtype": "Data",
+   "ignore_xss_filter": 1,
+   "label": "Reply To",
+   "length": 255
   }
  ],
  "index_web_pages_for_search": 1,
@@ -126,7 +156,7 @@
    "link_fieldname": "sender"
   }
  ],
- "modified": "2024-05-27 13:56:45.934938",
+ "modified": "2024-06-27 22:54:44.034081",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",
