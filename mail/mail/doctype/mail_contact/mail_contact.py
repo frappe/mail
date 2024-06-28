@@ -65,3 +65,9 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 		return ""
 
 	return f"(`tabMail Contact`.`user` = {frappe.db.escape(user)})"
+
+
+def on_doctype_update():
+	frappe.db.add_unique(
+		"Mail Contact", ["user", "email"], constraint_name="unique_user_email"
+	)
