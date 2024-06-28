@@ -191,6 +191,7 @@ class OutgoingMail(Document):
 					)
 				)
 
+			custom_headers = []
 			for header in self.custom_headers:
 				if not header.key.upper().startswith("X-"):
 					header.key = f"X-{header.key}"
@@ -199,6 +200,15 @@ class OutgoingMail(Document):
 					frappe.throw(
 						_("Custom header {0} is not allowed.").format(frappe.bold(header.key))
 					)
+
+				if header.key in custom_headers:
+					frappe.throw(
+						_("Row #{0}: Duplicate custom header {1}.").format(
+							header.idx, frappe.bold(header.key)
+						)
+					)
+				else:
+					custom_headers.append(header.key)
 
 	def load_attachments(self) -> None:
 		"""Loads the attachments."""
