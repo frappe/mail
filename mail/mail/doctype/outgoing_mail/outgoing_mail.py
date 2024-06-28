@@ -24,12 +24,12 @@ from mail.utils.email_parser import EmailParser
 from frappe.utils.file_manager import save_file
 from mail.utils.agent import get_random_outgoing_agent
 from frappe.utils.password import get_decrypted_password
+from mail.utils.validation import validate_mailbox_for_outgoing
 from email.utils import parseaddr, make_msgid, formataddr, formatdate
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.utils import get_in_reply_to, convert_html_to_text, parsedate_to_datetime
 from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
-from mail.utils.validation import validate_mail_folder, validate_mailbox_for_outgoing
 from frappe.utils import (
 	flt,
 	now,
@@ -92,12 +92,16 @@ class OutgoingMail(Document):
 	def validate_folder(self) -> None:
 		"""Validates the folder"""
 
+		folder = self.folder
 		if self.docstatus == 0:
-			self.folder = "Drafts"
-		elif self.docstatus == 1 and self.folder == "Drafts":
-			self.folder = "Sent"
-		elif self.has_value_changed("folder"):
-			validate_mail_folder(self.folder, validate_for="outbound")
+			folder = "Drafts"
+		elif folder == "Drafts":
+			folder = "Sent"
+
+		if self.get("_action") == "update_after_submit":
+			self._db_set(folder=folder, notify_update=True)
+		else:
+			self.folder = folder
 
 	def validate_domain(self) -> None:
 		"""Validates the domain."""

@@ -10,7 +10,6 @@ from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 from mail.utils.email_parser import EmailParser
 from frappe.utils import now, time_diff_in_seconds
-from mail.utils.validation import validate_mail_folder
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.core.doctype.submission_queue.submission_queue import queue_submission
@@ -32,16 +31,12 @@ class IncomingMail(Document):
 
 	def validate(self) -> None:
 		self.validate_mandatory_fields()
-		self.validate_folder()
 
 		if self.get("_action") == "submit":
 			self.process()
 
 	def on_submit(self) -> None:
 		self.create_mail_contact()
-
-	def on_update_after_submit(self) -> None:
-		self.validate_folder()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
@@ -58,12 +53,6 @@ class IncomingMail(Document):
 		for field in mandatory_fields:
 			if not self.get(field):
 				frappe.throw(_("{0} is mandatory").format(frappe.bold(field)))
-
-	def validate_folder(self) -> None:
-		"""Validates the folder"""
-
-		if self.has_value_changed("folder"):
-			validate_mail_folder(self.folder, validate_for="inbound")
 
 	def process(self) -> None:
 		"""Processes the Incoming Mail."""

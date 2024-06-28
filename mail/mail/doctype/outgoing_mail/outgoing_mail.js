@@ -16,10 +16,6 @@ frappe.ui.form.on("Outgoing Mail", {
         frm.set_query("sender", () => ({
             query: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_sender",
         }));
-
-        frm.set_query("folder", () => ({
-            filters: { outbound: 1 }
-        }));
     },
 
     hide_amend_button(frm) {

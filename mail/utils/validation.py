@@ -108,15 +108,3 @@ def validate_mailbox_for_incoming(mailbox: str) -> None:
 		frappe.throw(
 			_("Mailbox {0} is not allowed for Incoming Mail.").format(frappe.bold(mailbox))
 		)
-
-
-def validate_mail_folder(
-	folder: str, validate_for: Literal["inbound", "outbound"]
-) -> None:
-	"""Validates if the folder is an inbound or outbound folder."""
-
-	if not frappe.get_cached_value("Mail Folder", folder, validate_for):
-		folder_name = frappe.get_cached_value("Mail Folder", folder, "folder_name")
-		frappe.throw(
-			_("Folder {0} is not an {1} folder.").format(frappe.bold(folder_name), validate_for)
-		)

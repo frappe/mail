@@ -285,7 +285,6 @@ default_log_clearing_doctypes = {"Mail Agent Job": 7}
 
 fixtures = [
 	"Mail Agent Job Type",
-	"Mail Folder",
 	{
 		"dt": "Role",
 		"filters": [["role_name", "in", ["Postmaster", "Mailbox User", "Domain Owner"]]],
