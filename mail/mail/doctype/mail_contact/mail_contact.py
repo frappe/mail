@@ -31,6 +31,25 @@ class MailContact(Document):
 			)
 
 
+def create_mail_contact(
+	user: str, email: str, display_name: Optional[str] = None
+) -> None:
+	"""Creates the mail contact."""
+
+	if mail_contact := frappe.db.exists("Mail Contact", {"user": user, "email": email}):
+		current_display_name = frappe.get_cached_value(
+			"Mail Contact", mail_contact, "display_name"
+		)
+		if display_name != current_display_name:
+			frappe.db.set_value("Mail Contact", mail_contact, "display_name", display_name)
+	else:
+		doc = frappe.new_doc("Mail Contact")
+		doc.user = user
+		doc.email = email
+		doc.display_name = display_name
+		doc.insert()
+
+
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Mail Contact":
 		return False

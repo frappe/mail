@@ -11,6 +11,7 @@ from frappe.model.document import Document
 from mail.utils.email_parser import EmailParser
 from frappe.utils import now, time_diff_in_seconds
 from mail.utils.validation import validate_mail_folder
+from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from frappe.core.doctype.submission_queue.submission_queue import queue_submission
 from mail.utils.user import (
@@ -35,6 +36,9 @@ class IncomingMail(Document):
 
 		if self.get("_action") == "submit":
 			self.process()
+
+	def on_submit(self) -> None:
+		self.create_mail_contact()
 
 	def on_update_after_submit(self) -> None:
 		self.validate_folder()
@@ -96,6 +100,15 @@ class IncomingMail(Document):
 		self.processed_at = now()
 		self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
 		self.processed_after = time_diff_in_seconds(self.processed_at, self.received_at)
+
+	def create_mail_contact(self) -> None:
+		"""Creates the mail contact."""
+
+		if ("dmarc@" not in self.receiver) and frappe.get_cached_value(
+			"Mailbox", self.receiver, "create_mail_contact"
+		):
+			user = frappe.get_cached_value("Mailbox", self.receiver, "user")
+			create_mail_contact(user, self.sender, self.display_name)
 
 
 @frappe.whitelist()

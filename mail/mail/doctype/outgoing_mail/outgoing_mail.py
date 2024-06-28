@@ -25,6 +25,7 @@ from frappe.utils.file_manager import save_file
 from mail.utils.agent import get_random_outgoing_agent
 from frappe.utils.password import get_decrypted_password
 from email.utils import parseaddr, make_msgid, formataddr, formatdate
+from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.utils import get_in_reply_to, convert_html_to_text, parsedate_to_datetime
 from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
@@ -441,29 +442,10 @@ class OutgoingMail(Document):
 	def create_mail_contacts(self) -> None:
 		"""Creates the mail contacts."""
 
-		if not frappe.get_cached_value("Mailbox", self.sender, "create_mail_contact"):
-			return
-
-		user = frappe.session.user
-		recipient_map = {
-			recipient.email: recipient.display_name for recipient in self.recipients
-		}
-
-		for email, display_name in recipient_map.items():
-			mail_contact = frappe.db.exists("Mail Contact", {"user": user, "email": email})
-
-			if mail_contact:
-				current_display_name = frappe.get_cached_value(
-					"Mail Contact", mail_contact, "display_name"
-				)
-				if display_name != current_display_name:
-					frappe.db.set_value("Mail Contact", mail_contact, "display_name", display_name)
-			else:
-				doc = frappe.new_doc("Mail Contact")
-				doc.user = user
-				doc.email = email
-				doc.display_name = display_name
-				doc.insert()
+		if frappe.get_cached_value("Mailbox", self.sender, "create_mail_contact"):
+			user = frappe.get_cached_value("Mailbox", self.sender, "user")
+			for recipient in self.recipients:
+				create_mail_contact(user, recipient.email, recipient.display_name)
 
 	def _add_recipient(self, type: str, recipient: str | list[str]) -> None:
 		"""Adds the recipients."""
