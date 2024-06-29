@@ -56,5 +56,7 @@ def get_mail_sync_history(source: str, user: str, mailbox: str) -> "MailSyncHist
 
 def on_doctype_update():
 	frappe.db.add_unique(
-		"Mail Sync History", ["mailbox", "source"], constraint_name="unique_mailbox_source"
+		"Mail Sync History",
+		["source", "user", "mailbox"],
+		constraint_name="unique_source_user_mailbox",
 	)
