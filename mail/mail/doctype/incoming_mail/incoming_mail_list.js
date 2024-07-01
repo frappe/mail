@@ -22,10 +22,10 @@ function sync_incoming_mails(listview) {
 	frappe.call({
 		method: "mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails",
 		freeze: true,
-		freeze_message: __("Receiving Mails..."),
+		freeze_message: __("Creating Mail Agent Job..."),
 		callback: () => {
 			frappe.show_alert({
-				message: __("Sync Incoming Mails Job has been started in the background."),
+				message: __("{0} job has been created.", [__("Sync Mails").bold()]),
 				indicator: "green",
 			});
 		}

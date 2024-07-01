@@ -81,10 +81,10 @@ frappe.ui.form.on("Outgoing Mail", {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Getting Delivery Status..."),
+			freeze_message: __("Creating Mail Agent Job..."),
 			callback: () => {
                 frappe.show_alert({
-                    message: __("Sync Outgoing Mails Status Job has been started in the background."),
+                    message: __("{0} job has been created.", [__("Sync Status").bold()]),
                     indicator: "green",
                 });
             }

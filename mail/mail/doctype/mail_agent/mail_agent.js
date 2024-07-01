@@ -53,10 +53,10 @@ frappe.ui.form.on("Mail Agent", {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Syncing Outgoing Mails Status..."),
+			freeze_message: __("Creating Mail Agent Job..."),
 			callback: () => {
 				frappe.show_alert({
-					message: __("Sync Outgoing Mails Status Job has been started in the background."),
+					message: __("{0} job has been created.", [__("Sync Status").bold()]),
 					indicator: "green",
 				});
 			}
@@ -70,10 +70,10 @@ frappe.ui.form.on("Mail Agent", {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Syncing Incoming Mails..."),
+			freeze_message: __("Creating Mail Agent Job..."),
 			callback: () => {
 				frappe.show_alert({
-					message: __("Sync Incoming Mails Job has been started in the background."),
+					message: __("{0} job has been created.", [__("Sync Mails").bold()]),
 					indicator: "green",
 				});
 			}
@@ -87,10 +87,10 @@ frappe.ui.form.on("Mail Agent", {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Syncing Mail Domains..."),
+			freeze_message: __("Creating Mail Agent Job..."),
 			callback: () => {
 				frappe.show_alert({
-					message: __("Sync Mail Domains Job has been started in the background."),
+					message: __("{0} job has been created.", [__("Sync Mail Domains").bold()]),
 					indicator: "green",
 				});
 			}
@@ -104,10 +104,10 @@ frappe.ui.form.on("Mail Agent", {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Syncing Mailboxes..."),
+			freeze_message: __("Creating Mail Agent Job..."),
 			callback: () => {
 				frappe.show_alert({
-					message: __("Sync Mailboxes Job has been started in the background."),
+					message: __("{0} job has been created.", [__("Sync Mailboxes").bold()]),
 					indicator: "green",
 				});
 			}
@@ -121,10 +121,10 @@ frappe.ui.form.on("Mail Agent", {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Syncing Mail Aliases..."),
+			freeze_message: __("Creating Mail Agent Job..."),
 			callback: () => {
 				frappe.show_alert({
-					message: __("Sync Mail Aliases Job has been started in the background."),
+					message: __("{0} job has been created.", [__("Sync Mail Aliases").bold()]),
 					indicator: "green",
 				});
 			}
