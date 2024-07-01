@@ -41,19 +41,34 @@ def get_translations():
 	return get_all_translations(language)
 
 @frappe.whitelist()
-def get_incoming_mails():
+def get_incoming_mails(start=0):
 	mails = frappe.get_all("Incoming Mail", {
 		"receiver": frappe.session.user,
+		"docstatus": 1
 	}, ["name", "receiver", "sender", "body_html", "body_plain", "display_name", "subject"],
-	limit=20,
-	order_by="creation desc")
+	limit=50,
+	start=start,
+	order_by="created_at desc")
 
 	for mail in mails:
 		mail.latest_content = get_latest_content(mail.body_html, mail.body_plain)
 		mail.snippet = get_snippet(mail.latest_content) if mail.latest_content else ""
-		
-		if mail.name == "IM47794":
-			print(mail.snippet)
+
+	return mails
+
+@frappe.whitelist()
+def get_outgoing_mails(start=0):
+	mails = frappe.get_all("Outgoing Mail", {
+		"sender": frappe.session.user,
+		"docstatus": 1
+	}, ["name", "subject", "sender", "body_html", "body_plain"],
+	limit=50,
+	start=start,
+	order_by="created_at desc")
+
+	for mail in mails:
+		mail.latest_content = get_latest_content(mail.body_html, mail.body_plain)
+		mail.snippet = get_snippet(mail.latest_content) if mail.latest_content else ""
 
 	return mails
 
@@ -84,3 +99,29 @@ def get_snippet(content):
 		return ' '.join(words[:50])
 	else:
 		return ' '.join(content.split()[:50])
+	
+
+@frappe.whitelist()
+def get_mail_details(name, type):
+	fields = ["name", "subject", "body_html", "body_plain", "sender"]
+	if type == "Incoming Mail":
+		fields += ["receiver", "display_name"]
+	
+	mail = frappe.db.get_value(type, name, fields, as_dict=1)
+	
+	if not mail.display_name:
+		mail.display_name = frappe.db.get_value("User", mail.sender, "full_name")
+
+	mail.user_image = frappe.db.get_value("User", mail.sender, "user_image")
+	mail.latest_content = get_latest_content(mail.body_html, mail.body_plain)
+
+	if mail.body_html:
+		mail.body_html = extract_email_body(mail.body_html)
+	return mail
+
+def extract_email_body(html):
+	soup = BeautifulSoup(html, 'html.parser')
+	email_body = soup.find("table", class_='email-body')
+	if email_body:
+		return email_body.find('div').prettify()
+	return html

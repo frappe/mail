@@ -3,17 +3,22 @@ import { userStore } from '@/stores/user'
 import { sessionStore } from '@/stores/session'
 
 const routes = [
- /*  {
+  {
     path: '/',
     redirect: {
       name: 'Inbox',
     },
-  }, */
+  },
   {
     path: '/inbox',
     name: 'Inbox',
     component: () => import('@/pages/Inbox.vue'),
   },
+  {
+    path: '/sent',
+    name: 'Sent',
+    component: () => import('@/pages/Sent.vue'),
+  }
 ]
 
 let router = createRouter({
@@ -21,7 +26,7 @@ let router = createRouter({
   routes,
 })
 
-/* router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const { userResource } = userStore()
   const { isLoggedIn } = sessionStore()
 
@@ -32,6 +37,5 @@ let router = createRouter({
   } else {
     next()
   }
-  return next()
-}) */
+})
 export default router

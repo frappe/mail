@@ -54,7 +54,7 @@ const props = defineProps({
 function handleClick() {
     if (router.hasRoute(props.link.to)) {
         router.push({ name: props.link.to })
-    } else {
+    } else if (props.link.to) {
         window.location.href = `/${props.link.to}`
     }
 }
