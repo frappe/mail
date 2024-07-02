@@ -199,10 +199,10 @@ scheduler_events = {
 	# ],
 	"cron": {
 		"*/1 * * * *": [
-			"mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails",
-			"mail.mail.doctype.outgoing_mail.outgoing_mail.process_mail_submission_queue",
+			"mail.mail.doctype.outgoing_mail.outgoing_mail.enqueue_process_outgoing_mail_queue",
 		],
-		"*/3 * * * *": [
+		"*/2 * * * *": [
+			"mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails",
 			"mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails",
 			"mail.mail.doctype.outgoing_mail.outgoing_mail.sync_outgoing_mails_status",
 		],

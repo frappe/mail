@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 import json
-import redis
 import frappe
 from frappe import _
 from re import finditer
@@ -973,15 +972,17 @@ def sync_outgoing_mails_status_on_end(agent_job: "MailAgentJob") -> None:
 						doc._db_set(status=oml["status"], notify_update=True)
 
 
-def process_mail_submission_queue(batch_size: int = 500):
-	"""Called by the scheduler to process the mail submission queue."""
+def process_outgoing_mail_queue(batch_size: int = 500):
+	"""Processes the mail submission queue."""
 
-	rclient = redis.Redis.from_url(frappe.local.conf.redis_queue)
+	from frappe.utils.background_jobs import get_redis_connection_without_auth
+
+	rclient = get_redis_connection_without_auth()
 	while True:
 		mails_processed = 0
 
 		for x in range(min(batch_size, 500)):
-			mail = rclient.rpop("mail_submission_queue")
+			mail = rclient.rpop("mail:outgoing_mail_queue")
 
 			if not mail:
 				break
@@ -991,7 +992,7 @@ def process_mail_submission_queue(batch_size: int = 500):
 				create_outgoing_mail(**mail)
 			except Exception:
 				frappe.log_error(
-					title="process_mail_submission_queue", message=frappe.get_traceback()
+					title="process_outgoing_mail_queue", message=frappe.get_traceback()
 				)
 
 			mails_processed += 1
@@ -1000,3 +1001,12 @@ def process_mail_submission_queue(batch_size: int = 500):
 			break
 
 		frappe.db.commit()
+
+
+def enqueue_process_outgoing_mail_queue():
+	"""Enqueues the `process_outgoing_mail_queue` job."""
+
+	from mail.utils import enqueue_job
+
+	enqueue_job(process_outgoing_mail_queue, queue="long")
+	enqueue_job(transfer_mails, queue="short")

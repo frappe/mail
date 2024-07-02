@@ -1,11 +1,13 @@
 import json
-import redis
 import frappe
 from typing import Any
 from frappe.utils import cint
 from email.utils import parseaddr
-from mail.utils import enqueue_job
-from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
+from frappe.utils.background_jobs import get_redis_connection_without_auth
+from mail.mail.doctype.outgoing_mail.outgoing_mail import (
+	create_outgoing_mail,
+	enqueue_process_outgoing_mail_queue,
+)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -27,14 +29,12 @@ def send_batch() -> None:
 	data = get_decoded_data()
 	validate_batch(data)
 
-	rclient = redis.Redis.from_url(frappe.local.conf.redis_queue)
+	rclient = get_redis_connection_without_auth()
 	for mail in data:
 		mail = get_mail_dict(mail, send_in_batch=1)
-		rclient.lpush("mail_submission_queue", json.dumps(mail))
+		rclient.lpush("mail:outgoing_mail_queue", json.dumps(mail))
 
-	enqueue_job(
-		"mail.mail.doctype.outgoing_mail.outgoing_mail.process_mail_submission_queue"
-	)
+	enqueue_process_outgoing_mail_queue()
 
 
 @frappe.whitelist(methods=["POST"])
