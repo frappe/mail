@@ -4,12 +4,11 @@
 import frappe
 from frappe import _
 from frappe.utils import cint
+from typing import TYPE_CHECKING
 from mail.utils import get_dns_record
-from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 from mail.utils.validation import is_valid_host
 from mail.utils.user import has_role, is_system_manager, get_user_domains
-from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.mail.doctype.mailbox.mailbox import (
 	create_dmarc_mailbox,
 	create_postmaster_mailbox,
@@ -43,13 +42,6 @@ class MailDomain(Document):
 			create_postmaster_mailbox(self.domain_name)
 
 		create_dmarc_mailbox(self.domain_name)
-
-	def on_update(self) -> None:
-		if self.has_value_changed("enabled"):
-			self.sync_mail_domain(enabled=self.enabled)
-
-	def on_trash(self) -> None:
-		self.sync_mail_domain(enabled=False)
 
 	def validate_dkim_selector(self) -> None:
 		"""Validates the DKIM Selector."""
@@ -274,12 +266,6 @@ class MailDomain(Document):
 		if save:
 			self.save()
 
-	def sync_mail_domain(self, enabled: bool | int) -> None:
-		"""Updates the domain in the agents."""
-
-		domains = [{"domain": self.domain_name, "enabled": 1 if enabled else 0}]
-		sync_mail_domains(domains)
-
 
 def get_filtered_dkim_key(key_pem: str) -> str:
 	"""Returns the filtered DKIM Key."""
@@ -318,31 +304,6 @@ def verify_dns_record(record: "DNSRecord", debug: bool = False) -> bool:
 	return False
 
 
-@frappe.whitelist()
-def sync_mail_domains(
-	mail_domains: Optional[list[dict]] = None, agents: Optional[str | list] = None
-) -> None:
-	"""Updates the domains in the agents."""
-
-	if not mail_domains:
-		mail_domains = frappe.db.get_all(
-			"Mail Domain", filters={"enabled": 1}, fields=["name AS domain", "enabled"]
-		)
-
-	if mail_domains:
-		if not agents:
-			agents = frappe.db.get_all(
-				"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
-			)
-		elif isinstance(agents, str):
-			agents = [agents]
-
-		for agent in agents:
-			create_agent_job(
-				agent, "Sync Mail Domains", request_data={"mail_domains": mail_domains}
-			)
-
-
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Mail Domain":
 		return False
@@ -350,7 +311,7 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	return is_system_manager(user) or (user == doc.domain_owner)
 
 
-def get_permission_query_condition(user: Optional[str]) -> str:
+def get_permission_query_condition(user: str | None = None) -> str:
 	conditions = []
 
 	if not user:

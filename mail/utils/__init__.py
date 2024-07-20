@@ -3,15 +3,15 @@ import pytz
 import frappe
 import dns.resolver
 from frappe import _
+from typing import Callable
 from datetime import datetime
-from typing import Callable, Optional
 from frappe.utils import get_system_timezone
 from frappe.utils.background_jobs import get_jobs
 
 
 def get_dns_record(
 	fqdn: str, type: str = "A", raise_exception: bool = False
-) -> Optional[dns.resolver.Answer]:
+) -> dns.resolver.Answer | None:
 	"""Returns DNS record for the given FQDN and type."""
 
 	from mail.config.constants import NAMESERVERS
@@ -35,7 +35,7 @@ def get_dns_record(
 
 
 def parsedate_to_datetime(
-	date_header: str, to_timezone: Optional[str] = None
+	date_header: str, to_timezone: str | None = None
 ) -> "datetime":
 	"""Returns datetime object from parsed date header."""
 
@@ -46,7 +46,7 @@ def parsedate_to_datetime(
 
 
 def convert_to_utc(
-	date_time: datetime | str, from_timezone: Optional[str] = None
+	date_time: datetime | str, from_timezone: str | None = None
 ) -> "datetime":
 	"""Converts the given datetime to UTC timezone."""
 
@@ -93,3 +93,20 @@ def enqueue_job(method: str | Callable, **kwargs) -> None:
 	jobs = get_jobs()
 	if not jobs or method not in jobs[frappe.local.site]:
 		frappe.enqueue(method, **kwargs)
+
+
+def parse_iso_datetime(
+	datetime_str: str, to_timezone: str | None = None, as_str: bool = True
+) -> str | datetime:
+	"""Converts ISO datetime string to datetime object in given timezone."""
+
+	from frappe.utils import get_datetime_str
+
+	if not to_timezone:
+		to_timezone = get_system_timezone()
+
+	dt = datetime.fromisoformat(datetime_str.replace("Z", "+00:00")).astimezone(
+		pytz.timezone(to_timezone)
+	)
+
+	return get_datetime_str(dt) if as_str else dt

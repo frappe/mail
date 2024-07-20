@@ -1,6 +1,5 @@
 import frappe
 from frappe import _
-from typing import Optional
 from mail.utils.user import has_role, is_mailbox_owner
 from mail.utils.validation import (
 	validate_mailbox_for_incoming,
@@ -10,7 +9,7 @@ from mail.utils.validation import (
 
 @frappe.whitelist(methods=["POST"])
 def validate(
-	mailbox: Optional[str] = None, for_inbound: bool = False, for_outbound: bool = False
+	mailbox: str | None = None, for_inbound: bool = False, for_outbound: bool = False
 ) -> None:
 	"""Validates the mailbox for inbound and outbound emails."""
 

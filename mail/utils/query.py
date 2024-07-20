@@ -1,5 +1,4 @@
 import frappe
-from typing import Optional
 from mail.utils.user import (
 	has_role,
 	is_system_manager,
@@ -11,12 +10,12 @@ from mail.utils.user import (
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_outgoing_mails(
-	doctype: Optional[str] = None,
-	txt: Optional[str] = None,
-	searchfield: Optional[str] = None,
-	start: Optional[int] = 0,
-	page_len: Optional[int] = 20,
-	filters: Optional[dict] = None,
+	doctype: str | None = None,
+	txt: str | None = None,
+	searchfield: str | None = None,
+	start: int = 0,
+	page_len: int = 20,
+	filters: dict | None = None,
 ) -> list:
 	"""Returns Outgoing Mails on which the user has select permission."""
 

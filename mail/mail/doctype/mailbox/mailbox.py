@@ -3,11 +3,9 @@
 
 import frappe
 from frappe import _
-from typing import Optional
 from frappe.utils.user import add_role
 from frappe.model.document import Document
 from frappe.query_builder import Criterion
-from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
 from mail.utils.user import has_role, is_system_manager, get_user_owned_domains
 from mail.utils.validation import validate_active_domain, is_valid_email_for_domain
 
@@ -22,17 +20,6 @@ class Mailbox(Document):
 		self.validate_domain()
 		self.validate_display_name()
 		self.validate_default_mailbox()
-
-	def on_update(self) -> None:
-		enabled = self.enabled and self.incoming
-
-		if self.has_value_changed("enabled") or self.has_value_changed("incoming"):
-			if not enabled:
-				self.validate_against_mail_alias()
-			self.sync_mailbox(enabled=enabled)
-
-	def on_trash(self) -> None:
-		self.sync_mailbox(enabled=False)
 
 	def validate_email(self) -> None:
 		"""Validates the email address."""
@@ -82,12 +69,6 @@ class Mailbox(Document):
 				)
 			)
 
-	def sync_mailbox(self, enabled: bool | int) -> None:
-		"""Updates the mailbox in the agents."""
-
-		mailboxes = [{"mailbox": self.email, "enabled": 1 if enabled else 0}]
-		sync_mailboxes(mailboxes)
-
 
 def create_postmaster_mailbox(domain_name: str) -> "Mailbox":
 	"""Creates a postmaster mailbox for the domain."""
@@ -115,7 +96,7 @@ def create_mailbox(
 	user: str,
 	incoming: bool = True,
 	outgoing: bool = True,
-	display_name: Optional[str] = None,
+	display_name: str | None = None,
 ) -> "Mailbox":
 	"""Creates a user and mailbox if not exists."""
 
@@ -147,12 +128,12 @@ def create_mailbox(
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_domain(
-	doctype: Optional[str] = None,
-	txt: Optional[str] = None,
-	searchfield: Optional[str] = None,
-	start: Optional[int] = 0,
-	page_len: Optional[int] = 20,
-	filters: Optional[dict] = None,
+	doctype: str | None = None,
+	txt: str | None = None,
+	searchfield: str | None = None,
+	start: int = 0,
+	page_len: int = 20,
+	filters: dict | None = None,
 ) -> list:
 	"""Returns the domains for the user."""
 
@@ -174,12 +155,12 @@ def get_domain(
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_user(
-	doctype: Optional[str] = None,
-	txt: Optional[str] = None,
-	searchfield: Optional[str] = None,
-	start: Optional[int] = 0,
-	page_len: Optional[int] = 20,
-	filters: Optional[dict] = None,
+	doctype: str | None = None,
+	txt: str | None = None,
+	searchfield: str | None = None,
+	start: int = 0,
+	page_len: int = 20,
+	filters: dict | None = None,
 ) -> list:
 	"""Returns the users."""
 
@@ -203,38 +184,6 @@ def get_user(
 	return query.run(as_dict=False)
 
 
-@frappe.whitelist()
-def sync_mailboxes(
-	mailboxes: Optional[list[dict]] = None, agents: Optional[str | list] = None
-) -> None:
-	"""Updates the mailboxes in the agents."""
-
-	if not mailboxes:
-		mailboxes = frappe.db.get_all(
-			"Mailbox",
-			filters={
-				"enabled": 1,
-				"incoming": 1,
-			},
-			fields=["name AS mailbox", "enabled"],
-		)
-
-	if mailboxes:
-		if not agents:
-			agents = frappe.db.get_all(
-				"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
-			)
-		elif isinstance(agents, str):
-			agents = [agents]
-
-		for agent in agents:
-			create_agent_job(
-				agent,
-				"Sync Mailboxes",
-				request_data={"mailboxes": mailboxes},
-			)
-
-
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Mailbox":
 		return False
@@ -246,7 +195,7 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	)
 
 
-def get_permission_query_condition(user: Optional[str]) -> str:
+def get_permission_query_condition(user: str | None = None) -> str:
 	conditions = []
 
 	if not user:

@@ -4,13 +4,14 @@
 frappe.listview_settings["Incoming Mail"] = {
 	refresh: (listview) => {
 		listview.page.add_inner_button("Refresh", () => {
-			sync_incoming_mails(listview);
+			get_incoming_mails(listview);
 		});;
 	},
 
 	get_indicator: (doc) => {
 		const status_colors = {
 			"Draft": "grey",
+			"Rejected": "red",
 			"Delivered": "green",
 			"Cancelled": "red",
 		};
@@ -18,14 +19,14 @@ frappe.listview_settings["Incoming Mail"] = {
 	},
 };
 
-function sync_incoming_mails(listview) {
+function get_incoming_mails(listview) {
 	frappe.call({
-		method: "mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails",
+		method: "mail.mail.doctype.incoming_mail.incoming_mail.get_incoming_mails",
 		freeze: true,
-		freeze_message: __("Creating Mail Agent Job..."),
+		freeze_message: __("Creating Job..."),
 		callback: () => {
 			frappe.show_alert({
-				message: __("{0} job has been created.", [__("Sync Mails").bold()]),
+				message: __("{0} job has been created.", [__("Get Mails").bold()]),
 				indicator: "green",
 			});
 		}

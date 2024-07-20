@@ -1,5 +1,5 @@
 import frappe
-from typing import Literal, Optional
+from typing import Literal
 
 
 def is_system_manager(user: str) -> bool:
@@ -15,7 +15,7 @@ def is_postmaster(user: str) -> bool:
 
 
 def get_user_mailboxes(
-	user: str, type: Optional[Literal["Incoming", "Outgoing"]] = None
+	user: str, type: Literal["Incoming", "Outgoing"] | None = None
 ) -> list:
 	"""Returns the list of mailboxes associated with the user."""
 

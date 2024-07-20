@@ -3,7 +3,6 @@
 
 import frappe
 from frappe import _
-from typing import Optional
 from frappe.model.document import Document
 from mail.utils.user import is_system_manager
 
@@ -31,9 +30,7 @@ class MailContact(Document):
 			)
 
 
-def create_mail_contact(
-	user: str, email: str, display_name: Optional[str] = None
-) -> None:
+def create_mail_contact(user: str, email: str, display_name: str | None = None) -> None:
 	"""Creates the mail contact."""
 
 	if mail_contact := frappe.db.exists("Mail Contact", {"user": user, "email": email}):
@@ -57,7 +54,7 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	return is_system_manager(user) or (user == doc.user)
 
 
-def get_permission_query_condition(user: Optional[str]) -> str:
+def get_permission_query_condition(user: str | None = None) -> str:
 	if not user:
 		user = frappe.session.user
 

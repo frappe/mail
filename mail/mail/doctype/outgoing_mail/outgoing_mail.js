@@ -31,9 +31,9 @@ frappe.ui.form.on("Outgoing Mail", {
                     frm.trigger("retry");
                 }, __("Actions"));
             }
-            else if (["Transferred", "RQ", "Queued", "Deferred"].includes(frm.doc.status)) {
-                frm.add_custom_button(__("Sync Status"), () => {
-                    frm.trigger("sync_outgoing_mails_status");
+            else if (["Transferred", "Queued", "Deferred"].includes(frm.doc.status)) {
+                frm.add_custom_button(__("Get Status"), () => {
+                    frm.trigger("get_outgoing_mails_status");
                 }, __("Actions"));
             }
             else if (frm.doc.status === "Sent") {
@@ -74,17 +74,17 @@ frappe.ui.form.on("Outgoing Mail", {
         });
     },
 
-    sync_outgoing_mails_status(frm) {
+    get_outgoing_mails_status(frm) {
 		frappe.call({
-			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.sync_outgoing_mails_status",
+			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_outgoing_mails_status",
 			args: {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Creating Mail Agent Job..."),
+			freeze_message: __("Creating Job..."),
 			callback: () => {
                 frappe.show_alert({
-                    message: __("{0} job has been created.", [__("Sync Status").bold()]),
+                    message: __("{0} job has been created.", [__("Get Status").bold()]),
                     indicator: "green",
                 });
             }

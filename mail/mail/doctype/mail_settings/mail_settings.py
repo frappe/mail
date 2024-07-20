@@ -3,7 +3,6 @@
 
 import frappe
 from frappe import _
-from typing import Optional
 from frappe.utils import cint
 from frappe.model.document import Document
 from mail.utils.validation import is_valid_host
@@ -165,12 +164,12 @@ class MailSettings(Document):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_postmaster(
-	doctype: Optional[str] = None,
-	txt: Optional[str] = None,
-	searchfield: Optional[str] = None,
-	start: Optional[int] = 0,
-	page_len: Optional[int] = 20,
-	filters: Optional[dict] = None,
+	doctype: str | None = None,
+	txt: str | None = None,
+	searchfield: str | None = None,
+	start: int = 0,
+	page_len: int = 20,
+	filters: dict | None = None,
 ) -> list:
 	"""Returns the Postmaster."""
 

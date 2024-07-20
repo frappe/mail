@@ -31,6 +31,7 @@
   "column_break_d6p9",
   "domain_name",
   "agent",
+  "queue_id",
   "section_break_quhp",
   "message_id",
   "column_break_4zfa",
@@ -99,7 +100,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nPending\nTransferring\nFailed\nTransferred\nRQ\nQueued\nDeferred\nBounced\nPartially Sent\nSent",
+   "options": "Draft\nPending\nTransferring\nFailed\nTransferred\nQueued\nDeferred\nBounced\nPartially Sent\nSent",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
@@ -427,12 +428,20 @@
    "fieldname": "display_name",
    "fieldtype": "Data",
    "label": "Display Name"
+  },
+  {
+   "fieldname": "queue_id",
+   "fieldtype": "Data",
+   "label": "Queue ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "unique": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-28 13:37:34.222190",
+ "modified": "2024-07-16 14:03:28.286815",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

@@ -3,7 +3,6 @@
 
 import frappe
 from frappe import _
-from typing import Optional
 from frappe.model.document import Document
 
 
@@ -25,7 +24,7 @@ def create_mail_sync_history(
 	source: str,
 	user: str,
 	mailbox: str,
-	last_synced_at: Optional[str] = None,
+	last_synced_at: str | None = None,
 	commit: bool = False,
 ) -> "MailSyncHistory":
 	"""Create a Mail Sync History."""

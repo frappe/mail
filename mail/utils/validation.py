@@ -1,7 +1,6 @@
 import re
 import frappe
 from frappe import _
-from typing import Literal, Optional
 
 
 def is_valid_host(host: str) -> bool:
@@ -10,7 +9,7 @@ def is_valid_host(host: str) -> bool:
 	return bool(re.compile(r"^[a-zA-Z0-9_]+$").match(host))
 
 
-def is_valid_ip(ip: str, category: Optional[str] = None) -> bool:
+def is_valid_ip(ip: str, category: str | None = None) -> bool:
 	"""Returns True if the IP is valid else False."""
 
 	import ipaddress

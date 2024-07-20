@@ -1,7 +1,7 @@
 import re
+from typing import TYPE_CHECKING
 from email.utils import parseaddr
 from email.header import decode_header
-from typing import Optional, TYPE_CHECKING
 from mail.utils import parsedate_to_datetime
 from frappe.utils import cint, get_datetime_str
 from frappe.utils.file_manager import save_file
@@ -23,7 +23,7 @@ class EmailParser:
 
 		return message_from_string(message)
 
-	def get_subject(self) -> Optional[str]:
+	def get_subject(self) -> str | None:
 		"""Returns the decoded subject of the email."""
 
 		return decode_header(self.message["Subject"])[0][0] or None
@@ -54,7 +54,7 @@ class EmailParser:
 
 		return len(self.message.as_bytes())
 
-	def get_recipients(self, types: Optional[str | list] = None) -> list[dict]:
+	def get_recipients(self, types: str | list | None = None) -> list[dict]:
 		"""Returns the list of recipients of the email."""
 
 		if not types:
@@ -160,7 +160,7 @@ class EmailParser:
 				headers = headers[0].split(";")
 
 			for header in headers:
-				header = header.replace("\n", "").replace("\t", "")
+				header = header.replace("\n", "").replace("\t", "").replace("\r", "")
 				header_lower = header.lower()
 
 				for check in checks:

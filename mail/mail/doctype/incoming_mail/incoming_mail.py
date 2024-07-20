@@ -1,28 +1,29 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import json
 import frappe
 from frappe import _
 from uuid_utils import uuid7
+from typing import TYPE_CHECKING
 from email.utils import parseaddr
-from typing import Optional, TYPE_CHECKING
+from mail.utils import parse_iso_datetime
 from frappe.model.document import Document
 from mail.utils.email_parser import EmailParser
 from frappe.utils import now, time_diff_in_seconds
+from mail.utils.agent import get_agent_rabbitmq_connection
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
-from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
-from frappe.core.doctype.submission_queue.submission_queue import queue_submission
+from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
 from mail.utils.user import (
 	is_postmaster,
-	is_system_manager,
+	get_postmaster,
 	is_mailbox_owner,
+	is_system_manager,
 	get_user_mailboxes,
 )
 
 
 if TYPE_CHECKING:
-	from mail.mail.doctype.mail_agent_job.mail_agent_job import MailAgentJob
+	from mail.mail.doctype.outgoing_mail.outgoing_mail import OutgoingMail
 
 
 class IncomingMail(Document):
@@ -30,8 +31,6 @@ class IncomingMail(Document):
 		self.name = str(uuid7())
 
 	def validate(self) -> None:
-		self.validate_mandatory_fields()
-
 		if self.get("_action") == "submit":
 			self.process()
 
@@ -42,18 +41,6 @@ class IncomingMail(Document):
 		if frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Incoming Mail."))
 
-	def validate_mandatory_fields(self) -> None:
-		"""Validates mandatory fields."""
-
-		mandatory_fields = [
-			"status",
-			"message",
-		]
-
-		for field in mandatory_fields:
-			if not self.get(field):
-				frappe.throw(_("{0} is mandatory").format(frappe.bold(field)))
-
 	def process(self) -> None:
 		"""Processes the Incoming Mail."""
 
@@ -62,10 +49,10 @@ class IncomingMail(Document):
 		self.display_name, self.sender = parser.get_sender()
 		self.subject = parser.get_subject()
 		self.reply_to = parser.get_header("Reply-To")
-		self.receiver = parser.get_header("Delivered-To")
 		self.message_id = parser.get_header("Message-ID")
 		self.created_at = parser.get_date()
 		self.message_size = parser.get_size()
+		self.received_at = parse_iso_datetime(parser.get_header("Received-At"))
 
 		parser.save_attachments(self.doctype, self.name, is_private=True)
 		self.body_html, self.body_plain = parser.get_body()
@@ -85,7 +72,7 @@ class IncomingMail(Document):
 					self.reply_to_mail_name = reply_to_mail_name
 					break
 
-		self.status = "Delivered"
+		self.status = "Rejected" if self.is_rejected else "Delivered"
 		self.processed_at = now()
 		self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
 		self.processed_after = time_diff_in_seconds(self.processed_at, self.received_at)
@@ -101,7 +88,9 @@ class IncomingMail(Document):
 
 
 @frappe.whitelist()
-def reply_to_mail(source_name, target_doc=None):
+def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":
+	"""Creates an Outgoing Mail as a reply to the Incoming Mail."""
+
 	reply_to_mail_type = "Incoming Mail"
 	source_doc = frappe.get_doc(reply_to_mail_type, source_name)
 	target_doc = target_doc or frappe.new_doc("Outgoing Mail")
@@ -153,7 +142,7 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 		return user_is_system_manager or (user_is_mailbox_user and doc.docstatus == 1)
 
 
-def get_permission_query_condition(user: Optional[str]) -> str:
+def get_permission_query_condition(user: str | None = None) -> str:
 	if not user:
 		user = frappe.session.user
 
@@ -167,31 +156,160 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 
 
 @frappe.whitelist()
-def sync_incoming_mails(agents: Optional[str | list] = None) -> None:
-	"""Syncs incoming mails from the given agents."""
+def get_incoming_mails() -> None:
+	"""Called by the scheduler to get incoming mails from the mail agents."""
 
-	if not agents:
-		agents = frappe.db.get_all(
-			"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
-		)
-	elif isinstance(agents, str):
-		agents = [agents]
+	frappe.session.user = get_postmaster()
+	agents = frappe.db.get_all(
+		"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
+	)
 
 	for agent in agents:
-		create_agent_job(agent, "Sync Incoming Mails")
+		frappe.enqueue(
+			get_incoming_mails_from_agent,
+			queue="long",
+			is_async=True,
+			now=False,
+			job_name=f"Get Incoming Mails - {agent}",
+			enqueue_after_commit=False,
+			at_front=False,
+			agent=agent,
+		)
 
 
-def sync_incoming_mails_on_end(agent_job: "MailAgentJob") -> None:
-	"""Called on the end of the `Sync Incoming Mails` job."""
+def get_incoming_mails_from_agent(agent: str) -> None:
+	"""Gets incoming mails from the mail agent."""
 
-	if agent_job and agent_job.job_type == "Sync Incoming Mails":
-		if agent_job.status == "Completed":
-			if mails := json.loads(agent_job.response_data)["message"]:
-				for mail in mails:
-					doc = frappe.new_doc("Incoming Mail")
-					doc.agent = agent_job.agent
-					doc.received_at = mail["received_at"]
-					doc.eml_filename = mail["eml_filename"]
-					doc.message = mail["message"]
-					doc.insert()
-					queue_submission(doc, "submit", alert=False)
+	def callback(channel, method, properties, body) -> bool:
+		"""Callback function for the RabbitMQ consumer."""
+
+		is_accepted = False
+		message = body.decode("utf-8")
+		parsed_message = EmailParser.get_parsed_message(message)
+		receiver = parsed_message.get("Delivered-To")
+
+		if receiver and "@" in receiver:
+			domain_name = receiver.split("@")[1]
+
+			if is_active_domain(domain_name):
+				if is_mail_alias(receiver):
+					mail_alias = frappe.get_cached_doc("Mail Alias", receiver)
+					if mail_alias.enabled:
+						is_accepted = True
+						for mailbox in mail_alias.mailboxes:
+							if is_active_mailbox(mailbox.mailbox):
+								create_incoming_mail(agent, mailbox.mailbox, message)
+				elif is_active_mailbox(receiver):
+					is_accepted = True
+					create_incoming_mail(agent, receiver, message)
+
+		if not is_accepted:
+			incoming_mail = create_incoming_mail(
+				agent,
+				receiver,
+				message,
+				is_rejected=True,
+				rejection_message="550 5.4.1 Recipient address rejected: Access denied.",
+			)
+
+			# TODO: Create a better HTML template
+			raw_html = f"""
+			<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>Document</title>
+			</head>
+			<body>
+				<div>
+					<h2>Your message to {incoming_mail.receiver} couldn't be delivered.</h2>
+					<hr/>
+					<h3>{incoming_mail.rejection_message}</h3>
+					<hr/>
+					<div>
+						<p>Original Message Headers</p>
+						<br/><br/>
+						<code>{incoming_mail.message}</code>
+					</div>
+				</div>
+			</body>
+			</html>
+			"""
+
+			create_outgoing_mail(
+				sender=get_postmaster(),
+				to=incoming_mail.reply_to or incoming_mail.sender,
+				display_name="Mail Delivery System",
+				subject=f"Undeliverable: {incoming_mail.subject}",
+				raw_html=raw_html,
+			)
+
+		channel.basic_ack(delivery_tag=method.delivery_tag)
+		return True
+
+	try:
+		rmq = get_agent_rabbitmq_connection(agent)
+		rmq.declare_queue("mail_agent::incoming_mails")
+
+		while True:
+			if not rmq.basic_get("mail_agent::incoming_mails", callback=callback):
+				break
+	except Exception:
+		frappe.log_error(
+			title=f"Get Incoming Mails - {agent}",
+			message=frappe.get_traceback(with_context=False),
+		)
+
+
+def is_active_domain(domain_name: str) -> bool:
+	"""Returns True if the domain is active, otherwise False."""
+
+	return bool(
+		frappe.db.exists("Mail Domain", {"domain_name": domain_name, "enabled": 1})
+	)
+
+
+def is_mail_alias(alias: str) -> bool:
+	"""Returns True if the mail alias exists, otherwise False."""
+
+	return bool(frappe.db.exists("Mail Alias", alias))
+
+
+def is_active_mail_alias(alias: str) -> bool:
+	"""Returns True if the mail alias is active, otherwise False."""
+
+	return bool(frappe.db.exists("Mail Alias", {"alias": alias, "enabled": 1}))
+
+
+def is_active_mailbox(mailbox: str) -> bool:
+	"""Returns True if the mailbox is active, otherwise False."""
+
+	return bool(frappe.db.exists("Mailbox", {"email": mailbox, "enabled": 1}))
+
+
+def create_incoming_mail(
+	agent: str,
+	receiver: str,
+	message: str,
+	is_rejected: bool = False,
+	rejection_message: str | None = None,
+	do_not_save: bool = False,
+	do_not_submit: bool = False,
+) -> "IncomingMail":
+	"""Creates an Incoming Mail."""
+
+	doc = frappe.new_doc("Incoming Mail")
+	doc.agent = agent
+	doc.receiver = receiver
+	doc.message = message
+	doc.is_rejected = is_rejected
+	doc.rejection_message = rejection_message
+
+	if not do_not_save:
+		doc.flags.ignore_links = True
+		doc.save()
+		if not do_not_submit:
+			doc.submit()
+
+	return doc

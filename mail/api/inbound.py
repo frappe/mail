@@ -1,15 +1,15 @@
 import frappe
 from frappe import _
-from datetime import datetime
+from typing import TYPE_CHECKING
 from email.utils import formataddr
 from mail.utils import convert_to_utc
-from typing import Optional, TYPE_CHECKING
 from mail.api.auth import validate_user, validate_mailbox
 from mail.utils.validation import validate_mailbox_for_incoming
 from frappe.utils import now, cint, get_datetime, convert_utc_to_system_timezone
 from mail.mail.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
 
 if TYPE_CHECKING:
+	from datetime import datetime
 	from mail.mail.doctype.mail_sync_history.mail_sync_history import MailSyncHistory
 
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 def pull(
 	mailbox: str,
 	limit: int = 50,
-	last_synced_at: Optional[str] = None,
+	last_synced_at: str | None = None,
 ) -> dict[str, list[dict] | str]:
 	"""Returns the emails for the given mailbox."""
 
@@ -43,7 +43,7 @@ def pull(
 def pull_raw(
 	mailbox: str,
 	limit: int = 50,
-	last_synced_at: Optional[str] = None,
+	last_synced_at: str | None = None,
 ) -> dict[str, list[str] | str]:
 	"""Returns the raw-emails for the given mailbox."""
 
@@ -76,7 +76,7 @@ def validate_max_sync_limit(limit: int) -> None:
 		frappe.throw(_("Cannot fetch more than {0} emails at a time.").format(max_sync_limit))
 
 
-def convert_utc_to_stz(last_synced_at: str) -> Optional["datetime"]:
+def convert_utc_to_stz(last_synced_at: str) -> "datetime":
 	"""Converts the last_synced_at to system timezone."""
 
 	if last_synced_at:
@@ -92,7 +92,7 @@ def get_source() -> str:
 def get_incoming_mails(
 	mailbox: str,
 	limit: int,
-	last_synced_at: Optional[str] = None,
+	last_synced_at: str | None = None,
 ) -> dict[str, list[dict] | str]:
 	"""Returns the incoming mails for the given mailbox."""
 
@@ -134,7 +134,7 @@ def get_incoming_mails(
 def get_raw_incoming_mails(
 	mailbox: str,
 	limit: int,
-	last_synced_at: Optional[str] = None,
+	last_synced_at: str | None = None,
 ) -> dict[str, list[str] | str]:
 	"""Returns the raw incoming mails for the given mailbox."""
 
