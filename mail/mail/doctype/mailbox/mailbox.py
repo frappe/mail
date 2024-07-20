@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from typing import Optional
+from frappe.utils.user import add_role
 from frappe.model.document import Document
 from frappe.query_builder import Criterion
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
@@ -86,6 +87,18 @@ class Mailbox(Document):
 
 		mailboxes = [{"mailbox": self.email, "enabled": 1 if enabled else 0}]
 		sync_mailboxes(mailboxes)
+
+
+def create_postmaster_mailbox(domain_name: str) -> "Mailbox":
+	"""Creates a postmaster mailbox for the domain."""
+
+	postmaster_email = f"postmaster@{domain_name}"
+	frappe.flags.ingore_domain_validation = True
+	postmaster = create_mailbox(
+		domain_name, postmaster_email, incoming=False, display_name="Postmaster"
+	)
+	add_role(postmaster.user, "Postmaster")
+	return postmaster
 
 
 @frappe.whitelist()

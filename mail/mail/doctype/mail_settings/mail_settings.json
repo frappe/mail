@@ -142,18 +142,18 @@
    "reqd": 1
   },
   {
-   "default": "150",
+   "default": "1000",
    "fieldname": "max_batch_size",
    "fieldtype": "Int",
    "label": "Max Batch Size (Count)",
    "reqd": 1
   },
   {
+   "depends_on": "eval: doc.root_domain_name",
    "fieldname": "postmaster",
    "fieldtype": "Link",
    "label": "Postmaster",
-   "options": "User",
-   "reqd": 1
+   "options": "User"
   },
   {
    "fieldname": "column_break_l9fc",
@@ -188,7 +188,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-06-16 18:08:06.423201",
+ "modified": "2024-07-16 12:20:25.615344",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

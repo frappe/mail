@@ -8,9 +8,12 @@ from mail.utils import get_dns_record
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
 from mail.utils.validation import is_valid_host
-from mail.mail.doctype.mailbox.mailbox import create_dmarc_mailbox
 from mail.utils.user import has_role, is_system_manager, get_user_domains
 from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
+from mail.mail.doctype.mailbox.mailbox import (
+	create_dmarc_mailbox,
+	create_postmaster_mailbox,
+)
 
 if TYPE_CHECKING:
 	from mail.mail.doctype.dns_record.dns_record import DNSRecord
@@ -36,6 +39,9 @@ class MailDomain(Document):
 			self.verified = 0
 
 	def after_insert(self) -> None:
+		if self.root_domain:
+			create_postmaster_mailbox(self.domain_name)
+
 		create_dmarc_mailbox(self.domain_name)
 
 	def on_update(self) -> None:

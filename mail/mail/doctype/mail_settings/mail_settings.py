@@ -42,6 +42,9 @@ class MailSettings(Document):
 	def validate_postmaster(self) -> None:
 		"""Validates the Postmaster."""
 
+		if not self.postmaster:
+			return
+
 		if not frappe.db.exists("User", self.postmaster):
 			frappe.throw(_("User {0} does not exist.").format(frappe.bold(self.postmaster)))
 		elif not frappe.db.get_value("User", self.postmaster, "enabled"):
