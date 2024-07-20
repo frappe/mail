@@ -25,6 +25,7 @@ class MailAgent(Document):
 
 	def on_update(self) -> None:
 		self.update_server_dns_records()
+		frappe.cache.delete_value("outgoing_mail_agents")
 
 	def on_trash(self) -> None:
 		self.db_set("enabled", 0)
