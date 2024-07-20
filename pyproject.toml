@@ -11,6 +11,7 @@ dependencies = [
     "dnspython~=2.4.2",
     "dkimpy~=1.1.5",
     "uuid-utils~=0.6.1",
+    "pika~=1.3.2",
 ]
 
 [build-system]

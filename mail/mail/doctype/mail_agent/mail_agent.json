@@ -10,19 +10,20 @@
   "incoming",
   "outgoing",
   "section_break_syxq",
-  "protocol",
   "agent",
-  "host",
+  "section_break_s7ce",
+  "priority",
   "section_break_ejwa",
   "ipv4",
   "column_break_mz08",
   "ipv6",
-  "section_break_s7ce",
-  "priority",
-  "section_break_pzk7",
-  "agent_api_key",
-  "column_break_g6p5",
-  "agent_api_secret"
+  "rabbitmq_section",
+  "rmq_host",
+  "rmq_port",
+  "test_rabbitmq_connection",
+  "column_break_xzas",
+  "rmq_username",
+  "rmq_password"
  ],
  "fields": [
   {
@@ -77,21 +78,6 @@
    "read_only": 1
   },
   {
-   "description": "e.g. localhost or Private IP",
-   "fieldname": "host",
-   "fieldtype": "Data",
-   "label": "Host"
-  },
-  {
-   "fieldname": "section_break_pzk7",
-   "fieldtype": "Section Break",
-   "label": "Mail Agent"
-  },
-  {
-   "fieldname": "column_break_g6p5",
-   "fieldtype": "Column Break"
-  },
-  {
    "default": "1",
    "depends_on": "eval: !doc.__islocal",
    "fieldname": "enabled",
@@ -116,26 +102,43 @@
    "search_index": 1
   },
   {
-   "fieldname": "agent_api_key",
+   "fieldname": "column_break_xzas",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rabbitmq_section",
+   "fieldtype": "Section Break",
+   "label": "RabbitMQ (AMQP)"
+  },
+  {
+   "fieldname": "rmq_host",
    "fieldtype": "Data",
-   "label": "Agent API Key",
-   "no_copy": 1,
+   "label": "Host",
    "reqd": 1
   },
   {
-   "fieldname": "agent_api_secret",
+   "fieldname": "rmq_password",
    "fieldtype": "Password",
-   "label": "Agent API Secret",
-   "no_copy": 1,
+   "label": "Password"
+  },
+  {
+   "depends_on": "eval: !doc.__unsaved",
+   "fieldname": "test_rabbitmq_connection",
+   "fieldtype": "Button",
+   "label": "Test Connection"
+  },
+  {
+   "default": "5672",
+   "fieldname": "rmq_port",
+   "fieldtype": "Int",
+   "label": "Port",
+   "non_negative": 1,
    "reqd": 1
   },
   {
-   "default": "HTTPS",
-   "fieldname": "protocol",
-   "fieldtype": "Select",
-   "label": "Protocol",
-   "options": "HTTP\nHTTPS",
-   "reqd": 1
+   "fieldname": "rmq_username",
+   "fieldtype": "Data",
+   "label": "Username"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -154,14 +157,9 @@
    "group": "General",
    "link_doctype": "Outgoing Mail",
    "link_fieldname": "agent"
-  },
-  {
-   "group": "General",
-   "link_doctype": "Mail Agent Job",
-   "link_fieldname": "agent"
   }
  ],
- "modified": "2024-05-27 13:53:36.749793",
+ "modified": "2024-07-14 17:39:43.505467",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Agent",

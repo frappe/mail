@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from frappe.frappeclient import FrappeClient
+from mail.mail.doctype.mail_agent.rabbitmq import RabbitMQ
 
 
 def get_random_outgoing_agent() -> str:
@@ -19,21 +19,14 @@ def get_random_outgoing_agent() -> str:
 	return random.choice(agents)
 
 
-def get_agent_client(agent: str) -> FrappeClient:
-	"""Returns FrappeClient object for the given agent."""
-
-	if hasattr(frappe.local, "agent_clients"):
-		if client := frappe.local.agent_clients.get(agent):
-			return client
-	else:
-		frappe.local.agent_clients = {}
+def get_agent_rabbitmq_connection(agent: str) -> "RabbitMQ":
+	"""Returns `RabbitMQ` object for the given agent."""
 
 	agent = frappe.get_cached_doc("Mail Agent", agent)
-	url = f"{agent.protocol}://{agent.host or agent.agent}"
-	api_key = agent.agent_api_key
-	api_secret = agent.get_password("agent_api_secret")
 
-	client = FrappeClient(url, api_key=api_key, api_secret=api_secret)
-	frappe.local.agent_clients[agent.agent] = client
+	host = agent.rmq_host
+	port = agent.rmq_port
+	username = agent.rmq_username
+	password = agent.get_password("rmq_password") if agent.rmq_password else None
 
-	return client
+	return RabbitMQ(host=host, port=port, username=username, password=password)
