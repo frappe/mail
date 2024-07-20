@@ -441,7 +441,7 @@ class OutgoingMail(Document):
 		_add_dkim_signature(message)
 
 		self.message = message.as_string()
-		self.message_size = len(message.as_bytes())
+		self.message_size = len(self.message)
 		self.created_at = get_datetime_str(parsedate_to_datetime(message["Date"]))
 		self.submitted_at = now()
 		self.submitted_after = time_diff_in_seconds(self.submitted_at, self.created_at)
