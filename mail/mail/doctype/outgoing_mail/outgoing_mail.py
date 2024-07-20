@@ -115,13 +115,11 @@ class OutgoingMail(Document):
 		if frappe.session.user == "Administrator":
 			return
 
-		enabled, verified = frappe.get_cached_value(
-			"Mail Domain", self.domain_name, ["enabled", "verified"]
-		)
+		mail_domain = frappe.get_cached_doc("Mail Domain", self.domain_name)
 
-		if not enabled:
+		if not mail_domain.enabled:
 			frappe.throw(_("Domain {0} is disabled.").format(frappe.bold(self.domain_name)))
-		if not verified:
+		if not mail_domain.verified:
 			frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(self.domain_name)))
 
 	def validate_sender(self) -> None:
@@ -460,10 +458,10 @@ class OutgoingMail(Document):
 	def create_mail_contacts(self) -> None:
 		"""Creates the mail contacts."""
 
-		if frappe.get_cached_value("Mailbox", self.sender, "create_mail_contact"):
-			user = frappe.get_cached_value("Mailbox", self.sender, "user")
+		mailbox = frappe.get_cached_doc("Mailbox", self.sender)
+		if mailbox.create_mail_contact:
 			for recipient in self.recipients:
-				create_mail_contact(user, recipient.email, recipient.display_name)
+				create_mail_contact(mailbox.user, recipient.email, recipient.display_name)
 
 	def transfer_mail(self, force: bool = False) -> None:
 		"""Transfers the mail to the agent."""
@@ -922,7 +920,9 @@ def transfer_mails_to_agent(agent: str) -> None:
 
 	max_failures = 3
 	total_failures = 0
-	max_batch_size = frappe.db.get_single_value("Mail Settings", "max_batch_size") or 1000
+	max_batch_size = (
+		frappe.db.get_single_value("Mail Settings", "max_batch_size", cache=True) or 1000
+	)
 
 	while total_failures < max_failures:
 		current_status = "Pending"
