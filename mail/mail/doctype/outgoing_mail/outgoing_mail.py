@@ -18,6 +18,7 @@ from email.mime.image import MIMEImage
 from email.encoders import encode_base64
 from frappe.model.document import Document
 from urllib.parse import urlparse, parse_qs
+from frappe.utils.caching import request_cache
 from email.mime.multipart import MIMEMultipart
 from mail.utils.email_parser import EmailParser
 from frappe.utils.file_manager import save_file
@@ -419,12 +420,7 @@ class OutgoingMail(Document):
 				b"Message-ID",
 				b"In-Reply-To",
 			]
-			dkim_selector = frappe.get_cached_value(
-				"Mail Domain", self.domain_name, "dkim_selector"
-			)
-			dkim_private_key = get_decrypted_password(
-				"Mail Domain", self.domain_name, "dkim_private_key"
-			)
+			dkim_selector, dkim_private_key = get_dkim_selector_and_private_key(self.domain_name)
 			dkim_signature = dkim_sign(
 				message=message.as_string().split("\n", 1)[-1].encode("utf-8"),
 				domain=self.domain_name.encode(),
@@ -774,6 +770,14 @@ def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
 		body_html = f"<html><body>{tracking_pixel}{body_html}</body></html>"
 
 	return body_html
+
+
+@request_cache
+def get_dkim_selector_and_private_key(domain_name: str) -> tuple[str, str]:
+	"""Returns the DKIM selector and private key for the given domain."""
+
+	mail_domain = frappe.get_cached_doc("Mail Domain", domain_name)
+	return mail_domain.dkim_selector, mail_domain.get_password("dkim_private_key")
 
 
 def create_outgoing_mail(
