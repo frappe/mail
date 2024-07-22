@@ -22,7 +22,6 @@ from frappe.utils.caching import request_cache
 from email.mime.multipart import MIMEMultipart
 from mail.utils.email_parser import EmailParser
 from frappe.utils.file_manager import save_file
-from frappe.utils.password import get_decrypted_password
 from mail.utils.validation import validate_mailbox_for_outgoing
 from email.utils import parseaddr, make_msgid, formataddr, formatdate
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
@@ -63,7 +62,7 @@ class OutgoingMail(Document):
 		self.load_attachments()
 		self.validate_attachments()
 
-		if self.get("_action") == "submit":
+		if self.get("_action") == "submit" or frappe.flags.bulk_insert:
 			self.set_ip_address()
 			self.set_agent()
 			self.set_message_id()
@@ -822,6 +821,30 @@ def create_outgoing_mail(
 	return doc
 
 
+def get_outgoing_mail_for_bulk_insert(**kwargs) -> "OutgoingMail":
+	frappe.flags.bulk_insert = True
+
+	doc = create_outgoing_mail(**kwargs, do_not_save=True)
+	mailbox = frappe.get_cached_doc("Mailbox", doc.sender)
+	doc.domain_name = mailbox.domain_name
+	doc.display_name = doc.display_name or mailbox.display_name
+	doc.reply_to = doc.reply_to or mailbox.reply_to
+	doc.track = doc.track or mailbox.track_outgoing_mail
+
+	doc.autoname()
+	doc.validate()
+
+	for recipient in doc.recipients:
+		recipient.docstatus = 1
+		recipient.parent = doc.name
+		recipient.name = generate_hash(length=10)
+
+	doc.docstatus = 1
+	doc.status = "Pending"
+
+	return doc
+
+
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Outgoing Mail":
 		return False
@@ -1148,16 +1171,18 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 		)
 
 
-def process_outgoing_mail_queue(batch_size: int = 500) -> None:
+def process_outgoing_mail_queue(batch_size: int = 1000) -> None:
 	"""Processes the mail submission queue."""
 
+	from frappe.model.document import bulk_insert
 	from frappe.utils.background_jobs import get_redis_connection_without_auth
 
+	batch_size = min(batch_size, 1000)
 	rclient = get_redis_connection_without_auth()
 	while True:
-		mails_processed = 0
+		documents = []
 
-		for x in range(min(batch_size, 500)):
+		for x in range(batch_size):
 			mail = rclient.rpop("mail:outgoing_mail_queue")
 
 			if not mail:
@@ -1165,23 +1190,22 @@ def process_outgoing_mail_queue(batch_size: int = 500) -> None:
 
 			mail = json.loads(mail)
 			try:
-				create_outgoing_mail(**mail)
+				doc = get_outgoing_mail_for_bulk_insert(**mail)
+				documents.append(doc)
 			except Exception:
 				frappe.log_error(
 					title="process_outgoing_mail_queue", message=frappe.get_traceback()
 				)
 
-			mails_processed += 1
-
-		if mails_processed == 0:
+		if not documents:
 			break
 
+		bulk_insert("Outgoing Mail", documents)
 		frappe.db.commit()
 
 
-def enqueue_process_outgoing_mail_queue() -> None:
+def enqueue_process_outgoing_mail_queue(number_of_workers: int = 3) -> None:
 	"""Enqueues the `process_outgoing_mail_queue` job."""
 
-	from mail.utils import enqueue_job
-
-	enqueue_job(process_outgoing_mail_queue, queue="long")
+	for x in range(number_of_workers):
+		frappe.enqueue(process_outgoing_mail_queue, queue="long")

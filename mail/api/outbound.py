@@ -4,10 +4,7 @@ from typing import Any
 from frappe.utils import cint
 from email.utils import parseaddr
 from frappe.utils.background_jobs import get_redis_connection_without_auth
-from mail.mail.doctype.outgoing_mail.outgoing_mail import (
-	create_outgoing_mail,
-	enqueue_process_outgoing_mail_queue,
-)
+from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
 
 
 @frappe.whitelist(methods=["POST"])
@@ -33,8 +30,6 @@ def send_batch() -> None:
 	for mail in data:
 		mail = get_mail_dict(mail, send_in_batch=1)
 		rclient.lpush("mail:outgoing_mail_queue", json.dumps(mail))
-
-	enqueue_process_outgoing_mail_queue()
 
 
 @frappe.whitelist(methods=["POST"])
