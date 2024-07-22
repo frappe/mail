@@ -28,6 +28,7 @@
   "status",
   "ip_address",
   "via_api",
+  "newsletter",
   "column_break_d6p9",
   "domain_name",
   "agent",
@@ -436,12 +437,22 @@
    "no_copy": 1,
    "read_only": 1,
    "unique": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.newsletter",
+   "fieldname": "newsletter",
+   "fieldtype": "Check",
+   "label": "Newsletter",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-16 14:03:28.286815",
+ "modified": "2024-07-22 09:29:43.581489",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

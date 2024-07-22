@@ -19,13 +19,18 @@ website_redirects = [
 		"redirect_http_status": 307,
 	},
 	{
+		"source": "/outbound/send-raw",
+		"target": "/api/method/mail.api.outbound.send_raw",
+		"redirect_http_status": 307,
+	},
+	{
 		"source": "/outbound/send-batch",
 		"target": "/api/method/mail.api.outbound.send_batch",
 		"redirect_http_status": 307,
 	},
 	{
-		"source": "/outbound/send-raw",
-		"target": "/api/method/mail.api.outbound.send_raw",
+		"source": "/outbound/send-newsletter",
+		"target": "/api/method/mail.api.outbound.send_newsletter",
 		"redirect_http_status": 307,
 	},
 	{

@@ -4,13 +4,13 @@
 import json
 import time
 import frappe
+from frappe import _
 from re import finditer
 from email import policy
 from uuid_utils import uuid7
 from mimetypes import guess_type
 from email.message import Message
 from dkim import sign as dkim_sign
-from frappe import _, generate_hash
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email.mime.audio import MIMEAudio
@@ -791,6 +791,7 @@ def create_outgoing_mail(
 	attachments: list[dict] | None = None,
 	raw_message: str | None = None,
 	via_api: int = 0,
+	newsletter: int = 0,
 	send_in_batch: int = 0,
 	do_not_save: bool = False,
 	do_not_submit: bool = False,
@@ -810,6 +811,7 @@ def create_outgoing_mail(
 	doc._add_custom_headers(custom_headers)
 	doc.raw_message = raw_message
 	doc.via_api = via_api
+	doc.newsletter = newsletter
 	doc.send_in_batch = send_in_batch
 
 	if not do_not_save:
@@ -837,7 +839,7 @@ def get_outgoing_mail_for_bulk_insert(**kwargs) -> "OutgoingMail":
 	for recipient in doc.recipients:
 		recipient.docstatus = 1
 		recipient.parent = doc.name
-		recipient.name = generate_hash(length=10)
+		recipient.name = str(uuid7())
 
 	doc.docstatus = 1
 	doc.status = "Pending"

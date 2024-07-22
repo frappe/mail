@@ -20,6 +20,18 @@ def send() -> str:
 
 
 @frappe.whitelist(methods=["POST"])
+def send_raw() -> str:
+	"""Send Raw Mail."""
+
+	data = get_decoded_data()
+	validate_mail(data, mandatory_fields=["from", "to", "raw_message"])
+	mail = get_mail_dict(data)
+	doc = create_outgoing_mail(**mail)
+
+	return doc.name
+
+
+@frappe.whitelist(methods=["POST"])
 def send_batch() -> None:
 	"""Send Mails in Batch."""
 
@@ -33,15 +45,16 @@ def send_batch() -> None:
 
 
 @frappe.whitelist(methods=["POST"])
-def send_raw() -> str:
-	"""Send Raw Mail."""
+def send_newsletter() -> None:
+	"""Send Newsletter."""
 
 	data = get_decoded_data()
-	validate_mail(data, mandatory_fields=["from", "to", "raw_message"])
-	mail = get_mail_dict(data)
-	doc = create_outgoing_mail(**mail)
+	validate_batch(data)
 
-	return doc.name
+	rclient = get_redis_connection_without_auth()
+	for mail in data:
+		mail = get_mail_dict(mail, newsletter=1, send_in_batch=1)
+		rclient.lpush("mail:outgoing_mail_queue", json.dumps(mail))
 
 
 def get_decoded_data() -> Any:
@@ -80,7 +93,7 @@ def validate_mandatory_fields(data: dict, fields: list[str]) -> None:
 			raise frappe.ValidationError(f"{field} is mandatory.")
 
 
-def get_mail_dict(data: dict, send_in_batch: int = 0) -> dict:
+def get_mail_dict(data: dict, newsletter: int = 0, send_in_batch: int = 0) -> dict:
 	"""Returns the mail dict."""
 
 	display_name, sender = parseaddr(data["from"])
@@ -95,6 +108,7 @@ def get_mail_dict(data: dict, send_in_batch: int = 0) -> dict:
 		"raw_message": data.get("raw_message"),
 		# Flags
 		"via_api": 1,
+		"newsletter": newsletter,
 		"send_in_batch": send_in_batch,
 	}
 
