@@ -9,6 +9,7 @@ from re import finditer
 from email import policy
 from uuid_utils import uuid7
 from mimetypes import guess_type
+from mail.config import constants
 from email.message import Message
 from dkim import sign as dkim_sign
 from email.mime.base import MIMEBase
@@ -650,8 +651,8 @@ class OutgoingMail(Document):
 
 		try:
 			rmq = get_agent_rabbitmq_connection(self.agent)
-			rmq.declare_queue("mail::outgoing_mails", max_priority=3)
-			rmq.publish("mail::outgoing_mails", json.dumps(data), priority=3)
+			rmq.declare_queue(constants.OUTGOING_MAILS_QUEUE, max_priority=3)
+			rmq.publish(constants.OUTGOING_MAILS_QUEUE, json.dumps(data), priority=3)
 			rmq._disconnect()
 
 			transferred_at = now()
@@ -960,7 +961,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 
 		try:
 			rmq = get_agent_rabbitmq_connection(agent)
-			rmq.declare_queue("mail::outgoing_mails", max_priority=3)
+			rmq.declare_queue(constants.OUTGOING_MAILS_QUEUE, max_priority=3)
 
 			for mail in mails:
 				priority = 1
@@ -973,7 +974,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 					"outgoing_mail": mail.name,
 					"message": mail.message,
 				}
-				rmq.publish("mail::outgoing_mails", json.dumps(data), priority=priority)
+				rmq.publish(constants.OUTGOING_MAILS_QUEUE, json.dumps(data), priority=priority)
 
 			rmq._disconnect()
 
@@ -1159,10 +1160,10 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 
 	try:
 		rmq = get_agent_rabbitmq_connection(agent)
-		rmq.declare_queue("mail_agent::outgoing_mails_status", max_priority=3)
+		rmq.declare_queue(constants.OUTGOING_MAILS_STATUS_QUEUE, max_priority=3)
 
 		while True:
-			if not rmq.basic_get("mail_agent::outgoing_mails_status", callback=callback):
+			if not rmq.basic_get(constants.OUTGOING_MAILS_STATUS_QUEUE, callback=callback):
 				break
 	except Exception:
 		frappe.log_error(
