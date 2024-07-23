@@ -459,43 +459,6 @@ class OutgoingMail(Document):
 			for recipient in self.recipients:
 				create_mail_contact(mailbox.user, recipient.email, recipient.display_name)
 
-	def transfer_mail(self, force: bool = False) -> None:
-		"""Transfers the mail to the agent."""
-
-		if not (self.status == "Pending" or force):
-			return
-
-		self._db_set(status="Transferring", commit=True)
-
-		kwargs = {}
-		recipients = [formataddr((r.display_name, r.email)) for r in self.recipients]
-		data = {
-			"outgoing_mail": self.name,
-			"recipients": recipients,
-			"message": self.message,
-		}
-
-		try:
-			rmq = get_agent_rabbitmq_connection(self.agent)
-			rmq.declare_queue("mail::outgoing_mails", max_priority=3)
-			rmq.publish("mail::outgoing_mails", json.dumps(data), priority=1)
-			rmq._disconnect()
-
-			transferred_at = now()
-			transferred_after = time_diff_in_seconds(transferred_at, self.submitted_at)
-			kwargs.update(
-				{
-					"status": "Transferred",
-					"transferred_at": transferred_at,
-					"transferred_after": transferred_after,
-				}
-			)
-		except Exception:
-			error_log = frappe.get_traceback(with_context=False)
-			kwargs.update({"status": "Failed", "error_log": error_log})
-
-		self._db_set(**kwargs, commit=True)
-
 	def update_status(self, status: str | None = None, db_set: bool = True) -> None:
 		"""Updates the status based on the recipients status."""
 
@@ -662,7 +625,48 @@ class OutgoingMail(Document):
 			kwargs["error_log"] = None
 			kwargs["status"] = "Pending"
 			self._db_set(**kwargs, commit=True)
-			self.transfer_mail()
+			self.transfer_now()
+
+	@frappe.whitelist()
+	def transfer_now(self) -> None:
+		"""Transfer the mail to the agent with highest priority [3]."""
+
+		if not frappe.flags.force_transfer:
+			self.load_from_db()
+
+			if not (self.docstatus == 1 and self.status == "Pending"):
+				return
+
+		self._db_set(status="Transferring", commit=True)
+
+		kwargs = {}
+		recipients = [formataddr((r.display_name, r.email)) for r in self.recipients]
+		data = {
+			"outgoing_mail": self.name,
+			"recipients": recipients,
+			"message": self.message,
+		}
+
+		try:
+			rmq = get_agent_rabbitmq_connection(self.agent)
+			rmq.declare_queue("mail::outgoing_mails", max_priority=3)
+			rmq.publish("mail::outgoing_mails", json.dumps(data), priority=3)
+			rmq._disconnect()
+
+			transferred_at = now()
+			transferred_after = time_diff_in_seconds(transferred_at, self.submitted_at)
+			kwargs.update(
+				{
+					"status": "Transferred",
+					"transferred_at": transferred_at,
+					"transferred_after": transferred_after,
+				}
+			)
+		except Exception:
+			error_log = frappe.get_traceback(with_context=False)
+			kwargs.update({"status": "Failed", "error_log": error_log})
+
+		self._db_set(**kwargs, commit=True)
 
 
 @frappe.whitelist()

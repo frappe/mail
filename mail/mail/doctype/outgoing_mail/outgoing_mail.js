@@ -26,7 +26,12 @@ frappe.ui.form.on("Outgoing Mail", {
 
     add_actions(frm) {
         if (frm.doc.docstatus === 1) {
-            if (frm.doc.status === "Failed") {
+            if (frm.doc.status === "Pending") {
+                frm.add_custom_button(__("Transfer Now"), () => {
+                    frm.trigger("transfer_now");
+                }, __("Actions"));
+            }
+            else if (frm.doc.status === "Failed") {
                 frm.add_custom_button(__("Retry"), () => {
                     frm.trigger("retry");
                 }, __("Actions"));
@@ -58,6 +63,20 @@ frappe.ui.form.on("Outgoing Mail", {
                 }
             });
         }
+    },
+
+    transfer_now(frm) {
+        frappe.call({
+            doc: frm.doc,
+            method: "transfer_now",
+            freeze: true,
+            freeze_message: __("Transferring..."),
+            callback: (r) => {
+                if (!r.exc) {
+                    frm.refresh();
+                }
+            }
+        });
     },
 
     retry(frm) {
