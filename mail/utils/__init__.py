@@ -110,3 +110,15 @@ def parse_iso_datetime(
 	)
 
 	return get_datetime_str(dt) if as_str else dt
+
+
+def get_root_domain_name() -> str | None:
+	"""Returns the root domain name."""
+
+	root_domain_name = frappe.cache.get_value("root_domain_name")
+
+	if not root_domain_name:
+		root_domain_name = frappe.db.get_single_value("Mail Settings", "root_domain_name")
+		frappe.cache.set_value("root_domain_name", root_domain_name)
+
+	return root_domain_name

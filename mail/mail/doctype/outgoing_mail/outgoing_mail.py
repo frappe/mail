@@ -30,6 +30,7 @@ from mail.utils import (
 	get_in_reply_to,
 	parse_iso_datetime,
 	convert_html_to_text,
+	get_root_domain_name,
 	parsedate_to_datetime,
 )
 from mail.utils.user import (
@@ -901,7 +902,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 		OM = frappe.qb.DocType("Outgoing Mail")
 		return (
 			frappe.qb.from_(OM)
-			.select(OM.name, OM.message)
+			.select(OM.name, OM.newsletter, OM.domain_name, OM.message)
 			.where((OM.docstatus == 1) & (OM.agent == agent) & (OM.status == "Pending"))
 			.orderby(OM.submitted_at)
 			.limit(limit)
@@ -938,6 +939,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 	max_batch_size = (
 		frappe.db.get_single_value("Mail Settings", "max_batch_size", cache=True) or 1000
 	)
+	root_domain_name = get_root_domain_name()
 
 	while total_failures < max_failures:
 		current_status = "Pending"
@@ -961,11 +963,17 @@ def transfer_mails_to_agent(agent: str) -> None:
 			rmq.declare_queue("mail::outgoing_mails", max_priority=3)
 
 			for mail in mails:
+				priority = 1
+				if mail.newsletter:
+					priority = 0
+				elif mail.domain_name == root_domain_name:
+					priority = 2
+
 				data = {
 					"outgoing_mail": mail.name,
 					"message": mail.message,
 				}
-				rmq.publish("mail::outgoing_mails", json.dumps(data), priority=0)
+				rmq.publish("mail::outgoing_mails", json.dumps(data), priority=priority)
 
 			rmq._disconnect()
 

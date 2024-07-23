@@ -5,9 +5,9 @@ import frappe
 from frappe import _
 from frappe.utils import cint
 from typing import TYPE_CHECKING
-from mail.utils import get_dns_record
 from frappe.model.document import Document
 from mail.utils.validation import is_valid_host
+from mail.utils import get_dns_record, get_root_domain_name
 from mail.utils.user import has_role, is_system_manager, get_user_domains
 from mail.mail.doctype.mailbox.mailbox import (
 	create_dmarc_mailbox,
@@ -103,12 +103,7 @@ class MailDomain(Document):
 	def validate_root_domain(self) -> None:
 		"""Validates if the domain is the root domain."""
 
-		self.root_domain = (
-			1
-			if self.domain_name
-			== frappe.db.get_single_value("Mail Settings", "root_domain_name", cache=True)
-			else 0
-		)
+		self.root_domain = 1 if self.domain_name == get_root_domain_name() else 0
 
 	@frappe.whitelist()
 	def generate_dns_records(self, save: bool = False) -> None:
