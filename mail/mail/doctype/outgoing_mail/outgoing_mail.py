@@ -78,9 +78,6 @@ class OutgoingMail(Document):
 		self.create_mail_contacts()
 		self._db_set(status="Pending", notify_update=True)
 
-		if not self.send_in_batch:
-			self.transfer_mail()
-
 	def on_update_after_submit(self) -> None:
 		self.validate_folder()
 
@@ -662,9 +659,6 @@ class OutgoingMail(Document):
 
 		if self.docstatus == 1 and self.status == "Failed":
 			kwargs = {}
-			if self.send_in_batch:
-				kwargs["send_in_batch"] = 0
-
 			kwargs["error_log"] = None
 			kwargs["status"] = "Pending"
 			self._db_set(**kwargs, commit=True)
@@ -792,7 +786,6 @@ def create_outgoing_mail(
 	raw_message: str | None = None,
 	via_api: int = 0,
 	newsletter: int = 0,
-	send_in_batch: int = 0,
 	do_not_save: bool = False,
 	do_not_submit: bool = False,
 ) -> "OutgoingMail":
@@ -812,7 +805,6 @@ def create_outgoing_mail(
 	doc.raw_message = raw_message
 	doc.via_api = via_api
 	doc.newsletter = newsletter
-	doc.send_in_batch = send_in_batch
 
 	if not do_not_save:
 		doc.save()
@@ -906,12 +898,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 		return (
 			frappe.qb.from_(OM)
 			.select(OM.name, OM.message)
-			.where(
-				(OM.docstatus == 1)
-				& (OM.agent == agent)
-				& (OM.send_in_batch == 1)
-				& (OM.status == "Pending")
-			)
+			.where((OM.docstatus == 1) & (OM.agent == agent) & (OM.status == "Pending"))
 			.orderby(OM.submitted_at)
 			.limit(limit)
 		).run(as_dict=True)
@@ -929,7 +916,6 @@ def transfer_mails_to_agent(agent: str) -> None:
 			.where(
 				(OM.docstatus == 1)
 				& (OM.agent == agent)
-				& (OM.send_in_batch == 1)
 				& (OM.status == current_status)
 				& (OM.name.isin(outgoing_mails))
 			)

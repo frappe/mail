@@ -40,7 +40,7 @@ def send_batch() -> None:
 
 	rclient = get_redis_connection_without_auth()
 	for mail in data:
-		mail = get_mail_dict(mail, send_in_batch=1)
+		mail = get_mail_dict(mail)
 		rclient.lpush("mail:outgoing_mail_queue", json.dumps(mail))
 
 
@@ -53,7 +53,7 @@ def send_newsletter() -> None:
 
 	rclient = get_redis_connection_without_auth()
 	for mail in data:
-		mail = get_mail_dict(mail, newsletter=1, send_in_batch=1)
+		mail = get_mail_dict(mail, newsletter=1)
 		rclient.lpush("mail:outgoing_mail_queue", json.dumps(mail))
 
 
@@ -93,7 +93,7 @@ def validate_mandatory_fields(data: dict, fields: list[str]) -> None:
 			raise frappe.ValidationError(f"{field} is mandatory.")
 
 
-def get_mail_dict(data: dict, newsletter: int = 0, send_in_batch: int = 0) -> dict:
+def get_mail_dict(data: dict, newsletter: int = 0) -> dict:
 	"""Returns the mail dict."""
 
 	display_name, sender = parseaddr(data["from"])
@@ -109,7 +109,6 @@ def get_mail_dict(data: dict, newsletter: int = 0, send_in_batch: int = 0) -> di
 		# Flags
 		"via_api": 1,
 		"newsletter": newsletter,
-		"send_in_batch": send_in_batch,
 	}
 
 	if not mail["raw_message"]:
