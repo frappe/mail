@@ -35,7 +35,7 @@ class MailDomain(Document):
 		elif self.has_value_changed("dkim_selector"):
 			self.refresh_dns_records()
 		elif not self.enabled:
-			self.verified = 0
+			self.is_verified = 0
 
 	def after_insert(self) -> None:
 		if self.root_domain:
@@ -109,7 +109,7 @@ class MailDomain(Document):
 	def generate_dns_records(self, save: bool = False) -> None:
 		"""Generates the DNS Records."""
 
-		self.verified = 0
+		self.is_verified = 0
 		self.generate_dkim_key()
 		self.refresh_dns_records()
 
@@ -144,7 +144,7 @@ class MailDomain(Document):
 	def refresh_dns_records(self) -> None:
 		"""Refreshes the DNS Records."""
 
-		self.verified = 0
+		self.is_verified = 0
 		self.dns_records.clear()
 		mail_settings = frappe.get_single("Mail Settings")
 
@@ -235,11 +235,11 @@ class MailDomain(Document):
 	def verify_dns_records(self, save: bool = False) -> None:
 		"""Verifies the DNS Records."""
 
-		self.verified = 1
+		self.is_verified = 1
 
 		for record in self.dns_records:
 			if verify_dns_record(record):
-				record.verified = 1
+				record.is_verified = 1
 				frappe.msgprint(
 					_("Row #{0}: Verified {1}:{2} record.").format(
 						frappe.bold(record.idx), frappe.bold(record.type), frappe.bold(record.host)
@@ -248,8 +248,8 @@ class MailDomain(Document):
 					alert=True,
 				)
 			else:
-				record.verified = 0
-				self.verified = 0
+				record.is_verified = 0
+				self.is_verified = 0
 				frappe.msgprint(
 					_("Row #{0}: Could not verify {1}:{2} record.").format(
 						frappe.bold(record.idx), frappe.bold(record.type), frappe.bold(record.host)

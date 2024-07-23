@@ -65,13 +65,13 @@ def validate_active_domain(domain_name: str) -> None:
 	if frappe.session.user == "Administrator" or frappe.flags.ingore_domain_validation:
 		return
 
-	enabled, verified = frappe.get_cached_value(
-		"Mail Domain", domain_name, ["enabled", "verified"]
+	enabled, is_verified = frappe.get_cached_value(
+		"Mail Domain", domain_name, ["enabled", "is_verified"]
 	)
 
 	if not enabled:
 		frappe.throw(_("Domain {0} is disabled.").format(frappe.bold(domain_name)))
-	if not verified:
+	if not is_verified:
 		frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(domain_name)))
 
 

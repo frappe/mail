@@ -7,7 +7,7 @@
  "field_order": [
   "domain_name",
   "enabled",
-  "verified",
+  "is_verified",
   "subdomain",
   "root_domain",
   "column_break_lr3y",
@@ -113,17 +113,6 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: !doc.__islocal",
-   "fieldname": "verified",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Verified",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "default": "0",
    "depends_on": "eval: doc.root_domain",
    "fieldname": "root_domain",
    "fieldtype": "Check",
@@ -138,6 +127,17 @@
    "fieldname": "subdomain",
    "fieldtype": "Check",
    "label": "Subdomain",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "is_verified",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Verified",
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
@@ -156,7 +156,7 @@
    "link_fieldname": "domain_name"
   }
  ],
- "modified": "2024-05-27 13:58:18.391569",
+ "modified": "2024-07-23 12:25:32.921021",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",

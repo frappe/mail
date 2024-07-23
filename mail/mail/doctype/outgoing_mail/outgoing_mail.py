@@ -117,7 +117,7 @@ class OutgoingMail(Document):
 
 		if not mail_domain.enabled:
 			frappe.throw(_("Domain {0} is disabled.").format(frappe.bold(self.domain_name)))
-		if not mail_domain.verified:
+		if not mail_domain.is_verified:
 			frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(self.domain_name)))
 
 	def validate_sender(self) -> None:
@@ -692,7 +692,7 @@ def get_sender(
 		.select(MAILBOX.name)
 		.where(
 			(DOMAIN.enabled == 1)
-			& (DOMAIN.verified == 1)
+			& (DOMAIN.is_verified == 1)
 			& (MAILBOX.enabled == 1)
 			& (MAILBOX.outgoing == 1)
 			& (MAILBOX.status == "Active")

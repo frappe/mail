@@ -5,3 +5,4 @@ mail.patches.v1_0.rename_field_opened_count
 mail.patches.v1_0.rename_field_recipient
 mail.patches.v1_0.rename_field_original_message
 mail.patches.v1_0.rename_field_delivered_at
+mail.patches.v1_0.rename_field_verified
