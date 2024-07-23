@@ -36,9 +36,9 @@
   "received_after",
   "processed_after",
   "section_break_5me5",
-  "spf",
-  "dkim",
-  "dmarc",
+  "spf_pass",
+  "dkim_pass",
+  "dmarc_pass",
   "column_break_ytzm",
   "spf_description",
   "dkim_description",
@@ -128,36 +128,6 @@
   {
    "fieldname": "section_break_eomq",
    "fieldtype": "Section Break"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.docstatus != 0",
-   "fieldname": "spf",
-   "fieldtype": "Check",
-   "label": "SPF",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.docstatus != 0",
-   "fieldname": "dkim",
-   "fieldtype": "Check",
-   "label": "DKIM",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.docstatus != 0",
-   "fieldname": "dmarc",
-   "fieldtype": "Check",
-   "label": "DMARC",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
   },
   {
    "fieldname": "display_name",
@@ -364,13 +334,43 @@
    "fieldname": "rejection_message",
    "fieldtype": "Data",
    "label": "Rejection Message"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.docstatus != 0",
+   "fieldname": "spf_pass",
+   "fieldtype": "Check",
+   "label": "SPF",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.docstatus != 0",
+   "fieldname": "dkim_pass",
+   "fieldtype": "Check",
+   "label": "DKIM",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.docstatus != 0",
+   "fieldname": "dmarc_pass",
+   "fieldtype": "Check",
+   "label": "DMARC",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-15 21:00:25.318209",
+ "modified": "2024-07-23 12:30:53.626980",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

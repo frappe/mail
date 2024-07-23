@@ -152,7 +152,7 @@ class EmailParser:
 		checks = ["spf", "dkim", "dmarc"]
 
 		for check in checks:
-			result[check] = 0
+			result[f"{check}_pass"] = 0
 			result[f"{check}_description"] = "Header not found."
 
 		if headers := self.message.get_all("Authentication-Results"):
@@ -165,7 +165,7 @@ class EmailParser:
 
 				for check in checks:
 					if f"{check}=" in header_lower:
-						result[check] = 1 if f"{check}=pass" in header_lower else 0
+						result[f"{check}_pass"] = 1 if f"{check}=pass" in header_lower else 0
 						result[f"{check}_description"] = header
 						break
 
