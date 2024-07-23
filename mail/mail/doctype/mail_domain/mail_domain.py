@@ -38,7 +38,7 @@ class MailDomain(Document):
 			self.is_verified = 0
 
 	def after_insert(self) -> None:
-		if self.root_domain:
+		if self.is_root_domain:
 			create_postmaster_mailbox(self.domain_name)
 
 		create_dmarc_mailbox(self.domain_name)
@@ -98,12 +98,12 @@ class MailDomain(Document):
 		"""Validates if the domain is a subdomain."""
 
 		if len(self.domain_name.split(".")) > 2:
-			self.subdomain = 1
+			self.is_subdomain = 1
 
 	def validate_root_domain(self) -> None:
 		"""Validates if the domain is the root domain."""
 
-		self.root_domain = 1 if self.domain_name == get_root_domain_name() else 0
+		self.is_root_domain = 1 if self.domain_name == get_root_domain_name() else 0
 
 	@frappe.whitelist()
 	def generate_dns_records(self, save: bool = False) -> None:
@@ -190,7 +190,7 @@ class MailDomain(Document):
 		# DMARC Record
 		dmarc_value = (
 			f"v=DMARC1; p=none; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name};"
-			if self.root_domain
+			if self.is_root_domain
 			else f"v=DMARC1; p=reject; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name};"
 		)
 		records.append(
