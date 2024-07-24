@@ -5,6 +5,7 @@ NAMESERVERS: list = [
 	"9.9.9.9",
 ]
 
-OUTGOING_MAILS_QUEUE: str = "mail::outgoing_mails"
-INCOMING_MAILS_QUEUE: str = "mail_agent::incoming_mails"
-OUTGOING_MAILS_STATUS_QUEUE: str = "mail_agent::outgoing_mails_status"
+NEWSLETTER_QUEUE: str = "mail::newsletters"
+OUTGOING_MAIL_QUEUE: str = "mail::outgoing_mails"
+INCOMING_MAIL_QUEUE: str = "mail_agent::incoming_mails"
+OUTGOING_MAIL_STATUS_QUEUE: str = "mail_agent::outgoing_mails_status"

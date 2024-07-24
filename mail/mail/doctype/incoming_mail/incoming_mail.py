@@ -248,14 +248,14 @@ def get_incoming_mails_from_agent(agent: str) -> None:
 		channel.basic_ack(delivery_tag=method.delivery_tag)
 		return True
 
-	from mail.config.constants import INCOMING_MAILS_QUEUE
+	from mail.config.constants import INCOMING_MAIL_QUEUE
 
 	try:
 		rmq = get_agent_rabbitmq_connection(agent)
-		rmq.declare_queue(INCOMING_MAILS_QUEUE)
+		rmq.declare_queue(INCOMING_MAIL_QUEUE)
 
 		while True:
-			if not rmq.basic_get(INCOMING_MAILS_QUEUE, callback=callback):
+			if not rmq.basic_get(INCOMING_MAIL_QUEUE, callback=callback):
 				break
 	except Exception:
 		frappe.log_error(

@@ -29,6 +29,11 @@ website_redirects = [
 		"redirect_http_status": 307,
 	},
 	{
+		"source": "/outbound/send-raw-batch",
+		"target": "/api/method/mail.api.outbound.send_raw_batch",
+		"redirect_http_status": 307,
+	},
+	{
 		"source": "/outbound/send-newsletter",
 		"target": "/api/method/mail.api.outbound.send_newsletter",
 		"redirect_http_status": 307,
@@ -206,10 +211,10 @@ scheduler_events = {
 		"*/1 * * * *": [
 			"mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails",
 			"mail.mail.doctype.incoming_mail.incoming_mail.get_incoming_mails",
+			"mail.mail.doctype.outgoing_mail.outgoing_mail.enqueue_process_newsletter_queue",
 		],
 		"*/2 * * * *": [
 			"mail.mail.doctype.outgoing_mail.outgoing_mail.get_outgoing_mails_status",
-			"mail.mail.doctype.outgoing_mail.outgoing_mail.enqueue_process_outgoing_mail_queue",
 		],
 	}
 }

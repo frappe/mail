@@ -651,8 +651,8 @@ class OutgoingMail(Document):
 
 		try:
 			rmq = get_agent_rabbitmq_connection(self.agent)
-			rmq.declare_queue(constants.OUTGOING_MAILS_QUEUE, max_priority=3)
-			rmq.publish(constants.OUTGOING_MAILS_QUEUE, json.dumps(data), priority=3)
+			rmq.declare_queue(constants.OUTGOING_MAIL_QUEUE, max_priority=3)
+			rmq.publish(constants.OUTGOING_MAIL_QUEUE, json.dumps(data), priority=3)
 			rmq._disconnect()
 
 			transferred_at = now()
@@ -961,7 +961,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 
 		try:
 			rmq = get_agent_rabbitmq_connection(agent)
-			rmq.declare_queue(constants.OUTGOING_MAILS_QUEUE, max_priority=3)
+			rmq.declare_queue(constants.OUTGOING_MAIL_QUEUE, max_priority=3)
 
 			for mail in mails:
 				priority = 1
@@ -974,7 +974,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 					"outgoing_mail": mail.name,
 					"message": mail.message,
 				}
-				rmq.publish(constants.OUTGOING_MAILS_QUEUE, json.dumps(data), priority=priority)
+				rmq.publish(constants.OUTGOING_MAIL_QUEUE, json.dumps(data), priority=priority)
 
 			rmq._disconnect()
 
@@ -1160,10 +1160,10 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 
 	try:
 		rmq = get_agent_rabbitmq_connection(agent)
-		rmq.declare_queue(constants.OUTGOING_MAILS_STATUS_QUEUE, max_priority=3)
+		rmq.declare_queue(constants.OUTGOING_MAIL_STATUS_QUEUE, max_priority=3)
 
 		while True:
-			if not rmq.basic_get(constants.OUTGOING_MAILS_STATUS_QUEUE, callback=callback):
+			if not rmq.basic_get(constants.OUTGOING_MAIL_STATUS_QUEUE, callback=callback):
 				break
 	except Exception:
 		frappe.log_error(
@@ -1172,8 +1172,8 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 		)
 
 
-def process_outgoing_mail_queue(batch_size: int = 1000) -> None:
-	"""Processes the mail submission queue."""
+def process_newsletter_queue(batch_size: int = 1000) -> None:
+	"""Processes the newsletter queue."""
 
 	from frappe.model.document import bulk_insert
 	from frappe.utils.background_jobs import get_redis_connection_without_auth
@@ -1184,19 +1184,18 @@ def process_outgoing_mail_queue(batch_size: int = 1000) -> None:
 		documents = []
 
 		for x in range(batch_size):
-			mail = rclient.rpop("mail:outgoing_mail_queue")
+			mail = rclient.rpop(constants.NEWSLETTER_QUEUE)
 
 			if not mail:
 				break
 
 			mail = json.loads(mail)
+			mail["newsletter"] = 1
 			try:
 				doc = get_outgoing_mail_for_bulk_insert(**mail)
 				documents.append(doc)
 			except Exception:
-				frappe.log_error(
-					title="process_outgoing_mail_queue", message=frappe.get_traceback()
-				)
+				frappe.log_error(title="process_newsletter_queue", message=frappe.get_traceback())
 
 		if not documents:
 			break
@@ -1205,8 +1204,8 @@ def process_outgoing_mail_queue(batch_size: int = 1000) -> None:
 		frappe.db.commit()
 
 
-def enqueue_process_outgoing_mail_queue(number_of_workers: int = 3) -> None:
-	"""Enqueues the `process_outgoing_mail_queue` job."""
+def enqueue_process_newsletter_queue(number_of_workers: int = 3) -> None:
+	"""Enqueues the `process_newsletter_queue` job."""
 
 	for x in range(number_of_workers):
-		frappe.enqueue(process_outgoing_mail_queue, queue="long")
+		frappe.enqueue(process_newsletter_queue, queue="long")
