@@ -209,22 +209,22 @@ class MailDomain(Document):
 		"""Returns the Receiving Records."""
 
 		records = []
-		incoming_agents = frappe.db.get_all(
-			"Mail Agent",
-			filters={"enabled": 1, "incoming": 1},
+		agent_groups = frappe.db.get_all(
+			"Mail Agent Group",
+			filters={"enabled": 1},
 			fields=["name", "priority"],
 			order_by="priority",
 		)
 
-		if incoming_agents:
-			for agent in incoming_agents:
+		if agent_groups:
+			for agent_group in agent_groups:
 				records.append(
 					{
 						"category": "Receiving Record",
 						"type": "MX",
 						"host": self.domain_name,
-						"value": f"{agent.name.split(':')[0]}.",
-						"priority": agent.priority,
+						"value": f"{agent_group.name.split(':')[0]}.",
+						"priority": agent_group.priority,
 						"ttl": ttl,
 					}
 				)

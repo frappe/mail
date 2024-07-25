@@ -17,7 +17,7 @@ def get_random_outgoing_agent() -> str:
 		).run(pluck="name")
 
 		if agents:
-			frappe.cache.set_value("outgoing_mail_agents", agents)
+			frappe.cache.set_value("outgoing_mail_agents", agents, expires_in_sec=60 * 60)
 		else:
 			frappe.throw(_("No enabled outgoing agent found."))
 

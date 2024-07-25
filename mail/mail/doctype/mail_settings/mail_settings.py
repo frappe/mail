@@ -79,49 +79,55 @@ class MailSettings(Document):
 	def generate_dns_records(self, save: bool = False) -> None:
 		"""Generates the DNS Records."""
 
+		records = []
 		self.dns_records.clear()
+		category = "Server Record"
 
 		agents = frappe.db.get_all(
 			"Mail Agent",
-			filters={"enabled": 1, "outgoing": 1},
-			fields=["name", "outgoing", "ipv4", "ipv6"],
+			filters={"enabled": 1},
+			fields=["name", "incoming", "outgoing", "ipv4", "ipv6"],
+			order_by="creation asc",
+		)
+		agent_groups = frappe.db.get_all(
+			"Mail Agent Group",
+			filters={"enabled": 1},
+			fields=["name", "priority", "ipv4", "ipv6"],
 			order_by="creation asc",
 		)
 
 		if agents:
-			records = []
 			outgoing_agents = []
-			category = "Server Record"
 
 			for agent in agents:
 				if agent.outgoing:
-					# A Record
-					if agent.ipv4:
-						records.append(
-							{
-								"category": category,
-								"type": "A",
-								"host": agent.name,
-								"value": agent.ipv4,
-								"ttl": self.default_ttl,
-							}
-						)
-
-					# AAAA Record
-					if agent.ipv6:
-						records.append(
-							{
-								"category": category,
-								"type": "AAAA",
-								"host": agent.name,
-								"value": agent.ipv6,
-								"ttl": self.default_ttl,
-							}
-						)
-
 					outgoing_agents.append(f"a:{agent.name}")
 
-			# TXT Record
+				# A Record (Agent)
+				if agent.ipv4:
+					records.append(
+						{
+							"category": category,
+							"type": "A",
+							"host": agent.name,
+							"value": agent.ipv4,
+							"ttl": self.default_ttl,
+						}
+					)
+
+				# AAAA Record (Agent)
+				if agent.ipv6:
+					records.append(
+						{
+							"category": category,
+							"type": "AAAA",
+							"host": agent.name,
+							"value": agent.ipv6,
+							"ttl": self.default_ttl,
+						}
+					)
+
+			# TXT Record (Agent)
 			if outgoing_agents:
 				records.append(
 					{
@@ -133,7 +139,33 @@ class MailSettings(Document):
 					}
 				)
 
-			self.extend("dns_records", records)
+		if agent_groups:
+			for group in agent_groups:
+				# A Record (Agent Group)
+				if group.ipv4:
+					records.append(
+						{
+							"category": category,
+							"type": "A",
+							"host": group.name,
+							"value": group.ipv4,
+							"ttl": self.default_ttl,
+						}
+					)
+
+				# AAAA Record (Agent Group)
+				if group.ipv6:
+					records.append(
+						{
+							"category": category,
+							"type": "AAAA",
+							"host": group.name,
+							"value": group.ipv6,
+							"ttl": self.default_ttl,
+						}
+					)
+
+		self.extend("dns_records", records)
 
 		if save:
 			self.save()

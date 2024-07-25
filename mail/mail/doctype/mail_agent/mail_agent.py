@@ -62,8 +62,15 @@ class MailAgent(Document):
 			frappe.throw(_("Incoming and Outgoing cannot be enabled at the same time."))
 
 		if self.incoming:
-			if not self.priority:
-				frappe.throw(_("Priority is required for incoming agents."))
+			if not self.group:
+				frappe.throw(_("Group is required for incoming agent."))
+
+			if self.enabled and not frappe.db.get_value(
+				"Mail Agent Group", self.group, "enabled"
+			):
+				frappe.throw(_("Mail Agent Group {0} is disabled.".format(frappe.bold(self.group))))
+		elif self.outgoing:
+			self.group = None
 
 		if not self.is_new() and not self.outgoing:
 			self.remove_from_linked_domains()
