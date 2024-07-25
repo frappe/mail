@@ -1169,40 +1169,66 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 		)
 
 
-def process_newsletter_queue(batch_size: int = 1000) -> None:
-	"""Processes the newsletter queue."""
+def process_newsletter_stream(worker_id: int, batch_size: int = 1000) -> None:
+	"""Processes the newsletter stream."""
 
 	from frappe.model.document import bulk_insert
 	from frappe.utils.background_jobs import get_redis_connection_without_auth
 
 	batch_size = min(batch_size, 1000)
 	rclient = get_redis_connection_without_auth()
+
+	try:
+		rclient.xgroup_create(
+			constants.NEWSLETTER_STREAM, "newsletter_group", "0", mkstream=True
+		)
+	except Exception as e:
+		if str(e) != "BUSYGROUP Consumer Group name already exists":
+			raise
+
 	while True:
 		documents = []
+		entry_ids = []
 
-		for x in range(batch_size):
-			mail = rclient.rpop(constants.NEWSLETTER_QUEUE)
+		messages = rclient.xreadgroup(
+			"newsletter_group",
+			f"consumer-{worker_id}",
+			{constants.NEWSLETTER_STREAM: ">"},
+			count=batch_size,
+			block=1000,
+		)
 
-			if not mail:
-				break
+		if not messages:
+			break
 
-			mail = json.loads(mail)
-			mail["newsletter"] = 1
-			try:
-				doc = get_outgoing_mail_for_bulk_insert(**mail)
-				documents.append(doc)
-			except Exception:
-				frappe.log_error(title="process_newsletter_queue", message=frappe.get_traceback())
+		for stream, message_list in messages:
+			for entry_id, message in message_list:
+				try:
+					mail = {k.decode("utf-8"): v.decode("utf-8") for k, v in message.items()}
+					mail["newsletter"] = 1
+					doc = get_outgoing_mail_for_bulk_insert(**mail)
+					documents.append(doc)
+					entry_ids.append(entry_id)
+				except Exception:
+					frappe.log_error(title="Process Newsletter Stream", message=frappe.get_traceback())
 
 		if not documents:
 			break
 
-		bulk_insert("Outgoing Mail", documents)
-		frappe.db.commit()
+		try:
+			bulk_insert("Outgoing Mail", documents)
+			frappe.db.commit()
+
+			rclient.xack(constants.NEWSLETTER_STREAM, "newsletter_group", *entry_ids)
+			rclient.xdel(constants.NEWSLETTER_STREAM, *entry_ids)
+		except Exception:
+			frappe.log_error(title="Process Newsletter Stream", message=frappe.get_traceback())
 
 
-def enqueue_process_newsletter_queue(number_of_workers: int = 3) -> None:
-	"""Enqueues the `process_newsletter_queue` job."""
+def enqueue_process_newsletter_stream(number_of_workers: int = 3) -> None:
+	"""Enqueues the `process_newsletter_stream` job."""
 
-	for x in range(number_of_workers):
-		frappe.enqueue(process_newsletter_queue, queue="long")
+	for worker_id in range(1, number_of_workers + 1):
+		frappe.enqueue(
+			process_newsletter_stream, queue="long", timeout=3600, worker_id=worker_id
+		)

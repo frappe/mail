@@ -1,7 +1,7 @@
 import json
 import frappe
 from email.utils import parseaddr
-from mail.config.constants import NEWSLETTER_QUEUE
+from mail.config.constants import NEWSLETTER_STREAM
 from frappe.utils.background_jobs import get_redis_connection_without_auth
 from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
 
@@ -104,7 +104,7 @@ def send_newsletter() -> None:
 	rclient = get_redis_connection_without_auth()
 	for mail in mails:
 		mail = get_mail_dict(mail)
-		rclient.lpush(NEWSLETTER_QUEUE, json.dumps(mail))
+		rclient.xadd(NEWSLETTER_STREAM, mail)
 
 
 def validate_batch(mails: list[dict], mandatory_fields: list[str]) -> None:
