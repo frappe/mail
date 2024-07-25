@@ -8,7 +8,6 @@
   "sender",
   "display_name",
   "reply_to",
-  "track",
   "column_break_9ywf",
   "reply_to_mail_type",
   "reply_to_mail_name",
@@ -324,17 +323,6 @@
    "label": "More Info"
   },
   {
-   "default": "0",
-   "depends_on": "eval: doc.docstatus == 0",
-   "fetch_from": "sender.track_outgoing_mail",
-   "fetch_if_empty": 1,
-   "fieldname": "track",
-   "fieldtype": "Check",
-   "hidden": 1,
-   "label": "Track",
-   "search_index": 1
-  },
-  {
    "fieldname": "message",
    "fieldtype": "Code",
    "label": "Message",
@@ -441,7 +429,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-23 09:41:04.005717",
+ "modified": "2024-07-25 12:14:59.852049",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

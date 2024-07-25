@@ -348,7 +348,7 @@ class OutgoingMail(Document):
 			body_html = self._replace_image_url_with_content_id()
 			body_plain = convert_html_to_text(body_html)
 
-			if self.track:
+			if frappe.get_cached_value("Mailbox", self.sender, "track_outgoing_mail"):
 				self.tracking_id = uuid7().hex
 				body_html = add_tracking_pixel(body_html, self.tracking_id)
 
@@ -785,7 +785,6 @@ def create_outgoing_mail(
 	bcc: str | list[str] | None = None,
 	subject: str | None = None,
 	raw_html: str | None = None,
-	track: int = 0,
 	reply_to: str | list[str] | None = None,
 	custom_headers: dict | None = None,
 	attachments: list[dict] | None = None,
@@ -805,7 +804,6 @@ def create_outgoing_mail(
 	doc._add_recipient("Bcc", bcc)
 	doc.subject = subject
 	doc.raw_html = raw_html
-	doc.track = track
 	doc.reply_to = reply_to
 	doc._add_custom_headers(custom_headers)
 	doc.raw_message = raw_message
@@ -829,7 +827,6 @@ def get_outgoing_mail_for_bulk_insert(**kwargs) -> "OutgoingMail":
 	doc.domain_name = mailbox.domain_name
 	doc.display_name = doc.display_name or mailbox.display_name
 	doc.reply_to = doc.reply_to or mailbox.reply_to
-	doc.track = doc.track or mailbox.track_outgoing_mail
 
 	doc.autoname()
 	doc.validate()

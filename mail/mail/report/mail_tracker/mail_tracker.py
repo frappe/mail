@@ -43,7 +43,7 @@ def get_data(filters=None) -> list:
 			OM.last_opened_at,
 			OM.last_opened_from_ip,
 		)
-		.where((OM.track == 1) & (OM.docstatus == 1))
+		.where((OM.docstatus == 1) & (OM.tracking_id.isnotnull()))
 		.orderby(OM.creation, OM.created_at, order=Order.desc)
 	)
 

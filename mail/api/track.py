@@ -22,7 +22,7 @@ def open(id: str) -> None:
 			.set(OM.last_opened_at, now)
 			.set(OM.open_count, OM.open_count + 1)
 			.set(OM.last_opened_from_ip, frappe.local.request_ip)
-			.where((OM.track == 1) & (OM.docstatus == 1) & (OM.tracking_id == id))
+			.where((OM.docstatus == 1) & (OM.tracking_id == id))
 		).run()
 		frappe.db.commit()
 	except Exception:

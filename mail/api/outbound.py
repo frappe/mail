@@ -1,6 +1,5 @@
 import json
 import frappe
-from frappe.utils import cint
 from email.utils import parseaddr
 from mail.config.constants import NEWSLETTER_QUEUE
 from frappe.utils.background_jobs import get_redis_connection_without_auth
@@ -15,7 +14,6 @@ def send(
 	cc: str | list[str] | None = None,
 	bcc: str | list[str] | None = None,
 	raw_html: str | None = None,
-	track: bool = False,
 	reply_to: str | list[str] | None = None,
 	custom_headers: dict | None = None,
 	attachments: list[dict] | None = None,
@@ -31,7 +29,6 @@ def send(
 		bcc=bcc,
 		subject=subject,
 		raw_html=raw_html,
-		track=cint(track),
 		reply_to=reply_to,
 		custom_headers=custom_headers,
 		attachments=attachments,
@@ -142,7 +139,6 @@ def get_mail_dict(data: dict) -> dict:
 				"cc": data.get("cc"),
 				"bcc": data.get("bcc"),
 				"raw_html": data.get("html"),
-				"track": cint(data.get("track")),
 				"reply_to": data.get("reply_to"),
 				"custom_headers": data.get("headers"),
 				"attachments": data.get("attachments"),
