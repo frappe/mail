@@ -1169,19 +1169,21 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 		)
 
 
-def process_newsletter_stream(worker_id: int, batch_size: int = 1000) -> None:
+def process_newsletter_stream(
+	worker_id: int, batch_size: int = 1000, retry_interval: int = 60000
+) -> None:
 	"""Processes the newsletter stream."""
 
 	from frappe.model.document import bulk_insert
 	from frappe.utils.background_jobs import get_redis_connection_without_auth
 
+	group = "newsletter_group"
+	consumer = f"consumer-{worker_id}"
 	batch_size = min(batch_size, 1000)
 	rclient = get_redis_connection_without_auth()
 
 	try:
-		rclient.xgroup_create(
-			constants.NEWSLETTER_STREAM, "newsletter_group", "0", mkstream=True
-		)
+		rclient.xgroup_create(constants.NEWSLETTER_STREAM, group, "0", mkstream=True)
 	except Exception as e:
 		if str(e) != "BUSYGROUP Consumer Group name already exists":
 			raise
@@ -1191,26 +1193,39 @@ def process_newsletter_stream(worker_id: int, batch_size: int = 1000) -> None:
 		entry_ids = []
 
 		messages = rclient.xreadgroup(
-			"newsletter_group",
-			f"consumer-{worker_id}",
-			{constants.NEWSLETTER_STREAM: ">"},
-			count=batch_size,
-			block=1000,
+			group, consumer, {constants.NEWSLETTER_STREAM: ">"}, count=batch_size, block=1000
 		)
+
+		if messages:
+			messages = messages[0][1]
+		else:
+			pending_messages = rclient.xpending_range(
+				constants.NEWSLETTER_STREAM,
+				group,
+				"-",
+				"+",
+				count=batch_size,
+				consumername=consumer,
+			)
+
+			if pending_messages:
+				if entry_ids_to_claim := [msg["message_id"] for msg in pending_messages]:
+					messages = rclient.xclaim(
+						constants.NEWSLETTER_STREAM, group, consumer, retry_interval, entry_ids_to_claim
+					)
 
 		if not messages:
 			break
 
-		for stream, message_list in messages:
-			for entry_id, message in message_list:
-				try:
-					mail = {k.decode("utf-8"): v.decode("utf-8") for k, v in message.items()}
-					mail["newsletter"] = 1
-					doc = get_outgoing_mail_for_bulk_insert(**mail)
-					documents.append(doc)
-					entry_ids.append(entry_id)
-				except Exception:
-					frappe.log_error(title="Process Newsletter Stream", message=frappe.get_traceback())
+		for entry_id, message in messages:
+			try:
+				mail = {k.decode("utf-8"): v.decode("utf-8") for k, v in message.items()}
+				mail["newsletter"] = 1
+				doc = get_outgoing_mail_for_bulk_insert(**mail)
+				documents.append(doc)
+				entry_ids.append(entry_id)
+			except Exception:
+				frappe.log_error(title="Process Newsletter Stream", message=frappe.get_traceback())
 
 		if not documents:
 			break
@@ -1219,7 +1234,7 @@ def process_newsletter_stream(worker_id: int, batch_size: int = 1000) -> None:
 			bulk_insert("Outgoing Mail", documents)
 			frappe.db.commit()
 
-			rclient.xack(constants.NEWSLETTER_STREAM, "newsletter_group", *entry_ids)
+			rclient.xack(constants.NEWSLETTER_STREAM, group, *entry_ids)
 			rclient.xdel(constants.NEWSLETTER_STREAM, *entry_ids)
 		except Exception:
 			frappe.log_error(title="Process Newsletter Stream", message=frappe.get_traceback())
