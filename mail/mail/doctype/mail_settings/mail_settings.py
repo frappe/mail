@@ -95,8 +95,11 @@ class MailSettings(Document):
 			order_by="creation asc",
 		)
 
+		agent_group_hosts = []
 		if agent_groups:
 			for group in agent_groups:
+				agent_group_hosts.append(group.name)
+
 				# A Record (Agent Group)
 				if group.ipv4:
 					records.append(
@@ -127,6 +130,9 @@ class MailSettings(Document):
 			for agent in agents:
 				if agent.outgoing:
 					outgoing_agents.append(f"a:{agent.name}")
+
+				if agent.name in agent_group_hosts:
+					continue
 
 				# A Record (Agent)
 				if agent.ipv4:
