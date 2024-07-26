@@ -208,42 +208,51 @@ def get_incoming_mails_from_agent(agent: str) -> None:
 				agent,
 				receiver,
 				message,
-				is_rejected=True,
+				is_rejected=1,
 				rejection_message="550 5.4.1 Recipient address rejected: Access denied.",
 			)
 
-			# TODO: Create a better HTML template
-			raw_html = f"""
-			<!DOCTYPE html>
-			<html lang="en">
-			<head>
-				<meta charset="UTF-8">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<title>Document</title>
-			</head>
-			<body>
-				<div>
-					<h2>Your message to {incoming_mail.receiver} couldn't be delivered.</h2>
-					<hr/>
-					<h3>{incoming_mail.rejection_message}</h3>
-					<hr/>
+			if frappe.db.get_single_value(
+				"Mail Settings", "send_notification_on_reject", cache=True
+			):
+				# TODO: Create a better HTML template
+				raw_html = f"""
+				<!DOCTYPE html>
+				<html lang="en">
+				<head>
+					<meta charset="UTF-8">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title>Document</title>
+				</head>
+				<body>
 					<div>
-						<p>Original Message Headers</p>
-						<br/><br/>
-						<code>{incoming_mail.message}</code>
+						<h2>Your message to {incoming_mail.receiver} couldn't be delivered.</h2>
+						<hr/>
+						<h3>{incoming_mail.rejection_message}</h3>
+						<hr/>
+						<div>
+							<p>Original Message Headers</p>
+							<br/><br/>
+							<code>{incoming_mail.message}</code>
+						</div>
 					</div>
-				</div>
-			</body>
-			</html>
-			"""
+				</body>
+				</html>
+				"""
 
-			create_outgoing_mail(
-				sender=get_postmaster(),
-				to=incoming_mail.reply_to or incoming_mail.sender,
-				display_name="Mail Delivery System",
-				subject=f"Undeliverable: {incoming_mail.subject}",
-				raw_html=raw_html,
-			)
+				try:
+					create_outgoing_mail(
+						sender=get_postmaster(),
+						to=incoming_mail.reply_to or incoming_mail.sender,
+						display_name="Mail Delivery System",
+						subject=f"Undeliverable: {incoming_mail.subject}",
+						raw_html=raw_html,
+					)
+				except Exception:
+					frappe.log_error(
+						title="Send Rejection Notification",
+						message=frappe.get_traceback(with_context=False),
+					)
 
 		channel.basic_ack(delivery_tag=method.delivery_tag)
 		return True
@@ -294,7 +303,7 @@ def create_incoming_mail(
 	agent: str,
 	receiver: str,
 	message: str,
-	is_rejected: bool = False,
+	is_rejected: int = 0,
 	rejection_message: str | None = None,
 	do_not_save: bool = False,
 	do_not_submit: bool = False,

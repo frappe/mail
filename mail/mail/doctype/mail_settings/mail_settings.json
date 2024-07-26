@@ -28,6 +28,8 @@
   "outgoing_max_attachment_size",
   "outgoing_total_attachments_size",
   "incoming_tab",
+  "send_notification_on_reject",
+  "column_break_0buk",
   "max_sync_via_api"
  ],
  "fields": [
@@ -183,12 +185,22 @@
    "label": "Max Sync via API (Count)",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_0buk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "send_notification_on_reject",
+   "fieldtype": "Check",
+   "label": "Send Notification on Reject"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-07-16 12:20:25.615344",
+ "modified": "2024-07-26 11:59:10.957996",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
