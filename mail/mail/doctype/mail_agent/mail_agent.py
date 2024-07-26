@@ -28,8 +28,12 @@ class MailAgent(Document):
 		frappe.cache.delete_value("outgoing_mail_agents")
 
 	def on_trash(self) -> None:
+		if frappe.session.user != "Administrator":
+			frappe.throw(_("Only Administrator can delete Mail Agents."))
+
 		self.db_set("enabled", 0)
 		self.update_server_dns_records()
+		self.remove_from_linked_domains()
 
 	def validate_agent(self) -> None:
 		"""Validates the agent and fetches the IP addresses."""
