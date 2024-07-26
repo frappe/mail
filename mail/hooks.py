@@ -291,7 +291,7 @@ ignore_links_on_delete = ["Mail Domain", "Incoming Mail", "Outgoing Mail"]
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True
 
-# default_log_clearing_doctypes = {}
+default_log_clearing_doctypes = {"Incoming Mail": 7}
 
 fixtures = [
 	{

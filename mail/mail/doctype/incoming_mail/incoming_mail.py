@@ -27,6 +27,22 @@ if TYPE_CHECKING:
 
 
 class IncomingMail(Document):
+	@staticmethod
+	def clear_old_logs(days=7):
+		from frappe.query_builder import Interval
+		from frappe.query_builder.functions import Now
+
+		IM = frappe.qb.DocType("Incoming Mail")
+		(
+			frappe.qb.from_(IM)
+			.where(
+				(IM.docstatus != 0)
+				& (IM.is_rejected == 1)
+				& (IM.creation < (Now() - Interval(days=days)))
+			)
+			.delete()
+		).run()
+
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
