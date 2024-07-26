@@ -82,19 +82,44 @@ class MailSettings(Document):
 		records = []
 		self.dns_records.clear()
 		category = "Server Record"
-
-		agents = frappe.db.get_all(
-			"Mail Agent",
-			filters={"enabled": 1},
-			fields=["name", "incoming", "outgoing", "ipv4", "ipv6"],
-			order_by="creation asc",
-		)
 		agent_groups = frappe.db.get_all(
 			"Mail Agent Group",
 			filters={"enabled": 1},
 			fields=["name", "priority", "ipv4", "ipv6"],
 			order_by="creation asc",
 		)
+		agents = frappe.db.get_all(
+			"Mail Agent",
+			filters={"enabled": 1},
+			fields=["name", "incoming", "outgoing", "ipv4", "ipv6"],
+			order_by="creation asc",
+		)
+
+		if agent_groups:
+			for group in agent_groups:
+				# A Record (Agent Group)
+				if group.ipv4:
+					records.append(
+						{
+							"category": category,
+							"type": "A",
+							"host": group.name,
+							"value": group.ipv4,
+							"ttl": self.default_ttl,
+						}
+					)
+
+				# AAAA Record (Agent Group)
+				if group.ipv6:
+					records.append(
+						{
+							"category": category,
+							"type": "AAAA",
+							"host": group.name,
+							"value": group.ipv6,
+							"ttl": self.default_ttl,
+						}
+					)
 
 		if agents:
 			outgoing_agents = []
@@ -138,32 +163,6 @@ class MailSettings(Document):
 						"ttl": self.default_ttl,
 					}
 				)
-
-		if agent_groups:
-			for group in agent_groups:
-				# A Record (Agent Group)
-				if group.ipv4:
-					records.append(
-						{
-							"category": category,
-							"type": "A",
-							"host": group.name,
-							"value": group.ipv4,
-							"ttl": self.default_ttl,
-						}
-					)
-
-				# AAAA Record (Agent Group)
-				if group.ipv6:
-					records.append(
-						{
-							"category": category,
-							"type": "AAAA",
-							"host": group.name,
-							"value": group.ipv6,
-							"ttl": self.default_ttl,
-						}
-					)
 
 		self.extend("dns_records", records)
 
