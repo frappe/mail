@@ -129,14 +129,12 @@ class EmailParser:
 			content_type = part.get_content_type()
 
 			if content_type == "text/html":
-				body_html += part.get_payload(decode=True).decode(
-					part.get_content_charset(), "ignore"
-				)
+				if payload := part.get_payload(decode=True):
+					body_html += payload.decode(part.get_content_charset(), "ignore")
 
 			elif content_type == "text/plain":
-				body_plain += part.get_payload(decode=True).decode(
-					part.get_content_charset() or "utf-8", "ignore"
-				)
+				if payload := part.get_payload(decode=True):
+					body_plain += payload.decode(part.get_content_charset() or "utf-8", "ignore")
 
 		if self.content_id_and_file_url_map:
 			for content_id, file_url in self.content_id_and_file_url_map.items():

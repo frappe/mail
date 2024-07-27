@@ -231,41 +231,16 @@ def get_incoming_mails_from_agent(agent: str) -> None:
 					rejection_message="550 5.4.1 Recipient address rejected: Access denied.",
 				)
 
-				if frappe.db.get_single_value(
+				if incoming_mail.docstatus == 1 and frappe.db.get_single_value(
 					"Mail Settings", "send_notification_on_reject", cache=True
 				):
-					# TODO: Create a better HTML template
-					raw_html = f"""
-					<!DOCTYPE html>
-					<html lang="en">
-					<head>
-						<meta charset="UTF-8">
-						<meta name="viewport" content="width=device-width, initial-scale=1.0">
-						<title>Document</title>
-					</head>
-					<body>
-						<div>
-							<h2>Your message to {incoming_mail.receiver} couldn't be delivered.</h2>
-							<hr/>
-							<h3>{incoming_mail.rejection_message}</h3>
-							<hr/>
-							<div>
-								<p>Original Message Headers</p>
-								<br/><br/>
-								<code>{incoming_mail.message}</code>
-							</div>
-						</div>
-					</body>
-					</html>
-					"""
-
 					try:
 						create_outgoing_mail(
 							sender=get_postmaster(),
 							to=incoming_mail.reply_to or incoming_mail.sender,
 							display_name="Mail Delivery System",
 							subject=f"Undeliverable: {incoming_mail.subject}",
-							raw_html=raw_html,
+							raw_html=get_rejected_template(incoming_mail),
 						)
 					except Exception:
 						frappe.log_error(
@@ -318,6 +293,37 @@ def is_active_mailbox(mailbox: str) -> bool:
 	return bool(frappe.db.exists("Mailbox", {"email": mailbox, "enabled": 1}))
 
 
+def get_rejected_template(incoming_mail) -> str:
+	"""Returns the rejected HTML template."""
+
+	# TODO: Create a better HTML template
+	raw_html = f"""
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Document</title>
+	</head>
+	<body>
+		<div>
+			<h2>Your message to {incoming_mail.receiver} couldn't be delivered.</h2>
+			<hr/>
+			<h3>{incoming_mail.rejection_message}</h3>
+			<hr/>
+			<div>
+				<p>Original Message Headers</p>
+				<br/><br/>
+				<code>{incoming_mail.message}</code>
+			</div>
+		</div>
+	</body>
+	</html>
+	"""
+
+	return raw_html
+
+
 def create_incoming_mail(
 	agent: str,
 	receiver: str,
@@ -340,6 +346,12 @@ def create_incoming_mail(
 		doc.flags.ignore_links = True
 		doc.save()
 		if not do_not_submit:
-			doc.submit()
+			try:
+				doc.submit()
+			except Exception:
+				frappe.log_error(
+					title="Submit Incoming Mail",
+					message=frappe.get_traceback(with_context=False),
+				)
 
 	return doc
