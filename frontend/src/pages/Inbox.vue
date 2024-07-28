@@ -12,10 +12,10 @@
         </header>
         <div v-if="incomingMails.data" class="flex">
             <div @scroll="loadMoreEmails" ref="mailSidebar"
-                class="mailSidebar border-r w-1/3 px-5 py-3 h-[calc(100vh-3.2rem)] sticky top-16 overflow-y-scroll overscroll-contain">
+                class="mailSidebar border-r w-1/3 p-3 h-[calc(100vh-3.2rem)] sticky top-16 overflow-y-scroll overscroll-contain">
                 <div v-for="(mail, idx) in incomingMails.data" @click="openMail(mail)"
-                    class="flex flex-col py-2 space-y-1 cursor-pointer"
-                    :class="{ 'border-b': idx < incomingMails.data.length - 1 }">
+                    class="flex flex-col p-2 space-y-1 cursor-pointer rounded"
+                    :class="{ 'border-b': idx < incomingMails.data.length - 1, 'bg-gray-200': mail.name == currentMail }">
                     <SidebarDetail :mail="mail" />
                 </div>
             </div>
@@ -23,8 +23,8 @@
                 <div ref="resizer"
                     class="h-full w-[2px] rounded-full transition-all duration-300 ease-in-out group-hover:bg-gray-400" />
             </div>
-            <div v-if="currentMail" class="flex-1 overflow-auto w-2/3">
-                <MailDetails :mailID="currentMail.name" type="Incoming Mail"/>
+            <div class="flex-1 overflow-auto w-2/3">
+                <MailDetails :mailID="currentMail" type="Incoming Mail"/>
             </div>
         </div>
     </div>
@@ -41,11 +41,11 @@ import SidebarDetail from "@/components/SidebarDetail.vue";
 const user = inject("$user");
 const mailStart = ref(0)
 const mailList = ref([])
-const currentMail = ref(null)
+const currentMail = ref(JSON.parse(sessionStorage.getItem("currentIncomingMail")))
 
-onMounted(() => {
-    setCurrentMail()
-})
+const setCurrentMail = (mail) => {
+    sessionStorage.setItem("currentIncomingMail", JSON.stringify(mail))
+}
 
 const incomingMails = createListResource({
    url: "mail.api.mail.get_incoming_mails",
@@ -57,7 +57,10 @@ const incomingMails = createListResource({
    onSuccess(data) {
         mailList.value = mailList.value.concat(data)
         mailStart.value = mailStart.value + data.length
-       setCurrentMail()
+       if (!currentMail.value) {
+            currentMail.value = mailList.value[0].name
+           setCurrentMail(mailList.value[0].name)
+       }
    }
 });
 
@@ -80,14 +83,9 @@ const loadMoreEmails = useDebounceFn(() => {
         incomingMails.next()
 }, 500)
 
-const openMail = (mail) => {
-    currentMail.value = mail
-}
-
-const setCurrentMail = () => {
-    if (!currentMail.value && mailList.value.length) {
-        currentMail.value = mailList.value[0]
-    }
+const openMail = (mail=null) => {
+    currentMail.value = mail.name
+    setCurrentMail(mail.name)
 }
 
 const breadcrumbs = computed(() => {

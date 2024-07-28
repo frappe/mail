@@ -39,19 +39,18 @@ const mail = createResource({
     url: "mail.api.mail.get_mail_details",
     makeParams(values) {
         return {
-            name: props.mailID,
+            name: values?.mailID || props.mailID,
             type: props.type
         }
     },
     auto: true,
-    cache: ["mail", props.mailID]
 });
 
 watch(
     () => props.mailID,
     (newName) => {
         console.log(props.mailID)
-        mail.reload()
+        mail.reload({ mailID: newName })
     }
 )
 </script>
