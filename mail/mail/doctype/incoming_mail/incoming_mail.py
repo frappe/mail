@@ -89,8 +89,11 @@ class IncomingMail(Document):
 					break
 
 		self.status = "Rejected" if self.is_rejected else "Delivered"
+
+		if self.created_at:
+			self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
+
 		self.processed_at = now()
-		self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
 		self.processed_after = time_diff_in_seconds(self.processed_at, self.received_at)
 
 	def create_mail_contact(self) -> None:

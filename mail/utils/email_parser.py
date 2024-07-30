@@ -47,7 +47,8 @@ class EmailParser:
 		from frappe.utils import get_datetime_str
 		from mail.utils import parsedate_to_datetime
 
-		return get_datetime_str(parsedate_to_datetime(self.message["Date"]))
+		if self.message.get("Date"):
+			return get_datetime_str(parsedate_to_datetime(self.message["Date"]))
 
 	def get_size(self) -> int:
 		"""Returns the size of the email."""
