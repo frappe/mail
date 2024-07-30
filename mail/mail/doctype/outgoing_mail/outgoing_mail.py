@@ -790,7 +790,7 @@ def create_outgoing_mail(
 	attachments: list[dict] | None = None,
 	raw_message: str | None = None,
 	via_api: int = 0,
-	newsletter: int = 0,
+	is_newsletter: int = 0,
 	do_not_save: bool = False,
 	do_not_submit: bool = False,
 ) -> "OutgoingMail":
@@ -808,7 +808,7 @@ def create_outgoing_mail(
 	doc._add_custom_headers(custom_headers)
 	doc.raw_message = raw_message
 	doc.via_api = via_api
-	doc.newsletter = newsletter
+	doc.is_newsletter = is_newsletter
 
 	if not do_not_save:
 		doc.save()
@@ -900,7 +900,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 		OM = frappe.qb.DocType("Outgoing Mail")
 		return (
 			frappe.qb.from_(OM)
-			.select(OM.name, OM.newsletter, OM.domain_name, OM.message)
+			.select(OM.name, OM.is_newsletter, OM.domain_name, OM.message)
 			.where((OM.docstatus == 1) & (OM.agent == agent) & (OM.status == "Pending"))
 			.orderby(OM.submitted_at)
 			.limit(limit)
@@ -962,7 +962,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 
 			for mail in mails:
 				priority = 1
-				if mail.newsletter:
+				if mail.is_newsletter:
 					priority = 0
 				elif mail.domain_name == root_domain_name:
 					priority = 2
@@ -1220,7 +1220,7 @@ def process_newsletter_stream(
 		for entry_id, message in messages:
 			try:
 				mail = {k.decode("utf-8"): v.decode("utf-8") for k, v in message.items()}
-				mail["newsletter"] = 1
+				mail["is_newsletter"] = 1
 				doc = get_outgoing_mail_for_bulk_insert(**mail)
 				documents.append(doc)
 				entry_ids.append(entry_id)
