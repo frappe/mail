@@ -1,10 +1,5 @@
-import re
 from typing import TYPE_CHECKING
 from email.utils import parseaddr
-from email.header import decode_header
-from mail.utils import parsedate_to_datetime
-from frappe.utils import cint, get_datetime_str
-from frappe.utils.file_manager import save_file
 
 if TYPE_CHECKING:
 	from email.message import Message
@@ -25,6 +20,8 @@ class EmailParser:
 
 	def get_subject(self) -> str | None:
 		"""Returns the decoded subject of the email."""
+
+		from email.header import decode_header
 
 		return decode_header(self.message["Subject"])[0][0] or None
 
@@ -47,12 +44,16 @@ class EmailParser:
 	def get_date(self) -> str:
 		"""Returns the date of the email."""
 
+		from frappe.utils import get_datetime_str
+		from mail.utils import parsedate_to_datetime
+
 		return get_datetime_str(parsedate_to_datetime(self.message["Date"]))
 
 	def get_size(self) -> int:
 		"""Returns the size of the email."""
+		from email import policy
 
-		return len(self.message.as_bytes())
+		return len(self.message.as_string(policy=policy.default).encode("utf-8"))
 
 	def get_recipients(self, types: str | list | None = None) -> list[dict]:
 		"""Returns the list of recipients of the email."""
@@ -76,6 +77,10 @@ class EmailParser:
 		self, doctype: str, docname: str, is_private: bool = True
 	) -> None:
 		"""Saves the attachments of the email."""
+
+		import re
+		from frappe.utils import cint
+		from frappe.utils.file_manager import save_file
 
 		def save_attachment(
 			filename: str, content: bytes, doctype: str, docnamme: str, is_private: bool
@@ -130,11 +135,13 @@ class EmailParser:
 
 			if content_type == "text/html":
 				if payload := part.get_payload(decode=True):
-					body_html += payload.decode(part.get_content_charset(), "ignore")
+					charset = part.get_content_charset() or "utf-8"
+					body_html += payload.decode(charset, "ignore")
 
 			elif content_type == "text/plain":
 				if payload := part.get_payload(decode=True):
-					body_plain += payload.decode(part.get_content_charset() or "utf-8", "ignore")
+					charset = part.get_content_charset() or "utf-8"
+					body_plain += payload.decode(charset, "ignore")
 
 		if self.content_id_and_file_url_map:
 			for content_id, file_url in self.content_id_and_file_url_map.items():
