@@ -2,53 +2,23 @@
 # For license information, please see license.txt
 
 import json
-import time
 import frappe
 from frappe import _
 from re import finditer
 from email import policy
 from uuid_utils import uuid7
-from mimetypes import guess_type
 from mail.config import constants
 from email.message import Message
-from dkim import sign as dkim_sign
-from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
-from email.mime.audio import MIMEAudio
-from email.mime.image import MIMEImage
-from email.encoders import encode_base64
 from frappe.model.document import Document
-from urllib.parse import urlparse, parse_qs
+from mail.utils.cache import get_postmaster
+from email.utils import parseaddr, formataddr
 from frappe.utils.caching import request_cache
 from email.mime.multipart import MIMEMultipart
-from mail.utils.email_parser import EmailParser
-from frappe.utils.file_manager import save_file
-from mail.utils.validation import validate_mailbox_for_outgoing
-from mail.utils.cache import get_postmaster, get_root_domain_name
-from email.utils import parseaddr, make_msgid, formataddr, formatdate
-from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
-from mail.utils.agent import (
-	get_random_outgoing_mail_agent,
-	get_agent_rabbitmq_connection,
-)
-from mail.utils import (
-	get_in_reply_to,
-	parse_iso_datetime,
-	convert_html_to_text,
-	parsedate_to_datetime,
-)
-from mail.utils.user import (
-	is_mailbox_owner,
-	is_system_manager,
-	get_user_mailboxes,
-)
-from frappe.utils import (
-	flt,
-	now,
-	get_datetime_str,
-	time_diff_in_seconds,
-	validate_email_address,
-)
+from frappe.utils import flt, now, time_diff_in_seconds
+from mail.utils.agent import get_agent_rabbitmq_connection
+from mail.utils import parse_iso_datetime, convert_html_to_text
+from mail.utils.user import is_mailbox_owner, is_system_manager
 
 
 class OutgoingMail(Document):
@@ -133,6 +103,8 @@ class OutgoingMail(Document):
 				)
 			)
 
+		from mail.utils.validation import validate_mailbox_for_outgoing
+
 		validate_mailbox_for_outgoing(self.sender)
 
 	def validate_reply_to_mail(self) -> None:
@@ -161,6 +133,8 @@ class OutgoingMail(Document):
 					frappe.bold(len(self.recipients)), frappe.bold(max_recipients)
 				)
 			)
+
+		from frappe.utils import validate_email_address
 
 		recipients = []
 		for recipient in self.recipients:
@@ -275,6 +249,8 @@ class OutgoingMail(Document):
 	def set_agent(self) -> None:
 		"""Sets the Agent."""
 
+		from mail.utils.agent import get_random_outgoing_mail_agent
+
 		outgoing_agent = frappe.get_cached_value(
 			"Mail Domain", self.domain_name, "outgoing_agent"
 		)
@@ -282,6 +258,8 @@ class OutgoingMail(Document):
 
 	def set_message_id(self) -> None:
 		"""Sets the Message ID."""
+
+		from email.utils import make_msgid
 
 		self.message_id = make_msgid(domain=self.domain_name)
 
@@ -309,6 +287,9 @@ class OutgoingMail(Document):
 			"""Returns the MIME message."""
 
 			if self.raw_message:
+				from mail.utils import get_in_reply_to
+				from mail.utils.email_parser import EmailParser
+
 				parser = EmailParser(self.raw_message)
 				self.raw_html = self.body_html = self.body_plain = self.raw_message = None
 
@@ -325,6 +306,8 @@ class OutgoingMail(Document):
 				self.body_html, self.body_plain = parser.get_body()
 
 				return parser.message
+
+			from email.utils import formatdate
 
 			message = MIMEMultipart("alternative", policy=policy.SMTP)
 
@@ -372,6 +355,12 @@ class OutgoingMail(Document):
 		def _add_attachments(message: MIMEMultipart | Message) -> None:
 			"""Adds the attachments to the message."""
 
+			from mimetypes import guess_type
+			from email.mime.base import MIMEBase
+			from email.mime.audio import MIMEAudio
+			from email.mime.image import MIMEImage
+			from email.encoders import encode_base64
+
 			for attachment in self.attachments:
 				file = frappe.get_doc("File", attachment.get("name"))
 				content_type = guess_type(file.file_name)[0]
@@ -408,6 +397,8 @@ class OutgoingMail(Document):
 		def _add_dkim_signature(message: MIMEMultipart | Message) -> None:
 			"""Adds the DKIM signature to the message."""
 
+			from dkim import sign as dkim_sign
+
 			include_headers = [
 				b"To",
 				b"Cc",
@@ -428,6 +419,9 @@ class OutgoingMail(Document):
 			)
 			dkim_header = dkim_signature.decode().replace("\n", "").replace("\r", "")
 			message["DKIM-Signature"] = dkim_header[len("DKIM-Signature: ") :]
+
+		from frappe.utils import get_datetime_str
+		from mail.utils import parsedate_to_datetime
 
 		message = _get_message()
 		_add_headers(message)
@@ -457,6 +451,8 @@ class OutgoingMail(Document):
 
 	def create_mail_contacts(self) -> None:
 		"""Creates the mail contacts."""
+
+		from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 
 		mailbox = frappe.get_cached_doc("Mailbox", self.sender)
 		if mailbox.create_mail_contact:
@@ -522,6 +518,8 @@ class OutgoingMail(Document):
 	def _add_attachment(self, attachment: dict | list[dict]) -> None:
 		"""Adds the attachments."""
 
+		from frappe.utils.file_manager import save_file
+
 		if attachment:
 			attachments = [attachment] if isinstance(attachment, dict) else attachment
 			for a in attachments:
@@ -569,6 +567,8 @@ class OutgoingMail(Document):
 		self, file_url: str, set_as_inline: bool = False
 	) -> str | None:
 		"""Returns the attachment content ID."""
+
+		from urllib.parse import urlparse, parse_qs
 
 		if file_url:
 			field = "file_url"
@@ -866,6 +866,8 @@ def get_permission_query_condition(user: str | None = None) -> str:
 	if is_system_manager(user):
 		return ""
 
+	from mail.utils.user import get_user_mailboxes
+
 	if mailboxes := ", ".join(repr(m) for m in get_user_mailboxes(user)):
 		return f"(`tabOutgoing Mail`.`sender` IN ({mailboxes})) AND (`tabOutgoing Mail`.`docstatus` != 2)"
 	else:
@@ -933,6 +935,9 @@ def transfer_mails_to_agent(agent: str) -> None:
 
 		if commit:
 			frappe.db.commit()
+
+	import time
+	from mail.utils.cache import get_root_domain_name
 
 	max_failures = 3
 	total_failures = 0
