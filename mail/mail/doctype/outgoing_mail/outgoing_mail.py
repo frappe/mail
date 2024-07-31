@@ -18,7 +18,7 @@ from email.mime.multipart import MIMEMultipart
 from frappe.utils import flt, now, time_diff_in_seconds
 from mail.utils.agent import get_agent_rabbitmq_connection
 from mail.utils import parse_iso_datetime, convert_html_to_text
-from mail.utils.user import is_mailbox_owner, is_system_manager
+from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
 
 
 class OutgoingMail(Document):
@@ -812,6 +812,13 @@ def create_outgoing_mail(
 	doc.via_api = via_api
 	doc.is_newsletter = is_newsletter
 
+	if via_api:
+		user = frappe.session.user
+		if sender not in get_user_mailboxes(user, "Outgoing"):
+			from mail.utils.cache import get_user_default_mailbox
+
+			doc.sender = get_user_default_mailbox(user)
+
 	if not do_not_save:
 		doc.save()
 		doc._add_attachment(attachments)
@@ -865,8 +872,6 @@ def get_permission_query_condition(user: str | None = None) -> str:
 
 	if is_system_manager(user):
 		return ""
-
-	from mail.utils.user import get_user_mailboxes
 
 	if mailboxes := ", ".join(repr(m) for m in get_user_mailboxes(user)):
 		return f"(`tabOutgoing Mail`.`sender` IN ({mailboxes})) AND (`tabOutgoing Mail`.`docstatus` != 2)"
