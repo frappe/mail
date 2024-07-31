@@ -1090,7 +1090,7 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 					recipient.retries = retries
 					recipient.action_at = action_at
 					recipient.action_after = time_diff_in_seconds(
-						recipient.action_at, doc.submitted_at
+						recipient.action_at, doc.transferred_at
 					)
 					recipient.details = json.dumps(recipients[recipient.email], indent=4)
 					recipient.db_update()
@@ -1127,7 +1127,7 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 					recipient.retries = retries
 					recipient.action_at = action_at
 					recipient.action_after = time_diff_in_seconds(
-						recipient.action_at, doc.submitted_at
+						recipient.action_at, doc.transferred_at
 					)
 					recipient.details = json.dumps(
 						{
