@@ -1,10 +1,6 @@
 import frappe
-from mail.utils.user import (
-	has_role,
-	is_system_manager,
-	get_user_mailboxes,
-	get_user_owned_domains,
-)
+from mail.utils.cache import get_user_owned_domains
+from mail.utils.user import has_role, is_system_manager, get_user_mailboxes
 
 
 @frappe.whitelist()

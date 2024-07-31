@@ -5,13 +5,9 @@ import frappe
 from frappe import _
 from typing import Tuple
 from frappe.query_builder import Order, Criterion
+from mail.utils.cache import get_user_owned_domains
 from frappe.query_builder.functions import Date, IfNull
-from mail.utils.user import (
-	has_role,
-	is_system_manager,
-	get_user_mailboxes,
-	get_user_owned_domains,
-)
+from mail.utils.user import has_role, is_system_manager, get_user_mailboxes
 
 
 def execute(filters=None) -> Tuple[list, list]:

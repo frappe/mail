@@ -6,7 +6,7 @@ from frappe import _
 from typing import Callable
 from datetime import datetime
 from frappe.utils import get_system_timezone
-from frappe.utils.background_jobs import get_jobs
+from frappe.utils.caching import request_cache
 
 
 def get_dns_record(
@@ -59,6 +59,7 @@ def convert_to_utc(
 	)
 
 
+@request_cache
 def convert_html_to_text(html: str) -> str:
 	"""Returns plain text from HTML content."""
 
@@ -90,6 +91,8 @@ def get_in_reply_to(message_id: str) -> tuple[str, str] | tuple[None, None]:
 def enqueue_job(method: str | Callable, **kwargs) -> None:
 	"""Enqueues a background job."""
 
+	from frappe.utils.background_jobs import get_jobs
+
 	jobs = get_jobs()
 	if not jobs or method not in jobs[frappe.local.site]:
 		frappe.enqueue(method, **kwargs)
@@ -110,15 +113,3 @@ def parse_iso_datetime(
 	)
 
 	return get_datetime_str(dt) if as_str else dt
-
-
-def get_root_domain_name() -> str | None:
-	"""Returns the root domain name."""
-
-	root_domain_name = frappe.cache.get_value("root_domain_name")
-
-	if not root_domain_name:
-		root_domain_name = frappe.db.get_single_value("Mail Settings", "root_domain_name")
-		frappe.cache.set_value("root_domain_name", root_domain_name)
-
-	return root_domain_name

@@ -6,7 +6,8 @@ from frappe import _
 from frappe.utils.user import add_role
 from frappe.model.document import Document
 from frappe.query_builder import Criterion
-from mail.utils.user import has_role, is_system_manager, get_user_owned_domains
+from mail.utils.user import has_role, is_system_manager
+from mail.utils.cache import delete_cache, get_user_owned_domains
 from mail.utils.validation import validate_active_domain, is_valid_email_for_domain
 
 
@@ -20,6 +21,9 @@ class Mailbox(Document):
 		self.validate_domain()
 		self.validate_display_name()
 		self.validate_default_mailbox()
+
+	def on_update(self) -> None:
+		delete_cache(f"user|{self.user}")
 
 	def validate_email(self) -> None:
 		"""Validates the email address."""

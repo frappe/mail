@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from email.utils import parseaddr
 from mail.utils import parse_iso_datetime
 from frappe.model.document import Document
+from mail.utils.cache import get_postmaster
 from mail.utils.email_parser import EmailParser
 from mail.utils.agent import get_agent_rabbitmq_connection
 from frappe.utils import now, time_diff_in_seconds, validate_email_address
@@ -15,7 +16,6 @@ from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
 from mail.utils.user import (
 	is_postmaster,
-	get_postmaster,
 	is_mailbox_owner,
 	is_system_manager,
 	get_user_mailboxes,

@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.utils import cint
+from mail.utils.cache import delete_cache
 from frappe.model.document import Document
 from mail.utils.validation import is_valid_host
 from frappe.core.api.file import get_max_file_size
@@ -19,6 +20,10 @@ class MailSettings(Document):
 		self.generate_dns_records()
 		self.validate_outgoing_max_attachment_size()
 		self.validate_outgoing_total_attachments_size()
+
+	def on_update(self) -> None:
+		delete_cache("root_domain_name")
+		delete_cache("postmaster")
 
 	def validate_root_domain_name(self) -> None:
 		"""Validates the Root Domain Name."""

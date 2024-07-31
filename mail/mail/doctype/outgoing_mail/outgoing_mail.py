@@ -24,18 +24,20 @@ from email.mime.multipart import MIMEMultipart
 from mail.utils.email_parser import EmailParser
 from frappe.utils.file_manager import save_file
 from mail.utils.validation import validate_mailbox_for_outgoing
+from mail.utils.cache import get_postmaster, get_root_domain_name
 from email.utils import parseaddr, make_msgid, formataddr, formatdate
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
-from mail.utils.agent import get_random_outgoing_agent, get_agent_rabbitmq_connection
+from mail.utils.agent import (
+	get_random_outgoing_mail_agent,
+	get_agent_rabbitmq_connection,
+)
 from mail.utils import (
 	get_in_reply_to,
 	parse_iso_datetime,
 	convert_html_to_text,
-	get_root_domain_name,
 	parsedate_to_datetime,
 )
 from mail.utils.user import (
-	get_postmaster,
 	is_mailbox_owner,
 	is_system_manager,
 	get_user_mailboxes,
@@ -276,7 +278,7 @@ class OutgoingMail(Document):
 		outgoing_agent = frappe.get_cached_value(
 			"Mail Domain", self.domain_name, "outgoing_agent"
 		)
-		self.agent = outgoing_agent or get_random_outgoing_agent()
+		self.agent = outgoing_agent or get_random_outgoing_mail_agent()
 
 	def set_message_id(self) -> None:
 		"""Sets the Message ID."""

@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from mail.utils import get_dns_record
+from mail.utils.cache import delete_cache
 from frappe.model.document import Document
 from mail.utils.agent import get_agent_rabbitmq_connection
 from mail.mail.doctype.mail_settings.mail_settings import validate_mail_settings
@@ -25,7 +26,8 @@ class MailAgent(Document):
 
 	def on_update(self) -> None:
 		self.update_server_dns_records()
-		frappe.cache.delete_value("outgoing_mail_agents")
+		delete_cache("incoming_mail_agents")
+		delete_cache("outgoing_mail_agents")
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":

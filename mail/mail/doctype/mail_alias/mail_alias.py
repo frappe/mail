@@ -4,7 +4,8 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from mail.utils.user import get_user_owned_domains, is_system_manager
+from mail.utils.user import is_system_manager
+from mail.utils.cache import get_user_owned_domains
 from mail.utils.validation import (
 	validate_active_domain,
 	is_valid_email_for_domain,
