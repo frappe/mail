@@ -292,6 +292,7 @@ class OutgoingMail(Document):
 
 				parser = EmailParser(self.raw_message)
 				self.raw_html = self.body_html = self.body_plain = self.raw_message = None
+				parser.update_header("From", formataddr((self.display_name, self.sender)))
 
 				if parser.get_date() > now():
 					frappe.throw(_("Future date is not allowed."))
