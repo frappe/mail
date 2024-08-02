@@ -45,7 +45,7 @@ class MailDomain(Document):
 		create_dmarc_mailbox(self.domain_name)
 
 	def on_update(self) -> None:
-		delete_cache(f"user|{self.user}")
+		delete_cache(f"user|{self.domain_owner}")
 
 	def validate_dkim_selector(self) -> None:
 		"""Validates the DKIM Selector."""
