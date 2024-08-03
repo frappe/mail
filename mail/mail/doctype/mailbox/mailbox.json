@@ -18,8 +18,9 @@
   "domain_name",
   "user",
   "email",
+  "reply_to",
   "display_name",
-  "reply_to"
+  "reset_display_name"
  ],
  "fields": [
   {
@@ -136,6 +137,14 @@
    "ignore_xss_filter": 1,
    "label": "Reply To",
    "length": 255
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.display_name",
+   "fieldname": "reset_display_name",
+   "fieldtype": "Check",
+   "label": "Reset Display Name (API)",
+   "no_copy": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -156,7 +165,7 @@
    "link_fieldname": "sender"
   }
  ],
- "modified": "2024-06-27 22:54:44.034081",
+ "modified": "2024-08-03 15:21:48.574977",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",

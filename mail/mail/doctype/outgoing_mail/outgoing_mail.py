@@ -820,6 +820,10 @@ def create_outgoing_mail(
 
 			doc.sender = get_user_default_mailbox(user)
 
+		mailbox = frappe.get_cached_doc("Mailbox", doc.sender)
+		if mailbox.reset_display_name and mailbox.display_name:
+			doc.display_name = mailbox.display_name
+
 	if not do_not_save:
 		doc.save()
 		doc._add_attachment(attachments)
