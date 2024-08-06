@@ -52,11 +52,12 @@ def convert_to_utc(
 
 	from frappe.utils import get_datetime
 
-	return (
-		pytz.timezone(from_timezone or get_system_timezone())
-		.localize(get_datetime(date_time))
-		.astimezone(pytz.utc)
-	)
+	dt = get_datetime(date_time)
+	if dt.tzinfo is None:
+		tz = pytz.timezone(from_timezone or get_system_timezone())
+		dt = tz.localize(dt)
+
+	return dt.astimezone(pytz.utc)
 
 
 @request_cache
