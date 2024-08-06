@@ -290,13 +290,29 @@ class OutgoingMail(Document):
 				from mail.utils import get_in_reply_to
 				from mail.utils.email_parser import EmailParser
 
+				user = frappe.session.user
+				if self.sender not in get_user_mailboxes(user, "Outgoing"):
+					from mail.utils.cache import get_user_default_mailbox
+
+					self.sender = get_user_default_mailbox(user)
+
 				parser = EmailParser(self.raw_message)
-				self.raw_html = self.body_html = self.body_plain = self.raw_message = None
-				parser.update_header("From", formataddr((self.display_name, self.sender)))
 
 				if parser.get_date() > now():
 					frappe.throw(_("Future date is not allowed."))
 
+				if self.via_api:
+					mailbox = frappe.get_cached_doc("Mailbox", self.sender)
+					if mailbox.override_display_name:
+						self.display_name = mailbox.display_name
+					if mailbox.override_reply_to:
+						if mailbox.reply_to:
+							parser.update_header("Reply-To", mailbox.reply_to)
+						else:
+							del parser["Reply-To"]
+
+				self.raw_html = self.body_html = self.body_plain = self.raw_message = None
+				parser.update_header("From", formataddr((self.display_name, self.sender)))
 				self.subject = parser.get_subject()
 				self.reply_to = parser.get_header("Reply-To")
 				self.message_id = parser.get_header("Message-ID") or self.message_id
@@ -812,17 +828,6 @@ def create_outgoing_mail(
 	doc.raw_message = raw_message
 	doc.via_api = via_api
 	doc.is_newsletter = is_newsletter
-
-	if via_api:
-		user = frappe.session.user
-		if sender not in get_user_mailboxes(user, "Outgoing"):
-			from mail.utils.cache import get_user_default_mailbox
-
-			doc.sender = get_user_default_mailbox(user)
-
-		mailbox = frappe.get_cached_doc("Mailbox", doc.sender)
-		if mailbox.reset_display_name and mailbox.display_name:
-			doc.display_name = mailbox.display_name
 
 	if not do_not_save:
 		doc.save()

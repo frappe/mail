@@ -18,9 +18,12 @@
   "domain_name",
   "user",
   "email",
-  "reply_to",
+  "section_break_igbn",
   "display_name",
-  "reset_display_name"
+  "override_display_name",
+  "column_break_vnry",
+  "reply_to",
+  "override_reply_to"
  ],
  "fields": [
   {
@@ -141,10 +144,24 @@
   {
    "default": "0",
    "depends_on": "eval: doc.display_name",
-   "fieldname": "reset_display_name",
+   "fieldname": "override_display_name",
    "fieldtype": "Check",
-   "label": "Reset Display Name (API)",
+   "label": "Override Display Name (API)",
    "no_copy": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "override_reply_to",
+   "fieldtype": "Check",
+   "label": "Override Reply To (API)"
+  },
+  {
+   "fieldname": "section_break_igbn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_vnry",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -165,7 +182,7 @@
    "link_fieldname": "sender"
   }
  ],
- "modified": "2024-08-03 15:21:48.574977",
+ "modified": "2024-08-07 11:33:49.657077",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",
