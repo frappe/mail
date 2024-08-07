@@ -155,6 +155,7 @@
    "fieldname": "postmaster",
    "fieldtype": "Link",
    "label": "Postmaster",
+   "mandatory_depends_on": "eval: doc.send_notification_on_reject",
    "options": "User"
   },
   {
@@ -200,7 +201,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-07-26 11:59:10.957996",
+ "modified": "2024-08-07 11:23:01.415375",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
