@@ -290,12 +290,6 @@ class OutgoingMail(Document):
 				from mail.utils import get_in_reply_to
 				from mail.utils.email_parser import EmailParser
 
-				user = frappe.session.user
-				if self.sender not in get_user_mailboxes(user, "Outgoing"):
-					from mail.utils.cache import get_user_default_mailbox
-
-					self.sender = get_user_default_mailbox(user)
-
 				parser = EmailParser(self.raw_message)
 
 				if parser.get_date() > now():
@@ -828,6 +822,13 @@ def create_outgoing_mail(
 	doc.raw_message = raw_message
 	doc.via_api = via_api
 	doc.is_newsletter = is_newsletter
+
+	if via_api:
+		user = frappe.session.user
+		if sender not in get_user_mailboxes(user, "Outgoing"):
+			from mail.utils.cache import get_user_default_mailbox
+
+			doc.sender = get_user_default_mailbox(user)
 
 	if not do_not_save:
 		doc.save()
