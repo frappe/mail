@@ -23,6 +23,7 @@
   "is_rejected",
   "rejection_message",
   "column_break_htgl",
+  "domain_name",
   "agent",
   "section_break_0jgu",
   "message_id",
@@ -364,13 +365,23 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "domain_name",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Domain Name",
+   "no_copy": 1,
+   "options": "Mail Domain",
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-07-23 12:30:53.626980",
+ "modified": "2024-08-09 17:34:24.666124",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

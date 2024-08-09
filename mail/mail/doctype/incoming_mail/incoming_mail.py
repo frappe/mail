@@ -61,8 +61,12 @@ class IncomingMail(Document):
 		"""Processes the Incoming Mail."""
 
 		parser = EmailParser(self.message)
-
 		self.display_name, self.sender = parser.get_sender()
+
+		self.domain_name = None
+		if self.receiver and len(self.receiver.split("@")) > 1:
+			self.domain_name = self.receiver.split("@")[1]
+
 		self.subject = parser.get_subject()
 		self.reply_to = parser.get_header("Reply-To")
 		self.message_id = parser.get_header("Message-ID")
