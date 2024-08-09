@@ -917,11 +917,23 @@ def transfer_mails_to_agent(agent: str) -> None:
 	def get_mails_to_transfer(limit: int) -> list[dict]:
 		"""Returns the mails to transfer."""
 
+		from frappe.query_builder.functions import GroupConcat
+
 		OM = frappe.qb.DocType("Outgoing Mail")
+		MR = frappe.qb.DocType("Mail Recipient")
 		return (
 			frappe.qb.from_(OM)
-			.select(OM.name, OM.is_newsletter, OM.domain_name, OM.message)
+			.join(MR)
+			.on(OM.name == MR.parent)
+			.select(
+				OM.name,
+				OM.is_newsletter,
+				OM.domain_name,
+				OM.message,
+				GroupConcat(MR.email).as_("recipients"),
+			)
 			.where((OM.docstatus == 1) & (OM.agent == agent) & (OM.status == "Pending"))
+			.groupby(OM.name, OM.is_newsletter, OM.domain_name, OM.message)
 			.orderby(OM.submitted_at)
 			.limit(limit)
 		).run(as_dict=True)
@@ -992,6 +1004,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 
 				data = {
 					"outgoing_mail": mail.name,
+					"recipients": mail.recipients.split(","),
 					"message": mail.message,
 				}
 				rmq.publish(constants.OUTGOING_MAIL_QUEUE, json.dumps(data), priority=priority)
