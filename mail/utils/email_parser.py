@@ -21,9 +21,13 @@ class EmailParser:
 	def get_subject(self) -> str | None:
 		"""Returns the decoded subject of the email."""
 
-		from email.header import decode_header
+		from email.header import decode_header, make_header
 
-		return decode_header(self.message["Subject"])[0][0] or None
+		if subject := self.message["Subject"]:
+			decoded_subject = str(make_header(decode_header(subject)))
+			return decoded_subject
+
+		return None
 
 	def get_sender(self) -> tuple[str, str]:
 		"""Returns the display name and email of the sender."""
