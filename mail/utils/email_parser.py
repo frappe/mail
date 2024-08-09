@@ -34,7 +34,7 @@ class EmailParser:
 
 		return parseaddr(self.message["From"])
 
-	def get_header(self, header: str) -> str:
+	def get_header(self, header: str) -> str | None:
 		"""Returns the value of the header."""
 
 		return self.message[header]
@@ -42,17 +42,19 @@ class EmailParser:
 	def update_header(self, header: str, value: str) -> None:
 		"""Updates the value of the header."""
 
-		del self.message[header]
+		if header in self.message:
+			del self.message[header]
+
 		self.message[header] = value
 
-	def get_date(self) -> str:
+	def get_date(self) -> str | None:
 		"""Returns the date of the email."""
 
 		from frappe.utils import get_datetime_str
 		from mail.utils import parsedate_to_datetime
 
-		if self.message.get("Date"):
-			return get_datetime_str(parsedate_to_datetime(self.message["Date"]))
+		if date_header := self.message.get("Date"):
+			return get_datetime_str(parsedate_to_datetime(date_header))
 
 	def get_size(self) -> int:
 		"""Returns the size of the email."""
@@ -88,7 +90,7 @@ class EmailParser:
 		from frappe.utils.file_manager import save_file
 
 		def save_attachment(
-			filename: str, content: bytes, doctype: str, docnamme: str, is_private: bool
+			filename: str, content: bytes, doctype: str, docname: str, is_private: bool
 		) -> dict:
 			"""Saves the attachment as a file."""
 
@@ -97,11 +99,10 @@ class EmailParser:
 				"content": content,
 				"df": "file",
 				"dt": doctype,
-				"dn": docnamme,
+				"dn": docname,
 				"is_private": cint(is_private),
 			}
 			file = save_file(**kwargs)
-
 			return {
 				"name": file.name,
 				"file_name": file.file_name,
@@ -118,17 +119,16 @@ class EmailParser:
 
 				if disposition.startswith("inline"):
 					if content_id := re.sub(r"[<>]", "", part.get("Content-ID", "")):
-						if payload := part.get_payload(decode=True):
-							if part.get_content_charset():
-								payload = payload.decode(part.get_content_charset(), "ignore")
+						payload = part.get_payload(decode=True)
+						if payload and part.get_content_charset():
+							payload = payload.decode(part.get_content_charset(), "ignore")
 
-							file = save_attachment(filename, payload, doctype, docname, is_private)
-							self.content_id_and_file_url_map[content_id] = file["file_url"]
+						file = save_attachment(filename, payload, doctype, docname, is_private)
+						self.content_id_and_file_url_map[content_id] = file["file_url"]
 
 				elif disposition.startswith("attachment"):
-					save_attachment(
-						filename, part.get_payload(decode=True), doctype, docname, is_private
-					)
+					payload = part.get_payload(decode=True)
+					save_attachment(filename, payload, doctype, docname, is_private)
 
 	def get_body(self) -> tuple[str | None, str | None]:
 		"""Returns the HTML and plain text body of the email."""
@@ -150,8 +150,8 @@ class EmailParser:
 
 		if self.content_id_and_file_url_map:
 			for content_id, file_url in self.content_id_and_file_url_map.items():
-				body_html = body_html.replace("cid:" + content_id, file_url)
-				body_plain = body_plain.replace("cid:" + content_id, file_url)
+				body_html = body_html.replace(f"cid:{content_id}", file_url)
+				body_plain = body_plain.replace(f"cid:{content_id}", file_url)
 
 		return body_html or None, body_plain or None
 
