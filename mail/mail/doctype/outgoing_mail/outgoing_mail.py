@@ -52,6 +52,9 @@ class OutgoingMail(Document):
 		self.create_mail_contacts()
 		self._db_set(status="Pending", notify_update=True)
 
+		if self.via_api and not self.is_newsletter and self.submitted_after <= 5:
+			frappe.enqueue_doc("Outgoing Mail", self.name, "transfer_now")
+
 	def on_update_after_submit(self) -> None:
 		self.validate_folder()
 
