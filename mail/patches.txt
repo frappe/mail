@@ -9,3 +9,4 @@ mail.patches.v1_0.rename_field_verified
 mail.patches.v1_0.rename_fields_spf_dkim_dmarc
 mail.patches.v1_0.rename_fields_subdomain_root_domain
 mail.patches.v1_0.rename_field_newsletter
+mail.patches.v1_0.rename_field_default

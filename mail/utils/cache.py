@@ -143,6 +143,6 @@ def get_user_default_mailbox(user: str) -> str | None:
 	"""Returns the default mailbox of the user."""
 
 	def getter() -> str | None:
-		return frappe.db.get_value("Mailbox", {"user": user, "default": 1}, "name")
+		return frappe.db.get_value("Mailbox", {"user": user, "is_default": 1}, "name")
 
 	return _hget_or_hset(f"user|{user}", "default_mailbox", getter)

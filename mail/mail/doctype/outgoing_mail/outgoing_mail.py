@@ -735,7 +735,7 @@ def get_default_sender() -> str | None:
 		{
 			"user": user,
 			"enabled": 1,
-			"default": 1,
+			"is_default": 1,
 			"outgoing": 1,
 			"status": "Active",
 		},

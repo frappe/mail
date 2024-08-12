@@ -11,7 +11,7 @@
   "column_break_1jeq",
   "status",
   "section_break_yute",
-  "default",
+  "is_default",
   "track_outgoing_mail",
   "create_mail_contact",
   "column_break_9etf",
@@ -128,13 +128,6 @@
    "label": "Create Mail Contact"
   },
   {
-   "default": "0",
-   "fieldname": "default",
-   "fieldtype": "Check",
-   "label": "Default Mailbox",
-   "search_index": 1
-  },
-  {
    "fieldname": "reply_to",
    "fieldtype": "Data",
    "ignore_xss_filter": 1,
@@ -161,6 +154,13 @@
   {
    "fieldname": "column_break_vnry",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default Mailbox",
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -181,7 +181,7 @@
    "link_fieldname": "sender"
   }
  ],
- "modified": "2024-08-08 10:01:37.527425",
+ "modified": "2024-08-12 13:21:43.880122",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",
