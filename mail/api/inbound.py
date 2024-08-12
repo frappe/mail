@@ -34,7 +34,9 @@ def pull(
 	result = get_incoming_mails(
 		mailbox, limit, last_synced_at or sync_history.last_synced_at
 	)
-	update_last_synced_at(sync_history, result["last_synced_at"])
+	update_mail_sync_history(
+		sync_history, result["last_synced_at"], result["last_synced_mail"]
+	)
 	result["last_synced_at"] = convert_to_utc(result["last_synced_at"])
 
 	return result
@@ -60,7 +62,9 @@ def pull_raw(
 	result = get_raw_incoming_mails(
 		mailbox, limit, last_synced_at or sync_history.last_synced_at
 	)
-	update_last_synced_at(sync_history, result["last_synced_at"])
+	update_mail_sync_history(
+		sync_history, result["last_synced_at"], result["last_synced_mail"]
+	)
 	result["last_synced_at"] = convert_to_utc(result["last_synced_at"])
 
 	return result
@@ -124,6 +128,7 @@ def get_incoming_mails(
 
 	mails = query.run(as_dict=True)
 	last_synced_at = mails[-1].processed_at if mails else now()
+	last_synced_mail = mails[-1].id if mails else None
 
 	for mail in mails:
 		mail.pop("processed_at")
@@ -131,7 +136,11 @@ def get_incoming_mails(
 		mail["to"], mail["cc"] = get_recipients(mail)
 		mail["created_at"] = convert_to_utc(mail.created_at)
 
-	return {"mails": mails, "last_synced_at": last_synced_at}
+	return {
+		"mails": mails,
+		"last_synced_at": last_synced_at,
+		"last_synced_mail": last_synced_mail,
+	}
 
 
 def get_raw_incoming_mails(
@@ -144,7 +153,7 @@ def get_raw_incoming_mails(
 	IM = frappe.qb.DocType("Incoming Mail")
 	query = (
 		frappe.qb.from_(IM)
-		.select(IM.processed_at, IM.message)
+		.select(IM.processed_at, IM.name.as_("id"), IM.message)
 		.where((IM.docstatus == 1) & (IM.receiver == mailbox))
 		.orderby(IM.processed_at)
 		.limit(limit)
@@ -156,16 +165,30 @@ def get_raw_incoming_mails(
 	data = query.run(as_dict=True)
 	mails = [d.message for d in data]
 	last_synced_at = data[-1].processed_at if data else now()
+	last_synced_mail = data[-1].id if data else None
 
-	return {"mails": mails, "last_synced_at": last_synced_at}
+	return {
+		"mails": mails,
+		"last_synced_at": last_synced_at,
+		"last_synced_mail": last_synced_mail,
+	}
 
 
-def update_last_synced_at(sync_history: "MailSyncHistory", last_synced_at: str) -> None:
+def update_mail_sync_history(
+	sync_history: "MailSyncHistory",
+	last_synced_at: str,
+	last_synced_mail: str | None = None,
+) -> None:
 	"""Update the last_synced_at in the Mail Sync History."""
 
-	frappe.db.set_value(
-		sync_history.doctype, sync_history.name, "last_synced_at", last_synced_at or now()
-	)
+	kwargs = {
+		"last_synced_at": last_synced_at or now(),
+	}
+
+	if last_synced_mail:
+		kwargs["last_synced_mail"] = last_synced_mail
+
+	frappe.db.set_value(sync_history.doctype, sync_history.name, kwargs)
 	frappe.db.commit()
 
 
