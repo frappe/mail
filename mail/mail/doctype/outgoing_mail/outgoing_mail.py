@@ -827,7 +827,7 @@ def create_outgoing_mail(
 	doc.via_api = via_api
 	doc.is_newsletter = is_newsletter
 
-	if via_api:
+	if via_api and not is_newsletter:
 		user = frappe.session.user
 		if sender not in get_user_mailboxes(user, "Outgoing"):
 			from mail.utils.cache import get_user_default_mailbox
