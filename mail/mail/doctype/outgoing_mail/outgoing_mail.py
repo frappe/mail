@@ -28,6 +28,7 @@ class OutgoingMail(Document):
 	def validate(self) -> None:
 		self.validate_amended_doc()
 		self.validate_folder()
+		self.load_runtime()
 		self.validate_domain()
 		self.validate_sender()
 		self.validate_reply_to_mail()
@@ -82,17 +83,23 @@ class OutgoingMail(Document):
 		else:
 			self.folder = folder
 
+	def load_runtime(self) -> None:
+		"""Loads the runtime properties."""
+
+		self.runtime = frappe._dict()
+		self.runtime.mailbox = frappe.get_cached_doc("Mailbox", self.sender)
+		self.runtime.mail_domain = frappe.get_cached_doc("Mail Domain", self.domain_name)
+		self.runtime.mail_settings = frappe.get_cached_doc("Mail Settings")
+
 	def validate_domain(self) -> None:
 		"""Validates the domain."""
 
 		if frappe.session.user == "Administrator":
 			return
 
-		mail_domain = frappe.get_cached_doc("Mail Domain", self.domain_name)
-
-		if not mail_domain.enabled:
+		if not self.runtime.mail_domain.enabled:
 			frappe.throw(_("Domain {0} is disabled.").format(frappe.bold(self.domain_name)))
-		if not mail_domain.is_verified:
+		if not self.runtime.mail_domain.is_verified:
 			frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(self.domain_name)))
 
 	def validate_sender(self) -> None:
@@ -126,10 +133,7 @@ class OutgoingMail(Document):
 	def validate_recipients(self) -> None:
 		"""Validates the recipients."""
 
-		max_recipients = frappe.db.get_single_value(
-			"Mail Settings", "max_recipients", cache=True
-		)
-
+		max_recipients = self.runtime.mail_settings.max_recipients
 		if len(self.recipients) > max_recipients:
 			frappe.throw(
 				_("Recipient limit exceeded ({0}). Maximum {1} recipient(s) allowed.").format(
@@ -165,8 +169,7 @@ class OutgoingMail(Document):
 		"""Validates the custom headers."""
 
 		if self.custom_headers:
-			max_headers = frappe.db.get_single_value("Mail Settings", "max_headers", cache=True)
-
+			max_headers = self.runtime.mail_settings.max_headers
 			if len(self.custom_headers) > max_headers:
 				frappe.throw(
 					_(
@@ -214,33 +217,35 @@ class OutgoingMail(Document):
 		"""Validates the attachments."""
 
 		if self.attachments:
-			mail_settings = frappe.get_cached_doc("Mail Settings")
+			max_attachments = self.runtime.mail_settings.outgoing_max_attachments
+			max_attachment_size = self.runtime.mail_settings.outgoing_max_attachment_size
+			max_attachments_size = self.runtime.mail_settings.outgoing_total_attachments_size
 
-			if len(self.attachments) > mail_settings.outgoing_max_attachments:
+			if len(self.attachments) > max_attachments:
 				frappe.throw(
 					_("Attachment limit exceeded ({0}). Maximum {1} attachment(s) allowed.").format(
 						frappe.bold(len(self.attachments)),
-						frappe.bold(mail_settings.outgoing_max_attachments),
+						frappe.bold(max_attachments),
 					)
 				)
 
 			total_attachments_size = 0
 			for attachment in self.attachments:
 				file_size = flt(attachment.file_size / 1024 / 1024, 3)
-				if file_size > mail_settings.outgoing_max_attachment_size:
+				if file_size > max_attachment_size:
 					frappe.throw(
 						_("Attachment size limit exceeded ({0} MB). Maximum {1} MB allowed.").format(
-							frappe.bold(file_size), frappe.bold(mail_settings.outgoing_max_attachment_size)
+							frappe.bold(file_size), frappe.bold(max_attachment_size)
 						)
 					)
 
 				total_attachments_size += file_size
 
-			if total_attachments_size > mail_settings.outgoing_total_attachments_size:
+			if total_attachments_size > max_attachments_size:
 				frappe.throw(
 					_("Attachments size limit exceeded ({0} MB). Maximum {1} MB allowed.").format(
 						frappe.bold(total_attachments_size),
-						frappe.bold(mail_settings.outgoing_total_attachments_size),
+						frappe.bold(max_attachments_size),
 					)
 				)
 
@@ -254,9 +259,7 @@ class OutgoingMail(Document):
 
 		from mail.utils.agent import get_random_outgoing_mail_agent
 
-		outgoing_agent = frappe.get_cached_value(
-			"Mail Domain", self.domain_name, "outgoing_agent"
-		)
+		outgoing_agent = self.runtime.mail_domain.outgoing_agent
 		self.agent = outgoing_agent or get_random_outgoing_mail_agent()
 
 	def set_message_id(self) -> None:
@@ -299,12 +302,11 @@ class OutgoingMail(Document):
 					frappe.throw(_("Future date is not allowed."))
 
 				if self.via_api:
-					mailbox = frappe.get_cached_doc("Mailbox", self.sender)
-					if mailbox.override_display_name:
-						self.display_name = mailbox.display_name
-					if mailbox.override_reply_to:
-						if mailbox.reply_to:
-							parser.update_header("Reply-To", mailbox.reply_to)
+					if self.runtime.mailbox.override_display_name:
+						self.display_name = self.runtime.mailbox.display_name
+					if self.runtime.mailbox.override_reply_to:
+						if self.runtime.mailbox.reply_to:
+							parser.update_header("Reply-To", self.runtime.mailbox.reply_to)
 						else:
 							del parser["Reply-To"]
 
@@ -347,7 +349,7 @@ class OutgoingMail(Document):
 			body_html = self._replace_image_url_with_content_id()
 			body_plain = convert_html_to_text(body_html)
 
-			if frappe.get_cached_value("Mailbox", self.sender, "track_outgoing_mail"):
+			if self.runtime.mailbox.track_outgoing_mail:
 				self.tracking_id = uuid7().hex
 				body_html = add_tracking_pixel(body_html, self.tracking_id)
 
@@ -452,9 +454,7 @@ class OutgoingMail(Document):
 		"""Validates the maximum message size."""
 
 		message_size = flt(self.message_size / 1024 / 1024, 3)
-		max_message_size = frappe.db.get_single_value(
-			"Mail Settings", "max_message_size", cache=True
-		)
+		max_message_size = self.runtime.mail_settings.max_message_size
 
 		if message_size > max_message_size:
 			frappe.throw(
@@ -468,10 +468,11 @@ class OutgoingMail(Document):
 
 		from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 
-		mailbox = frappe.get_cached_doc("Mailbox", self.sender)
-		if mailbox.create_mail_contact:
+		if self.runtime.mailbox.create_mail_contact:
 			for recipient in self.recipients:
-				create_mail_contact(mailbox.user, recipient.email, recipient.display_name)
+				create_mail_contact(
+					self.runtime.mailbox.user, recipient.email, recipient.display_name
+				)
 
 	def update_status(self, status: str | None = None, db_set: bool = True) -> None:
 		"""Updates the status based on the recipients status."""
