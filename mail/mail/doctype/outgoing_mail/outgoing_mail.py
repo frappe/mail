@@ -947,16 +947,11 @@ def transfer_mails_to_agent(agent: str) -> None:
 		"""Updates the outgoing mails."""
 
 		OM = frappe.qb.DocType("Outgoing Mail")
-		query = (
-			frappe.qb.update(OM)
-			.set(OM.error_log, None)
-			.set(OM.status, "Transferring")
-			.where(
-				(OM.docstatus == 1)
-				& (OM.agent == agent)
-				& (OM.status == current_status)
-				& (OM.name.isin(outgoing_mails))
-			)
+		query = frappe.qb.update(OM).where(
+			(OM.docstatus == 1)
+			& (OM.agent == agent)
+			& (OM.status == current_status)
+			& (OM.name.isin(outgoing_mails))
 		)
 
 		for field, value in kwargs.items():
@@ -1014,15 +1009,21 @@ def transfer_mails_to_agent(agent: str) -> None:
 
 			rmq._disconnect()
 
-			transferred_at = now()
-			OM = frappe.qb.DocType("Outgoing Mail")
-			update_outgoing_mails(
-				outgoing_mails,
-				current_status=current_status,
-				status="Transferred",
-				error_log=None,
-				transferred_at=transferred_at,
-				transferred_after=(OM.transferred_at - OM.submitted_at),
+			frappe.db.sql(
+				"""
+				UPDATE `tabOutgoing Mail`
+				SET
+					status = %s,
+					error_log = NULL,
+					transferred_at = %s,
+					transferred_after = TIMESTAMPDIFF(SECOND, `submitted_at`, `transferred_at`)
+				WHERE
+					docstatus = 1 AND
+					agent = %s AND
+					status = %s AND
+					name IN %s
+				""",
+				("Transferred", now(), agent, current_status, tuple(outgoing_mails)),
 			)
 			current_status = "Transferred"
 		except Exception:
