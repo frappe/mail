@@ -74,7 +74,7 @@ class EmailParser:
 		for type in types:
 			if addresses := self.message.get(type):
 				for address in addresses.split(","):
-					display_name, email = parseaddr(address)
+					display_name, email = parseaddr(address.replace("\r", "").replace("\n", ""))
 					if email:
 						recipients.append({"type": type, "email": email, "display_name": display_name})
 
