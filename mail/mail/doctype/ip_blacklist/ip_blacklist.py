@@ -62,9 +62,9 @@ def get_group(ip_version: Literal["IPv4", "IPv6"], ip_address: str) -> str:
 	"""Returns the IP group"""
 
 	if ip_version == "IPv6":
-		return ":".join(ip_address.split(":")[:4])
+		return ":".join(ip_address.split(":")[:3])
 	else:
-		return ".".join(ip_address.split(".")[:3])
+		return ".".join(ip_address.split(".")[:2])
 
 
 def create_ip_blacklist(
