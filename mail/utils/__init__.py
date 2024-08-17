@@ -34,6 +34,22 @@ def get_dns_record(
 		frappe.throw(err_msg)
 
 
+def get_host_by_ip(ip_address: str, raise_exception: bool = False) -> str | None:
+	"""Returns host for the given IP address."""
+
+	import socket
+
+	err_msg = None
+
+	try:
+		return socket.gethostbyaddr(ip_address)[0]
+	except Exception as e:
+		err_msg = _(str(e))
+
+	if raise_exception and err_msg:
+		frappe.throw(err_msg)
+
+
 def parsedate_to_datetime(
 	date_header: str, to_timezone: str | None = None
 ) -> "datetime":

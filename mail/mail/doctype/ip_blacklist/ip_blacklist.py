@@ -4,6 +4,7 @@
 import frappe
 import ipaddress
 from typing import Literal
+from mail.utils import get_host_by_ip
 from frappe.model.document import Document
 from mail.utils.cache import delete_cache, get_blacklist_for_ip_group
 
@@ -13,6 +14,7 @@ class IPBlacklist(Document):
 		self.set_ip_version()
 		self.set_ip_address_expanded()
 		self.set_group()
+		self.set_host()
 
 	def on_update(self) -> None:
 		delete_cache(f"blacklist|{self.ip_group}")
@@ -31,6 +33,11 @@ class IPBlacklist(Document):
 		"""Sets the IP group"""
 
 		self.ip_group = get_group(self.ip_version, self.ip_address_expanded)
+
+	def set_host(self):
+		"""Sets the host for the IP address"""
+
+		self.host = get_host_by_ip(self.ip_address_expanded)
 
 
 def get_ip_version(ip_address: str) -> Literal["IPv4", "IPv6"]:

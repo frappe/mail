@@ -13,13 +13,13 @@
   "ip_address_expanded",
   "ip_group",
   "column_break_0vb9",
+  "host",
   "blacklist_reason"
  ],
  "fields": [
   {
    "fieldname": "ip_version",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "IP Version",
    "no_copy": 1,
@@ -53,7 +53,6 @@
   {
    "fieldname": "ip_address",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "IP Address",
    "reqd": 1,
@@ -75,11 +74,20 @@
    "no_copy": 1,
    "read_only": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "host",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Host",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-14 23:20:52.244610",
+ "modified": "2024-08-17 15:42:23.244505",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "IP Blacklist",
