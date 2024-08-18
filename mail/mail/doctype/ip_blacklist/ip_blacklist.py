@@ -15,6 +15,8 @@ class IPBlacklist(Document):
 		self.set_ip_address_expanded()
 		self.set_group()
 		self.set_host()
+		self.set_source_ip_address()
+		self.set_source_host()
 
 	def on_update(self) -> None:
 		delete_cache(f"blacklist|{self.ip_group}")
@@ -34,10 +36,20 @@ class IPBlacklist(Document):
 
 		self.ip_group = get_group(self.ip_version, self.ip_address_expanded)
 
-	def set_host(self):
+	def set_host(self) -> None:
 		"""Sets the host for the IP address"""
 
 		self.host = get_host_by_ip(self.ip_address_expanded)
+
+	def set_source_ip_address(self) -> None:
+		"""Sets the source IP address"""
+
+		self.source_ip_address = frappe.local.request_ip
+
+	def set_source_host(self) -> None:
+		"""Sets the source host"""
+
+		self.source_host = get_host_by_ip(self.source_ip_address)
 
 
 def get_ip_version(ip_address: str) -> Literal["IPv4", "IPv6"]:

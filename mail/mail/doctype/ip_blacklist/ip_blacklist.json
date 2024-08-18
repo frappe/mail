@@ -14,7 +14,11 @@
   "ip_group",
   "column_break_0vb9",
   "host",
-  "blacklist_reason"
+  "blacklist_reason",
+  "section_break_9zf8",
+  "source_ip_address",
+  "column_break_iwmw",
+  "source_host"
  ],
  "fields": [
   {
@@ -83,11 +87,31 @@
    "label": "Host",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_9zf8",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "source_ip_address",
+   "fieldtype": "Data",
+   "label": "Source IP Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_iwmw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "source_host",
+   "fieldtype": "Data",
+   "label": "Source Host",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-17 15:42:23.244505",
+ "modified": "2024-08-18 09:12:09.460482",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "IP Blacklist",
