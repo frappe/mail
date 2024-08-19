@@ -57,7 +57,7 @@ const incomingMails = createListResource({
    onSuccess(data) {
         mailList.value = mailList.value.concat(data)
         mailStart.value = mailStart.value + data.length
-       if (!currentMail.value) {
+       if (!currentMail.value && mailList.value.length) {
             currentMail.value = mailList.value[0].name
            setCurrentMail(mailList.value[0].name)
        }

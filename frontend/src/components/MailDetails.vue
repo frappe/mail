@@ -19,6 +19,11 @@
             class="pt-5 ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-gray-300 prose-th:border-gray-300 prose-td:relative prose-th:relative prose-th:bg-gray-100 prose-sm max-w-none">
         </div>
     </div>
+    <div v-else class="flex-1 flex items-center justify-center w-full h-full my-auto">
+        <div class="text-gray-500 text-lg">
+            {{ __("No emails to show") }}
+        </div>
+    </div>
 </template>
 <script setup>
 import { createResource, Avatar } from 'frappe-ui';
@@ -43,7 +48,7 @@ const mail = createResource({
             type: props.type
         }
     },
-    auto: true,
+    auto: props.mailID ? true : false,
 });
 
 watch(
