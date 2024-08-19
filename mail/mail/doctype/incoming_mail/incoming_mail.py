@@ -72,6 +72,7 @@ class IncomingMail(Document):
 		self.message_id = parser.get_header("Message-ID")
 		self.created_at = parser.get_date()
 		self.message_size = parser.get_size()
+		self.spam_score = extract_spam_score(parser.get_header("X-Spam-Status"))
 		self.received_at = parse_iso_datetime(parser.get_header("Received-At"))
 
 		parser.save_attachments(self.doctype, self.name, is_private=True)
@@ -272,6 +273,21 @@ def get_incoming_mails_from_agent(agent: str) -> None:
 			title=f"Get Incoming Mails - {agent}",
 			message=frappe.get_traceback(with_context=False),
 		)
+
+
+def extract_spam_score(header: str | None = None) -> float:
+	"""Extracts the spam score from the given `X-Spam-Status` header."""
+
+	if not header:
+		return 0.0
+
+	import re
+
+	spam_score_pattern = re.compile(r"score=(-?\d+\.?\d*)")
+	if match := spam_score_pattern.search(header):
+		return float(match.group(1))
+
+	return 0.0
 
 
 def is_active_domain(domain_name: str) -> bool:
