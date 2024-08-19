@@ -21,6 +21,8 @@
   "more_info_tab",
   "status",
   "spam_score",
+  "from_ip",
+  "from_host",
   "is_rejected",
   "rejection_message",
   "column_break_htgl",
@@ -384,13 +386,27 @@
    "label": "Spam Score",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "from_ip",
+   "fieldtype": "Data",
+   "label": "From IP",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_host",
+   "fieldtype": "Data",
+   "label": "From Host",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-19 16:37:08.465236",
+ "modified": "2024-08-19 17:26:51.270394",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

@@ -72,6 +72,7 @@ class IncomingMail(Document):
 		self.message_id = parser.get_header("Message-ID")
 		self.created_at = parser.get_date()
 		self.message_size = parser.get_size()
+		self.from_ip, self.from_host = extract_ip_and_host(parser.get_header("Received"))
 		self.spam_score = extract_spam_score(parser.get_header("X-Spam-Status"))
 		self.received_at = parse_iso_datetime(parser.get_header("Received-At"))
 
@@ -273,6 +274,26 @@ def get_incoming_mails_from_agent(agent: str) -> None:
 			title=f"Get Incoming Mails - {agent}",
 			message=frappe.get_traceback(with_context=False),
 		)
+
+
+def extract_ip_and_host(header: str | None = None) -> tuple[str | None, str | None]:
+	"""Extracts the IP and Host from the given `Received` header."""
+
+	if not header:
+		return None, None
+
+	import re
+
+	ip_pattern = re.compile(r"\[(?P<ip>[\d\.]+|[a-fA-F0-9:]+)")
+	host_pattern = re.compile(r"from\s+(?P<host>[^\s]+)")
+
+	ip_match = ip_pattern.search(header)
+	ip = ip_match.group("ip") if ip_match else None
+
+	host_match = host_pattern.search(header)
+	host = host_match.group("host") if host_match else None
+
+	return ip, host
 
 
 def extract_spam_score(header: str | None = None) -> float:
