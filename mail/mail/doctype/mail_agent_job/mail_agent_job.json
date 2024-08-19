@@ -38,7 +38,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Queued\nRunning\nCompleted\nFailed",
+   "options": "Queued\nRunning\nCompleted\nFailed On Start\nFailed\nFailed On End",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
@@ -201,7 +201,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-05-16 17:04:20.182592",
+ "modified": "2024-06-07 08:14:42.690572",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Agent Job",

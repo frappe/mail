@@ -7,11 +7,9 @@ frappe.ui.form.on("Mail Alias", {
     },
 
     set_queries(frm) {
-		frm.set_query("domain_name", () => {
-			return {
-				query: "mail.mail.doctype.mailbox.mailbox.get_domain",
-			};
-		});
+		frm.set_query("domain_name", () => ({
+            query: "mail.mail.doctype.mailbox.mailbox.get_domain",
+        }));
 
         frm.set_query("mailbox", "mailboxes", (doc) => {
 			let filters = {

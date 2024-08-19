@@ -21,6 +21,73 @@ def execute(filters=None) -> Tuple[list, list]:
 	return columns, data
 
 
+def get_data(filters=None) -> list:
+	filters = filters or {}
+
+	OM = frappe.qb.DocType("Outgoing Mail")
+	query = (
+		frappe.qb.from_(OM)
+		.select(
+			OM.name,
+			OM.creation,
+			OM.status,
+			OM.open_count,
+			OM.agent,
+			OM.domain_name,
+			OM.sender,
+			OM.message_id,
+			OM.tracking_id,
+			OM.created_at,
+			OM.first_opened_at,
+			OM.last_opened_at,
+			OM.last_opened_from_ip,
+		)
+		.where((OM.track == 1) & (OM.docstatus == 1))
+		.orderby(OM.creation, OM.created_at, order=Order.desc)
+	)
+
+	if (
+		not filters.get("name")
+		and not filters.get("message_id")
+		and not filters.get("tracking_id")
+	):
+		query = query.where(
+			(Date(OM.created_at) >= Date(filters.get("from_date")))
+			& (Date(OM.created_at) <= Date(filters.get("to_date")))
+		)
+
+	for field in [
+		"name",
+		"status",
+		"agent",
+		"domain_name",
+		"sender",
+		"message_id",
+		"tracking_id",
+	]:
+		if filters.get(field):
+			query = query.where(OM[field] == filters.get(field))
+
+	user = frappe.session.user
+	if not is_system_manager(user):
+		conditions = []
+		domains = get_user_owned_domains(user)
+		mailboxes = get_user_mailboxes(user)
+
+		if has_role(user, "Domain Owner") and domains:
+			conditions.append(OM.domain_name.isin(domains))
+
+		if has_role(user, "Mailbox User") and mailboxes:
+			conditions.append(OM.sender.isin(mailboxes))
+
+		if not conditions:
+			return []
+
+		query = query.where(Criterion.any(conditions))
+
+	return query.run(as_dict=True)
+
+
 def get_columns() -> list:
 	return [
 		{
@@ -106,70 +173,3 @@ def get_columns() -> list:
 			"width": 120,
 		},
 	]
-
-
-def get_data(filters=None) -> list:
-	filters = filters or {}
-
-	OM = frappe.qb.DocType("Outgoing Mail")
-	query = (
-		frappe.qb.from_(OM)
-		.select(
-			OM.name,
-			OM.creation,
-			OM.status,
-			OM.open_count,
-			OM.agent,
-			OM.domain_name,
-			OM.sender,
-			OM.message_id,
-			OM.tracking_id,
-			OM.created_at,
-			OM.first_opened_at,
-			OM.last_opened_at,
-			OM.last_opened_from_ip,
-		)
-		.where((OM.track == 1) & (OM.docstatus == 1))
-		.orderby(OM.creation, OM.created_at, order=Order.desc)
-	)
-
-	if (
-		not filters.get("name")
-		and not filters.get("message_id")
-		and not filters.get("tracking_id")
-	):
-		query = query.where(
-			(Date(OM.created_at) >= Date(filters.get("from_date")))
-			& (Date(OM.created_at) <= Date(filters.get("to_date")))
-		)
-
-	for field in [
-		"name",
-		"status",
-		"agent",
-		"domain_name",
-		"sender",
-		"message_id",
-		"tracking_id",
-	]:
-		if filters.get(field):
-			query = query.where(OM[field] == filters.get(field))
-
-	user = frappe.session.user
-	if not is_system_manager(user):
-		conditions = []
-		domains = get_user_owned_domains(user)
-		mailboxes = get_user_mailboxes(user)
-
-		if has_role(user, "Domain Owner") and domains:
-			conditions.append(OM.domain_name.isin(domains))
-
-		if has_role(user, "Mailbox User") and mailboxes:
-			conditions.append(OM.sender.isin(mailboxes))
-
-		if not conditions:
-			return []
-
-		query = query.where(Criterion.any(conditions))
-
-	return query.run(as_dict=True)

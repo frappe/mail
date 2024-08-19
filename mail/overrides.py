@@ -1,11 +1,9 @@
 import frappe
 from frappe import _
+from typing import Optional
 from frappe.utils import flt, cint
-from typing import Optional, TYPE_CHECKING
+from frappe.model.document import Document
 from mail.utils import has_role, is_system_manager, get_user_owned_domains
-
-if TYPE_CHECKING:
-	from frappe.model.document import Document
 
 
 def validate_file(doc, method):
@@ -61,7 +59,7 @@ def validate_file(doc, method):
 				)
 
 
-def user_has_permission(doc: "Document", ptype: str, user: str) -> bool:
+def user_has_permission(doc: Document, ptype: str, user: str) -> bool:
 	if doc.doctype != "User":
 		return False
 

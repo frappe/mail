@@ -4,7 +4,6 @@
 frappe.ui.form.on("Outgoing Mail", {
     setup(frm) {
         frm.trigger("set_queries");
-        frm.trigger("disable_use_raw_html");
     },
 
 	refresh(frm) {
@@ -13,17 +12,13 @@ frappe.ui.form.on("Outgoing Mail", {
 	},
 
     set_queries(frm) {
-        frm.set_query("sender", (doc) => {
-            return {
-                query: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_sender",
-            };
-        });
-    },
+        frm.set_query("sender", () => ({
+            query: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_sender",
+        }));
 
-    disable_use_raw_html(frm) {
-        if (frm.is_new()) {
-            frm.set_value("use_raw_html", 0);
-        }
+        frm.set_query("folder", () => ({
+            filters: { outbound: 1 }
+        }));
     },
 
     hide_amend_button(frm) {
@@ -39,9 +34,17 @@ frappe.ui.form.on("Outgoing Mail", {
                     frm.trigger("retry");
                 }, __("Actions"));
             }
-            else if (["Transferred", "Queued", "Deferred"].includes(frm.doc.status)) {
+            else if (["Transferred", "RQ", "Queued", "Deferred"].includes(frm.doc.status)) {
                 frm.add_custom_button(__("Sync Status"), () => {
                     frm.trigger("sync_outgoing_mails_status");
+                }, __("Actions"));
+            }
+            else if (frm.doc.status === "Sent") {
+                frm.add_custom_button(__("Reply"), () => {
+                    frm.events.reply(frm, all=false);
+                }, __("Actions"));
+                frm.add_custom_button(__("Reply All"), () => {
+                    frm.events.reply(frm, all=true);
                 }, __("Actions"));
             }
         }
@@ -77,4 +80,14 @@ frappe.ui.form.on("Outgoing Mail", {
             }
 		});
 	},
+
+    reply(frm, all) {
+        frappe.model.open_mapped_doc({
+			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.reply_to_mail",
+			frm: frm,
+            args: {
+                all: all,
+            },
+		});
+    }
 });

@@ -4,9 +4,13 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "folder",
   "display_name",
   "sender",
+  "reply_to",
   "column_break_hpzu",
+  "reply_to_mail_type",
+  "reply_to_mail",
   "subject",
   "receiver",
   "section_break_s2hp",
@@ -311,13 +315,54 @@
    "no_copy": 1,
    "read_only": 1,
    "set_only_once": 1
+  },
+  {
+   "depends_on": "eval: doc.docstatus == 0",
+   "fieldname": "reply_to_mail_type",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Reply To Mail Type",
+   "no_copy": 1,
+   "options": "\nIncoming Mail\nOutgoing Mail",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "reply_to_mail",
+   "fieldtype": "Dynamic Link",
+   "label": "In Reply To",
+   "no_copy": 1,
+   "options": "reply_to_mail_type",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "reply_to",
+   "fieldtype": "Data",
+   "ignore_xss_filter": 1,
+   "label": "Reply To",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Inbox",
+   "depends_on": "eval: doc.docstatus != 0",
+   "fieldname": "folder",
+   "fieldtype": "Link",
+   "label": "Folder",
+   "no_copy": 1,
+   "options": "Mail Folder",
+   "reqd": 1,
+   "search_index": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-03 13:45:16.015221",
+ "modified": "2024-06-09 17:56:20.004772",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
@@ -366,7 +411,9 @@
    "write": 1
   }
  ],
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "subject"
 }

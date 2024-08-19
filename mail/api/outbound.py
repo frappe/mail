@@ -25,6 +25,7 @@ def send() -> list[str]:
 		raw_html = mail.get("html")
 		custom_headers = mail.get("headers")
 		attachments = mail.get("attachments")
+		reply_to = mail.get("reply-to") or mail.get("reply_to")
 		track = cint(mail.get("track") or mail.get("enable_tracking"))
 
 		if mail.get("mode") == "individual" and isinstance(to, list) and len(to) > 1:
@@ -36,6 +37,7 @@ def send() -> list[str]:
 					cc,
 					bcc,
 					raw_html,
+					reply_to,
 					track,
 					attachments,
 					custom_headers,
@@ -51,6 +53,7 @@ def send() -> list[str]:
 				cc,
 				bcc,
 				raw_html,
+				reply_to,
 				track,
 				attachments,
 				custom_headers,
@@ -58,10 +61,5 @@ def send() -> list[str]:
 				send_in_batch=send_in_batch,
 			)
 			docs.append(doc.name)
-
-	frappe.get_doc(
-		"Scheduled Job Type",
-		{"method": "mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails"},
-	).enqueue(force=True)
 
 	return docs

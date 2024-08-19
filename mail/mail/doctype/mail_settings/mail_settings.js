@@ -7,14 +7,12 @@ frappe.ui.form.on("Mail Settings", {
 	},
 
     set_queries(frm) {
-        frm.set_query("postmaster", () => {
-            return {
-                query: "mail.mail.doctype.mail_settings.mail_settings.get_postmaster",
-                filters: {
-                    enabled: 1,
-                    role: "Postmaster",
-                },
-            };
-        });
+        frm.set_query("postmaster", () => ({
+            query: "mail.mail.doctype.mail_settings.mail_settings.get_postmaster",
+            filters: {
+                enabled: 1,
+                role: "Postmaster",
+            },
+        }));
     },
 });

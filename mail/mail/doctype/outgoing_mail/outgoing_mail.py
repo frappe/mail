@@ -5,6 +5,7 @@ import json
 import frappe
 from frappe import _
 from re import finditer
+from email import policy
 from uuid_utils import uuid7
 from bs4 import BeautifulSoup
 from mimetypes import guess_type
@@ -13,7 +14,6 @@ from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email.mime.audio import MIMEAudio
 from email.mime.image import MIMEImage
-from frappe.core.utils import html2text
 from email.encoders import encode_base64
 from typing import Optional, TYPE_CHECKING
 from frappe.model.document import Document
@@ -34,6 +34,8 @@ from mail.utils import (
 	is_mailbox_owner,
 	is_system_manager,
 	get_user_mailboxes,
+	validate_mail_folder,
+	convert_html_to_text,
 	parsedate_to_datetime,
 	get_random_outgoing_agent,
 	validate_mailbox_for_outgoing,
@@ -49,9 +51,11 @@ class OutgoingMail(Document):
 		self.name = str(uuid7())
 
 	def validate(self) -> None:
+		self.validate_amended_doc()
+		self.validate_folder()
 		self.validate_domain()
 		self.validate_sender()
-		self.validate_amended_doc()
+		self.validate_reply_to_mail()
 		self.validate_recipients()
 		self.validate_custom_headers()
 		self.load_attachments()
@@ -71,11 +75,30 @@ class OutgoingMail(Document):
 		self._db_set(status="Pending", notify_update=True)
 
 		if not self.send_in_batch:
-			self.transfer_mail()
+			transfer_mail(outgoing_mail=self)
+
+	def on_update_after_submit(self) -> None:
+		self.validate_folder()
 
 	def on_trash(self) -> None:
 		if self.docstatus != 0 and frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Outgoing Mail."))
+
+	def validate_amended_doc(self) -> None:
+		"""Validates the amended document."""
+
+		if self.amended_from:
+			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
+
+	def validate_folder(self) -> None:
+		"""Validates the folder"""
+
+		if self.docstatus == 0:
+			self.folder = "Drafts"
+		elif self.docstatus == 1 and self.folder == "Drafts":
+			self.folder = "Sent"
+		elif self.has_value_changed("folder"):
+			validate_mail_folder(self.folder, validate_for="outbound")
 
 	def validate_domain(self) -> None:
 		"""Validates the domain."""
@@ -105,11 +128,18 @@ class OutgoingMail(Document):
 
 		validate_mailbox_for_outgoing(self.sender)
 
-	def validate_amended_doc(self) -> None:
-		"""Validates the amended document."""
+	def validate_reply_to_mail(self) -> None:
+		"""Validates the Reply To Mail."""
 
-		if self.amended_from:
-			frappe.throw(_("Amending {0} is not allowed.").format(frappe.bold("Outgoing Mail")))
+		if self.reply_to_mail:
+			if not self.reply_to_mail_type:
+				frappe.throw(_("Reply To Mail Type is required."))
+			elif self.reply_to_mail_type not in ["Incoming Mail", "Outgoing Mail"]:
+				frappe.throw(
+					_("{0} must be either Incoming Mail or Outgoing Mail.").format(
+						frappe.bold("Reply To Mail Type")
+					)
+				)
 
 	def validate_recipients(self) -> None:
 		"""Validates the recipients."""
@@ -243,7 +273,7 @@ class OutgoingMail(Document):
 	def set_body_plain(self) -> None:
 		"""Sets the Plain Body."""
 
-		self.body_plain = html2text(self.body_html)
+		self.body_plain = convert_html_to_text(self.body_html)
 
 	def set_message_id(self) -> None:
 		"""Sets the Message ID."""
@@ -256,11 +286,19 @@ class OutgoingMail(Document):
 		def _get_message() -> "MIMEMultipart":
 			"""Returns the MIME message."""
 
-			message = MIMEMultipart("alternative")
+			message = MIMEMultipart("alternative", policy=policy.SMTP)
+
+			if self.reply_to:
+				message["Reply-To"] = self.reply_to
+
+			if self.reply_to_mail:
+				if in_reply_to := frappe.db.get_value(
+					self.reply_to_mail_type, self.reply_to_mail, "message_id"
+				):
+					message["In-Reply-To"] = in_reply_to
+
 			display_name = frappe.get_cached_value("Mailbox", self.sender, "display_name")
-			message["From"] = (
-				"{0} <{1}>".format(display_name, self.sender) if display_name else self.sender
-			)
+			message["From"] = formataddr((display_name, self.sender))
 
 			for type in ["To", "Cc", "Bcc"]:
 				if recipients := self._get_recipients(type):
@@ -271,14 +309,14 @@ class OutgoingMail(Document):
 			message["Message-ID"] = self.message_id
 
 			body_html = self._replace_image_url_with_content_id()
-			body_plain = html2text(body_html)
-			message.attach(MIMEText(body_plain, "plain", "utf-8"))
+			body_plain = convert_html_to_text(body_html)
 
 			if self.track:
 				self.tracking_id = uuid7().hex
 				body_html = add_tracking_pixel(body_html, self.tracking_id)
 
-			message.attach(MIMEText(body_html, "html", "utf-8"))
+			message.attach(MIMEText(body_plain, "plain", "utf-8", policy=policy.SMTP))
+			message.attach(MIMEText(body_html, "html", "utf-8", policy=policy.SMTP))
 
 			return message
 
@@ -305,16 +343,16 @@ class OutgoingMail(Document):
 				if maintype == "text":
 					if isinstance(content, str):
 						content = content.encode("utf-8")
-					part = MIMEText(content, _subtype=subtype, _charset="utf-8")
+					part = MIMEText(content, _subtype=subtype, _charset="utf-8", policy=policy.SMTP)
 
 				elif maintype == "image":
-					part = MIMEImage(content, _subtype=subtype)
+					part = MIMEImage(content, _subtype=subtype, policy=policy.SMTP)
 
 				elif maintype == "audio":
-					part = MIMEAudio(content, _subtype=subtype)
+					part = MIMEAudio(content, _subtype=subtype, policy=policy.SMTP)
 
 				else:
-					part = MIMEBase(maintype, subtype)
+					part = MIMEBase(maintype, subtype, policy=policy.SMTP)
 					part.set_payload(content)
 					encode_base64(part)
 
@@ -328,7 +366,7 @@ class OutgoingMail(Document):
 		def _add_dkim_signature(message: "MIMEMultipart") -> None:
 			"""Adds the DKIM signature to the message."""
 
-			headers = [
+			include_headers = [
 				b"To",
 				b"Cc",
 				b"From",
@@ -336,6 +374,7 @@ class OutgoingMail(Document):
 				b"Subject",
 				b"Reply-To",
 				b"Message-ID",
+				b"In-Reply-To",
 			]
 			dkim_selector = frappe.get_cached_value(
 				"Mail Domain", self.domain_name, "dkim_selector"
@@ -343,14 +382,16 @@ class OutgoingMail(Document):
 			dkim_private_key = get_decrypted_password(
 				"Mail Domain", self.domain_name, "dkim_private_key"
 			)
-			signature = dkim_sign(
+			dkim_signature = dkim_sign(
 				message=message.as_string().split("\n", 1)[-1].encode("utf-8"),
 				domain=self.domain_name.encode(),
 				selector=dkim_selector.encode(),
 				privkey=dkim_private_key.encode(),
-				include_headers=headers,
+				include_headers=include_headers,
 			)
-			message["DKIM-Signature"] = signature[len("DKIM-Signature: ") :].decode()
+			dkim_header = dkim_signature.decode().replace("\n", "").replace("\r", "")
+
+			message["DKIM-Signature"] = dkim_header[len("DKIM-Signature: ") :]
 
 		message = _get_message()
 		_add_custom_headers(message)
@@ -399,15 +440,6 @@ class OutgoingMail(Document):
 				doc.email = email
 				doc.display_name = display_name
 				doc.insert()
-
-	def transfer_mail(self) -> None:
-		"""Sends the mail."""
-
-		request_data = {
-			"outgoing_mail": self.name,
-			"message": self.message,
-		}
-		create_agent_job(self.agent, "Transfer Mail", request_data=request_data)
 
 	def _add_recipients(
 		self, type: str, recipients: Optional[str | list[str]] = None
@@ -560,7 +592,7 @@ class OutgoingMail(Document):
 			kwargs["error_log"] = None
 			kwargs["status"] = "Pending"
 			self._db_set(**kwargs, commit=True)
-			self.transfer_mail()
+			transfer_mail(outgoing_mail=self)
 
 
 @frappe.whitelist()
@@ -602,105 +634,29 @@ def get_sender(
 
 
 @frappe.whitelist()
-def sync_outgoing_mails_status(agents: Optional[str | list] = None) -> None:
-	"""Gets the delivery status from agents."""
+def reply_to_mail(source_name, target_doc=None):
+	reply_to_mail_type = "Outgoing Mail"
+	source_doc = frappe.get_doc(reply_to_mail_type, source_name)
+	target_doc = target_doc or frappe.new_doc("Outgoing Mail")
 
-	if not agents:
-		MS = frappe.qb.DocType("Mail Agent")
-		OM = frappe.qb.DocType("Outgoing Mail")
-		agents = (
-			frappe.qb.from_(MS)
-			.left_join(OM)
-			.on(OM.agent == MS.name)
-			.select(MS.name)
-			.distinct()
-			.where(
-				(MS.enabled == 1)
-				& (MS.outgoing == 1)
-				& (OM.docstatus == 1)
-				& (OM.status.isin(["Transferred", "Queued", "Deferred"]))
+	target_doc.reply_to_mail_type = source_doc.doctype
+	target_doc.reply_to_mail = source_name
+	target_doc.sender = source_doc.sender
+	target_doc.subject = f"Re: {source_doc.subject}"
+
+	recipient_types = ["To", "Cc"] if frappe.flags.args.all else ["To"]
+	for recipient in source_doc.recipients:
+		if recipient.type in recipient_types:
+			target_doc.append(
+				"recipients",
+				{
+					"type": recipient.type,
+					"email": recipient.email,
+					"display_name": recipient.display_name,
+				},
 			)
-		).run(pluck="name")
 
-	elif isinstance(agents, str):
-		agents = [agents]
-
-	for agent in agents:
-		create_agent_job(agent, "Sync Outgoing Mails Status")
-
-
-def update_outgoing_mails_status(agent_job: "MailAgentJob") -> None:
-	"""Called by the Mail Agent Job to update the outgoing mails status."""
-
-	if agent_job and agent_job.job_type in ["Transfer Mail", "Transfer Mails"]:
-		data = json.loads(agent_job.request_data)
-
-		if isinstance(data, dict):
-			if agent_job.status == "Running":
-				outgoing_mail = frappe.get_doc("Outgoing Mail", data.get("outgoing_mail"))
-				return outgoing_mail._db_set(status="Transferring", commit=True, notify_update=True)
-
-			data = [data]
-
-		if agent_job.status == "Failed":
-			OM = frappe.qb.DocType("Outgoing Mail")
-			outgoing_mails = [d["outgoing_mail"] for d in data]
-			(
-				frappe.qb.update(OM)
-				.set(OM.status, "Failed")
-				.set(OM.error_log, agent_job.error_log)
-				.where((OM.docstatus == 1) & (OM.name.isin(outgoing_mails)))
-			).run()
-
-		elif agent_job.status == "Completed":
-			OM = frappe.qb.DocType("Outgoing Mail")
-			outgoing_mails = [d["outgoing_mail"] for d in data]
-			transferred_at = now()
-			(
-				frappe.qb.update(OM)
-				.set(OM.status, "Transferred")
-				.set(OM.transferred_at, transferred_at)
-				.set(OM.transferred_after, OM.transferred_at - OM.created_at)
-				.where((OM.docstatus == 1) & (OM.name.isin(outgoing_mails)))
-			).run()
-
-
-def update_outgoing_mails_delivery_status(agent_job: "MailAgentJob") -> None:
-	"""Called by the Mail Agent Job to update the outgoing mails delivery status."""
-
-	def _validate_data(data: dict) -> None:
-		"""Validates the data."""
-
-		if data:
-			fields = ["outgoing_mail", "status", "recipients"]
-
-			for field in fields:
-				if not data.get(field):
-					frappe.throw(_("{0} is required.").format(frappe.bold(field)))
-		else:
-			frappe.throw(_("Invalid Data."))
-
-	if agent_job and agent_job.job_type == "Sync Outgoing Mails Status":
-		if agent_job.status == "Completed":
-			if data := json.loads(agent_job.response_data)["message"]:
-				for oml in data:
-					_validate_data(oml)
-
-					if doc := frappe.get_doc("Outgoing Mail", oml["outgoing_mail"]):
-						if oml["status"] != "Queued":
-							for recipient in doc.recipients:
-								key = (recipient.type, recipient.email)
-								oml_recipient = oml["recipients"][str(key)]
-								recipient.status = oml_recipient["status"]
-								recipient.action_at = oml_recipient["action_at"]
-								recipient.action_after = time_diff_in_seconds(
-									recipient.action_at, doc.created_at
-								)
-								recipient.retries = oml_recipient["retries"]
-								recipient.details = oml_recipient["details"]
-								recipient.db_update()
-
-						doc._db_set(status=oml["status"], notify_update=True)
+	return target_doc
 
 
 def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
@@ -720,57 +676,6 @@ def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
 	return str(soup)
 
 
-def transfer_mails() -> None:
-	"""Sends the mails in batch."""
-
-	def _get_outgoing_mails() -> list[dict]:
-		OM = frappe.qb.DocType("Outgoing Mail")
-		return (
-			frappe.qb.from_(OM)
-			.select(OM.name, OM.agent, OM.message)
-			.where((OM.docstatus == 1) & (OM.send_in_batch == 1) & (OM.status == "Pending"))
-			.orderby(OM.creation)
-		).run(as_dict=True)
-
-	def _create_and_transfer_batch(
-		agent: str, outgoing_mails: list, batch_size: int
-	) -> None:
-		for i in range(0, len(outgoing_mails), batch_size):
-			create_agent_job(
-				agent, "Transfer Mails", request_data=outgoing_mails[i : i + batch_size]
-			)
-
-	def _update_outgoing_mails_status(oms: list[str], commit: bool = False) -> None:
-		OM = frappe.qb.DocType("Outgoing Mail")
-		(
-			frappe.qb.update(OM)
-			.set(OM.status, "Transferring")
-			.where((OM.docstatus == 1) & (OM.name.isin(oms)))
-		).run()
-
-		if commit:
-			frappe.db.commit()
-
-	if outgoing_mails := _get_outgoing_mails():
-		outgoing_mail_list = []
-		agent_wise_outgoing_mails = {}
-		batch_size = frappe.db.get_single_value("Mail Settings", "max_batch_size", cache=True)
-
-		for mail in outgoing_mails:
-			outgoing_mail_list.append(mail["name"])
-			agent_wise_outgoing_mails.setdefault(mail.agent, []).append(
-				{
-					"outgoing_mail": mail.name,
-					"message": mail.message,
-				}
-			)
-
-		for agent, outgoing_mails in agent_wise_outgoing_mails.items():
-			_create_and_transfer_batch(agent, outgoing_mails, batch_size)
-
-		_update_outgoing_mails_status(outgoing_mail_list)
-
-
 def create_outgoing_mail(
 	sender: str,
 	subject: str,
@@ -778,6 +683,7 @@ def create_outgoing_mail(
 	cc: Optional[str | list[str]],
 	bcc: Optional[str | list[str]],
 	raw_html: Optional[str] = None,
+	reply_to: Optional[str] = None,
 	track: int = 0,
 	attachments: Optional[list[dict]] = None,
 	custom_headers: Optional[dict | list[dict]] = None,
@@ -789,7 +695,9 @@ def create_outgoing_mail(
 	doc = frappe.new_doc("Outgoing Mail")
 	doc.sender = sender
 	doc.subject = subject
+	doc.use_raw_html = 1
 	doc.raw_html = raw_html
+	doc.reply_to = reply_to
 	doc.track = track
 	doc.via_api = via_api
 	doc.send_in_batch = send_in_batch
@@ -833,3 +741,198 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 		return f"(`tabOutgoing Mail`.`sender` IN ({mailboxes})) AND (`tabOutgoing Mail`.`docstatus` != 2)"
 	else:
 		return "1=0"
+
+
+def transfer_mail(outgoing_mail: "OutgoingMail") -> None:
+	"""Transfers the mail to the agent."""
+
+	if outgoing_mail:
+		request_data = {
+			"outgoing_mail": outgoing_mail.name,
+			"message": outgoing_mail.message,
+		}
+		create_agent_job(outgoing_mail.agent, "Transfer Mail", request_data=request_data)
+		outgoing_mail._db_set(status="Transferring", commit=True)
+
+
+def transfer_mails() -> None:
+	"""Called by the scheduler to transfer the mails in batch."""
+
+	def _get_outgoing_mails() -> list[dict]:
+		OM = frappe.qb.DocType("Outgoing Mail")
+		return (
+			frappe.qb.from_(OM)
+			.select(OM.name, OM.agent, OM.message)
+			.where((OM.docstatus == 1) & (OM.send_in_batch == 1) & (OM.status == "Pending"))
+			.orderby(OM.creation)
+		).run(as_dict=True)
+
+	def _create_and_transfer_batch(
+		agent: str, outgoing_mails: list, batch_size: int
+	) -> None:
+		for i in range(0, len(outgoing_mails), batch_size):
+			create_agent_job(
+				agent, "Transfer Mails", request_data=outgoing_mails[i : i + batch_size]
+			)
+
+	def _update_outgoing_mails_status(
+		outgoing_mail_list: list[str], commit: bool = False
+	) -> None:
+		OM = frappe.qb.DocType("Outgoing Mail")
+		(
+			frappe.qb.update(OM)
+			.set(OM.status, "Transferring")
+			.where(
+				(OM.docstatus == 1)
+				& (OM.send_in_batch == 1)
+				& (OM.status == "Pending")
+				& (OM.name.isin(outgoing_mail_list))
+			)
+		).run()
+
+		if commit:
+			frappe.db.commit()
+
+	if outgoing_mails := _get_outgoing_mails():
+		outgoing_mail_list = []
+		agent_wise_outgoing_mails = {}
+		batch_size = frappe.db.get_single_value("Mail Settings", "max_batch_size", cache=True)
+
+		for mail in outgoing_mails:
+			outgoing_mail_list.append(mail["name"])
+			agent_wise_outgoing_mails.setdefault(mail.agent, []).append(
+				{
+					"outgoing_mail": mail.name,
+					"message": mail.message,
+				}
+			)
+
+		del outgoing_mails
+
+		for agent, outgoing_mails in agent_wise_outgoing_mails.items():
+			_create_and_transfer_batch(agent, outgoing_mails, batch_size)
+
+		_update_outgoing_mails_status(outgoing_mail_list)
+
+
+@frappe.whitelist()
+def sync_outgoing_mails_status(agents: Optional[str | list] = None) -> None:
+	"""Gets the delivery status from agents."""
+
+	if not agents:
+		MS = frappe.qb.DocType("Mail Agent")
+		OM = frappe.qb.DocType("Outgoing Mail")
+		agents = (
+			frappe.qb.from_(MS)
+			.left_join(OM)
+			.on(OM.agent == MS.name)
+			.select(MS.name)
+			.distinct()
+			.where(
+				(MS.enabled == 1)
+				& (MS.outgoing == 1)
+				& (OM.docstatus == 1)
+				& (OM.status.isin(["Transferred", "RQ", "Queued", "Deferred"]))
+			)
+		).run(pluck="name")
+
+	elif isinstance(agents, str):
+		agents = [agents]
+
+	for agent in agents:
+		create_agent_job(agent, "Sync Outgoing Mails Status")
+
+
+def transfer_mail_on_end(agent_job: "MailAgentJob") -> None:
+	"""Called on the end of the `Transfer Mail` job."""
+
+	if agent_job and agent_job.job_type == "Transfer Mail":
+		if agent_job.status in ["Completed", "Failed"]:
+			kwargs = {}
+			outgoing_mail = None
+
+			if agent_job.status == "Completed":
+				data = json.loads(agent_job.response_data)["message"][0]
+				outgoing_mail = frappe.get_doc("Outgoing Mail", data["outgoing_mail"])
+
+				transferred_at = now()
+				transferred_after = time_diff_in_seconds(transferred_at, outgoing_mail.created_at)
+				kwargs.update(
+					{
+						"status": "Transferred",
+						"transferred_at": transferred_at,
+						"transferred_after": transferred_after,
+					}
+				)
+			else:
+				data = json.loads(agent_job.request_data)
+				outgoing_mail = frappe.get_doc("Outgoing Mail", data["outgoing_mail"])
+				kwargs.update({"status": "Failed", "error_log": agent_job.error_log})
+
+			outgoing_mail._db_set(**kwargs, notify_update=True)
+
+
+def transfer_mails_on_end(agent_job: "MailAgentJob") -> None:
+	"""Called on the end of the `Transfer Mails` job."""
+
+	if agent_job and agent_job.job_type == "Transfer Mails":
+		if agent_job.status in ["Completed", "Failed"]:
+			outgoing_mails = []
+			OM = frappe.qb.DocType("Outgoing Mail")
+			query = frappe.qb.update(OM).where(OM.docstatus == 1)
+
+			if agent_job.status == "Completed":
+				data = json.loads(agent_job.response_data)["message"]
+				outgoing_mails = [d["outgoing_mail"] for d in data]
+
+				transferred_at = now()
+				query = (
+					query.set(OM.status, "Transferred")
+					.set(OM.transferred_at, transferred_at)
+					.set(OM.transferred_after, OM.transferred_at - OM.created_at)
+				)
+			else:
+				data = json.loads(agent_job.request_data)
+				outgoing_mails = [d["outgoing_mail"] for d in data]
+				query = query.set(OM.status, "Failed").set(OM.error_log, agent_job.error_log)
+
+			query = query.where(OM.name.isin(outgoing_mails))
+			query.run()
+
+
+def sync_outgoing_mails_status_on_end(agent_job: "MailAgentJob") -> None:
+	"""Called on the end of the `Sync Outgoing Mails Status` job."""
+
+	def _validate_data(oml: dict) -> None:
+		"""Validates the data."""
+
+		if oml:
+			fields = ["outgoing_mail", "status", "recipients"]
+
+			for field in fields:
+				if not oml.get(field):
+					frappe.throw(_("{0} is required.").format(frappe.bold(field)))
+		else:
+			frappe.throw(_("Invalid Data."))
+
+	if agent_job and agent_job.job_type == "Sync Outgoing Mails Status":
+		if agent_job.status == "Completed":
+			if data := json.loads(agent_job.response_data)["message"]:
+				for oml in data:
+					_validate_data(oml)
+
+					if doc := frappe.get_doc("Outgoing Mail", oml["outgoing_mail"]):
+						if oml["status"] not in ["RQ", "Queued"]:
+							for recipient in doc.recipients:
+								key = (recipient.type, recipient.email)
+								oml_recipient = oml["recipients"][str(key)]
+								recipient.status = oml_recipient["status"]
+								recipient.action_at = oml_recipient["action_at"]
+								recipient.action_after = time_diff_in_seconds(
+									recipient.action_at, doc.created_at
+								)
+								recipient.retries = oml_recipient["retries"]
+								recipient.details = oml_recipient["details"]
+								recipient.db_update()
+
+						doc._db_set(status=oml["status"], notify_update=True)

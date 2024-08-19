@@ -1,20 +1,12 @@
 import re
-import pytz
 import frappe
-import random
-import socket
-import ipaddress
 import dns.resolver
 from frappe import _
-from bs4 import BeautifulSoup
-from datetime import datetime
-from email import message_from_string
-from typing import Optional, TYPE_CHECKING
-from frappe.utils import get_system_timezone
-from mail.config.constants import NAMESERVERS
-from frappe.query_builder import Order, Criterion
+from frappe.frappeclient import FrappeClient
+from typing import Literal, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
+	from datetime import datetime
 	from email.message import Message
 
 
@@ -22,6 +14,8 @@ def get_dns_record(
 	fqdn: str, type: str = "A", raise_exception: bool = False
 ) -> Optional[dns.resolver.Answer]:
 	"""Returns DNS record for the given FQDN and type."""
+
+	from mail.config.constants import NAMESERVERS
 
 	err_msg = None
 
@@ -50,6 +44,8 @@ def is_valid_host(host: str) -> bool:
 def is_valid_ip(ip: str, category: Optional[str] = None) -> bool:
 	"""Returns True if the IP is valid else False."""
 
+	import ipaddress
+
 	try:
 		ip_obj = ipaddress.ip_address(ip)
 
@@ -67,6 +63,8 @@ def is_valid_ip(ip: str, category: Optional[str] = None) -> bool:
 def is_port_open(fqdn: str, port: int) -> bool:
 	"""Returns True if the port is open else False."""
 
+	import socket
+
 	try:
 		with socket.create_connection((fqdn, port), timeout=10):
 			return True
@@ -76,6 +74,8 @@ def is_port_open(fqdn: str, port: int) -> bool:
 
 def get_random_outgoing_agent() -> str:
 	"""Returns a random enabled outgoing mail agent."""
+
+	import random
 
 	agents = frappe.db.get_all(
 		"Mail Agent", filters={"enabled": 1, "outgoing": 1}, pluck="name"
@@ -89,8 +89,12 @@ def get_random_outgoing_agent() -> str:
 
 def parsedate_to_datetime(
 	date_header: str, to_timezone: Optional[str] = None
-) -> datetime:
+) -> "datetime":
 	"""Returns datetime object from parsed date header."""
+
+	import pytz
+	from datetime import datetime
+	from frappe.utils import get_system_timezone
 
 	date_header = re.sub(r"\s+\([A-Z]+\)", "", date_header)
 	dt = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S %z")
@@ -98,8 +102,10 @@ def parsedate_to_datetime(
 	return dt.astimezone(pytz.timezone(to_timezone or get_system_timezone()))
 
 
-def convert_html_to_text(self, html: str) -> str:
+def convert_html_to_text(html: str) -> str:
 	"""Returns plain text from HTML content."""
+
+	from bs4 import BeautifulSoup
 
 	text = ""
 
@@ -183,6 +189,8 @@ def validate_mailbox_for_incoming(mailbox: str) -> None:
 def get_parsed_message(message: str) -> "Message":
 	"""Returns parsed email message object from string."""
 
+	from email import message_from_string
+
 	return message_from_string(message)
 
 
@@ -207,10 +215,19 @@ def is_postmaster(user: str) -> bool:
 	return user == get_postmaster()
 
 
-def get_user_mailboxes(user: str) -> list:
+def get_user_mailboxes(
+	user: str, type: Optional[Literal["Incoming", "Outgoing"]] = None
+) -> list:
 	"""Returns the list of mailboxes associated with the user."""
 
-	return frappe.db.get_all("Mailbox", filters={"user": user}, pluck="name")
+	filters = {
+		"user": user,
+	}
+
+	if type:
+		filters[type.lower()] = 1
+
+	return frappe.db.get_all("Mailbox", filters=filters, pluck="name")
 
 
 def is_mailbox_owner(mailbox: str, user: str) -> bool:
@@ -219,7 +236,7 @@ def is_mailbox_owner(mailbox: str, user: str) -> bool:
 	return frappe.db.get_value("Mailbox", mailbox, "user") == user
 
 
-def get_user_mailbox_domains(user: str) -> list:
+def get_user_domains(user: str) -> list:
 	"""Returns the list of domains associated with the user's mailboxes."""
 
 	return list(
@@ -242,8 +259,8 @@ def has_role(user: str, roles: str | list) -> bool:
 		roles = [roles]
 
 	user_roles = frappe.get_roles(user)
-	for r in roles:
-		if r in user_roles:
+	for role in roles:
+		if role in user_roles:
 			return True
 
 	return False
@@ -260,6 +277,8 @@ def get_outgoing_mails(
 	filters: Optional[dict] = None,
 ) -> list:
 	"""Returns Outgoing Mails on which the user has select permission."""
+
+	from frappe.query_builder import Order, Criterion
 
 	user = frappe.session.user
 
@@ -290,3 +309,36 @@ def get_outgoing_mails(
 		query = query.where((Criterion.any(conditions)))
 
 	return query.run(as_dict=False)
+
+
+def get_agent_client(agent: str) -> FrappeClient:
+	"""Returns FrappeClient object for the given agent."""
+
+	if hasattr(frappe.local, "agent_clients"):
+		if client := frappe.local.agent_clients.get(agent):
+			return client
+	else:
+		frappe.local.agent_clients = {}
+
+	agent = frappe.get_cached_doc("Mail Agent", agent)
+	url = f"{agent.protocol}://{agent.host or agent.agent}"
+	api_key = agent.agent_api_key
+	api_secret = agent.get_password("agent_api_secret")
+
+	frappe.local.agent_clients[agent.agent] = FrappeClient(
+		url, api_key=api_key, api_secret=api_secret
+	)
+
+	return get_agent_client(agent.agent)
+
+
+def validate_mail_folder(
+	folder: str, validate_for: Literal["inbound", "outbound"]
+) -> None:
+	"""Validates if the folder is an inbound or outbound folder."""
+
+	if not frappe.get_cached_value("Mail Folder", folder, validate_for):
+		folder_name = frappe.get_cached_value("Mail Folder", folder, "folder_name")
+		frappe.throw(
+			_("Folder {0} is not an {1} folder.").format(frappe.bold(folder_name), validate_for)
+		)

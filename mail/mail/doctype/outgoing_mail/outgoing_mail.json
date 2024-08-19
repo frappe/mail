@@ -4,8 +4,12 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "folder",
   "sender",
+  "reply_to",
   "column_break_9ywf",
+  "reply_to_mail_type",
+  "reply_to_mail",
   "subject",
   "section_break_baaa",
   "recipients",
@@ -70,8 +74,7 @@
    "fieldname": "subject",
    "fieldtype": "Small Text",
    "in_standard_filter": 1,
-   "label": "Subject",
-   "reqd": 1
+   "label": "Subject"
   },
   {
    "fieldname": "column_break_9ywf",
@@ -93,7 +96,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nPending\nTransferring\nFailed\nTransferred\nQueued\nDeferred\nBounced\nPartially Sent\nSent",
+   "options": "Draft\nPending\nTransferring\nFailed\nTransferred\nRQ\nQueued\nDeferred\nBounced\nPartially Sent\nSent",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
@@ -201,17 +204,19 @@
    "search_index": 1
   },
   {
-   "default": "1",
+   "default": "0",
    "depends_on": "eval: doc.docstatus == 0",
    "fieldname": "use_raw_html",
    "fieldtype": "Check",
-   "label": "Use Raw HTML"
+   "label": "Use Raw HTML",
+   "no_copy": 1
   },
   {
    "depends_on": "eval: doc.docstatus == 0 && doc.use_raw_html ",
    "fieldname": "raw_html",
    "fieldtype": "Code",
-   "label": "Raw HTML"
+   "label": "Raw HTML",
+   "no_copy": 1
   },
   {
    "fieldname": "transferred_at",
@@ -349,12 +354,51 @@
    "label": "Message",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.docstatus == 0",
+   "fieldname": "reply_to_mail_type",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Reply To Mail Type",
+   "no_copy": 1,
+   "options": "\nIncoming Mail\nOutgoing Mail",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "reply_to_mail",
+   "fieldtype": "Dynamic Link",
+   "label": "In Reply To",
+   "no_copy": 1,
+   "options": "reply_to_mail_type",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "reply_to",
+   "fieldtype": "Data",
+   "ignore_xss_filter": 1,
+   "label": "Reply To",
+   "length": 255
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Drafts",
+   "depends_on": "eval: doc.docstatus != 0",
+   "fieldname": "folder",
+   "fieldtype": "Link",
+   "label": "Folder",
+   "no_copy": 1,
+   "options": "Mail Folder",
+   "reqd": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-03 13:44:56.715171",
+ "modified": "2024-06-10 22:40:23.717542",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
@@ -400,8 +444,10 @@
    "role": "System Manager"
   }
  ],
+ "show_title_field_in_link": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "title_field": "subject",
  "track_changes": 1
 }

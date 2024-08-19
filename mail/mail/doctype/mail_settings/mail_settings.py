@@ -185,3 +185,23 @@ def get_postmaster(
 			& (HAS_ROLE.parenttype == "User")
 		)
 	).run(as_dict=False)
+
+
+def validate_mail_settings() -> None:
+	"""Validates the mandatory fields in the Mail Settings."""
+
+	mail_settings = frappe.get_doc("Mail Settings")
+	mandatory_fields = [
+		"root_domain_name",
+		"spf_host",
+		"default_dkim_selector",
+		"default_dkim_bits",
+		"default_ttl",
+	]
+
+	for field in mandatory_fields:
+		if not mail_settings.get(field):
+			field_label = frappe.get_meta("Mail Settings").get_label(field)
+			frappe.throw(
+				_("Please set the {0} in the Mail Settings.".format(frappe.bold(field_label)))
+			)

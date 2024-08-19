@@ -12,13 +12,9 @@ frappe.ui.form.on("Mail Domain", {
 	},
 
     set_queries(frm) {
-        frm.set_query("outgoing_agent", () => {
-            return {
-                filters: {
-                    "outgoing": 1,
-                }
-            }
-        });
+        frm.set_query("outgoing_agent", () => ({
+            filters: { outgoing: 1 }
+        }));
     },
 
     set_domain_owner(frm) {
