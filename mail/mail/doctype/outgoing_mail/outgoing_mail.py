@@ -861,6 +861,7 @@ def get_outgoing_mail_for_bulk_insert(**kwargs) -> "OutgoingMail":
 		recipient.name = str(uuid7())
 
 	doc.docstatus = 1
+	doc.folder = "Sent"
 	doc.status = "Pending"
 
 	return doc
