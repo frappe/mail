@@ -119,16 +119,13 @@ class EmailParser:
 
 				if disposition.startswith("inline"):
 					if content_id := re.sub(r"[<>]", "", part.get("Content-ID", "")):
-						payload = part.get_payload(decode=True)
-						if payload and part.get_content_charset():
-							payload = payload.decode(part.get_content_charset(), "ignore")
-
-						file = save_attachment(filename, payload, doctype, docname, is_private)
-						self.content_id_and_file_url_map[content_id] = file["file_url"]
+						if payload := part.get_payload(decode=True):
+							file = save_attachment(filename, payload, doctype, docname, is_private)
+							self.content_id_and_file_url_map[content_id] = file["file_url"]
 
 				elif disposition.startswith("attachment"):
-					payload = part.get_payload(decode=True)
-					save_attachment(filename, payload, doctype, docname, is_private)
+					if payload := part.get_payload(decode=True):
+						save_attachment(filename, payload, doctype, docname, is_private)
 
 	def get_body(self) -> tuple[str | None, str | None]:
 		"""Returns the HTML and plain text body of the email."""
