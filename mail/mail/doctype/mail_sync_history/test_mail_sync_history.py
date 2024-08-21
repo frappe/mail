@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestMailFolder(FrappeTestCase):
+class TestMailSyncHistory(FrappeTestCase):
 	pass

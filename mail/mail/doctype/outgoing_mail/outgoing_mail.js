@@ -9,15 +9,12 @@ frappe.ui.form.on("Outgoing Mail", {
 	refresh(frm) {
         frm.trigger("hide_amend_button");
         frm.trigger("add_actions");
+        frm.trigger("set_sender");
 	},
 
     set_queries(frm) {
         frm.set_query("sender", () => ({
             query: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_sender",
-        }));
-
-        frm.set_query("folder", () => ({
-            filters: { outbound: 1 }
         }));
     },
 
@@ -29,14 +26,19 @@ frappe.ui.form.on("Outgoing Mail", {
 
     add_actions(frm) {
         if (frm.doc.docstatus === 1) {
-            if (frm.doc.status === "Failed") {
+            if (frm.doc.status === "Pending") {
+                frm.add_custom_button(__("Transfer Now"), () => {
+                    frm.trigger("transfer_now");
+                }, __("Actions"));
+            }
+            else if (frm.doc.status === "Failed") {
                 frm.add_custom_button(__("Retry"), () => {
                     frm.trigger("retry");
                 }, __("Actions"));
             }
-            else if (["Transferred", "RQ", "Queued", "Deferred"].includes(frm.doc.status)) {
-                frm.add_custom_button(__("Sync Status"), () => {
-                    frm.trigger("sync_outgoing_mails_status");
+            else if (["Transferred", "Queued", "Deferred"].includes(frm.doc.status)) {
+                frm.add_custom_button(__("Get Status"), () => {
+                    frm.trigger("get_outgoing_mails_status");
                 }, __("Actions"));
             }
             else if (frm.doc.status === "Sent") {
@@ -48,6 +50,33 @@ frappe.ui.form.on("Outgoing Mail", {
                 }, __("Actions"));
             }
         }
+    },
+
+    set_sender(frm) {
+        if (!frm.doc.sender) {
+            frappe.call({
+                method: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_default_sender",
+                callback: (r) => {
+                    if (r.message) {
+                        frm.set_value("sender", r.message);
+                    }
+                }
+            });
+        }
+    },
+
+    transfer_now(frm) {
+        frappe.call({
+            doc: frm.doc,
+            method: "transfer_now",
+            freeze: true,
+            freeze_message: __("Transferring..."),
+            callback: (r) => {
+                if (!r.exc) {
+                    frm.refresh();
+                }
+            }
+        });
     },
 
     retry(frm) {
@@ -64,17 +93,17 @@ frappe.ui.form.on("Outgoing Mail", {
         });
     },
 
-    sync_outgoing_mails_status(frm) {
+    get_outgoing_mails_status(frm) {
 		frappe.call({
-			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.sync_outgoing_mails_status",
+			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_outgoing_mails_status",
 			args: {
 				agents: frm.doc.agent,
 			},
 			freeze: true,
-			freeze_message: __("Getting Delivery Status..."),
+			freeze_message: __("Creating Job..."),
 			callback: () => {
                 frappe.show_alert({
-                    message: __("Sync Outgoing Mails Status Job has been started in the background."),
+                    message: __("{0} job has been created.", [__("Get Status").bold()]),
                     indicator: "green",
                 });
             }

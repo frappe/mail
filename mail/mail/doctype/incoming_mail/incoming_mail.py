@@ -1,232 +1,132 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import re
-import json
 import frappe
 from frappe import _
 from uuid_utils import uuid7
+from typing import TYPE_CHECKING
 from email.utils import parseaddr
-from email.header import decode_header
-from typing import Optional, TYPE_CHECKING
+from mail.utils import parse_iso_datetime
 from frappe.model.document import Document
-from frappe.utils.file_manager import save_file
-from frappe.utils import (
-	now,
-	get_datetime_str,
-	time_diff_in_seconds,
-)
-from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
-from frappe.core.doctype.submission_queue.submission_queue import queue_submission
-from mail.utils import (
+from mail.utils.cache import get_postmaster
+from mail.utils.email_parser import EmailParser
+from mail.utils.agent import get_agent_rabbitmq_connection
+from frappe.utils import now, time_diff_in_seconds, validate_email_address
+from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
+from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
+from mail.utils.user import (
 	is_postmaster,
 	is_mailbox_owner,
 	is_system_manager,
 	get_user_mailboxes,
-	get_parsed_message,
-	validate_mail_folder,
-	parsedate_to_datetime,
 )
 
+
 if TYPE_CHECKING:
-	from email.message import Message
-	from mail.mail.doctype.mail_agent_job.mail_agent_job import MailAgentJob
+	from mail.mail.doctype.outgoing_mail.outgoing_mail import OutgoingMail
 
 
 class IncomingMail(Document):
+	@staticmethod
+	def clear_old_logs(days=7):
+		from frappe.query_builder import Interval
+		from frappe.query_builder.functions import Now
+
+		IM = frappe.qb.DocType("Incoming Mail")
+		(
+			frappe.qb.from_(IM)
+			.where(
+				(IM.docstatus != 0)
+				& (IM.is_rejected == 1)
+				& (IM.creation < (Now() - Interval(days=days)))
+			)
+			.delete()
+		).run()
+
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
 	def validate(self) -> None:
-		self.validate_mandatory_fields()
-		self.validate_folder()
-
 		if self.get("_action") == "submit":
 			self.process()
 
-	def on_update_after_submit(self) -> None:
-		self.validate_folder()
+	def on_submit(self) -> None:
+		self.create_mail_contact()
+		self.sync_with_frontend()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Incoming Mail."))
 
-	def validate_mandatory_fields(self) -> None:
-		"""Validates mandatory fields."""
-
-		mandatory_fields = [
-			"status",
-			"message",
-		]
-		print(self.as_dict())
-		print(self.doctype)
-		for field in mandatory_fields:
-			if not self.get(field):
-				frappe.throw(_("{0} is mandatory").format(frappe.bold(field)))
-
-	def validate_folder(self) -> None:
-		"""Validates the folder"""
-
-		if self.has_value_changed("folder"):
-			validate_mail_folder(self.folder, validate_for="inbound")
-
 	def process(self) -> None:
 		"""Processes the Incoming Mail."""
 
-		def _add_attachment(
-			filename: str, content: bytes, is_private: bool = 1, for_doc: bool = True
-		) -> dict:
-			"""Add attachment to the Incoming Mail."""
+		parser = EmailParser(self.message)
+		self.display_name, self.sender = parser.get_sender()
 
-			kwargs = {
-				"fname": filename,
-				"content": content,
-				"is_private": is_private,
-				"dt": None,
-				"dn": None,
-			}
+		self.domain_name = None
+		if self.receiver and len(self.receiver.split("@")) > 1:
+			self.domain_name = self.receiver.split("@")[1]
 
-			if for_doc:
-				kwargs["dt"] = self.doctype
-				kwargs["dn"] = self.name
-				kwargs["df"] = "file"
+		self.subject = parser.get_subject()
+		self.reply_to = parser.get_header("Reply-To")
+		self.message_id = parser.get_header("Message-ID")
+		self.created_at = parser.get_date()
+		self.message_size = parser.get_size()
+		self.from_ip, self.from_host = extract_ip_and_host(parser.get_header("Received"))
+		self.spam_score = extract_spam_score(parser.get_header("X-Spam-Status"))
+		self.received_at = parse_iso_datetime(parser.get_header("Received-At"))
 
-			file = save_file(**kwargs)
+		parser.save_attachments(self.doctype, self.name, is_private=True)
+		self.body_html, self.body_plain = parser.get_body()
 
-			return {
-				"name": file.name,
-				"file_name": file.file_name,
-				"file_url": file.file_url,
-				"is_private": file.is_private,
-			}
+		for recipient in parser.get_recipients():
+			self.append("recipients", recipient)
 
-		def _get_body(parsed_message: "Message") -> tuple[str, str]:
-			"""Returns the HTML and plain text body from the parsed message."""
+		for key, value in parser.get_authentication_results().items():
+			setattr(self, key, value)
 
-			body_html, body_plain = "", ""
+		if in_reply_to := parser.get_header("In-Reply-To"):
+			for reply_to_mail_type in ["Outgoing Mail", "Incoming Mail"]:
+				if reply_to_mail_name := frappe.get_cached_value(
+					reply_to_mail_type, in_reply_to, "name"
+				):
+					self.reply_to_mail_type = reply_to_mail_type
+					self.reply_to_mail_name = reply_to_mail_name
+					break
 
-			for part in parsed_message.walk():
-				filename = part.get_filename()
-				content_type = part.get_content_type()
-				disposition = part.get("Content-Disposition")
+		self.status = "Rejected" if self.is_rejected else "Delivered"
 
-				if disposition and filename:
-					disposition = disposition.lower()
+		if self.created_at:
+			self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
 
-					if disposition.startswith("inline"):
-						if content_id := re.sub(r"[<>]", "", part.get("Content-ID", "")):
-							if payload := part.get_payload(decode=True):
-								if part.get_content_charset():
-									payload = payload.decode(part.get_content_charset(), "ignore")
+		self.processed_at = now()
+		self.processed_after = time_diff_in_seconds(self.processed_at, self.received_at)
 
-								file = _add_attachment(filename, payload, is_private=0, for_doc=False)
-								body_html = body_html.replace("cid:" + content_id, file["file_url"])
-								body_plain = body_plain.replace("cid:" + content_id, file["file_url"])
+	def create_mail_contact(self) -> None:
+		"""Creates the mail contact."""
 
-					elif disposition.startswith("attachment"):
-						_add_attachment(filename, part.get_payload(decode=True))
+		if ("dmarc@" not in self.receiver) and frappe.get_cached_value(
+			"Mailbox", self.receiver, "create_mail_contact"
+		):
+			user = frappe.get_cached_value("Mailbox", self.receiver, "user")
+			create_mail_contact(user, self.sender, self.display_name)
 
-				elif content_type == "text/html":
-					body_html += part.get_payload(decode=True).decode(
-						part.get_content_charset(), "ignore"
-					)
+	def sync_with_frontend(self) -> None:
+		"""Syncs the Incoming Mail with the frontend."""
 
-				elif content_type == "text/plain":
-					body_plain += part.get_payload(decode=True).decode(
-						part.get_content_charset() or "utf-8", "ignore"
-					)
-
-			return body_html, body_plain
-
-		parsed_message = get_parsed_message(self.message)
-		sender = parseaddr(parsed_message["From"])
-
-		self.sender = sender[1]
-		self.display_name = sender[0]
-		self.reply_to = parsed_message["Reply-To"]
-		self.receiver = parsed_message["Delivered-To"]
-		self._add_recipients(parsed_message)
-		self.subject = decode_header(parsed_message["Subject"])[0][0]
-		self.message_id = parsed_message["Message-ID"]
-		self.body_html, self.body_plain = _get_body(parsed_message)
-		self.created_at = get_datetime_str(parsedate_to_datetime(parsed_message["Date"]))
-
-		if in_reply_to := parsed_message["In-Reply-To"]:
-			if reply_to_mail := frappe.db.get_value("Outgoing Mail", in_reply_to, "name"):
-				self.reply_to_mail_type = "Outgoing Mail"
-				self.reply_to_mail = reply_to_mail
-			elif reply_to_mail := frappe.db.get_value("Incoming Mail", in_reply_to, "name"):
-				self.reply_to_mail_type = "Incoming Mail"
-				self.reply_to_mail = reply_to_mail
-
-		if headers := parsed_message.get_all("Authentication-Results"):
-			if len(headers) == 1:
-				headers = headers[0].split(";")
-
-			for header in headers:
-				header = header.replace("\n", "").replace("\t", "")
-				header_lower = header.lower()
-
-				if "spf=" in header_lower:
-					self.spf_description = header
-					if "spf=pass" in header_lower:
-						self.spf = 1
-
-				elif "dkim=" in header_lower:
-					self.dkim_description = header
-					if "dkim=pass" in header_lower:
-						self.dkim = 1
-
-				elif "dmarc=" in header_lower:
-					self.dmarc_description = header
-					if "dmarc=pass" in header_lower:
-						self.dmarc = 1
-
-		no_header = "Header not found."
-		if not self.spf_description:
-			self.spf = 0
-			self.spf_description = no_header
-		if not self.dkim_description:
-			self.dkim = 0
-			self.dkim_description = no_header
-		if not self.dmarc_description:
-			self.dmarc = 0
-			self.dmarc_description = no_header
-
-		self.status = "Delivered"
-		self.delivered_at = now()
-		self.message_size = len(parsed_message.as_bytes())
-		self.received_after = time_diff_in_seconds(self.received_at, self.created_at)
-		self.delivered_after = time_diff_in_seconds(self.delivered_at, self.received_at)
-
-	def _add_recipients(
-		self, parsed_message: "Message", types: Optional[str | list] = None
-	) -> None:
-		"""Adds recipients to the Incoming Mail."""
-
-		if not types:
-			types = ["To", "Cc", "Bcc"]
-		elif isinstance(types, str):
-			types = [types]
-
-		for type in types:
-			if recipients := parsed_message.get(type):
-				for recipient in recipients.split(","):
-					display_name, email = parseaddr(recipient)
-					if email:
-						self.append(
-							"recipients", {"type": type, "email": email, "display_name": display_name}
-						)
-
+		frappe.publish_realtime("incoming_mail_received", self.as_dict(), user=self.receiver, after_commit=True)
 
 @frappe.whitelist()
-def reply_to_mail(source_name, target_doc=None):
+def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":
+	"""Creates an Outgoing Mail as a reply to the Incoming Mail."""
+
 	reply_to_mail_type = "Incoming Mail"
 	source_doc = frappe.get_doc(reply_to_mail_type, source_name)
 	target_doc = target_doc or frappe.new_doc("Outgoing Mail")
 
 	target_doc.reply_to_mail_type = source_doc.doctype
-	target_doc.reply_to_mail = source_name
+	target_doc.reply_to_mail_name = source_name
 	target_doc.subject = f"Re: {source_doc.subject}"
 
 	email = source_doc.sender
@@ -272,7 +172,7 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 		return user_is_system_manager or (user_is_mailbox_user and doc.docstatus == 1)
 
 
-def get_permission_query_condition(user: Optional[str]) -> str:
+def get_permission_query_condition(user: str | None = None) -> str:
 	if not user:
 		user = frappe.session.user
 
@@ -286,31 +186,221 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 
 
 @frappe.whitelist()
-def sync_incoming_mails(agents: Optional[str | list] = None) -> None:
-	"""Syncs incoming mails from the given agents."""
+def get_incoming_mails() -> None:
+	"""Called by the scheduler to get incoming mails from the mail agents."""
 
-	if not agents:
-		agents = frappe.db.get_all(
-			"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
-		)
-	elif isinstance(agents, str):
-		agents = [agents]
+	frappe.session.user = get_postmaster()
+	agents = frappe.db.get_all(
+		"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
+	)
 
 	for agent in agents:
-		create_agent_job(agent, "Sync Incoming Mails")
+		frappe.enqueue(
+			get_incoming_mails_from_agent,
+			queue="long",
+			is_async=True,
+			now=False,
+			job_name=f"Get Incoming Mails - {agent}",
+			enqueue_after_commit=False,
+			at_front=False,
+			agent=agent,
+		)
 
 
-def sync_incoming_mails_on_end(agent_job: "MailAgentJob") -> None:
-	"""Called on the end of the `Sync Incoming Mails` job."""
+def get_incoming_mails_from_agent(agent: str) -> None:
+	"""Gets incoming mails from the mail agent."""
 
-	if agent_job and agent_job.job_type == "Sync Incoming Mails":
-		if agent_job.status == "Completed":
-			if mails := json.loads(agent_job.response_data)["message"]:
-				for mail in mails:
-					doc = frappe.new_doc("Incoming Mail")
-					doc.agent = agent_job.agent
-					doc.received_at = mail["received_at"]
-					doc.eml_filename = mail["eml_filename"]
-					doc.message = mail["message"]
-					doc.insert()
-					queue_submission(doc, "submit", alert=False)
+	def callback(channel, method, properties, body) -> bool:
+		"""Callback function for the RabbitMQ consumer."""
+
+		is_accepted = False
+		message = body.decode("utf-8")
+		parsed_message = EmailParser.get_parsed_message(message)
+		receiver = parsed_message.get("Delivered-To")
+		display_name, sender = parseaddr(parsed_message.get("From"))
+
+		if (validate_email_address(sender) == sender) and (
+			validate_email_address(receiver) == receiver
+		):
+			domain_name = receiver.split("@")[1]
+
+			if is_active_domain(domain_name):
+				if is_mail_alias(receiver):
+					mail_alias = frappe.get_cached_doc("Mail Alias", receiver)
+					if mail_alias.enabled:
+						is_accepted = True
+						for mailbox in mail_alias.mailboxes:
+							if is_active_mailbox(mailbox.mailbox):
+								create_incoming_mail(agent, mailbox.mailbox, message)
+				elif is_active_mailbox(receiver):
+					is_accepted = True
+					create_incoming_mail(agent, receiver, message)
+
+			if not is_accepted:
+				incoming_mail = create_incoming_mail(
+					agent,
+					receiver,
+					message,
+					is_rejected=1,
+					rejection_message="550 5.4.1 Recipient address rejected: Access denied.",
+				)
+
+				if incoming_mail.docstatus == 1 and frappe.db.get_single_value(
+					"Mail Settings", "send_notification_on_reject", cache=True
+				):
+					try:
+						create_outgoing_mail(
+							sender=get_postmaster(),
+							to=incoming_mail.reply_to or incoming_mail.sender,
+							display_name="Mail Delivery System",
+							subject=f"Undeliverable: {incoming_mail.subject}",
+							raw_html=get_rejected_template(incoming_mail),
+						)
+					except Exception:
+						frappe.log_error(
+							title="Send Rejection Notification",
+							message=frappe.get_traceback(with_context=False),
+						)
+
+		channel.basic_ack(delivery_tag=method.delivery_tag)
+		return True
+
+	from mail.config.constants import INCOMING_MAIL_QUEUE
+
+	try:
+		rmq = get_agent_rabbitmq_connection(agent)
+		rmq.declare_queue(INCOMING_MAIL_QUEUE)
+
+		while True:
+			if not rmq.basic_get(INCOMING_MAIL_QUEUE, callback=callback):
+				break
+	except Exception:
+		frappe.log_error(
+			title=f"Get Incoming Mails - {agent}",
+			message=frappe.get_traceback(with_context=False),
+		)
+
+
+def extract_ip_and_host(header: str | None = None) -> tuple[str | None, str | None]:
+	"""Extracts the IP and Host from the given `Received` header."""
+
+	if not header:
+		return None, None
+
+	import re
+
+	ip_pattern = re.compile(r"\[(?P<ip>[\d\.]+|[a-fA-F0-9:]+)")
+	host_pattern = re.compile(r"from\s+(?P<host>[^\s]+)")
+
+	ip_match = ip_pattern.search(header)
+	ip = ip_match.group("ip") if ip_match else None
+
+	host_match = host_pattern.search(header)
+	host = host_match.group("host") if host_match else None
+
+	return ip, host
+
+
+def extract_spam_score(header: str | None = None) -> float:
+	"""Extracts the spam score from the given `X-Spam-Status` header."""
+
+	if not header:
+		return 0.0
+
+	import re
+
+	spam_score_pattern = re.compile(r"score=(-?\d+\.?\d*)")
+	if match := spam_score_pattern.search(header):
+		return float(match.group(1))
+
+	return 0.0
+
+
+def is_active_domain(domain_name: str) -> bool:
+	"""Returns True if the domain is active, otherwise False."""
+
+	return bool(
+		frappe.db.exists("Mail Domain", {"domain_name": domain_name, "enabled": 1})
+	)
+
+
+def is_mail_alias(alias: str) -> bool:
+	"""Returns True if the mail alias exists, otherwise False."""
+
+	return bool(frappe.db.exists("Mail Alias", alias))
+
+
+def is_active_mail_alias(alias: str) -> bool:
+	"""Returns True if the mail alias is active, otherwise False."""
+
+	return bool(frappe.db.exists("Mail Alias", {"alias": alias, "enabled": 1}))
+
+
+def is_active_mailbox(mailbox: str) -> bool:
+	"""Returns True if the mailbox is active, otherwise False."""
+
+	return bool(frappe.db.exists("Mailbox", {"email": mailbox, "enabled": 1}))
+
+
+def get_rejected_template(incoming_mail) -> str:
+	"""Returns the rejected HTML template."""
+
+	# TODO: Create a better HTML template
+	raw_html = f"""
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Document</title>
+	</head>
+	<body>
+		<div>
+			<h2>Your message to {incoming_mail.receiver} couldn't be delivered.</h2>
+			<hr/>
+			<h3>{incoming_mail.rejection_message}</h3>
+			<hr/>
+			<div>
+				<p>Original Message Headers</p>
+				<br/><br/>
+				<code>{incoming_mail.message}</code>
+			</div>
+		</div>
+	</body>
+	</html>
+	"""
+
+	return raw_html
+
+
+def create_incoming_mail(
+	agent: str,
+	receiver: str,
+	message: str,
+	is_rejected: int = 0,
+	rejection_message: str | None = None,
+	do_not_save: bool = False,
+	do_not_submit: bool = False,
+) -> "IncomingMail":
+	"""Creates an Incoming Mail."""
+
+	doc = frappe.new_doc("Incoming Mail")
+	doc.agent = agent
+	doc.receiver = receiver
+	doc.message = message
+	doc.is_rejected = is_rejected
+	doc.rejection_message = rejection_message
+
+	if not do_not_save:
+		doc.flags.ignore_links = True
+		doc.save()
+		if not do_not_submit:
+			try:
+				doc.submit()
+			except Exception:
+				frappe.log_error(
+					title="Submit Incoming Mail",
+					message=frappe.get_traceback(with_context=False),
+				)
+
+	return doc

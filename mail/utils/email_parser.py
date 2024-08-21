@@ -1,0 +1,182 @@
+from typing import TYPE_CHECKING
+from email.utils import parseaddr
+
+if TYPE_CHECKING:
+	from email.message import Message
+
+
+class EmailParser:
+	def __init__(self, message: str) -> None:
+		self.message = self.get_parsed_message(message)
+		self.content_id_and_file_url_map = {}
+
+	@staticmethod
+	def get_parsed_message(message: str) -> "Message":
+		"""Returns parsed email message object from string."""
+
+		from email import message_from_string
+
+		return message_from_string(message)
+
+	def get_subject(self) -> str | None:
+		"""Returns the decoded subject of the email."""
+
+		from email.header import decode_header, make_header
+
+		if subject := self.message["Subject"]:
+			decoded_subject = str(make_header(decode_header(subject)))
+			return decoded_subject
+
+		return None
+
+	def get_sender(self) -> tuple[str, str]:
+		"""Returns the display name and email of the sender."""
+
+		return parseaddr(self.message["From"])
+
+	def get_header(self, header: str) -> str | None:
+		"""Returns the value of the header."""
+
+		return self.message[header]
+
+	def update_header(self, header: str, value: str) -> None:
+		"""Updates the value of the header."""
+
+		if header in self.message:
+			del self.message[header]
+
+		self.message[header] = value
+
+	def get_date(self) -> str | None:
+		"""Returns the date of the email."""
+
+		from frappe.utils import get_datetime_str
+		from mail.utils import parsedate_to_datetime
+
+		if date_header := self.message.get("Date"):
+			return get_datetime_str(parsedate_to_datetime(date_header))
+
+	def get_size(self) -> int:
+		"""Returns the size of the email."""
+		from email import policy
+
+		return len(self.message.as_string(policy=policy.default).encode("utf-8"))
+
+	def get_recipients(self, types: str | list | None = None) -> list[dict]:
+		"""Returns the list of recipients of the email."""
+
+		if not types:
+			types = ["To", "Cc", "Bcc"]
+		elif isinstance(types, str):
+			types = [types]
+
+		recipients = []
+		for type in types:
+			if addresses := self.message.get(type):
+				for address in addresses.split(","):
+					display_name, email = parseaddr(address.replace("\r", "").replace("\n", ""))
+					if email:
+						recipients.append({"type": type, "email": email, "display_name": display_name})
+
+		return recipients
+
+	def save_attachments(
+		self, doctype: str, docname: str, is_private: bool = True
+	) -> None:
+		"""Saves the attachments of the email."""
+
+		import re
+		from frappe.utils import cint
+		from frappe.utils.file_manager import save_file
+
+		def save_attachment(
+			filename: str, content: bytes, doctype: str, docname: str, is_private: bool
+		) -> dict:
+			"""Saves the attachment as a file."""
+
+			kwargs = {
+				"fname": filename,
+				"content": content,
+				"df": "file",
+				"dt": doctype,
+				"dn": docname,
+				"is_private": cint(is_private),
+			}
+			file = save_file(**kwargs)
+			return {
+				"name": file.name,
+				"file_name": file.file_name,
+				"file_url": file.file_url,
+				"is_private": file.is_private,
+			}
+
+		for part in self.message.walk():
+			filename = part.get_filename()
+			disposition = part.get("Content-Disposition")
+
+			if disposition and filename:
+				disposition = disposition.lower()
+
+				if disposition.startswith("inline"):
+					if content_id := re.sub(r"[<>]", "", part.get("Content-ID", "")):
+						payload = part.get_payload(decode=True)
+						if payload and part.get_content_charset():
+							payload = payload.decode(part.get_content_charset(), "ignore")
+
+						file = save_attachment(filename, payload, doctype, docname, is_private)
+						self.content_id_and_file_url_map[content_id] = file["file_url"]
+
+				elif disposition.startswith("attachment"):
+					payload = part.get_payload(decode=True)
+					save_attachment(filename, payload, doctype, docname, is_private)
+
+	def get_body(self) -> tuple[str | None, str | None]:
+		"""Returns the HTML and plain text body of the email."""
+
+		body_html, body_plain = "", ""
+
+		for part in self.message.walk():
+			content_type = part.get_content_type()
+
+			if content_type == "text/html":
+				if payload := part.get_payload(decode=True):
+					charset = part.get_content_charset() or "utf-8"
+					body_html += payload.decode(charset, "ignore")
+
+			elif content_type == "text/plain":
+				if payload := part.get_payload(decode=True):
+					charset = part.get_content_charset() or "utf-8"
+					body_plain += payload.decode(charset, "ignore")
+
+		if self.content_id_and_file_url_map:
+			for content_id, file_url in self.content_id_and_file_url_map.items():
+				body_html = body_html.replace(f"cid:{content_id}", file_url)
+				body_plain = body_plain.replace(f"cid:{content_id}", file_url)
+
+		return body_html or None, body_plain or None
+
+	def get_authentication_results(self) -> dict[str, int | str]:
+		"""Returns the authentication results of the email."""
+
+		result = {}
+		checks = ["spf", "dkim", "dmarc"]
+
+		for check in checks:
+			result[f"{check}_pass"] = 0
+			result[f"{check}_description"] = "Header not found."
+
+		if headers := self.message.get_all("Authentication-Results"):
+			if len(headers) == 1:
+				headers = headers[0].split(";")
+
+			for header in headers:
+				header = header.replace("\n", "").replace("\t", "").replace("\r", "")
+				header_lower = header.lower()
+
+				for check in checks:
+					if f"{check}=" in header_lower:
+						result[f"{check}_pass"] = 1 if f"{check}=pass" in header_lower else 0
+						result[f"{check}_description"] = header
+						break
+
+		return result

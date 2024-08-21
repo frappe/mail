@@ -4,7 +4,7 @@
             <Breadcrumbs :items="breadcrumbs">
                 <template #suffix>
                     <div v-if="outgoingMailCount.data" class="self-end text-xs text-gray-600 ml-2">
-                        {{ formatNumber(outgoingMailCount.data) }} {{ __("messages") }}
+                        {{ __('{0} {1}').format(formatNumber(outgoingMailCount.data), outgoingMailCount.data == 1 ? singularize('messages') : 'messages') }}
                     </div>
                 </template>
             </Breadcrumbs>
@@ -19,7 +19,7 @@
                     <SidebarDetail :mail="mail" />
                 </div>
             </div>
-            <div class="flex w-2 cursor-col-resize justify-center" @mousedown="startResizing">
+            <div class="flex w-px cursor-col-resize justify-center" @mousedown="startResizing">
                 <div ref="resizer"
                     class="h-full w-[2px] rounded-full transition-all duration-300 ease-in-out group-hover:bg-gray-400" />
             </div>
@@ -31,17 +31,25 @@
 </template>
 <script setup>
 import { Breadcrumbs, createResource, createListResource } from 'frappe-ui';
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, onMounted } from 'vue';
 import HeaderActions from "@/components/HeaderActions.vue";
-import { formatNumber, startResizing } from "@/utils";
+import { formatNumber, startResizing, singularize } from "@/utils";
 import MailDetails from "@/components/MailDetails.vue";
 import { useDebounceFn } from '@vueuse/core'
 import SidebarDetail from "@/components/SidebarDetail.vue";
 
+const socket = inject('$socket')
 const user = inject("$user");
 const mailStart = ref(0)
 const mailList = ref([])
 const currentMail = ref(JSON.parse(sessionStorage.getItem("currentOutgoingMail")))
+
+onMounted(() => {
+    socket.on('outgoing_mail_sent', (data) => {
+		outgoingMails.reload()
+        outgoingMailCount.reload()
+	})
+})
 
 const outgoingMails = createListResource({
     url: "mail.api.mail.get_outgoing_mails",
@@ -53,7 +61,7 @@ const outgoingMails = createListResource({
     onSuccess(data) {
         mailList.value = mailList.value.concat(data)
         mailStart.value = mailStart.value + data.length
-        if (!currentMail.value) {
+        if (!currentMail.value && mailList.value.length) {
             setCurrentMail(mailList.value[0].name)
         }
     }

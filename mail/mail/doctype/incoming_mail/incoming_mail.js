@@ -7,12 +7,6 @@ frappe.ui.form.on("Incoming Mail", {
         frm.trigger("add_actions");
 	},
 
-    set_queries(frm) {
-        frm.set_query("folder", () => ({
-            filters: { inbound: 1 }
-        }));
-    },
-
     add_actions(frm) {
         if (frm.doc.docstatus === 1) {
             frm.add_custom_button(__("Reply"), () => {

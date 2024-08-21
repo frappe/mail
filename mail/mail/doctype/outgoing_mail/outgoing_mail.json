@@ -6,40 +6,43 @@
  "field_order": [
   "folder",
   "sender",
+  "display_name",
   "reply_to",
   "column_break_9ywf",
   "reply_to_mail_type",
-  "reply_to_mail",
+  "reply_to_mail_name",
   "subject",
   "section_break_baaa",
   "recipients",
   "section_break_atoq",
   "custom_headers",
   "section_break_ijwo",
-  "track",
-  "use_raw_html",
-  "raw_html",
   "body_html",
+  "raw_html",
+  "raw_message",
   "body_plain",
-  "section_break_4dyb",
+  "section_break_ubzr",
   "error_log",
   "more_info_tab",
   "status",
   "ip_address",
   "via_api",
+  "is_newsletter",
   "column_break_d6p9",
   "domain_name",
   "agent",
+  "queue_id",
   "section_break_quhp",
   "message_id",
   "column_break_4zfa",
   "message_size",
   "section_break_093p",
   "created_at",
+  "submitted_at",
   "transferred_at",
   "column_break_fvyv",
+  "submitted_after",
   "transferred_after",
-  "send_in_batch",
   "section_break_aafd",
   "tracking_id",
   "first_opened_at",
@@ -96,7 +99,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nPending\nTransferring\nFailed\nTransferred\nRQ\nQueued\nDeferred\nBounced\nPartially Sent\nSent",
+   "options": "Draft\nPending\nTransferring\nFailed\nTransferred\nQueued\nDeferred\nBounced\nPartially Sent\nSent",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1
@@ -151,7 +154,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.docstatus != 0 || !doc.use_raw_html ",
+   "depends_on": "eval: !doc.raw_html && !doc.raw_message",
    "fieldname": "body_html",
    "fieldtype": "Text Editor",
    "label": "Body HTML",
@@ -189,11 +192,7 @@
    "label": "Message ID",
    "no_copy": 1,
    "read_only": 1,
-   "unique": 1
-  },
-  {
-   "fieldname": "section_break_4dyb",
-   "fieldtype": "Section Break"
+   "search_index": 1
   },
   {
    "fieldname": "created_at",
@@ -204,15 +203,7 @@
    "search_index": 1
   },
   {
-   "default": "0",
-   "depends_on": "eval: doc.docstatus == 0",
-   "fieldname": "use_raw_html",
-   "fieldtype": "Check",
-   "label": "Use Raw HTML",
-   "no_copy": 1
-  },
-  {
-   "depends_on": "eval: doc.docstatus == 0 && doc.use_raw_html ",
+   "depends_on": "eval: !doc.raw_message",
    "fieldname": "raw_html",
    "fieldtype": "Code",
    "label": "Raw HTML",
@@ -227,18 +218,19 @@
   },
   {
    "depends_on": "eval: doc.transferred_at",
-   "description": "Transferred At - Created At",
+   "description": "Transferred At - Submitted At",
    "fieldname": "transferred_after",
    "fieldtype": "Int",
    "label": "Transferred After (Seconds)",
    "no_copy": 1,
+   "non_negative": 1,
    "read_only": 1
   },
   {
    "depends_on": "eval: doc.message_size",
    "fieldname": "message_size",
    "fieldtype": "Int",
-   "label": "Message Size",
+   "label": "Message Size (Bytes)",
    "no_copy": 1,
    "non_negative": 1,
    "read_only": 1
@@ -281,16 +273,6 @@
    "fieldname": "last_opened_at",
    "fieldtype": "Datetime",
    "label": "Last Opened At",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.send_in_batch",
-   "fieldname": "send_in_batch",
-   "fieldtype": "Check",
-   "label": "Send in Batch",
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
@@ -341,14 +323,6 @@
    "label": "More Info"
   },
   {
-   "default": "0",
-   "depends_on": "eval: doc.docstatus == 0",
-   "fieldname": "track",
-   "fieldtype": "Check",
-   "label": "Track",
-   "search_index": 1
-  },
-  {
    "fieldname": "message",
    "fieldtype": "Code",
    "label": "Message",
@@ -367,15 +341,9 @@
    "search_index": 1
   },
   {
-   "fieldname": "reply_to_mail",
-   "fieldtype": "Dynamic Link",
-   "label": "In Reply To",
-   "no_copy": 1,
-   "options": "reply_to_mail_type",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
+   "depends_on": "eval: doc.sender",
+   "fetch_from": "sender.reply_to",
+   "fetch_if_empty": 1,
    "fieldname": "reply_to",
    "fieldtype": "Data",
    "ignore_xss_filter": 1,
@@ -387,18 +355,81 @@
    "default": "Drafts",
    "depends_on": "eval: doc.docstatus != 0",
    "fieldname": "folder",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "label": "Folder",
    "no_copy": 1,
-   "options": "Mail Folder",
+   "options": "Drafts\nSent\nTrash",
    "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "raw_message",
+   "fieldtype": "Code",
+   "label": "Raw Message",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "section_break_ubzr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "depends_on": "eval: doc.submitted_at",
+   "description": "Submitted At - Created At",
+   "fieldname": "submitted_after",
+   "fieldtype": "Int",
+   "label": "Submitted After (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "reply_to_mail_name",
+   "fieldtype": "Dynamic Link",
+   "label": "In Reply To",
+   "no_copy": 1,
+   "options": "reply_to_mail_type",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "depends_on": "eval: doc.sender",
+   "fetch_from": "sender.display_name",
+   "fetch_if_empty": 1,
+   "fieldname": "display_name",
+   "fieldtype": "Data",
+   "label": "Display Name"
+  },
+  {
+   "fieldname": "queue_id",
+   "fieldtype": "Data",
+   "label": "Queue ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.is_newsletter",
+   "fieldname": "is_newsletter",
+   "fieldtype": "Check",
+   "label": "Newsletter",
+   "no_copy": 1,
+   "read_only": 1,
    "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-06-10 22:40:23.717542",
+ "modified": "2024-07-30 12:51:36.213407",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

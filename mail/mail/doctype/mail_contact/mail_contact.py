@@ -3,9 +3,8 @@
 
 import frappe
 from frappe import _
-from typing import Optional
-from mail.utils import is_system_manager
 from frappe.model.document import Document
+from mail.utils.user import is_system_manager
 
 
 class MailContact(Document):
@@ -31,6 +30,23 @@ class MailContact(Document):
 			)
 
 
+def create_mail_contact(user: str, email: str, display_name: str | None = None) -> None:
+	"""Creates the mail contact."""
+
+	if mail_contact := frappe.db.exists("Mail Contact", {"user": user, "email": email}):
+		current_display_name = frappe.get_cached_value(
+			"Mail Contact", mail_contact, "display_name"
+		)
+		if display_name != current_display_name:
+			frappe.db.set_value("Mail Contact", mail_contact, "display_name", display_name)
+	else:
+		doc = frappe.new_doc("Mail Contact")
+		doc.user = user
+		doc.email = email
+		doc.display_name = display_name
+		doc.insert()
+
+
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Mail Contact":
 		return False
@@ -38,7 +54,7 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	return is_system_manager(user) or (user == doc.user)
 
 
-def get_permission_query_condition(user: Optional[str]) -> str:
+def get_permission_query_condition(user: str | None = None) -> str:
 	if not user:
 		user = frappe.session.user
 
@@ -46,3 +62,9 @@ def get_permission_query_condition(user: Optional[str]) -> str:
 		return ""
 
 	return f"(`tabMail Contact`.`user` = {frappe.db.escape(user)})"
+
+
+def on_doctype_update():
+	frappe.db.add_unique(
+		"Mail Contact", ["user", "email"], constraint_name="unique_user_email"
+	)

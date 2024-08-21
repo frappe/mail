@@ -40,7 +40,7 @@
    "in_list_view": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "\nDeferred\nDeferred Bounced\nBounced\nSent",
+   "options": "\nDeferred\nBounced\nSent",
    "read_only": 1,
    "search_index": 1
   },
@@ -64,7 +64,7 @@
   },
   {
    "depends_on": "eval: doc.status",
-   "description": "Action At - Created At",
+   "description": "Action At - Transferred At",
    "fieldname": "action_after",
    "fieldtype": "Int",
    "label": "Action After (Seconds)",
@@ -94,7 +94,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-06-03 10:48:22.139860",
+ "modified": "2024-07-31 16:10:44.144199",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Recipient",

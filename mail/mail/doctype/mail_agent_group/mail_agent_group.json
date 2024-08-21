@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "creation": "2024-07-25 08:43:29.318012",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "column_break_xfcc",
+  "host",
+  "priority",
+  "section_break_mdrk",
+  "ipv4",
+  "column_break_md9f",
+  "ipv6"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled",
+   "no_copy": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_xfcc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Priority",
+   "non_negative": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "host",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Host",
+   "no_copy": 1,
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_break_mdrk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ipv4",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "IPv4",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_md9f",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ipv6",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "IPv6",
+   "no_copy": 1,
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [
+  {
+   "group": "General",
+   "link_doctype": "Mail Agent",
+   "link_fieldname": "group"
+  }
+ ],
+ "modified": "2024-07-25 10:39:38.962700",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "Mail Agent Group",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -4,16 +4,15 @@
 import frappe
 from frappe import _
 from frappe.utils import cint
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
+from mail.utils import get_dns_record
 from frappe.model.document import Document
-from mail.mail.doctype.mailbox.mailbox import create_dmarc_mailbox
-from mail.mail.doctype.mail_agent_job.mail_agent_job import create_agent_job
-from mail.utils import (
-	has_role,
-	is_valid_host,
-	get_dns_record,
-	is_system_manager,
-	get_user_domains,
+from mail.utils.validation import is_valid_host
+from mail.utils.user import has_role, is_system_manager
+from mail.utils.cache import delete_cache, get_user_domains, get_root_domain_name
+from mail.mail.doctype.mailbox.mailbox import (
+	create_dmarc_mailbox,
+	create_postmaster_mailbox,
 )
 
 if TYPE_CHECKING:
@@ -37,17 +36,16 @@ class MailDomain(Document):
 		elif self.has_value_changed("dkim_selector"):
 			self.refresh_dns_records()
 		elif not self.enabled:
-			self.verified = 0
+			self.is_verified = 0
 
 	def after_insert(self) -> None:
+		if self.is_root_domain:
+			create_postmaster_mailbox(self.domain_name)
+
 		create_dmarc_mailbox(self.domain_name)
 
 	def on_update(self) -> None:
-		if self.has_value_changed("enabled"):
-			self.sync_mail_domain(enabled=self.enabled)
-
-	def on_trash(self) -> None:
-		self.sync_mail_domain(enabled=False)
+		delete_cache(f"user|{self.domain_owner}")
 
 	def validate_dkim_selector(self) -> None:
 		"""Validates the DKIM Selector."""
@@ -82,7 +80,7 @@ class MailDomain(Document):
 		"""Validates the Outgoing Agent."""
 
 		if self.outgoing_agent:
-			enabled, outgoing = frappe.db.get_value(
+			enabled, outgoing = frappe.get_cached_value(
 				"Mail Agent", self.outgoing_agent, ["enabled", "outgoing"]
 			)
 
@@ -104,23 +102,18 @@ class MailDomain(Document):
 		"""Validates if the domain is a subdomain."""
 
 		if len(self.domain_name.split(".")) > 2:
-			self.subdomain = 1
+			self.is_subdomain = 1
 
 	def validate_root_domain(self) -> None:
 		"""Validates if the domain is the root domain."""
 
-		self.root_domain = (
-			1
-			if self.domain_name
-			== frappe.db.get_single_value("Mail Settings", "root_domain_name", cache=True)
-			else 0
-		)
+		self.is_root_domain = 1 if self.domain_name == get_root_domain_name() else 0
 
 	@frappe.whitelist()
 	def generate_dns_records(self, save: bool = False) -> None:
 		"""Generates the DNS Records."""
 
-		self.verified = 0
+		self.is_verified = 0
 		self.generate_dkim_key()
 		self.refresh_dns_records()
 
@@ -155,7 +148,7 @@ class MailDomain(Document):
 	def refresh_dns_records(self) -> None:
 		"""Refreshes the DNS Records."""
 
-		self.verified = 0
+		self.is_verified = 0
 		self.dns_records.clear()
 		mail_settings = frappe.get_single("Mail Settings")
 
@@ -201,7 +194,7 @@ class MailDomain(Document):
 		# DMARC Record
 		dmarc_value = (
 			f"v=DMARC1; p=none; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name};"
-			if self.root_domain
+			if self.is_root_domain
 			else f"v=DMARC1; p=reject; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name};"
 		)
 		records.append(
@@ -220,22 +213,22 @@ class MailDomain(Document):
 		"""Returns the Receiving Records."""
 
 		records = []
-		incoming_agents = frappe.db.get_all(
-			"Mail Agent",
-			filters={"enabled": 1, "incoming": 1},
+		agent_groups = frappe.db.get_all(
+			"Mail Agent Group",
+			filters={"enabled": 1},
 			fields=["name", "priority"],
 			order_by="priority",
 		)
 
-		if incoming_agents:
-			for agent in incoming_agents:
+		if agent_groups:
+			for agent_group in agent_groups:
 				records.append(
 					{
 						"category": "Receiving Record",
 						"type": "MX",
 						"host": self.domain_name,
-						"value": f"{agent.name.split(':')[0]}.",
-						"priority": agent.priority,
+						"value": f"{agent_group.name.split(':')[0]}.",
+						"priority": agent_group.priority,
 						"ttl": ttl,
 					}
 				)
@@ -246,11 +239,11 @@ class MailDomain(Document):
 	def verify_dns_records(self, save: bool = False) -> None:
 		"""Verifies the DNS Records."""
 
-		self.verified = 1
+		self.is_verified = 1
 
 		for record in self.dns_records:
 			if verify_dns_record(record):
-				record.verified = 1
+				record.is_verified = 1
 				frappe.msgprint(
 					_("Row #{0}: Verified {1}:{2} record.").format(
 						frappe.bold(record.idx), frappe.bold(record.type), frappe.bold(record.host)
@@ -259,8 +252,8 @@ class MailDomain(Document):
 					alert=True,
 				)
 			else:
-				record.verified = 0
-				self.verified = 0
+				record.is_verified = 0
+				self.is_verified = 0
 				frappe.msgprint(
 					_("Row #{0}: Could not verify {1}:{2} record.").format(
 						frappe.bold(record.idx), frappe.bold(record.type), frappe.bold(record.host)
@@ -271,12 +264,6 @@ class MailDomain(Document):
 
 		if save:
 			self.save()
-
-	def sync_mail_domain(self, enabled: bool | int) -> None:
-		"""Updates the domain in the agents."""
-
-		domains = [{"domain": self.domain_name, "enabled": 1 if enabled else 0}]
-		sync_mail_domains(domains)
 
 
 def get_filtered_dkim_key(key_pem: str) -> str:
@@ -316,31 +303,6 @@ def verify_dns_record(record: "DNSRecord", debug: bool = False) -> bool:
 	return False
 
 
-@frappe.whitelist()
-def sync_mail_domains(
-	mail_domains: Optional[list[dict]] = None, agents: Optional[str | list] = None
-) -> None:
-	"""Updates the domains in the agents."""
-
-	if not mail_domains:
-		mail_domains = frappe.db.get_all(
-			"Mail Domain", filters={"enabled": 1}, fields=["name AS domain", "enabled"]
-		)
-
-	if mail_domains:
-		if not agents:
-			agents = frappe.db.get_all(
-				"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
-			)
-		elif isinstance(agents, str):
-			agents = [agents]
-
-		for agent in agents:
-			create_agent_job(
-				agent, "Sync Mail Domains", request_data={"mail_domains": mail_domains}
-			)
-
-
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Mail Domain":
 		return False
@@ -348,7 +310,7 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	return is_system_manager(user) or (user == doc.domain_owner)
 
 
-def get_permission_query_condition(user: Optional[str]) -> str:
+def get_permission_query_condition(user: str | None = None) -> str:
 	conditions = []
 
 	if not user:

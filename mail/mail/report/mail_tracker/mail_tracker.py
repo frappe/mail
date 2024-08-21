@@ -6,19 +6,16 @@ from frappe import _
 from typing import Tuple
 from frappe.query_builder.functions import Date
 from frappe.query_builder import Order, Criterion
-from mail.utils import (
-	has_role,
-	is_system_manager,
-	get_user_mailboxes,
-	get_user_owned_domains,
-)
+from mail.utils.cache import get_user_owned_domains
+from mail.utils.user import has_role, is_system_manager, get_user_mailboxes
 
 
 def execute(filters=None) -> Tuple[list, list]:
 	columns = get_columns()
 	data = get_data(filters)
+	summary = get_summary(data)
 
-	return columns, data
+	return columns, data, None, None, summary
 
 
 def get_data(filters=None) -> list:
@@ -42,7 +39,7 @@ def get_data(filters=None) -> list:
 			OM.last_opened_at,
 			OM.last_opened_from_ip,
 		)
-		.where((OM.track == 1) & (OM.docstatus == 1))
+		.where((OM.docstatus == 1) & (OM.tracking_id.isnotnull()))
 		.orderby(OM.creation, OM.created_at, order=Order.desc)
 	)
 
@@ -86,6 +83,28 @@ def get_data(filters=None) -> list:
 		query = query.where(Criterion.any(conditions))
 
 	return query.run(as_dict=True)
+
+
+def get_summary(data: dict) -> list[dict]:
+	total_open_count = 0
+	for row in data:
+		if row["open_count"] > 0:
+			total_open_count += 1
+
+	return [
+		{
+			"value": len(data),
+			"indicator": "green",
+			"label": "Total Sent",
+			"datatype": "Int",
+		},
+		{
+			"value": total_open_count,
+			"indicator": "blue",
+			"label": "Total Opened",
+			"datatype": "Int",
+		},
+	]
 
 
 def get_columns() -> list:

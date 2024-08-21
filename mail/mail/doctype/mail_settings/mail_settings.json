@@ -26,7 +26,11 @@
   "outgoing_max_attachments",
   "column_break_l9fc",
   "outgoing_max_attachment_size",
-  "outgoing_total_attachments_size"
+  "outgoing_total_attachments_size",
+  "incoming_tab",
+  "send_notification_on_reject",
+  "column_break_0buk",
+  "max_sync_via_api"
  ],
  "fields": [
   {
@@ -140,18 +144,19 @@
    "reqd": 1
   },
   {
-   "default": "150",
+   "default": "1000",
    "fieldname": "max_batch_size",
    "fieldtype": "Int",
    "label": "Max Batch Size (Count)",
    "reqd": 1
   },
   {
+   "depends_on": "eval: doc.root_domain_name",
    "fieldname": "postmaster",
    "fieldtype": "Link",
    "label": "Postmaster",
-   "options": "User",
-   "reqd": 1
+   "mandatory_depends_on": "eval: doc.send_notification_on_reject",
+   "options": "User"
   },
   {
    "fieldname": "column_break_l9fc",
@@ -168,12 +173,35 @@
   {
    "fieldname": "section_break_xudp",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "incoming_tab",
+   "fieldtype": "Tab Break",
+   "label": "Incoming"
+  },
+  {
+   "default": "100",
+   "fieldname": "max_sync_via_api",
+   "fieldtype": "Int",
+   "label": "Max Sync via API (Count)",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_0buk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "send_notification_on_reject",
+   "fieldtype": "Check",
+   "label": "Send Notification on Reject"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-06-01 11:46:19.490403",
+ "modified": "2024-08-07 11:23:01.415375",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

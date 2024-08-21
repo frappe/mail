@@ -1,9 +1,9 @@
 import frappe
 from frappe import _
-from typing import Optional
 from frappe.utils import flt, cint
 from frappe.model.document import Document
-from mail.utils import has_role, is_system_manager, get_user_owned_domains
+from mail.utils.cache import get_user_owned_domains
+from mail.utils.user import has_role, is_system_manager
 
 
 def validate_file(doc, method):
@@ -73,7 +73,7 @@ def user_has_permission(doc: Document, ptype: str, user: str) -> bool:
 	)
 
 
-def get_user_permission_query_condition(user: Optional[str]) -> str:
+def get_user_permission_query_condition(user: str | None = None) -> str:
 	conditions = []
 
 	if not user:

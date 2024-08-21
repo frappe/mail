@@ -11,11 +11,19 @@
   "column_break_1jeq",
   "status",
   "section_break_yute",
-  "domain_name",
+  "is_default",
+  "track_outgoing_mail",
+  "create_mail_contact",
   "column_break_9etf",
+  "domain_name",
   "user",
   "email",
-  "display_name"
+  "section_break_igbn",
+  "display_name",
+  "override_display_name",
+  "column_break_vnry",
+  "reply_to",
+  "override_reply_to"
  ],
  "fields": [
   {
@@ -106,6 +114,54 @@
    "label": "Outgoing",
    "no_copy": 1,
    "permlevel": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "track_outgoing_mail",
+   "fieldtype": "Check",
+   "label": "Track Outgoing Mail"
+  },
+  {
+   "default": "0",
+   "fieldname": "create_mail_contact",
+   "fieldtype": "Check",
+   "label": "Create Mail Contact"
+  },
+  {
+   "fieldname": "reply_to",
+   "fieldtype": "Data",
+   "ignore_xss_filter": 1,
+   "label": "Reply To",
+   "length": 255
+  },
+  {
+   "default": "0",
+   "fieldname": "override_display_name",
+   "fieldtype": "Check",
+   "label": "Override Display Name (API)",
+   "no_copy": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "override_reply_to",
+   "fieldtype": "Check",
+   "label": "Override Reply To (API)"
+  },
+  {
+   "fieldname": "section_break_igbn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_vnry",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "label": "Default Outgoing",
+   "read_only_depends_on": "eval: !doc.outgoing",
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -126,7 +182,7 @@
    "link_fieldname": "sender"
   }
  ],
- "modified": "2024-05-27 13:56:45.934938",
+ "modified": "2024-08-21 16:24:31.264835",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",
@@ -159,6 +215,7 @@
    "read": 1,
    "report": 1,
    "role": "Mailbox User",
+   "select": 1,
    "write": 1
   },
   {
@@ -172,11 +229,6 @@
    "read": 1,
    "role": "Domain Owner",
    "write": 1
-  },
-  {
-   "permlevel": 1,
-   "read": 1,
-   "role": "Mailbox User"
   }
  ],
  "sort_field": "modified",

@@ -24,7 +24,7 @@ frappe.query_reports["Mail Tracker"] = {
 			options: "Outgoing Mail",
 			get_query: () => {
 				return {
-					query: "mail.utils.get_outgoing_mails",
+					query: "mail.utils.query.get_outgoing_mails",
 				};
 			},
 		},
@@ -32,7 +32,7 @@ frappe.query_reports["Mail Tracker"] = {
 			fieldname: "status",
 			label: __("Status"),
 			fieldtype: "Select",
-			options: ["", "Pending", "Transferring", "Failed", "Transferred", "RQ", "Queued", "Deferred", "Bounced", "Partially Sent", "Sent"],
+			options: ["", "Pending", "Transferring", "Failed", "Transferred", "Queued", "Deferred", "Bounced", "Partially Sent", "Sent"],
 		},
 		{
 			fieldname: "agent",

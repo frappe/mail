@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestMailAgentJobType(FrappeTestCase):
+class TestMailAgentGroup(FrappeTestCase):
 	pass

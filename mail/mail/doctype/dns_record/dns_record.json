@@ -13,7 +13,7 @@
   "column_break_fywh",
   "value",
   "ttl",
-  "verified"
+  "is_verified"
  ],
  "fields": [
   {
@@ -52,6 +52,7 @@
    "depends_on": "eval: doc.type == \"MX\"",
    "fieldname": "priority",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Priority",
    "no_copy": 1,
    "non_negative": 1,
@@ -79,7 +80,7 @@
   {
    "default": "0",
    "depends_on": "eval: doc.parenttype != \"Mail Settings\"",
-   "fieldname": "verified",
+   "fieldname": "is_verified",
    "fieldtype": "Check",
    "label": "Verified",
    "no_copy": 1,
@@ -89,7 +90,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-01-28 14:59:37.694075",
+ "modified": "2024-07-25 11:46:26.871935",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "DNS Record",

@@ -20,7 +20,7 @@
                     <div class="mb-1.5 text-sm text-gray-700">
                         {{ __('Message') }}
                     </div>
-                    <TextEditor :content="mail.html" @change="(val) => (mail.html = val)" :editable="true"
+                    <TextEditor :content="mail.raw_html" @change="(val) => (mail.raw_html = val)" :editable="true"
                         :fixedMenu="true"
                         editorClass="prose-sm max-w-none border-b border-x bg-gray-100 rounded-b-md py-1 px-2 min-h-[7rem]" />
                 </div>
@@ -30,15 +30,32 @@
 </template>
 <script setup>
 import { Dialog, FormControl, TextEditor, createResource } from "frappe-ui";
-import { reactive } from "vue";
+import { reactive, watch } from "vue";
 
 const show = defineModel()
+
+const props = defineProps({
+    replyDetails: {
+        type: Object,
+        required: false
+    }
+})
+
 const mail = reactive({
-    to: "pateljannat2308@gmail.com",
+    to: "",
     cc: "",
     bcc: "",
-    subject: "From Hardcode",
-    html: "<p>Hardcoded</p>"
+    subject: "",
+    raw_html: ""
+})
+
+watch(props.replyDetails, (val) => {
+    if (val) {
+        mail.to = val.to
+        mail.cc = val.cc
+        mail.bcc = val.bcc
+        mail.subject = val.subject
+    }
 })
 
 const sender = createResource({
@@ -61,7 +78,7 @@ const sendMail = createResource({
     makeParams(values) {
         console.log(mail)
         return {
-            from: "sagar.s@frappemail.com",
+            from_: "jannat@bunniesbakery.in",
             ...mail
         }
     },

@@ -4,7 +4,7 @@
             <Breadcrumbs :items="breadcrumbs">
                 <template #suffix>
                     <div v-if="incomingMailCount.data" class="self-end text-xs text-gray-600 ml-2">
-                        {{ formatNumber(incomingMailCount.data) }} {{ __("messages") }}
+                        {{ __('{0} {1}').format(formatNumber(incomingMailCount.data), incomingMailCount.data == 1 ? singularize('messages') : 'messages') }}
                     </div>
                 </template>
             </Breadcrumbs>
@@ -19,7 +19,7 @@
                     <SidebarDetail :mail="mail" />
                 </div>
             </div>
-            <div class="flex w-2 cursor-col-resize justify-center" @mousedown="startResizing">
+            <div class="flex w-px cursor-col-resize justify-center" @mousedown="startResizing">
                 <div ref="resizer"
                     class="h-full w-[2px] rounded-full transition-all duration-300 ease-in-out group-hover:bg-gray-400" />
             </div>
@@ -32,16 +32,24 @@
 <script setup>
 import { Breadcrumbs, createListResource, createResource } from "frappe-ui";
 import { computed, inject, ref, onMounted } from "vue";
-import { formatNumber, startResizing } from "@/utils";
+import { formatNumber, startResizing, singularize } from "@/utils";
 import HeaderActions from "@/components/HeaderActions.vue";
 import MailDetails from "@/components/MailDetails.vue";
-import { set, useDebounceFn } from '@vueuse/core'
+import { useDebounceFn } from '@vueuse/core'
 import SidebarDetail from "@/components/SidebarDetail.vue";
 
+const socket = inject('$socket')
 const user = inject("$user");
 const mailStart = ref(0)
 const mailList = ref([])
 const currentMail = ref(JSON.parse(sessionStorage.getItem("currentIncomingMail")))
+
+onMounted(() => {
+    socket.on('incoming_mail_received', (data) => {
+        incomingMails.reload()
+        incomingMailCount.reload()
+    })
+})
 
 const setCurrentMail = (mail) => {
     sessionStorage.setItem("currentIncomingMail", JSON.stringify(mail))

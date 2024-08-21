@@ -4,21 +4,18 @@
 import frappe
 from frappe import _
 from typing import Tuple
-from frappe.query_builder.functions import Date
 from frappe.query_builder import Order, Criterion
-from mail.utils import (
-	has_role,
-	is_system_manager,
-	get_user_mailboxes,
-	get_user_owned_domains,
-)
+from mail.utils.cache import get_user_owned_domains
+from frappe.query_builder.functions import Date, IfNull
+from mail.utils.user import has_role, is_system_manager, get_user_mailboxes
 
 
 def execute(filters=None) -> Tuple[list, list]:
 	columns = get_columns()
 	data = get_data(filters)
+	summary = get_summary(data)
 
-	return columns, data
+	return columns, data, None, None, summary
 
 
 def get_data(filters=None) -> list:
@@ -37,7 +34,8 @@ def get_data(filters=None) -> list:
 			MR.status,
 			MR.retries,
 			OM.message_size,
-			OM.send_in_batch,
+			OM.via_api,
+			OM.submitted_after,
 			OM.transferred_after,
 			MR.action_after,
 			OM.agent,
@@ -47,10 +45,11 @@ def get_data(filters=None) -> list:
 			MR.email.as_("recipient"),
 			OM.message_id,
 			OM.created_at,
+			OM.submitted_at,
 			OM.transferred_at,
 			MR.action_at,
 		)
-		.where((OM.docstatus == 1))
+		.where((OM.docstatus == 1) & (IfNull(MR.status, "") != ""))
 		.orderby(OM.creation, OM.created_at, order=Order.desc)
 		.orderby(MR.idx, order=Order.asc)
 	)
@@ -96,6 +95,54 @@ def get_data(filters=None) -> list:
 	return query.run(as_dict=True)
 
 
+def get_summary(data: list) -> list[dict]:
+	status_count = {}
+	total_message_size = 0
+	total_transfer_delay = 0
+
+	for row in data:
+		status = row["status"]
+		if status in ["Sent", "Deferred", "Bounced"]:
+			status_count.setdefault(status, 0)
+			status_count[status] += 1
+
+		total_message_size += row["message_size"]
+		total_transfer_delay += row["transferred_after"]
+
+	return [
+		{
+			"value": status_count.get("Sent", 0),
+			"indicator": "green",
+			"label": "Total Sent",
+			"datatype": "Int",
+		},
+		{
+			"value": status_count.get("Deferred", 0),
+			"indicator": "blue",
+			"label": "Total Deferred",
+			"datatype": "Int",
+		},
+		{
+			"value": status_count.get("Bounced", 0),
+			"indicator": "red",
+			"label": "Total Bounced",
+			"datatype": "Int",
+		},
+		{
+			"value": total_message_size / len(data) if data else 0,
+			"indicator": "blue",
+			"label": "Average Message Size",
+			"datatype": "Int",
+		},
+		{
+			"value": total_transfer_delay / len(data) if data else 0,
+			"indicator": "green",
+			"label": "Average Transfer Delay",
+			"datatype": "Int",
+		},
+	]
+
+
 def get_columns() -> list:
 	return [
 		{
@@ -130,9 +177,15 @@ def get_columns() -> list:
 			"width": 120,
 		},
 		{
-			"label": _("Send in Batch"),
-			"fieldname": "send_in_batch",
+			"label": _("API"),
+			"fieldname": "via_api",
 			"fieldtype": "Check",
+			"width": 60,
+		},
+		{
+			"label": _("Created After"),
+			"fieldname": "submitted_after",
+			"fieldtype": "Int",
 			"width": 120,
 		},
 		{
@@ -189,6 +242,12 @@ def get_columns() -> list:
 		{
 			"label": _("Created At"),
 			"fieldname": "created_at",
+			"fieldtype": "Datetime",
+			"width": 180,
+		},
+		{
+			"label": _("Submitted At"),
+			"fieldname": "submitted_at",
 			"fieldtype": "Datetime",
 			"width": 180,
 		},

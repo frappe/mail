@@ -60,11 +60,14 @@ def get_incoming_mails(start=0):
 def get_outgoing_mails(start=0):
 	mails = frappe.get_all("Outgoing Mail", {
 		"sender": frappe.session.user,
-		"docstatus": 1
+		"docstatus": 1,
+		"status": "Sent",
 	}, ["name", "subject", "sender", "body_html", "body_plain"],
 	limit=50,
 	start=start,
 	order_by="created_at desc")
+
+	print(frappe.session.user)
 
 	for mail in mails:
 		mail.latest_content = get_latest_content(mail.body_html, mail.body_plain)
@@ -103,20 +106,21 @@ def get_snippet(content):
 
 @frappe.whitelist()
 def get_mail_details(name, type):
-	fields = ["name", "subject", "body_html", "body_plain", "sender"]
-	if type == "Incoming Mail":
-		fields += ["receiver", "display_name"]
+	fields = ["name", "subject", "body_html", "body_plain", "sender", "display_name"]
 	
 	mail = frappe.db.get_value(type, name, fields, as_dict=1)
-	
 	if not mail.display_name:
 		mail.display_name = frappe.db.get_value("User", mail.sender, "full_name")
 
 	mail.user_image = frappe.db.get_value("User", mail.sender, "user_image")
 	mail.latest_content = get_latest_content(mail.body_html, mail.body_plain)
+	mail.to = get_recipients(name, type, "To")
+	mail.cc = get_recipients(name, type, "Cc")
+	mail.bcc = get_recipients(name, type, "Bcc")
 
 	if mail.body_html:
 		mail.body_html = extract_email_body(mail.body_html)
+
 	return mail
 
 def extract_email_body(html):
@@ -125,3 +129,16 @@ def extract_email_body(html):
 	if email_body:
 		return email_body.find('div').prettify()
 	return html
+
+def get_recipients(name, type, recipient_type):
+	recipients = frappe.get_all("Mail Recipient", {
+		"parent": name,
+		"parenttype": type,
+		"type": recipient_type
+	}, ["email", "display_name", "type"])
+
+	for recipient in recipients:
+		if not recipient.display_name:
+			recipient.display_name = frappe.db.get_value("User", recipient.email, "full_name")
+
+	return recipients

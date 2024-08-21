@@ -9,8 +9,43 @@ app_license = "agpl-3.0"
 
 website_redirects = [
 	{
+		"source": "/auth/validate",
+		"target": "/api/method/mail.api.auth.validate",
+		"redirect_http_status": 307,
+	},
+	{
 		"source": "/outbound/send",
 		"target": "/api/method/mail.api.outbound.send",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/outbound/send-raw",
+		"target": "/api/method/mail.api.outbound.send_raw",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/outbound/send-batch",
+		"target": "/api/method/mail.api.outbound.send_batch",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/outbound/send-raw-batch",
+		"target": "/api/method/mail.api.outbound.send_raw_batch",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/outbound/send-newsletter",
+		"target": "/api/method/mail.api.outbound.send_newsletter",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/inbound/pull",
+		"target": "/api/method/mail.api.inbound.pull",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/inbound/pull-raw",
+		"target": "/api/method/mail.api.inbound.pull_raw",
 		"redirect_http_status": 307,
 	},
 ]
@@ -78,7 +113,7 @@ website_redirects = [
 # ------------
 
 # before_install = "mail.install.before_install"
-after_install = "mail.install.after_install"
+# after_install = "mail.install.after_install"
 # after_migrate = "mail.install.after_migrate"
 
 # Uninstallation
@@ -173,10 +208,13 @@ scheduler_events = {
 	#     "mail.tasks.monthly"
 	# ],
 	"cron": {
-		"*/1 * * * *": ["mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails"],
-		"*/3 * * * *": [
-			"mail.mail.doctype.incoming_mail.incoming_mail.sync_incoming_mails",
-			"mail.mail.doctype.outgoing_mail.outgoing_mail.sync_outgoing_mails_status",
+		"* * * * *": [
+			"mail.mail.doctype.outgoing_mail.outgoing_mail.transfer_mails",
+			"mail.mail.doctype.incoming_mail.incoming_mail.get_incoming_mails",
+		],
+		"*/2 * * * *": [
+			"mail.mail.doctype.outgoing_mail.outgoing_mail.get_outgoing_mails_status",
+			"mail.mail.doctype.outgoing_mail.outgoing_mail.enqueue_process_newsletter_stream",
 		],
 	}
 }
@@ -207,7 +245,7 @@ scheduler_events = {
 # Ignore links to specified DocTypes when deleting documents
 # -----------------------------------------------------------
 
-# ignore_links_on_delete = ["Communication", "ToDo"]
+ignore_links_on_delete = ["Mail Domain", "Incoming Mail", "Outgoing Mail"]
 
 # Request Events
 # ----------------
@@ -253,11 +291,9 @@ scheduler_events = {
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True
 
-default_log_clearing_doctypes = {"Mail Agent Job": 7}
+default_log_clearing_doctypes = {"Incoming Mail": 7}
 
 fixtures = [
-	"Mail Agent Job Type",
-	"Mail Folder",
 	{
 		"dt": "Role",
 		"filters": [["role_name", "in", ["Postmaster", "Mailbox User", "Domain Owner"]]],

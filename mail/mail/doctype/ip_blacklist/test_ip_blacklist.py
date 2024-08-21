@@ -5,5 +5,5 @@
 from frappe.tests.utils import FrappeTestCase
 
 
-class TestMailAgentJob(FrappeTestCase):
+class TestIPBlacklist(FrappeTestCase):
 	pass

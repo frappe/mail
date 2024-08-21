@@ -3,10 +3,10 @@
 
 import frappe
 from frappe import _
-from typing import Optional
 from frappe.utils import cint
-from mail.utils import is_valid_host
+from mail.utils.cache import delete_cache
 from frappe.model.document import Document
+from mail.utils.validation import is_valid_host
 from frappe.core.api.file import get_max_file_size
 
 
@@ -20,6 +20,10 @@ class MailSettings(Document):
 		self.generate_dns_records()
 		self.validate_outgoing_max_attachment_size()
 		self.validate_outgoing_total_attachments_size()
+
+	def on_update(self) -> None:
+		delete_cache("root_domain_name")
+		delete_cache("postmaster")
 
 	def validate_root_domain_name(self) -> None:
 		"""Validates the Root Domain Name."""
@@ -41,6 +45,9 @@ class MailSettings(Document):
 
 	def validate_postmaster(self) -> None:
 		"""Validates the Postmaster."""
+
+		if not self.postmaster:
+			return
 
 		if not frappe.db.exists("User", self.postmaster):
 			frappe.throw(_("User {0} does not exist.").format(frappe.bold(self.postmaster)))
@@ -77,49 +84,86 @@ class MailSettings(Document):
 	def generate_dns_records(self, save: bool = False) -> None:
 		"""Generates the DNS Records."""
 
+		records = []
 		self.dns_records.clear()
-
+		category = "Server Record"
+		agent_groups = frappe.db.get_all(
+			"Mail Agent Group",
+			filters={"enabled": 1},
+			fields=["name", "priority", "ipv4", "ipv6"],
+			order_by="creation asc",
+		)
 		agents = frappe.db.get_all(
 			"Mail Agent",
-			filters={"enabled": 1, "outgoing": 1},
-			fields=["name", "outgoing", "ipv4", "ipv6"],
+			filters={"enabled": 1},
+			fields=["name", "incoming", "outgoing", "ipv4", "ipv6"],
 			order_by="creation asc",
 		)
 
+		agent_group_hosts = []
+		if agent_groups:
+			for group in agent_groups:
+				agent_group_hosts.append(group.name)
+
+				# A Record (Agent Group)
+				if group.ipv4:
+					records.append(
+						{
+							"category": category,
+							"type": "A",
+							"host": group.name,
+							"value": group.ipv4,
+							"ttl": self.default_ttl,
+						}
+					)
+
+				# AAAA Record (Agent Group)
+				if group.ipv6:
+					records.append(
+						{
+							"category": category,
+							"type": "AAAA",
+							"host": group.name,
+							"value": group.ipv6,
+							"ttl": self.default_ttl,
+						}
+					)
+
 		if agents:
-			records = []
 			outgoing_agents = []
-			category = "Server Record"
 
 			for agent in agents:
 				if agent.outgoing:
-					# A Record
-					if agent.ipv4:
-						records.append(
-							{
-								"category": category,
-								"type": "A",
-								"host": agent.name,
-								"value": agent.ipv4,
-								"ttl": self.default_ttl,
-							}
-						)
-
-					# AAAA Record
-					if agent.ipv6:
-						records.append(
-							{
-								"category": category,
-								"type": "AAAA",
-								"host": agent.name,
-								"value": agent.ipv6,
-								"ttl": self.default_ttl,
-							}
-						)
-
 					outgoing_agents.append(f"a:{agent.name}")
 
-			# TXT Record
+				if agent.name in agent_group_hosts:
+					continue
+
+				# A Record (Agent)
+				if agent.ipv4:
+					records.append(
+						{
+							"category": category,
+							"type": "A",
+							"host": agent.name,
+							"value": agent.ipv4,
+							"ttl": self.default_ttl,
+						}
+					)
+
+				# AAAA Record (Agent)
+				if agent.ipv6:
+					records.append(
+						{
+							"category": category,
+							"type": "AAAA",
+							"host": agent.name,
+							"value": agent.ipv6,
+							"ttl": self.default_ttl,
+						}
+					)
+
+			# TXT Record (Agent)
 			if outgoing_agents:
 				records.append(
 					{
@@ -131,7 +175,7 @@ class MailSettings(Document):
 					}
 				)
 
-			self.extend("dns_records", records)
+		self.extend("dns_records", records)
 
 		if save:
 			self.save()
@@ -162,12 +206,12 @@ class MailSettings(Document):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_postmaster(
-	doctype: Optional[str] = None,
-	txt: Optional[str] = None,
-	searchfield: Optional[str] = None,
-	start: Optional[int] = 0,
-	page_len: Optional[int] = 20,
-	filters: Optional[dict] = None,
+	doctype: str | None = None,
+	txt: str | None = None,
+	searchfield: str | None = None,
+	start: int = 0,
+	page_len: int = 20,
+	filters: dict | None = None,
 ) -> list:
 	"""Returns the Postmaster."""
 
