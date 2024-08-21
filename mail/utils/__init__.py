@@ -110,8 +110,9 @@ def enqueue_job(method: str | Callable, **kwargs) -> None:
 
 	from frappe.utils.background_jobs import get_jobs
 
-	jobs = get_jobs()
-	if not jobs or method not in jobs[frappe.local.site]:
+	site = frappe.local.site
+	jobs = get_jobs(site=site)
+	if not jobs or method not in jobs[site]:
 		frappe.enqueue(method, **kwargs)
 
 
