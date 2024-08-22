@@ -21,10 +21,10 @@ def get_agent_rabbitmq_connection(agent: str) -> "RabbitMQ":
 	"""Returns `RabbitMQ` object for the given agent."""
 
 	agent = frappe.get_cached_doc("Mail Agent", agent)
-
+	print("in the agent", agent)
 	host = agent.rmq_host
 	port = agent.rmq_port
 	username = agent.rmq_username
 	password = agent.get_password("rmq_password") if agent.rmq_password else None
-
+	print(host, port, username, password)
 	return RabbitMQ(host=host, port=port, username=username, password=password)

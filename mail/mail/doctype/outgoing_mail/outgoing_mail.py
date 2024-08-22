@@ -83,6 +83,13 @@ class OutgoingMail(Document):
 		else:
 			self.folder = folder
 
+	def sync_with_frontend(self, status) -> None:
+		"""Triggered to sync the document with the frontend."""
+
+		if self.via_api:
+			if status == "Sent": 
+				frappe.publish_realtime("outgoing_mail_sent", self.as_dict(), after_commit=True)
+
 	def load_runtime(self) -> None:
 		"""Loads the runtime properties."""
 
@@ -497,6 +504,8 @@ class OutgoingMail(Document):
 		if db_set:
 			self._db_set(status=status)
 
+		self.sync_with_frontend(status)
+
 	def _add_recipient(self, type: str, recipient: str | list[str]) -> None:
 		"""Adds the recipients."""
 
@@ -799,6 +808,8 @@ def create_outgoing_mail(
 	subject: str | None = None,
 	body_html: str | None = None,
 	reply_to: str | list[str] | None = None,
+	reply_to_mail_type: str | None = None,
+	reply_to_mail_name: str | None = None,
 	custom_headers: dict | None = None,
 	attachments: list[dict] | None = None,
 	raw_message: str | None = None,
@@ -818,6 +829,8 @@ def create_outgoing_mail(
 	doc.subject = subject
 	doc.body_html = body_html
 	doc.reply_to = reply_to
+	doc.reply_to_mail_type = reply_to_mail_type
+	doc.reply_to_mail_name = reply_to_mail_name
 	doc._add_custom_headers(custom_headers)
 	doc.raw_message = raw_message
 	doc.via_api = via_api
@@ -1040,7 +1053,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 @frappe.whitelist()
 def get_outgoing_mails_status() -> None:
 	"""Called by the scheduler to get the outgoing mails status."""
-
+	print("from here")
 	frappe.session.user = get_postmaster()
 	MA = frappe.qb.DocType("Mail Agent")
 	OM = frappe.qb.DocType("Outgoing Mail")
@@ -1057,7 +1070,7 @@ def get_outgoing_mails_status() -> None:
 			& (OM.status.isin(["Transferred", "Queued", "Deferred"]))
 		)
 	).run(pluck="name")
-
+	print(agents)
 	for agent in agents:
 		frappe.enqueue(
 			get_outgoing_mails_status_from_agent,
@@ -1073,7 +1086,7 @@ def get_outgoing_mails_status() -> None:
 
 def get_outgoing_mails_status_from_agent(agent: str) -> None:
 	"""Gets the outgoing mails status from the agent."""
-
+	print("from agent here")
 	def _queue_ok(data: dict) -> None:
 		"""Updates Queue ID in Outgoing Mail."""
 
@@ -1181,7 +1194,7 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 		"""Callback function for the RabbitMQ consumer."""
 
 		data = json.loads(body)
-
+		print(data)
 		hook = data["hook"]
 		if hook == "queue_ok":
 			_queue_ok(data)
@@ -1194,7 +1207,9 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 		return True
 
 	try:
+		print("try called")
 		rmq = get_agent_rabbitmq_connection(agent)
+		print(rmq)
 		rmq.declare_queue(constants.OUTGOING_MAIL_STATUS_QUEUE, max_priority=3)
 
 		while True:
