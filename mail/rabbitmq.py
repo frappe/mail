@@ -7,6 +7,7 @@ class RabbitMQ:
 		self,
 		host: str = "localhost",
 		port: int = 5672,
+		virtual_host: str = "/",
 		username: str | None = None,
 		password: str | None = None,
 	) -> None:
@@ -14,6 +15,7 @@ class RabbitMQ:
 
 		self.__host = host
 		self.__port = port
+		self.__virtual_host = virtual_host
 		self.__username = username
 		self.__password = password
 		self._connection = None
@@ -26,10 +28,15 @@ class RabbitMQ:
 		if self.__username and self.__password:
 			credentials = pika.PlainCredentials(self.__username, self.__password)
 			parameters = pika.ConnectionParameters(
-				host=self.__host, port=self.__port, credentials=credentials
+				host=self.__host,
+				port=self.__port,
+				virtual_host=self.__virtual_host,
+				credentials=credentials,
 			)
 		else:
-			parameters = pika.ConnectionParameters(host=self.__host, port=self.__port)
+			parameters = pika.ConnectionParameters(
+				host=self.__host, port=self.__port, virtual_host=self.__virtual_host
+			)
 
 		self._connection = pika.BlockingConnection(parameters)
 		self._channel = self._connection.channel()

@@ -219,10 +219,17 @@ class MailSettings(Document):
 		try:
 			host = self.rmq_host
 			port = self.rmq_port
+			virtual_host = self.rmq_virtual_host
 			username = self.rmq_username
 			password = self.get_password("rmq_password") if self.rmq_password else None
 
-			rmq = RabbitMQ(host=host, port=port, username=username, password=password)
+			rmq = RabbitMQ(
+				host=host,
+				port=port,
+				virtual_host=virtual_host,
+				username=username,
+				password=password,
+			)
 			rmq._disconnect()
 			frappe.msgprint(_("Connection Successful"), alert=True, indicator="green")
 		except socket.gaierror as e:

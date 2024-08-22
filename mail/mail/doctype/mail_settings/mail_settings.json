@@ -19,6 +19,7 @@
   "rabbitmq_amqp_tab",
   "rmq_host",
   "rmq_port",
+  "rmq_virtual_host",
   "test_rabbitmq_connection",
   "column_break_yebz",
   "rmq_username",
@@ -242,12 +243,18 @@
    "fieldname": "test_rabbitmq_connection",
    "fieldtype": "Button",
    "label": "Test Connection"
+  },
+  {
+   "fieldname": "rmq_virtual_host",
+   "fieldtype": "Data",
+   "label": "Virtual Host",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-22 15:24:49.073770",
+ "modified": "2024-08-22 15:57:27.974257",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
