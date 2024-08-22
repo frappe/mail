@@ -25,7 +25,7 @@ class EmailParser:
 
 		if subject := self.message["Subject"]:
 			decoded_subject = str(make_header(decode_header(subject)))
-			return decoded_subject
+			return remove_whitespace_characters(decoded_subject)
 
 		return None
 
@@ -74,7 +74,7 @@ class EmailParser:
 		for type in types:
 			if addresses := self.message.get(type):
 				for address in addresses.split(","):
-					display_name, email = parseaddr(address.replace("\r", "").replace("\n", ""))
+					display_name, email = parseaddr(remove_whitespace_characters(address))
 					if email:
 						recipients.append({"type": type, "email": email, "display_name": display_name})
 
@@ -119,16 +119,13 @@ class EmailParser:
 
 				if disposition.startswith("inline"):
 					if content_id := re.sub(r"[<>]", "", part.get("Content-ID", "")):
-						payload = part.get_payload(decode=True)
-						if payload and part.get_content_charset():
-							payload = payload.decode(part.get_content_charset(), "ignore")
-
-						file = save_attachment(filename, payload, doctype, docname, is_private)
-						self.content_id_and_file_url_map[content_id] = file["file_url"]
+						if payload := part.get_payload(decode=True):
+							file = save_attachment(filename, payload, doctype, docname, is_private)
+							self.content_id_and_file_url_map[content_id] = file["file_url"]
 
 				elif disposition.startswith("attachment"):
-					payload = part.get_payload(decode=True)
-					save_attachment(filename, payload, doctype, docname, is_private)
+					if payload := part.get_payload(decode=True):
+						save_attachment(filename, payload, doctype, docname, is_private)
 
 	def get_body(self) -> tuple[str | None, str | None]:
 		"""Returns the HTML and plain text body of the email."""
@@ -170,7 +167,7 @@ class EmailParser:
 				headers = headers[0].split(";")
 
 			for header in headers:
-				header = header.replace("\n", "").replace("\t", "").replace("\r", "")
+				header = remove_whitespace_characters(header)
 				header_lower = header.lower()
 
 				for check in checks:
@@ -180,3 +177,7 @@ class EmailParser:
 						break
 
 		return result
+
+
+def remove_whitespace_characters(text: str) -> str:
+	return text.replace("\t", "").replace("\r", "").replace("\n", "")

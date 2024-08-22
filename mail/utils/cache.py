@@ -165,4 +165,4 @@ def get_blacklist_for_ip_group(ip_group: str) -> list:
 			.where(IP_BLACKLIST.ip_group == ip_group)
 		).run(as_dict=True)
 
-	return _get_or_set(f"blacklist|{ip_group}", getter)
+	return _get_or_set(f"blacklist|{ip_group}", getter, expires_in_sec=24 * 60 * 60)

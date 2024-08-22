@@ -55,8 +55,11 @@ def parsedate_to_datetime(
 ) -> "datetime":
 	"""Returns datetime object from parsed date header."""
 
-	date_header = re.sub(r"\s+\([A-Z]+\)", "", date_header)
-	dt = datetime.strptime(date_header, "%a, %d %b %Y %H:%M:%S %z")
+	from email.utils import parsedate_to_datetime as parsedate
+
+	dt = parsedate(date_header)
+	if not dt:
+		frappe.throw(_("Invalid date format: {0}").format(date_header))
 
 	return dt.astimezone(pytz.timezone(to_timezone or get_system_timezone()))
 
@@ -110,8 +113,9 @@ def enqueue_job(method: str | Callable, **kwargs) -> None:
 
 	from frappe.utils.background_jobs import get_jobs
 
-	jobs = get_jobs()
-	if not jobs or method not in jobs[frappe.local.site]:
+	site = frappe.local.site
+	jobs = get_jobs(site=site)
+	if not jobs or method not in jobs[site]:
 		frappe.enqueue(method, **kwargs)
 
 

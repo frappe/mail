@@ -254,7 +254,7 @@ def get_incoming_mails_from_agent(agent: str) -> None:
 							to=incoming_mail.reply_to or incoming_mail.sender,
 							display_name="Mail Delivery System",
 							subject=f"Undeliverable: {incoming_mail.subject}",
-							raw_html=get_rejected_template(incoming_mail),
+							body_html=get_rejected_template(incoming_mail),
 						)
 					except Exception:
 						frappe.log_error(
@@ -346,7 +346,7 @@ def get_rejected_template(incoming_mail) -> str:
 	"""Returns the rejected HTML template."""
 
 	# TODO: Create a better HTML template
-	raw_html = f"""
+	body_html = f"""
 	<!DOCTYPE html>
 	<html lang="en">
 	<head>
@@ -370,7 +370,7 @@ def get_rejected_template(incoming_mail) -> str:
 	</html>
 	"""
 
-	return raw_html
+	return body_html
 
 
 def create_incoming_mail(
