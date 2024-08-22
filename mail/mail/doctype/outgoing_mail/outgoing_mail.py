@@ -17,7 +17,12 @@ from frappe.utils.caching import request_cache
 from email.mime.multipart import MIMEMultipart
 from frappe.utils import flt, now, time_diff_in_seconds
 from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
-from mail.utils import parse_iso_datetime, convert_html_to_text, get_rabbitmq_connection
+from mail.utils import (
+	enqueue_job,
+	parse_iso_datetime,
+	convert_html_to_text,
+	get_rabbitmq_connection,
+)
 
 
 class OutgoingMail(Document):
@@ -882,7 +887,7 @@ def get_permission_query_condition(user: str | None = None) -> str:
 
 
 def transfer_mails() -> None:
-	"""Called by the scheduler to transfer the mails in batch."""
+	"""Transfers the mails to the RabbitMQ."""
 
 	def get_mails_to_transfer(limit: int) -> list[dict]:
 		"""Returns the mails to transfer."""
@@ -936,7 +941,6 @@ def transfer_mails() -> None:
 	)
 	root_domain_name = get_root_domain_name()
 
-	frappe.session.user = get_postmaster()
 	while total_failures < max_failures:
 		current_status = "Pending"
 		mails = get_mails_to_transfer(limit=max_batch_size)
@@ -1003,9 +1007,8 @@ def transfer_mails() -> None:
 				time.sleep(5)
 
 
-@frappe.whitelist()
 def get_outgoing_mails_status() -> None:
-	"""Called by the scheduler to get the outgoing mails status."""
+	"""Gets the outgoing mails status from the RabbitMQ."""
 
 	def has_unsynced_outgoing_mails() -> bool:
 		"""Returns True if there are unsynced outgoing mails."""
@@ -1143,8 +1146,6 @@ def get_outgoing_mails_status() -> None:
 	if not has_unsynced_outgoing_mails():
 		return
 
-	frappe.session.user = get_postmaster()
-
 	try:
 		rmq = get_rabbitmq_connection()
 		rmq.declare_queue(constants.OUTGOING_MAIL_STATUS_QUEUE, max_priority=3)
@@ -1230,8 +1231,23 @@ def process_newsletter_stream(
 			frappe.log_error(title="Process Newsletter Stream", message=frappe.get_traceback())
 
 
+def enqueue_transfer_mails() -> None:
+	"Called by the scheduler to enqueue the `transfer_mails` job."
+
+	frappe.session.user = get_postmaster()
+	enqueue_job(transfer_mails)
+
+
+@frappe.whitelist()
+def enqueue_get_outgoing_mails_status() -> None:
+	"Called by the scheduler to enqueue the `get_outgoing_mails_status` job."
+
+	frappe.session.user = get_postmaster()
+	enqueue_job(get_outgoing_mails_status)
+
+
 def enqueue_process_newsletter_stream(number_of_workers: int = 3) -> None:
-	"""Enqueues the `process_newsletter_stream` job."""
+	"Called by the scheduler to enqueue the `process_newsletter_stream` job."
 
 	for worker_id in range(1, number_of_workers + 1):
 		frappe.enqueue(

@@ -21,7 +21,7 @@ frappe.listview_settings["Incoming Mail"] = {
 
 function get_incoming_mails(listview) {
 	frappe.call({
-		method: "mail.mail.doctype.incoming_mail.incoming_mail.get_incoming_mails",
+		method: "mail.mail.doctype.incoming_mail.incoming_mail.enqueue_get_incoming_mails",
 		freeze: true,
 		freeze_message: __("Creating Job..."),
 		callback: () => {

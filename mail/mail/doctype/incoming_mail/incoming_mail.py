@@ -9,10 +9,10 @@ from email.utils import parseaddr
 from frappe.model.document import Document
 from mail.utils.cache import get_postmaster
 from mail.utils.email_parser import EmailParser
-from mail.utils import parse_iso_datetime, get_rabbitmq_connection
 from frappe.utils import now, time_diff_in_seconds, validate_email_address
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
+from mail.utils import enqueue_job, parse_iso_datetime, get_rabbitmq_connection
 from mail.utils.user import (
 	is_postmaster,
 	is_mailbox_owner,
@@ -179,84 +179,6 @@ def get_permission_query_condition(user: str | None = None) -> str:
 		return "1=0"
 
 
-@frappe.whitelist()
-def get_incoming_mails() -> None:
-	"""Called by the scheduler to get incoming mails from the mail agents."""
-
-	def callback(channel, method, properties, body) -> bool:
-		"""Callback function for the RabbitMQ consumer."""
-
-		is_accepted = False
-		agent = properties.app_id
-		message = body.decode("utf-8")
-		parsed_message = EmailParser.get_parsed_message(message)
-		receiver = parsed_message.get("Delivered-To")
-		display_name, sender = parseaddr(parsed_message.get("From"))
-
-		if (validate_email_address(sender) == sender) and (
-			validate_email_address(receiver) == receiver
-		):
-			domain_name = receiver.split("@")[1]
-
-			if is_active_domain(domain_name):
-				if is_mail_alias(receiver):
-					mail_alias = frappe.get_cached_doc("Mail Alias", receiver)
-					if mail_alias.enabled:
-						is_accepted = True
-						for mailbox in mail_alias.mailboxes:
-							if is_active_mailbox(mailbox.mailbox):
-								create_incoming_mail(agent, mailbox.mailbox, message)
-				elif is_active_mailbox(receiver):
-					is_accepted = True
-					create_incoming_mail(agent, receiver, message)
-
-			if not is_accepted:
-				incoming_mail = create_incoming_mail(
-					agent,
-					receiver,
-					message,
-					is_rejected=1,
-					rejection_message="550 5.4.1 Recipient address rejected: Access denied.",
-				)
-
-				if incoming_mail.docstatus == 1 and frappe.db.get_single_value(
-					"Mail Settings", "send_notification_on_reject", cache=True
-				):
-					try:
-						create_outgoing_mail(
-							sender=get_postmaster(),
-							to=incoming_mail.reply_to or incoming_mail.sender,
-							display_name="Mail Delivery System",
-							subject=f"Undeliverable: {incoming_mail.subject}",
-							body_html=get_rejected_template(incoming_mail),
-						)
-					except Exception:
-						frappe.log_error(
-							title="Send Rejection Notification",
-							message=frappe.get_traceback(with_context=False),
-						)
-
-		channel.basic_ack(delivery_tag=method.delivery_tag)
-		return True
-
-	from mail.config.constants import INCOMING_MAIL_QUEUE
-
-	frappe.session.user = get_postmaster()
-
-	try:
-		rmq = get_rabbitmq_connection()
-		rmq.declare_queue(INCOMING_MAIL_QUEUE)
-
-		while True:
-			if not rmq.basic_get(INCOMING_MAIL_QUEUE, callback=callback):
-				break
-	except Exception:
-		frappe.log_error(
-			title="Get Incoming Mails",
-			message=frappe.get_traceback(with_context=False),
-		)
-
-
 def extract_ip_and_host(header: str | None = None) -> tuple[str | None, str | None]:
 	"""Extracts the IP and Host from the given `Received` header."""
 
@@ -380,3 +302,88 @@ def create_incoming_mail(
 				)
 
 	return doc
+
+
+def get_incoming_mails() -> None:
+	"""Gets incoming mails from the RabbitMQ."""
+
+	def callback(channel, method, properties, body) -> bool:
+		"""Callback function for the RabbitMQ consumer."""
+
+		is_accepted = False
+		agent = properties.app_id
+		message = body.decode("utf-8")
+		parsed_message = EmailParser.get_parsed_message(message)
+		receiver = parsed_message.get("Delivered-To")
+		display_name, sender = parseaddr(parsed_message.get("From"))
+
+		if (validate_email_address(sender) == sender) and (
+			validate_email_address(receiver) == receiver
+		):
+			domain_name = receiver.split("@")[1]
+
+			if is_active_domain(domain_name):
+				if is_mail_alias(receiver):
+					mail_alias = frappe.get_cached_doc("Mail Alias", receiver)
+					if mail_alias.enabled:
+						is_accepted = True
+						for mailbox in mail_alias.mailboxes:
+							if is_active_mailbox(mailbox.mailbox):
+								create_incoming_mail(agent, mailbox.mailbox, message)
+				elif is_active_mailbox(receiver):
+					is_accepted = True
+					create_incoming_mail(agent, receiver, message)
+
+			if not is_accepted:
+				incoming_mail = create_incoming_mail(
+					agent,
+					receiver,
+					message,
+					is_rejected=1,
+					rejection_message="550 5.4.1 Recipient address rejected: Access denied.",
+				)
+
+				if incoming_mail.docstatus == 1 and frappe.db.get_single_value(
+					"Mail Settings", "send_notification_on_reject", cache=True
+				):
+					try:
+						create_outgoing_mail(
+							sender=get_postmaster(),
+							to=incoming_mail.reply_to or incoming_mail.sender,
+							display_name="Mail Delivery System",
+							subject=f"Undeliverable: {incoming_mail.subject}",
+							body_html=get_rejected_template(incoming_mail),
+						)
+					except Exception:
+						frappe.log_error(
+							title="Send Rejection Notification",
+							message=frappe.get_traceback(with_context=False),
+						)
+
+		channel.basic_ack(delivery_tag=method.delivery_tag)
+		return True
+
+	from mail.config.constants import INCOMING_MAIL_QUEUE
+
+	frappe.session.user = get_postmaster()
+
+	try:
+		rmq = get_rabbitmq_connection()
+		rmq.declare_queue(INCOMING_MAIL_QUEUE)
+
+		while True:
+			if not rmq.basic_get(INCOMING_MAIL_QUEUE, callback=callback):
+				break
+	except Exception:
+		frappe.log_error(
+			title="Get Incoming Mails",
+			message=frappe.get_traceback(with_context=False),
+		)
+
+
+@frappe.whitelist()
+def enqueue_get_incoming_mails() -> None:
+	"Called by the scheduler to enqueue the `get_incoming_mails` job."
+
+	frappe.session.user = get_postmaster()
+	enqueue_job(get_incoming_mails)

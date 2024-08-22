@@ -95,7 +95,7 @@ frappe.ui.form.on("Outgoing Mail", {
 
     get_outgoing_mails_status(frm) {
 		frappe.call({
-			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.get_outgoing_mails_status",
+			method: "mail.mail.doctype.outgoing_mail.outgoing_mail.enqueue_get_outgoing_mails_status",
 			args: {
 				agents: frm.doc.agent,
 			},
