@@ -5,8 +5,26 @@ import dns.resolver
 from frappe import _
 from typing import Callable
 from datetime import datetime
+from mail.rabbitmq import RabbitMQ
 from frappe.utils import get_system_timezone
 from frappe.utils.caching import request_cache
+
+
+def get_rabbitmq_connection() -> "RabbitMQ":
+	"""Returns `RabbitMQ` object."""
+
+	mail_settings = frappe.get_cached_doc("Mail Settings")
+	host = mail_settings.rmq_host
+	port = mail_settings.rmq_port
+	virtual_host = mail_settings.rmq_virtual_host
+	username = mail_settings.rmq_username
+	password = (
+		mail_settings.get_password("rmq_password") if mail_settings.rmq_password else None
+	)
+
+	return RabbitMQ(
+		host=host, port=port, virtual_host=virtual_host, username=username, password=password
+	)
 
 
 def get_dns_record(

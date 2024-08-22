@@ -18,15 +18,6 @@ frappe.ui.form.on("Mail Agent", {
 		}
 	},
 
-	test_rabbitmq_connection(frm) {
-		frappe.call({
-			method: "test_rabbitmq_connection",
-			doc: frm.doc,
-			freeze: true,
-			freeze_message: __("Testing RabbitMQ Connection..."),
-		});
-	},
-
 	add_actions(frm) {
 		if (!frm.doc.__islocal) {
 			if (frm.doc.outgoing) {

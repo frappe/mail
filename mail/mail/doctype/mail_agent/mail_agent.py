@@ -6,7 +6,6 @@ from frappe import _
 from mail.utils import get_dns_record
 from mail.utils.cache import delete_cache
 from frappe.model.document import Document
-from mail.utils.agent import get_agent_rabbitmq_connection
 from mail.mail.doctype.mail_settings.mail_settings import validate_mail_settings
 
 
@@ -22,7 +21,6 @@ class MailAgent(Document):
 		self.validate_agent()
 		self.validate_enabled()
 		self.validate_incoming_and_outgoing()
-		self.validate_rmq_host()
 
 	def on_update(self) -> None:
 		self.update_server_dns_records()
@@ -81,12 +79,6 @@ class MailAgent(Document):
 		if not self.is_new() and not self.outgoing:
 			self.remove_from_linked_domains()
 
-	def validate_rmq_host(self) -> None:
-		"""Validates the rmq_host and converts it to lowercase."""
-
-		if self.rmq_host:
-			self.rmq_host = self.rmq_host.lower()
-
 	def remove_from_linked_domains(self) -> None:
 		"""Removes the agent from the linked domains."""
 
@@ -99,26 +91,3 @@ class MailAgent(Document):
 		"""Updates the DNS Records of the server."""
 
 		frappe.get_doc("Mail Settings").generate_dns_records(save=True)
-
-	@frappe.whitelist()
-	def test_rabbitmq_connection(self) -> None:
-		"""Tests the connection to the RabbitMQ server."""
-
-		try:
-			rmq = get_agent_rabbitmq_connection(self.agent)
-			rmq._disconnect()
-			frappe.msgprint(_("Connection Successful"), alert=True, indicator="green")
-		except Exception as e:
-			messages = []
-			for error in e.args:
-				if not isinstance(error, str):
-					error = error.exception
-
-				messages.append("{}: {}".format(frappe.bold(e.__class__.__name__), error))
-
-			as_list = True
-			if len(messages) == 1:
-				messages = messages[0]
-				as_list = False
-
-			frappe.msgprint(messages, _("Connection Failed"), as_list=as_list, indicator="red")
