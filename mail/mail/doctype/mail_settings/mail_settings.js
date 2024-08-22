@@ -6,6 +6,15 @@ frappe.ui.form.on("Mail Settings", {
         frm.trigger("set_queries");
 	},
 
+    test_rabbitmq_connection(frm) {
+		frappe.call({
+			method: "test_rabbitmq_connection",
+			doc: frm.doc,
+			freeze: true,
+			freeze_message: __("Testing RabbitMQ Connection..."),
+		});
+	},
+
     set_queries(frm) {
         frm.set_query("postmaster", () => ({
             query: "mail.mail.doctype.mail_settings.mail_settings.get_postmaster",

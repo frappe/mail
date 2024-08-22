@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-from mail.mail.doctype.mail_agent.rabbitmq import RabbitMQ
+from mail.rabbitmq import RabbitMQ
 
 
 def get_random_outgoing_mail_agent() -> str:

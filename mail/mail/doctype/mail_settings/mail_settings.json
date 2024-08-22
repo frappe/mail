@@ -19,6 +19,7 @@
   "rabbitmq_amqp_tab",
   "rmq_host",
   "rmq_port",
+  "test_rabbitmq_connection",
   "column_break_yebz",
   "rmq_username",
   "rmq_password",
@@ -235,12 +236,18 @@
    "fieldname": "rabbitmq_amqp_tab",
    "fieldtype": "Tab Break",
    "label": "RabbitMQ (AMQP)"
+  },
+  {
+   "depends_on": "eval: !doc.__unsaved",
+   "fieldname": "test_rabbitmq_connection",
+   "fieldtype": "Button",
+   "label": "Test Connection"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-22 15:08:39.702672",
+ "modified": "2024-08-22 15:24:49.073770",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
