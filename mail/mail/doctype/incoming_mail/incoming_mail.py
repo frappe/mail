@@ -386,4 +386,4 @@ def enqueue_get_incoming_mails() -> None:
 	"Called by the scheduler to enqueue the `get_incoming_mails` job."
 
 	frappe.session.user = get_postmaster()
-	enqueue_job(get_incoming_mails)
+	enqueue_job(get_incoming_mails, queue="long")

@@ -1209,7 +1209,7 @@ def enqueue_transfer_mails() -> None:
 	"Called by the scheduler to enqueue the `transfer_mails` job."
 
 	frappe.session.user = get_postmaster()
-	enqueue_job(transfer_mails)
+	enqueue_job(transfer_mails, queue="long")
 
 
 @frappe.whitelist()
@@ -1217,10 +1217,10 @@ def enqueue_get_outgoing_mails_status() -> None:
 	"Called by the scheduler to enqueue the `get_outgoing_mails_status` job."
 
 	frappe.session.user = get_postmaster()
-	enqueue_job(get_outgoing_mails_status)
+	enqueue_job(get_outgoing_mails_status, queue="long")
 
 
 def enqueue_process_newsletter_queue() -> None:
 	"Called by the scheduler to enqueue the `process_newsletter_queue` job."
 
-	enqueue_job(process_newsletter_queue)
+	enqueue_job(process_newsletter_queue, queue="long")
