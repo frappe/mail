@@ -272,10 +272,6 @@ class OutgoingMail(Document):
 	def set_body_html(self) -> None:
 		"""Sets the HTML Body."""
 
-		if self.raw_html:
-			self.body_html = self.raw_html
-			self.raw_html = None
-
 		self.body_html = self.body_html or ""
 
 		if self.via_api:
@@ -310,7 +306,7 @@ class OutgoingMail(Document):
 						else:
 							del parser["Reply-To"]
 
-				self.raw_html = self.body_html = self.body_plain = self.raw_message = None
+				self.body_html = self.body_plain = self.raw_message = None
 				parser.update_header("From", formataddr((self.display_name, self.sender)))
 				self.subject = parser.get_subject()
 				self.reply_to = parser.get_header("Reply-To")
@@ -801,7 +797,7 @@ def create_outgoing_mail(
 	cc: str | list[str] | None = None,
 	bcc: str | list[str] | None = None,
 	subject: str | None = None,
-	raw_html: str | None = None,
+	body_html: str | None = None,
 	reply_to: str | list[str] | None = None,
 	custom_headers: dict | None = None,
 	attachments: list[dict] | None = None,
@@ -820,7 +816,7 @@ def create_outgoing_mail(
 	doc._add_recipient("Cc", cc)
 	doc._add_recipient("Bcc", bcc)
 	doc.subject = subject
-	doc.raw_html = raw_html
+	doc.body_html = body_html
 	doc.reply_to = reply_to
 	doc._add_custom_headers(custom_headers)
 	doc.raw_message = raw_message
