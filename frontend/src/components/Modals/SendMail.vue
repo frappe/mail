@@ -11,18 +11,18 @@
         }]
     }">
         <template #body-content>
-            <div class="flex flex-col space-y-4">
-                <FormControl v-model="mail.to" :label="__('To')" />
+            <div class="flex flex-col space-y-4 text-sm">
+                <FormControl v-model="mail.to" :label="__('To')"/>
                 <FormControl v-model="mail.cc" :label="__('CC')" />
                 <FormControl v-model="mail.bcc" :label="__('BCC')" />
                 <FormControl v-model="mail.subject" :label="__('Subject')" />
                 <div>
-                    <div class="mb-1.5 text-sm text-gray-700">
+                    <div class="mb-1.5 text-xs text-gray-600">
                         {{ __('Message') }}
                     </div>
-                    <TextEditor :content="mail.raw_html" @change="(val) => (mail.raw_html = val)" :editable="true"
+                    <TextEditor :content="mail.html" @change="(val) => (mail.html = val)" :editable="true"
                         :fixedMenu="true"
-                        editorClass="prose-sm max-w-none border-b border-x bg-gray-100 rounded-b-md py-1 px-2 min-h-[7rem]" />
+                        editorClass="text-sm prose-sm max-w-none border-b border-x bg-gray-100 rounded-b-md py-2 px-2 min-h-[7rem]" />
                 </div>
             </div>
         </template>
@@ -30,8 +30,9 @@
 </template>
 <script setup>
 import { Dialog, FormControl, TextEditor, createResource } from "frappe-ui";
-import { reactive, watch } from "vue";
+import { reactive, watch, inject } from "vue";
 
+const user = inject("$user");
 const show = defineModel()
 
 const props = defineProps({
@@ -46,39 +47,27 @@ const mail = reactive({
     cc: "",
     bcc: "",
     subject: "",
-    raw_html: ""
+    html: ""
 })
 
-watch(props.replyDetails, (val) => {
-    if (val) {
-        mail.to = val.to
-        mail.cc = val.cc
-        mail.bcc = val.bcc
-        mail.subject = val.subject
+watch(show, () => {
+    if (show.value && props.replyDetails) {
+        mail.to = props.replyDetails.to
+        mail.cc = props.replyDetails.cc
+        mail.bcc = props.replyDetails.bcc
+        mail.subject = props.replyDetails.subject
+        mail.html = props.replyDetails.html
+        mail.reply_to_mail_type = props.replyDetails.reply_to_mail_type
+        mail.reply_to_mail_name = props.replyDetails.reply_to_mail_name
     }
-})
-
-const sender = createResource({
-    url: "frappe.client.get_list",
-    makeParams(values) {
-        return {
-            doctype: "Mailbox",
-            fields: ["email"],
-            filters: {
-                'enabled': true,
-                'outgoing': true
-            }
-        }
-    },
 })
 
 const sendMail = createResource({
     url: "mail.api.outbound.send",
     method: "POST",
     makeParams(values) {
-        console.log(mail)
         return {
-            from_: "jannat@bunniesbakery.in",
+            from_: `${user.data?.full_name} <${user.data?.name}>`,
             ...mail
         }
     },

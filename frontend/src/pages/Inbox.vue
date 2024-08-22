@@ -14,8 +14,8 @@
             <div @scroll="loadMoreEmails" ref="mailSidebar"
                 class="mailSidebar border-r w-1/3 p-3 h-[calc(100vh-3.2rem)] sticky top-16 overflow-y-scroll overscroll-contain">
                 <div v-for="(mail, idx) in incomingMails.data" @click="openMail(mail)"
-                    class="flex flex-col p-2 space-y-1 cursor-pointer rounded"
-                    :class="{ 'border-b': idx < incomingMails.data.length - 1, 'bg-gray-200': mail.name == currentMail }">
+                    class="flex flex-col p-2 space-y-1 cursor-pointer"
+                    :class="{ 'border-b': idx < incomingMails.data.length - 1, 'bg-gray-200 rounded': mail.name == currentMail }">
                     <SidebarDetail :mail="mail" />
                 </div>
             </div>

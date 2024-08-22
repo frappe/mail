@@ -1,11 +1,14 @@
 <template>
-    <div v-if="mail.data" class="p-3">
+    <div v-if="mail.data" class="p-3 pl-5">
         <div class="flex space-x-3 border-b pb-2">
             <Avatar class="avatar border border-gray-300" :label="mail.data.display_name || mail.data.sender"
                 :image="mail.data.user_image" size="lg" />
-            <div class="text-xs space-y-1">
-                <div class="text-base font-semibold">
-                    {{ mail.data.display_name || mail.data.sender }}
+            <div class="text-xs space-y-1 flex-1">
+                <div class="flex items-center justify-between">
+                    <div class="text-base font-semibold">
+                        {{ mail.data.display_name || mail.data.sender }}
+                    </div>
+                    <MailDate :datetime="mail.data.creation" />
                 </div>
                 <div class="leading-4">
                     {{ mail.data.subject }}
@@ -49,8 +52,8 @@
                 </template>
             </Button>
         </div>
-        <div v-if="mail.data.body_html" v-html="mail.data.body_html"
-            class="text-sm ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-gray-300 prose-th:border-gray-300 prose-td:relative prose-th:relative prose-th:bg-gray-100 prose-sm max-w-none">
+        <div v-if="mail.data.body_html" v-html="mailBody"
+            class="text-sm leading-5 ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-gray-300 prose-th:border-gray-300 prose-td:relative prose-th:relative prose-th:bg-gray-100 prose-sm max-w-none">
         </div>
     </div>
     <div v-else class="flex-1 flex flex-col space-y-2 items-center justify-center w-full h-full my-auto">
@@ -62,17 +65,13 @@
 </template>
 <script setup>
 import { createResource, Avatar, Button } from 'frappe-ui';
-import { watch, ref, reactive } from 'vue';
+import { watch, ref, reactive, inject, computed } from 'vue';
 import { Reply, ReplyAll, Forward } from 'lucide-vue-next';
 import SendMail from "@/components/Modals/SendMail.vue";
+import MailDate from '@/components/MailDate.vue';
 
 const showSendModal = ref(false)
-const replyDetails = reactive({
-    to: "",
-    cc: "",
-    bcc: "",
-    subject: "",
-})
+const dayjs = inject("$dayjs")
 
 const props = defineProps({
     mailID: {
@@ -85,8 +84,17 @@ const props = defineProps({
     }
 });
 
+const replyDetails = reactive({
+    to: "",
+    cc: "",
+    bcc: "",
+    subject: "",
+    reply_to_mail_type: props.type,
+    reply_to_mail_name: "",
+})
+
 const mail = createResource({
-    url: "mail.api.mail.get_mail_details",
+    url: "mail.api.mail.get_mail",
     makeParams(values) {
         return {
             name: values?.mailID || props.mailID,
@@ -96,17 +104,39 @@ const mail = createResource({
     auto: props.mailID ? true : false,
 });
 
-const openModal = (type) => {
-    showSendModal.value = true
-    replyDetails.to = mail.data.sender
+const mailBody = computed(() => {
+    return mail.data.body_html.replace(/<br\s*\/?>/, '')
+})
+
+const openModal = (type) => {    
+    if (props.type == "Incoming Mail") {
+        replyDetails.to = mail.data.sender
+    } else {
+        replyDetails.to = mail.data.to.map(to => to.email).join(", ")
+    }
+
     replyDetails.subject = `Re: ${mail.data.subject}`
+    replyDetails.cc = ""
+    replyDetails.bcc = ""
+    replyDetails.reply_to_mail_name = mail.data.name
+    
     if (type === 'replyAll') {
         replyDetails.cc = mail.data.cc.map(cc => cc.email).join(", ")
         replyDetails.bcc = mail.data.bcc.map(bcc => bcc.email).join(", ")
     }
     if (type === 'forward') {
+        replyDetails.to = ""
         replyDetails.subject = `Fwd: ${mail.data.subject}`
     }
+    replyDetails.html = getReplyHtml(mail.data.body_html, type)
+    showSendModal.value = true
+}
+
+const getReplyHtml = (html, type) => {
+    const replyHeader = `
+        On ${dayjs(mail.data.creation).format("DD MMM YYYY")} at ${dayjs(mail.data.creation).format("h:mm A")}, ${replyDetails.to} wrote:
+    `;
+    return `<br><blockquote>${replyHeader} <br> ${html}</blockquote>`;
 }
 
 watch(
@@ -116,3 +146,8 @@ watch(
     }
 )
 </script>
+<style>
+.prose :where(blockquote p:first-of-type):not(:where([class~="not-prose"],[class~="not-prose"] *))::before {
+    content: ""
+}
+</style>

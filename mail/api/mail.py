@@ -45,7 +45,7 @@ def get_incoming_mails(start=0):
 	mails = frappe.get_all("Incoming Mail", {
 		"receiver": frappe.session.user,
 		"docstatus": 1
-	}, ["name", "receiver", "sender", "body_html", "body_plain", "display_name", "subject"],
+	}, ["name", "sender", "body_html", "body_plain", "display_name", "subject", "creation"],
 	limit=50,
 	start=start,
 	order_by="created_at desc")
@@ -62,7 +62,7 @@ def get_outgoing_mails(start=0):
 		"sender": frappe.session.user,
 		"docstatus": 1,
 		"status": "Sent",
-	}, ["name", "subject", "sender", "body_html", "body_plain"],
+	}, ["name", "subject", "sender", "body_html", "body_plain", "creation", "display_name"],
 	limit=50,
 	start=start,
 	order_by="created_at desc")
@@ -79,20 +79,18 @@ def get_latest_content(html, plain):
 	content = html if html else plain
 	if content is None:
 		return ''
-	
-	# Check if the content is HTML
+
 	if is_html(content):
-		soup = BeautifulSoup(content, 'html.parser')	# Parse the content with BeautifulSoup
-		div = soup.find('div', {'dir': 'ltr'})	# Find the first div with dir="ltr"
-		if div is None:
-			return content	# Return the content if no div is found
-		return div.get_text(strip=True)	# Otherwise, return the text of the div
-	else:
-		lines = content.split('\n')	# If the content is plain text, split it into lines
-		return '\n'.join(lines[:2])	# Return the first two lines joined by a newline character
+		soup = BeautifulSoup(content, 'html.parser')
+		blockquote = soup.find('blockquote')
+		if blockquote:
+			blockquote.extract()
+		return soup.get_text(strip=True)
+
+	return content
 	
 def get_snippet(content):
-	if is_html(content):
+	""" if is_html(content):
 		soup = BeautifulSoup(content, 'html.parser')
 		email_body = soup.find(class_='email-body')
 		if email_body:
@@ -100,13 +98,36 @@ def get_snippet(content):
 		else:
 			words = soup.get_text(strip=True).split()
 		return ' '.join(words[:50])
-	else:
-		return ' '.join(content.split()[:50])
+	else: """
+	content = re.sub(r'(?<=[.,])(?=[^\s])', r' ', content) # add space after . and , if not followed by a space
+	return ' '.join(content.split()[:50])
 	
 
 @frappe.whitelist()
+def get_mail(name, type):
+	mail = get_mail_details(name, type)
+	mail.thread = []
+
+	mail.thread = mail.thread + get_thread_from("Incoming Mail", mail.name)
+	mail.thread = mail.thread + get_thread_from("Outgoing Mail", mail.name)
+	mail.thread.sort(key=lambda x: x.creation)
+	print(mail.thread)
+	return mail
+
+def get_thread_from(type, mail_name):
+	thread = []
+	emails = frappe.get_all(type, {
+		"reply_to_mail_name": mail_name
+	}, pluck="name")
+
+	for email in emails:
+		email = get_mail_details(email, type)
+		thread.append(email)
+	print(thread)
+	return thread
+
 def get_mail_details(name, type):
-	fields = ["name", "subject", "body_html", "body_plain", "sender", "display_name"]
+	fields = ["name", "subject", "body_html", "body_plain", "sender", "display_name", "creation"]
 	
 	mail = frappe.db.get_value(type, name, fields, as_dict=1)
 	if not mail.display_name:
@@ -117,10 +138,7 @@ def get_mail_details(name, type):
 	mail.to = get_recipients(name, type, "To")
 	mail.cc = get_recipients(name, type, "Cc")
 	mail.bcc = get_recipients(name, type, "Bcc")
-
-	if mail.body_html:
-		mail.body_html = extract_email_body(mail.body_html)
-
+	mail.body_html = extract_email_body(mail.body_html)
 	return mail
 
 def extract_email_body(html):

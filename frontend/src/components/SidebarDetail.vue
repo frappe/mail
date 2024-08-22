@@ -1,6 +1,9 @@
 <template>
-    <div class="font-semibold">
-        {{ mail.display_name ? mail.display_name : mail.sender }}
+    <div class="flex items-center justify-between">
+        <div class="font-semibold">
+            {{ mail.display_name ? mail.display_name : mail.sender }}
+        </div>
+        <MailDate :datetime="mail.creation" :inList="true"/>
     </div>
     <div class="subject text-xs">
         {{ mail.subject }}
@@ -10,6 +13,8 @@
     </div>
 </template>
 <script setup>
+import MailDate from './MailDate.vue';
+
     const props = defineProps({
         mail: {
             type: Object,
