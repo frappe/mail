@@ -6,11 +6,10 @@ from frappe import _
 from uuid_utils import uuid7
 from typing import TYPE_CHECKING
 from email.utils import parseaddr
-from mail.utils import parse_iso_datetime
 from frappe.model.document import Document
 from mail.utils.cache import get_postmaster
 from mail.utils.email_parser import EmailParser
-from mail.utils.agent import get_agent_rabbitmq_connection
+from mail.utils import parse_iso_datetime, get_rabbitmq_connection
 from frappe.utils import now, time_diff_in_seconds, validate_email_address
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
@@ -184,31 +183,11 @@ def get_permission_query_condition(user: str | None = None) -> str:
 def get_incoming_mails() -> None:
 	"""Called by the scheduler to get incoming mails from the mail agents."""
 
-	frappe.session.user = get_postmaster()
-	agents = frappe.db.get_all(
-		"Mail Agent", filters={"enabled": 1, "incoming": 1}, pluck="name"
-	)
-
-	for agent in agents:
-		frappe.enqueue(
-			get_incoming_mails_from_agent,
-			queue="long",
-			is_async=True,
-			now=False,
-			job_name=f"Get Incoming Mails - {agent}",
-			enqueue_after_commit=False,
-			at_front=False,
-			agent=agent,
-		)
-
-
-def get_incoming_mails_from_agent(agent: str) -> None:
-	"""Gets incoming mails from the mail agent."""
-
 	def callback(channel, method, properties, body) -> bool:
 		"""Callback function for the RabbitMQ consumer."""
 
 		is_accepted = False
+		agent = properties.app_id
 		message = body.decode("utf-8")
 		parsed_message = EmailParser.get_parsed_message(message)
 		receiver = parsed_message.get("Delivered-To")
@@ -262,8 +241,10 @@ def get_incoming_mails_from_agent(agent: str) -> None:
 
 	from mail.config.constants import INCOMING_MAIL_QUEUE
 
+	frappe.session.user = get_postmaster()
+
 	try:
-		rmq = get_agent_rabbitmq_connection(agent)
+		rmq = get_rabbitmq_connection()
 		rmq.declare_queue(INCOMING_MAIL_QUEUE)
 
 		while True:
@@ -271,7 +252,7 @@ def get_incoming_mails_from_agent(agent: str) -> None:
 				break
 	except Exception:
 		frappe.log_error(
-			title=f"Get Incoming Mails - {agent}",
+			title="Get Incoming Mails",
 			message=frappe.get_traceback(with_context=False),
 		)
 
