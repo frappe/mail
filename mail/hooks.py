@@ -214,7 +214,7 @@ scheduler_events = {
 		],
 		"*/2 * * * *": [
 			"mail.mail.doctype.outgoing_mail.outgoing_mail.enqueue_get_outgoing_mails_status",
-			"mail.mail.doctype.outgoing_mail.outgoing_mail.enqueue_process_newsletter_stream",
+			"mail.mail.doctype.outgoing_mail.outgoing_mail.enqueue_process_newsletter_queue",
 		],
 	}
 }

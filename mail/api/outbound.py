@@ -1,9 +1,10 @@
 import json
 import frappe
 from email.utils import parseaddr
+from mail.utils import get_rabbitmq_connection
 from mail.utils.user import get_user_mailboxes
-from mail.config.constants import NEWSLETTER_STREAM
-from frappe.utils.background_jobs import get_redis_connection_without_auth
+from mail.config.constants import NEWSLETTER_QUEUE
+from mail.utils.cache import get_user_default_mailbox
 from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
 
 
@@ -103,16 +104,17 @@ def send_newsletter() -> None:
 	validate_batch(mails, mandatory_fields=["from_", "to"])
 
 	user = frappe.session.user
-	rclient = get_redis_connection_without_auth()
+	rmq = get_rabbitmq_connection()
+	rmq.declare_queue(NEWSLETTER_QUEUE)
 	for mail in mails:
 		mail = get_mail_dict(mail)
 
 		if mail["sender"] not in get_user_mailboxes(user, "Outgoing"):
-			from mail.utils.cache import get_user_default_mailbox
-
 			mail["sender"] = get_user_default_mailbox(user)
 
-		rclient.xadd(NEWSLETTER_STREAM, mail)
+		rmq.publish(NEWSLETTER_QUEUE, json.dumps(mail))
+
+	rmq._disconnect()
 
 
 def validate_batch(mails: list[dict], mandatory_fields: list[str]) -> None:

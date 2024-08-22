@@ -1160,63 +1160,37 @@ def get_outgoing_mails_status() -> None:
 		)
 
 
-def process_newsletter_stream(
-	worker_id: int, batch_size: int = 1000, retry_interval: int = 60000
-) -> None:
-	"""Processes the newsletter stream."""
+def process_newsletter_queue(batch_size: int = 1000) -> None:
+	"""Processes the newsletter queue."""
+
+	def callback(channel, method, properties, body) -> tuple[OutgoingMail, int]:
+		"""Callback function for the RabbitMQ consumer."""
+
+		mail = json.loads(body)
+		mail["is_newsletter"] = 1
+		doc = get_outgoing_mail_for_bulk_insert(**mail)
+
+		return doc, method.delivery_tag
 
 	from frappe.model.document import bulk_insert
-	from frappe.utils.background_jobs import get_redis_connection_without_auth
 
-	group = "newsletter_group"
-	consumer = f"consumer-{worker_id}"
 	batch_size = min(batch_size, 1000)
-	rclient = get_redis_connection_without_auth()
-
-	try:
-		rclient.xgroup_create(constants.NEWSLETTER_STREAM, group, "0", mkstream=True)
-	except Exception as e:
-		if str(e) != "BUSYGROUP Consumer Group name already exists":
-			raise
 
 	while True:
 		documents = []
-		entry_ids = []
+		delivery_tags = []
+		rmq = get_rabbitmq_connection()
+		rmq.declare_queue(constants.NEWSLETTER_QUEUE)
 
-		messages = rclient.xreadgroup(
-			group, consumer, {constants.NEWSLETTER_STREAM: ">"}, count=batch_size, block=1000
-		)
+		for x in range(batch_size):
+			result = rmq.basic_get(constants.NEWSLETTER_QUEUE, callback=callback)
 
-		if messages:
-			messages = messages[0][1]
-		else:
-			pending_messages = rclient.xpending_range(
-				constants.NEWSLETTER_STREAM,
-				group,
-				"-",
-				"+",
-				count=batch_size,
-				consumername=consumer,
-			)
+			if not result:
+				break
 
-			if pending_messages:
-				if entry_ids_to_claim := [msg["message_id"] for msg in pending_messages]:
-					messages = rclient.xclaim(
-						constants.NEWSLETTER_STREAM, group, consumer, retry_interval, entry_ids_to_claim
-					)
-
-		if not messages:
-			break
-
-		for entry_id, message in messages:
-			try:
-				mail = {k.decode("utf-8"): v.decode("utf-8") for k, v in message.items()}
-				mail["is_newsletter"] = 1
-				doc = get_outgoing_mail_for_bulk_insert(**mail)
-				documents.append(doc)
-				entry_ids.append(entry_id)
-			except Exception:
-				frappe.log_error(title="Process Newsletter Stream", message=frappe.get_traceback())
+			doc, delivery_tag = result
+			documents.append(doc)
+			delivery_tags.append(delivery_tag)
 
 		if not documents:
 			break
@@ -1225,10 +1199,10 @@ def process_newsletter_stream(
 			bulk_insert("Outgoing Mail", documents)
 			frappe.db.commit()
 
-			rclient.xack(constants.NEWSLETTER_STREAM, group, *entry_ids)
-			rclient.xdel(constants.NEWSLETTER_STREAM, *entry_ids)
+			if delivery_tags:
+				rmq._channel.basic_ack(delivery_tag=delivery_tags[-1], multiple=True)
 		except Exception:
-			frappe.log_error(title="Process Newsletter Stream", message=frappe.get_traceback())
+			frappe.log_error(title="Process Newsletter Queue", message=frappe.get_traceback())
 
 
 def enqueue_transfer_mails() -> None:
@@ -1246,10 +1220,7 @@ def enqueue_get_outgoing_mails_status() -> None:
 	enqueue_job(get_outgoing_mails_status)
 
 
-def enqueue_process_newsletter_stream(number_of_workers: int = 3) -> None:
-	"Called by the scheduler to enqueue the `process_newsletter_stream` job."
+def enqueue_process_newsletter_queue() -> None:
+	"Called by the scheduler to enqueue the `process_newsletter_queue` job."
 
-	for worker_id in range(1, number_of_workers + 1):
-		frappe.enqueue(
-			process_newsletter_stream, queue="long", timeout=3600, worker_id=worker_id
-		)
+	enqueue_job(process_newsletter_queue)
