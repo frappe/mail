@@ -16,9 +16,8 @@ from email.utils import parseaddr, formataddr
 from frappe.utils.caching import request_cache
 from email.mime.multipart import MIMEMultipart
 from frappe.utils import flt, now, time_diff_in_seconds
-from mail.utils.agent import get_agent_rabbitmq_connection
-from mail.utils import parse_iso_datetime, convert_html_to_text
 from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
+from mail.utils import parse_iso_datetime, convert_html_to_text, get_rabbitmq_connection
 
 
 class OutgoingMail(Document):
@@ -39,7 +38,6 @@ class OutgoingMail(Document):
 
 		if self.get("_action") == "submit" or frappe.flags.bulk_insert:
 			self.set_ip_address()
-			self.set_agent()
 			self.set_message_id()
 
 			if not self.raw_message:
@@ -253,14 +251,6 @@ class OutgoingMail(Document):
 		"""Sets the IP Address."""
 
 		self.ip_address = frappe.local.request_ip
-
-	def set_agent(self) -> None:
-		"""Sets the Agent."""
-
-		from mail.utils.agent import get_random_outgoing_mail_agent
-
-		outgoing_agent = self.runtime.mail_domain.outgoing_agent
-		self.agent = outgoing_agent or get_random_outgoing_mail_agent()
 
 	def set_message_id(self) -> None:
 		"""Sets the Message ID."""
@@ -644,7 +634,7 @@ class OutgoingMail(Document):
 
 	@frappe.whitelist()
 	def transfer_now(self) -> None:
-		"""Transfer the mail to the agent with highest priority [3]."""
+		"""Transfer the mail to the RabbitMQ with highest priority [3]."""
 
 		if not frappe.flags.force_transfer:
 			self.load_from_db()
@@ -663,7 +653,7 @@ class OutgoingMail(Document):
 		}
 
 		try:
-			rmq = get_agent_rabbitmq_connection(self.agent)
+			rmq = get_rabbitmq_connection()
 			rmq.declare_queue(constants.OUTGOING_MAIL_QUEUE, max_priority=3)
 			rmq.publish(constants.OUTGOING_MAIL_QUEUE, json.dumps(data), priority=3)
 			rmq._disconnect()
@@ -894,27 +884,6 @@ def get_permission_query_condition(user: str | None = None) -> str:
 def transfer_mails() -> None:
 	"""Called by the scheduler to transfer the mails in batch."""
 
-	frappe.session.user = get_postmaster()
-	agents = frappe.db.get_all(
-		"Mail Agent", filters={"enabled": 1, "outgoing": 1}, pluck="name"
-	)
-
-	for agent in agents:
-		frappe.enqueue(
-			transfer_mails_to_agent,
-			queue="long",
-			is_async=True,
-			now=False,
-			job_name=f"Transfer Mails - {agent}",
-			enqueue_after_commit=False,
-			at_front=False,
-			agent=agent,
-		)
-
-
-def transfer_mails_to_agent(agent: str) -> None:
-	"""Transfers the mails to the agent."""
-
 	def get_mails_to_transfer(limit: int) -> list[dict]:
 		"""Returns the mails to transfer."""
 
@@ -933,7 +902,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 				OM.message,
 				GroupConcat(MR.email).as_("recipients"),
 			)
-			.where((OM.docstatus == 1) & (OM.agent == agent) & (OM.status == "Pending"))
+			.where((OM.docstatus == 1) & (OM.status == "Pending"))
 			.groupby(OM.name, OM.is_newsletter, OM.domain_name, OM.message)
 			.orderby(OM.submitted_at)
 			.limit(limit)
@@ -946,10 +915,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 
 		OM = frappe.qb.DocType("Outgoing Mail")
 		query = frappe.qb.update(OM).where(
-			(OM.docstatus == 1)
-			& (OM.agent == agent)
-			& (OM.status == current_status)
-			& (OM.name.isin(outgoing_mails))
+			(OM.docstatus == 1) & (OM.status == current_status) & (OM.name.isin(outgoing_mails))
 		)
 
 		for field, value in kwargs.items():
@@ -970,6 +936,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 	)
 	root_domain_name = get_root_domain_name()
 
+	frappe.session.user = get_postmaster()
 	while total_failures < max_failures:
 		current_status = "Pending"
 		mails = get_mails_to_transfer(limit=max_batch_size)
@@ -988,7 +955,7 @@ def transfer_mails_to_agent(agent: str) -> None:
 		current_status = "Transferring"
 
 		try:
-			rmq = get_agent_rabbitmq_connection(agent)
+			rmq = get_rabbitmq_connection()
 			rmq.declare_queue(constants.OUTGOING_MAIL_QUEUE, max_priority=3)
 
 			for mail in mails:
@@ -1017,17 +984,16 @@ def transfer_mails_to_agent(agent: str) -> None:
 					transferred_after = TIMESTAMPDIFF(SECOND, `submitted_at`, `transferred_at`)
 				WHERE
 					docstatus = 1 AND
-					agent = %s AND
 					status = %s AND
 					name IN %s
 				""",
-				("Transferred", now(), agent, current_status, tuple(outgoing_mails)),
+				("Transferred", now(), current_status, tuple(outgoing_mails)),
 			)
 			current_status = "Transferred"
 		except Exception:
 			total_failures += 1
 			error_log = frappe.get_traceback(with_context=False)
-			frappe.log_error(title=f"Transfer Mails - {agent}", message=error_log)
+			frappe.log_error(title="Transfer Mails", message=error_log)
 			update_outgoing_mails(
 				outgoing_mails, current_status=current_status, status="Failed", error_log=error_log
 			)
@@ -1041,40 +1007,21 @@ def transfer_mails_to_agent(agent: str) -> None:
 def get_outgoing_mails_status() -> None:
 	"""Called by the scheduler to get the outgoing mails status."""
 
-	frappe.session.user = get_postmaster()
-	MA = frappe.qb.DocType("Mail Agent")
-	OM = frappe.qb.DocType("Outgoing Mail")
-	agents = (
-		frappe.qb.from_(MA)
-		.left_join(OM)
-		.on(OM.agent == MA.name)
-		.select(MA.name)
-		.distinct()
-		.where(
-			(MA.enabled == 1)
-			& (MA.outgoing == 1)
-			& (OM.docstatus == 1)
-			& (OM.status.isin(["Transferred", "Queued", "Deferred"]))
-		)
-	).run(pluck="name")
+	def has_unsynced_outgoing_mails() -> bool:
+		"""Returns True if there are unsynced outgoing mails."""
 
-	for agent in agents:
-		frappe.enqueue(
-			get_outgoing_mails_status_from_agent,
-			queue="long",
-			is_async=True,
-			now=False,
-			job_name=f"Get Outgoing Mails Status - {agent}",
-			enqueue_after_commit=False,
-			at_front=False,
-			agent=agent,
-		)
+		OM = frappe.qb.DocType("Outgoing Mail")
+		mails = (
+			frappe.qb.from_(OM)
+			.select(OM.name)
+			.distinct()
+			.where((OM.docstatus == 1) & (OM.status.isin(["Transferred", "Queued", "Deferred"])))
+			.limit(1)
+		).run(pluck="name")
 
+		return bool(mails)
 
-def get_outgoing_mails_status_from_agent(agent: str) -> None:
-	"""Gets the outgoing mails status from the agent."""
-
-	def _queue_ok(data: dict) -> None:
+	def queue_ok(data: dict) -> None:
 		"""Updates Queue ID in Outgoing Mail."""
 
 		queue_id = data["queue_id"]
@@ -1085,7 +1032,7 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 			{"status": "Queued", "queue_id": queue_id},
 		)
 
-	def _undelivered(data: dict) -> None:
+	def undelivered(data: dict) -> None:
 		"""Updates Outgoing Mail status to Deferred or Bounced."""
 
 		hook = data["hook"]
@@ -1128,7 +1075,7 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 				title="Error Updating Outgoing Mail Status", message=frappe.get_traceback()
 			)
 
-	def _delivered(data: dict) -> None:
+	def delivered(data: dict) -> None:
 		"""Updates Outgoing Mail status to Sent or Partially Sent."""
 
 		retries = data["retries"]
@@ -1184,17 +1131,22 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 
 		hook = data["hook"]
 		if hook == "queue_ok":
-			_queue_ok(data)
+			queue_ok(data)
 		elif hook in ["bounce", "deferred"]:
-			_undelivered(data)
+			undelivered(data)
 		elif hook == "delivered":
-			_delivered(data)
+			delivered(data)
 
 		channel.basic_ack(delivery_tag=method.delivery_tag)
 		return True
 
+	if not has_unsynced_outgoing_mails():
+		return
+
+	frappe.session.user = get_postmaster()
+
 	try:
-		rmq = get_agent_rabbitmq_connection(agent)
+		rmq = get_rabbitmq_connection()
 		rmq.declare_queue(constants.OUTGOING_MAIL_STATUS_QUEUE, max_priority=3)
 
 		while True:
@@ -1202,7 +1154,7 @@ def get_outgoing_mails_status_from_agent(agent: str) -> None:
 				break
 	except Exception:
 		frappe.log_error(
-			title=f"Get Outgoing Mails Status - {agent}",
+			title="Get Outgoing Mails Status",
 			message=frappe.get_traceback(with_context=False),
 		)
 
