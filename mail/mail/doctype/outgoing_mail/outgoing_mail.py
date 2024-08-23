@@ -1024,7 +1024,7 @@ def get_outgoing_mails_status() -> None:
 
 		return bool(mails)
 
-	def queue_ok(data: dict) -> None:
+	def queue_ok(agent: str, data: dict) -> None:
 		"""Updates Queue ID in Outgoing Mail."""
 
 		queue_id = data["queue_id"]
@@ -1032,7 +1032,7 @@ def get_outgoing_mails_status() -> None:
 		frappe.db.set_value(
 			"Outgoing Mail",
 			outgoing_mail,
-			{"status": "Queued", "queue_id": queue_id},
+			{"status": "Queued", "agent": agent, "queue_id": queue_id},
 		)
 
 	def undelivered(data: dict) -> None:
@@ -1152,7 +1152,7 @@ def get_outgoing_mails_status() -> None:
 
 					hook = data["hook"]
 					if hook == "queue_ok":
-						queue_ok(data)
+						queue_ok(properties.app_id, data)
 					elif hook in ["bounce", "deferred"]:
 						undelivered(data)
 					elif hook == "delivered":
