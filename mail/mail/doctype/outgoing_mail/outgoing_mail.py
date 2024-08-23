@@ -1127,22 +1127,6 @@ def get_outgoing_mails_status() -> None:
 				title="Error Updating Outgoing Mail Status", message=frappe.get_traceback()
 			)
 
-	def callback(channel, method, properties, body) -> bool:
-		"""Callback function for the RabbitMQ consumer."""
-
-		data = json.loads(body)
-
-		hook = data["hook"]
-		if hook == "queue_ok":
-			queue_ok(data)
-		elif hook in ["bounce", "deferred"]:
-			undelivered(data)
-		elif hook == "delivered":
-			delivered(data)
-
-		channel.basic_ack(delivery_tag=method.delivery_tag)
-		return True
-
 	if not has_unsynced_outgoing_mails():
 		return
 
@@ -1159,7 +1143,23 @@ def get_outgoing_mails_status() -> None:
 		rmq.declare_queue(constants.OUTGOING_MAIL_STATUS_QUEUE, max_priority=3)
 
 		while True:
-			if not rmq.basic_get(constants.OUTGOING_MAIL_STATUS_QUEUE, callback=callback):
+			result = rmq.basic_get(constants.OUTGOING_MAIL_STATUS_QUEUE)
+
+			if result:
+				method, properties, body = result
+				if body:
+					data = json.loads(body)
+
+					hook = data["hook"]
+					if hook == "queue_ok":
+						queue_ok(data)
+					elif hook in ["bounce", "deferred"]:
+						undelivered(data)
+					elif hook == "delivered":
+						delivered(data)
+
+				rmq._channel.basic_ack(delivery_tag=method.delivery_tag)
+			else:
 				break
 	except Exception:
 		frappe.log_error(
@@ -1170,15 +1170,6 @@ def get_outgoing_mails_status() -> None:
 
 def process_newsletter_queue(batch_size: int = 1000) -> None:
 	"""Processes the newsletter queue."""
-
-	def callback(channel, method, properties, body) -> tuple[OutgoingMail, int]:
-		"""Callback function for the RabbitMQ consumer."""
-
-		mail = json.loads(body)
-		mail["is_newsletter"] = 1
-		doc = get_outgoing_mail_for_bulk_insert(**mail)
-
-		return doc, method.delivery_tag
 
 	from frappe.model.document import bulk_insert
 
@@ -1192,32 +1183,45 @@ def process_newsletter_queue(batch_size: int = 1000) -> None:
 		delivery_tags = []
 		rmq = get_rabbitmq_connection()
 
-		if prefetch_count:
-			rmq._channel.basic_qos(prefetch_count=prefetch_count)
+		try:
+			if prefetch_count:
+				rmq._channel.basic_qos(prefetch_count=prefetch_count)
 
-		rmq.declare_queue(constants.NEWSLETTER_QUEUE)
+			rmq.declare_queue(constants.NEWSLETTER_QUEUE)
 
-		for x in range(batch_size):
-			result = rmq.basic_get(constants.NEWSLETTER_QUEUE, callback=callback)
+			for x in range(batch_size):
+				result = rmq.basic_get(constants.NEWSLETTER_QUEUE)
 
-			if not result:
+				if result:
+					method, properties, body = result
+					if body:
+						mail = json.loads(body)
+						mail["is_newsletter"] = 1
+						doc = get_outgoing_mail_for_bulk_insert(**mail)
+						documents.append(doc)
+						delivery_tags.append(method.delivery_tag)
+				else:
+					break
+
+			if not documents:
 				break
 
-			doc, delivery_tag = result
-			documents.append(doc)
-			delivery_tags.append(delivery_tag)
+			try:
+				bulk_insert("Outgoing Mail", documents)
+				frappe.db.commit()
 
-		if not documents:
-			break
+				if delivery_tags:
+					rmq._channel.basic_ack(delivery_tag=delivery_tags[-1], multiple=True)
+			except Exception:
+				if delivery_tags:
+					rmq._channel.basic_nack(
+						delivery_tag=delivery_tags[-1], multiple=True, requeue=True
+					)
 
-		try:
-			bulk_insert("Outgoing Mail", documents)
-			frappe.db.commit()
+				frappe.log_error(title="Process Newsletter Queue", message=frappe.get_traceback())
 
-			if delivery_tags:
-				rmq._channel.basic_ack(delivery_tag=delivery_tags[-1], multiple=True)
-		except Exception:
-			frappe.log_error(title="Process Newsletter Queue", message=frappe.get_traceback())
+		finally:
+			rmq._disconnect()
 
 
 def enqueue_transfer_mails() -> None:

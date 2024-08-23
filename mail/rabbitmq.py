@@ -79,25 +79,33 @@ class RabbitMQ:
 		queue: str,
 		callback: callable,
 		auto_ack: bool = False,
-		prefetch_count: int = 1,
+		prefetch_count: int = 0,
 	) -> NoReturn:
 		"""Consumes messages from the queue with the given callback."""
 
-		self._channel.basic_qos(prefetch_count=prefetch_count)
+		if prefetch_count > 0:
+			self._channel.basic_qos(prefetch_count=prefetch_count)
+
 		self._channel.basic_consume(
 			queue=queue, on_message_callback=callback, auto_ack=auto_ack
 		)
 		self._channel.start_consuming()
 
 	def basic_get(
-		self, queue: str, callback: callable, auto_ack: bool = False
-	) -> Any | None:
+		self,
+		queue: str,
+		auto_ack: bool = False,
+		prefetch_count: int = 0,
+	) -> tuple[Any, int, bytes] | None:
 		"""Gets a message from the queue and calls the callback function."""
+
+		if prefetch_count > 0:
+			self._channel.basic_qos(prefetch_count=prefetch_count)
 
 		method, properties, body = self._channel.basic_get(queue=queue, auto_ack=auto_ack)
 
 		if method:
-			return callback(self._channel, method, properties, body)
+			return method, properties, body
 
 	def _disconnect(self) -> None:
 		"""Disconnects from the RabbitMQ server."""

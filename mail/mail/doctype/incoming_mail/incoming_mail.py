@@ -307,12 +307,10 @@ def create_incoming_mail(
 def get_incoming_mails() -> None:
 	"""Gets incoming mails from the RabbitMQ."""
 
-	def callback(channel, method, properties, body) -> bool:
-		"""Callback function for the RabbitMQ consumer."""
+	def process_incoming_mail(agent: str, message: str) -> None:
+		"""Processes the incoming mail message."""
 
 		is_accepted = False
-		agent = properties.app_id
-		message = body.decode("utf-8")
 		parsed_message = EmailParser.get_parsed_message(message)
 		receiver = parsed_message.get("Delivered-To")
 		display_name, sender = parseaddr(parsed_message.get("From"))
@@ -359,9 +357,8 @@ def get_incoming_mails() -> None:
 							title="Send Rejection Notification",
 							message=frappe.get_traceback(with_context=False),
 						)
-
-		channel.basic_ack(delivery_tag=method.delivery_tag)
-		return True
+		else:
+			frappe.log_error(title="Invalid Email Address", message=message)
 
 	from mail.config.constants import INCOMING_MAIL_QUEUE
 
@@ -379,13 +376,25 @@ def get_incoming_mails() -> None:
 		rmq.declare_queue(INCOMING_MAIL_QUEUE)
 
 		while True:
-			if not rmq.basic_get(INCOMING_MAIL_QUEUE, callback=callback):
+			result = rmq.basic_get(INCOMING_MAIL_QUEUE)
+
+			if result:
+				method, properties, body = result
+				if body:
+					message = body.decode("utf-8")
+					process_incoming_mail(properties.app_id, message)
+
+				rmq._channel.basic_ack(delivery_tag=method.delivery_tag)
+			else:
 				break
 	except Exception:
 		frappe.log_error(
 			title="Get Incoming Mails",
 			message=frappe.get_traceback(with_context=False),
 		)
+	finally:
+		if rmq:
+			rmq._disconnect()
 
 
 @frappe.whitelist()
