@@ -113,7 +113,9 @@ def convert_html_to_text(html: str) -> str:
 	return text
 
 
-def get_in_reply_to(message_id: str) -> tuple[str, str] | tuple[None, None]:
+def get_in_reply_to_mail(
+	message_id: str | None = None,
+) -> tuple[str, str] | tuple[None, None]:
 	"""Returns mail type and name of the mail to which the given message is a reply to."""
 
 	if message_id:

@@ -8,11 +8,16 @@ from typing import TYPE_CHECKING
 from email.utils import parseaddr
 from frappe.model.document import Document
 from mail.utils.cache import get_postmaster
-from mail.utils.email_parser import EmailParser
 from frappe.utils import now, time_diff_in_seconds, validate_email_address
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
-from mail.utils import enqueue_job, parse_iso_datetime, get_rabbitmq_connection
+from mail.utils.email_parser import EmailParser, extract_ip_and_host, extract_spam_score
+from mail.utils import (
+	enqueue_job,
+	parse_iso_datetime,
+	get_in_reply_to_mail,
+	get_rabbitmq_connection,
+)
 from mail.utils.user import (
 	is_postmaster,
 	is_mailbox_owner,
@@ -67,13 +72,16 @@ class IncomingMail(Document):
 			self.domain_name = self.receiver.split("@")[1]
 
 		self.subject = parser.get_subject()
-		self.reply_to = parser.get_header("Reply-To")
-		self.message_id = parser.get_header("Message-ID")
+		self.reply_to = parser.get_reply_to()
+		self.message_id = parser.get_message_id()
 		self.created_at = parser.get_date()
 		self.message_size = parser.get_size()
 		self.from_ip, self.from_host = extract_ip_and_host(parser.get_header("Received"))
 		self.spam_score = extract_spam_score(parser.get_header("X-Spam-Status"))
 		self.received_at = parse_iso_datetime(parser.get_header("Received-At"))
+		self.reply_to_mail_type, self.reply_to_mail_name = get_in_reply_to_mail(
+			parser.get_in_reply_to()
+		)
 
 		parser.save_attachments(self.doctype, self.name, is_private=True)
 		self.body_html, self.body_plain = parser.get_body()
@@ -83,15 +91,6 @@ class IncomingMail(Document):
 
 		for key, value in parser.get_authentication_results().items():
 			setattr(self, key, value)
-
-		if in_reply_to := parser.get_header("In-Reply-To"):
-			for reply_to_mail_type in ["Outgoing Mail", "Incoming Mail"]:
-				if reply_to_mail_name := frappe.get_cached_value(
-					reply_to_mail_type, in_reply_to, "name"
-				):
-					self.reply_to_mail_type = reply_to_mail_type
-					self.reply_to_mail_name = reply_to_mail_name
-					break
 
 		self.status = "Rejected" if self.is_rejected else "Delivered"
 
@@ -177,41 +176,6 @@ def get_permission_query_condition(user: str | None = None) -> str:
 		return f"(`tabIncoming Mail`.`receiver` IN ({mailboxes})) AND (`tabIncoming Mail`.`docstatus` = 1)"
 	else:
 		return "1=0"
-
-
-def extract_ip_and_host(header: str | None = None) -> tuple[str | None, str | None]:
-	"""Extracts the IP and Host from the given `Received` header."""
-
-	if not header:
-		return None, None
-
-	import re
-
-	ip_pattern = re.compile(r"\[(?P<ip>[\d\.]+|[a-fA-F0-9:]+)")
-	host_pattern = re.compile(r"from\s+(?P<host>[^\s]+)")
-
-	ip_match = ip_pattern.search(header)
-	ip = ip_match.group("ip") if ip_match else None
-
-	host_match = host_pattern.search(header)
-	host = host_match.group("host") if host_match else None
-
-	return ip, host
-
-
-def extract_spam_score(header: str | None = None) -> float:
-	"""Extracts the spam score from the given `X-Spam-Status` header."""
-
-	if not header:
-		return 0.0
-
-	import re
-
-	spam_score_pattern = re.compile(r"score=(-?\d+\.?\d*)")
-	if match := spam_score_pattern.search(header):
-		return float(match.group(1))
-
-	return 0.0
 
 
 def is_active_domain(domain_name: str) -> bool:

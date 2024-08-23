@@ -18,6 +18,18 @@ class EmailParser:
 
 		return message_from_string(message)
 
+	def get_message_id(self) -> str | None:
+		"""Returns the message ID of the email."""
+
+		if message_id := self.message.get("Message-ID"):
+			return remove_whitespace_characters(message_id)
+
+	def get_in_reply_to(self) -> str | None:
+		"""Returns the in-reply-to message ID of the email."""
+
+		if in_reply_to := self.message.get("In-Reply-To"):
+			return remove_whitespace_characters(in_reply_to)
+
 	def get_subject(self) -> str | None:
 		"""Returns the decoded subject of the email."""
 
@@ -33,6 +45,12 @@ class EmailParser:
 		"""Returns the display name and email of the sender."""
 
 		return parseaddr(self.message["From"])
+
+	def get_reply_to(self) -> str:
+		"""Returns the reply-to email(s) of the email."""
+
+		if reply_to := self.message.get("Reply-To"):
+			return remove_whitespace_characters(reply_to)
 
 	def get_header(self, header: str) -> str | None:
 		"""Returns the value of the header."""
@@ -180,4 +198,41 @@ class EmailParser:
 
 
 def remove_whitespace_characters(text: str) -> str:
-	return text.replace("\t", "").replace("\r", "").replace("\n", "")
+	"""Removes whitespace characters from the text."""
+
+	return text.replace("\t", "").replace("\r", "").replace("\n", "").strip()
+
+
+def extract_ip_and_host(header: str | None = None) -> tuple[str | None, str | None]:
+	"""Extracts the IP and Host from the given `Received` header."""
+
+	if not header:
+		return None, None
+
+	import re
+
+	ip_pattern = re.compile(r"\[(?P<ip>[\d\.]+|[a-fA-F0-9:]+)")
+	host_pattern = re.compile(r"from\s+(?P<host>[^\s]+)")
+
+	ip_match = ip_pattern.search(header)
+	ip = ip_match.group("ip") if ip_match else None
+
+	host_match = host_pattern.search(header)
+	host = host_match.group("host") if host_match else None
+
+	return ip, host
+
+
+def extract_spam_score(header: str | None = None) -> float:
+	"""Extracts the spam score from the given `X-Spam-Status` header."""
+
+	if not header:
+		return 0.0
+
+	import re
+
+	spam_score_pattern = re.compile(r"score=(-?\d+\.?\d*)")
+	if match := spam_score_pattern.search(header):
+		return float(match.group(1))
+
+	return 0.0

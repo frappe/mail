@@ -284,7 +284,7 @@ class OutgoingMail(Document):
 			"""Returns the MIME message."""
 
 			if self.raw_message:
-				from mail.utils import get_in_reply_to
+				from mail.utils import get_in_reply_to_mail
 				from mail.utils.email_parser import EmailParser
 
 				parser = EmailParser(self.raw_message)
@@ -304,10 +304,10 @@ class OutgoingMail(Document):
 				self.body_html = self.body_plain = self.raw_message = None
 				parser.update_header("From", formataddr((self.display_name, self.sender)))
 				self.subject = parser.get_subject()
-				self.reply_to = parser.get_header("Reply-To")
-				self.message_id = parser.get_header("Message-ID") or self.message_id
-				self.reply_to_mail_type, self.reply_to_mail_name = get_in_reply_to(
-					parser.get_header("In-Reply-To")
+				self.reply_to = parser.get_reply_to()
+				self.message_id = parser.get_message_id() or self.message_id
+				self.reply_to_mail_type, self.reply_to_mail_name = get_in_reply_to_mail(
+					parser.get_in_reply_to()
 				)
 				parser.save_attachments(self.doctype, self.name, is_private=True)
 				self.body_html, self.body_plain = parser.get_body()
