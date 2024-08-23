@@ -1146,8 +1146,16 @@ def get_outgoing_mails_status() -> None:
 	if not has_unsynced_outgoing_mails():
 		return
 
+	prefetch_count = frappe.db.get_single_value(
+		"Mail Settings", "status_prefetch_count", cache=True
+	)
+
 	try:
 		rmq = get_rabbitmq_connection()
+
+		if prefetch_count:
+			rmq._channel.basic_qos(prefetch_count=prefetch_count)
+
 		rmq.declare_queue(constants.OUTGOING_MAIL_STATUS_QUEUE, max_priority=3)
 
 		while True:
@@ -1175,11 +1183,18 @@ def process_newsletter_queue(batch_size: int = 1000) -> None:
 	from frappe.model.document import bulk_insert
 
 	batch_size = min(batch_size, 1000)
+	prefetch_count = frappe.db.get_single_value(
+		"Mail Settings", "newsletter_prefetch_count", cache=True
+	)
 
 	while True:
 		documents = []
 		delivery_tags = []
 		rmq = get_rabbitmq_connection()
+
+		if prefetch_count:
+			rmq._channel.basic_qos(prefetch_count=prefetch_count)
+
 		rmq.declare_queue(constants.NEWSLETTER_QUEUE)
 
 		for x in range(batch_size):
