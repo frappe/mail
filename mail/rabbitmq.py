@@ -89,12 +89,8 @@ class RabbitMQ(pika.BlockingConnection):
 		self,
 		queue: str,
 		auto_ack: bool = False,
-		prefetch_count: int = 0,
 	) -> tuple[Any, int, bytes] | None:
 		"""Gets a message from the queue and returns it."""
-
-		if prefetch_count > 0:
-			self._channel.basic_qos(prefetch_count=prefetch_count)
 
 		method, properties, body = self._channel.basic_get(queue=queue, auto_ack=auto_ack)
 

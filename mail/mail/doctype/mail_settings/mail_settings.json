@@ -24,11 +24,6 @@
   "column_break_yebz",
   "rmq_username",
   "rmq_password",
-  "prefetch_section",
-  "newsletter_prefetch_count",
-  "status_prefetch_count",
-  "column_break_xwtk",
-  "mail_prefetch_count",
   "outgoing_tab",
   "max_recipients",
   "max_headers",
@@ -254,42 +249,12 @@
    "fieldtype": "Data",
    "label": "Virtual Host",
    "reqd": 1
-  },
-  {
-   "fieldname": "column_break_xwtk",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "prefetch_section",
-   "fieldtype": "Section Break",
-   "label": "Prefetch"
-  },
-  {
-   "default": "1000",
-   "fieldname": "newsletter_prefetch_count",
-   "fieldtype": "Int",
-   "label": "Newsletter",
-   "non_negative": 1
-  },
-  {
-   "default": "500",
-   "fieldname": "status_prefetch_count",
-   "fieldtype": "Int",
-   "label": "Status",
-   "non_negative": 1
-  },
-  {
-   "default": "100",
-   "fieldname": "mail_prefetch_count",
-   "fieldtype": "Int",
-   "label": "Mail",
-   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-23 10:01:42.220821",
+ "modified": "2024-08-24 09:25:40.824221",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

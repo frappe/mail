@@ -327,16 +327,8 @@ def get_incoming_mails() -> None:
 	from mail.config.constants import INCOMING_MAIL_QUEUE
 
 	frappe.session.user = get_postmaster()
-	prefetch_count = frappe.db.get_single_value(
-		"Mail Settings", "mail_prefetch_count", cache=True
-	)
-
 	try:
 		rmq = get_rabbitmq_connection()
-
-		if prefetch_count:
-			rmq._channel.basic_qos(prefetch_count=prefetch_count)
-
 		rmq.declare_queue(INCOMING_MAIL_QUEUE)
 
 		while True:
