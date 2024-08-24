@@ -102,7 +102,7 @@ class RabbitMQ(pika.BlockingConnection):
 	def _disconnect(self) -> None:
 		"""Disconnects from the RabbitMQ server."""
 
-		if self.is_open:
+		if hasattr(self, "is_open") and self.is_open:
 			self.close()
 
 	def __del__(self) -> None:
