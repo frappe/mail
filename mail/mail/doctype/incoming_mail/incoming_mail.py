@@ -151,6 +151,17 @@ def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":
 	return target_doc
 
 
+@frappe.whitelist()
+def delete_incoming_mails(mailbox: str) -> None:
+	"""Deletes the incoming mails for the given mailbox."""
+
+	if frappe.session.user != "Administrator":
+		frappe.throw(_("Only Administrator can delete Incoming Mails."))
+
+	if mailbox:
+		frappe.db.delete("Incoming Mail", {"receiver": mailbox})
+
+
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Incoming Mail":
 		return False

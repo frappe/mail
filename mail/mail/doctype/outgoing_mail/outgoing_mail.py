@@ -872,6 +872,17 @@ def get_outgoing_mail_for_bulk_insert(**kwargs) -> "OutgoingMail":
 	return doc
 
 
+@frappe.whitelist()
+def delete_outgoing_mails(mailbox: str) -> None:
+	"""Deletes the outgoing mails for the given mailbox."""
+
+	if frappe.session.user != "Administrator":
+		frappe.throw(_("Only Administrator can delete Outgoing Mails."))
+
+	if mailbox:
+		frappe.db.delete("Outgoing Mail", {"sender": mailbox})
+
+
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Outgoing Mail":
 		return False
