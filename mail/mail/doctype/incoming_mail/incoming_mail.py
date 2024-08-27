@@ -79,8 +79,9 @@ class IncomingMail(Document):
 		self.from_ip, self.from_host = extract_ip_and_host(parser.get_header("Received"))
 		self.spam_score = extract_spam_score(parser.get_header("X-Spam-Status"))
 		self.received_at = parse_iso_datetime(parser.get_header("Received-At"))
+		self.in_reply_to = parser.get_in_reply_to()
 		self.in_reply_to_mail_type, self.in_reply_to_mail_name = get_in_reply_to_mail(
-			parser.get_in_reply_to()
+			self.in_reply_to
 		)
 
 		parser.save_attachments(self.doctype, self.name, is_private=True)

@@ -137,6 +137,18 @@ class OutgoingMail(Document):
 				)
 			)
 
+		from mail.utils import get_in_reply_to
+
+		self.in_reply_to = get_in_reply_to(
+			self.in_reply_to_mail_type, self.in_reply_to_mail_name
+		)
+		if not self.in_reply_to:
+			frappe.throw(
+				_("In Reply To Mail {0} - {1} does not exist.").format(
+					frappe.bold(self.in_reply_to_mail_type), frappe.bold(self.in_reply_to_mail_name)
+				)
+			)
+
 	def validate_recipients(self) -> None:
 		"""Validates the recipients."""
 
@@ -310,8 +322,9 @@ class OutgoingMail(Document):
 				self.subject = parser.get_subject()
 				self.reply_to = parser.get_reply_to()
 				self.message_id = parser.get_message_id() or self.message_id
+				self.in_reply_to = parser.get_in_reply_to()
 				self.in_reply_to_mail_type, self.in_reply_to_mail_name = get_in_reply_to_mail(
-					parser.get_in_reply_to()
+					self.in_reply_to
 				)
 				parser.save_attachments(self.doctype, self.name, is_private=True)
 				self.body_html, self.body_plain = parser.get_body()
@@ -325,11 +338,8 @@ class OutgoingMail(Document):
 			if self.reply_to:
 				message["Reply-To"] = self.reply_to
 
-			if self.in_reply_to_mail_name:
-				if in_reply_to := frappe.get_cached_value(
-					self.in_reply_to_mail_type, self.in_reply_to_mail_name, "message_id"
-				):
-					message["In-Reply-To"] = in_reply_to
+			if self.in_reply_to:
+				message["In-Reply-To"] = self.in_reply_to
 
 			message["From"] = formataddr((self.display_name, self.sender))
 

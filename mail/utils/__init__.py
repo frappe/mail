@@ -128,6 +128,20 @@ def get_in_reply_to_mail(
 	return None, None
 
 
+def get_in_reply_to(
+	in_reply_to_mail_type: str | None = None,
+	in_reply_to_mail_name: str | None = None,
+) -> str | None:
+	"""Returns message_id of the mail to which the given mail is a reply to."""
+
+	if in_reply_to_mail_type and in_reply_to_mail_name:
+		return frappe.get_cached_value(
+			in_reply_to_mail_type, in_reply_to_mail_name, "message_id"
+		)
+
+	return None
+
+
 def enqueue_job(method: str | Callable, **kwargs) -> None:
 	"""Enqueues a background job."""
 
