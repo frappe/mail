@@ -79,7 +79,7 @@ class IncomingMail(Document):
 		self.from_ip, self.from_host = extract_ip_and_host(parser.get_header("Received"))
 		self.spam_score = extract_spam_score(parser.get_header("X-Spam-Status"))
 		self.received_at = parse_iso_datetime(parser.get_header("Received-At"))
-		self.reply_to_mail_type, self.reply_to_mail_name = get_in_reply_to_mail(
+		self.in_reply_to_mail_type, self.in_reply_to_mail_name = get_in_reply_to_mail(
 			parser.get_in_reply_to()
 		)
 
@@ -114,12 +114,12 @@ class IncomingMail(Document):
 def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":
 	"""Creates an Outgoing Mail as a reply to the Incoming Mail."""
 
-	reply_to_mail_type = "Incoming Mail"
-	source_doc = frappe.get_doc(reply_to_mail_type, source_name)
+	in_reply_to_mail_type = "Incoming Mail"
+	source_doc = frappe.get_doc(in_reply_to_mail_type, source_name)
 	target_doc = target_doc or frappe.new_doc("Outgoing Mail")
 
-	target_doc.reply_to_mail_type = source_doc.doctype
-	target_doc.reply_to_mail_name = source_name
+	target_doc.in_reply_to_mail_type = source_doc.doctype
+	target_doc.in_reply_to_mail_name = source_name
 	target_doc.subject = f"Re: {source_doc.subject}"
 
 	email = source_doc.sender

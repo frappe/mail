@@ -35,7 +35,7 @@ class OutgoingMail(Document):
 		self.load_runtime()
 		self.validate_domain()
 		self.validate_sender()
-		self.validate_reply_to_mail()
+		self.validate_in_reply_to()
 		self.validate_recipients()
 		self.validate_custom_headers()
 		self.load_attachments()
@@ -120,18 +120,22 @@ class OutgoingMail(Document):
 
 		validate_mailbox_for_outgoing(self.sender)
 
-	def validate_reply_to_mail(self) -> None:
-		"""Validates the Reply To Mail."""
+	def validate_in_reply_to(self) -> None:
+		"""Validates the In Reply To."""
 
-		if self.reply_to_mail_name:
-			if not self.reply_to_mail_type:
-				frappe.throw(_("Reply To Mail Type is required."))
-			elif self.reply_to_mail_type not in ["Incoming Mail", "Outgoing Mail"]:
-				frappe.throw(
-					_("{0} must be either Incoming Mail or Outgoing Mail.").format(
-						frappe.bold("Reply To Mail Type")
-					)
+		if not self.in_reply_to_mail_type and not self.in_reply_to_mail_name:
+			return
+
+		if not self.in_reply_to_mail_type:
+			frappe.throw(_("In Reply To Mail Type is required."))
+		elif not self.in_reply_to_mail_name:
+			frappe.throw(_("In Reply To Mail Name is required."))
+		elif self.in_reply_to_mail_type not in ["Incoming Mail", "Outgoing Mail"]:
+			frappe.throw(
+				_("{0} must be either Incoming Mail or Outgoing Mail.").format(
+					frappe.bold("In Reply To Mail Type")
 				)
+			)
 
 	def validate_recipients(self) -> None:
 		"""Validates the recipients."""
@@ -306,7 +310,7 @@ class OutgoingMail(Document):
 				self.subject = parser.get_subject()
 				self.reply_to = parser.get_reply_to()
 				self.message_id = parser.get_message_id() or self.message_id
-				self.reply_to_mail_type, self.reply_to_mail_name = get_in_reply_to_mail(
+				self.in_reply_to_mail_type, self.in_reply_to_mail_name = get_in_reply_to_mail(
 					parser.get_in_reply_to()
 				)
 				parser.save_attachments(self.doctype, self.name, is_private=True)
@@ -321,9 +325,9 @@ class OutgoingMail(Document):
 			if self.reply_to:
 				message["Reply-To"] = self.reply_to
 
-			if self.reply_to_mail_name:
+			if self.in_reply_to_mail_name:
 				if in_reply_to := frappe.get_cached_value(
-					self.reply_to_mail_type, self.reply_to_mail_name, "message_id"
+					self.in_reply_to_mail_type, self.in_reply_to_mail_name, "message_id"
 				):
 					message["In-Reply-To"] = in_reply_to
 
@@ -739,12 +743,12 @@ def get_default_sender() -> str | None:
 def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":
 	"""Creates an Outgoing Mail as a reply to the given Outgoing Mail."""
 
-	reply_to_mail_type = "Outgoing Mail"
-	source_doc = frappe.get_doc(reply_to_mail_type, source_name)
+	in_reply_to_mail_type = "Outgoing Mail"
+	source_doc = frappe.get_doc(in_reply_to_mail_type, source_name)
 	target_doc = target_doc or frappe.new_doc("Outgoing Mail")
 
-	target_doc.reply_to_mail_type = source_doc.doctype
-	target_doc.reply_to_mail_name = source_name
+	target_doc.in_reply_to_mail_type = source_doc.doctype
+	target_doc.in_reply_to_mail_name = source_name
 	target_doc.sender = source_doc.sender
 	target_doc.subject = f"Re: {source_doc.subject}"
 

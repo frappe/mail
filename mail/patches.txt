@@ -1,12 +1,4 @@
 [pre_model_sync]
 
 [post_model_sync]
-mail.patches.v1_0.rename_field_opened_count
-mail.patches.v1_0.rename_field_recipient
-mail.patches.v1_0.rename_field_original_message
-mail.patches.v1_0.rename_field_delivered_at
-mail.patches.v1_0.rename_field_verified
-mail.patches.v1_0.rename_fields_spf_dkim_dmarc
-mail.patches.v1_0.rename_fields_subdomain_root_domain
-mail.patches.v1_0.rename_field_newsletter
-mail.patches.v1_0.rename_field_default
+mail.patches.v1_0.rename_field_reply_to_mail

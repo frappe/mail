@@ -9,8 +9,8 @@
   "display_name",
   "reply_to",
   "column_break_9ywf",
-  "reply_to_mail_type",
-  "reply_to_mail_name",
+  "in_reply_to_mail_type",
+  "in_reply_to_mail_name",
   "subject",
   "section_break_baaa",
   "recipients",
@@ -322,17 +322,6 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.docstatus == 0",
-   "fieldname": "reply_to_mail_type",
-   "fieldtype": "Select",
-   "hidden": 1,
-   "label": "Reply To Mail Type",
-   "no_copy": 1,
-   "options": "\nIncoming Mail\nOutgoing Mail",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "depends_on": "eval: doc.sender",
    "fetch_from": "sender.reply_to",
    "fetch_if_empty": 1,
@@ -383,15 +372,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "reply_to_mail_name",
-   "fieldtype": "Dynamic Link",
-   "label": "In Reply To",
-   "no_copy": 1,
-   "options": "reply_to_mail_type",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "depends_on": "eval: doc.sender",
    "fetch_from": "sender.display_name",
    "fetch_if_empty": 1,
@@ -416,12 +396,32 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "depends_on": "eval: doc.docstatus == 0",
+   "fieldname": "in_reply_to_mail_type",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "In Reply To Mail Type",
+   "no_copy": 1,
+   "options": "\nIncoming Mail\nOutgoing Mail",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "in_reply_to_mail_name",
+   "fieldtype": "Dynamic Link",
+   "label": "In Reply To Mail Name",
+   "no_copy": 1,
+   "options": "in_reply_to_mail_type",
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-22 10:00:44.973789",
+ "modified": "2024-08-27 08:11:34.819656",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

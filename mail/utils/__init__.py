@@ -119,11 +119,11 @@ def get_in_reply_to_mail(
 	"""Returns mail type and name of the mail to which the given message is a reply to."""
 
 	if message_id:
-		for reply_to_mail_type in ["Outgoing Mail", "Incoming Mail"]:
-			if reply_to_mail_name := frappe.db.get_value(
-				reply_to_mail_type, {"message_id": message_id}, "name"
+		for in_reply_to_mail_type in ["Outgoing Mail", "Incoming Mail"]:
+			if in_reply_to_mail_name := frappe.db.get_value(
+				in_reply_to_mail_type, {"message_id": message_id}, "name"
 			):
-				return reply_to_mail_type, reply_to_mail_name
+				return in_reply_to_mail_type, in_reply_to_mail_name
 
 	return None, None
 
