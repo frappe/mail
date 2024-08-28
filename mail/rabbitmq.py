@@ -24,7 +24,6 @@ class RabbitMQ:
 
 		self._connection = None
 		self._channel = None
-		self._connect()
 
 	def _connect(self) -> None:
 		"""Establishes the RabbitMQ connection and channel."""
