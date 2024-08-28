@@ -16,6 +16,14 @@
   "default_dkim_bits",
   "section_break_kplw",
   "dns_records",
+  "rabbitmq_amqp_tab",
+  "rmq_host",
+  "rmq_port",
+  "rmq_virtual_host",
+  "test_rabbitmq_connection",
+  "column_break_yebz",
+  "rmq_username",
+  "rmq_password",
   "outgoing_tab",
   "max_recipients",
   "max_headers",
@@ -196,12 +204,57 @@
    "fieldname": "send_notification_on_reject",
    "fieldtype": "Check",
    "label": "Send Notification on Reject"
+  },
+  {
+   "fieldname": "rmq_host",
+   "fieldtype": "Data",
+   "label": "Host",
+   "reqd": 1
+  },
+  {
+   "default": "5672",
+   "fieldname": "rmq_port",
+   "fieldtype": "Int",
+   "label": "Port",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "rmq_username",
+   "fieldtype": "Data",
+   "label": "Username"
+  },
+  {
+   "fieldname": "rmq_password",
+   "fieldtype": "Password",
+   "label": "Password"
+  },
+  {
+   "fieldname": "column_break_yebz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rabbitmq_amqp_tab",
+   "fieldtype": "Tab Break",
+   "label": "RabbitMQ (AMQP)"
+  },
+  {
+   "depends_on": "eval: !doc.__unsaved",
+   "fieldname": "test_rabbitmq_connection",
+   "fieldtype": "Button",
+   "label": "Test Connection"
+  },
+  {
+   "fieldname": "rmq_virtual_host",
+   "fieldtype": "Data",
+   "label": "Virtual Host",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-07 11:23:01.415375",
+ "modified": "2024-08-24 09:25:40.824221",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

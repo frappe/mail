@@ -5,8 +5,26 @@ import dns.resolver
 from frappe import _
 from typing import Callable
 from datetime import datetime
+from mail.rabbitmq import RabbitMQ
 from frappe.utils import get_system_timezone
 from frappe.utils.caching import request_cache
+
+
+def get_rabbitmq_connection() -> "RabbitMQ":
+	"""Returns `RabbitMQ` object."""
+
+	mail_settings = frappe.get_cached_doc("Mail Settings")
+	host = mail_settings.rmq_host
+	port = mail_settings.rmq_port
+	virtual_host = mail_settings.rmq_virtual_host
+	username = mail_settings.rmq_username
+	password = (
+		mail_settings.get_password("rmq_password") if mail_settings.rmq_password else None
+	)
+
+	return RabbitMQ(
+		host=host, port=port, virtual_host=virtual_host, username=username, password=password
+	)
 
 
 def get_dns_record(
@@ -95,17 +113,33 @@ def convert_html_to_text(html: str) -> str:
 	return text
 
 
-def get_in_reply_to(message_id: str) -> tuple[str, str] | tuple[None, None]:
+def get_in_reply_to_mail(
+	message_id: str | None = None,
+) -> tuple[str, str] | tuple[None, None]:
 	"""Returns mail type and name of the mail to which the given message is a reply to."""
 
 	if message_id:
-		for reply_to_mail_type in ["Outgoing Mail", "Incoming Mail"]:
-			if reply_to_mail_name := frappe.db.get_value(
-				reply_to_mail_type, {"message_id": message_id}, "name"
+		for in_reply_to_mail_type in ["Outgoing Mail", "Incoming Mail"]:
+			if in_reply_to_mail_name := frappe.db.get_value(
+				in_reply_to_mail_type, {"message_id": message_id}, "name"
 			):
-				return reply_to_mail_type, reply_to_mail_name
+				return in_reply_to_mail_type, in_reply_to_mail_name
 
 	return None, None
+
+
+def get_in_reply_to(
+	in_reply_to_mail_type: str | None = None,
+	in_reply_to_mail_name: str | None = None,
+) -> str | None:
+	"""Returns message_id of the mail to which the given mail is a reply to."""
+
+	if in_reply_to_mail_type and in_reply_to_mail_name:
+		return frappe.get_cached_value(
+			in_reply_to_mail_type, in_reply_to_mail_name, "message_id"
+		)
+
+	return None
 
 
 def enqueue_job(method: str | Callable, **kwargs) -> None:

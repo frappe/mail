@@ -18,6 +18,7 @@ class MailSettings(Document):
 		self.validate_default_dkim_selector()
 		self.validate_default_dkim_bits()
 		self.generate_dns_records()
+		self.validate_rmq_host()
 		self.validate_outgoing_max_attachment_size()
 		self.validate_outgoing_total_attachments_size()
 
@@ -180,6 +181,12 @@ class MailSettings(Document):
 		if save:
 			self.save()
 
+	def validate_rmq_host(self) -> None:
+		"""Validates the rmq_host and converts it to lowercase."""
+
+		if self.rmq_host:
+			self.rmq_host = self.rmq_host.lower()
+
 	def validate_outgoing_max_attachment_size(self) -> None:
 		"""Validates the Outgoing Max Attachment Size."""
 
@@ -201,6 +208,34 @@ class MailSettings(Document):
 					frappe.bold("Total Attachments Size"), frappe.bold("Max Attachment Size")
 				)
 			)
+
+	@frappe.whitelist()
+	def test_rabbitmq_connection(self) -> None:
+		"""Tests the connection to the RabbitMQ server."""
+
+		import socket
+		from mail.utils import get_rabbitmq_connection
+
+		try:
+			rmq = get_rabbitmq_connection()
+			rmq._disconnect()
+			frappe.msgprint(_("Connection Successful"), alert=True, indicator="green")
+		except socket.gaierror as e:
+			frappe.msgprint(e.args[1], _("Connection Failed"), indicator="red")
+		except Exception as e:
+			messages = []
+			for error in e.args:
+				if not isinstance(error, str):
+					error = error.exception
+
+				messages.append("{}: {}".format(frappe.bold(e.__class__.__name__), error))
+
+			as_list = True
+			if len(messages) == 1:
+				messages = messages[0]
+				as_list = False
+
+			frappe.msgprint(messages, _("Connection Failed"), as_list=as_list, indicator="red")
 
 
 @frappe.whitelist()
