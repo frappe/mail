@@ -214,12 +214,11 @@ class MailSettings(Document):
 		"""Tests the connection to the RabbitMQ server."""
 
 		import socket
-		from mail.utils import get_rabbitmq_connection
+		from mail.rabbitmq import rabbitmq_context
 
 		try:
-			rmq = get_rabbitmq_connection()
-			rmq._disconnect()
-			frappe.msgprint(_("Connection Successful"), alert=True, indicator="green")
+			with rabbitmq_context() as rmq:
+				frappe.msgprint(_("Connection Successful"), alert=True, indicator="green")
 		except socket.gaierror as e:
 			frappe.msgprint(e.args[1], _("Connection Failed"), indicator="red")
 		except Exception as e:

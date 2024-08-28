@@ -1,8 +1,9 @@
 import json
 import frappe
+from frappe import _
 from email.utils import parseaddr
-from mail.utils import get_rabbitmq_connection
 from mail.utils.user import get_user_mailboxes
+from mail.rabbitmq import rabbitmq_context
 from mail.config.constants import NEWSLETTER_QUEUE
 from mail.utils.cache import get_user_default_mailbox
 from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
@@ -96,6 +97,7 @@ def send_raw_batch() -> list[str]:
 def send_newsletter() -> None:
 	"""Send Newsletter."""
 
+	user = frappe.session.user
 	mails = json.loads(frappe.request.data.decode())
 
 	if isinstance(mails, dict):
@@ -103,18 +105,21 @@ def send_newsletter() -> None:
 
 	validate_batch(mails, mandatory_fields=["from_", "to"])
 
-	user = frappe.session.user
-	rmq = get_rabbitmq_connection()
-	rmq.declare_queue(NEWSLETTER_QUEUE)
-	for mail in mails:
-		mail = get_mail_dict(mail)
+	try:
+		with rabbitmq_context() as rmq:
+			rmq.declare_queue(NEWSLETTER_QUEUE)
+			for mail in mails:
+				mail = get_mail_dict(mail)
 
-		if mail["sender"] not in get_user_mailboxes(user, "Outgoing"):
-			mail["sender"] = get_user_default_mailbox(user)
+				if mail["sender"] not in get_user_mailboxes(user, "Outgoing"):
+					mail["sender"] = get_user_default_mailbox(user)
 
-		rmq.publish(NEWSLETTER_QUEUE, json.dumps(mail))
-
-	rmq._disconnect()
+				rmq.publish(NEWSLETTER_QUEUE, json.dumps(mail))
+	except Exception:
+		frappe.log_error(title="Newsletter Publish", message=frappe.get_traceback())
+		frappe.throw(
+			_("An error occurred while enqueuing the newsletter. Please try again later.")
+		)
 
 
 def validate_batch(mails: list[dict], mandatory_fields: list[str]) -> None:

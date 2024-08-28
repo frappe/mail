@@ -15,13 +15,13 @@ from mail.utils.cache import get_postmaster
 from email.utils import parseaddr, formataddr
 from frappe.utils.caching import request_cache
 from email.mime.multipart import MIMEMultipart
+from mail.rabbitmq import rabbitmq_context
 from frappe.utils import flt, now, time_diff_in_seconds
 from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
 from mail.utils import (
 	enqueue_job,
 	parse_iso_datetime,
 	convert_html_to_text,
-	get_rabbitmq_connection,
 )
 
 
@@ -653,17 +653,17 @@ class OutgoingMail(Document):
 
 	@frappe.whitelist()
 	def transfer_now(self) -> None:
-		"""Transfer the mail to the RabbitMQ with highest priority [3]."""
+		"""Transfer the mail to RabbitMQ with the highest priority [3]."""
 
 		if not frappe.flags.force_transfer:
 			self.load_from_db()
 
+			# Ensure the document is submitted and in "Pending" status
 			if not (self.docstatus == 1 and self.status == "Pending"):
 				return
 
 		self._db_set(status="Transferring", commit=True)
 
-		kwargs = {}
 		recipients = [formataddr((r.display_name, r.email)) for r in self.recipients]
 		data = {
 			"outgoing_mail": self.name,
@@ -672,25 +672,21 @@ class OutgoingMail(Document):
 		}
 
 		try:
-			rmq = get_rabbitmq_connection()
-			rmq.declare_queue(constants.OUTGOING_MAIL_QUEUE, max_priority=3)
-			rmq.publish(constants.OUTGOING_MAIL_QUEUE, json.dumps(data), priority=3)
-			rmq._disconnect()
+			with rabbitmq_context() as rmq:
+				rmq.declare_queue(constants.OUTGOING_MAIL_QUEUE, max_priority=3)
+				rmq.publish(constants.OUTGOING_MAIL_QUEUE, json.dumps(data), priority=3)
 
 			transferred_at = now()
 			transferred_after = time_diff_in_seconds(transferred_at, self.submitted_at)
-			kwargs.update(
-				{
-					"status": "Transferred",
-					"transferred_at": transferred_at,
-					"transferred_after": transferred_after,
-				}
+			self._db_set(
+				status="Transferred",
+				transferred_at=transferred_at,
+				transferred_after=transferred_after,
+				commit=True,
 			)
 		except Exception:
 			error_log = frappe.get_traceback(with_context=False)
-			kwargs.update({"status": "Failed", "error_log": error_log})
-
-		self._db_set(**kwargs, commit=True)
+			self._db_set(status="Failed", error_log=error_log, commit=True)
 
 
 @frappe.whitelist()
@@ -912,7 +908,7 @@ def get_permission_query_condition(user: str | None = None) -> str:
 
 
 def transfer_mails() -> None:
-	"""Transfers the mails to the RabbitMQ."""
+	"""Transfers the mails to RabbitMQ."""
 
 	def get_mails_to_transfer(limit: int) -> list[dict]:
 		"""Returns the mails to transfer."""
@@ -973,7 +969,7 @@ def transfer_mails() -> None:
 		if not mails:
 			break
 
-		outgoing_mails = [mail.name for mail in mails]
+		outgoing_mails = [mail["name"] for mail in mails]
 		update_outgoing_mails(
 			outgoing_mails,
 			current_status=current_status,
@@ -984,24 +980,22 @@ def transfer_mails() -> None:
 		current_status = "Transferring"
 
 		try:
-			rmq = get_rabbitmq_connection()
-			rmq.declare_queue(constants.OUTGOING_MAIL_QUEUE, max_priority=3)
+			with rabbitmq_context() as rmq:
+				rmq.declare_queue(constants.OUTGOING_MAIL_QUEUE, max_priority=3)
 
-			for mail in mails:
-				priority = 1
-				if mail.is_newsletter:
-					priority = 0
-				elif mail.domain_name == root_domain_name:
-					priority = 2
+				for mail in mails:
+					priority = 1
+					if mail.is_newsletter:
+						priority = 0
+					elif mail.domain_name == root_domain_name:
+						priority = 2
 
-				data = {
-					"outgoing_mail": mail.name,
-					"recipients": mail.recipients.split(","),
-					"message": mail.message,
-				}
-				rmq.publish(constants.OUTGOING_MAIL_QUEUE, json.dumps(data), priority=priority)
-
-			rmq._disconnect()
+					data = {
+						"outgoing_mail": mail["name"],
+						"recipients": mail["recipients"].split(","),
+						"message": mail["message"],
+					}
+					rmq.publish(constants.OUTGOING_MAIL_QUEUE, json.dumps(data), priority=priority)
 
 			frappe.db.sql(
 				"""
@@ -1033,7 +1027,7 @@ def transfer_mails() -> None:
 
 
 def get_outgoing_mails_status() -> None:
-	"""Gets the outgoing mails status from the RabbitMQ."""
+	"""Gets the outgoing mails status from RabbitMQ."""
 
 	def has_unsynced_outgoing_mails() -> bool:
 		"""Returns True if there are unsynced outgoing mails."""
@@ -1052,38 +1046,32 @@ def get_outgoing_mails_status() -> None:
 	def queue_ok(agent: str, data: dict) -> None:
 		"""Updates Queue ID in Outgoing Mail."""
 
-		queue_id = data["queue_id"]
-		outgoing_mail = data["outgoing_mail"]
 		frappe.db.set_value(
 			"Outgoing Mail",
-			outgoing_mail,
-			{"status": "Queued", "agent": agent, "queue_id": queue_id},
+			data["outgoing_mail"],
+			{"status": "Queued", "agent": agent, "queue_id": data["queue_id"]},
 		)
 
 	def undelivered(data: dict) -> None:
 		"""Updates Outgoing Mail status to Deferred or Bounced."""
 
-		hook = data["hook"]
-		rcpt_to = data["rcpt_to"]
-		retries = data["retries"]
-		queue_id = data["queue_id"]
-		outgoing_mail = data.get("outgoing_mail")
-		action_at = parse_iso_datetime(data["action_at"])
-
 		try:
-			if outgoing_mail:
-				doc = frappe.get_doc("Outgoing Mail", outgoing_mail, for_update=True)
-			else:
-				doc = frappe.get_doc("Outgoing Mail", {"queue_id": queue_id}, for_update=True)
+			outgoing_mail = data.get("outgoing_mail")
+			queue_id = data["queue_id"]
+			hook = data["hook"]
+			rcpt_to = data["rcpt_to"]
+			retries = data["retries"]
+			action_at = parse_iso_datetime(data["action_at"])
 
-			recipients = {}
-			for recipient in rcpt_to:
-				key = parseaddr(recipient["original"])[1]
-				recipients[key] = recipient
-
-			status = "Bounced"
-			if hook == "deferred":
-				status = "Deferred"
+			doc = frappe.get_doc(
+				"Outgoing Mail",
+				outgoing_mail if outgoing_mail else {"queue_id": queue_id},
+				for_update=True,
+			)
+			recipients = {
+				parseaddr(recipient["original"])[1]: recipient for recipient in rcpt_to
+			}
+			status = "Deferred" if hook == "deferred" else "Bounced"
 
 			for recipient in doc.recipients:
 				if recipient.email in recipients:
@@ -1098,6 +1086,7 @@ def get_outgoing_mails_status() -> None:
 
 			doc.update_status(db_set=False)
 			doc.db_update()
+
 		except Exception:
 			frappe.log_error(
 				title="Error Updating Outgoing Mail Status", message=frappe.get_traceback()
@@ -1106,21 +1095,19 @@ def get_outgoing_mails_status() -> None:
 	def delivered(data: dict) -> None:
 		"""Updates Outgoing Mail status to Sent or Partially Sent."""
 
-		retries = data["retries"]
-		queue_id = data["queue_id"]
-		outgoing_mail = data.get("outgoing_mail")
-		action_at = parse_iso_datetime(data["action_at"])
-		host, ip, response, delay, port, mode, ok_recips, secured, verified = data["params"]
-
 		try:
-			if outgoing_mail:
-				doc = frappe.get_doc("Outgoing Mail", outgoing_mail, for_update=True)
-			else:
-				doc = frappe.get_doc("Outgoing Mail", {"queue_id": queue_id}, for_update=True)
+			outgoing_mail = data.get("outgoing_mail")
+			queue_id = data["queue_id"]
+			retries = data["retries"]
+			action_at = parse_iso_datetime(data["action_at"])
+			host, ip, response, delay, port, mode, ok_recips, secured, verified = data["params"]
 
-			recipients = []
-			for recipient in ok_recips:
-				recipients.append(parseaddr(recipient["original"])[1])
+			doc = frappe.get_doc(
+				"Outgoing Mail",
+				outgoing_mail if outgoing_mail else {"queue_id": queue_id},
+				for_update=True,
+			)
+			recipients = [parseaddr(recipient["original"])[1] for recipient in ok_recips]
 
 			for recipient in doc.recipients:
 				if recipient.email in recipients:
@@ -1147,6 +1134,7 @@ def get_outgoing_mails_status() -> None:
 
 				doc.update_status(db_set=False)
 				doc.db_update()
+
 		except Exception:
 			frappe.log_error(
 				title="Error Updating Outgoing Mail Status", message=frappe.get_traceback()
@@ -1156,28 +1144,28 @@ def get_outgoing_mails_status() -> None:
 		return
 
 	try:
-		rmq = get_rabbitmq_connection()
-		rmq.declare_queue(constants.OUTGOING_MAIL_STATUS_QUEUE, max_priority=3)
+		with rabbitmq_context() as rmq:
+			rmq.declare_queue(constants.OUTGOING_MAIL_STATUS_QUEUE, max_priority=3)
 
-		while True:
-			result = rmq.basic_get(constants.OUTGOING_MAIL_STATUS_QUEUE)
+			while True:
+				result = rmq.basic_get(constants.OUTGOING_MAIL_STATUS_QUEUE)
 
-			if result:
-				method, properties, body = result
-				if body:
-					data = json.loads(body)
+				if result:
+					method, properties, body = result
+					if body:
+						data = json.loads(body)
+						hook = data["hook"]
 
-					hook = data["hook"]
-					if hook == "queue_ok":
-						queue_ok(properties.app_id, data)
-					elif hook in ["bounce", "deferred"]:
-						undelivered(data)
-					elif hook == "delivered":
-						delivered(data)
+						if hook == "queue_ok":
+							queue_ok(properties.app_id, data)
+						elif hook in ["bounce", "deferred"]:
+							undelivered(data)
+						elif hook == "delivered":
+							delivered(data)
 
-				rmq._channel.basic_ack(delivery_tag=method.delivery_tag)
-			else:
-				break
+					rmq._channel.basic_ack(delivery_tag=method.delivery_tag)
+				else:
+					break
 	except Exception:
 		frappe.log_error(
 			title="Get Outgoing Mails Status",
@@ -1195,24 +1183,23 @@ def process_newsletter_queue(batch_size: int = 1000) -> None:
 	while True:
 		documents = []
 		delivery_tags = []
-		rmq = get_rabbitmq_connection()
 
-		try:
+		with rabbitmq_context() as rmq:
 			rmq.declare_queue(constants.NEWSLETTER_QUEUE)
 
 			for x in range(batch_size):
 				result = rmq.basic_get(constants.NEWSLETTER_QUEUE)
 
-				if result:
-					method, properties, body = result
-					if body:
-						mail = json.loads(body)
-						mail["is_newsletter"] = 1
-						doc = get_outgoing_mail_for_bulk_insert(**mail)
-						documents.append(doc)
-						delivery_tags.append(method.delivery_tag)
-				else:
+				if not result:
 					break
+
+				method, properties, body = result
+				if body:
+					mail = json.loads(body)
+					mail["is_newsletter"] = 1
+					doc = get_outgoing_mail_for_bulk_insert(**mail)
+					documents.append(doc)
+					delivery_tags.append(method.delivery_tag)
 
 			if not documents:
 				break
@@ -1230,9 +1217,6 @@ def process_newsletter_queue(batch_size: int = 1000) -> None:
 					)
 
 				frappe.log_error(title="Process Newsletter Queue", message=frappe.get_traceback())
-
-		finally:
-			rmq._disconnect()
 
 
 def enqueue_transfer_mails() -> None:
