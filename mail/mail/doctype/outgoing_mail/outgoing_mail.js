@@ -33,12 +33,17 @@ frappe.ui.form.on("Outgoing Mail", {
             }
             else if (frm.doc.status === "Failed") {
                 frm.add_custom_button(__("Retry"), () => {
-                    frm.trigger("retry");
+                    frm.trigger("retry_failed_mail");
                 }, __("Actions"));
             }
             else if (["Transferred", "Queued", "Deferred"].includes(frm.doc.status)) {
                 frm.add_custom_button(__("Get Status"), () => {
                     frm.trigger("get_outgoing_mails_status");
+                }, __("Actions"));
+            }
+            else if (frm.doc.status === "Bounced") {
+                frm.add_custom_button(__("Retry"), () => {
+                    frm.trigger("retry_bounced_mail");
                 }, __("Actions"));
             }
             else if (frm.doc.status === "Sent") {
@@ -79,10 +84,10 @@ frappe.ui.form.on("Outgoing Mail", {
         });
     },
 
-    retry(frm) {
+    retry_failed_mail(frm) {
         frappe.call({
             doc: frm.doc,
-            method: "retry_transfer_mail",
+            method: "retry_failed_mail",
             freeze: true,
             freeze_message: __("Retrying..."),
             callback: (r) => {
@@ -109,6 +114,20 @@ frappe.ui.form.on("Outgoing Mail", {
             }
 		});
 	},
+
+    retry_bounced_mail(frm) {
+        frappe.call({
+            doc: frm.doc,
+            method: "retry_bounced_mail",
+            freeze: true,
+            freeze_message: __("Retrying..."),
+            callback: (r) => {
+                if (!r.exc) {
+                    frm.refresh();
+                }
+            }
+        });
+    },
 
     reply(frm, all) {
         frappe.model.open_mapped_doc({

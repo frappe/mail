@@ -641,14 +641,22 @@ class OutgoingMail(Document):
 			self.notify_update()
 
 	@frappe.whitelist()
-	def retry_transfer_mail(self) -> None:
-		"""Retries sending the mail."""
+	def retry_failed_mail(self) -> None:
+		"""Retries the failed mail."""
 
 		if self.docstatus == 1 and self.status == "Failed":
-			kwargs = {}
-			kwargs["error_log"] = None
-			kwargs["status"] = "Pending"
-			self._db_set(**kwargs, commit=True)
+			self._db_set(status="Pending", error_log=None, commit=True)
+			self.transfer_now()
+
+	@frappe.whitelist()
+	def retry_bounced_mail(self) -> None:
+		"""Retries the bounced mail."""
+
+		if not is_system_manager(frappe.session.user):
+			frappe.throw(_("Only System Manager can retry bounced mail."))
+
+		if self.docstatus == 1 and self.status == "Bounced":
+			self._db_set(status="Pending", error_log=None, commit=True)
 			self.transfer_now()
 
 	@frappe.whitelist()
