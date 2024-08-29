@@ -872,8 +872,8 @@ def get_outgoing_mail_for_bulk_insert(**kwargs) -> "OutgoingMail":
 def delete_outgoing_mails(mailbox: str) -> None:
 	"""Deletes the outgoing mails for the given mailbox."""
 
-	if frappe.session.user != "Administrator":
-		frappe.throw(_("Only Administrator can delete Outgoing Mails."))
+	if not is_system_manager(frappe.session.user):
+		frappe.throw(_("Only System Manager can delete Outgoing Mails."))
 
 	if mailbox:
 		frappe.db.delete("Outgoing Mail", {"sender": mailbox})

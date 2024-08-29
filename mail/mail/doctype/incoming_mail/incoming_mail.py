@@ -155,8 +155,8 @@ def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":
 def delete_incoming_mails(mailbox: str) -> None:
 	"""Deletes the incoming mails for the given mailbox."""
 
-	if frappe.session.user != "Administrator":
-		frappe.throw(_("Only Administrator can delete Incoming Mails."))
+	if not is_system_manager(frappe.session.user):
+		frappe.throw(_("Only System Manager can delete Incoming Mails."))
 
 	if mailbox:
 		frappe.db.delete("Incoming Mail", {"receiver": mailbox})
