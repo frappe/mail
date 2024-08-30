@@ -1,3 +1,5 @@
+import { useTimeAgo } from '@vueuse/core'
+
 export function convertToTitleCase(str) {
     if (!str) {
         return ''
@@ -73,4 +75,14 @@ export function singularize(word) {
 		new RegExp(`(${Object.keys(endings).join('|')})$`),
 		(r) => endings[r]
 	)
+}
+
+export function timeAgo(date) {
+    return useTimeAgo(date).value
+}
+
+export function validateEmail(email) {
+    let regExp =
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    return regExp.test(email)
 }

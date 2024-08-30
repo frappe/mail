@@ -116,26 +116,16 @@ def get_mail_thread(name, mail_type):
 
     def get_thread(mail, thread):
         thread.append(mail)
-        print(mail.subject)
-        print(mail.name)
         if mail.name in visited:
-            print("visited")
             return
         visited.add(mail.name)
 
-        if mail.reply_to_mail_name:
-            print(mail.reply_to_mail_name)
-            reply_type = reverse_type(mail.mail_type)
-            print(reply_type)
-            print(mail.name, mail.type)
-            reply_mail = get_mail_details(mail.reply_to_mail_name, reply_type)
-            reply_mail.mail_type = reply_type
+        if mail.in_reply_to_mail_name:
+            reply_mail = get_mail_details(mail.in_reply_to_mail_name, mail.in_reply_to_mail_type)
             get_thread(reply_mail, thread)
         else:
-            print("else")
             replica = find_replica(mail, mail.mail_type)
             if replica and replica != name:
-                print("replica thread")
                 replica_type = reverse_type(mail.mail_type)
                 replica_mail = get_mail_details(replica, replica_type)
                 replica_mail.mail_type = replica_type
@@ -164,9 +154,7 @@ def gather_thread_replies(mail_name):
 
 def get_thread_from_replies(mail_type, mail_name):
     replies = []
-    emails = frappe.get_all(mail_type, {"reply_to_mail_name": mail_name}, pluck="name")
-    print(mail_type, mail_name)
-    print(emails)
+    emails = frappe.get_all(mail_type, {"in_reply_to_mail_name": mail_name}, pluck="name")
     for email in emails:
         reply = get_mail_details(email, mail_type)
         reply.mail_type = mail_type
@@ -188,7 +176,7 @@ def remove_duplicates_and_sort(thread):
     return thread
 
 def get_mail_details(name, type):
-    fields = ["name", "subject", "body_html", "body_plain", "sender", "display_name", "creation", "message_id", "reply_to_mail_name"]
+    fields = ["name", "subject", "body_html", "body_plain", "sender", "display_name", "creation", "message_id", "in_reply_to_mail_name", "in_reply_to_mail_type"]
 
     mail = frappe.db.get_value(type, name, fields, as_dict=1)
     if not mail.display_name:
@@ -200,9 +188,12 @@ def get_mail_details(name, type):
     mail.cc = get_recipients(name, type, "Cc")
     mail.bcc = get_recipients(name, type, "Bcc")
     mail.body_html = extract_email_body(mail.body_html)
+    mail.mail_type = type
     return mail
 
 def extract_email_body(html):
+    if not html:
+        return
     soup = BeautifulSoup(html, 'html.parser')
     email_body = soup.find("table", class_='email-body')
     if email_body:
@@ -221,3 +212,22 @@ def get_recipients(name, type, recipient_type):
             recipient.display_name = frappe.db.get_value("User", recipient.email, "full_name")
 
     return recipients
+
+@frappe.whitelist()
+def get_mail_contacts(txt=None):
+    filters = {
+        "user": frappe.session.user
+    }
+    if txt:
+        filters["email"] = ["like", f"%{txt}%"]
+
+    contacts = frappe.get_all("Mail Contact", filters=filters, fields=["email"])
+
+    for contact in contacts:
+        details = frappe.db.get_value("User", {
+            "email": contact.email
+        }, ["user_image", "full_name", "email"], as_dict=1)
+        if details:
+            contact.update(details)
+
+    return contacts

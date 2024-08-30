@@ -817,8 +817,8 @@ def create_outgoing_mail(
 	subject: str | None = None,
 	body_html: str | None = None,
 	reply_to: str | list[str] | None = None,
-	reply_to_mail_type: str | None = None,
-	reply_to_mail_name: str | None = None,
+	in_reply_to_mail_type: str | None = None,
+	in_reply_to_mail_name: str | None = None,
 	custom_headers: dict | None = None,
 	attachments: list[dict] | None = None,
 	raw_message: str | None = None,
@@ -838,8 +838,8 @@ def create_outgoing_mail(
 	doc.subject = subject
 	doc.body_html = body_html
 	doc.reply_to = reply_to
-	doc.reply_to_mail_type = reply_to_mail_type
-	doc.reply_to_mail_name = reply_to_mail_name
+	doc.in_reply_to_mail_type = in_reply_to_mail_type
+	doc.in_reply_to_mail_name = in_reply_to_mail_name
 	doc._add_custom_headers(custom_headers)
 	doc.raw_message = raw_message
 	doc.via_api = via_api

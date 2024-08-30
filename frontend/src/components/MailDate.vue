@@ -1,10 +1,14 @@
 <template>
-    <div class="text-xs text-gray-600">
-        {{ formattedDate }}
-    </div>
+    <Tooltip :text="tooltipText" :disabled="inList">
+        <div class="text-xs text-gray-600 cursor-pointer">
+            {{ formattedDate }}
+        </div>
+    </Tooltip>
 </template>
 <script setup>
 import { inject, computed } from 'vue';
+import { Tooltip } from 'frappe-ui';
+import { timeAgo } from '@/utils';
 
 const dayjs = inject('$dayjs')
 
@@ -20,12 +24,19 @@ const props = defineProps({
 })
 
 const formattedDate = computed(() => {
-    if (dayjs(props.datetime).isToday()) {
-        return dayjs(props.datetime).format('h:mm A')
-    } else if (dayjs(props.datetime).isYesterday()) {
-        return props.inList ? `Yesterday` : `Yesterday at ${dayjs(props.datetime).format('h:mm A')}`
-    } else {
-        return props.inList ? dayjs(props.datetime).format('DD MMM YYYY') : `${dayjs(props.datetime).format('MMM D, YYYY')} at ${dayjs(props.datetime).format('h:mm A')}`
+    if (props.inList) {
+        if (dayjs(props.datetime).isToday()) {
+            return dayjs(props.datetime).format('h:mm A')
+        } else if (dayjs(props.datetime).isYesterday()) {
+            return `Yesterday`
+        } else {
+            return dayjs(props.datetime).format('DD MMM YYYY')
+        }
     }
+    return __(timeAgo(props.datetime))
+})
+
+const tooltipText = computed(() => {
+    return __(`${dayjs(props.datetime).format('DD MMM YYYY h:mm A')} at ${dayjs(props.datetime).format('h:mm A')}`)
 })
 </script>
