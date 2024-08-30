@@ -86,6 +86,13 @@ class OutgoingMail(Document):
 		else:
 			self.folder = folder
 
+	def sync_with_frontend(self, status) -> None:
+		"""Triggered to sync the document with the frontend."""
+
+		if self.via_api:
+			if status == "Sent": 
+				frappe.publish_realtime("outgoing_mail_sent", self.as_dict(), after_commit=True)
+
 	def load_runtime(self) -> None:
 		"""Loads the runtime properties."""
 
@@ -506,6 +513,8 @@ class OutgoingMail(Document):
 		if db_set:
 			self._db_set(status=status)
 
+		self.sync_with_frontend(status)
+
 	def _add_recipient(self, type: str, recipient: str | list[str]) -> None:
 		"""Adds the recipients."""
 
@@ -812,6 +821,8 @@ def create_outgoing_mail(
 	subject: str | None = None,
 	body_html: str | None = None,
 	reply_to: str | list[str] | None = None,
+	in_reply_to_mail_type: str | None = None,
+	in_reply_to_mail_name: str | None = None,
 	custom_headers: dict | None = None,
 	attachments: list[dict] | None = None,
 	raw_message: str | None = None,
@@ -831,6 +842,8 @@ def create_outgoing_mail(
 	doc.subject = subject
 	doc.body_html = body_html
 	doc.reply_to = reply_to
+	doc.in_reply_to_mail_type = in_reply_to_mail_type
+	doc.in_reply_to_mail_name = in_reply_to_mail_name
 	doc._add_custom_headers(custom_headers)
 	doc.raw_message = raw_message
 	doc.via_api = via_api

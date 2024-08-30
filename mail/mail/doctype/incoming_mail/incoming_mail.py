@@ -56,6 +56,7 @@ class IncomingMail(Document):
 
 	def on_submit(self) -> None:
 		self.create_mail_contact()
+		self.sync_with_frontend()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
@@ -110,6 +111,10 @@ class IncomingMail(Document):
 			user = frappe.get_cached_value("Mailbox", self.receiver, "user")
 			create_mail_contact(user, self.sender, self.display_name)
 
+	def sync_with_frontend(self) -> None:
+		"""Syncs the Incoming Mail with the frontend."""
+
+		frappe.publish_realtime("incoming_mail_received", self.as_dict(), user=self.receiver, after_commit=True)
 
 @frappe.whitelist()
 def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":

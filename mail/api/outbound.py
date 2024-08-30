@@ -18,6 +18,8 @@ def send(
 	bcc: str | list[str] | None = None,
 	html: str | None = None,
 	reply_to: str | list[str] | None = None,
+	in_reply_to_mail_type: str | None = None,
+	in_reply_to_mail_name: str | None = None,
 	custom_headers: dict | None = None,
 	attachments: list[dict] | None = None,
 ) -> str:
@@ -33,6 +35,8 @@ def send(
 		subject=subject,
 		body_html=html,
 		reply_to=reply_to,
+		in_reply_to_mail_type=in_reply_to_mail_type,
+		in_reply_to_mail_name=in_reply_to_mail_name,
 		custom_headers=custom_headers,
 		attachments=attachments,
 		via_api=1,

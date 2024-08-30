@@ -182,7 +182,7 @@
    "link_fieldname": "sender"
   }
  ],
- "modified": "2024-08-12 13:47:22.541969",
+ "modified": "2024-08-21 16:24:31.264835",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailbox",
@@ -215,6 +215,7 @@
    "read": 1,
    "report": 1,
    "role": "Mailbox User",
+   "select": 1,
    "write": 1
   },
   {
@@ -228,11 +229,6 @@
    "read": 1,
    "role": "Domain Owner",
    "write": 1
-  },
-  {
-   "permlevel": 1,
-   "read": 1,
-   "role": "Mailbox User"
   }
  ],
  "sort_field": "modified",
