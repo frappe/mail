@@ -360,7 +360,7 @@ def get_incoming_mails() -> None:
 						message = body.decode("utf-8")
 						process_incoming_mail(properties.app_id, message)
 
-					rmq._channel.basic_ack(delivery_tag=method.delivery_tag)
+					rmq.channel.basic_ack(delivery_tag=method.delivery_tag)
 				else:
 					break
 	except Exception:

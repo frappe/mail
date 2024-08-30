@@ -218,7 +218,6 @@ class MailSettings(Document):
 
 		try:
 			with rabbitmq_context() as rmq:
-				rmq._connect()
 				frappe.msgprint(_("Connection Successful"), alert=True, indicator="green")
 		except socket.gaierror as e:
 			frappe.msgprint(e.args[1], _("Connection Failed"), indicator="red")

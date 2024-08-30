@@ -1,8 +1,13 @@
 import pika
 import frappe
 import threading
-from queue import Queue, Empty
-from typing import Any, NoReturn
+from queue import Queue
+from contextlib import contextmanager
+from typing import Any, Generator, TYPE_CHECKING
+
+if TYPE_CHECKING:
+	from pika import BlockingConnection
+	from pika.adapters.blocking_connection import BlockingChannel
 
 
 class RabbitMQ:
@@ -14,7 +19,7 @@ class RabbitMQ:
 		username: str | None = None,
 		password: str | None = None,
 	) -> None:
-		"""Initializes the RabbitMQ object with the given parameters."""
+		"""Initializes the RabbitMQ connection with the given parameters."""
 
 		self.__host = host
 		self.__port = port
@@ -24,9 +29,10 @@ class RabbitMQ:
 
 		self._connection = None
 		self._channel = None
+		self._connect()
 
 	def _connect(self) -> None:
-		"""Establishes the RabbitMQ connection and channel."""
+		"""Connects to the RabbitMQ server."""
 
 		if self.__username and self.__password:
 			credentials = pika.PlainCredentials(self.__username, self.__password)
@@ -44,27 +50,31 @@ class RabbitMQ:
 		self._connection = pika.BlockingConnection(parameters)
 		self._channel = self._connection.channel()
 
-	def _ensure_connection_and_channel(self) -> None:
-		"""Ensures the connection and channel are open. Reopens them if necessary."""
+	@property
+	def connection(self) -> "BlockingConnection":
+		"""Returns the connection to the RabbitMQ server."""
 
 		if not self._connection or self._connection.is_closed:
 			self._connect()
-		elif not self._channel or self._channel.is_closed:
+
+		return self._connection
+
+	@property
+	def channel(self) -> "BlockingChannel":
+		"""Returns the channel to the RabbitMQ server."""
+
+		if not self._channel or self._channel.is_closed:
 			self._channel = self._connection.channel()
+
+		return self._channel
 
 	def declare_queue(
 		self, queue: str, max_priority: int = 0, durable: bool = True
 	) -> None:
 		"""Declares a queue with the given name and arguments."""
 
-		self._ensure_connection_and_channel()
-
-		if max_priority > 0:
-			self._channel.queue_declare(
-				queue=queue, arguments={"x-max-priority": max_priority}, durable=durable
-			)
-		else:
-			self._channel.queue_declare(queue=queue, durable=durable)
+		arguments = {"x-max-priority": max_priority} if max_priority > 0 else None
+		self.channel.queue_declare(queue=queue, arguments=arguments, durable=durable)
 
 	def publish(
 		self,
@@ -76,13 +86,11 @@ class RabbitMQ:
 	) -> None:
 		"""Publishes a message to the exchange with the given routing key."""
 
-		self._ensure_connection_and_channel()
-
 		properties = pika.BasicProperties(
 			delivery_mode=pika.DeliveryMode.Persistent if persistent else None,
 			priority=priority if priority > 0 else None,
 		)
-		self._channel.basic_publish(
+		self.channel.basic_publish(
 			exchange=exchange,
 			routing_key=routing_key,
 			body=body,
@@ -95,18 +103,16 @@ class RabbitMQ:
 		callback: callable,
 		auto_ack: bool = False,
 		prefetch_count: int = 0,
-	) -> NoReturn:
+	) -> None:
 		"""Consumes messages from the queue with the given callback."""
 
-		self._ensure_connection_and_channel()
-
 		if prefetch_count > 0:
-			self._channel.basic_qos(prefetch_count=prefetch_count)
+			self.channel.basic_qos(prefetch_count=prefetch_count)
 
-		self._channel.basic_consume(
+		self.channel.basic_consume(
 			queue=queue, on_message_callback=callback, auto_ack=auto_ack
 		)
-		self._channel.start_consuming()
+		self.channel.start_consuming()
 
 	def basic_get(
 		self,
@@ -115,8 +121,7 @@ class RabbitMQ:
 	) -> tuple[Any, int, bytes] | None:
 		"""Gets a message from the queue and returns it."""
 
-		self._ensure_connection_and_channel()
-		method, properties, body = self._channel.basic_get(queue=queue, auto_ack=auto_ack)
+		method, properties, body = self.channel.basic_get(queue=queue, auto_ack=auto_ack)
 
 		if method:
 			return method, properties, body
@@ -131,84 +136,103 @@ class RabbitMQ:
 
 
 class RabbitMQConnectionPool:
-	def __init__(self, initial_pool_size: int = 1, max_pool_size: int = 10) -> None:
-		"""Initializes the RabbitMQ connection pool with the given parameters."""
+	_instance = None
 
-		self.pool = Queue(maxsize=max_pool_size)
-		self.lock = threading.Lock()
-		self.max_pool_size = max_pool_size
-		self._initialize_pool(initial_pool_size)
+	def __new__(cls, *args, **kwargs) -> "RabbitMQConnectionPool":
+		"""Singleton pattern to ensure only one instance of the class is created."""
 
-	def _initialize_pool(self, size: int) -> None:
-		"""Initializes the pool with RabbitMQ connections."""
+		if not cls._instance:
+			cls._instance = super(RabbitMQConnectionPool, cls).__new__(cls)
 
-		for x in range(size):
-			connection = self._create_new_connection()
-			self.pool.put(connection)
+		return cls._instance
+
+	def __init__(
+		self,
+		host: str = "localhost",
+		port: int = 5672,
+		virtual_host: str = "/",
+		username: str | None = None,
+		password: str | None = None,
+		pool_size: int = 5,
+	) -> None:
+		"""Initializes the RabbitMQ connection pool."""
+
+		if not hasattr(self, "_initialized"):  # Ensure __init__ is run only once
+			self.__host = host
+			self.__port = port
+			self.__virtual_host = virtual_host
+			self.__username = username
+			self.__password = password
+
+			self._lock = threading.Lock()
+			self._condition = threading.Condition(self._lock)
+			self._pool_size = pool_size
+			self._pool = Queue(maxsize=pool_size)
+			self._initialized = True
 
 	def _create_new_connection(self) -> RabbitMQ:
 		"""Creates a new RabbitMQ connection."""
 
-		mail_settings = frappe.get_cached_doc("Mail Settings")
 		return RabbitMQ(
-			host=mail_settings.rmq_host,
-			port=mail_settings.rmq_port,
-			virtual_host=mail_settings.rmq_virtual_host,
-			username=mail_settings.rmq_username,
-			password=mail_settings.get_password("rmq_password")
-			if mail_settings.rmq_password
-			else None,
+			host=self.__host,
+			port=self.__port,
+			virtual_host=self.__virtual_host,
+			username=self.__username,
+			password=self.__password,
 		)
 
 	def get_connection(self) -> RabbitMQ:
-		"""Gets a connection from the pool, creating a new one if necessary."""
-
-		with self.lock:
-			if self.pool.empty() and self.pool.qsize() < self.max_pool_size:
-				# Create new connection if the pool is empty and hasn't reached max size
-				self._initialize_pool(1)
-
-			try:
-				return self.pool.get(timeout=5)
-			except Empty:
-				raise RuntimeError("No connections available in the pool.")
-
-	def return_connection(self, connection: RabbitMQ) -> None:
-		"""Returns a connection to the pool."""
-
-		with self.lock:
-			if self.pool.qsize() < self.max_pool_size:
-				self.pool.put(connection)
-			else:
-				connection._disconnect()  # Close connection if pool is full
-
-
-class RabbitMQConnectionContext:
-	def __init__(self, pool: RabbitMQConnectionPool) -> None:
-		"""Initializes the RabbitMQ connection context manager with the given pool."""
-
-		self.pool = pool
-		self.connection: RabbitMQ | None = None
-
-	def __enter__(self) -> RabbitMQ:
 		"""Returns a RabbitMQ connection from the pool."""
 
-		self.connection = self.pool.get_connection()
-		return self.connection
+		with self._condition:
+			while self._pool.empty():
+				if self._pool.qsize() < self._pool_size:
+					return self._create_new_connection()
+				if not self._condition.wait(timeout=5):
+					raise RuntimeError("No connections available in the pool.")
 
-	def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-		"""Returns the RabbitMQ connection to the pool."""
+			return self._pool.get()
 
-		if self.connection:
-			self.pool.return_connection(self.connection)
-			self.connection = None
+	def return_connection(self, connection: RabbitMQ) -> None:
+		"""Return an RabbitMQ connection to the pool."""
+
+		with self._condition:
+			if self._pool.full():
+				connection._disconnect()
+			else:
+				self._pool.put(connection)
+				self._condition.notify()
+
+	def close_connections(self) -> None:
+		"""Close all RabbitMQ connections in the pool."""
+
+		with self._condition:
+			while not self._pool.empty():
+				connection: RabbitMQ = self._pool.get()
+				connection._disconnect()
+
+			self._condition.notify_all()
 
 
-def rabbitmq_context() -> RabbitMQConnectionContext:
-	"""Returns a RabbitMQ connection context manager."""
+@contextmanager
+def rabbitmq_context() -> Generator[RabbitMQ, None, None]:
+	"""Context manager to get a RabbitMQ connection from the pool."""
 
-	global connection_pool
-	return RabbitMQConnectionContext(pool=connection_pool)
+	mail_settings = frappe.get_cached_doc("Mail Settings")
+	pool = RabbitMQConnectionPool(
+		host=mail_settings.rmq_host,
+		port=mail_settings.rmq_port,
+		virtual_host=mail_settings.rmq_virtual_host,
+		username=mail_settings.rmq_username,
+		password=mail_settings.get_password("rmq_password")
+		if mail_settings.rmq_password
+		else None,
+	)
+	connection: RabbitMQ | None = None
 
-
-connection_pool = RabbitMQConnectionPool()
+	try:
+		connection = pool.get_connection()
+		yield connection
+	finally:
+		if connection:
+			pool.return_connection(connection)

@@ -1171,7 +1171,7 @@ def get_outgoing_mails_status() -> None:
 						elif hook == "delivered":
 							delivered(data)
 
-					rmq._channel.basic_ack(delivery_tag=method.delivery_tag)
+					rmq.channel.basic_ack(delivery_tag=method.delivery_tag)
 				else:
 					break
 	except Exception:
@@ -1217,12 +1217,10 @@ def process_newsletter_queue(batch_size: int = 1000) -> None:
 				frappe.db.commit()
 
 				if delivery_tags:
-					rmq._channel.basic_ack(delivery_tag=delivery_tags[-1], multiple=True)
+					rmq.channel.basic_ack(delivery_tag=delivery_tags[-1], multiple=True)
 			except Exception:
 				if delivery_tags:
-					rmq._channel.basic_nack(
-						delivery_tag=delivery_tags[-1], multiple=True, requeue=True
-					)
+					rmq.channel.basic_nack(delivery_tag=delivery_tags[-1], multiple=True, requeue=True)
 
 				frappe.log_error(title="Process Newsletter Queue", message=frappe.get_traceback())
 
