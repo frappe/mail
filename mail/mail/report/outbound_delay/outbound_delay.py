@@ -60,6 +60,9 @@ def get_data(filters=None) -> list:
 			& (Date(OM.created_at) <= Date(filters.get("to_date")))
 		)
 
+	if not filters.get("include_newsletter"):
+		query = query.where(OM.is_newsletter == 0)
+
 	for field in [
 		"name",
 		"agent",
