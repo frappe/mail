@@ -168,6 +168,10 @@ has_permission = {
 	"Incoming Mail": "mail.mail.doctype.incoming_mail.incoming_mail.has_permission",
 }
 
+website_route_rules = [
+	{"from_route": "/mail/<path:app_path>", "to_route": "mail"},
+]
+
 # DocType Class
 # ---------------
 # Override standard doctype classes
