@@ -68,5 +68,11 @@ frappe.query_reports["Outbound Delay"] = {
 			label: __("Message ID"),
 			fieldtype: "Data",
 		},
+		{
+			fieldname: "include_newsletter",
+			label: __("Include Newsletter"),
+			fieldtype: "Check",
+			default: 0,
+		},
 	]
 };

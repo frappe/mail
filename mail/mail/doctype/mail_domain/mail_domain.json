@@ -14,7 +14,6 @@
   "domain_owner",
   "dkim_selector",
   "dkim_bits",
-  "outgoing_agent",
   "dns_records_section",
   "dns_records",
   "dkim_keys_section",
@@ -96,14 +95,6 @@
    "options": "\n1024\n2048\n4096"
   },
   {
-   "fieldname": "outgoing_agent",
-   "fieldtype": "Link",
-   "label": "Outgoing Agent",
-   "no_copy": 1,
-   "options": "Mail Agent",
-   "permlevel": 1
-  },
-  {
    "default": "1",
    "depends_on": "eval: !doc.__islocal",
    "fieldname": "enabled",
@@ -166,7 +157,7 @@
    "link_fieldname": "domain_name"
   }
  ],
- "modified": "2024-08-09 17:43:05.973121",
+ "modified": "2024-08-31 00:33:45.955612",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",

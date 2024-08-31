@@ -63,7 +63,9 @@ class RabbitMQ:
 	def channel(self) -> "BlockingChannel":
 		"""Returns the channel to the RabbitMQ server."""
 
-		if not self._channel or self._channel.is_closed:
+		if not self._connection or self._connection.is_closed:
+			self._connect()
+		elif not self._channel or self._channel.is_closed:
 			self._channel = self._connection.channel()
 
 		return self._channel

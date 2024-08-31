@@ -90,7 +90,7 @@ class OutgoingMail(Document):
 		"""Triggered to sync the document with the frontend."""
 
 		if self.via_api:
-			if status == "Sent": 
+			if status == "Sent":
 				frappe.publish_realtime("outgoing_mail_sent", self.as_dict(), after_commit=True)
 
 	def load_runtime(self) -> None:

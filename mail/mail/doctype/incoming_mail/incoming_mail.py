@@ -114,7 +114,10 @@ class IncomingMail(Document):
 	def sync_with_frontend(self) -> None:
 		"""Syncs the Incoming Mail with the frontend."""
 
-		frappe.publish_realtime("incoming_mail_received", self.as_dict(), user=self.receiver, after_commit=True)
+		frappe.publish_realtime(
+			"incoming_mail_received", self.as_dict(), user=self.receiver, after_commit=True
+		)
+
 
 @frappe.whitelist()
 def reply_to_mail(source_name, target_doc=None) -> "OutgoingMail":

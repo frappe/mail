@@ -27,7 +27,6 @@ class MailDomain(Document):
 	def validate(self) -> None:
 		self.validate_dkim_selector()
 		self.validate_dkim_bits()
-		self.validate_outgoing_agent()
 		self.validate_subdomain()
 		self.validate_root_domain()
 
@@ -75,28 +74,6 @@ class MailDomain(Document):
 			self.dkim_bits = frappe.db.get_single_value(
 				"Mail Settings", "default_dkim_bits", cache=True
 			)
-
-	def validate_outgoing_agent(self) -> None:
-		"""Validates the Outgoing Agent."""
-
-		if self.outgoing_agent:
-			enabled, outgoing = frappe.get_cached_value(
-				"Mail Agent", self.outgoing_agent, ["enabled", "outgoing"]
-			)
-
-			if not enabled:
-				frappe.throw(
-					_("Outgoing Agent {0} is disabled.".format(frappe.bold(self.outgoing_agent)))
-				)
-
-			if not outgoing:
-				frappe.throw(
-					_(
-						"Outgoing Agent {0} is not an valid outgoing agent.".format(
-							frappe.bold(self.outgoing_agent)
-						)
-					)
-				)
 
 	def validate_subdomain(self) -> None:
 		"""Validates if the domain is a subdomain."""
