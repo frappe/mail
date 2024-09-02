@@ -28,6 +28,7 @@ class MailDomain(Document):
 	def validate(self) -> None:
 		self.validate_dkim_selector()
 		self.validate_dkim_key_size()
+		self.validate_newsletter_retention()
 		self.validate_subdomain()
 		self.validate_root_domain()
 
@@ -81,6 +82,27 @@ class MailDomain(Document):
 		else:
 			self.dkim_key_size = frappe.db.get_single_value(
 				"Mail Settings", "default_dkim_key_size", cache=True
+			)
+
+	def validate_newsletter_retention(self) -> None:
+		"""Validates the Newsletter Retention."""
+
+		if self.newsletter_retention:
+			if self.newsletter_retention < 1:
+				frappe.throw(_("Newsletter Retention must be greater than 0."))
+
+			max_newsletter_retention = frappe.db.get_single_value(
+				"Mail Settings", "max_newsletter_retention", cache=True
+			)
+			if self.newsletter_retention > max_newsletter_retention:
+				frappe.throw(
+					_("Newsletter Retention must be less than or equal to {0}.").format(
+						frappe.bold(max_newsletter_retention)
+					)
+				)
+		else:
+			self.newsletter_retention = frappe.db.get_single_value(
+				"Mail Settings", "default_newsletter_retention", cache=True
 			)
 
 	def validate_subdomain(self) -> None:

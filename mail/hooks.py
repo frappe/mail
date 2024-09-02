@@ -199,9 +199,7 @@ scheduler_events = {
 	# "all": [
 	#     "mail.tasks.all"
 	# ],
-	# "daily": [
-	#     "mail.tasks.daily"
-	# ],
+	"daily": ["mail.mail.doctype.outgoing_mail.outgoing_mail.delete_newsletters"],
 	# "hourly": [
 	#     "mail.tasks.hourly"
 	# ],
@@ -220,7 +218,7 @@ scheduler_events = {
 			"mail.mail.doctype.outgoing_mail.outgoing_mail.enqueue_get_outgoing_mails_status",
 			"mail.mail.doctype.outgoing_mail.outgoing_mail.enqueue_process_newsletter_queue",
 		],
-	}
+	},
 }
 
 # Testing

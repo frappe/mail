@@ -14,6 +14,7 @@
   "default_ttl",
   "column_break_xlun",
   "default_dkim_key_size",
+  "default_newsletter_retention",
   "section_break_kplw",
   "dns_records",
   "rabbitmq_amqp_tab",
@@ -35,6 +36,8 @@
   "column_break_l9fc",
   "outgoing_max_attachment_size",
   "outgoing_total_attachments_size",
+  "newsletter_section",
+  "max_newsletter_retention",
   "incoming_tab",
   "send_notification_on_reject",
   "column_break_0buk",
@@ -250,12 +253,33 @@
    "non_negative": 1,
    "options": "1024\n2048\n4096",
    "reqd": 1
+  },
+  {
+   "fieldname": "newsletter_section",
+   "fieldtype": "Section Break",
+   "label": "Newsletter"
+  },
+  {
+   "default": "3",
+   "fieldname": "default_newsletter_retention",
+   "fieldtype": "Int",
+   "label": "Newsletter Retention (Days)",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "7",
+   "fieldname": "max_newsletter_retention",
+   "fieldtype": "Int",
+   "label": "Max Retention (Days)",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-09-02 12:49:01.040413",
+ "modified": "2024-09-02 16:27:18.705211",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

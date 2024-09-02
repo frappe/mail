@@ -10,12 +10,12 @@ from uuid_utils import uuid7
 from mail.config import constants
 from email.message import Message
 from email.mime.text import MIMEText
+from mail.rabbitmq import rabbitmq_context
 from frappe.model.document import Document
 from mail.utils.cache import get_postmaster
 from email.utils import parseaddr, formataddr
 from frappe.utils.caching import request_cache
 from email.mime.multipart import MIMEMultipart
-from mail.rabbitmq import rabbitmq_context
 from frappe.utils import flt, now, time_diff_in_seconds
 from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
 from mail.utils import (
@@ -900,6 +900,37 @@ def delete_outgoing_mails(mailbox: str) -> None:
 
 	if mailbox:
 		frappe.db.delete("Outgoing Mail", {"sender": mailbox})
+
+
+def delete_newsletters() -> None:
+	"""Called by the scheduler to delete the newsletters based on the retention."""
+
+	from frappe.query_builder import Interval
+	from frappe.query_builder.functions import Now
+
+	newsletter_retention_and_mail_domains_map = {}
+	for d in frappe.db.get_list(
+		"Mail Domain",
+		fields=["name", "newsletter_retention"],
+		order_by="newsletter_retention",
+	):
+		newsletter_retention_and_mail_domains_map.setdefault(
+			d["newsletter_retention"], []
+		).append(d["name"])
+
+	for retention_days, mail_domains in newsletter_retention_and_mail_domains_map.items():
+		OM = frappe.qb.DocType("Outgoing Mail")
+		(
+			frappe.qb.from_(OM)
+			.where(
+				(OM.docstatus != 0)
+				& (OM.status == "Sent")
+				& (OM.is_newsletter == 1)
+				& (OM.domain_name.isin(mail_domains))
+				& (OM.submitted_at < (Now() - Interval(days=retention_days)))
+			)
+			.delete()
+		).run()
 
 
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
