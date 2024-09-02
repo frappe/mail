@@ -21,21 +21,21 @@ frappe.ui.form.on("Mailbox", {
     },
 
     add_actions(frm) {
-        if (!frm.doc.__islocal) {
-            frm.add_custom_button(__("Delete Incoming Mails"), () => {
-                frappe.confirm(
-                    __("Are you certain you wish to proceed?"),
-                    () => frm.trigger("delete_incoming_mails")
-                )
-            }, __("Actions"));
+        if (frm.doc.__islocal || !has_common(frappe.user_roles, ["Administrator", "System Manager"])) return;
 
-            frm.add_custom_button(__("Delete Outgoing Mails"), () => {
-                frappe.confirm(
-                    __("Are you certain you wish to proceed?"),
-                    () => frm.trigger("delete_outgoing_mails")
-                )
-            }, __("Actions"));
-        }
+        frm.add_custom_button(__("Delete Incoming Mails"), () => {
+            frappe.confirm(
+                __("Are you certain you wish to proceed?"),
+                () => frm.trigger("delete_incoming_mails")
+            )
+        }, __("Actions"));
+
+        frm.add_custom_button(__("Delete Outgoing Mails"), () => {
+            frappe.confirm(
+                __("Are you certain you wish to proceed?"),
+                () => frm.trigger("delete_outgoing_mails")
+            )
+        }, __("Actions"));
     },
 
     delete_incoming_mails(frm) {

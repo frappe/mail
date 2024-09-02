@@ -41,7 +41,7 @@ frappe.ui.form.on("Outgoing Mail", {
                     frm.trigger("get_outgoing_mails_status");
                 }, __("Actions"));
             }
-            else if (frm.doc.status === "Bounced") {
+            else if (frm.doc.status === "Bounced" && has_common(frappe.user_roles, ["Administrator", "System Manager"])) {
                 frm.add_custom_button(__("Retry"), () => {
                     frm.trigger("retry_bounced_mail");
                 }, __("Actions"));
