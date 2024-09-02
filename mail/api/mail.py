@@ -106,10 +106,6 @@ def get_snippet(content):
 
 @frappe.whitelist()
 def get_mail_thread(name, mail_type):
-	# Mail has reply to
-	# Mail has replica that has reply to
-	# Its the first mail of the thread so fetch emails to which this is the reply to
-
 	mail = get_mail_details(name, mail_type)
 	mail.mail_type = mail_type
 
@@ -127,21 +123,21 @@ def get_mail_thread(name, mail_type):
 		if mail.in_reply_to_mail_name:
 			reply_mail = get_mail_details(mail.in_reply_to_mail_name, mail.in_reply_to_mail_type)
 			get_thread(reply_mail, thread)
+		
+		replica = find_replica(mail, mail.mail_type)
+		if replica and replica != name:
+			replica_type = reverse_type(mail.mail_type)
+			replica_mail = get_mail_details(replica, replica_type)
+			replica_mail.mail_type = replica_type
+			get_thread(replica_mail, thread)
 		else:
-			replica = find_replica(mail, mail.mail_type)
-			if replica and replica != name:
-				replica_type = reverse_type(mail.mail_type)
-				replica_mail = get_mail_details(replica, replica_type)
-				replica_mail.mail_type = replica_type
-				get_thread(replica_mail, thread)
-			else:
-				replies = []
-				replies += gather_thread_replies(name)
-				replies += gather_thread_replies(original_replica)
+			replies = []
+			replies += gather_thread_replies(name)
+			replies += gather_thread_replies(original_replica)
 
-				for reply in replies:
-					if reply.name not in visited:
-						get_thread(reply, thread)
+			for reply in replies:
+				if reply.name not in visited:
+					get_thread(reply, thread)
 
 	get_thread(mail, thread)
 	thread = remove_duplicates_and_sort(thread)
@@ -200,7 +196,7 @@ def get_mail_details(name, type):
 	]
 
 	mail = frappe.db.get_value(type, name, fields, as_dict=1)
-	if not mail.display_name:
+	if not mail.get("display_name"):
 		mail.display_name = frappe.db.get_value("User", mail.sender, "full_name")
 
 	mail.user_image = frappe.db.get_value("User", mail.sender, "user_image")
