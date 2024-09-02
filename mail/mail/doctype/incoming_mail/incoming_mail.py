@@ -31,22 +31,6 @@ if TYPE_CHECKING:
 
 
 class IncomingMail(Document):
-	@staticmethod
-	def clear_old_logs(days=7):
-		from frappe.query_builder import Interval
-		from frappe.query_builder.functions import Now
-
-		IM = frappe.qb.DocType("Incoming Mail")
-		(
-			frappe.qb.from_(IM)
-			.where(
-				(IM.docstatus != 0)
-				& (IM.is_rejected == 1)
-				& (IM.creation < (Now() - Interval(days=days)))
-			)
-			.delete()
-		).run()
-
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -168,6 +152,27 @@ def delete_incoming_mails(mailbox: str) -> None:
 
 	if mailbox:
 		frappe.db.delete("Incoming Mail", {"receiver": mailbox})
+
+
+def delete_rejected_mails() -> None:
+	"""Called by the scheduler to delete the rejected mails based on the retention."""
+
+	from frappe.query_builder import Interval
+	from frappe.query_builder.functions import Now
+
+	retention_days = frappe.db.get_single_value(
+		"Mail Settings", "rejected_mail_retention", cache=True
+	)
+	IM = frappe.qb.DocType("Incoming Mail")
+	(
+		frappe.qb.from_(IM)
+		.where(
+			(IM.docstatus != 0)
+			& (IM.is_rejected == 1)
+			& (IM.processed_at < (Now() - Interval(days=retention_days)))
+		)
+		.delete()
+	).run()
 
 
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:

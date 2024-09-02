@@ -41,7 +41,8 @@
   "incoming_tab",
   "send_notification_on_reject",
   "column_break_0buk",
-  "max_sync_via_api"
+  "max_sync_via_api",
+  "rejected_mail_retention"
  ],
  "fields": [
   {
@@ -274,12 +275,20 @@
    "label": "Max Retention (Days)",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "default": "3",
+   "fieldname": "rejected_mail_retention",
+   "fieldtype": "Int",
+   "label": "Rejected Mail Retention (Days)",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-09-02 16:27:18.705211",
+ "modified": "2024-09-02 21:06:22.544268",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
