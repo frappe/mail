@@ -35,6 +35,7 @@ def get_data(filters=None) -> list:
 			MR.retries,
 			OM.message_size,
 			OM.via_api,
+			OM.is_newsletter,
 			OM.submitted_after,
 			OM.transferred_after,
 			MR.action_after,
@@ -184,6 +185,12 @@ def get_columns() -> list:
 			"fieldname": "via_api",
 			"fieldtype": "Check",
 			"width": 60,
+		},
+		{
+			"label": _("Newsletter"),
+			"fieldname": "is_newsletter",
+			"fieldtype": "Check",
+			"width": 100,
 		},
 		{
 			"label": _("Created After"),
