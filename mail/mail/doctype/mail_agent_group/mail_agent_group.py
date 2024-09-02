@@ -51,4 +51,4 @@ class MailAgentGroup(Document):
 	def update_server_dns_records(self) -> None:
 		"""Updates the DNS Records of the server."""
 
-		frappe.get_doc("Mail Settings").generate_dns_records(save=True)
+		frappe.get_doc("Mail Settings").refresh_dns_records(save=True)

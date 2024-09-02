@@ -13,7 +13,7 @@
   "default_dkim_selector",
   "default_ttl",
   "column_break_xlun",
-  "default_dkim_bits",
+  "default_dkim_key_size",
   "section_break_kplw",
   "dns_records",
   "rabbitmq_amqp_tab",
@@ -72,15 +72,6 @@
    "reqd": 1
   },
   {
-   "default": "2048",
-   "fieldname": "default_dkim_bits",
-   "fieldtype": "Select",
-   "label": "DKIM Bits",
-   "non_negative": 1,
-   "options": "1024\n2048\n4096",
-   "reqd": 1
-  },
-  {
    "fieldname": "root_domain_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -89,18 +80,19 @@
   },
   {
    "fieldname": "defaults_section",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Defaults"
   },
   {
    "fieldname": "dns_records",
    "fieldtype": "Table",
-   "label": "DNS Records",
    "options": "DNS Record",
    "read_only": 1
   },
   {
    "fieldname": "section_break_kplw",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "DNS Records"
   },
   {
    "fieldname": "outgoing_tab",
@@ -249,12 +241,21 @@
    "fieldtype": "Data",
    "label": "Virtual Host",
    "reqd": 1
+  },
+  {
+   "default": "2048",
+   "fieldname": "default_dkim_key_size",
+   "fieldtype": "Select",
+   "label": "DKIM Key Size (Bits)",
+   "non_negative": 1,
+   "options": "1024\n2048\n4096",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-08-24 09:25:40.824221",
+ "modified": "2024-09-02 12:49:01.040413",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

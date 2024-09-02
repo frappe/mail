@@ -16,8 +16,8 @@ class MailSettings(Document):
 		self.validate_spf_host()
 		self.validate_postmaster()
 		self.validate_default_dkim_selector()
-		self.validate_default_dkim_bits()
-		self.generate_dns_records()
+		self.validate_default_dkim_key_size()
+		self.refresh_dns_records()
 		self.validate_rmq_host()
 		self.validate_outgoing_max_attachment_size()
 		self.validate_outgoing_total_attachments_size()
@@ -76,13 +76,13 @@ class MailSettings(Document):
 			)
 			frappe.throw(msg)
 
-	def validate_default_dkim_bits(self) -> None:
-		"""Validates the DKIM Bits."""
+	def validate_default_dkim_key_size(self) -> None:
+		"""Validates the DKIM Key Size."""
 
-		if cint(self.default_dkim_bits) < 1024:
-			frappe.throw(_("DKIM Bits must be greater than 1024."))
+		if cint(self.default_dkim_key_size) < 1024:
+			frappe.throw(_("DKIM Key Size must be greater than 1024."))
 
-	def generate_dns_records(self, save: bool = False) -> None:
+	def refresh_dns_records(self, save: bool = False) -> None:
 		"""Generates the DNS Records."""
 
 		records = []
@@ -273,7 +273,7 @@ def validate_mail_settings() -> None:
 		"root_domain_name",
 		"spf_host",
 		"default_dkim_selector",
-		"default_dkim_bits",
+		"default_dkim_key_size",
 		"default_ttl",
 	]
 

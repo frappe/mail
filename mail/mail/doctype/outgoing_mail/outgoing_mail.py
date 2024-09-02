@@ -808,8 +808,10 @@ def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
 def get_dkim_selector_and_private_key(domain_name: str) -> tuple[str, str]:
 	"""Returns the DKIM selector and private key for the given domain."""
 
-	mail_domain = frappe.get_cached_doc("Mail Domain", domain_name)
-	return mail_domain.dkim_selector, mail_domain.get_password("dkim_private_key")
+	selector = frappe.db.get_value("Mail Domain", domain_name, "dkim_selector")
+	private_key = frappe.db.get_value("DKIM Key", domain_name, "private_key")
+
+	return selector, private_key
 
 
 def create_outgoing_mail(

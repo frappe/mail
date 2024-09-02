@@ -9,6 +9,7 @@ from mail.utils import get_dns_record
 from frappe.model.document import Document
 from mail.utils.validation import is_valid_host
 from mail.utils.user import has_role, is_system_manager
+from mail.mail.doctype.dkim_key.dkim_key import create_or_update_dkim_key
 from mail.utils.cache import delete_cache, get_user_domains, get_root_domain_name
 from mail.mail.doctype.mailbox.mailbox import (
 	create_dmarc_mailbox,
@@ -26,12 +27,13 @@ class MailDomain(Document):
 
 	def validate(self) -> None:
 		self.validate_dkim_selector()
-		self.validate_dkim_bits()
+		self.validate_dkim_key_size()
 		self.validate_subdomain()
 		self.validate_root_domain()
 
-		if self.is_new() or self.has_value_changed("dkim_bits"):
-			self.generate_dns_records()
+		if self.is_new() or self.has_value_changed("dkim_key_size"):
+			create_or_update_dkim_key(self.domain_name, cint(self.dkim_key_size))
+			self.refresh_dns_records()
 		elif self.has_value_changed("dkim_selector"):
 			self.refresh_dns_records()
 		elif not self.enabled:
@@ -45,6 +47,12 @@ class MailDomain(Document):
 
 	def on_update(self) -> None:
 		delete_cache(f"user|{self.domain_owner}")
+
+	@property
+	def dkim_public_key(self) -> str:
+		"""Returns the DKIM Public Key."""
+
+		return frappe.db.get_value("DKIM Key", self.domain_name, "public_key")
 
 	def validate_dkim_selector(self) -> None:
 		"""Validates the DKIM Selector."""
@@ -64,15 +72,15 @@ class MailDomain(Document):
 				"Mail Settings", "default_dkim_selector", cache=True
 			)
 
-	def validate_dkim_bits(self) -> None:
-		"""Validates the DKIM Bits."""
+	def validate_dkim_key_size(self) -> None:
+		"""Validates the DKIM Key Size."""
 
-		if self.dkim_bits:
-			if cint(self.dkim_bits) < 1024:
-				frappe.throw(_("DKIM Bits must be greater than 1024."))
+		if self.dkim_key_size:
+			if cint(self.dkim_key_size) < 1024:
+				frappe.throw(_("DKIM Key Size must be greater than 1024."))
 		else:
-			self.dkim_bits = frappe.db.get_single_value(
-				"Mail Settings", "default_dkim_bits", cache=True
+			self.dkim_key_size = frappe.db.get_single_value(
+				"Mail Settings", "default_dkim_key_size", cache=True
 			)
 
 	def validate_subdomain(self) -> None:
@@ -87,42 +95,7 @@ class MailDomain(Document):
 		self.is_root_domain = 1 if self.domain_name == get_root_domain_name() else 0
 
 	@frappe.whitelist()
-	def generate_dns_records(self, save: bool = False) -> None:
-		"""Generates the DNS Records."""
-
-		self.is_verified = 0
-		self.generate_dkim_key()
-		self.refresh_dns_records()
-
-		if save:
-			self.save()
-
-	def generate_dkim_key(self) -> None:
-		"""Generates the DKIM Key."""
-
-		from cryptography.hazmat.backends import default_backend
-		from cryptography.hazmat.primitives import serialization
-		from cryptography.hazmat.primitives.asymmetric import rsa
-
-		private_key = rsa.generate_private_key(
-			public_exponent=65537, key_size=cint(self.dkim_bits), backend=default_backend()
-		)
-		public_key = private_key.public_key()
-
-		private_key_pem = private_key.private_bytes(
-			encoding=serialization.Encoding.PEM,
-			format=serialization.PrivateFormat.TraditionalOpenSSL,
-			encryption_algorithm=serialization.NoEncryption(),
-		).decode()
-		public_key_pem = public_key.public_bytes(
-			encoding=serialization.Encoding.PEM,
-			format=serialization.PublicFormat.SubjectPublicKeyInfo,
-		).decode()
-
-		self.dkim_private_key = private_key_pem
-		self.dkim_public_key = get_filtered_dkim_key(public_key_pem)
-
-	def refresh_dns_records(self) -> None:
+	def refresh_dns_records(self, save: bool = False) -> None:
 		"""Refreshes the DNS Records."""
 
 		self.is_verified = 0
@@ -136,6 +109,9 @@ class MailDomain(Document):
 
 		self.extend("dns_records", sending_records)
 		self.extend("dns_records", receiving_records)
+
+		if save:
+			self.save()
 
 	def get_sending_records(
 		self, root_domain_name: str, spf_host: str, ttl: str
@@ -241,20 +217,6 @@ class MailDomain(Document):
 
 		if save:
 			self.save()
-
-
-def get_filtered_dkim_key(key_pem: str) -> str:
-	"""Returns the filtered DKIM Key."""
-
-	key_pem = "".join(key_pem.split())
-	key_pem = (
-		key_pem.replace("-----BEGINPUBLICKEY-----", "")
-		.replace("-----ENDPUBLICKEY-----", "")
-		.replace("-----BEGINRSAPRIVATEKEY-----", "")
-		.replace("----ENDRSAPRIVATEKEY-----", "")
-	)
-
-	return key_pem
 
 
 def verify_dns_record(record: "DNSRecord", debug: bool = False) -> bool:

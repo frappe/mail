@@ -29,15 +29,15 @@ frappe.ui.form.on("Mail Domain", {
                 frm.trigger("verify_dns_records");
             }, __("Actions"));
 
-            frm.add_custom_button(__("Create DMARC Mailbox"), () => {
-                frm.trigger("create_dmarc_mailbox");
-            }, __("Actions"));
-
-            frm.add_custom_button(__("Regenerate DNS Records"), () => {
+            frm.add_custom_button(__("Refresh DNS Records"), () => {
                 frappe.confirm(
                     __("Are you certain you wish to proceed?"),
-                    () => frm.trigger("generate_dns_records")
+                    () => frm.trigger("refresh_dns_records")
                 )
+            }, __("Actions"));
+
+            frm.add_custom_button(__("Create DMARC Mailbox"), () => {
+                frm.trigger("create_dmarc_mailbox");
             }, __("Actions"));
         }
     },
@@ -59,6 +59,23 @@ frappe.ui.form.on("Mail Domain", {
         });
     },
 
+    refresh_dns_records(frm) {
+        frappe.call({
+            doc: frm.doc,
+            method: "refresh_dns_records",
+            args: {
+                save: true,
+            },
+            freeze: true,
+            freeze_message: __("Refreshing DNS Records..."),
+            callback: (r) => {
+                if (!r.exc) {
+                    frm.refresh();
+                }
+            }
+        });
+    },
+
     create_dmarc_mailbox(frm) {
         frappe.call({
 			method: "mail.mail.doctype.mailbox.mailbox.create_dmarc_mailbox",
@@ -68,22 +85,5 @@ frappe.ui.form.on("Mail Domain", {
 			freeze: true,
 			freeze_message: __("Creating DMARC Mailbox..."),
 		});
-    },
-
-    generate_dns_records(frm) {
-        frappe.call({
-            doc: frm.doc,
-            method: "generate_dns_records",
-            args: {
-                save: true,
-            },
-            freeze: true,
-            freeze_message: __("Generating DNS Records..."),
-            callback: (r) => {
-                if (!r.exc) {
-                    frm.refresh();
-                }
-            }
-        });
-    },
+    }
 });
