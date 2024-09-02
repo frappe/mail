@@ -7,7 +7,7 @@ from frappe.utils.caching import request_cache
 def is_valid_host(host: str) -> bool:
 	"""Returns True if the host is a valid hostname else False."""
 
-	return bool(re.compile(r"^[a-zA-Z0-9_]+$").match(host))
+	return bool(re.compile(r"^[a-zA-Z0-9_-]+$").match(host))
 
 
 def is_valid_ip(ip: str, category: str | None = None) -> bool:
