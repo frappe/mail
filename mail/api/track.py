@@ -4,12 +4,14 @@ from frappe.query_builder import Case
 
 
 @frappe.whitelist(methods=["GET"], allow_guest=True)
-def open(id: str) -> None:
+def open() -> None:
 	"""Updates Outgoing Mail opened status."""
 
 	try:
+		id = frappe.request.args.get("id")
+
 		if not id:
-			frappe.throw(_("Tracking ID is required."))
+			frappe.throw(_(f"Tracking ID is required - {frappe.local.request_ip}."))
 
 		now = frappe.utils.now()
 		OM = frappe.qb.DocType("Outgoing Mail")
