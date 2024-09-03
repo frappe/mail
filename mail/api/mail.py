@@ -43,25 +43,32 @@ def get_translations():
 
 
 @frappe.whitelist()
-def get_incoming_mails(start=0):
+def get_incoming_mails(start: int = 0) -> list:
 	mails = frappe.get_all(
 		"Incoming Mail",
 		{"receiver": frappe.session.user, "docstatus": 1},
-		["name", "sender", "body_html", "body_plain", "display_name", "subject", "creation"],
+		[
+			"name",
+			"sender",
+			"body_html",
+			"body_plain",
+			"display_name",
+			"subject",
+			"creation",
+			"in_reply_to_mail_name",
+			"in_reply_to_mail_type",
+			"message_id",
+		],
 		limit=50,
 		start=start,
 		order_by="created_at desc",
 	)
 
-	for mail in mails:
-		mail.latest_content = get_latest_content(mail.body_html, mail.body_plain)
-		mail.snippet = get_snippet(mail.latest_content) if mail.latest_content else ""
-
-	return mails
+	return get_mail_list(mails, "Incoming Mail")
 
 
 @frappe.whitelist()
-def get_outgoing_mails(start=0):
+def get_outgoing_mails(start: int = 0) -> list:
 	mails = frappe.get_all(
 		"Outgoing Mail",
 		{
@@ -69,17 +76,67 @@ def get_outgoing_mails(start=0):
 			"docstatus": 1,
 			"status": "Sent",
 		},
-		["name", "subject", "sender", "body_html", "body_plain", "creation", "display_name"],
+		[
+			"name",
+			"subject",
+			"sender",
+			"body_html",
+			"body_plain",
+			"creation",
+			"display_name",
+			"in_reply_to_mail_name",
+			"in_reply_to_mail_type",
+			"message_id",
+		],
 		limit=50,
 		start=start,
 		order_by="created_at desc",
 	)
+	return get_mail_list(mails, "Outgoing Mail")
+
+
+def get_mail_list(mails, mail_type):
+	for mail in mails[:]:
+		mail.mail_type = mail_type
+		thread = get_list_thread(mail)
+		thread_with_names = [email.name for email in thread]
+		mails_in_original_list = [email for email in mails if email.name in thread_with_names]
+		if len(mails_in_original_list) > 1:
+			latest_mail = max(mails_in_original_list, key=lambda x: x.creation)
+			mails_in_original_list.remove(latest_mail)
+
+			for email in mails_in_original_list:
+				mails.remove(email)
 
 	for mail in mails:
 		mail.latest_content = get_latest_content(mail.body_html, mail.body_plain)
 		mail.snippet = get_snippet(mail.latest_content) if mail.latest_content else ""
 
 	return mails
+
+
+def get_list_thread(mail):
+	thread = []
+	processed = set()
+
+	def add_to_thread(mail):
+		if mail.name in processed:
+			return
+		processed.add(mail.name)
+		thread.append(mail)
+
+		if mail.in_reply_to_mail_name:
+			reply_mail = get_mail_details(
+				mail.in_reply_to_mail_name, mail.in_reply_to_mail_type, False
+			)
+			add_to_thread(reply_mail)
+		if mail.message_id:
+			replica_name = find_replica(mail, mail.mail_type)
+			replica = get_mail_details(replica_name, reverse_type(mail.mail_type), False)
+			add_to_thread(replica)
+
+	add_to_thread(mail)
+	return thread
 
 
 def get_latest_content(html, plain):
@@ -106,11 +163,7 @@ def get_snippet(content):
 
 @frappe.whitelist()
 def get_mail_thread(name, mail_type):
-	# Mail has reply to
-	# Mail has replica that has reply to
-	# Its the first mail of the thread so fetch emails to which this is the reply to
-
-	mail = get_mail_details(name, mail_type)
+	mail = get_mail_details(name, mail_type, True)
 	mail.mail_type = mail_type
 
 	original_replica = find_replica(mail, mail_type)
@@ -125,23 +178,25 @@ def get_mail_thread(name, mail_type):
 		visited.add(mail.name)
 
 		if mail.in_reply_to_mail_name:
-			reply_mail = get_mail_details(mail.in_reply_to_mail_name, mail.in_reply_to_mail_type)
+			reply_mail = get_mail_details(
+				mail.in_reply_to_mail_name, mail.in_reply_to_mail_type, True
+			)
 			get_thread(reply_mail, thread)
-		else:
-			replica = find_replica(mail, mail.mail_type)
-			if replica and replica != name:
-				replica_type = reverse_type(mail.mail_type)
-				replica_mail = get_mail_details(replica, replica_type)
-				replica_mail.mail_type = replica_type
-				get_thread(replica_mail, thread)
-			else:
-				replies = []
-				replies += gather_thread_replies(name)
-				replies += gather_thread_replies(original_replica)
 
-				for reply in replies:
-					if reply.name not in visited:
-						get_thread(reply, thread)
+		replica = find_replica(mail, mail.mail_type)
+		if replica and replica != name:
+			replica_type = reverse_type(mail.mail_type)
+			replica_mail = get_mail_details(replica, replica_type, True)
+			replica_mail.mail_type = replica_type
+			get_thread(replica_mail, thread)
+		else:
+			replies = []
+			replies += gather_thread_replies(name)
+			replies += gather_thread_replies(original_replica)
+
+			for reply in replies:
+				if reply.name not in visited:
+					get_thread(reply, thread)
 
 	get_thread(mail, thread)
 	thread = remove_duplicates_and_sort(thread)
@@ -163,7 +218,7 @@ def get_thread_from_replies(mail_type, mail_name):
 	replies = []
 	emails = frappe.get_all(mail_type, {"in_reply_to_mail_name": mail_name}, pluck="name")
 	for email in emails:
-		reply = get_mail_details(email, mail_type)
+		reply = get_mail_details(email, mail_type, True)
 		reply.mail_type = mail_type
 		replies.append(reply)
 
@@ -171,7 +226,7 @@ def get_thread_from_replies(mail_type, mail_name):
 
 
 def find_replica(mail, mail_type):
-	replica_type = "Incoming Mail" if mail_type == "Outgoing Mail" else "Outgoing Mail"
+	replica_type = reverse_type(mail_type)
 	return frappe.db.exists(replica_type, {"message_id": mail.message_id})
 
 
@@ -185,7 +240,7 @@ def remove_duplicates_and_sort(thread):
 	return thread
 
 
-def get_mail_details(name, type):
+def get_mail_details(name: str, type: str, include_all_details: bool = False):
 	fields = [
 		"name",
 		"subject",
@@ -200,7 +255,12 @@ def get_mail_details(name, type):
 	]
 
 	mail = frappe.db.get_value(type, name, fields, as_dict=1)
-	if not mail.display_name:
+	mail.mail_type = type
+
+	if not include_all_details:
+		return mail
+
+	if not mail.get("display_name"):
 		mail.display_name = frappe.db.get_value("User", mail.sender, "full_name")
 
 	mail.user_image = frappe.db.get_value("User", mail.sender, "user_image")

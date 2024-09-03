@@ -35,6 +35,8 @@ export const sessionStore = defineStore('mail-session', () => {
     const logout = createResource({
         url: 'logout',
         onSuccess() {
+            sessionStorage.removeItem("currentIncomingMail")
+            sessionStorage.removeItem("currentOutgoingMail")
             userResource.reset()
             user.value = null
             window.location.reload()

@@ -37,6 +37,6 @@ const formattedDate = computed(() => {
 })
 
 const tooltipText = computed(() => {
-    return __(`${dayjs(props.datetime).format('DD MMM YYYY h:mm A')} at ${dayjs(props.datetime).format('h:mm A')}`)
+    return __(`${dayjs(props.datetime).format('DD MMM YYYY')} at ${dayjs(props.datetime).format('h:mm A')}`)
 })
 </script>
