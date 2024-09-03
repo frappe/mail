@@ -10,10 +10,9 @@
   "column_break_3hud",
   "spf_host",
   "defaults_section",
-  "default_dkim_selector",
+  "default_dkim_key_size",
   "default_ttl",
   "column_break_xlun",
-  "default_dkim_key_size",
   "default_newsletter_retention",
   "section_break_kplw",
   "dns_records",
@@ -55,13 +54,6 @@
   {
    "fieldname": "column_break_3hud",
    "fieldtype": "Column Break"
-  },
-  {
-   "default": "frappemail",
-   "fieldname": "default_dkim_selector",
-   "fieldtype": "Data",
-   "label": "DKIM Selector",
-   "reqd": 1
   },
   {
    "fieldname": "column_break_xlun",
@@ -288,7 +280,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-09-02 21:06:22.544268",
+ "modified": "2024-09-03 12:51:45.088777",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

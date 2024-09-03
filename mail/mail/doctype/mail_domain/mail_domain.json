@@ -12,7 +12,6 @@
   "is_root_domain",
   "column_break_lr3y",
   "domain_owner",
-  "dkim_selector",
   "dkim_key_size",
   "newsletter_retention",
   "dns_records_section",
@@ -42,11 +41,6 @@
   {
    "fieldname": "column_break_lr3y",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "dkim_selector",
-   "fieldtype": "Data",
-   "label": "DKIM Selector"
   },
   {
    "depends_on": "dns_records",
@@ -137,7 +131,7 @@
    "link_fieldname": "domain_name"
   }
  ],
- "modified": "2024-09-02 16:26:30.696756",
+ "modified": "2024-09-03 12:48:42.009855",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",

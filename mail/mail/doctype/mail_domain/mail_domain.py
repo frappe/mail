@@ -7,9 +7,8 @@ from frappe.utils import cint
 from typing import TYPE_CHECKING
 from mail.utils import get_dns_record
 from frappe.model.document import Document
-from mail.utils.validation import is_valid_host
 from mail.utils.user import has_role, is_system_manager
-from mail.mail.doctype.dkim_key.dkim_key import create_or_update_dkim_key
+from mail.mail.doctype.dkim_key.dkim_key import create_dkim_key
 from mail.utils.cache import delete_cache, get_user_domains, get_root_domain_name
 from mail.mail.doctype.mailbox.mailbox import (
 	create_dmarc_mailbox,
@@ -26,16 +25,13 @@ class MailDomain(Document):
 		self.name = self.domain_name
 
 	def validate(self) -> None:
-		self.validate_dkim_selector()
 		self.validate_dkim_key_size()
 		self.validate_newsletter_retention()
 		self.validate_subdomain()
 		self.validate_root_domain()
 
 		if self.is_new() or self.has_value_changed("dkim_key_size"):
-			create_or_update_dkim_key(self.domain_name, cint(self.dkim_key_size))
-			self.refresh_dns_records()
-		elif self.has_value_changed("dkim_selector"):
+			create_dkim_key(self.domain_name, cint(self.dkim_key_size))
 			self.refresh_dns_records()
 		elif not self.enabled:
 			self.is_verified = 0
@@ -48,30 +44,6 @@ class MailDomain(Document):
 
 	def on_update(self) -> None:
 		delete_cache(f"user|{self.domain_owner}")
-
-	@property
-	def dkim_public_key(self) -> str:
-		"""Returns the DKIM Public Key."""
-
-		return frappe.db.get_value("DKIM Key", self.domain_name, "public_key")
-
-	def validate_dkim_selector(self) -> None:
-		"""Validates the DKIM Selector."""
-
-		if self.dkim_selector:
-			self.dkim_selector = self.dkim_selector.lower()
-
-			if not is_valid_host(self.dkim_selector):
-				msg = _(
-					"DKIM Selector {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores.".format(
-						frappe.bold(self.dkim_selector)
-					)
-				)
-				frappe.throw(msg)
-		else:
-			self.dkim_selector = frappe.db.get_single_value(
-				"Mail Settings", "default_dkim_selector", cache=True
-			)
 
 	def validate_dkim_key_size(self) -> None:
 		"""Validates the DKIM Key Size."""
@@ -155,22 +127,11 @@ class MailDomain(Document):
 			},
 		)
 
-		# DKIM Record
-		records.append(
-			{
-				"category": category,
-				"type": type,
-				"host": f"{self.dkim_selector}._domainkey.{self.domain_name}",
-				"value": f"v=DKIM1;k=rsa;p={self.dkim_public_key}",
-				"ttl": ttl,
-			}
-		)
-
 		# DMARC Record
 		dmarc_value = (
-			f"v=DMARC1; p=none; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name};"
+			f"v=DMARC1; p=reject; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name}; fo=1; adkim=s; aspf=s; pct=100;"
 			if self.is_root_domain
-			else f"v=DMARC1; p=reject; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name};"
+			else f"v=DMARC1; p=quarantine; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name}; fo=1; adkim=r; aspf=r; pct=100;"
 		)
 		records.append(
 			{

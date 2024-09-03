@@ -15,7 +15,6 @@ class MailSettings(Document):
 		self.validate_root_domain_name()
 		self.validate_spf_host()
 		self.validate_postmaster()
-		self.validate_default_dkim_selector()
 		self.validate_default_dkim_key_size()
 		self.refresh_dns_records()
 		self.validate_rmq_host()
@@ -62,19 +61,6 @@ class MailSettings(Document):
 					frappe.bold(self.postmaster)
 				)
 			)
-
-	def validate_default_dkim_selector(self) -> None:
-		"""Validates the DKIM Selector."""
-
-		self.default_dkim_selector = self.default_dkim_selector.lower()
-
-		if not is_valid_host(self.default_dkim_selector):
-			msg = _(
-				"DKIM Selector {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores.".format(
-					frappe.bold(self.default_dkim_selector)
-				)
-			)
-			frappe.throw(msg)
 
 	def validate_default_dkim_key_size(self) -> None:
 		"""Validates the DKIM Key Size."""
@@ -272,7 +258,6 @@ def validate_mail_settings() -> None:
 	mandatory_fields = [
 		"root_domain_name",
 		"spf_host",
-		"default_dkim_selector",
 		"default_dkim_key_size",
 		"default_ttl",
 	]

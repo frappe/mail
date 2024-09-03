@@ -14,7 +14,6 @@ from mail.rabbitmq import rabbitmq_context
 from frappe.model.document import Document
 from mail.utils.cache import get_postmaster
 from email.utils import parseaddr, formataddr
-from frappe.utils.caching import request_cache
 from email.mime.multipart import MIMEMultipart
 from frappe.utils import flt, now, time_diff_in_seconds
 from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
@@ -426,6 +425,8 @@ class OutgoingMail(Document):
 			"""Adds the DKIM signature to the message."""
 
 			from dkim import sign as dkim_sign
+			from mail.utils.cache import get_root_domain_name
+			from mail.mail.doctype.dkim_key.dkim_key import get_dkim_selector_and_private_key
 
 			include_headers = [
 				b"To",
@@ -440,7 +441,7 @@ class OutgoingMail(Document):
 			dkim_selector, dkim_private_key = get_dkim_selector_and_private_key(self.domain_name)
 			dkim_signature = dkim_sign(
 				message=message.as_string().split("\n", 1)[-1].encode("utf-8"),
-				domain=self.domain_name.encode(),
+				domain=get_root_domain_name().encode(),
 				selector=dkim_selector.encode(),
 				privkey=dkim_private_key.encode(),
 				include_headers=include_headers,
@@ -802,16 +803,6 @@ def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
 		body_html = f"<html><body>{tracking_pixel}{body_html}</body></html>"
 
 	return body_html
-
-
-@request_cache
-def get_dkim_selector_and_private_key(domain_name: str) -> tuple[str, str]:
-	"""Returns the DKIM selector and private key for the given domain."""
-
-	selector = frappe.db.get_value("Mail Domain", domain_name, "dkim_selector")
-	private_key = frappe.db.get_value("DKIM Key", domain_name, "private_key")
-
-	return selector, private_key
 
 
 def create_outgoing_mail(

@@ -2,26 +2,23 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe import _
 from frappe.utils import cint
+from frappe import _, generate_hash
 from frappe.model.document import Document
+from frappe.utils.caching import request_cache
 
 
 class DKIMKey(Document):
 	def autoname(self) -> None:
-		self.name = self.domain_name
+		self.name = f"{self.domain_name.replace('.', '-')}-{generate_hash(length=10)}"
 
 	def validate(self) -> None:
 		self.validate_domain_name()
 		self.validate_key_size()
+		self.generate_dkim_keys()
 
-		if (
-			self.is_new()
-			or self.has_value_changed("key_size")
-			or not self.private_key
-			or not self.public_key
-		):
-			self.generate_dkim_keys()
+	def after_insert(self) -> None:
+		self.disable_existing_dkim_keys()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
@@ -49,25 +46,63 @@ class DKIMKey(Document):
 
 		self.private_key, self.public_key = generate_dkim_keys(cint(self.key_size))
 
+	def disable_existing_dkim_keys(self) -> None:
+		"""Disables the existing DKIM Keys."""
 
-def create_or_update_dkim_key(
-	domain_name: str, key_size: int | None = None
-) -> "DKIMKey":
-	"""Creates a DKIM Key document if it does not exist, else updates it."""
+		DKIM_KEY = frappe.qb.DocType("DKIM Key")
+		(
+			frappe.qb.update(DKIM_KEY)
+			.set(DKIM_KEY.enabled, 0)
+			.where(
+				(DKIM_KEY.enabled == 1)
+				& (DKIM_KEY.name != self.name)
+				& (DKIM_KEY.domain_name == self.domain_name)
+			)
+		).run()
 
-	doc = None
+	def get_dkim_record(self) -> dict:
+		"""Returns the DKIM Record."""
 
-	if frappe.db.exists("DKIM Key", domain_name):
-		doc = frappe.get_doc("DKIM Key", domain_name)
-	else:
-		doc = frappe.new_doc("DKIM Key")
-		doc.domain_name = domain_name
+		from mail.utils.cache import get_root_domain_name
 
+		return {
+			"category": "Sending Record",
+			"type": "TXT",
+			"host": f"{self.name}._domainkey.{get_root_domain_name()}",
+			"value": f"v=DKIM1; k=rsa; p={self.public_key}",
+			"ttl": frappe.db.get_single_value("Mail Settings", "default_ttl", cache=True),
+		}
+
+
+def create_dkim_key(domain_name: str, key_size: int | None = None) -> "DKIMKey":
+	"""Creates a DKIM Key document."""
+
+	doc = frappe.new_doc("DKIM Key")
+	doc.enabled = 1
+	doc.domain_name = domain_name
 	doc.key_size = key_size
 	doc.flags.ignore_links = True
 	doc.save(ignore_permissions=True)
 
 	return doc
+
+
+@request_cache
+def get_dkim_selector_and_private_key(
+	domain_name: str, raise_exception: bool = True
+) -> tuple[str | None, str | None]:
+	"""Returns the DKIM selector and private key for the given domain."""
+
+	selector, private_key = frappe.db.get_value(
+		"DKIM Key", {"enabled": 1, "domain_name": domain_name}, ["name", "private_key"]
+	)
+
+	if raise_exception and (not selector or not private_key):
+		frappe.throw(
+			_("DKIM Key not found for the domain {0}").format(frappe.bold(domain_name))
+		)
+
+	return selector, private_key
 
 
 def generate_dkim_keys(key_size: int = 1024) -> tuple[str, str]:
