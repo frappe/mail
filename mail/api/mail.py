@@ -47,21 +47,17 @@ def get_incoming_mails(start=0):
 	mails = frappe.get_all(
 		"Incoming Mail",
 		{"receiver": frappe.session.user, "docstatus": 1},
-		["name", "sender", "body_html", "body_plain", "display_name", "subject", "creation"],
+		["name", "sender", "body_html", "body_plain", "display_name", "subject", "creation", "in_reply_to_mail_name", "in_reply_to_mail_type"],
 		limit=50,
 		start=start,
 		order_by="created_at desc",
 	)
 
-	for mail in mails:
-		mail.latest_content = get_latest_content(mail.body_html, mail.body_plain)
-		mail.snippet = get_snippet(mail.latest_content) if mail.latest_content else ""
-
-	return mails
+	return get_mail_list(mails)
 
 
 @frappe.whitelist()
-def get_outgoing_mails(start=0):
+def get_outgoing_mails(start: int = 0) -> list:
 	mails = frappe.get_all(
 		"Outgoing Mail",
 		{
@@ -69,17 +65,43 @@ def get_outgoing_mails(start=0):
 			"docstatus": 1,
 			"status": "Sent",
 		},
-		["name", "subject", "sender", "body_html", "body_plain", "creation", "display_name"],
+		["name", "subject", "sender", "body_html", "body_plain", "creation", "display_name", "in_reply_to_mail_name", "in_reply_to_mail_type"],
 		limit=50,
 		start=start,
 		order_by="created_at desc",
 	)
+	return get_mail_list(mails)
+
+def get_mail_list(mails):
+	for mail in mails[:]:
+		thread = get_list_thread(mail)
+		thread_with_names = [email.name for email in thread]
+		mails_in_original_list = [email for email in mails if email.name in thread_with_names]
+		
+		if len(mails_in_original_list) > 1:
+			latest_mail = max(mails_in_original_list, key=lambda x: x.creation)
+			mails_in_original_list.remove(latest_mail)
+
+			for email in mails_in_original_list:
+				mails.remove(email)
 
 	for mail in mails:
 		mail.latest_content = get_latest_content(mail.body_html, mail.body_plain)
 		mail.snippet = get_snippet(mail.latest_content) if mail.latest_content else ""
 
 	return mails
+
+def get_list_thread(mail):
+	thread = []
+	def add_to_thread(mail):
+		thread.append(mail)
+		if mail.in_reply_to_mail_name:
+			reply_mail = frappe.db.get_value(mail.in_reply_to_mail_type, mail.in_reply_to_mail_name, ["name", "subject", "sender", "body_html", "body_plain", "display_name", "creation", "in_reply_to_mail_name", "in_reply_to_mail_type"], as_dict=1)
+			add_to_thread(reply_mail)
+		else:
+			return
+	add_to_thread(mail)
+	return thread
 
 
 def get_latest_content(html, plain):
@@ -102,7 +124,6 @@ def get_snippet(content):
 		r"(?<=[.,])(?=[^\s])", r" ", content
 	)  # add space after . and , if not followed by a space
 	return " ".join(content.split()[:50])
-
 
 @frappe.whitelist()
 def get_mail_thread(name, mail_type):
