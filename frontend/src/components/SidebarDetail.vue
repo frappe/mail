@@ -1,15 +1,17 @@
 <template>
-    <div class="flex items-center justify-between">
-        <div class="font-semibold">
-            {{ mail.display_name ? mail.display_name : mail.sender }}
+    <div class="p-2 pt-3">
+        <div class="flex items-center justify-between">
+            <div class="font-semibold">
+                {{ mail.display_name ? mail.display_name : mail.sender }}
+            </div>
+            <MailDate :datetime="mail.creation" :inList="true"/>
         </div>
-        <MailDate :datetime="mail.creation" :inList="true"/>
-    </div>
-    <div class="subject text-xs">
-        {{ mail.subject }}
-    </div>
-    <div class="snippet text-xs text-gray-600">
-        {{ mail.snippet }}
+        <div class="subject text-xs">
+            {{ mail.subject }}
+        </div>
+        <div class="snippet text-xs text-gray-600">
+            {{ mail.snippet }}
+        </div>
     </div>
 </template>
 <script setup>
