@@ -131,7 +131,7 @@ class MailDomain(Document):
 		dmarc_value = (
 			f"v=DMARC1; p=reject; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name}; fo=1; adkim=s; aspf=s; pct=100;"
 			if self.is_root_domain
-			else f"v=DMARC1; p=quarantine; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name}; fo=1; adkim=r; aspf=r; pct=100;"
+			else f"v=DMARC1; p=reject; rua=mailto:dmarc@{self.domain_name}; ruf=mailto:dmarc@{self.domain_name}; fo=1; adkim=r; aspf=r; pct=100;"
 		)
 		records.append(
 			{
