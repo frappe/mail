@@ -795,7 +795,7 @@ def add_tracking_pixel(body_html: str, tracking_id: str) -> str:
 	"""Adds the tracking pixel to the HTML body."""
 
 	src = f"{frappe.utils.get_url()}/api/method/mail.api.track.open?id={tracking_id}"
-	tracking_pixel = f'<img src="{src}" width="1" height="1" style="display:none;">'
+	tracking_pixel = f'<img src="{src}">'
 
 	if "<body>" in body_html:
 		body_html = body_html.replace("<body>", f"<body>{tracking_pixel}", 1)
