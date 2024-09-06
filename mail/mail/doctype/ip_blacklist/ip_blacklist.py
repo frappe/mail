@@ -11,12 +11,14 @@ from mail.utils.cache import delete_cache, get_blacklist_for_ip_group
 
 class IPBlacklist(Document):
 	def validate(self) -> None:
-		self.set_ip_version()
-		self.set_ip_address_expanded()
-		self.set_group()
+		if self.is_new():
+			self.set_ip_version()
+			self.set_ip_address_expanded()
+			self.set_ip_group()
+			self.set_source_ip_address()
+			self.set_source_host()
+
 		self.set_host()
-		self.set_source_ip_address()
-		self.set_source_host()
 
 	def on_update(self) -> None:
 		delete_cache(f"blacklist|{self.ip_group}")
@@ -31,15 +33,10 @@ class IPBlacklist(Document):
 
 		self.ip_address_expanded = get_ip_address_expanded(self.ip_version, self.ip_address)
 
-	def set_group(self) -> None:
+	def set_ip_group(self) -> None:
 		"""Sets the IP group"""
 
-		self.ip_group = get_group(self.ip_version, self.ip_address_expanded)
-
-	def set_host(self) -> None:
-		"""Sets the host for the IP address"""
-
-		self.host = get_host_by_ip(self.ip_address_expanded)
+		self.ip_group = get_ip_group(self.ip_version, self.ip_address_expanded)
 
 	def set_source_ip_address(self) -> None:
 		"""Sets the source IP address"""
@@ -50,6 +47,11 @@ class IPBlacklist(Document):
 		"""Sets the source host"""
 
 		self.source_host = get_host_by_ip(self.source_ip_address)
+
+	def set_host(self) -> None:
+		"""Sets the host for the IP address"""
+
+		self.host = get_host_by_ip(self.ip_address_expanded)
 
 
 def get_ip_version(ip_address: str) -> Literal["IPv4", "IPv6"]:
@@ -70,7 +72,7 @@ def get_ip_address_expanded(
 	)
 
 
-def get_group(ip_version: Literal["IPv4", "IPv6"], ip_address: str) -> str:
+def get_ip_group(ip_version: Literal["IPv4", "IPv6"], ip_address: str) -> str:
 	"""Returns the IP group"""
 
 	if ip_version == "IPv6":
@@ -105,7 +107,7 @@ def get_blacklist_for_ip_address(
 
 	ip_version = get_ip_version(ip_address)
 	ip_address_expanded = get_ip_address_expanded(ip_version, ip_address)
-	ip_group = get_group(ip_version, ip_address_expanded)
+	ip_group = get_ip_group(ip_version, ip_address_expanded)
 
 	if blacklist_group := get_blacklist_for_ip_group(ip_group):
 		for blacklist in blacklist_group:

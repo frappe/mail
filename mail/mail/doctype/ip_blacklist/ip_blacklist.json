@@ -29,7 +29,8 @@
    "no_copy": 1,
    "options": "\nIPv4\nIPv6",
    "read_only": 1,
-   "search_index": 1
+   "search_index": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "ip_group",
@@ -47,6 +48,7 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Blacklisted",
+   "no_copy": 1,
    "search_index": 1
   },
   {
@@ -59,6 +61,7 @@
    "fieldtype": "Data",
    "in_standard_filter": 1,
    "label": "IP Address",
+   "no_copy": 1,
    "reqd": 1,
    "set_only_once": 1,
    "unique": 1
@@ -77,6 +80,7 @@
    "label": "IP Address Expanded",
    "no_copy": 1,
    "read_only": 1,
+   "set_only_once": 1,
    "unique": 1
   },
   {
@@ -96,7 +100,9 @@
    "fieldname": "source_ip_address",
    "fieldtype": "Data",
    "label": "Source IP Address",
-   "read_only": 1
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "column_break_iwmw",
@@ -106,12 +112,14 @@
    "fieldname": "source_host",
    "fieldtype": "Data",
    "label": "Source Host",
-   "read_only": 1
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-08-18 09:12:09.460482",
+ "modified": "2024-09-06 11:18:47.017425",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "IP Blacklist",
