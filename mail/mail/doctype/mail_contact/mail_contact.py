@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from mail.utils.user import is_system_manager
+from mail.utils.user import is_postmaster, is_system_manager
 
 
 class MailContact(Document):
@@ -51,7 +51,7 @@ def has_permission(doc: "Document", ptype: str, user: str) -> bool:
 	if doc.doctype != "Mail Contact":
 		return False
 
-	return is_system_manager(user) or (user == doc.user)
+	return (user == doc.user) or is_postmaster(user) or is_system_manager(user)
 
 
 def get_permission_query_condition(user: str | None = None) -> str:
