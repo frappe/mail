@@ -1108,11 +1108,14 @@ def get_outgoing_mails_status() -> None:
 			retries = data["retries"]
 			action_at = parse_iso_datetime(data["action_at"])
 
-			doc = frappe.get_doc(
-				"Outgoing Mail",
-				outgoing_mail if outgoing_mail else {"queue_id": queue_id},
-				for_update=True,
-			)
+			if not outgoing_mail:
+				outgoing_mail = frappe.db.exists("Outgoing Mail", {"queue_id": queue_id})
+
+				if not outgoing_mail:
+					frappe.log_error(title="Outgoing Mail Not Found", message=str(data))
+					return
+
+			doc = frappe.get_doc("Outgoing Mail", outgoing_mail, for_update=True)
 			recipients = {
 				parseaddr(recipient["original"])[1]: recipient for recipient in rcpt_to
 			}
@@ -1147,11 +1150,14 @@ def get_outgoing_mails_status() -> None:
 			action_at = parse_iso_datetime(data["action_at"])
 			host, ip, response, delay, port, mode, ok_recips, secured, verified = data["params"]
 
-			doc = frappe.get_doc(
-				"Outgoing Mail",
-				outgoing_mail if outgoing_mail else {"queue_id": queue_id},
-				for_update=True,
-			)
+			if not outgoing_mail:
+				outgoing_mail = frappe.db.exists("Outgoing Mail", {"queue_id": queue_id})
+
+				if not outgoing_mail:
+					frappe.log_error(title="Outgoing Mail Not Found", message=str(data))
+					return
+
+			doc = frappe.get_doc("Outgoing Mail", outgoing_mail, for_update=True)
 			recipients = [parseaddr(recipient["original"])[1] for recipient in ok_recips]
 
 			for recipient in doc.recipients:
