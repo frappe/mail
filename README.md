@@ -1,6 +1,5 @@
 <div align="center">
 	<picture>
-		<source media="(prefers-color-scheme: dark)" srcset=".github/frappe-mail-logo-dark.png">
 		<img src=".github/frappe-mail-logo.png" height="30">
 	</picture>
   <br/>
@@ -42,15 +41,31 @@ bench install-app mail
 
 ## Mail System Architecture
 
-Frappe Mail utilizes a **Master-Slave Architecture** to manage email workflows efficiently. The architecture is designed to handle large volumes of emails in a scalable and reliable manner by decoupling email processing tasks.
+Frappe Mail is designed with a Master-Slave architecture to efficiently handle high volumes of email traffic while decoupling key email processing tasks. This architecture ensures scalability, reliability, and performance.
 
-- **Mail App (Master):** The Mail App is the master or producer of outbound emails. When an email is composed and signed, it is not immediately sent. Instead, the email is pushed to a RabbitMQ broker, which handles queuing and asynchronous delivery.
-- **RabbitMQ (Broker):** RabbitMQ serves as the central message broker in the system. It decouples the Mail App from the actual delivery process by queuing the emails for consumption by the Mail Agent. This setup ensures that the Mail App remains responsive, even under heavy load, and allows the system to handle a high volume of email deliveries.
-- **Mail Agent (Slave/Consumer):** The Mail Agent acts as the consumer for outbound email deliveries. It pulls the queued messages from RabbitMQ and processes them for delivery via Haraka MTA. This division of labour ensures that the Mail App does not directly handle email sending, which would otherwise slow down the system, especially under load.
-- **Haraka MTA:** Haraka is a high-performance mail transfer agent (MTA) used to deliver emails. The Mail Agent sends emails to Haraka, delivering them to recipient mail servers. Haraka is highly customizable, and Frappe Mail Agent extends it with plugins for status queuing, blacklist checks, PTR checks, and other email-related tasks.
-- **Receiving Delivery Status and Inbound Emails:** For tracking email statuses and managing inbound mail, the roles reverse:
-  - Haraka acts as the Producer, pushing delivery statuses and incoming email messages into the RabbitMQ queue.
-  - The Mail App functions as the Consumer, pulling these messages from RabbitMQ to update delivery statuses or process incoming emails accordingly.
+<div align="center">
+  <br/>
+	<picture>
+		<img src=".github/frappe-mail-architecture.png">
+	</picture>
+  <br/>
+  <br/>
+</div>
+
+### Mail App (Master)
+
+The Mail App serves as the master or producer of outbound emails. When an email is composed and signed, it is not immediately sent. Instead, the email is pushed to a RabbitMQ broker, which manages queuing and asynchronous delivery. This keeps the Mail App responsive and allows it to handle large numbers of emails without being slowed down by the delivery process.
+
+### RabbitMQ (Broker)
+
+RabbitMQ serves as the core message broker in the architecture. It queues emails, ensuring they are processed asynchronously. This decouples the Mail App from the email delivery system, allowing the Mail Agent to consume and deliver the queued emails at its own pace.
+
+### Mail Agent (Slave)
+
+The Mail Agent is responsible for consuming queued messages from RabbitMQ and handling email delivery via Haraka MTA. It plays a critical role in processing both outbound and inbound emails:
+
+- **Haraka MTA:** The Mail Agent forwards the queued messages to Haraka, which handles the actual SMTP-based email delivery. Haraka efficiently sends the emails to their respective recipient mail servers.
+- **SpamAssassin Integration:** The Mail Agent includes SpamAssassin, which works alongside Haraka to evaluate incoming emails. SpamAssassin assigns a spam score to each email, which helps in determining the appropriate folder for the message (Inbox, Spam, etc.). SpamAssassin is automatically installed with the Inbound Mail Agent to ensure robust spam detection on inbound emails.
 
 This master-slave architecture makes Frappe Mail modular, scalable, and highly efficient for handling both outbound and inbound email traffic. By relying on RabbitMQ for message queuing, the system decouples email composition from delivery, ensuring robust performance and reliability even under high-volume scenarios.
 
