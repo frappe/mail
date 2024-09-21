@@ -41,7 +41,8 @@
   "send_notification_on_reject",
   "column_break_0buk",
   "max_sync_via_api",
-  "rejected_mail_retention"
+  "rejected_mail_retention",
+  "required_spam_score"
  ],
  "fields": [
   {
@@ -275,12 +276,19 @@
    "label": "Rejected Mail Retention (Days)",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "default": "5",
+   "fieldname": "required_spam_score",
+   "fieldtype": "Int",
+   "label": "Required Spam Score",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-09-03 12:51:45.088777",
+ "modified": "2024-09-21 19:41:00.903151",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

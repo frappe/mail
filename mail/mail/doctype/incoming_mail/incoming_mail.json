@@ -415,7 +415,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-09-02 16:07:26.678893",
+ "modified": "2024-09-21 19:43:55.898477",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
@@ -468,5 +468,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
- "title_field": "subject"
+ "title_field": "subject",
+ "track_changes": 1
 }
