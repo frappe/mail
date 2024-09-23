@@ -1,5 +1,6 @@
 <div align="center">
 	<picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/frappe-mail-logo-dark.png">
 		<img src=".github/frappe-mail-logo.png" height="30">
 	</picture>
   <br/>
@@ -45,9 +46,10 @@ Frappe Mail is designed with a Master-Slave architecture to efficiently handle h
 
 <div align="center">
   <br/>
-	<picture>
-		<img src=".github/frappe-mail-architecture.png">
-	</picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/frappe-mail-architecture-dark.png">
+    <img src=".github/frappe-mail-architecture.png">
+  </picture>
   <br/>
   <br/>
 </div>
