@@ -1,5 +1,5 @@
 <template>
-    <div class="p-2 pt-3">
+    <div class="p-2">
         <div class="flex items-center justify-between">
             <div class="font-semibold">
                 {{ mail.display_name ? mail.display_name : mail.sender }}

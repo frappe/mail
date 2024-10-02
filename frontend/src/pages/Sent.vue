@@ -12,7 +12,7 @@
         </header>
         <div v-if="outgoingMails.data" class="flex h-[calc(100vh-3.2rem)]">
             <div @scroll="loadMoreEmails" ref="mailSidebar"
-                class="mailSidebar border-r w-1/3 px-3 py-2 sticky top-16 overflow-y-scroll overscroll-contain">
+                class="mailSidebar border-r w-1/3 p-2 sticky top-16 overflow-y-scroll overscroll-contain">
                 <div v-for="(mail, idx) in outgoingMails.data" @click="openMail(mail)"
                     class="flex flex-col space-y-1 cursor-pointer"
                     :class="{ 'bg-gray-200 rounded': mail.name == currentMail }">

@@ -1,0 +1,13 @@
+{
+  "name": "mail",
+  "version": "1.0.0",
+  "scripts": {
+    "test-local": "cypress open --e2e --browser chrome",
+    "postinstall": "cd frontend && yarn install --check-files",
+    "dev": "cd frontend && yarn dev",
+    "build": "cd frontend && yarn build"
+  },
+  "repository": "https://github.com/frappe/mail",
+  "author": "Frappe",
+  "license": "AGPL-3.0-or-later"
+}

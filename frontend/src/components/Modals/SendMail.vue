@@ -92,7 +92,7 @@
                             <!-- <AttachmentItem
                                 v-for="a in attachments"
                                 :key="a.file_url"
-                                :label="a.file_name"
+                                :label="a.file_name"`
                             >
                                 <template #suffix>
                                 <FeatherIcon
@@ -107,7 +107,7 @@
                         class="flex justify-between gap-2 overflow-hidden border-t py-2.5"
                         >
                             <div class="flex gap-1 items-center overflow-x-auto">
-                                <TextEditorFixedMenu :buttons="textEditorMenuButtons" />
+                               <!--  <TextEditorFixedMenu :buttons="textEditorMenuButtons" /> -->
                                 <EmojiPicker
                                     v-model="emoji"
                                     v-slot="{ togglePopover }"

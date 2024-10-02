@@ -1,5 +1,5 @@
 <template>
-    <div v-if="mailThread.data?.length" class="p-4">
+    <div v-if="mailThread.data?.length" class="p-3">
         <div class="p-3 mb-4" v-for="mail in mailThread.data" :class="{'shadow rounded-md' : mailThread.data.length > 1 }">
             <div class="flex space-x-3 border-b pb-2">
                 <Avatar class="avatar border border-gray-300" :label="mail.display_name || mail.sender"
