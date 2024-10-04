@@ -37,7 +37,10 @@ You can install this app using the [bench](https://github.com/frappe/bench) CLI:
 ```bash
 cd $PATH_TO_YOUR_BENCH
 bench get-app $URL_OF_THIS_REPO --branch develop
-bench install-app mail
+
+# create a site 
+bench --site <your-site-name>
+bench --site <your-site-name> install-app mail
 ```
 
 ## Mail System Architecture
