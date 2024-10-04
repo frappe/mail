@@ -1,10 +1,6 @@
 <div align="center">
-	<picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/frappe-mail-logo-dark.png">
-		<img src=".github/frappe-mail-logo.png" height="30">
-	</picture>
-  <br/>
-  <br/>
+  <img src=".github/frappe-mail-logo.svg" height="80" alt="Frappe Mail Logo">
+  <h2>Frappe Mail</h2>
 </div>
 
 Frappe Mail is an open-source email tool built on the [Frappe Framework](https://github.com/frappe/frappe). It offers a complete infrastructure for sending and receiving emails, managing domains, mailboxes, aliases, and email signing. It provides APIs for users to easily integrate email functionality into their applications. Frappe Mail leverages [RabbitMQ](https://github.com/rabbitmq/rabbitmq-server) for efficient email queuing and [Haraka MTA](https://github.com/haraka/haraka) for SMTP email delivery. [Mail Agent](https://github.com/frappe/mail_agent) consume the queued messages and handle email delivery via Haraka, enabling reliable and scalable email processing.
