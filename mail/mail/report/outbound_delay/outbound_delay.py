@@ -47,7 +47,7 @@ def get_data(filters=None) -> list:
 			OM.message_id,
 			OM.created_at,
 			OM.submitted_at,
-			OM.transferred_at,
+			OM.transfer_completed_at.as_("transferred_at"),
 			MR.action_at,
 		)
 		.where((OM.docstatus == 1) & (IfNull(MR.status, "") != ""))

@@ -39,7 +39,7 @@
   "section_break_093p",
   "created_at",
   "submitted_at",
-  "transferred_at",
+  "transfer_completed_at",
   "column_break_fvyv",
   "submitted_after",
   "transferred_after",
@@ -204,15 +204,8 @@
    "search_index": 1
   },
   {
-   "fieldname": "transferred_at",
-   "fieldtype": "Datetime",
-   "label": "Transferred At",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval: doc.transferred_at",
-   "description": "Transferred At - Submitted At",
+   "depends_on": "eval: doc.transfer_completed_at",
+   "description": "Transfer Completed At - Submitted At",
    "fieldname": "transferred_after",
    "fieldtype": "Int",
    "label": "Transferred After (Seconds)",
@@ -426,12 +419,19 @@
    "label": "In Reply To (Message ID)",
    "length": 255,
    "read_only": 1
+  },
+  {
+   "fieldname": "transfer_completed_at",
+   "fieldtype": "Datetime",
+   "label": "Transfer Completed At",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-08-27 09:37:40.451414",
+ "modified": "2024-10-05 10:05:48.765359",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",
