@@ -680,7 +680,14 @@ class OutgoingMail(Document):
 			if not (self.docstatus == 1 and self.status == "Pending"):
 				return
 
-		self._db_set(status="Transferring", commit=True)
+		transfer_started_at = now()
+		transfer_started_after = time_diff_in_seconds(transfer_started_at, self.submitted_at)
+		self._db_set(
+			status="Transferring",
+			transfer_started_at=transfer_started_at,
+			transfer_started_after=transfer_started_after,
+			commit=True,
+		)
 
 		recipients = [formataddr((r.display_name, r.email)) for r in self.recipients]
 		data = {
@@ -696,7 +703,7 @@ class OutgoingMail(Document):
 
 			transfer_completed_at = now()
 			transfer_completed_after = time_diff_in_seconds(
-				transfer_completed_at, self.submitted_at
+				transfer_completed_at, transfer_started_at
 			)
 			self._db_set(
 				status="Transferred",
@@ -1021,6 +1028,7 @@ def transfer_mails() -> None:
 			outgoing_mails,
 			current_status=current_status,
 			status="Transferring",
+			transfer_started_at=now(),
 			error_log=None,
 			commit=True,
 		)
@@ -1051,7 +1059,7 @@ def transfer_mails() -> None:
 					status = %s,
 					error_log = NULL,
 					transfer_completed_at = %s,
-					transfer_completed_after = TIMESTAMPDIFF(SECOND, `submitted_at`, `transfer_completed_at`)
+					transfer_completed_after = TIMESTAMPDIFF(SECOND, `transfer_started_at`, `transfer_completed_at`)
 				WHERE
 					docstatus = 1 AND
 					status = %s AND
