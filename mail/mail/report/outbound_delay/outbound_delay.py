@@ -36,19 +36,21 @@ def get_data(filters=None) -> list:
 			OM.message_size,
 			OM.via_api,
 			OM.is_newsletter,
-			OM.submitted_after,
-			OM.transfer_completed_after.as_("transferred_after"),
-			MR.action_after,
+			OM.submitted_after.as_("submission_delay"),
+			(OM.transfer_started_after + OM.transfer_completed_after).as_("transfer_delay"),
+			MR.action_after.as_("action_delay"),
+			(
+				OM.submitted_after
+				+ OM.transfer_started_after
+				+ OM.transfer_completed_after
+				+ MR.action_after
+			).as_("total_delay"),
 			OM.agent,
 			OM.domain_name,
 			OM.ip_address,
 			OM.sender,
 			MR.email.as_("recipient"),
 			OM.message_id,
-			OM.created_at,
-			OM.submitted_at,
-			OM.transfer_completed_at.as_("transferred_at"),
-			MR.action_at,
 		)
 		.where((OM.docstatus == 1) & (IfNull(MR.status, "") != ""))
 		.orderby(OM.creation, OM.created_at, order=Order.desc)
@@ -111,7 +113,7 @@ def get_summary(data: list) -> list[dict]:
 			status_count[status] += 1
 
 		total_message_size += row["message_size"]
-		total_transfer_delay += row["transferred_after"]
+		total_transfer_delay += row["transfer_delay"]
 
 	return [
 		{
@@ -193,22 +195,28 @@ def get_columns() -> list:
 			"width": 100,
 		},
 		{
-			"label": _("Created After"),
-			"fieldname": "submitted_after",
+			"label": _("Submission Delay"),
+			"fieldname": "submission_delay",
 			"fieldtype": "Int",
 			"width": 120,
 		},
 		{
-			"label": _("Transferred After"),
-			"fieldname": "transferred_after",
+			"label": _("Transfer Delay"),
+			"fieldname": "transfer_delay",
 			"fieldtype": "Int",
-			"width": 140,
+			"width": 120,
 		},
 		{
-			"label": _("Action After"),
-			"fieldname": "action_after",
+			"label": _("Action Delay"),
+			"fieldname": "action_delay",
 			"fieldtype": "Int",
-			"width": 110,
+			"width": 120,
+		},
+		{
+			"label": _("Total Delay"),
+			"fieldname": "total_delay",
+			"fieldtype": "Int",
+			"width": 120,
 		},
 		{
 			"label": _("Agent"),
@@ -248,29 +256,5 @@ def get_columns() -> list:
 			"fieldname": "message_id",
 			"fieldtype": "Data",
 			"width": 200,
-		},
-		{
-			"label": _("Created At"),
-			"fieldname": "created_at",
-			"fieldtype": "Datetime",
-			"width": 180,
-		},
-		{
-			"label": _("Submitted At"),
-			"fieldname": "submitted_at",
-			"fieldtype": "Datetime",
-			"width": 180,
-		},
-		{
-			"label": _("Transferred At"),
-			"fieldname": "transferred_at",
-			"fieldtype": "Datetime",
-			"width": 180,
-		},
-		{
-			"label": _("Action At"),
-			"fieldname": "action_at",
-			"fieldtype": "Datetime",
-			"width": 180,
 		},
 	]
