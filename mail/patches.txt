@@ -4,3 +4,4 @@
 mail.patches.v1_0.rename_field_dkim_bits
 mail.patches.v1_0.create_dkim_key_doc
 mail.patches.v1_0.rename_field_transferred_at
+mail.patches.v1_0.rename_field_transferred_after

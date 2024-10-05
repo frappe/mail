@@ -695,11 +695,13 @@ class OutgoingMail(Document):
 				rmq.publish(constants.OUTGOING_MAIL_QUEUE, json.dumps(data), priority=3)
 
 			transfer_completed_at = now()
-			transferred_after = time_diff_in_seconds(transfer_completed_at, self.submitted_at)
+			transfer_completed_after = time_diff_in_seconds(
+				transfer_completed_at, self.submitted_at
+			)
 			self._db_set(
 				status="Transferred",
 				transfer_completed_at=transfer_completed_at,
-				transferred_after=transferred_after,
+				transfer_completed_after=transfer_completed_after,
 				commit=True,
 			)
 		except Exception:
@@ -1049,7 +1051,7 @@ def transfer_mails() -> None:
 					status = %s,
 					error_log = NULL,
 					transfer_completed_at = %s,
-					transferred_after = TIMESTAMPDIFF(SECOND, `submitted_at`, `transfer_completed_at`)
+					transfer_completed_after = TIMESTAMPDIFF(SECOND, `submitted_at`, `transfer_completed_at`)
 				WHERE
 					docstatus = 1 AND
 					status = %s AND

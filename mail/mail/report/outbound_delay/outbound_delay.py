@@ -37,7 +37,7 @@ def get_data(filters=None) -> list:
 			OM.via_api,
 			OM.is_newsletter,
 			OM.submitted_after,
-			OM.transferred_after,
+			OM.transfer_completed_after.as_("transferred_after"),
 			MR.action_after,
 			OM.agent,
 			OM.domain_name,
