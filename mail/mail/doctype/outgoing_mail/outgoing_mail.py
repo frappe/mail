@@ -680,7 +680,14 @@ class OutgoingMail(Document):
 			if not (self.docstatus == 1 and self.status == "Pending"):
 				return
 
-		self._db_set(status="Transferring", commit=True)
+		transfer_started_at = now()
+		transfer_started_after = time_diff_in_seconds(transfer_started_at, self.submitted_at)
+		self._db_set(
+			status="Transferring",
+			transfer_started_at=transfer_started_at,
+			transfer_started_after=transfer_started_after,
+			commit=True,
+		)
 
 		recipients = [formataddr((r.display_name, r.email)) for r in self.recipients]
 		data = {
@@ -694,12 +701,14 @@ class OutgoingMail(Document):
 				rmq.declare_queue(constants.OUTGOING_MAIL_QUEUE, max_priority=3)
 				rmq.publish(constants.OUTGOING_MAIL_QUEUE, json.dumps(data), priority=3)
 
-			transferred_at = now()
-			transferred_after = time_diff_in_seconds(transferred_at, self.submitted_at)
+			transfer_completed_at = now()
+			transfer_completed_after = time_diff_in_seconds(
+				transfer_completed_at, transfer_started_at
+			)
 			self._db_set(
 				status="Transferred",
-				transferred_at=transferred_at,
-				transferred_after=transferred_after,
+				transfer_completed_at=transfer_completed_at,
+				transfer_completed_after=transfer_completed_after,
 				commit=True,
 			)
 		except Exception:
@@ -1019,6 +1028,7 @@ def transfer_mails() -> None:
 			outgoing_mails,
 			current_status=current_status,
 			status="Transferring",
+			transfer_started_at=now(),
 			error_log=None,
 			commit=True,
 		)
@@ -1048,8 +1058,8 @@ def transfer_mails() -> None:
 				SET
 					status = %s,
 					error_log = NULL,
-					transferred_at = %s,
-					transferred_after = TIMESTAMPDIFF(SECOND, `submitted_at`, `transferred_at`)
+					transfer_completed_at = %s,
+					transfer_completed_after = TIMESTAMPDIFF(SECOND, `transfer_started_at`, `transfer_completed_at`)
 				WHERE
 					docstatus = 1 AND
 					status = %s AND
@@ -1127,7 +1137,7 @@ def get_outgoing_mails_status() -> None:
 					recipient.retries = retries
 					recipient.action_at = action_at
 					recipient.action_after = time_diff_in_seconds(
-						recipient.action_at, doc.transferred_at
+						recipient.action_at, doc.transfer_completed_at
 					)
 					recipient.details = json.dumps(recipients[recipient.email], indent=4)
 					recipient.db_update()
@@ -1166,7 +1176,7 @@ def get_outgoing_mails_status() -> None:
 					recipient.retries = retries
 					recipient.action_at = action_at
 					recipient.action_after = time_diff_in_seconds(
-						recipient.action_at, doc.transferred_at
+						recipient.action_at, doc.transfer_completed_at
 					)
 					recipient.details = json.dumps(
 						{
