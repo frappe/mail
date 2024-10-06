@@ -30,11 +30,23 @@ Frappe Mail is an open-source email tool built on the [Frappe Framework](https:/
 
 You can install this app using the [bench](https://github.com/frappe/bench) CLI:
 
-```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch develop
-bench install-app mail
-```
+1. Install Frappe Mail:
+
+   ```bash
+   bench get-app mail
+   ```
+
+2. Create a site with the mail app:
+
+   ```bash
+   bench --site sitename.localhost install-app mail
+   ```
+
+3. Open the site in the browser:
+
+   ```bash
+   bench browse sitename.localhost --user Administrator
+   ```
 
 ## Mail System Architecture
 
