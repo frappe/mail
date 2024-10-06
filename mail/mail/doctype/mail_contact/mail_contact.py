@@ -12,7 +12,8 @@ class MailContact(Document):
 		self.set_user()
 
 	def validate(self) -> None:
-		self.validate_duplicate_contact()
+		if self.is_new():
+			self.validate_duplicate_contact()
 
 	def set_user(self) -> None:
 		"""Set user as current user if not set."""
@@ -24,7 +25,7 @@ class MailContact(Document):
 	def validate_duplicate_contact(self) -> None:
 		"""Validates if the contact is duplicate."""
 
-		if frappe.db.exists("Mail Contact", {"email": self.email, "user": self.user}):
+		if frappe.db.exists("Mail Contact", {"user": self.user, "email": self.email}):
 			frappe.throw(
 				_("Mail Contact with email {0} already exists.").format(frappe.bold(self.email))
 			)
