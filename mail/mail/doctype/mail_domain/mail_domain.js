@@ -11,12 +11,6 @@ frappe.ui.form.on("Mail Domain", {
         frm.trigger("add_actions");
 	},
 
-    set_queries(frm) {
-        frm.set_query("outgoing_agent", () => ({
-            filters: { outgoing: 1 }
-        }));
-    },
-
     set_domain_owner(frm) {
         if (frm.doc.__islocal && !frm.doc.domain_owner && frappe.session.user) {
             frm.set_value("domain_owner", frappe.session.user);

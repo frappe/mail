@@ -16,6 +16,7 @@ class MailSettings(Document):
 		self.validate_spf_host()
 		self.validate_postmaster()
 		self.validate_default_dkim_key_size()
+		self.validate_mail_agents()
 		self.refresh_dns_records()
 		self.validate_rmq_host()
 		self.validate_outgoing_max_attachment_size()
@@ -68,99 +69,43 @@ class MailSettings(Document):
 		if cint(self.default_dkim_key_size) < 1024:
 			frappe.throw(_("DKIM Key Size must be greater than 1024."))
 
+	def validate_mail_agents(self) -> None:
+		"""Validates the Mail Agents."""
+
+		inbound_agents = []
+		outbound_agents = []
+		for agent in self.mail_agents:
+			if agent.type == "Inbound":
+				inbound_agents.append(agent)
+			elif agent.type == "Outbound":
+				outbound_agents.append(agent)
+
+		if not inbound_agents:
+			frappe.throw(_("At least one Inbound Mail Agent is required."))
+		if not outbound_agents:
+			frappe.throw(_("At least one Outbound Mail Agent is required."))
+
 	def refresh_dns_records(self, save: bool = False) -> None:
 		"""Generates the DNS Records."""
 
 		records = []
 		self.dns_records.clear()
-		category = "Server Record"
-		agent_groups = frappe.db.get_all(
-			"Mail Agent Group",
-			filters={"enabled": 1},
-			fields=["name", "priority", "ipv4", "ipv6"],
-			order_by="creation asc",
-		)
-		agents = frappe.db.get_all(
-			"Mail Agent",
-			filters={"enabled": 1},
-			fields=["name", "incoming", "outgoing", "ipv4", "ipv6"],
-			order_by="creation asc",
-		)
 
-		agent_group_hosts = []
-		if agent_groups:
-			for group in agent_groups:
-				agent_group_hosts.append(group.name)
-
-				# A Record (Agent Group)
-				if group.ipv4:
-					records.append(
-						{
-							"category": category,
-							"type": "A",
-							"host": group.name,
-							"value": group.ipv4,
-							"ttl": self.default_ttl,
-						}
-					)
-
-				# AAAA Record (Agent Group)
-				if group.ipv6:
-					records.append(
-						{
-							"category": category,
-							"type": "AAAA",
-							"host": group.name,
-							"value": group.ipv6,
-							"ttl": self.default_ttl,
-						}
-					)
-
-		if agents:
-			outgoing_agents = []
-
-			for agent in agents:
-				if agent.outgoing:
-					outgoing_agents.append(f"a:{agent.name}")
-
-				if agent.name in agent_group_hosts:
-					continue
-
-				# A Record (Agent)
-				if agent.ipv4:
-					records.append(
-						{
-							"category": category,
-							"type": "A",
-							"host": agent.name,
-							"value": agent.ipv4,
-							"ttl": self.default_ttl,
-						}
-					)
-
-				# AAAA Record (Agent)
-				if agent.ipv6:
-					records.append(
-						{
-							"category": category,
-							"type": "AAAA",
-							"host": agent.name,
-							"value": agent.ipv6,
-							"ttl": self.default_ttl,
-						}
-					)
-
-			# TXT Record (Agent)
-			if outgoing_agents:
-				records.append(
-					{
-						"category": category,
-						"type": "TXT",
-						"host": f"{self.spf_host}.{self.root_domain_name}",
-						"value": f"v=spf1 {' '.join(outgoing_agents)} ~all",
-						"ttl": self.default_ttl,
-					}
-				)
+		if outbound_agents := [
+			f"a:{outbound_agent.host}"
+			for outbound_agent in self.mail_agents
+			if outbound_agent.type == "Outbound"
+		]:
+			# TXT Record (SPF)
+			records.append(
+				{
+					"category": "Server Record",
+					"type": "TXT",
+					"host": f"{self.spf_host}.{self.root_domain_name}",
+					"value": f"v=spf1 {' '.join(outbound_agents)} ~all",
+					"ttl": self.default_ttl,
+				}
+			)
 
 		self.extend("dns_records", records)
 

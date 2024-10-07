@@ -37,8 +37,7 @@ frappe.query_reports["Mail Tracker"] = {
 		{
 			fieldname: "agent",
 			label: __("Agent"),
-			fieldtype: frappe.user.has_role("System Manager") ? "Link" : "Data",
-			options: "Mail Agent",
+			fieldtype: "Data",
 		},
 		{
 			fieldname: "domain_name",

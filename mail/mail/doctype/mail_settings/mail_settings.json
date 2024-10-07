@@ -14,6 +14,8 @@
   "default_ttl",
   "column_break_xlun",
   "default_newsletter_retention",
+  "mail_agents_section",
+  "mail_agents",
   "section_break_kplw",
   "dns_records",
   "rabbitmq_amqp_tab",
@@ -283,12 +285,22 @@
    "fieldtype": "Int",
    "label": "Required Spam Score",
    "reqd": 1
+  },
+  {
+   "fieldname": "mail_agents",
+   "fieldtype": "Table",
+   "options": "Mail Agent"
+  },
+  {
+   "fieldname": "mail_agents_section",
+   "fieldtype": "Section Break",
+   "label": "Mail Agents"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-09-21 19:41:00.903151",
+ "modified": "2024-10-07 15:42:35.280723",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
