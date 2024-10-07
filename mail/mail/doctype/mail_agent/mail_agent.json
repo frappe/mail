@@ -33,7 +33,7 @@
    "label": "Priority",
    "mandatory_depends_on": "eval: doc.type == \"Inbound\"",
    "non_negative": 1,
-   "unique": 1
+   "search_index": 1
   },
   {
    "fieldname": "type",
@@ -51,7 +51,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-07 15:44:31.030545",
+ "modified": "2024-10-07 17:25:15.659023",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Agent",
