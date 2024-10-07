@@ -1024,14 +1024,23 @@ def transfer_mails() -> None:
 			break
 
 		outgoing_mails = [mail["name"] for mail in mails]
-		update_outgoing_mails(
-			outgoing_mails,
-			current_status=current_status,
-			status="Transferring",
-			transfer_started_at=now(),
-			error_log=None,
-			commit=True,
+
+		frappe.db.sql(
+			"""
+			UPDATE `tabOutgoing Mail`
+			SET
+				status = %s,
+				error_log = NULL,
+				transfer_started_at = %s,
+				transfer_started_after = TIMESTAMPDIFF(SECOND, `submitted_after`, `transfer_started_at`)
+			WHERE
+				docstatus = 1 AND
+				status = %s AND
+				name IN %s
+			""",
+			("Transferring", now(), current_status, tuple(outgoing_mails)),
 		)
+		frappe.db.commit()
 		current_status = "Transferring"
 
 		try:
