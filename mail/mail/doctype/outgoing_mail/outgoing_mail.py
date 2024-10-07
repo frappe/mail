@@ -1032,7 +1032,7 @@ def transfer_mails() -> None:
 				status = %s,
 				error_log = NULL,
 				transfer_started_at = %s,
-				transfer_started_after = TIMESTAMPDIFF(SECOND, `submitted_after`, `transfer_started_at`)
+				transfer_started_after = TIMESTAMPDIFF(SECOND, `submitted_at`, `transfer_started_at`)
 			WHERE
 				docstatus = 1 AND
 				status = %s AND
