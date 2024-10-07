@@ -1,130 +1,63 @@
 {
  "actions": [],
- "creation": "2024-01-19 19:54:24.682903",
- "default_view": "List",
+ "allow_rename": 1,
+ "creation": "2024-10-07 14:22:45.181308",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "enabled",
-  "incoming",
-  "outgoing",
-  "section_break_syxq",
-  "group",
-  "agent",
-  "ipv4",
-  "ipv6"
+  "section_break_dhue",
+  "type",
+  "column_break_dxky",
+  "host",
+  "priority"
  ],
  "fields": [
   {
-   "fieldname": "agent",
+   "fieldname": "section_break_dhue",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "host",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Agent",
-   "no_copy": 1,
+   "label": "Host",
    "reqd": 1,
-   "set_only_once": 1,
    "unique": 1
   },
   {
-   "fieldname": "section_break_syxq",
+   "depends_on": "eval: doc.type == \"Inbound\"",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Priority",
+   "mandatory_depends_on": "eval: doc.type == \"Inbound\"",
+   "non_negative": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "\nInbound\nOutbound",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_dxky",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "ipv4",
-   "fieldtype": "Data",
-   "in_standard_filter": 1,
-   "label": "IPv4",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "ipv6",
-   "fieldtype": "Data",
-   "in_standard_filter": 1,
-   "label": "IPv6",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "default": "1",
-   "depends_on": "eval: !doc.__islocal",
-   "fieldname": "enabled",
-   "fieldtype": "Check",
-   "label": "Enabled",
-   "search_index": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "incoming",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Incoming",
-   "search_index": 1
-  },
-  {
-   "default": "1",
-   "fieldname": "outgoing",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Outgoing",
-   "search_index": 1
-  },
-  {
-   "depends_on": "eval: doc.incoming",
-   "fieldname": "group",
-   "fieldtype": "Link",
-   "label": "Group",
-   "mandatory_depends_on": "eval: doc.incoming",
-   "options": "Mail Agent Group",
-   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
- "links": [
-  {
-   "group": "General",
-   "link_doctype": "Mail Domain",
-   "link_fieldname": "outgoing_agent"
-  },
-  {
-   "group": "General",
-   "link_doctype": "Incoming Mail",
-   "link_fieldname": "agent"
-  },
-  {
-   "group": "General",
-   "link_doctype": "Outgoing Mail",
-   "link_fieldname": "agent"
-  }
- ],
- "modified": "2024-08-22 16:23:00.431166",
+ "istable": 1,
+ "links": [],
+ "modified": "2024-10-07 15:44:31.030545",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Agent",
  "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "write": 1
-  },
-  {
-   "role": "Domain Owner",
-   "select": 1
-  },
-  {
-   "role": "Mailbox User",
-   "select": 1
-  }
- ],
- "sort_field": "modified",
+ "permissions": [],
+ "sort_field": "creation",
  "sort_order": "DESC",
- "states": [],
- "track_changes": 1
+ "states": []
 }

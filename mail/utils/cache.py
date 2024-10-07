@@ -58,30 +58,6 @@ def get_postmaster() -> str:
 	return _get_or_set("postmaster", getter, expires_in_sec=None)
 
 
-def get_incoming_mail_agents() -> list:
-	"""Returns the incoming mail agents."""
-
-	def getter() -> list:
-		MA = frappe.qb.DocType("Mail Agent")
-		return (
-			frappe.qb.from_(MA).select(MA.name).where((MA.enabled == 1) & (MA.incoming == 1))
-		).run(pluck="name")
-
-	return _get_or_set("incoming_mail_agents", getter)
-
-
-def get_outgoing_mail_agents() -> list:
-	"""Returns the outgoing mail agents."""
-
-	def getter() -> list:
-		MA = frappe.qb.DocType("Mail Agent")
-		return (
-			frappe.qb.from_(MA).select(MA.name).where((MA.enabled == 1) & (MA.outgoing == 1))
-		).run(pluck="name")
-
-	return _get_or_set("outgoing_mail_agents", getter)
-
-
 def get_user_domains(user: str) -> list:
 	"""Returns the domains of the user."""
 

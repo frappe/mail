@@ -221,8 +221,7 @@ def get_columns() -> list:
 		{
 			"label": _("Agent"),
 			"fieldname": "agent",
-			"fieldtype": "Link",
-			"options": "Mail Agent",
+			"fieldtype": "Data",
 			"width": 150,
 		},
 		{
