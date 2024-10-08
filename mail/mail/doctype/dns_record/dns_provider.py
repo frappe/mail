@@ -14,7 +14,7 @@ class BaseDNSProvider(ABC):
 		pass
 
 	@abstractmethod
-	def read_dns_records(self, domain: str):
+	def read_dns_records(self, domain: str) -> list[dict]:
 		"""Reads DNS records for a domain."""
 		pass
 
@@ -40,7 +40,7 @@ class DigitalOceanDNS(BaseDNSProvider):
 		self.token = token
 		self.api_base_url = "https://api.digitalocean.com/v2/domains"
 
-	def _headers(self):
+	def _headers(self) -> dict:
 		"""Returns the headers for the API request."""
 
 		return {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
@@ -54,9 +54,8 @@ class DigitalOceanDNS(BaseDNSProvider):
 		data = {"type": type, "name": host, "data": value, "ttl": ttl}
 		response = requests.post(url, headers=self._headers(), json=data)
 		response.raise_for_status()
-		print(f"DNS record created: {response.json()}")
 
-	def read_dns_records(self, domain: str):
+	def read_dns_records(self, domain: str) -> list[dict]:
 		"""Reads DNS records for a domain with pagination."""
 
 		url = f"{self.api_base_url}/{domain}/records"
@@ -90,7 +89,6 @@ class DigitalOceanDNS(BaseDNSProvider):
 		data = {"type": type, "name": host, "data": value, "ttl": ttl}
 		response = requests.put(url, headers=self._headers(), json=data)
 		response.raise_for_status()
-		print(f"DNS record updated: {response.json()}")
 
 	def delete_dns_record(self, domain: str, record_id: int) -> None:
 		"""Deletes a DNS record."""
@@ -98,7 +96,6 @@ class DigitalOceanDNS(BaseDNSProvider):
 		url = f"{self.api_base_url}/{domain}/records/{record_id}"
 		response = requests.delete(url, headers=self._headers())
 		response.raise_for_status()
-		print(f"DNS record deleted: {response.status_code == 204}")
 
 
 class DNSProvider:
@@ -124,7 +121,7 @@ class DNSProvider:
 
 		self.provider.create_dns_record(domain, type, host, value, ttl)
 
-	def read_dns_records(self, domain: str):
+	def read_dns_records(self, domain: str) -> list[dict]:
 		"""Reads DNS records for a domain."""
 
 		return self.provider.read_dns_records(domain)

@@ -9,11 +9,40 @@ from mail.mail.doctype.dns_record.dns_provider import DNSProvider
 
 
 class DNSRecord(Document):
-	def validate(self):
+	def validate(self) -> None:
 		if self.is_new():
+			self.validate_duplicate_record()
 			self.validate_ttl()
 
-	def on_update(self):
+	def on_update(self) -> None:
+		if self.has_value_changed("value") or self.has_value_changed("ttl"):
+			self.is_verified = 0
+			self.create_or_update_record_in_dns_provider()
+
+	def on_trash(self) -> None:
+		self.delete_record_from_dns_provider()
+
+	def validate_duplicate_record(self) -> None:
+		"""Validates if a duplicate DNS Record exists"""
+
+		if frappe.db.exists(
+			"DNS Record",
+			{"host": self.host, "type": self.type, "name": ["!=", self.name]},
+		):
+			frappe.throw(
+				_("DNS Record with the same host and type already exists."),
+				title=_("Duplicate Record"),
+			)
+
+	def validate_ttl(self) -> None:
+		"""Validates the TTL value"""
+
+		if not self.ttl:
+			self.ttl = frappe.db.get_single_value("Mail Settings", "default_ttl", cache=True)
+
+	def create_or_update_record_in_dns_provider(self) -> None:
+		"""Creates or Updates the DNS Record in the DNS Provider"""
+
 		mail_settings = frappe.get_single("Mail Settings")
 
 		if not mail_settings.dns_provider or not mail_settings.dns_provider_token:
@@ -31,7 +60,9 @@ class DNSRecord(Document):
 			ttl=self.ttl,
 		)
 
-	def on_trash(self):
+	def delete_record_from_dns_provider(self) -> None:
+		"""Deletes the DNS Record from the DNS Provider"""
+
 		mail_settings = frappe.get_single("Mail Settings")
 
 		if not mail_settings.dns_provider or not mail_settings.dns_provider_token:
@@ -44,12 +75,6 @@ class DNSRecord(Document):
 		dns_provider.delete_dns_record_if_exists(
 			domain=mail_settings.root_domain_name, type=self.type, host=self.host
 		)
-
-	def validate_ttl(self) -> None:
-		"""Validates the TTL value"""
-
-		if not self.ttl:
-			self.ttl = frappe.db.get_single_value("Mail Settings", "default_ttl", cache=True)
 
 	def get_fqdn(self) -> str:
 		"""Returns the Fully Qualified Domain Name"""
@@ -110,5 +135,5 @@ def create_or_update_dns_record(
 	return dns_record
 
 
-def after_doctype_insert():
+def after_doctype_insert() -> None:
 	frappe.db.add_unique("DNS Record", ["host", "type"])

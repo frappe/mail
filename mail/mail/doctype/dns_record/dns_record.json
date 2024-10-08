@@ -126,16 +126,18 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "eval: !doc.__islocal",
    "fieldname": "last_checked_at",
    "fieldtype": "Datetime",
    "in_standard_filter": 1,
    "label": "Last Checked At",
+   "no_copy": 1,
    "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-08 19:23:42.845890",
+ "modified": "2024-10-08 19:56:38.294134",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "DNS Record",
