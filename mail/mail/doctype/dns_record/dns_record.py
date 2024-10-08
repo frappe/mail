@@ -52,13 +52,18 @@ class DNSRecord(Document):
 			provider=mail_settings.dns_provider,
 			token=mail_settings.get_password("dns_provider_token"),
 		)
-		dns_provider.create_or_update_dns_record(
+		result = dns_provider.create_or_update_dns_record(
 			domain=mail_settings.root_domain_name,
 			type=self.type,
 			host=self.host,
 			value=self.value,
 			ttl=self.ttl,
 		)
+
+		if result == True:
+			frappe.db.set_value(
+				self.doctype, self.name, {"is_verified": 1, "last_checked_at": now()}
+			)
 
 	def delete_record_from_dns_provider(self) -> None:
 		"""Deletes the DNS Record from the DNS Provider"""

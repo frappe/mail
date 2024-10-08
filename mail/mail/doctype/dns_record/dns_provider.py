@@ -9,7 +9,7 @@ class BaseDNSProvider(ABC):
 	@abstractmethod
 	def create_dns_record(
 		self, domain: str, type: str, host: str, value: str, ttl: int
-	) -> None:
+	) -> bool:
 		"""Creates a DNS record."""
 		pass
 
@@ -21,12 +21,12 @@ class BaseDNSProvider(ABC):
 	@abstractmethod
 	def update_dns_record(
 		self, domain: str, record_id: int, type: str, host: str, value: str, ttl: int
-	) -> None:
+	) -> bool:
 		"""Updates a DNS record."""
 		pass
 
 	@abstractmethod
-	def delete_dns_record(self, domain: str, record_id: int) -> None:
+	def delete_dns_record(self, domain: str, record_id: int) -> bool:
 		"""Deletes a DNS record."""
 		pass
 
@@ -47,13 +47,15 @@ class DigitalOceanDNS(BaseDNSProvider):
 
 	def create_dns_record(
 		self, domain: str, type: str, host: str, value: str, ttl: int
-	) -> None:
+	) -> bool:
 		"""Creates a DNS record."""
 
 		url = f"{self.api_base_url}/{domain}/records"
 		data = {"type": type, "name": host, "data": value, "ttl": ttl}
 		response = requests.post(url, headers=self._headers(), json=data)
 		response.raise_for_status()
+		record = response.json().get("domain_record", {})
+		return bool(record.get("id"))
 
 	def read_dns_records(self, domain: str) -> list[dict]:
 		"""Reads DNS records for a domain with pagination."""
@@ -82,20 +84,23 @@ class DigitalOceanDNS(BaseDNSProvider):
 
 	def update_dns_record(
 		self, domain: str, record_id: int, type: str, host: str, value: str, ttl: int
-	) -> None:
+	) -> bool:
 		"""Updates a DNS record."""
 
 		url = f"{self.api_base_url}/{domain}/records/{record_id}"
 		data = {"type": type, "name": host, "data": value, "ttl": ttl}
 		response = requests.put(url, headers=self._headers(), json=data)
 		response.raise_for_status()
+		record = response.json().get("domain_record", {})
+		return record.get("id") == record_id
 
-	def delete_dns_record(self, domain: str, record_id: int) -> None:
+	def delete_dns_record(self, domain: str, record_id: int) -> bool:
 		"""Deletes a DNS record."""
 
 		url = f"{self.api_base_url}/{domain}/records/{record_id}"
 		response = requests.delete(url, headers=self._headers())
 		response.raise_for_status()
+		return response.status_code == 204
 
 
 class DNSProvider:
@@ -116,10 +121,10 @@ class DNSProvider:
 
 	def create_dns_record(
 		self, domain: str, type: str, host: str, value: str, ttl: int
-	) -> None:
+	) -> bool:
 		"""Creates a DNS record."""
 
-		self.provider.create_dns_record(domain, type, host, value, ttl)
+		return self.provider.create_dns_record(domain, type, host, value, ttl)
 
 	def read_dns_records(self, domain: str) -> list[dict]:
 		"""Reads DNS records for a domain."""
@@ -128,19 +133,19 @@ class DNSProvider:
 
 	def update_dns_record(
 		self, domain: str, record_id: int, type: str, host: str, value: str, ttl: int
-	) -> None:
+	) -> bool:
 		"""Updates a DNS record."""
 
-		self.provider.update_dns_record(domain, record_id, type, host, value, ttl)
+		return self.provider.update_dns_record(domain, record_id, type, host, value, ttl)
 
-	def delete_dns_record(self, domain: str, record_id: int) -> None:
+	def delete_dns_record(self, domain: str, record_id: int) -> bool:
 		"""Deletes a DNS record."""
 
-		self.provider.delete_dns_record(domain, record_id)
+		return self.provider.delete_dns_record(domain, record_id)
 
 	def create_or_update_dns_record(
 		self, domain: str, type: str, host: str, value: str, ttl: int
-	) -> None:
+	) -> bool:
 		"""Creates or updates a DNS record, handles pagination."""
 
 		dns_records = self.read_dns_records(domain)
@@ -148,7 +153,7 @@ class DNSProvider:
 		# Check if the record already exists and update it
 		for dns_record in dns_records:
 			if dns_record["name"] == host and dns_record["type"] == type:
-				self.update_dns_record(
+				return self.update_dns_record(
 					domain=domain,
 					record_id=dns_record["id"],
 					type=type,
@@ -156,12 +161,11 @@ class DNSProvider:
 					value=value,
 					ttl=ttl,
 				)
-				break
 		else:
 			# Create a new record if no match is found
-			self.create_dns_record(domain, type, host, value, ttl)
+			return self.create_dns_record(domain, type, host, value, ttl)
 
-	def delete_dns_record_if_exists(self, domain: str, type: str, host: str) -> None:
+	def delete_dns_record_if_exists(self, domain: str, type: str, host: str) -> bool:
 		"""Deletes a DNS record if it exists, handles pagination."""
 
 		dns_records = self.read_dns_records(domain)
@@ -169,5 +173,6 @@ class DNSProvider:
 		# Check for existing record and delete it
 		for dns_record in dns_records:
 			if dns_record["name"] == host and dns_record["type"] == type:
-				self.delete_dns_record(domain, dns_record["id"])
-				break
+				return self.delete_dns_record(domain, dns_record["id"])
+
+		return True  # Return True if no record is found
