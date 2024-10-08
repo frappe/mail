@@ -34,6 +34,26 @@ def get_dns_record(
 		frappe.throw(err_msg)
 
 
+def verify_dns_record(
+	fqdn: str, type: str, expected_value: str, debug: bool = False
+) -> bool:
+	"""Verifies the DNS Record."""
+
+	if result := get_dns_record(fqdn, type):
+		for data in result:
+			if data:
+				if type == "MX":
+					data = data.exchange
+				data = data.to_text().replace('"', "")
+				if type == "TXT" and "._domainkey." in fqdn:
+					data = data.replace(" ", "")
+				if data == expected_value:
+					return True
+			if debug:
+				frappe.msgprint(f"Expected: {expected_value} Got: {data}")
+	return False
+
+
 def get_host_by_ip(ip_address: str, raise_exception: bool = False) -> str | None:
 	"""Returns host for the given IP address."""
 

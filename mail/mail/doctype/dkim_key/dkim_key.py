@@ -6,6 +6,7 @@ from frappe.utils import cint
 from frappe import _, generate_hash
 from frappe.model.document import Document
 from frappe.utils.caching import request_cache
+from mail.mail.doctype.dns_record.dns_record import create_or_update_dns_record
 
 
 class DKIMKey(Document):
@@ -18,6 +19,7 @@ class DKIMKey(Document):
 		self.generate_dkim_keys()
 
 	def after_insert(self) -> None:
+		self.create_or_update_dns_record()
 		self.disable_existing_dkim_keys()
 
 	def on_trash(self) -> None:
@@ -46,6 +48,18 @@ class DKIMKey(Document):
 
 		self.private_key, self.public_key = generate_dkim_keys(cint(self.key_size))
 
+	def create_or_update_dns_record(self) -> None:
+		"""Creates or Updates the DNS Record."""
+
+		create_or_update_dns_record(
+			host=f"{self.name}._domainkey",
+			type="TXT",
+			value=f"v=DKIM1; k=rsa; p={self.public_key}",
+			category="Sending Record",
+			attached_to_doctype=self.doctype,
+			attached_to_docname=self.name,
+		)
+
 	def disable_existing_dkim_keys(self) -> None:
 		"""Disables the existing DKIM Keys."""
 
@@ -59,19 +73,6 @@ class DKIMKey(Document):
 				& (DKIM_KEY.domain_name == self.domain_name)
 			)
 		).run()
-
-	def get_dkim_record(self) -> dict:
-		"""Returns the DKIM Record."""
-
-		from mail.utils.cache import get_root_domain_name
-
-		return {
-			"category": "Sending Record",
-			"type": "TXT",
-			"host": f"{self.name}._domainkey.{get_root_domain_name()}",
-			"value": f"v=DKIM1; k=rsa; p={self.public_key}",
-			"ttl": frappe.db.get_single_value("Mail Settings", "default_ttl", cache=True),
-		}
 
 
 def create_dkim_key(domain_name: str, key_size: int | None = None) -> "DKIMKey":

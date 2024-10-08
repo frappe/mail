@@ -86,8 +86,14 @@
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2024-09-04 20:16:14.814445",
+ "links": [
+  {
+   "group": "General",
+   "link_doctype": "DNS Record",
+   "link_fieldname": "attached_to_docname"
+  }
+ ],
+ "modified": "2024-10-08 12:36:24.443179",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "DKIM Key",

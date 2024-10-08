@@ -4,8 +4,6 @@
 import frappe
 from frappe import _
 from frappe.utils import cint
-from typing import TYPE_CHECKING
-from mail.utils import get_dns_record
 from frappe.model.document import Document
 from mail.utils.user import has_role, is_system_manager
 from mail.mail.doctype.dkim_key.dkim_key import create_dkim_key
@@ -14,9 +12,6 @@ from mail.mail.doctype.mailbox.mailbox import (
 	create_dmarc_mailbox,
 	create_postmaster_mailbox,
 )
-
-if TYPE_CHECKING:
-	from mail.mail.doctype.dns_record.dns_record import DNSRecord
 
 
 class MailDomain(Document):
@@ -173,10 +168,12 @@ class MailDomain(Document):
 	def verify_dns_records(self, save: bool = False) -> None:
 		"""Verifies the DNS Records."""
 
+		from mail.utils import verify_dns_record
+
 		self.is_verified = 1
 
 		for record in self.dns_records:
-			if verify_dns_record(record):
+			if verify_dns_record(record.host, record.type, record.value):
 				record.is_verified = 1
 				frappe.msgprint(
 					_("Row #{0}: Verified {1}:{2} record.").format(
@@ -198,29 +195,6 @@ class MailDomain(Document):
 
 		if save:
 			self.save()
-
-
-def verify_dns_record(record: "DNSRecord", debug: bool = False) -> bool:
-	"""Verifies the DNS Record."""
-
-	if result := get_dns_record(record.host, record.type):
-		for data in result:
-			if data:
-				if record.type == "MX":
-					data = data.exchange
-
-				data = data.to_text().replace('"', "")
-
-				if record.type == "TXT" and "._domainkey." in record.host:
-					data = data.replace(" ", "")
-
-				if data == record.value:
-					return True
-
-			if debug:
-				frappe.msgprint(f"Expected: {record.value} Got: {data}")
-
-	return False
 
 
 def has_permission(doc: "Document", ptype: str, user: str) -> bool:
