@@ -2,18 +2,19 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on("Mail Settings", {
-	refresh(frm) {
+    refresh(frm) {
         frm.trigger("set_queries");
-	},
+        frm.trigger("add_comments");
+    },
 
     test_rabbitmq_connection(frm) {
-		frappe.call({
-			method: "test_rabbitmq_connection",
-			doc: frm.doc,
-			freeze: true,
-			freeze_message: __("Testing RabbitMQ Connection..."),
-		});
-	},
+        frappe.call({
+            method: "test_rabbitmq_connection",
+            doc: frm.doc,
+            freeze: true,
+            freeze_message: __("Testing RabbitMQ Connection..."),
+        });
+    },
 
     set_queries(frm) {
         frm.set_query("postmaster", () => ({
@@ -24,4 +25,14 @@ frappe.ui.form.on("Mail Settings", {
             },
         }));
     },
+
+    add_comments(frm) {
+        if (frm.doc.root_domain_name && (!frm.doc.dns_provider || !frm.doc.dns_provider_token)) {
+            let root_domain_name = `<b>${frm.doc.root_domain_name}</b>`;
+            let msg = __(
+                "DNS provider or token not configured. Please manually add the required SPF and DKIM records to the DNS provider for the domain {0} to ensure proper email authentication.", [root_domain_name]
+            );
+            frm.dashboard.add_comment(msg, "yellow", true);
+        }
+    }
 });
