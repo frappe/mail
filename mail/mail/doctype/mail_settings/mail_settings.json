@@ -6,8 +6,12 @@
  "engine": "InnoDB",
  "field_order": [
   "root_domain_name",
-  "postmaster",
   "column_break_3hud",
+  "dns_service",
+  "dns_service_token",
+  "section_break_71vy",
+  "postmaster",
+  "column_break_rm1i",
   "spf_host",
   "defaults_section",
   "default_dkim_key_size",
@@ -295,12 +299,34 @@
    "fieldname": "mail_agents_section",
    "fieldtype": "Section Break",
    "label": "Mail Agents"
+  },
+  {
+   "fieldname": "dns_service",
+   "fieldtype": "Select",
+   "label": "DNS Service",
+   "options": "\nDigitalOcean"
+  },
+  {
+   "depends_on": "eval: doc.dns_service",
+   "fieldname": "dns_service_token",
+   "fieldtype": "Password",
+   "label": "DNS Service Token",
+   "length": 255,
+   "mandatory_depends_on": "eval: doc.dns_service"
+  },
+  {
+   "fieldname": "section_break_71vy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_rm1i",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-07 15:42:35.280723",
+ "modified": "2024-10-08 11:34:16.555551",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
