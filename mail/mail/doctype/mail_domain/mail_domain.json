@@ -48,7 +48,7 @@
    "fieldtype": "Table",
    "label": "DNS Records",
    "no_copy": 1,
-   "options": "DNS Record",
+   "options": "Mail Domain DNS Record",
    "read_only": 1
   },
   {
@@ -131,7 +131,7 @@
    "link_fieldname": "domain_name"
   }
  ],
- "modified": "2024-09-03 12:48:42.009855",
+ "modified": "2024-10-08 11:52:46.083194",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",

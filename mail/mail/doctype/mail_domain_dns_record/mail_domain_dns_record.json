@@ -93,7 +93,7 @@
  "modified": "2024-07-25 11:46:26.871935",
  "modified_by": "Administrator",
  "module": "Mail",
- "name": "DNS Record",
+ "name": "Mail Domain DNS Record",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",
