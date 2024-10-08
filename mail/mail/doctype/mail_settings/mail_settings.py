@@ -13,6 +13,7 @@ from frappe.core.api.file import get_max_file_size
 class MailSettings(Document):
 	def validate(self) -> None:
 		self.validate_root_domain_name()
+		self.validate_dns_provider()
 		self.validate_spf_host()
 		self.validate_postmaster()
 		self.validate_default_dkim_key_size()
@@ -30,6 +31,12 @@ class MailSettings(Document):
 		"""Validates the Root Domain Name."""
 
 		self.root_domain_name = self.root_domain_name.lower()
+
+	def validate_dns_provider(self) -> None:
+		"""Validates the DNS Provider."""
+
+		if self.dns_provider and not self.dns_provider_token:
+			frappe.throw(_("Please set the DNS Provider Token."))
 
 	def validate_spf_host(self) -> None:
 		"""Validates the SPF Host."""
