@@ -21,9 +21,7 @@
   "priority",
   "ttl",
   "column_break_hszw",
-  "value",
-  "section_break_vuqt",
-  "response"
+  "value"
  ],
  "fields": [
   {
@@ -133,22 +131,11 @@
    "in_standard_filter": 1,
    "label": "Last Checked At",
    "read_only": 1
-  },
-  {
-   "fieldname": "section_break_vuqt",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "response",
-   "fieldtype": "JSON",
-   "label": "Response",
-   "no_copy": 1,
-   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-08 15:51:36.551651",
+ "modified": "2024-10-08 19:23:42.845890",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "DNS Record",

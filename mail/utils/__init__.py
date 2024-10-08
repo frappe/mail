@@ -47,6 +47,7 @@ def verify_dns_record(
 				data = data.to_text().replace('"', "")
 				if type == "TXT" and "._domainkey." in fqdn:
 					data = data.replace(" ", "")
+					expected_value = expected_value.replace(" ", "")
 				if data == expected_value:
 					return True
 			if debug:
