@@ -20,8 +20,6 @@
   "default_newsletter_retention",
   "mail_agents_section",
   "mail_agents",
-  "section_break_kplw",
-  "dns_records",
   "rabbitmq_amqp_tab",
   "rmq_host",
   "rmq_port",
@@ -85,17 +83,6 @@
    "fieldname": "defaults_section",
    "fieldtype": "Section Break",
    "label": "Defaults"
-  },
-  {
-   "fieldname": "dns_records",
-   "fieldtype": "Table",
-   "options": "Mail Domain DNS Record",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_kplw",
-   "fieldtype": "Section Break",
-   "label": "DNS Records"
   },
   {
    "fieldname": "outgoing_tab",
@@ -325,7 +312,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-08 15:46:06.652459",
+ "modified": "2024-10-08 22:42:18.860286",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

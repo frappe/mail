@@ -8,6 +8,7 @@ from mail.utils.cache import delete_cache
 from frappe.model.document import Document
 from mail.utils.validation import is_valid_host
 from frappe.core.api.file import get_max_file_size
+from mail.mail.doctype.dns_record.dns_record import create_or_update_dns_record
 
 
 class MailSettings(Document):
@@ -18,7 +19,7 @@ class MailSettings(Document):
 		self.validate_postmaster()
 		self.validate_default_dkim_key_size()
 		self.validate_mail_agents()
-		self.refresh_dns_records()
+		self.refresh_spf_dns_record()
 		self.validate_rmq_host()
 		self.validate_outgoing_max_attachment_size()
 		self.validate_outgoing_total_attachments_size()
@@ -41,8 +42,10 @@ class MailSettings(Document):
 	def validate_spf_host(self) -> None:
 		"""Validates the SPF Host."""
 
-		self.spf_host = self.spf_host.lower()
+		if not self.has_value_changed("spf_host"):
+			return
 
+		self.spf_host = self.spf_host.lower()
 		if not is_valid_host(self.spf_host):
 			msg = _(
 				"SPF Host {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores.".format(
@@ -50,6 +53,13 @@ class MailSettings(Document):
 				)
 			)
 			frappe.throw(msg)
+
+		previous_doc = self.get_doc_before_save()
+		if previous_doc and previous_doc.spf_host:
+			if spf_dns_record := frappe.db.exists(
+				"DNS Record", {"host": previous_doc.spf_host, "type": "TXT"}
+			):
+				frappe.delete_doc("DNS Record", spf_dns_record, ignore_permissions=True)
 
 	def validate_postmaster(self) -> None:
 		"""Validates the Postmaster."""
@@ -92,29 +102,21 @@ class MailSettings(Document):
 		if not outbound_agents:
 			frappe.throw(_("At least one Outbound Mail Agent is required."))
 
-	def refresh_dns_records(self, save: bool = False) -> None:
-		"""Generates the DNS Records."""
-
-		records = []
-		self.dns_records.clear()
+	def refresh_spf_dns_record(self, save: bool = False) -> None:
+		"""Refreshes the SPF DNS Record."""
 
 		if outbound_agents := [
 			f"a:{outbound_agent.host}"
 			for outbound_agent in self.mail_agents
 			if outbound_agent.type == "Outbound"
 		]:
-			# TXT Record (SPF)
-			records.append(
-				{
-					"category": "Server Record",
-					"type": "TXT",
-					"host": f"{self.spf_host}.{self.root_domain_name}",
-					"value": f"v=spf1 {' '.join(outbound_agents)} ~all",
-					"ttl": self.default_ttl,
-				}
+			create_or_update_dns_record(
+				host=self.spf_host,
+				type="TXT",
+				value=f"v=spf1 {' '.join(outbound_agents)} ~all",
+				ttl=self.default_ttl,
+				category="Server Record",
 			)
-
-		self.extend("dns_records", records)
 
 		if save:
 			self.save()
