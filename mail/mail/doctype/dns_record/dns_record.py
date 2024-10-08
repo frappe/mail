@@ -5,12 +5,45 @@ import frappe
 from frappe import _
 from frappe.utils import now
 from frappe.model.document import Document
+from mail.mail.doctype.dns_record.dns_provider import DNSProvider
 
 
 class DNSRecord(Document):
 	def validate(self):
 		if self.is_new():
 			self.validate_ttl()
+
+	def on_update(self):
+		mail_settings = frappe.get_single("Mail Settings")
+
+		if not mail_settings.dns_provider or not mail_settings.dns_provider_token:
+			return
+
+		dns_provider = DNSProvider(
+			provider=mail_settings.dns_provider,
+			token=mail_settings.get_password("dns_provider_token"),
+		)
+		dns_provider.create_or_update_dns_record(
+			domain=mail_settings.root_domain_name,
+			type=self.type,
+			host=self.host,
+			value=self.value,
+			ttl=self.ttl,
+		)
+
+	def on_trash(self):
+		mail_settings = frappe.get_single("Mail Settings")
+
+		if not mail_settings.dns_provider or not mail_settings.dns_provider_token:
+			return
+
+		dns_provider = DNSProvider(
+			provider=mail_settings.dns_provider,
+			token=mail_settings.get_password("dns_provider_token"),
+		)
+		dns_provider.delete_dns_record_if_exists(
+			domain=mail_settings.root_domain_name, type=self.type, host=self.host
+		)
 
 	def validate_ttl(self) -> None:
 		"""Validates the TTL value"""

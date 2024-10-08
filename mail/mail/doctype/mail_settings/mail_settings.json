@@ -7,8 +7,8 @@
  "field_order": [
   "root_domain_name",
   "column_break_3hud",
-  "dns_service",
-  "dns_service_token",
+  "dns_provider",
+  "dns_provider_token",
   "section_break_71vy",
   "postmaster",
   "column_break_rm1i",
@@ -301,32 +301,31 @@
    "label": "Mail Agents"
   },
   {
-   "fieldname": "dns_service",
-   "fieldtype": "Select",
-   "label": "DNS Service",
-   "options": "\nDigitalOcean"
-  },
-  {
-   "depends_on": "eval: doc.dns_service",
-   "fieldname": "dns_service_token",
-   "fieldtype": "Password",
-   "label": "DNS Service Token",
-   "length": 255,
-   "mandatory_depends_on": "eval: doc.dns_service"
-  },
-  {
    "fieldname": "section_break_71vy",
    "fieldtype": "Section Break"
   },
   {
    "fieldname": "column_break_rm1i",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dns_provider",
+   "fieldtype": "Select",
+   "label": "DNS Provider",
+   "options": "\nDigitalOcean"
+  },
+  {
+   "depends_on": "eval: doc.dns_provider",
+   "fieldname": "dns_provider_token",
+   "fieldtype": "Password",
+   "label": "DNS Provider Token",
+   "mandatory_depends_on": "eval: doc.dns_provider"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-08 12:42:47.504785",
+ "modified": "2024-10-08 15:46:06.652459",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
