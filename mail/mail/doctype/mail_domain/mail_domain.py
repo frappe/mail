@@ -103,7 +103,7 @@ class MailDomain(Document):
 			self.save()
 
 	def get_sending_records(
-		self, root_domain_name: str, spf_host: str, ttl: str
+		self, root_domain_name: str, spf_host: str, ttl: int
 	) -> list[dict]:
 		"""Returns the Sending Records."""
 
@@ -140,7 +140,7 @@ class MailDomain(Document):
 
 		return records
 
-	def get_receiving_records(self, ttl: str) -> list[dict]:
+	def get_receiving_records(self, ttl: int) -> list[dict]:
 		"""Returns the Receiving Records."""
 
 		records = []
