@@ -67,9 +67,9 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "1 Hour",
+   "default": "3600",
    "fieldname": "default_ttl",
-   "fieldtype": "Data",
+   "fieldtype": "Int",
    "label": "TTL",
    "non_negative": 1,
    "reqd": 1
@@ -326,7 +326,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-08 11:52:46.321703",
+ "modified": "2024-10-08 12:42:47.504785",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

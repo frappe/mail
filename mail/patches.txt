@@ -1,4 +1,5 @@
 [pre_model_sync]
+mail.patches.v1_0.set_default_ttl
 
 [post_model_sync]
 mail.patches.v1_0.rename_field_dkim_bits
