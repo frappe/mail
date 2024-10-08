@@ -21,6 +21,7 @@ class DKIMKey(Document):
 	def after_insert(self) -> None:
 		self.create_or_update_dns_record()
 		self.disable_existing_dkim_keys()
+		self.delete_existing_dns_records()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
@@ -73,6 +74,26 @@ class DKIMKey(Document):
 				& (DKIM_KEY.domain_name == self.domain_name)
 			)
 		).run()
+
+	def delete_existing_dns_records(self) -> None:
+		"""Deletes the existing DNS Records."""
+
+		existing_dkim_keys = frappe.db.get_all(
+			"DKIM Key",
+			filters={"enabled": 0, "name": ["!=", self.name], "domain_name": self.domain_name},
+			pluck="name",
+		)
+		existing_dns_records = frappe.db.get_all(
+			"DNS Record",
+			filters={
+				"attached_to_doctype": "DKIM Key",
+				"attached_to_docname": ["in", existing_dkim_keys],
+			},
+			pluck="name",
+		)
+
+		for dns_record in existing_dns_records:
+			frappe.delete_doc("DNS Record", dns_record, ignore_permissions=True)
 
 
 def create_dkim_key(domain_name: str, key_size: int | None = None) -> "DKIMKey":
