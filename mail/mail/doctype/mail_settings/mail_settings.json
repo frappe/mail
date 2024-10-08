@@ -89,7 +89,7 @@
   {
    "fieldname": "dns_records",
    "fieldtype": "Table",
-   "options": "DNS Record",
+   "options": "Mail Domain DNS Record",
    "read_only": 1
   },
   {
@@ -326,7 +326,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-08 11:34:16.555551",
+ "modified": "2024-10-08 11:52:46.321703",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

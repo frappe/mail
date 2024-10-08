@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class DNSRecord(Document):
+class MailDomainDNSRecord(Document):
 	pass
