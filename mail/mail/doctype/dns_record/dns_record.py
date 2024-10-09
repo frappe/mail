@@ -16,8 +16,8 @@ class DNSRecord(Document):
 
 	def on_update(self) -> None:
 		if self.has_value_changed("value") or self.has_value_changed("ttl"):
-			self.is_verified = 0
 			self.create_or_update_record_in_dns_provider()
+			self.reload()
 
 	def on_trash(self) -> None:
 		self.delete_record_from_dns_provider()
@@ -43,27 +43,25 @@ class DNSRecord(Document):
 	def create_or_update_record_in_dns_provider(self) -> None:
 		"""Creates or Updates the DNS Record in the DNS Provider"""
 
+		result = False
 		mail_settings = frappe.get_single("Mail Settings")
 
-		if not mail_settings.dns_provider or not mail_settings.dns_provider_token:
-			return
-
-		dns_provider = DNSProvider(
-			provider=mail_settings.dns_provider,
-			token=mail_settings.get_password("dns_provider_token"),
-		)
-		result = dns_provider.create_or_update_dns_record(
-			domain=mail_settings.root_domain_name,
-			type=self.type,
-			host=self.host,
-			value=self.value,
-			ttl=self.ttl,
-		)
-
-		if result == True:
-			frappe.db.set_value(
-				self.doctype, self.name, {"is_verified": 1, "last_checked_at": now()}
+		if mail_settings.dns_provider and mail_settings.dns_provider_token:
+			dns_provider = DNSProvider(
+				provider=mail_settings.dns_provider,
+				token=mail_settings.get_password("dns_provider_token"),
 			)
+			result = dns_provider.create_or_update_dns_record(
+				domain=mail_settings.root_domain_name,
+				type=self.type,
+				host=self.host,
+				value=self.value,
+				ttl=self.ttl,
+			)
+
+		frappe.db.set_value(
+			self.doctype, self.name, {"is_verified": int(result), "last_checked_at": now()}
+		)
 
 	def delete_record_from_dns_provider(self) -> None:
 		"""Deletes the DNS Record from the DNS Provider"""

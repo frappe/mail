@@ -33,6 +33,9 @@ class MailSettings(Document):
 
 		self.root_domain_name = self.root_domain_name.lower()
 
+		if self.has_value_changed("root_domain_name"):
+			frappe.db.set_value("DNS Record", {"is_verified": 1}, "is_verified", 0)
+
 	def validate_dns_provider(self) -> None:
 		"""Validates the DNS Provider."""
 
