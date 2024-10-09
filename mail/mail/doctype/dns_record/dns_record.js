@@ -15,7 +15,7 @@ frappe.ui.form.on("DNS Record", {
     },
 
     add_comments(frm) {
-        if (!frm.doc.is_verified) {
+        if (!frm.doc.__islocal && !frm.doc.is_verified) {
             let bold_mail_settings = `<b>${__("Mail Settings")}</b>`;
             let msg = __(
                 "It seems that the DNS provider or token is not configured in the {0}. Please manually add this DNS record to your provider for the root domain to ensure proper email authentication.", [bold_mail_settings]
