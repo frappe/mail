@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from frappe.utils import now
+from mail.utils import enqueue_job
 from frappe.model.document import Document
 from mail.mail.doctype.dns_record.dns_provider import DNSProvider
 
@@ -136,6 +137,22 @@ def create_or_update_dns_record(
 	dns_record.save()
 
 	return dns_record
+
+
+def verify_all_dns_records() -> None:
+	"""Verifies all DNS Records"""
+
+	dns_records = frappe.db.get_all("DNS Record", filters={}, pluck="name")
+	for dns_record in dns_records:
+		dns_record = frappe.get_doc("DNS Record", dns_record)
+		dns_record.verify_dns_record(save=True)
+
+
+@frappe.whitelist()
+def enqueue_verify_all_dns_records() -> None:
+	"Called by the scheduler to enqueue the `verify_all_dns_records` job."
+
+	enqueue_job(verify_all_dns_records, queue="long")
 
 
 def after_doctype_insert() -> None:
