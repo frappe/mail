@@ -6,6 +6,7 @@ from frappe.utils import cint
 from frappe import _, generate_hash
 from frappe.model.document import Document
 from frappe.utils.caching import request_cache
+from mail.mail.doctype.dns_record.dns_record import create_or_update_dns_record
 
 
 class DKIMKey(Document):
@@ -18,7 +19,9 @@ class DKIMKey(Document):
 		self.generate_dkim_keys()
 
 	def after_insert(self) -> None:
+		self.create_or_update_dns_record()
 		self.disable_existing_dkim_keys()
+		self.delete_existing_dns_records()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
@@ -46,6 +49,18 @@ class DKIMKey(Document):
 
 		self.private_key, self.public_key = generate_dkim_keys(cint(self.key_size))
 
+	def create_or_update_dns_record(self) -> None:
+		"""Creates or Updates the DNS Record."""
+
+		create_or_update_dns_record(
+			host=f"{self.name}._domainkey",
+			type="TXT",
+			value=f"v=DKIM1; k=rsa; p={self.public_key}",
+			category="Sending Record",
+			attached_to_doctype=self.doctype,
+			attached_to_docname=self.name,
+		)
+
 	def disable_existing_dkim_keys(self) -> None:
 		"""Disables the existing DKIM Keys."""
 
@@ -60,18 +75,25 @@ class DKIMKey(Document):
 			)
 		).run()
 
-	def get_dkim_record(self) -> dict:
-		"""Returns the DKIM Record."""
+	def delete_existing_dns_records(self) -> None:
+		"""Deletes the existing DNS Records."""
 
-		from mail.utils.cache import get_root_domain_name
+		existing_dkim_keys = frappe.db.get_all(
+			"DKIM Key",
+			filters={"enabled": 0, "name": ["!=", self.name], "domain_name": self.domain_name},
+			pluck="name",
+		)
+		existing_dns_records = frappe.db.get_all(
+			"DNS Record",
+			filters={
+				"attached_to_doctype": "DKIM Key",
+				"attached_to_docname": ["in", existing_dkim_keys],
+			},
+			pluck="name",
+		)
 
-		return {
-			"category": "Sending Record",
-			"type": "TXT",
-			"host": f"{self.name}._domainkey.{get_root_domain_name()}",
-			"value": f"v=DKIM1; k=rsa; p={self.public_key}",
-			"ttl": frappe.db.get_single_value("Mail Settings", "default_ttl", cache=True),
-		}
+		for dns_record in existing_dns_records:
+			frappe.delete_doc("DNS Record", dns_record, ignore_permissions=True)
 
 
 def create_dkim_key(domain_name: str, key_size: int | None = None) -> "DKIMKey":

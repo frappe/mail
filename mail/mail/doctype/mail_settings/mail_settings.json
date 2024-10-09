@@ -7,8 +7,8 @@
  "field_order": [
   "root_domain_name",
   "column_break_3hud",
-  "dns_service",
-  "dns_service_token",
+  "dns_provider",
+  "dns_provider_token",
   "section_break_71vy",
   "postmaster",
   "column_break_rm1i",
@@ -20,8 +20,6 @@
   "default_newsletter_retention",
   "mail_agents_section",
   "mail_agents",
-  "section_break_kplw",
-  "dns_records",
   "rabbitmq_amqp_tab",
   "rmq_host",
   "rmq_port",
@@ -67,9 +65,9 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "1 Hour",
+   "default": "3600",
    "fieldname": "default_ttl",
-   "fieldtype": "Data",
+   "fieldtype": "Int",
    "label": "TTL",
    "non_negative": 1,
    "reqd": 1
@@ -85,17 +83,6 @@
    "fieldname": "defaults_section",
    "fieldtype": "Section Break",
    "label": "Defaults"
-  },
-  {
-   "fieldname": "dns_records",
-   "fieldtype": "Table",
-   "options": "Mail Domain DNS Record",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_kplw",
-   "fieldtype": "Section Break",
-   "label": "DNS Records"
   },
   {
    "fieldname": "outgoing_tab",
@@ -301,32 +288,31 @@
    "label": "Mail Agents"
   },
   {
-   "fieldname": "dns_service",
-   "fieldtype": "Select",
-   "label": "DNS Service",
-   "options": "\nDigitalOcean"
-  },
-  {
-   "depends_on": "eval: doc.dns_service",
-   "fieldname": "dns_service_token",
-   "fieldtype": "Password",
-   "label": "DNS Service Token",
-   "length": 255,
-   "mandatory_depends_on": "eval: doc.dns_service"
-  },
-  {
    "fieldname": "section_break_71vy",
    "fieldtype": "Section Break"
   },
   {
    "fieldname": "column_break_rm1i",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dns_provider",
+   "fieldtype": "Select",
+   "label": "DNS Provider",
+   "options": "\nDigitalOcean"
+  },
+  {
+   "depends_on": "eval: doc.dns_provider",
+   "fieldname": "dns_provider_token",
+   "fieldtype": "Password",
+   "label": "DNS Provider Token",
+   "mandatory_depends_on": "eval: doc.dns_provider"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-08 11:52:46.321703",
+ "modified": "2024-10-08 22:42:18.860286",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
