@@ -104,6 +104,14 @@ class DNSRecord(Document):
 				indicator="green",
 				alert=True,
 			)
+		else:
+			frappe.msgprint(
+				_("Could not verify {0}:{1} record.").format(
+					frappe.bold(self.get_fqdn()), frappe.bold(self.type)
+				),
+				indicator="orange",
+				alert=True,
+			)
 
 		if save:
 			self.save()
