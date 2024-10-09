@@ -28,10 +28,10 @@ frappe.ui.form.on("Mail Settings", {
 
     add_comments(frm) {
         if (frm.doc.root_domain_name && (!frm.doc.dns_provider || !frm.doc.dns_provider_token)) {
-            let root_domain_name = `<b>${frm.doc.root_domain_name}</b>`;
+            let bold_root_domain_name = `<b>${frm.doc.root_domain_name}</b>`;
             let dns_record_list_link = `<a href="/app/dns-record">${__("DNS Records")}</a>`;
             let msg = __(
-                "DNS provider or token not configured. Please manually add the {0} to the DNS provider for the domain {1} to ensure proper email authentication.", [dns_record_list_link, root_domain_name]
+                "DNS provider or token not configured. Please manually add the {0} to the DNS provider for the domain {1} to ensure proper email authentication.", [dns_record_list_link, bold_root_domain_name]
             );
             frm.dashboard.add_comment(msg, "yellow", true);
         }
