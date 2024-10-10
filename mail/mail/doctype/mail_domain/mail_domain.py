@@ -146,8 +146,8 @@ class MailDomain(Document):
 		records = []
 		if inbound_agents := frappe.db.get_all(
 			"Mail Agent",
-			filters={"type": "Inbound"},
-			fields=["host", "priority"],
+			filters={"enabled": 1, "type": "Inbound"},
+			fields=["agent", "priority"],
 			order_by="priority asc",
 		):
 			for inbound_agent in inbound_agents:
@@ -156,7 +156,7 @@ class MailDomain(Document):
 						"category": "Receiving Record",
 						"type": "MX",
 						"host": self.domain_name,
-						"value": f"{inbound_agent.host.split(':')[0]}.",
+						"value": f"{inbound_agent.agent.split(':')[0]}.",
 						"priority": inbound_agent.priority,
 						"ttl": ttl,
 					}
