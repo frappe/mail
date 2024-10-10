@@ -35,13 +35,7 @@ class MailAgent(Document):
 		"""Validates the agent and fetches the IP addresses."""
 
 		if self.is_new() and frappe.db.exists("Mail Agent", self.agent):
-			frappe.throw(
-				_(
-					"Mail Agent {0} already exists.".format(
-						frappe.bold(self.agent),
-					)
-				)
-			)
+			frappe.throw(_("Mail Agent {0} already exists.").format(frappe.bold(self.agent)))
 
 		ipv4 = get_dns_record(self.agent, "A")
 		ipv6 = get_dns_record(self.agent, "AAAA")

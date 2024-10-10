@@ -56,10 +56,8 @@ class MailSettings(Document):
 		self.spf_host = self.spf_host.lower()
 		if not is_valid_host(self.spf_host):
 			msg = _(
-				"SPF Host {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores.".format(
-					frappe.bold(self.spf_host)
-				)
-			)
+				"SPF Host {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores."
+			).format(frappe.bold(self.spf_host))
 			frappe.throw(msg)
 
 		previous_doc = self.get_doc_before_save()
@@ -197,5 +195,5 @@ def validate_mail_settings() -> None:
 		if not mail_settings.get(field):
 			field_label = frappe.get_meta("Mail Settings").get_label(field)
 			frappe.throw(
-				_("Please set the {0} in the Mail Settings.".format(frappe.bold(field_label)))
+				_("Please set the {0} in the Mail Settings.").format(frappe.bold(field_label))
 			)

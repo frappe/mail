@@ -24,9 +24,9 @@ def get_dns_record(
 
 		return resolver.resolve(fqdn, type)
 	except dns.resolver.NXDOMAIN:
-		err_msg = _("{0} does not exist.".format(frappe.bold(fqdn)))
+		err_msg = _("{0} does not exist.").format(frappe.bold(fqdn))
 	except dns.resolver.NoAnswer:
-		err_msg = _("No answer for {0}.".format(frappe.bold(fqdn)))
+		err_msg = _("No answer for {0}.").format(frappe.bold(fqdn))
 	except dns.exception.DNSException as e:
 		err_msg = _(str(e))
 
