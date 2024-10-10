@@ -36,6 +36,14 @@ class MailSettings(Document):
 		if self.has_value_changed("root_domain_name"):
 			frappe.db.set_value("DNS Record", {"is_verified": 1}, "is_verified", 0)
 
+			if self.get_doc_before_save().get("root_domain_name"):
+				dns_record_list_link = f'<a href="/app/dns-record">{_("DNS Records")}</a>'
+				frappe.msgprint(
+					_(
+						"Please verify the {0} for the new {1} to ensure proper email authentication."
+					).format(dns_record_list_link, frappe.bold("Root Domain Name"))
+				)
+
 	def validate_dns_provider(self) -> None:
 		"""Validates the DNS Provider."""
 
