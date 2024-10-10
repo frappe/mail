@@ -8,7 +8,6 @@ from mail.utils.cache import delete_cache
 from frappe.model.document import Document
 from mail.utils.validation import is_valid_host
 from frappe.core.api.file import get_max_file_size
-from mail.mail.doctype.dns_record.dns_record import create_or_update_dns_record
 
 
 class MailSettings(Document):
@@ -18,8 +17,6 @@ class MailSettings(Document):
 		self.validate_spf_host()
 		self.validate_postmaster()
 		self.validate_default_dkim_key_size()
-		self.validate_mail_agents()
-		self.refresh_spf_dns_record()
 		self.validate_rmq_host()
 		self.validate_outgoing_max_attachment_size()
 		self.validate_outgoing_total_attachments_size()
@@ -72,6 +69,10 @@ class MailSettings(Document):
 			):
 				frappe.delete_doc("DNS Record", spf_dns_record, ignore_permissions=True)
 
+		from mail.mail.doctype.mail_agent.mail_agent import create_or_update_spf_dns_record
+
+		create_or_update_spf_dns_record(self.spf_host)
+
 	def validate_postmaster(self) -> None:
 		"""Validates the Postmaster."""
 
@@ -96,41 +97,6 @@ class MailSettings(Document):
 
 		if cint(self.default_dkim_key_size) < 1024:
 			frappe.throw(_("DKIM Key Size must be greater than 1024."))
-
-	def validate_mail_agents(self) -> None:
-		"""Validates the Mail Agents."""
-
-		inbound_agents = []
-		outbound_agents = []
-		for agent in self.mail_agents:
-			if agent.type == "Inbound":
-				inbound_agents.append(agent)
-			elif agent.type == "Outbound":
-				outbound_agents.append(agent)
-
-		if not inbound_agents:
-			frappe.throw(_("At least one Inbound Mail Agent is required."))
-		if not outbound_agents:
-			frappe.throw(_("At least one Outbound Mail Agent is required."))
-
-	def refresh_spf_dns_record(self, save: bool = False) -> None:
-		"""Refreshes the SPF DNS Record."""
-
-		if outbound_agents := [
-			f"a:{outbound_agent.host}"
-			for outbound_agent in self.mail_agents
-			if outbound_agent.type == "Outbound"
-		]:
-			create_or_update_dns_record(
-				host=self.spf_host,
-				type="TXT",
-				value=f"v=spf1 {' '.join(outbound_agents)} ~all",
-				ttl=self.default_ttl,
-				category="Server Record",
-			)
-
-		if save:
-			self.save()
 
 	def validate_rmq_host(self) -> None:
 		"""Validates the rmq_host and converts it to lowercase."""
