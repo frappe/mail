@@ -63,6 +63,7 @@ def create_or_update_spf_dns_record(spf_host: str | None = None) -> None:
 			frappe.delete_doc("DNS Record", spf_dns_record, ignore_permissions=True)
 			return
 
+	outbound_agents = [f"a:{outbound_agent}" for outbound_agent in outbound_agents]
 	create_or_update_dns_record(
 		host=spf_host,
 		type="TXT",
