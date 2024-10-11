@@ -26,6 +26,12 @@
   "column_break_yebz",
   "rmq_username",
   "rmq_password",
+  "spamassassin_tab",
+  "enable_spam_detection",
+  "section_break_7usg",
+  "spamd_host",
+  "column_break_7l7w",
+  "spamd_port",
   "outgoing_tab",
   "max_recipients",
   "max_headers",
@@ -295,12 +301,48 @@
    "fieldtype": "Password",
    "label": "DNS Provider Token",
    "mandatory_depends_on": "eval: doc.dns_provider"
+  },
+  {
+   "fieldname": "spamassassin_tab",
+   "fieldtype": "Tab Break",
+   "label": "SpamAssassin"
+  },
+  {
+   "default": "127.0.0.1",
+   "depends_on": "eval: doc.enable_spam_detection",
+   "fieldname": "spamd_host",
+   "fieldtype": "Data",
+   "label": "Host",
+   "mandatory_depends_on": "eval: doc.enable_spam_detection"
+  },
+  {
+   "default": "783",
+   "depends_on": "eval: doc.enable_spam_detection",
+   "fieldname": "spamd_port",
+   "fieldtype": "Int",
+   "label": "Port",
+   "mandatory_depends_on": "eval: doc.enable_spam_detection",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_7l7w",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_spam_detection",
+   "fieldtype": "Check",
+   "label": "Enable Spam Detection"
+  },
+  {
+   "fieldname": "section_break_7usg",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-10 10:51:33.423792",
+ "modified": "2024-10-11 11:37:35.536192",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
