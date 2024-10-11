@@ -48,6 +48,21 @@ website_redirects = [
 		"target": "/api/method/mail.api.inbound.pull_raw",
 		"redirect_http_status": 307,
 	},
+	{
+		"source": "/spamd/scan",
+		"target": "/api/method/mail.api.spamd.scan",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/spamd/is-spam",
+		"target": "/api/method/mail.api.spamd.is_spam",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/spamd/get-score",
+		"target": "/api/method/mail.api.spamd.get_spam_score",
+		"redirect_http_status": 307,
+	},
 ]
 
 
