@@ -32,6 +32,12 @@
   "spamd_host",
   "column_break_7l7w",
   "spamd_port",
+  "section_break_f89w",
+  "enable_spamd_for_inbound",
+  "enable_spamd_for_outbound",
+  "column_break_rdyc",
+  "max_spam_score_for_inbound",
+  "max_spam_score_for_outbound",
   "outgoing_tab",
   "max_recipients",
   "max_headers",
@@ -49,8 +55,7 @@
   "send_notification_on_reject",
   "column_break_0buk",
   "max_sync_via_api",
-  "rejected_mail_retention",
-  "required_spam_score"
+  "rejected_mail_retention"
  ],
  "fields": [
   {
@@ -275,13 +280,6 @@
    "reqd": 1
   },
   {
-   "default": "5",
-   "fieldname": "required_spam_score",
-   "fieldtype": "Int",
-   "label": "Required Spam Score",
-   "reqd": 1
-  },
-  {
    "fieldname": "section_break_71vy",
    "fieldtype": "Section Break"
   },
@@ -337,12 +335,48 @@
   {
    "fieldname": "section_break_7usg",
    "fieldtype": "Section Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_spamd_for_inbound",
+   "fieldtype": "Check",
+   "label": "Enable for Incoming"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_spamd_for_outbound",
+   "fieldtype": "Check",
+   "label": "Enable for Outgoing"
+  },
+  {
+   "fieldname": "section_break_f89w",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_rdyc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "5",
+   "depends_on": "eval: doc.enable_spamd_for_inbound",
+   "fieldname": "max_spam_score_for_inbound",
+   "fieldtype": "Int",
+   "label": "Max Score for Incoming",
+   "mandatory_depends_on": "eval: doc.enable_spamd_for_inbound"
+  },
+  {
+   "default": "5",
+   "depends_on": "eval: doc.enable_spamd_for_outbound",
+   "fieldname": "max_spam_score_for_outbound",
+   "fieldtype": "Int",
+   "label": "Max Score for Outgoing",
+   "mandatory_depends_on": "eval: doc.enable_spamd_for_outbound"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-11 11:37:35.536192",
+ "modified": "2024-10-11 12:48:16.205653",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

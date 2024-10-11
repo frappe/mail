@@ -78,10 +78,10 @@ class IncomingMail(Document):
 		for key, value in parser.get_authentication_results().items():
 			setattr(self, key, value)
 
-		required_spam_score = frappe.db.get_single_value(
-			"Mail Settings", "required_spam_score", cache=True
+		max_spam_score_for_inbound = frappe.db.get_single_value(
+			"Mail Settings", "max_spam_score_for_inbound", cache=True
 		)
-		self.folder = "Spam" if self.spam_score > required_spam_score else "Inbox"
+		self.folder = "Spam" if self.spam_score > max_spam_score_for_inbound else "Inbox"
 		self.status = "Rejected" if self.is_rejected else "Delivered"
 
 		if self.created_at:
