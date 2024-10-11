@@ -28,10 +28,11 @@
   "rmq_password",
   "spamassassin_tab",
   "enable_spam_detection",
-  "section_break_7usg",
-  "spamd_host",
   "column_break_7l7w",
+  "spamd_host",
   "spamd_port",
+  "scanning_mode",
+  "hybrid_scanning_threshold",
   "section_break_f89w",
   "enable_spamd_for_inbound",
   "enable_spamd_for_outbound",
@@ -333,10 +334,6 @@
    "label": "Enable Spam Detection"
   },
   {
-   "fieldname": "section_break_7usg",
-   "fieldtype": "Section Break"
-  },
-  {
    "default": "1",
    "fieldname": "enable_spamd_for_inbound",
    "fieldtype": "Check",
@@ -371,12 +368,29 @@
    "fieldtype": "Int",
    "label": "Max Score for Outgoing",
    "mandatory_depends_on": "eval: doc.enable_spamd_for_outbound"
+  },
+  {
+   "default": "Exclude Attachments",
+   "depends_on": "eval: doc.enable_spam_detection",
+   "fieldname": "scanning_mode",
+   "fieldtype": "Select",
+   "label": "Scanning Mode",
+   "mandatory_depends_on": "eval: doc.enable_spam_detection",
+   "options": "\nExclude Attachments\nInclude Attachments\nHybrid Approach"
+  },
+  {
+   "default": "3",
+   "depends_on": "eval: doc.scanning_mode == \"Hybrid Approach\"",
+   "fieldname": "hybrid_scanning_threshold",
+   "fieldtype": "Int",
+   "label": "Hybrid Scanning Threshold",
+   "mandatory_depends_on": "eval: doc.scanning_mode == \"Hybrid Approach\""
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-11 12:48:16.205653",
+ "modified": "2024-10-11 14:04:42.775546",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
