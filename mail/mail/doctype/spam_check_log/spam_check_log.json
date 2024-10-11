@@ -16,6 +16,11 @@
   "hybrid_scanning_threshold",
   "spam_score",
   "section_break_5qon",
+  "started_at",
+  "completed_at",
+  "column_break_svei",
+  "duration",
+  "section_break_o1qt",
   "message"
  ],
  "fields": [
@@ -86,12 +91,43 @@
   {
    "fieldname": "section_break_opob",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.started_at && doc.completed_at",
+   "fieldname": "duration",
+   "fieldtype": "Float",
+   "label": "Duration (Seconds)",
+   "no_copy": 1,
+   "precision": "1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_svei",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_o1qt",
+   "fieldtype": "Section Break"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-11 17:00:55.206738",
+ "modified": "2024-10-11 21:27:54.191498",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Spam Check Log",

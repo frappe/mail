@@ -12,6 +12,7 @@ from frappe.query_builder import Interval
 from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
 from frappe.query_builder.functions import Now
+from frappe.utils import now, time_diff_in_seconds
 
 
 class SpamCheckLog(Document):
@@ -44,6 +45,7 @@ class SpamCheckLog(Document):
 		if not mail_settings.enable_spam_detection:
 			frappe.throw(_("Spam Detection is disabled"))
 
+		self.started_at = now()
 		scanned_message = None
 		spamd_host = mail_settings.spamd_host
 		spamd_port = mail_settings.spamd_port
@@ -70,6 +72,8 @@ class SpamCheckLog(Document):
 		self.scanning_mode = scanning_mode
 		self.hybrid_scanning_threshold = hybrid_scanning_threshold
 		self.spam_score = extract_spam_score(scanned_message)
+		self.completed_at = now()
+		self.duration = time_diff_in_seconds(self.completed_at, self.started_at)
 
 	def is_spam(self, message_type: Literal["Inbound", "Outbound"] = "Outbound") -> bool:
 		"""Returns True if the message is spam else False"""
