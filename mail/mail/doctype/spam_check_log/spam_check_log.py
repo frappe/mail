@@ -8,11 +8,18 @@ from frappe import _
 from typing import Literal
 from email import message_from_string
 from mail.utils import get_host_by_ip
+from frappe.query_builder import Interval
 from frappe.model.document import Document
 from email.mime.multipart import MIMEMultipart
+from frappe.query_builder.functions import Now
 
 
 class SpamCheckLog(Document):
+	@staticmethod
+	def clear_old_logs(days=14):
+		log = frappe.qb.DocType("Spam Check Log")
+		frappe.db.delete(log, filters=(log.creation < (Now() - Interval(days=days))))
+
 	def validate(self) -> None:
 		if self.is_new():
 			self.set_source_ip_address()
