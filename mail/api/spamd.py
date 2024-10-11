@@ -5,11 +5,16 @@ from mail.mail.doctype.spam_check_log.spam_check_log import create_spam_check_lo
 
 
 @frappe.whitelist(methods=["POST"], allow_guest=True)
-def get_spam_score(message: str) -> float:
-	"""Returns the spam score of the message"""
+def scan(message: str) -> dict:
+	"""Returns the spam score, headers and scanning mode of the message"""
 
 	spam_log = create_spam_check_log(message)
-	return spam_log.spam_score
+	return {
+		"is_spam": spam_log.is_spam(),
+		"spam_score": spam_log.spam_score,
+		"spam_headers": spam_log.spam_headers,
+		"scanning_mode": spam_log.scanning_mode,
+	}
 
 
 @frappe.whitelist(methods=["POST"], allow_guest=True)
@@ -20,3 +25,11 @@ def is_spam(
 
 	spam_log = create_spam_check_log(message)
 	return spam_log.is_spam(message_type)
+
+
+@frappe.whitelist(methods=["POST"], allow_guest=True)
+def get_spam_score(message: str) -> float:
+	"""Returns the spam score of the message"""
+
+	spam_log = create_spam_check_log(message)
+	return spam_log.spam_score
