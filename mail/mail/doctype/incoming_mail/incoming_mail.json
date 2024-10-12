@@ -365,6 +365,7 @@
    "fieldtype": "Float",
    "label": "Spam Score",
    "no_copy": 1,
+   "precision": "1",
    "read_only": 1
   },
   {
@@ -414,7 +415,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-07 13:43:46.760292",
+ "modified": "2024-10-12 23:25:25.919399",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

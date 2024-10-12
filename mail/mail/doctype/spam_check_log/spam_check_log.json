@@ -8,6 +8,7 @@
  "field_order": [
   "section_break_vtj1",
   "source_ip_address",
+  "column_break_9x8t",
   "source_host",
   "section_break_opob",
   "spam_headers",
@@ -122,12 +123,16 @@
   {
    "fieldname": "section_break_o1qt",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_9x8t",
+   "fieldtype": "Column Break"
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-11 21:27:54.191498",
+ "modified": "2024-10-12 23:37:10.756757",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Spam Check Log",

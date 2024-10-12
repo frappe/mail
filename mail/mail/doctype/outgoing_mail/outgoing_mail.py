@@ -16,6 +16,7 @@ from mail.utils.cache import get_postmaster
 from email.utils import parseaddr, formataddr
 from email.mime.multipart import MIMEMultipart
 from frappe.utils import flt, now, time_diff_in_seconds
+from mail.mail.doctype.spam_check_log.spam_check_log import create_spam_check_log
 from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
 from mail.utils import (
 	enqueue_job,
@@ -50,6 +51,7 @@ class OutgoingMail(Document):
 
 			self.generate_message()
 			self.validate_max_message_size()
+			self.set_spam_score()
 
 	def on_submit(self) -> None:
 		self.create_mail_contacts()
@@ -475,6 +477,19 @@ class OutgoingMail(Document):
 					frappe.bold(message_size), frappe.bold(max_message_size)
 				)
 			)
+
+	def set_spam_score(self) -> None:
+		"""Sets the spam score."""
+
+		# Skip spam check for bulk emails as it may slow down the insertion
+		if frappe.flags.bulk_insert:
+			return
+
+		mail_settings = self.runtime.mail_settings
+
+		if mail_settings.enable_spam_detection and mail_settings.scan_outgoing_mail:
+			spam_log = create_spam_check_log(self.message)
+			self.spam_score = spam_log.spam_score
 
 	def create_mail_contacts(self) -> None:
 		"""Creates the mail contacts."""

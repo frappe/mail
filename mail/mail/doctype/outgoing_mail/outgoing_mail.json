@@ -34,6 +34,7 @@
   "section_break_quhp",
   "message_id",
   "in_reply_to",
+  "spam_score",
   "column_break_4zfa",
   "message_size",
   "section_break_093p",
@@ -444,12 +445,22 @@
    "no_copy": 1,
    "non_negative": 1,
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "spam_score",
+   "fieldtype": "Float",
+   "label": "Spam Score",
+   "length": 255,
+   "no_copy": 1,
+   "precision": "1",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-07 13:44:23.140761",
+ "modified": "2024-10-12 23:25:10.466095",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Outgoing Mail",

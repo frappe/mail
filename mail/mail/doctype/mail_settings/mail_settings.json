@@ -34,11 +34,11 @@
   "scanning_mode",
   "hybrid_scanning_threshold",
   "section_break_f89w",
-  "enable_spamd_for_inbound",
-  "enable_spamd_for_outbound",
+  "scan_outgoing_mail",
+  "scan_incoming_mail",
   "column_break_rdyc",
-  "max_spam_score_for_inbound",
   "max_spam_score_for_outbound",
+  "max_spam_score_for_inbound",
   "outgoing_tab",
   "max_recipients",
   "max_headers",
@@ -334,18 +334,6 @@
    "label": "Enable Spam Detection"
   },
   {
-   "default": "1",
-   "fieldname": "enable_spamd_for_inbound",
-   "fieldtype": "Check",
-   "label": "Enable for Incoming"
-  },
-  {
-   "default": "1",
-   "fieldname": "enable_spamd_for_outbound",
-   "fieldtype": "Check",
-   "label": "Enable for Outgoing"
-  },
-  {
    "fieldname": "section_break_f89w",
    "fieldtype": "Section Break"
   },
@@ -355,20 +343,20 @@
   },
   {
    "default": "5",
-   "depends_on": "eval: doc.enable_spamd_for_inbound",
+   "depends_on": "eval: doc.scan_incoming_mail",
    "fieldname": "max_spam_score_for_inbound",
    "fieldtype": "Float",
    "label": "Max Score for Incoming",
-   "mandatory_depends_on": "eval: doc.enable_spamd_for_inbound",
+   "mandatory_depends_on": "eval: doc.scan_incoming_mail",
    "precision": "1"
   },
   {
    "default": "5",
-   "depends_on": "eval: doc.enable_spamd_for_outbound",
+   "depends_on": "eval: doc.scan_outgoing_mail",
    "fieldname": "max_spam_score_for_outbound",
    "fieldtype": "Float",
    "label": "Max Score for Outgoing",
-   "mandatory_depends_on": "eval: doc.enable_spamd_for_outbound",
+   "mandatory_depends_on": "eval: doc.scan_outgoing_mail",
    "precision": "1"
   },
   {
@@ -388,12 +376,24 @@
    "label": "Hybrid Scanning Threshold",
    "mandatory_depends_on": "eval: doc.scanning_mode == \"Hybrid Approach\"",
    "precision": "1"
+  },
+  {
+   "default": "1",
+   "fieldname": "scan_incoming_mail",
+   "fieldtype": "Check",
+   "label": "Scan Incoming Mail"
+  },
+  {
+   "default": "1",
+   "fieldname": "scan_outgoing_mail",
+   "fieldtype": "Check",
+   "label": "Scan Outgoing Mail"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2024-10-11 16:56:46.886825",
+ "modified": "2024-10-12 23:31:11.909843",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
