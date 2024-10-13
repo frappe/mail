@@ -23,6 +23,7 @@
   "from_ip",
   "from_host",
   "spam_score",
+  "is_spam",
   "is_rejected",
   "rejection_message",
   "column_break_htgl",
@@ -49,6 +50,7 @@
   "dkim_description",
   "dmarc_description",
   "section_break_qijk",
+  "spam_check_response",
   "message",
   "amended_from"
  ],
@@ -282,6 +284,7 @@
    "depends_on": "eval: doc.docstatus != 0",
    "fieldname": "folder",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Folder",
    "no_copy": 1,
    "options": "Inbox\nSpam\nTrash",
@@ -361,6 +364,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.spam_check_response",
    "fieldname": "spam_score",
    "fieldtype": "Float",
    "label": "Spam Score",
@@ -409,13 +413,30 @@
    "label": "In Reply To (Message ID)",
    "length": 255,
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.is_spam",
+   "fieldname": "is_spam",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Spam",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "spam_check_response",
+   "fieldtype": "Code",
+   "label": "Spam Check Response",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-12 23:25:25.919399",
+ "modified": "2024-10-13 22:05:50.356349",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

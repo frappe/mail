@@ -36,6 +36,7 @@
   {
    "fieldname": "scanning_mode",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Scanning Mode",
    "no_copy": 1,
    "read_only": 1
@@ -52,6 +53,7 @@
   {
    "fieldname": "spam_score",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Spam Score",
    "no_copy": 1,
    "precision": "1",
@@ -71,6 +73,7 @@
   {
    "fieldname": "source_ip_address",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Source IP Address",
    "no_copy": 1,
    "read_only": 1
@@ -78,6 +81,7 @@
   {
    "fieldname": "source_host",
    "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Source Host",
    "no_copy": 1,
    "read_only": 1
@@ -104,6 +108,7 @@
    "depends_on": "eval: doc.started_at && doc.completed_at",
    "fieldname": "duration",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Duration (Seconds)",
    "no_copy": 1,
    "precision": "1",
@@ -132,7 +137,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-13 20:24:21.448730",
+ "modified": "2024-10-13 22:10:17.504303",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Spam Check Log",

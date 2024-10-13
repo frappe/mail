@@ -15,7 +15,7 @@ from frappe.model.document import Document
 from mail.utils.cache import get_postmaster
 from email.utils import parseaddr, formataddr
 from email.mime.multipart import MIMEMultipart
-from frappe.utils import flt, now, time_diff_in_seconds
+from frappe.utils import flt, now, cint, time_diff_in_seconds
 from mail.mail.doctype.spam_check_log.spam_check_log import create_spam_check_log
 from mail.utils.user import is_mailbox_owner, is_system_manager, get_user_mailboxes
 from mail.utils import (
@@ -483,7 +483,7 @@ class OutgoingMail(Document):
 			)
 
 	def spam_check(self) -> None:
-		"""Sets the spam score."""
+		"""Checks if the mail is spam."""
 
 		# Skip spam check for bulk emails as it may slow down the insertion
 		if frappe.flags.bulk_insert:
@@ -494,7 +494,7 @@ class OutgoingMail(Document):
 			spam_log = create_spam_check_log(self.message)
 			self.spam_score = spam_log.spam_score
 			self.spam_check_response = spam_log.spamd_response
-			self.is_spam = self.spam_score > mail_settings.max_spam_score_for_outbound
+			self.is_spam = cint(self.spam_score > mail_settings.max_spam_score_for_outbound)
 
 			if self.is_spam and mail_settings.block_spam_outgoing_mail:
 				self.status = "Blocked (Spam)"
