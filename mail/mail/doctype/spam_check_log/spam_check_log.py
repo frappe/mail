@@ -130,9 +130,33 @@ def scan_message(host: str, port: int, message: str) -> str:
 	stdout, stderr = process.communicate(input=message.encode("utf-8"))
 
 	if stderr:
-		frappe.log_error(title=_("Spam Detection Error"), message=stderr.decode())
+		frappe.log_error(title=_("Spam Detection Failed"), message=stderr.decode())
 
-	return stdout.decode()
+	error_message = None
+	result = stdout.decode()
+
+	if not result:
+		error_message = _("SpamAssassin did not return any output.")
+
+	elif result == message:
+		error_steps = [
+			_("1. Ensure the correct IP address is allowed to connect to SpamAssassin."),
+			_(
+				"2. Verify that the SpamAssassin service is running and accepting connections on port {0}."
+			).format(port),
+			_(
+				"3. Review SpamAssassin logs for any unauthorized connection attempts or permission errors."
+			),
+		]
+		formatted_error_steps = "".join(f"<hr/>{step}" for step in error_steps)
+		error_message = _(
+			"SpamAssassin did not return the expected headers. This may indicate a permission issue or an unauthorized connection. Please check the following: {0}"
+		).format(formatted_error_steps)
+
+	if error_message:
+		frappe.throw(error_message, title=_("Spam Detection Failed"), wide=True)
+
+	return result
 
 
 def extract_spam_score(scanned_message: str) -> float:
