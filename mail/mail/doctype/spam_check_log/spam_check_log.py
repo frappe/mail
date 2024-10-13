@@ -72,7 +72,7 @@ class SpamCheckLog(Document):
 		self.completed_at = now()
 		self.duration = time_diff_in_seconds(self.completed_at, self.started_at)
 
-	def is_spam(self, message_type: Literal["Inbound", "Outbound"] = "Outbound") -> bool:
+	def is_spam(self, message_type: Literal["Inbound", "Outbound"]) -> bool:
 		"""Returns True if the message is spam else False"""
 
 		max_spam_score_field = (
@@ -126,13 +126,13 @@ def scan_message(host: str, port: int, message: str) -> str:
 			sock.sendall(message.encode("utf-8"))
 			sock.shutdown(socket.SHUT_WR)
 
-			result = ""
+			response = ""
 			while True:
 				try:
 					data = sock.recv(4096)
 					if not data:
 						break
-					result += data.decode("utf-8")
+					response += data.decode("utf-8")
 				except socket.timeout:
 					frappe.throw(
 						_("Timed out waiting for response from SpamAssassin."),
@@ -147,7 +147,7 @@ def scan_message(host: str, port: int, message: str) -> str:
 			title=_("Spam Detection Failed"),
 		)
 
-	if not result:
+	if not response:
 		error_steps = [
 			_("1. Ensure the correct IP address is allowed to connect to SpamAssassin."),
 			_(
@@ -160,13 +160,13 @@ def scan_message(host: str, port: int, message: str) -> str:
 		formatted_error_steps = "".join(f"<hr/>{step}" for step in error_steps)
 		frappe.throw(
 			_(
-				"SpamAssassin did not return the expected result. This may indicate a permission issue or an unauthorized connection. Please check the following: {0}"
+				"SpamAssassin did not return the expected response. This may indicate a permission issue or an unauthorized connection. Please check the following: {0}"
 			).format(formatted_error_steps),
 			title=_("Spam Detection Failed"),
 			wide=True,
 		)
 
-	return result
+	return response
 
 
 def extract_spam_score(spamd_response: str) -> float:

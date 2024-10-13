@@ -6,11 +6,10 @@ from mail.mail.doctype.spam_check_log.spam_check_log import create_spam_check_lo
 
 @frappe.whitelist(methods=["POST"], allow_guest=True)
 def scan(message: str) -> dict:
-	"""Returns the spam score, headers and scanning mode of the message"""
+	"""Returns the spam score, spamd response and scanning mode of the message"""
 
 	spam_log = create_spam_check_log(message)
 	return {
-		"is_spam": spam_log.is_spam(),
 		"spam_score": spam_log.spam_score,
 		"spamd_response": spam_log.spamd_response,
 		"scanning_mode": spam_log.scanning_mode,
