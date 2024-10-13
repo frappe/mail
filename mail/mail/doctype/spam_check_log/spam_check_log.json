@@ -11,7 +11,7 @@
   "column_break_9x8t",
   "source_host",
   "section_break_opob",
-  "spam_headers",
+  "spamd_response",
   "column_break_c5vz",
   "scanning_mode",
   "hybrid_scanning_threshold",
@@ -28,13 +28,6 @@
   {
    "fieldname": "section_break_vtj1",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "spam_headers",
-   "fieldtype": "Code",
-   "label": "X-Spam Headers",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "fieldname": "column_break_c5vz",
@@ -127,12 +120,19 @@
   {
    "fieldname": "column_break_9x8t",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "spamd_response",
+   "fieldtype": "Code",
+   "label": "Response",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2024-10-12 23:37:10.756757",
+ "modified": "2024-10-13 20:24:21.448730",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Spam Check Log",

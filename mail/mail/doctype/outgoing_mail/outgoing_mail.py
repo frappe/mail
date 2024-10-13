@@ -493,7 +493,7 @@ class OutgoingMail(Document):
 		if mail_settings.enable_spam_detection and mail_settings.scan_outgoing_mail:
 			spam_log = create_spam_check_log(self.message)
 			self.spam_score = spam_log.spam_score
-			self.spam_headers = spam_log.spam_headers
+			self.spam_check_response = spam_log.spamd_response
 			self.is_spam = self.spam_score > mail_settings.max_spam_score_for_outbound
 
 			if self.is_spam and mail_settings.block_spam_outgoing_mail:

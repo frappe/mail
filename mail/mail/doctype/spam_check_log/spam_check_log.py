@@ -3,7 +3,7 @@
 
 import re
 import frappe
-import subprocess
+import socket
 from frappe import _
 from typing import Literal
 from email import message_from_string
@@ -45,33 +45,30 @@ class SpamCheckLog(Document):
 		if not mail_settings.enable_spam_detection:
 			frappe.throw(_("Spam Detection is disabled"))
 
-		self.started_at = now()
-		scanned_message = None
 		spamd_host = mail_settings.spamd_host
 		spamd_port = mail_settings.spamd_port
 		scanning_mode = mail_settings.scanning_mode
 		hybrid_scanning_threshold = mail_settings.hybrid_scanning_threshold
 
+		response = None
+		self.started_at = now()
+
 		if scanning_mode == "Hybrid Approach":
 			message_without_attachments = get_message_without_attachments(self.message)
-			initial_result = scan_message(spamd_host, spamd_port, message_without_attachments)
-			initial_spam_score = extract_spam_score(initial_result)
+			initial_response = scan_message(spamd_host, spamd_port, message_without_attachments)
+			initial_spam_score = extract_spam_score(initial_response)
 
 			if initial_spam_score < hybrid_scanning_threshold:
-				scanned_message = initial_result
+				response = initial_response
 
 		elif scanning_mode == "Exclude Attachments":
 			self.message = get_message_without_attachments(self.message)
 
-		scanned_message = scanned_message or scan_message(
-			spamd_host, spamd_port, self.message
-		)
-		self.spam_headers = "\n".join(
-			f"{k}: {v}" for k, v in extract_spam_headers(scanned_message).items()
-		)
+		response = response or scan_message(spamd_host, spamd_port, self.message)
+		self.spamd_response = response
 		self.scanning_mode = scanning_mode
 		self.hybrid_scanning_threshold = hybrid_scanning_threshold
-		self.spam_score = extract_spam_score(scanned_message)
+		self.spam_score = extract_spam_score(response)
 		self.completed_at = now()
 		self.duration = time_diff_in_seconds(self.completed_at, self.started_at)
 
@@ -121,24 +118,36 @@ def get_message_without_attachments(message: str) -> str:
 def scan_message(host: str, port: int, message: str) -> str:
 	"""Scans the message for spam"""
 
-	process = subprocess.Popen(
-		["spamc", "-d", host, "-p", str(port)],
-		stdin=subprocess.PIPE,
-		stdout=subprocess.PIPE,
-		stderr=subprocess.PIPE,
-	)
-	stdout, stderr = process.communicate(input=message.encode("utf-8"))
+	try:
+		with socket.create_connection((host, port), timeout=30) as sock:
+			sock.settimeout(10)
+			command = "SYMBOLS SPAMC/1.5\r\n\r\n"
+			sock.sendall(command.encode("utf-8"))
+			sock.sendall(message.encode("utf-8"))
+			sock.shutdown(socket.SHUT_WR)
 
-	if stderr:
-		frappe.log_error(title=_("Spam Detection Failed"), message=stderr.decode())
+			result = ""
+			while True:
+				try:
+					data = sock.recv(4096)
+					if not data:
+						break
+					result += data.decode("utf-8")
+				except socket.timeout:
+					frappe.throw(
+						_("Timed out waiting for response from SpamAssassin."),
+						title=_("Spam Detection Failed"),
+					)
 
-	error_message = None
-	result = stdout.decode()
+	except ConnectionRefusedError:
+		frappe.throw(
+			_(
+				"Could not connect to SpamAssassin (spamd). Please ensure it's running on {0}:{1}"
+			).format(host, port),
+			title=_("Spam Detection Failed"),
+		)
 
 	if not result:
-		error_message = _("SpamAssassin did not return any output.")
-
-	elif result == message:
 		error_steps = [
 			_("1. Ensure the correct IP address is allowed to connect to SpamAssassin."),
 			_(
@@ -149,31 +158,21 @@ def scan_message(host: str, port: int, message: str) -> str:
 			),
 		]
 		formatted_error_steps = "".join(f"<hr/>{step}" for step in error_steps)
-		error_message = _(
-			"SpamAssassin did not return the expected headers. This may indicate a permission issue or an unauthorized connection. Please check the following: {0}"
-		).format(formatted_error_steps)
-
-	if error_message:
-		frappe.throw(error_message, title=_("Spam Detection Failed"), wide=True)
+		frappe.throw(
+			_(
+				"SpamAssassin did not return the expected result. This may indicate a permission issue or an unauthorized connection. Please check the following: {0}"
+			).format(formatted_error_steps),
+			title=_("Spam Detection Failed"),
+			wide=True,
+		)
 
 	return result
 
 
-def extract_spam_score(scanned_message: str) -> float:
-	"""Extracts the spam score from the scanned message"""
+def extract_spam_score(spamd_response: str) -> float:
+	"""Extracts the spam score from the spamd response"""
 
-	if match := re.search(r"X-Spam-Status:.*score=([\d\.]+)", scanned_message):
+	if match := re.search(r"Spam:.*?;\s*(-?\d+\.\d+)\s*/", spamd_response):
 		return float(match.group(1))
 
-	frappe.throw(_("Spam score not found in output."))
-
-
-def extract_spam_headers(scanned_message: str) -> dict:
-	"""Extracts the spam headers from the scanned message"""
-
-	parsed_message = message_from_string(scanned_message)
-	spam_headers = {
-		key: value for key, value in parsed_message.items() if key.startswith("X-Spam-")
-	}
-
-	return spam_headers
+	frappe.throw(_("Spam score not found in output."), title=_("Spam Detection Failed"))

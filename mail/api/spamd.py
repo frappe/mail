@@ -12,7 +12,7 @@ def scan(message: str) -> dict:
 	return {
 		"is_spam": spam_log.is_spam(),
 		"spam_score": spam_log.spam_score,
-		"spam_headers": spam_log.spam_headers,
+		"spamd_response": spam_log.spamd_response,
 		"scanning_mode": spam_log.scanning_mode,
 	}
 
