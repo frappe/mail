@@ -51,10 +51,14 @@ class OutgoingMail(Document):
 
 			self.generate_message()
 			self.validate_max_message_size()
-			self.set_spam_score()
+			self.spam_check()
 
 	def on_submit(self) -> None:
 		self.create_mail_contacts()
+
+		if self.status == "Blocked (Spam)":
+			return
+
 		self._db_set(status="Pending", notify_update=True)
 
 		if self.via_api and not self.is_newsletter and self.submitted_after <= 5:
@@ -478,7 +482,7 @@ class OutgoingMail(Document):
 				)
 			)
 
-	def set_spam_score(self) -> None:
+	def spam_check(self) -> None:
 		"""Sets the spam score."""
 
 		# Skip spam check for bulk emails as it may slow down the insertion
@@ -486,10 +490,14 @@ class OutgoingMail(Document):
 			return
 
 		mail_settings = self.runtime.mail_settings
-
 		if mail_settings.enable_spam_detection and mail_settings.scan_outgoing_mail:
 			spam_log = create_spam_check_log(self.message)
 			self.spam_score = spam_log.spam_score
+			self.spam_headers = spam_log.spam_headers
+			self.is_spam = self.spam_score > mail_settings.max_spam_score_for_outbound
+
+			if self.is_spam and mail_settings.block_spam_outgoing_mail:
+				self.status = "Blocked (Spam)"
 
 	def create_mail_contacts(self) -> None:
 		"""Creates the mail contacts."""
@@ -901,7 +909,9 @@ def get_outgoing_mail_for_bulk_insert(**kwargs) -> "OutgoingMail":
 
 	doc.docstatus = 1
 	doc.folder = "Sent"
-	doc.status = "Pending"
+
+	if not doc.status or doc.status == "Draft":
+		doc.status = "Pending"
 
 	return doc
 
