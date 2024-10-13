@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2024-06-28 19:27+0553\n"
-"PO-Revision-Date: 2024-06-28 19:27+0553\n"
+"POT-Creation-Date: 2024-10-13 22:20+0553\n"
+"PO-Revision-Date: 2024-10-13 22:20+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -16,1886 +16,1708 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.13.1\n"
 
-#. Label of a Section Break field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid " Incoming"
-msgstr ""
-
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Option for the 'Type' (Select) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "A"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Option for the 'Type' (Select) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "AAAA"
 msgstr ""
 
-#. Label of a Check field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#. Label of the via_api (Check) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/outbound_delay/outbound_delay.py:186
 msgid "API"
 msgstr ""
 
-#: mail/report/outbound_delay/outbound_delay.py:70
-msgid "Action After"
-msgstr ""
-
-#. Label of a Int field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
+#. Label of the action_after (Int) field in DocType 'Mail Recipient'
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
 msgid "Action After (Seconds)"
 msgstr ""
 
-#: mail/report/outbound_delay/outbound_delay.py:127
-msgid "Action At"
-msgstr ""
-
-#. Label of a Datetime field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
+#. Label of the action_at (Datetime) field in DocType 'Mail Recipient'
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
 msgid "Action At"
 msgstr ""
 
 #. Description of the 'Action After (Seconds)' (Int) field in DocType 'Mail
 #. Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
-msgid "Action At - Created At"
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
+msgid "Action At - Transfer Completed At"
 msgstr ""
 
-#: mail/doctype/mail_agent/mail_agent.js:26
-#: mail/doctype/mail_agent/mail_agent.js:32
-#: mail/doctype/mail_agent/mail_agent.js:36
-#: mail/doctype/mail_agent/mail_agent.js:40
-#: mail/doctype/mail_agent/mail_agent.js:44
-#: mail/doctype/mail_agent_job/mail_agent_job.js:13
-#: mail/doctype/mail_domain/mail_domain.js:34
-#: mail/doctype/mail_domain/mail_domain.js:38
-#: mail/doctype/mail_domain/mail_domain.js:45
-#: mail/doctype/outgoing_mail/outgoing_mail.js:40
-#: mail/doctype/outgoing_mail/outgoing_mail.js:45
+#: mail/mail/report/outbound_delay/outbound_delay.py:210
+msgid "Action Delay"
+msgstr ""
+
+#: mail/mail/doctype/dns_record/dns_record.js:13
+#: mail/mail/doctype/incoming_mail/incoming_mail.js:14
+#: mail/mail/doctype/incoming_mail/incoming_mail.js:17
+#: mail/mail/doctype/mail_domain/mail_domain.js:24
+#: mail/mail/doctype/mail_domain/mail_domain.js:31
+#: mail/mail/doctype/mail_domain/mail_domain.js:35
+#: mail/mail/doctype/mailbox/mailbox.js:31
+#: mail/mail/doctype/mailbox/mailbox.js:38
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:32
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:37
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:42
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:47
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:52
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:55
 msgid "Actions"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Active"
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.js:39
-#: mail/report/mail_tracker/mail_tracker.py:52
-#: mail/report/outbound_delay/outbound_delay.js:39
-#: mail/report/outbound_delay/outbound_delay.py:76
+#. Label of the agent (Data) field in DocType 'Incoming Mail'
+#. Label of the agent (Data) field in DocType 'Mail Agent'
+#. Label of the agent (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/mail_agent/mail_agent.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.js:39
+#: mail/mail/report/mail_tracker/mail_tracker.py:138
+#: mail/mail/report/outbound_delay/outbound_delay.js:39
+#: mail/mail/report/outbound_delay/outbound_delay.py:222
 msgid "Agent"
 msgstr ""
 
-#. Label of a Link field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Agent"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Agent"
-msgstr ""
-
-#. Label of a Link field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Agent"
-msgstr ""
-
-#. Label of a Link field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Agent"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Agent API Key"
-msgstr ""
-
-#. Label of a Password field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Agent API Secret"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Alias'
-#: mail/doctype/mail_alias/mail_alias.json
-msgctxt "Mail Alias"
+#. Label of the alias (Data) field in DocType 'Mail Alias'
+#: mail/mail/doctype/mail_alias/mail_alias.json
 msgid "Alias"
 msgstr ""
 
-#. Label of a Link field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the amended_from (Link) field in DocType 'Incoming Mail'
+#. Label of the amended_from (Link) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Amended From"
 msgstr ""
 
-#. Label of a Link field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Amended From"
-msgstr ""
-
-#: mail/doctype/outgoing_mail/outgoing_mail.py:112
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:72
 msgid "Amending {0} is not allowed."
 msgstr ""
 
-#: mail/doctype/mail_agent/mail_agent.py:63
-msgid "An A or AAAA record not found for the agent {0}."
+#: mail/api/outbound.py:125
+msgid "An error occurred while enqueuing the newsletter. Please try again later."
 msgstr ""
 
-#: mail/doctype/mail_domain/mail_domain.js:42
+#: mail/mail/doctype/mail_domain/mail_domain.js:28
+#: mail/mail/doctype/mailbox/mailbox.js:28
+#: mail/mail/doctype/mailbox/mailbox.js:35
 msgid "Are you certain you wish to proceed?"
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:192
+#. Label of the attached_to_docname (Dynamic Link) field in DocType 'DNS
+#. Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+msgid "Attached To DocName"
+msgstr ""
+
+#. Label of the attached_to_doctype (Select) field in DocType 'DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+msgid "Attached To DocType"
+msgstr ""
+
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:251
 msgid "Attachment limit exceeded ({0}). Maximum {1} attachment(s) allowed."
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:203 overrides.py:42
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:262 mail/overrides.py:40
 msgid "Attachment size limit exceeded ({0} MB). Maximum {1} MB allowed."
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:212
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:271
 msgid "Attachments size limit exceeded ({0} MB). Maximum {1} MB allowed."
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
+#: frontend/src/components/MailDetails.vue:29
+#: frontend/src/components/Modals/SendMail.vue:39
+#: frontend/src/components/Modals/SendMail.vue:61
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
 msgid "Bcc"
 msgstr ""
 
-#. Label of a Text Editor field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the blacklist_reason (Small Text) field in DocType 'IP Blacklist'
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+msgid "Blacklist Reason"
+msgstr ""
+
+#. Label of the is_blacklisted (Check) field in DocType 'IP Blacklist'
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+msgid "Blacklisted"
+msgstr ""
+
+#. Label of the body_html (HTML Editor) field in DocType 'Incoming Mail'
+#. Label of the body_html (HTML Editor) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Body HTML"
 msgstr ""
 
-#. Label of a Text Editor field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Body HTML"
-msgstr ""
-
-#. Label of a Code field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Body Plain"
-msgstr ""
-
-#. Label of a Code field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#. Label of the body_plain (Code) field in DocType 'Incoming Mail'
+#. Label of the body_plain (Code) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Body Plain"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
-msgid "Bounced"
-msgstr ""
-
 #. Option for the 'Status' (Select) field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Bounced"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Option for the 'Type' (Select) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "CNAME"
 msgstr ""
 
-#: overrides.py:29
+#: mail/overrides.py:27
 msgid "Cannot attach file to a submitted/cancelled {0} {1}."
 msgstr ""
 
-#: overrides.py:58
+#: mail/overrides.py:56
 msgid "Cannot delete attachment as it is linked with {0} {1}."
 msgstr ""
 
-#: overrides.py:50
+#: mail/api/inbound.py:81
+msgid "Cannot fetch more than {0} emails at a time."
+msgstr ""
+
+#: mail/overrides.py:48
 msgid "Cannot update attachment as it is linked with {0} {1}."
 msgstr ""
 
-#. Label of a Select field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Label of the category (Select) field in DocType 'DNS Record'
+#. Label of the category (Select) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "Category"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
+#: frontend/src/components/MailDetails.vue:23
+#: frontend/src/components/Modals/SendMail.vue:31
+#: frontend/src/components/Modals/SendMail.vue:49
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
 msgid "Cc"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Completed"
+#: frontend/src/components/HeaderActions.vue:7
+msgid "Compose an email"
 msgstr ""
 
-#: mail/doctype/mail_domain/mail_domain.js:36
+#: mail/mail/doctype/mail_settings/mail_settings.py:138
+#: mail/mail/doctype/mail_settings/mail_settings.py:152
+msgid "Connection Failed"
+msgstr ""
+
+#: mail/mail/doctype/mail_settings/mail_settings.py:136
+msgid "Connection Successful"
+msgstr ""
+
+#: mail/mail/doctype/dns_record/dns_record.py:109
+msgid "Could not verify {0}:{1} record."
+msgstr ""
+
+#: mail/mail/doctype/mail_domain/mail_domain.js:33
 msgid "Create DMARC Mailbox"
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.py:85
-#: mail/report/outbound_delay/outbound_delay.py:115
+#. Label of the create_mail_contact (Check) field in DocType 'Mailbox'
+#: mail/mail/doctype/mailbox/mailbox.json
+msgid "Create Mail Contact"
+msgstr ""
+
+#. Label of the created_at (Datetime) field in DocType 'Incoming Mail'
+#. Label of the created_at (Datetime) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.py:170
 msgid "Created At"
 msgstr ""
 
-#. Label of a Datetime field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Created At"
-msgstr ""
-
-#. Label of a Datetime field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Created At"
-msgstr ""
-
-#: mail/doctype/mail_domain/mail_domain.js:73
+#: mail/mail/doctype/mail_domain/mail_domain.js:80
 msgid "Creating DMARC Mailbox..."
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.py:34
-#: mail/report/outbound_delay/outbound_delay.py:34
+#: mail/mail/doctype/dns_record/dns_record_list.js:16
+#: mail/mail/doctype/incoming_mail/incoming_mail_list.js:26
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:105
+msgid "Creating Job..."
+msgstr ""
+
+#: mail/mail/report/mail_tracker/mail_tracker.py:120
+#: mail/mail/report/outbound_delay/outbound_delay.py:162
 msgid "Creation"
 msgstr ""
 
-#. Label of a Table field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#. Label of the custom_headers (Table) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Custom Headers"
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:156
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:200
 msgid "Custom Headers limit exceeded ({0}). Maximum {1} custom header(s) allowed."
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:169
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:214
 msgid "Custom header {0} is not allowed."
 msgstr ""
 
-#. Option for the 'Request Method' (Select) field in DocType 'Mail Agent Job
-#. Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "DELETE"
-msgstr ""
-
-#. Label of a Check field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the dkim_pass (Check) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "DKIM"
 msgstr ""
 
-#. Label of a Select field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
-msgid "DKIM Bits"
-msgstr ""
-
-#. Label of a Select field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
-msgid "DKIM Bits"
-msgstr ""
-
-#: mail/doctype/mail_domain/mail_domain.py:75
-#: mail/doctype/mail_settings/mail_settings.py:75
-msgid "DKIM Bits must be greater than 1024."
-msgstr ""
-
-#. Label of a Small Text field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the dkim_description (Small Text) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "DKIM Description"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
-msgid "DKIM Selector"
+#. Name of a DocType
+#. Option for the 'Attached To DocType' (Select) field in DocType 'DNS Record'
+#: mail/mail/doctype/dkim_key/dkim_key.json
+#: mail/mail/doctype/dns_record/dns_record.json
+msgid "DKIM Key"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
-msgid "DKIM Selector"
+#. Label of the dkim_key_size (Select) field in DocType 'Mail Domain'
+#. Label of the default_dkim_key_size (Select) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "DKIM Key Size (Bits)"
 msgstr ""
 
-#: mail/doctype/mail_domain/mail_domain.py:61
-#: mail/doctype/mail_settings/mail_settings.py:66
-msgid "DKIM Selector {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores."
+#: mail/mail/doctype/mail_domain/mail_domain.py:48
+#: mail/mail/doctype/mail_settings/mail_settings.py:97
+msgid "DKIM Key Size must be greater than 1024."
 msgstr ""
 
-#. Label of a Check field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#: mail/mail/doctype/dkim_key/dkim_key.py:124
+msgid "DKIM Key not found for the domain {0}"
+msgstr ""
+
+#. Label of the dmarc_pass (Check) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "DMARC"
 msgstr ""
 
-#. Label of a Small Text field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the dmarc_description (Small Text) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "DMARC Description"
 msgstr ""
 
+#. Label of the dns_provider (Select) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "DNS Provider"
+msgstr ""
+
+#. Label of the dns_provider_token (Password) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "DNS Provider Token"
+msgstr ""
+
 #. Name of a DocType
-#: mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/dns_record/dns_record.json
 msgid "DNS Record"
 msgstr ""
 
-#. Label of a Table field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
+#: mail/mail/doctype/dns_record/dns_record.py:34
+msgid "DNS Record with the same host and type already exists."
+msgstr ""
+
+#. Label of the dns_records (Table) field in DocType 'Mail Domain'
+#: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mail_settings/mail_settings.js:32
 msgid "DNS Records"
 msgstr ""
 
-#. Label of a Table field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
-msgid "DNS Records"
+#: mail/mail/doctype/mail_settings/mail_settings.js:33
+msgid "DNS provider or token not configured. Please manually add the {0} to the DNS provider for the domain {1} to ensure proper email authentication."
+msgstr ""
+
+#. Label of the is_default (Check) field in DocType 'Mailbox'
+#: mail/mail/doctype/mailbox/mailbox.json
+msgid "Default Outgoing"
+msgstr ""
+
+#. Label of the defaults_section (Section Break) field in DocType 'Mail
+#. Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Defaults"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
-msgid "Deferred"
-msgstr ""
-
 #. Option for the 'Status' (Select) field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Deferred"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
-msgid "Deferred Bounced"
+#: mail/mail/doctype/mailbox/mailbox.js:26
+msgid "Delete Incoming Mails"
+msgstr ""
+
+#: mail/mail/doctype/mailbox/mailbox.js:33
+msgid "Delete Outgoing Mails"
+msgstr ""
+
+#: mail/mail/doctype/mailbox/mailbox.js:48
+msgid "Deleting Incoming Mails..."
+msgstr ""
+
+#: mail/mail/doctype/mailbox/mailbox.js:59
+msgid "Deleting Outgoing Mails..."
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "Delivered"
 msgstr ""
 
-#. Label of a Int field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Delivered After (Seconds)"
-msgstr ""
-
-#. Label of a Datetime field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Delivered At"
-msgstr ""
-
-#. Description of the 'Delivered After (Seconds)' (Int) field in DocType
-#. 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Delivered At - Received At"
-msgstr ""
-
-#. Label of a Code field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
+#. Label of the details (Code) field in DocType 'Mail Recipient'
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
 msgid "Details"
 msgstr ""
 
-#. Label of a Data field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Option for the 'DNS Provider' (Select) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "DigitalOcean"
+msgstr ""
+
+#: frontend/src/components/Modals/SendMail.vue:135
+msgid "Discard"
+msgstr ""
+
+#. Label of the display_name (Data) field in DocType 'Incoming Mail'
+#. Label of the display_name (Data) field in DocType 'Mail Contact'
+#. Label of the display_name (Data) field in DocType 'Mail Recipient'
+#. Label of the display_name (Data) field in DocType 'Mailbox'
+#. Label of the display_name (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/mail_contact/mail_contact.json
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
+#: mail/mail/doctype/mailbox/mailbox.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Display Name"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Contact'
-#: mail/doctype/mail_contact/mail_contact.json
-msgctxt "Mail Contact"
-msgid "Display Name"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
-msgid "Display Name"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
-msgid "Display Name"
-msgstr ""
-
-#: mail/report/mail_tracker/mail_tracker.js:45
-#: mail/report/mail_tracker/mail_tracker.py:59
-#: mail/report/outbound_delay/outbound_delay.js:45
-#: mail/report/outbound_delay/outbound_delay.py:83
+#. Label of the domain_name (Link) field in DocType 'DKIM Key'
+#. Label of the domain_name (Link) field in DocType 'Incoming Mail'
+#. Label of the domain_name (Link) field in DocType 'Mail Alias'
+#. Label of the domain_name (Data) field in DocType 'Mail Domain'
+#. Label of the domain_name (Link) field in DocType 'Mailbox'
+#. Label of the domain_name (Link) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/dkim_key/dkim_key.json
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/mail_alias/mail_alias.json
+#: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mailbox/mailbox.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.js:44
+#: mail/mail/report/mail_tracker/mail_tracker.py:144
+#: mail/mail/report/outbound_delay/outbound_delay.js:44
+#: mail/mail/report/outbound_delay/outbound_delay.py:228
 msgid "Domain Name"
 msgstr ""
 
-#. Label of a Link field in DocType 'Mail Alias'
-#: mail/doctype/mail_alias/mail_alias.json
-msgctxt "Mail Alias"
-msgid "Domain Name"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
-msgid "Domain Name"
-msgstr ""
-
-#. Label of a Link field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
-msgid "Domain Name"
-msgstr ""
-
-#. Label of a Link field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Domain Name"
+#: mail/mail/doctype/dkim_key/dkim_key.py:34
+msgid "Domain Name is mandatory"
 msgstr ""
 
 #. Name of a role
-#: mail/doctype/mail_agent/mail_agent.json
-#: mail/doctype/mail_alias/mail_alias.json
-#: mail/doctype/mail_domain/mail_domain.json mail/doctype/mailbox/mailbox.json
-#: mail/doctype/outgoing_mail/outgoing_mail.json
+#. Label of the domain_owner (Link) field in DocType 'Mail Domain'
+#: mail/mail/doctype/mail_agent/mail_agent.json
+#: mail/mail/doctype/mail_alias/mail_alias.json
+#: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mailbox/mailbox.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Domain Owner"
 msgstr ""
 
-#. Label of a Link field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
-msgid "Domain Owner"
-msgstr ""
-
-#: mail/doctype/outgoing_mail/outgoing_mail.py:91 utils.py:144
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:110
+#: mail/utils/validation.py:75
 msgid "Domain {0} is disabled."
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:93 utils.py:146
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:112
+#: mail/utils/validation.py:77
 msgid "Domain {0} is not verified."
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Draft"
-msgstr ""
-
 #. Option for the 'Status' (Select) field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Draft"
 msgstr ""
 
-#. Label of a Float field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Duration (Seconds)"
+#. Option for the 'Folder' (Select) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Drafts"
 msgstr ""
 
-#. Label of a Data field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "EML File"
+#: mail/mail/doctype/dns_record/dns_record.py:35
+msgid "Duplicate Record"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Contact'
-#: mail/doctype/mail_contact/mail_contact.json
-msgctxt "Mail Contact"
+#. Label of the email (Data) field in DocType 'Mail Contact'
+#. Label of the email (Data) field in DocType 'Mail Recipient'
+#. Label of the email (Data) field in DocType 'Mailbox'
+#: mail/mail/doctype/mail_contact/mail_contact.json
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Email"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
-msgid "Email"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
-msgid "Email"
-msgstr ""
-
-#: utils.py:124
+#: mail/utils/validation.py:54
 msgid "Email domain {0} does not match with domain {1}."
 msgstr ""
 
-#. Label of a Check field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
+#. Label of the enabled (Check) field in DocType 'DKIM Key'
+#. Label of the enabled (Check) field in DocType 'Mail Agent'
+#. Label of the enabled (Check) field in DocType 'Mail Alias'
+#. Label of the enabled (Check) field in DocType 'Mail Domain'
+#. Label of the enabled (Check) field in DocType 'Mailbox'
+#: mail/mail/doctype/dkim_key/dkim_key.json
+#: mail/mail/doctype/mail_agent/mail_agent.json
+#: mail/mail/doctype/mail_alias/mail_alias.json
+#: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Enabled"
 msgstr ""
 
-#. Label of a Check field in DocType 'Mail Agent Job Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "Enabled"
-msgstr ""
-
-#. Label of a Check field in DocType 'Mail Alias'
-#: mail/doctype/mail_alias/mail_alias.json
-msgctxt "Mail Alias"
-msgid "Enabled"
-msgstr ""
-
-#. Label of a Check field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
-msgid "Enabled"
-msgstr ""
-
-#. Label of a Check field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
-msgid "Enabled"
-msgstr ""
-
-#. Label of a Datetime field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Ended At"
-msgstr ""
-
-#. Label of a Code field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
+#. Label of the error_log (Code) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Error Log"
-msgstr ""
-
-#. Label of a Code field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Error Log"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Execute On End"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Agent Job Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "Execute On End"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Execute On Start"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Agent Job Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "Execute On Start"
-msgstr ""
-
-#. Option for the 'Status' (Select) field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Failed"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Failed"
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.py:91
+#. Label of the first_opened_at (Datetime) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.py:176
 msgid "First Opened At"
 msgstr ""
 
-#. Label of a Datetime field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "First Opened At"
+#. Label of the folder (Select) field in DocType 'Incoming Mail'
+#. Label of the folder (Select) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Folder"
+msgstr ""
+
+#: frontend/src/components/MailDetails.vue:52
+msgid "Forward"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Forwarding Only"
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.js:8
-#: mail/report/outbound_delay/outbound_delay.js:8
+#: mail/mail/report/mail_tracker/mail_tracker.js:8
+#: mail/mail/report/outbound_delay/outbound_delay.js:8
 msgid "From Date"
 msgstr ""
 
+#. Label of the from_host (Data) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+msgid "From Host"
+msgstr ""
+
+#. Label of the from_ip (Data) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+msgid "From IP"
+msgstr ""
+
 #. Option for the 'Status' (Select) field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Full"
 msgstr ""
 
-#. Option for the 'Request Method' (Select) field in DocType 'Mail Agent Job
-#. Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "GET"
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:315
+msgid "Future date is not allowed."
 msgstr ""
 
-#. Group in Mail Agent's connections
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "General"
-msgstr ""
-
+#. Group in DKIM Key's connections
 #. Group in Mail Domain's connections
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
-msgid "General"
-msgstr ""
-
 #. Group in Mailbox's connections
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
+#: mail/mail/doctype/dkim_key/dkim_key.json
+#: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "General"
 msgstr ""
 
-#: mail/doctype/mail_domain/mail_domain.js:85
-msgid "Generating DNS Records..."
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:40
+msgid "Get Status"
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.js:71
-msgid "Getting Delivery Status..."
-msgstr ""
-
-#. Option for the 'Protocol' (Select) field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "HTTP"
-msgstr ""
-
-#. Option for the 'Protocol' (Select) field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "HTTPS"
-msgstr ""
-
-#. Label of a Data field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Label of the host (Data) field in DocType 'DNS Record'
+#. Label of the host (Data) field in DocType 'IP Blacklist'
+#. Label of the host (Data) field in DocType 'Mail Domain DNS Record'
+#. Label of the rmq_host (Data) field in DocType 'Mail Settings'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Host"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Host"
-msgstr ""
-
-#: mail/report/outbound_delay/outbound_delay.js:51
-#: mail/report/outbound_delay/outbound_delay.py:90
+#. Label of the ip_address (Data) field in DocType 'IP Blacklist'
+#. Label of the ip_address (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/outbound_delay/outbound_delay.js:50
+#: mail/mail/report/outbound_delay/outbound_delay.py:235
 msgid "IP Address"
 msgstr ""
 
-#. Label of a Data field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "IP Address"
+#. Label of the ip_address_expanded (Data) field in DocType 'IP Blacklist'
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+msgid "IP Address Expanded"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
+#. Name of a DocType
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+msgid "IP Blacklist"
+msgstr ""
+
+#. Label of the ip_group (Data) field in DocType 'IP Blacklist'
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+msgid "IP Group"
+msgstr ""
+
+#. Label of the ip_version (Select) field in DocType 'IP Blacklist'
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+msgid "IP Version"
+msgstr ""
+
+#. Option for the 'IP Version' (Select) field in DocType 'IP Blacklist'
+#. Label of the ipv4 (Data) field in DocType 'Mail Agent'
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+#: mail/mail/doctype/mail_agent/mail_agent.json
 msgid "IPv4"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
+#. Option for the 'IP Version' (Select) field in DocType 'IP Blacklist'
+#. Label of the ipv6 (Data) field in DocType 'Mail Agent'
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+#: mail/mail/doctype/mail_agent/mail_agent.json
 msgid "IPv6"
 msgstr ""
 
+#. Label of the in_reply_to_mail_name (Dynamic Link) field in DocType 'Incoming
+#. Mail'
+#. Label of the in_reply_to_mail_name (Dynamic Link) field in DocType 'Outgoing
+#. Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "In Reply To"
+msgstr ""
+
+#. Label of the in_reply_to (Data) field in DocType 'Incoming Mail'
+#. Label of the in_reply_to (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "In Reply To (Message ID)"
+msgstr ""
+
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:138
+msgid "In Reply To Mail Name is required."
+msgstr ""
+
+#. Label of the in_reply_to_mail_type (Select) field in DocType 'Incoming Mail'
+#. Label of the in_reply_to_mail_type (Select) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "In Reply To Mail Type"
+msgstr ""
+
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:136
+msgid "In Reply To Mail Type is required."
+msgstr ""
+
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:153
+msgid "In Reply To Mail {0} - {1} does not exist."
+msgstr ""
+
 #. Option for the 'Status' (Select) field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Inactive"
 msgstr ""
 
-#. Label of a Check field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Incoming"
+#. Option for the 'Type' (Select) field in DocType 'Mail Agent'
+#: mail/mail/doctype/mail_agent/mail_agent.json
+msgid "Inbound"
 msgstr ""
 
-#. Label of a Check field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
+#. Option for the 'Folder' (Select) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+msgid "Inbox"
+msgstr ""
+
+#: mail/mail/report/outbound_delay/outbound_delay.js:72
+msgid "Include Newsletter"
+msgstr ""
+
+#. Label of the incoming_tab (Tab Break) field in DocType 'Mail Settings'
+#. Label of the incoming (Check) field in DocType 'Mailbox'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Incoming"
 msgstr ""
 
 #. Name of a DocType
-#: mail/doctype/incoming_mail/incoming_mail.json
+#. Option for the 'In Reply To Mail Type' (Select) field in DocType 'Incoming
+#. Mail'
+#. Option for the 'In Reply To Mail Type' (Select) field in DocType 'Outgoing
+#. Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Incoming Mail"
 msgstr ""
 
-#. Linked DocType in Mail Agent's connections
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Incoming Mail"
+#: mail/utils/__init__.py:83
+msgid "Invalid date format: {0}"
 msgstr ""
 
-#. Linked DocType in Mailbox's connections
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
-msgid "Incoming Mail"
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.py:78
-msgid "Incoming and Outgoing cannot be enabled at the same time."
-msgstr ""
-
-#: mail/doctype/outgoing_mail/outgoing_mail.py:681
-msgid "Invalid Data."
-msgstr ""
-
-#: mail/doctype/outgoing_mail/outgoing_mail.py:425
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:528
 msgid "Invalid format for recipient {0}."
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Agent Job Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "Job Name"
+#: mail/mail/doctype/dns_record/dns_record.js:20
+msgid "It seems that the DNS provider or token is not configured in the {0}. Please manually add this DNS record to your provider for the root domain to ensure proper email authentication."
 msgstr ""
 
-#. Label of a Link field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Job Type"
-msgstr ""
-
-#: mail/doctype/mail_agent_job/mail_agent_job.py:38
-msgid "Job Type {0} is disabled."
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Header'
-#: mail/doctype/mail_header/mail_header.json
-msgctxt "Mail Header"
+#. Label of the key (Data) field in DocType 'Mail Header'
+#: mail/mail/doctype/mail_header/mail_header.json
 msgid "Key"
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.py:97
+#. Label of the key_size (Select) field in DocType 'DKIM Key'
+#: mail/mail/doctype/dkim_key/dkim_key.json
+msgid "Key Size (Bits)"
+msgstr ""
+
+#: mail/mail/doctype/dkim_key/dkim_key.py:41
+msgid "Key Size must be greater than 1024."
+msgstr ""
+
+#. Label of the last_checked_at (Datetime) field in DocType 'DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+msgid "Last Checked At"
+msgstr ""
+
+#. Label of the last_opened_at (Datetime) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.py:182
 msgid "Last Opened At"
 msgstr ""
 
-#. Label of a Datetime field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Last Opened At"
-msgstr ""
-
-#: mail/report/mail_tracker/mail_tracker.py:103
+#. Label of the last_opened_from_ip (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.py:188
 msgid "Last Opened From IP"
 msgstr ""
 
-#. Label of a Data field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Last Opened From IP"
+#. Label of the last_synced_at (Datetime) field in DocType 'Mail Sync History'
+#: mail/mail/doctype/mail_sync_history/mail_sync_history.json
+msgid "Last Synced At"
+msgstr ""
+
+#. Label of the last_synced_mail (Data) field in DocType 'Mail Sync History'
+#: mail/mail/doctype/mail_sync_history/mail_sync_history.json
+msgid "Last Synced Mail"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Option for the 'Type' (Select) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "MX"
 msgstr ""
 
 #. Name of a DocType
-#: mail/doctype/mail_agent/mail_agent.json
+#: mail/mail/doctype/mail_agent/mail_agent.json
 msgid "Mail Agent"
 msgstr ""
 
-#. Label of a Section Break field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Mail Agent"
-msgstr ""
-
-#. Name of a DocType
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgid "Mail Agent Job"
-msgstr ""
-
-#. Linked DocType in Mail Agent's connections
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Mail Agent Job"
-msgstr ""
-
-#. Linked DocType in Mail Agent Job Type's connections
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "Mail Agent Job"
-msgstr ""
-
-#. Name of a DocType
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgid "Mail Agent Job Type"
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.py:45
+#: mail/mail/doctype/mail_agent/mail_agent.py:38
 msgid "Mail Agent {0} already exists."
 msgstr ""
 
 #. Name of a DocType
-#: mail/doctype/mail_alias/mail_alias.json
-msgid "Mail Alias"
-msgstr ""
-
-#. Linked DocType in Mail Domain's connections
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
-msgid "Mail Alias"
-msgstr ""
-
-#. Linked DocType in Mailbox's connections
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
+#: mail/mail/doctype/mail_alias/mail_alias.json
 msgid "Mail Alias"
 msgstr ""
 
 #. Name of a DocType
-#: mail/doctype/mail_alias_mailbox/mail_alias_mailbox.json
+#: mail/mail/doctype/mail_alias_mailbox/mail_alias_mailbox.json
 msgid "Mail Alias Mailbox"
 msgstr ""
 
 #. Name of a DocType
-#: mail/doctype/mail_contact/mail_contact.json
+#: mail/mail/doctype/mail_contact/mail_contact.json
 msgid "Mail Contact"
 msgstr ""
 
-#: mail/doctype/mail_contact/mail_contact.py:30
+#: mail/mail/doctype/mail_contact/mail_contact.py:30
 msgid "Mail Contact with email {0} already exists."
 msgstr ""
 
 #. Name of a DocType
-#: mail/doctype/mail_domain/mail_domain.json
-msgid "Mail Domain"
-msgstr ""
-
-#. Linked DocType in Mail Agent's connections
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
+#: mail/mail/doctype/mail_domain/mail_domain.json
 msgid "Mail Domain"
 msgstr ""
 
 #. Name of a DocType
-#: mail/doctype/mail_header/mail_header.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
+msgid "Mail Domain DNS Record"
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/mail_header/mail_header.json
 msgid "Mail Header"
 msgstr ""
 
 #. Name of a DocType
-#: mail/doctype/mail_recipient/mail_recipient.json
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
 msgid "Mail Recipient"
 msgstr ""
 
 #. Name of a DocType
-#: mail/doctype/mail_settings/mail_settings.json
+#: mail/mail/doctype/dns_record/dns_record.js:19
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Mail Settings"
 msgstr ""
 
+#. Name of a DocType
+#: mail/mail/doctype/mail_sync_history/mail_sync_history.json
+msgid "Mail Sync History"
+msgstr ""
+
+#: mail/mail/doctype/mail_sync_history/mail_sync_history.py:20
+msgid "Mail Sync History already exists for this source, user and mailbox"
+msgstr ""
+
 #. Name of a report
-#: mail/report/mail_tracker/mail_tracker.json
+#: mail/mail/report/mail_tracker/mail_tracker.json
 msgid "Mail Tracker"
 msgstr ""
 
+#. Label of the mailbox (Link) field in DocType 'Mail Alias Mailbox'
+#. Label of the mailbox (Link) field in DocType 'Mail Sync History'
 #. Name of a DocType
-#: mail/doctype/mailbox/mailbox.json
-msgid "Mailbox"
-msgstr ""
-
-#. Label of a Link field in DocType 'Mail Alias Mailbox'
-#: mail/doctype/mail_alias_mailbox/mail_alias_mailbox.json
-msgctxt "Mail Alias Mailbox"
-msgid "Mailbox"
-msgstr ""
-
-#. Linked DocType in Mail Domain's connections
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
+#: mail/mail/doctype/mail_alias_mailbox/mail_alias_mailbox.json
+#: mail/mail/doctype/mail_sync_history/mail_sync_history.json
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Mailbox"
 msgstr ""
 
 #. Name of a role
-#: mail/doctype/incoming_mail/incoming_mail.json
-#: mail/doctype/mail_agent/mail_agent.json
-#: mail/doctype/mail_contact/mail_contact.json
-#: mail/doctype/mail_domain/mail_domain.json mail/doctype/mailbox/mailbox.json
-#: mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/mail_agent/mail_agent.json
+#: mail/mail/doctype/mail_contact/mail_contact.json
+#: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mailbox/mailbox.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Mailbox User"
 msgstr ""
 
-#: utils.py:157 utils.py:174
+#: mail/utils/validation.py:89 mail/utils/validation.py:107
 msgid "Mailbox {0} is disabled."
 msgstr ""
 
-#: mail/doctype/mailbox/mailbox.py:73
+#: mail/mail/doctype/mailbox/mailbox.py:82
 msgid "Mailbox {0} is linked with active Mail Alias {1}."
 msgstr ""
 
-#: utils.py:159 utils.py:176
+#: mail/utils/validation.py:91 mail/utils/validation.py:109
 msgid "Mailbox {0} is not active."
 msgstr ""
 
-#: utils.py:179
+#: mail/utils/validation.py:112
 msgid "Mailbox {0} is not allowed for Incoming Mail."
 msgstr ""
 
-#: utils.py:162
+#: mail/utils/validation.py:94
 msgid "Mailbox {0} is not allowed for Outgoing Mail."
 msgstr ""
 
-#. Label of a Table field in DocType 'Mail Alias'
-#: mail/doctype/mail_alias/mail_alias.json
-msgctxt "Mail Alias"
+#: mail/api/auth.py:45
+msgid "Mailbox {0} is not associated with user {1}"
+msgstr ""
+
+#. Label of the mailboxes (Table) field in DocType 'Mail Alias'
+#: mail/mail/doctype/mail_alias/mail_alias.json
 msgid "Mailboxes"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
+#. Label of the outgoing_max_attachment_size (Int) field in DocType 'Mail
+#. Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Max Attachment Size (MB)"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
+#. Label of the outgoing_max_attachments (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Max Attachments (Count)"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
+#. Label of the max_batch_size (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Max Batch Size (Count)"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
+#. Label of the max_headers (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Max Headers"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
+#. Label of the max_message_size (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Max Message Size (MB)"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
+#. Label of the max_recipients (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Max Recipients"
 msgstr ""
 
-#. Label of a Code field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the max_newsletter_retention (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Max Retention (Days)"
+msgstr ""
+
+#. Label of the max_sync_via_api (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Max Sync via API (Count)"
+msgstr ""
+
+#. Label of the message (Code) field in DocType 'Incoming Mail'
+#. Label of the message (Code) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Message"
 msgstr ""
 
-#. Label of a Code field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Message"
-msgstr ""
-
-#: mail/report/mail_tracker/mail_tracker.js:57
-#: mail/report/mail_tracker/mail_tracker.py:73
-#: mail/report/outbound_delay/outbound_delay.js:68
-#: mail/report/outbound_delay/outbound_delay.py:109
+#. Label of the message_id (Data) field in DocType 'Incoming Mail'
+#. Label of the message_id (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.js:56
+#: mail/mail/report/mail_tracker/mail_tracker.py:158
+#: mail/mail/report/outbound_delay/outbound_delay.js:67
+#: mail/mail/report/outbound_delay/outbound_delay.py:254
 msgid "Message ID"
 msgstr ""
 
-#. Label of a Data field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Message ID"
-msgstr ""
-
-#. Label of a Data field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Message ID"
-msgstr ""
-
-#: mail/report/outbound_delay/outbound_delay.py:52
+#: mail/mail/report/outbound_delay/outbound_delay.py:180
 msgid "Message Size"
 msgstr ""
 
-#. Label of a Int field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Message Size"
+#. Label of the message_size (Int) field in DocType 'Incoming Mail'
+#. Label of the message_size (Int) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Message Size (Bytes)"
 msgstr ""
 
-#. Label of a Int field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Message Size"
-msgstr ""
-
-#: mail/doctype/outgoing_mail/outgoing_mail.py:374
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:474
 msgid "Message size limit exceeded ({0} MB). Maximum {1} MB allowed."
 msgstr ""
 
-#. Label of a Tab Break field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the more_info_tab (Tab Break) field in DocType 'Incoming Mail'
+#. Label of the more_info_tab (Tab Break) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "More Info"
 msgstr ""
 
-#. Label of a Tab Break field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "More Info"
-msgstr ""
-
-#: mail/report/mail_tracker/mail_tracker.py:27
-#: mail/report/outbound_delay/outbound_delay.py:27
+#: mail/mail/report/mail_tracker/mail_tracker.py:113
+#: mail/mail/report/outbound_delay/outbound_delay.py:155
 msgid "Name"
 msgstr ""
 
-#: utils.py:36
+#. Label of the newsletter_section (Section Break) field in DocType 'Mail
+#. Settings'
+#. Label of the is_newsletter (Check) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/outbound_delay/outbound_delay.py:192
+msgid "Newsletter"
+msgstr ""
+
+#. Label of the newsletter_retention (Int) field in DocType 'Mail Domain'
+#. Label of the default_newsletter_retention (Int) field in DocType 'Mail
+#. Settings'
+#: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Newsletter Retention (Days)"
+msgstr ""
+
+#: mail/mail/doctype/mail_domain/mail_domain.py:59
+msgid "Newsletter Retention must be greater than 0."
+msgstr ""
+
+#: mail/mail/doctype/mail_domain/mail_domain.py:66
+msgid "Newsletter Retention must be less than or equal to {0}."
+msgstr ""
+
+#: mail/utils/__init__.py:29
 msgid "No answer for {0}."
 msgstr ""
 
-#: utils.py:85
-msgid "No enabled outgoing agent found."
+#: frontend/src/components/MailDetails.vue:69
+msgid "No emails to show"
 msgstr ""
 
-#. Label of a Code field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "On End Error Log"
+#: mail/mail/doctype/dkim_key/dkim_key.py:28
+msgid "Only Administrator can delete DKIM Key."
 msgstr ""
 
-#. Label of a Code field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "On Start Error Log"
-msgstr ""
-
-#: mail/doctype/incoming_mail/incoming_mail.py:47
+#: mail/mail/doctype/incoming_mail/incoming_mail.py:47
 msgid "Only Administrator can delete Incoming Mail."
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:78
+#: mail/mail/doctype/mail_agent/mail_agent.py:29
+msgid "Only Administrator can delete Mail Agent."
+msgstr ""
+
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:66
 msgid "Only Administrator can delete Outgoing Mail."
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.py:46
+#: mail/mail/doctype/incoming_mail/incoming_mail.py:155
+msgid "Only System Manager can delete Incoming Mails."
+msgstr ""
+
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:899
+msgid "Only System Manager can delete Outgoing Mails."
+msgstr ""
+
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:666
+msgid "Only System Manager can retry bounced mail."
+msgstr ""
+
+#. Label of the open_count (Int) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.py:132
 msgid "Open Count"
 msgstr ""
 
-#. Label of a Int field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Open Count"
+#. Option for the 'Type' (Select) field in DocType 'Mail Agent'
+#: mail/mail/doctype/mail_agent/mail_agent.json
+msgid "Outbound"
 msgstr ""
 
 #. Name of a report
-#: mail/report/outbound_delay/outbound_delay.json
+#: mail/mail/report/outbound_delay/outbound_delay.json
 msgid "Outbound Delay"
 msgstr ""
 
-#. Label of a Check field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
+#. Label of the outgoing_tab (Tab Break) field in DocType 'Mail Settings'
+#. Label of the outgoing (Check) field in DocType 'Mailbox'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Outgoing"
 msgstr ""
 
-#. Label of a Tab Break field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
-msgid "Outgoing"
-msgstr ""
-
-#. Label of a Check field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
-msgid "Outgoing"
-msgstr ""
-
-#. Label of a Link field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
-msgid "Outgoing Agent"
-msgstr ""
-
-#: mail/doctype/mail_domain/mail_domain.py:91
-msgid "Outgoing Agent {0} is disabled."
-msgstr ""
-
-#: mail/doctype/mail_domain/mail_domain.py:98
-msgid "Outgoing Agent {0} is not an valid outgoing agent."
-msgstr ""
-
+#. Option for the 'In Reply To Mail Type' (Select) field in DocType 'Incoming
+#. Mail'
 #. Name of a DocType
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-#: mail/report/mail_tracker/mail_tracker.js:22
-#: mail/report/outbound_delay/outbound_delay.js:22
+#. Option for the 'In Reply To Mail Type' (Select) field in DocType 'Outgoing
+#. Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.js:22
+#: mail/mail/report/outbound_delay/outbound_delay.js:22
 msgid "Outgoing Mail"
 msgstr ""
 
-#. Linked DocType in Mail Agent's connections
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Outgoing Mail"
+#. Label of the override_display_name (Check) field in DocType 'Mailbox'
+#: mail/mail/doctype/mailbox/mailbox.json
+msgid "Override Display Name (API)"
 msgstr ""
 
-#. Linked DocType in Mailbox's connections
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
-msgid "Outgoing Mail"
-msgstr ""
-
-#. Option for the 'Request Method' (Select) field in DocType 'Mail Agent Job
-#. Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "POST"
+#. Label of the override_reply_to (Check) field in DocType 'Mailbox'
+#: mail/mail/doctype/mailbox/mailbox.json
+msgid "Override Reply To (API)"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Partially Sent"
 msgstr ""
 
+#. Label of the rmq_password (Password) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Password"
+msgstr ""
+
 #. Option for the 'Status' (Select) field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Pending"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Pending Activation"
 msgstr ""
 
-#: mail/doctype/mail_agent/mail_agent.py:140
+#: mail/mail/doctype/mail_settings/mail_settings.py:48
+msgid "Please set the DNS Provider Token."
+msgstr ""
+
+#: mail/mail/doctype/mail_settings/mail_settings.py:198
 msgid "Please set the {0} in the Mail Settings."
 msgstr ""
 
+#: mail/mail/doctype/mail_settings/mail_settings.py:39
+msgid "Please verify the {0} for the new {1} to ensure proper email authentication."
+msgstr ""
+
+#. Label of the rmq_port (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Port"
+msgstr ""
+
 #. Name of a role
-#: mail/doctype/incoming_mail/incoming_mail.json
-#: mail/doctype/outgoing_mail/outgoing_mail.json
+#. Label of the postmaster (Link) field in DocType 'Mail Settings'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/mail_contact/mail_contact.json
+#: mail/mail/doctype/mail_settings/mail_settings.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Postmaster"
 msgstr ""
 
-#. Label of a Link field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
-msgid "Postmaster"
-msgstr ""
-
-#. Label of a Int field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Label of the priority (Int) field in DocType 'DNS Record'
+#. Label of the priority (Int) field in DocType 'Mail Agent'
+#. Label of the priority (Int) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_agent/mail_agent.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "Priority"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Priority"
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.py:82
-msgid "Priority is required for incoming agents."
-msgstr ""
-
-#. Label of a Password field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
+#. Label of the private_key (Text) field in DocType 'DKIM Key'
+#: mail/mail/doctype/dkim_key/dkim_key.json
 msgid "Private Key"
 msgstr ""
 
-#. Label of a Select field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "Protocol"
+#. Label of the processed_after (Int) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+msgid "Processed After (Seconds)"
 msgstr ""
 
-#. Label of a Text field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
+#. Label of the processed_at (Datetime) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+msgid "Processed At"
+msgstr ""
+
+#. Description of the 'Processed After (Seconds)' (Int) field in DocType
+#. 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+msgid "Processed At - Received At"
+msgstr ""
+
+#. Label of the public_key (Text) field in DocType 'DKIM Key'
+#: mail/mail/doctype/dkim_key/dkim_key.json
 msgid "Public Key"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Queue"
-msgstr ""
-
-#. Label of a Data field in DocType 'Mail Agent Job Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "Queue"
-msgstr ""
-
-#. Option for the 'Status' (Select) field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Queued"
+#. Label of the queue_id (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Queue ID"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Queued"
 msgstr ""
 
-#. Label of a Code field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Raw HTML"
+#. Label of the rabbitmq_amqp_tab (Tab Break) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "RabbitMQ (AMQP)"
 msgstr ""
 
-#. Label of a Int field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the raw_message (Code) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Raw Message"
+msgstr ""
+
+#. Label of the received_after (Int) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "Received After (Seconds)"
 msgstr ""
 
-#. Label of a Datetime field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the received_at (Datetime) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "Received At"
 msgstr ""
 
 #. Description of the 'Received After (Seconds)' (Int) field in DocType
 #. 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "Received At - Created At"
 msgstr ""
 
-#. Label of a Link field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the receiver (Link) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "Receiver"
 msgstr ""
 
-#: mail/doctype/incoming_mail/incoming_mail_list.js:25
-msgid "Receiving Mails..."
-msgstr ""
-
 #. Option for the 'Category' (Select) field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Option for the 'Category' (Select) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "Receiving Record"
 msgstr ""
 
-#: mail/report/outbound_delay/outbound_delay.js:62
-#: mail/report/outbound_delay/outbound_delay.py:103
+#: mail/mail/report/outbound_delay/outbound_delay.js:61
+#: mail/mail/report/outbound_delay/outbound_delay.py:248
 msgid "Recipient"
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:123
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:164
 msgid "Recipient limit exceeded ({0}). Maximum {1} recipient(s) allowed."
 msgstr ""
 
-#. Label of a Table field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the recipients (Table) field in DocType 'Incoming Mail'
+#. Label of the recipients (Table) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Recipients"
 msgstr ""
 
-#. Label of a Table field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Recipients"
+#: mail/mail/doctype/mail_domain/mail_domain.js:26
+msgid "Refresh DNS Records"
 msgstr ""
 
-#: mail/doctype/mail_domain/mail_domain.js:40
-msgid "Regenerate DNS Records"
+#: mail/mail/doctype/mail_domain/mail_domain.js:64
+msgid "Refreshing DNS Records..."
 msgstr ""
 
-#. Label of a Code field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Request Data (JSON)"
+#. Option for the 'Status' (Select) field in DocType 'Incoming Mail'
+#. Label of the is_rejected (Check) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+msgid "Rejected"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Request Method"
+#. Label of the rejected_mail_retention (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Rejected Mail Retention (Days)"
 msgstr ""
 
-#. Label of a Select field in DocType 'Mail Agent Job Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "Request Method"
+#. Label of the rejection_message (Data) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+msgid "Rejection Message"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Request Path"
+#: frontend/src/components/MailDetails.vue:38
+#: mail/mail/doctype/incoming_mail/incoming_mail.js:12
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:50
+msgid "Reply"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Agent Job Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "Request Path"
+#: frontend/src/components/MailDetails.vue:45
+#: mail/mail/doctype/incoming_mail/incoming_mail.js:15
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:53
+msgid "Reply All"
 msgstr ""
 
-#. Label of a Section Break field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Request and Response"
+#. Label of the reply_to (Data) field in DocType 'Incoming Mail'
+#. Label of the reply_to (Data) field in DocType 'Mailbox'
+#. Label of the reply_to (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/mailbox/mailbox.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Reply To"
 msgstr ""
 
-#. Label of a Code field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Response Data (JSON)"
+#. Label of the required_spam_score (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Required Spam Score"
 msgstr ""
 
-#: mail/report/outbound_delay/outbound_delay.py:46
+#. Label of the retries (Int) field in DocType 'Mail Recipient'
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
+#: mail/mail/report/outbound_delay/outbound_delay.py:174
 msgid "Retries"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
-msgid "Retries"
-msgstr ""
-
-#: mail/doctype/mail_agent_job/mail_agent_job.js:11
-#: mail/doctype/outgoing_mail/outgoing_mail.js:38
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:35
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:45
 msgid "Retry"
 msgstr ""
 
-#: mail/doctype/mail_agent_job/mail_agent_job.js:22
-#: mail/doctype/outgoing_mail/outgoing_mail.js:55
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:92
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:120
 msgid "Retrying..."
 msgstr ""
 
-#. Label of a Check field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
+#. Label of the is_root_domain (Check) field in DocType 'Mail Domain'
+#: mail/mail/doctype/mail_domain/mail_domain.json
 msgid "Root Domain"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
+#. Label of the root_domain_name (Data) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Root Domain Name"
 msgstr ""
 
-#: mail/doctype/mail_domain/mail_domain.py:265
+#: mail/mail/doctype/mail_domain/mail_domain.py:189
 msgid "Row #{0}: Could not verify {1}:{2} record."
 msgstr ""
 
-#: mail/doctype/mail_alias/mail_alias.py:53
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:219
+msgid "Row #{0}: Duplicate custom header {1}."
+msgstr ""
+
+#: mail/mail/doctype/mail_alias/mail_alias.py:48
 msgid "Row #{0}: Duplicate mailbox {1}."
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:143
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:186
 msgid "Row #{0}: Duplicate recipient {1} of type {2}."
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:134
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:177
 msgid "Row #{0}: Invalid recipient {1}."
 msgstr ""
 
-#: mail/doctype/mail_alias/mail_alias.py:49
+#: mail/mail/doctype/mail_alias/mail_alias.py:44
 msgid "Row #{0}: Mailbox cannot be the same as the alias."
 msgstr ""
 
-#: mail/doctype/mail_domain/mail_domain.py:255
+#: mail/mail/doctype/mail_domain/mail_domain.py:179
 msgid "Row #{0}: Verified {1}:{2} record."
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Running"
-msgstr ""
-
-#. Label of a Check field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the spf_pass (Check) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "SPF"
 msgstr ""
 
-#. Label of a Small Text field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the spf_description (Small Text) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
 msgid "SPF Description"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
+#. Label of the spf_host (Data) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "SPF Host"
 msgstr ""
 
-#: mail/doctype/mail_settings/mail_settings.py:37
+#: mail/mail/doctype/mail_settings/mail_settings.py:58
 msgid "SPF Host {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores."
 msgstr ""
 
-#: mail/report/outbound_delay/outbound_delay.py:58
-msgid "Send in Batch"
+#: frontend/src/components/Modals/SendMail.vue:139
+msgid "Send"
 msgstr ""
 
-#. Label of a Check field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Send in Batch"
+#: frontend/src/components/Modals/SendMail.vue:3
+msgid "Send Mail"
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.js:51
-#: mail/report/mail_tracker/mail_tracker.py:66
-#: mail/report/outbound_delay/outbound_delay.js:56
-#: mail/report/outbound_delay/outbound_delay.py:96
-msgid "Sender"
+#. Label of the send_notification_on_reject (Check) field in DocType 'Mail
+#. Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Send Notification on Reject"
 msgstr ""
 
-#. Label of a Data field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Sender"
-msgstr ""
-
-#. Label of a Link field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#. Label of the sender (Data) field in DocType 'Incoming Mail'
+#. Label of the sender (Link) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.js:50
+#: mail/mail/report/mail_tracker/mail_tracker.py:151
+#: mail/mail/report/outbound_delay/outbound_delay.js:55
+#: mail/mail/report/outbound_delay/outbound_delay.py:241
 msgid "Sender"
 msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Option for the 'Category' (Select) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "Sending Record"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
-msgid "Sent"
-msgstr ""
-
 #. Option for the 'Status' (Select) field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#. Option for the 'Folder' (Select) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Sent"
 msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Option for the 'Category' (Select) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "Server Record"
 msgstr ""
 
-#. Label of a Datetime field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Started At"
+#. Label of the source (Data) field in DocType 'Mail Sync History'
+#: mail/mail/doctype/mail_sync_history/mail_sync_history.json
+msgid "Source"
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.js:33
-#: mail/report/mail_tracker/mail_tracker.py:40
-#: mail/report/outbound_delay/outbound_delay.js:33
-#: mail/report/outbound_delay/outbound_delay.py:40
+#. Label of the source_host (Data) field in DocType 'IP Blacklist'
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+msgid "Source Host"
+msgstr ""
+
+#. Label of the source_ip_address (Data) field in DocType 'IP Blacklist'
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+msgid "Source IP Address"
+msgstr ""
+
+#. Option for the 'Folder' (Select) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+msgid "Spam"
+msgstr ""
+
+#. Label of the spam_score (Float) field in DocType 'Incoming Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+msgid "Spam Score"
+msgstr ""
+
+#. Label of the status (Select) field in DocType 'Incoming Mail'
+#. Label of the status (Select) field in DocType 'Mail Recipient'
+#. Label of the status (Select) field in DocType 'Mailbox'
+#. Label of the status (Select) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
+#: mail/mail/doctype/mailbox/mailbox.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.js:33
+#: mail/mail/report/mail_tracker/mail_tracker.py:126
+#: mail/mail/report/outbound_delay/outbound_delay.js:33
+#: mail/mail/report/outbound_delay/outbound_delay.py:168
 msgid "Status"
 msgstr ""
 
-#. Label of a Select field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
-msgid "Status"
-msgstr ""
-
-#. Label of a Select field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Status"
-msgstr ""
-
-#. Label of a Select field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
-msgid "Status"
-msgstr ""
-
-#. Label of a Select field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
-msgid "Status"
-msgstr ""
-
-#. Label of a Select field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Status"
-msgstr ""
-
-#. Label of a Check field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
+#. Label of the is_subdomain (Check) field in DocType 'Mail Domain'
+#: mail/mail/doctype/mail_domain/mail_domain.json
 msgid "Subdomain"
 msgstr ""
 
-#. Label of a Small Text field in DocType 'Incoming Mail'
-#: mail/doctype/incoming_mail/incoming_mail.json
-msgctxt "Incoming Mail"
+#. Label of the subject (Small Text) field in DocType 'Incoming Mail'
+#. Label of the subject (Small Text) field in DocType 'Outgoing Mail'
+#: frontend/src/components/Modals/SendMail.vue:73
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Subject"
 msgstr ""
 
-#. Label of a Small Text field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Subject"
+#: mail/mail/report/outbound_delay/outbound_delay.py:198
+msgid "Submission Delay"
+msgstr ""
+
+#. Label of the submitted_after (Int) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Submitted After (Seconds)"
+msgstr ""
+
+#. Label of the submitted_at (Datetime) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Submitted At"
+msgstr ""
+
+#. Description of the 'Submitted After (Seconds)' (Int) field in DocType
+#. 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Submitted At - Created At"
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "Suspended"
 msgstr ""
 
-#: mail/doctype/mail_agent/mail_agent.js:30
-msgid "Sync Incoming Mails"
-msgstr ""
-
-#: mail/doctype/incoming_mail/incoming_mail_list.js:28
-#: mail/doctype/mail_agent/mail_agent.js:76
-msgid "Sync Incoming Mails Job has been started in the background."
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:42
-msgid "Sync Mail Aliases"
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:127
-msgid "Sync Mail Aliases Job has been started in the background."
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:34
-msgid "Sync Mail Domains"
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:93
-msgid "Sync Mail Domains Job has been started in the background."
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:38
-msgid "Sync Mailboxes"
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:110
-msgid "Sync Mailboxes Job has been started in the background."
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:24
-msgid "Sync Outgoing Mails Status"
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:59
-#: mail/doctype/outgoing_mail/outgoing_mail.js:74
-msgid "Sync Outgoing Mails Status Job has been started in the background."
-msgstr ""
-
-#: mail/doctype/outgoing_mail/outgoing_mail.js:43
-msgid "Sync Status"
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:73
-msgid "Syncing Incoming Mails..."
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:124
-msgid "Syncing Mail Aliases..."
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:90
-msgid "Syncing Mail Domains..."
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:107
-msgid "Syncing Mailboxes..."
-msgstr ""
-
-#: mail/doctype/mail_agent/mail_agent.js:56
-msgid "Syncing Outgoing Mails Status..."
-msgstr ""
-
 #. Name of a role
-#: mail/doctype/incoming_mail/incoming_mail.json
-#: mail/doctype/mail_agent/mail_agent.json
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-#: mail/doctype/mail_alias/mail_alias.json
-#: mail/doctype/mail_contact/mail_contact.json
-#: mail/doctype/mail_domain/mail_domain.json
-#: mail/doctype/mail_settings/mail_settings.json
-#: mail/doctype/mailbox/mailbox.json
-#: mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/doctype/dkim_key/dkim_key.json
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/ip_blacklist/ip_blacklist.json
+#: mail/mail/doctype/mail_agent/mail_agent.json
+#: mail/mail/doctype/mail_alias/mail_alias.json
+#: mail/mail/doctype/mail_contact/mail_contact.json
+#: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mail_settings/mail_settings.json
+#: mail/mail/doctype/mail_sync_history/mail_sync_history.json
+#: mail/mail/doctype/mailbox/mailbox.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "System Manager"
 msgstr ""
 
-#. Label of a Data field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
+#. Label of the ttl (Int) field in DocType 'DNS Record'
+#. Label of the default_ttl (Int) field in DocType 'Mail Settings'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "TTL"
 msgstr ""
 
-#. Label of a Data field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Label of the ttl (Int) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "TTL (Recommended)"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Option for the 'Type' (Select) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "TXT"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Agent Job'
-#: mail/doctype/mail_agent_job/mail_agent_job.json
-msgctxt "Mail Agent Job"
-msgid "Timeout"
+#. Label of the test_rabbitmq_connection (Button) field in DocType 'Mail
+#. Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Test Connection"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Agent Job Type'
-#: mail/doctype/mail_agent_job_type/mail_agent_job_type.json
-msgctxt "Mail Agent Job Type"
-msgid "Timeout"
+#: mail/mail/doctype/mail_settings/mail_settings.js:15
+msgid "Testing RabbitMQ Connection..."
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
+#: frontend/src/components/MailDetails.vue:17
+#: frontend/src/components/Modals/SendMail.vue:20
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
 msgid "To"
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.js:15
-#: mail/report/outbound_delay/outbound_delay.js:15
+#: mail/mail/report/mail_tracker/mail_tracker.js:15
+#: mail/mail/report/outbound_delay/outbound_delay.js:15
 msgid "To Date"
 msgstr ""
 
-#. Label of a Int field in DocType 'Mail Settings'
-#: mail/doctype/mail_settings/mail_settings.json
-msgctxt "Mail Settings"
+#. Label of the outgoing_total_attachments_size (Int) field in DocType 'Mail
+#. Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Total Attachments Size (MB)"
 msgstr ""
 
-#. Label of a Check field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Track"
+#: mail/mail/report/outbound_delay/outbound_delay.py:216
+msgid "Total Delay"
 msgstr ""
 
-#: mail/report/mail_tracker/mail_tracker.js:62
-#: mail/report/mail_tracker/mail_tracker.py:79
+#. Label of the track_outgoing_mail (Check) field in DocType 'Mailbox'
+#: mail/mail/doctype/mailbox/mailbox.json
+msgid "Track Outgoing Mail"
+msgstr ""
+
+#. Label of the tracking_id (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+#: mail/mail/report/mail_tracker/mail_tracker.js:61
+#: mail/mail/report/mail_tracker/mail_tracker.py:164
 msgid "Tracking ID"
-msgstr ""
-
-#. Label of a Data field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Tracking ID"
-msgstr ""
-
-#: api/track.py:12
-msgid "Tracking ID is required."
 msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Option for the 'Category' (Select) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "Tracking Record"
 msgstr ""
 
+#. Label of the transfer_completed_after (Int) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Transfer Completed After (Seconds)"
+msgstr ""
+
+#. Label of the transfer_completed_at (Datetime) field in DocType 'Outgoing
+#. Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Transfer Completed At"
+msgstr ""
+
+#. Description of the 'Transfer Completed After (Seconds)' (Int) field in
+#. DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Transfer Completed At - Transfer Started At"
+msgstr ""
+
+#: mail/mail/report/outbound_delay/outbound_delay.py:204
+msgid "Transfer Delay"
+msgstr ""
+
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:30
+msgid "Transfer Now"
+msgstr ""
+
+#. Label of the transfer_started_after (Int) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Transfer Started After (Seconds)"
+msgstr ""
+
+#. Label of the transfer_started_at (Datetime) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Transfer Started At"
+msgstr ""
+
+#. Description of the 'Transfer Started After (Seconds)' (Int) field in DocType
+#. 'Outgoing Mail'
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Transfer Started At - Submitted At"
+msgstr ""
+
 #. Option for the 'Status' (Select) field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Transferred"
 msgstr ""
 
-#: mail/report/outbound_delay/outbound_delay.py:64
-msgid "Transferred After"
-msgstr ""
-
-#. Label of a Int field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Transferred After (Seconds)"
-msgstr ""
-
-#: mail/report/outbound_delay/outbound_delay.py:121
-msgid "Transferred At"
-msgstr ""
-
-#. Label of a Datetime field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Transferred At"
-msgstr ""
-
-#. Description of the 'Transferred After (Seconds)' (Int) field in DocType
-#. 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Transferred At - Created At"
-msgstr ""
-
 #. Option for the 'Status' (Select) field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
 msgid "Transferring"
 msgstr ""
 
-#. Label of a Select field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:78
+msgid "Transferring..."
+msgstr ""
+
+#. Option for the 'Folder' (Select) field in DocType 'Incoming Mail'
+#. Option for the 'Folder' (Select) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/incoming_mail/incoming_mail.json
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.json
+msgid "Trash"
+msgstr ""
+
+#. Label of the type (Select) field in DocType 'DNS Record'
+#. Label of the type (Select) field in DocType 'Mail Agent'
+#. Label of the type (Select) field in DocType 'Mail Domain DNS Record'
+#. Label of the type (Select) field in DocType 'Mail Recipient'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_agent/mail_agent.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
+#: mail/mail/doctype/mail_recipient/mail_recipient.json
 msgid "Type"
 msgstr ""
 
-#. Label of a Select field in DocType 'Mail Recipient'
-#: mail/doctype/mail_recipient/mail_recipient.json
-msgctxt "Mail Recipient"
-msgid "Type"
-msgstr ""
-
-#. Label of a Check field in DocType 'Outgoing Mail'
-#: mail/doctype/outgoing_mail/outgoing_mail.json
-msgctxt "Outgoing Mail"
-msgid "Use Raw HTML"
-msgstr ""
-
-#. Label of a Link field in DocType 'Mail Contact'
-#: mail/doctype/mail_contact/mail_contact.json
-msgctxt "Mail Contact"
+#. Label of the user (Link) field in DocType 'Mail Contact'
+#. Label of the user (Link) field in DocType 'Mail Sync History'
+#. Label of the user (Link) field in DocType 'Mailbox'
+#: mail/mail/doctype/mail_contact/mail_contact.json
+#: mail/mail/doctype/mail_sync_history/mail_sync_history.json
+#: mail/mail/doctype/mailbox/mailbox.json
 msgid "User"
 msgstr ""
 
-#. Label of a Link field in DocType 'Mailbox'
-#: mail/doctype/mailbox/mailbox.json
-msgctxt "Mailbox"
-msgid "User"
-msgstr ""
-
-#: mail/doctype/mail_settings/mail_settings.py:46
+#: mail/mail/doctype/mail_settings/mail_settings.py:81
 msgid "User {0} does not exist."
 msgstr ""
 
-#: mail/doctype/mail_settings/mail_settings.py:53
+#: mail/mail/doctype/mail_settings/mail_settings.py:88
 msgid "User {0} does not have the Postmaster role."
 msgstr ""
 
-#: mail/doctype/mail_settings/mail_settings.py:48
+#: mail/mail/doctype/mail_settings/mail_settings.py:83
 msgid "User {0} is disabled."
 msgstr ""
 
-#. Label of a Text field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#: mail/api/auth.py:34
+msgid "User {0} is not allowed to access mailboxes."
+msgstr ""
+
+#. Label of the rmq_username (Data) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Username"
+msgstr ""
+
+#. Label of the value (Text) field in DocType 'DNS Record'
+#. Label of the value (Text) field in DocType 'Mail Domain DNS Record'
+#. Label of the value (Text) field in DocType 'Mail Header'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
+#: mail/mail/doctype/mail_header/mail_header.json
 msgid "Value"
 msgstr ""
 
-#. Label of a Text field in DocType 'Mail Header'
-#: mail/doctype/mail_header/mail_header.json
-msgctxt "Mail Header"
-msgid "Value"
-msgstr ""
-
-#. Label of a Check field in DocType 'DNS Record'
-#: mail/doctype/dns_record/dns_record.json
-msgctxt "DNS Record"
+#. Label of the is_verified (Check) field in DocType 'DNS Record'
+#. Label of the is_verified (Check) field in DocType 'Mail Domain'
+#. Label of the is_verified (Check) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/dns_record/dns_record.json
+#: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "Verified"
 msgstr ""
 
-#. Label of a Check field in DocType 'Mail Domain'
-#: mail/doctype/mail_domain/mail_domain.json
-msgctxt "Mail Domain"
-msgid "Verified"
+#: mail/mail/doctype/dns_record/dns_record.py:101
+msgid "Verified {0}:{1} record."
 msgstr ""
 
-#: mail/doctype/mail_domain/mail_domain.js:32
+#: mail/mail/doctype/dns_record/dns_record.js:11
+msgid "Verify DNS Record"
+msgstr ""
+
+#: mail/mail/doctype/mail_domain/mail_domain.js:22
 msgid "Verify DNS Records"
 msgstr ""
 
-#: mail/doctype/mail_domain/mail_domain.js:57
+#: mail/mail/doctype/dns_record/dns_record.js:35
+msgid "Verifying DNS Record..."
+msgstr ""
+
+#: mail/mail/doctype/mail_domain/mail_domain.js:47
 msgid "Verifying DNS Records..."
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:101
+#. Label of the rmq_virtual_host (Data) field in DocType 'Mail Settings'
+#: mail/mail/doctype/mail_settings/mail_settings.json
+msgid "Virtual Host"
+msgstr ""
+
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:120
 msgid "You are not allowed to send mail from mailbox {0}."
 msgstr ""
 
-#. Description of the 'Host' (Data) field in DocType 'Mail Agent'
-#: mail/doctype/mail_agent/mail_agent.json
-msgctxt "Mail Agent"
-msgid "e.g. localhost or Private IP"
-msgstr ""
-
-#: public/frontend/assets/Inbox.f5738ca4.js:1
-msgid "incomingMailCount"
-msgstr ""
-
-#: utils.py:34
+#: mail/utils/__init__.py:27
 msgid "{0} does not exist."
 msgstr ""
 
-#: mail/doctype/incoming_mail/incoming_mail.py:60
-msgid "{0} is mandatory"
+#: frontend/src/components/Modals/SendMail.vue:26
+#: frontend/src/components/Modals/SendMail.vue:56
+#: frontend/src/components/Modals/SendMail.vue:68
+msgid "{0} is an invalid email address"
 msgstr ""
 
-#: mail/doctype/outgoing_mail/outgoing_mail.py:679
-msgid "{0} is required."
+#: mail/mail/doctype/dns_record/dns_record_list.js:19
+#: mail/mail/doctype/incoming_mail/incoming_mail_list.js:29
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.js:108
+msgid "{0} job has been created."
 msgstr ""
 
-#: mail/doctype/mail_settings/mail_settings.py:156
+#: mail/mail/doctype/outgoing_mail/outgoing_mail.py:141
+msgid "{0} must be either Incoming Mail or Outgoing Mail."
+msgstr ""
+
+#: mail/mail/doctype/mail_settings/mail_settings.py:122
 msgid "{0} should be greater than or equal to {1}."
 msgstr ""
 
-#: mail/doctype/mail_settings/mail_settings.py:146
+#: mail/mail/doctype/mail_settings/mail_settings.py:112
 msgid "{0} should be less than or equal to {1} MB."
-msgstr ""
-
-#: public/frontend/assets/frappe-ui.6bb07023.js:59
-msgid "{|}~.]+@[-a-z0-9]+(.[-a-z0-9]+)*.[a-z]+)(?=$|s)/gmi,b=/<()(?:mailto:)?([-.w]+@[-a-z0-9]+(.[-a-z0-9]+)*.[a-z]+)>/gi,w=function(f){return function(y,g,x,S,E,C,M){x=x.replace(r.helper.regexes.asteriskDashAndColon,r.helper.escapeCharactersCallback);var O=x,P=\"\",I=\"\",D=g||\"\",A=M||\"\";return/^www./i.test(x)&&(x=x.replace(/^www./i,\"http://www.\")),f.excludeTrailingPunctuationFromURLs&&C&&(P=C),f.openLinksInNewWindow&&(I=' rel=\"noopener noreferrer\" target=\"¨E95Eblank\"'),D+'<a href=\"'+x+'\"'+I+\">\"+O+\"</a>\"+P+A}},k=function(f,y){return function(g,x,S){var E=\"mailto:\";return x=x||\"\",S=r.subParser(\"unescapeSpecialChars\")(S,f,y),f.encodeEmails?(E=r.helper.encodeEmailAddress(E+S),S=r.helper.encodeEmailAddress(S)):E=E+S,x+'<a href=\"'+E+'\">'+S+\"</a>\"}};r.subParser(\"autoLinks\",function(f,y,g){return f=g.converter._dispatch(\"autoLinks.before\",f,y,g),f=f.replace(m,w(y)),f=f.replace(b,k(y,g)),f=g.converter._dispatch(\"autoLinks.after\",f,y,g),f}),r.subParser(\"simplifiedAutoLinks\",function(f,y,g){return y.simplifiedAutoLink&&(f=g.converter._dispatch(\"simplifiedAutoLinks.before\",f,y,g),y.excludeTrailingPunctuationFromURLs?f=f.replace(p,w(y)):f=f.replace(h,w(y)),f=f.replace(v,k(y,g)),f=g.converter._dispatch(\"simplifiedAutoLinks.after\",f,y,g)),f}),r.subParser(\"blockGamut\",function(f,y,g){return f=g.converter._dispatch(\"blockGamut.before\",f,y,g),f=r.subParser(\"blockQuotes\")(f,y,g),f=r.subParser(\"headers\")(f,y,g),f=r.subParser(\"horizontalRule\")(f,y,g),f=r.subParser(\"lists\")(f,y,g),f=r.subParser(\"codeBlocks\")(f,y,g),f=r.subParser(\"tables\")(f,y,g),f=r.subParser(\"hashHTMLBlocks\")(f,y,g),f=r.subParser(\"paragraphs\")(f,y,g),f=g.converter._dispatch(\"blockGamut.after\",f,y,g),f}),r.subParser(\"blockQuotes\",function(f,y,g){f=g.converter._dispatch(\"blockQuotes.before\",f,y,g),f=f+"
 msgstr ""
 
