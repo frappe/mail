@@ -48,6 +48,21 @@ website_redirects = [
 		"target": "/api/method/mail.api.inbound.pull_raw",
 		"redirect_http_status": 307,
 	},
+	{
+		"source": "/spamd/scan",
+		"target": "/api/method/mail.api.spamd.scan",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/spamd/is-spam",
+		"target": "/api/method/mail.api.spamd.is_spam",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/spamd/score",
+		"target": "/api/method/mail.api.spamd.get_spam_score",
+		"redirect_http_status": 307,
+	},
 ]
 
 
@@ -296,7 +311,7 @@ ignore_links_on_delete = ["Mail Domain", "Incoming Mail", "Outgoing Mail"]
 # Automatically update python controller files with type annotations for this app.
 # export_python_type_annotations = True
 
-# default_log_clearing_doctypes = {"Incoming Mail": 7}
+default_log_clearing_doctypes = {"Spam Check Log": 14}
 
 fixtures = [
 	{

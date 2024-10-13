@@ -9,10 +9,11 @@ from email.utils import parseaddr
 from frappe.model.document import Document
 from mail.utils.cache import get_postmaster
 from mail.rabbitmq import rabbitmq_context
-from frappe.utils import now, time_diff_in_seconds, validate_email_address
+from mail.utils.email_parser import EmailParser, extract_ip_and_host
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.outgoing_mail.outgoing_mail import create_outgoing_mail
-from mail.utils.email_parser import EmailParser, extract_ip_and_host, extract_spam_score
+from frappe.utils import now, cint, time_diff_in_seconds, validate_email_address
+from mail.mail.doctype.spam_check_log.spam_check_log import create_spam_check_log
 from mail.utils import (
 	enqueue_job,
 	parse_iso_datetime,
@@ -36,6 +37,7 @@ class IncomingMail(Document):
 
 	def validate(self) -> None:
 		if self.get("_action") == "submit":
+			self.spam_check()
 			self.process()
 
 	def on_submit(self) -> None:
@@ -45,6 +47,16 @@ class IncomingMail(Document):
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Incoming Mail."))
+
+	def spam_check(self) -> None:
+		"""Checks if the mail is spam."""
+
+		mail_settings = frappe.get_cached_doc("Mail Settings")
+		if mail_settings.enable_spam_detection and mail_settings.scan_incoming_mail:
+			spam_log = create_spam_check_log(self.message)
+			self.spam_score = spam_log.spam_score
+			self.spam_check_response = spam_log.spamd_response
+			self.is_spam = cint(self.spam_score > mail_settings.max_spam_score_for_inbound)
 
 	def process(self) -> None:
 		"""Processes the Incoming Mail."""
@@ -62,7 +74,6 @@ class IncomingMail(Document):
 		self.created_at = parser.get_date()
 		self.message_size = parser.get_size()
 		self.from_ip, self.from_host = extract_ip_and_host(parser.get_header("Received"))
-		self.spam_score = extract_spam_score(parser.get_header("X-Spam-Status"))
 		self.received_at = parse_iso_datetime(parser.get_header("Received-At"))
 		self.in_reply_to = parser.get_in_reply_to()
 		self.in_reply_to_mail_type, self.in_reply_to_mail_name = get_in_reply_to_mail(
@@ -78,10 +89,7 @@ class IncomingMail(Document):
 		for key, value in parser.get_authentication_results().items():
 			setattr(self, key, value)
 
-		required_spam_score = frappe.db.get_single_value(
-			"Mail Settings", "required_spam_score", cache=True
-		)
-		self.folder = "Spam" if self.spam_score > required_spam_score else "Inbox"
+		self.folder = "Spam" if self.is_spam else "Inbox"
 		self.status = "Rejected" if self.is_rejected else "Delivered"
 
 		if self.created_at:

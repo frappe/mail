@@ -8,6 +8,7 @@ frappe.ui.form.on("Outgoing Mail", {
 
 	refresh(frm) {
         frm.trigger("hide_amend_button");
+        frm.trigger("add_comments");
         frm.trigger("add_actions");
         frm.trigger("set_sender");
 	},
@@ -23,6 +24,15 @@ frappe.ui.form.on("Outgoing Mail", {
 			frm.page.btn_primary.hide()
 		}
 	},
+
+    add_comments(frm) {
+        if (!frm.doc.__islocal && frm.doc.status == "Blocked (Spam)") {
+            let msg = __(
+                "This email was blocked because it was flagged as spam by our system. The spam score exceeded the allowed threshold. Please review the content of your email and try removing any suspicious links or attachments, or contact support for further assistance."
+            );
+            frm.dashboard.add_comment(msg, "red", true);
+        }
+    },
 
     add_actions(frm) {
         if (frm.doc.docstatus === 1) {
