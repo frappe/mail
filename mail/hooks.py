@@ -59,7 +59,7 @@ website_redirects = [
 		"redirect_http_status": 307,
 	},
 	{
-		"source": "/spamd/get-score",
+		"source": "/spamd/score",
 		"target": "/api/method/mail.api.spamd.get_spam_score",
 		"redirect_http_status": 307,
 	},
