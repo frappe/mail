@@ -1,5 +1,6 @@
 import frappe
 from frappe import _
+from html import unescape
 from typing import Literal
 from mail.mail.doctype.spam_check_log.spam_check_log import create_spam_check_log
 
@@ -8,6 +9,7 @@ from mail.mail.doctype.spam_check_log.spam_check_log import create_spam_check_lo
 def scan(message: str) -> dict:
 	"""Returns the spam score, spamd response and scanning mode of the message"""
 
+	message = get_unescaped_message(message)
 	spam_log = create_spam_check_log(message)
 	return {
 		"spam_score": spam_log.spam_score,
@@ -22,6 +24,7 @@ def is_spam(
 ) -> bool:
 	"""Returns True if the message is spam else False"""
 
+	message = get_unescaped_message(message)
 	spam_log = create_spam_check_log(message)
 	return spam_log.is_spam(message_type)
 
@@ -30,5 +33,12 @@ def is_spam(
 def get_spam_score(message: str) -> float:
 	"""Returns the spam score of the message"""
 
+	message = get_unescaped_message(message)
 	spam_log = create_spam_check_log(message)
 	return spam_log.spam_score
+
+
+def get_unescaped_message(message: str) -> str:
+	"""Returns the unescaped message"""
+
+	return unescape(message)
