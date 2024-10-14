@@ -238,7 +238,7 @@
   {
    "description": "Received At - Created At",
    "fieldname": "received_after",
-   "fieldtype": "Int",
+   "fieldtype": "Float",
    "label": "Received After (Seconds)",
    "no_copy": 1,
    "read_only": 1
@@ -301,7 +301,7 @@
   {
    "description": "Processed At - Received At",
    "fieldname": "processed_after",
-   "fieldtype": "Int",
+   "fieldtype": "Float",
    "label": "Processed After (Seconds)",
    "no_copy": 1,
    "read_only": 1
@@ -436,7 +436,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-13 22:05:50.356349",
+ "modified": "2024-10-14 13:03:44.017238",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",

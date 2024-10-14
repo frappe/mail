@@ -66,7 +66,7 @@
    "depends_on": "eval: doc.status",
    "description": "Action At - Transfer Completed At",
    "fieldname": "action_after",
-   "fieldtype": "Int",
+   "fieldtype": "Float",
    "label": "Action After (Seconds)",
    "no_copy": 1,
    "read_only": 1
@@ -94,7 +94,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-10-05 10:03:46.688970",
+ "modified": "2024-10-14 13:04:35.052446",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Recipient",

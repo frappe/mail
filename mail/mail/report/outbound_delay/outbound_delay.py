@@ -144,7 +144,7 @@ def get_summary(data: list) -> list[dict]:
 			"value": total_transfer_delay / len(data) if data else 0,
 			"indicator": "green",
 			"label": "Average Transfer Delay",
-			"datatype": "Int",
+			"datatype": "Float",
 		},
 	]
 
@@ -197,25 +197,25 @@ def get_columns() -> list:
 		{
 			"label": _("Submission Delay"),
 			"fieldname": "submission_delay",
-			"fieldtype": "Int",
+			"fieldtype": "Float",
 			"width": 120,
 		},
 		{
 			"label": _("Transfer Delay"),
 			"fieldname": "transfer_delay",
-			"fieldtype": "Int",
+			"fieldtype": "Float",
 			"width": 120,
 		},
 		{
 			"label": _("Action Delay"),
 			"fieldname": "action_delay",
-			"fieldtype": "Int",
+			"fieldtype": "Float",
 			"width": 120,
 		},
 		{
 			"label": _("Total Delay"),
 			"fieldname": "total_delay",
-			"fieldtype": "Int",
+			"fieldtype": "Float",
 			"width": 120,
 		},
 		{
