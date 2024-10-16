@@ -8,7 +8,7 @@ By following this documentation, you’ll learn how to replicate the setup used 
 
 ## Who Should Self-Host Frappe Mail?
 
-Self-hosting **Frappe Mail** is best suited for businesses or individuals with high email volume (e.g., sending around **100,000 emails per day**) or for those looking to start their own email service. If your email volume is substantial, hosting your own Frappe Mail server provides better control and scalability.
+Self-hosting **Frappe Mail** is best suited for businesses or individuals with high email volume (e.g., sending around **100,000 emails per day**) or or for those prioritizing security by storing emails on their own servers. If your email volume is substantial, hosting your own Frappe Mail server provides better control and scalability.
 
 For those with **low email volumes**, setting up and maintaining Frappe Mail may be more **expensive** compared to using a third-party email service or **Frappe Mail as a Service** (coming soon on **Frappe Cloud**), which will offer a more affordable solution for smaller operations.
 
