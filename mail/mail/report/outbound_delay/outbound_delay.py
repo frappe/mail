@@ -4,6 +4,7 @@
 import frappe
 from frappe import _
 from typing import Tuple
+from frappe.utils import flt
 from frappe.query_builder import Order, Criterion
 from mail.utils.cache import get_user_owned_domains
 from frappe.query_builder.functions import Date, IfNull
@@ -212,48 +213,42 @@ def get_data(filters: dict | None = None) -> list[list]:
 
 
 def get_summary(data: list) -> list[dict]:
-	status_count = {}
-	total_message_size = 0
-	total_transfer_delay = 0
+	summary_data = {}
+	average_data = {}
 
 	for row in data:
-		status = row["status"]
-		if status in ["Sent", "Deferred", "Bounced"]:
-			status_count.setdefault(status, 0)
-			status_count[status] += 1
+		for field in ["message_size", "submission_delay", "transfer_delay", "action_delay"]:
+			key = f"total_{field}"
+			summary_data.setdefault(key, 0)
+			summary_data[key] += row[field]
 
-		total_message_size += row["message_size"]
-		total_transfer_delay += row["transfer_delay"]
+	for key, value in summary_data.items():
+		key = key.replace("total_", "")
+		average_data[key] = flt(value / len(data) if data else 0, 1)
 
 	return [
 		{
-			"label": _("Total Sent"),
+			"label": _("Average Message Size"),
 			"datatype": "Int",
-			"value": status_count.get("Sent", 0),
+			"value": average_data["message_size"],
 			"indicator": "green",
 		},
 		{
-			"label": _("Total Deferred"),
-			"datatype": "Int",
-			"value": status_count.get("Deferred", 0),
-			"indicator": "blue",
-		},
-		{
-			"label": _("Total Bounced"),
-			"datatype": "Int",
-			"value": status_count.get("Bounced", 0),
-			"indicator": "red",
-		},
-		{
-			"label": _("Average Message Size"),
-			"datatype": "Int",
-			"value": total_message_size / len(data) if data else 0,
-			"indicator": "blue",
+			"label": _("Average Submission Delay"),
+			"datatype": "Data",
+			"value": f"{average_data['submission_delay']}s",
+			"indicator": "yellow",
 		},
 		{
 			"label": _("Average Transfer Delay"),
-			"datatype": "Float",
-			"value": total_transfer_delay / len(data) if data else 0,
-			"indicator": "green",
+			"datatype": "Data",
+			"value": f"{average_data['transfer_delay']}s",
+			"indicator": "blue",
+		},
+		{
+			"label": _("Average Action Delay"),
+			"datatype": "Data",
+			"value": f"{average_data['action_delay']}s",
+			"indicator": "orange",
 		},
 	]
