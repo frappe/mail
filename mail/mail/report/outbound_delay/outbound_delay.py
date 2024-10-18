@@ -10,7 +10,7 @@ from frappe.query_builder.functions import Date, IfNull
 from mail.utils.user import has_role, is_system_manager, get_user_mailboxes
 
 
-def execute(filters=None) -> Tuple[list, list]:
+def execute(filters: dict | None = None) -> Tuple[list, list]:
 	columns = get_columns()
 	data = get_data(filters)
 	summary = get_summary(data)
@@ -18,138 +18,7 @@ def execute(filters=None) -> Tuple[list, list]:
 	return columns, data, None, None, summary
 
 
-def get_data(filters=None) -> list:
-	filters = filters or {}
-
-	OM = frappe.qb.DocType("Outgoing Mail")
-	MR = frappe.qb.DocType("Mail Recipient")
-
-	query = (
-		frappe.qb.from_(OM)
-		.left_join(MR)
-		.on(OM.name == MR.parent)
-		.select(
-			OM.name,
-			OM.creation,
-			MR.status,
-			MR.retries,
-			OM.message_size,
-			OM.via_api,
-			OM.is_newsletter,
-			OM.submitted_after.as_("submission_delay"),
-			(OM.transfer_started_after + OM.transfer_completed_after).as_("transfer_delay"),
-			MR.action_after.as_("action_delay"),
-			(
-				OM.submitted_after
-				+ OM.transfer_started_after
-				+ OM.transfer_completed_after
-				+ MR.action_after
-			).as_("total_delay"),
-			OM.agent,
-			OM.domain_name,
-			OM.ip_address,
-			OM.sender,
-			MR.email.as_("recipient"),
-			OM.message_id,
-		)
-		.where((OM.docstatus == 1) & (IfNull(MR.status, "") != ""))
-		.orderby(OM.creation, OM.created_at, order=Order.desc)
-		.orderby(MR.idx, order=Order.asc)
-	)
-
-	if not filters.get("name") and not filters.get("message_id"):
-		query = query.where(
-			(Date(OM.created_at) >= Date(filters.get("from_date")))
-			& (Date(OM.created_at) <= Date(filters.get("to_date")))
-		)
-
-	if not filters.get("include_newsletter"):
-		query = query.where(OM.is_newsletter == 0)
-
-	for field in [
-		"name",
-		"agent",
-		"domain_name",
-		"ip_address",
-		"sender",
-		"message_id",
-	]:
-		if filters.get(field):
-			query = query.where(OM[field] == filters.get(field))
-
-	for field in ["status", "email"]:
-		if filters.get(field):
-			query = query.where(MR[field] == filters.get(field))
-
-	user = frappe.session.user
-	if not is_system_manager(user):
-		conditions = []
-		domains = get_user_owned_domains(user)
-		mailboxes = get_user_mailboxes(user)
-
-		if has_role(user, "Domain Owner") and domains:
-			conditions.append(OM.domain_name.isin(domains))
-
-		if has_role(user, "Mailbox User") and mailboxes:
-			conditions.append(OM.sender.isin(mailboxes))
-
-		if not conditions:
-			return []
-
-		query = query.where(Criterion.any(conditions))
-
-	return query.run(as_dict=True)
-
-
-def get_summary(data: list) -> list[dict]:
-	status_count = {}
-	total_message_size = 0
-	total_transfer_delay = 0
-
-	for row in data:
-		status = row["status"]
-		if status in ["Sent", "Deferred", "Bounced"]:
-			status_count.setdefault(status, 0)
-			status_count[status] += 1
-
-		total_message_size += row["message_size"]
-		total_transfer_delay += row["transfer_delay"]
-
-	return [
-		{
-			"value": status_count.get("Sent", 0),
-			"indicator": "green",
-			"label": "Total Sent",
-			"datatype": "Int",
-		},
-		{
-			"value": status_count.get("Deferred", 0),
-			"indicator": "blue",
-			"label": "Total Deferred",
-			"datatype": "Int",
-		},
-		{
-			"value": status_count.get("Bounced", 0),
-			"indicator": "red",
-			"label": "Total Bounced",
-			"datatype": "Int",
-		},
-		{
-			"value": total_message_size / len(data) if data else 0,
-			"indicator": "blue",
-			"label": "Average Message Size",
-			"datatype": "Int",
-		},
-		{
-			"value": total_transfer_delay / len(data) if data else 0,
-			"indicator": "green",
-			"label": "Average Transfer Delay",
-			"datatype": "Float",
-		},
-	]
-
-
-def get_columns() -> list:
+def get_columns() -> list[dict]:
 	return [
 		{
 			"label": _("Name"),
@@ -255,5 +124,136 @@ def get_columns() -> list:
 			"fieldname": "message_id",
 			"fieldtype": "Data",
 			"width": 200,
+		},
+	]
+
+
+def get_data(filters: dict | None = None) -> list[list]:
+	filters = filters or {}
+
+	OM = frappe.qb.DocType("Outgoing Mail")
+	MR = frappe.qb.DocType("Mail Recipient")
+
+	query = (
+		frappe.qb.from_(OM)
+		.left_join(MR)
+		.on(OM.name == MR.parent)
+		.select(
+			OM.name,
+			OM.creation,
+			MR.status,
+			MR.retries,
+			OM.message_size,
+			OM.via_api,
+			OM.is_newsletter,
+			OM.submitted_after.as_("submission_delay"),
+			(OM.transfer_started_after + OM.transfer_completed_after).as_("transfer_delay"),
+			MR.action_after.as_("action_delay"),
+			(
+				OM.submitted_after
+				+ OM.transfer_started_after
+				+ OM.transfer_completed_after
+				+ MR.action_after
+			).as_("total_delay"),
+			OM.agent,
+			OM.domain_name,
+			OM.ip_address,
+			OM.sender,
+			MR.email.as_("recipient"),
+			OM.message_id,
+		)
+		.where((OM.docstatus == 1) & (IfNull(MR.status, "") != ""))
+		.orderby(OM.creation, OM.created_at, order=Order.desc)
+		.orderby(MR.idx, order=Order.asc)
+	)
+
+	if not filters.get("name") and not filters.get("message_id"):
+		query = query.where(
+			(Date(OM.created_at) >= Date(filters.get("from_date")))
+			& (Date(OM.created_at) <= Date(filters.get("to_date")))
+		)
+
+	if not filters.get("include_newsletter"):
+		query = query.where(OM.is_newsletter == 0)
+
+	for field in [
+		"name",
+		"agent",
+		"domain_name",
+		"ip_address",
+		"sender",
+		"message_id",
+	]:
+		if filters.get(field):
+			query = query.where(OM[field] == filters.get(field))
+
+	for field in ["status", "email"]:
+		if filters.get(field):
+			query = query.where(MR[field] == filters.get(field))
+
+	user = frappe.session.user
+	if not is_system_manager(user):
+		conditions = []
+		domains = get_user_owned_domains(user)
+		mailboxes = get_user_mailboxes(user)
+
+		if has_role(user, "Domain Owner") and domains:
+			conditions.append(OM.domain_name.isin(domains))
+
+		if has_role(user, "Mailbox User") and mailboxes:
+			conditions.append(OM.sender.isin(mailboxes))
+
+		if not conditions:
+			return []
+
+		query = query.where(Criterion.any(conditions))
+
+	return query.run(as_dict=True)
+
+
+def get_summary(data: list) -> list[dict]:
+	status_count = {}
+	total_message_size = 0
+	total_transfer_delay = 0
+
+	for row in data:
+		status = row["status"]
+		if status in ["Sent", "Deferred", "Bounced"]:
+			status_count.setdefault(status, 0)
+			status_count[status] += 1
+
+		total_message_size += row["message_size"]
+		total_transfer_delay += row["transfer_delay"]
+
+	return [
+		{
+			"label": _("Total Sent"),
+			"datatype": "Int",
+			"value": status_count.get("Sent", 0),
+			"indicator": "green",
+		},
+		{
+			"label": _("Total Deferred"),
+			"datatype": "Int",
+			"value": status_count.get("Deferred", 0),
+			"indicator": "blue",
+		},
+		{
+			"label": _("Total Bounced"),
+			"datatype": "Int",
+			"value": status_count.get("Bounced", 0),
+			"indicator": "red",
+		},
+		{
+			"label": _("Average Message Size"),
+			"datatype": "Int",
+			"value": total_message_size / len(data) if data else 0,
+			"indicator": "blue",
+		},
+		{
+			"label": _("Average Transfer Delay"),
+			"datatype": "Float",
+			"value": total_transfer_delay / len(data) if data else 0,
+			"indicator": "green",
 		},
 	]
