@@ -1,22 +1,23 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import json
 import frappe
 from frappe import _
-from typing import Tuple
-from frappe.utils import flt
+from datetime import datetime
 from frappe.query_builder import Order, Criterion
 from mail.utils.cache import get_user_owned_domains
 from frappe.query_builder.functions import Date, IfNull
 from mail.utils.user import has_role, is_system_manager, get_user_mailboxes
 
 
-def execute(filters: dict | None = None) -> Tuple[list, list]:
+def execute(filters: dict | None = None) -> tuple:
 	columns = get_columns()
 	data = get_data(filters)
+	chart = get_chart(data)
 	summary = get_summary(data)
 
-	return columns, data, None, None, summary
+	return columns, data, None, chart, summary
 
 
 def get_columns() -> list[dict]:
@@ -65,28 +66,10 @@ def get_columns() -> list[dict]:
 			"width": 100,
 		},
 		{
-			"label": _("Submission Delay"),
-			"fieldname": "submission_delay",
-			"fieldtype": "Float",
-			"width": 120,
-		},
-		{
-			"label": _("Transfer Delay"),
-			"fieldname": "transfer_delay",
-			"fieldtype": "Float",
-			"width": 120,
-		},
-		{
-			"label": _("Action Delay"),
-			"fieldname": "action_delay",
-			"fieldtype": "Float",
-			"width": 120,
-		},
-		{
-			"label": _("Total Delay"),
-			"fieldname": "total_delay",
-			"fieldtype": "Float",
-			"width": 120,
+			"label": _("Response Message"),
+			"fieldname": "response",
+			"fieldtype": "Code",
+			"width": 500,
 		},
 		{
 			"label": _("Agent"),
@@ -147,15 +130,7 @@ def get_data(filters: dict | None = None) -> list[list]:
 			OM.message_size,
 			OM.via_api,
 			OM.is_newsletter,
-			OM.submitted_after.as_("submission_delay"),
-			(OM.transfer_started_after + OM.transfer_completed_after).as_("transfer_delay"),
-			MR.action_after.as_("action_delay"),
-			(
-				OM.submitted_after
-				+ OM.transfer_started_after
-				+ OM.transfer_completed_after
-				+ MR.action_after
-			).as_("total_delay"),
+			MR.details.as_("response"),
 			OM.agent,
 			OM.domain_name,
 			OM.ip_address,
@@ -209,46 +184,104 @@ def get_data(filters: dict | None = None) -> list[list]:
 
 		query = query.where(Criterion.any(conditions))
 
-	return query.run(as_dict=True)
+	data = query.run(as_dict=True)
+
+	for row in data:
+		response = json.loads(row["response"])
+		row["response"] = (
+			response.get("dsn_msg")
+			or response.get("reason")
+			or response.get("dsn_smtp_response")
+			or response.get("response")
+		)
+
+	return data
+
+
+def get_chart(data: list) -> list[dict]:
+	labels, sent, deffered, bounced = [], [], [], []
+
+	for row in reversed(data):
+		if isinstance(row["creation"], datetime):
+			date = row["creation"].date().strftime("%d-%m-%Y")
+		else:
+			frappe.throw(_("Invalid date format"))
+
+		if date not in labels:
+			labels.append(date)
+
+			if row["status"] == "Sent":
+				sent.append(1)
+				deffered.append(0)
+				bounced.append(0)
+			elif row["status"] == "Deferred":
+				sent.append(0)
+				deffered.append(1)
+				bounced.append(0)
+			elif row["status"] == "Bounced":
+				sent.append(0)
+				deffered.append(0)
+				bounced.append(1)
+			else:
+				sent.append(0)
+				deffered.append(0)
+				bounced.append(0)
+		else:
+			idx = labels.index(date)
+			if row["status"] == "Sent":
+				sent[idx] += 1
+			elif row["status"] == "Deferred":
+				deffered[idx] += 1
+			elif row["status"] == "Bounced":
+				bounced[idx] += 1
+
+	return {
+		"data": {
+			"labels": labels,
+			"datasets": [
+				{"name": "bounced", "values": bounced},
+				{"name": "deffered", "values": deffered},
+				{"name": "sent", "values": sent},
+			],
+		},
+		"fieldtype": "Int",
+		"type": "bar",
+		"axisOptions": {"xIsSeries": -1},
+	}
 
 
 def get_summary(data: list) -> list[dict]:
-	summary_data = {}
-	average_data = {}
+	status_count = {}
 
 	for row in data:
-		for field in ["message_size", "submission_delay", "transfer_delay", "action_delay"]:
-			key = f"total_{field}"
-			summary_data.setdefault(key, 0)
-			summary_data[key] += row[field]
-
-	for key, value in summary_data.items():
-		key = key.replace("total_", "")
-		average_data[key] = flt(value / len(data) if data else 0, 1)
+		status = row["status"]
+		if status in ["Sent", "Deferred", "Bounced"]:
+			status_count.setdefault(status, 0)
+			status_count[status] += 1
 
 	return [
 		{
-			"label": _("Average Message Size"),
+			"label": _("Sent"),
 			"datatype": "Int",
-			"value": average_data["message_size"],
+			"value": status_count.get("Sent", 0),
 			"indicator": "green",
 		},
 		{
-			"label": _("Average Submission Delay"),
-			"datatype": "Data",
-			"value": f"{average_data['submission_delay']}s",
-			"indicator": "yellow",
-		},
-		{
-			"label": _("Average Transfer Delay"),
-			"datatype": "Data",
-			"value": f"{average_data['transfer_delay']}s",
+			"label": _("Deferred"),
+			"datatype": "Int",
+			"value": status_count.get("Deferred", 0),
 			"indicator": "blue",
 		},
 		{
-			"label": _("Average Action Delay"),
-			"datatype": "Data",
-			"value": f"{average_data['action_delay']}s",
-			"indicator": "orange",
+			"label": _("Bounced"),
+			"datatype": "Int",
+			"value": status_count.get("Bounced", 0),
+			"indicator": "red",
+		},
+		{
+			"label": _("Total"),
+			"datatype": "Int",
+			"value": len(data),
+			"indicator": "black",
 		},
 	]
