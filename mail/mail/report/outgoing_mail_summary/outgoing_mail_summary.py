@@ -4,6 +4,7 @@
 import json
 import frappe
 from frappe import _
+from frappe.utils import flt
 from datetime import datetime
 from frappe.query_builder import Order, Criterion
 from mail.utils.cache import get_user_owned_domains
@@ -64,6 +65,12 @@ def get_columns() -> list[dict]:
 			"fieldname": "is_newsletter",
 			"fieldtype": "Check",
 			"width": 100,
+		},
+		{
+			"label": _("Spam Score"),
+			"fieldname": "spam_score",
+			"fieldtype": "Float",
+			"width": 110,
 		},
 		{
 			"label": _("Response Message"),
@@ -130,6 +137,7 @@ def get_data(filters: dict | None = None) -> list[list]:
 			OM.message_size,
 			OM.via_api,
 			OM.is_newsletter,
+			OM.spam_score,
 			MR.details.as_("response"),
 			OM.agent,
 			OM.domain_name,
@@ -202,10 +210,10 @@ def get_chart(data: list) -> list[dict]:
 	labels, sent, deffered, bounced = [], [], [], []
 
 	for row in reversed(data):
-		if isinstance(row["creation"], datetime):
-			date = row["creation"].date().strftime("%d-%m-%Y")
-		else:
+		if not isinstance(row["creation"], datetime):
 			frappe.throw(_("Invalid date format"))
+
+		date = row["creation"].date().strftime("%d-%m-%Y")
 
 		if date not in labels:
 			labels.append(date)
@@ -252,12 +260,15 @@ def get_chart(data: list) -> list[dict]:
 
 def get_summary(data: list) -> list[dict]:
 	status_count = {}
+	total_spam_score = 0
 
 	for row in data:
 		status = row["status"]
 		if status in ["Sent", "Deferred", "Bounced"]:
 			status_count.setdefault(status, 0)
 			status_count[status] += 1
+
+		total_spam_score += row["spam_score"]
 
 	return [
 		{
@@ -279,9 +290,9 @@ def get_summary(data: list) -> list[dict]:
 			"indicator": "red",
 		},
 		{
-			"label": _("Total"),
-			"datatype": "Int",
-			"value": len(data),
+			"label": _("Average Spam Score"),
+			"datatype": "Float",
+			"value": flt(total_spam_score / len(data), 1) if data else 0,
 			"indicator": "black",
 		},
 	]
