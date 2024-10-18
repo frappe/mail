@@ -8,3 +8,4 @@ mail.patches.v1_0.create_dkim_key_doc
 mail.patches.v1_0.rename_field_transferred_at
 mail.patches.v1_0.rename_field_transferred_after
 mail.patches.v1_0.move_mail_agents_to_mail_settings
+execute:frappe.db.set_value("Incoming Mail", {"status": "Delivered"}, "status", "Accepted")

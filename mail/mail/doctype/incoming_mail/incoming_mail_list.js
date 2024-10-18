@@ -12,7 +12,7 @@ frappe.listview_settings["Incoming Mail"] = {
 		const status_colors = {
 			"Draft": "grey",
 			"Rejected": "red",
-			"Delivered": "green",
+			"Accepted": "green",
 			"Cancelled": "red",
 		};
 		return [__(doc.status), status_colors[doc.status], "status,=," + doc.status];

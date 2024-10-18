@@ -90,7 +90,7 @@ class IncomingMail(Document):
 			setattr(self, key, value)
 
 		self.folder = "Spam" if self.is_spam else "Inbox"
-		self.status = "Rejected" if self.is_rejected else "Delivered"
+		self.status = "Rejected" if self.is_rejected else "Accepted"
 
 		if self.created_at:
 			self.received_after = time_diff_in_seconds(self.received_at, self.created_at)

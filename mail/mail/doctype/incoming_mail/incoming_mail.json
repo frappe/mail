@@ -63,7 +63,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "Draft\nRejected\nDelivered",
+   "options": "Draft\nRejected\nAccepted",
    "read_only": 1,
    "search_index": 1
   },
@@ -436,7 +436,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-10-14 13:03:44.017238",
+ "modified": "2024-10-18 16:35:37.107356",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Incoming Mail",
