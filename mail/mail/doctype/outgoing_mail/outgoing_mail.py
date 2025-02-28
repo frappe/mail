@@ -103,8 +103,6 @@ class OutgoingMail(Document):
 		self.validate_attachments()
 		self.validate_include_agent_groups()
 		self.validate_exclude_agent_groups()
-		self.validate_include_agents()
-		self.validate_exclude_agents()
 
 		if self.get("_action") == "submit":
 			self.set_ip_address()
@@ -389,16 +387,6 @@ class OutgoingMail(Document):
 		"""Validate exclude agent groups and set it to the value from the domain."""
 
 		self.exclude_agent_groups = self.exclude_agent_groups or self.runtime.mail_domain.exclude_agent_groups
-
-	def validate_include_agents(self) -> None:
-		"""Validate include agents and set it to the value from the domain."""
-
-		self.include_agents = self.include_agents or self.runtime.mail_domain.include_agents
-
-	def validate_exclude_agents(self) -> None:
-		"""Validate exclude agents and set it to the value from the domain."""
-
-		self.exclude_agents = self.exclude_agents or self.runtime.mail_domain.exclude_agents
 
 	def set_ip_address(self) -> None:
 		"""Sets the IP Address."""
@@ -927,10 +915,7 @@ class OutgoingMail(Document):
 			if not recipients:
 				frappe.throw(_("All recipients are blocked or sent."))
 
-			agent_or_group = get_random_agent_or_agent_group(
-				self.include_agent_groups, self.exclude_agent_groups, self.include_agents, self.exclude_agents
-			)
-
+			agent_group = get_random_agent_group(self.include_agent_groups, self.exclude_agent_groups)
 			mail_account = frappe.get_cached_doc("Mail Account", self.sender)
 			username = mail_account.email
 			password = mail_account.get_password("password")
@@ -943,7 +928,7 @@ class OutgoingMail(Document):
 				# Reuses existing connections across threads.
 				# Connections are gracefully closed by the cleanup thread.
 
-				with SMTPContext(agent_or_group, 465, username, password, use_ssl=True) as session:
+				with SMTPContext(agent_group, 465, username, password, use_ssl=True) as session:
 					session.sendmail(self.from_, recipients, self.message, mail_options=mail_options)
 			else:
 				# Background worker:
@@ -951,7 +936,7 @@ class OutgoingMail(Document):
 				# Ensures the same connection is reused throughout the job for the (host, port, user) key.
 				# Connection is gracefully closed when the job completes.
 
-				connection = get_smtp_connection(agent_or_group, 465, username, password, use_ssl=True)
+				connection = get_smtp_connection(agent_group, 465, username, password, use_ssl=True)
 				connection.session.sendmail(self.from_, recipients, self.message, mail_options=mail_options)
 				connection.increment_email_count()
 
@@ -1049,11 +1034,9 @@ def get_retry_after(failed_count: int) -> str:
 	return add_to_date(now(), minutes=retry_after_minutes)
 
 
-def get_random_agent_or_agent_group(
+def get_random_agent_group(
 	include_agent_groups: str | list[str] | None = None,
 	exclude_agent_groups: str | list[str] | None = None,
-	include_agents: str | list[str] | None = None,
-	exclude_agents: str | list[str] | None = None,
 	raise_if_not_found: bool = True,
 ) -> str:
 	"""Returns a random agent or agent group based on the given criteria."""
@@ -1067,49 +1050,28 @@ def get_random_agent_or_agent_group(
 
 	include_agent_groups = normalize_input(include_agent_groups)
 	exclude_agent_groups = normalize_input(exclude_agent_groups)
-	include_agents = normalize_input(include_agents)
-	exclude_agents = normalize_input(exclude_agents)
 
-	selected_agent = None
 	selected_agent_group = None
 	agent_groups = set(frappe.db.get_all("Mail Agent Group", {"enabled": 1, "outbound": 1}, pluck="name"))
 
-	if include_agents or exclude_agents:
-		agents = set(frappe.db.get_all("Mail Agent", {"enabled": 1, "enable_outbound": 1}, pluck="name"))
-		if include_agents:
-			if invalid_agents := [agent for agent in include_agents if agent and agent not in agents]:
-				frappe.throw(
-					_("The following agents do not exist or are not enabled for outbound: {0}").format(
-						", ".join(invalid_agents)
-					)
+	if include_agent_groups:
+		if invalid_groups := [group for group in include_agent_groups if group and group not in agent_groups]:
+			frappe.throw(
+				_("The following agent groups do not exist or are not enabled for outbound: {0}").format(
+					", ".join(invalid_groups)
 				)
-				agents.intersection_update(include_agents)
+			)
+			agent_groups.intersection_update(include_agent_groups)
 
-		if exclude_agents:
-			agents.difference_update(exclude_agents)
+	if exclude_agent_groups:
+		agent_groups.difference_update(exclude_agent_groups)
 
-		selected_agent = random.choice(list(agents))
-	else:
-		if include_agent_groups:
-			if invalid_groups := [
-				group for group in include_agent_groups if group and group not in agent_groups
-			]:
-				frappe.throw(
-					_("The following agent groups do not exist or are not enabled for outbound: {0}").format(
-						", ".join(invalid_groups)
-					)
-				)
-				agent_groups.intersection_update(include_agent_groups)
+	selected_agent_group = random.choice(list(agent_groups))
 
-		if exclude_agent_groups:
-			agent_groups.difference_update(exclude_agent_groups)
-
-		selected_agent_group = random.choice(list(agent_groups))
-
-	if not selected_agent and not selected_agent_group and raise_if_not_found:
+	if not selected_agent_group and raise_if_not_found:
 		frappe.throw(_("No agent or agent group found based on the given criteria."))
 
-	return selected_agent or selected_agent_group
+	return selected_agent_group
 
 
 def create_outgoing_mail(

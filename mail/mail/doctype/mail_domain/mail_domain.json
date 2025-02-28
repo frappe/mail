@@ -19,11 +19,7 @@
   "agent_groups_section",
   "include_agent_groups",
   "column_break_vpyy",
-  "exclude_agent_groups",
-  "agents_section",
-  "include_agents",
-  "column_break_x6bd",
-  "exclude_agents"
+  "exclude_agent_groups"
  ],
  "fields": [
   {
@@ -101,29 +97,6 @@
   },
   {
    "collapsible": 1,
-   "collapsible_depends_on": "eval: doc.include_agents || doc.exclude_agents",
-   "fieldname": "agents_section",
-   "fieldtype": "Section Break",
-   "label": "Agents"
-  },
-  {
-   "fieldname": "include_agents",
-   "fieldtype": "Small Text",
-   "label": "Include Agents",
-   "permlevel": 1
-  },
-  {
-   "fieldname": "column_break_x6bd",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "exclude_agents",
-   "fieldtype": "Small Text",
-   "label": "Exclude Agents",
-   "permlevel": 1
-  },
-  {
-   "collapsible": 1,
    "collapsible_depends_on": "eval: doc.include_agent_groups || doc.exclude_agent_groups",
    "fieldname": "agent_groups_section",
    "fieldtype": "Section Break",
@@ -169,6 +142,7 @@
    "set_only_once": 1
   }
  ],
+ "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [
   {
@@ -217,7 +191,7 @@
    "link_fieldname": "domain_name"
   }
  ],
- "modified": "2025-02-04 18:26:03.115949",
+ "modified": "2025-02-28 15:06:16.930138",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",
@@ -270,6 +244,7 @@
    "share": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
