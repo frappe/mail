@@ -54,6 +54,12 @@ class DNSRecord(Document):
 		if not self.ttl:
 			self.ttl = frappe.db.get_single_value("Mail Settings", "default_ttl", cache=True)
 
+	@frappe.whitelist()
+	def sync_dns_record(self) -> None:
+		"""Syncs the DNS Record"""
+
+		self.create_or_update_record_in_dns_provider()
+
 	def create_or_update_record_in_dns_provider(self) -> None:
 		"""Creates or Updates the DNS Record in the DNS Provider"""
 

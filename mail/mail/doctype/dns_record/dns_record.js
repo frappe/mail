@@ -15,6 +15,16 @@ frappe.ui.form.on('DNS Record', {
 				},
 				__('Actions'),
 			)
+
+			if (!frm.doc.is_verified) {
+				frm.add_custom_button(
+					__('Sync DNS Record'),
+					() => {
+						frm.trigger('sync_dns_record')
+					},
+					__('Actions'),
+				)
+			}
 		}
 	},
 
@@ -38,6 +48,20 @@ frappe.ui.form.on('DNS Record', {
 			},
 			freeze: true,
 			freeze_message: __('Verifying DNS Record...'),
+			callback: (r) => {
+				if (!r.exc) {
+					frm.refresh()
+				}
+			},
+		})
+	},
+
+	sync_dns_record(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'sync_dns_record',
+			freeze: true,
+			freeze_message: __('Syncing DNS Record...'),
 			callback: (r) => {
 				if (!r.exc) {
 					frm.refresh()
