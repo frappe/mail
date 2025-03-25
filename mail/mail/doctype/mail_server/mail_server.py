@@ -42,6 +42,7 @@ class MailServer(Document):
 	def on_update(self) -> None:
 		if self.has_value_changed("enabled"):
 			create_or_update_spf_dns_record()
+			self.create_or_delete_spf_ehlo_dns_record()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
@@ -50,6 +51,7 @@ class MailServer(Document):
 		if frappe.db.get_value("Mail Cluster", self.cluster, "outbound"):
 			self.db_set("enabled", 0)
 			create_or_update_spf_dns_record()
+			self.create_or_delete_spf_ehlo_dns_record()
 
 	def validate_server(self) -> None:
 		"""Validates the server and fetches the IP addresses."""
@@ -171,6 +173,26 @@ class MailServer(Document):
 		"""Generates the Mail Server Config."""
 
 		return create_mail_server_config(self.name)
+
+	def create_or_delete_spf_ehlo_dns_record(self) -> None:
+		"""Creates or deletes the SPF EHLO DNS Record."""
+
+		mail_settings = frappe.get_cached_doc("Mail Settings")
+		if not self.server.endswith(f".{mail_settings.root_domain_name}"):
+			return
+
+		host = self.server[: -len(mail_settings.root_domain_name) - 1]
+		if self.enabled:
+			create_or_update_dns_record(
+				host=host,
+				type="TXT",
+				value=f"v=spf1 include:{mail_settings.spf_host}.{mail_settings.root_domain_name} ~all",
+				ttl=mail_settings.default_ttl,
+				category="Server Record",
+			)
+		else:
+			if spf_ehlo_dns_record := frappe.db.exists("DNS Record", {"host": host, "type": "TXT"}):
+				frappe.delete_doc("DNS Record", spf_ehlo_dns_record, ignore_permissions=True)
 
 
 def create_or_update_spf_dns_record(spf_host: str | None = None) -> None:
