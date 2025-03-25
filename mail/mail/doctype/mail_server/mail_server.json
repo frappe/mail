@@ -80,13 +80,11 @@
    "reqd": 1
   },
   {
-   "default": "[::]",
    "description": "The address the gossip protocol will bind to.",
    "fieldname": "cluster_bind_address",
    "fieldtype": "Data",
    "label": "Bind Address",
-   "no_copy": 1,
-   "reqd": 1
+   "no_copy": 1
   },
   {
    "default": "Private IPv4",
@@ -218,7 +216,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-03-18 17:43:09.408847",
+ "modified": "2025-03-25 19:12:51.951090",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",
