@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-04-06 19:18+0553\n"
-"PO-Revision-Date: 2025-04-06 19:18+0553\n"
+"POT-Creation-Date: 2025-04-07 12:02+0553\n"
+"PO-Revision-Date: 2025-04-07 12:02+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -276,6 +276,15 @@ msgstr ""
 #. 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "Allow users to configure encryption at rest for their data."
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/allowed_ip/allowed_ip.json
+msgid "Allowed IP"
+msgstr ""
+
+#: mail/mail/doctype/allowed_ip/allowed_ip.py:33
+msgid "Allowed IP removed successfully."
 msgstr ""
 
 #. Description of the 'Allow Personal Signup' (Check) field in DocType 'Mail
@@ -718,6 +727,7 @@ msgstr ""
 msgid "Cloudflare"
 msgstr ""
 
+#. Label of the cluster (Link) field in DocType 'Allowed IP'
 #. Label of the cluster (Link) field in DocType 'Blocked IP'
 #. Label of the cluster (Data) field in DocType 'Incoming Mail'
 #. Label of the cluster (Data) field in DocType 'Mail Cluster'
@@ -725,6 +735,7 @@ msgstr ""
 #. Label of the cluster (Link) field in DocType 'Mail Server Request'
 #. Label of the cluster (Link) field in DocType 'Message Queue'
 #. Label of the cluster (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/allowed_ip/allowed_ip.json
 #: mail/mail/doctype/blocked_ip/blocked_ip.json
 #: mail/mail/doctype/incoming_mail/incoming_mail.json
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
@@ -1976,9 +1987,11 @@ msgstr ""
 msgid "IMAP4"
 msgstr ""
 
+#. Label of the ip_address (Data) field in DocType 'Allowed IP'
 #. Label of the ip_address (Data) field in DocType 'Blocked IP'
 #. Label of the ip_address (Data) field in DocType 'Mail Account Request'
 #. Label of the ip_address (Data) field in DocType 'Outgoing Mail'
+#: mail/mail/doctype/allowed_ip/allowed_ip.json
 #: mail/mail/doctype/blocked_ip/blocked_ip.json
 #: mail/mail/doctype/mail_account_request/mail_account_request.json
 #: mail/mail/doctype/outgoing_mail/outgoing_mail.json
@@ -3118,6 +3131,10 @@ msgstr ""
 msgid "No aliases found."
 msgstr ""
 
+#: mail/mail/doctype/allowed_ip/allowed_ip.py:43
+msgid "No allowed IPs found."
+msgstr ""
+
 #: mail/utils/dns.py:27
 msgid "No answer for {0}."
 msgstr ""
@@ -3419,6 +3436,10 @@ msgstr ""
 
 #: mail/mail/doctype/outgoing_mail/outgoing_mail.py:267
 msgid "Please add at least one recipient before sending the mail."
+msgstr ""
+
+#: mail/mail/doctype/allowed_ip/allowed_ip.py:47
+msgid "Please select a cluster to view allowed IPs."
 msgstr ""
 
 #: mail/mail/doctype/blocked_ip/blocked_ip.py:47
@@ -3912,6 +3933,10 @@ msgstr ""
 msgid "Request Key"
 msgstr ""
 
+#: mail/mail/doctype/allowed_ip/allowed_ip.py:94
+#: mail/mail/doctype/allowed_ip/allowed_ip.py:113
+#: mail/mail/doctype/allowed_ip/allowed_ip.py:132
+#: mail/mail/doctype/allowed_ip/allowed_ip.py:154
 #: mail/mail/doctype/blocked_ip/blocked_ip.py:94
 #: mail/mail/doctype/blocked_ip/blocked_ip.py:113
 #: mail/mail/doctype/blocked_ip/blocked_ip.py:132
@@ -4594,6 +4619,7 @@ msgid "Syncing DNS Record..."
 msgstr ""
 
 #. Name of a role
+#: mail/mail/doctype/allowed_ip/allowed_ip.json
 #: mail/mail/doctype/blocked_ip/blocked_ip.json
 #: mail/mail/doctype/bounce_history/bounce_history.json
 #: mail/mail/doctype/dkim_key/dkim_key.json
