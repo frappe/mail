@@ -11,7 +11,7 @@
   "default",
   "section_break_v9po",
   "cert_path",
-  "certificate",
+  "cert",
   "column_break_09nn",
   "private_key_path",
   "private_key",
@@ -31,12 +31,6 @@
    "in_list_view": 1,
    "label": "Certificate ID",
    "reqd": 1
-  },
-  {
-   "description": "TLS certificate in PEM format.",
-   "fieldname": "certificate",
-   "fieldtype": "Text",
-   "label": "Certificate"
   },
   {
    "description": "Private key in PEM format.",
@@ -89,13 +83,19 @@
    "in_list_view": 1,
    "label": "Certificate Path",
    "placeholder": "/opt/stalwart-mail/etc/cert.pem"
+  },
+  {
+   "description": "TLS certificate in PEM format.",
+   "fieldname": "cert",
+   "fieldtype": "Text",
+   "label": "Certificate"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 00:21:51.683352",
+ "modified": "2025-04-30 00:22:55.489351",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server TLS Certificate",

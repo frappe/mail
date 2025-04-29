@@ -129,7 +129,7 @@ def get_config_toml(server: str) -> str | None:
 		return {k: v for acme in acme_providers for k, v in get_acme_config(acme).items()}
 
 	def get_tls_config(tls) -> dict:
-		cert = wrap_in_triple_quotes(tls.certificate) if tls.certificate else f"%{{file:{tls.cert_path}}}%"
+		cert = wrap_in_triple_quotes(tls.cert) if tls.cert else f"%{{file:{tls.cert_path}}}%"
 		private_key = (
 			wrap_in_triple_quotes(tls.private_key)
 			if tls.private_key

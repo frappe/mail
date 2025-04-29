@@ -148,7 +148,7 @@ class MailServer(Document):
 				)
 			certificate_ids.append(tls.certificate_id)
 
-			if not tls.certificate and not tls.cert_path:
+			if not tls.cert and not tls.cert_path:
 				frappe.throw(_("Row #{0}: Certificate or Certificate Path is required.").format(tls.idx))
 			if not tls.private_key and not tls.private_key_path:
 				frappe.throw(_("Row #{0}: Private Key or Private Key Path is required.").format(tls.idx))

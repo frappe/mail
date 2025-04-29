@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-04-29 23:53+0553\n"
-"PO-Revision-Date: 2025-04-29 23:53+0553\n"
+"POT-Creation-Date: 2025-04-30 00:25+0553\n"
+"PO-Revision-Date: 2025-04-30 00:25+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -243,8 +243,7 @@ msgstr ""
 msgid "Advanced"
 msgstr ""
 
-#. Label of the cluster_advertise_address (Select) field in DocType 'Mail
-#. Server'
+#. Label of the cluster_advertise_addr (Select) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Advertise Address"
 msgstr ""
@@ -560,7 +559,7 @@ msgstr ""
 msgid "Bcc: "
 msgstr ""
 
-#. Label of the cluster_bind_address (Data) field in DocType 'Mail Server'
+#. Label of the cluster_bind_addr (Data) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Bind Address"
 msgstr ""
@@ -773,8 +772,7 @@ msgstr ""
 msgid "Cc: "
 msgstr ""
 
-#. Label of the certificate (Text) field in DocType 'Mail Server TLS
-#. Certificate'
+#. Label of the cert (Text) field in DocType 'Mail Server TLS Certificate'
 #: mail/mail/doctype/mail_server_tls_certificate/mail_server_tls_certificate.json
 msgid "Certificate"
 msgstr ""
@@ -785,14 +783,12 @@ msgstr ""
 msgid "Certificate ID"
 msgstr ""
 
-#. Label of the certificate_path (Data) field in DocType 'Mail Server TLS
-#. Certificate'
+#. Label of the cert_path (Data) field in DocType 'Mail Server TLS Certificate'
 #: mail/mail/doctype/mail_server_tls_certificate/mail_server_tls_certificate.json
 msgid "Certificate Path"
 msgstr ""
 
-#. Label of the challenge_type (Select) field in DocType 'Mail Server ACME
-#. Provider'
+#. Label of the challenge (Select) field in DocType 'Mail Server ACME Provider'
 #: mail/mail/doctype/mail_server_acme_provider/mail_server_acme_provider.json
 msgid "Challenge Type"
 msgstr ""
@@ -978,7 +974,7 @@ msgstr ""
 msgid "Connection timeout to the database."
 msgstr ""
 
-#. Label of the contact_emails (Small Text) field in DocType 'Mail Server ACME
+#. Label of the contact (Small Text) field in DocType 'Mail Server ACME
 #. Provider'
 #: mail/mail/doctype/mail_server_acme_provider/mail_server_acme_provider.json
 msgid "Contact Emails"
@@ -1377,8 +1373,7 @@ msgstr ""
 msgid "Directory Storage"
 msgstr ""
 
-#. Label of the directory_url (Data) field in DocType 'Mail Server ACME
-#. Provider'
+#. Label of the directory (Data) field in DocType 'Mail Server ACME Provider'
 #: mail/mail/doctype/mail_server_acme_provider/mail_server_acme_provider.json
 msgid "Directory URL"
 msgstr ""
@@ -2274,7 +2269,7 @@ msgstr ""
 msgid "Groups deleted successfully."
 msgstr ""
 
-#. Label of the hmac_key (Password) field in DocType 'Mail Server ACME
+#. Label of the eab_hmac_key (Password) field in DocType 'Mail Server ACME
 #. Provider'
 #: mail/mail/doctype/mail_server_acme_provider/mail_server_acme_provider.json
 msgid "HMAC Key"
@@ -2676,7 +2671,7 @@ msgstr ""
 msgid "Key"
 msgstr ""
 
-#. Label of the key_id (Data) field in DocType 'Mail Server ACME Provider'
+#. Label of the eab_kid (Data) field in DocType 'Mail Server ACME Provider'
 #: mail/mail/doctype/mail_server_acme_provider/mail_server_acme_provider.json
 msgid "Key ID"
 msgstr ""
@@ -4135,8 +4130,8 @@ msgstr ""
 msgid "Priority"
 msgstr ""
 
-#. Option for the 'Advertise Address' (Select) field in DocType 'Mail Server'
 #. Label of the private_ipv4 (Data) field in DocType 'Mail Server'
+#. Option for the 'Advertise Address' (Select) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Private IPv4"
 msgstr ""
@@ -4146,8 +4141,8 @@ msgstr ""
 msgid "Private IPv4 address of this mail server (used for internal communication)."
 msgstr ""
 
-#. Option for the 'Advertise Address' (Select) field in DocType 'Mail Server'
 #. Label of the private_ipv6 (Data) field in DocType 'Mail Server'
+#. Option for the 'Advertise Address' (Select) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Private IPv6"
 msgstr ""
@@ -4247,8 +4242,8 @@ msgstr ""
 msgid "Public"
 msgstr ""
 
-#. Option for the 'Advertise Address' (Select) field in DocType 'Mail Server'
 #. Label of the public_ipv4 (Data) field in DocType 'Mail Server'
+#. Option for the 'Advertise Address' (Select) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Public IPv4"
 msgstr ""
@@ -4264,8 +4259,8 @@ msgstr ""
 msgid "Public IPv4 addresses assigned to this cluster."
 msgstr ""
 
-#. Option for the 'Advertise Address' (Select) field in DocType 'Mail Server'
 #. Label of the public_ipv6 (Data) field in DocType 'Mail Server'
+#. Option for the 'Advertise Address' (Select) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Public IPv6"
 msgstr ""
@@ -4512,8 +4507,7 @@ msgstr ""
 msgid "Renew"
 msgstr ""
 
-#. Label of the renew_before_days (Int) field in DocType 'Mail Server ACME
-#. Provider'
+#. Label of the renew_before (Int) field in DocType 'Mail Server ACME Provider'
 #: mail/mail/doctype/mail_server_acme_provider/mail_server_acme_provider.json
 msgid "Renew Before (Days)"
 msgstr ""
@@ -5328,7 +5322,7 @@ msgstr ""
 msgid "Subject Alternative Names (SAN) for the certificate."
 msgstr ""
 
-#. Label of the subject_names (Small Text) field in DocType 'Mail Server ACME
+#. Label of the domains (Small Text) field in DocType 'Mail Server ACME
 #. Provider'
 #: mail/mail/doctype/mail_server_acme_provider/mail_server_acme_provider.json
 msgid "Subject Names"
