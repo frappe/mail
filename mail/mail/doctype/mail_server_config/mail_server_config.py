@@ -386,7 +386,7 @@ def get_config_toml(server: str) -> str | None:
 			"data": cluster.storage_data,
 			"encryption": {
 				"enable": bool(cluster.storage_encryption_enable),
-				"append": bool(cluster.encrypt_on_append),
+				"append": bool(cluster.storage_encryption_append),
 			},
 			"blob": cluster.storage_blob,
 			"fts": cluster.storage_fts,
