@@ -154,7 +154,7 @@ def get_config_toml(server: str) -> str | None:
 	def get_listeners(listeners: list) -> dict:
 		return {
 			listener.listener_id: {
-				"bind": split_lines_or_return(listener.bind_addresses),
+				"bind": split_lines_or_return(listener.bind),
 				"protocol": PROTOCOL_MAP[listener.protocol],
 				"tls": {"implicit": bool(listener.implicit_tls)},
 			}

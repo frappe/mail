@@ -9,7 +9,7 @@
   "protocol",
   "listener_id",
   "column_break_eecc",
-  "bind_addresses",
+  "bind",
   "tls_options_section",
   "implicit_tls"
  ],
@@ -49,23 +49,23 @@
    "label": "Implicit TLS"
   },
   {
+   "fieldname": "column_break_eecc",
+   "fieldtype": "Column Break"
+  },
+  {
    "description": "The addresses the listener will bind to.",
-   "fieldname": "bind_addresses",
+   "fieldname": "bind",
    "fieldtype": "Small Text",
    "in_list_view": 1,
    "label": "Bind Addresses",
    "reqd": 1
-  },
-  {
-   "fieldname": "column_break_eecc",
-   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-05 18:55:01.803680",
+ "modified": "2025-04-29 23:47:25.590521",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Listener",
