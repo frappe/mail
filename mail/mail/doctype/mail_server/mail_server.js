@@ -78,7 +78,7 @@ frappe.ui.form.on('Mail Server ACME Provider', {
 
 		if (frm.doc.server) {
 			row.directory_id = frm.doc.server.replaceAll('.', '-')
-			row.subject_names = frm.doc.server
+			row.domains = frm.doc.server
 			row.contact_emails = 'postmaster@' + frm.doc.server
 		}
 		if (frm.doc.acme_providers.length < 2) {

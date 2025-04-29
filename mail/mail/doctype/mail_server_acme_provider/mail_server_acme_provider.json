@@ -15,7 +15,7 @@
   "column_break_hxpf",
   "renew_before",
   "section_break_6dav",
-  "subject_names",
+  "domains",
   "column_break_lzmq",
   "contact_emails",
   "external_account_binding_section",
@@ -46,13 +46,6 @@
   {
    "fieldname": "section_break_6dav",
    "fieldtype": "Section Break"
-  },
-  {
-   "description": "Hostnames covered by this ACME manager.",
-   "fieldname": "subject_names",
-   "fieldtype": "Small Text",
-   "label": "Subject Names",
-   "reqd": 1
   },
   {
    "fieldname": "column_break_lzmq",
@@ -118,13 +111,20 @@
    "in_list_view": 1,
    "label": "Renew Before (Days)",
    "reqd": 1
+  },
+  {
+   "description": "Hostnames covered by this ACME manager.",
+   "fieldname": "domains",
+   "fieldtype": "Small Text",
+   "label": "Subject Names",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 00:10:48.357825",
+ "modified": "2025-04-30 00:11:57.204696",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server ACME Provider",
