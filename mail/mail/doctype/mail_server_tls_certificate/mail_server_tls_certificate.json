@@ -10,7 +10,7 @@
   "column_break_rea4",
   "default",
   "section_break_v9po",
-  "certificate_path",
+  "cert_path",
   "certificate",
   "column_break_09nn",
   "private_key_path",
@@ -57,14 +57,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "File path to the TLS certificate.",
-   "fieldname": "certificate_path",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Certificate Path",
-   "placeholder": "/opt/stalwart-mail/etc/cert.pem"
-  },
-  {
    "description": "File path to the Private Key.",
    "fieldname": "private_key_path",
    "fieldtype": "Data",
@@ -89,13 +81,21 @@
    "fieldname": "subjects",
    "fieldtype": "Small Text",
    "label": "Subject Alternative Names"
+  },
+  {
+   "description": "File path to the TLS certificate.",
+   "fieldname": "cert_path",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Certificate Path",
+   "placeholder": "/opt/stalwart-mail/etc/cert.pem"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-18 19:44:50.366314",
+ "modified": "2025-04-30 00:21:51.683352",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server TLS Certificate",
