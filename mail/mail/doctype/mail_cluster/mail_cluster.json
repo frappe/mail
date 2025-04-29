@@ -39,7 +39,7 @@
   "data_storage_section",
   "storage_data",
   "column_break_iwwx",
-  "enable_encryption_at_rest",
+  "storage_encryption_enable",
   "encrypt_on_append",
   "blob_storage_section",
   "storage_blob",
@@ -119,13 +119,6 @@
    "fieldname": "section_break_r4np",
    "fieldtype": "Tab Break",
    "label": "Storage"
-  },
-  {
-   "default": "1",
-   "description": "Allow users to configure encryption at rest for their data.",
-   "fieldname": "enable_encryption_at_rest",
-   "fieldtype": "Check",
-   "label": "Enable encryption at rest"
   },
   {
    "default": "0",
@@ -495,6 +488,13 @@
    "fieldtype": "Data",
    "label": "Storage",
    "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Allow users to configure encryption at rest for their data.",
+   "fieldname": "storage_encryption_enable",
+   "fieldtype": "Check",
+   "label": "Enable encryption at rest"
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 23:12:53.581707",
+ "modified": "2025-04-29 23:15:33.740329",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",
