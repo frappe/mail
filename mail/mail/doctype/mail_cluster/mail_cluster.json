@@ -16,7 +16,7 @@
   "authentication_section",
   "fallback_admin_user",
   "fallback_admin_password",
-  "admin_password_hash",
+  "fallback_admin_secret",
   "column_break_9jti",
   "base_url",
   "api_key",
@@ -282,14 +282,6 @@
    "unique": 1
   },
   {
-   "fieldname": "admin_password_hash",
-   "fieldtype": "Small Text",
-   "hidden": 1,
-   "label": "Password Hash",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "proxy_section",
    "fieldtype": "Section Break",
    "label": "Proxy"
@@ -495,6 +487,14 @@
    "fieldtype": "Password",
    "label": "Password",
    "no_copy": 1
+  },
+  {
+   "fieldname": "fallback_admin_secret",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Password Secret",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 23:32:18.695513",
+ "modified": "2025-04-29 23:36:25.974650",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

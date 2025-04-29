@@ -339,7 +339,7 @@ def get_config_toml(server: str) -> str | None:
 		"authentication": {
 			"fallback-admin": {
 				"user": cluster.fallback_admin_user,
-				"secret": cluster.admin_password_hash,
+				"secret": cluster.fallback_admin_secret,
 			}
 		},
 		"acme": get_acme_providers(server.acme_providers),

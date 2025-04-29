@@ -82,7 +82,7 @@ class MailCluster(Document):
 		self.validate_cluster()
 		self.validate_priority()
 		self.validate_fallback_admin_password()
-		self.generate_admin_password_hash()
+		self.generate_fallback_admin_secret()
 		self.validate_base_url()
 		self.validate_cluster_key()
 		self.validate_stores()
@@ -156,9 +156,11 @@ class MailCluster(Document):
 		else:
 			self.fallback_admin_password = random_string(length=20)
 
-	def generate_admin_password_hash(self) -> None:
+	def generate_fallback_admin_secret(self) -> None:
+		"""Generates the fallback admin secret."""
+
 		if self.has_value_changed("fallback_admin_password"):
-			self.admin_password_hash = hash_password(self.get_password("fallback_admin_password"))
+			self.fallback_admin_secret = hash_password(self.get_password("fallback_admin_password"))
 
 	def validate_base_url(self) -> None:
 		"""Validates the base URL of the cluster."""

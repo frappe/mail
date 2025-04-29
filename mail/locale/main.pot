@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-04-29 23:25+0553\n"
-"PO-Revision-Date: 2025-04-29 23:25+0553\n"
+"POT-Creation-Date: 2025-04-29 23:37+0553\n"
+"PO-Revision-Date: 2025-04-29 23:37+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -542,7 +542,7 @@ msgstr ""
 msgid "Base URL"
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:274
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:276
 msgid "Base URL is required."
 msgstr ""
 
@@ -591,7 +591,7 @@ msgstr ""
 #. Label of the blob_storage_section (Section Break) field in DocType 'Mail
 #. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:336
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:340
 msgid "Blob Storage"
 msgstr ""
 
@@ -1223,7 +1223,7 @@ msgstr ""
 #. Label of the data_storage_section (Section Break) field in DocType 'Mail
 #. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:335
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:339
 msgid "Data Storage"
 msgstr ""
 
@@ -1374,7 +1374,7 @@ msgstr ""
 #. Label of the directory_storage_section (Section Break) field in DocType
 #. 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:334
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:338
 msgid "Directory Storage"
 msgstr ""
 
@@ -2188,7 +2188,7 @@ msgstr ""
 #. Label of the full_text_index_storage_section (Section Break) field in
 #. DocType 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:337
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:341
 msgid "Full Text Index Storage"
 msgstr ""
 
@@ -2517,7 +2517,7 @@ msgstr ""
 #. Label of the in_memory_storage_section (Section Break) field in DocType
 #. 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:338
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:342
 msgid "In-Memory Storage"
 msgstr ""
 
@@ -2958,8 +2958,8 @@ msgstr ""
 msgid "Mail Cluster {0} already exists."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:300
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:324
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:304
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:328
 #: mail/mail/doctype/mail_server/mail_server.py:89
 #: mail/mail/doctype/mail_server_request/mail_server_request.py:44
 #: mail/mail/doctype/mail_server_request/mail_server_request.py:85
@@ -3941,7 +3941,8 @@ msgid "Part ID"
 msgstr ""
 
 #. Label of the password (Password) field in DocType 'Mail Account'
-#. Label of the admin_password (Password) field in DocType 'Mail Cluster'
+#. Label of the fallback_admin_password (Password) field in DocType 'Mail
+#. Cluster'
 #. Label of the password (Password) field in DocType 'Mail Server Store'
 #: frontend/src/components/Modals/AddMemberModal.vue:72
 #: frontend/src/pages/BusinessSignupView.vue:37
@@ -3953,10 +3954,10 @@ msgstr ""
 msgid "Password"
 msgstr ""
 
-#. Label of the admin_password_hash (Small Text) field in DocType 'Mail
+#. Label of the fallback_admin_secret (Small Text) field in DocType 'Mail
 #. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-msgid "Password Hash"
+msgid "Password Secret"
 msgstr ""
 
 #. Description of the 'Password' (Password) field in DocType 'Mail Cluster'
@@ -4780,7 +4781,7 @@ msgstr ""
 msgid "Row #{0}: Invalid recipient {1}."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:220
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:222
 #: mail/mail/doctype/mail_server/mail_server.py:166
 msgid "Row #{0}: Listener ID {1} is duplicated."
 msgstr ""
@@ -4789,7 +4790,7 @@ msgstr ""
 msgid "Row #{0}: Private Key or Private Key Path is required."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:182
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:184
 msgid "Row #{0}: Store ID {1} is duplicated."
 msgstr ""
 
@@ -5055,7 +5056,7 @@ msgid "Server Type"
 msgstr ""
 
 #: mail/mail/doctype/mail_cluster/mail_cluster.js:182
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:327
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:331
 #: mail/mail/doctype/mail_server/mail_server.py:247
 msgid "Servers Configuration reloaded."
 msgstr ""
@@ -5279,7 +5280,7 @@ msgstr ""
 msgid "Store ID"
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:199
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:201
 msgid "Store with Store ID {0} not found."
 msgstr ""
 
@@ -6240,7 +6241,7 @@ msgstr ""
 msgid "User {0} is not authorized to invite users to the tenant."
 msgstr ""
 
-#. Label of the admin_username (Data) field in DocType 'Mail Cluster'
+#. Label of the fallback_admin_user (Data) field in DocType 'Mail Cluster'
 #. Label of the username (Data) field in DocType 'Mail Server Store'
 #. Label of the dns_provider_username (Data) field in DocType 'Mail Settings'
 #: frontend/src/components/Modals/AddAliasModal.vue:21
@@ -6488,7 +6489,7 @@ msgstr ""
 msgid "{0} does not exist."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:204
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:206
 msgid "{0} has an invalid store type '{1}'. Allowed types are: {2}."
 msgstr ""
 
