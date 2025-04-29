@@ -50,7 +50,7 @@
   "in_memory_storage_section",
   "storage_lookup",
   "cleanup_jmap_section",
-  "jmap_frequency_cron",
+  "jmap_account_purge_frequency",
   "column_break_ld4b",
   "jmap_changes_history_days",
   "jmap_trash_auto_expunge_days",
@@ -273,14 +273,6 @@
    "label": "Cleanup (JMAP)"
   },
   {
-   "default": "0 0 * * *",
-   "description": "Specifies how often tombstoned messages are deleted from the database.\n\n<br>\n<br>\n\n<pre>*  *  *  *  *\n\u252c  \u252c  \u252c  \u252c  \u252c\n\u2502  \u2502  \u2502  \u2502  \u2502\n\u2502  \u2502  \u2502  \u2502  \u2514 day of week (0 - 6) (0 is Sunday)\n\u2502  \u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500 month (1 - 12)\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 day of month (1 - 31)\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 hour (0 - 23)\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 minute (0 - 59)\n\n---\n\n* - Any value\n/ - Step values\n</pre>\n",
-   "fieldname": "jmap_frequency_cron",
-   "fieldtype": "Data",
-   "label": "Frequency (Cron)",
-   "reqd": 1
-  },
-  {
    "default": "30",
    "description": "How long to keep changes history for JMAP and IMAP clients.",
    "fieldname": "jmap_changes_history_days",
@@ -495,6 +487,14 @@
    "fieldname": "storage_full_text_default_language",
    "fieldtype": "Data",
    "label": "Default Language"
+  },
+  {
+   "default": "0 0 * * *",
+   "description": "Specifies how often tombstoned messages are deleted from the database.\n\n<br>\n<br>\n\n<pre>*  *  *  *  *\n\u252c  \u252c  \u252c  \u252c  \u252c\n\u2502  \u2502  \u2502  \u2502  \u2502\n\u2502  \u2502  \u2502  \u2502  \u2514 day of week (0 - 6) (0 is Sunday)\n\u2502  \u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500 month (1 - 12)\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 day of month (1 - 31)\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 hour (0 - 23)\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 minute (0 - 59)\n\n---\n\n* - Any value\n/ - Step values\n</pre>\n",
+   "fieldname": "jmap_account_purge_frequency",
+   "fieldtype": "Data",
+   "label": "Frequency (Cron)",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 23:18:58.000734",
+ "modified": "2025-04-29 23:20:53.245490",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

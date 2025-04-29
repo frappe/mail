@@ -208,7 +208,7 @@ class MailCluster(Document):
 					)
 				)
 
-		is_valid_cron_expression(self.jmap_frequency_cron, raise_exception=True)
+		is_valid_cron_expression(self.jmap_account_purge_frequency, raise_exception=True)
 
 	def validate_listeners(self) -> None:
 		"""Validates the listeners."""
