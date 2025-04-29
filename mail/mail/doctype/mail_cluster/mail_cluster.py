@@ -84,7 +84,7 @@ class MailCluster(Document):
 		self.validate_admin_password()
 		self.generate_admin_password_hash()
 		self.validate_base_url()
-		self.validate_cluster_encryption_key()
+		self.validate_cluster_key()
 		self.validate_stores()
 		self.validate_storage()
 		self.validate_listeners()
@@ -166,11 +166,11 @@ class MailCluster(Document):
 		if not self.base_url:
 			self.base_url = f"https://{self.cluster}/"
 
-	def validate_cluster_encryption_key(self) -> None:
+	def validate_cluster_key(self) -> None:
 		"""Validates the encryption key of the cluster."""
 
-		if not self.cluster_encryption_key:
-			self.cluster_encryption_key = random_string(length=64)
+		if not self.cluster_key:
+			self.cluster_key = random_string(length=64)
 
 	def validate_stores(self) -> None:
 		"""Validates the stores."""

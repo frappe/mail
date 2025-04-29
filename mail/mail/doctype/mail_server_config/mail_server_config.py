@@ -361,7 +361,7 @@ def get_config_toml(server: str) -> str | None:
 			"bind-addr": server.cluster_bind_address,
 			"bind-port": cluster.cluster_bind_port,
 			"advertise-addr": server.get(frappe.scrub(server.cluster_advertise_address)),
-			"key": password_or_none(cluster, "cluster_encryption_key"),
+			"key": password_or_none(cluster, "cluster_key"),
 			"heartbeat": format_value_or_zero(server.cluster_heartbeat, "s"),
 			"seed-nodes": get_seed_nodes(server.name, cluster.name),
 		},

@@ -21,7 +21,7 @@
   "base_url",
   "api_key",
   "cluster_settings_section",
-  "cluster_encryption_key",
+  "cluster_key",
   "column_break_trr0",
   "cluster_bind_port",
   "proxy_section",
@@ -182,14 +182,6 @@
    "fieldtype": "Password",
    "label": "Password",
    "no_copy": 1
-  },
-  {
-   "description": "The key used to encrypt gossip messages.",
-   "fieldname": "cluster_encryption_key",
-   "fieldtype": "Password",
-   "label": "Encryption Key",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "description": "Key for authenticating HTTP requests. Generate one via <i>Actions &gt; Generate API Key</i>.",
@@ -495,6 +487,14 @@
    "label": "Verification Timeout (Milliseconds)",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "description": "The key used to encrypt gossip messages.",
+   "fieldname": "cluster_key",
+   "fieldtype": "Password",
+   "label": "Encryption Key",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 16:41:53.466047",
+ "modified": "2025-04-29 22:59:03.031005",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",
