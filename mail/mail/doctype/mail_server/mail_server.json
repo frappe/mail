@@ -22,7 +22,7 @@
   "public_ipv6",
   "cluster_settings_section",
   "cluster_node_id",
-  "cluster_bind_address",
+  "cluster_bind_addr",
   "column_break_m8qz",
   "cluster_advertise_address",
   "cluster_heartbeat",
@@ -79,13 +79,6 @@
    "non_negative": 1,
    "placeholder": "1",
    "reqd": 1
-  },
-  {
-   "description": "The address the gossip protocol will bind to.",
-   "fieldname": "cluster_bind_address",
-   "fieldtype": "Data",
-   "label": "Bind Address",
-   "no_copy": 1
   },
   {
    "default": "Private IPv4",
@@ -212,6 +205,13 @@
    "fieldname": "base_url",
    "fieldtype": "Data",
    "label": "Base URL"
+  },
+  {
+   "description": "The address the gossip protocol will bind to.",
+   "fieldname": "cluster_bind_addr",
+   "fieldtype": "Data",
+   "label": "Bind Address",
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,
@@ -223,7 +223,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-03-29 11:33:52.607394",
+ "modified": "2025-04-30 00:01:07.317157",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",

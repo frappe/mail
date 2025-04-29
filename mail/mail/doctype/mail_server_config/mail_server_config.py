@@ -358,7 +358,7 @@ def get_config_toml(server: str) -> str | None:
 		},
 		"cluster": {
 			"node-id": server.cluster_node_id,
-			"bind-addr": server.cluster_bind_address,
+			"bind-addr": server.cluster_bind_addr,
 			"bind-port": cluster.cluster_bind_port,
 			"advertise-addr": server.get(frappe.scrub(server.cluster_advertise_address)),
 			"key": password_or_none(cluster, "cluster_key"),
