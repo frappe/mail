@@ -84,7 +84,7 @@ frappe.ui.form.on('Mail Server ACME Provider', {
 		if (frm.doc.acme_providers.length < 2) {
 			row.default = 1
 		}
-		row.challenge_type = 'TLS-ALPN-01'
+		row.challenge = 'TLS-ALPN-01'
 		row.directory_url = 'https://acme-v02.api.letsencrypt.org/directory'
 		row.renew_before_days = 30
 		refresh_field('acme_providers')

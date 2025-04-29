@@ -10,7 +10,7 @@
   "column_break_5m6h",
   "default",
   "section_break_3ivg",
-  "challenge_type",
+  "challenge",
   "directory_url",
   "column_break_hxpf",
   "renew_before_days",
@@ -42,15 +42,6 @@
   {
    "fieldname": "column_break_5m6h",
    "fieldtype": "Column Break"
-  },
-  {
-   "description": "The ACME challenge type used to validate domain ownership.",
-   "fieldname": "challenge_type",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Challenge Type",
-   "options": "TLS-ALPN-01",
-   "reqd": 1
   },
   {
    "description": "The contact email address, which is used for important communications regarding your ACME account and certificates.",
@@ -118,13 +109,22 @@
    "fieldname": "hmac_key",
    "fieldtype": "Password",
    "label": "HMAC Key"
+  },
+  {
+   "description": "The ACME challenge type used to validate domain ownership.",
+   "fieldname": "challenge",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Challenge Type",
+   "options": "TLS-ALPN-01",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-18 19:52:40.766325",
+ "modified": "2025-04-30 00:08:10.505551",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server ACME Provider",

@@ -115,7 +115,7 @@ def get_config_toml(server: str) -> str | None:
 		config = {
 			"default": bool(acme.default),
 			"directory": acme.directory_url,
-			"challenge": acme.challenge_type.lower(),
+			"challenge": acme.challenge.lower(),
 			"contact": split_lines_or_empty(acme.contact_emails),
 			"domains": split_lines_or_empty(acme.subject_names),
 			"cache": "%{BASE_PATH}%/etc/acme",
