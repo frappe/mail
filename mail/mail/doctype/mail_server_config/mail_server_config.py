@@ -346,7 +346,7 @@ def get_config_toml(server: str) -> str | None:
 		"certificate": get_tls_certificates(server.tls_certificates),
 		"server": {
 			"hostname": server.server,
-			"proxy": {"trusted-networks": split_lines_or_empty(cluster.proxy_trusted_networks)},
+			"proxy": {"trusted-networks": split_lines_or_empty(cluster.server_proxy_trusted_networks)},
 			"max-connections": server.server_max_connections,
 			"listener": get_listeners(server.listeners or cluster.listeners),
 			"socket": {

@@ -25,7 +25,7 @@
   "column_break_trr0",
   "cluster_bind_port",
   "proxy_section",
-  "proxy_trusted_networks",
+  "server_proxy_trusted_networks",
   "column_break_egzt",
   "networking_section",
   "ipv4_addresses",
@@ -380,12 +380,6 @@
    "read_only": 1
   },
   {
-   "description": "Enable proxy protocol for connections from these networks.",
-   "fieldname": "proxy_trusted_networks",
-   "fieldtype": "Small Text",
-   "label": "Trusted Networks"
-  },
-  {
    "fieldname": "proxy_section",
    "fieldtype": "Section Break",
    "label": "Proxy"
@@ -495,6 +489,12 @@
    "label": "Encryption Key",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "description": "Enable proxy protocol for connections from these networks.",
+   "fieldname": "server_proxy_trusted_networks",
+   "fieldtype": "Small Text",
+   "label": "Trusted Networks"
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 22:59:03.031005",
+ "modified": "2025-04-29 23:02:42.646873",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",
