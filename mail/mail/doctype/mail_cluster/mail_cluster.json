@@ -14,7 +14,7 @@
   "cluster",
   "priority",
   "authentication_section",
-  "admin_username",
+  "fallback_admin_user",
   "admin_password",
   "admin_password_hash",
   "column_break_9jti",
@@ -146,14 +146,6 @@
    "fieldname": "cluster_settings_section",
    "fieldtype": "Section Break",
    "label": "Cluster Settings"
-  },
-  {
-   "default": "frappe",
-   "description": "Username for administrative access to the cluster.",
-   "fieldname": "admin_username",
-   "fieldtype": "Data",
-   "label": "Username",
-   "reqd": 1
   },
   {
    "description": "Password for administrative access to the cluster.",
@@ -495,6 +487,14 @@
    "fieldtype": "Int",
    "label": "Trash Auto-Expunge (Days)",
    "non_negative": 1
+  },
+  {
+   "default": "frappe",
+   "description": "Username for administrative access to the cluster.",
+   "fieldname": "fallback_admin_user",
+   "fieldtype": "Data",
+   "label": "Username",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 23:24:20.891669",
+ "modified": "2025-04-29 23:30:32.464275",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

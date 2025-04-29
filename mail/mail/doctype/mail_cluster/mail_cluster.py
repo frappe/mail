@@ -279,7 +279,7 @@ class MailCluster(Document):
 			name=name, type="apiKey", secrets=secret, roles=["admin"], enabledPermissions=["authenticate"]
 		)
 		server_api = MailServerAPI(
-			self.base_url, username=self.admin_username, password=self.get_password("admin_password")
+			self.base_url, username=self.fallback_admin_user, password=self.get_password("admin_password")
 		)
 		response = server_api.request(method="POST", endpoint="/api/principal", json=principal.__dict__)
 		response.raise_for_status()

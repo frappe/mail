@@ -217,7 +217,7 @@ class MailServer(Document):
 		server_api = MailServerAPI(
 			self.base_url,
 			api_key=api_key,
-			username=cluster.admin_username,
+			username=cluster.fallback_admin_user,
 			password=cluster.get_password("admin_password"),
 		)
 		response = server_api.request(method="GET", endpoint="/api/reload")

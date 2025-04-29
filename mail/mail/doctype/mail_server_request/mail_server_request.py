@@ -90,7 +90,7 @@ class MailServerRequest(Document):
 		server_api = MailServerAPI(
 			cluster.base_url,
 			api_key=api_key,
-			username=cluster.admin_username,
+			username=cluster.fallback_admin_user,
 			password=cluster.get_password("admin_password"),
 		)
 		response = server_api.request(

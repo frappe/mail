@@ -338,7 +338,7 @@ def get_config_toml(server: str) -> str | None:
 	config = {
 		"authentication": {
 			"fallback-admin": {
-				"user": cluster.admin_username,
+				"user": cluster.fallback_admin_user,
 				"secret": cluster.admin_password_hash,
 			}
 		},
