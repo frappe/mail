@@ -13,7 +13,7 @@
   "challenge",
   "directory",
   "column_break_hxpf",
-  "renew_before_days",
+  "renew_before",
   "section_break_6dav",
   "subject_names",
   "column_break_lzmq",
@@ -57,14 +57,6 @@
   {
    "fieldname": "column_break_lzmq",
    "fieldtype": "Column Break"
-  },
-  {
-   "description": "Determines how early before expiration the certificate should be renewed.",
-   "fieldname": "renew_before_days",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Renew Before (Days)",
-   "reqd": 1
   },
   {
    "default": "0",
@@ -118,13 +110,21 @@
    "fieldtype": "Data",
    "label": "Directory URL",
    "reqd": 1
+  },
+  {
+   "description": "Determines how early before expiration the certificate should be renewed.",
+   "fieldname": "renew_before",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Renew Before (Days)",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 00:09:28.712637",
+ "modified": "2025-04-30 00:10:48.357825",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server ACME Provider",

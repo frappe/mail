@@ -119,7 +119,7 @@ def get_config_toml(server: str) -> str | None:
 			"contact": split_lines_or_empty(acme.contact_emails),
 			"domains": split_lines_or_empty(acme.subject_names),
 			"cache": "%{BASE_PATH}%/etc/acme",
-			"renew-before": format_value_or_zero(acme.renew_before_days, "d"),
+			"renew-before": format_value_or_zero(acme.renew_before, "d"),
 			"eab": {"kid": acme.key_id, "hmac-key": password_or_none(acme, "hmac_key")},
 		}
 
