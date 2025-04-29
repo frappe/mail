@@ -397,7 +397,9 @@ def get_config_toml(server: str) -> str | None:
 			"account": {"purge": {"frequency": cluster.jmap_account_purge_frequency}},
 			"email": {"auto-expunge": format_value_or_zero(cluster.jmap_trash_auto_expunge_days, "d")},
 			"protocol": {
-				"changes": {"max-history": format_value_or_zero(cluster.jmap_changes_history_days, "d")}
+				"changes": {
+					"max-history": format_value_or_zero(cluster.jmap_protocol_changes_max_history, "d")
+				}
 			},
 			"push": {
 				"max-total": cluster.jmap_push_max_total,
