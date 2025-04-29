@@ -21,7 +21,7 @@
   "external_account_binding_section",
   "eab_kid",
   "column_break_bgl5",
-  "hmac_key"
+  "eab_hmac_key"
  ],
  "fields": [
   {
@@ -70,12 +70,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "The External Account Binding (EAB) HMAC key.",
-   "fieldname": "hmac_key",
-   "fieldtype": "Password",
-   "label": "HMAC Key"
-  },
-  {
    "description": "The ACME challenge type used to validate domain ownership.",
    "fieldname": "challenge",
    "fieldtype": "Select",
@@ -118,13 +112,19 @@
    "fieldname": "eab_kid",
    "fieldtype": "Data",
    "label": "Key ID"
+  },
+  {
+   "description": "The External Account Binding (EAB) HMAC key.",
+   "fieldname": "eab_hmac_key",
+   "fieldtype": "Password",
+   "label": "HMAC Key"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 00:14:54.861819",
+ "modified": "2025-04-30 00:15:42.325327",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server ACME Provider",
