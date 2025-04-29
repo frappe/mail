@@ -120,7 +120,7 @@ def get_config_toml(server: str) -> str | None:
 			"domains": split_lines_or_empty(acme.domains),
 			"cache": "%{BASE_PATH}%/etc/acme",
 			"renew-before": format_value_or_zero(acme.renew_before, "d"),
-			"eab": {"kid": acme.key_id, "hmac-key": password_or_none(acme, "hmac_key")},
+			"eab": {"kid": acme.eab_kid, "hmac-key": password_or_none(acme, "hmac_key")},
 		}
 
 		return {acme.directory_id: config}
