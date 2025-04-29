@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-04-29 22:59+0553\n"
-"PO-Revision-Date: 2025-04-29 22:59+0553\n"
+"POT-Creation-Date: 2025-04-29 23:25+0553\n"
+"PO-Revision-Date: 2025-04-29 23:25+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -803,7 +803,8 @@ msgstr ""
 msgid "Change Password"
 msgstr ""
 
-#. Label of the jmap_changes_history_days (Int) field in DocType 'Mail Cluster'
+#. Label of the jmap_protocol_changes_max_history (Int) field in DocType 'Mail
+#. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "Changes History (Days)"
 msgstr ""
@@ -1264,7 +1265,8 @@ msgstr ""
 msgid "Default Email must be one of the email addresses assigned to the user."
 msgstr ""
 
-#. Label of the default_language (Data) field in DocType 'Mail Cluster'
+#. Label of the storage_full_text_default_language (Data) field in DocType
+#. 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "Default Language"
 msgstr ""
@@ -1727,7 +1729,7 @@ msgstr ""
 msgid "Enable TLS"
 msgstr ""
 
-#. Label of the enable_encryption_at_rest (Check) field in DocType 'Mail
+#. Label of the storage_encryption_enable (Check) field in DocType 'Mail
 #. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "Enable encryption at rest"
@@ -1774,7 +1776,8 @@ msgstr ""
 msgid "Encrypt messages that are manually appended by the user using JMAP or IMAP."
 msgstr ""
 
-#. Label of the encrypt_on_append (Check) field in DocType 'Mail Cluster'
+#. Label of the storage_encryption_append (Check) field in DocType 'Mail
+#. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "Encrypt on append"
 msgstr ""
@@ -2126,7 +2129,8 @@ msgstr ""
 msgid "FoundationDB"
 msgstr ""
 
-#. Label of the jmap_frequency_cron (Data) field in DocType 'Mail Cluster'
+#. Label of the jmap_account_purge_frequency (Data) field in DocType 'Mail
+#. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "Frequency (Cron)"
 msgstr ""
@@ -5244,11 +5248,11 @@ msgid "Status"
 msgstr ""
 
 #. Label of the section_break_r4np (Tab Break) field in DocType 'Mail Cluster'
-#. Label of the directory_storage (Data) field in DocType 'Mail Cluster'
-#. Label of the data_storage (Data) field in DocType 'Mail Cluster'
-#. Label of the blob_storage (Data) field in DocType 'Mail Cluster'
-#. Label of the fts_storage (Data) field in DocType 'Mail Cluster'
-#. Label of the in_memory_storage (Data) field in DocType 'Mail Cluster'
+#. Label of the storage_directory (Data) field in DocType 'Mail Cluster'
+#. Label of the storage_data (Data) field in DocType 'Mail Cluster'
+#. Label of the storage_blob (Data) field in DocType 'Mail Cluster'
+#. Label of the storage_fts (Data) field in DocType 'Mail Cluster'
+#. Label of the storage_lookup (Data) field in DocType 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "Storage"
 msgstr ""
@@ -6010,8 +6014,7 @@ msgstr ""
 msgid "Trash"
 msgstr ""
 
-#. Label of the jmap_trash_auto_expunge_days (Int) field in DocType 'Mail
-#. Cluster'
+#. Label of the jmap_email_auto_expunge (Int) field in DocType 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "Trash Auto-Expunge (Days)"
 msgstr ""
@@ -6023,8 +6026,8 @@ msgstr ""
 msgid "Trashed On"
 msgstr ""
 
-#. Label of the proxy_trusted_networks (Small Text) field in DocType 'Mail
-#. Cluster'
+#. Label of the server_proxy_trusted_networks (Small Text) field in DocType
+#. 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "Trusted Networks"
 msgstr ""

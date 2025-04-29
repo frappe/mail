@@ -53,7 +53,7 @@
   "jmap_account_purge_frequency",
   "column_break_ld4b",
   "jmap_protocol_changes_max_history",
-  "jmap_trash_auto_expunge_days",
+  "jmap_email_auto_expunge",
   "listeners_tab",
   "listeners",
   "jmap_tab",
@@ -273,14 +273,6 @@
    "label": "Cleanup (JMAP)"
   },
   {
-   "default": "30",
-   "description": "How long to keep messages in the Trash and Junk Mail folders before auto-expunging.",
-   "fieldname": "jmap_trash_auto_expunge_days",
-   "fieldtype": "Int",
-   "label": "Trash Auto-Expunge (Days)",
-   "non_negative": 1
-  },
-  {
    "fieldname": "column_break_trr0",
    "fieldtype": "Column Break"
   },
@@ -495,6 +487,14 @@
    "fieldtype": "Int",
    "label": "Changes History (Days)",
    "non_negative": 1
+  },
+  {
+   "default": "30",
+   "description": "How long to keep messages in the Trash and Junk Mail folders before auto-expunging.",
+   "fieldname": "jmap_email_auto_expunge",
+   "fieldtype": "Int",
+   "label": "Trash Auto-Expunge (Days)",
+   "non_negative": 1
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 23:22:50.440287",
+ "modified": "2025-04-29 23:24:20.891669",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",
