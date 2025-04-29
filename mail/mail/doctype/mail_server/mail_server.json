@@ -24,7 +24,7 @@
   "cluster_node_id",
   "cluster_bind_addr",
   "column_break_m8qz",
-  "cluster_advertise_address",
+  "cluster_advertise_addr",
   "cluster_heartbeat",
   "tls_tab",
   "acme_providers",
@@ -79,14 +79,6 @@
    "non_negative": 1,
    "placeholder": "1",
    "reqd": 1
-  },
-  {
-   "default": "Private IPv4",
-   "description": "The address the gossip protocol will advertise to other nodes in the cluster.",
-   "fieldname": "cluster_advertise_address",
-   "fieldtype": "Select",
-   "label": "Advertise Address",
-   "options": "\nPrivate IPv4\nPrivate IPv6\nPublic IPv4\nPublic IPv6"
   },
   {
    "default": "1",
@@ -212,6 +204,14 @@
    "fieldtype": "Data",
    "label": "Bind Address",
    "no_copy": 1
+  },
+  {
+   "default": "Private IPv4",
+   "description": "The address the gossip protocol will advertise to other nodes in the cluster.",
+   "fieldname": "cluster_advertise_addr",
+   "fieldtype": "Select",
+   "label": "Advertise Address",
+   "options": "\nPrivate IPv4\nPrivate IPv6\nPublic IPv4\nPublic IPv6"
   }
  ],
  "grid_page_length": 50,
@@ -223,7 +223,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-04-30 00:01:07.317157",
+ "modified": "2025-04-30 00:02:27.985367",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",

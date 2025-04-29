@@ -163,7 +163,7 @@ def get_config_toml(server: str) -> str | None:
 
 	def get_seed_nodes(server: str, cluster: str) -> dict:
 		seed_nodes = [
-			s[frappe.scrub(s["cluster_advertise_address"])]
+			s[frappe.scrub(s["cluster_advertise_addr"])]
 			for s in frappe.db.get_all(
 				"Mail Server",
 				filters={"enabled": 1, "cluster": cluster, "name": ["!=", server]},
@@ -172,10 +172,10 @@ def get_config_toml(server: str) -> str | None:
 					"private_ipv6",
 					"public_ipv4",
 					"public_ipv6",
-					"cluster_advertise_address",
+					"cluster_advertise_addr",
 				],
 			)
-			if s["cluster_advertise_address"]
+			if s["cluster_advertise_addr"]
 		]
 		return {str(i).zfill(len(str(len(seed_nodes) - 1))): v for i, v in enumerate(seed_nodes)}
 
@@ -360,7 +360,7 @@ def get_config_toml(server: str) -> str | None:
 			"node-id": server.cluster_node_id,
 			"bind-addr": server.cluster_bind_addr,
 			"bind-port": cluster.cluster_bind_port,
-			"advertise-addr": server.get(frappe.scrub(server.cluster_advertise_address)),
+			"advertise-addr": server.get(frappe.scrub(server.cluster_advertise_addr)),
 			"key": password_or_none(cluster, "cluster_key"),
 			"heartbeat": format_value_or_zero(server.cluster_heartbeat, "s"),
 			"seed-nodes": get_seed_nodes(server.name, cluster.name),
