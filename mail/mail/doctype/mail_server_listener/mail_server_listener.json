@@ -11,7 +11,7 @@
   "column_break_eecc",
   "bind",
   "tls_options_section",
-  "implicit_tls"
+  "tls_implicit"
  ],
  "fields": [
   {
@@ -41,14 +41,6 @@
    "label": "TLS Options"
   },
   {
-   "default": "0",
-   "description": "Whether to use implicit TLS.",
-   "fieldname": "implicit_tls",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Implicit TLS"
-  },
-  {
    "fieldname": "column_break_eecc",
    "fieldtype": "Column Break"
   },
@@ -59,13 +51,21 @@
    "in_list_view": 1,
    "label": "Bind Addresses",
    "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Whether to use implicit TLS.",
+   "fieldname": "tls_implicit",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Implicit TLS"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-29 23:47:25.590521",
+ "modified": "2025-04-29 23:49:22.381106",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Listener",

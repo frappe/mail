@@ -156,7 +156,7 @@ def get_config_toml(server: str) -> str | None:
 			listener.listener_id: {
 				"bind": split_lines_or_return(listener.bind),
 				"protocol": PROTOCOL_MAP[listener.protocol],
-				"tls": {"implicit": bool(listener.implicit_tls)},
+				"tls": {"implicit": bool(listener.tls_implicit)},
 			}
 			for listener in listeners
 		}

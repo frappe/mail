@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-04-29 23:37+0553\n"
-"PO-Revision-Date: 2025-04-29 23:37+0553\n"
+"POT-Creation-Date: 2025-04-29 23:53+0553\n"
+"PO-Revision-Date: 2025-04-29 23:53+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -565,8 +565,7 @@ msgstr ""
 msgid "Bind Address"
 msgstr ""
 
-#. Label of the bind_addresses (Small Text) field in DocType 'Mail Server
-#. Listener'
+#. Label of the bind (Small Text) field in DocType 'Mail Server Listener'
 #: mail/mail/doctype/mail_server_listener/mail_server_listener.json
 msgid "Bind Addresses"
 msgstr ""
@@ -2474,7 +2473,7 @@ msgstr ""
 msgid "Ignore in Developer Mode"
 msgstr ""
 
-#. Label of the implicit_tls (Check) field in DocType 'Mail Server Listener'
+#. Label of the tls_implicit (Check) field in DocType 'Mail Server Listener'
 #: mail/mail/doctype/mail_server_listener/mail_server_listener.json
 msgid "Implicit TLS"
 msgstr ""

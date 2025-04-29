@@ -27,30 +27,30 @@ DEFAULT_STORES = [
 	}
 ]
 DEFAULT_LISTENERS = [
-	{"protocol": "HTTP", "listener_id": "http", "bind": "[::]:8080", "implicit_tls": 0},
-	{"protocol": "HTTP", "listener_id": "https", "bind": "[::]:443", "implicit_tls": 1},
-	{"protocol": "IMAP4", "listener_id": "imap", "bind": "[::]:143", "implicit_tls": 0},
-	{"protocol": "IMAP4", "listener_id": "imaptls", "bind": "[::]:993", "implicit_tls": 1},
-	{"protocol": "POP3", "listener_id": "pop3", "bind": "[::]:110", "implicit_tls": 0},
-	{"protocol": "POP3", "listener_id": "pop3s", "bind": "[::]:995", "implicit_tls": 1},
+	{"protocol": "HTTP", "listener_id": "http", "bind": "[::]:8080", "tls_implicit": 0},
+	{"protocol": "HTTP", "listener_id": "https", "bind": "[::]:443", "tls_implicit": 1},
+	{"protocol": "IMAP4", "listener_id": "imap", "bind": "[::]:143", "tls_implicit": 0},
+	{"protocol": "IMAP4", "listener_id": "imaptls", "bind": "[::]:993", "tls_implicit": 1},
+	{"protocol": "POP3", "listener_id": "pop3", "bind": "[::]:110", "tls_implicit": 0},
+	{"protocol": "POP3", "listener_id": "pop3s", "bind": "[::]:995", "tls_implicit": 1},
 	{
 		"protocol": "ManageSieve",
 		"listener_id": "sieve",
 		"bind": "[::]:4190",
-		"implicit_tls": 0,
+		"tls_implicit": 0,
 	},
-	{"protocol": "SMTP", "listener_id": "smtp", "bind": "[::]:25", "implicit_tls": 0},
+	{"protocol": "SMTP", "listener_id": "smtp", "bind": "[::]:25", "tls_implicit": 0},
 	{
 		"protocol": "SMTP",
 		"listener_id": "submission",
 		"bind": "[::]:587",
-		"implicit_tls": 0,
+		"tls_implicit": 0,
 	},
 	{
 		"protocol": "SMTP",
 		"listener_id": "submissions",
 		"bind": "[::]:465",
-		"implicit_tls": 1,
+		"tls_implicit": 1,
 	},
 ]
 STORAGE_OPTIONS = {
