@@ -116,7 +116,7 @@ frappe.ui.form.on('Mail Cluster', {
 
 		if (!frappe.user_roles.includes('System Manager')) return
 
-		if (frm.doc.admin_password) {
+		if (frm.doc.fallback_admin_password) {
 			frm.add_custom_button(__('Show Password'), () => {
 				frm.trigger('show_password')
 			})
@@ -146,7 +146,7 @@ frappe.ui.form.on('Mail Cluster', {
 	show_password(frm) {
 		frappe.call({
 			doc: frm.doc,
-			method: 'get_admin_password',
+			method: 'get_fallback_admin_password',
 			freeze: true,
 			freeze_message: __('Getting Password...'),
 			callback: (r) => {

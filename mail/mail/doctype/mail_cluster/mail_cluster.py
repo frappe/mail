@@ -81,7 +81,7 @@ class MailCluster(Document):
 		self.validate_public()
 		self.validate_cluster()
 		self.validate_priority()
-		self.validate_admin_password()
+		self.validate_fallback_admin_password()
 		self.generate_admin_password_hash()
 		self.validate_base_url()
 		self.validate_cluster_key()
@@ -149,16 +149,16 @@ class MailCluster(Document):
 				_("Mail Cluster with priority {0} already exists.").format(frappe.bold(self.priority))
 			)
 
-	def validate_admin_password(self) -> None:
-		if self.admin_password:
-			if len(self.admin_password) < 16:
+	def validate_fallback_admin_password(self) -> None:
+		if self.fallback_admin_password:
+			if len(self.fallback_admin_password) < 16:
 				frappe.throw(_("Password must be at least 16 characters long."))
 		else:
-			self.admin_password = random_string(length=20)
+			self.fallback_admin_password = random_string(length=20)
 
 	def generate_admin_password_hash(self) -> None:
-		if self.has_value_changed("admin_password"):
-			self.admin_password_hash = hash_password(self.get_password("admin_password"))
+		if self.has_value_changed("fallback_admin_password"):
+			self.admin_password_hash = hash_password(self.get_password("fallback_admin_password"))
 
 	def validate_base_url(self) -> None:
 		"""Validates the base URL of the cluster."""
@@ -253,11 +253,11 @@ class MailCluster(Document):
 			self.append("listeners", listener)
 
 	@frappe.whitelist()
-	def get_admin_password(self) -> str:
+	def get_fallback_admin_password(self) -> str:
 		"""Returns the admin password of the cluster."""
 
 		frappe.only_for("System Manager")
-		return self.get_password("admin_password")
+		return self.get_password("fallback_admin_password")
 
 	@frappe.whitelist()
 	def generate_api_key(self) -> None:
@@ -279,7 +279,9 @@ class MailCluster(Document):
 			name=name, type="apiKey", secrets=secret, roles=["admin"], enabledPermissions=["authenticate"]
 		)
 		server_api = MailServerAPI(
-			self.base_url, username=self.fallback_admin_user, password=self.get_password("admin_password")
+			self.base_url,
+			username=self.fallback_admin_user,
+			password=self.get_password("fallback_admin_password"),
 		)
 		response = server_api.request(method="POST", endpoint="/api/principal", json=principal.__dict__)
 		response.raise_for_status()

@@ -15,7 +15,7 @@
   "priority",
   "authentication_section",
   "fallback_admin_user",
-  "admin_password",
+  "fallback_admin_password",
   "admin_password_hash",
   "column_break_9jti",
   "base_url",
@@ -146,13 +146,6 @@
    "fieldname": "cluster_settings_section",
    "fieldtype": "Section Break",
    "label": "Cluster Settings"
-  },
-  {
-   "description": "Password for administrative access to the cluster.",
-   "fieldname": "admin_password",
-   "fieldtype": "Password",
-   "label": "Password",
-   "no_copy": 1
   },
   {
    "description": "Key for authenticating HTTP requests. Generate one via <i>Actions &gt; Generate API Key</i>.",
@@ -495,6 +488,13 @@
    "fieldtype": "Data",
    "label": "Username",
    "reqd": 1
+  },
+  {
+   "description": "Password for administrative access to the cluster.",
+   "fieldname": "fallback_admin_password",
+   "fieldtype": "Password",
+   "label": "Password",
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 23:30:32.464275",
+ "modified": "2025-04-29 23:32:18.695513",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",
