@@ -35,20 +35,20 @@
   "stores_section",
   "stores",
   "directory_storage_section",
-  "directory_storage",
+  "storage_directory",
   "data_storage_section",
-  "data_storage",
+  "storage_data",
   "column_break_iwwx",
   "enable_encryption_at_rest",
   "encrypt_on_append",
   "blob_storage_section",
-  "blob_storage",
+  "storage_blob",
   "full_text_index_storage_section",
-  "fts_storage",
+  "storage_fts",
   "column_break_a9m0",
   "default_language",
   "in_memory_storage_section",
-  "in_memory_storage",
+  "storage_lookup",
   "cleanup_jmap_section",
   "jmap_frequency_cron",
   "column_break_ld4b",
@@ -259,36 +259,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "directory_storage",
-   "fieldtype": "Data",
-   "label": "Storage",
-   "reqd": 1
-  },
-  {
-   "fieldname": "data_storage",
-   "fieldtype": "Data",
-   "label": "Storage",
-   "reqd": 1
-  },
-  {
-   "fieldname": "blob_storage",
-   "fieldtype": "Data",
-   "label": "Storage",
-   "reqd": 1
-  },
-  {
-   "fieldname": "fts_storage",
-   "fieldtype": "Data",
-   "label": "Storage",
-   "reqd": 1
-  },
-  {
-   "fieldname": "in_memory_storage",
-   "fieldtype": "Data",
-   "label": "Storage",
-   "reqd": 1
-  },
-  {
    "description": "Stores user accounts, passwords, email addresses, and settings. Used for authentication, email validation, and account management.",
    "fieldname": "directory_storage_section",
    "fieldtype": "Section Break",
@@ -495,6 +465,36 @@
    "fieldname": "server_proxy_trusted_networks",
    "fieldtype": "Small Text",
    "label": "Trusted Networks"
+  },
+  {
+   "fieldname": "storage_directory",
+   "fieldtype": "Data",
+   "label": "Storage",
+   "reqd": 1
+  },
+  {
+   "fieldname": "storage_data",
+   "fieldtype": "Data",
+   "label": "Storage",
+   "reqd": 1
+  },
+  {
+   "fieldname": "storage_blob",
+   "fieldtype": "Data",
+   "label": "Storage",
+   "reqd": 1
+  },
+  {
+   "fieldname": "storage_fts",
+   "fieldtype": "Data",
+   "label": "Storage",
+   "reqd": 1
+  },
+  {
+   "fieldname": "storage_lookup",
+   "fieldtype": "Data",
+   "label": "Storage",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 23:02:42.646873",
+ "modified": "2025-04-29 23:12:53.581707",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

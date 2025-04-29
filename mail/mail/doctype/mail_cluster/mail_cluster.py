@@ -54,9 +54,9 @@ DEFAULT_LISTENERS = [
 	},
 ]
 STORAGE_OPTIONS = {
-	"directory_storage": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite"],
-	"data_storage": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite"],
-	"blob_storage": [
+	"storage_directory": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite"],
+	"storage_data": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite"],
+	"storage_blob": [
 		"RocksDB",
 		"FoundationDB",
 		"PostgreSQL",
@@ -66,8 +66,8 @@ STORAGE_OPTIONS = {
 		"Azure Blob Storage",
 		"Filesystem",
 	],
-	"fts_storage": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite", "ElasticSearch"],
-	"in_memory_storage": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite", "Redis/Memcached"],
+	"storage_fts": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite", "ElasticSearch"],
+	"storage_lookup": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite", "Redis/Memcached"],
 }
 
 
@@ -331,9 +331,9 @@ def get_storage_labels() -> dict:
 	"""Returns the storage labels."""
 
 	return {
-		"directory_storage": _("Directory Storage"),
-		"data_storage": _("Data Storage"),
-		"blob_storage": _("Blob Storage"),
-		"fts_storage": _("Full Text Index Storage"),
-		"in_memory_storage": _("In-Memory Storage"),
+		"storage_directory": _("Directory Storage"),
+		"storage_data": _("Data Storage"),
+		"storage_blob": _("Blob Storage"),
+		"storage_fts": _("Full Text Index Storage"),
+		"storage_lookup": _("In-Memory Storage"),
 	}

@@ -369,9 +369,9 @@ def get_config_toml(server: str) -> str | None:
 			"local-keys": get_local_keys(bool(server.outbound_only)),
 		},
 		"directory": {
-			f"{cluster.directory_storage}": {
+			f"{cluster.storage_directory}": {
 				"type": "internal",
-				"store": f"{cluster.directory_storage}",
+				"store": f"{cluster.storage_directory}",
 				"cache": {
 					"size": 1048576,
 					"ttl": {
@@ -382,16 +382,16 @@ def get_config_toml(server: str) -> str | None:
 			}
 		},
 		"storage": {
-			"directory": cluster.directory_storage,
-			"data": cluster.data_storage,
+			"directory": cluster.storage_directory,
+			"data": cluster.storage_data,
 			"encryption": {
 				"enable": bool(cluster.enable_encryption_at_rest),
 				"append": bool(cluster.encrypt_on_append),
 			},
-			"blob": cluster.blob_storage,
-			"fts": cluster.fts_storage,
+			"blob": cluster.storage_blob,
+			"fts": cluster.storage_fts,
 			"full-text": {"default-language": cluster.default_language},
-			"lookup": cluster.in_memory_storage,
+			"lookup": cluster.storage_lookup,
 		},
 		"jmap": {
 			"account": {"purge": {"frequency": cluster.jmap_frequency_cron}},
