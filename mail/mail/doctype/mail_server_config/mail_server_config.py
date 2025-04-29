@@ -390,7 +390,7 @@ def get_config_toml(server: str) -> str | None:
 			},
 			"blob": cluster.storage_blob,
 			"fts": cluster.storage_fts,
-			"full-text": {"default-language": cluster.default_language},
+			"full-text": {"default-language": cluster.storage_full_text_default_language},
 			"lookup": cluster.storage_lookup,
 		},
 		"jmap": {

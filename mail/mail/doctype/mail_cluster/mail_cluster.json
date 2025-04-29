@@ -46,7 +46,7 @@
   "full_text_index_storage_section",
   "storage_fts",
   "column_break_a9m0",
-  "default_language",
+  "storage_full_text_default_language",
   "in_memory_storage_section",
   "storage_lookup",
   "cleanup_jmap_section",
@@ -119,13 +119,6 @@
    "fieldname": "section_break_r4np",
    "fieldtype": "Tab Break",
    "label": "Storage"
-  },
-  {
-   "default": "en",
-   "description": "Default language to use when language detection is not possible.",
-   "fieldname": "default_language",
-   "fieldtype": "Data",
-   "label": "Default Language"
   },
   {
    "fieldname": "column_break_iwwx",
@@ -495,6 +488,13 @@
    "fieldname": "storage_encryption_append",
    "fieldtype": "Check",
    "label": "Encrypt on append"
+  },
+  {
+   "default": "en",
+   "description": "Default language to use when language detection is not possible.",
+   "fieldname": "storage_full_text_default_language",
+   "fieldtype": "Data",
+   "label": "Default Language"
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 23:16:44.620901",
+ "modified": "2025-04-29 23:18:58.000734",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",
