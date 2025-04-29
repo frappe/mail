@@ -11,7 +11,7 @@
   "default",
   "section_break_3ivg",
   "challenge",
-  "directory_url",
+  "directory",
   "column_break_hxpf",
   "renew_before_days",
   "section_break_6dav",
@@ -30,13 +30,6 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Directory ID",
-   "reqd": 1
-  },
-  {
-   "description": "The URL of the ACME directory endpoint.",
-   "fieldname": "directory_url",
-   "fieldtype": "Data",
-   "label": "Directory URL",
    "reqd": 1
   },
   {
@@ -118,13 +111,20 @@
    "label": "Challenge Type",
    "options": "TLS-ALPN-01",
    "reqd": 1
+  },
+  {
+   "description": "The URL of the ACME directory endpoint.",
+   "fieldname": "directory",
+   "fieldtype": "Data",
+   "label": "Directory URL",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 00:08:10.505551",
+ "modified": "2025-04-30 00:09:28.712637",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server ACME Provider",

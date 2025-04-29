@@ -114,7 +114,7 @@ def get_config_toml(server: str) -> str | None:
 	def get_acme_config(acme) -> dict:
 		config = {
 			"default": bool(acme.default),
-			"directory": acme.directory_url,
+			"directory": acme.directory,
 			"challenge": acme.challenge.lower(),
 			"contact": split_lines_or_empty(acme.contact_emails),
 			"domains": split_lines_or_empty(acme.subject_names),
