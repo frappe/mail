@@ -116,7 +116,7 @@ def get_config_toml(server: str) -> str | None:
 			"default": bool(acme.default),
 			"directory": acme.directory,
 			"challenge": acme.challenge.lower(),
-			"contact": split_lines_or_empty(acme.contact_emails),
+			"contact": split_lines_or_empty(acme.contact),
 			"domains": split_lines_or_empty(acme.domains),
 			"cache": "%{BASE_PATH}%/etc/acme",
 			"renew-before": format_value_or_zero(acme.renew_before, "d"),
