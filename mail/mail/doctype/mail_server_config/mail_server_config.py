@@ -195,7 +195,7 @@ def get_config_toml(server: str) -> str | None:
 				config.update({"user": store.username, "password": password_or_none(store, "password")})
 
 		if store.type in ["PostgreSQL", "mySQL", "S3-compatible", "Redis/Memcached", "Azure Blob Storage"]:
-			config["timeout"] = format_value_or_zero(store.timeout_seconds, "s")
+			config["timeout"] = format_value_or_zero(store.timeout, "s")
 
 		if store.type in [
 			"RocksDB",
