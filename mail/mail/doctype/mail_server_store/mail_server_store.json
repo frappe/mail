@@ -27,7 +27,7 @@
   "max_allowed_packet",
   "timeout",
   "bucket_storage_account_section",
-  "bucket_name",
+  "bucket",
   "storage_account_name",
   "container",
   "column_break_o8ml",
@@ -477,14 +477,6 @@
   },
   {
    "depends_on": "eval: doc.type == \"S3-compatible\"",
-   "description": "The S3 bucket where blobs (e-mail messages, Sieve scripts, etc.) will be stored.",
-   "fieldname": "bucket_name",
-   "fieldtype": "Data",
-   "label": "Bucket",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
-  },
-  {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
    "description": "Identifies the S3 account.",
    "fieldname": "s3_access_key",
    "fieldtype": "Password",
@@ -561,13 +553,21 @@
    "fieldtype": "Small Text",
    "label": "Redis URL(s)",
    "mandatory_depends_on": "eval: doc.type == \"Redis/Memcached\""
+  },
+  {
+   "depends_on": "eval: doc.type == \"S3-compatible\"",
+   "description": "The S3 bucket where blobs (e-mail messages, Sieve scripts, etc.) will be stored.",
+   "fieldname": "bucket",
+   "fieldtype": "Data",
+   "label": "Bucket",
+   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 10:00:34.440454",
+ "modified": "2025-04-30 10:01:38.882375",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",

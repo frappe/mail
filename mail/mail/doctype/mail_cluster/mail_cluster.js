@@ -46,7 +46,7 @@ const STORES_PRESET = {
 	'S3-compatible': {
 		store_id: 's3',
 		timeout: 15,
-		bucket_name: 'frappemail',
+		bucket: 'frappemail',
 		key_prefix: 'frappemail/',
 		compression: 'LZ4',
 		retry_limit: 3,
