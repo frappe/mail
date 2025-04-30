@@ -35,7 +35,7 @@
   "authentication_section",
   "user",
   "access_key",
-  "s3_secret_key",
+  "secret_key",
   "azure_access_key",
   "column_break_r24o",
   "password",
@@ -461,14 +461,6 @@
    "label": "Bucket / Storage Account"
   },
   {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
-   "description": "The secret key for the S3 account.",
-   "fieldname": "s3_secret_key",
-   "fieldtype": "Password",
-   "label": "Secret Key",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
-  },
-  {
    "depends_on": "eval: doc.type == \"Azure Blob Storage\"",
    "description": "The access key for the Azure Storage Account.",
    "fieldname": "azure_access_key",
@@ -561,13 +553,21 @@
    "fieldtype": "Password",
    "label": "Security Token",
    "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
+  },
+  {
+   "depends_on": "eval: doc.type == \"S3-compatible\"",
+   "description": "The secret key for the S3 account.",
+   "fieldname": "secret_key",
+   "fieldtype": "Password",
+   "label": "Secret Key",
+   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 10:20:42.012923",
+ "modified": "2025-04-30 10:22:12.573360",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",
