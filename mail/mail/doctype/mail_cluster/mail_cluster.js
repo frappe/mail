@@ -55,7 +55,7 @@ const STORES_PRESET = {
 	'Redis/Memcached': {
 		store_id: 'redis',
 		redis_type: 'Redis Single Node',
-		redis_urls: 'redis://127.0.0.1',
+		urls: 'redis://127.0.0.1',
 		timeout: 15,
 		username: 'frappemail',
 		cluster_read_from_replicas: 1,

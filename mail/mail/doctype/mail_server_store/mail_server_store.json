@@ -22,7 +22,7 @@
   "port",
   "database",
   "redis_type",
-  "redis_urls",
+  "urls",
   "column_break_offi",
   "max_allowed_packet",
   "timeout",
@@ -322,14 +322,6 @@
    "non_negative": 1
   },
   {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\"",
-   "description": "URL(s) of the Redis server(s).",
-   "fieldname": "redis_urls",
-   "fieldtype": "Small Text",
-   "label": "Redis URL(s)",
-   "mandatory_depends_on": "eval: doc.type == \"Redis/Memcached\""
-  },
-  {
    "fieldname": "cluster_settings_section",
    "fieldtype": "Section Break",
    "label": "Cluster Settings"
@@ -561,13 +553,21 @@
    "label": "Server Type",
    "mandatory_depends_on": "eval: doc.type == \"Redis/Memcached\"",
    "options": "\nRedis Single Node\nRedis Cluster"
+  },
+  {
+   "depends_on": "eval: doc.type == \"Redis/Memcached\"",
+   "description": "URL(s) of the Redis server(s).",
+   "fieldname": "urls",
+   "fieldtype": "Small Text",
+   "label": "Redis URL(s)",
+   "mandatory_depends_on": "eval: doc.type == \"Redis/Memcached\""
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 09:58:50.457254",
+ "modified": "2025-04-30 10:00:34.440454",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",

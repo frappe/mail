@@ -284,7 +284,7 @@ def get_config_toml(server: str) -> str | None:
 				config.update(
 					{
 						"redis-type": redis_type,
-						"urls": split_lines_or_empty(store.redis_urls),
+						"urls": split_lines_or_empty(store.urls),
 					}
 				)
 
