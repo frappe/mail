@@ -24,14 +24,14 @@ if TYPE_CHECKING:
 
 class MailServer(Document):
 	def autoname(self) -> None:
-		self.server = self.server.lower()
-		self.name = self.server
+		self.hostname = self.hostname.lower()
+		self.name = self.hostname
 
 	def validate(self) -> None:
 		if self.is_new():
 			validate_mail_settings()
 
-		self.validate_server()
+		self.validate_hostname()
 		self.validate_cluster()
 		self.validate_base_url()
 		self.validate_cluster_node_id()
@@ -56,27 +56,27 @@ class MailServer(Document):
 			create_or_update_spf_dns_record()
 			self.create_or_delete_spf_ehlo_dns_record()
 
-	def validate_server(self) -> None:
+	def validate_hostname(self) -> None:
 		"""Validates the server and fetches the IP addresses."""
 
-		if self.is_new() and frappe.db.exists("Mail Server", self.server):
-			frappe.throw(_("Mail Server {0} already exists.").format(frappe.bold(self.server)))
+		if self.is_new() and frappe.db.exists("Mail Server", self.hostname):
+			frappe.throw(_("Mail Server {0} already exists.").format(frappe.bold(self.hostname)))
 
-		if ipv4_addresses := [r.address for r in get_dns_record(self.server, "A") or []]:
+		if ipv4_addresses := [r.address for r in get_dns_record(self.hostname, "A") or []]:
 			if len(ipv4_addresses) > 1:
 				frappe.throw(
 					_("Multiple IPv4 addresses found for Mail Server {0}. Found: {1}.").format(
-						frappe.bold(self.server), ", ".join(ipv4_addresses)
+						frappe.bold(self.hostname), ", ".join(ipv4_addresses)
 					)
 				)
 
 			self.public_ipv4 = ipv4_addresses[0]
 
-		if ipv6_addresses := [r.address for r in get_dns_record(self.server, "AAAA") or []]:
+		if ipv6_addresses := [r.address for r in get_dns_record(self.hostname, "AAAA") or []]:
 			if len(ipv6_addresses) > 1:
 				frappe.throw(
 					_("Multiple IPv6 addresses found for Mail Server {0}. Found: {1}.").format(
-						frappe.bold(self.server), ", ".join(ipv6_addresses)
+						frappe.bold(self.hostname), ", ".join(ipv6_addresses)
 					)
 				)
 
@@ -92,7 +92,7 @@ class MailServer(Document):
 		"""Validates the base URL of the server."""
 
 		if not self.base_url:
-			self.base_url = f"https://{self.server}/"
+			self.base_url = f"https://{self.hostname}/"
 
 	def validate_cluster_node_id(self) -> None:
 		"""Validates the cluster node ID."""
@@ -187,10 +187,10 @@ class MailServer(Document):
 		"""Creates or deletes the SPF EHLO DNS Record."""
 
 		mail_settings = frappe.get_cached_doc("Mail Settings")
-		if not self.server.endswith(f".{mail_settings.root_domain_name}"):
+		if not self.hostname.endswith(f".{mail_settings.root_domain_name}"):
 			return
 
-		host = self.server[: -len(mail_settings.root_domain_name) - 1]
+		host = self.hostname[: -len(mail_settings.root_domain_name) - 1]
 		if self.enabled:
 			create_or_update_dns_record(
 				host=host,

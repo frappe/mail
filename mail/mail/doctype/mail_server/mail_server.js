@@ -76,10 +76,10 @@ frappe.ui.form.on('Mail Server ACME Provider', {
 	acme_providers_add(frm, cdt, cdn) {
 		const row = locals[cdt][cdn]
 
-		if (frm.doc.server) {
-			row.directory_id = frm.doc.server.replaceAll('.', '-')
-			row.domains = frm.doc.server
-			row.contact = 'postmaster@' + frm.doc.server
+		if (frm.doc.hostname) {
+			row.directory_id = frm.doc.hostname.replaceAll('.', '-')
+			row.domains = frm.doc.hostname
+			row.contact = 'postmaster@' + frm.doc.hostname
 		}
 		if (frm.doc.acme_providers.length < 2) {
 			row.default = 1

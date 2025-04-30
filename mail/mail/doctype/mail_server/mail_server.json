@@ -11,7 +11,7 @@
   "outbound_only",
   "column_break_0mtp",
   "cluster",
-  "server",
+  "hostname",
   "base_url",
   "network_settings_section",
   "server_max_connections",
@@ -33,17 +33,6 @@
   "listeners"
  ],
  "fields": [
-  {
-   "description": "Hostname of the mail server.",
-   "fieldname": "server",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Server",
-   "no_copy": 1,
-   "reqd": 1,
-   "set_only_once": 1,
-   "unique": 1
-  },
   {
    "fieldname": "section_break_excr",
    "fieldtype": "Section Break"
@@ -212,6 +201,17 @@
    "fieldtype": "Select",
    "label": "Advertise Address",
    "options": "\nPrivate IPv4\nPrivate IPv6\nPublic IPv4\nPublic IPv6"
+  },
+  {
+   "description": "Hostname of the mail server.",
+   "fieldname": "hostname",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Hostname",
+   "no_copy": 1,
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
   }
  ],
  "grid_page_length": 50,
@@ -223,7 +223,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-04-30 00:02:27.985367",
+ "modified": "2025-04-30 12:08:28.745736",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-04-30 11:31+0553\n"
-"PO-Revision-Date: 2025-04-30 11:31+0553\n"
+"POT-Creation-Date: 2025-04-30 12:11+0553\n"
+"PO-Revision-Date: 2025-04-30 12:11+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -2325,7 +2325,9 @@ msgstr ""
 msgid "Host"
 msgstr ""
 
+#. Label of the hostname (Data) field in DocType 'Mail Server'
 #. Label of the host (Data) field in DocType 'Mail Server Store'
+#: mail/mail/doctype/mail_server/mail_server.json
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Hostname"
 msgstr ""
@@ -2335,7 +2337,7 @@ msgstr ""
 msgid "Hostname of the database server."
 msgstr ""
 
-#. Description of the 'Server' (Data) field in DocType 'Mail Server'
+#. Description of the 'Hostname' (Data) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Hostname of the mail server."
 msgstr ""
@@ -5014,9 +5016,7 @@ msgstr ""
 msgid "Sent At"
 msgstr ""
 
-#. Label of the server (Data) field in DocType 'Mail Server'
 #. Label of the server (Link) field in DocType 'Mail Server Config'
-#: mail/mail/doctype/mail_server/mail_server.json
 #: mail/mail/doctype/mail_server_config/mail_server_config.json
 msgid "Server"
 msgstr ""
