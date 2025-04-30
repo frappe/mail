@@ -273,7 +273,7 @@ def get_config_toml(server: str) -> str | None:
 						"endpoint": store.endpoint,
 						"profile": store.profile,
 						"bucket": store.bucket,
-						"access-key": password_or_none(store, "s3_access_key"),
+						"access-key": password_or_none(store, "access_key"),
 						"secret-key": password_or_none(store, "s3_secret_key"),
 						"security-token": password_or_none(store, "s3_security_token"),
 					}

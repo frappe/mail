@@ -34,7 +34,7 @@
   "key_prefix",
   "authentication_section",
   "user",
-  "s3_access_key",
+  "access_key",
   "s3_secret_key",
   "azure_access_key",
   "column_break_r24o",
@@ -462,14 +462,6 @@
   },
   {
    "depends_on": "eval: doc.type == \"S3-compatible\"",
-   "description": "Identifies the S3 account.",
-   "fieldname": "s3_access_key",
-   "fieldtype": "Password",
-   "label": "Access Key",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
-  },
-  {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
    "description": "The security token for the S3 account.",
    "fieldname": "s3_security_token",
    "fieldtype": "Password",
@@ -561,13 +553,21 @@
    "fieldname": "user",
    "fieldtype": "Data",
    "label": "Username"
+  },
+  {
+   "depends_on": "eval: doc.type == \"S3-compatible\"",
+   "description": "Identifies the S3 account.",
+   "fieldname": "access_key",
+   "fieldtype": "Password",
+   "label": "Access Key",
+   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 10:14:22.509772",
+ "modified": "2025-04-30 10:19:45.361125",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",
