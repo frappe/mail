@@ -23,7 +23,7 @@ const STORES_PRESET = {
 		user: 'frappemail',
 		compression: 'LZ4',
 		purge_frequency: '0 3 * * *',
-		max_connections: 10,
+		pool_max_connections: 10,
 	},
 	mySQL: {
 		store_id: 'mysql',
@@ -33,7 +33,7 @@ const STORES_PRESET = {
 		user: 'frappemail',
 		compression: 'LZ4',
 		purge_frequency: '0 3 * * *',
-		max_connections: 10,
+		pool_max_connections: 10,
 		pool_min_connections: 5,
 	},
 	SQLite: {
@@ -41,7 +41,7 @@ const STORES_PRESET = {
 		path: '/var/lib/data/index.sqlite3',
 		compression: 'LZ4',
 		purge_frequency: '0 3 * * *',
-		max_connections: 10,
+		pool_max_connections: 10,
 	},
 	'S3-compatible': {
 		store_id: 's3',

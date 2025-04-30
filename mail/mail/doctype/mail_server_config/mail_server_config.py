@@ -185,7 +185,7 @@ def get_config_toml(server: str) -> str | None:
 		config = {"type": STORE_TYPE_MAP[store.type]}
 
 		if store.type in ["SQLite", "PostgreSQL", "mySQL"]:
-			config.update({"pool": {"max-connections": store.max_connections}})
+			config.update({"pool": {"max-connections": store.pool_max_connections}})
 
 		if store.type in ["S3-compatible", "Azure Blob Storage"]:
 			config.update({"key-prefix": store.key_prefix, "max-retries": store.max_retries})
