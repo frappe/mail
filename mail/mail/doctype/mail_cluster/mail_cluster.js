@@ -34,7 +34,7 @@ const STORES_PRESET = {
 		compression: 'LZ4',
 		purge_frequency: '0 3 * * *',
 		max_connections: 10,
-		min_connections: 5,
+		pool_min_connections: 5,
 	},
 	SQLite: {
 		store_id: 'sqlite',

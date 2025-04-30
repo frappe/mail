@@ -262,7 +262,7 @@ def get_config_toml(server: str) -> str | None:
 
 				if store.type == "mySQL":
 					config["max-allowed-packet"] = store.max_allowed_packet
-					config["pool"]["min-connections"] = store.min_connections
+					config["pool"]["min-connections"] = store.pool_min_connections
 
 			case "S3-compatible":
 				config.update(
