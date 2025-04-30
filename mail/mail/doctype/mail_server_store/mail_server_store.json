@@ -61,7 +61,7 @@
   "read_from_replicas",
   "transaction_settings_section",
   "transaction_timeout",
-  "transaction_max_retry_delay_seconds",
+  "transaction_max_retry_delay",
   "column_break_q4si",
   "transaction_retry_limit",
   "tls_section",
@@ -258,14 +258,6 @@
   {
    "fieldname": "column_break_q4si",
    "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: doc.type == \"FoundationDB\"",
-   "description": "Transaction maximum retry delay.",
-   "fieldname": "transaction_max_retry_delay_seconds",
-   "fieldtype": "Int",
-   "label": "Max Retry Delay (Seconds)",
-   "non_negative": 1
   },
   {
    "fieldname": "cluster_settings_section",
@@ -561,13 +553,21 @@
    "fieldtype": "Int",
    "label": "Timeout (Seconds)",
    "non_negative": 1
+  },
+  {
+   "depends_on": "eval: doc.type == \"FoundationDB\"",
+   "description": "Transaction maximum retry delay.",
+   "fieldname": "transaction_max_retry_delay",
+   "fieldtype": "Int",
+   "label": "Max Retry Delay (Seconds)",
+   "non_negative": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 11:15:38.916184",
+ "modified": "2025-04-30 11:17:11.696325",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",
