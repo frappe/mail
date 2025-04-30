@@ -54,7 +54,7 @@
   "column_break_gg5z",
   "datacenter",
   "cluster_settings_section",
-  "cluster_retries",
+  "retry_total",
   "cluster_max_wait_ms",
   "cluster_min_wait_ms",
   "column_break_roov",
@@ -287,15 +287,6 @@
    "fieldname": "cluster_read_from_replicas",
    "fieldtype": "Check",
    "label": "Read From Replicas"
-  },
-  {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
-   "description": "Number of retries to connect to the Redis cluster.",
-   "fieldname": "cluster_retries",
-   "fieldtype": "Int",
-   "label": "Retries",
-   "non_negative": 1,
-   "placeholder": "3"
   },
   {
    "fieldname": "column_break_roov",
@@ -561,13 +552,22 @@
    "fieldname": "datacenter",
    "fieldtype": "Data",
    "label": "Data Center ID"
+  },
+  {
+   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
+   "description": "Number of retries to connect to the Redis cluster.",
+   "fieldname": "retry_total",
+   "fieldtype": "Int",
+   "label": "Retries",
+   "non_negative": 1,
+   "placeholder": "3"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 11:08:21.400053",
+ "modified": "2025-04-30 11:11:11.627612",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",

@@ -293,7 +293,7 @@ def get_config_toml(server: str) -> str | None:
 						{
 							"read-from-replicas": bool(store.cluster_read_from_replicas),
 							"retry": {
-								"total": store.cluster_retries,
+								"total": store.retry_total,
 								"max-wait": format_value_or_zero(store.cluster_max_wait_ms, "ms"),
 								"min-wait": format_value_or_zero(store.cluster_min_wait_ms, "ms"),
 							},
