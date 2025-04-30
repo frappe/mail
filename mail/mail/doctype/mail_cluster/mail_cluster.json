@@ -11,7 +11,7 @@
   "inbound",
   "outbound",
   "column_break_fkha",
-  "cluster",
+  "hostname",
   "priority",
   "authentication_section",
   "fallback_admin_user",
@@ -271,17 +271,6 @@
    "reqd": 1
   },
   {
-   "description": "FQDN of the proxy or load balancer forwarding requests to mail servers.",
-   "fieldname": "cluster",
-   "fieldtype": "Data",
-   "label": "Cluster",
-   "no_copy": 1,
-   "placeholder": "mail.frappemail.com",
-   "reqd": 1,
-   "set_only_once": 1,
-   "unique": 1
-  },
-  {
    "fieldname": "proxy_section",
    "fieldtype": "Section Break",
    "label": "Proxy"
@@ -495,6 +484,17 @@
    "label": "Password Secret",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "description": "FQDN of the proxy or load balancer forwarding requests to mail servers.",
+   "fieldname": "hostname",
+   "fieldtype": "Data",
+   "label": "Hostname",
+   "no_copy": 1,
+   "placeholder": "mail.frappemail.com",
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
   }
  ],
  "grid_page_length": 50,
@@ -526,7 +526,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-04-29 23:53:22.214016",
+ "modified": "2025-04-30 12:39:26.719775",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

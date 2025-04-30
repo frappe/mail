@@ -73,13 +73,13 @@ STORAGE_OPTIONS = {
 
 class MailCluster(Document):
 	def autoname(self) -> None:
-		self.cluster = self.cluster.lower()
-		self.name = self.cluster
+		self.hostname = self.hostname.lower()
+		self.name = self.hostname
 
 	def validate(self) -> None:
 		self.validate_enabled()
 		self.validate_public()
-		self.validate_cluster()
+		self.validate_hostname()
 		self.validate_priority()
 		self.validate_fallback_admin_password()
 		self.generate_fallback_admin_secret()
@@ -129,14 +129,14 @@ class MailCluster(Document):
 				alert=True,
 			)
 
-	def validate_cluster(self) -> None:
+	def validate_hostname(self) -> None:
 		"""Validates the cluster and fetches the IP addresses."""
 
-		if self.is_new() and frappe.db.exists("Mail Cluster", self.cluster):
-			frappe.throw(_("Mail Cluster {0} already exists.").format(frappe.bold(self.cluster)))
+		if self.is_new() and frappe.db.exists("Mail Cluster", self.hostname):
+			frappe.throw(_("Mail Cluster {0} already exists.").format(frappe.bold(self.hostname)))
 
-		self.ipv4_addresses = "\n".join([r.address for r in get_dns_record(self.cluster, "A") or []])
-		self.ipv6_addresses = "\n".join([r.address for r in get_dns_record(self.cluster, "AAAA") or []])
+		self.ipv4_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "A") or []])
+		self.ipv6_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "AAAA") or []])
 
 	def validate_priority(self) -> None:
 		"""Validates the priority of the cluster."""
@@ -166,7 +166,7 @@ class MailCluster(Document):
 		"""Validates the base URL of the cluster."""
 
 		if not self.base_url:
-			self.base_url = f"https://{self.cluster}/"
+			self.base_url = f"https://{self.hostname}/"
 
 	def validate_cluster_key(self) -> None:
 		"""Validates the encryption key of the cluster."""
@@ -275,7 +275,7 @@ class MailCluster(Document):
 		if not self.base_url:
 			frappe.throw(_("Base URL is required."))
 
-		name = f"{random_string(10)}-{self.cluster}".lower()
+		name = f"{random_string(10)}-{self.hostname}".lower()
 		secret = generate_secret()
 		principal = Principal(
 			name=name, type="apiKey", secrets=secret, roles=["admin"], enabledPermissions=["authenticate"]

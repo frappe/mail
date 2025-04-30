@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-04-30 12:11+0553\n"
-"PO-Revision-Date: 2025-04-30 12:11+0553\n"
+"POT-Creation-Date: 2025-04-30 12:50+0553\n"
+"PO-Revision-Date: 2025-04-30 12:50+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -868,7 +868,6 @@ msgstr ""
 #. Label of the cluster (Link) field in DocType 'Allowed IP'
 #. Label of the cluster (Link) field in DocType 'Blocked IP'
 #. Label of the cluster (Data) field in DocType 'Incoming Mail'
-#. Label of the cluster (Data) field in DocType 'Mail Cluster'
 #. Label of the cluster (Link) field in DocType 'Mail Server'
 #. Label of the cluster (Link) field in DocType 'Mail Server Request'
 #. Label of the cluster (Link) field in DocType 'Mail Tenant'
@@ -877,7 +876,6 @@ msgstr ""
 #: mail/mail/doctype/allowed_ip/allowed_ip.json
 #: mail/mail/doctype/blocked_ip/blocked_ip.json
 #: mail/mail/doctype/incoming_mail/incoming_mail.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.json
 #: mail/mail/doctype/mail_server/mail_server.json
 #: mail/mail/doctype/mail_server_request/mail_server_request.json
 #: mail/mail/doctype/mail_tenant/mail_tenant.json
@@ -1887,7 +1885,7 @@ msgstr ""
 msgid "FAIL"
 msgstr ""
 
-#. Description of the 'Cluster' (Data) field in DocType 'Mail Cluster'
+#. Description of the 'Hostname' (Data) field in DocType 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "FQDN of the proxy or load balancer forwarding requests to mail servers."
 msgstr ""
@@ -2325,8 +2323,10 @@ msgstr ""
 msgid "Host"
 msgstr ""
 
+#. Label of the hostname (Data) field in DocType 'Mail Cluster'
 #. Label of the hostname (Data) field in DocType 'Mail Server'
 #. Label of the host (Data) field in DocType 'Mail Server Store'
+#: mail/mail/doctype/mail_cluster/mail_cluster.json
 #: mail/mail/doctype/mail_server/mail_server.json
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Hostname"
