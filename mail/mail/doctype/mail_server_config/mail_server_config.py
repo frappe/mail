@@ -188,7 +188,7 @@ def get_config_toml(server: str) -> str | None:
 			config.update({"pool": {"max-connections": store.max_connections}})
 
 		if store.type in ["S3-compatible", "Azure Blob Storage"]:
-			config.update({"key-prefix": store.key_prefix, "max-retries": store.retry_limit})
+			config.update({"key-prefix": store.key_prefix, "max-retries": store.max_retries})
 
 		if store.type in ["PostgreSQL", "mySQL", "Redis/Memcached", "ElasticSearch"]:
 			if not (store.type == "Redis/Memcached" and store.redis_type == "Redis Single Node"):

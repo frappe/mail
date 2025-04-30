@@ -45,7 +45,7 @@
   "compression",
   "min_blob_size",
   "write_buffer_size",
-  "retry_limit",
+  "max_retries",
   "nested_depth",
   "column_break_bsqd",
   "purge_frequency",
@@ -399,13 +399,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: [\"S3-compatible\", \"Azure Blob Storage\"].includes(doc.type)",
-   "description": "The maximum number of times to retry failed requests. Set to 0 to disable retries.",
-   "fieldname": "retry_limit",
-   "fieldtype": "Int",
-   "label": "Retry Limit"
-  },
-  {
    "depends_on": "eval: doc.type == \"S3-compatible\"",
    "description": "The geographical region where the bucket resides.",
    "fieldname": "region",
@@ -561,13 +554,20 @@
    "fieldtype": "Int",
    "label": "Write Buffer Size (MB)",
    "non_negative": 1
+  },
+  {
+   "depends_on": "eval: [\"S3-compatible\", \"Azure Blob Storage\"].includes(doc.type)",
+   "description": "The maximum number of times to retry failed requests. Set to 0 to disable retries.",
+   "fieldname": "max_retries",
+   "fieldtype": "Int",
+   "label": "Retry Limit"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 10:29:14.597264",
+ "modified": "2025-04-30 10:30:48.063622",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",

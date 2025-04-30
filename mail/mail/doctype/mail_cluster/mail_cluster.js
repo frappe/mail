@@ -49,7 +49,7 @@ const STORES_PRESET = {
 		bucket: 'frappemail',
 		key_prefix: 'frappemail/',
 		compression: 'LZ4',
-		retry_limit: 3,
+		max_retries: 3,
 		purge_frequency: '0 3 * * *',
 	},
 	'Redis/Memcached': {
@@ -74,7 +74,7 @@ const STORES_PRESET = {
 		container: 'mail',
 		key_prefix: 'frappemail/',
 		compression: 'LZ4',
-		retry_limit: 3,
+		max_retries: 3,
 		purge_frequency: '0 3 * * *',
 	},
 	Filesystem: {
