@@ -21,7 +21,7 @@
   "host",
   "port",
   "database",
-  "redis_server_type",
+  "redis_type",
   "redis_urls",
   "column_break_offi",
   "max_allowed_packet",
@@ -198,14 +198,14 @@
    "label": "Authentication"
   },
   {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"ElasticSearch\"].includes(doc.type) || (doc.type == \"Redis/Memcached\" && doc.redis_server_type == \"Redis Cluster\")",
+   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"ElasticSearch\"].includes(doc.type) || (doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\")",
    "description": "Username to connect to the database.",
    "fieldname": "username",
    "fieldtype": "Data",
    "label": "Username"
   },
   {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"ElasticSearch\"].includes(doc.type) || (doc.type == \"Redis/Memcached\" && doc.redis_server_type == \"Redis Cluster\")",
+   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"ElasticSearch\"].includes(doc.type) || (doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\")",
    "description": "Password to connect to the database.",
    "fieldname": "password",
    "fieldtype": "Password",
@@ -323,15 +323,6 @@
   },
   {
    "depends_on": "eval: doc.type == \"Redis/Memcached\"",
-   "description": "Type of Redis server.",
-   "fieldname": "redis_server_type",
-   "fieldtype": "Select",
-   "label": "Server Type",
-   "mandatory_depends_on": "eval: doc.type == \"Redis/Memcached\"",
-   "options": "\nRedis Single Node\nRedis Cluster"
-  },
-  {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\"",
    "description": "URL(s) of the Redis server(s).",
    "fieldname": "redis_urls",
    "fieldtype": "Small Text",
@@ -345,14 +336,14 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_server_type == \"Redis Cluster\"",
+   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
    "description": "Whether to read from replicas.",
    "fieldname": "cluster_read_from_replicas",
    "fieldtype": "Check",
    "label": "Read From Replicas"
   },
   {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_server_type == \"Redis Cluster\"",
+   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
    "description": "Number of retries to connect to the Redis cluster.",
    "fieldname": "cluster_retries",
    "fieldtype": "Int",
@@ -365,7 +356,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_server_type == \"Redis Cluster\"",
+   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
    "description": "Maximum time to wait between retries.",
    "fieldname": "cluster_max_wait_ms",
    "fieldtype": "Int",
@@ -373,7 +364,7 @@
    "non_negative": 1
   },
   {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_server_type == \"Redis Cluster\"",
+   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
    "description": "Minimum time to wait between retries.",
    "fieldname": "cluster_min_wait_ms",
    "fieldtype": "Int",
@@ -561,13 +552,22 @@
    "fieldtype": "Int",
    "label": "Timeout (Seconds)",
    "non_negative": 1
+  },
+  {
+   "depends_on": "eval: doc.type == \"Redis/Memcached\"",
+   "description": "Type of Redis server.",
+   "fieldname": "redis_type",
+   "fieldtype": "Select",
+   "label": "Server Type",
+   "mandatory_depends_on": "eval: doc.type == \"Redis/Memcached\"",
+   "options": "\nRedis Single Node\nRedis Cluster"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 09:53:37.883276",
+ "modified": "2025-04-30 09:58:50.457254",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",

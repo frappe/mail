@@ -54,7 +54,7 @@ const STORES_PRESET = {
 	},
 	'Redis/Memcached': {
 		store_id: 'redis',
-		redis_server_type: 'Redis Single Node',
+		redis_type: 'Redis Single Node',
 		redis_urls: 'redis://127.0.0.1',
 		timeout: 15,
 		username: 'frappemail',
@@ -203,7 +203,7 @@ frappe.ui.form.on('Mail Server Store', {
 		refresh_field('stores')
 	},
 
-	redis_server_type() {
+	redis_type() {
 		refresh_field('stores')
 	},
 })

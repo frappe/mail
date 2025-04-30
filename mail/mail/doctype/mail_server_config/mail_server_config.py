@@ -191,7 +191,7 @@ def get_config_toml(server: str) -> str | None:
 			config.update({"key-prefix": store.key_prefix, "max-retries": store.retry_limit})
 
 		if store.type in ["PostgreSQL", "mySQL", "Redis/Memcached", "ElasticSearch"]:
-			if not (store.type == "Redis/Memcached" and store.redis_server_type == "Redis Single Node"):
+			if not (store.type == "Redis/Memcached" and store.redis_type == "Redis Single Node"):
 				config.update({"user": store.username, "password": password_or_none(store, "password")})
 
 		if store.type in ["PostgreSQL", "mySQL", "S3-compatible", "Redis/Memcached", "Azure Blob Storage"]:
@@ -280,7 +280,7 @@ def get_config_toml(server: str) -> str | None:
 				)
 
 			case "Redis/Memcached":
-				redis_type = "single" if store.redis_server_type == "Redis Single Node" else "cluster"
+				redis_type = "single" if store.redis_type == "Redis Single Node" else "cluster"
 				config.update(
 					{
 						"redis-type": redis_type,
