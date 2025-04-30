@@ -65,7 +65,7 @@
   "column_break_q4si",
   "transaction_retry_limit",
   "tls_section",
-  "enable_tls",
+  "tls_enable",
   "allow_invalid_certs",
   "pools_section",
   "thread_pool_size",
@@ -183,14 +183,6 @@
    "fieldname": "tls_section",
    "fieldtype": "Section Break",
    "label": "TLS"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
-   "description": "Use TLS to connect to the store.",
-   "fieldname": "enable_tls",
-   "fieldtype": "Check",
-   "label": "Enable TLS"
   },
   {
    "default": "0",
@@ -561,13 +553,21 @@
    "fieldtype": "Int",
    "label": "Max Retry Delay (Seconds)",
    "non_negative": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
+   "description": "Use TLS to connect to the store.",
+   "fieldname": "tls_enable",
+   "fieldtype": "Check",
+   "label": "Enable TLS"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 11:17:11.696325",
+ "modified": "2025-04-30 11:18:25.551701",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",

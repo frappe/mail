@@ -254,7 +254,7 @@ def get_config_toml(server: str) -> str | None:
 						"port": store.port,
 						"database": store.database,
 						"tls": {
-							"enable": bool(store.enable_tls),
+							"enable": bool(store.tls_enable),
 							"allow-invalid-certs": bool(store.allow_invalid_certs),
 						},
 					}
