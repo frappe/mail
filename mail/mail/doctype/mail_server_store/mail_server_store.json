@@ -48,7 +48,7 @@
   "retry_limit",
   "nested_depth",
   "column_break_bsqd",
-  "purge_frequency_cron",
+  "purge_frequency",
   "cluster_ids_section",
   "machine_id",
   "column_break_gg5z",
@@ -156,15 +156,6 @@
   {
    "fieldname": "column_break_bsqd",
    "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: [\"RocksDB\", \"FoundationDB\", \"PostgreSQL\", \"mySQL\", \"SQLite\", \"S3-compatible\", \"Azure Blob Storage\", \"Filesystem\"].includes(doc.type)",
-   "description": "How often to purge the database. Expects a cron expression.\n\n<br>\n<br>\n\n<pre>*  *  *  *  *\n\u252c  \u252c  \u252c  \u252c  \u252c\n\u2502  \u2502  \u2502  \u2502  \u2502\n\u2502  \u2502  \u2502  \u2502  \u2514 day of week (0 - 6) (0 is Sunday)\n\u2502  \u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500 month (1 - 12)\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 day of month (1 - 31)\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 hour (0 - 23)\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 minute (0 - 59)\n\n---\n\n* - Any value\n/ - Step values\n</pre>",
-   "fieldname": "purge_frequency_cron",
-   "fieldtype": "Data",
-   "label": "Purge Frequency (Cron)",
-   "not_nullable": 1,
-   "placeholder": "0 3 * * *"
   },
   {
    "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
@@ -561,13 +552,22 @@
    "fieldname": "sas_token",
    "fieldtype": "Password",
    "label": "SAS Token"
+  },
+  {
+   "depends_on": "eval: [\"RocksDB\", \"FoundationDB\", \"PostgreSQL\", \"mySQL\", \"SQLite\", \"S3-compatible\", \"Azure Blob Storage\", \"Filesystem\"].includes(doc.type)",
+   "description": "How often to purge the database. Expects a cron expression.\n\n<br>\n<br>\n\n<pre>*  *  *  *  *\n\u252c  \u252c  \u252c  \u252c  \u252c\n\u2502  \u2502  \u2502  \u2502  \u2502\n\u2502  \u2502  \u2502  \u2502  \u2514 day of week (0 - 6) (0 is Sunday)\n\u2502  \u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500 month (1 - 12)\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 day of month (1 - 31)\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 hour (0 - 23)\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 minute (0 - 59)\n\n---\n\n* - Any value\n/ - Step values\n</pre>",
+   "fieldname": "purge_frequency",
+   "fieldtype": "Data",
+   "label": "Purge Frequency (Cron)",
+   "not_nullable": 1,
+   "placeholder": "0 3 * * *"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 10:23:23.748350",
+ "modified": "2025-04-30 10:26:13.693332",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",

@@ -23,7 +23,7 @@ DEFAULT_STORES = [
 		"compression": "LZ4",
 		"min_blob_size_bytes": 16834,
 		"write_buffer_size_mb": 128,
-		"purge_frequency_cron": "0 3 * * *",
+		"purge_frequency": "0 3 * * *",
 	}
 ]
 DEFAULT_LISTENERS = [
@@ -186,8 +186,8 @@ class MailCluster(Document):
 
 			store_ids.append(store.store_id)
 
-			if store.purge_frequency_cron:
-				is_valid_cron_expression(store.purge_frequency_cron, raise_exception=True)
+			if store.purge_frequency:
+				is_valid_cron_expression(store.purge_frequency, raise_exception=True)
 
 	def validate_storage(self) -> None:
 		"""Validates the selected stores against the stores."""

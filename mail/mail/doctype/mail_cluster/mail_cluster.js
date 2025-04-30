@@ -8,12 +8,12 @@ const STORES_PRESET = {
 		compression: 'LZ4',
 		min_blob_size_bytes: 16834,
 		write_buffer_size_mb: 128,
-		purge_frequency_cron: '0 3 * * *',
+		purge_frequency: '0 3 * * *',
 	},
 	FoundationDB: {
 		store_id: 'foundationdb',
 		compression: 'LZ4',
-		purge_frequency_cron: '0 3 * * *',
+		purge_frequency: '0 3 * * *',
 	},
 	PostgreSQL: {
 		store_id: 'postgresql',
@@ -22,7 +22,7 @@ const STORES_PRESET = {
 		timeout: 15,
 		user: 'frappemail',
 		compression: 'LZ4',
-		purge_frequency_cron: '0 3 * * *',
+		purge_frequency: '0 3 * * *',
 		max_connections: 10,
 	},
 	mySQL: {
@@ -32,7 +32,7 @@ const STORES_PRESET = {
 		timeout: 15,
 		user: 'frappemail',
 		compression: 'LZ4',
-		purge_frequency_cron: '0 3 * * *',
+		purge_frequency: '0 3 * * *',
 		max_connections: 10,
 		min_connections: 5,
 	},
@@ -40,7 +40,7 @@ const STORES_PRESET = {
 		store_id: 'sqlite',
 		path: '/var/lib/data/index.sqlite3',
 		compression: 'LZ4',
-		purge_frequency_cron: '0 3 * * *',
+		purge_frequency: '0 3 * * *',
 		max_connections: 10,
 	},
 	'S3-compatible': {
@@ -50,7 +50,7 @@ const STORES_PRESET = {
 		key_prefix: 'frappemail/',
 		compression: 'LZ4',
 		retry_limit: 3,
-		purge_frequency_cron: '0 3 * * *',
+		purge_frequency: '0 3 * * *',
 	},
 	'Redis/Memcached': {
 		store_id: 'redis',
@@ -75,13 +75,13 @@ const STORES_PRESET = {
 		key_prefix: 'frappemail/',
 		compression: 'LZ4',
 		retry_limit: 3,
-		purge_frequency_cron: '0 3 * * *',
+		purge_frequency: '0 3 * * *',
 	},
 	Filesystem: {
 		store_id: 'filesystem',
 		path: '/var/lib/data/blobs',
 		compression: 'LZ4',
-		purge_frequency_cron: '0 3 * * *',
+		purge_frequency: '0 3 * * *',
 		nested_depth: 2,
 	},
 }

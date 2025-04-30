@@ -210,7 +210,7 @@ def get_config_toml(server: str) -> str | None:
 			config.update(
 				{
 					"compression": store.compression.lower(),
-					"purge": {"frequency": store.purge_frequency_cron},
+					"purge": {"frequency": store.purge_frequency},
 				}
 			)
 
