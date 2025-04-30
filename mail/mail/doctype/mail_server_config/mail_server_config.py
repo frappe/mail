@@ -295,7 +295,7 @@ def get_config_toml(server: str) -> str | None:
 							"retry": {
 								"total": store.retry_total,
 								"max-wait": format_value_or_zero(store.retry_max_wait, "ms"),
-								"min-wait": format_value_or_zero(store.cluster_min_wait_ms, "ms"),
+								"min-wait": format_value_or_zero(store.retry_min_wait, "ms"),
 							},
 						}
 					)
