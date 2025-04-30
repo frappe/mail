@@ -70,7 +70,7 @@ const STORES_PRESET = {
 	'Azure Blob Storage': {
 		store_id: 'azure',
 		timeout: 15,
-		storage_account_name: 'frappe',
+		storage_account: 'frappe',
 		container: 'mail',
 		key_prefix: 'frappemail/',
 		compression: 'LZ4',

@@ -316,7 +316,7 @@ def get_config_toml(server: str) -> str | None:
 			case "Azure Blob Storage":
 				config.update(
 					{
-						"storage-account": store.storage_account_name,
+						"storage-account": store.storage_account,
 						"container": store.container,
 						"azure-access-key": password_or_none(store, "azure_access_key"),
 						"sas-token": password_or_none(store, "azure_sas_token"),
