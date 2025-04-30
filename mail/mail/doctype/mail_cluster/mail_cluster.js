@@ -58,7 +58,7 @@ const STORES_PRESET = {
 		urls: 'redis://127.0.0.1',
 		timeout: 15,
 		user: 'frappemail',
-		cluster_read_from_replicas: 1,
+		read_from_replicas: 1,
 	},
 	ElasticSearch: {
 		store_id: 'elasticsearch',

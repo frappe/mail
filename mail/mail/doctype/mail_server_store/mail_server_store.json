@@ -58,7 +58,7 @@
   "cluster_max_wait_ms",
   "cluster_min_wait_ms",
   "column_break_roov",
-  "cluster_read_from_replicas",
+  "read_from_replicas",
   "transaction_settings_section",
   "transaction_timeout_seconds",
   "transaction_max_retry_delay_seconds",
@@ -279,14 +279,6 @@
    "fieldname": "cluster_settings_section",
    "fieldtype": "Section Break",
    "label": "Cluster Settings"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
-   "description": "Whether to read from replicas.",
-   "fieldname": "cluster_read_from_replicas",
-   "fieldtype": "Check",
-   "label": "Read From Replicas"
   },
   {
    "fieldname": "column_break_roov",
@@ -561,13 +553,21 @@
    "label": "Retries",
    "non_negative": 1,
    "placeholder": "3"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
+   "description": "Whether to read from replicas.",
+   "fieldname": "read_from_replicas",
+   "fieldtype": "Check",
+   "label": "Read From Replicas"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 11:11:11.627612",
+ "modified": "2025-04-30 11:12:14.689062",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",
