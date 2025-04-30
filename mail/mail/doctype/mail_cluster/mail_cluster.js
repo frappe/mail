@@ -64,7 +64,7 @@ const STORES_PRESET = {
 		store_id: 'elasticsearch',
 		url: 'http://localhost:9200',
 		user: 'frappemail',
-		number_of_shards: 3,
+		index_shards: 3,
 		number_of_replicas: 0,
 	},
 	'Azure Blob Storage': {
