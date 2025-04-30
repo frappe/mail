@@ -50,7 +50,7 @@
   "column_break_bsqd",
   "purge_frequency",
   "cluster_ids_section",
-  "machine_id",
+  "machine",
   "column_break_gg5z",
   "data_center_id",
   "cluster_settings_section",
@@ -236,13 +236,6 @@
    "fieldname": "cluster_ids_section",
    "fieldtype": "Section Break",
    "label": "Cluster IDs"
-  },
-  {
-   "depends_on": "eval: doc.type == \"FoundationDB\"",
-   "description": "Machine ID in the FoundationDB cluster.",
-   "fieldname": "machine_id",
-   "fieldtype": "Data",
-   "label": "Machine ID"
   },
   {
    "depends_on": "eval: doc.type == \"FoundationDB\"",
@@ -561,13 +554,20 @@
    "fieldtype": "Int",
    "label": "Nested Depth",
    "non_negative": 1
+  },
+  {
+   "depends_on": "eval: doc.type == \"FoundationDB\"",
+   "description": "Machine ID in the FoundationDB cluster.",
+   "fieldname": "machine",
+   "fieldtype": "Data",
+   "label": "Machine ID"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 10:32:13.353434",
+ "modified": "2025-04-30 11:07:28.857335",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",
