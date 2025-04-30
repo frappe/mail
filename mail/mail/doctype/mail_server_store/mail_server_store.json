@@ -39,7 +39,7 @@
   "azure_access_key",
   "column_break_r24o",
   "password",
-  "s3_security_token",
+  "security_token",
   "azure_sas_token",
   "storage_settings_section",
   "compression",
@@ -462,14 +462,6 @@
   },
   {
    "depends_on": "eval: doc.type == \"S3-compatible\"",
-   "description": "The security token for the S3 account.",
-   "fieldname": "s3_security_token",
-   "fieldtype": "Password",
-   "label": "Security Token",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
-  },
-  {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
    "description": "The secret key for the S3 account.",
    "fieldname": "s3_secret_key",
    "fieldtype": "Password",
@@ -561,13 +553,21 @@
    "fieldtype": "Password",
    "label": "Access Key",
    "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
+  },
+  {
+   "depends_on": "eval: doc.type == \"S3-compatible\"",
+   "description": "The security token for the S3 account.",
+   "fieldname": "security_token",
+   "fieldtype": "Password",
+   "label": "Security Token",
+   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 10:19:45.361125",
+ "modified": "2025-04-30 10:20:42.012923",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",
