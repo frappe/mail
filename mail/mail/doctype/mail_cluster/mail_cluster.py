@@ -21,7 +21,7 @@ DEFAULT_STORES = [
 		"store_id": "rocksdb",
 		"path": "/opt/stalwart-mail/data",
 		"compression": "LZ4",
-		"min_blob_size_bytes": 16834,
+		"min_blob_size": 16834,
 		"write_buffer_size_mb": 128,
 		"purge_frequency": "0 3 * * *",
 	}

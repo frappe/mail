@@ -224,7 +224,7 @@ def get_config_toml(server: str) -> str | None:
 				if store.type == "RocksDB":
 					config.update(
 						{
-							"min-blob-size": store.min_blob_size_bytes,
+							"min-blob-size": store.min_blob_size,
 							"write-buffer-size": store.write_buffer_size_mb,
 						}
 					)
