@@ -65,7 +65,7 @@ const STORES_PRESET = {
 		url: 'http://localhost:9200',
 		user: 'frappemail',
 		index_shards: 3,
-		number_of_replicas: 0,
+		index_replicas: 0,
 	},
 	'Azure Blob Storage': {
 		store_id: 'azure',

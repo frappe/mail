@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-04-30 00:25+0553\n"
-"PO-Revision-Date: 2025-04-30 00:25+0553\n"
+"POT-Creation-Date: 2025-04-30 11:31+0553\n"
+"PO-Revision-Date: 2025-04-30 11:31+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -96,9 +96,9 @@ msgstr ""
 msgid "Accepted"
 msgstr ""
 
-#. Label of the s3_access_key (Password) field in DocType 'Mail Server Store'
 #. Label of the azure_access_key (Password) field in DocType 'Mail Server
 #. Store'
+#. Label of the access_key (Password) field in DocType 'Mail Server Store'
 #. Label of the dns_provider_access_key (Data) field in DocType 'Mail Settings'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 #: mail/mail/doctype/mail_settings/mail_settings.json
@@ -303,7 +303,7 @@ msgstr ""
 msgid "Allow Business Signup"
 msgstr ""
 
-#. Label of the allow_invalid_certs (Check) field in DocType 'Mail Server
+#. Label of the tls_allow_invalid_certs (Check) field in DocType 'Mail Server
 #. Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Allow Invalid Certs"
@@ -673,7 +673,7 @@ msgstr ""
 msgid "Bounce History"
 msgstr ""
 
-#. Label of the bucket_name (Data) field in DocType 'Mail Server Store'
+#. Label of the bucket (Data) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Bucket"
 msgstr ""
@@ -1210,7 +1210,7 @@ msgstr ""
 msgid "DSN Report"
 msgstr ""
 
-#. Label of the data_center_id (Data) field in DocType 'Mail Server Store'
+#. Label of the datacenter (Data) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Data Center ID"
 msgstr ""
@@ -1718,7 +1718,7 @@ msgstr ""
 msgid "Enable Spam Detection"
 msgstr ""
 
-#. Label of the enable_tls (Check) field in DocType 'Mail Server Store'
+#. Label of the tls_enable (Check) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Enable TLS"
 msgstr ""
@@ -2325,7 +2325,7 @@ msgstr ""
 msgid "Host"
 msgstr ""
 
-#. Label of the hostname (Data) field in DocType 'Mail Server Store'
+#. Label of the host (Data) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Hostname"
 msgstr ""
@@ -2852,7 +2852,7 @@ msgstr ""
 msgid "MX record priority for handling inbound mail. Lower values have higher priority."
 msgstr ""
 
-#. Label of the machine_id (Data) field in DocType 'Mail Server Store'
+#. Label of the machine (Data) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Machine ID"
 msgstr ""
@@ -3199,8 +3199,7 @@ msgstr ""
 msgid "Marking as Unread..."
 msgstr ""
 
-#. Label of the max_allowed_packet_bytes (Int) field in DocType 'Mail Server
-#. Store'
+#. Label of the max_allowed_packet (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Max Allowed Packet (Bytes)"
 msgstr ""
@@ -3211,14 +3210,14 @@ msgid "Max Attempts"
 msgstr ""
 
 #. Label of the server_max_connections (Int) field in DocType 'Mail Server'
-#. Label of the max_connections (Int) field in DocType 'Mail Server Store'
+#. Label of the pool_max_connections (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server/mail_server.json
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Max Connections"
 msgstr ""
 
-#. Label of the transaction_max_retry_delay_seconds (Int) field in DocType
-#. 'Mail Server Store'
+#. Label of the transaction_max_retry_delay (Int) field in DocType 'Mail Server
+#. Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Max Retry Delay (Seconds)"
 msgstr ""
@@ -3228,7 +3227,7 @@ msgstr ""
 msgid "Max Subscriptions"
 msgstr ""
 
-#. Label of the cluster_max_wait_ms (Int) field in DocType 'Mail Server Store'
+#. Label of the retry_max_wait (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Max Wait (Milliseconds)"
 msgstr ""
@@ -3509,17 +3508,17 @@ msgstr ""
 msgid "Methods"
 msgstr ""
 
-#. Label of the min_blob_size_bytes (Int) field in DocType 'Mail Server Store'
+#. Label of the min_blob_size (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Min Blob Size (Bytes)"
 msgstr ""
 
-#. Label of the min_connections (Int) field in DocType 'Mail Server Store'
+#. Label of the pool_min_connections (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Min Connections"
 msgstr ""
 
-#. Label of the cluster_min_wait_ms (Int) field in DocType 'Mail Server Store'
+#. Label of the retry_min_wait (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Min Wait (Milliseconds)"
 msgstr ""
@@ -3601,7 +3600,7 @@ msgstr ""
 msgid "Need to switch accounts? Log out."
 msgstr ""
 
-#. Label of the nested_depth (Int) field in DocType 'Mail Server Store'
+#. Label of the depth (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Nested Depth"
 msgstr ""
@@ -3753,12 +3752,12 @@ msgstr ""
 msgid "Notification Types"
 msgstr ""
 
-#. Label of the number_of_replicas (Int) field in DocType 'Mail Server Store'
+#. Label of the index_replicas (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Number of Replicas"
 msgstr ""
 
-#. Label of the number_of_shards (Int) field in DocType 'Mail Server Store'
+#. Label of the index_shards (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Number of Shards"
 msgstr ""
@@ -4286,8 +4285,7 @@ msgstr ""
 msgid "Public key used to authenticate API requests."
 msgstr ""
 
-#. Label of the purge_frequency_cron (Data) field in DocType 'Mail Server
-#. Store'
+#. Label of the purge_frequency (Data) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Purge Frequency (Cron)"
 msgstr ""
@@ -4335,8 +4333,7 @@ msgstr ""
 msgid "Raw Message"
 msgstr ""
 
-#. Label of the cluster_read_from_replicas (Check) field in DocType 'Mail
-#. Server Store'
+#. Label of the read_from_replicas (Check) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Read From Replicas"
 msgstr ""
@@ -4412,7 +4409,7 @@ msgstr ""
 msgid "Redis Single Node"
 msgstr ""
 
-#. Label of the redis_urls (Small Text) field in DocType 'Mail Server Store'
+#. Label of the urls (Small Text) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Redis URL(s)"
 msgstr ""
@@ -4671,7 +4668,7 @@ msgstr ""
 msgid "Resuming Queue..."
 msgstr ""
 
-#. Label of the cluster_retries (Int) field in DocType 'Mail Server Store'
+#. Label of the retry_total (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Retries"
 msgstr ""
@@ -4693,7 +4690,7 @@ msgstr ""
 
 #. Label of the transaction_retry_limit (Int) field in DocType 'Mail Server
 #. Store'
-#. Label of the retry_limit (Int) field in DocType 'Mail Server Store'
+#. Label of the max_retries (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Retry Limit"
 msgstr ""
@@ -4797,7 +4794,7 @@ msgstr ""
 msgid "S3-compatible"
 msgstr ""
 
-#. Label of the azure_sas_token (Password) field in DocType 'Mail Server Store'
+#. Label of the sas_token (Password) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "SAS Token"
 msgstr ""
@@ -4894,7 +4891,7 @@ msgstr ""
 msgid "Secret"
 msgstr ""
 
-#. Label of the s3_secret_key (Password) field in DocType 'Mail Server Store'
+#. Label of the secret_key (Password) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Secret Key"
 msgstr ""
@@ -4910,8 +4907,7 @@ msgstr ""
 msgid "Secret used along with the auth key for secure access."
 msgstr ""
 
-#. Label of the s3_security_token (Password) field in DocType 'Mail Server
-#. Store'
+#. Label of the security_token (Password) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Security Token"
 msgstr ""
@@ -5043,7 +5039,7 @@ msgstr ""
 msgid "Server Response"
 msgstr ""
 
-#. Label of the redis_server_type (Select) field in DocType 'Mail Server Store'
+#. Label of the redis_type (Select) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Server Type"
 msgstr ""
@@ -5251,8 +5247,7 @@ msgstr ""
 msgid "Storage"
 msgstr ""
 
-#. Label of the storage_account_name (Data) field in DocType 'Mail Server
-#. Store'
+#. Label of the storage_account (Data) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Storage Account Name"
 msgstr ""
@@ -5761,7 +5756,7 @@ msgstr ""
 msgid "Thread ID"
 msgstr ""
 
-#. Label of the thread_pool_size (Int) field in DocType 'Mail Server Store'
+#. Label of the workers (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Thread Pool Size"
 msgstr ""
@@ -5835,9 +5830,8 @@ msgstr ""
 msgid "Timed out waiting for response from SpamAssassin."
 msgstr ""
 
-#. Label of the timeout_seconds (Int) field in DocType 'Mail Server Store'
-#. Label of the transaction_timeout_seconds (Int) field in DocType 'Mail Server
-#. Store'
+#. Label of the timeout (Int) field in DocType 'Mail Server Store'
+#. Label of the transaction_timeout (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Timeout (Seconds)"
 msgstr ""
@@ -6235,7 +6229,7 @@ msgid "User {0} is not authorized to invite users to the tenant."
 msgstr ""
 
 #. Label of the fallback_admin_user (Data) field in DocType 'Mail Cluster'
-#. Label of the username (Data) field in DocType 'Mail Server Store'
+#. Label of the user (Data) field in DocType 'Mail Server Store'
 #. Label of the dns_provider_username (Data) field in DocType 'Mail Settings'
 #: frontend/src/components/Modals/AddAliasModal.vue:21
 #: frontend/src/components/Modals/AddGroupModal.vue:20
@@ -6391,7 +6385,7 @@ msgstr ""
 msgid "Whether to use implicit TLS."
 msgstr ""
 
-#. Label of the write_buffer_size_mb (Int) field in DocType 'Mail Server Store'
+#. Label of the write_buffer_size (Int) field in DocType 'Mail Server Store'
 #: mail/mail/doctype/mail_server_store/mail_server_store.json
 msgid "Write Buffer Size (MB)"
 msgstr ""

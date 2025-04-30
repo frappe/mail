@@ -306,7 +306,7 @@ def get_config_toml(server: str) -> str | None:
 						"tls": {"allow-invalid-certs": bool(store.tls_allow_invalid_certs)},
 						"index": {
 							"shards": store.index_shards,
-							"replicas": store.number_of_replicas,
+							"replicas": store.index_replicas,
 						},
 					}
 				)

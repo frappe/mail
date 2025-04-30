@@ -75,7 +75,7 @@
   "index_section",
   "index_shards",
   "column_break_5nye",
-  "number_of_replicas"
+  "index_replicas"
  ],
  "fields": [
   {
@@ -247,14 +247,6 @@
    "fieldname": "index_section",
    "fieldtype": "Section Break",
    "label": "Index"
-  },
-  {
-   "depends_on": "eval: doc.type == \"ElasticSearch\"",
-   "description": "Number of replicas for the index.",
-   "fieldname": "number_of_replicas",
-   "fieldtype": "Int",
-   "label": "Number of Replicas",
-   "non_negative": 1
   },
   {
    "fieldname": "column_break_5nye",
@@ -561,13 +553,21 @@
    "fieldtype": "Int",
    "label": "Number of Shards",
    "non_negative": 1
+  },
+  {
+   "depends_on": "eval: doc.type == \"ElasticSearch\"",
+   "description": "Number of replicas for the index.",
+   "fieldname": "index_replicas",
+   "fieldtype": "Int",
+   "label": "Number of Replicas",
+   "non_negative": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 11:26:41.617852",
+ "modified": "2025-04-30 11:27:31.938711",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",
