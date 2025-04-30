@@ -319,7 +319,7 @@ def get_config_toml(server: str) -> str | None:
 						"storage-account": store.storage_account,
 						"container": store.container,
 						"azure-access-key": password_or_none(store, "azure_access_key"),
-						"sas-token": password_or_none(store, "azure_sas_token"),
+						"sas-token": password_or_none(store, "sas_token"),
 					}
 				)
 

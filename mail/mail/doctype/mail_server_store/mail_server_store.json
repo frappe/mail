@@ -40,7 +40,7 @@
   "column_break_r24o",
   "password",
   "security_token",
-  "azure_sas_token",
+  "sas_token",
   "storage_settings_section",
   "compression",
   "min_blob_size_bytes",
@@ -468,13 +468,6 @@
    "label": "Access Key"
   },
   {
-   "depends_on": "eval: doc.type == \"Azure Blob Storage\"",
-   "description": "SAS Token, when not using access-key based authentication.",
-   "fieldname": "azure_sas_token",
-   "fieldtype": "Password",
-   "label": "SAS Token"
-  },
-  {
    "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
    "description": "Hostname of the database server.",
    "fieldname": "host",
@@ -561,13 +554,20 @@
    "fieldtype": "Password",
    "label": "Secret Key",
    "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
+  },
+  {
+   "depends_on": "eval: doc.type == \"Azure Blob Storage\"",
+   "description": "SAS Token, when not using access-key based authentication.",
+   "fieldname": "sas_token",
+   "fieldtype": "Password",
+   "label": "SAS Token"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 10:22:12.573360",
+ "modified": "2025-04-30 10:23:23.748350",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",
