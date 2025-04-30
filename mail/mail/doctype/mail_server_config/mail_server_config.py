@@ -236,7 +236,7 @@ def get_config_toml(server: str) -> str | None:
 					{
 						"cluster-file": store.cluster_file,
 						"transaction": {
-							"timeout": format_value_or_zero(store.transaction_timeout_seconds, "s"),
+							"timeout": format_value_or_zero(store.transaction_timeout, "s"),
 							"retry-limit": store.transaction_retry_limit,
 							"max-retry-delay": format_value_or_zero(
 								store.transaction_max_retry_delay_seconds, "s"
