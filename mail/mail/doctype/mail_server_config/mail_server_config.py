@@ -219,7 +219,7 @@ def get_config_toml(server: str) -> str | None:
 				config["path"] = store.path
 
 				if store.type in ["RocksDB", "SQLite"]:
-					config["workers"] = store.thread_pool_size
+					config["workers"] = store.workers
 
 				if store.type == "RocksDB":
 					config.update(
