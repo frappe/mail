@@ -44,7 +44,7 @@
   "storage_settings_section",
   "compression",
   "min_blob_size",
-  "write_buffer_size_mb",
+  "write_buffer_size",
   "retry_limit",
   "nested_depth",
   "column_break_bsqd",
@@ -132,14 +132,6 @@
    "fieldtype": "Int",
    "label": "Thread Pool Size",
    "placeholder": "8"
-  },
-  {
-   "depends_on": "eval: doc.type == \"RocksDB\"",
-   "description": "Size of the write buffer in bytes, used to batch writes to the store.",
-   "fieldname": "write_buffer_size_mb",
-   "fieldtype": "Int",
-   "label": "Write Buffer Size (MB)",
-   "non_negative": 1
   },
   {
    "fieldname": "column_break_uo3q",
@@ -561,13 +553,21 @@
    "fieldtype": "Int",
    "label": "Min Blob Size (Bytes)",
    "non_negative": 1
+  },
+  {
+   "depends_on": "eval: doc.type == \"RocksDB\"",
+   "description": "Size of the write buffer in bytes, used to batch writes to the store.",
+   "fieldname": "write_buffer_size",
+   "fieldtype": "Int",
+   "label": "Write Buffer Size (MB)",
+   "non_negative": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 10:27:52.592442",
+ "modified": "2025-04-30 10:29:14.597264",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",

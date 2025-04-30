@@ -22,7 +22,7 @@ DEFAULT_STORES = [
 		"path": "/opt/stalwart-mail/data",
 		"compression": "LZ4",
 		"min_blob_size": 16834,
-		"write_buffer_size_mb": 128,
+		"write_buffer_size": 128,
 		"purge_frequency": "0 3 * * *",
 	}
 ]

@@ -225,7 +225,7 @@ def get_config_toml(server: str) -> str | None:
 					config.update(
 						{
 							"min-blob-size": store.min_blob_size,
-							"write-buffer-size": store.write_buffer_size_mb,
+							"write-buffer-size": store.write_buffer_size,
 						}
 					)
 				elif store.type == "Filesystem":
