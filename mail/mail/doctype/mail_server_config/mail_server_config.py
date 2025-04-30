@@ -229,7 +229,7 @@ def get_config_toml(server: str) -> str | None:
 						}
 					)
 				elif store.type == "Filesystem":
-					config["depth"] = store.nested_depth
+					config["depth"] = store.depth
 
 			case "FoundationDB":
 				config.update(

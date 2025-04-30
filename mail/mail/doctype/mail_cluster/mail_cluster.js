@@ -82,7 +82,7 @@ const STORES_PRESET = {
 		path: '/var/lib/data/blobs',
 		compression: 'LZ4',
 		purge_frequency: '0 3 * * *',
-		nested_depth: 2,
+		depth: 2,
 	},
 }
 
