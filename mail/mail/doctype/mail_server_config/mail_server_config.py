@@ -252,7 +252,7 @@ def get_config_toml(server: str) -> str | None:
 			case "PostgreSQL" | "mySQL":
 				config.update(
 					{
-						"host": store.hostname,
+						"host": store.host,
 						"port": store.port,
 						"database": store.database,
 						"tls": {

@@ -18,7 +18,7 @@
   "url",
   "cloud_id",
   "configuration_section",
-  "hostname",
+  "host",
   "port",
   "database",
   "redis_server_type",
@@ -165,14 +165,6 @@
    "label": "Purge Frequency (Cron)",
    "not_nullable": 1,
    "placeholder": "0 3 * * *"
-  },
-  {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
-   "description": "Hostname of the database server.",
-   "fieldname": "hostname",
-   "fieldtype": "Data",
-   "label": "Hostname",
-   "mandatory_depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)"
   },
   {
    "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
@@ -561,13 +553,21 @@
    "fieldname": "azure_sas_token",
    "fieldtype": "Password",
    "label": "SAS Token"
+  },
+  {
+   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
+   "description": "Hostname of the database server.",
+   "fieldname": "host",
+   "fieldtype": "Data",
+   "label": "Hostname",
+   "mandatory_depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-17 16:07:59.203875",
+ "modified": "2025-04-30 09:48:48.927344",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",
