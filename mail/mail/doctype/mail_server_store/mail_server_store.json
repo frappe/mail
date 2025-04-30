@@ -24,7 +24,7 @@
   "redis_server_type",
   "redis_urls",
   "column_break_offi",
-  "max_allowed_packet_bytes",
+  "max_allowed_packet",
   "timeout_seconds",
   "bucket_storage_account_section",
   "bucket_name",
@@ -182,14 +182,6 @@
    "fieldtype": "Data",
    "label": "Database",
    "mandatory_depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)"
-  },
-  {
-   "depends_on": "eval: doc.type == \"mySQL\"",
-   "description": "Maximum size of a packet in bytes.",
-   "fieldname": "max_allowed_packet_bytes",
-   "fieldtype": "Int",
-   "label": "Max Allowed Packet (Bytes)",
-   "non_negative": 1
   },
   {
    "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"S3-compatible\", \"Redis/Memcached\", \"Azure Blob Storage\"].includes(doc.type)",
@@ -561,13 +553,21 @@
    "fieldtype": "Data",
    "label": "Hostname",
    "mandatory_depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: doc.type == \"mySQL\"",
+   "description": "Maximum size of a packet in bytes.",
+   "fieldname": "max_allowed_packet",
+   "fieldtype": "Int",
+   "label": "Max Allowed Packet (Bytes)",
+   "non_negative": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 09:48:48.927344",
+ "modified": "2025-04-30 09:51:21.380380",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",
