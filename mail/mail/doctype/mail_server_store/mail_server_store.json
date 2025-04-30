@@ -52,7 +52,7 @@
   "cluster_ids_section",
   "machine",
   "column_break_gg5z",
-  "data_center_id",
+  "datacenter",
   "cluster_settings_section",
   "cluster_retries",
   "cluster_max_wait_ms",
@@ -236,13 +236,6 @@
    "fieldname": "cluster_ids_section",
    "fieldtype": "Section Break",
    "label": "Cluster IDs"
-  },
-  {
-   "depends_on": "eval: doc.type == \"FoundationDB\"",
-   "description": "Data center ID of the FoundationDB cluster.",
-   "fieldname": "data_center_id",
-   "fieldtype": "Data",
-   "label": "Data Center ID"
   },
   {
    "fieldname": "column_break_gg5z",
@@ -561,13 +554,20 @@
    "fieldname": "machine",
    "fieldtype": "Data",
    "label": "Machine ID"
+  },
+  {
+   "depends_on": "eval: doc.type == \"FoundationDB\"",
+   "description": "Data center ID of the FoundationDB cluster.",
+   "fieldname": "datacenter",
+   "fieldtype": "Data",
+   "label": "Data Center ID"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 11:07:28.857335",
+ "modified": "2025-04-30 11:08:21.400053",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",

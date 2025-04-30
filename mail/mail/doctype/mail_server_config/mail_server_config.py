@@ -244,7 +244,7 @@ def get_config_toml(server: str) -> str | None:
 						},
 						"ids": {
 							"machine": store.machine,
-							"datacenter": store.data_center_id,
+							"datacenter": store.datacenter,
 						},
 					}
 				)
