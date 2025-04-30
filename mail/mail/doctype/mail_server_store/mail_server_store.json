@@ -33,7 +33,7 @@
   "column_break_o8ml",
   "key_prefix",
   "authentication_section",
-  "username",
+  "user",
   "s3_access_key",
   "s3_secret_key",
   "azure_access_key",
@@ -196,13 +196,6 @@
    "fieldname": "authentication_section",
    "fieldtype": "Section Break",
    "label": "Authentication"
-  },
-  {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"ElasticSearch\"].includes(doc.type) || (doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\")",
-   "description": "Username to connect to the database.",
-   "fieldname": "username",
-   "fieldtype": "Data",
-   "label": "Username"
   },
   {
    "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"ElasticSearch\"].includes(doc.type) || (doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\")",
@@ -561,13 +554,20 @@
    "fieldtype": "Data",
    "label": "Storage Account Name",
    "mandatory_depends_on": "eval: doc.type == \"Azure Blob Storage\""
+  },
+  {
+   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"ElasticSearch\"].includes(doc.type) || (doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\")",
+   "description": "Username to connect to the database.",
+   "fieldname": "user",
+   "fieldtype": "Data",
+   "label": "Username"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-04-30 10:12:33.302801",
+ "modified": "2025-04-30 10:14:22.509772",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Store",

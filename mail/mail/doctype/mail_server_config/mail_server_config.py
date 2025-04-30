@@ -192,7 +192,7 @@ def get_config_toml(server: str) -> str | None:
 
 		if store.type in ["PostgreSQL", "mySQL", "Redis/Memcached", "ElasticSearch"]:
 			if not (store.type == "Redis/Memcached" and store.redis_type == "Redis Single Node"):
-				config.update({"user": store.username, "password": password_or_none(store, "password")})
+				config.update({"user": store.user, "password": password_or_none(store, "password")})
 
 		if store.type in ["PostgreSQL", "mySQL", "S3-compatible", "Redis/Memcached", "Azure Blob Storage"]:
 			config["timeout"] = format_value_or_zero(store.timeout, "s")
