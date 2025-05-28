@@ -19,7 +19,7 @@ DEFAULT_STORES = [
 	{
 		"type": "RocksDB",
 		"store_id": "rocksdb",
-		"path": "/opt/stalwart-mail/data",
+		"path": "/opt/stalwart/data",
 		"compression": "LZ4",
 		"min_blob_size": 16834,
 		"write_buffer_size": 128,
@@ -210,7 +210,7 @@ class MailCluster(Document):
 					)
 				)
 
-		is_valid_cron_expression(self.jmap_account_purge_frequency, raise_exception=True)
+		is_valid_cron_expression(self.account_purge_frequency, raise_exception=True)
 
 	def validate_listeners(self) -> None:
 		"""Validates the listeners."""

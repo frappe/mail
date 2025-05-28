@@ -374,26 +374,28 @@ def get_config_toml(server: str) -> str | None:
 		"storage": {
 			"directory": cluster.storage_directory,
 			"data": cluster.storage_data,
-			"encryption": {
-				"enable": bool(cluster.storage_encryption_enable),
-				"append": bool(cluster.storage_encryption_append),
-			},
 			"blob": cluster.storage_blob,
 			"fts": cluster.storage_fts,
 			"full-text": {"default-language": cluster.storage_full_text_default_language},
 			"lookup": cluster.storage_lookup,
 		},
+		"account": {"purge": {"frequency": cluster.account_purge_frequency}},
+		"email": {
+			"encryption": {
+				"enable": bool(cluster.email_encryption_enable),
+				"append": bool(cluster.email_encryption_append),
+			},
+			"auto-expunge": format_value_or_zero(cluster.email_auto_expunge, "d"),
+		},
+		"changes": {"max-history": format_value_or_zero(cluster.changes_max_history, "d")},
 		"jmap": {
-			"account": {"purge": {"frequency": cluster.jmap_account_purge_frequency}},
 			"email": {
-				"auto-expunge": format_value_or_zero(cluster.jmap_email_auto_expunge, "d"),
 				"max-attachment-size": cluster.jmap_email_max_attachment_size,
 				"max-size": cluster.jmap_email_max_size,
 				"parse": {"max-items": cluster.jmap_email_parse_max_items},
 			},
 			"protocol": {
 				"changes": {
-					"max-history": format_value_or_zero(cluster.jmap_protocol_changes_max_history, "d"),
 					"max-results": cluster.jmap_protocol_changes_max_results,
 				},
 				"request": {
@@ -446,7 +448,7 @@ def get_config_toml(server: str) -> str | None:
 		"tracer": {
 			"log": {
 				"type": "log",
-				"path": "/opt/stalwart-mail/logs",
+				"path": "/opt/stalwart/logs",
 				"prefix": "stalwart.log",
 				"rotate": "daily",
 				"level": "info",

@@ -39,8 +39,8 @@
   "data_storage_section",
   "storage_data",
   "column_break_iwwx",
-  "storage_encryption_enable",
-  "storage_encryption_append",
+  "email_encryption_enable",
+  "email_encryption_append",
   "blob_storage_section",
   "storage_blob",
   "full_text_index_storage_section",
@@ -49,11 +49,11 @@
   "storage_full_text_default_language",
   "in_memory_storage_section",
   "storage_lookup",
-  "cleanup_jmap_section",
-  "jmap_account_purge_frequency",
+  "cleanup_section",
+  "account_purge_frequency",
   "column_break_ld4b",
-  "jmap_protocol_changes_max_history",
-  "jmap_email_auto_expunge",
+  "changes_max_history",
+  "email_auto_expunge",
   "listeners_tab",
   "listeners",
   "jmap_tab",
@@ -282,11 +282,6 @@
    "label": "In-Memory Storage"
   },
   {
-   "fieldname": "cleanup_jmap_section",
-   "fieldtype": "Section Break",
-   "label": "Cleanup (JMAP)"
-  },
-  {
    "fieldname": "column_break_trr0",
    "fieldtype": "Column Break"
   },
@@ -447,49 +442,11 @@
    "reqd": 1
   },
   {
-   "default": "1",
-   "description": "Allow users to configure encryption at rest for their data.",
-   "fieldname": "storage_encryption_enable",
-   "fieldtype": "Check",
-   "label": "Enable encryption at rest"
-  },
-  {
-   "default": "0",
-   "description": "Encrypt messages that are manually appended by the user using JMAP or IMAP.",
-   "fieldname": "storage_encryption_append",
-   "fieldtype": "Check",
-   "label": "Encrypt on append"
-  },
-  {
    "default": "en",
    "description": "Default language to use when language detection is not possible.",
    "fieldname": "storage_full_text_default_language",
    "fieldtype": "Data",
    "label": "Default Language"
-  },
-  {
-   "default": "0 0 * * *",
-   "description": "Specifies how often tombstoned messages are deleted from the database.\n\n<br>\n<br>\n\n<pre>*  *  *  *  *\n\u252c  \u252c  \u252c  \u252c  \u252c\n\u2502  \u2502  \u2502  \u2502  \u2502\n\u2502  \u2502  \u2502  \u2502  \u2514 day of week (0 - 6) (0 is Sunday)\n\u2502  \u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500 month (1 - 12)\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 day of month (1 - 31)\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 hour (0 - 23)\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 minute (0 - 59)\n\n---\n\n* - Any value\n/ - Step values\n</pre>\n",
-   "fieldname": "jmap_account_purge_frequency",
-   "fieldtype": "Data",
-   "label": "Frequency (Cron)",
-   "reqd": 1
-  },
-  {
-   "default": "30",
-   "description": "How long to keep changes history for JMAP and IMAP clients.",
-   "fieldname": "jmap_protocol_changes_max_history",
-   "fieldtype": "Int",
-   "label": "Changes History (Days)",
-   "non_negative": 1
-  },
-  {
-   "default": "30",
-   "description": "How long to keep messages in the Trash and Junk Mail folders before auto-expunging.",
-   "fieldname": "jmap_email_auto_expunge",
-   "fieldtype": "Int",
-   "label": "Trash Auto-Expunge (Days)",
-   "non_negative": 1
   },
   {
    "default": "frappe",
@@ -731,6 +688,49 @@
    "label": "Parse Max",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "default": "0 0 * * *",
+   "description": "Specifies how often tombstoned messages are deleted from the database.\n\n<br>\n<br>\n\n<pre>*  *  *  *  *\n\u252c  \u252c  \u252c  \u252c  \u252c\n\u2502  \u2502  \u2502  \u2502  \u2502\n\u2502  \u2502  \u2502  \u2502  \u2514 day of week (0 - 6) (0 is Sunday)\n\u2502  \u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500 month (1 - 12)\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 day of month (1 - 31)\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 hour (0 - 23)\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 minute (0 - 59)\n\n---\n\n* - Any value\n/ - Step values\n</pre>\n",
+   "fieldname": "account_purge_frequency",
+   "fieldtype": "Data",
+   "label": "Frequency (Cron)",
+   "reqd": 1
+  },
+  {
+   "default": "30",
+   "description": "How long to keep messages in the Trash and Junk Mail folders before auto-expunging.",
+   "fieldname": "email_auto_expunge",
+   "fieldtype": "Int",
+   "label": "Trash Auto-Expunge (Days)",
+   "non_negative": 1
+  },
+  {
+   "default": "30",
+   "description": "How many changes to keep in the history for each account. This is used to determine the changes that have occurred since the last time the client requested changes.",
+   "fieldname": "changes_max_history",
+   "fieldtype": "Int",
+   "label": "Changes History (Days)",
+   "non_negative": 1
+  },
+  {
+   "default": "1",
+   "description": "Allow users to configure encryption at rest for their data.",
+   "fieldname": "email_encryption_enable",
+   "fieldtype": "Check",
+   "label": "Enable encryption at rest"
+  },
+  {
+   "default": "0",
+   "description": "Encrypt messages that are manually appended by the user using JMAP or IMAP.",
+   "fieldname": "email_encryption_append",
+   "fieldtype": "Check",
+   "label": "Encrypt on append"
+  },
+  {
+   "fieldname": "cleanup_section",
+   "fieldtype": "Section Break",
+   "label": "Cleanup"
   }
  ],
  "grid_page_length": 50,
@@ -762,7 +762,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-05-13 20:22:31.463104",
+ "modified": "2025-05-28 11:25:57.823304",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

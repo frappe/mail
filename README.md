@@ -135,7 +135,7 @@ Setting up Stalwart Mail Server for production requires additional configuration
    Apply the changes by restarting the server:
 
    ```bash
-     sudo systemctl restart stalwart-mail
+     sudo systemctl restart stalwart
    ```
 
 #### Step 2: Install Frappe Mail

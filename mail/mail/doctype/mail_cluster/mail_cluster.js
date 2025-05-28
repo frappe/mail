@@ -4,7 +4,7 @@
 const STORES_PRESET = {
 	RocksDB: {
 		store_id: 'rocksdb',
-		path: '/opt/stalwart-mail/data',
+		path: '/opt/stalwart/data',
 		compression: 'LZ4',
 		min_blob_size: 16834,
 		write_buffer_size: 128,
