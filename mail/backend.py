@@ -276,7 +276,13 @@ class MailBackendAccountManager(MailBackendManagerBase):
 class MailBackendMailingListManager(MailBackendManagerBase):
 	"""Class to manage mailing lists on the Mail Backend."""
 
-	def create(self, email: str, display_name: str, members: list[str] | None = None) -> None:
+	def create(
+		self,
+		email: str,
+		display_name: str,
+		members: list[str] | None = None,
+		external_members: list[str] | None = None,
+	) -> None:
 		"""Creates a mailing list on the backend."""
 
 		principal = Principal(
@@ -285,6 +291,7 @@ class MailBackendMailingListManager(MailBackendManagerBase):
 			description=display_name,
 			emails=[email],
 			members=members or [],
+			externalMembers=external_members or [],
 		).__dict__
 		self.create_request(method="POST", endpoint="/api/principal", request_data=principal)
 
@@ -307,18 +314,20 @@ class MailBackendMailingListManager(MailBackendManagerBase):
 
 		self.create_request(method="DELETE", endpoint=f"/api/principal/{email}")
 
-	def add_member(self, email: str, member: str) -> None:
+	def add_member(self, email: str, member: str, is_external: bool = False) -> None:
 		"""Adds a mailing list member on the backend."""
 
 		endpoint = f"/api/principal/{email}"
-		request_data = json.dumps([{"action": "addItem", "field": "members", "value": member}])
+		field = "externalMembers" if is_external else "members"
+		request_data = json.dumps([{"action": "addItem", "field": field, "value": member}])
 		self.create_request(method="PATCH", endpoint=endpoint, request_data=request_data)
 
-	def remove_member(self, email: str, member: str) -> None:
+	def remove_member(self, email: str, member: str, is_external: bool = False) -> None:
 		"""Removes a mailing list member from the backend."""
 
 		endpoint = f"/api/principal/{email}"
-		request_data = json.dumps([{"action": "removeItem", "field": "members", "value": member}])
+		field = "externalMembers" if is_external else "members"
+		request_data = json.dumps([{"action": "removeItem", "field": field, "value": member}])
 		self.create_request(method="PATCH", endpoint=endpoint, request_data=request_data)
 
 

@@ -41,8 +41,11 @@ class MailingList(Document):
 				members = frappe.db.get_all(
 					"Mailing List Member", filters={"mailing_list": self.name}, pluck="member_name"
 				)
+				external_members = frappe.db.get_all(
+					"Mailing List External Member", filters={"mailing_list": self.name}, pluck="member_email"
+				)
 				MailBackendMailingListManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).create(
-					self.email, self.display_name, members
+					self.email, self.display_name, members=members, external_members=external_members
 				)
 			elif self.has_value_changed("display_name"):
 				MailBackendMailingListManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).update(

@@ -96,9 +96,14 @@
    "group": "Reference",
    "link_doctype": "Mailing List Member",
    "link_fieldname": "mailing_list"
+  },
+  {
+   "group": "Reference",
+   "link_doctype": "Mailing List External Member",
+   "link_fieldname": "mailing_list"
   }
  ],
- "modified": "2025-06-02 13:13:02.896110",
+ "modified": "2025-06-02 19:19:48.921106",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mailing List",
