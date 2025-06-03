@@ -9,9 +9,11 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import Interval
 from frappe.query_builder.functions import IfNull, Now
+from uuid_utils import uuid7
 
 from mail.jmap import get_jmap_client
 from mail.utils import generate_uuid_style_hash
+from mail.utils.cache import get_cluster_for_tenant
 from mail.utils.dt import parse_iso_datetime
 
 
@@ -23,14 +25,25 @@ class JMAPPushSubscription(Document):
 		if not account or not subscription_id or not verification_code:
 			frappe.throw(_("Invalid parameters for push subscription verification."))
 
-		subscription = frappe.get_doc("JMAP Push Subscription", account)
+		subscription_name = frappe.db.get_value(
+			"JMAP Push Subscription", {"account": account, "subscription_id": subscription_id}, "name"
+		)
+
+		if not subscription_name:
+			frappe.throw(
+				_("No push subscription found for the given account ({0}) and subscription ID ({1}).").format(
+					frappe.bold(account), frappe.bold(subscription_id)
+				)
+			)
+
+		subscription = frappe.get_doc("JMAP Push Subscription", subscription_name)
 
 		if subscription.verified:
 			frappe.throw(_("Subscription already verified."))
 		elif subscription.subscription_id != subscription_id:
 			frappe.throw(_("Invalid subscription ID."))
 
-		client = get_jmap_client(account)
+		client = get_jmap_client(account, subscription.server, cache=False)
 		response = client.push_subscription_set_verification_code(subscription_id, verification_code)
 
 		kwargs = {"_verification_response": json.dumps(response)}
@@ -62,11 +75,13 @@ class JMAPPushSubscription(Document):
 			frappe.throw(_("Failed to get push subscriptions."))
 
 	@staticmethod
-	def destroy_push_subscriptions(account: str, subscription_ids: list[str] | None = None) -> None:
+	def destroy_push_subscriptions(
+		account: str, server: str | None, subscription_ids: list[str] | None = None
+	) -> None:
 		"""Destroys the push subscriptions for the given account."""
 
 		try:
-			client = get_jmap_client(account)
+			client = get_jmap_client(account, server, cache=False)
 
 			if not subscription_ids:
 				subscription_ids = []
@@ -80,12 +95,6 @@ class JMAPPushSubscription(Document):
 				message=frappe.get_traceback(with_context=True),
 			)
 			frappe.throw(_("Failed to destroy push subscription(s)."))
-
-	@property
-	def account_uuid_hash(self) -> str:
-		"""Returns a UUID-style hash of the account name."""
-
-		return generate_uuid_style_hash(self.account)
 
 	@property
 	def verification_response(self) -> str | None:
@@ -113,15 +122,21 @@ class JMAPPushSubscription(Document):
 			else None
 		)
 
+	def autoname(self) -> None:
+		self.name = str(uuid7())
+
 	def before_insert(self) -> None:
 		self.set_endpoint()
+
+	def validate(self) -> None:
+		self.validate_server()
 
 	def after_insert(self) -> None:
 		self._subscribe()
 
 	def on_trash(self) -> None:
 		if self.subscription_id:
-			JMAPPushSubscription.destroy_push_subscriptions(self.account, [self.subscription_id])
+			JMAPPushSubscription.destroy_push_subscriptions(self.account, self.server, [self.subscription_id])
 
 	def set_endpoint(self) -> None:
 		"""Sets the endpoint URL for the push subscription."""
@@ -129,6 +144,19 @@ class JMAPPushSubscription(Document):
 		if not self.endpoint:
 			self.endpoint = (
 				f"{frappe.utils.get_url()}/api/method/mail.api.jmap.push_notification?account={self.account}"
+			)
+
+	def validate_server(self) -> None:
+		"""Validates that the server and account belong to the same cluster."""
+
+		account_tenant = frappe.db.get_value("Mail Account", self.account, "tenant")
+		server_cluster = frappe.db.get_value("Mail Server", self.server, "cluster")
+
+		if server_cluster != get_cluster_for_tenant(account_tenant):
+			frappe.throw(
+				_("The Mail Server {0} does not belong to the same cluster as the account {1}.").format(
+					frappe.bold(self.server), frappe.bold(self.account)
+				)
 			)
 
 	def _subscribe(self) -> None:
@@ -148,20 +176,16 @@ class JMAPPushSubscription(Document):
 		types = self.notification_types.split("\n") if self.notification_types else None
 
 		try:
-			client = get_jmap_client(self.account)
-			response = client.push_subscription_create(
-				self.account_uuid_hash, device_client_id, self.endpoint, types
-			)
+			client = get_jmap_client(self.account, self.server, cache=False)
+			response = client.push_subscription_create(self.name, device_client_id, self.endpoint, types)
 
 			kwargs["_subscription_response"] = json.dumps(response)
 			if response.get("created"):
 				kwargs.update(
 					{
 						"status": "Pending Verification",
-						"expires_at": parse_iso_datetime(
-							response["created"][self.account_uuid_hash]["expires"]
-						),
-						"subscription_id": response["created"][self.account_uuid_hash]["id"],
+						"expires_at": parse_iso_datetime(response["created"][self.name]["expires"]),
+						"subscription_id": response["created"][self.name]["id"],
 					}
 				)
 			else:
@@ -186,7 +210,7 @@ class JMAPPushSubscription(Document):
 			frappe.throw(_("Cannot renew a subscription that is not active or expired."))
 
 		try:
-			client = get_jmap_client(self.account)
+			client = get_jmap_client(self.account, self.server, cache=False)
 			response = client.push_subscription_set_expires(self.subscription_id)
 
 			kwargs = {"_renew_response": json.dumps(response)}
@@ -229,15 +253,8 @@ class JMAPPushSubscription(Document):
 			frappe.throw(_("Cannot resubscribe a subscription that is not expired or failed."))
 
 		if self.subscription_id:
-			JMAPPushSubscription.destroy_push_subscriptions(self.account, [self.subscription_id])
+			JMAPPushSubscription.destroy_push_subscriptions(self.account, self.server, [self.subscription_id])
 
-		self._subscribe()
-
-	@frappe.whitelist()
-	def destroy_all_subscriptions(self) -> None:
-		"""Destroys all push subscriptions for the account."""
-
-		JMAPPushSubscription.destroy_push_subscriptions(self.account)
 		self._subscribe()
 
 	def _db_set(
@@ -252,23 +269,46 @@ class JMAPPushSubscription(Document):
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
 
 
-def create_jmap_push_subscription(account: str) -> "JMAPPushSubscription":
-	"""Creates a JMAP Push Subscription for the given account."""
+def create_jmap_push_subscriptions(account: str) -> list["JMAPPushSubscription"]:
+	"""Creates JMAP Push Subscriptions for the given account if they do not already exist."""
 
-	if frappe.db.exists("JMAP Push Subscription", account):
-		return frappe.get_doc("JMAP Push Subscription", account)
+	account_tenant = frappe.db.get_value("Mail Account", account, "tenant")
+	account_cluster = get_cluster_for_tenant(account_tenant)
+
+	if not account_cluster:
+		frappe.throw(_("No cluster found for the account {0}.").format(frappe.bold(account)))
+
+	servers = frappe.db.get_all("Mail Server", {"enabled": 1, "cluster": account_cluster}, pluck="name")
+
+	subscriptions = []
+	for server in servers:
+		subscription = create_jmap_push_subscription(account, server)
+		subscriptions.append(subscription)
+
+	return subscriptions
+
+
+def create_jmap_push_subscription(account: str, server: str) -> "JMAPPushSubscription":
+	"""Creates a JMAP Push Subscription for the given account and server."""
+
+	if subscription := frappe.db.get_value(
+		"JMAP Push Subscription", {"account": account, "server": server}, "name"
+	):
+		return frappe.get_doc("JMAP Push Subscription", subscription)
 
 	push_subscription = frappe.new_doc("JMAP Push Subscription")
 	push_subscription.account = account
+	push_subscription.server = server
 	push_subscription.insert(ignore_permissions=True)
 
 	return push_subscription
 
 
-def delete_jmap_push_subscription(account: str) -> None:
-	"""Deletes the JMAP Push Subscription for the given account."""
+def delete_jmap_push_subscriptions(account: str) -> None:
+	"""Deletes all JMAP Push Subscriptions for the given account."""
 
-	frappe.delete_doc("JMAP Push Subscription", account, ignore_permissions=True)
+	for subscription in frappe.db.get_all("JMAP Push Subscription", {"account": account}, pluck="name"):
+		frappe.delete_doc("JMAP Push Subscription", subscription, ignore_permissions=True)
 
 
 def renew_push_subscriptions() -> None:
@@ -293,3 +333,9 @@ def renew_push_subscriptions() -> None:
 		with suppress(Exception):
 			push_subscription = frappe.get_doc("JMAP Push Subscription", subscription)
 			push_subscription.renew()
+
+
+def on_doctype_update() -> None:
+	frappe.db.add_unique(
+		"JMAP Push Subscription", ["account", "server"], constraint_name="unique_push_subscription"
+	)

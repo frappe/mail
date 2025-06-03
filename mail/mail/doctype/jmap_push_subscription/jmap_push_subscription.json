@@ -1,6 +1,5 @@
 {
  "actions": [],
- "autoname": "field:account",
  "creation": "2025-04-25 13:11:49.985072",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -12,6 +11,7 @@
   "section_break_ktdh",
   "status",
   "account",
+  "server",
   "endpoint",
   "expires_at",
   "subscription_id",
@@ -38,8 +38,8 @@
    "label": "Account",
    "options": "Mail Account",
    "reqd": 1,
-   "set_only_once": 1,
-   "unique": 1
+   "search_index": 1,
+   "set_only_once": 1
   },
   {
    "default": "Email\nMailbox\nEmailDelivery",
@@ -168,16 +168,26 @@
    "label": "Renew Response",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "server",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Server",
+   "options": "Mail Server",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-09 18:14:45.739539",
+ "modified": "2025-06-03 12:54:26.523305",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "JMAP Push Subscription",
- "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {
@@ -196,5 +206,6 @@
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "account"
 }

@@ -209,7 +209,7 @@ class MailBackendAccountManager(MailBackendManagerBase):
 		"""Creates an account on the backend."""
 
 		from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import (
-			create_jmap_push_subscription,
+			create_jmap_push_subscriptions,
 		)
 
 		principal = Principal(
@@ -224,7 +224,7 @@ class MailBackendAccountManager(MailBackendManagerBase):
 			method="POST",
 			endpoint="/api/principal",
 			request_data=principal,
-			on_end=create_jmap_push_subscription,
+			on_end=create_jmap_push_subscriptions,
 			on_end_kwargs={"account": email},
 		)
 
@@ -262,13 +262,13 @@ class MailBackendAccountManager(MailBackendManagerBase):
 		"""Deletes an account from the backend."""
 
 		from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import (
-			delete_jmap_push_subscription,
+			delete_jmap_push_subscriptions,
 		)
 
 		self.create_request(
 			method="DELETE",
 			endpoint=f"/api/principal/{email}",
-			on_start=delete_jmap_push_subscription,
+			on_start=delete_jmap_push_subscriptions,
 			on_start_kwargs={"account": email},
 		)
 

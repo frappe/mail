@@ -226,9 +226,14 @@
    "group": "Reference",
    "link_doctype": "Mail Backend Request",
    "link_fieldname": "backend_name"
+  },
+  {
+   "group": "Reference",
+   "link_doctype": "JMAP Push Subscription",
+   "link_fieldname": "server"
   }
  ],
- "modified": "2025-05-02 16:08:14.161735",
+ "modified": "2025-06-03 15:34:02.200496",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",

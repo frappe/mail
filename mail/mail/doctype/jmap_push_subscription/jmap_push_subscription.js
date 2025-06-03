@@ -41,16 +41,6 @@ frappe.ui.form.on('JMAP Push Subscription', {
 				__('Actions'),
 			)
 		}
-
-		frm.add_custom_button(
-			__('Destroy All Subscriptions'),
-			() => {
-				frappe.confirm(__('Are you sure you want to destroy all subscriptions?'), () =>
-					frm.trigger('destroy_all_subscriptions'),
-				)
-			},
-			__('Actions'),
-		)
 	},
 
 	add_comments(frm) {
@@ -83,20 +73,6 @@ frappe.ui.form.on('JMAP Push Subscription', {
 			method: 'resubscribe',
 			freeze: true,
 			freeze_message: __('Resubscribing...'),
-			callback: (r) => {
-				if (!r.exc) {
-					frm.refresh()
-				}
-			},
-		})
-	},
-
-	destroy_all_subscriptions(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: 'destroy_all_subscriptions',
-			freeze: true,
-			freeze_message: __('Destroying all subscriptions...'),
 			callback: (r) => {
 				if (!r.exc) {
 					frm.refresh()

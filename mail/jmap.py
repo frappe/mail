@@ -601,20 +601,42 @@ class JMAPClient:
 			)
 
 
-def get_jmap_client(account: str) -> "JMAPClient":
+def get_jmap_client(account: str, server: str | None = None, cache: bool = True) -> "JMAPClient":
 	"""Returns a JMAP client for the given account."""
 
 	def generator() -> "JMAPClient":
-		doc = frappe.get_doc("Mail Account", account)
-		cluster = get_cluster_for_tenant(doc.tenant)
+		account_doc = frappe.get_doc("Mail Account", account)
+		account_cluster = get_cluster_for_tenant(account_doc.tenant)
 
-		if not cluster:
-			frappe.throw(_("No cluster found for the account {0}.").format(frappe.bold(doc.name)))
+		if not account_cluster:
+			frappe.throw(_("No cluster found for the account {0}.").format(frappe.bold(account)))
 
-		host = frappe.db.get_value("Mail Cluster", cluster, "base_url")
-		return JMAPClient(host, doc.email, doc.get_password())
+		host = frappe.db.get_value("Mail Cluster", account_cluster, "base_url")
 
-	return frappe.cache.hget("jmap:client", account, generator)
+		if server:
+			server_cluster, server_base_url = frappe.db.get_value(
+				"Mail Server", server, ["cluster", "base_url"]
+			)
+
+			if server_cluster != account_cluster:
+				frappe.throw(
+					_("The server {0} does not belong to the same cluster as the account {1}.").format(
+						frappe.bold(server), frappe.bold(account)
+					)
+				)
+
+			host = server_base_url
+
+		return JMAPClient(host, account_doc.email, account_doc.get_password())
+
+	if cache:
+		cache_key = "jmap:client"
+		if server:
+			cache_key = f"{cache_key}:{server}"
+
+		return frappe.cache.hget(cache_key, account, generator)
+	else:
+		return generator()
 
 
 def invalidate_jmap_client_cache(account: str) -> None:
