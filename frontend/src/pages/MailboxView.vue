@@ -139,8 +139,14 @@
 							:user-layout
 							:class="{ 'bg-gray-50': mail.thread_id == threadID }"
 							@click="openThread(mail)"
-							@select-thread="selectThread(mail.thread_id)"
-							@deselect-thread="deselectThread(mail.thread_id)"
+							@select-thread="
+								(isManuallySelected) =>
+									selectThread(mail.thread_id, isManuallySelected)
+							"
+							@deselect-thread="
+								(isManuallySelected) =>
+									deselectThread(mail.thread_id, isManuallySelected)
+							"
 						/>
 					</div>
 					<div v-if="threads.loading" class="flex items-center justify-center py-4">
@@ -196,7 +202,7 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, inject, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import {
@@ -245,6 +251,9 @@ const selections = ref<string[]>([])
 const allSelectedManuallyToggled = ref(false)
 const allSelected = ref(false)
 
+const lastSelected = ref<string>()
+const isShiftPressed = ref(false)
+
 const resetSelections = () => {
 	allSelectedManuallyToggled.value = false
 	allSelected.value = false
@@ -252,12 +261,36 @@ const resetSelections = () => {
 	selections.value = []
 }
 
-const selectThread = (thread: string) => {
-	if (!selections.value.includes(thread)) selections.value.push(thread)
+const selectThread = (thread: string, isManuallySelected: boolean) => {
+	if (selections.value.includes(thread)) return
+	if (isShiftPressed.value) {
+		const shiftSelectedIDs = getShiftSelectedIDs(thread)
+		mailItems.value?.forEach((item) => {
+			if (shiftSelectedIDs.includes(item?.id)) item?.setIsSelected(true)
+		})
+		selections.value = Array.from(new Set([...selections.value, ...shiftSelectedIDs]))
+	} else selections.value.push(thread)
+	if (isManuallySelected) lastSelected.value = thread
 }
 
-const deselectThread = (thread: string) =>
-	(selections.value = selections.value.filter((m) => m !== thread))
+const deselectThread = (thread: string, isManuallySelected: boolean) => {
+	if (isShiftPressed.value) {
+		const shiftSelectedIDs = getShiftSelectedIDs(thread)
+		mailItems.value?.forEach((item) => {
+			if (shiftSelectedIDs.includes(item?.id)) item?.setIsSelected(false)
+		})
+		selections.value = selections.value.filter((m) => !shiftSelectedIDs.includes(m))
+	} else selections.value = selections.value.filter((m) => m !== thread)
+	if (isManuallySelected) lastSelected.value = thread
+}
+
+const getShiftSelectedIDs = (thread: string) => {
+	const startIndex = threadIDs.value.indexOf(lastSelected.value)
+	const endIndex = threadIDs.value.indexOf(thread)
+	const lower = Math.min(startIndex, endIndex)
+	const higher = Math.max(startIndex, endIndex)
+	return threadIDs.value.slice(lower, higher + 1)
+}
 
 watch(
 	() => selections.value.length,
@@ -266,6 +299,18 @@ watch(
 		allSelected.value = val === threads.data.length
 	},
 )
+
+watch(allSelected, (val) => {
+	if (allSelectedManuallyToggled.value)
+		mailItems.value?.forEach((item) => item?.setIsSelected(val))
+})
+
+const handleKeyDown = (e: KeyboardEvent) => {
+	if (e.key === 'Shift') isShiftPressed.value = true
+}
+const handleKeyUp = (e: KeyboardEvent) => {
+	if (e.key === 'Shift') isShiftPressed.value = false
+}
 
 interface SelectAction {
 	label: string
@@ -314,11 +359,6 @@ const selectActions = computed((): SelectAction[] =>
 	].filter((action) => action.condition),
 )
 
-watch(allSelected, (val) => {
-	if (allSelectedManuallyToggled.value)
-		mailItems.value?.forEach((item) => item?.setIsSelected(val))
-})
-
 // Main data
 
 const limit = ref(50)
@@ -328,6 +368,8 @@ const threads = createResource({
 	url: 'mail.api.mail.get_mails_from_mailbox',
 	makeParams: () => ({ mailbox, limit: limit.value, filter_by: filter.value }),
 })
+
+const threadIDs = computed(() => threads.data?.map((thread: Thread) => thread.thread_id) || [])
 
 const groupedThreads = computed(() =>
 	threads?.data?.reduce((groups, thread: Thread) => {
@@ -362,18 +404,30 @@ watch(
 	{ immediate: true },
 )
 
-onMounted(() =>
+onMounted(() => {
+	window.addEventListener('keydown', handleKeyDown)
+	window.addEventListener('keyup', handleKeyUp)
+
 	socket.on('mail_created_or_updated', (updatedMailbox: string) => {
 		if (updatedMailbox === mailbox) reloadMails()
 		else if (['inbox', 'junk'].includes(updatedMailbox)) mailboxes.reload()
-	}),
-)
+	})
+})
+
+onUnmounted(() => {
+	window.removeEventListener('keydown', handleKeyDown)
+	window.removeEventListener('keyup', handleKeyUp)
+})
 
 const loadMoreEmails = useDebounceFn((e) => {
 	const { scrollTop, scrollHeight, clientHeight } = e.target
 	if (scrollTop + clientHeight >= scrollHeight - 10 && threads?.data?.length === limit.value) {
 		limit.value += 50
 		threads.reload()
+		setTimeout(
+			() => e.target.scrollTo({ top: e.target.scrollHeight, behavior: 'smooth' }),
+			100,
+		)
 	}
 }, 500)
 

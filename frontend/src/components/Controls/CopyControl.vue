@@ -34,9 +34,7 @@ const copyToClipBoard = async (text: string) => {
 	try {
 		await navigator.clipboard.writeText(text)
 		message.value = 'Copied!'
-		setTimeout(() => {
-			message.value = 'Copy'
-		}, 2000)
+		setTimeout(() => (message.value = 'Copy'), 2000)
 	} catch {
 		alert('Failed to copy text. Please copy from here: ' + text)
 	}

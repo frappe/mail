@@ -6,7 +6,12 @@
 		@mouseleave="isHovered = false"
 	>
 		<div class="flex h-8 min-h-8 min-w-8 items-center justify-center">
-			<Checkbox v-if="isHovered || isSelected" v-model="isSelected" size="md" @click.stop />
+			<Checkbox
+				v-if="isHovered || isSelected"
+				v-model="isSelected"
+				size="md"
+				@click.stop="isManuallySelected = true"
+			/>
 			<Avatar
 				v-else
 				:label="mail.from_name || mail.from_email"
@@ -104,10 +109,14 @@ const header = computed(() => {
 
 const isHovered = ref(false)
 const isSelected = ref(false)
+const isManuallySelected = ref(false)
 
-watch(isSelected, () => emit(isSelected.value ? 'select-thread' : 'deselect-thread'))
+watch(isSelected, () => {
+	emit(isSelected.value ? 'select-thread' : 'deselect-thread', isManuallySelected.value)
+	isManuallySelected.value = false
+})
 
 const setIsSelected = (value: boolean) => (isSelected.value = value)
 
-defineExpose({ setIsSelected })
+defineExpose({ id: mail.thread_id, setIsSelected })
 </script>
