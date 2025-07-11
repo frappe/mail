@@ -1,21 +1,36 @@
 <template>
 	<div
 		class="flex cursor-pointer space-x-2.5 border-b px-3.5 py-2.5 sm:px-5 sm:hover:bg-gray-50"
-		:class="{ '!bg-blue-50': isSelected, '!py-2': isFullWidth }"
+		:class="{
+			'!bg-blue-50': isSelected || isTouching,
+			'!py-2': isFullWidth,
+			'select-none': isMobile,
+		}"
 		@mouseenter="isHovered = true"
 		@mouseleave="isHovered = false"
+		@touchstart="onTouchStart"
+		@touchend="clearTouchTimer"
+		@touchcancel="clearTouchTimer"
 	>
-		<div class="flex h-8 min-h-8 min-w-8 items-center justify-center">
+		<div class="flex h-10 min-h-10 w-10 min-w-10 items-center justify-center">
 			<Checkbox
-				v-if="isHovered || isSelected"
+				v-if="(isHovered || isSelected) && !isMobile"
 				v-model="isSelected"
 				size="md"
 				@click.stop="isManuallySelected = true"
 			/>
+			<div
+				v-else-if="isSelected && isMobile"
+				class="bg-surface-gray-3 flex h-10 min-h-10 w-10 min-w-10 rounded-full"
+				@click.stop="isSelected = false"
+			>
+				<Check class="text-ink-gray-5 m-auto" />
+			</div>
 			<Avatar
 				v-else
 				:label="mail.from_name || mail.from_email"
-				:size="isFullWidth ? 'lg' : 'xl'"
+				:size="isFullWidth ? 'lg' : '2xl'"
+				@click.stop="isSelected = true"
 			/>
 		</div>
 
@@ -84,6 +99,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { Check } from 'lucide-vue-next'
 import { Avatar, Badge, Checkbox } from 'frappe-ui'
 
 import { useScreenSize } from '@/utils/composables'
@@ -119,4 +135,45 @@ watch(isSelected, () => {
 const setIsSelected = (value: boolean) => (isSelected.value = value)
 
 defineExpose({ id: mail.thread_id, setIsSelected })
+
+// touch
+
+let touchStartX = 0
+let touchStartY = 0
+let touchMoved = false
+let touchTimer: ReturnType<typeof setTimeout> | null = null
+
+const isTouching = ref(false)
+
+const onTouchStart = (e: TouchEvent) => {
+	touchMoved = false
+	touchStartX = e.touches[0].clientX
+	touchStartY = e.touches[0].clientY
+	isTouching.value = true
+	document.addEventListener('touchmove', onTouchMove, { passive: true })
+
+	touchTimer = setTimeout(() => {
+		if (!touchMoved) isSelected.value = !isSelected.value
+	}, 450)
+}
+
+const clearTouchTimer = () => {
+	isTouching.value = false
+	document.removeEventListener('touchmove', onTouchMove)
+
+	if (touchTimer) {
+		clearTimeout(touchTimer)
+		touchTimer = null
+	}
+}
+
+const onTouchMove = (e: TouchEvent) => {
+	const touch = e.touches[0]
+	const dx = Math.abs(touch.clientX - touchStartX)
+	const dy = Math.abs(touch.clientY - touchStartY)
+	if (dx > 10 || dy > 10) {
+		touchMoved = true
+		clearTouchTimer()
+	}
+}
 </script>
