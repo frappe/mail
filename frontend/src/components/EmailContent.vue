@@ -21,6 +21,7 @@
 import { computed, ref } from 'vue'
 // eslint-disable-next-line import/no-unresolved
 import IframeResizer from '@iframe-resizer/vue/sfc'
+import DOMPurify from 'dompurify'
 
 import { useTheme } from '@/utils/composables'
 
@@ -50,8 +51,7 @@ const srcdoc = computed(() => {
 		</button>
 	`
 
-	const transformedContent = content
-		.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script\s*>/gi, '')
+	const transformedContent = DOMPurify.sanitize(content, DOMPURIFY_CONFIG)
 		.replace(
 			/<div\s+class="(gmail_quote|frappe_mail_quote)"([^>]*)>([\s\S]*?)<\/div>/gi,
 			(_, quoteClass, otherAttrs, innerHtml) =>
@@ -132,6 +132,80 @@ const srcdoc = computed(() => {
 })
 
 const colors = computed(() => THEME_CONFIG[activeTheme.value])
+
+const DOMPURIFY_CONFIG = {
+	ALLOWED_TAGS: [
+		'html',
+		'head',
+		'body',
+		'title',
+		'meta',
+		'style',
+		'table',
+		'tbody',
+		'thead',
+		'tfoot',
+		'tr',
+		'td',
+		'th',
+		'div',
+		'span',
+		'p',
+		'br',
+		'strong',
+		'b',
+		'em',
+		'i',
+		'u',
+		'h1',
+		'h2',
+		'h3',
+		'h4',
+		'h5',
+		'h6',
+		'a',
+		'img',
+		'blockquote',
+		'ul',
+		'ol',
+		'li',
+	],
+	ALLOWED_ATTR: [
+		'style',
+		'class',
+		'id',
+		'width',
+		'height',
+		'align',
+		'valign',
+		'cellpadding',
+		'cellspacing',
+		'border',
+		'bgcolor',
+		'color',
+		'href',
+		'src',
+		'alt',
+		'title',
+		'target',
+		'data-type',
+		'data-id',
+		'data-label',
+		'data-list',
+		'data-email-footer',
+		'xmlns',
+		'content',
+		'name',
+		'http-equiv',
+		'charset',
+	],
+	KEEP_CONTENT: true,
+	ALLOW_UNKNOWN_PROTOCOLS: false,
+	WHOLE_DOCUMENT: true,
+	ADD_TAGS: ['meta', 'style'],
+	ADD_ATTR: ['cellpadding', 'cellspacing', 'border', 'bgcolor', 'xmlns'],
+	REMOVE_EMPTY: false,
+}
 
 const THEME_CONFIG = {
 	light: {
