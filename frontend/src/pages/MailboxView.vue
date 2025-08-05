@@ -150,6 +150,17 @@
 								(isManuallySelected: boolean) =>
 									deselectThread(mail.thread_id, isManuallySelected)
 							"
+							@set-seen="
+								(seen: boolean) =>
+									setSeen.submit({ thread_ids: [mail.thread_id], seen })
+							"
+							@trash-thread="
+								moveThreads.submit({
+									thread_ids: [mail.thread_id],
+									move_to_mailbox: 'trash',
+								})
+							"
+							@delete-thread="deleteThreads.submit([mail.thread_id])"
 						/>
 					</div>
 					<div v-if="threads.loading" class="flex items-center justify-center py-4">

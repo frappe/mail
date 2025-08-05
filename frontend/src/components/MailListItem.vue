@@ -51,7 +51,11 @@
 						{{ header }}
 					</span>
 				</h3>
-				<MailDate v-if="!isFullWidth" :datetime="mail.received_at" :in-list="true" />
+				<MailDate
+					v-if="!isFullWidth && !isHovered"
+					:datetime="mail.received_at"
+					:in-list="true"
+				/>
 			</div>
 			<h4
 				class="truncate text-sm leading-[1.5]"
@@ -85,22 +89,36 @@
 				/>
 				<Badge
 					v-if="mail.draft"
-					:class="isFullWidth ? 'ml-5' : 'ml-auto'"
+					class="ml-auto"
+					:class="{ invisible: !isFullWidth && isHovered }"
 					:label="__('Draft')"
 					theme="red"
 				/>
 			</div>
-			<div v-if="isFullWidth" class="flex min-w-20 max-w-20 justify-end">
+			<div v-if="isFullWidth && !isHovered" class="flex w-20 shrink-0 justify-end">
 				<MailDate :datetime="mail.received_at" :in-list="true" />
 			</div>
+		</div>
+		<div
+			v-if="isHovered && !isMobile"
+			class="flex items-center justify-end space-x-2"
+			:class="{ 'w-[82px] shrink-0': isFullWidth }"
+		>
+			<Tooltip v-for="action in actions" :key="action.label" :text="action.label">
+				<Button variant="ghost" @click.stop="action.onClick">
+					<template #icon>
+						<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
+					</template>
+				</Button>
+			</Tooltip>
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Check } from 'lucide-vue-next'
-import { Avatar, Badge, Checkbox } from 'frappe-ui'
+import { Check, Mail, MailOpen, Trash2 } from 'lucide-vue-next'
+import { Avatar, Badge, Button, Checkbox, Tooltip } from 'frappe-ui'
 
 import { getFirstAlphabet } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
@@ -111,7 +129,13 @@ import type { LayoutType, Thread } from '@/types'
 
 const { mail, userLayout } = defineProps<{ mail: Thread; userLayout: LayoutType }>()
 
-const emit = defineEmits(['select-thread', 'deselect-thread'])
+const emit = defineEmits([
+	'select-thread',
+	'deselect-thread',
+	'setSeen',
+	'trashThread',
+	'deleteThread',
+])
 
 const { isMobile } = useScreenSize()
 
@@ -136,6 +160,35 @@ watch(isSelected, () => {
 const setIsSelected = (value: boolean) => (isSelected.value = value)
 
 defineExpose({ id: mail.thread_id, setIsSelected })
+
+const actions = computed(() =>
+	[
+		{
+			label: __('Mark as Unread'),
+			onClick: () => emit('setSeen', false),
+			icon: Mail,
+			condition: mail.seen,
+		},
+		{
+			label: __('Mark as Read'),
+			onClick: () => emit('setSeen', true),
+			icon: MailOpen,
+			condition: !mail.seen,
+		},
+		{
+			label: __('Move to Trash'),
+			onClick: () => emit('trashThread'),
+			icon: Trash2,
+			condition: mail.mailbox_role !== 'trash',
+		},
+		{
+			label: __('Delete Message'),
+			onClick: () => emit('deleteThread'),
+			icon: Trash2,
+			condition: mail.mailbox_role === 'trash',
+		},
+	].filter((action) => action.condition),
+)
 
 // touch
 
