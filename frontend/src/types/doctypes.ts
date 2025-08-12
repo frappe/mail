@@ -70,28 +70,12 @@ export interface MailAccountRequest extends DocType {
 	expires_at?: string
 }
 
-// Last updated: 2025-02-03 17:11:17.517836
-export interface MailDomainDNSRecord extends ChildDocType {
-	/** Type: Select */
-	type: '' | 'A' | 'AAAA' | 'CNAME' | 'MX' | 'TXT'
-	/** Host: Data */
-	host: string
-	/** Value: Text */
-	value: string
-	/** Priority: Int */
-	priority?: number
-	/** TTL (Recommended): Int */
-	ttl: number
-	/** Category: Select */
-	category: '' | 'Sending Record' | 'Receiving Record' | 'Tracking Record' | 'Server Record'
-}
-
 // Last updated: 2025-07-15 16:20:27.181885
 export interface MailDomain extends DocType {
 	/** Domain Name: Data */
 	domain_name: string
 	/** DNS Records: Table (Mail Domain DNS Record) */
-	dns_records: MailDomainDNSRecord[]
+	dns_records: string
 	/** Enabled: Check */
 	enabled: 0 | 1
 	/** Verified: Check */

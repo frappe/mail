@@ -12,7 +12,7 @@ from frappe.utils import cint, now, random_string, validate_email_address
 from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 
 from mail.backend import MailBackendAccountManager, MailBackendIdentityManager, get_mail_backend_api
-from mail.jmap import get_jmap_client, invalidate_jmap_cache
+from mail.jmap import get_jmap_client, invalidate_jmap_cache, raise_for_status
 from mail.mail.doctype.jmap_sync_state.jmap_sync_state import create_jmap_sync_state
 from mail.utils import (
 	convert_html_to_text,
@@ -47,12 +47,9 @@ class MailAccount(Document):
 			try:
 				backend_api = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(self.tenant))
 				response = backend_api.request(method="GET", endpoint=f"/api/principal/{self.email}")
-
-				_response_json = response.json()
-				if response.status_code == 200:
-					return _response_json["data"]
-				else:
-					frappe.throw(title=_("Failed to fetch Account Details"), msg=str(_response_json))
+				raise_for_status(response)
+				response_json = response.json()
+				return response_json["data"]
 			except Exception:
 				frappe.log_error(
 					title=_("Failed to fetch Account Details"),

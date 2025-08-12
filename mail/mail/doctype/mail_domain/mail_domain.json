@@ -33,15 +33,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "dns_records",
-   "fieldname": "dns_records",
-   "fieldtype": "Table",
-   "label": "DNS Records",
-   "no_copy": 1,
-   "options": "Mail Domain DNS Record",
-   "read_only": 1
-  },
-  {
    "fieldname": "dns_records_section",
    "fieldtype": "Section Break"
   },
@@ -114,6 +105,15 @@
    "label": "Default Disk Quota (in GB)",
    "non_negative": 1,
    "precision": "5"
+  },
+  {
+   "depends_on": "dns_records",
+   "fieldname": "dns_records",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "DNS Records",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -150,7 +150,7 @@
    "link_fieldname": "domain_name"
   }
  ],
- "modified": "2025-07-15 16:20:27.181885",
+ "modified": "2025-08-12 13:43:42.808709",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",

@@ -2,12 +2,16 @@
 # For license information, please see license.txt
 
 
+import json
+from functools import cached_property
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
-from mail.backend import MailBackendDomainManager
+from mail.backend import MailBackendDomainManager, get_mail_backend_api
+from mail.jmap import raise_for_status
 from mail.mail.doctype.dkim_key.dkim_key import create_dkim_key
 from mail.utils import get_dkim_host, get_dkim_selector
 from mail.utils.cache import (
@@ -20,13 +24,89 @@ from mail.utils.user import get_user_linked_domains, has_role, is_system_manager
 
 
 class MailDomain(Document):
+	@cached_property
+	def _dns_records(self) -> list[dict]:
+		"""Fetches the DNS Records for the Mail Domain."""
+
+		if not self.is_new() and self.enabled:
+			try:
+				cluster = get_cluster_for_tenant(self.tenant)
+				backend_api = get_mail_backend_api("Mail Cluster", cluster)
+				response = backend_api.request(method="GET", endpoint=f"/api/dns/records/{self.domain_name}")
+				raise_for_status(response)
+				dns_records = response.json()["data"]
+
+				mail_settings = frappe.get_cached_doc("Mail Settings")
+				hostname = f"{frappe.db.get_value('Mail Cluster', cluster, 'hostname')}."
+				_hostname = next(
+					(
+						r["content"]
+						for r in dns_records
+						if r["type"] == "CNAME" and r["name"] == f"mail.{self.domain_name}."
+					),
+					None,
+				)
+
+				cleaned_records = []
+				for record in dns_records:
+					record["host"] = record.pop("name")
+					record["value"] = (
+						record.pop("content").replace(_hostname, hostname)
+						if _hostname
+						else record.pop("content")
+					)
+
+					if (
+						self.is_root_domain
+						and record["type"] == "CNAME"
+						and record["host"] == f"mail.{self.domain_name}."
+						and record["host"] == record["value"]
+					):
+						continue
+
+					if record["type"] == "TXT" and record["value"].startswith("v=spf1"):
+						record[
+							"value"
+						] = f"v=spf1 include:{mail_settings.spf_host}.{mail_settings.root_domain_name} ~all"
+
+					record["mandatory"] = int(
+						(record["type"] == "CNAME" and record["host"] == f"mail.{self.domain_name}.")
+						or (
+							record["type"] == "TXT"
+							and (
+								record["value"].startswith("v=spf1")
+								or record["host"] == f"_dmarc.{self.domain_name}."
+								or record["host"].endswith(f"._domainkey.{self.domain_name}.")
+							)
+						)
+					)
+
+					cleaned_records.append(record)
+
+				return sorted(cleaned_records, key=lambda x: (x["mandatory"] == 0, x["type"], x["host"]))
+			except Exception:
+				frappe.log_error(
+					title=_("Failed to fetch DNS Records"),
+					message=frappe.get_traceback(with_context=True),
+				)
+
+		return []
+
+	@property
+	def dns_records(self) -> str:
+		"""Returns the DNS Records in JSON format."""
+
+		if dns_records := self._dns_records:
+			return json.dumps(dns_records, indent=4)
+
+		frappe.throw(_("Failed to fetch DNS Records"))
+
 	def autoname(self) -> None:
 		self.domain_name = self.domain_name.strip().lower()
 		self.name = self.domain_name
 
 	def before_insert(self) -> None:
 		self.validate_tenant()
-		self.refresh_dns_records(do_not_save=True)
 
 	def validate(self) -> None:
 		if self.is_new():
@@ -95,44 +175,31 @@ class MailDomain(Document):
 			self.is_verified = 0
 
 	@frappe.whitelist()
-	def refresh_dns_records(self, do_not_save: bool = False) -> None:
-		"""Refreshes the DNS Records."""
-
-		if not has_permission(self, "write"):
-			frappe.throw(_("You do not have permission to refresh DNS Records."))
-
-		self.is_verified = 0
-		self.dns_records.clear()
-
-		for record in get_dns_records(self.tenant, self.domain_name):
-			self.append("dns_records", record)
-
-		if not do_not_save:
-			self.save(ignore_permissions=True)
-			frappe.msgprint(_("DNS Records refreshed successfully."), indicator="green", alert=True)
-
-	@frappe.whitelist()
 	def verify_dns_records(self, do_not_save: bool = False) -> bool:
 		"""Verifies the DNS Records."""
 
 		if not has_permission(self, "write"):
 			frappe.throw(_("You do not have permission to verify DNS Records."))
 
-		errors = []
-		for record in self.dns_records:
-			if not verify_dns_record(record.host, record.type, record.value):
-				errors.append(
-					_("Row #{0}: Failed to verify {1} : {2}.").format(
-						record.idx, frappe.bold(record.type), frappe.bold(record.host)
+		failed_records = []
+		for record in self._dns_records:
+			if record["mandatory"] and not verify_dns_record(record["host"], record["type"], record["value"]):
+				value = record["value"]
+				if len(value) > 30:
+					value = f"{value[:15]}...{value[-15:]}"
+
+				failed_records.append(
+					_("{0} record for {1} should have value {2}").format(
+						frappe.bold(record["type"]), frappe.bold(record["host"]), frappe.bold(value)
 					)
 				)
 
-		if not errors:
+		if not failed_records:
 			self.is_verified = 1
 			frappe.msgprint(_("DNS Records verified successfully."), indicator="green", alert=True)
 		else:
 			self.is_verified = 0
-			frappe.msgprint(errors, title="DNS Verification Failed", indicator="red", as_list=True)
+			frappe.msgprint(failed_records, title="DNS Verification Failed", as_list=True)
 
 		if not do_not_save:
 			self.save(ignore_permissions=True)
@@ -154,63 +221,6 @@ class MailDomain(Document):
 
 		frappe.cache.hdel(f"domain|{self.name}", "tenant")
 		frappe.cache.hdel(f"tenant|{self.tenant}", "domains")
-
-
-def get_dns_records(tenant: str, domain_name: str) -> list[dict]:
-	"""Returns the DNS Records for the given domain."""
-
-	records = []
-	mail_settings = frappe.get_cached_doc("Mail Settings")
-
-	# SPF Record
-	records.append(
-		{
-			"category": "Sending Record",
-			"type": "TXT",
-			"host": domain_name,
-			"value": f"v=spf1 include:{mail_settings.spf_host}.{mail_settings.root_domain_name} ~all",
-			"ttl": mail_settings.default_ttl,
-		},
-	)
-
-	# DKIM Record
-	records.append(
-		{
-			"category": "Sending Record",
-			"type": "CNAME",
-			"host": f"{get_dkim_selector('rsa')}._domainkey.{domain_name}",
-			"value": f"{get_dkim_host(domain_name, 'rsa')}._domainkey.{mail_settings.root_domain_name}.",
-			"ttl": mail_settings.default_ttl,
-		}
-	)
-
-	# DMARC Record
-	dmarc_address = f"postmaster@{domain_name}"
-	records.append(
-		{
-			"category": "Sending Record",
-			"type": "TXT",
-			"host": f"_dmarc.{domain_name}",
-			"value": f"v=DMARC1; p=reject; rua=mailto:{dmarc_address}; ruf=mailto:{dmarc_address}; fo=1; aspf=s; adkim=s; pct=100;",
-			"ttl": mail_settings.default_ttl,
-		}
-	)
-
-	# MX Record
-	cluster = get_cluster_for_tenant(tenant)
-	priority = frappe.db.get_value("Mail Cluster", cluster, "priority")
-	records.append(
-		{
-			"category": "Receiving Record",
-			"type": "MX",
-			"host": domain_name,
-			"value": f"{cluster.split(':')[0]}.",
-			"priority": priority,
-			"ttl": mail_settings.default_ttl,
-		}
-	)
-
-	return records
 
 
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:

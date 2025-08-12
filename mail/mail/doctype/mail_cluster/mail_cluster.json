@@ -10,7 +10,6 @@
   "public",
   "column_break_fkha",
   "hostname",
-  "priority",
   "authentication_section",
   "fallback_admin_user",
   "fallback_admin_password",
@@ -121,18 +120,6 @@
   {
    "fieldname": "column_break_fkha",
    "fieldtype": "Column Break"
-  },
-  {
-   "description": "MX record priority for handling inbound mail. Lower values have higher priority.",
-   "fieldname": "priority",
-   "fieldtype": "Int",
-   "in_standard_filter": 1,
-   "label": "Priority",
-   "no_copy": 1,
-   "non_negative": 1,
-   "placeholder": "5",
-   "reqd": 1,
-   "search_index": 1
   },
   {
    "fieldname": "section_break_r4np",
@@ -808,7 +795,7 @@
    "link_fieldname": "backend_name"
   }
  ],
- "modified": "2025-08-12 11:43:32.833381",
+ "modified": "2025-08-12 16:56:36.365015",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

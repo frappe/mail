@@ -17,19 +17,6 @@ frappe.ui.form.on('Mail Domain', {
 			)
 
 			frm.add_custom_button(
-				__('Refresh DNS Records'),
-				() => {
-					frappe.confirm(
-						__(
-							"Are you sure you want to refresh the DNS records? If there are any changes, you'll need to update the DNS settings with your DNS provider accordingly.",
-						),
-						() => frm.trigger('refresh_dns_records'),
-					)
-				},
-				__('Actions'),
-			)
-
-			frm.add_custom_button(
 				__('Rotate DKIM Keys'),
 				() => {
 					frappe.confirm(
@@ -51,21 +38,6 @@ frappe.ui.form.on('Mail Domain', {
 			args: {},
 			freeze: true,
 			freeze_message: __('Verifying DNS Records...'),
-			callback: (r) => {
-				if (!r.exc) {
-					frm.refresh()
-				}
-			},
-		})
-	},
-
-	refresh_dns_records(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: 'refresh_dns_records',
-			args: {},
-			freeze: true,
-			freeze_message: __('Refreshing DNS Records...'),
 			callback: (r) => {
 				if (!r.exc) {
 					frm.refresh()
