@@ -2,16 +2,14 @@
 	<component
 		:is="isMobile ? SendMailMobileLayout : Dialog"
 		v-model="show"
-		:options="{ title: __('Send Mail'), size: '4xl' }"
+		:options="{ title: __('Compose Mail'), size: '4xl' }"
+		@send-mail="sendMail"
+		@discard-mail="discardMail"
 	>
 		<template #body-content>
 			<TextEditor
 				ref="textEditor"
-				:editor-class="[
-					'prose-sm max-w-none',
-					'min-h-[15rem]',
-					'[&_p.reply-to-content]:hidden',
-				]"
+				editor-class="prose-none text-base max-w-none min-h-[15rem]"
 				:extensions="[CustomImageExtension]"
 				:content="mail.html_body"
 				@change="(val: string) => (mail.html_body = val)"
@@ -133,7 +131,10 @@
 				</template>
 				<template #bottom>
 					<FileUploader
-						:class="{ 'fixed bottom-0 left-0 right-0 px-3': isMobile }"
+						:class="{
+							'fixed left-0 right-0 z-20 px-3 transition-all': isMobile,
+						}"
+						:style="{ bottom: `${toolbarBottom}px` }"
 						:upload-args="{ private: true, folder: 'Home/Frappe Mail' }"
 						@success="
 							(file) => mail.attachments.push({ ...file, disposition: 'attachment' })
@@ -186,7 +187,7 @@
 								</div>
 
 								<!-- Send & Discard -->
-								<div class="ml-auto flex items-center space-x-2 sm:mt-0">
+								<div v-if="!isMobile" class="ml-auto flex items-center space-x-2">
 									<Button :label="__('Discard')" @click="discardMail" />
 									<Button
 										variant="solid"
@@ -203,7 +204,17 @@
 	</component>
 </template>
 <script setup lang="ts">
-import { computed, inject, nextTick, reactive, ref, useTemplateRef, watch } from 'vue'
+import {
+	computed,
+	inject,
+	nextTick,
+	onMounted,
+	onUnmounted,
+	reactive,
+	ref,
+	useTemplateRef,
+	watch,
+} from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
 import { Laugh, Paperclip } from 'lucide-vue-next'
 import {
@@ -338,6 +349,32 @@ watch(show, (val) => {
 
 	if (mailID) updateDraftMail.submit({ submit: false })
 	else if (!isMailEmpty.value) createMail.submit({ saveAsDraft: true })
+})
+
+// Make toolbar hover over keyboard on mobile
+
+const toolbarBottom = ref(0)
+
+const updatePosition = () => {
+	if (!window.visualViewport) return
+	const offset =
+		window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop
+	toolbarBottom.value = offset > 0 ? offset : 0
+}
+
+onMounted(() => {
+	if (!(isMobile.value && window.visualViewport)) return
+
+	window.visualViewport.addEventListener('resize', updatePosition)
+	window.visualViewport.addEventListener('scroll', updatePosition)
+
+	updatePosition()
+
+	onUnmounted(() => {
+		if (!window.visualViewport) return
+		window.visualViewport.removeEventListener('resize', updatePosition)
+		window.visualViewport.removeEventListener('scroll', updatePosition)
+	})
 })
 
 const isMailEmpty = computed(() => {

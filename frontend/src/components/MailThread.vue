@@ -23,7 +23,7 @@
 						<Dropdown :options="moveToOptions">
 							<Button variant="ghost">
 								<template #icon>
-									<component :is="FolderInput" class="text-ink-gray-5 h-4 w-4" />
+									<FolderInput class="text-ink-gray-5 h-4 w-4" />
 								</template>
 							</Button>
 						</Dropdown>

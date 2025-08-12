@@ -126,22 +126,6 @@ export const textEditorButtons = [
 	'Separator',
 	'Image',
 	'Link',
-	'Horizontal Rule',
-	[
-		'InsertTable',
-		'AddColumnBefore',
-		'AddColumnAfter',
-		'DeleteColumn',
-		'AddRowBefore',
-		'AddRowAfter',
-		'DeleteRow',
-		'MergeCells',
-		'SplitCell',
-		'ToggleHeaderColumn',
-		'ToggleHeaderRow',
-		'ToggleHeaderCell',
-		'DeleteTable',
-	],
 ]
 
 export const getFirstAlphabet = (str?: string) => str?.match(/[A-Za-z]/)?.[0]
