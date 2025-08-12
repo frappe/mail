@@ -9,7 +9,7 @@
 		<template #body-content>
 			<TextEditor
 				ref="textEditor"
-				editor-class="prose-none text-base max-w-none min-h-[15rem]"
+				editor-class="not-prose prose-sm max-w-none min-h-[15rem]"
 				:extensions="[CustomImageExtension]"
 				:content="mail.html_body"
 				@change="(val: string) => (mail.html_body = val)"
@@ -101,6 +101,14 @@
 						}"
 					>
 						<EditorContent :editor="editor" />
+
+						<!-- Show quoted content -->
+						<Button
+							v-if="mail?.quoted_content"
+							label="&middot;&middot;&middot;"
+							class="max-h-4 w-fit"
+							@click="openQuotedContent"
+						/>
 
 						<!-- Attachments -->
 						<div class="text-ink-gray-6 mt-auto flex flex-col gap-2.5 pt-2.5">
@@ -281,6 +289,7 @@ const emptyMail = {
 	attachments: [],
 	subject: '',
 	html_body: '',
+	quoted_content: '',
 	in_reply_to: '',
 	in_reply_to_id: '',
 }
@@ -291,13 +300,19 @@ const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
 	makeParams: ({ saveAsDraft }: { saveAsDraft: boolean }) => ({
 		...mail,
+		html_body: mail.html_body + mail.quoted_content,
 		save_as_draft: saveAsDraft,
 	}),
 })
 
 const updateDraftMail = createResource({
 	url: 'mail.api.mail.update_draft_mail',
-	makeParams: ({ submit }: { submit: boolean }) => ({ ...mail, name: mailID, submit: submit }),
+	makeParams: ({ submit }: { submit: boolean }) => ({
+		...mail,
+		html_body: mail.html_body + mail.quoted_content,
+		name: mailID,
+		submit: submit,
+	}),
 })
 
 const destroyMail = createResource({
@@ -332,7 +347,9 @@ const setMailDetails = () => {
 	mail.in_reply_to = mailDetails.in_reply_to
 	mail.in_reply_to_id = mailDetails.in_reply_to_id
 	mail.subject = mailDetails.subject
-	mail.html_body = mailDetails.html_body
+	const { quotedContent, remainingBody } = separateQuotedContent()
+	mail.quoted_content = quotedContent
+	mail.html_body = remainingBody
 	mail.attachments = mailDetails.attachments
 	mail.to = mailDetails.to
 	mail.cc = mailDetails.cc
@@ -340,6 +357,30 @@ const setMailDetails = () => {
 
 	cc.value = !!mail.cc?.length
 	bcc.value = !!mail.bcc?.length
+}
+
+const separateQuotedContent = () => {
+	if (!mailDetails?.html_body) return { quotedContent: '', remainingBody: '' }
+
+	const parser = new DOMParser()
+	const doc = parser.parseFromString(mailDetails.html_body, 'text/html')
+
+	const topLevelDiv = Array.from(doc.body.children).find(
+		(el) => el.tagName.toLowerCase() === 'div' && el.classList.contains('frappe_mail_quote'),
+	)
+
+	let quotedContent = ''
+	if (topLevelDiv) {
+		quotedContent = topLevelDiv.outerHTML
+		topLevelDiv.remove()
+	}
+
+	return { quotedContent, remainingBody: doc.body.innerHTML }
+}
+
+const openQuotedContent = () => {
+	mail.html_body += mail.quoted_content
+	mail.quoted_content = ''
 }
 
 watch(show, (val) => {
@@ -379,6 +420,7 @@ onMounted(() => {
 
 const isMailEmpty = computed(() => {
 	const isSubjectEmpty = !mail.subject.length
+	const isQuotedContentEmpty = !mail.quoted_content?.length
 	const isAttachmentsEmpty = !mail.attachments.length
 	const isRecipientsEmpty = [mail.to, mail.cc, mail.bcc].every((d) => !d.length)
 
@@ -391,7 +433,13 @@ const isMailEmpty = computed(() => {
 			Array.from(element.children).every((d) => !d.textContent?.trim())
 	}
 
-	return isSubjectEmpty && isRecipientsEmpty && isAttachmentsEmpty && isBodyEmpty
+	return (
+		isSubjectEmpty &&
+		isQuotedContentEmpty &&
+		isRecipientsEmpty &&
+		isAttachmentsEmpty &&
+		isBodyEmpty
+	)
 })
 
 const fetchAttachment = createResource({

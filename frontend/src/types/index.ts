@@ -72,6 +72,7 @@ export interface ComposeMailData {
 	cc: string[]
 	bcc: string[]
 	subject: string
+	quoted_content?: string
 	html_body: string
 	attachments: Attachment[]
 	in_reply_to: string

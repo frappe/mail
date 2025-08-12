@@ -174,6 +174,14 @@
 						</div>
 					</div>
 				</div>
+
+				<div
+					v-if="!mailThread.data[mailThread.data.length - 1].draft"
+					class="flex items-center space-x-2"
+				>
+					<Button :icon-left="Reply" :label="__('Reply')" variant="outline" />
+					<Button :icon-left="Forward" :label="__('Forward')" variant="outline" />
+				</div>
 			</div>
 		</div>
 		<SendMail
@@ -465,7 +473,7 @@ const replyAll = (mail: Mail) => {
 
 const forward = (mail: Mail) => {
 	mailDetails.subject = `Fwd: ${mail.subject}`
-	mailDetails.html_body = getMailBody(mail)
+	mailDetails.html_body = getQuotedContent(mail)
 	showSendModal.value = true
 }
 
@@ -473,13 +481,13 @@ const isUserEmail = (email: string) => user.data.email_addresses.includes(email)
 
 const setReplyDetailsAndOpenModal = (mail: Mail) => {
 	mailDetails.subject = mail.subject.startsWith('Re: ') ? mail.subject : `Re: ${mail.subject}`
-	mailDetails.html_body = getMailBody(mail)
+	mailDetails.html_body = getQuotedContent(mail)
 	mailDetails.in_reply_to = mail.message_id
 	mailDetails.in_reply_to_id = mail._id
 	showSendModal.value = true
 }
 
-const getMailBody = (mail: Mail) => {
+const getQuotedContent = (mail: Mail) => {
 	if (!mail.html_body) return ''
 	const replyHeader = `On ${dayjs(mail.received_at).format('DD MMM YYYY')} at ${dayjs(mail.received_at).format('h:mm A')}, ${mail.from_email} wrote:`
 	return `<div class="frappe_mail_quote">${replyHeader}<br><blockquote style="margin-left: 8px"><br>${mail.html_body}</blockquote></div>`
