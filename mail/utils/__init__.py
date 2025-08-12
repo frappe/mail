@@ -356,14 +356,3 @@ def get_dkim_selector(key_type: Literal["rsa", "ed25519"]) -> str:
 	"""
 
 	return f"frappemail-{key_type[0]}"
-
-
-def get_postmaster_address() -> str:
-	"""
-	Returns Postmaster address.
-	e.g. postmaster@rootdomain.com
-	"""
-
-	from mail.utils.cache import get_root_domain_name
-
-	return f"postmaster@{get_root_domain_name()}"
