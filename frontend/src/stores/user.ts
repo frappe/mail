@@ -17,7 +17,10 @@ export const userStore = defineStore('mail-users', () => {
 		auto: true,
 	})
 
-	const mailboxes = createResource({ url: 'mail.api.mail.get_mailboxes', auto: true })
+	const mailboxes = createResource({
+		url: 'mail.api.mail.get_mailboxes',
+		auto: !!userResource.data,
+	})
 
 	const mailboxIds = computed(() => {
 		const ids: Record<Mailbox, string> = {

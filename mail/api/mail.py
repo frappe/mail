@@ -55,9 +55,11 @@ def get_mailboxes() -> list[dict]:
 def get_mail_thread(thread_id: str) -> list[dict]:
 	"""Returns mail thread for the given id."""
 
-	rows = get_thread_rows(thread_id)
-	messages = group_thread_mail_recipients(rows)
-	return add_mail_attachments(messages)
+	if rows := get_thread_rows(thread_id):
+		messages = group_thread_mail_recipients(rows)
+		return add_mail_attachments(messages)
+
+	return []
 
 
 def get_thread_rows(thread_id: str) -> list[dict]:
@@ -426,13 +428,13 @@ def set_mails_mailbox(mail_ids: list[str], mailbox: str) -> None:
 
 
 @frappe.whitelist()
-def empty_mailbox(mailbox_id: str) -> None:
+def empty_mailbox(mailbox: str) -> None:
 	"""Empties selected mailbox for current user."""
 
 	account = get_account_for_user(frappe.session.user)
 	messages = frappe.get_all(
 		"Email Message",
-		{"account": account, "mailbox_id": ["in", mailbox_id], "destroyed": 0},
+		{"account": account, "mailbox_id": ["in", mailbox], "destroyed": 0},
 		pluck="name",
 	)
 	EmailMessage.destroy_emails(account, messages)
