@@ -231,32 +231,33 @@ def extract_recipients(message: dict) -> list:
 	"""Extracts recipient details from a message dictionary."""
 
 	recipients = []
-	domains = json.loads(message["domains"]) if isinstance(message["domains"], str) else message["domains"]
-	for domain in domains:
-		for recipient in domain["recipients"]:
-			status = "Scheduled"
-			server_response = {}
-			if domain["status"] != recipient["status"]:
-				if isinstance(recipient["status"], dict):
-					recipient_status = recipient["status"]
-					if recipient_status.get("temp_fail", False):
-						status = "Temporary Failure"
-					elif recipient_status.get("perm_fail", False):
-						status = "Permanent Failure"
-					server_response = json.dumps(recipient_status, indent=4)
+	for recipient in message["recipients"]:
+		status = "Scheduled"
 
-			recipients.append(
-				{
-					"email": recipient["address"],
-					"domain_name": domain["name"],
-					"status": status,
-					"retry_num": domain["retry_num"],
-					"next_retry": domain["next_retry"],
-					"next_notify": domain["next_notify"],
-					"expires": domain["expires"],
-					"server_response": server_response,
-				}
-			)
+		server_response = None
+		if recipient["status"] != status.lower():
+			rcpt_status = recipient["status"]
+			if rcpt_status.get("temp_fail", False):
+				status = "Temporary Failure"
+			elif rcpt_status.get("perm_fail", False):
+				status = "Permanent Failure"
+
+			server_response = json.dumps(rcpt_status, indent=4)
+
+		recipients.append(
+			{
+				"email": recipient["address"],
+				"domain_name": recipient["address"].split("@")[-1],
+				"original_rcpt": recipient["orcpt"],
+				"status": status,
+				"queue": recipient["queue"],
+				"retry_num": recipient["retry_num"],
+				"next_retry": recipient["next_retry"],
+				"next_notify": recipient["next_notify"],
+				"expires": recipient["expires"],
+				"server_response": server_response,
+			}
+		)
 
 	return recipients
 

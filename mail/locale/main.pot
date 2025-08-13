@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-08-12 11:54+0553\n"
-"PO-Revision-Date: 2025-08-12 11:54+0553\n"
+"POT-Creation-Date: 2025-08-13 17:43+0553\n"
+"PO-Revision-Date: 2025-08-13 17:43+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -129,7 +129,7 @@ msgstr ""
 msgid "A"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:366
+#: mail/mail/doctype/mail_account/mail_account.py:365
 msgid "A job has been queued to set the quota."
 msgstr ""
 
@@ -646,7 +646,7 @@ msgstr ""
 msgid "Backup Email"
 msgstr ""
 
-#: mail/utils/validation.py:207
+#: mail/utils/validation.py:204
 msgid "Bad Cron Expression"
 msgstr ""
 
@@ -809,11 +809,11 @@ msgstr ""
 msgid "Cannot retry a mail with status {0}"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:359
+#: mail/mail/doctype/mail_account/mail_account.py:358
 msgid "Cannot set quota for a disabled account."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:383
+#: mail/mail/doctype/mail_account/mail_account.py:382
 msgid "Cannot set vacation response for a disabled account."
 msgstr ""
 
@@ -964,7 +964,7 @@ msgstr ""
 msgid "Cluster Settings"
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:77
+#: mail/mail/doctype/mail_domain/mail_domain.py:73
 msgid "Cluster is not set for Mail Tenant {0}."
 msgstr ""
 
@@ -1210,7 +1210,7 @@ msgstr ""
 msgid "DKIM Key"
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:154
+#: mail/mail/doctype/mail_domain/mail_domain.py:150
 msgid "DKIM Keys rotated successfully."
 msgstr ""
 
@@ -1287,11 +1287,11 @@ msgstr ""
 msgid "DNS Records"
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:116
+#: mail/mail/doctype/mail_domain/mail_domain.py:112
 msgid "DNS Records refreshed successfully."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:136
+#: mail/mail/doctype/mail_domain/mail_domain.py:132
 msgid "DNS Records verified successfully."
 msgstr ""
 
@@ -1369,7 +1369,7 @@ msgstr ""
 msgid "Default Email"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:294
+#: mail/mail/doctype/mail_account/mail_account.py:293
 msgid "Default Email must be one of the email addresses assigned to the user."
 msgstr ""
 
@@ -1697,11 +1697,11 @@ msgstr ""
 msgid "Domain {0} already registered."
 msgstr ""
 
-#: mail/utils/validation.py:157
+#: mail/utils/validation.py:154
 msgid "Domain {0} and User {1} do not belong to the same tenant."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:242
+#: mail/mail/doctype/mail_account/mail_account.py:241
 msgid "Domain {0} and User {1} must belong to the same tenant."
 msgstr ""
 
@@ -1709,7 +1709,7 @@ msgstr ""
 msgid "Domain {0} and {1} {2} must belong to the same tenant."
 msgstr ""
 
-#: mail/utils/validation.py:183
+#: mail/utils/validation.py:180
 msgid "Domain {0} does not exist or may be disabled in the Mail Domain."
 msgstr ""
 
@@ -1717,7 +1717,7 @@ msgstr ""
 msgid "Domain {0} has already been registered."
 msgstr ""
 
-#: mail/utils/validation.py:129
+#: mail/utils/validation.py:126
 msgid "Domain {0} is disabled."
 msgstr ""
 
@@ -1725,15 +1725,15 @@ msgstr ""
 msgid "Domain {0} is not allowed for personal signup."
 msgstr ""
 
-#: mail/utils/validation.py:139
+#: mail/utils/validation.py:136
 msgid "Domain {0} is not owned by the tenant."
 msgstr ""
 
-#: mail/utils/validation.py:131
+#: mail/utils/validation.py:128
 msgid "Domain {0} is not verified."
 msgstr ""
 
-#: mail/utils/validation.py:190
+#: mail/utils/validation.py:187
 msgid "Domain {0} not found in Mail Domain."
 msgstr ""
 
@@ -1944,7 +1944,7 @@ msgstr ""
 msgid "Email domain {0} does not match with domain {1}."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:263
+#: mail/mail/doctype/mail_account/mail_account.py:262
 msgid "Email is mandatory."
 msgstr ""
 
@@ -2282,12 +2282,12 @@ msgstr ""
 msgid "Failed to destroy push subscription(s)."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:56
-#: mail/mail/doctype/mail_account/mail_account.py:59
+#: mail/mail/doctype/mail_account/mail_account.py:55
+#: mail/mail/doctype/mail_account/mail_account.py:58
 msgid "Failed to fetch Account Details"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:77
+#: mail/mail/doctype/mail_account/mail_account.py:76
 msgid "Failed to fetch Vacation Response"
 msgstr ""
 
@@ -2351,11 +2351,11 @@ msgstr ""
 msgid "Failed to renew push subscription."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:414
+#: mail/mail/doctype/mail_account/mail_account.py:413
 msgid "Failed to set vacation response"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:417
+#: mail/mail/doctype/mail_account/mail_account.py:416
 msgid "Failed to set vacation response."
 msgstr ""
 
@@ -2502,8 +2502,8 @@ msgstr ""
 #: frontend/src/components/Settings/VacationResponseSettings.vue:12
 #: mail/mail/doctype/mail_account/mail_account.js:156
 #: mail/mail/doctype/mail_account/mail_account.json
-#: mail/mail/doctype/mail_account/mail_account.py:394
-#: mail/mail/doctype/mail_account/mail_account.py:402
+#: mail/mail/doctype/mail_account/mail_account.py:393
+#: mail/mail/doctype/mail_account/mail_account.py:401
 msgid "From Date"
 msgstr ""
 
@@ -2940,20 +2940,20 @@ msgstr ""
 msgid "Internal"
 msgstr ""
 
-#: mail/utils/validation.py:240
+#: mail/utils/validation.py:237
 msgid "Invalid JMAP Structure"
 msgstr ""
 
-#: mail/utils/validation.py:257 mail/utils/validation.py:286
-#: mail/utils/validation.py:317
+#: mail/utils/validation.py:254 mail/utils/validation.py:283
+#: mail/utils/validation.py:314
 msgid "Invalid Maildir"
 msgstr ""
 
-#: mail/utils/validation.py:283 mail/utils/validation.py:314
+#: mail/utils/validation.py:280 mail/utils/validation.py:311
 msgid "Invalid Maildir format in the following directories: {0}"
 msgstr ""
 
-#: mail/utils/validation.py:254
+#: mail/utils/validation.py:251
 msgid "Invalid Maildir format: missing {0} directories."
 msgstr ""
 
@@ -2993,7 +2993,7 @@ msgstr ""
 msgid "Invalid parameters for push subscription verification."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:314
+#: mail/mail/doctype/mail_account/mail_account.py:313
 msgid "Invalid reply-to address: {0}"
 msgstr ""
 
@@ -3342,7 +3342,7 @@ msgstr ""
 msgid "Mail Account Request"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:552
+#: mail/mail/doctype/mail_account/mail_account.py:551
 msgid "Mail Account {0} already exists."
 msgstr ""
 
@@ -4033,7 +4033,7 @@ msgstr ""
 msgid "Missing account query parameter."
 msgstr ""
 
-#: mail/utils/validation.py:237
+#: mail/utils/validation.py:234
 msgid "Missing required files/directories for JMAP format: {0}"
 msgstr ""
 
@@ -4348,7 +4348,7 @@ msgstr ""
 msgid "Only Administrator can delete Mail Cluster."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:55
+#: mail/mail/doctype/mail_domain/mail_domain.py:51
 msgid "Only Administrator can delete Mail Domain."
 msgstr ""
 
@@ -4408,6 +4408,11 @@ msgstr ""
 #: frontend/src/pages/SetupView.vue:11
 #: mail/mail/doctype/dmarc_report/dmarc_report.json
 msgid "Organization Name"
+msgstr ""
+
+#. Label of the original_rcpt (Data) field in DocType 'Message Queue Recipient'
+#: mail/mail/doctype/message_queue_recipient/message_queue_recipient.json
+msgid "Original RCPT"
 msgstr ""
 
 #. Label of the outbound_only (Check) field in DocType 'Mail Server'
@@ -4496,7 +4501,7 @@ msgstr ""
 msgid "Password for administrative access to the cluster."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:426
+#: mail/mail/doctype/mail_account/mail_account.py:425
 msgid "Password has been regenerated."
 msgstr ""
 
@@ -4854,6 +4859,11 @@ msgstr ""
 msgid "Query"
 msgstr ""
 
+#. Label of the queue (Data) field in DocType 'Message Queue Recipient'
+#: mail/mail/doctype/message_queue_recipient/message_queue_recipient.json
+msgid "Queue"
+msgstr ""
+
 #. Label of the queue_id (Data) field in DocType 'Message Queue'
 #: mail/mail/doctype/message_queue/message_queue.json
 msgid "Queue ID"
@@ -4907,7 +4917,7 @@ msgid "Quota Usage"
 msgstr ""
 
 #: mail/mail/doctype/mail_account/mail_account.js:114
-#: mail/mail/doctype/mail_account/mail_account.py:361
+#: mail/mail/doctype/mail_account/mail_account.py:360
 msgid "Quota cannot be negative."
 msgstr ""
 
@@ -5394,7 +5404,7 @@ msgstr ""
 msgid "Row #{0}: Directory ID {1} is duplicated."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:129
+#: mail/mail/doctype/mail_domain/mail_domain.py:125
 msgid "Row #{0}: Failed to verify {1} : {2}."
 msgstr ""
 
@@ -6291,11 +6301,11 @@ msgstr ""
 msgid "The access key for the Azure Storage Account."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:216
+#: mail/mail/doctype/mail_account/mail_account.py:215
 msgid "The account is linked to Mail Alias {0}. Please disable it first."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:222
+#: mail/mail/doctype/mail_account/mail_account.py:221
 msgid "The account is linked to a Mailing List as a member. Please remove it first."
 msgstr ""
 
@@ -6575,9 +6585,9 @@ msgstr ""
 #: frontend/src/components/Settings/VacationResponseSettings.vue:18
 #: mail/mail/doctype/mail_account/mail_account.js:163
 #: mail/mail/doctype/mail_account/mail_account.json
-#: mail/mail/doctype/mail_account/mail_account.py:396
-#: mail/mail/doctype/mail_account/mail_account.py:398
-#: mail/mail/doctype/mail_account/mail_account.py:402
+#: mail/mail/doctype/mail_account/mail_account.py:395
+#: mail/mail/doctype/mail_account/mail_account.py:397
+#: mail/mail/doctype/mail_account/mail_account.py:401
 msgid "To Date"
 msgstr ""
 
@@ -6898,7 +6908,7 @@ msgstr ""
 msgid "User must be an admin of the tenant"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:499
+#: mail/mail/doctype/mail_account/mail_account.py:498
 msgid "User with email {0} already exists."
 msgstr ""
 
@@ -6914,7 +6924,7 @@ msgstr ""
 msgid "User {0} does not have Mail Admin role."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:234
+#: mail/mail/doctype/mail_account/mail_account.py:233
 msgid "User {0} does not have Mail User role."
 msgstr ""
 
@@ -6988,16 +6998,16 @@ msgstr ""
 msgid "Users"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:401
+#: mail/mail/doctype/mail_account/mail_account.py:400
 msgid "Vacation - {0} cannot be before Vacation - {1}."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:398
+#: mail/mail/doctype/mail_account/mail_account.py:397
 msgid "Vacation - {0} cannot be in the past."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:394
-#: mail/mail/doctype/mail_account/mail_account.py:396
+#: mail/mail/doctype/mail_account/mail_account.py:393
+#: mail/mail/doctype/mail_account/mail_account.py:395
 msgid "Vacation - {0} is required."
 msgstr ""
 
@@ -7217,7 +7227,7 @@ msgid "Yesterday"
 msgstr ""
 
 #: mail/mail/doctype/mail_account_request/mail_account_request.py:214
-#: mail/utils/validation.py:167
+#: mail/utils/validation.py:164
 msgid "You are not authorized to perform this action."
 msgstr ""
 
@@ -7225,23 +7235,23 @@ msgstr ""
 msgid "You cannot send email from {0} using account {1}. Please use the email address associated with the account."
 msgstr ""
 
-#: mail/utils/validation.py:328
+#: mail/utils/validation.py:325
 msgid "You do not have permission to access this resource."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:106
+#: mail/mail/doctype/mail_domain/mail_domain.py:102
 msgid "You do not have permission to refresh DNS Records."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:151
+#: mail/mail/doctype/mail_domain/mail_domain.py:147
 msgid "You do not have permission to rotate DKIM Keys."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:357
+#: mail/mail/doctype/mail_account/mail_account.py:356
 msgid "You do not have permission to set quota for this account."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:123
+#: mail/mail/doctype/mail_domain/mail_domain.py:119
 msgid "You do not have permission to verify DNS Records."
 msgstr ""
 
@@ -7257,11 +7267,11 @@ msgstr ""
 msgid "You have no mails in this folder."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:254
+#: mail/mail/doctype/mail_account/mail_account.py:253
 msgid "You have reached the maximum limit of {0} accounts for the tenant."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:82
+#: mail/mail/doctype/mail_domain/mail_domain.py:78
 msgid "You have reached the maximum limit of {0} domains for the tenant."
 msgstr ""
 
@@ -7419,7 +7429,7 @@ msgstr ""
 msgid "{0} has an invalid store type '{1}'. Allowed types are: {2}."
 msgstr ""
 
-#: mail/utils/validation.py:206
+#: mail/utils/validation.py:203
 msgid "{0} is not a valid Cron expression."
 msgstr ""
 
