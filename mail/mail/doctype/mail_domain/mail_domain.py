@@ -121,9 +121,6 @@ class MailDomain(Document):
 	def on_update(self) -> None:
 		self.clear_cache()
 
-		if self.has_value_changed("dkim_rsa_key_size"):
-			create_dkim_key(self.domain_name, cint(self.dkim_rsa_key_size))
-
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Mail Domain."))
@@ -206,7 +203,7 @@ class MailDomain(Document):
 		if not has_permission(self, "write"):
 			frappe.throw(_("You do not have permission to rotate DKIM Keys."))
 
-		create_dkim_key(self.domain_name, cint(self.dkim_rsa_key_size))
+		create_dkim_key(self.domain_name)
 		frappe.msgprint(_("DKIM Keys rotated successfully."), indicator="green", alert=True)
 
 	def clear_cache(self) -> None:

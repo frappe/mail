@@ -82,8 +82,6 @@ export interface MailDomain extends DocType {
 	is_verified: 0 | 1
 	/** Subdomain: Check */
 	is_subdomain: 0 | 1
-	/** DKIM RSA Key Size: Select */
-	dkim_rsa_key_size?: '' | '2048' | '4096'
 	/** Root Domain: Check */
 	is_root_domain: 0 | 1
 	/** Tenant: Link (Mail Tenant) */
