@@ -15,19 +15,6 @@ frappe.ui.form.on('Mail Domain', {
 				},
 				__('Actions'),
 			)
-
-			frm.add_custom_button(
-				__('Rotate DKIM Keys'),
-				() => {
-					frappe.confirm(
-						__(
-							'Are you sure you want to rotate the DKIM keys? This will generate new keys for email signing and may take up to 10 minutes to propagate across DNS servers. Emails sent during this period may fail DKIM verification.',
-						),
-						() => frm.trigger('rotate_dkim_keys'),
-					)
-				},
-				__('Actions'),
-			)
 		}
 	},
 
@@ -38,21 +25,6 @@ frappe.ui.form.on('Mail Domain', {
 			args: {},
 			freeze: true,
 			freeze_message: __('Verifying DNS Records...'),
-			callback: (r) => {
-				if (!r.exc) {
-					frm.refresh()
-				}
-			},
-		})
-	},
-
-	rotate_dkim_keys(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: 'rotate_dkim_keys',
-			args: {},
-			freeze: true,
-			freeze_message: __('Rotating DKIM Keys...'),
 			callback: (r) => {
 				if (!r.exc) {
 					frm.refresh()

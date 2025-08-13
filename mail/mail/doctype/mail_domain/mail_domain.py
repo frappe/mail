@@ -196,16 +196,6 @@ class MailDomain(Document):
 
 		return bool(self.is_verified)
 
-	@frappe.whitelist()
-	def rotate_dkim_keys(self) -> None:
-		"""Rotates the DKIM Keys."""
-
-		if not has_permission(self, "write"):
-			frappe.throw(_("You do not have permission to rotate DKIM Keys."))
-
-		create_dkim_key(self.domain_name)
-		frappe.msgprint(_("DKIM Keys rotated successfully."), indicator="green", alert=True)
-
 	def clear_cache(self) -> None:
 		"""Clears the Cache."""
 
