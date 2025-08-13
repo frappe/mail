@@ -21,8 +21,6 @@
   "dns_provider_token",
   "dns_provider_private_zone",
   "section_break_l9un",
-  "default_dkim_rsa_key_size",
-  "column_break_rwnw",
   "default_ttl",
   "signup_tab",
   "allow_business_signup",
@@ -160,19 +158,6 @@
    "label": "Enable Spam Detection"
   },
   {
-   "fieldname": "column_break_rwnw",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "2048",
-   "description": "The default size of the RSA key used for DKIM signing.",
-   "fieldname": "default_dkim_rsa_key_size",
-   "fieldtype": "Select",
-   "label": "DKIM RSA Key Size",
-   "options": "\n2048\n4096",
-   "reqd": 1
-  },
-  {
    "default": "0",
    "description": "Allows users to sign up as a business and creates a tenant.",
    "fieldname": "allow_business_signup",
@@ -281,7 +266,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-16 10:50:56.921888",
+ "modified": "2025-08-13 15:52:18.290873",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

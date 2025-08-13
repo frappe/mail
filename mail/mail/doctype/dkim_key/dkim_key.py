@@ -19,8 +19,6 @@ class DKIMKey(Document):
 		self.name = f"{self.domain_name.replace('.', '-')}-{random_string(length=10)}"
 
 	def validate(self) -> None:
-		self.validate_rsa_key_size()
-
 		if self.is_new():
 			self.generate_dkim_keys()
 
@@ -45,14 +43,6 @@ class DKIMKey(Document):
 			MailBackendDKIMManager(
 				"Mail Cluster", get_cluster_for_tenant(get_tenant_for_domain(self.domain_name))
 			).delete(self.domain_name)
-
-	def validate_rsa_key_size(self) -> None:
-		"""Validates the Key Size."""
-
-		if not self.rsa_key_size:
-			self.rsa_key_size = frappe.db.get_single_value(
-				"Mail Settings", "default_dkim_rsa_key_size", cache=True
-			)
 
 	def generate_dkim_keys(self) -> None:
 		"""Generates the DKIM Keys."""

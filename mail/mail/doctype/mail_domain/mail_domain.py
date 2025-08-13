@@ -113,7 +113,6 @@ class MailDomain(Document):
 			self.validate_is_root_domain()
 
 		self.validate_tenant()
-		self.validate_dkim_rsa_key_size()
 		self.validate_is_verified()
 
 	def after_insert(self) -> None:
@@ -157,14 +156,6 @@ class MailDomain(Document):
 				_("You have reached the maximum limit of {0} domains for the tenant.").format(
 					frappe.bold(max_domains)
 				)
-			)
-
-	def validate_dkim_rsa_key_size(self) -> None:
-		"""Validates the DKIM Key Size."""
-
-		if not self.dkim_rsa_key_size:
-			self.dkim_rsa_key_size = frappe.db.get_single_value(
-				"Mail Settings", "default_dkim_rsa_key_size", cache=True
 			)
 
 	def validate_is_verified(self) -> None:
