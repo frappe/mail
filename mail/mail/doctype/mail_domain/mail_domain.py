@@ -13,7 +13,6 @@ from frappe.utils import cint
 from mail.backend import MailBackendDomainManager, get_mail_backend_api
 from mail.jmap import raise_for_status
 from mail.mail.doctype.dkim_key.dkim_key import create_dkim_key
-from mail.utils import get_dkim_host, get_dkim_selector
 from mail.utils.cache import (
 	get_cluster_for_tenant,
 	get_root_domain_name,
@@ -86,7 +85,7 @@ class MailDomain(Document):
 				return sorted(cleaned_records, key=lambda x: (x["mandatory"] == 0, x["type"], x["host"]))
 			except Exception:
 				frappe.log_error(
-					title=_("Failed to fetch DNS Records"),
+					title=_("Failed to fetch DNS Records for {0}").format(self.domain_name),
 					message=frappe.get_traceback(with_context=True),
 				)
 
@@ -99,7 +98,7 @@ class MailDomain(Document):
 		if dns_records := self._dns_records:
 			return json.dumps(dns_records, indent=4)
 
-		frappe.throw(_("Failed to fetch DNS Records"))
+		frappe.msgprint(_("Failed to fetch DNS Records."), indicator="red", alert=True)
 
 	def autoname(self) -> None:
 		self.domain_name = self.domain_name.strip().lower()
@@ -180,6 +179,9 @@ class MailDomain(Document):
 
 		if not has_permission(self, "write"):
 			frappe.throw(_("You do not have permission to verify DNS Records."))
+
+		if not self._dns_records:
+			return frappe.throw(_("Failed to fetch DNS Records."))
 
 		failed_records = []
 		for record in self._dns_records:
