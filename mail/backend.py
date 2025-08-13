@@ -134,52 +134,31 @@ class MailBackendManagerBase:
 class MailBackendDKIMManager(MailBackendManagerBase):
 	"""Class to manage DKIM keys on the Mail Backend."""
 
-	def create(self, domain_name: str, rsa_private_key: str) -> None:
+	def create(self, domain_name: str, algorithm: Literal["rsa", "ed25519"]) -> None:
 		"""Creates a DKIM key on the backend."""
 
-		from mail.mail.doctype.mail_cluster.mail_cluster import reload_clusters_config
-		from mail.mail.doctype.mail_server.mail_server import reload_servers_config
-
 		request_data = json.dumps(
-			[
-				{
-					"type": "insert",
-					"prefix": f"signature.rsa-{domain_name}",
-					"values": [
-						["report", "true"],
-						["selector", get_dkim_selector("rsa")],
-						["canonicalization", "relaxed/relaxed"],
-						["private-key", rsa_private_key],
-						["algorithm", "rsa-sha256"],
-						["domain", domain_name],
-					],
-					"assert_empty": True,
-				}
-			]
+			{
+				"id": f"{algorithm}-{domain_name}",
+				"algorithm": algorithm.title(),
+				"domain": domain_name,
+				"selector": get_dkim_selector(algorithm),
+			}
 		)
-
-		on_end = reload_clusters_config
-		on_end_kwargs = {"clusters": [self.backend_name]}
-		if self.backend_type == "Mail Server":
-			on_end = reload_servers_config
-			on_end_kwargs = {"servers": [self.backend_name]}
-
 		self.create_request(
 			method="POST",
-			endpoint="/api/settings",
+			endpoint="/api/dkim",
 			request_data=request_data,
-			on_end=on_end,
-			on_end_kwargs=on_end_kwargs,
 		)
 
-	def delete(self, domain_name: str) -> None:
+	def delete(self, domain_name: str, algorithm: Literal["rsa", "ed25519"]) -> None:
 		"""Deletes a DKIM key from the backend."""
 
 		request_data = json.dumps(
 			[
 				{
 					"type": "clear",
-					"prefix": f"signature.rsa-{domain_name}",
+					"prefix": f"signature.{algorithm}-{domain_name}",
 				}
 			]
 		)

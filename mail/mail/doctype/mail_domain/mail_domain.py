@@ -8,11 +8,9 @@ from functools import cached_property
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint
 
-from mail.backend import MailBackendDomainManager, get_mail_backend_api
+from mail.backend import MailBackendDKIMManager, MailBackendDomainManager, get_mail_backend_api
 from mail.jmap import raise_for_status
-from mail.mail.doctype.dkim_key.dkim_key import create_dkim_key
 from mail.utils.cache import (
 	get_cluster_for_tenant,
 	get_root_domain_name,
@@ -116,7 +114,10 @@ class MailDomain(Document):
 		self.validate_is_verified()
 
 	def after_insert(self) -> None:
-		MailBackendDomainManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).create(self.domain_name)
+		cluster = get_cluster_for_tenant(self.tenant)
+		MailBackendDomainManager("Mail Cluster", cluster).create(self.domain_name)
+		MailBackendDKIMManager("Mail Cluster", cluster).create(self.domain_name, algorithm="rsa")
+		MailBackendDKIMManager("Mail Cluster", cluster).create(self.domain_name, algorithm="ed25519")
 
 	def on_update(self) -> None:
 		self.clear_cache()
@@ -126,7 +127,10 @@ class MailDomain(Document):
 			frappe.throw(_("Only Administrator can delete Mail Domain."))
 
 		self.clear_cache()
-		MailBackendDomainManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).delete(self.domain_name)
+		cluster = get_cluster_for_tenant(self.tenant)
+		MailBackendDomainManager("Mail Cluster", cluster).delete(self.domain_name)
+		MailBackendDKIMManager("Mail Cluster", cluster).delete(self.domain_name, algorithm="rsa")
+		MailBackendDKIMManager("Mail Cluster", cluster).delete(self.domain_name, algorithm="ed25519")
 
 	def validate_is_subdomain(self) -> None:
 		"""Validates the Is Subdomain field."""
