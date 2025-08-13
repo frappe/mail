@@ -21,7 +21,6 @@ class MailSettings(Document):
 
 		if self.has_value_changed("root_domain_name"):
 			self.handle_root_domain_change()
-			create_dmarc_dns_record_for_external_domains()
 
 	def validate_root_domain_name(self) -> None:
 		"""Validates the Root Domain Name."""
@@ -131,19 +130,6 @@ class MailSettings(Document):
 		"""Clears the Cache."""
 
 		frappe.cache.delete_value("mail-settings")
-
-
-def create_dmarc_dns_record_for_external_domains() -> None:
-	"""Creates the DMARC DNS Record for external domains."""
-
-	from mail.mail.doctype.dns_record.dns_record import create_or_update_dns_record
-
-	create_or_update_dns_record(
-		host="*._report._dmarc",
-		type="TXT",
-		value="v=DMARC1",
-		category="Server Record",
-	)
 
 
 def validate_mail_settings() -> None:
