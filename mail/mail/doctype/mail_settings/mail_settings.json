@@ -39,7 +39,7 @@
  ],
  "fields": [
   {
-   "description": "The domain name used to create DNS records (SPF, DKIM keys, external DMARC, etc.).",
+   "description": "The domain name used to create DNS records (SPF, external DMARC, etc.).",
    "fieldname": "root_domain_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -266,7 +266,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-08-13 15:52:18.290873",
+ "modified": "2025-08-13 17:04:29.574308",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

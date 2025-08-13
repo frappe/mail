@@ -118,11 +118,6 @@
    "link_fieldname": "domain_name"
   },
   {
-   "group": "Reference",
-   "link_doctype": "DKIM Key",
-   "link_fieldname": "domain_name"
-  },
-  {
    "group": "Account",
    "link_doctype": "Mail Account Request",
    "link_fieldname": "domain_name"
@@ -143,7 +138,7 @@
    "link_fieldname": "domain_name"
   }
  ],
- "modified": "2025-08-13 15:54:46.675986",
+ "modified": "2025-08-13 17:03:36.121955",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Domain",
