@@ -11,16 +11,16 @@ type Mailbox = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'imp
 export const userStore = defineStore('mail-users', () => {
 	const userResource: UserResource = createResource({
 		url: 'mail.api.account.get_user_info',
+		onSuccess: (data) => {
+			if (data) mailboxes.reload()
+		},
 		onError: (error) => {
 			if (error && error.exc_type === 'AuthenticationError') router.push('/login')
 		},
 		auto: true,
 	})
 
-	const mailboxes = createResource({
-		url: 'mail.api.mail.get_mailboxes',
-		auto: !!userResource.data,
-	})
+	const mailboxes = createResource({ url: 'mail.api.mail.get_mailboxes' })
 
 	const mailboxIds = computed(() => {
 		const ids: Record<Mailbox, string> = {

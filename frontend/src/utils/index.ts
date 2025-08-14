@@ -145,3 +145,22 @@ export const getTheme = (
 			return 'blue'
 	}
 }
+
+export const extractQuotedContent = (htmlBody?: string) => {
+	if (!htmlBody) return { quoted_content: '', html_body: '' }
+
+	const parser = new DOMParser()
+	const doc = parser.parseFromString(htmlBody, 'text/html')
+
+	const topLevelDiv = Array.from(doc.body.children).find(
+		(el) => el.tagName.toLowerCase() === 'div' && el.classList.contains('frappe_mail_quote'),
+	)
+
+	let quoted_content = ''
+	if (topLevelDiv) {
+		quoted_content = topLevelDiv.outerHTML
+		topLevelDiv.remove()
+	}
+
+	return { quoted_content, html_body: doc.body.innerHTML }
+}

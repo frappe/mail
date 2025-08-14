@@ -67,16 +67,17 @@ export interface Mail {
 }
 
 export interface ComposeMailData {
-	from_email: string
-	to: string[]
-	cc: string[]
-	bcc: string[]
-	subject: string
+	_name?: string
+	from_email?: string
+	to?: string[]
+	cc?: string[]
+	bcc?: string[]
+	subject?: string
 	quoted_content?: string
-	html_body: string
-	attachments: Attachment[]
-	in_reply_to: string
-	in_reply_to_id: string
+	html_body?: string
+	attachments?: Attachment[]
+	in_reply_to?: string
+	in_reply_to_id?: string
 }
 
 export interface Thread {

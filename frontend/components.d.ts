@@ -22,6 +22,7 @@ declare module 'vue' {
     AttachmentCapsule: typeof import('./src/components/AttachmentCapsule.vue')['default']
     AutocompleteControl: typeof import('./src/components/Controls/AutocompleteControl.vue')['default']
     ChangePasswordModal: typeof import('./src/components/Modals/ChangePasswordModal.vue')['default']
+    ComposeMailEditor: typeof import('./src/components/ComposeMailEditor.vue')['default']
     CopyCode: typeof import('./src/components/CopyCode.vue')['default']
     CopyControl: typeof import('./src/components/Controls/CopyControl.vue')['default']
     DashboardLayout: typeof import('./src/components/DashboardLayout.vue')['default']
