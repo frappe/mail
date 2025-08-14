@@ -1,16 +1,14 @@
 // Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Email Message', {
+frappe.ui.form.on('Mail Message', {
 	refresh(frm) {
 		frm.disable_save()
 
-		if (!frm.doc.__islocal && !frm.doc.destroyed) {
+		if (!frm.doc.__islocal) {
 			if (!frm.doc.draft) {
 				frm.trigger('add_seen_flagged_buttons')
 			}
-
-			frm.trigger('add_destroy_button')
 
 			if (!frm.doc.draft) {
 				frm.trigger('add_reply_forward_buttons')
@@ -62,22 +60,12 @@ frappe.ui.form.on('Email Message', {
 		)
 	},
 
-	add_destroy_button(frm) {
-		if (!frm.doc.destroyed) {
-			frm.add_custom_button(__('Destroy'), () => {
-				frappe.confirm(__('Are you sure you want to destroy this email?'), () => {
-					frm.trigger('destroy')
-				})
-			})
-		}
-	},
-
 	add_reply_forward_buttons(frm) {
 		frm.add_custom_button(
 			__('Reply'),
 			() => {
 				frappe.model.open_mapped_doc({
-					method: 'mail.mail.doctype.email_message.email_message.reply',
+					method: 'mail.mail.doctype.mail_message.mail_message.reply',
 					frm: frm,
 					freeze: true,
 					freeze_message: __('Loading...'),
@@ -90,7 +78,7 @@ frappe.ui.form.on('Email Message', {
 			__('Reply All'),
 			() => {
 				frappe.model.open_mapped_doc({
-					method: 'mail.mail.doctype.email_message.email_message.reply_all',
+					method: 'mail.mail.doctype.mail_message.mail_message.reply_all',
 					frm: frm,
 					freeze: true,
 					freeze_message: __('Loading...'),
@@ -103,7 +91,7 @@ frappe.ui.form.on('Email Message', {
 			__('Forward'),
 			() => {
 				frappe.model.open_mapped_doc({
-					method: 'mail.mail.doctype.email_message.email_message.forward',
+					method: 'mail.mail.doctype.mail_message.mail_message.forward',
 					frm: frm,
 					freeze: true,
 					freeze_message: __('Loading...'),
@@ -151,7 +139,7 @@ frappe.ui.form.on('Email Message', {
 					freeze_message: __(freeze_message),
 					callback: (r) => {
 						if (!r.exc) {
-							frappe.set_route('List', 'Email Message')
+							frappe.set_route('List', 'Mail Message')
 						}
 					},
 				})
@@ -180,20 +168,6 @@ frappe.ui.form.on('Email Message', {
 		}
 	},
 
-	destroy(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: 'destroy',
-			freeze: true,
-			freeze_message: __('Destroying...'),
-			callback: (r) => {
-				if (!r.exc) {
-					frm.refresh()
-				}
-			},
-		})
-	},
-
 	move_to_mailbox(frm, mailbox_id) {
 		frappe.call({
 			doc: frm.doc,
@@ -214,7 +188,7 @@ frappe.ui.form.on('Email Message', {
 	load_attachments(frm) {
 		frappe.call({
 			doc: frm.doc,
-			method: 'preload_attachments_to_cache',
+			method: 'load_attachments',
 			args: {
 				include_inline: true,
 				include_regular: true,

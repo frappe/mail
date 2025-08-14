@@ -19,7 +19,7 @@ export default defineConfig({
 				input: {
 					frappe: ['file'],
 					mail: [
-						'email_message',
+						'mail_message',
 						'mail_tenant',
 						'mail_tenant_member',
 						'mail_domain',
