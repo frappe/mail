@@ -8,6 +8,7 @@ from functools import cached_property
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint
 
 from mail.backend import MailBackendDKIMManager, MailBackendDomainManager, get_mail_backend_api
 from mail.jmap import raise_for_status
@@ -23,71 +24,35 @@ from mail.utils.user import get_user_linked_domains, has_role, is_system_manager
 class MailDomain(Document):
 	@cached_property
 	def _dns_records(self) -> list[dict]:
-		"""Fetches the DNS Records for the Mail Domain."""
+		"""Fetch and normalize DNS Records for the Mail Domain."""
 
-		if not self.is_new() and self.enabled:
-			try:
-				cluster = get_cluster_for_tenant(self.tenant)
-				backend_api = get_mail_backend_api("Mail Cluster", cluster)
-				response = backend_api.request(method="GET", endpoint=f"/api/dns/records/{self.domain_name}")
-				raise_for_status(response)
-				dns_records = response.json()["data"]
+		if self.is_new() or not self.enabled:
+			return []
 
-				mail_settings = frappe.get_cached_doc("Mail Settings")
-				hostname = f"{frappe.db.get_value('Mail Cluster', cluster, 'hostname')}."
-				_hostname = next(
-					(
-						r["content"]
-						for r in dns_records
-						if r["type"] == "CNAME" and r["name"] == f"mail.{self.domain_name}."
-					),
-					None,
+		try:
+			dns_records = self._fetch_dns_records()
+			if not dns_records:
+				return []
+
+			mail_settings = frappe.get_cached_doc("Mail Settings")
+			cluster = get_cluster_for_tenant(self.tenant)
+			hostname = f"{frappe.db.get_value('Mail Cluster', cluster, 'hostname')}."
+			cname_hostname = self._get_mail_cname_hostname(dns_records)
+			cleaned_records = [
+				self._normalize_record(
+					record, mail_settings.spf_host, mail_settings.root_domain_name, hostname, cname_hostname
 				)
+				for record in dns_records
+				if not self._should_skip_record(record)
+			]
 
-				cleaned_records = []
-				for record in dns_records:
-					record["host"] = record.pop("name")
-					record["value"] = (
-						record.pop("content").replace(_hostname, hostname)
-						if _hostname
-						else record.pop("content")
-					)
-
-					if (
-						self.is_root_domain
-						and record["type"] == "CNAME"
-						and record["host"] == f"mail.{self.domain_name}."
-						and record["host"] == record["value"]
-					):
-						continue
-
-					if record["type"] == "TXT" and record["value"].startswith("v=spf1"):
-						record[
-							"value"
-						] = f"v=spf1 include:{mail_settings.spf_host}.{mail_settings.root_domain_name} ~all"
-
-					record["mandatory"] = int(
-						(record["type"] == "CNAME" and record["host"] == f"mail.{self.domain_name}.")
-						or (
-							record["type"] == "TXT"
-							and (
-								record["value"].startswith("v=spf1")
-								or record["host"] == f"_dmarc.{self.domain_name}."
-								or record["host"].endswith(f"._domainkey.{self.domain_name}.")
-							)
-						)
-					)
-
-					cleaned_records.append(record)
-
-				return sorted(cleaned_records, key=lambda x: (x["mandatory"] == 0, x["type"], x["host"]))
-			except Exception:
-				frappe.log_error(
-					title=_("Failed to fetch DNS Records for {0}").format(self.domain_name),
-					message=frappe.get_traceback(with_context=True),
-				)
-
-		return []
+			return sorted(cleaned_records, key=lambda r: (r["mandatory"] == 0, r["type"], r["host"]))
+		except Exception:
+			frappe.log_error(
+				title=_("Failed to fetch DNS Records for {0}").format(self.domain_name),
+				message=frappe.get_traceback(with_context=True),
+			)
+			return []
 
 	@property
 	def dns_records(self) -> str:
@@ -205,6 +170,76 @@ class MailDomain(Document):
 
 		frappe.cache.hdel(f"domain|{self.name}", "tenant")
 		frappe.cache.hdel(f"tenant|{self.tenant}", "domains")
+
+	def _fetch_dns_records(self) -> list[dict]:
+		"""Fetch DNS Records from the Mail Backend API."""
+
+		cluster = get_cluster_for_tenant(self.tenant)
+		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		response = backend_api.request(method="GET", endpoint=f"/api/dns/records/{self.domain_name}")
+		raise_for_status(response)
+
+		return response.json()["data"]
+
+	def _get_mail_cname_hostname(self, dns_records: list[dict]) -> str | None:
+		"""Returns the CNAME hostname from the DNS records."""
+
+		return next(
+			(
+				r["content"]
+				for r in dns_records
+				if r["type"] == "CNAME" and r["name"] == f"mail.{self.domain_name}."
+			),
+			None,
+		)
+
+	def _normalize_record(
+		self, record: dict, spf_host: str, root_domain: str, hostname: str, cname_hostname: str | None
+	) -> dict:
+		"""Transform DNS record to standardized structure."""
+
+		record["host"] = record.pop("name")
+		record["value"] = (
+			record.pop("content").replace(cname_hostname, hostname)
+			if cname_hostname
+			else record.pop("content")
+		)
+
+		if record["type"] == "TXT" and record["value"].startswith("v=spf1"):
+			record["value"] = f"v=spf1 include:{spf_host}.{root_domain} ~all"
+
+		if record["type"] == "MX":
+			priority, record["value"] = record["value"].split(" ", 1)
+			record["priority"] = cint(priority)
+		elif record["type"] == "SRV":
+			priority, weight, port, record["value"] = record["value"].split(" ", 3)
+			record["priority"] = cint(priority)
+			record["weight"] = cint(weight)
+			record["port"] = cint(port)
+
+		record["mandatory"] = int(
+			(record["type"] == "CNAME" and record["host"] == f"mail.{self.domain_name}.")
+			or (
+				record["type"] == "TXT"
+				and (
+					record["value"].startswith("v=spf1")
+					or record["host"] == f"_dmarc.{self.domain_name}."
+					or record["host"].endswith(f"._domainkey.{self.domain_name}.")
+				)
+			)
+		)
+
+		return record
+
+	def _should_skip_record(self, record: dict) -> bool:
+		"""Skip redundant CNAME for root domain."""
+
+		return (
+			self.is_root_domain
+			and record["type"] == "CNAME"
+			and record["name"] == f"mail.{self.domain_name}."
+			and record["name"] == record["content"]
+		)
 
 
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
