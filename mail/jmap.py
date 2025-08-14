@@ -356,7 +356,7 @@ class JMAPClient:
 
 		return result
 
-	def email_query(self, filter: dict, position: int = 0, limit: int = 50) -> dict:
+	def email_query(self, filter: dict | None = None, position: int = 0, limit: int = 50) -> dict:
 		"""Query emails based on the provided filter."""
 
 		response = self._make_request(
@@ -366,7 +366,7 @@ class JMAPClient:
 					"Email/query",
 					{
 						"accountId": self.account_id,
-						"filter": filter if filter else None,
+						"filter": filter,
 						"position": position,
 						"limit": limit,
 						"sort": [{"property": "receivedAt", "isAscending": True}],
