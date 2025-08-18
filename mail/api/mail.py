@@ -31,12 +31,46 @@ def get_mails_from_mailbox(mailbox: str, limit: int, filter_by: str | None = Non
 	"""Returns mails from the selected mailbox for the current user."""
 
 	account = get_account_for_user(frappe.session.user)
-	is_unseen = filter_by == "unread"
-	is_has_attachment = filter_by == "has_attachments"
-	is_flagged = filter_by == "starred" or mailbox == "starred"
-	mailboxes = None if mailbox == "starred" else [mailbox]
 
-	return fetch_threads(account, mailboxes, is_unseen, is_flagged, is_has_attachment, 0, limit)
+	filter = {}
+	if mailbox != "starred":
+		filter["inMailbox"] = mailbox
+	if mailbox == "starred" or filter_by == "starred":
+		filter["someInThreadHaveKeyword"] = "$flagged"
+	if filter_by == "unread":
+		filter["notKeyword"] = "$seen"
+	if filter_by == "has_attachments":
+		filter["hasAttachment"] = True
+
+	return [serialize_thread(thread) for thread in fetch_threads(account, filter, 0, limit)]
+
+
+def serialize_thread(thread: dict) -> dict:
+	"""Serializes thread for response."""
+	thread_fields = [
+		"name",
+		"account",
+		"thread_id",
+		"mailboxes",
+		"from_name",
+		"from_email",
+		"subject",
+		"received_at",
+		"seen",
+		"draft",
+		"flagged",
+		"preview",
+	]
+	attachment_fields = ["filename", "type", "size", "blob_id"]
+
+	return {
+		**{field: thread[field] for field in thread_fields},
+		"attachments": [
+			{field: attachment[field] for field in attachment_fields}
+			for attachment in thread.get("attachments", [])
+			if attachment.get("disposition") == "attachment"
+		],
+	}
 
 
 @frappe.whitelist()
