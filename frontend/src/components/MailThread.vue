@@ -66,8 +66,10 @@
 					<ComposeMailEditor
 						v-if="mail.draft"
 						:mail-i-d="mail.name"
-						:mail-details="draftMails[mail.name || mail._name]"
+						:mail-details="draftMails[mail.name]"
+						:is-in-thread="true"
 						@reload-mails="emit('reloadMails')"
+						@discard-mail="discardDraft(mail.name)"
 					/>
 
 					<template v-else>
@@ -232,7 +234,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, reactive, ref, watch } from 'vue'
+import { computed, inject, nextTick, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
 	ArrowUpRight,
@@ -480,30 +482,40 @@ const populateDraftMailDetails = (mail: Mail) =>
 	})
 
 const reply = (mail: Mail) =>
-	createDraft('reply', mail, {
+	createDraft(mail, {
 		...getReplyDetails(mail),
 		...getReplyRecipients(mail),
 	})
 
 const replyAll = (mail: Mail) =>
-	createDraft('replyAll', mail, {
+	createDraft(mail, {
 		...getReplyDetails(mail),
 		...getReplyAllRecipients(mail),
 	})
 
 const forward = (mail: Mail) =>
-	createDraft('forward', mail, {
+	createDraft(mail, {
 		subject: `Fwd: ${mail.subject}`,
 		html_body: getForwardedContent(mail),
 	})
 
-const createDraft = (action: string, mail: Mail, draftDetails: ComposeMailData) => {
-	const _name = `${action}:${mail.name}`
-	if (_name in draftMails) return
+const createDraft = (mail: Mail, draftDetails: ComposeMailData) => {
+	mail.collapsed = false
+	const name = `draft:${mail.name}`
+	if (name in draftMails) discardDraft(name)
 
-	draftMails[_name] = { _name, ...draftDetails }
-	const index = mailThread.data.indexOf(mail)
-	if (index !== -1) mailThread.data.splice(index + 1, 0, { ...draftMails[_name], draft: 1 })
+	nextTick(() => {
+		draftMails[name] = { name, ...draftDetails }
+		const index = mailThread.data.indexOf(mail)
+		const draft = mailThread.data.find((m: Mail) => m.name === name)
+		if (index !== -1 && !draft)
+			mailThread.data.splice(index + 1, 0, { ...draftMails[name], draft: 1 })
+	})
+}
+
+const discardDraft = (mail: string) => {
+	delete draftMails[mail]
+	mailThread.data = mailThread.data.filter((m: Mail) => m.name !== mail)
 }
 
 const getReplyDetails = (mail: Mail) => ({

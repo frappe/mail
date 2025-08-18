@@ -18,6 +18,7 @@
 				<div class="flex items-center gap-2">
 					<span class="text-ink-gray-4 text-xs">{{ __('To') }}:</span>
 					<MultiselectInputControl
+						ref="toInput"
 						v-model="mail.to"
 						class="flex-1 text-sm"
 						:validate="validateEmail"
@@ -83,11 +84,16 @@
 		</template>
 		<template #editor="{ editor }">
 			<div
-				class="flex h-[calc(100dvh-16.9rem)] flex-col overflow-y-auto py-2.5 text-sm sm:max-h-[40vh]"
-				:class="{
-					'h-[calc(100dvh-19.7rem)]': cc || bcc,
-					'h-[calc(100dvh-21.9rem)]': cc && bcc,
-				}"
+				class="flex flex-col overflow-y-auto py-2.5 text-sm"
+				:class="
+					isInThread
+						? 'max-h-60'
+						: {
+								'h-[calc(100dvh-16.9rem)] sm:max-h-[40vh]': true,
+								'h-[calc(100dvh-19.7rem)]': cc || bcc,
+								'h-[calc(100dvh-21.9rem)]': cc && bcc,
+							}
+				"
 			>
 				<EditorContent :editor="editor" />
 
@@ -230,9 +236,13 @@ import type { Attachment, ComposeMailData, File as FileDoc, UserResource } from 
 
 const show = defineModel<boolean>()
 
-const { mailID, mailDetails } = defineProps<{ mailID?: string; mailDetails?: ComposeMailData }>()
+const {
+	mailID,
+	mailDetails,
+	isInThread = false,
+} = defineProps<{ mailID?: string; mailDetails?: ComposeMailData; isInThread?: boolean }>()
 
-const emit = defineEmits(['reloadMails'])
+const emit = defineEmits(['reloadMails', 'discardMail'])
 
 const user = inject('$user') as UserResource
 const { isMobile } = useScreenSize()
@@ -240,14 +250,16 @@ const { isMobile } = useScreenSize()
 const textEditor = useTemplateRef('textEditor')
 const editor = computed(() => textEditor.value.editor)
 
+const toInput = useTemplateRef('toInput')
 const ccInput = useTemplateRef('ccInput')
+const bccInput = useTemplateRef('bccInput')
+
 const cc = ref(!!mailDetails?.cc?.length)
 const toggleCC = () => {
 	cc.value = !cc.value
 	if (cc.value) nextTick(() => ccInput.value?.setFocus())
 }
 
-const bccInput = useTemplateRef('bccInput')
 const bcc = ref(!!mailDetails?.bcc?.length)
 const toggleBCC = () => {
 	bcc.value = !bcc.value
@@ -275,7 +287,11 @@ const mail = reactive<ComposeMailData>({
 })
 
 const originalMail = ref<ComposeMailData>()
-onMounted(() => (originalMail.value = JSON.parse(JSON.stringify(mail))))
+onMounted(() => {
+	originalMail.value = JSON.parse(JSON.stringify(mail))
+	if (mailDetails?.name?.startsWith('draft') && !mailDetails?.in_reply_to)
+		setTimeout(() => toInput.value?.setFocus(), 50)
+})
 
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
@@ -315,6 +331,7 @@ const discardMail = () => {
 	saveDraft.value = false
 	show.value = false
 	if (mailID) destroyMail.submit()
+	emit('discardMail')
 }
 
 onUnmounted(() => {
