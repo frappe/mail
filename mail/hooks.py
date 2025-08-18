@@ -169,7 +169,6 @@ permission_query_conditions = {
 	"Mailing List External Member": "mail.mail.doctype.mailing_list_external_member.mailing_list_external_member.get_permission_query_condition",
 	"Mail Alias": "mail.mail.doctype.mail_alias.mail_alias.get_permission_query_condition",
 	"Mail Contact": "mail.mail.doctype.mail_contact.mail_contact.get_permission_query_condition",
-	"Email Message": "mail.mail.doctype.email_message.email_message.get_permission_query_condition",
 	"Mail Queue": "mail.mail.doctype.mail_queue.mail_queue.get_permission_query_condition",
 	"Mail Data Exchange": "mail.mail.doctype.mail_data_exchange.mail_data_exchange.get_permission_query_condition",
 }
@@ -187,7 +186,6 @@ has_permission = {
 	"Mailing List External Member": "mail.mail.doctype.mailing_list_external_member.mailing_list_external_member.has_permission",
 	"Mail Alias": "mail.mail.doctype.mail_alias.mail_alias.has_permission",
 	"Mail Contact": "mail.mail.doctype.mail_contact.mail_contact.has_permission",
-	"Email Message": "mail.mail.doctype.email_message.email_message.has_permission",
 	"Mail Queue": "mail.mail.doctype.mail_queue.mail_queue.has_permission",
 	"Mail Data Exchange": "mail.mail.doctype.mail_data_exchange.mail_data_exchange.has_permission",
 }
@@ -214,7 +212,7 @@ website_route_rules = [
 # ---------------
 
 scheduler_events = {
-	"all": ["mail.mail.doctype.email_message.search.build_index_in_background"],
+	"all": ["mail.mail.doctype.mail_message.search.build_index_in_background"],
 	"daily": [
 		"mail.mail.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
 	],
@@ -225,8 +223,7 @@ scheduler_events = {
 		"mail.mail.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",
 	],
 	"hourly_long": [
-		"mail.mail.doctype.email_message.email_message.schedule_fetch_changes",
-		"mail.mail.doctype.email_message.email_message.delete_destroyed_emails",
+		"mail.mail.doctype.mail_message.mail_message.schedule_fetch_changes",
 	],
 	# "weekly": [
 	#     "mail.tasks.weekly"

@@ -19,7 +19,7 @@ except ImportError:
 
 class EmailSearch:
 	def __init__(self) -> None:
-		self.ft = frappe.cache.ft("email_message_idx")
+		self.ft = frappe.cache.ft("mail_message_idx")
 
 	def build_index(self) -> None:
 		self.drop_index()
@@ -38,7 +38,7 @@ class EmailSearch:
 	def create_index(self) -> None:
 		"""Creates index."""
 
-		definition = IndexDefinition(prefix=["email_message"])
+		definition = IndexDefinition(prefix=["mail_message"])
 		schema = [
 			TextField("subject", weight=12),
 			TextField("html_body", weight=5),
@@ -86,7 +86,7 @@ class EmailSearch:
 		if not self.index_exists():
 			return
 
-		key = f"email_message:{doc.name}"
+		key = f"mail_message:{doc.name}"
 
 		doc.recipients = ", ".join(
 			[
@@ -112,7 +112,7 @@ class EmailSearch:
 	def set_value(self, name: str, field: str, value: str) -> None:
 		"""Update field value for indexed document."""
 
-		frappe.cache.hset(f"email_message:{name}", field, value)
+		frappe.cache.hset(f"mail_message:{name}", field, value)
 
 	def index_exists(self):
 		"""Checks if the email search index exists."""
@@ -163,7 +163,7 @@ class EmailSearch:
 			return
 
 		for d in names:
-			self.ft.delete_document(f"email_message:{d}")
+			self.ft.delete_document(f"mail_message:{d}")
 
 
 @filelock("email_search_indexing", timeout=300)

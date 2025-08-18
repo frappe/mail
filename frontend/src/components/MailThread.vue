@@ -406,7 +406,7 @@ const moveMail = createResource({
 })
 
 const deleteMails = createResource({
-	url: 'mail.mail.doctype.email_message.email_message.bulk_destroy',
+	url: 'mail.mail.doctype.mail_message.mail_message.bulk_delete',
 	makeParams: (names: string[]) => ({ names }),
 	onSuccess: () => {
 		if (mailThread.data.length == 1) router.push({ name: 'Mailbox', params: { mailbox } })

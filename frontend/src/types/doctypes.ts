@@ -303,7 +303,7 @@ export interface MailContact extends DocType {
 }
 
 // Last updated: 2025-07-17 12:58:57.621439
-export interface EmailMessageRecipient extends ChildDocType {
+export interface MailMessageRecipient extends ChildDocType {
 	/** Type: Select */
 	type: 'To' | 'Cc' | 'Bcc'
 	/** Display Name: Data */
@@ -313,7 +313,7 @@ export interface EmailMessageRecipient extends ChildDocType {
 }
 
 // Last updated: 2025-07-17 12:46:53.441935
-export interface EmailMessageReplyTo extends ChildDocType {
+export interface MailMessageReplyTo extends ChildDocType {
 	/** Display Name: Data */
 	display_name?: string
 	/** Email: Data */
@@ -321,7 +321,7 @@ export interface EmailMessageReplyTo extends ChildDocType {
 }
 
 // Last updated: 2025-07-16 13:15:26.953982
-export interface EmailMessagePart extends ChildDocType {
+export interface MailMessagePart extends ChildDocType {
 	/** Blob ID: Data */
 	blob_id?: string
 	/** Size: Int */
@@ -347,7 +347,7 @@ export interface EmailMessagePart extends ChildDocType {
 }
 
 // Last updated: 2025-07-17 12:59:27.169419
-export interface EmailMessage extends DocType {
+export interface MailMessage extends DocType {
 	/** Subject: Small Text */
 	subject?: string
 	/** Account: Link (Mail Account) */
@@ -363,11 +363,11 @@ export interface EmailMessage extends DocType {
 	/** Folder: Data */
 	folder?: string
 	/** undefined: Table (Email Message Recipient) */
-	recipients: EmailMessageRecipient[]
+	recipients: MailMessageRecipient[]
 	/** Blob ID: Data */
 	blob_id?: string
 	/** undefined: Table (Email Message Reply To) */
-	reply_to: EmailMessageReplyTo[]
+	reply_to: MailMessageReplyTo[]
 	/** Message ID: Data */
 	message_id?: string
 	/** In Reply To (Message ID): Data */
@@ -389,7 +389,7 @@ export interface EmailMessage extends DocType {
 	/** Keywords: JSON */
 	_keywords?: any
 	/** Attachments: Table (Email Message Part) */
-	attachments: EmailMessagePart[]
+	attachments: MailMessagePart[]
 	/** Message: Code */
 	message?: string
 	/** From IP: Data */
@@ -421,9 +421,9 @@ export interface EmailMessage extends DocType {
 	/** Keywords: JSON */
 	keywords?: any
 	/** HTML Body: Table (Email Message Part) */
-	_html_body: EmailMessagePart[]
+	_html_body: MailMessagePart[]
 	/** Text Body: Table (Email Message Part) */
-	_text_body: EmailMessagePart[]
+	_text_body: MailMessagePart[]
 	/** HTML: Code */
 	html_body?: string
 	/** Text: Code */

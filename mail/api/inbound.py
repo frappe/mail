@@ -8,7 +8,6 @@ from frappe import _
 from frappe.utils import convert_utc_to_system_timezone, now
 
 from mail.api.auth import validate_user
-from mail.mail.doctype.email_message.email_message import EmailMessage
 from mail.mail.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
 from mail.utils.cache import get_account_for_user
 from mail.utils.dt import convert_to_utc
@@ -77,7 +76,9 @@ def pull_raw(
 def _fetch_blob(blob_id: str) -> bytes:
 	"""Fetches the blob for the given blob_id."""
 
-	return EmailMessage.fetch_blob(get_account(), blob_id)
+	from mail.mail.doctype.mail_message.mail_message import fetch_blob
+
+	return fetch_blob(get_account(), blob_id)
 
 
 def validate_max_sync_limit(limit: int) -> None:

@@ -6,7 +6,7 @@ import urllib.request
 import frappe
 from frappe.core.api.file import create_new_folder
 
-from mail.mail.doctype.email_message.search import build_index_in_background
+from mail.mail.doctype.mail_message.search import build_index_in_background
 from mail.mail.doctype.rate_limit.rate_limit import create_rate_limit
 from mail.utils import get_mail_app_path, get_stalwart_cli_path
 
