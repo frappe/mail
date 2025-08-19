@@ -644,6 +644,33 @@ def fetch_thread(account: str, thread_id: str) -> list[dict]:
 	return messages
 
 
+def search_messages(account: str, filter: dict, position: int = 0, limit: int = 20) -> list[dict]:
+	"""Returns a list of messages based on the provided filter and position."""
+
+	if not account or not filter:
+		frappe.throw(_("Account and filter are required."))
+
+	fields = [
+		"name",
+		"subject",
+		"preview",
+		"recipients",
+		"sent_at",
+		"received_at",
+		"from_name",
+		"from_email",
+		"_id",
+		"thread_id",
+	]
+
+	messages = []
+	for message in fetch_messages(account, filter=filter, position=position, limit=limit):
+		result = {field: message[field] for field in fields}
+		messages.append(result)
+
+	return messages
+
+
 def get_messages(account: str, _ids: list[str]) -> list[dict]:
 	"""Returns a list of messages for the provided IDs."""
 
