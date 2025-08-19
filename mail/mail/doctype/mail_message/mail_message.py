@@ -639,7 +639,7 @@ def fetch_thread(account: str, thread_id: str) -> list[dict]:
 	client = get_jmap_client(account)
 	result = client.thread_get([thread_id])
 	_ids = result.get(thread_id, [])
-	messages = get_messages(account, _ids=_ids)
+	messages = get_messages(account, _ids=_ids, sort_asc=True)
 
 	return messages
 
@@ -671,7 +671,7 @@ def search_messages(account: str, filter: dict, position: int = 0, limit: int = 
 	return messages
 
 
-def get_messages(account: str, _ids: list[str]) -> list[dict]:
+def get_messages(account: str, _ids: list[str], sort_asc: bool = False) -> list[dict]:
 	"""Returns a list of messages for the provided IDs."""
 
 	validate_permission_for_account(account)
@@ -697,7 +697,7 @@ def get_messages(account: str, _ids: list[str]) -> list[dict]:
 			_store_message_in_cache(account, message["_id"], message)
 			messages.append(message)
 
-	return sorted(messages, key=lambda m: m["received_at"], reverse=True)
+	return sorted(messages, key=lambda m: m["received_at"], reverse=not sort_asc)
 
 
 def get_message_ids(
