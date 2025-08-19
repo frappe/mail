@@ -357,7 +357,7 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Refresh'),
-			onClick: () => fetchChanges.submit(),
+			onClick: () => reloadMails(),
 			icon: RefreshCw,
 			condition: !selections.value.length,
 		},
@@ -494,12 +494,6 @@ const deleteThreads = createResource({
 			router.push({ name: 'Mailbox', params: { mailbox } })
 		reloadMails()
 	},
-})
-
-const fetchChanges = createResource({
-	url: 'mail.api.mail.fetch_changes',
-	onSuccess: reloadMails,
-	onError: reloadMails,
 })
 
 // Filter

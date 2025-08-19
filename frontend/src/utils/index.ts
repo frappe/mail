@@ -92,16 +92,22 @@ export const copyToClipBoard = async (text: string) => {
 	}
 }
 
-export const getGroupedRecipients = (recipients: Recipient[], showEmail = false) => {
+export const getGroupedRecipients = (
+	recipients: Recipient[],
+	formatToString = true,
+	showEmail = false,
+) => {
 	const to = []
 	const cc = []
 	const bcc = []
 
 	for (const r of recipients) {
-		if (r.type === 'To') to.push(r)
-		else if (r.type === 'Cc') cc.push(r)
-		else if (r.type === 'Bcc') bcc.push(r)
+		if (r.type === 'To') to.push(formatToString ? r : r.email)
+		else if (r.type === 'Cc') cc.push(formatToString ? r : r.email)
+		else if (r.type === 'Bcc') bcc.push(formatToString ? r : r.email)
 	}
+
+	if (!formatToString) return { to, cc, bcc }
 
 	const format = (list: Recipient[]) =>
 		list
@@ -110,7 +116,11 @@ export const getGroupedRecipients = (recipients: Recipient[], showEmail = false)
 			)
 			.join(', ')
 
-	return { to: format(to), cc: format(cc), bcc: format(bcc) }
+	return {
+		to: format(to as Recipient[]),
+		cc: format(cc as Recipient[]),
+		bcc: format(bcc as Recipient[]),
+	}
 }
 
 export const getFormattedDate = (date: Date) => {

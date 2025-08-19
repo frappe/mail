@@ -58,7 +58,12 @@ export interface Mail {
 	flagged: 0 | 1
 	seen: 0 | 1
 	recipients: Recipient[]
-	reply_to: string[]
+	groupedRecipients: {
+		to: string[]
+		cc: string[]
+		bcc: string[]
+	}
+	reply_to: { display_name: string; email: string }[]
 	attachments: Attachment[]
 	collapsed?: boolean
 }

@@ -106,10 +106,7 @@
 									<Button
 										variant="ghost"
 										@click.stop="
-											starMails.submit({
-												names: [mail.name],
-												flagged: false,
-											})
+											starMails.submit({ _ids: [mail._id], flagged: false })
 										"
 									>
 										<template #icon>
@@ -266,6 +263,7 @@ const thread = createResource({
 			)
 			.map((mail) => ({
 				...mail,
+				groupedRecipients: getGroupedRecipients(mail.recipients, false),
 				collapsed: !!mail.seen,
 			})),
 	onSuccess: (data: Mail[]) => {
@@ -320,7 +318,7 @@ const threadActions = computed((): MailAction[] =>
 const mailActions = (mail: Mail): MailAction[] => [
 	{
 		label: __('Star'),
-		onClick: () => starMails.submit({ names: [mail.name], flagged: true }),
+		onClick: () => starMails.submit({ _ids: [mail._id], flagged: true }),
 		icon: Star,
 		condition: !mail.flagged && mailbox !== mailboxIds.trash,
 	},
@@ -346,9 +344,9 @@ const moreActions = (mail: Mail): MailAction[] => [
 		condition: () =>
 			!mail.draft &&
 			mail.from_email !== user.data.email &&
-			mail.recipients.To?.concat(mail.recipients.Cc || []).filter(
-				(m) => m.email !== user.data.email,
-			).length > 0,
+			mail.groupedRecipients.to
+				?.concat(mail.groupedRecipients.cc)
+				.filter((m) => m !== user.data.email).length > 0,
 	},
 	{
 		label: __('Forward'),
@@ -376,7 +374,7 @@ const moreActions = (mail: Mail): MailAction[] => [
 	},
 	{
 		label: __('View in Desk'),
-		onClick: () => window.open(`/app/email-message/${mail.name}`, '_blank')?.focus(),
+		onClick: () => window.open(`/app/mail-message/${mail.name}`, '_blank')?.focus(),
 		icon: ExternalLink,
 		condition: () => user.data.is_system_manager,
 	},
@@ -385,12 +383,12 @@ const moreActions = (mail: Mail): MailAction[] => [
 const isCollapsed = (mail: Mail) => mail.collapsed && mail !== thread.data[thread.data.length - 1]
 
 const getRecipients = (mail: Mail) => {
-	const recipientsObject = getGroupedRecipients(mail.recipients)
+	const formattedRecipients = getGroupedRecipients(mail.recipients)
 
 	let recipients = ''
-	if (recipientsObject.to) recipients += __('To: ') + recipientsObject.to + ' '
-	if (recipientsObject.cc) recipients += __('Cc: ') + recipientsObject.cc + ' '
-	if (recipientsObject.bcc) recipients += __('Bcc: ') + recipientsObject.bcc + ' '
+	if (formattedRecipients.to) recipients += __('To: ') + formattedRecipients.to + ' '
+	if (formattedRecipients.cc) recipients += __('Cc: ') + formattedRecipients.cc + ' '
+	if (formattedRecipients.bcc) recipients += __('Bcc: ') + formattedRecipients.bcc + ' '
 	return recipients
 }
 
@@ -414,22 +412,22 @@ const deleteMails = createResource({
 
 const starMails = createResource({
 	url: 'mail.api.mail.set_flagged',
-	makeParams: ({ names, flagged }: { names: string[]; flagged: boolean }) => ({
-		names,
+	makeParams: ({ _ids, flagged }: { _ids: string[]; flagged: boolean }) => ({
+		_ids,
 		flagged,
 	}),
-	onSuccess: ({ names, flagged }) =>
-		names.forEach(
-			(name) => (thread.data.find((m: Mail) => m.name === name).flagged = Number(flagged)),
+	onSuccess: ({ _ids, flagged }: { _ids: string[]; flagged: boolean }) =>
+		_ids.forEach(
+			(_id) => (thread.data.find((m: Mail) => m._id === _id).flagged = Number(flagged)),
 		),
 })
 
 const editDraft = (mail: Mail) => {
 	draftMailID.value = mail.name
 	mailDetails.from_email = mail.from_email
-	mailDetails.to = mail.recipients.To?.map((m) => m.email) || []
-	mailDetails.cc = mail.recipients.Cc?.map((m) => m.email) || []
-	mailDetails.bcc = mail.recipients.Bcc?.map((m) => m.email) || []
+	mailDetails.to = mail.groupedRecipients.to
+	mailDetails.cc = mail.groupedRecipients.cc
+	mailDetails.bcc = mail.groupedRecipients.bcc
 	mailDetails.subject = mail.subject || ''
 	mailDetails.html_body = mail.html_body
 	mailDetails.attachments = mail.attachments || []
@@ -437,24 +435,26 @@ const editDraft = (mail: Mail) => {
 }
 
 const reply = (mail: Mail) => {
-	if (isUserEmail(mail.from_email))
-		mailDetails.to = mail.recipients.To?.map((rcpt) => rcpt.email)
-	else mailDetails.to = mail.reply_to.length ? mail.reply_to : [mail.from_email]
+	if (isUserEmail(mail.from_email)) mailDetails.to = mail.groupedRecipients.to
+	else
+		mailDetails.to = mail.reply_to.length
+			? mail.reply_to.map((rt) => rt.email)
+			: [mail.from_email]
 
 	setReplyDetailsAndOpenModal(mail)
 }
 
 const replyAll = (mail: Mail) => {
 	if (isUserEmail(mail.from_email)) {
-		mailDetails.to = mail.recipients.To?.map((rcpt) => rcpt.email) || []
-		mailDetails.cc = mail.recipients.Cc?.map((rcpt) => rcpt.email) || []
+		mailDetails.to = mail.groupedRecipients.to
+		mailDetails.cc = mail.groupedRecipients.cc
 	} else {
-		mailDetails.to = mail.reply_to.length ? mail.reply_to : [mail.from_email]
+		mailDetails.to = mail.reply_to.length
+			? mail.reply_to.map((rt) => rt.email)
+			: [mail.from_email]
 
-		const originalRecipients = [...(mail.recipients.To || []), ...(mail.recipients.Cc || [])]
-		mailDetails.cc = originalRecipients
-			.filter((rcpt) => !isUserEmail(rcpt.email))
-			.map((rcpt) => rcpt.email)
+		const originalRecipients = [...mail.groupedRecipients.to, ...mail.groupedRecipients.cc]
+		mailDetails.cc = originalRecipients.filter((rcpt) => !isUserEmail(rcpt))
 	}
 
 	setReplyDetailsAndOpenModal(mail)

@@ -39,7 +39,7 @@ const dayjs = inject('$dayjs')
 
 const { mail } = defineProps<{ mail: Mail }>()
 
-const recipients = computed(() => getGroupedRecipients(mail.recipients, true))
+const recipients = computed(() => getGroupedRecipients(mail.recipients, true, true))
 
 const FIELDS = [
 	{

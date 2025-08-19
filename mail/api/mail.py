@@ -9,7 +9,6 @@ from frappe.utils import format_datetime, random_string
 from mail.jmap import get_mailbox_id_by_role
 from mail.mail.doctype.mail_message.mail_message import (
 	delete_messages,
-	enqueue_fetch_changes,
 	fetch_blob,
 	fetch_thread,
 	fetch_threads,
@@ -20,11 +19,8 @@ from mail.mail.doctype.mail_message.mail_message import (
 )
 from mail.mail.doctype.mail_message.search import EmailSearch
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
-from mail.utils import convert_html_to_text
 from mail.utils.cache import get_account_for_user
-from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import has_role
-from mail.utils.validation import validate_permission_for_account
 
 
 @frappe.whitelist()
@@ -307,7 +303,7 @@ def destroy_mail(name: str) -> None:
 def get_mime_message(name: str) -> dict:
 	"""Fetches mail mime message and related data."""
 
-	doc = frappe.get_doc("Email Message", name)
+	doc = frappe.get_doc("Mail Message", name)
 	doc.check_permission(permtype="read")
 
 	def get_mail_recipients(recipient_type):
@@ -358,13 +354,13 @@ def set_seen(thread_ids: list[str], seen: bool, mailbox: str) -> dict:
 
 
 @frappe.whitelist()
-def set_flagged(names: list[str], flagged: bool) -> dict:
+def set_flagged(_ids: list[str], flagged: bool) -> dict:
 	"""Sets flagged for mails."""
 
 	account = get_account_for_user(frappe.session.user)
-	set_flagged_status(account, names, flagged)
+	set_flagged_status(account, _ids, flagged)
 
-	return {"names": names, "flagged": flagged}
+	return {"_ids": _ids, "flagged": flagged}
 
 
 @frappe.whitelist()
@@ -409,16 +405,6 @@ def delete_threads(thread_ids: list[str], mailbox: str) -> list[str]:
 	delete_messages(account, messages)
 
 	return thread_ids
-
-
-@frappe.whitelist()
-@dynamic_rate_limit()
-def fetch_changes() -> None:
-	"""Fetches changes for the current user's account."""
-
-	account = get_account_for_user(frappe.session.user)
-	validate_permission_for_account(account)
-	enqueue_fetch_changes(account)
 
 
 @frappe.whitelist()
