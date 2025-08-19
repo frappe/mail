@@ -911,9 +911,8 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 	}
 
 	for key in ["sender", "from"]:
-		if message[key]:
-			formatted_message[f"{key}_name"] = message[key][0]["name"]
-			formatted_message[f"{key}_email"] = message[key][0]["email"]
+		formatted_message[f"{key}_name"] = message[key][0]["name"] if message[key] else None
+		formatted_message[f"{key}_email"] = message[key][0]["email"] if message[key] else None
 
 	formatted_message["reply_to"] = []
 	if reply_to := message["replyTo"]:
@@ -930,9 +929,11 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 				)
 
 	for key, field in {"htmlBody": "html_body", "textBody": "text_body"}.items():
-		if body := message[key]:
-			part_id = body[0]["partId"]
-			formatted_message[field] = message["bodyValues"].get(part_id, {}).get("value")
+		formatted_message[field] = (
+			message.get("bodyValues", {}).get(message[key][0]["partId"], {}).get("value")
+			if message.get(key)
+			else None
+		)
 
 	formatted_message["mailboxes"] = []
 	for mailbox_id, value in message["mailboxIds"].items():
@@ -949,8 +950,7 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 		formatted_message[key] = cint(message["keywords"].get(f"${key}", False))
 
 	for key, field in {"messageId": "message_id", "inReplyTo": "in_reply_to"}.items():
-		if message[key]:
-			formatted_message[field] = message[key][0]
+		formatted_message[field] = message[key][0] if message[key] else None
 
 	for key, field in {
 		"attachments": "attachments",
