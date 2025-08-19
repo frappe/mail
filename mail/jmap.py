@@ -491,7 +491,7 @@ class JMAPClient:
 
 		return result
 
-	def email_get(self, email_ids: list[str], properties: list[str] | None = None) -> tuple[list[dict], str]:
+	def email_get(self, _ids: list[str], properties: list[str] | None = None) -> tuple[list[dict], str]:
 		"""Returns the emails for the provided email IDs."""
 
 		properties = properties or [
@@ -523,7 +523,7 @@ class JMAPClient:
 
 		emails = []
 		state = None
-		for ids_batch in create_batch(email_ids, self.max_objects_in_get):
+		for ids_batch in create_batch(_ids, self.max_objects_in_get):
 			response = self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
@@ -642,10 +642,10 @@ class JMAPClient:
 				],
 			)
 
-	def email_set_destroy(self, email_ids: list[str]) -> None:
+	def email_set_destroy(self, _ids: list[str]) -> None:
 		"""Destroy emails."""
 
-		for ids_batch in create_batch(email_ids, self.max_objects_in_set):
+		for ids_batch in create_batch(_ids, self.max_objects_in_set):
 			self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
