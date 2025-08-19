@@ -2,6 +2,8 @@ import { toast } from 'frappe-ui'
 
 import dayjs from '@/utils/dayjs'
 
+import type { Recipient } from '@/types'
+
 export const convertToTitleCase = (str: string) =>
 	str
 		?.toLowerCase()
@@ -90,17 +92,26 @@ export const copyToClipBoard = async (text: string) => {
 	}
 }
 
-interface Recipient {
-	display_name?: string | null
-	email: string
-}
+export const getGroupedRecipients = (recipients: Recipient[], showEmail = false) => {
+	const to = []
+	const cc = []
+	const bcc = []
 
-export const getRecipients = (recipients: Recipient[], showEmail = false) =>
-	recipients
-		?.map(({ display_name, email }) =>
-			showEmail && display_name ? `${display_name} <${email}>` : display_name || email,
-		)
-		.join(', ')
+	for (const r of recipients) {
+		if (r.type === 'To') to.push(r)
+		else if (r.type === 'Cc') cc.push(r)
+		else if (r.type === 'Bcc') bcc.push(r)
+	}
+
+	const format = (list: Recipient[]) =>
+		list
+			?.map(({ display_name, email }) =>
+				showEmail && display_name ? `${display_name} <${email}>` : display_name || email,
+			)
+			.join(', ')
+
+	return { to: format(to), cc: format(cc), bcc: format(bcc) }
+}
 
 export const getFormattedDate = (date: Date) => {
 	if (dayjs(date).isToday()) return __('Today')

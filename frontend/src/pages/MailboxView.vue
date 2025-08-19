@@ -372,7 +372,7 @@ const filter = ref<string | null>(
 )
 
 const threads = createResource({
-	url: 'mail.api.mail.get_mails_from_mailbox',
+	url: 'mail.api.mail.get_threads',
 	makeParams: () => ({ mailbox, limit: limit.value, filter_by: filter.value }),
 })
 

@@ -29,6 +29,7 @@ export interface UserResource {
 }
 
 export interface Recipient {
+	type: 'To' | 'Cc' | 'Bcc'
 	email: string
 	display_name: string | null
 }
@@ -56,11 +57,7 @@ export interface Mail {
 	draft: 0 | 1
 	flagged: 0 | 1
 	seen: 0 | 1
-	recipients: {
-		To: Recipient[]
-		Cc: Recipient[]
-		Bcc: Recipient[]
-	}
+	recipients: Recipient[]
 	reply_to: string[]
 	attachments: Attachment[]
 	collapsed?: boolean

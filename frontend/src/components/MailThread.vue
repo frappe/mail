@@ -8,7 +8,7 @@
 				@click="router.push({ name: 'Mailbox', params: { mailbox } })"
 			/>
 			<span
-				v-if="mailThread.loading"
+				v-if="thread.loading"
 				class="bg-surface-gray-3 h-3.5 animate-pulse"
 				:style="{
 					width: `${Math.max(100, Math.random() * (isMobile ? 300 : 800))}px`,
@@ -16,7 +16,7 @@
 			/>
 			<template v-else>
 				<h2 v-if="!isMobile" class="mr-2 truncate font-semibold leading-5">
-					{{ mailThread?.data?.[0].subject || __('[No subject]') }}
+					{{ thread?.data?.[0]?.subject || __('[No subject]') }}
 				</h2>
 				<div class="ml-auto shrink-0 space-x-2">
 					<Tooltip v-if="mailbox !== 'starred'" :text="__('Move To')">
@@ -43,21 +43,21 @@
 			</template>
 		</div>
 		<div class="flex-1 overflow-y-auto">
-			<div v-if="isMobile && !mailThread.loading" class="border-b px-3 py-3.5">
+			<div v-if="isMobile && !thread.loading" class="border-b px-3 py-3.5">
 				<h2 class="font-semibold leading-5">
-					{{ mailThread?.data?.[0].subject || __('[No subject]') }}
+					{{ thread?.data?.[0].subject || __('[No subject]') }}
 				</h2>
 			</div>
 
-			<MailThreadPlaceholder v-if="mailThread.loading" />
+			<MailThreadPlaceholder v-if="thread.loading" />
 
 			<div v-else class="space-y-4 sm:px-5 sm:py-6">
 				<div
-					v-for="mail in mailThread.data"
+					v-for="mail in thread.data"
 					:key="mail.name"
 					:class="{
 						'p-3.5': isMobile,
-						'border-b p-3.5 sm:rounded-md sm:border': mailThread.data.length > 1,
+						'border-b p-3.5 sm:rounded-md sm:border': thread.data.length > 1,
 						'cursor-pointer': isCollapsed(mail),
 					}"
 					@click="mail.collapsed = false"
@@ -65,7 +65,7 @@
 					<div
 						class="flex space-x-3"
 						:class="{
-							'cursor-pointer': mail !== mailThread.data[mailThread.data.length - 1],
+							'cursor-pointer': mail !== thread.data[thread.data.length - 1],
 							'pb-6': mail.preview,
 						}"
 						@click.stop="mail.collapsed = !mail.collapsed"
@@ -95,7 +95,7 @@
 										:mail
 									/>
 								</div>
-								<div class="truncate">{{ getAllRecipients(mail) }}</div>
+								<div class="truncate">{{ getRecipients(mail) }}</div>
 							</div>
 							<div class="flex items-center space-x-1 self-start">
 								<MailDate :datetime="mail.received_at" />
@@ -216,7 +216,7 @@ import {
 } from 'lucide-vue-next'
 import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
 
-import { getFirstAlphabet, getRecipients } from '@/utils'
+import { getFirstAlphabet, getGroupedRecipients } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
@@ -253,8 +253,8 @@ const mailDetails = reactive<ComposeMailData>({
 	in_reply_to_id: '',
 })
 
-const mailThread = createResource({
-	url: 'mail.api.mail.get_mail_thread',
+const thread = createResource({
+	url: 'mail.api.mail.get_thread',
 	auto: !!threadID,
 	makeParams: () => ({ thread_id: threadID }),
 	transform: (data: Mail[]) =>
@@ -275,7 +275,7 @@ const mailThread = createResource({
 })
 
 const reload = () => {
-	if (threadID) mailThread.reload()
+	if (threadID) thread.reload()
 }
 
 defineExpose({ reload })
@@ -382,17 +382,15 @@ const moreActions = (mail: Mail): MailAction[] => [
 	},
 ]
 
-const isCollapsed = (mail: Mail) =>
-	mail.collapsed && mail !== mailThread.data[mailThread.data.length - 1]
+const isCollapsed = (mail: Mail) => mail.collapsed && mail !== thread.data[thread.data.length - 1]
 
-const getAllRecipients = (mail: Mail) => {
+const getRecipients = (mail: Mail) => {
+	const recipientsObject = getGroupedRecipients(mail.recipients)
+
 	let recipients = ''
-	if (mail.recipients.To?.length)
-		recipients += __('To: ') + getRecipients(mail.recipients.To) + ' '
-	if (mail.recipients.Cc?.length)
-		recipients += __('Cc: ') + getRecipients(mail.recipients.Cc) + ' '
-	if (mail.recipients.Bcc?.length)
-		recipients += __('Bcc: ') + getRecipients(mail.recipients.Bcc) + ' '
+	if (recipientsObject.to) recipients += __('To: ') + recipientsObject.to + ' '
+	if (recipientsObject.cc) recipients += __('Cc: ') + recipientsObject.cc + ' '
+	if (recipientsObject.bcc) recipients += __('Bcc: ') + recipientsObject.bcc + ' '
 	return recipients
 }
 
@@ -409,7 +407,7 @@ const deleteMails = createResource({
 	url: 'mail.mail.doctype.mail_message.mail_message.bulk_delete',
 	makeParams: (names: string[]) => ({ names }),
 	onSuccess: () => {
-		if (mailThread.data.length == 1) router.push({ name: 'Mailbox', params: { mailbox } })
+		if (thread.data.length == 1) router.push({ name: 'Mailbox', params: { mailbox } })
 		emit('reloadMails')
 	},
 })
@@ -422,8 +420,7 @@ const starMails = createResource({
 	}),
 	onSuccess: ({ names, flagged }) =>
 		names.forEach(
-			(name) =>
-				(mailThread.data.find((m: Mail) => m.name === name).flagged = Number(flagged)),
+			(name) => (thread.data.find((m: Mail) => m.name === name).flagged = Number(flagged)),
 		),
 })
 

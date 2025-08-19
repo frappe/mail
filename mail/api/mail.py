@@ -11,6 +11,7 @@ from mail.mail.doctype.mail_message.mail_message import (
 	delete_messages,
 	enqueue_fetch_changes,
 	fetch_blob,
+	fetch_thread,
 	fetch_threads,
 	get_message_ids,
 	move_messages,
@@ -24,53 +25,6 @@ from mail.utils.cache import get_account_for_user
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import has_role
 from mail.utils.validation import validate_permission_for_account
-
-
-@frappe.whitelist()
-def get_mails_from_mailbox(mailbox: str, limit: int, filter_by: str | None = None) -> list:
-	"""Returns mails from the selected mailbox for the current user."""
-
-	account = get_account_for_user(frappe.session.user)
-
-	filter = {}
-	if mailbox != "starred":
-		filter["inMailbox"] = mailbox
-	if mailbox == "starred" or filter_by == "starred":
-		filter["someInThreadHaveKeyword"] = "$flagged"
-	if filter_by == "unread":
-		filter["notKeyword"] = "$seen"
-	if filter_by == "has_attachments":
-		filter["hasAttachment"] = True
-
-	return [serialize_thread(thread) for thread in fetch_threads(account, filter, 0, limit)]
-
-
-def serialize_thread(thread: dict) -> dict:
-	"""Serializes thread for response."""
-	thread_fields = [
-		"name",
-		"account",
-		"thread_id",
-		"mailboxes",
-		"from_name",
-		"from_email",
-		"subject",
-		"received_at",
-		"seen",
-		"draft",
-		"flagged",
-		"preview",
-	]
-	attachment_fields = ["filename", "type", "size", "blob_id"]
-
-	return {
-		**{field: thread[field] for field in thread_fields},
-		"attachments": [
-			{field: attachment[field] for field in attachment_fields}
-			for attachment in thread.get("attachments", [])
-			if attachment.get("disposition") == "attachment"
-		],
-	}
 
 
 @frappe.whitelist()
@@ -95,139 +49,92 @@ def get_mailboxes() -> list[dict]:
 
 
 @frappe.whitelist()
-def get_mail_thread(thread_id: str) -> list[dict]:
-	"""Returns mail thread for the given id."""
-
-	rows = get_thread_rows(thread_id)
-	messages = group_thread_mail_recipients(rows)
-	return add_mail_attachments(messages)
-
-
-def get_thread_rows(thread_id: str) -> list[dict]:
-	"""Returns mail thread rows for the given id."""
+def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
+	"""Returns threads from the selected mailbox for the current user."""
 
 	account = get_account_for_user(frappe.session.user)
 
-	EM = frappe.qb.DocType("Email Message")
-	EMR = frappe.qb.DocType("Email Message Recipient")
-	EMRT = frappe.qb.DocType("Email Message Reply To")
+	filter = {}
+	if mailbox != "starred":
+		filter["inMailbox"] = mailbox
+	if mailbox == "starred" or filter_by == "starred":
+		filter["someInThreadHaveKeyword"] = "$flagged"
+	if filter_by == "unread":
+		filter["notKeyword"] = "$seen"
+	if filter_by == "has_attachments":
+		filter["hasAttachment"] = True
 
-	return (
-		frappe.qb.from_(EM)
-		.left_join(EMR)
-		.on(EM.name == EMR.parent)
-		.left_join(EMRT)
-		.on(EM.name == EMRT.parent)
-		.select(
-			EM.name,
-			EM.message_id,
-			EM._id,
-			EM.from_name,
-			EM.from_email,
-			EM.subject,
-			EM.html_body,
-			EM.text_body,
-			EM.received_at,
-			EM.draft,
-			EM.seen,
-			EM.flagged,
-			EM.mailbox_id,
-			EMR.type,
-			EMR.email,
-			EMR.display_name,
-			EMRT.email.as_("reply_to"),
-		)
-		.where((EM.account == account) & (EM.thread_id == thread_id) & (EM.destroyed == 0))
-	).run(as_dict=True)
+	return [serialize_thread(thread) for thread in fetch_threads(account, filter, 0, limit)]
 
 
-def group_thread_mail_recipients(rows: list[dict]) -> tuple[dict, set]:
-	"""Groups mail thread recipients by type."""
-
-	grouped = {}
-
-	for row in rows:
-		key = row["name"]
-		if key not in grouped:
-			grouped[key] = {
-				"name": row["name"],
-				"message_id": row["message_id"],
-				"_id": row["_id"],
-				"from_name": row["from_name"],
-				"from_email": row["from_email"],
-				"subject": row["subject"],
-				"html_body": row["html_body"],
-				"text_body": row["text_body"],
-				"preview": convert_html_to_text(row["html_body"] or row["text_body"] or ""),
-				"received_at": row["received_at"],
-				"draft": row["draft"],
-				"seen": row["seen"],
-				"flagged": row["flagged"],
-				"mailbox_id": row["mailbox_id"],
-				"recipients": defaultdict(list),
-				"reply_to": [],
-			}
-
-		if row["email"]:
-			recipient = {"email": row["email"], "display_name": row["display_name"]}
-			grouped[key]["recipients"][row["type"]].append(recipient)
-
-		if row["reply_to"] and row["reply_to"] not in grouped[key]["reply_to"]:
-			grouped[key]["reply_to"].append(row["reply_to"])
-
-	return grouped
-
-
-def add_mail_attachments(messages: list[dict]) -> list[dict]:
-	"""Returns thread with attachments."""
+@frappe.whitelist()
+def get_thread(thread_id: str) -> list[dict]:
+	"""Returns mails for the given thread id."""
 
 	account = get_account_for_user(frappe.session.user)
-	attachments = get_mail_attachments(list(messages.keys()))
-
-	for attachment in attachments:
-		if attachment.disposition == "attachment":
-			if not attachment.filename:
-				if attachment.type == "message/delivery-status":
-					attachment.filename = "Delivery Report"
-				elif attachment.type == "message/rfc822":
-					attachment.filename = "Original Message"
-			parent = attachment.pop("parent")
-			messages[parent].setdefault("attachments", []).append(attachment)
-
-		elif attachment.disposition == "inline":
-			blob = fetch_blob(account, attachment.blob_id)
-			base64_content = base64.b64encode(blob).decode("utf-8")
-			message = messages[attachment.parent]
-			message["html_body"] = convert_img_src_from_cid_to_base64(
-				message["html_body"], attachment.cid, attachment.type, base64_content
-			)
-
-	return messages.values()
+	return [serialize_mail(mail) for mail in fetch_thread(account, thread_id)]
 
 
-def get_mail_attachments(messages: list[str]) -> list[dict]:
-	"""Returns attachments for the given messages."""
+def serialize_thread(thread: dict) -> dict:
+	"""Serializes thread for response."""
 
-	EMP = frappe.qb.DocType("Email Message Part")
+	thread_fields = [
+		"name",
+		"account",
+		"thread_id",
+		"mailboxes",
+		"from_name",
+		"from_email",
+		"subject",
+		"received_at",
+		"seen",
+		"draft",
+		"flagged",
+		"preview",
+	]
+	return {
+		**{field: thread[field] for field in thread_fields},
+		"attachments": serialize_attachments(thread.get("attachments", [])),
+	}
 
-	return (
-		frappe.qb.from_(EMP)
-		.select(
-			EMP.parent,
-			EMP.filename,
-			EMP.blob_id,
-			EMP.cid,
-			EMP.type,
-			EMP.size,
-			EMP.file_url,
-			EMP.disposition,
-		)
-		.where(
-			(EMP.parenttype == "Email Message")
-			& (EMP.parent.isin(messages))
-			& ((EMP.parentfield == "attachments") | (EMP.disposition == "inline"))
-		)
-	).run(as_dict=True)
+
+def serialize_mail(mail: dict) -> dict:
+	"""Serializes mail for response."""
+
+	mail_fields = [
+		"name",
+		"message_id",
+		"_id",
+		"from_name",
+		"from_email",
+		"subject",
+		"html_body",
+		"text_body",
+		"preview",
+		"received_at",
+		"draft",
+		"seen",
+		"flagged",
+		"mailboxes",
+		"recipients",
+		"reply_to",
+	]
+	return {
+		**{field: mail[field] for field in mail_fields},
+		"attachments": serialize_attachments(mail.get("attachments", [])),
+	}
+
+
+def serialize_attachments(attachments: list[dict]) -> dict:
+	"""Serializes attachment for response."""
+
+	attachment_fields = ["filename", "type", "size", "blob_id"]
+
+	return [
+		{field: attachment[field] for field in attachment_fields}
+		for attachment in attachments
+		if attachment.get("disposition") == "attachment"
+	]
 
 
 @frappe.whitelist()

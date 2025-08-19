@@ -27,17 +27,19 @@
 </template>
 
 <script lang="ts" setup>
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 import { Popover } from 'frappe-ui'
 
-import { getRecipients } from '@/utils'
+import { getGroupedRecipients } from '@/utils'
 
 import type { Mail } from '@/types'
 
 const dayjs = inject('$dayjs')
 
 const { mail } = defineProps<{ mail: Mail }>()
+
+const recipients = computed(() => getGroupedRecipients(mail.recipients, true))
 
 const FIELDS = [
 	{
@@ -47,17 +49,17 @@ const FIELDS = [
 	},
 	{
 		label: __('To: '),
-		value: () => getRecipients(mail.recipients.To, true),
+		value: () => recipients.value.to,
 	},
 	{
-		condition: !!mail.recipients.Cc?.length,
+		condition: !!recipients.value.cc,
 		label: __('Cc: '),
-		value: () => getRecipients(mail.recipients.Cc, true),
+		value: () => recipients.value.cc,
 	},
 	{
-		condition: !!mail.recipients.Bcc?.length,
+		condition: !!recipients.value.bcc,
 		label: __('Bcc: '),
-		value: () => getRecipients(mail.recipients.Bcc, true),
+		value: () => recipients.value.bcc,
 	},
 	{
 		label: __('Date: '),
