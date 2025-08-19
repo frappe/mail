@@ -745,6 +745,36 @@ def delete_messages(account: str, _ids: list[str]) -> None:
 		frappe.throw(_("Failed to delete mail(s)."))
 
 
+def empty_mailbox(account: str, mailbox_id: str) -> None:
+	"""Empty the specified mailbox by deleting all messages in it."""
+
+	if not account or not mailbox_id:
+		frappe.throw(_("Account and Mailbox ID are required."))
+
+	validate_permission_for_account(account)
+
+	try:
+		client = get_jmap_client(account)
+
+		while True:
+			result = client.email_query(
+				{"inMailbox": mailbox_id}, position=0, limit=client.max_objects_in_get
+			)
+
+			_ids = result["ids"]
+			if not _ids:
+				break
+
+			client.email_set_destroy(_ids)
+			_remove_messages_from_cache(account, _ids)
+	except Exception:
+		frappe.log_error(
+			title=_("Failed to empty mailbox"),
+			message=frappe.get_traceback(with_context=True),
+		)
+		frappe.throw(_("Failed to empty mailbox."))
+
+
 def move_messages(account: str, _ids: list[str], mailbox_id: str) -> None:
 	"""Move messages to a different mailbox."""
 
