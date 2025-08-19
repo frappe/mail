@@ -381,17 +381,12 @@
    "link_fieldname": "alias_for_name"
   },
   {
-   "group": "Mail",
-   "link_doctype": "Email Message",
-   "link_fieldname": "account"
-  },
-  {
    "group": "Data Exchange",
    "link_doctype": "Mail Data Exchange",
    "link_fieldname": "account"
   }
  ],
- "modified": "2025-08-06 15:05:28.556234",
+ "modified": "2025-08-19 15:58:31.062290",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Account",

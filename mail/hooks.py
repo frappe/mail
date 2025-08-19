@@ -264,7 +264,7 @@ scheduler_events = {
 # Ignore links to specified DocTypes when deleting documents
 # -----------------------------------------------------------
 
-ignore_links_on_delete = ["Mail Domain", "Email Message"]
+ignore_links_on_delete = ["Mail Domain", "Mail Message"]
 
 # Request Events
 # ----------------
