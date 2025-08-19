@@ -457,7 +457,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-08-15 18:43:26.294754",
+ "modified": "2025-08-19 09:14:38.648067",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Message",
@@ -473,6 +473,19 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Mail Admin",
+   "select": 1
+  },
+  {
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Mail User",
    "write": 1
   }
  ],
