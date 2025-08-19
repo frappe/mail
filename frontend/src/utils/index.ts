@@ -127,9 +127,9 @@ export const getFormattedRecipients = (mailRecipients: Recipient[]) => {
 	const groupedRecipients = getGroupedRecipients(mailRecipients)
 
 	let formattedRecipients = ''
-	if (groupedRecipients.to) formattedRecipients += __('To: ') + groupedRecipients.to + ' '
-	if (groupedRecipients.cc) formattedRecipients += __('Cc: ') + groupedRecipients.cc + ' '
-	if (groupedRecipients.bcc) formattedRecipients += __('Bcc: ') + groupedRecipients.bcc + ' '
+	if (groupedRecipients.to) formattedRecipients += __('To:') + ` ${groupedRecipients.to} `
+	if (groupedRecipients.cc) formattedRecipients += __('Cc:') + ` ${groupedRecipients.cc} `
+	if (groupedRecipients.bcc) formattedRecipients += __('Bcc:') + ` ${groupedRecipients.bcc} `
 	return formattedRecipients
 }
 

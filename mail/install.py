@@ -49,8 +49,6 @@ def add_rate_limits() -> None:
 		# mail.api.spamd
 		{"method_path": "mail.api.spamd.scan", "limit": 60, "seconds": 60},
 		{"method_path": "mail.api.spamd.get_spam_score", "limit": 60, "seconds": 60},
-		# mail.api.mail
-		{"method_path": "mail.api.mail.fetch_changes", "limit": 10, "seconds": 60},
 	]
 
 	for rl in rate_limits:
