@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 from frappe import _
 from frappe.utils import format_datetime, random_string
 
+from mail.jmap import get_mailbox_id_by_role
 from mail.mail.doctype.mail_message.mail_message import (
 	delete_messages,
 	fetch_blob,
@@ -49,15 +50,26 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 
 	account = get_account_for_user(frappe.session.user)
 
-	filter = {}
-	if mailbox != "starred":
-		filter["inMailbox"] = mailbox
-	if mailbox == "starred" or filter_by == "starred":
-		filter["someInThreadHaveKeyword"] = "$flagged"
-	if filter_by == "unread":
-		filter["notKeyword"] = "$seen"
-	if filter_by == "has_attachments":
-		filter["hasAttachment"] = True
+	if mailbox == "starred":
+		conditions = [
+			{"inMailboxOtherThan": [get_mailbox_id_by_role(account, "trash")]},
+			{"someInThreadHaveKeyword": "$flagged"},
+		]
+	else:
+		conditions = [{"inMailbox": mailbox}]
+
+	filter_map = {
+		"starred": {"someInThreadHaveKeyword": "$flagged"},
+		"unread": {"notKeyword": "$seen"},
+		"has_attachments": {"hasAttachment": True},
+	}
+	if filter_by in filter_map and not (mailbox == "starred" and filter_by == "starred"):
+		conditions.append(filter_map[filter_by])
+
+	if len(conditions) == 1:
+		filter = conditions[0]
+	else:
+		filter = {"operator": "AND", "conditions": conditions}
 
 	return [serialize_thread(thread) for thread in fetch_threads(account, filter, 0, limit)]
 
