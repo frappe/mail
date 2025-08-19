@@ -74,6 +74,7 @@ export interface Mail {
 }
 
 export interface ComposeMailData {
+	name?: string
 	from_email: string
 	to: string[]
 	cc: string[]

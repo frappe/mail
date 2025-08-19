@@ -11,7 +11,7 @@
 				</template>
 			</Breadcrumbs>
 		</div>
-		<HeaderActions :mailbox @reload-mails="reloadMails" />
+		<HeaderActions />
 	</header>
 
 	<div class="relative flex h-[calc(100dvh-3.05rem)]">
@@ -374,6 +374,13 @@ const filter = ref<string | null>(
 const threads = createResource({
 	url: 'mail.api.mail.get_threads',
 	makeParams: () => ({ mailbox, limit: limit.value, filter_by: filter.value }),
+	transform: (data: Thread[]) => {
+		if (mailbox !== 'starred') return data
+
+		return data.filter(
+			(thread) => !thread.mailboxes.map((m) => m.mailbox_id).includes(mailboxIds.trash),
+		)
+	},
 })
 
 const threadIDs = computed(() => threads.data?.map((thread: Thread) => thread.thread_id) || [])

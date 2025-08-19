@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from frappe import _
 from frappe.utils import format_datetime, random_string
 
-from mail.jmap import get_mailbox_id_by_role
 from mail.mail.doctype.mail_message.mail_message import (
 	delete_messages,
 	fetch_blob,
@@ -224,7 +223,7 @@ def update_draft_mail(
 ) -> None:
 	"""Creates new mail queue from existing draft message."""
 
-	doc = frappe.get_doc("Email Message", name)
+	doc = frappe.get_doc("Mail Message", name)
 	doc.check_permission(permtype="write")
 
 	doc.from_email = from_email
@@ -293,11 +292,11 @@ def convert_img_src_from_cid_to_base64(html_body: str, cid: str, type: str, base
 
 
 @frappe.whitelist()
-def destroy_mail(name: str) -> None:
-	"""Destroys the given mail."""
+def delete_mail(_id: str) -> None:
+	"""Deletes the given mail."""
 
 	account = get_account_for_user(frappe.session.user)
-	delete_messages(account, [name])
+	delete_messages(account, [_id])
 
 
 @frappe.whitelist()
@@ -347,7 +346,7 @@ def set_seen(thread_ids: list[str], seen: bool, mailbox: str) -> dict:
 	"""Sets seen for mails."""
 
 	account = get_account_for_user(frappe.session.user)
-	mailbox_id = ["!=", get_mailbox_id_by_role(account, "trash")] if mailbox == "starred" else mailbox
+	mailbox_id = None if mailbox == "starred" else mailbox
 	messages = get_message_ids(account, thread_ids, mailbox_id)
 	set_seen_status(account, messages, seen)
 
@@ -373,25 +372,12 @@ def move_mails(_ids: list[str], mailbox: str) -> None:
 
 
 @frappe.whitelist()
-def empty_mailbox(mailbox_id: str) -> None:
-	"""Empties selected mailbox for current user."""
-
-	account = get_account_for_user(frappe.session.user)
-	messages = frappe.get_all(
-		"Email Message",
-		{"account": account, "mailbox_id": ["in", mailbox_id], "destroyed": 0},
-		pluck="name",
-	)
-	delete_messages(account, messages)
-
-
-@frappe.whitelist()
 def set_threads_mailbox(thread_ids: list[str], mailbox: str, move_to_mailbox) -> list[str]:
 	"""Sets mailbox for threads."""
 
 	account = get_account_for_user(frappe.session.user)
-	mailbox_filter = ["!=", get_mailbox_id_by_role(account, "trash")] if mailbox == "starred" else mailbox
-	messages = get_message_ids(account, thread_ids, mailbox_filter)
+	mailbox_id = None if mailbox == "starred" else mailbox
+	messages = get_message_ids(account, thread_ids, mailbox_id)
 	move_messages(account, messages, move_to_mailbox)
 
 	return thread_ids
@@ -399,7 +385,7 @@ def set_threads_mailbox(thread_ids: list[str], mailbox: str, move_to_mailbox) ->
 
 @frappe.whitelist()
 def delete_threads(thread_ids: list[str], mailbox: str) -> list[str]:
-	"""Destroys mails belonging to the given threads."""
+	"""Deletes mails belonging to the given threads."""
 
 	account = get_account_for_user(frappe.session.user)
 	messages = get_message_ids(account, thread_ids, mailbox)

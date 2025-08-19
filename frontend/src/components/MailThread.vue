@@ -412,7 +412,8 @@ const starMails = createResource({
 })
 
 const editDraft = (mail: Mail) => {
-	draftMailID.value = mail.name
+	draftMailID.value = mail._id
+	mailDetails.name = mail.name
 	mailDetails.from_email = mail.from_email
 	mailDetails.to = mail.groupedRecipients.to
 	mailDetails.cc = mail.groupedRecipients.cc
