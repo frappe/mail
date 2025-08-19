@@ -83,6 +83,7 @@ def serialize_thread(thread: dict) -> dict:
 		"from_email",
 		"subject",
 		"received_at",
+		"recipients",
 		"seen",
 		"draft",
 		"flagged",
@@ -364,11 +365,11 @@ def set_flagged(_ids: list[str], flagged: bool) -> dict:
 
 
 @frappe.whitelist()
-def set_mails_mailbox(mail_ids: list[str], mailbox: str) -> None:
+def move_mails(_ids: list[str], mailbox: str) -> None:
 	"""Sets mailbox for mails."""
 
 	account = get_account_for_user(frappe.session.user)
-	move_messages(account, mail_ids, mailbox)
+	move_messages(account, _ids, mailbox)
 
 
 @frappe.whitelist()

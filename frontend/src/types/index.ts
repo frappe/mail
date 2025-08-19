@@ -34,6 +34,11 @@ export interface Recipient {
 	display_name: string | null
 }
 
+export interface Mailbox {
+	mailbox: string
+	mailbox_id: string
+	mailbox_name: string
+}
 export interface Attachment {
 	filename: string
 	blob_id: string
@@ -53,10 +58,10 @@ export interface Mail {
 	html_body: string
 	text_body: string
 	received_at: string
-	mailbox_id: string
 	draft: 0 | 1
 	flagged: 0 | 1
 	seen: 0 | 1
+	mailboxes: Mailbox[]
 	recipients: Recipient[]
 	groupedRecipients: {
 		to: string[]
@@ -90,7 +95,8 @@ export interface Thread {
 	preview: string | null
 	has_attachment: 0 | 1
 	received_at: string
-	mailbox_id: string
+	mailboxes: Mailbox[]
+	recipients: Recipient[]
 	seen: 0 | 1
 	draft: 0 | 1
 	flagged: 0 | 1

@@ -45,7 +45,7 @@ const FIELDS = [
 	{
 		condition: mail.reply_to.length > 0,
 		label: __('Reply To: '),
-		value: () => mail.reply_to.join(', '),
+		value: () => mail.reply_to.map((rt) => rt.email).join(', '),
 	},
 	{
 		label: __('To: '),

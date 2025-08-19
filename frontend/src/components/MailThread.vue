@@ -95,7 +95,9 @@
 										:mail
 									/>
 								</div>
-								<div class="truncate">{{ getRecipients(mail) }}</div>
+								<div class="truncate">
+									{{ getFormattedRecipients(mail.recipients) }}
+								</div>
 							</div>
 							<div class="flex items-center space-x-1 self-start">
 								<MailDate :datetime="mail.received_at" />
@@ -213,7 +215,7 @@ import {
 } from 'lucide-vue-next'
 import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
 
-import { getFirstAlphabet, getGroupedRecipients } from '@/utils'
+import { getFirstAlphabet, getFormattedRecipients, getGroupedRecipients } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
@@ -256,11 +258,11 @@ const thread = createResource({
 	makeParams: () => ({ thread_id: threadID }),
 	transform: (data: Mail[]) =>
 		data
-			.filter((mail) =>
-				mailbox === mailboxIds.trash
-					? mail.mailbox_id === mailboxIds.trash
-					: mail.mailbox_id !== mailboxIds.trash,
-			)
+			.filter((mail) => {
+				const mailboxes = mail.mailboxes.map((m) => m.mailbox_id)
+				const trash = mailboxIds.trash
+				return mailbox === trash ? mailboxes.includes(trash) : !mailboxes.includes(trash)
+			})
 			.map((mail) => ({
 				...mail,
 				groupedRecipients: getGroupedRecipients(mail.recipients, false),
@@ -356,7 +358,7 @@ const moreActions = (mail: Mail): MailAction[] => [
 	},
 	{
 		label: __('Move to Trash'),
-		onClick: () => moveMail.submit({ mail_ids: [mail.name], mailbox: mailboxIds.trash }),
+		onClick: () => moveMail.submit({ _ids: [mail._id], mailbox: mailboxIds.trash }),
 		icon: Trash2,
 		condition: () => mailbox !== mailboxIds.trash,
 	},
@@ -382,22 +384,9 @@ const moreActions = (mail: Mail): MailAction[] => [
 
 const isCollapsed = (mail: Mail) => mail.collapsed && mail !== thread.data[thread.data.length - 1]
 
-const getRecipients = (mail: Mail) => {
-	const formattedRecipients = getGroupedRecipients(mail.recipients)
-
-	let recipients = ''
-	if (formattedRecipients.to) recipients += __('To: ') + formattedRecipients.to + ' '
-	if (formattedRecipients.cc) recipients += __('Cc: ') + formattedRecipients.cc + ' '
-	if (formattedRecipients.bcc) recipients += __('Bcc: ') + formattedRecipients.bcc + ' '
-	return recipients
-}
-
 const moveMail = createResource({
-	url: 'mail.api.mail.set_mails_mailbox',
-	makeParams: ({ mail_ids, mailbox }: { mail_ids: string[]; mailbox: string }) => ({
-		mail_ids,
-		mailbox,
-	}),
+	url: 'mail.api.mail.move_mails',
+	makeParams: ({ _ids, mailbox }: { _ids: string[]; mailbox: string }) => ({ _ids, mailbox }),
 	onSuccess: () => emit('reloadMails'),
 })
 
