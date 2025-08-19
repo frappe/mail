@@ -250,8 +250,8 @@
    "fieldname": "in_reply_to",
    "fieldtype": "Data",
    "label": "In Reply To (Message ID)",
-   "mandatory_depends_on": "eval: !doc.draft",
-   "read_only": 1
+   "read_only": 1,
+   "read_only_depends_on": "eval: !doc.draft"
   },
   {
    "fieldname": "thread_id",
@@ -457,7 +457,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-08-19 09:14:38.648067",
+ "modified": "2025-08-19 17:25:24.459352",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Message",
