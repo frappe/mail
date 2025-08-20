@@ -14,10 +14,10 @@ from mail.mail.doctype.mail_message.mail_message import (
 	fetch_threads,
 	get_message_ids,
 	move_messages,
+	search_messages,
 	set_flagged_status,
 	set_seen_status,
 )
-from mail.mail.doctype.mail_message.search import EmailSearch
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
 from mail.utils.cache import get_account_for_user
 from mail.utils.user import has_role
@@ -410,4 +410,5 @@ def delete_threads(thread_ids: list[str], mailbox: str) -> list[str]:
 def search_mails(query) -> dict:
 	"""Returns search results for the given query."""
 
-	return EmailSearch().search(query)
+	account = get_account_for_user(frappe.session.user)
+	return search_messages(account, {"text": query}, 0, 10)

@@ -661,6 +661,7 @@ def search_messages(account: str, filter: dict, position: int = 0, limit: int = 
 		"from_email",
 		"_id",
 		"thread_id",
+		"mailboxes",
 	]
 
 	messages = []

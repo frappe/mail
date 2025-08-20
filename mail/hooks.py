@@ -212,7 +212,6 @@ website_route_rules = [
 # ---------------
 
 scheduler_events = {
-	"all": ["mail.mail.doctype.mail_message.search.build_index_in_background"],
 	"daily": [
 		"mail.mail.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
 	],
