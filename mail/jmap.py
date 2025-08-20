@@ -402,7 +402,11 @@ class JMAPClient:
 	) -> list[str] | dict[str, list]:
 		"""Returns threads based on the provided filter."""
 
-		if not fetch_all:
+		threads: dict[str, list[str]] = {}
+		fetched = position
+		batch_size = self.max_objects_in_get
+
+		while len(threads) < limit:
 			response = self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
@@ -412,59 +416,38 @@ class JMAPClient:
 							"accountId": self.account_id,
 							"filter": filter,
 							"sort": [{"property": "receivedAt", "isAscending": False}],
-							"position": position,
-							"collapseThreads": True,
-							"limit": limit,
-							"calculateTotal": True,
+							"position": fetched,
+							"limit": batch_size,
 						},
 						"0",
+					],
+					[
+						"Email/get",
+						{
+							"accountId": self.account_id,
+							"#ids": {"resultOf": "0", "name": "Email/query", "path": "/ids"},
+							"properties": ["id", "threadId"],
+						},
+						"1",
 					],
 				],
 			)
 
-			return response["methodResponses"][0][1]["ids"]
+			email_list = response["methodResponses"][1][1]["list"]
+			if not email_list:
+				break
 
-		result = {}
-		response = self._make_request(
-			using=["urn:ietf:params:jmap:mail"],
-			method_calls=[
-				[
-					"Email/query",
-					{
-						"accountId": self.account_id,
-						"filter": filter,
-						"sort": [{"property": "receivedAt", "isAscending": False}],
-						"position": position,
-						"collapseThreads": True,
-						"limit": limit,
-						"calculateTotal": True,
-					},
-					"0",
-				],
-				[
-					"Email/get",
-					{
-						"accountId": self.account_id,
-						"#ids": {"name": "Email/query", "path": "/ids", "resultOf": "0"},
-						"properties": ["threadId"],
-					},
-					"1",
-				],
-				[
-					"Thread/get",
-					{
-						"accountId": self.account_id,
-						"#ids": {"name": "Email/get", "path": "/list/*/threadId", "resultOf": "1"},
-					},
-					"2",
-				],
-			],
-		)
+			for email in email_list:
+				threads.setdefault(email["threadId"], []).append(email["id"])
+				if len(threads) >= limit:
+					break
 
-		for thread in response["methodResponses"][2][1]["list"]:
-			result[thread["id"]] = thread["emailIds"]
+			fetched += batch_size
 
-		return result
+		if not fetch_all:
+			return [ids[0] for ids in threads.values()]
+
+		return threads
 
 	def thread_get(self, thread_ids: list[str]) -> dict[str, list]:
 		"""Returns the threads for the provided thread IDs."""
