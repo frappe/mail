@@ -78,16 +78,10 @@ const getInterlocutors = (result: {
 	const sender = result.from_name || result.from_email
 	if (!result.recipients?.length) return sender
 
-	const uniqueRecipients = Object.values(
-		result.recipients.reduce((acc: { [email: string]: Recipient }, obj: Recipient) => {
-			acc[obj.email] = obj
-			return acc
-		}, {}),
-	)
-
-	const recipients = uniqueRecipients
-		.filter((recipient) => recipient.email !== result.from_email)
-		.map((recipient) => recipient.display_name || recipient.email)
+	const seen = new Set<string>()
+	const recipients = result.recipients
+		.filter((r) => r.email !== result.from_email && !seen.has(r.email) && seen.add(r.email))
+		.map((r) => r.display_name || r.email)
 		.join(', ')
 
 	return `${sender}, ${recipients}`
