@@ -248,7 +248,7 @@ def extract_recipients(message: dict) -> list:
 			{
 				"email": recipient["address"],
 				"domain_name": recipient["address"].split("@")[-1],
-				"original_rcpt": recipient["orcpt"],
+				"original_rcpt": recipient.get("orcpt"),
 				"status": status,
 				"queue": recipient["queue"],
 				"retry_num": recipient["retry_num"],
