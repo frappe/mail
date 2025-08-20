@@ -427,7 +427,7 @@ APIs for retrieving received emails.
 - **Parameters:**
   - `email` (str): The email address for which to pull emails.
   - `limit` (int = 50): Maximum number of emails to retrieve.
-  - `last_synced_at` (str | None): Optional timestamp to fetch emails received after this time.
+  - `last_received_at` (str | None): Optional timestamp to fetch emails received after this time.
 - **Response:** Returns a dictionary with a list of received email details.
 - **Example Response:**
   ```json
@@ -447,8 +447,8 @@ APIs for retrieving received emails.
           "cc": []
         }
       ],
-      "last_synced_at": "2024-11-06 08:58:55.528916+00:00",
-      "last_synced_mail": "019300b2-c261-71d1-bc8d-bc321cc9ebaf"
+      "last_received_at": "2024-11-06 08:58:55.528916+00:00",
+      "last_received_mail": "019300b2-c261-71d1-bc8d-bc321cc9ebaf"
     }
   }
   ```
@@ -466,8 +466,8 @@ APIs for retrieving received emails.
       "mails": [
         "Delivered-To: me@s-aga-r.dev\r\nReceived-At: 2024-11-06T08:58:30.063Z\r\nAuthentication-Results: mail.s-aga-r.dev;\r\n\tspf=pass (mail.s-aga-r.dev: domain of sagar.s@frappemail.com designates 64.227.189.58 as permitted sender) smtp.mailfrom=sagar.s@frappemail.com smtp.helo=o1-blr.frappemail.com;\r\n\tdkim=pass header.i=@frappemail.com header.s=frappemail-com-d8852addda header.a=rsa-sha256 header.b=qJlPddwY;\r\n\tdmarc=pass (p=REJECT arc=none) header.from=frappemail.com header.d=frappemail.com;\r\n\tbimi=none\r\nReceived-SPF: pass (mail.s-aga-r.dev: domain of sagar.s@frappemail.com designates 64.227.189.58 as permitted sender) client-ip=64.227.189.58;\r\nReceived: from o1-blr.frappemail.com (o1-blr.frappemail.com [64.227.189.58])\r\n\tby mail.s-aga-r.dev (Haraka/3.0.3) with ESMTPS id EA28E71F-ED28-44DE-86E3-A783E1B759E0.1\r\n\tenvelope-from <sagar.s@frappemail.com>\r\n\ttls TLS_AES_256_GCM_SHA384;\r\n\tWed, 06 Nov 2024 08:58:29 +0000\r\nReceived: (Frappe Mail Agent); Wed, 06 Nov 2024 08:58:29 +0000\r\nReceived: from o1-blr.frappemail.com (ip6-localhost [::1])\r\n\tby o1-blr.frappemail.com (Haraka/3.0.3) with ESMTPSA id BF84C129-A129-4818-88F2-2A216D4D040D.1\r\n\tenvelope-from <sagar.s@frappemail.com>\r\n\ttls TLS_AES_256_GCM_SHA384 (authenticated bits=0);\r\n\tWed, 06 Nov 2024 08:58:29 +0000\r\nContent-Type: multipart/alternative;\r\n boundary=\"===============0863045983596233963==\"\r\nMIME-Version: 1.0\r\nFrom: Sagar Sharma <sagar.s@frappemail.com>\r\nTo: Sagar S <me@s-aga-r.dev>\r\nSubject: Test Email\r\nDate: Wed, 06 Nov 2024 08:57:26 +0000\r\nMessage-ID: <173088344652.222.8316241415157629603@frappemail.com>\r\nX-Priority: 1\r\nDKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=frappemail.com;\r\n i=@frappemail.com; q=dns/txt; s=frappemail-com-d8852addda; t=1730883446; h=to\r\n : cc : from : date : subject : reply-to : message-id : in-reply-to;\r\n bh=k/MZq04SX5ovIG3cljRzVc8RLJpPS8/IC/KDyuOdV3I=;\r\n b=qJlPddwYBSyHtM/n34p3t3GLjmiHkbANF1m+9m/H4PgHC4LVwtgpS8Yo62uC4T84PoRqZ\r\n h5r+9Vcs/mgXcH2BeMyoqMO4H1Vk6iC6NvEYiHs+iQFjdwgKodpvLuSEls111e6U9+NCybq\r\n OwuDiQ28SiwvmdbVWOrxOACvl4LuJorWdIJ6i5iXelz/f52QMm1tlP2Wh2dXT7Mu6nTGO7g\r\n KpuieIHnDMTurQplxp2dOSnpwsw7I1sr3aHFDyP6oFONzMvTiK+/X2iCMg/W+nMjE4nz+2B\r\n DO7MTGFmB4RsUDyf+HtYVGFe/HggFK6XROWtUJR0CcmWVt9SeK3S5X+OT+tA==\r\nX-FM-OML: 019300b1-f29c-7868-af63-3513911e6801\r\nOriginal-Authentication-Results: o1-blr.frappemail.com;\r\n\tauth=pass (plain)\r\n\r\n--===============0863045983596233963==\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: base64\r\n\r\nVGVzdCBFbWFpbA==\r\n\r\n--===============0863045983596233963==\r\nContent-Type: text/html; charset=\"utf-8\"\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: base64\r\n\r\nPGh0bWw+PGJvZHk+PGltZyBzcmM9Imh0dHBzOi8vY2xpZW50LmZyYXBwZW1haWwuY29tL2FwaS9t\r\nZXRob2QvbWFpbC5hcGkudHJhY2sub3Blbj9pZD0wMTkzMDBiMTY3MjI3MGVjYWE0YWI5OTlmOTBm\r\nMmQ5MCI+PHA+VGVzdCBFbWFpbDwvcD48L2JvZHk+PC9odG1sPg==\r\n\r\n--===============0863045983596233963==--\r\n"
       ],
-      "last_synced_at": "2024-11-06 08:58:55.528916+00:00",
-      "last_synced_mail": "019300b2-c261-71d1-bc8d-bc321cc9ebaf"
+      "last_received_at": "2024-11-06 08:58:55.528916+00:00",
+      "last_received_mail": "019300b2-c261-71d1-bc8d-bc321cc9ebaf"
     }
   }
   ```

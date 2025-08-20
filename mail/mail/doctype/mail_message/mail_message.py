@@ -587,7 +587,7 @@ def forward(source_name: str, target_doc=None) -> "MailQueue":
 
 
 def fetch_messages(
-	account: str, filter: dict | None = None, position: int = 0, limit: int = 50
+	account: str, filter: dict | None = None, position: int = 0, limit: int = 50, sort_asc: bool = False
 ) -> list[dict]:
 	"""Returns a list of messages based on the provided filter."""
 
@@ -597,14 +597,14 @@ def fetch_messages(
 	client = get_jmap_client(account)
 
 	while len(messages) < limit:
-		result = client.email_query(filter, position, limit)
+		result = client.email_query(filter, position, limit, sort_asc)
 		_ids = result["ids"]
 		total = result["total"]
 
 		if not _ids:
 			break
 
-		messages.extend(get_messages(account, _ids=_ids))
+		messages.extend(get_messages(account, _ids=_ids, sort_asc=sort_asc))
 
 		if len(messages) >= limit:
 			break

@@ -355,7 +355,9 @@ class JMAPClient:
 
 		return result
 
-	def email_query(self, filter: dict | None = None, position: int = 0, limit: int = 50) -> dict:
+	def email_query(
+		self, filter: dict | None = None, position: int = 0, limit: int = 50, sort_asc: bool = False
+	) -> dict:
 		"""Query emails in batches until reaching the limit."""
 
 		_ids = []
@@ -373,7 +375,7 @@ class JMAPClient:
 							"filter": filter,
 							"position": position,
 							"limit": batch_size,
-							"sort": [{"property": "receivedAt", "isAscending": False}],
+							"sort": [{"property": "receivedAt", "isAscending": sort_asc}],
 							"calculateTotal": True if total is None else False,
 						},
 						"0",

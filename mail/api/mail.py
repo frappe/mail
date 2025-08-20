@@ -1,6 +1,3 @@
-import base64
-from collections import defaultdict
-
 import frappe
 from bs4 import BeautifulSoup
 from frappe import _
