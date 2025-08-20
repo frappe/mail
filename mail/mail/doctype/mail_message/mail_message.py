@@ -719,7 +719,11 @@ def get_message_ids(
 			return _ids
 
 		emails, _state = client.email_get(_ids, properties=["id", "mailboxIds"])
-		return [email["id"] for email in emails if mailbox_id in email["mailboxIds"]]
+		if isinstance(mailbox_id, str):
+			return [email["id"] for email in emails if mailbox_id in email["mailboxIds"]]
+		else:
+			return [email["id"] for email in emails if not set(mailbox_id).isdisjoint(email["mailboxIds"])]
+
 	except Exception:
 		frappe.log_error(_("Failed to fetch message IDs."), frappe.get_traceback(with_context=True))
 		frappe.throw(_("Failed to fetch message IDs."))

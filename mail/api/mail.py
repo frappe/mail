@@ -25,23 +25,21 @@ from mail.utils.user import has_role
 
 @frappe.whitelist()
 def get_mailboxes() -> list[dict]:
-	"""Returns the user's mailboxes along with no. of unseen mails."""
+	"""Serializes and returns the user's mailboxes."""
 
 	user = frappe.session.user
 	if not has_role(user, "Mail User") or user == "Administrator":
 		return []
 
-	mailboxes = frappe.get_all("Mailbox", filters={"account": get_account_for_user(user)})
-	return [
-		{
-			"id": mailbox["id"],
-			"_name": mailbox["_name"],
-			"role": mailbox["role"],
-			"total_threads": mailbox["total_threads"],
-			"unread_threads": mailbox["unread_threads"],
-		}
-		for mailbox in mailboxes
-	]
+	fields = ["id", "_name", "role", "total_threads", "unread_threads"]
+	mailboxes = get_account_mailboxes(get_account_for_user(user))
+	return [{field: mailbox[field] for field in fields} for mailbox in mailboxes]
+
+
+def get_account_mailboxes(account) -> list[dict]:
+	"""Returns the account's mailboxes."""
+
+	return frappe.get_all("Mailbox", filters={"account": account})
 
 
 @frappe.whitelist()
@@ -141,7 +139,7 @@ def serialize_attachments(attachments: list[dict]) -> dict:
 	return [
 		{field: attachment[field] for field in attachment_fields}
 		for attachment in attachments
-		if attachment.get("disposition") == "attachment"
+		if attachment.get("filename")
 	]
 
 
@@ -358,8 +356,9 @@ def set_seen(thread_ids: list[str], seen: bool, mailbox: str) -> dict:
 	"""Sets seen for mails."""
 
 	account = get_account_for_user(frappe.session.user)
-	mailbox_id = None if mailbox == "starred" else mailbox
-	messages = get_message_ids(account, thread_ids, mailbox_id)
+	if mailbox == "starred":
+		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	messages = get_message_ids(account, thread_ids, mailbox)
 	set_seen_status(account, messages, seen)
 
 	return {"thread_ids": thread_ids, "seen": seen}
@@ -388,8 +387,9 @@ def set_threads_mailbox(thread_ids: list[str], mailbox: str, move_to_mailbox) ->
 	"""Sets mailbox for threads."""
 
 	account = get_account_for_user(frappe.session.user)
-	mailbox_id = None if mailbox == "starred" else mailbox
-	messages = get_message_ids(account, thread_ids, mailbox_id)
+	if mailbox == "starred":
+		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	messages = get_message_ids(account, thread_ids, mailbox)
 	move_messages(account, messages, move_to_mailbox)
 
 	return thread_ids
