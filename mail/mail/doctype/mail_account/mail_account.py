@@ -17,7 +17,6 @@ from mail.mail.doctype.jmap_sync_state.jmap_sync_state import create_jmap_sync_s
 from mail.utils import (
 	convert_html_to_text,
 	generate_uuid_style_hash,
-	get_postmaster_address,
 	hash_password,
 	normalize_email,
 )
@@ -560,16 +559,6 @@ def create_mail_account(
 	account.insert(ignore_permissions=True)
 
 	return account
-
-
-def create_postmaster_account(tenant: str) -> None:
-	"""Creates a Postmaster account."""
-
-	frappe.flags.ignore_domain_validation = True
-	postmaster_address = get_postmaster_address()
-	create_mail_account(
-		tenant=tenant, email=postmaster_address, backup_email=postmaster_address, first_name="Postmaster"
-	)
 
 
 def sync_jmap_identities(account: str) -> None:

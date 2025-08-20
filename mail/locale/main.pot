@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-08-12 11:54+0553\n"
-"PO-Revision-Date: 2025-08-12 11:54+0553\n"
+"POT-Creation-Date: 2025-08-20 11:44+0553\n"
+"PO-Revision-Date: 2025-08-20 11:44+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -25,11 +25,11 @@ msgstr ""
 msgid " Supported file formats: .zip, .tar, .tgz"
 msgstr ""
 
-#: mail/api/mail.py:366
+#: mail/api/mail.py:319
 msgid "'Fail'"
 msgstr ""
 
-#: mail/api/mail.py:366
+#: mail/api/mail.py:319
 msgid "'Pass'"
 msgstr ""
 
@@ -129,7 +129,7 @@ msgstr ""
 msgid "A"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:366
+#: mail/mail/doctype/mail_account/mail_account.py:365
 msgid "A job has been queued to set the quota."
 msgstr ""
 
@@ -198,24 +198,24 @@ msgstr ""
 msgid "Access denied: Your IP address ({0}) is blocked due to explicit IP restrictions."
 msgstr ""
 
-#. Label of the account (Link) field in DocType 'Email Message'
 #. Label of the account (Link) field in DocType 'JMAP Push Subscription'
 #. Label of the account (Link) field in DocType 'JMAP Sync State'
 #. Label of the account (Data) field in DocType 'Mail Account Request'
 #. Label of the account (Link) field in DocType 'Mail Data Exchange'
 #. Group in Mail Domain's connections
+#. Label of the account (Link) field in DocType 'Mail Message'
 #. Label of the account (Link) field in DocType 'Mail Queue'
 #. Label of the account (Link) field in DocType 'Mail Sync History'
 #. Group in Mail Tenant's connections
 #. Label of the account (Link) field in DocType 'Mailbox'
 #. Label of a shortcut in the Mail Workspace
 #: frontend/src/components/Modals/SettingsModal.vue:60
-#: mail/mail/doctype/email_message/email_message.json
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.json
 #: mail/mail/doctype/jmap_sync_state/jmap_sync_state.json
 #: mail/mail/doctype/mail_account_request/mail_account_request.json
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 #: mail/mail/doctype/mail_sync_history/mail_sync_history.json
 #: mail/mail/doctype/mail_tenant/mail_tenant.json
@@ -228,17 +228,27 @@ msgstr ""
 msgid "Account Request"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:283
+#: mail/mail/doctype/mail_message/mail_message.py:737
+#: mail/mail/doctype/mail_message/mail_message.py:812
+#: mail/mail/doctype/mail_message/mail_message.py:832
+#: mail/mail/doctype/mail_message/mail_message.py:852
+msgid "Account and Mail IDs are required."
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:757
+msgid "Account and Mailbox ID are required."
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:710
+msgid "Account and Thread IDs are required."
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:874
 msgid "Account and blob ID are required."
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:253
-#: mail/mail/doctype/email_message/email_message.py:310
-msgid "Account and message IDs are required."
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:179
-msgid "Account and thread IDs are required."
+#: mail/mail/doctype/mail_message/mail_message.py:651
+msgid "Account and filter are required."
 msgstr ""
 
 #: mail/mail/doctype/mail_account_request/mail_account_request.py:129
@@ -263,18 +273,12 @@ msgstr ""
 msgid "Account username for the DNS provider."
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:1095
-msgid "Account {0} already synced. Use <code>fetch_changes</code> to update."
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:205
-msgid "Account, message IDs, and mailbox ID are required."
+#: mail/mail/doctype/mail_message/mail_message.py:787
+msgid "Account, Mail IDs, and Mailbox ID are required."
 msgstr ""
 
 #: mail/mail/doctype/dns_record/dns_record.js:16
 #: mail/mail/doctype/dns_record/dns_record.js:25
-#: mail/mail/doctype/email_message/email_message.js:170
-#: mail/mail/doctype/email_message/email_message.js:178
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.js:23
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.js:41
 #: mail/mail/doctype/mail_account/mail_account.js:46
@@ -289,6 +293,8 @@ msgstr ""
 #: mail/mail/doctype/mail_domain/mail_domain.js:16
 #: mail/mail/doctype/mail_domain/mail_domain.js:29
 #: mail/mail/doctype/mail_domain/mail_domain.js:42
+#: mail/mail/doctype/mail_message/mail_message.js:158
+#: mail/mail/doctype/mail_message/mail_message.js:166
 #: mail/mail/doctype/mail_queue/mail_queue.js:27
 #: mail/mail/doctype/mail_queue/mail_queue.js:38
 #: mail/mail/doctype/mail_server/mail_server.js:31
@@ -396,11 +402,11 @@ msgstr ""
 msgid "Aliases deleted successfully."
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:509
+#: frontend/src/pages/MailboxView.vue:503
 msgid "All"
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:582
+#: frontend/src/pages/MailboxView.vue:576
 msgid "All Mails"
 msgstr ""
 
@@ -475,8 +481,8 @@ msgstr ""
 msgid "Amended From"
 msgstr ""
 
-#. Label of the answered (Check) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the answered (Check) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Answered"
 msgstr ""
 
@@ -506,10 +512,6 @@ msgstr ""
 
 #: frontend/src/pages/dashboard/MailingListsView.vue:135
 msgid "Are you sure you want to delete the selected lists?"
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.js:68
-msgid "Are you sure you want to destroy this email?"
 msgstr ""
 
 #: mail/mail/doctype/mail_domain/mail_domain.js:23
@@ -556,17 +558,13 @@ msgstr ""
 msgid "Attachment Size (Bytes)"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:737
-msgid "Attachment not found."
-msgstr ""
-
-#. Label of the attachments (Table) field in DocType 'Email Message'
-#. Label of the section_break_oulc (Section Break) field in DocType 'Email
+#. Label of the section_break_oulc (Section Break) field in DocType 'Mail
 #. Message'
+#. Label of the attachments (Table) field in DocType 'Mail Message'
 #. Label of the attachments_section (Section Break) field in DocType 'Mail
 #. Queue'
 #. Label of the attachments (JSON) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Attachments"
 msgstr ""
@@ -613,7 +611,7 @@ msgstr ""
 msgid "Azure Blob Storage"
 msgstr ""
 
-#: mail/api/mail.py:382
+#: mail/api/mail.py:335
 msgid "BCC"
 msgstr ""
 
@@ -646,7 +644,7 @@ msgstr ""
 msgid "Backup Email"
 msgstr ""
 
-#: mail/utils/validation.py:207
+#: mail/utils/validation.py:204
 msgid "Bad Cron Expression"
 msgstr ""
 
@@ -666,15 +664,14 @@ msgstr ""
 msgid "Batch"
 msgstr ""
 
-#. Option for the 'Type' (Select) field in DocType 'Email Message Recipient'
+#. Option for the 'Type' (Select) field in DocType 'Mail Message Recipient'
 #: frontend/src/components/SendMail.vue:51
 #: frontend/src/components/SendMail.vue:76
-#: mail/mail/doctype/email_message_recipient/email_message_recipient.json
+#: mail/mail/doctype/mail_message_recipient/mail_message_recipient.json
 msgid "Bcc"
 msgstr ""
 
-#: frontend/src/components/MailDetailsPopover.vue:59
-#: frontend/src/components/MailThread.vue:395
+#: frontend/src/components/MailDetailsPopover.vue:61
 msgid "Bcc: "
 msgstr ""
 
@@ -688,11 +685,11 @@ msgstr ""
 msgid "Blob Hash"
 msgstr ""
 
-#. Label of the blob_id (Data) field in DocType 'Email Message'
-#. Label of the blob_id (Data) field in DocType 'Email Message Part'
+#. Label of the blob_id (Data) field in DocType 'Mail Message'
+#. Label of the blob_id (Data) field in DocType 'Mail Message Part'
 #. Label of the blob_id (Data) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#: mail/mail/doctype/mail_message/mail_message.json
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Blob ID"
 msgstr ""
@@ -718,20 +715,19 @@ msgstr ""
 msgid "Blocked IPs"
 msgstr ""
 
-#. Label of the section_break_yjrj (Section Break) field in DocType 'Email
-#. Message'
 #. Label of the vacation_response_body_section (Section Break) field in DocType
 #. 'Mail Account'
+#. Label of the body_section (Section Break) field in DocType 'Mail Message'
 #. Label of the body_section (Section Break) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
 #: mail/mail/doctype/mail_account/mail_account.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Body"
 msgstr ""
 
-#. Label of the body_parts_section (Section Break) field in DocType 'Email
+#. Label of the body_parts_section (Section Break) field in DocType 'Mail
 #. Message'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Body Parts"
 msgstr ""
 
@@ -751,6 +747,10 @@ msgstr ""
 msgid "Buffered writes"
 msgstr ""
 
+#: mail/mail/doctype/mail_message/mail_message_list.js:11
+msgid "Bulk Delete"
+msgstr ""
+
 #: frontend/src/pages/SignupView.vue:10
 msgid "Business (For work or company use)"
 msgstr ""
@@ -759,7 +759,7 @@ msgstr ""
 msgid "Business signup is disabled."
 msgstr ""
 
-#: mail/api/mail.py:381
+#: mail/api/mail.py:334
 msgid "CC"
 msgstr ""
 
@@ -785,7 +785,7 @@ msgstr ""
 msgid "Cancelling Delivery..."
 msgstr ""
 
-#: mail/api/inbound.py:87
+#: mail/api/inbound.py:89
 msgid "Cannot fetch more than {0} emails at a time."
 msgstr ""
 
@@ -805,15 +805,15 @@ msgstr ""
 msgid "Cannot resubscribe a subscription that is not expired or failed."
 msgstr ""
 
-#: mail/mail/doctype/mail_queue/mail_queue.py:573
+#: mail/mail/doctype/mail_queue/mail_queue.py:576
 msgid "Cannot retry a mail with status {0}"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:359
+#: mail/mail/doctype/mail_account/mail_account.py:358
 msgid "Cannot set quota for a disabled account."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:383
+#: mail/mail/doctype/mail_account/mail_account.py:382
 msgid "Cannot set vacation response for a disabled account."
 msgstr ""
 
@@ -824,15 +824,14 @@ msgstr ""
 msgid "Category"
 msgstr ""
 
-#. Option for the 'Type' (Select) field in DocType 'Email Message Recipient'
+#. Option for the 'Type' (Select) field in DocType 'Mail Message Recipient'
 #: frontend/src/components/SendMail.vue:41
 #: frontend/src/components/SendMail.vue:63
-#: mail/mail/doctype/email_message_recipient/email_message_recipient.json
+#: mail/mail/doctype/mail_message_recipient/mail_message_recipient.json
 msgid "Cc"
 msgstr ""
 
-#: frontend/src/components/MailDetailsPopover.vue:54
-#: frontend/src/components/MailThread.vue:393
+#: frontend/src/components/MailDetailsPopover.vue:56
 msgid "Cc: "
 msgstr ""
 
@@ -877,8 +876,8 @@ msgstr ""
 msgid "Changes History"
 msgstr ""
 
-#. Label of the charset (Data) field in DocType 'Email Message Part'
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#. Label of the charset (Data) field in DocType 'Mail Message Part'
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 msgid "Charset"
 msgstr ""
 
@@ -964,7 +963,7 @@ msgstr ""
 msgid "Cluster Settings"
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:77
+#: mail/mail/doctype/mail_domain/mail_domain.py:73
 msgid "Cluster is not set for Mail Tenant {0}."
 msgstr ""
 
@@ -998,7 +997,7 @@ msgstr ""
 msgid "Completed At - Started At"
 msgstr ""
 
-#: frontend/src/components/HeaderActions.vue:37
+#: frontend/src/components/HeaderActions.vue:4
 msgid "Compose"
 msgstr ""
 
@@ -1040,7 +1039,6 @@ msgstr ""
 msgid "Configuration reloaded."
 msgstr ""
 
-#: frontend/src/components/HeaderActions.vue:46
 #: frontend/src/components/Modals/AddMailingListExternalMemberModal.vue:8
 #: frontend/src/components/Modals/AddMailingListInternalMembersModal.vue:8
 #: frontend/src/components/Modals/ChangePasswordModal.vue:51
@@ -1080,8 +1078,8 @@ msgstr ""
 msgid "Container"
 msgstr ""
 
-#. Label of the cid (Data) field in DocType 'Email Message Part'
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#. Label of the content_id (Data) field in DocType 'Mail Message Part'
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 msgid "Content ID"
 msgstr ""
 
@@ -1144,7 +1142,7 @@ msgstr ""
 msgid "Created At"
 msgstr ""
 
-#: mail/api/mail.py:372
+#: mail/api/mail.py:325
 msgid "Created at"
 msgstr ""
 
@@ -1158,12 +1156,6 @@ msgstr ""
 
 #: mail/mail/doctype/dns_record/dns_record_list.js:16
 msgid "Creating Job..."
-msgstr ""
-
-#. Description of the 'Fetched After (Seconds)' (Float) field in DocType 'Email
-#. Message'
-#: mail/mail/doctype/email_message/email_message.json
-msgid "Creation - Received At"
 msgstr ""
 
 #. Description of the 'Received After (Seconds)' (Float) field in DocType 'Mail
@@ -1186,8 +1178,8 @@ msgstr ""
 msgid "DELETE"
 msgstr ""
 
-#. Label of the dkim_pass (Check) field in DocType 'Email Message'
-#: mail/api/mail.py:391 mail/mail/doctype/email_message/email_message.json
+#. Label of the dkim_pass (Check) field in DocType 'Mail Message'
+#: mail/api/mail.py:344 mail/mail/doctype/mail_message/mail_message.json
 msgid "DKIM"
 msgstr ""
 
@@ -1196,8 +1188,8 @@ msgstr ""
 msgid "DKIM Alignment"
 msgstr ""
 
-#. Label of the dkim_description (Small Text) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the dkim_description (Small Text) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "DKIM Description"
 msgstr ""
 
@@ -1210,7 +1202,7 @@ msgstr ""
 msgid "DKIM Key"
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:154
+#: mail/mail/doctype/mail_domain/mail_domain.py:150
 msgid "DKIM Keys rotated successfully."
 msgstr ""
 
@@ -1233,13 +1225,13 @@ msgstr ""
 msgid "DKIM Results"
 msgstr ""
 
-#. Label of the dmarc_pass (Check) field in DocType 'Email Message'
-#: mail/api/mail.py:393 mail/mail/doctype/email_message/email_message.json
+#. Label of the dmarc_pass (Check) field in DocType 'Mail Message'
+#: mail/api/mail.py:346 mail/mail/doctype/mail_message/mail_message.json
 msgid "DMARC"
 msgstr ""
 
-#. Label of the dmarc_description (Small Text) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the dmarc_description (Small Text) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "DMARC Description"
 msgstr ""
 
@@ -1287,11 +1279,11 @@ msgstr ""
 msgid "DNS Records"
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:116
+#: mail/mail/doctype/mail_domain/mail_domain.py:112
 msgid "DNS Records refreshed successfully."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:136
+#: mail/mail/doctype/mail_domain/mail_domain.py:132
 msgid "DNS Records verified successfully."
 msgstr ""
 
@@ -1335,7 +1327,7 @@ msgstr ""
 msgid "Database"
 msgstr ""
 
-#: frontend/src/components/MailDetailsPopover.vue:63
+#: frontend/src/components/MailDetailsPopover.vue:65
 msgid "Date: "
 msgstr ""
 
@@ -1369,7 +1361,7 @@ msgstr ""
 msgid "Default Email"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:294
+#: mail/mail/doctype/mail_account/mail_account.py:293
 msgid "Default Email must be one of the email addresses assigned to the user."
 msgstr ""
 
@@ -1433,7 +1425,6 @@ msgstr ""
 msgid "Delete Mailing Lists"
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:187
 #: frontend/src/components/MailThread.vue:366
 msgid "Delete Message"
 msgstr ""
@@ -1442,12 +1433,17 @@ msgstr ""
 msgid "Delete Newsletter After Sending"
 msgstr ""
 
+#: frontend/src/components/MailListItem.vue:191
 #: frontend/src/components/MailThread.vue:312
 msgid "Delete Thread"
 msgstr ""
 
 #: frontend/src/pages/MailboxView.vue:341
 msgid "Delete Threads"
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message_list.js:15
+msgid "Delete {0} {1} permanently?"
 msgstr ""
 
 #. Label of the delivery_mode (Select) field in DocType 'Mail Queue'
@@ -1472,11 +1468,6 @@ msgstr ""
 msgid "Deploying Configuration..."
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.js:67
-#: mail/mail/doctype/email_message/email_message_list.js:17
-msgid "Destroy"
-msgstr ""
-
 #. Label of the destroy_after_submission (Check) field in DocType 'Mail Queue'
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Destroy After Submission"
@@ -1492,15 +1483,6 @@ msgstr ""
 #. 'Mail Account'
 #: mail/mail/doctype/mail_account/mail_account.json
 msgid "Destroy Newsletter After Submission"
-msgstr ""
-
-#. Label of the destroyed (Check) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
-msgid "Destroyed"
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.js:188
-msgid "Destroying..."
 msgstr ""
 
 #. Label of the details_tab (Tab Break) field in DocType 'Mail Cluster'
@@ -1598,28 +1580,28 @@ msgstr ""
 msgid "Disk Quota (in GB)"
 msgstr ""
 
-#. Label of the display_name (Data) field in DocType 'Email Message Recipient'
-#. Label of the display_name (Data) field in DocType 'Email Message Reply To'
 #. Label of the display_name (Data) field in DocType 'Mail Account'
 #. Label of the display_name (Data) field in DocType 'Mail Contact'
+#. Label of the display_name (Data) field in DocType 'Mail Message Recipient'
+#. Label of the display_name (Data) field in DocType 'Mail Message Reply To'
 #. Label of the display_name (Data) field in DocType 'Mailing List'
 #: frontend/src/components/Modals/AddMailingListModal.vue:39
 #: frontend/src/components/Modals/MailAccountModal.vue:31
 #: frontend/src/components/Settings/AccountSettings.vue:13
 #: frontend/src/pages/dashboard/MailingListView.vue:30
 #: frontend/src/pages/dashboard/MailingListsView.vue:147
-#: mail/mail/doctype/email_message_recipient/email_message_recipient.json
-#: mail/mail/doctype/email_message_reply_to/email_message_reply_to.json
 #: mail/mail/doctype/mail_account/mail_account.json
 #: mail/mail/doctype/mail_contact/mail_contact.json
+#: mail/mail/doctype/mail_message_recipient/mail_message_recipient.json
+#: mail/mail/doctype/mail_message_reply_to/mail_message_reply_to.json
 #: mail/mail/doctype/mailing_list/mailing_list.json
 msgid "Display Name"
 msgstr ""
 
 #. Label of the disposition (Data) field in DocType 'DMARC Report Detail'
-#. Label of the disposition (Select) field in DocType 'Email Message Part'
+#. Label of the disposition (Select) field in DocType 'Mail Message Part'
 #: mail/mail/doctype/dmarc_report_detail/dmarc_report_detail.json
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 #: mail/mail/report/dmarc_report_viewer/dmarc_report_viewer.py:41
 msgid "Disposition"
 msgstr ""
@@ -1697,11 +1679,11 @@ msgstr ""
 msgid "Domain {0} already registered."
 msgstr ""
 
-#: mail/utils/validation.py:157
+#: mail/utils/validation.py:154
 msgid "Domain {0} and User {1} do not belong to the same tenant."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:242
+#: mail/mail/doctype/mail_account/mail_account.py:241
 msgid "Domain {0} and User {1} must belong to the same tenant."
 msgstr ""
 
@@ -1709,7 +1691,7 @@ msgstr ""
 msgid "Domain {0} and {1} {2} must belong to the same tenant."
 msgstr ""
 
-#: mail/utils/validation.py:183
+#: mail/utils/validation.py:180
 msgid "Domain {0} does not exist or may be disabled in the Mail Domain."
 msgstr ""
 
@@ -1717,7 +1699,7 @@ msgstr ""
 msgid "Domain {0} has already been registered."
 msgstr ""
 
-#: mail/utils/validation.py:129
+#: mail/utils/validation.py:126
 msgid "Domain {0} is disabled."
 msgstr ""
 
@@ -1725,15 +1707,15 @@ msgstr ""
 msgid "Domain {0} is not allowed for personal signup."
 msgstr ""
 
-#: mail/utils/validation.py:139
+#: mail/utils/validation.py:136
 msgid "Domain {0} is not owned by the tenant."
 msgstr ""
 
-#: mail/utils/validation.py:131
+#: mail/utils/validation.py:128
 msgid "Domain {0} is not verified."
 msgstr ""
 
-#: mail/utils/validation.py:190
+#: mail/utils/validation.py:187
 msgid "Domain {0} not found in Mail Domain."
 msgstr ""
 
@@ -1755,12 +1737,12 @@ msgstr ""
 msgid "Download"
 msgstr ""
 
-#. Label of the draft (Check) field in DocType 'Email Message'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
+#. Label of the draft (Check) field in DocType 'Mail Message'
 #: frontend/src/components/MailListItem.vue:94
 #: frontend/src/pages/MailDataExchangesView.vue:88
-#: mail/mail/doctype/email_message/email_message.json
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Draft"
 msgstr ""
 
@@ -1827,10 +1809,6 @@ msgstr ""
 msgid "Either blob_id or file_url is required for attachments."
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:718
-msgid "Either cid or blob_id is required."
-msgstr ""
-
 #: mail/utils/__init__.py:105
 msgid "Either file path or file data is required."
 msgstr ""
@@ -1848,12 +1826,12 @@ msgstr ""
 msgid "ElasticSearch"
 msgstr ""
 
-#. Label of the email (Data) field in DocType 'Email Message Recipient'
-#. Label of the email (Data) field in DocType 'Email Message Reply To'
 #. Label of the email (Data) field in DocType 'Mail Account'
 #. Label of the email (Data) field in DocType 'Mail Account Request'
 #. Label of the email (Data) field in DocType 'Mail Alias'
 #. Label of the email (Data) field in DocType 'Mail Contact'
+#. Label of the email (Data) field in DocType 'Mail Message Recipient'
+#. Label of the email (Data) field in DocType 'Mail Message Reply To'
 #. Label of the email (Data) field in DocType 'Mailing List'
 #. Label of the member_email (Data) field in DocType 'Mailing List External
 #. Member'
@@ -1865,12 +1843,12 @@ msgstr ""
 #: frontend/src/pages/LoginView.vue:5
 #: frontend/src/pages/ResetPasswordView.vue:4
 #: frontend/src/pages/dashboard/MailingListsView.vue:146
-#: mail/mail/doctype/email_message_recipient/email_message_recipient.json
-#: mail/mail/doctype/email_message_reply_to/email_message_reply_to.json
 #: mail/mail/doctype/mail_account/mail_account.json
 #: mail/mail/doctype/mail_account_request/mail_account_request.json
 #: mail/mail/doctype/mail_alias/mail_alias.json
 #: mail/mail/doctype/mail_contact/mail_contact.json
+#: mail/mail/doctype/mail_message_recipient/mail_message_recipient.json
+#: mail/mail/doctype/mail_message_reply_to/mail_message_reply_to.json
 #: mail/mail/doctype/mailing_list/mailing_list.json
 #: mail/mail/doctype/mailing_list_external_member/mailing_list_external_member.json
 #: mail/mail/doctype/message_queue/message_queue.js:46
@@ -1878,9 +1856,7 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#. Label of the _id (Data) field in DocType 'Email Message'
 #. Label of the _id (Data) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Email ID"
 msgstr ""
@@ -1891,60 +1867,19 @@ msgstr ""
 msgid "Email Limits"
 msgstr ""
 
-#. Name of a DocType
-#: mail/mail/doctype/email_message/email_message.json
-msgid "Email Message"
-msgstr ""
-
-#. Name of a DocType
-#: mail/mail/doctype/email_message_part/email_message_part.json
-msgid "Email Message Part"
-msgstr ""
-
-#. Name of a DocType
-#: mail/mail/doctype/email_message_recipient/email_message_recipient.json
-msgid "Email Message Recipient"
-msgstr ""
-
-#. Name of a DocType
-#: mail/mail/doctype/email_message_reply_to/email_message_reply_to.json
-msgid "Email Message Reply To"
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:758
-msgid "Email Message {0} has already been destroyed."
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:704
-msgid "Email Message {0} has been destroyed and will be permanently removed soon."
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:694
-msgid "Email Message {0} is a draft. Please send it before performing this action."
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:973
-msgid "Email Message {0} is not a draft."
-msgstr ""
-
 #: mail/api/auth.py:39
 msgid "Email address {0} is not associated with the user {1}."
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:950
-#: mail/mail/doctype/mail_queue/mail_queue.py:582
+#: mail/mail/doctype/mail_queue/mail_queue.py:585
 msgid "Email does not have a blob ID."
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:715
-msgid "Email does not have any attachments."
 msgstr ""
 
 #: mail/utils/validation.py:102
 msgid "Email domain {0} does not match with domain {1}."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:263
+#: mail/mail/doctype/mail_account/mail_account.py:262
 msgid "Email is mandatory."
 msgstr ""
 
@@ -1952,20 +1887,8 @@ msgstr ""
 msgid "Email is required to send invite"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:1063
-msgid "Email messages destroyed successfully."
-msgstr ""
-
-#: mail/mail/doctype/mail_queue/mail_queue.py:926
+#: mail/mail/doctype/mail_queue/mail_queue.py:929
 msgid "Email processing aborted: {failed_count} out of {total_count} emails failed ({failure_rate:.2%} failure rate). Please investigate the issue before retrying."
-msgstr ""
-
-#: frontend/src/components/HeaderActions.vue:36
-msgid "Empty Spam"
-msgstr ""
-
-#: frontend/src/components/HeaderActions.vue:35
-msgid "Empty Trash"
 msgstr ""
 
 #. Label of the metrics_prometheus_enable (Check) field in DocType 'Mail
@@ -2110,7 +2033,7 @@ msgstr ""
 msgid "Error uploading attachment"
 msgstr ""
 
-#: mail/jmap.py:913
+#: mail/jmap.py:922
 msgid "Error {0}: {1}"
 msgstr ""
 
@@ -2258,20 +2181,16 @@ msgstr ""
 msgid "Failed to copy code"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:1233
-msgid "Failed to delete destroyed emails"
+#: mail/mail/doctype/mail_message/mail_message.py:747
+msgid "Failed to delete mail(s)"
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:750
+msgid "Failed to delete mail(s)."
 msgstr ""
 
 #: mail/mail/doctype/mail_server_config/mail_server_config.py:116
 msgid "Failed to deploy configuration"
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:273
-msgid "Failed to destroy email(s)"
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:276
-msgid "Failed to destroy email(s)."
 msgstr ""
 
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.py:94
@@ -2282,29 +2201,42 @@ msgstr ""
 msgid "Failed to destroy push subscription(s)."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:56
-#: mail/mail/doctype/mail_account/mail_account.py:59
+#: mail/mail/doctype/mail_message/mail_message.py:777
+msgid "Failed to empty mailbox"
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:780
+msgid "Failed to empty mailbox."
+msgstr ""
+
+#: mail/mail/doctype/mail_account/mail_account.py:55
+#: mail/mail/doctype/mail_account/mail_account.py:58
 msgid "Failed to fetch Account Details"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:77
+#: mail/mail/doctype/mail_queue/mail_queue.py:567
+msgid "Failed to fetch In Reply To ID"
+msgstr ""
+
+#: mail/mail/doctype/mail_account/mail_account.py:76
 msgid "Failed to fetch Vacation Response"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:298
+#: mail/mail/doctype/mail_message/mail_message.py:889
 msgid "Failed to fetch blob"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:301
+#: mail/mail/doctype/mail_message/mail_message.py:892
 msgid "Failed to fetch blob."
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:1173
+#: mail/mail/doctype/mail_message/mail_message.py:1099
 msgid "Failed to fetch changes"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:1117
-msgid "Failed to fetch emails"
+#: mail/mail/doctype/mail_message/mail_message.py:729
+#: mail/mail/doctype/mail_message/mail_message.py:730
+msgid "Failed to fetch message IDs."
 msgstr ""
 
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.py:72
@@ -2327,16 +2259,12 @@ msgstr ""
 msgid "Failed to load content from the compressed file."
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:231
-msgid "Failed to move email(s) to mailbox"
+#: mail/mail/doctype/mail_message/mail_message.py:802
+msgid "Failed to move mail(s) to mailbox"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:234
-msgid "Failed to move email(s) to mailbox."
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:1142
-msgid "Failed to process created email"
+#: mail/mail/doctype/mail_message/mail_message.py:805
+msgid "Failed to move mail(s) to mailbox."
 msgstr ""
 
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.py:232
@@ -2351,11 +2279,35 @@ msgstr ""
 msgid "Failed to renew push subscription."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:414
+#: mail/mail/doctype/mail_message/mail_message.py:842
+msgid "Failed to set flagged status for mail(s)"
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:845
+msgid "Failed to set flagged status for mail(s)."
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:822
+msgid "Failed to set seen status for mail(s)"
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:825
+msgid "Failed to set seen status for mail(s)."
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:864
+msgid "Failed to set spam status for mail(s)"
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:867
+msgid "Failed to set spam status for mail(s)."
+msgstr ""
+
+#: mail/mail/doctype/mail_account/mail_account.py:413
 msgid "Failed to set vacation response"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:417
+#: mail/mail/doctype/mail_account/mail_account.py:416
 msgid "Failed to set vacation response."
 msgstr ""
 
@@ -2367,21 +2319,8 @@ msgstr ""
 msgid "Failed to subscribe to JMAP Push Subscription."
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.py:344
-msgid "Failed to update email(s)"
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:347
-msgid "Failed to update email(s)."
-msgstr ""
-
 #: frontend/src/components/Modals/AddDomainModal.vue:92
 msgid "Failed to verify DNS record."
-msgstr ""
-
-#. Label of the fetched_after (Float) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
-msgid "Fetched After (Seconds)"
 msgstr ""
 
 #. Label of the import_file (Attach) field in DocType 'Mail Data Exchange'
@@ -2394,13 +2333,13 @@ msgstr ""
 msgid "File <code>{0}</code> not found."
 msgstr ""
 
-#. Label of the filename (Data) field in DocType 'Email Message Part'
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#. Label of the filename (Data) field in DocType 'Mail Message Part'
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 msgid "File Name"
 msgstr ""
 
-#. Label of the file_url (Attach) field in DocType 'Email Message Part'
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#. Label of the file_url (Attach) field in DocType 'Mail Message Part'
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 msgid "File URL"
 msgstr ""
 
@@ -2441,14 +2380,9 @@ msgstr ""
 msgid "First Name"
 msgstr ""
 
-#. Label of the flagged (Check) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the flagged (Check) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Flagged"
-msgstr ""
-
-#. Label of the folder (Data) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
-msgid "Folder"
 msgstr ""
 
 #: mail/mail/doctype/mail_account_request/mail_account_request.js:35
@@ -2468,12 +2402,12 @@ msgid "Format"
 msgstr ""
 
 #: frontend/src/components/MailThread.vue:354
-#: mail/mail/doctype/email_message/email_message.js:103
+#: mail/mail/doctype/mail_message/mail_message.js:91
 msgid "Forward"
 msgstr ""
 
-#. Label of the forwarded (Check) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the forwarded (Check) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Forwarded"
 msgstr ""
 
@@ -2493,7 +2427,7 @@ msgid "Frequency (Cron)"
 msgstr ""
 
 #. Label of the envelope_from (Data) field in DocType 'DMARC Report Detail'
-#: frontend/src/components/SendMail.vue:22 mail/api/mail.py:379
+#: frontend/src/components/SendMail.vue:22 mail/api/mail.py:332
 #: mail/mail/doctype/dmarc_report_detail/dmarc_report_detail.json
 msgid "From"
 msgstr ""
@@ -2502,33 +2436,33 @@ msgstr ""
 #: frontend/src/components/Settings/VacationResponseSettings.vue:12
 #: mail/mail/doctype/mail_account/mail_account.js:156
 #: mail/mail/doctype/mail_account/mail_account.json
-#: mail/mail/doctype/mail_account/mail_account.py:394
-#: mail/mail/doctype/mail_account/mail_account.py:402
+#: mail/mail/doctype/mail_account/mail_account.py:393
+#: mail/mail/doctype/mail_account/mail_account.py:401
 msgid "From Date"
 msgstr ""
 
-#. Label of the from_email (Data) field in DocType 'Email Message'
+#. Label of the from_email (Data) field in DocType 'Mail Message'
 #. Label of the from_email (Data) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "From Email"
 msgstr ""
 
-#. Label of the from_host (Data) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the from_host (Data) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "From Host"
 msgstr ""
 
-#. Label of the from_ip (Data) field in DocType 'Email Message'
+#. Label of the from_ip (Data) field in DocType 'Mail Message'
 #. Label of the from_ip (Data) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "From IP"
 msgstr ""
 
-#. Label of the from_name (Data) field in DocType 'Email Message'
+#. Label of the from_name (Data) field in DocType 'Mail Message'
 #. Label of the from_name (Data) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "From Name"
 msgstr ""
@@ -2544,7 +2478,7 @@ msgstr ""
 msgid "Full Text Index Storage"
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:551
+#: frontend/src/pages/MailboxView.vue:545
 msgid "Full Width"
 msgstr ""
 
@@ -2611,19 +2545,19 @@ msgstr ""
 msgid "HMAC Key"
 msgstr ""
 
-#. Label of the html_body (Code) field in DocType 'Email Message'
 #. Label of the vacation_response_html_body (Text Editor) field in DocType
 #. 'Mail Account'
+#. Label of the html_body (Code) field in DocType 'Mail Message'
 #. Label of the html_body (Code) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
 #: mail/mail/doctype/mail_account/mail_account.js:188
 #: mail/mail/doctype/mail_account/mail_account.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "HTML"
 msgstr ""
 
-#. Label of the _html_body (Table) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the _html_body (Table) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "HTML Body"
 msgstr ""
 
@@ -2636,12 +2570,12 @@ msgstr ""
 msgid "HTTP"
 msgstr ""
 
-#. Label of the has_attachment (Check) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the has_attachment (Check) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Has Attachment"
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:525
+#: frontend/src/pages/MailboxView.vue:519
 msgid "Has attachments"
 msgstr ""
 
@@ -2882,9 +2816,9 @@ msgstr ""
 msgid "In Reply To (Email ID)"
 msgstr ""
 
-#. Label of the in_reply_to (Data) field in DocType 'Email Message'
+#. Label of the in_reply_to (Data) field in DocType 'Mail Message'
 #. Label of the in_reply_to (Data) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "In Reply To (Message ID)"
 msgstr ""
@@ -2940,20 +2874,20 @@ msgstr ""
 msgid "Internal"
 msgstr ""
 
-#: mail/utils/validation.py:240
+#: mail/utils/validation.py:237
 msgid "Invalid JMAP Structure"
 msgstr ""
 
-#: mail/utils/validation.py:257 mail/utils/validation.py:286
-#: mail/utils/validation.py:317
+#: mail/utils/validation.py:254 mail/utils/validation.py:283
+#: mail/utils/validation.py:314
 msgid "Invalid Maildir"
 msgstr ""
 
-#: mail/utils/validation.py:283 mail/utils/validation.py:314
+#: mail/utils/validation.py:280 mail/utils/validation.py:311
 msgid "Invalid Maildir format in the following directories: {0}"
 msgstr ""
 
-#: mail/utils/validation.py:254
+#: mail/utils/validation.py:251
 msgid "Invalid Maildir format: missing {0} directories."
 msgstr ""
 
@@ -2993,7 +2927,7 @@ msgstr ""
 msgid "Invalid parameters for push subscription verification."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:314
+#: mail/mail/doctype/mail_account/mail_account.py:313
 msgid "Invalid reply-to address: {0}"
 msgstr ""
 
@@ -3110,9 +3044,8 @@ msgstr ""
 msgid "Key-value storage used primarily by the SMTP server and anti-spam components."
 msgstr ""
 
-#. Label of the _keywords (JSON) field in DocType 'Email Message'
-#. Label of the keywords (JSON) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the keywords (JSON) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Keywords"
 msgstr ""
 
@@ -3126,8 +3059,8 @@ msgstr ""
 msgid "LZ4"
 msgstr ""
 
-#. Label of the language (Data) field in DocType 'Email Message Part'
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#. Label of the language (Data) field in DocType 'Mail Message Part'
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 msgid "Language"
 msgstr ""
 
@@ -3144,16 +3077,20 @@ msgstr ""
 msgid "Last Name"
 msgstr ""
 
-#. Label of the last_synced_at (Datetime) field in DocType 'JMAP Sync State'
-#. Label of the last_synced_at (Datetime) field in DocType 'Mail Sync History'
-#: mail/mail/doctype/jmap_sync_state/jmap_sync_state.json
+#. Label of the last_received_at (Datetime) field in DocType 'Mail Sync
+#. History'
 #: mail/mail/doctype/mail_sync_history/mail_sync_history.json
-msgid "Last Synced At"
+msgid "Last Received At"
 msgstr ""
 
-#. Label of the last_synced_mail (Data) field in DocType 'Mail Sync History'
+#. Label of the last_received_mail (Data) field in DocType 'Mail Sync History'
 #: mail/mail/doctype/mail_sync_history/mail_sync_history.json
-msgid "Last Synced Mail"
+msgid "Last Received Mail"
+msgstr ""
+
+#. Label of the last_synced_at (Datetime) field in DocType 'JMAP Sync State'
+#: mail/mail/doctype/jmap_sync_state/jmap_sync_state.json
+msgid "Last Synced At"
 msgstr ""
 
 #. Label of the limit (Int) field in DocType 'Rate Limit'
@@ -3199,25 +3136,25 @@ msgstr ""
 msgid "Listeners"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.js:168
+#: mail/mail/doctype/mail_message/mail_message.js:156
 msgid "Load Attachments"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.js:176
+#: mail/mail/doctype/mail_message/mail_message.js:164
 #: mail/mail/doctype/mail_queue/mail_queue.js:36
 msgid "Load MIME Message"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.js:223
+#: mail/mail/doctype/mail_message/mail_message.js:197
 msgid "Loading Attachments..."
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.js:237
+#: mail/mail/doctype/mail_message/mail_message.js:211
 #: mail/mail/doctype/mail_queue/mail_queue.js:62
 msgid "Loading MIME Message..."
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.js:123
+#: mail/mail/doctype/mail_message/mail_message.js:111
 msgid "Loading Mailboxes..."
 msgstr ""
 
@@ -3226,14 +3163,14 @@ msgid "Loading more mails..."
 msgstr ""
 
 #: frontend/src/pages/MailboxView.vue:25
-#: mail/mail/doctype/email_message/email_message.js:83
-#: mail/mail/doctype/email_message/email_message.js:96
-#: mail/mail/doctype/email_message/email_message.js:109
+#: mail/mail/doctype/mail_message/mail_message.js:71
+#: mail/mail/doctype/mail_message/mail_message.js:84
+#: mail/mail/doctype/mail_message/mail_message.js:97
 msgid "Loading..."
 msgstr ""
 
-#. Label of the location (Data) field in DocType 'Email Message Part'
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#. Label of the location (Data) field in DocType 'Mail Message Part'
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 msgid "Location"
 msgstr ""
 
@@ -3320,9 +3257,7 @@ msgstr ""
 msgid "Machine ID in the FoundationDB cluster."
 msgstr ""
 
-#. Group in Mail Account's connections
 #. Name of a Workspace
-#: mail/mail/doctype/mail_account/mail_account.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Mail"
 msgstr ""
@@ -3342,7 +3277,7 @@ msgstr ""
 msgid "Mail Account Request"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:552
+#: mail/mail/doctype/mail_account/mail_account.py:551
 msgid "Mail Account {0} already exists."
 msgstr ""
 
@@ -3351,13 +3286,13 @@ msgstr ""
 #: frontend/src/components/Modals/EditInviteModal.vue:26
 #: frontend/src/pages/dashboard/InvitesView.vue:205
 #: frontend/src/pages/dashboard/UsersView.vue:196
-#: mail/mail/doctype/email_message/email_message.json
 #: mail/mail/doctype/mail_account/mail_account.json
 #: mail/mail/doctype/mail_account_request/mail_account_request.json
 #: mail/mail/doctype/mail_alias/mail_alias.json
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/mail/doctype/mail_domain/mail_domain.json
 #: mail/mail/doctype/mail_domain_request/mail_domain_request.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_tenant/mail_tenant.json
 #: mail/mail/doctype/mail_tenant_member/mail_tenant_member.json
 #: mail/mail/doctype/mailing_list/mailing_list.json
@@ -3481,6 +3416,52 @@ msgstr ""
 msgid "Mail Domain {0} is not verified."
 msgstr ""
 
+#. Label of the _id (Data) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
+msgid "Mail ID"
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/mail_message/mail_message.json
+msgid "Mail Message"
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/mail_message_mailbox/mail_message_mailbox.json
+msgid "Mail Message Mailbox"
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
+msgid "Mail Message Part"
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/mail_message_recipient/mail_message_recipient.json
+msgid "Mail Message Recipient"
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/mail_message_reply_to/mail_message_reply_to.json
+msgid "Mail Message Reply To"
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:427
+msgid "Mail Message does not have a blob ID."
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:248
+msgid "Mail Message {0} is a draft. Please send it before performing this action."
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:466
+msgid "Mail Message {0} is not a draft."
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:562
+msgid "Mail Messages deleted successfully."
+msgstr ""
+
 #. Name of a DocType
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Mail Queue"
@@ -3575,12 +3556,12 @@ msgstr ""
 #: frontend/src/components/Modals/EditInviteModal.vue:26
 #: frontend/src/pages/dashboard/InvitesView.vue:204
 #: frontend/src/pages/dashboard/UsersView.vue:195
-#: mail/mail/doctype/email_message/email_message.json
 #: mail/mail/doctype/mail_account/mail_account.json
 #: mail/mail/doctype/mail_alias/mail_alias.json
 #: mail/mail/doctype/mail_contact/mail_contact.json
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 #: mail/mail/doctype/mailbox/mailbox.json
 #: mail/mail/doctype/mailing_list_member/mailing_list_member.json
@@ -3607,8 +3588,10 @@ msgstr ""
 msgid "Mail data import for account {0} has failed."
 msgstr ""
 
+#. Label of the mailbox (Link) field in DocType 'Mail Message Mailbox'
 #. Name of a DocType
 #: frontend/src/components/UserDropdown.vue:96
+#: mail/mail/doctype/mail_message_mailbox/mail_message_mailbox.json
 #: mail/mail/doctype/mailbox/mailbox.json
 msgid "Mailbox"
 msgstr ""
@@ -3621,9 +3604,9 @@ msgstr ""
 msgid "Mailbox Deletion Error"
 msgstr ""
 
-#. Label of the mailbox_id (Data) field in DocType 'Email Message'
+#. Label of the mailbox_id (Data) field in DocType 'Mail Message Mailbox'
 #. Label of the mailbox_id (Data) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message_mailbox/mail_message_mailbox.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Mailbox ID"
 msgstr ""
@@ -3632,6 +3615,11 @@ msgstr ""
 #. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 msgid "Mailbox Limits"
+msgstr ""
+
+#. Label of the mailbox_name (Data) field in DocType 'Mail Message Mailbox'
+#: mail/mail/doctype/mail_message_mailbox/mail_message_mailbox.json
+msgid "Mailbox Name"
 msgstr ""
 
 #: mail/mail/doctype/mailbox/mailbox.py:124
@@ -3646,7 +3634,7 @@ msgstr ""
 msgid "Mailbox cannot be a parent of itself."
 msgstr ""
 
-#: mail/jmap.py:227 mail/jmap.py:241
+#: mail/jmap.py:226 mail/jmap.py:240
 msgid "Mailbox with ID {0} not found for account {1}."
 msgstr ""
 
@@ -3654,8 +3642,14 @@ msgstr ""
 msgid "Mailbox with ID {0} not found in account {1}."
 msgstr ""
 
-#: mail/jmap.py:213
+#: mail/jmap.py:212
 msgid "Mailbox with role {0} not found for account {1}."
+msgstr ""
+
+#. Label of the mailboxes_section (Section Break) field in DocType 'Mail
+#. Message'
+#: mail/mail/doctype/mail_message/mail_message.json
+msgid "Mailboxes"
 msgstr ""
 
 #. Option for the 'Alias For (Type)' (Select) field in DocType 'Mail Alias'
@@ -3703,7 +3697,7 @@ msgstr ""
 msgid "Mailing Lists deleted successfully."
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:580
+#: frontend/src/pages/MailboxView.vue:574
 msgid "Mails With Attachments"
 msgstr ""
 
@@ -3746,12 +3740,12 @@ msgstr ""
 msgid "ManageSieve"
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:175
+#: frontend/src/components/MailListItem.vue:179
 #: frontend/src/pages/MailboxView.vue:347
 msgid "Mark as Read"
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:169
+#: frontend/src/components/MailListItem.vue:173
 #: frontend/src/components/MailThread.vue:301
 #: frontend/src/pages/MailboxView.vue:353
 msgid "Mark as Unread"
@@ -3919,9 +3913,8 @@ msgstr ""
 msgid "Members removed successfully."
 msgstr ""
 
-#. Label of the section_break_kwfe (Section Break) field in DocType 'Email
-#. Message'
-#. Label of the message (Code) field in DocType 'Email Message'
+#. Label of the message_section (Section Break) field in DocType 'Mail Message'
+#. Label of the message (Code) field in DocType 'Mail Message'
 #. Label of the message_section (Section Break) field in DocType 'Mail Queue'
 #. Label of the message (Code) field in DocType 'Mail Queue'
 #. Label of the message (Code) field in DocType 'Message Queue'
@@ -3929,16 +3922,16 @@ msgstr ""
 #. Label of the message_section (Section Break) field in DocType 'Spam Check
 #. Log'
 #: frontend/src/components/Settings/VacationResponseSettings.vue:28
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 #: mail/mail/doctype/message_queue/message_queue.json
 #: mail/mail/doctype/spam_check_log/spam_check_log.json
 msgid "Message"
 msgstr ""
 
-#. Label of the message_id (Data) field in DocType 'Email Message'
+#. Label of the message_id (Data) field in DocType 'Mail Message'
 #. Label of the message_id (Data) field in DocType 'Mail Queue'
-#: mail/api/mail.py:370 mail/mail/doctype/email_message/email_message.json
+#: mail/api/mail.py:323 mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Message ID"
 msgstr ""
@@ -3964,6 +3957,10 @@ msgstr ""
 
 #: mail/mail/doctype/message_queue/message_queue.py:29
 msgid "Message deleted successfully."
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:180
+msgid "Message not found or you do not have permission to view it."
 msgstr ""
 
 #. Label of the method (Select) field in DocType 'Mail Backend Request'
@@ -4033,22 +4030,22 @@ msgstr ""
 msgid "Missing account query parameter."
 msgstr ""
 
-#: mail/utils/validation.py:237
+#: mail/utils/validation.py:234
 msgid "Missing required files/directories for JMAP format: {0}"
 msgstr ""
 
-#: frontend/src/components/MailThread.vue:138
+#: frontend/src/components/MailThread.vue:137
 msgid "More"
 msgstr ""
 
-#. Label of the more_info_tab (Tab Break) field in DocType 'Email Message'
+#. Label of the more_info_tab (Tab Break) field in DocType 'Mail Message'
 #. Label of the more_info_tab (Tab Break) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "More Info"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.js:136
+#: mail/mail/doctype/mail_message/mail_message.js:124
 msgid "Move"
 msgstr ""
 
@@ -4057,18 +4054,18 @@ msgstr ""
 msgid "Move To"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.js:134
+#: mail/mail/doctype/mail_message/mail_message.js:122
 msgid "Move to "
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:181
+#: frontend/src/components/MailListItem.vue:185
 #: frontend/src/components/MailThread.vue:306
 #: frontend/src/components/MailThread.vue:360
 #: frontend/src/pages/MailboxView.vue:330
 msgid "Move to Trash"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.js:202
+#: mail/mail/doctype/mail_message/mail_message.js:176
 msgid "Moving to Mailbox..."
 msgstr ""
 
@@ -4184,7 +4181,7 @@ msgstr ""
 msgid "No DMARC reports found."
 msgstr ""
 
-#: mail/api/inbound.py:290 mail/api/outbound.py:130
+#: mail/api/inbound.py:177 mail/api/outbound.py:130
 msgid "No Mail Account found for the user {0}."
 msgstr ""
 
@@ -4204,7 +4201,6 @@ msgstr ""
 msgid "No blocked IPs found."
 msgstr ""
 
-#: mail/jmap.py:793
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.py:279
 msgid "No cluster found for the account {0}."
 msgstr ""
@@ -4242,6 +4238,7 @@ msgstr ""
 msgid "No members found."
 msgstr ""
 
+#: mail/mail/doctype/mail_message/mail_message.py:223
 #: mail/mail/doctype/message_queue/message_queue.py:39
 msgid "No messages found."
 msgstr ""
@@ -4348,7 +4345,7 @@ msgstr ""
 msgid "Only Administrator can delete Mail Cluster."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:55
+#: mail/mail/doctype/mail_domain/mail_domain.py:51
 msgid "Only Administrator can delete Mail Domain."
 msgstr ""
 
@@ -4410,6 +4407,11 @@ msgstr ""
 msgid "Organization Name"
 msgstr ""
 
+#. Label of the original_rcpt (Data) field in DocType 'Message Queue Recipient'
+#: mail/mail/doctype/message_queue_recipient/message_queue_recipient.json
+msgid "Original RCPT"
+msgstr ""
+
 #. Label of the outbound_only (Check) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Outbound Only"
@@ -4466,8 +4468,8 @@ msgstr ""
 msgid "Parse Max"
 msgstr ""
 
-#. Label of the part_id (Data) field in DocType 'Email Message Part'
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#. Label of the part_id (Data) field in DocType 'Mail Message Part'
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 msgid "Part ID"
 msgstr ""
 
@@ -4496,7 +4498,7 @@ msgstr ""
 msgid "Password for administrative access to the cluster."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:426
+#: mail/mail/doctype/mail_account/mail_account.py:425
 msgid "Password has been regenerated."
 msgstr ""
 
@@ -4589,6 +4591,10 @@ msgstr ""
 msgid "Please select a account to view mailboxes."
 msgstr ""
 
+#: mail/mail/doctype/mail_message/mail_message.py:200
+msgid "Please select a account to view messages."
+msgstr ""
+
 #: mail/mail/doctype/dmarc_report/dmarc_report.py:55
 msgid "Please select a cluster to view DMARC reports."
 msgstr ""
@@ -4668,6 +4674,11 @@ msgstr ""
 #. Label of the prefix (Data) field in DocType 'Mail Cluster Trace'
 #: mail/mail/doctype/mail_cluster_trace/mail_cluster_trace.json
 msgid "Prefix"
+msgstr ""
+
+#. Label of the preview (Code) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
+msgid "Preview"
 msgstr ""
 
 #. Label of the previous_state (Data) field in DocType 'JMAP Sync State'
@@ -4854,6 +4865,11 @@ msgstr ""
 msgid "Query"
 msgstr ""
 
+#. Label of the queue (Data) field in DocType 'Message Queue Recipient'
+#: mail/mail/doctype/message_queue_recipient/message_queue_recipient.json
+msgid "Queue"
+msgstr ""
+
 #. Label of the queue_id (Data) field in DocType 'Message Queue'
 #: mail/mail/doctype/message_queue/message_queue.json
 msgid "Queue ID"
@@ -4907,7 +4923,7 @@ msgid "Quota Usage"
 msgstr ""
 
 #: mail/mail/doctype/mail_account/mail_account.js:114
-#: mail/mail/doctype/mail_account/mail_account.py:361
+#: mail/mail/doctype/mail_account/mail_account.py:360
 msgid "Quota cannot be negative."
 msgstr ""
 
@@ -4942,21 +4958,21 @@ msgstr ""
 msgid "Receive Replies On"
 msgstr ""
 
-#. Label of the received_after (Float) field in DocType 'Email Message'
+#. Label of the received_after (Float) field in DocType 'Mail Message'
 #. Label of the received_after (Float) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Received After (Seconds)"
 msgstr ""
 
-#. Label of the received_at (Datetime) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the received_at (Datetime) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Received At"
 msgstr ""
 
-#. Description of the 'Received After (Seconds)' (Float) field in DocType
-#. 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Description of the 'Received After (Seconds)' (Float) field in DocType 'Mail
+#. Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Received At - Sent At"
 msgstr ""
 
@@ -4972,13 +4988,13 @@ msgstr ""
 msgid "Receiving Record"
 msgstr ""
 
-#. Label of the recipients_section (Section Break) field in DocType 'Email
+#. Label of the recipients_section (Section Break) field in DocType 'Mail
 #. Message'
 #. Label of the recipients_section (Section Break) field in DocType 'Mail
 #. Queue'
 #. Label of the recipients (JSON) field in DocType 'Mail Queue'
 #. Label of the recipients (Table) field in DocType 'Message Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 #: mail/mail/doctype/message_queue/message_queue.js:36
 #: mail/mail/doctype/message_queue/message_queue.json
@@ -5121,34 +5137,34 @@ msgid "Replies will go to the addresses you specify."
 msgstr ""
 
 #: frontend/src/components/MailThread.vue:334
-#: mail/mail/doctype/email_message/email_message.js:77
+#: mail/mail/doctype/mail_message/mail_message.js:65
 msgid "Reply"
 msgstr ""
 
-#: mail/mail/doctype/email_message/email_message.js:86
-#: mail/mail/doctype/email_message/email_message.js:99
-#: mail/mail/doctype/email_message/email_message.js:112
+#: mail/mail/doctype/mail_message/mail_message.js:74
+#: mail/mail/doctype/mail_message/mail_message.js:87
+#: mail/mail/doctype/mail_message/mail_message.js:100
 msgid "Reply / Forward"
 msgstr ""
 
 #: frontend/src/components/MailThread.vue:343
-#: mail/mail/doctype/email_message/email_message.js:90
+#: mail/mail/doctype/mail_message/mail_message.js:78
 msgid "Reply All"
 msgstr ""
 
-#. Label of the reply_to_section (Section Break) field in DocType 'Email
-#. Message'
 #. Label of the reply_to (Small Text) field in DocType 'Mail Account'
+#. Label of the reply_to_section (Section Break) field in DocType 'Mail
+#. Message'
 #. Label of the reply_to_section (Section Break) field in DocType 'Mail Queue'
 #. Label of the reply_to (JSON) field in DocType 'Mail Queue'
 #: frontend/src/components/Modals/MailAccountModal.vue:32
-#: mail/mail/doctype/email_message/email_message.json
 #: mail/mail/doctype/mail_account/mail_account.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Reply To"
 msgstr ""
 
-#: frontend/src/components/MailDetailsPopover.vue:45
+#: frontend/src/components/MailDetailsPopover.vue:47
 msgid "Reply To: "
 msgstr ""
 
@@ -5394,7 +5410,7 @@ msgstr ""
 msgid "Row #{0}: Directory ID {1} is duplicated."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:129
+#: mail/mail/doctype/mail_domain/mail_domain.py:125
 msgid "Row #{0}: Failed to verify {1} : {2}."
 msgstr ""
 
@@ -5441,8 +5457,8 @@ msgstr ""
 msgid "SMTP"
 msgstr ""
 
-#. Label of the spf_pass (Check) field in DocType 'Email Message'
-#: mail/api/mail.py:387 mail/mail/doctype/email_message/email_message.json
+#. Label of the spf_pass (Check) field in DocType 'Mail Message'
+#: mail/api/mail.py:340 mail/mail/doctype/mail_message/mail_message.json
 msgid "SPF"
 msgstr ""
 
@@ -5451,8 +5467,8 @@ msgstr ""
 msgid "SPF Alignment"
 msgstr ""
 
-#. Label of the spf_description (Small Text) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the spf_description (Small Text) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "SPF Description"
 msgstr ""
 
@@ -5560,8 +5576,8 @@ msgstr ""
 msgid "See MIME Message"
 msgstr ""
 
-#. Label of the seen (Check) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the seen (Check) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Seen"
 msgstr ""
 
@@ -5573,7 +5589,7 @@ msgstr ""
 msgid "Select Layout"
 msgstr ""
 
-#: frontend/src/components/MailThread.vue:194
+#: frontend/src/components/MailThread.vue:193
 msgid "Select an email to view the thread."
 msgstr ""
 
@@ -5608,13 +5624,13 @@ msgstr ""
 msgid "Send Verification Email"
 msgstr ""
 
-#. Label of the sender_email (Data) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the sender_email (Data) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Sender Email"
 msgstr ""
 
-#. Label of the sender_name (Data) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the sender_name (Data) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Sender Name"
 msgstr ""
 
@@ -5625,9 +5641,9 @@ msgstr ""
 msgid "Sending Record"
 msgstr ""
 
-#. Label of the sent_at (Datetime) field in DocType 'Email Message'
+#. Label of the sent_at (Datetime) field in DocType 'Mail Message'
 #. Label of the sent_at (Datetime) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Sent At"
 msgstr ""
@@ -5719,11 +5735,11 @@ msgstr ""
 msgid "Signup"
 msgstr ""
 
-#. Label of the size (Int) field in DocType 'Email Message'
-#. Label of the size (Int) field in DocType 'Email Message Part'
+#. Label of the size (Int) field in DocType 'Mail Message'
+#. Label of the size (Int) field in DocType 'Mail Message Part'
 #. Label of the size (Int) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#: mail/mail/doctype/mail_message/mail_message.json
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Size"
 msgstr ""
@@ -5783,9 +5799,9 @@ msgstr ""
 msgid "Spam Detection is disabled"
 msgstr ""
 
-#. Label of the spam_score (Float) field in DocType 'Email Message'
+#. Label of the spam_score (Float) field in DocType 'Mail Message'
 #. Label of the spam_score (Float) field in DocType 'Spam Check Log'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/spam_check_log/spam_check_log.json
 msgid "Spam Score"
 msgstr ""
@@ -5853,12 +5869,12 @@ msgid "Star"
 msgstr ""
 
 #: frontend/src/components/AppSidebar.vue:128
-#: frontend/src/pages/MailboxView.vue:519
-#: frontend/src/pages/MailboxView.vue:566
+#: frontend/src/pages/MailboxView.vue:513
+#: frontend/src/pages/MailboxView.vue:560
 msgid "Starred"
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:578
+#: frontend/src/pages/MailboxView.vue:572
 msgid "Starred Mails"
 msgstr ""
 
@@ -5972,16 +5988,16 @@ msgid "Subdomain Policy"
 msgstr ""
 
 #. Label of the subject (Small Text) field in DocType 'DMARC Report'
-#. Label of the subject (Small Text) field in DocType 'Email Message'
 #. Label of the vacation_response_subject (Small Text) field in DocType 'Mail
 #. Account'
+#. Label of the subject (Small Text) field in DocType 'Mail Message'
 #. Label of the subject (Small Text) field in DocType 'Mail Queue'
 #: frontend/src/components/SendMail.vue:89
 #: frontend/src/components/Settings/VacationResponseSettings.vue:23
-#: mail/api/mail.py:378 mail/mail/doctype/dmarc_report/dmarc_report.json
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/api/mail.py:331 mail/mail/doctype/dmarc_report/dmarc_report.json
 #: mail/mail/doctype/mail_account/mail_account.js:173
 #: mail/mail/doctype/mail_account/mail_account.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Subject"
 msgstr ""
@@ -6004,7 +6020,7 @@ msgstr ""
 msgid "Subject Names"
 msgstr ""
 
-#: frontend/src/components/MailDetailsPopover.vue:68
+#: frontend/src/components/MailDetailsPopover.vue:70
 msgid "Subject: "
 msgstr ""
 
@@ -6054,7 +6070,7 @@ msgstr ""
 msgid "Subscription already verified."
 msgstr ""
 
-#: mail/mail/doctype/mail_queue/mail_queue.py:886
+#: mail/mail/doctype/mail_queue/mail_queue.py:889
 msgid "Successfully retried {0} emails."
 msgstr ""
 
@@ -6090,7 +6106,6 @@ msgstr ""
 #: mail/mail/doctype/dkim_key/dkim_key.json
 #: mail/mail/doctype/dmarc_report/dmarc_report.json
 #: mail/mail/doctype/dns_record/dns_record.json
-#: mail/mail/doctype/email_message/email_message.json
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.json
 #: mail/mail/doctype/jmap_sync_state/jmap_sync_state.json
 #: mail/mail/doctype/mail_account/mail_account.json
@@ -6102,6 +6117,7 @@ msgstr ""
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/mail/doctype/mail_domain/mail_domain.json
 #: mail/mail/doctype/mail_domain_request/mail_domain_request.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 #: mail/mail/doctype/mail_server/mail_server.json
 #: mail/mail/doctype/mail_server_config/mail_server_config.json
@@ -6209,21 +6225,21 @@ msgstr ""
 msgid "Tenant is required"
 msgstr ""
 
-#. Label of the text_body (Code) field in DocType 'Email Message'
 #. Label of the vacation_response_text_body (Code) field in DocType 'Mail
 #. Account'
+#. Label of the text_body (Code) field in DocType 'Mail Message'
 #. Label of the text_body (Code) field in DocType 'Mail Queue'
 #. Label of the text (Data) field in DocType 'Message Queue'
-#: mail/mail/doctype/email_message/email_message.json
 #: mail/mail/doctype/mail_account/mail_account.js:182
 #: mail/mail/doctype/mail_account/mail_account.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 #: mail/mail/doctype/message_queue/message_queue.json
 msgid "Text"
 msgstr ""
 
-#. Label of the _text_body (Table) field in DocType 'Email Message'
-#: mail/mail/doctype/email_message/email_message.json
+#. Label of the _text_body (Table) field in DocType 'Mail Message'
+#: mail/mail/doctype/mail_message/mail_message.json
 msgid "Text Body"
 msgstr ""
 
@@ -6291,11 +6307,11 @@ msgstr ""
 msgid "The access key for the Azure Storage Account."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:216
+#: mail/mail/doctype/mail_account/mail_account.py:215
 msgid "The account is linked to Mail Alias {0}. Please disable it first."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:222
+#: mail/mail/doctype/mail_account/mail_account.py:221
 msgid "The account is linked to a Mailing List as a member. Please remove it first."
 msgstr ""
 
@@ -6449,10 +6465,6 @@ msgstr ""
 msgid "The security token for the S3 account."
 msgstr ""
 
-#: mail/jmap.py:804
-msgid "The server {0} does not belong to the same cluster as the account {1}."
-msgstr ""
-
 #. Description of the 'DNS Provider' (Select) field in DocType 'Mail Settings'
 #: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "The service provider managing your root domain's DNS records."
@@ -6481,10 +6493,6 @@ msgstr ""
 msgid "The {0} {1} is disabled."
 msgstr ""
 
-#: frontend/src/components/HeaderActions.vue:42
-msgid "This action cannot be undone."
-msgstr ""
-
 #: mail/mail/doctype/mail_account_request/mail_account_request.py:207
 msgid "This method can only be called for invited users."
 msgstr ""
@@ -6493,9 +6501,9 @@ msgstr ""
 msgid "This request has expired. Please create a new one."
 msgstr ""
 
-#. Label of the thread_id (Data) field in DocType 'Email Message'
+#. Label of the thread_id (Data) field in DocType 'Mail Message'
 #. Label of the thread_id (Data) field in DocType 'Mail Queue'
-#: mail/mail/doctype/email_message/email_message.json
+#: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Thread ID"
 msgstr ""
@@ -6564,10 +6572,10 @@ msgid "Timeout (Seconds)"
 msgstr ""
 
 #. Label of the envelope_to (Data) field in DocType 'DMARC Report Detail'
-#. Option for the 'Type' (Select) field in DocType 'Email Message Recipient'
-#: frontend/src/components/SendMail.vue:29 mail/api/mail.py:380
+#. Option for the 'Type' (Select) field in DocType 'Mail Message Recipient'
+#: frontend/src/components/SendMail.vue:29 mail/api/mail.py:333
 #: mail/mail/doctype/dmarc_report_detail/dmarc_report_detail.json
-#: mail/mail/doctype/email_message_recipient/email_message_recipient.json
+#: mail/mail/doctype/mail_message_recipient/mail_message_recipient.json
 msgid "To"
 msgstr ""
 
@@ -6575,19 +6583,18 @@ msgstr ""
 #: frontend/src/components/Settings/VacationResponseSettings.vue:18
 #: mail/mail/doctype/mail_account/mail_account.js:163
 #: mail/mail/doctype/mail_account/mail_account.json
-#: mail/mail/doctype/mail_account/mail_account.py:396
-#: mail/mail/doctype/mail_account/mail_account.py:398
-#: mail/mail/doctype/mail_account/mail_account.py:402
+#: mail/mail/doctype/mail_account/mail_account.py:395
+#: mail/mail/doctype/mail_account/mail_account.py:397
+#: mail/mail/doctype/mail_account/mail_account.py:401
 msgid "To Date"
 msgstr ""
 
-#: frontend/src/components/MailDetailsPopover.vue:49
-#: frontend/src/components/MailThread.vue:391
-msgid "To: "
+#: frontend/src/components/MailListItem.vue:153
+msgid "To:"
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:149
-msgid "To: {0}"
+#: frontend/src/components/MailDetailsPopover.vue:51
+msgid "To: "
 msgstr ""
 
 #. Label of the dns_provider_token (Password) field in DocType 'Mail Settings'
@@ -6694,18 +6701,18 @@ msgid "Trusted Networks"
 msgstr ""
 
 #. Label of the type (Select) field in DocType 'DNS Record'
-#. Label of the type (Data) field in DocType 'Email Message Part'
-#. Label of the type (Select) field in DocType 'Email Message Recipient'
 #. Label of the type (Select) field in DocType 'Mail Cluster Store'
 #. Label of the type (Select) field in DocType 'Mail Domain DNS Record'
+#. Label of the type (Data) field in DocType 'Mail Message Part'
+#. Label of the type (Select) field in DocType 'Mail Message Recipient'
 #: frontend/src/pages/dashboard/MailAliasesView.vue:15
 #: frontend/src/pages/dashboard/MailingListView.vue:57
 #: frontend/src/pages/dashboard/MailingListView.vue:240
 #: mail/mail/doctype/dns_record/dns_record.json
-#: mail/mail/doctype/email_message_part/email_message_part.json
-#: mail/mail/doctype/email_message_recipient/email_message_recipient.json
 #: mail/mail/doctype/mail_cluster_store/mail_cluster_store.json
 #: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
+#: mail/mail/doctype/mail_message_recipient/mail_message_recipient.json
 msgid "Type"
 msgstr ""
 
@@ -6779,7 +6786,7 @@ msgstr ""
 msgid "Unique identifier for your DNS zone."
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:514
+#: frontend/src/pages/MailboxView.vue:508
 msgid "Unread"
 msgstr ""
 
@@ -6788,7 +6795,7 @@ msgstr ""
 msgid "Unread Emails"
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:576
+#: frontend/src/pages/MailboxView.vue:570
 msgid "Unread Mails"
 msgstr ""
 
@@ -6797,7 +6804,7 @@ msgstr ""
 msgid "Unread Threads"
 msgstr ""
 
-#: frontend/src/components/MailThread.vue:104
+#: frontend/src/components/MailThread.vue:106
 msgid "Unstar"
 msgstr ""
 
@@ -6898,7 +6905,7 @@ msgstr ""
 msgid "User must be an admin of the tenant"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:499
+#: mail/mail/doctype/mail_account/mail_account.py:498
 msgid "User with email {0} already exists."
 msgstr ""
 
@@ -6914,7 +6921,7 @@ msgstr ""
 msgid "User {0} does not have Mail Admin role."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:234
+#: mail/mail/doctype/mail_account/mail_account.py:233
 msgid "User {0} does not have Mail User role."
 msgstr ""
 
@@ -6988,16 +6995,16 @@ msgstr ""
 msgid "Users"
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:401
+#: mail/mail/doctype/mail_account/mail_account.py:400
 msgid "Vacation - {0} cannot be before Vacation - {1}."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:398
+#: mail/mail/doctype/mail_account/mail_account.py:397
 msgid "Vacation - {0} cannot be in the past."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:394
-#: mail/mail/doctype/mail_account/mail_account.py:396
+#: mail/mail/doctype/mail_account/mail_account.py:393
+#: mail/mail/doctype/mail_account/mail_account.py:395
 msgid "Vacation - {0} is required."
 msgstr ""
 
@@ -7102,7 +7109,7 @@ msgstr ""
 msgid "Verifying DNS Records..."
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:556
+#: frontend/src/pages/MailboxView.vue:550
 msgid "Vertical Split"
 msgstr ""
 
@@ -7217,7 +7224,7 @@ msgid "Yesterday"
 msgstr ""
 
 #: mail/mail/doctype/mail_account_request/mail_account_request.py:214
-#: mail/utils/validation.py:167
+#: mail/utils/validation.py:164
 msgid "You are not authorized to perform this action."
 msgstr ""
 
@@ -7225,23 +7232,23 @@ msgstr ""
 msgid "You cannot send email from {0} using account {1}. Please use the email address associated with the account."
 msgstr ""
 
-#: mail/utils/validation.py:328
+#: mail/utils/validation.py:325
 msgid "You do not have permission to access this resource."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:106
+#: mail/mail/doctype/mail_domain/mail_domain.py:102
 msgid "You do not have permission to refresh DNS Records."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:151
+#: mail/mail/doctype/mail_domain/mail_domain.py:147
 msgid "You do not have permission to rotate DKIM Keys."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:357
+#: mail/mail/doctype/mail_account/mail_account.py:356
 msgid "You do not have permission to set quota for this account."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:123
+#: mail/mail/doctype/mail_domain/mail_domain.py:119
 msgid "You do not have permission to verify DNS Records."
 msgstr ""
 
@@ -7257,20 +7264,16 @@ msgstr ""
 msgid "You have no mails in this folder."
 msgstr ""
 
-#: mail/mail/doctype/mail_account/mail_account.py:254
+#: mail/mail/doctype/mail_account/mail_account.py:253
 msgid "You have reached the maximum limit of {0} accounts for the tenant."
 msgstr ""
 
-#: mail/mail/doctype/mail_domain/mail_domain.py:82
+#: mail/mail/doctype/mail_domain/mail_domain.py:78
 msgid "You have reached the maximum limit of {0} domains for the tenant."
 msgstr ""
 
 #: mail/mail/doctype/mailing_list/mailing_list.py:110
 msgid "You have reached the maximum limit of {0} mailing lists for the tenant."
-msgstr ""
-
-#: mail/mail/doctype/email_message/email_message.py:664
-msgid "You must destroy this email message before it can be deleted."
 msgstr ""
 
 #. Label of the dns_provider_zone_id (Data) field in DocType 'Mail Settings'
@@ -7290,8 +7293,8 @@ msgstr ""
 msgid "archive"
 msgstr ""
 
-#. Option for the 'Disposition' (Select) field in DocType 'Email Message Part'
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#. Option for the 'Disposition' (Select) field in DocType 'Mail Message Part'
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 msgid "attachment"
 msgstr ""
 
@@ -7330,8 +7333,8 @@ msgstr ""
 msgid "inbox"
 msgstr ""
 
-#. Option for the 'Disposition' (Select) field in DocType 'Email Message Part'
-#: mail/mail/doctype/email_message_part/email_message_part.json
+#. Option for the 'Disposition' (Select) field in DocType 'Mail Message Part'
+#: mail/mail/doctype/mail_message_part/mail_message_part.json
 msgid "inline"
 msgstr ""
 
@@ -7386,11 +7389,11 @@ msgstr ""
 msgid "sent"
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:570
+#: frontend/src/pages/MailboxView.vue:564
 msgid "thread"
 msgstr ""
 
-#: frontend/src/pages/MailboxView.vue:570
+#: frontend/src/pages/MailboxView.vue:564
 msgid "threads"
 msgstr ""
 
@@ -7399,7 +7402,7 @@ msgstr ""
 msgid "trash"
 msgstr ""
 
-#: mail/api/mail.py:373
+#: mail/api/mail.py:326
 msgid "{0} (Delivered after {1} seconds)"
 msgstr ""
 
@@ -7419,7 +7422,7 @@ msgstr ""
 msgid "{0} has an invalid store type '{1}'. Allowed types are: {2}."
 msgstr ""
 
-#: mail/utils/validation.py:206
+#: mail/utils/validation.py:203
 msgid "{0} is not a valid Cron expression."
 msgstr ""
 
@@ -7431,7 +7434,7 @@ msgstr ""
 msgid "{0} job has been created."
 msgstr ""
 
-#: mail/api/mail.py:388
+#: mail/api/mail.py:341
 msgid "{0} with IP {1}"
 msgstr ""
 

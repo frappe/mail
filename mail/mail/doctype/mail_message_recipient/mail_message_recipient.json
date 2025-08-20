@@ -1,19 +1,29 @@
 {
  "actions": [],
- "creation": "2025-04-11 13:12:04.078572",
+ "creation": "2025-08-14 19:07:37.204444",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_break_0wsq",
+  "section_break_tl9i",
+  "type",
+  "column_break_id93",
   "display_name",
-  "column_break_cpyh",
   "email"
  ],
  "fields": [
   {
-   "fieldname": "section_break_0wsq",
-   "fieldtype": "Section Break"
+   "default": "To",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "To\nCc\nBcc",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_id93",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "display_name",
@@ -26,22 +36,23 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Email",
-   "length": 255,
+   "options": "Email",
    "reqd": 1
   },
   {
-   "fieldname": "column_break_cpyh",
-   "fieldtype": "Column Break"
+   "fieldname": "section_break_tl9i",
+   "fieldtype": "Section Break"
   }
  ],
- "grid_page_length": 50,
+ "grid_page_length": 100,
  "index_web_pages_for_search": 1,
+ "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-07-17 12:46:53.441935",
+ "modified": "2025-08-14 19:12:30.003138",
  "modified_by": "Administrator",
  "module": "Mail",
- "name": "Email Message Reply To",
+ "name": "Mail Message Recipient",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

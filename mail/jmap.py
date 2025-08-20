@@ -8,7 +8,6 @@ import requests
 from frappe import _
 from frappe.utils import create_batch
 
-from mail.utils import batch_dict
 from mail.utils.cache import get_cluster_for_tenant
 from mail.utils.validation import validate_permission_for_account
 
@@ -356,28 +355,101 @@ class JMAPClient:
 
 		return result
 
-	def email_query(self, filter: dict, position: int = 0, limit: int = 50) -> dict:
-		"""Query emails based on the provided filter."""
+	def email_query(
+		self, filter: dict | None = None, position: int = 0, limit: int = 50, sort_asc: bool = False
+	) -> dict:
+		"""Query emails in batches until reaching the limit."""
 
-		response = self._make_request(
-			using=["urn:ietf:params:jmap:mail"],
-			method_calls=[
-				[
-					"Email/query",
-					{
-						"accountId": self.account_id,
-						"filter": filter if filter else None,
-						"position": position,
-						"limit": limit,
-						"sort": [{"property": "receivedAt", "isAscending": True}],
-						"calculateTotal": True,
-					},
-					"0",
-				]
-			],
-		)
+		_ids = []
+		total = None
+		batch_size = min(limit, self.max_objects_in_get)
 
-		return response["methodResponses"][0][1]
+		while len(_ids) < limit:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Email/query",
+						{
+							"accountId": self.account_id,
+							"filter": filter,
+							"position": position,
+							"limit": batch_size,
+							"sort": [{"property": "receivedAt", "isAscending": sort_asc}],
+							"calculateTotal": True if total is None else False,
+						},
+						"0",
+					]
+				],
+			)
+			result = response["methodResponses"][0][1]
+
+			if total is None:
+				total = result["total"]
+
+			ids = result["ids"]
+			if not ids:
+				break
+
+			_ids.extend(ids)
+			position += len(ids)
+
+			if len(ids) < batch_size:
+				break
+
+		return {"ids": _ids[:limit], "total": total}
+
+	def thread_query(
+		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
+	) -> list[str] | dict[str, list]:
+		"""Returns threads based on the provided filter."""
+
+		threads: dict[str, list[str]] = {}
+		fetched = position
+		batch_size = self.max_objects_in_get
+
+		while len(threads) < limit:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Email/query",
+						{
+							"accountId": self.account_id,
+							"filter": filter,
+							"sort": [{"property": "receivedAt", "isAscending": False}],
+							"position": fetched,
+							"limit": batch_size,
+						},
+						"0",
+					],
+					[
+						"Email/get",
+						{
+							"accountId": self.account_id,
+							"#ids": {"resultOf": "0", "name": "Email/query", "path": "/ids"},
+							"properties": ["id", "threadId"],
+						},
+						"1",
+					],
+				],
+			)
+
+			email_list = response["methodResponses"][1][1]["list"]
+			if not email_list:
+				break
+
+			for email in email_list:
+				threads.setdefault(email["threadId"], []).append(email["id"])
+				if len(threads) >= limit:
+					break
+
+			fetched += batch_size
+
+		if not fetch_all:
+			return [ids[0] for ids in threads.values()]
+
+		return threads
 
 	def thread_get(self, thread_ids: list[str]) -> dict[str, list]:
 		"""Returns the threads for the provided thread IDs."""
@@ -404,7 +476,7 @@ class JMAPClient:
 
 		return result
 
-	def email_get(self, email_ids: list[str], properties: list[str] | None = None) -> tuple[list[dict], str]:
+	def email_get(self, _ids: list[str], properties: list[str] | None = None) -> tuple[list[dict], str]:
 		"""Returns the emails for the provided email IDs."""
 
 		properties = properties or [
@@ -418,6 +490,7 @@ class JMAPClient:
 			"sentAt",
 			"hasAttachment",
 			"subject",
+			"preview",
 			"from",
 			"to",
 			"cc",
@@ -435,7 +508,7 @@ class JMAPClient:
 
 		emails = []
 		state = None
-		for ids_batch in create_batch(email_ids, self.max_objects_in_get):
+		for ids_batch in create_batch(_ids, self.max_objects_in_get):
 			response = self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
@@ -515,10 +588,10 @@ class JMAPClient:
 
 		return results
 
-	def email_set_keywords(self, email_id_keywords_map: dict[str, dict]) -> None:
+	def email_set_keywords(self, _ids: list[str], keywords: dict[str, bool]) -> None:
 		"""Update email keywords."""
 
-		for map_batch in batch_dict(email_id_keywords_map, self.max_objects_in_set):
+		for ids_batch in create_batch(_ids, self.max_objects_in_set):
 			self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
@@ -527,7 +600,8 @@ class JMAPClient:
 						{
 							"accountId": self.account_id,
 							"update": {
-								email_id: {"keywords": keywords} for email_id, keywords in map_batch.items()
+								_id: {f"keywords/{keyword}": value for keyword, value in keywords.items()}
+								for _id in ids_batch
 							},
 						},
 						"0",
@@ -535,53 +609,10 @@ class JMAPClient:
 				],
 			)
 
-	def email_set_mailbox(self, emails_to_move: list[tuple[str, str]], target_mailbox_id: str) -> None:
+	def email_set_mailbox(self, _ids: list[str], mailbox_id: str) -> None:
 		"""Update emails mailbox."""
 
-		update_data = {}
-		junk_mailbox_id = self.get_mailbox_id_by_role(role="junk")
-		trash_mailbox_id = self.get_mailbox_id_by_role(role="trash")
-
-		for email in emails_to_move:
-			email_id, from_mailbox_id = email
-
-			update = {
-				f"mailboxIds/{from_mailbox_id}": None,
-				f"mailboxIds/{target_mailbox_id}": True,
-			}
-
-			is_to_junk = target_mailbox_id == junk_mailbox_id
-			is_from_junk = from_mailbox_id == junk_mailbox_id
-			is_to_trash = target_mailbox_id == trash_mailbox_id
-
-			# !Junk -> Junk
-			if is_to_junk and not is_from_junk:
-				update.update(
-					{
-						"keywords/$notjunk": False,
-						"keywords/$junk": True,
-					}
-				)
-			# Junk -> Trash
-			elif is_from_junk and is_to_trash:
-				update.update(
-					{
-						"keywords/$notjunk": False,
-						"keywords/$junk": True,
-					}
-				)
-			# Junk -> !Junk
-			elif is_from_junk and not is_to_junk:
-				update.update(
-					{
-						"keywords/$junk": False,
-						"keywords/$notjunk": True,
-					}
-				)
-
-			update_data[email_id] = update
-
-		for map_batch in batch_dict(update_data, self.max_objects_in_set):
+		for ids_batch in create_batch(_ids, self.max_objects_in_set):
 			self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
@@ -589,17 +620,17 @@ class JMAPClient:
 						"Email/set",
 						{
 							"accountId": self.account_id,
-							"update": map_batch,
+							"update": {_id: {"mailboxIds": {mailbox_id: True}} for _id in ids_batch},
 						},
 						"0",
 					]
 				],
 			)
 
-	def email_set_destroy(self, email_ids: list[str]) -> None:
+	def email_set_destroy(self, _ids: list[str]) -> None:
 		"""Destroy emails."""
 
-		for ids_batch in create_batch(email_ids, self.max_objects_in_set):
+		for ids_batch in create_batch(_ids, self.max_objects_in_set):
 			self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[

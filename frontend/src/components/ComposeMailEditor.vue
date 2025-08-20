@@ -274,6 +274,7 @@ const appendEmoji = () => {
 }
 
 const mail = reactive<ComposeMailData>({
+	name: mailDetails?.name || '',
 	from_email: mailDetails?.from_email || user.data.default_outgoing,
 	to: mailDetails?.to || [],
 	cc: mailDetails?.cc || [],
@@ -307,14 +308,13 @@ const updateDraftMail = createResource({
 	makeParams: ({ submit }: { submit: boolean }) => ({
 		...mail,
 		html_body: mail.html_body + mail.quoted_content,
-		name: mailID,
 		submit: submit,
 	}),
 })
 
-const destroyMail = createResource({
-	url: 'mail.api.mail.destroy_mail',
-	makeParams: () => ({ name: mailID }),
+const deleteMail = createResource({
+	url: 'mail.api.mail.delete_mail',
+	makeParams: () => ({ _id: mailID }),
 	onSuccess: () => emit('reloadMails'),
 })
 
@@ -330,7 +330,7 @@ const sendMail = () => {
 const discardMail = () => {
 	saveDraft.value = false
 	show.value = false
-	if (mailID) destroyMail.submit()
+	if (mailID) deleteMail.submit()
 	emit('discardMail')
 }
 

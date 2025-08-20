@@ -9,8 +9,10 @@
   "section_break_1jom",
   "email",
   "domain_name",
+  "original_rcpt",
   "column_break_dffn",
   "status",
+  "queue",
   "retry_num",
   "section_break_2qkq",
   "next_retry",
@@ -94,6 +96,21 @@
    "fieldtype": "JSON",
    "label": "Server Response",
    "read_only": 1
+  },
+  {
+   "fieldname": "queue",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Queue",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.email != doc.original_rcpt",
+   "fieldname": "original_rcpt",
+   "fieldtype": "Data",
+   "label": "Original RCPT",
+   "length": 255,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -101,7 +118,7 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-07-17 12:59:40.744674",
+ "modified": "2025-08-13 17:42:34.698050",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Message Queue Recipient",

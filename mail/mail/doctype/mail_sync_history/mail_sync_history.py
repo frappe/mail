@@ -24,7 +24,7 @@ def create_mail_sync_history(
 	source: str,
 	user: str,
 	account: str,
-	last_synced_at: str | None = None,
+	last_received_at: str | None = None,
 	commit: bool = False,
 ) -> "MailSyncHistory":
 	"""Create a Mail Sync History."""
@@ -33,7 +33,7 @@ def create_mail_sync_history(
 	doc.source = source
 	doc.user = user
 	doc.account = account
-	doc.last_synced_at = last_synced_at
+	doc.last_received_at = last_received_at
 	doc.insert(ignore_permissions=True)
 
 	if commit:
