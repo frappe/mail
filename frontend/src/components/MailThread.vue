@@ -8,7 +8,7 @@
 				@click="router.push({ name: 'Mailbox', params: { mailbox } })"
 			/>
 			<span
-				v-if="mailThread.loading"
+				v-if="thread.loading"
 				class="bg-surface-gray-3 h-3.5 animate-pulse"
 				:style="{
 					width: `${Math.max(100, Math.random() * (isMobile ? 300 : 800))}px`,
@@ -16,7 +16,7 @@
 			/>
 			<template v-else>
 				<h2 v-if="!isMobile" class="mr-2 truncate font-semibold leading-5">
-					{{ mailThread?.data?.[0].subject || __('[No subject]') }}
+					{{ thread?.data?.[0]?.subject || __('[No subject]') }}
 				</h2>
 				<div class="ml-auto shrink-0 space-x-2">
 					<Tooltip v-if="mailbox !== 'starred'" :text="__('Move To')">
@@ -43,21 +43,21 @@
 			</template>
 		</div>
 		<div class="flex-1 overflow-y-auto">
-			<div v-if="isMobile && !mailThread.loading" class="border-b px-3 py-3.5">
+			<div v-if="isMobile && !thread.loading" class="border-b px-3 py-3.5">
 				<h2 class="font-semibold leading-5">
-					{{ mailThread?.data?.[0].subject || __('[No subject]') }}
+					{{ thread?.data?.[0].subject || __('[No subject]') }}
 				</h2>
 			</div>
 
-			<MailThreadPlaceholder v-if="mailThread.loading" />
+			<MailThreadPlaceholder v-if="thread.loading" />
 
 			<div v-else class="space-y-4 sm:px-5 sm:py-6">
 				<div
-					v-for="mail in mailThread.data"
+					v-for="mail in thread.data"
 					:key="mail.name"
 					:class="{
 						'p-3.5': isMobile,
-						'border-b p-3.5 sm:rounded-md sm:border': mailThread.data.length > 1,
+						'border-b p-3.5 sm:rounded-md sm:border': thread.data.length > 1,
 						'cursor-pointer': isCollapsed(mail),
 					}"
 					@click="mail.collapsed = false"
@@ -65,7 +65,7 @@
 					<div
 						class="flex space-x-3"
 						:class="{
-							'cursor-pointer': mail !== mailThread.data[mailThread.data.length - 1],
+							'cursor-pointer': mail !== thread.data[thread.data.length - 1],
 							'pb-6': mail.preview,
 						}"
 						@click.stop="mail.collapsed = !mail.collapsed"
@@ -95,7 +95,9 @@
 										:mail
 									/>
 								</div>
-								<div class="truncate">{{ getAllRecipients(mail) }}</div>
+								<div class="truncate">
+									{{ getFormattedRecipients(mail.recipients) }}
+								</div>
 							</div>
 							<div class="flex items-center space-x-1 self-start">
 								<MailDate :datetime="mail.received_at" />
@@ -106,10 +108,7 @@
 									<Button
 										variant="ghost"
 										@click.stop="
-											starMails.submit({
-												names: [mail.name],
-												flagged: false,
-											})
+											starMails.submit({ _ids: [mail._id], flagged: false })
 										"
 									>
 										<template #icon>
@@ -216,7 +215,7 @@ import {
 } from 'lucide-vue-next'
 import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
 
-import { getFirstAlphabet, getRecipients } from '@/utils'
+import { getFirstAlphabet, getFormattedRecipients, getGroupedRecipients } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
@@ -253,19 +252,20 @@ const mailDetails = reactive<ComposeMailData>({
 	in_reply_to_id: '',
 })
 
-const mailThread = createResource({
-	url: 'mail.api.mail.get_mail_thread',
+const thread = createResource({
+	url: 'mail.api.mail.get_thread',
 	auto: !!threadID,
 	makeParams: () => ({ thread_id: threadID }),
 	transform: (data: Mail[]) =>
 		data
-			.filter((mail) =>
-				mailbox === mailboxIds.trash
-					? mail.mailbox_id === mailboxIds.trash
-					: mail.mailbox_id !== mailboxIds.trash,
-			)
+			.filter((mail) => {
+				const mailboxes = mail.mailboxes.map((m) => m.mailbox_id)
+				const trash = mailboxIds.trash
+				return mailbox === trash ? mailboxes.includes(trash) : !mailboxes.includes(trash)
+			})
 			.map((mail) => ({
 				...mail,
+				groupedRecipients: getGroupedRecipients(mail.recipients, false),
 				collapsed: !!mail.seen,
 			})),
 	onSuccess: (data: Mail[]) => {
@@ -275,7 +275,7 @@ const mailThread = createResource({
 })
 
 const reload = () => {
-	if (threadID) mailThread.reload()
+	if (threadID) thread.reload()
 }
 
 defineExpose({ reload })
@@ -320,7 +320,7 @@ const threadActions = computed((): MailAction[] =>
 const mailActions = (mail: Mail): MailAction[] => [
 	{
 		label: __('Star'),
-		onClick: () => starMails.submit({ names: [mail.name], flagged: true }),
+		onClick: () => starMails.submit({ _ids: [mail._id], flagged: true }),
 		icon: Star,
 		condition: !mail.flagged && mailbox !== mailboxIds.trash,
 	},
@@ -346,9 +346,9 @@ const moreActions = (mail: Mail): MailAction[] => [
 		condition: () =>
 			!mail.draft &&
 			mail.from_email !== user.data.email &&
-			mail.recipients.To?.concat(mail.recipients.Cc || []).filter(
-				(m) => m.email !== user.data.email,
-			).length > 0,
+			mail.groupedRecipients.to
+				?.concat(mail.groupedRecipients.cc)
+				.filter((m) => m !== user.data.email).length > 0,
 	},
 	{
 		label: __('Forward'),
@@ -358,7 +358,7 @@ const moreActions = (mail: Mail): MailAction[] => [
 	},
 	{
 		label: __('Move to Trash'),
-		onClick: () => moveMail.submit({ mail_ids: [mail.name], mailbox: mailboxIds.trash }),
+		onClick: () => moveMail.submit({ _ids: [mail._id], mailbox: mailboxIds.trash }),
 		icon: Trash2,
 		condition: () => mailbox !== mailboxIds.trash,
 	},
@@ -376,32 +376,17 @@ const moreActions = (mail: Mail): MailAction[] => [
 	},
 	{
 		label: __('View in Desk'),
-		onClick: () => window.open(`/app/email-message/${mail.name}`, '_blank')?.focus(),
+		onClick: () => window.open(`/app/mail-message/${mail.name}`, '_blank')?.focus(),
 		icon: ExternalLink,
 		condition: () => user.data.is_system_manager,
 	},
 ]
 
-const isCollapsed = (mail: Mail) =>
-	mail.collapsed && mail !== mailThread.data[mailThread.data.length - 1]
-
-const getAllRecipients = (mail: Mail) => {
-	let recipients = ''
-	if (mail.recipients.To?.length)
-		recipients += __('To: ') + getRecipients(mail.recipients.To) + ' '
-	if (mail.recipients.Cc?.length)
-		recipients += __('Cc: ') + getRecipients(mail.recipients.Cc) + ' '
-	if (mail.recipients.Bcc?.length)
-		recipients += __('Bcc: ') + getRecipients(mail.recipients.Bcc) + ' '
-	return recipients
-}
+const isCollapsed = (mail: Mail) => mail.collapsed && mail !== thread.data[thread.data.length - 1]
 
 const moveMail = createResource({
-	url: 'mail.api.mail.set_mails_mailbox',
-	makeParams: ({ mail_ids, mailbox }: { mail_ids: string[]; mailbox: string }) => ({
-		mail_ids,
-		mailbox,
-	}),
+	url: 'mail.api.mail.move_mails',
+	makeParams: ({ _ids, mailbox }: { _ids: string[]; mailbox: string }) => ({ _ids, mailbox }),
 	onSuccess: () => emit('reloadMails'),
 })
 
@@ -409,30 +394,30 @@ const deleteMails = createResource({
 	url: 'mail.mail.doctype.mail_message.mail_message.bulk_delete',
 	makeParams: (names: string[]) => ({ names }),
 	onSuccess: () => {
-		if (mailThread.data.length == 1) router.push({ name: 'Mailbox', params: { mailbox } })
+		if (thread.data.length == 1) router.push({ name: 'Mailbox', params: { mailbox } })
 		emit('reloadMails')
 	},
 })
 
 const starMails = createResource({
 	url: 'mail.api.mail.set_flagged',
-	makeParams: ({ names, flagged }: { names: string[]; flagged: boolean }) => ({
-		names,
+	makeParams: ({ _ids, flagged }: { _ids: string[]; flagged: boolean }) => ({
+		_ids,
 		flagged,
 	}),
-	onSuccess: ({ names, flagged }) =>
-		names.forEach(
-			(name) =>
-				(mailThread.data.find((m: Mail) => m.name === name).flagged = Number(flagged)),
+	onSuccess: ({ _ids, flagged }: { _ids: string[]; flagged: boolean }) =>
+		_ids.forEach(
+			(_id) => (thread.data.find((m: Mail) => m._id === _id).flagged = Number(flagged)),
 		),
 })
 
 const editDraft = (mail: Mail) => {
-	draftMailID.value = mail.name
+	draftMailID.value = mail._id
+	mailDetails.name = mail.name
 	mailDetails.from_email = mail.from_email
-	mailDetails.to = mail.recipients.To?.map((m) => m.email) || []
-	mailDetails.cc = mail.recipients.Cc?.map((m) => m.email) || []
-	mailDetails.bcc = mail.recipients.Bcc?.map((m) => m.email) || []
+	mailDetails.to = mail.groupedRecipients.to
+	mailDetails.cc = mail.groupedRecipients.cc
+	mailDetails.bcc = mail.groupedRecipients.bcc
 	mailDetails.subject = mail.subject || ''
 	mailDetails.html_body = mail.html_body
 	mailDetails.attachments = mail.attachments || []
@@ -440,24 +425,26 @@ const editDraft = (mail: Mail) => {
 }
 
 const reply = (mail: Mail) => {
-	if (isUserEmail(mail.from_email))
-		mailDetails.to = mail.recipients.To?.map((rcpt) => rcpt.email)
-	else mailDetails.to = mail.reply_to.length ? mail.reply_to : [mail.from_email]
+	if (isUserEmail(mail.from_email)) mailDetails.to = mail.groupedRecipients.to
+	else
+		mailDetails.to = mail.reply_to.length
+			? mail.reply_to.map((rt) => rt.email)
+			: [mail.from_email]
 
 	setReplyDetailsAndOpenModal(mail)
 }
 
 const replyAll = (mail: Mail) => {
 	if (isUserEmail(mail.from_email)) {
-		mailDetails.to = mail.recipients.To?.map((rcpt) => rcpt.email) || []
-		mailDetails.cc = mail.recipients.Cc?.map((rcpt) => rcpt.email) || []
+		mailDetails.to = mail.groupedRecipients.to
+		mailDetails.cc = mail.groupedRecipients.cc
 	} else {
-		mailDetails.to = mail.reply_to.length ? mail.reply_to : [mail.from_email]
+		mailDetails.to = mail.reply_to.length
+			? mail.reply_to.map((rt) => rt.email)
+			: [mail.from_email]
 
-		const originalRecipients = [...(mail.recipients.To || []), ...(mail.recipients.Cc || [])]
-		mailDetails.cc = originalRecipients
-			.filter((rcpt) => !isUserEmail(rcpt.email))
-			.map((rcpt) => rcpt.email)
+		const originalRecipients = [...mail.groupedRecipients.to, ...mail.groupedRecipients.cc]
+		mailDetails.cc = originalRecipients.filter((rcpt) => !isUserEmail(rcpt))
 	}
 
 	setReplyDetailsAndOpenModal(mail)

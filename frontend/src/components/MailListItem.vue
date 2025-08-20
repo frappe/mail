@@ -120,7 +120,7 @@ import { computed, ref, watch } from 'vue'
 import { Check, Mail, MailOpen, Trash2 } from 'lucide-vue-next'
 import { Avatar, Badge, Button, Checkbox, Tooltip } from 'frappe-ui'
 
-import { getFirstAlphabet } from '@/utils'
+import { getFirstAlphabet, getFormattedRecipients } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
@@ -141,13 +141,17 @@ const emit = defineEmits([
 const { isMobile } = useScreenSize()
 const { mailboxIds } = userStore()
 
+const mailboxes = computed(() => mail.mailboxes.map((m) => m.mailbox_id))
+
 const isFullWidth = computed(() => userLayout === 'full' && !isMobile.value)
 
 const header = computed(() => {
-	const isOutgoing = [mailboxIds.sent, mailboxIds.drafts].includes(mail.mailbox_id)
-	if (isOutgoing)
-		return __('To: {0}', [mail.recipients.map((d) => d.name || d.email).join(', ')])
-	return mail.from_name || mail.from_email
+	const isOutgoing =
+		mailboxes.value.includes(mailboxIds.sent) || mailboxes.value.includes(mailboxIds.drafts)
+
+	return isOutgoing
+		? getFormattedRecipients(mail.recipients) || __('To:')
+		: mail.from_name || mail.from_email
 })
 
 const isHovered = ref(false)
@@ -181,13 +185,13 @@ const actions = computed(() =>
 			label: __('Move to Trash'),
 			onClick: () => emit('trashThread'),
 			icon: Trash2,
-			condition: mail.mailbox_id !== mailboxIds.trash,
+			condition: !mailboxes.value.includes(mailboxIds.trash),
 		},
 		{
-			label: __('Delete Message'),
+			label: __('Delete Thread'),
 			onClick: () => emit('deleteThread'),
 			icon: Trash2,
-			condition: mail.mailbox_id === mailboxIds.trash,
+			condition: mailboxes.value.includes(mailboxIds.trash),
 		},
 	].filter((action) => action.condition),
 )

@@ -263,6 +263,7 @@ const appendEmoji = () => {
 }
 
 const emptyMail = {
+	name: '',
 	from_email: user.data.default_outgoing,
 	to: [],
 	cc: [],
@@ -286,12 +287,12 @@ const createMail = createResource({
 
 const updateDraftMail = createResource({
 	url: 'mail.api.mail.update_draft_mail',
-	makeParams: ({ submit }: { submit: boolean }) => ({ ...mail, name: mailID, submit: submit }),
+	makeParams: ({ submit }: { submit: boolean }) => ({ ...mail, submit: submit }),
 })
 
-const destroyMail = createResource({
-	url: 'mail.api.mail.destroy_mail',
-	makeParams: () => ({ name: mailID }),
+const deleteMail = createResource({
+	url: 'mail.api.mail.delete_mail',
+	makeParams: () => ({ _id: mailID }),
 	onSuccess: () => emit('reloadMails'),
 })
 
@@ -307,7 +308,7 @@ const sendMail = () => {
 const discardMail = () => {
 	saveDraft.value = false
 	show.value = false
-	if (mailID) destroyMail.submit()
+	if (mailID) deleteMail.submit()
 }
 
 const setMailDetails = () => {
@@ -318,6 +319,7 @@ const setMailDetails = () => {
 	}
 
 	if (mailDetails.from_email) mail.from_email = mailDetails.from_email
+	mail.name = mailDetails.name
 	mail.in_reply_to = mailDetails.in_reply_to
 	mail.in_reply_to_id = mailDetails.in_reply_to_id
 	mail.subject = mailDetails.subject

@@ -11,7 +11,7 @@
 				</template>
 			</Breadcrumbs>
 		</div>
-		<HeaderActions :mailbox @reload-mails="reloadMails" />
+		<HeaderActions />
 	</header>
 
 	<div class="relative flex h-[calc(100dvh-3.05rem)]">
@@ -357,7 +357,7 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Refresh'),
-			onClick: () => fetchChanges.submit(),
+			onClick: () => reloadMails(),
 			icon: RefreshCw,
 			condition: !selections.value.length,
 		},
@@ -372,7 +372,7 @@ const filter = ref<string | null>(
 )
 
 const threads = createResource({
-	url: 'mail.api.mail.get_mails_from_mailbox',
+	url: 'mail.api.mail.get_threads',
 	makeParams: () => ({ mailbox, limit: limit.value, filter_by: filter.value }),
 })
 
@@ -494,12 +494,6 @@ const deleteThreads = createResource({
 			router.push({ name: 'Mailbox', params: { mailbox } })
 		reloadMails()
 	},
-})
-
-const fetchChanges = createResource({
-	url: 'mail.api.mail.fetch_changes',
-	onSuccess: reloadMails,
-	onError: reloadMails,
 })
 
 // Filter

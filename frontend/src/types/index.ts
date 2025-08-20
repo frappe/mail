@@ -29,10 +29,16 @@ export interface UserResource {
 }
 
 export interface Recipient {
+	type: 'To' | 'Cc' | 'Bcc'
 	email: string
 	display_name: string | null
 }
 
+export interface Mailbox {
+	mailbox: string
+	mailbox_id: string
+	mailbox_name: string
+}
 export interface Attachment {
 	filename: string
 	blob_id: string
@@ -52,21 +58,23 @@ export interface Mail {
 	html_body: string
 	text_body: string
 	received_at: string
-	mailbox_id: string
 	draft: 0 | 1
 	flagged: 0 | 1
 	seen: 0 | 1
-	recipients: {
-		To: Recipient[]
-		Cc: Recipient[]
-		Bcc: Recipient[]
+	mailboxes: Mailbox[]
+	recipients: Recipient[]
+	groupedRecipients: {
+		to: string[]
+		cc: string[]
+		bcc: string[]
 	}
-	reply_to: string[]
+	reply_to: { display_name: string; email: string }[]
 	attachments: Attachment[]
 	collapsed?: boolean
 }
 
 export interface ComposeMailData {
+	name?: string
 	from_email: string
 	to: string[]
 	cc: string[]
@@ -88,7 +96,8 @@ export interface Thread {
 	preview: string | null
 	has_attachment: 0 | 1
 	received_at: string
-	mailbox_id: string
+	mailboxes: Mailbox[]
+	recipients: Recipient[]
 	seen: 0 | 1
 	draft: 0 | 1
 	flagged: 0 | 1

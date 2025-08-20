@@ -9,191 +9,138 @@ from frappe.utils import format_datetime, random_string
 from mail.jmap import get_mailbox_id_by_role
 from mail.mail.doctype.mail_message.mail_message import (
 	delete_messages,
-	enqueue_fetch_changes,
 	fetch_blob,
+	fetch_thread,
 	fetch_threads,
 	get_message_ids,
 	move_messages,
+	search_messages,
 	set_flagged_status,
 	set_seen_status,
 )
-from mail.mail.doctype.mail_message.search import EmailSearch
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
-from mail.utils import convert_html_to_text
 from mail.utils.cache import get_account_for_user
-from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import has_role
-from mail.utils.validation import validate_permission_for_account
-
-
-@frappe.whitelist()
-def get_mails_from_mailbox(mailbox: str, limit: int, filter_by: str | None = None) -> list:
-	"""Returns mails from the selected mailbox for the current user."""
-
-	account = get_account_for_user(frappe.session.user)
-	is_unseen = filter_by == "unread"
-	is_has_attachment = filter_by == "has_attachments"
-	is_flagged = filter_by == "starred" or mailbox == "starred"
-	mailboxes = None if mailbox == "starred" else [mailbox]
-
-	return fetch_threads(account, mailboxes, is_unseen, is_flagged, is_has_attachment, 0, limit)
 
 
 @frappe.whitelist()
 def get_mailboxes() -> list[dict]:
-	"""Returns the user's mailboxes along with no. of unseen mails."""
+	"""Serializes and returns the user's mailboxes."""
 
 	user = frappe.session.user
 	if not has_role(user, "Mail User") or user == "Administrator":
 		return []
 
-	mailboxes = frappe.get_all("Mailbox", filters={"account": get_account_for_user(user)})
-	return [
-		{
-			"id": mailbox["id"],
-			"_name": mailbox["_name"],
-			"role": mailbox["role"],
-			"total_threads": mailbox["total_threads"],
-			"unread_threads": mailbox["unread_threads"],
-		}
-		for mailbox in mailboxes
-	]
+	fields = ["id", "_name", "role", "total_threads", "unread_threads"]
+	mailboxes = get_account_mailboxes(get_account_for_user(user))
+	return [{field: mailbox[field] for field in fields} for mailbox in mailboxes]
+
+
+def get_account_mailboxes(account) -> list[dict]:
+	"""Returns the account's mailboxes."""
+
+	return frappe.get_all("Mailbox", filters={"account": account})
 
 
 @frappe.whitelist()
-def get_mail_thread(thread_id: str) -> list[dict]:
-	"""Returns mail thread for the given id."""
-
-	rows = get_thread_rows(thread_id)
-	messages = group_thread_mail_recipients(rows)
-	return add_mail_attachments(messages)
-
-
-def get_thread_rows(thread_id: str) -> list[dict]:
-	"""Returns mail thread rows for the given id."""
+def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
+	"""Returns threads from the selected mailbox for the current user."""
 
 	account = get_account_for_user(frappe.session.user)
 
-	EM = frappe.qb.DocType("Email Message")
-	EMR = frappe.qb.DocType("Email Message Recipient")
-	EMRT = frappe.qb.DocType("Email Message Reply To")
+	if mailbox == "starred":
+		conditions = [
+			{"inMailboxOtherThan": [get_mailbox_id_by_role(account, "trash")]},
+			{"someInThreadHaveKeyword": "$flagged"},
+		]
+	else:
+		conditions = [{"inMailbox": mailbox}]
 
-	return (
-		frappe.qb.from_(EM)
-		.left_join(EMR)
-		.on(EM.name == EMR.parent)
-		.left_join(EMRT)
-		.on(EM.name == EMRT.parent)
-		.select(
-			EM.name,
-			EM.message_id,
-			EM._id,
-			EM.from_name,
-			EM.from_email,
-			EM.subject,
-			EM.html_body,
-			EM.text_body,
-			EM.received_at,
-			EM.draft,
-			EM.seen,
-			EM.flagged,
-			EM.mailbox_id,
-			EMR.type,
-			EMR.email,
-			EMR.display_name,
-			EMRT.email.as_("reply_to"),
-		)
-		.where((EM.account == account) & (EM.thread_id == thread_id) & (EM.destroyed == 0))
-	).run(as_dict=True)
+	filter_map = {
+		"starred": {"someInThreadHaveKeyword": "$flagged"},
+		"unread": {"notKeyword": "$seen"},
+		"has_attachments": {"hasAttachment": True},
+	}
+	if filter_by in filter_map and not (mailbox == "starred" and filter_by == "starred"):
+		conditions.append(filter_map[filter_by])
+
+	if len(conditions) == 1:
+		filter = conditions[0]
+	else:
+		filter = {"operator": "AND", "conditions": conditions}
+
+	return [serialize_thread(thread) for thread in fetch_threads(account, filter, 0, limit)]
 
 
-def group_thread_mail_recipients(rows: list[dict]) -> tuple[dict, set]:
-	"""Groups mail thread recipients by type."""
-
-	grouped = {}
-
-	for row in rows:
-		key = row["name"]
-		if key not in grouped:
-			grouped[key] = {
-				"name": row["name"],
-				"message_id": row["message_id"],
-				"_id": row["_id"],
-				"from_name": row["from_name"],
-				"from_email": row["from_email"],
-				"subject": row["subject"],
-				"html_body": row["html_body"],
-				"text_body": row["text_body"],
-				"preview": convert_html_to_text(row["html_body"] or row["text_body"] or ""),
-				"received_at": row["received_at"],
-				"draft": row["draft"],
-				"seen": row["seen"],
-				"flagged": row["flagged"],
-				"mailbox_id": row["mailbox_id"],
-				"recipients": defaultdict(list),
-				"reply_to": [],
-			}
-
-		if row["email"]:
-			recipient = {"email": row["email"], "display_name": row["display_name"]}
-			grouped[key]["recipients"][row["type"]].append(recipient)
-
-		if row["reply_to"] and row["reply_to"] not in grouped[key]["reply_to"]:
-			grouped[key]["reply_to"].append(row["reply_to"])
-
-	return grouped
-
-
-def add_mail_attachments(messages: list[dict]) -> list[dict]:
-	"""Returns thread with attachments."""
+@frappe.whitelist()
+def get_thread(thread_id: str) -> list[dict]:
+	"""Returns mails for the given thread id."""
 
 	account = get_account_for_user(frappe.session.user)
-	attachments = get_mail_attachments(list(messages.keys()))
-
-	for attachment in attachments:
-		if attachment.disposition == "attachment":
-			if not attachment.filename:
-				if attachment.type == "message/delivery-status":
-					attachment.filename = "Delivery Report"
-				elif attachment.type == "message/rfc822":
-					attachment.filename = "Original Message"
-			parent = attachment.pop("parent")
-			messages[parent].setdefault("attachments", []).append(attachment)
-
-		elif attachment.disposition == "inline":
-			blob = fetch_blob(account, attachment.blob_id)
-			base64_content = base64.b64encode(blob).decode("utf-8")
-			message = messages[attachment.parent]
-			message["html_body"] = convert_img_src_from_cid_to_base64(
-				message["html_body"], attachment.cid, attachment.type, base64_content
-			)
-
-	return messages.values()
+	return [serialize_mail(mail) for mail in fetch_thread(account, thread_id)]
 
 
-def get_mail_attachments(messages: list[str]) -> list[dict]:
-	"""Returns attachments for the given messages."""
+def serialize_thread(thread: dict) -> dict:
+	"""Serializes thread for response."""
 
-	EMP = frappe.qb.DocType("Email Message Part")
+	thread_fields = [
+		"name",
+		"account",
+		"thread_id",
+		"mailboxes",
+		"from_name",
+		"from_email",
+		"subject",
+		"received_at",
+		"recipients",
+		"seen",
+		"draft",
+		"flagged",
+		"preview",
+	]
+	return {
+		**{field: thread[field] for field in thread_fields},
+		"attachments": serialize_attachments(thread.get("attachments", [])),
+	}
 
-	return (
-		frappe.qb.from_(EMP)
-		.select(
-			EMP.parent,
-			EMP.filename,
-			EMP.blob_id,
-			EMP.cid,
-			EMP.type,
-			EMP.size,
-			EMP.file_url,
-			EMP.disposition,
-		)
-		.where(
-			(EMP.parenttype == "Email Message")
-			& (EMP.parent.isin(messages))
-			& ((EMP.parentfield == "attachments") | (EMP.disposition == "inline"))
-		)
-	).run(as_dict=True)
+
+def serialize_mail(mail: dict) -> dict:
+	"""Serializes mail for response."""
+
+	mail_fields = [
+		"name",
+		"message_id",
+		"_id",
+		"from_name",
+		"from_email",
+		"subject",
+		"html_body",
+		"text_body",
+		"preview",
+		"received_at",
+		"draft",
+		"seen",
+		"flagged",
+		"mailboxes",
+		"recipients",
+		"reply_to",
+	]
+	return {
+		**{field: mail[field] for field in mail_fields},
+		"attachments": serialize_attachments(mail.get("attachments", [])),
+	}
+
+
+def serialize_attachments(attachments: list[dict]) -> dict:
+	"""Serializes attachment for response."""
+
+	attachment_fields = ["filename", "type", "size", "blob_id"]
+
+	return [
+		{field: attachment[field] for field in attachment_fields}
+		for attachment in attachments
+		if attachment.get("filename")
+	]
 
 
 @frappe.whitelist()
@@ -286,7 +233,7 @@ def update_draft_mail(
 ) -> None:
 	"""Creates new mail queue from existing draft message."""
 
-	doc = frappe.get_doc("Email Message", name)
+	doc = frappe.get_doc("Mail Message", name)
 	doc.check_permission(permtype="write")
 
 	doc.from_email = from_email
@@ -355,18 +302,18 @@ def convert_img_src_from_cid_to_base64(html_body: str, cid: str, type: str, base
 
 
 @frappe.whitelist()
-def destroy_mail(name: str) -> None:
-	"""Destroys the given mail."""
+def delete_mail(_id: str) -> None:
+	"""Deletes the given mail."""
 
 	account = get_account_for_user(frappe.session.user)
-	delete_messages(account, [name])
+	delete_messages(account, [_id])
 
 
 @frappe.whitelist()
 def get_mime_message(name: str) -> dict:
 	"""Fetches mail mime message and related data."""
 
-	doc = frappe.get_doc("Email Message", name)
+	doc = frappe.get_doc("Mail Message", name)
 	doc.check_permission(permtype="read")
 
 	def get_mail_recipients(recipient_type):
@@ -409,42 +356,30 @@ def set_seen(thread_ids: list[str], seen: bool, mailbox: str) -> dict:
 	"""Sets seen for mails."""
 
 	account = get_account_for_user(frappe.session.user)
-	mailbox_id = ["!=", get_mailbox_id_by_role(account, "trash")] if mailbox == "starred" else mailbox
-	messages = get_message_ids(account, thread_ids, mailbox_id)
+	if mailbox == "starred":
+		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	messages = get_message_ids(account, thread_ids, mailbox)
 	set_seen_status(account, messages, seen)
 
 	return {"thread_ids": thread_ids, "seen": seen}
 
 
 @frappe.whitelist()
-def set_flagged(names: list[str], flagged: bool) -> dict:
+def set_flagged(_ids: list[str], flagged: bool) -> dict:
 	"""Sets flagged for mails."""
 
 	account = get_account_for_user(frappe.session.user)
-	set_flagged_status(account, names, flagged)
+	set_flagged_status(account, _ids, flagged)
 
-	return {"names": names, "flagged": flagged}
+	return {"_ids": _ids, "flagged": flagged}
 
 
 @frappe.whitelist()
-def set_mails_mailbox(mail_ids: list[str], mailbox: str) -> None:
+def move_mails(_ids: list[str], mailbox: str) -> None:
 	"""Sets mailbox for mails."""
 
 	account = get_account_for_user(frappe.session.user)
-	move_messages(account, mail_ids, mailbox)
-
-
-@frappe.whitelist()
-def empty_mailbox(mailbox_id: str) -> None:
-	"""Empties selected mailbox for current user."""
-
-	account = get_account_for_user(frappe.session.user)
-	messages = frappe.get_all(
-		"Email Message",
-		{"account": account, "mailbox_id": ["in", mailbox_id], "destroyed": 0},
-		pluck="name",
-	)
-	delete_messages(account, messages)
+	move_messages(account, _ids, mailbox)
 
 
 @frappe.whitelist()
@@ -452,8 +387,9 @@ def set_threads_mailbox(thread_ids: list[str], mailbox: str, move_to_mailbox) ->
 	"""Sets mailbox for threads."""
 
 	account = get_account_for_user(frappe.session.user)
-	mailbox_filter = ["!=", get_mailbox_id_by_role(account, "trash")] if mailbox == "starred" else mailbox
-	messages = get_message_ids(account, thread_ids, mailbox_filter)
+	if mailbox == "starred":
+		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	messages = get_message_ids(account, thread_ids, mailbox)
 	move_messages(account, messages, move_to_mailbox)
 
 	return thread_ids
@@ -461,7 +397,7 @@ def set_threads_mailbox(thread_ids: list[str], mailbox: str, move_to_mailbox) ->
 
 @frappe.whitelist()
 def delete_threads(thread_ids: list[str], mailbox: str) -> list[str]:
-	"""Destroys mails belonging to the given threads."""
+	"""Deletes mails belonging to the given threads."""
 
 	account = get_account_for_user(frappe.session.user)
 	messages = get_message_ids(account, thread_ids, mailbox)
@@ -471,17 +407,8 @@ def delete_threads(thread_ids: list[str], mailbox: str) -> list[str]:
 
 
 @frappe.whitelist()
-@dynamic_rate_limit()
-def fetch_changes() -> None:
-	"""Fetches changes for the current user's account."""
-
-	account = get_account_for_user(frappe.session.user)
-	validate_permission_for_account(account)
-	enqueue_fetch_changes(account)
-
-
-@frappe.whitelist()
 def search_mails(query) -> dict:
 	"""Returns search results for the given query."""
 
-	return EmailSearch().search(query)
+	account = get_account_for_user(frappe.session.user)
+	return search_messages(account, {"text": query}, 0, 10)

@@ -6,7 +6,6 @@ import urllib.request
 import frappe
 from frappe.core.api.file import create_new_folder
 
-from mail.mail.doctype.mail_message.search import build_index_in_background
 from mail.mail.doctype.rate_limit.rate_limit import create_rate_limit
 from mail.utils import get_mail_app_path, get_stalwart_cli_path
 
@@ -19,7 +18,6 @@ def after_install() -> None:
 
 def after_migrate() -> None:
 	install_stalwart_cli()
-	build_index_in_background()
 
 
 def add_rate_limits() -> None:
@@ -49,8 +47,6 @@ def add_rate_limits() -> None:
 		# mail.api.spamd
 		{"method_path": "mail.api.spamd.scan", "limit": 60, "seconds": 60},
 		{"method_path": "mail.api.spamd.get_spam_score", "limit": 60, "seconds": 60},
-		# mail.api.mail
-		{"method_path": "mail.api.mail.fetch_changes", "limit": 10, "seconds": 60},
 	]
 
 	for rl in rate_limits:

@@ -126,7 +126,7 @@ export interface MailAlias extends DocType {
 	normalized_email?: string
 }
 
-// Last updated: 2025-06-02 14:52:59.122386
+// Last updated: 2025-08-06 15:04:33.093678
 export interface MailTenant extends DocType {
 	/** Tenant Name: Data */
 	tenant_name: string
@@ -170,7 +170,7 @@ export interface MailDomainRequest extends DocType {
 	tenant: string
 }
 
-// Last updated: 2025-07-17 13:01:33.729262
+// Last updated: 2025-08-06 15:05:28.556234
 export interface MailAccount extends DocType {
 	/** Enabled: Check */
 	enabled: 0 | 1
@@ -302,7 +302,7 @@ export interface MailContact extends DocType {
 	display_name?: string
 }
 
-// Last updated: 2025-07-17 12:58:57.621439
+// Last updated: 2025-08-14 19:12:30.003138
 export interface MailMessageRecipient extends ChildDocType {
 	/** Type: Select */
 	type: 'To' | 'Cc' | 'Bcc'
@@ -312,7 +312,7 @@ export interface MailMessageRecipient extends ChildDocType {
 	email: string
 }
 
-// Last updated: 2025-07-17 12:46:53.441935
+// Last updated: 2025-08-14 19:12:08.055725
 export interface MailMessageReplyTo extends ChildDocType {
 	/** Display Name: Data */
 	display_name?: string
@@ -320,78 +320,88 @@ export interface MailMessageReplyTo extends ChildDocType {
 	email: string
 }
 
-// Last updated: 2025-07-16 13:15:26.953982
+// Last updated: 2025-08-14 19:19:58.972374
 export interface MailMessagePart extends ChildDocType {
-	/** Blob ID: Data */
-	blob_id?: string
-	/** Size: Int */
-	size?: number
-	/** Type: Data */
-	type?: string
+	/** Part ID: Data */
+	part_id?: string
+	/** File Name: Data */
+	filename?: string
 	/** Charset: Data */
 	charset?: string
 	/** Disposition: Select */
 	disposition?: '' | 'inline' | 'attachment'
-	/** Content ID: Data */
-	cid?: string
-	/** Part ID: Data */
-	part_id?: string
 	/** Language: Data */
 	language?: string
 	/** Location: Data */
 	location?: string
-	/** File Name: Data */
-	filename?: string
 	/** File URL: Attach */
 	file_url?: any
-}
-
-// Last updated: 2025-07-17 12:59:27.169419
-export interface MailMessage extends DocType {
-	/** Subject: Small Text */
-	subject?: string
-	/** Account: Link (Mail Account) */
-	account: string
-	/** Thread ID: Data */
-	thread_id?: string
-	/** Sent At: Datetime */
-	sent_at?: string
-	/** Received At: Datetime */
-	received_at?: string
-	/** Has Attachment: Check */
-	has_attachment: 0 | 1
-	/** Folder: Data */
-	folder?: string
-	/** undefined: Table (Email Message Recipient) */
-	recipients: MailMessageRecipient[]
+	/** Type: Data */
+	type?: string
 	/** Blob ID: Data */
 	blob_id?: string
-	/** undefined: Table (Email Message Reply To) */
-	reply_to: MailMessageReplyTo[]
-	/** Message ID: Data */
-	message_id?: string
-	/** In Reply To (Message ID): Data */
-	in_reply_to?: string
+	/** Content ID: Data */
+	content_id?: string
+	/** Size: Int */
+	size?: number
+}
+
+// Last updated: 2025-08-15 18:43:26.294754
+export interface MailMessage extends DocType {
+	/** Account: Link (Mail Account) */
+	account: string
 	/** From Name: Data */
 	from_name?: string
 	/** From Email: Data */
 	from_email?: string
+	/** Subject: Small Text */
+	subject?: string
+	/** undefined: Table (Mail Message Reply To) */
+	reply_to: MailMessageReplyTo[]
+	/** undefined: Table (Mail Message Recipient) */
+	recipients: MailMessageRecipient[]
+	/** HTML: Code */
+	html_body?: string
+	/** Text: Code */
+	text_body?: string
+	/** Attachments: Table (Mail Message Part) */
+	attachments: MailMessagePart[]
+	/** Message ID: Data */
+	message_id?: string
+	/** Mail ID: Data */
+	_id?: string
+	/** Blob ID: Data */
+	blob_id?: string
+	/** Size: Int */
+	size?: number
+	/** Has Attachment: Check */
+	has_attachment: 0 | 1
+	/** Sent At: Datetime */
+	sent_at?: string
+	/** Received At: Datetime */
+	received_at?: string
+	/** Received After (Seconds): Float */
+	received_after?: number
 	/** Sender Name: Data */
 	sender_name?: string
 	/** Sender Email: Data */
 	sender_email?: string
-	/** Received After (Seconds): Float */
-	received_after?: number
-	/** Size: Int */
-	size?: number
+	/** In Reply To (Message ID): Data */
+	in_reply_to?: string
+	/** Thread ID: Data */
+	thread_id?: string
+	/** Draft: Check */
+	draft: 0 | 1
 	/** Seen: Check */
 	seen: 0 | 1
+	/** Flagged: Check */
+	flagged: 0 | 1
+	/** Answered: Check */
+	answered: 0 | 1
+	/** Forwarded: Check */
+	forwarded: 0 | 1
 	/** Keywords: JSON */
-	_keywords?: any
-	/** Attachments: Table (Email Message Part) */
-	attachments: MailMessagePart[]
-	/** Message: Code */
-	message?: string
+	keywords?: any
 	/** From IP: Data */
 	from_ip?: string
 	/** From Host: Data */
@@ -410,32 +420,16 @@ export interface MailMessage extends DocType {
 	dkim_description?: string
 	/** DMARC Description: Small Text */
 	dmarc_description?: string
-	/** Email ID: Data */
-	_id?: string
-	/** Mailbox ID: Data */
-	mailbox_id?: string
-	/** Destroyed: Check */
-	destroyed: 0 | 1
-	/** Fetched After (Seconds): Float */
-	fetched_after?: number
-	/** Keywords: JSON */
-	keywords?: any
-	/** HTML Body: Table (Email Message Part) */
+	/** HTML Body: Table (Mail Message Part) */
 	_html_body: MailMessagePart[]
-	/** Text Body: Table (Email Message Part) */
+	/** Text Body: Table (Mail Message Part) */
 	_text_body: MailMessagePart[]
-	/** HTML: Code */
-	html_body?: string
-	/** Text: Code */
-	text_body?: string
-	/** Draft: Check */
-	draft: 0 | 1
-	/** Flagged: Check */
-	flagged: 0 | 1
-	/** Answered: Check */
-	answered: 0 | 1
-	/** Forwarded: Check */
-	forwarded: 0 | 1
+	/** Message: Code */
+	message?: string
+	/** undefined: Table (Mail Message Mailbox) */
+	mailboxes: MailMessageMailbox[]
+	/** Preview: Code */
+	preview?: string
 }
 
 // Last updated: 2025-01-15 11:46:42.917146
@@ -500,4 +494,14 @@ export interface MailingListMember extends DocType {
 	member_name: string
 	/** Mailing List: Link (Mailing List) */
 	mailing_list: string
+}
+
+// Last updated: 2025-08-14 22:57:14.397697
+export interface MailMessageMailbox extends ChildDocType {
+	/** Mailbox: Link (Mailbox) */
+	mailbox: string
+	/** Mailbox ID: Data */
+	mailbox_id: string
+	/** Mailbox Name: Data */
+	mailbox_name: string
 }

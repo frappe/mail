@@ -11,12 +11,12 @@
 					placeholder="Search"
 				/>
 			</div>
-			<div v-if="results?.data?.docs?.length" class="px-2 pb-2">
+			<div v-if="results?.data?.length" class="px-2 pb-2">
 				<div
-					v-for="(result, idx) in results?.data?.docs"
+					v-for="(result, idx) in results.data"
 					:key="idx"
 					class="hover:bg-surface-gray-3 flex rounded p-2 hover:cursor-pointer"
-					@click="openMail(result.mailbox_id, result.thread_id)"
+					@click="openMail(result.mailboxes[0].mailbox_id, result.thread_id)"
 				>
 					<div class="mr-2 space-y-1 truncate">
 						<p class="truncate text-base font-semibold">
@@ -41,6 +41,8 @@ import { Search } from 'lucide-vue-next'
 import { Dialog, createResource } from 'frappe-ui'
 
 import { getFormattedDate } from '@/utils'
+
+import type { Recipient } from '@/types'
 
 const show = defineModel<boolean>()
 
@@ -71,21 +73,17 @@ const openMail = (mailbox: string, threadID: string) => {
 const getInterlocutors = (result: {
 	from_name?: string
 	from_email: string
-	recipients?: string
+	recipients?: Recipient[]
 }) => {
 	const sender = result.from_name || result.from_email
+	if (!result.recipients?.length) return sender
+
+	const seen = new Set<string>()
 	const recipients = result.recipients
-		?.split(', ')
-		.filter((email, index, array) => array.indexOf(email) === index)
-		.map((email) => {
-			const parts = email.split(' <')
-			if (
-				(parts.length === 1 && parts[0] !== result.from_email) ||
-				(parts.length === 2 && parts[1].slice(0, -1) !== result.from_email)
-			)
-				return parts[0]
-		})
+		.filter((r) => r.email !== result.from_email && !seen.has(r.email) && seen.add(r.email))
+		.map((r) => r.display_name || r.email)
 		.join(', ')
-	return sender + (recipients ? `, ${recipients}` : '')
+
+	return `${sender}, ${recipients}`
 }
 </script>

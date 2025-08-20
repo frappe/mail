@@ -2,6 +2,8 @@ import { toast } from 'frappe-ui'
 
 import dayjs from '@/utils/dayjs'
 
+import type { Recipient } from '@/types'
+
 export const convertToTitleCase = (str: string) =>
 	str
 		?.toLowerCase()
@@ -90,17 +92,46 @@ export const copyToClipBoard = async (text: string) => {
 	}
 }
 
-interface Recipient {
-	display_name?: string | null
-	email: string
+export const getGroupedRecipients = (
+	recipients: Recipient[],
+	formatToString = true,
+	showEmail = false,
+) => {
+	const to = []
+	const cc = []
+	const bcc = []
+
+	for (const r of recipients) {
+		if (r.type === 'To') to.push(formatToString ? r : r.email)
+		else if (r.type === 'Cc') cc.push(formatToString ? r : r.email)
+		else if (r.type === 'Bcc') bcc.push(formatToString ? r : r.email)
+	}
+
+	if (!formatToString) return { to, cc, bcc }
+
+	const format = (list: Recipient[]) =>
+		list
+			?.map(({ display_name, email }) =>
+				showEmail && display_name ? `${display_name} <${email}>` : display_name || email,
+			)
+			.join(', ')
+
+	return {
+		to: format(to as Recipient[]),
+		cc: format(cc as Recipient[]),
+		bcc: format(bcc as Recipient[]),
+	}
 }
 
-export const getRecipients = (recipients: Recipient[], showEmail = false) =>
-	recipients
-		?.map(({ display_name, email }) =>
-			showEmail && display_name ? `${display_name} <${email}>` : display_name || email,
-		)
-		.join(', ')
+export const getFormattedRecipients = (mailRecipients: Recipient[]) => {
+	const groupedRecipients = getGroupedRecipients(mailRecipients)
+
+	let formattedRecipients = ''
+	if (groupedRecipients.to) formattedRecipients += __('To:') + ` ${groupedRecipients.to} `
+	if (groupedRecipients.cc) formattedRecipients += __('Cc:') + ` ${groupedRecipients.cc} `
+	if (groupedRecipients.bcc) formattedRecipients += __('Bcc:') + ` ${groupedRecipients.bcc} `
+	return formattedRecipients
+}
 
 export const getFormattedDate = (date: Date) => {
 	if (dayjs(date).isToday()) return __('Today')
