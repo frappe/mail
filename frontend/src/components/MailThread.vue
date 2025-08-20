@@ -65,11 +65,14 @@
 				>
 					<ComposeMailEditor
 						v-if="mail.draft"
-						:mail-i-d="mail.name"
+						:mail-i-d="mail._id"
 						:mail-details="draftMails[mail.name]"
 						:is-in-thread="true"
 						@reload-mails="emit('reloadMails')"
 						@discard-mail="discardDraft(mail.name)"
+						@reply="reply(getSourceMail(mail.name))"
+						@reply-all="replyAll(getSourceMail(mail.name))"
+						@forward="forward(getSourceMail(mail.name))"
 					/>
 
 					<template v-else>
@@ -320,6 +323,8 @@ const reload = () => {
 	if (threadID) thread.reload()
 }
 
+watch(() => threadID, reload)
+
 defineExpose({ reload })
 
 const user = inject('$user')
@@ -386,47 +391,62 @@ const mailActions = (mail: Mail): MailAction[] => [
 	},
 ]
 
-const moreActions = (mail: Mail): MailAction[] => [
+interface GroupedAction {
+	group: string
+	items: MailAction[]
+}
+
+const moreActions = (mail: Mail): GroupedAction[] => [
 	{
-		label: __('Reply All'),
-		onClick: () => replyAll(mail),
-		icon: ReplyAll,
-		condition: () =>
-			!mail.draft &&
-			mail.from_email !== user.data.email &&
-			mail.groupedRecipients.to
-				?.concat(mail.groupedRecipients.cc)
-				.filter((m) => m !== user.data.email).length > 0,
+		group: '',
+		items: [
+			{
+				label: __('Reply All'),
+				onClick: () => replyAll(mail),
+				icon: ReplyAll,
+				condition: () =>
+					!mail.draft &&
+					mail.from_email !== user.data.email &&
+					mail.groupedRecipients.to
+						?.concat(mail.groupedRecipients.cc)
+						.filter((m) => m !== user.data.email).length > 0,
+			},
+			{
+				label: __('Forward'),
+				onClick: () => forward(mail),
+				icon: Forward,
+				condition: () => !mail.draft,
+			},
+			{
+				label: __('Move to Trash'),
+				onClick: () => moveMail.submit({ _ids: [mail._id], mailbox: mailboxIds.trash }),
+				icon: Trash2,
+				condition: () => mailbox !== mailboxIds.trash,
+			},
+			{
+				label: __('Delete Message'),
+				onClick: () => deleteMails.submit([mail.name]),
+				icon: Trash2,
+				condition: () => mailbox === mailboxIds.trash,
+			},
+		],
 	},
 	{
-		label: __('Forward'),
-		onClick: () => forward(mail),
-		icon: Forward,
-		condition: () => !mail.draft,
-	},
-	{
-		label: __('Move to Trash'),
-		onClick: () => moveMail.submit({ _ids: [mail._id], mailbox: mailboxIds.trash }),
-		icon: Trash2,
-		condition: () => mailbox !== mailboxIds.trash,
-	},
-	{
-		label: __('Delete Message'),
-		onClick: () => deleteMails.submit([mail.name]),
-		icon: Trash2,
-		condition: () => mailbox === mailboxIds.trash,
-	},
-	{
-		label: __('See MIME Message'),
-		onClick: () => window.open(`/mail/mime-message/${mail.name}`, '_blank')?.focus(),
-		icon: Code,
-		condition: () => !mail.draft && !isMobile.value,
-	},
-	{
-		label: __('View in Desk'),
-		onClick: () => window.open(`/app/mail-message/${mail.name}`, '_blank')?.focus(),
-		icon: ExternalLink,
-		condition: () => user.data.is_system_manager,
+		group: '',
+		items: [
+			{
+				label: __('See MIME Message'),
+				onClick: () => window.open(`/mail/mime-message/${mail.name}`, '_blank')?.focus(),
+				icon: Code,
+				condition: () => !mail.draft && !isMobile.value,
+			},
+			{
+				label: __('View in Desk'),
+				onClick: () => window.open(`/app/mail-message/${mail.name}`, '_blank')?.focus(),
+				icon: ExternalLink,
+				condition: () => user.data.is_system_manager,
+			},
+		],
 	},
 ]
 
@@ -476,18 +496,21 @@ const reply = (mail: Mail) =>
 	createDraft(mail, {
 		...getReplyDetails(mail),
 		...getReplyRecipients(mail),
+		type: 'reply',
 	})
 
 const replyAll = (mail: Mail) =>
 	createDraft(mail, {
 		...getReplyDetails(mail),
 		...getReplyAllRecipients(mail),
+		type: 'replyAll',
 	})
 
 const forward = (mail: Mail) =>
 	createDraft(mail, {
 		subject: `Fwd: ${mail.subject}`,
 		html_body: getForwardedContent(mail),
+		type: 'forward',
 	})
 
 const createDraft = (mail: Mail, draftDetails: ComposeMailData) => {
@@ -504,6 +527,9 @@ const createDraft = (mail: Mail, draftDetails: ComposeMailData) => {
 	})
 }
 
+const getSourceMail = (mail: string) =>
+	thread.data.find((m: Mail) => m.name === mail.split(':')[1])
+
 const discardDraft = (mail: string) => {
 	delete draftMails[mail]
 	thread.data = thread.data.filter((m: Mail) => m.name !== mail)
@@ -518,24 +544,21 @@ const getReplyDetails = (mail: Mail) => ({
 
 const getReplyRecipients = (mail: Mail) => ({
 	to: isUserEmail(mail.from_email)
-		? mail.recipients.To?.map((rcpt) => rcpt.email)
+		? mail.groupedRecipients.to
 		: mail.reply_to.length
-			? mail.reply_to
+			? mail.reply_to.map((r) => r.email)
 			: [mail.from_email],
 })
 
 const getReplyAllRecipients = (mail: Mail) => {
 	if (isUserEmail(mail.from_email))
-		return {
-			to: mail.recipients.To?.map((rcpt) => rcpt.email) || [],
-			cc: mail.recipients.Cc?.map((rcpt) => rcpt.email) || [],
-		}
+		return { to: mail.groupedRecipients.to, cc: mail.groupedRecipients.cc }
 	else
 		return {
-			to: mail.reply_to.length ? mail.reply_to : [mail.from_email],
-			cc: [...(mail.recipients.To || []), ...(mail.recipients.Cc || [])]
-				.filter((rcpt) => !isUserEmail(rcpt.email))
-				.map((rcpt) => rcpt.email),
+			to: mail.reply_to.length ? mail.reply_to.map((r) => r.email) : [mail.from_email],
+			cc: [...mail.groupedRecipients.to, ...mail.groupedRecipients.cc].filter(
+				(r) => !isUserEmail(r),
+			),
 		}
 }
 
@@ -562,6 +585,4 @@ const getForwardedContent = (mail: Mail) =>
 		<br><br>
 		${mail.html_body || '&nbsp;'}
 	`
-
-watch(() => threadID, reload)
 </script>

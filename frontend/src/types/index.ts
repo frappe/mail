@@ -85,6 +85,7 @@ export interface ComposeMailData {
 	attachments?: Attachment[]
 	in_reply_to?: string
 	in_reply_to_id?: string
+	type?: 'reply' | 'replyAll' | 'forward'
 }
 
 export interface Thread {

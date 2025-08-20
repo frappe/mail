@@ -1,79 +1,92 @@
 <template>
 	<TextEditor
 		ref="textEditor"
-		editor-class="not-prose prose-sm max-w-none min-h-[15rem]"
+		editor-class="not-prose prose-sm max-w-none"
 		:extensions="[CustomImageExtension]"
 		:content="mail.html_body"
 		@change="(val: string) => (mail.html_body = val)"
 	>
 		<template #top>
 			<div class="flex flex-col gap-3 border-b pb-2.5">
-				<div v-if="false" class="flex items-center gap-2 sm:border-t sm:pt-2.5">
+				<div v-if="!isInThread" class="flex items-center gap-2 sm:border-t sm:pt-2.5">
 					<span class="text-ink-gray-4 text-xs">{{ __('From') }}:</span>
 					<AutocompleteControl
 						v-model="mail.from_email"
 						:options="user.data?.email_addresses || []"
 					/>
 				</div>
-				<div class="flex items-center gap-2">
-					<span class="text-ink-gray-4 text-xs">{{ __('To') }}:</span>
-					<MultiselectInputControl
-						ref="toInput"
-						v-model="mail.to"
-						class="flex-1 text-sm"
-						:validate="validateEmail"
-						:error-message="
-							(value: string) => __(`'{0}' is an invalid email address`, [value])
-						"
-					/>
-					<div class="flex gap-1.5">
-						<Button
-							:label="__('Cc')"
-							variant="ghost"
-							:class="
-								cc
-									? '!bg-surface-gray-4 hover:bg-surface-gray-3'
-									: '!text-ink-gray-4'
-							"
-							@click="toggleCC()"
-						/>
-						<Button
-							:label="__('Bcc')"
-							variant="ghost"
-							:class="
-								bcc
-									? '!bg-surface-gray-4 hover:bg-surface-gray-3'
-									: '!text-ink-gray-4'
-							"
-							@click="toggleBCC()"
-						/>
+				<div class="flex items-start gap-2">
+					<Dropdown
+						v-if="isInThread && mailDetails?.type"
+						:options="THREAD_MAIL_ACTIONS"
+					>
+						<Button variant="ghost" :icon="TYPE_ICON_MAP[mailDetails.type]"> </Button>
+					</Dropdown>
+					<div class="flex flex-1 flex-col gap-3">
+						<div class="flex items-center gap-2">
+							<span class="text-ink-gray-4 text-xs">{{ __('To') }}:</span>
+							<MultiselectInputControl
+								ref="toInput"
+								v-model="mail.to"
+								class="flex-1 text-sm"
+								:validate="validateEmail"
+								:error-message="
+									(value: string) =>
+										__(`'{0}' is an invalid email address`, [value])
+								"
+							/>
+							<div class="flex gap-1.5">
+								<Button
+									:label="__('Cc')"
+									variant="ghost"
+									:class="
+										cc
+											? '!bg-surface-gray-4 hover:bg-surface-gray-3'
+											: '!text-ink-gray-4'
+									"
+									@click="toggleCC()"
+								/>
+								<Button
+									:label="__('Bcc')"
+									variant="ghost"
+									:class="
+										bcc
+											? '!bg-surface-gray-4 hover:bg-surface-gray-3'
+											: '!text-ink-gray-4'
+									"
+									@click="toggleBCC()"
+								/>
+							</div>
+						</div>
+						<div v-if="cc" class="flex items-center gap-2">
+							<span class="text-ink-gray-4 text-xs">{{ __('Cc') }}:</span>
+							<MultiselectInputControl
+								ref="ccInput"
+								v-model="mail.cc"
+								class="flex-1 text-sm"
+								:validate="validateEmail"
+								:error-message="
+									(value: string) =>
+										__(`'{0}' is an invalid email address`, [value])
+								"
+							/>
+						</div>
+						<div v-if="bcc" class="flex items-center gap-2">
+							<span class="text-ink-gray-4 text-xs">{{ __('Bcc') }}:</span>
+							<MultiselectInputControl
+								ref="bccInput"
+								v-model="mail.bcc"
+								class="flex-1 text-sm"
+								:validate="validateEmail"
+								:error-message="
+									(value: string) =>
+										__(`'{0}' is an invalid email address`, [value])
+								"
+							/>
+						</div>
 					</div>
 				</div>
-				<div v-if="cc" class="flex items-center gap-2">
-					<span class="text-ink-gray-4 text-xs">{{ __('Cc') }}:</span>
-					<MultiselectInputControl
-						ref="ccInput"
-						v-model="mail.cc"
-						class="flex-1 text-sm"
-						:validate="validateEmail"
-						:error-message="
-							(value: string) => __(`'{0}' is an invalid email address`, [value])
-						"
-					/>
-				</div>
-				<div v-if="bcc" class="flex items-center gap-2">
-					<span class="text-ink-gray-4 text-xs">{{ __('Bcc') }}:</span>
-					<MultiselectInputControl
-						ref="bccInput"
-						v-model="mail.bcc"
-						class="flex-1 text-sm"
-						:validate="validateEmail"
-						:error-message="
-							(value: string) => __(`'{0}' is an invalid email address`, [value])
-						"
-					/>
-				</div>
-				<div v-if="false" class="flex items-center gap-2">
+				<div v-if="!isInThread" class="flex items-center gap-2">
 					<span class="text-ink-gray-4 text-xs">{{ __('Subject') }}:</span>
 					<input
 						v-model="mail.subject"
@@ -83,18 +96,7 @@
 			</div>
 		</template>
 		<template #editor="{ editor }">
-			<div
-				class="flex flex-col overflow-y-auto py-2.5 text-sm"
-				:class="
-					isInThread
-						? 'max-h-60'
-						: {
-								'h-[calc(100dvh-16.9rem)] sm:max-h-[40vh]': true,
-								'h-[calc(100dvh-19.7rem)]': cc || bcc,
-								'h-[calc(100dvh-21.9rem)]': cc && bcc,
-							}
-				"
-			>
+			<div class="flex flex-col overflow-y-auto py-2.5 text-sm">
 				<EditorContent :editor="editor" />
 
 				<!-- Show quoted content -->
@@ -185,11 +187,16 @@
 
 						<!-- Send & Discard -->
 						<div v-if="!isMobile" class="ml-auto flex items-center space-x-2">
-							<Button :label="__('Discard')" @click="discardMail" />
+							<Button
+								:label="__('Discard')"
+								:icon-left="Trash2"
+								@click="discardMail"
+							/>
 							<Button
 								variant="solid"
 								:label="__('Send')"
 								:disabled="isRecipientsEmpty"
+								:icon-left="SendHorizontal"
 								@click="sendMail"
 							/>
 						</div>
@@ -212,9 +219,20 @@ import {
 	useTemplateRef,
 } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
-import { Laugh, Paperclip } from 'lucide-vue-next'
+import {
+	Edit,
+	ExternalLink,
+	Forward,
+	Laugh,
+	Paperclip,
+	Reply,
+	ReplyAll,
+	SendHorizontal,
+	Trash2,
+} from 'lucide-vue-next'
 import {
 	Button,
+	Dropdown,
 	ErrorMessage,
 	FeatherIcon,
 	FileUploader,
@@ -242,7 +260,7 @@ const {
 	isInThread = false,
 } = defineProps<{ mailID?: string; mailDetails?: ComposeMailData; isInThread?: boolean }>()
 
-const emit = defineEmits(['reloadMails', 'discardMail'])
+const emit = defineEmits(['reloadMails', 'discardMail', 'reply', 'replyAll', 'forward'])
 
 const user = inject('$user') as UserResource
 const { isMobile } = useScreenSize()
@@ -343,6 +361,40 @@ onUnmounted(() => {
 	}
 })
 
+const THREAD_MAIL_ACTIONS = [
+	{
+		group: '',
+		items: [
+			{ label: __('Reply'), icon: Reply, onClick: () => emit('reply') },
+			{
+				label: __('Reply All'),
+				icon: ReplyAll,
+				onClick: () => emit('replyAll'),
+			},
+			{
+				label: __('Forward'),
+				icon: Forward,
+				onClick: () => emit('forward'),
+			},
+		],
+	},
+	{
+		group: '',
+		items: [
+			{
+				label: __('Edit Subject'),
+				icon: Edit,
+				onClick: () => console.log('discard-mail'),
+			},
+			{
+				label: __('Pop Out'),
+				icon: ExternalLink,
+				onClick: () => console.log('discard-mail'),
+			},
+		],
+	},
+]
+
 // Make toolbar hover over keyboard on mobile
 
 const toolbarBottom = ref(0)
@@ -439,4 +491,10 @@ const CustomImageExtension = ImageExtension.extend({
 		},
 	}),
 })
+
+const TYPE_ICON_MAP = {
+	reply: Reply,
+	replyAll: ReplyAll,
+	forward: Forward,
+}
 </script>
