@@ -254,7 +254,7 @@ def extract_recipients(message: dict) -> list:
 				"retry_num": recipient["retry_num"],
 				"next_retry": recipient["next_retry"],
 				"next_notify": recipient["next_notify"],
-				"expires": recipient["expires"],
+				"expires": recipient.get("expires"),
 				"server_response": server_response,
 			}
 		)
