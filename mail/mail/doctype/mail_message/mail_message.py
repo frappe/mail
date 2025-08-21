@@ -132,8 +132,7 @@ class MailMessage(Document):
 	def message(self) -> str | None:
 		"""Returns the message content if available."""
 
-		cache_key = _get_blob_cache_key(self.account, self.blob_id)
-		if content := frappe.cache.get_value(cache_key):
+		if content := _get_blob_from_cache(self.account, self.blob_id):
 			return content.decode("utf-8")
 
 	@cached_property
@@ -681,8 +680,7 @@ def get_messages(account: str, _ids: list[str], sort_asc: bool = False) -> list[
 	_ids_to_fetch = []
 
 	for _id in _ids:
-		cache_key = _get_message_cache_key(account, _id)
-		if message := frappe.cache.get_value(cache_key):
+		if message := _get_message_from_cache(account, _id):
 			messages.append(message)
 		else:
 			_ids_to_fetch.append(_id)
@@ -815,8 +813,17 @@ def set_seen_status(account: str, _ids: list[str], seen: bool = True) -> None:
 
 	try:
 		client = get_jmap_client(account)
-		client.email_set_keywords(_ids, {"$seen": seen})
-		_remove_messages_from_cache(account, _ids)
+		client.email_set_keywords(_ids, {"$seen": bool(seen)})
+
+		for _id in _ids:
+			if message := _get_message_from_cache(account, _id):
+				keywords = json.loads(message["keywords"])
+				keywords["$seen"] = bool(seen)
+
+				message["seen"] = cint(seen)
+				message["keywords"] = json.dumps(keywords, indent=4)
+
+				_store_message_in_cache(account, message["_id"], message)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to set seen status for mail(s)"),
@@ -835,8 +842,17 @@ def set_flagged_status(account: str, _ids: list[str], flagged: bool = True) -> N
 
 	try:
 		client = get_jmap_client(account)
-		client.email_set_keywords(_ids, {"$flagged": flagged})
-		_remove_messages_from_cache(account, _ids)
+		client.email_set_keywords(_ids, {"$flagged": bool(flagged)})
+
+		for _id in _ids:
+			if message := _get_message_from_cache(account, _id):
+				keywords = json.loads(message["keywords"])
+				keywords["$flagged"] = bool(flagged)
+
+				message["flagged"] = cint(flagged)
+				message["keywords"] = json.dumps(keywords, indent=4)
+
+				_store_message_in_cache(account, message["_id"], message)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to set flagged status for mail(s)"),
@@ -875,8 +891,7 @@ def fetch_blob(account: str, blob_id: str, name: str | None = None) -> bytes:
 
 	validate_permission_for_account(account)
 
-	cache_key = _get_blob_cache_key(account, blob_id)
-	if content := frappe.cache.get_value(cache_key):
+	if content := _get_blob_from_cache(account, blob_id):
 		return content
 
 	try:
@@ -1000,6 +1015,13 @@ def _get_total_cache_key(account: str) -> str:
 	return f"jmap:message:{account}:total"
 
 
+def _get_message_from_cache(account: str, _id: str) -> dict | None:
+	"""Returns a message from cache if it exists."""
+
+	cache_key = _get_message_cache_key(account, _id)
+	return frappe.cache.get_value(cache_key)
+
+
 def _store_message_in_cache(account: str, _id: str, message: dict) -> None:
 	"""Store a message in cache with TTL and maintain per-account bucket size."""
 
@@ -1029,6 +1051,13 @@ def _remove_messages_from_cache(account: str, _ids: list[str]) -> None:
 
 	if not frappe.cache.llen(list_key):
 		frappe.cache.delete_value(list_key)
+
+
+def _get_blob_from_cache(account: str, blob_id: str) -> bytes | None:
+	"""Returns a blob from cache if it exists."""
+
+	cache_key = _get_blob_cache_key(account, blob_id)
+	return frappe.cache.get_value(cache_key)
 
 
 def _store_blob_in_cache(account: str, blob_id: str, content: bytes) -> None:
