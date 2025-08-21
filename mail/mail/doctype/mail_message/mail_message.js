@@ -112,11 +112,16 @@ frappe.ui.form.on('Mail Message', {
 			callback: (r) => {
 				if (!r.exc) {
 					const mailboxes = r.message || []
-					if (mailboxes.length == 0) return
+					if (mailboxes.length === 0) return
 
-					const current_mailbox = mailboxes.find((m) => m.id === frm.doc.mailbox_id)
+					const current_mailboxes = frm.doc.mailboxes || []
+
 					mailboxes.forEach((mailbox) => {
-						if (mailbox.id == current_mailbox.id || mailbox.role === 'drafts') return
+						const exists_in_current = current_mailboxes.some(
+							(m) => m.mailbox_id === mailbox.id,
+						)
+
+						if (exists_in_current || mailbox.role === 'drafts') return
 
 						frm.add_custom_button(
 							__('Move to ' + mailbox._name),
