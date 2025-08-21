@@ -65,14 +65,14 @@
 				>
 					<ComposeMailEditor
 						v-if="mail.draft"
-						:mail-i-d="mail._id"
 						:mail-details="draftMails[mail.name]"
 						:is-in-thread="true"
 						@reload-mails="emit('reloadMails')"
-						@discard-mail="discardDraft(mail.name)"
+						@discard-mail="discardLocalDraft(mail.name)"
 						@reply="reply(getSourceMail(mail.name))"
 						@reply-all="replyAll(getSourceMail(mail.name))"
 						@forward="forward(getSourceMail(mail.name))"
+						@pop-out="popOutDraft(mail.name)"
 					/>
 
 					<template v-else>
@@ -215,10 +215,9 @@
 			</div>
 		</div>
 		<SendMail
-			v-if="draftMailID"
+			v-if="focusedDraft"
 			v-model="showSendModal"
-			:mail-i-d="draftMailID"
-			:mail-details="draftMails[draftMailID]"
+			:mail-details="draftMails[focusedDraft]"
 			@reload-mails="emit('reloadMails')"
 		/>
 	</div>
@@ -283,9 +282,6 @@ const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const router = useRouter()
 const { mailboxes, mailboxIds } = userStore()
-
-const showSendModal = ref(false)
-const draftMailID = ref<string>()
 
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
 
@@ -489,6 +485,7 @@ const starMails = createResource({
 const populateDraftMails = (mail: Mail) =>
 	(draftMails[mail.name] = {
 		name: mail.name,
+		_id: mail._id,
 		from_email: mail.from_email,
 		to: mail.groupedRecipients.to,
 		cc: mail.groupedRecipients.cc,
@@ -501,30 +498,30 @@ const populateDraftMails = (mail: Mail) =>
 	})
 
 const reply = (mail: Mail) =>
-	createDraft(mail, {
+	createLocalDraft(mail, {
 		...getReplyDetails(mail),
 		...getReplyRecipients(mail),
 		type: 'reply',
 	})
 
 const replyAll = (mail: Mail) =>
-	createDraft(mail, {
+	createLocalDraft(mail, {
 		...getReplyDetails(mail),
 		...getReplyAllRecipients(mail),
 		type: 'replyAll',
 	})
 
 const forward = (mail: Mail) =>
-	createDraft(mail, {
+	createLocalDraft(mail, {
 		subject: `Fwd: ${mail.subject}`,
 		html_body: getForwardedContent(mail),
 		type: 'forward',
 	})
 
-const createDraft = (mail: Mail, draftDetails: ComposeMailData) => {
+const createLocalDraft = (mail: Mail, draftDetails: ComposeMailData) => {
 	mail.collapsed = false
 	const name = `draft:${mail.name}`
-	if (name in draftMails) discardDraft(name)
+	if (name in draftMails) discardLocalDraft(name)
 
 	nextTick(() => {
 		draftMails[name] = { name, ...draftDetails }
@@ -535,13 +532,21 @@ const createDraft = (mail: Mail, draftDetails: ComposeMailData) => {
 	})
 }
 
-const getSourceMail = (mail: string) =>
-	thread.data.find((m: Mail) => m.name === mail.split(':')[1])
-
-const discardDraft = (mail: string) => {
+const discardLocalDraft = (mail: string) => {
 	delete draftMails[mail]
 	thread.data = thread.data.filter((m: Mail) => m.name !== mail)
 }
+
+const focusedDraft = ref<string>()
+const showSendModal = ref(false)
+
+const popOutDraft = (mail: string) => {
+	focusedDraft.value = mail
+	showSendModal.value = true
+}
+
+const getSourceMail = (mail: string) =>
+	thread.data.find((m: Mail) => m.name === mail.split(':')[1])
 
 const getReplyDetails = (mail: Mail) => ({
 	subject: mail.subject?.startsWith('Re: ') ? mail.subject : `Re: ${mail.subject}`,

@@ -8,11 +8,19 @@
 	>
 		<template #top>
 			<div class="flex flex-col gap-2.5 border-b pb-2.5">
-				<div v-if="!mailDetails?.type" class="flex items-center gap-2">
-					<span class="text-ink-gray-4 text-xs">{{ __('From') }}:</span>
-					<AutocompleteControl
-						v-model="mail.from_email"
-						:options="user.data?.email_addresses || []"
+				<div v-if="!mailDetails?.type" class="flex justify-between gap-2">
+					<div class="flex items-center gap-2">
+						<span class="text-ink-gray-4 text-xs">{{ __('From') }}:</span>
+						<AutocompleteControl
+							v-model="mail.from_email"
+							:options="user.data?.email_addresses || []"
+						/>
+					</div>
+					<Button
+						v-if="isInThread"
+						variant="ghost"
+						:icon="ExternalLink"
+						@click="emit('popOut')"
 					/>
 				</div>
 				<div class="flex items-start gap-2">
@@ -227,7 +235,6 @@ import {
 } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
 import {
-	Edit,
 	ExternalLink,
 	Forward,
 	Laugh,
@@ -262,13 +269,12 @@ import type { Attachment, ComposeMailData, File as FileDoc, UserResource } from 
 
 const show = defineModel<boolean>()
 
-const {
-	mailID,
-	mailDetails,
-	isInThread = false,
-} = defineProps<{ mailID?: string; mailDetails?: ComposeMailData; isInThread?: boolean }>()
+const { mailDetails, isInThread = false } = defineProps<{
+	mailDetails?: ComposeMailData
+	isInThread?: boolean
+}>()
 
-const emit = defineEmits(['reloadMails', 'discardMail', 'reply', 'replyAll', 'forward'])
+const emit = defineEmits(['reloadMails', 'discardMail', 'reply', 'replyAll', 'forward', 'popOut'])
 
 const user = inject('$user') as UserResource
 const { isMobile } = useScreenSize()
@@ -301,6 +307,7 @@ const appendEmoji = () => {
 
 const mail = reactive<ComposeMailData>({
 	name: mailDetails?.name || '',
+	_id: mailDetails?._id || '',
 	from_email: mailDetails?.from_email || user.data.default_outgoing,
 	to: mailDetails?.to || [],
 	cc: mailDetails?.cc || [],
@@ -316,8 +323,7 @@ const mail = reactive<ComposeMailData>({
 const originalMail = ref<ComposeMailData>()
 onMounted(() => {
 	originalMail.value = JSON.parse(JSON.stringify(mail))
-	if (mailDetails?.name?.startsWith('draft') && !mailDetails?.in_reply_to)
-		setTimeout(() => toInput.value?.setFocus(), 50)
+	if (mailDetails?.type === 'forward') setTimeout(() => toInput.value?.setFocus(), 50)
 })
 
 const createMail = createResource({
@@ -340,7 +346,7 @@ const updateDraft = createResource({
 
 const deleteMail = createResource({
 	url: 'mail.api.mail.delete_mail',
-	makeParams: () => ({ _id: mailID }),
+	makeParams: () => ({ _id: mail._id }),
 	onSuccess: () => emit('reloadMails'),
 })
 
@@ -349,21 +355,21 @@ const isSaveDraft = ref(true)
 const sendMail = () => {
 	isSaveDraft.value = false
 	show.value = false
-	if (mailID) updateDraft.submit({ submit: true })
+	if (mail._id) updateDraft.submit({ submit: true })
 	else createMail.submit({ save_as_draft: false })
 }
 
 const saveDraft = () => {
 	if (!isDraftUpdated.value) return
 
-	if (mailID) updateDraft.submit({ submit: false })
+	if (mail._id) updateDraft.submit({ submit: false })
 	else if (!isMailEmpty.value) createMail.submit({ save_as_draft: true })
 }
 
 const discardMail = () => {
 	isSaveDraft.value = false
 	show.value = false
-	if (mailID) deleteMail.submit()
+	if (mail._id) deleteMail.submit()
 	emit('discardMail')
 }
 
@@ -395,14 +401,9 @@ const THREAD_MAIL_ACTIONS = [
 		group: '',
 		items: [
 			{
-				label: __('Edit Subject'),
-				icon: Edit,
-				onClick: () => console.log('discard-mail'),
-			},
-			{
 				label: __('Pop Out'),
 				icon: ExternalLink,
-				onClick: () => console.log('discard-mail'),
+				onClick: () => emit('popOut'),
 			},
 		],
 	},

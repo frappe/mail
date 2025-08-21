@@ -2,17 +2,12 @@
 	<component
 		:is="isMobile ? SendMailMobileLayout : Dialog"
 		v-model="show"
-		:options="{ title: __('Compose Mail'), size: '4xl' }"
+		:options="{ title: __('Compose Mail'), size: '7xl' }"
 		@send-mail="sendMail"
 		@discard-mail="discardMail"
 	>
 		<template #body-content>
-			<ComposeMailEditor
-				v-model="show"
-				:mail-i-d
-				:mail-details
-				@reload-mails="emit('reloadMails')"
-			/>
+			<ComposeMailEditor v-model="show" :mail-details @reload-mails="emit('reloadMails')" />
 		</template>
 	</component>
 </template>
@@ -28,7 +23,7 @@ import type { ComposeMailData } from '@/types'
 
 const show = defineModel<boolean>()
 
-const { mailID, mailDetails } = defineProps<{ mailID?: string; mailDetails?: ComposeMailData }>()
+const { mailDetails } = defineProps<{ mailDetails?: ComposeMailData }>()
 
 const emit = defineEmits(['reloadMails'])
 
