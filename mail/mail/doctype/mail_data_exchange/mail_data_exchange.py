@@ -367,8 +367,8 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 
 	if is_system_manager(user):
 		return True
-	elif is_tenant_admin(doc.tenant, user):
-		return True
+	elif has_role(user, "Mail Admin"):
+		return is_tenant_admin(doc.tenant, user)
 	elif has_role(user, "Mail User"):
 		return is_account_owner(doc.account, user)
 

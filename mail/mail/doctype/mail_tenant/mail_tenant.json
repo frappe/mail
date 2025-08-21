@@ -132,7 +132,7 @@
    "link_fieldname": "tenant"
   }
  ],
- "modified": "2025-08-06 15:04:33.093678",
+ "modified": "2025-08-21 18:54:47.654063",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Tenant",
@@ -182,6 +182,10 @@
    "report": 1,
    "role": "Mail Admin",
    "share": 1
+  },
+  {
+   "role": "Mail User",
+   "select": 1
   }
  ],
  "row_format": "Dynamic",
