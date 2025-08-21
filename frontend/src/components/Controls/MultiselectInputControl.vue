@@ -8,7 +8,7 @@
 				:label="value"
 				theme="gray"
 				variant="subtle"
-				class="rounded text-sm"
+				class="!text-ink-gray-7 rounded"
 				@keydown.delete.capture.stop="removeLastValue"
 			>
 				<template #suffix>

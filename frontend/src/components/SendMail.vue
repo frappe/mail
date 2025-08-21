@@ -21,11 +21,10 @@
 import { Dialog } from 'frappe-ui'
 
 import { useScreenSize } from '@/utils/composables'
+import ComposeMailEditor from '@/components/ComposeMailEditor.vue'
 import SendMailMobileLayout from '@/components/SendMailMobileLayout.vue'
 
 import type { ComposeMailData } from '@/types'
-
-import ComposeMailEditor from './ComposeMailEditor.vue'
 
 const show = defineModel<boolean>()
 

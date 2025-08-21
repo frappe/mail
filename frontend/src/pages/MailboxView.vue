@@ -207,7 +207,16 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+import {
+	computed,
+	inject,
+	// nextTick,
+	onMounted,
+	onUnmounted,
+	ref,
+	useTemplateRef,
+	watch,
+} from 'vue'
 import { useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import {
@@ -374,6 +383,11 @@ const filter = ref<string | null>(
 const threads = createResource({
 	url: 'mail.api.mail.get_threads',
 	makeParams: () => ({ mailbox, limit: limit.value, filter_by: filter.value }),
+	// onSuccess: () => {
+	// 	if (allSelected.value && allSelectedManuallyToggled.value) {
+	// 		nextTick(() => mailItems.value?.forEach((item) => item?.setIsSelected(true)))
+	// 	}
+	// },
 })
 
 const threadIDs = computed(() => threads.data?.map((thread: Thread) => thread.thread_id) || [])
@@ -408,9 +422,9 @@ onMounted(() => {
 	window.addEventListener('keydown', handleKeyDown)
 	window.addEventListener('keyup', handleKeyUp)
 
-	socket.on('mail_created_or_updated', (updatedMailbox: string) => {
-		if (updatedMailbox === mailbox) reloadMails()
-		else if ([mailboxIds.inbox, mailboxIds.junk].includes(updatedMailbox)) mailboxes.reload()
+	socket.on('mail_created_or_updated', () => {
+		reloadMails()
+		mailboxes.reload()
 	})
 })
 

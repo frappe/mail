@@ -313,7 +313,14 @@ const thread = createResource({
 				emit('setSeen', true)
 				unseen = false
 			}
-			if (mail.draft) populateDraftMailDetails(mail)
+			if (mail.draft) {
+				mail.groupedRecipients = getGroupedRecipients(mail.recipients, false) as {
+					to: string[]
+					cc: string[]
+					bcc: string[]
+				}
+				populateDraftMails(mail)
+			}
 		})
 	},
 	onError: () => router.push({ name: 'Mailbox', params: { mailbox } }),
@@ -479,12 +486,13 @@ const starMails = createResource({
 		),
 })
 
-const populateDraftMailDetails = (mail: Mail) =>
+const populateDraftMails = (mail: Mail) =>
 	(draftMails[mail.name] = {
+		name: mail.name,
 		from_email: mail.from_email,
-		to: mail.recipients.To?.map((m) => m.email) || [],
-		cc: mail.recipients.Cc?.map((m) => m.email) || [],
-		bcc: mail.recipients.Bcc?.map((m) => m.email) || [],
+		to: mail.groupedRecipients.to,
+		cc: mail.groupedRecipients.cc,
+		bcc: mail.groupedRecipients.bcc,
 		subject: mail.subject || '',
 		in_reply_to: mail.message_id,
 		in_reply_to_id: mail._id,

@@ -7,8 +7,8 @@
 		@change="(val: string) => (mail.html_body = val)"
 	>
 		<template #top>
-			<div class="flex flex-col gap-3 border-b pb-2.5">
-				<div v-if="!isInThread" class="flex items-center gap-2 sm:border-t sm:pt-2.5">
+			<div class="flex flex-col gap-2.5 border-b pb-2.5">
+				<div v-if="!mailDetails?.type" class="flex items-center gap-2">
 					<span class="text-ink-gray-4 text-xs">{{ __('From') }}:</span>
 					<AutocompleteControl
 						v-model="mail.from_email"
@@ -22,7 +22,7 @@
 					>
 						<Button variant="ghost" :icon="TYPE_ICON_MAP[mailDetails.type]"> </Button>
 					</Dropdown>
-					<div class="flex flex-1 flex-col gap-3">
+					<div class="flex flex-1 flex-col gap-2.5">
 						<div class="flex items-center gap-2">
 							<span class="text-ink-gray-4 text-xs">{{ __('To') }}:</span>
 							<MultiselectInputControl
@@ -86,11 +86,11 @@
 						</div>
 					</div>
 				</div>
-				<div v-if="!isInThread" class="flex items-center gap-2">
+				<div v-if="!mailDetails?.type" class="flex items-center gap-2">
 					<span class="text-ink-gray-4 text-xs">{{ __('Subject') }}:</span>
 					<input
 						v-model="mail.subject"
-						class="bg-surface-white sm:bg-surface-modal flex-1 border-none text-base focus-visible:!ring-0"
+						class="flex-1 border-none bg-inherit text-base focus-visible:!ring-0"
 					/>
 				</div>
 			</div>
@@ -193,6 +193,13 @@
 								@click="discardMail"
 							/>
 							<Button
+								:label="__('Save Draft')"
+								:icon-left="Save"
+								:disabled="!isDraftUpdated"
+								:loading="createMail.loading || updateDraft.loading"
+								@click="saveDraft"
+							/>
+							<Button
 								variant="solid"
 								:label="__('Send')"
 								:disabled="isRecipientsEmpty"
@@ -227,6 +234,7 @@ import {
 	Paperclip,
 	Reply,
 	ReplyAll,
+	Save,
 	SendHorizontal,
 	Trash2,
 } from 'lucide-vue-next'
@@ -314,14 +322,14 @@ onMounted(() => {
 
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
-	makeParams: ({ saveAsDraft }: { saveAsDraft: boolean }) => ({
+	makeParams: ({ save_as_draft }: { save_as_draft: boolean }) => ({
 		...mail,
 		html_body: mail.html_body + mail.quoted_content,
-		save_as_draft: saveAsDraft,
+		save_as_draft,
 	}),
 })
 
-const updateDraftMail = createResource({
+const updateDraft = createResource({
 	url: 'mail.api.mail.update_draft_mail',
 	makeParams: ({ submit }: { submit: boolean }) => ({
 		...mail,
@@ -336,29 +344,34 @@ const deleteMail = createResource({
 	onSuccess: () => emit('reloadMails'),
 })
 
-const saveDraft = ref(true)
+const isSaveDraft = ref(true)
 
 const sendMail = () => {
-	saveDraft.value = false
+	isSaveDraft.value = false
 	show.value = false
-	if (mailID) updateDraftMail.submit({ submit: true })
-	else createMail.submit({ saveAsDraft: false })
+	if (mailID) updateDraft.submit({ submit: true })
+	else createMail.submit({ save_as_draft: false })
+}
+
+const saveDraft = () => {
+	if (!isDraftUpdated.value) return
+
+	if (mailID) updateDraft.submit({ submit: false })
+	else if (!isMailEmpty.value) createMail.submit({ save_as_draft: true })
 }
 
 const discardMail = () => {
-	saveDraft.value = false
+	isSaveDraft.value = false
 	show.value = false
 	if (mailID) deleteMail.submit()
 	emit('discardMail')
 }
 
-onUnmounted(() => {
-	if (!saveDraft.value) return (saveDraft.value = true)
+const isDraftUpdated = computed(() => JSON.stringify(mail) !== JSON.stringify(originalMail.value))
 
-	if (JSON.stringify(mail) !== JSON.stringify(originalMail.value)) {
-		if (mailID) updateDraftMail.submit({ submit: false })
-		else if (!isMailEmpty.value) createMail.submit({ saveAsDraft: true })
-	}
+onUnmounted(() => {
+	if (!isSaveDraft.value) return (isSaveDraft.value = true)
+	saveDraft()
 })
 
 const THREAD_MAIL_ACTIONS = [
