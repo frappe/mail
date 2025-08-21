@@ -181,7 +181,7 @@ def create_mail(
 	in_reply_to: str | None = None,
 	in_reply_to_id: str | None = None,
 	save_as_draft: bool = False,
-) -> None:
+) -> bool:
 	"""Creates new mail queue."""
 
 	account = get_account_for_user(frappe.session.user)
@@ -204,7 +204,7 @@ def create_mail(
 	recipients += [{"type": "Cc", "email": email} for email in cc]
 	recipients += [{"type": "Bcc", "email": email} for email in bcc]
 
-	MailQueue._create(
+	mail_queue = MailQueue._create(
 		account=account,
 		from_email=from_email,
 		subject=subject,
@@ -216,10 +216,12 @@ def create_mail(
 		save_as_draft=save_as_draft,
 	)
 
+	return {"_id": mail_queue._id, "save_as_draft": save_as_draft}
+
 
 @frappe.whitelist()
 def update_draft_mail(
-	name: str,
+	_id: str,
 	from_email: str,
 	to: list[str],
 	cc: list[str],
@@ -231,7 +233,9 @@ def update_draft_mail(
 ) -> None:
 	"""Creates new mail queue from existing draft message."""
 
-	doc = frappe.get_doc("Mail Message", name)
+	account = get_account_for_user(frappe.session.user)
+
+	doc = frappe.get_doc("Mail Message", f"{account}|{_id}")
 	doc.check_permission(permtype="write")
 
 	doc.from_email = from_email

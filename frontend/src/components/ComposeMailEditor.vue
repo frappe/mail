@@ -20,14 +20,12 @@
 						v-if="isInThread"
 						variant="ghost"
 						:icon="ExternalLink"
-						@click="emit('popOut')"
+						:disabled="isLoading"
+						@click="emit('popOut', mail)"
 					/>
 				</div>
 				<div class="flex items-start gap-2">
-					<Dropdown
-						v-if="isInThread && mailDetails?.type"
-						:options="THREAD_MAIL_ACTIONS"
-					>
+					<Dropdown v-if="isInThread && mailDetails?.type" :options="localDraftActions">
 						<Button variant="ghost" :icon="TYPE_ICON_MAP[mailDetails.type]"> </Button>
 					</Dropdown>
 					<div class="flex flex-1 flex-col gap-2.5">
@@ -198,20 +196,20 @@
 							<Button
 								:label="__('Discard')"
 								:icon-left="Trash2"
+								:disabled="isLoading"
 								@click="discardMail"
 							/>
 							<Button
 								:label="__('Save Draft')"
 								:icon-left="Save"
-								:disabled="!isDraftUpdated"
-								:loading="createMail.loading || updateDraft.loading"
+								:disabled="!isDraftUpdated || isMailEmpty || isLoading"
 								@click="saveDraft"
 							/>
 							<Button
 								variant="solid"
 								:label="__('Send')"
-								:disabled="isRecipientsEmpty"
 								:icon-left="SendHorizontal"
+								:disabled="isRecipientsEmpty || isLoading"
 								@click="sendMail"
 							/>
 						</div>
@@ -259,7 +257,7 @@ import {
 import { ImageExtension } from 'frappe-ui/src/components/TextEditor/extensions/image'
 import { useFileUpload } from 'frappe-ui/src/utils/useFileUpload'
 
-import { formatBytes, textEditorButtons, validateEmail } from '@/utils'
+import { formatBytes, raiseToast, textEditorButtons, validateEmail } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
 import MultiselectInputControl from '@/components/Controls/MultiselectInputControl.vue'
@@ -321,10 +319,34 @@ const mail = reactive<ComposeMailData>({
 })
 
 const originalMail = ref<ComposeMailData>()
+const updateOriginalMail = () => (originalMail.value = JSON.parse(JSON.stringify(mail)))
+const isDraftUpdated = computed(() => JSON.stringify(mail) !== JSON.stringify(originalMail.value))
+
 onMounted(() => {
-	originalMail.value = JSON.parse(JSON.stringify(mail))
+	updateOriginalMail()
 	if (mailDetails?.type === 'forward') setTimeout(() => toInput.value?.setFocus(), 50)
 })
+
+onUnmounted(() => saveDraft())
+
+const sendMail = () => {
+	show.value = false
+	if (mail._id) updateDraft.submit({ submit: true })
+	else createMail.submit({ save_as_draft: false })
+}
+
+const saveDraft = async () => {
+	if (!isDraftUpdated.value || isLoading.value) return
+
+	if (mail._id) updateDraft.submit({ submit: false })
+	else if (!isMailEmpty.value) createMail.submit({ save_as_draft: true })
+}
+
+const discardMail = () => {
+	show.value = false
+	if (mail._id) deleteMail.submit()
+	else emit('discardMail')
+}
 
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
@@ -333,6 +355,11 @@ const createMail = createResource({
 		html_body: mail.html_body + mail.quoted_content,
 		save_as_draft,
 	}),
+	onSuccess: ({ _id, save_as_draft }: { _id: string; save_as_draft: boolean }) => {
+		mail._id = _id
+		updateOriginalMail()
+		if (save_as_draft) raiseToast(__('Draft saved.'))
+	},
 })
 
 const updateDraft = createResource({
@@ -342,6 +369,10 @@ const updateDraft = createResource({
 		html_body: mail.html_body + mail.quoted_content,
 		submit: submit,
 	}),
+	onSuccess: () => {
+		updateOriginalMail()
+		raiseToast(__('Draft saved.'))
+	},
 })
 
 const deleteMail = createResource({
@@ -350,37 +381,9 @@ const deleteMail = createResource({
 	onSuccess: () => emit('reloadMails'),
 })
 
-const isSaveDraft = ref(true)
+const isLoading = computed(() => createMail.loading || updateDraft.loading || deleteMail.loading)
 
-const sendMail = () => {
-	isSaveDraft.value = false
-	show.value = false
-	if (mail._id) updateDraft.submit({ submit: true })
-	else createMail.submit({ save_as_draft: false })
-}
-
-const saveDraft = () => {
-	if (!isDraftUpdated.value) return
-
-	if (mail._id) updateDraft.submit({ submit: false })
-	else if (!isMailEmpty.value) createMail.submit({ save_as_draft: true })
-}
-
-const discardMail = () => {
-	isSaveDraft.value = false
-	show.value = false
-	if (mail._id) deleteMail.submit()
-	emit('discardMail')
-}
-
-const isDraftUpdated = computed(() => JSON.stringify(mail) !== JSON.stringify(originalMail.value))
-
-onUnmounted(() => {
-	if (!isSaveDraft.value) return (isSaveDraft.value = true)
-	saveDraft()
-})
-
-const THREAD_MAIL_ACTIONS = [
+const localDraftActions = computed(() => [
 	{
 		group: '',
 		items: [
@@ -403,11 +406,12 @@ const THREAD_MAIL_ACTIONS = [
 			{
 				label: __('Pop Out'),
 				icon: ExternalLink,
-				onClick: () => emit('popOut'),
+				onClick: () => emit('popOut', mail),
+				condition: () => !isLoading.value,
 			},
 		],
 	},
-]
+])
 
 // Make toolbar hover over keyboard on mobile
 
@@ -495,6 +499,7 @@ const uploadFunction = async (file: File) => {
 }
 
 const CustomImageExtension = ImageExtension.extend({
+	name: 'customImage',
 	addOptions: () => ({ uploadFunction }),
 	addAttributes: () => ({
 		'data-cid': {

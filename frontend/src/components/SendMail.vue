@@ -7,7 +7,12 @@
 		@discard-mail="discardMail"
 	>
 		<template #body-content>
-			<ComposeMailEditor v-model="show" :mail-details @reload-mails="emit('reloadMails')" />
+			<ComposeMailEditor
+				v-model="show"
+				:mail-details
+				@reload-mails="emit('reloadMails')"
+				@discard-mail="emit('discardMail')"
+			/>
 		</template>
 	</component>
 </template>
@@ -25,7 +30,7 @@ const show = defineModel<boolean>()
 
 const { mailDetails } = defineProps<{ mailDetails?: ComposeMailData }>()
 
-const emit = defineEmits(['reloadMails'])
+const emit = defineEmits(['reloadMails', 'discardMail'])
 
 const { isMobile } = useScreenSize()
 </script>

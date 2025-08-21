@@ -72,7 +72,7 @@
 						@reply="reply(getSourceMail(mail.name))"
 						@reply-all="replyAll(getSourceMail(mail.name))"
 						@forward="forward(getSourceMail(mail.name))"
-						@pop-out="popOutDraft(mail.name)"
+						@pop-out="(mailDetails: ComposeMailData) => popOutDraft(mailDetails)"
 					/>
 
 					<template v-else>
@@ -149,13 +149,7 @@
 										</Button>
 									</Tooltip>
 									<Tooltip v-if="!isCollapsed(mail)" :text="__('More')">
-										<Dropdown
-											:options="
-												moreActions(mail).filter(
-													(d) => d.condition !== false,
-												)
-											"
-										>
+										<Dropdown :options="moreActions(mail)">
 											<span @click.stop>
 												<Button variant="ghost">
 													<template #icon>
@@ -219,6 +213,7 @@
 			v-model="showSendModal"
 			:mail-details="draftMails[focusedDraft]"
 			@reload-mails="emit('reloadMails')"
+			@discard-mail="discardLocalDraft(focusedDraft)"
 		/>
 	</div>
 
@@ -240,7 +235,6 @@
 import { computed, inject, nextTick, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-	ArrowUpRight,
 	Code,
 	Ellipsis,
 	ExternalLink,
@@ -373,12 +367,6 @@ const mailActions = (mail: Mail): MailAction[] => [
 		onClick: () => starMails.submit({ _ids: [mail._id], flagged: true }),
 		icon: Star,
 		condition: !mail.flagged && mailbox !== mailboxIds.trash,
-	},
-	{
-		label: __('Pop Out'),
-		onClick: () => editDraft(mail),
-		icon: ArrowUpRight,
-		condition: !!mail.draft && !isMobile.value,
 	},
 	{
 		label: __('Edit Draft'),
@@ -540,8 +528,9 @@ const discardLocalDraft = (mail: string) => {
 const focusedDraft = ref<string>()
 const showSendModal = ref(false)
 
-const popOutDraft = (mail: string) => {
-	focusedDraft.value = mail
+const popOutDraft = (mail: ComposeMailData) => {
+	draftMails[mail.name as string] = mail
+	focusedDraft.value = mail.name
 	showSendModal.value = true
 }
 
