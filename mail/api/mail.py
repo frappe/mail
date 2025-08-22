@@ -180,6 +180,7 @@ def create_mail(
 	attachments: list[dict] = None,
 	in_reply_to: str | None = None,
 	in_reply_to_id: str | None = None,
+	forwarded_from_id: str | None = None,
 	save_as_draft: bool = False,
 ) -> dict:
 	"""Creates new mail queue."""
@@ -211,6 +212,7 @@ def create_mail(
 		html_body=html_body,
 		in_reply_to=in_reply_to,
 		in_reply_to_id=in_reply_to_id,
+		forwarded_from_id=forwarded_from_id,
 		attachments=doc_attachments,
 		recipients=recipients,
 		save_as_draft=save_as_draft,

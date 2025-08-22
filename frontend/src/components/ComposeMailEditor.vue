@@ -4,6 +4,7 @@
 		editor-class="not-prose prose-sm max-w-none"
 		:extensions="[CustomImageExtension]"
 		:content="mail.html_body"
+		:class="{ 'pointer-events-none opacity-50': !show }"
 		@change="(val: string) => (mail.html_body = val)"
 	>
 		<template #top>
@@ -19,10 +20,13 @@
 					<Button
 						v-if="isInThread"
 						variant="ghost"
-						:icon="ExternalLink"
 						:disabled="isLoading"
 						@click="emit('popOut', mail)"
-					/>
+					>
+						<template #icon>
+							<component :is="ExternalLink" class="text-ink-gray-5 h-4 w-4" />
+						</template>
+					</Button>
 				</div>
 				<div class="flex items-start gap-2">
 					<Dropdown v-if="isInThread && mailDetails?.type" :options="localDraftActions">
@@ -318,6 +322,7 @@ const mail = reactive<ComposeMailData>({
 	quoted_content: mailDetails?.quoted_content || '',
 	in_reply_to: mailDetails?.in_reply_to || '',
 	in_reply_to_id: mailDetails?.in_reply_to_id || '',
+	forwarded_from_id: mailDetails?.forwarded_from_id || '',
 })
 
 const originalMail = ref<ComposeMailData>()

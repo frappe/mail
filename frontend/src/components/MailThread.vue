@@ -65,6 +65,7 @@
 				>
 					<ComposeMailEditor
 						v-if="mail.draft"
+						v-model="mail.show"
 						:mail-details="draftMails[mail.name]"
 						:is-in-thread="true"
 						@reload-mails="emit('reloadMails')"
@@ -294,6 +295,7 @@ const thread = createResource({
 				...mail,
 				groupedRecipients: getGroupedRecipients(mail.recipients, false),
 				collapsed: !!mail.seen,
+				show: true,
 			})),
 	onSuccess: (data: Mail[]) => {
 		if (!data.length) return router.push({ name: 'Mailbox', params: { mailbox } })
@@ -503,6 +505,7 @@ const forward = (mail: Mail) =>
 	createLocalDraft(mail, {
 		subject: `Fwd: ${mail.subject}`,
 		html_body: getForwardedContent(mail),
+		forwarded_from_id: mail._id,
 		type: 'forward',
 	})
 
@@ -516,7 +519,7 @@ const createLocalDraft = (mail: Mail, draftDetails: ComposeMailData) => {
 		const index = thread.data.indexOf(mail)
 		const draft = thread.data.find((m: Mail) => m.name === name)
 		if (index !== -1 && !draft)
-			thread.data.splice(index + 1, 0, { ...draftMails[name], draft: 1 })
+			thread.data.splice(index + 1, 0, { ...draftMails[name], draft: 1, show: true })
 	})
 }
 
