@@ -193,25 +193,24 @@
 
 						<!-- Send & Discard -->
 						<div v-if="!isMobile" class="ml-auto flex items-center space-x-2">
-							<Button
-								:label="__('Discard')"
-								:icon-left="Trash2"
-								:disabled="isLoading"
-								@click="discardMail"
-							/>
-							<Button
-								:label="__('Save Draft')"
-								:icon-left="Save"
-								:disabled="!isDraftUpdated || isMailEmpty || isLoading"
-								@click="saveDraft"
-							/>
-							<Button
-								variant="solid"
-								:label="__('Send')"
-								:icon-left="SendHorizontal"
-								:disabled="isRecipientsEmpty || isLoading"
-								@click="sendMail"
-							/>
+							<span v-if="isSavingDraft" class="text-ink-gray-5 text-base italic">
+								{{ __('Saving Draft...') }}
+							</span>
+							<template v-else>
+								<Button
+									:label="__('Discard')"
+									:icon-left="Trash2"
+									:disabled="isLoading"
+									@click="discardMail"
+								/>
+								<Button
+									variant="solid"
+									:label="__('Send')"
+									:icon-left="SendHorizontal"
+									:disabled="isRecipientsEmpty || isLoading"
+									@click="sendMail"
+								/>
+							</template>
 						</div>
 					</div>
 				</template>
@@ -232,6 +231,7 @@ import {
 	useTemplateRef,
 } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
+import { watchDebounced } from '@vueuse/core'
 import {
 	ExternalLink,
 	Forward,
@@ -239,7 +239,6 @@ import {
 	Paperclip,
 	Reply,
 	ReplyAll,
-	Save,
 	SendHorizontal,
 	Trash2,
 } from 'lucide-vue-next'
@@ -274,8 +273,7 @@ const { mailDetails, isInThread = false } = defineProps<{
 
 const emit = defineEmits(['reloadMails', 'discardMail', 'reply', 'replyAll', 'forward', 'popOut'])
 
-const user = inject('$user') as UserResource
-const { isMobile } = useScreenSize()
+// Editor
 
 const textEditor = useTemplateRef('textEditor')
 const editor = computed(() => textEditor.value.editor)
@@ -303,6 +301,10 @@ const appendEmoji = () => {
 	emoji.value = ''
 }
 
+// Setup & hooks
+
+const user = inject('$user') as UserResource
+
 const mail = reactive<ComposeMailData>({
 	name: mailDetails?.name || '',
 	_id: mailDetails?._id || '',
@@ -329,17 +331,25 @@ onMounted(() => {
 
 onUnmounted(() => saveDraft())
 
-const sendMail = () => {
-	show.value = false
-	if (mail._id) updateDraft.submit({ submit: true })
-	else createMail.submit({ save_as_draft: false })
-}
+watchDebounced(mail, () => saveDraft(), { debounce: 2000 })
+
+// Actions
+
+const isSavingDraft = ref(false)
 
 const saveDraft = async () => {
 	if (!isDraftUpdated.value || isLoading.value) return
 
-	if (mail._id) updateDraft.submit({ submit: false })
-	else if (!isMailEmpty.value) createMail.submit({ save_as_draft: true })
+	isSavingDraft.value = true
+	if (mail._id) await updateDraft.submit()
+	else if (!isMailEmpty.value) await createMail.submit()
+	isSavingDraft.value = false
+}
+
+const sendMail = () => {
+	show.value = false
+	if (mail._id) updateDraft.submit()
+	else createMail.submit()
 }
 
 const discardMail = () => {
@@ -348,31 +358,32 @@ const discardMail = () => {
 	else emit('discardMail')
 }
 
+const onMailUpdateSuccess = ({ _id, save_as_draft }: { _id: string; save_as_draft: boolean }) => {
+	mail._id = _id
+	updateOriginalMail()
+	raiseToast(save_as_draft ? __('Draft saved.') : __('Mail sent.'))
+}
+
+// Resources
+
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
-	makeParams: ({ save_as_draft }: { save_as_draft: boolean }) => ({
+	makeParams: () => ({
 		...mail,
 		html_body: mail.html_body + mail.quoted_content,
-		save_as_draft,
+		save_as_draft: isSavingDraft.value,
 	}),
-	onSuccess: ({ _id, save_as_draft }: { _id: string; save_as_draft: boolean }) => {
-		mail._id = _id
-		updateOriginalMail()
-		if (save_as_draft) raiseToast(__('Draft saved.'))
-	},
+	onSuccess: onMailUpdateSuccess,
 })
 
 const updateDraft = createResource({
 	url: 'mail.api.mail.update_draft_mail',
-	makeParams: ({ submit }: { submit: boolean }) => ({
+	makeParams: () => ({
 		...mail,
 		html_body: mail.html_body + mail.quoted_content,
-		submit: submit,
+		submit: !isSavingDraft.value,
 	}),
-	onSuccess: () => {
-		updateOriginalMail()
-		raiseToast(__('Draft saved.'))
-	},
+	onSuccess: onMailUpdateSuccess,
 })
 
 const deleteMail = createResource({
@@ -382,6 +393,8 @@ const deleteMail = createResource({
 })
 
 const isLoading = computed(() => createMail.loading || updateDraft.loading || deleteMail.loading)
+
+// Local draft actions
 
 const localDraftActions = computed(() => [
 	{
@@ -415,6 +428,8 @@ const localDraftActions = computed(() => [
 
 // Make toolbar hover over keyboard on mobile
 
+const { isMobile } = useScreenSize()
+
 const toolbarBottom = ref(0)
 
 const updatePosition = () => {
@@ -438,6 +453,8 @@ onMounted(() => {
 		window.visualViewport.removeEventListener('scroll', updatePosition)
 	})
 })
+
+// Mail content
 
 const isRecipientsEmpty = computed(() => [mail.to, mail.cc, mail.bcc].every((d) => !d.length))
 
@@ -468,6 +485,8 @@ const openQuotedContent = () => {
 	mail.html_body += mail.quoted_content
 	mail.quoted_content = ''
 }
+
+// Attachments
 
 const fetchAttachment = createResource({
 	url: 'mail.api.mail.fetch_attachment',

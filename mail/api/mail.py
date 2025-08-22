@@ -181,7 +181,7 @@ def create_mail(
 	in_reply_to: str | None = None,
 	in_reply_to_id: str | None = None,
 	save_as_draft: bool = False,
-) -> bool:
+) -> dict:
 	"""Creates new mail queue."""
 
 	account = get_account_for_user(frappe.session.user)
@@ -204,7 +204,7 @@ def create_mail(
 	recipients += [{"type": "Cc", "email": email} for email in cc]
 	recipients += [{"type": "Bcc", "email": email} for email in bcc]
 
-	mail_queue = MailQueue._create(
+	doc = MailQueue._create(
 		account=account,
 		from_email=from_email,
 		subject=subject,
@@ -216,7 +216,7 @@ def create_mail(
 		save_as_draft=save_as_draft,
 	)
 
-	return {"_id": mail_queue._id, "save_as_draft": save_as_draft}
+	return {"_id": doc._id, "save_as_draft": save_as_draft}
 
 
 @frappe.whitelist()
@@ -230,7 +230,7 @@ def update_draft_mail(
 	html_body: str | None,
 	attachments: list[dict] = None,
 	submit: bool = False,
-) -> None:
+) -> dict:
 	"""Creates new mail queue from existing draft message."""
 
 	account = get_account_for_user(frappe.session.user)
@@ -270,7 +270,9 @@ def update_draft_mail(
 	for email in bcc:
 		doc.append("recipients", {"type": "Bcc", "email": email})
 
-	doc.submit() if submit else doc.save_draft()
+	new_doc = doc.submit() if submit else doc.save_draft()
+
+	return {"_id": new_doc._id, "save_as_draft": not submit}
 
 
 def convert_img_src_from_file_url_to_cid(html_body: str, file_url: str, cid: str) -> str:
