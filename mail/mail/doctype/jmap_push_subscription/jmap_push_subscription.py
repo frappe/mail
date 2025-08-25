@@ -30,35 +30,21 @@ class JMAPPushSubscription(Document):
 		)
 
 		if not subscription_name:
-			frappe.throw(
-				_("No push subscription found for the given account ({0}) and subscription ID ({1}).").format(
-					frappe.bold(account), frappe.bold(subscription_id)
-				)
-			)
+			if verification_name := frappe.db.exists(
+				"JMAP Push Verification Queue", {"account": account, "subscription_id": subscription_id}
+			):
+				frappe.db.set_value("JMAP Push Verification Queue", verification_name, "status", "Expired")
+
+			doc = frappe.new_doc("JMAP Push Verification Queue")
+			doc.status = "Pending"
+			doc.account = account
+			doc.subscription_id = subscription_id
+			doc.verification_code = verification_code
+			doc.insert(ignore_permissions=True)
+			return
 
 		subscription = frappe.get_doc("JMAP Push Subscription", subscription_name)
-
-		if subscription.verified:
-			frappe.throw(_("Subscription already verified."))
-		elif subscription.subscription_id != subscription_id:
-			frappe.throw(_("Invalid subscription ID."))
-
-		client = get_jmap_client(account, subscription.server, cache=False)
-		response = client.push_subscription_set_verification_code(subscription_id, verification_code)
-
-		kwargs = {"_verification_response": json.dumps(response)}
-		if response[0][1].get("updated"):
-			kwargs.update(
-				{
-					"status": "Active",
-					"verified": 1,
-					"verified_at": frappe.utils.now(),
-				}
-			)
-		elif response[0][1].get("notUpdated"):
-			kwargs["status"] = "Failed to Verify"
-
-		subscription._db_set(notify=True, **kwargs)
+		subscription._verify(verification_code)
 
 	@staticmethod
 	def get_push_subscriptions(account: str) -> list[dict]:
@@ -199,6 +185,29 @@ class JMAPPushSubscription(Document):
 			)
 			kwargs["status"] = "Failed to Subscribe"
 			self._db_set(**kwargs)
+
+	def _verify(self, verification_code: str) -> None:
+		"""Verifies the JMAP push subscription using the provided verification code."""
+
+		if self.verified:
+			frappe.throw(_("Subscription already verified."))
+
+		client = get_jmap_client(self.account, self.server, cache=False)
+		response = client.push_subscription_set_verification_code(self.subscription_id, verification_code)
+
+		kwargs = {"_verification_response": json.dumps(response)}
+		if response[0][1].get("updated"):
+			kwargs.update(
+				{
+					"status": "Active",
+					"verified": 1,
+					"verified_at": frappe.utils.now(),
+				}
+			)
+		elif response[0][1].get("notUpdated"):
+			kwargs["status"] = "Failed to Verify"
+
+		self._db_set(notify=True, **kwargs)
 
 	@frappe.whitelist()
 	def renew(self) -> None:
