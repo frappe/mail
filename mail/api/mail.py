@@ -132,7 +132,7 @@ def serialize_mail(mail: dict) -> dict:
 def serialize_attachments(attachments: list[dict]) -> dict:
 	"""Serializes attachment for response."""
 
-	attachment_fields = ["filename", "type", "size", "blob_id"]
+	attachment_fields = ["filename", "type", "size", "blob_id", "disposition"]
 
 	return [
 		{field: attachment[field] for field in attachment_fields}
@@ -192,8 +192,11 @@ def create_mail(
 		cid = random_string(10)
 		doc_attachments.append(
 			{
-				"file_url": d.get("file_url"),
-				"filename": d.get("file_name", ""),
+				"file_url": d.get("file_url", ""),
+				"blob_id": d.get("blob_id", ""),
+				"filename": d.get("file_name") or d.get("filename", ""),
+				"type": d.get("type", ""),
+				"size": d.get("size", ""),
 				"disposition": d.get("disposition"),
 				"cid": cid,
 			}

@@ -505,6 +505,7 @@ const forward = (mail: Mail) =>
 	createLocalDraft(mail, {
 		subject: `Fwd: ${mail.subject}`,
 		html_body: getForwardedContent(mail),
+		attachments: mail.attachments || [],
 		forwarded_from_id: mail._id,
 		type: 'forward',
 	})
