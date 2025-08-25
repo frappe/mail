@@ -176,6 +176,7 @@
 
 					<div
 						class="flex flex-wrap justify-between gap-2 overflow-hidden border-t pt-2.5"
+						:class="{ 'pb-2.5': isMobile }"
 					>
 						<!-- Text editor buttons -->
 						<div class="flex items-center gap-1 overflow-x-auto">

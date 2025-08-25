@@ -60,12 +60,12 @@
 						'border-b p-3.5 sm:rounded-xl sm:border':
 							thread.data.length > 1 || mail.draft,
 						'cursor-pointer': isCollapsed(mail),
-						'shadow-elevation-light-md': mail.draft,
+						'shadow-elevation-light-md': mail.draft && !isMobile,
 					}"
 					@click="mail.collapsed = false"
 				>
 					<ComposeMailEditor
-						v-if="mail.draft"
+						v-if="mail.draft && !isMobile"
 						v-model="mail.show"
 						:mail-details="draftMails[mail.name]"
 						:is-in-thread="true"
@@ -150,7 +150,10 @@
 											</template>
 										</Button>
 									</Tooltip>
-									<Tooltip v-if="!isCollapsed(mail)" :text="__('More')">
+									<Tooltip
+										v-if="!mail.draft && !isCollapsed(mail)"
+										:text="__('More')"
+									>
 										<Dropdown :options="moreActions(mail)">
 											<span @click.stop>
 												<Button variant="ghost">
@@ -200,6 +203,13 @@
 						:label="__('Reply')"
 						variant="outline"
 						@click="reply(thread.data.at(-1))"
+					/>
+					<Button
+						v-if="showReplyAll(thread.data.at(-1))"
+						:icon-left="ReplyAll"
+						:label="__('Reply All')"
+						variant="outline"
+						@click="replyAll(thread.data.at(-1))"
 					/>
 					<Button
 						:icon-left="Forward"
@@ -369,11 +379,11 @@ const mailActions = (mail: Mail): MailAction[] => [
 		label: __('Star'),
 		onClick: () => starMails.submit({ _ids: [mail._id], flagged: true }),
 		icon: Star,
-		condition: !mail.flagged && mailbox !== mailboxIds.trash,
+		condition: !mail.flagged && !mail.draft && mailbox !== mailboxIds.trash,
 	},
 	{
 		label: __('Edit Draft'),
-		onClick: () => editDraft(mail),
+		onClick: () => popOutDraft(mail),
 		icon: SquarePen,
 		condition: !!mail.draft && isMobile.value,
 	},
@@ -398,12 +408,7 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				label: __('Reply All'),
 				onClick: () => replyAll(mail),
 				icon: ReplyAll,
-				condition: () =>
-					!mail.draft &&
-					mail.from_email !== user.data.email &&
-					mail.groupedRecipients.to
-						?.concat(mail.groupedRecipients.cc)
-						.filter((m) => m !== user.data.email).length > 0,
+				condition: () => showReplyAll(mail),
 			},
 			{
 				label: __('Forward'),
@@ -445,6 +450,13 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 ]
 
 const isCollapsed = (mail: Mail) => mail.collapsed && mail !== thread.data[thread.data.length - 1]
+
+const showReplyAll = (mail: Mail) =>
+	!mail.draft &&
+	mail.from_email !== user.data.email &&
+	mail.groupedRecipients.to
+		?.concat(mail.groupedRecipients.cc)
+		.filter((m) => m !== user.data.email).length > 0
 
 const moveMail = createResource({
 	url: 'mail.api.mail.move_mails',
@@ -518,6 +530,8 @@ const createLocalDraft = (mail: Mail, draftDetails: ComposeMailData) => {
 
 	nextTick(() => {
 		draftMails[name] = { name, ...draftDetails }
+		if (isMobile.value) return popOutDraft(draftMails[name])
+
 		const index = thread.data.indexOf(mail)
 		const draft = thread.data.find((m: Mail) => m.name === name)
 		if (index !== -1 && !draft)
