@@ -1090,7 +1090,7 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 		new_state = result["newState"]
 		update_current_state(account, new_state)
 
-		frappe.publish_realtime("mail_created_or_updated", user=account)
+		frappe.publish_realtime("mail_created_or_updated", user=user)
 
 		if result["hasMoreChanges"]:
 			fetch_changes(account)

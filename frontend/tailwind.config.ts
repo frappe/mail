@@ -12,6 +12,10 @@ export default {
 			strokeWidth: {
 				1.5: '1.5',
 			},
+			boxShadow: {
+				'elevation-light-md':
+					'0 0 1.5px 0 rgba(0, 0, 0, 0.15), 0 0 6px 2px rgba(0, 0, 0, 0.03), 0 6px 12px -2px rgba(0, 0, 0, 0.12)',
+			},
 		},
 	},
 	plugins: [],

@@ -4,7 +4,10 @@
 		editor-class="not-prose prose-sm max-w-none"
 		:extensions="[CustomImageExtension]"
 		:content="mail.html_body"
-		:class="{ 'pointer-events-none opacity-50': !show }"
+		:class="{
+			'pointer-events-none opacity-50': !show,
+			'flex h-[75vh] shrink-0 flex-col': !isInThread,
+		}"
 		@change="(val: string) => (mail.html_body = val)"
 	>
 		<template #top>
@@ -106,25 +109,29 @@
 			</div>
 		</template>
 		<template #editor="{ editor }">
-			<div class="flex flex-col overflow-y-auto py-2.5 text-sm">
-				<EditorContent :editor="editor" />
+			<div
+				class="my-2.5 flex flex-1 cursor-text flex-col overflow-y-auto text-sm"
+				:class="{ 'max-h-96 min-h-32': isInThread }"
+				@click="editor.commands.focus('end')"
+			>
+				<EditorContent :editor @click.stop />
 
-				<!-- Show quoted content -->
-				<Button
-					v-if="mail?.quoted_content"
-					label="&middot;&middot;&middot;"
-					class="max-h-4 w-fit"
-					@click="openQuotedContent"
-				/>
+				<div class="mt-auto cursor-default space-y-2.5 pt-2.5" @click.stop>
+					<!-- Show quoted content -->
+					<Button
+						v-if="mail?.quoted_content"
+						label="&middot;&middot;&middot;"
+						class="max-h-4 w-fit"
+						@click="openQuotedContent"
+					/>
 
-				<!-- Attachments -->
-				<div class="text-ink-gray-6 mt-auto flex flex-col gap-2.5 pt-2.5">
+					<!-- Attachments -->
 					<a
 						v-for="(file, index) in mail.attachments.filter(
 							(file: Attachment) => file.disposition === 'attachment',
 						)"
 						:key="index"
-						class="bg-surface-gray-2 flex cursor-pointer items-center rounded p-2.5"
+						class="bg-surface-gray-2 text-ink-gray-6 flex cursor-pointer items-center rounded p-2.5"
 						:href="file.file_url"
 						target="_blank"
 						@click="openAttachment(file.blob_id, file.type)"
@@ -168,7 +175,7 @@
 					<ErrorMessage :message="error" class="mb-2.5" />
 
 					<div
-						class="flex flex-wrap justify-between gap-2 overflow-hidden border-t py-2.5"
+						class="flex flex-wrap justify-between gap-2 overflow-hidden border-t pt-2.5"
 					>
 						<!-- Text editor buttons -->
 						<div class="flex items-center gap-1 overflow-x-auto">
@@ -280,8 +287,6 @@ const emit = defineEmits(['reloadMails', 'discardMail', 'reply', 'replyAll', 'fo
 // Editor
 
 const textEditor = useTemplateRef('textEditor')
-const editor = computed(() => textEditor.value.editor)
-
 const toInput = useTemplateRef('toInput')
 const ccInput = useTemplateRef('ccInput')
 const bccInput = useTemplateRef('bccInput')
@@ -300,8 +305,8 @@ const toggleBCC = () => {
 
 const emoji = ref()
 const appendEmoji = () => {
-	editor.value.commands.insertContent(emoji.value)
-	editor.value.commands.focus()
+	textEditor.value.editor.commands.insertContent(emoji.value)
+	textEditor.value.editor.commands.focus()
 	emoji.value = ''
 }
 
@@ -366,7 +371,7 @@ const discardMail = () => {
 const onMailUpdateSuccess = ({ _id, save_as_draft }: { _id: string; save_as_draft: boolean }) => {
 	mail._id = _id
 	updateOriginalMail()
-	raiseToast(save_as_draft ? __('Draft saved.') : __('Mail sent.'))
+	if (!show.value) raiseToast(save_as_draft ? __('Draft saved.') : __('Message sent.'))
 }
 
 // Resources
@@ -394,7 +399,10 @@ const updateDraft = createResource({
 const deleteMail = createResource({
 	url: 'mail.api.mail.delete_mail',
 	makeParams: () => ({ _id: mail._id }),
-	onSuccess: () => emit('reloadMails'),
+	onSuccess: () => {
+		emit('reloadMails')
+		raiseToast(__('Draft discarded.'))
+	},
 })
 
 const isLoading = computed(() => createMail.loading || updateDraft.loading || deleteMail.loading)

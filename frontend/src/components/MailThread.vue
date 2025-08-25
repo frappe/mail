@@ -57,9 +57,10 @@
 					:key="mail.name"
 					:class="{
 						'p-3.5': isMobile,
-						'border-b p-3.5 sm:rounded-md sm:border':
+						'border-b p-3.5 sm:rounded-xl sm:border':
 							thread.data.length > 1 || mail.draft,
 						'cursor-pointer': isCollapsed(mail),
+						'shadow-elevation-light-md': mail.draft,
 					}"
 					@click="mail.collapsed = false"
 				>
@@ -582,12 +583,13 @@ const getQuotedContent = (mail: Mail) =>
 
 const getForwardedContent = (mail: Mail) =>
 	`
-		---------- Forwarded message --------- <br>
-		From: ${mail.from_name} <${mail.from_email}> <br>
-		Date: ${dayjs(mail.received_at).format('ddd, MMM D, YYYY [at] h:mm A')} <br>
-		Subject: ${mail.subject || ''} <br>
-		To: ${mail.groupedRecipients.to.join(', ')} <br>
-		${mail.groupedRecipients.cc.length ? `Cc: ${mail.groupedRecipients.cc.join(', ')} <br>` : ''}
+		<br><br>
+		---------- Forwarded message ---------<br>
+		From: ${mail.from_name} < ${mail.from_email} ><br>
+		Date: ${dayjs(mail.received_at).format('ddd, MMM D, YYYY [at] h:mm A')}<br>
+		Subject: ${mail.subject || ''}<br>
+		To: ${mail.groupedRecipients.to.join(', ')}<br>
+		${mail.groupedRecipients.cc.length ? `Cc: ${mail.groupedRecipients.cc.join(', ')}<br>` : ''}
 		<br><br>
 		${mail.html_body || '&nbsp;'}
 	`
