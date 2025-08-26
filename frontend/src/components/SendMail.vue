@@ -8,7 +8,7 @@
 	>
 		<template #body-content>
 			<ComposeMailEditor
-				v-if="show"
+				v-if="show || !isMobile"
 				ref="composeMailEditor"
 				v-model="show"
 				:mail-details
