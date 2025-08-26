@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 import frappe
 from frappe.utils.caching import request_cache
 
@@ -91,3 +93,19 @@ def has_role(user: str, roles: str | list) -> bool:
 			return True
 
 	return False
+
+
+def get_caldav_settings(user: str) -> dict:
+	"""Returns the CalDAV settings for the user."""
+
+	caldav_settings = {}
+
+	if account := get_account_for_user(user):
+		account = frappe.get_doc("Mail Account", account)
+		cluster = frappe.db.get_value("Mail Tenant", account.tenant, "cluster")
+		base_url = frappe.db.get_value("Mail Cluster", cluster, "base_url")
+		caldav_url = urljoin(base_url, ".well-known/caldav")
+
+		caldav_settings.update({"url": caldav_url, "auth": (account.email, account.get_account_password())})
+
+	return caldav_settings
