@@ -3,11 +3,13 @@
 		:is="isMobile ? SendMailMobileLayout : Dialog"
 		v-model="show"
 		:options="{ title: __('Compose Mail'), size: '7xl' }"
-		@send-mail="sendMail"
-		@discard-mail="discardMail"
+		@send-mail="editor?.sendMail()"
+		@discard-mail="editor?.discardMail()"
 	>
 		<template #body-content>
 			<ComposeMailEditor
+				v-if="show"
+				ref="composeMailEditor"
 				v-model="show"
 				:mail-details
 				@reload-mails="emit('reloadMails')"
@@ -18,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+import { useTemplateRef } from 'vue'
 import { Dialog } from 'frappe-ui'
 
 import { useScreenSize } from '@/utils/composables'
@@ -33,4 +36,6 @@ const { mailDetails } = defineProps<{ mailDetails?: ComposeMailData }>()
 const emit = defineEmits(['reloadMails', 'discardMail'])
 
 const { isMobile } = useScreenSize()
+
+const editor = useTemplateRef('composeMailEditor')
 </script>

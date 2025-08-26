@@ -340,7 +340,10 @@ onMounted(() => {
 	if (mailDetails?.type === 'forward') setTimeout(() => toInput.value?.setFocus(), 50)
 })
 
-onUnmounted(() => saveDraft())
+onUnmounted(() => {
+	saveDraft()
+	emit('discardMail')
+})
 
 watchDebounced(mail, () => saveDraft(), { debounce: 2000 })
 
@@ -358,6 +361,7 @@ const saveDraft = async () => {
 }
 
 const sendMail = () => {
+	if (isRecipientsEmpty.value) return raiseToast(__('Please add at least one recipient.'))
 	show.value = false
 	if (mail._id) updateDraft.submit()
 	else createMail.submit()
@@ -368,6 +372,8 @@ const discardMail = () => {
 	if (mail._id) deleteMail.submit()
 	else emit('discardMail')
 }
+
+defineExpose({ sendMail, discardMail })
 
 const onMailUpdateSuccess = ({ _id, save_as_draft }: { _id: string; save_as_draft: boolean }) => {
 	mail._id = _id

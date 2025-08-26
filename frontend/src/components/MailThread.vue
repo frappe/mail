@@ -77,7 +77,7 @@
 						@pop-out="(mailDetails: ComposeMailData) => popOutDraft(mailDetails)"
 					/>
 
-					<template v-else>
+					<template v-else-if="!mail.name.startsWith('draft')">
 						<div
 							class="flex space-x-3"
 							:class="{
@@ -530,12 +530,11 @@ const createLocalDraft = (mail: Mail, draftDetails: ComposeMailData) => {
 
 	nextTick(() => {
 		draftMails[name] = { name, ...draftDetails }
-		if (isMobile.value) return popOutDraft(draftMails[name])
-
 		const index = thread.data.indexOf(mail)
 		const draft = thread.data.find((m: Mail) => m.name === name)
 		if (index !== -1 && !draft)
 			thread.data.splice(index + 1, 0, { ...draftMails[name], draft: 1, show: true })
+		if (isMobile.value) popOutDraft(draftMails[name])
 	})
 }
 
