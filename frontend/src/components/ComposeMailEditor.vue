@@ -4,10 +4,9 @@
 		editor-class="not-prose prose-sm max-w-none"
 		:extensions="[CustomImageExtension]"
 		:content="mail.html_body"
-		:class="{
-			'pointer-events-none opacity-50': !show,
-			'flex h-[75vh] shrink-0 flex-col': !isInThread,
-		}"
+		class="flex flex-col"
+		:class="{ 'pointer-events-none opacity-50': !show, 'h-[75vh]': !isInThread }"
+		:style="isMobile && { height: editorHeight }"
 		@change="(val: string) => (mail.html_body = val)"
 	>
 		<template #top>
@@ -225,6 +224,28 @@ const appendEmoji = (emoji: string) => {
 	textEditor.value.editor.commands.insertContent(emoji)
 	textEditor.value.editor.commands.focus()
 }
+
+const editorHeight = ref('0px')
+
+const updateHeight = () => {
+	if (window.visualViewport)
+		editorHeight.value =
+			window.visualViewport.height - window.visualViewport.offsetTop - 112 + 'px'
+}
+
+onMounted(() => {
+	if (!window.visualViewport) return
+	window.visualViewport.addEventListener('resize', updateHeight)
+	window.visualViewport.addEventListener('scroll', updateHeight)
+
+	updateHeight()
+
+	onUnmounted(() => {
+		if (!window.visualViewport) return
+		window.visualViewport.removeEventListener('resize', updateHeight)
+		window.visualViewport.removeEventListener('scroll', updateHeight)
+	})
+})
 
 // Setup & hooks
 

@@ -29,7 +29,7 @@
 			<TextEditor
 				editor-class="prose-sm min-h-[8rem] border rounded-b-lg border-t-0 p-2 max-w-none border-outline-gray-2"
 				placeholder="Type something..."
-				:fixed-menu="textEditorButtons"
+				:fixed-menu="buttons"
 				:content="account.doc.vacation_response_html_body"
 				@change="(val: string) => (account.doc.vacation_response_html_body = val)"
 			/>
@@ -49,12 +49,15 @@
 import { computed, inject } from 'vue'
 import { Button, FormControl, Switch, TextEditor, createDocumentResource } from 'frappe-ui'
 
-import { raiseToast, textEditorButtons } from '@/utils'
+import { raiseToast } from '@/utils'
+import { useTextEditorButtons } from '@/utils/composables'
 
 import type { MailAccount } from '@/types/doctypes'
 
 const user = inject('$user')
 const dayjs = inject('$dayjs')
+
+const { buttons } = useTextEditorButtons()
 
 const account = createDocumentResource({
 	doctype: 'Mail Account',

@@ -1,9 +1,7 @@
 <template>
 	<FileUploader
-		:class="{
-			'fixed left-0 right-0 z-20 px-3 transition-all': isMobile,
-		}"
-		:style="{ bottom: `${toolbarBottom}px` }"
+		:class="{ 'fixed left-0 right-0 z-20': isMobile }"
+		:style="{ bottom: toolbarBottom }"
 		:upload-args="{ private: true, folder: 'Home/Frappe Mail' }"
 		@success="(file) => emit('addAttachment', { ...file, disposition: 'attachment' })"
 	>
@@ -26,22 +24,22 @@
 				:class="{ 'pb-2.5': isMobile }"
 			>
 				<!-- Text editor buttons -->
-				<div class="flex items-center gap-1 overflow-x-auto">
-					<TextEditorFixedMenu :buttons="textEditorButtons" class="!bg-inherit" />
+				<div class="flex items-center gap-1 overflow-x-auto" :class="{ 'px-3': isMobile }">
+					<TextEditorFixedMenu :buttons class="!bg-inherit" />
 					<EmojiPicker
 						v-if="!isMobile"
 						v-slot="{ togglePopover }"
 						@update:model-value="emit('appendEmoji', $event)"
 					>
-						<Button variant="ghost" @click="togglePopover()">
+						<Button variant="ghost" class="max-h-6 max-w-6" @click="togglePopover()">
 							<template #icon>
 								<Laugh class="h-4 w-4" />
 							</template>
 						</Button>
 					</EmojiPicker>
-					<Button variant="ghost" @click="openFileSelector()">
+					<Button variant="ghost" class="max-h-6 max-w-6" @click="openFileSelector()">
 						<template #icon>
-							<Paperclip class="h-4" />
+							<Paperclip class="h-4 w-4" />
 						</template>
 					</Button>
 				</div>
@@ -76,8 +74,8 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { Laugh, Paperclip, SendHorizontal, Trash2 } from 'lucide-vue-next'
 import { Button, ErrorMessage, FileUploader, Progress, TextEditorFixedMenu } from 'frappe-ui'
 
-import { formatBytes, textEditorButtons } from '@/utils'
-import { useScreenSize } from '@/utils/composables'
+import { formatBytes } from '@/utils'
+import { useScreenSize, useTextEditorButtons } from '@/utils/composables'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 
 const { isSavingDraft, isLoading, isRecipientsEmpty } = defineProps<{
@@ -91,19 +89,21 @@ const emit = defineEmits(['appendEmoji', 'addAttachment', 'discardMail', 'sendMa
 // Make toolbar hover over keyboard on mobile
 
 const { isMobile } = useScreenSize()
+const { buttons } = useTextEditorButtons()
 
-const toolbarBottom = ref(0)
+const toolbarBottom = ref('0px')
 
 const updatePosition = () => {
-	if (!window.visualViewport) return
-	const offset =
-		window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop
-	toolbarBottom.value = offset > 0 ? offset : 0
+	if (window.visualViewport)
+		toolbarBottom.value =
+			window.innerHeight -
+			window.visualViewport.height -
+			window.visualViewport.offsetTop +
+			'px'
 }
 
 onMounted(() => {
-	if (!(isMobile.value && window.visualViewport)) return
-
+	if (!window.visualViewport) return
 	window.visualViewport.addEventListener('resize', updatePosition)
 	window.visualViewport.addEventListener('scroll', updatePosition)
 
