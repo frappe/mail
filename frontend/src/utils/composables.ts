@@ -73,3 +73,27 @@ export const useTextEditorButtons = () => {
 
 	return { buttons }
 }
+
+export const useVisualViewport = (calc: (viewport: VisualViewport) => string) => {
+	const value = ref('0px')
+
+	const update = () => {
+		if (window.visualViewport) value.value = calc(window.visualViewport)
+	}
+
+	onMounted(() => {
+		if (!window.visualViewport) return
+		window.visualViewport.addEventListener('resize', update)
+		window.visualViewport.addEventListener('scroll', update)
+
+		update()
+
+		onUnmounted(() => {
+			if (!window.visualViewport) return
+			window.visualViewport.removeEventListener('resize', update)
+			window.visualViewport.removeEventListener('scroll', update)
+		})
+	})
+
+	return value
+}

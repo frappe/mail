@@ -5,7 +5,7 @@
 		:extensions="[CustomImageExtension]"
 		:content="mail.html_body"
 		class="flex flex-col"
-		:class="{ 'pointer-events-none opacity-50': !show, 'h-[75vh]': !isInThread }"
+		:class="{ 'pointer-events-none opacity-50': !show, 'sm:h-[75vh]': !isInThread }"
 		:style="isMobile && { height: editorHeight }"
 		@change="(val: string) => (mail.html_body = val)"
 	>
@@ -183,7 +183,7 @@ import { ImageExtension } from 'frappe-ui/src/components/TextEditor/extensions/i
 import { useFileUpload } from 'frappe-ui/src/utils/useFileUpload'
 
 import { formatBytes, raiseToast, validateEmail } from '@/utils'
-import { useScreenSize } from '@/utils/composables'
+import { useScreenSize, useVisualViewport } from '@/utils/composables'
 import ComposeMailToolbar from '@/components/ComposeMailToolbar.vue'
 import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
 import MultiselectInputControl from '@/components/Controls/MultiselectInputControl.vue'
@@ -225,27 +225,9 @@ const appendEmoji = (emoji: string) => {
 	textEditor.value.editor.commands.focus()
 }
 
-const editorHeight = ref('0px')
-
-const updateHeight = () => {
-	if (window.visualViewport)
-		editorHeight.value =
-			window.visualViewport.height - window.visualViewport.offsetTop - 112 + 'px'
-}
-
-onMounted(() => {
-	if (!window.visualViewport) return
-	window.visualViewport.addEventListener('resize', updateHeight)
-	window.visualViewport.addEventListener('scroll', updateHeight)
-
-	updateHeight()
-
-	onUnmounted(() => {
-		if (!window.visualViewport) return
-		window.visualViewport.removeEventListener('resize', updateHeight)
-		window.visualViewport.removeEventListener('scroll', updateHeight)
-	})
-})
+const editorHeight = useVisualViewport(
+	(viewport) => `${viewport.height - viewport.offsetTop - 112}px`,
+)
 
 // Setup & hooks
 

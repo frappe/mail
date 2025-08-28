@@ -70,12 +70,11 @@
 	</FileUploader>
 </template>
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
 import { Laugh, Paperclip, SendHorizontal, Trash2 } from 'lucide-vue-next'
 import { Button, ErrorMessage, FileUploader, Progress, TextEditorFixedMenu } from 'frappe-ui'
 
 import { formatBytes } from '@/utils'
-import { useScreenSize, useTextEditorButtons } from '@/utils/composables'
+import { useScreenSize, useTextEditorButtons, useVisualViewport } from '@/utils/composables'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 
 const { isSavingDraft, isLoading, isRecipientsEmpty } = defineProps<{
@@ -91,28 +90,7 @@ const emit = defineEmits(['appendEmoji', 'addAttachment', 'discardMail', 'sendMa
 const { isMobile } = useScreenSize()
 const { buttons } = useTextEditorButtons()
 
-const toolbarBottom = ref('0px')
-
-const updatePosition = () => {
-	if (window.visualViewport)
-		toolbarBottom.value =
-			window.innerHeight -
-			window.visualViewport.height -
-			window.visualViewport.offsetTop +
-			'px'
-}
-
-onMounted(() => {
-	if (!window.visualViewport) return
-	window.visualViewport.addEventListener('resize', updatePosition)
-	window.visualViewport.addEventListener('scroll', updatePosition)
-
-	updatePosition()
-
-	onUnmounted(() => {
-		if (!window.visualViewport) return
-		window.visualViewport.removeEventListener('resize', updatePosition)
-		window.visualViewport.removeEventListener('scroll', updatePosition)
-	})
-})
+const toolbarBottom = useVisualViewport(
+	(viewport) => `${window.innerHeight - viewport.height - viewport.offsetTop}px`,
+)
 </script>
