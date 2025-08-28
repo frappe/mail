@@ -624,8 +624,26 @@ def fetch_threads(account: str, filter: dict | None = None, position: int = 0, l
 	validate_permission_for_account(account)
 
 	client = get_jmap_client(account)
-	_ids = client.thread_query(filter, position, limit, fetch_all=False)
-	messages = get_messages(account, _ids=_ids)
+	thread_to_messages = client.thread_query(filter, position, limit, fetch_all=True)
+
+	if not thread_to_messages:
+		return []
+
+	primary_message_ids = []
+	thread_message_map = {}
+
+	for _thread_id, message_ids in thread_to_messages.items():
+		if not message_ids:
+			continue
+
+		recent_message_id = message_ids[0]
+		primary_message_ids.append(recent_message_id)
+		thread_message_map[recent_message_id] = message_ids
+
+	messages = get_messages(account, _ids=primary_message_ids)
+
+	for message in messages:
+		message["thread_message_ids"] = thread_message_map[message["_id"]]
 
 	return messages
 
@@ -697,35 +715,6 @@ def get_messages(account: str, _ids: list[str], sort_asc: bool = False) -> list[
 			messages.append(message)
 
 	return sorted(messages, key=lambda m: m["received_at"], reverse=not sort_asc)
-
-
-def get_message_ids(
-	account: str, thread_ids: list[str], mailbox_id: str | list[str] | None = None
-) -> list[str]:
-	"""Returns the message IDs for the given threads."""
-
-	if not account or not thread_ids:
-		frappe.throw(_("Account and Thread IDs are required."))
-
-	validate_permission_for_account(account)
-
-	try:
-		client = get_jmap_client(account)
-		result = client.thread_get(thread_ids)
-		_ids = [_id for _thread_id, ids in result.items() for _id in ids]
-
-		if not mailbox_id:
-			return _ids
-
-		emails, _state = client.email_get(_ids, properties=["id", "mailboxIds"])
-		if isinstance(mailbox_id, str):
-			return [email["id"] for email in emails if mailbox_id in email["mailboxIds"]]
-		else:
-			return [email["id"] for email in emails if not set(mailbox_id).isdisjoint(email["mailboxIds"])]
-
-	except Exception:
-		frappe.log_error(_("Failed to fetch message IDs."), frappe.get_traceback(with_context=True))
-		frappe.throw(_("Failed to fetch message IDs."))
 
 
 def delete_messages(account: str, _ids: list[str]) -> None:
