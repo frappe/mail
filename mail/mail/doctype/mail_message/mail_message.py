@@ -1094,21 +1094,28 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 		result = client.email_changes(current_state)
 
 		if created_ids := result["created"]:
-			inbox_id = client.get_mailbox_id_by_role("inbox", raise_exception=True)
-			user, create_contact = frappe.db.get_value(
-				"Mail Account", account, ["user", "create_mail_contact"]
-			)
+			if messages := get_messages(account, _ids=created_ids):
+				inbox_id = client.get_mailbox_id_by_role("inbox", raise_exception=True)
+				user, should_create_contact = frappe.db.get_value(
+					"Mail Account", account, ["user", "create_mail_contact"]
+				)
 
-			for message in get_messages(account, _ids=created_ids):
-				if create_contact:
-					for rcpt in message["recipients"]:
-						create_mail_contact(user, rcpt["email"], rcpt["display_name"])
+				mailboxes = set()
+				for message in messages:
+					if should_create_contact:
+						for recipient in message["recipients"]:
+							create_mail_contact(user, recipient["email"], recipient["display_name"])
 
-				if not message["draft"] and not message["seen"]:
-					for mailbox in message["mailboxes"]:
-						if mailbox["mailbox_id"] == inbox_id:
-							# Send Push Notification
-							break
+					if not message["draft"] and not message["seen"]:
+						for mailbox in message["mailboxes"]:
+							mailboxes.add(mailbox["mailbox_id"])
+
+							if mailbox["mailbox_id"] == inbox_id:
+								# Send Push Notification
+								pass
+
+				if mailboxes:
+					frappe.publish_realtime("new_mail_created", list(mailboxes), user=account)
 
 		if updated_ids := result["updated"]:
 			_remove_messages_from_cache(account, updated_ids)
@@ -1118,8 +1125,6 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 
 		new_state = result["newState"]
 		update_current_state(account, new_state)
-
-		frappe.publish_realtime("mail_created_or_updated", user=account)
 
 		if result["hasMoreChanges"]:
 			fetch_changes(account)
