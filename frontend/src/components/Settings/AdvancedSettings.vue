@@ -32,7 +32,7 @@ const showSecret = ref(false)
 const apiSecret = ref('')
 
 const generateKeys = createResource({
-	url: 'frappe.core.doctype.user.user.generate_keys',
+	url: 'mail.utils.user.generate_user_keys',
 	makeParams: () => ({ user: user.data?.name }),
 	onSuccess: (data) => {
 		if (!user.data?.api_key) user.reload()

@@ -1,8 +1,11 @@
 from urllib.parse import urljoin
 
 import frappe
+from frappe import _
+from frappe.core.doctype.user.user import generate_keys
 from frappe.utils.caching import request_cache
 
+from mail.utils import user_context
 from mail.utils.cache import get_account_for_user, get_aliases_for_user, get_tenant_for_user
 
 
@@ -93,6 +96,18 @@ def has_role(user: str, roles: str | list) -> bool:
 			return True
 
 	return False
+
+
+@frappe.whitelist(methods=["POST"])
+def generate_user_keys(user: str) -> dict:
+	"""Generates API and Secret keys for the user."""
+
+	session_user = frappe.session.user
+	if is_system_manager(session_user) or session_user == user:
+		with user_context("Administrator"):
+			return generate_keys(user)
+
+	frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
 def get_caldav_settings(user: str) -> dict:
