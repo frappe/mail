@@ -415,6 +415,7 @@ class MailAccount(Document):
 			)
 			frappe.throw(_("Failed to set vacation response."))
 
+	@frappe.whitelist()
 	def regenerate_password(self) -> None:
 		"""Regenerates the password for the Mail Account."""
 
