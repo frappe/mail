@@ -22,7 +22,7 @@
 					<Button
 						v-if="isInThread"
 						variant="ghost"
-						:disabled="isLoading"
+						:disabled="isLoading || isDraftUpdated"
 						@click="emit('popOut', mail)"
 					>
 						<template #icon>
@@ -307,9 +307,9 @@ const onMailUpdateSuccess = ({
 	if (_id) mail._id = _id
 	updateOriginalMail()
 	if (error) return raiseToast(error, 'error')
-	if (show.value) return
+	if (!isInThread) reloadMails()
 
-	reloadMails()
+	if (show.value) return
 	if (status === 'Drafted') raiseToast(__('Draft saved.'))
 	else if (status === 'Submitted') raiseToast(__('Message sent.'))
 }

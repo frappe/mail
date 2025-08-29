@@ -27,7 +27,14 @@
 		<Button :label="__('Delete Now')" variant="ghost" @click="showEmptyMailbox = true" />
 	</div>
 
-	<div class="relative flex h-[calc(100dvh-3.05rem)]">
+	<div
+		class="relative flex"
+		:class="
+			[mailboxIds.trash, mailboxIds.junk].includes(mailbox)
+				? 'h-[calc(100dvh-6.1rem)]'
+				: 'h-[calc(100dvh-3.05rem)]'
+		"
+	>
 		<!-- Loading -->
 		<div
 			v-if="threads?.loading && limit === 50"

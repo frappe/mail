@@ -200,6 +200,7 @@
 				<div
 					v-if="thread.data.length && !thread.data?.at(-1)?.draft"
 					class="flex items-center space-x-2"
+					:class="{ 'px-3': isMobile }"
 				>
 					<Button
 						:icon-left="Reply"
