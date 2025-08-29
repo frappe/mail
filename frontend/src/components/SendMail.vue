@@ -12,7 +12,7 @@
 				ref="composeMailEditor"
 				v-model="show"
 				:mail-details
-				@reload-mails="emit('reloadMails')"
+				:reload-mails="() => emit('reloadMails')"
 				@discard-mail="emit('discardMail')"
 			/>
 		</template>

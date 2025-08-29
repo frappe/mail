@@ -192,12 +192,17 @@ import type { Attachment, ComposeMailData, File as FileDoc, UserResource } from 
 
 const show = defineModel<boolean>()
 
-const { mailDetails, isInThread = false } = defineProps<{
+const {
+	reloadMails,
+	mailDetails,
+	isInThread = false,
+} = defineProps<{
+	reloadMails: () => void
 	mailDetails?: ComposeMailData
 	isInThread?: boolean
 }>()
 
-const emit = defineEmits(['reloadMails', 'discardMail', 'reply', 'replyAll', 'forward', 'popOut'])
+const emit = defineEmits(['discardMail', 'reply', 'replyAll', 'forward', 'popOut'])
 
 // Editor
 
@@ -258,10 +263,7 @@ onMounted(() => {
 	if (mailDetails?.type === 'forward') setTimeout(() => toInput.value?.setFocus(), 50)
 })
 
-onUnmounted(() => {
-	saveDraft()
-	// emit('discardMail')
-})
+onUnmounted(() => saveDraft())
 
 watchDebounced(mail, () => saveDraft(), { debounce: 2000 })
 
@@ -293,10 +295,23 @@ const discardMail = () => {
 
 defineExpose({ sendMail, discardMail })
 
-const onMailUpdateSuccess = ({ _id, save_as_draft }: { _id: string; save_as_draft: boolean }) => {
-	mail._id = _id
+const onMailUpdateSuccess = ({
+	_id,
+	status,
+	error,
+}: {
+	_id: string
+	status: string
+	error: string
+}) => {
+	if (_id) mail._id = _id
 	updateOriginalMail()
-	if (!show.value) raiseToast(save_as_draft ? __('Draft saved.') : __('Message sent.'))
+	if (error) return raiseToast(error, 'error')
+	if (show.value) return
+
+	reloadMails()
+	if (status === 'Drafted') raiseToast(__('Draft saved.'))
+	else if (status === 'Submitted') raiseToast(__('Message sent.'))
 }
 
 // Resources
@@ -309,6 +324,7 @@ const createMail = createResource({
 		save_as_draft: isSavingDraft.value,
 	}),
 	onSuccess: onMailUpdateSuccess,
+	onError: (error) => raiseToast(error.message, 'error'),
 })
 
 const updateDraft = createResource({
@@ -319,15 +335,17 @@ const updateDraft = createResource({
 		submit: !isSavingDraft.value,
 	}),
 	onSuccess: onMailUpdateSuccess,
+	onError: (error) => raiseToast(error.message, 'error'),
 })
 
 const deleteMail = createResource({
 	url: 'mail.api.mail.delete_mail',
 	makeParams: () => ({ _id: mail._id }),
 	onSuccess: () => {
-		emit('reloadMails')
+		reloadMails()
 		raiseToast(__('Draft discarded.'))
 	},
+	onError: (error) => raiseToast(error.message, 'error'),
 })
 
 const isLoading = computed(() => createMail.loading || updateDraft.loading || deleteMail.loading)

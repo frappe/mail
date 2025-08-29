@@ -67,9 +67,9 @@
 					<ComposeMailEditor
 						v-if="mail.draft && !isMobile"
 						v-model="mail.show"
+						:reload-mails="() => reload()"
 						:mail-details="draftMails[mail.name]"
 						:is-in-thread="true"
-						@reload-mails="emit('reloadMails')"
 						@discard-mail="discardLocalDraft(mail.name)"
 						@reply="reply(getSourceMail(mail.name))"
 						@reply-all="replyAll(getSourceMail(mail.name))"
@@ -122,7 +122,7 @@
 											variant="ghost"
 											@click.stop="
 												starMails.submit({
-													names: [mail.name],
+													_ids: [mail._id],
 													flagged: false,
 												})
 											"
@@ -197,7 +197,10 @@
 					</template>
 				</div>
 
-				<div v-if="!thread.data?.at(-1)?.draft" class="flex items-center space-x-2">
+				<div
+					v-if="thread.data.length && !thread.data?.at(-1)?.draft"
+					class="flex items-center space-x-2"
+				>
 					<Button
 						:icon-left="Reply"
 						:label="__('Reply')"
@@ -224,7 +227,7 @@
 			v-if="focusedDraft"
 			v-model="showSendModal"
 			:mail-details="draftMails[focusedDraft]"
-			@reload-mails="emit('reloadMails')"
+			@reload-mails="reload"
 			@discard-mail="discardLocalDraft(focusedDraft)"
 		/>
 	</div>
@@ -297,11 +300,7 @@ const thread = createResource({
 	makeParams: () => ({ thread_id: threadID }),
 	transform: (data: Mail[]) =>
 		data
-			.filter((mail) => {
-				const mailboxes = mail.mailboxes.map((m) => m.mailbox_id)
-				const trash = mailboxIds.trash
-				return mailbox === trash ? mailboxes.includes(trash) : !mailboxes.includes(trash)
-			})
+			.filter((mail) => filterRelevantMails(mail))
 			.map((mail) => ({
 				...mail,
 				groupedRecipients: getGroupedRecipients(mail.recipients, false),
@@ -309,7 +308,9 @@ const thread = createResource({
 				show: true,
 			})),
 	onSuccess: (data: Mail[]) => {
-		if (!data.length) return router.push({ name: 'Mailbox', params: { mailbox } })
+		if (!data.filter((mail) => filterRelevantMails(mail)).length)
+			return router.push({ name: 'Mailbox', params: { mailbox } })
+
 		let unseen = true
 		data.forEach((mail) => {
 			if (unseen && !mail.seen) {
@@ -329,13 +330,17 @@ const thread = createResource({
 	onError: () => router.push({ name: 'Mailbox', params: { mailbox } }),
 })
 
+const filterRelevantMails = (mail: Mail) => {
+	const mailboxes = mail.mailboxes.map((m) => m.mailbox_id)
+	const trash = mailboxIds.trash
+	return mailbox === trash ? mailboxes.includes(trash) : !mailboxes.includes(trash)
+}
+
 const reload = () => {
 	if (threadID) thread.reload()
 }
 
 watch(() => threadID, reload)
-
-defineExpose({ reload })
 
 const user = inject('$user')
 

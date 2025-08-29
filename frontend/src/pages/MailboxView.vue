@@ -11,7 +11,7 @@
 				</template>
 			</Breadcrumbs>
 		</div>
-		<HeaderActions />
+		<HeaderActions @reload-mails="reloadMails(true, ['drafts', 'sent'])" />
 	</header>
 
 	<div class="relative flex h-[calc(100dvh-3.05rem)]">
@@ -237,7 +237,7 @@ import { Breadcrumbs, Button, Checkbox, Dropdown, Tooltip, createResource } from
 
 import { getFormattedDate, startResizing } from '@/utils'
 import { useScreenSize, useSidebar } from '@/utils/composables'
-import { userStore } from '@/stores/user'
+import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
 import MailListItem from '@/components/MailListItem.vue'
@@ -402,7 +402,12 @@ const groupedThreads = computed(() =>
 	}, {}),
 )
 
-const reloadMails = (reloadMailboxes = true) => {
+const reloadMails: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) => void = (
+	reloadMailboxes = true,
+	mailboxRoles = [],
+) => {
+	if (mailboxRoles.length && !mailboxRoles.map((m) => mailboxIds[m]).includes(mailbox)) return
+
 	resetSelections()
 	threads.reload()
 	if (reloadMailboxes) mailboxes.reload()
@@ -422,9 +427,8 @@ onMounted(() => {
 	window.addEventListener('keydown', handleKeyDown)
 	window.addEventListener('keyup', handleKeyUp)
 
-	socket.on('mail_created_or_updated', () => {
-		reloadMails()
-		mailboxes.reload()
+	socket.on('new_mail_created', (updatedMailboxes: string[]) => {
+		if (updatedMailboxes.includes(mailbox)) reloadMails()
 	})
 })
 

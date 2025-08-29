@@ -221,7 +221,7 @@ def create_mail(
 		save_as_draft=save_as_draft,
 	)
 
-	return {"_id": doc._id, "save_as_draft": save_as_draft}
+	return {"_id": doc._id, "status": doc.status, "error": doc.error_message}
 
 
 @frappe.whitelist()
@@ -277,7 +277,7 @@ def update_draft_mail(
 
 	new_doc = doc.submit() if submit else doc.save_draft()
 
-	return {"_id": new_doc._id, "save_as_draft": not submit}
+	return {"_id": new_doc._id, "status": new_doc.status, "error": new_doc.error_message}
 
 
 def convert_img_src_from_file_url_to_cid(html_body: str, file_url: str, cid: str) -> str:
