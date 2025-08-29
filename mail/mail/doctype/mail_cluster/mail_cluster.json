@@ -501,7 +501,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "4",
+   "default": "40",
    "description": "Restricts the number of concurrent requests a user can make to the JMAP server.",
    "fieldname": "jmap_protocol_request_max_concurrent",
    "fieldtype": "Int",
@@ -573,7 +573,7 @@
    "reqd": 1
   },
   {
-   "default": "4",
+   "default": "40",
    "description": "Restricts the number of concurrent file uploads a user can perform.",
    "fieldname": "jmap_protocol_upload_max_concurrent",
    "fieldtype": "Int",
@@ -591,7 +591,7 @@
    "reqd": 1
   },
   {
-   "default": "1000",
+   "default": "144000",
    "description": "Specifies the maximum number of files that a user can upload within a certain period.",
    "fieldname": "jmap_protocol_upload_quota_files",
    "fieldtype": "Int",
@@ -600,7 +600,7 @@
    "reqd": 1
   },
   {
-   "default": "50000000",
+   "default": "500000000",
    "description": "Defines the total size of files that a user can upload within a certain period.",
    "fieldname": "jmap_protocol_upload_quota_size",
    "fieldtype": "Int",
@@ -808,7 +808,7 @@
    "link_fieldname": "backend_name"
   }
  ],
- "modified": "2025-08-12 11:43:32.833381",
+ "modified": "2025-08-21 22:06:02.097830",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

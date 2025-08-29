@@ -248,13 +248,13 @@ def extract_recipients(message: dict) -> list:
 			{
 				"email": recipient["address"],
 				"domain_name": recipient["address"].split("@")[-1],
-				"original_rcpt": recipient["orcpt"],
+				"original_rcpt": recipient.get("orcpt"),
 				"status": status,
 				"queue": recipient["queue"],
 				"retry_num": recipient["retry_num"],
 				"next_retry": recipient["next_retry"],
 				"next_notify": recipient["next_notify"],
-				"expires": recipient["expires"],
+				"expires": recipient.get("expires"),
 				"server_response": server_response,
 			}
 		)

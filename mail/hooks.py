@@ -212,6 +212,9 @@ website_route_rules = [
 # ---------------
 
 scheduler_events = {
+	# "all": [
+	#     "mail.tasks.all"
+	# ],
 	"daily": [
 		"mail.mail.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
 	],
@@ -233,6 +236,7 @@ scheduler_events = {
 	"cron": {
 		"*/5 * * * *": [
 			"mail.mail.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
+			"mail.mail.doctype.jmap_push_verification_queue.jmap_push_verification_queue.process_verifications",
 		],
 	},
 }
