@@ -58,7 +58,7 @@ const show = defineModel<boolean>()
 
 const { aliasID } = defineProps<{ aliasID: string }>()
 
-const emit = defineEmits(['reload-aliases'])
+const emit = defineEmits(['reloadAliases'])
 
 const user = inject('$user')
 
@@ -75,7 +75,7 @@ const getAlias = () =>
 			onSuccess: () => {
 				show.value = false
 				raiseToast(__('Alias saved successfully'))
-				emit('reload-aliases')
+				emit('reloadAliases')
 			},
 			onError: (error) => {
 				raiseToast(error.messages[0], 'error')

@@ -23,7 +23,7 @@
 						<Dropdown :options="moveToOptions">
 							<Button variant="ghost">
 								<template #icon>
-									<component :is="FolderInput" class="text-ink-gray-5 h-4 w-4" />
+									<FolderInput class="text-ink-gray-5 h-4 w-4" />
 								</template>
 							</Button>
 						</Dropdown>
@@ -57,129 +57,179 @@
 					:key="mail.name"
 					:class="{
 						'p-3.5': isMobile,
-						'border-b p-3.5 sm:rounded-md sm:border': thread.data.length > 1,
+						'border-b p-3.5 sm:rounded-xl sm:border':
+							thread.data.length > 1 || mail.draft,
 						'cursor-pointer': isCollapsed(mail),
+						'shadow-elevation-light-md': mail.draft && !isMobile,
 					}"
 					@click="mail.collapsed = false"
 				>
-					<div
-						class="flex space-x-3"
-						:class="{
-							'cursor-pointer': mail !== thread.data[thread.data.length - 1],
-							'pb-6': mail.preview,
-						}"
-						@click.stop="mail.collapsed = !mail.collapsed"
-					>
-						<Avatar
-							:label="
-								getFirstAlphabet(mail.from_name) ||
-								getFirstAlphabet(mail.from_email)
-							"
-							:image="mail.user_image"
-							size="xl"
-						/>
-						<div class="flex flex-1 justify-between truncate text-sm">
-							<div class="mr-3 flex flex-col space-y-1 truncate">
-								<div class="flex items-center space-x-1.5">
-									<span class="text-base font-semibold">
-										{{ mail.from_name || mail.from_email }}
-									</span>
-									<span
-										v-if="mail.from_name && !isMobile"
-										class="text-ink-gray-5"
-									>
-										{{ `<${mail.from_email}>` }}
-									</span>
-									<MailDetailsPopover
-										v-if="!(mail.draft || isCollapsed(mail))"
-										:mail
-									/>
-								</div>
-								<div class="truncate">
-									{{ getFormattedRecipients(mail.recipients) }}
-								</div>
-							</div>
-							<div class="flex items-center space-x-1 self-start">
-								<MailDate :datetime="mail.received_at" />
-								<Tooltip
-									v-if="mail.flagged && mailbox !== mailboxIds.trash"
-									:text="__('Unstar')"
-								>
-									<Button
-										variant="ghost"
-										@click.stop="
-											starMails.submit({ _ids: [mail._id], flagged: false })
-										"
-									>
-										<template #icon>
-											<Star
-												class="fill-ink-amber-2 text-ink-amber-2 h-4 w-4"
-											/>
-										</template>
-									</Button>
-								</Tooltip>
-								<Tooltip
-									v-for="action in mailActions(mail).filter(
-										(d) => d.condition !== false && !isCollapsed(mail),
-									)"
-									:key="action.label"
-									:text="action.label"
-								>
-									<Button variant="ghost" @click.stop="action.onClick">
-										<template #icon>
-											<component
-												:is="action.icon"
-												class="text-ink-gray-5 h-4 w-4"
-											/>
-										</template>
-									</Button>
-								</Tooltip>
-								<Tooltip v-if="!isCollapsed(mail)" :text="__('More')">
-									<Dropdown
-										:options="
-											moreActions(mail).filter((d) => d.condition !== false)
-										"
-									>
-										<span @click.stop>
-											<Button variant="ghost">
-												<template #icon>
-													<Ellipsis class="text-ink-gray-5 h-4 w-4" />
-												</template>
-											</Button>
-										</span>
-									</Dropdown>
-								</Tooltip>
-							</div>
-						</div>
-					</div>
+					<ComposeMailEditor
+						v-if="mail.draft && !isMobile"
+						v-model="mail.show"
+						:reload-mails="() => reload()"
+						:mail-details="draftMails[mail.name]"
+						:is-in-thread="true"
+						@discard-mail="discardLocalDraft(mail.name)"
+						@reply="reply(getSourceMail(mail.name))"
+						@reply-all="replyAll(getSourceMail(mail.name))"
+						@forward="forward(getSourceMail(mail.name))"
+						@pop-out="(mailDetails: ComposeMailData) => popOutDraft(mailDetails)"
+					/>
 
-					<div v-show="isCollapsed(mail)" class="truncate">{{ mail.preview }}</div>
-
-					<div v-show="!isCollapsed(mail)">
-						<EmailContent v-if="mail.html_body" :content="mail.html_body" />
-						<pre v-else-if="mail.text_body" class="text-wrap pt-4 text-sm leading-5">{{
-							mail.text_body
-						}}</pre>
-
-						<div v-if="mail.attachments?.length" class="mt-8 flex flex-wrap space-x-2">
-							<AttachmentCapsule
-								v-for="attachment in mail.attachments"
-								:key="attachment.name"
-								:file-name="attachment.filename"
-								:blob-i-d="attachment.blob_id"
-								:type="attachment.type"
-								class="mb-2"
+					<template v-else-if="!mail.name.startsWith('draft')">
+						<div
+							class="flex space-x-3"
+							:class="{
+								'cursor-pointer': mail !== thread.data[thread.data.length - 1],
+								'pb-6': mail.preview,
+							}"
+							@click.stop="mail.collapsed = !mail.collapsed"
+						>
+							<Avatar
+								:label="
+									getFirstAlphabet(mail.from_name) ||
+									getFirstAlphabet(mail.from_email)
+								"
+								:image="mail.user_image"
+								size="xl"
 							/>
+							<div class="flex flex-1 justify-between truncate text-sm">
+								<div class="mr-3 flex flex-col space-y-1 truncate">
+									<div class="flex items-center space-x-1.5">
+										<span class="text-base font-semibold">
+											{{ mail.from_name || mail.from_email }}
+										</span>
+										<span
+											v-if="mail.from_name && !isMobile"
+											class="text-ink-gray-5"
+										>
+											{{ `<${mail.from_email}>` }}
+										</span>
+										<MailDetailsPopover v-if="!isCollapsed(mail)" :mail />
+									</div>
+									<div class="truncate">
+										{{ getFormattedRecipients(mail.recipients) }}
+									</div>
+								</div>
+								<div class="flex items-center space-x-1 self-start">
+									<MailDate :datetime="mail.received_at" />
+									<Tooltip
+										v-if="mail.flagged && mailbox !== mailboxIds.trash"
+										:text="__('Unstar')"
+									>
+										<Button
+											variant="ghost"
+											@click.stop="
+												starMails.submit({
+													_ids: [mail._id],
+													flagged: false,
+												})
+											"
+										>
+											<template #icon>
+												<Star
+													class="fill-ink-amber-2 text-ink-amber-2 h-4 w-4"
+												/>
+											</template>
+										</Button>
+									</Tooltip>
+									<Tooltip
+										v-for="action in mailActions(mail).filter(
+											(d) => d.condition !== false && !isCollapsed(mail),
+										)"
+										:key="action.label"
+										:text="action.label"
+									>
+										<Button variant="ghost" @click.stop="action.onClick">
+											<template #icon>
+												<component
+													:is="action.icon"
+													class="text-ink-gray-5 h-4 w-4"
+												/>
+											</template>
+										</Button>
+									</Tooltip>
+									<Tooltip
+										v-if="!mail.draft && !isCollapsed(mail)"
+										:text="__('More')"
+									>
+										<Dropdown :options="moreActions(mail)">
+											<span @click.stop>
+												<Button variant="ghost">
+													<template #icon>
+														<Ellipsis
+															class="text-ink-gray-5 h-4 w-4"
+														/>
+													</template>
+												</Button>
+											</span>
+										</Dropdown>
+									</Tooltip>
+								</div>
+							</div>
 						</div>
-					</div>
+
+						<div v-show="isCollapsed(mail)" class="truncate">{{ mail.preview }}</div>
+
+						<div v-show="!isCollapsed(mail)">
+							<EmailContent v-if="mail.html_body" :content="mail.html_body" />
+							<pre
+								v-else-if="mail.text_body"
+								class="text-wrap pt-4 text-sm leading-5"
+								>{{ mail.text_body }}</pre
+							>
+
+							<div
+								v-if="mail.attachments?.length"
+								class="mt-8 flex flex-wrap space-x-2"
+							>
+								<AttachmentCapsule
+									v-for="attachment in mail.attachments"
+									:key="attachment.name"
+									:file-name="attachment.filename"
+									:blob-i-d="attachment.blob_id"
+									:type="attachment.type"
+									class="mb-2"
+								/>
+							</div>
+						</div>
+					</template>
+				</div>
+
+				<div
+					v-if="thread.data.length && !thread.data?.at(-1)?.draft"
+					class="flex items-center space-x-2"
+					:class="{ 'px-3': isMobile }"
+				>
+					<Button
+						:icon-left="Reply"
+						:label="__('Reply')"
+						variant="outline"
+						@click="reply(thread.data.at(-1))"
+					/>
+					<Button
+						v-if="showReplyAll(thread.data.at(-1))"
+						:icon-left="ReplyAll"
+						:label="__('Reply All')"
+						variant="outline"
+						@click="replyAll(thread.data.at(-1))"
+					/>
+					<Button
+						:icon-left="Forward"
+						:label="__('Forward')"
+						variant="outline"
+						@click="forward(thread.data.at(-1))"
+					/>
 				</div>
 			</div>
 		</div>
 		<SendMail
+			v-if="focusedDraft"
 			v-model="showSendModal"
-			:mail-i-d="draftMailID"
-			:mail-details
-			@reload-mails="emit('reloadMails')"
+			:mail-details="draftMails[focusedDraft]"
+			@reload-mails="reload"
+			@discard-mail="discardLocalDraft(focusedDraft)"
 		/>
 	</div>
 
@@ -198,7 +248,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, reactive, ref, watch } from 'vue'
+import { computed, inject, nextTick, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
 	Code,
@@ -215,10 +265,16 @@ import {
 } from 'lucide-vue-next'
 import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
 
-import { getFirstAlphabet, getFormattedRecipients, getGroupedRecipients } from '@/utils'
+import {
+	extractQuotedContent,
+	getFirstAlphabet,
+	getFormattedRecipients,
+	getGroupedRecipients,
+} from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
+import ComposeMailEditor from '@/components/ComposeMailEditor.vue'
 import EmailContent from '@/components/EmailContent.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
 import MailDate from '@/components/MailDate.vue'
@@ -237,20 +293,7 @@ const dayjs = inject('$dayjs')
 const router = useRouter()
 const { mailboxes, mailboxIds } = userStore()
 
-const showSendModal = ref(false)
-const draftMailID = ref<string>()
-
-const mailDetails = reactive<ComposeMailData>({
-	from_email: '',
-	to: [],
-	cc: [],
-	bcc: [],
-	subject: '',
-	html_body: '',
-	attachments: [],
-	in_reply_to: '',
-	in_reply_to_id: '',
-})
+const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
 
 const thread = createResource({
 	url: 'mail.api.mail.get_thread',
@@ -258,27 +301,50 @@ const thread = createResource({
 	makeParams: () => ({ thread_id: threadID }),
 	transform: (data: Mail[]) =>
 		data
-			.filter((mail) => {
-				const mailboxes = mail.mailboxes.map((m) => m.mailbox_id)
-				const trash = mailboxIds.trash
-				return mailbox === trash ? mailboxes.includes(trash) : !mailboxes.includes(trash)
-			})
+			.filter((mail) => filterRelevantMails(mail))
 			.map((mail) => ({
 				...mail,
 				groupedRecipients: getGroupedRecipients(mail.recipients, false),
 				collapsed: !!mail.seen,
+				show: true,
 			})),
 	onSuccess: (data: Mail[]) => {
-		if (data.some((mail) => !mail.seen)) emit('setSeen', true)
+		if (!data.filter((mail) => filterRelevantMails(mail)).length) {
+			router.push({ name: 'Mailbox', params: { mailbox } })
+			emit('reloadMails')
+			return
+		}
+
+		let unseen = true
+		data.forEach((mail) => {
+			if (unseen && !mail.seen) {
+				emit('setSeen', true)
+				unseen = false
+			}
+			if (mail.draft) {
+				mail.groupedRecipients = getGroupedRecipients(mail.recipients, false) as {
+					to: string[]
+					cc: string[]
+					bcc: string[]
+				}
+				populateDraftMails(mail)
+			}
+		})
 	},
 	onError: () => router.push({ name: 'Mailbox', params: { mailbox } }),
 })
+
+const filterRelevantMails = (mail: Mail) => {
+	const mailboxes = mail.mailboxes.map((m) => m.mailbox_id)
+	const trash = mailboxIds.trash
+	return mailbox === trash ? mailboxes.includes(trash) : !mailboxes.includes(trash)
+}
 
 const reload = () => {
 	if (threadID) thread.reload()
 }
 
-defineExpose({ reload })
+watch(() => threadID, reload)
 
 const user = inject('$user')
 
@@ -322,13 +388,13 @@ const mailActions = (mail: Mail): MailAction[] => [
 		label: __('Star'),
 		onClick: () => starMails.submit({ _ids: [mail._id], flagged: true }),
 		icon: Star,
-		condition: !mail.flagged && mailbox !== mailboxIds.trash,
+		condition: !mail.flagged && !mail.draft && mailbox !== mailboxIds.trash,
 	},
 	{
 		label: __('Edit Draft'),
-		onClick: () => editDraft(mail),
+		onClick: () => popOutDraft(mail),
 		icon: SquarePen,
-		condition: !!mail.draft,
+		condition: !!mail.draft && isMobile.value,
 	},
 	{
 		label: __('Reply'),
@@ -338,51 +404,68 @@ const mailActions = (mail: Mail): MailAction[] => [
 	},
 ]
 
-const moreActions = (mail: Mail): MailAction[] => [
+interface GroupedAction {
+	group: string
+	items: MailAction[]
+}
+
+const moreActions = (mail: Mail): GroupedAction[] => [
 	{
-		label: __('Reply All'),
-		onClick: () => replyAll(mail),
-		icon: ReplyAll,
-		condition: () =>
-			!mail.draft &&
-			mail.from_email !== user.data.email &&
-			mail.groupedRecipients.to
-				?.concat(mail.groupedRecipients.cc)
-				.filter((m) => m !== user.data.email).length > 0,
+		group: '',
+		items: [
+			{
+				label: __('Reply All'),
+				onClick: () => replyAll(mail),
+				icon: ReplyAll,
+				condition: () => showReplyAll(mail),
+			},
+			{
+				label: __('Forward'),
+				onClick: () => forward(mail),
+				icon: Forward,
+				condition: () => !mail.draft,
+			},
+			{
+				label: __('Move to Trash'),
+				onClick: () => moveMail.submit({ _ids: [mail._id], mailbox: mailboxIds.trash }),
+				icon: Trash2,
+				condition: () => mailbox !== mailboxIds.trash,
+			},
+			{
+				label: __('Delete Message'),
+				onClick: () => deleteMails.submit([mail.name]),
+				icon: Trash2,
+				condition: () => mailbox === mailboxIds.trash,
+			},
+		],
 	},
 	{
-		label: __('Forward'),
-		onClick: () => forward(mail),
-		icon: Forward,
-		condition: () => !mail.draft,
-	},
-	{
-		label: __('Move to Trash'),
-		onClick: () => moveMail.submit({ _ids: [mail._id], mailbox: mailboxIds.trash }),
-		icon: Trash2,
-		condition: () => mailbox !== mailboxIds.trash,
-	},
-	{
-		label: __('Delete Message'),
-		onClick: () => deleteMails.submit([mail.name]),
-		icon: Trash2,
-		condition: () => mailbox === mailboxIds.trash,
-	},
-	{
-		label: __('See MIME Message'),
-		onClick: () => window.open(`/mail/mime-message/${mail.name}`, '_blank')?.focus(),
-		icon: Code,
-		condition: () => !mail.draft && !isMobile.value,
-	},
-	{
-		label: __('View in Desk'),
-		onClick: () => window.open(`/app/mail-message/${mail.name}`, '_blank')?.focus(),
-		icon: ExternalLink,
-		condition: () => user.data.is_system_manager,
+		group: '',
+		items: [
+			{
+				label: __('See MIME Message'),
+				onClick: () => window.open(`/mail/mime-message/${mail.name}`, '_blank')?.focus(),
+				icon: Code,
+				condition: () => !mail.draft && !isMobile.value,
+			},
+			{
+				label: __('View in Desk'),
+				onClick: () => window.open(`/app/mail-message/${mail.name}`, '_blank')?.focus(),
+				icon: ExternalLink,
+				condition: () => user.data.is_system_manager,
+			},
+		],
 	},
 ]
 
 const isCollapsed = (mail: Mail) => mail.collapsed && mail !== thread.data[thread.data.length - 1]
+
+const showReplyAll = (mail: Mail) =>
+	!mail.draft &&
+	mail.from_email !== user.data.email &&
+	mail.groupedRecipients.to
+		?.concat(mail.groupedRecipients.cc)
+		.filter((m) => m !== user.data.email).length > 0
 
 const moveMail = createResource({
 	url: 'mail.api.mail.move_mails',
@@ -411,66 +494,125 @@ const starMails = createResource({
 		),
 })
 
-const editDraft = (mail: Mail) => {
-	draftMailID.value = mail._id
-	mailDetails.name = mail.name
-	mailDetails.from_email = mail.from_email
-	mailDetails.to = mail.groupedRecipients.to
-	mailDetails.cc = mail.groupedRecipients.cc
-	mailDetails.bcc = mail.groupedRecipients.bcc
-	mailDetails.subject = mail.subject || ''
-	mailDetails.html_body = mail.html_body
-	mailDetails.attachments = mail.attachments || []
+const populateDraftMails = (mail: Mail) =>
+	(draftMails[mail.name] = {
+		name: mail.name,
+		_id: mail._id,
+		from_email: mail.from_email,
+		to: mail.groupedRecipients.to,
+		cc: mail.groupedRecipients.cc,
+		bcc: mail.groupedRecipients.bcc,
+		subject: mail.subject || '',
+		in_reply_to: mail.message_id,
+		in_reply_to_id: mail._id,
+		attachments: mail.attachments || [],
+		...extractQuotedContent(mail.html_body),
+	})
+
+const reply = (mail: Mail) =>
+	createLocalDraft(mail, {
+		...getReplyDetails(mail),
+		...getReplyRecipients(mail),
+		type: 'reply',
+	})
+
+const replyAll = (mail: Mail) =>
+	createLocalDraft(mail, {
+		...getReplyDetails(mail),
+		...getReplyAllRecipients(mail),
+		type: 'replyAll',
+	})
+
+const forward = (mail: Mail) =>
+	createLocalDraft(mail, {
+		subject: `Fwd: ${mail.subject}`,
+		html_body: getForwardedContent(mail),
+		attachments: mail.attachments || [],
+		forwarded_from_id: mail._id,
+		type: 'forward',
+	})
+
+const createLocalDraft = (mail: Mail, draftDetails: ComposeMailData) => {
+	mail.collapsed = false
+	const name = `draft:${mail.name}`
+	if (name in draftMails) discardLocalDraft(name)
+
+	nextTick(() => {
+		draftMails[name] = { name, ...draftDetails }
+		const index = thread.data.indexOf(mail)
+		const draft = thread.data.find((m: Mail) => m.name === name)
+		if (index !== -1 && !draft)
+			thread.data.splice(index + 1, 0, { ...draftMails[name], draft: 1, show: true })
+		if (isMobile.value) popOutDraft(draftMails[name])
+	})
+}
+
+const discardLocalDraft = (mail: string) => {
+	delete draftMails[mail]
+	thread.data = thread.data.filter((m: Mail) => m.name !== mail)
+}
+
+const focusedDraft = ref<string>()
+const showSendModal = ref(false)
+
+const popOutDraft = (mail: ComposeMailData) => {
+	draftMails[mail.name as string] = mail
+	focusedDraft.value = mail.name
 	showSendModal.value = true
 }
 
-const reply = (mail: Mail) => {
-	if (isUserEmail(mail.from_email)) mailDetails.to = mail.groupedRecipients.to
+const getSourceMail = (mail: string) =>
+	thread.data.find((m: Mail) => m.name === mail.split(':')[1])
+
+const getReplyDetails = (mail: Mail) => ({
+	subject: mail.subject?.startsWith('Re: ') ? mail.subject : `Re: ${mail.subject}`,
+	quoted_content: getQuotedContent(mail),
+	in_reply_to: mail.message_id,
+	in_reply_to_id: mail._id,
+})
+
+const getReplyRecipients = (mail: Mail) => ({
+	to: isUserEmail(mail.from_email)
+		? mail.groupedRecipients.to
+		: mail.reply_to.length
+			? mail.reply_to.map((r) => r.email)
+			: [mail.from_email],
+})
+
+const getReplyAllRecipients = (mail: Mail) => {
+	if (isUserEmail(mail.from_email))
+		return { to: mail.groupedRecipients.to, cc: mail.groupedRecipients.cc }
 	else
-		mailDetails.to = mail.reply_to.length
-			? mail.reply_to.map((rt) => rt.email)
-			: [mail.from_email]
-
-	setReplyDetailsAndOpenModal(mail)
-}
-
-const replyAll = (mail: Mail) => {
-	if (isUserEmail(mail.from_email)) {
-		mailDetails.to = mail.groupedRecipients.to
-		mailDetails.cc = mail.groupedRecipients.cc
-	} else {
-		mailDetails.to = mail.reply_to.length
-			? mail.reply_to.map((rt) => rt.email)
-			: [mail.from_email]
-
-		const originalRecipients = [...mail.groupedRecipients.to, ...mail.groupedRecipients.cc]
-		mailDetails.cc = originalRecipients.filter((rcpt) => !isUserEmail(rcpt))
-	}
-
-	setReplyDetailsAndOpenModal(mail)
-}
-
-const forward = (mail: Mail) => {
-	mailDetails.subject = `Fwd: ${mail.subject}`
-	mailDetails.html_body = getMailBody(mail)
-	showSendModal.value = true
+		return {
+			to: mail.reply_to.length ? mail.reply_to.map((r) => r.email) : [mail.from_email],
+			cc: [...mail.groupedRecipients.to, ...mail.groupedRecipients.cc].filter(
+				(r) => !isUserEmail(r),
+			),
+		}
 }
 
 const isUserEmail = (email: string) => user.data.email_addresses.includes(email)
 
-const setReplyDetailsAndOpenModal = (mail: Mail) => {
-	mailDetails.subject = mail.subject.startsWith('Re: ') ? mail.subject : `Re: ${mail.subject}`
-	mailDetails.html_body = getMailBody(mail)
-	mailDetails.in_reply_to = mail.message_id
-	mailDetails.in_reply_to_id = mail._id
-	showSendModal.value = true
-}
+const getQuotedContent = (mail: Mail) =>
+	`
+		<div class="frappe_mail_quote">
+			On ${dayjs(mail.received_at).format('DD MMM YYYY [at] h:mm A')}, ${mail.from_email} wrote:
+			<blockquote style="margin-left: 8px">
+				${mail.html_body || '&nbsp;'}
+			</blockquote>
+		</div>
+	`
 
-const getMailBody = (mail: Mail) => {
-	if (!mail.html_body) return ''
-	const replyHeader = `On ${dayjs(mail.received_at).format('DD MMM YYYY')} at ${dayjs(mail.received_at).format('h:mm A')}, ${mail.from_email} wrote:`
-	return `<div class="frappe_mail_quote">${replyHeader}<br><blockquote style="margin-left: 8px"><br>${mail.html_body}</blockquote></div>`
-}
-
-watch(() => threadID, reload)
+const getForwardedContent = (mail: Mail) =>
+	`
+		<br><br>
+		---------- Forwarded message ---------<br>
+		From: ${mail.from_name} < ${mail.from_email} ><br>
+		Date: ${dayjs(mail.received_at).format('ddd, MMM D, YYYY [at] h:mm A')}<br>
+		Subject: ${mail.subject || ''}<br>
+		To: ${mail.groupedRecipients.to.join(', ')}<br>
+		${mail.groupedRecipients.cc.length ? `Cc: ${mail.groupedRecipients.cc.join(', ')}<br>` : ''}
+		<br><br>
+		${mail.html_body || '&nbsp;'}
+	`
 </script>

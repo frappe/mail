@@ -71,7 +71,7 @@ import LinkControl from '@/components/Controls/LinkControl.vue'
 
 const show = defineModel<boolean>()
 
-const emit = defineEmits(['reload-aliases'])
+const emit = defineEmits(['reloadAliases'])
 
 const user = inject('$user')
 
@@ -90,7 +90,7 @@ const alias = useNewDoc(
 		onSuccess: () => {
 			show.value = false
 			raiseToast(__('Alias created successfully'))
-			emit('reload-aliases')
+			emit('reloadAliases')
 		},
 		onError: (error) => raiseToast(error.message, 'error'),
 	},

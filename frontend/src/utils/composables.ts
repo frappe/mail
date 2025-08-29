@@ -49,3 +49,51 @@ export const useTheme = () => {
 
 	return { currentTheme, getSystemTheme, setTheme, activeTheme }
 }
+
+export const useTextEditorButtons = () => {
+	const { isMobile } = useScreenSize()
+
+	const alignButtons = ['Separator', 'Align Left', 'Align Center', 'Align Right']
+
+	const buttons = computed(() => [
+		'Paragraph',
+		['Heading 2', 'Heading 3', 'Heading 4', 'Heading 5', 'Heading 6'],
+		'Separator',
+		'Bold',
+		'Italic',
+		'FontColor',
+		...(isMobile.value ? [] : alignButtons),
+		'Separator',
+		'Bullet List',
+		'Numbered List',
+		'Separator',
+		'Image',
+		'Link',
+	])
+
+	return { buttons }
+}
+
+export const useVisualViewport = (calc: (viewport: VisualViewport) => string) => {
+	const value = ref('0px')
+
+	const update = () => {
+		if (window.visualViewport) value.value = calc(window.visualViewport)
+	}
+
+	onMounted(() => {
+		if (!window.visualViewport) return
+		window.visualViewport.addEventListener('resize', update)
+		window.visualViewport.addEventListener('scroll', update)
+
+		update()
+
+		onUnmounted(() => {
+			if (!window.visualViewport) return
+			window.visualViewport.removeEventListener('resize', update)
+			window.visualViewport.removeEventListener('scroll', update)
+		})
+	})
+
+	return value
+}

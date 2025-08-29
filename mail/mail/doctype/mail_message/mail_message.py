@@ -1115,7 +1115,7 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 								pass
 
 				if mailboxes:
-					frappe.publish_realtime("new_mail_created", list(mailboxes), user=account)
+					frappe.publish_realtime("new_mail_created", list(mailboxes), user=user)
 
 		if updated_ids := result["updated"]:
 			_remove_messages_from_cache(account, updated_ids)

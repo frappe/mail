@@ -6,6 +6,7 @@ from frappe.utils import format_datetime, random_string
 from mail.jmap import get_mailbox_id_by_role
 from mail.mail.doctype.mail_message.mail_message import (
 	delete_messages,
+	empty_mailbox,
 	fetch_blob,
 	fetch_thread,
 	fetch_threads,
@@ -16,6 +17,7 @@ from mail.mail.doctype.mail_message.mail_message import (
 	set_seen_status,
 )
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
+from mail.utils import convert_html_to_text
 from mail.utils.cache import get_account_for_user
 from mail.utils.user import has_role
 
@@ -131,7 +133,7 @@ def serialize_mail(mail: dict) -> dict:
 def serialize_attachments(attachments: list[dict]) -> dict:
 	"""Serializes attachment for response."""
 
-	attachment_fields = ["filename", "type", "size", "blob_id"]
+	attachment_fields = ["filename", "type", "size", "blob_id", "disposition"]
 
 	return [
 		{field: attachment[field] for field in attachment_fields}
@@ -179,8 +181,9 @@ def create_mail(
 	attachments: list[dict] = None,
 	in_reply_to: str | None = None,
 	in_reply_to_id: str | None = None,
+	forwarded_from_id: str | None = None,
 	save_as_draft: bool = False,
-) -> None:
+) -> dict:
 	"""Creates new mail queue."""
 
 	account = get_account_for_user(frappe.session.user)
@@ -190,8 +193,11 @@ def create_mail(
 		cid = random_string(10)
 		doc_attachments.append(
 			{
-				"file_url": d.get("file_url"),
-				"filename": d.get("file_name", ""),
+				"file_url": d.get("file_url", ""),
+				"blob_id": d.get("blob_id", ""),
+				"filename": d.get("file_name") or d.get("filename", ""),
+				"type": d.get("type", ""),
+				"size": d.get("size", ""),
 				"disposition": d.get("disposition"),
 				"cid": cid,
 			}
@@ -203,22 +209,25 @@ def create_mail(
 	recipients += [{"type": "Cc", "email": email} for email in cc]
 	recipients += [{"type": "Bcc", "email": email} for email in bcc]
 
-	MailQueue._create(
+	doc = MailQueue._create(
 		account=account,
 		from_email=from_email,
 		subject=subject,
 		html_body=html_body,
 		in_reply_to=in_reply_to,
 		in_reply_to_id=in_reply_to_id,
+		forwarded_from_id=forwarded_from_id,
 		attachments=doc_attachments,
 		recipients=recipients,
 		save_as_draft=save_as_draft,
 	)
 
+	return {"_id": doc._id, "status": doc.status, "error": doc.error_message}
+
 
 @frappe.whitelist()
 def update_draft_mail(
-	name: str,
+	_id: str,
 	from_email: str,
 	to: list[str],
 	cc: list[str],
@@ -227,10 +236,12 @@ def update_draft_mail(
 	html_body: str | None,
 	attachments: list[dict] = None,
 	submit: bool = False,
-) -> None:
+) -> dict:
 	"""Creates new mail queue from existing draft message."""
 
-	doc = frappe.get_doc("Mail Message", name)
+	account = get_account_for_user(frappe.session.user)
+
+	doc = frappe.get_doc("Mail Message", f"{account}|{_id}")
 	doc.check_permission(permtype="write")
 
 	doc.from_email = from_email
@@ -255,6 +266,7 @@ def update_draft_mail(
 			html_body = convert_img_src_from_file_url_to_cid(html_body, d.get("file_url"), cid)
 
 	doc.html_body = convert_img_src_from_base64_to_cid(html_body)
+	doc.text_body = convert_html_to_text(doc.html_body)
 
 	doc.recipients = []
 	for email in to:
@@ -264,7 +276,9 @@ def update_draft_mail(
 	for email in bcc:
 		doc.append("recipients", {"type": "Bcc", "email": email})
 
-	doc.submit() if submit else doc.save_draft()
+	new_doc = doc.submit() if submit else doc.save_draft()
+
+	return {"_id": new_doc._id, "status": new_doc.status, "error": new_doc.error_message}
 
 
 def convert_img_src_from_file_url_to_cid(html_body: str, file_url: str, cid: str) -> str:
@@ -401,6 +415,14 @@ def delete_threads(thread_ids: list[str], mailbox: str) -> list[str]:
 	delete_messages(account, messages)
 
 	return thread_ids
+
+
+@frappe.whitelist()
+def empty_user_mailbox(mailbox: str) -> None:
+	"""Empties the given mailbox."""
+
+	account = get_account_for_user(frappe.session.user)
+	empty_mailbox(account, mailbox)
 
 
 @frappe.whitelist()

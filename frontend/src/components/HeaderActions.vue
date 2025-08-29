@@ -4,7 +4,7 @@
 		<Button icon-left="edit" :label="__('Compose')" @click="showSendModal = true" />
 	</div>
 
-	<SendMail v-model="showSendModal" />
+	<SendMail v-model="showSendModal" @reload-mails="emit('reloadMails')" />
 	<SearchModal v-model="showSearchModal" />
 </template>
 <script setup lang="ts">
@@ -13,6 +13,8 @@ import { Button } from 'frappe-ui'
 
 import SearchModal from '@/components/Modals/SearchModal.vue'
 import SendMail from '@/components/SendMail.vue'
+
+const emit = defineEmits(['reloadMails'])
 
 const showSearchModal = ref(false)
 const showSendModal = ref(false)

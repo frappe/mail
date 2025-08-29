@@ -11,10 +11,30 @@
 				</template>
 			</Breadcrumbs>
 		</div>
-		<HeaderActions />
+		<HeaderActions @reload-mails="reloadMails(true, ['drafts', 'sent'])" />
 	</header>
+	<div
+		v-if="
+			[mailboxIds.trash, mailboxIds.junk].includes(mailbox) &&
+			threads.data?.length &&
+			(userLayout === 'split' || !threadID)
+		"
+		class="space-x-1 border-b px-3 py-2.5 sm:px-5"
+	>
+		<span class="text-ink-gray-5">
+			{{ __('Items in this mailbox will be automatically deleted after 30 days.') }}
+		</span>
+		<Button :label="__('Delete Now')" variant="ghost" @click="showEmptyMailbox = true" />
+	</div>
 
-	<div class="relative flex h-[calc(100dvh-3.05rem)]">
+	<div
+		class="relative flex"
+		:class="
+			[mailboxIds.trash, mailboxIds.junk].includes(mailbox)
+				? 'h-[calc(100dvh-6.1rem)]'
+				: 'h-[calc(100dvh-3.05rem)]'
+		"
+	>
 		<!-- Loading -->
 		<div
 			v-if="threads?.loading && limit === 50"
@@ -205,9 +225,20 @@
 			<p>{{ __('You have no mails in this folder.') }}</p>
 		</div>
 	</div>
+
+	<Dialog v-model="showEmptyMailbox" :options="emptyMailboxOptions" />
 </template>
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+import {
+	computed,
+	inject,
+	// nextTick,
+	onMounted,
+	onUnmounted,
+	ref,
+	useTemplateRef,
+	watch,
+} from 'vue'
 import { useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import {
@@ -224,11 +255,19 @@ import {
 	Star,
 	Trash2,
 } from 'lucide-vue-next'
-import { Breadcrumbs, Button, Checkbox, Dropdown, Tooltip, createResource } from 'frappe-ui'
+import {
+	Breadcrumbs,
+	Button,
+	Checkbox,
+	Dialog,
+	Dropdown,
+	Tooltip,
+	createResource,
+} from 'frappe-ui'
 
-import { getFormattedDate, startResizing } from '@/utils'
+import { getFormattedDate, raiseToast, startResizing } from '@/utils'
 import { useScreenSize, useSidebar } from '@/utils/composables'
-import { userStore } from '@/stores/user'
+import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
 import MailListItem from '@/components/MailListItem.vue'
@@ -374,6 +413,11 @@ const filter = ref<string | null>(
 const threads = createResource({
 	url: 'mail.api.mail.get_threads',
 	makeParams: () => ({ mailbox, limit: limit.value, filter_by: filter.value }),
+	// onSuccess: () => {
+	// 	if (allSelected.value && allSelectedManuallyToggled.value) {
+	// 		nextTick(() => mailItems.value?.forEach((item) => item?.setIsSelected(true)))
+	// 	}
+	// },
 })
 
 const threadIDs = computed(() => threads.data?.map((thread: Thread) => thread.thread_id) || [])
@@ -388,7 +432,12 @@ const groupedThreads = computed(() =>
 	}, {}),
 )
 
-const reloadMails = (reloadMailboxes = true) => {
+const reloadMails: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) => void = (
+	reloadMailboxes = true,
+	mailboxRoles = [],
+) => {
+	if (mailboxRoles.length && !mailboxRoles.map((m) => mailboxIds[m]).includes(mailbox)) return
+
 	resetSelections()
 	threads.reload()
 	if (reloadMailboxes) mailboxes.reload()
@@ -408,9 +457,8 @@ onMounted(() => {
 	window.addEventListener('keydown', handleKeyDown)
 	window.addEventListener('keyup', handleKeyUp)
 
-	socket.on('mail_created_or_updated', (updatedMailbox: string) => {
-		if (updatedMailbox === mailbox) reloadMails()
-		else if ([mailboxIds.inbox, mailboxIds.junk].includes(updatedMailbox)) mailboxes.reload()
+	socket.on('new_mail_created', (updatedMailboxes: string[]) => {
+		if (updatedMailboxes.includes(mailbox)) reloadMails()
 	})
 })
 
@@ -495,6 +543,34 @@ const deleteThreads = createResource({
 		reloadMails()
 	},
 })
+
+const showEmptyMailbox = ref(false)
+
+const emptyMailbox = createResource({
+	url: 'mail.api.mail.empty_user_mailbox',
+	makeParams: () => ({ mailbox }),
+	onSuccess: () => {
+		raiseToast(__('{0} emptied successfully', [mailboxName.value]))
+		reloadMails()
+	},
+	onError: (error) => raiseToast(error.message, 'error'),
+})
+
+const emptyMailboxOptions = computed(() => ({
+	title: __('Empty {0}', [mailboxName.value]),
+	message: __(`Are you sure you want to empty the contents of this mailbox?`),
+	icon: { name: 'alert-triangle', appearance: 'warning' },
+	actions: [
+		{
+			label: __('Confirm'),
+			variant: 'solid',
+			onClick: () => {
+				emptyMailbox.submit()
+				showEmptyMailbox.value = false
+			},
+		},
+	],
+}))
 
 // Filter
 

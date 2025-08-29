@@ -35,7 +35,7 @@ const show = defineModel<boolean>()
 
 const { list } = defineProps<{ list: string }>()
 
-const emit = defineEmits(['reload-members'])
+const emit = defineEmits(['reloadMembers'])
 
 const member = useNewDoc(
 	'Mailing List External Member',
@@ -45,7 +45,7 @@ const member = useNewDoc(
 		onSuccess: () => {
 			show.value = false
 			raiseToast(__('Member added successfully'))
-			emit('reload-members')
+			emit('reloadMembers')
 		},
 		onError: (error) => raiseToast(error.message, 'error'),
 	},
