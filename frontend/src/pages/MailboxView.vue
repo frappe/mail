@@ -13,6 +13,19 @@
 		</div>
 		<HeaderActions @reload-mails="reloadMails(true, ['drafts', 'sent'])" />
 	</header>
+	<div
+		v-if="
+			[mailboxIds.trash, mailboxIds.junk].includes(mailbox) &&
+			threads.data?.length &&
+			(userLayout === 'split' || !threadID)
+		"
+		class="space-x-1 border-b px-3 py-2.5 sm:px-5"
+	>
+		<span class="text-ink-gray-5">
+			{{ __('Items in this mailbox will be automatically deleted after 30 days.') }}
+		</span>
+		<Button :label="__('Delete Now')" variant="ghost" @click="showEmptyMailbox = true" />
+	</div>
 
 	<div class="relative flex h-[calc(100dvh-3.05rem)]">
 		<!-- Loading -->
@@ -205,6 +218,8 @@
 			<p>{{ __('You have no mails in this folder.') }}</p>
 		</div>
 	</div>
+
+	<Dialog v-model="showEmptyMailbox" :options="emptyMailboxOptions" />
 </template>
 <script setup lang="ts">
 import {
@@ -233,9 +248,17 @@ import {
 	Star,
 	Trash2,
 } from 'lucide-vue-next'
-import { Breadcrumbs, Button, Checkbox, Dropdown, Tooltip, createResource } from 'frappe-ui'
+import {
+	Breadcrumbs,
+	Button,
+	Checkbox,
+	Dialog,
+	Dropdown,
+	Tooltip,
+	createResource,
+} from 'frappe-ui'
 
-import { getFormattedDate, startResizing } from '@/utils'
+import { getFormattedDate, raiseToast, startResizing } from '@/utils'
 import { useScreenSize, useSidebar } from '@/utils/composables'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
@@ -513,6 +536,34 @@ const deleteThreads = createResource({
 		reloadMails()
 	},
 })
+
+const showEmptyMailbox = ref(false)
+
+const emptyMailbox = createResource({
+	url: 'mail.api.mail.empty_user_mailbox',
+	makeParams: () => ({ mailbox }),
+	onSuccess: () => {
+		raiseToast(__('{0} emptied successfully', [mailboxName.value]))
+		reloadMails()
+	},
+	onError: (error) => raiseToast(error.message, 'error'),
+})
+
+const emptyMailboxOptions = computed(() => ({
+	title: __('Empty {0}', [mailboxName.value]),
+	message: __(`Are you sure you want to empty the contents of this mailbox?`),
+	icon: { name: 'alert-triangle', appearance: 'warning' },
+	actions: [
+		{
+			label: __('Confirm'),
+			variant: 'solid',
+			onClick: () => {
+				emptyMailbox.submit()
+				showEmptyMailbox.value = false
+			},
+		},
+	],
+}))
 
 // Filter
 

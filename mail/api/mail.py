@@ -6,6 +6,7 @@ from frappe.utils import format_datetime, random_string
 from mail.jmap import get_mailbox_id_by_role
 from mail.mail.doctype.mail_message.mail_message import (
 	delete_messages,
+	empty_mailbox,
 	fetch_blob,
 	fetch_thread,
 	fetch_threads,
@@ -414,6 +415,14 @@ def delete_threads(thread_ids: list[str], mailbox: str) -> list[str]:
 	delete_messages(account, messages)
 
 	return thread_ids
+
+
+@frappe.whitelist()
+def empty_user_mailbox(mailbox: str) -> None:
+	"""Empties the given mailbox."""
+
+	account = get_account_for_user(frappe.session.user)
+	empty_mailbox(account, mailbox)
 
 
 @frappe.whitelist()

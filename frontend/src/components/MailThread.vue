@@ -308,8 +308,11 @@ const thread = createResource({
 				show: true,
 			})),
 	onSuccess: (data: Mail[]) => {
-		if (!data.filter((mail) => filterRelevantMails(mail)).length)
-			return router.push({ name: 'Mailbox', params: { mailbox } })
+		if (!data.filter((mail) => filterRelevantMails(mail)).length) {
+			router.push({ name: 'Mailbox', params: { mailbox } })
+			emit('reloadMails')
+			return
+		}
 
 		let unseen = true
 		data.forEach((mail) => {
