@@ -8,7 +8,7 @@
 				:label="value"
 				theme="gray"
 				variant="subtle"
-				class="rounded text-sm"
+				class="!text-ink-gray-7 rounded"
 				@keydown.delete.capture.stop="removeLastValue"
 			>
 				<template #suffix>
@@ -21,7 +21,7 @@
 						<template #target="{ togglePopover }">
 							<ComboboxInput
 								ref="search"
-								class="bg-surface-white sm:bg-surface-modal sm:hover:bg-surface-modal sm:focus:bg-surface-modal search-input form-input w-full border-none focus:border-none focus:!shadow-none focus-visible:!ring-0"
+								class="search-input form-input w-full border-none !bg-inherit focus:border-none focus:!shadow-none focus-visible:!ring-0"
 								type="text"
 								:value="query"
 								autocomplete="off"

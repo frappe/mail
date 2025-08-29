@@ -56,7 +56,7 @@ const show = defineModel<boolean>()
 
 const { inviteID } = defineProps<{ inviteID: string }>()
 
-const emit = defineEmits(['reload-invites'])
+const emit = defineEmits(['reloadInvites'])
 
 const accountRequest = ref()
 
@@ -68,7 +68,7 @@ const getMailAccountRequest = () =>
 			onSuccess: () => {
 				show.value = false
 				raiseToast(__('Invite updated successfully'))
-				emit('reload-invites')
+				emit('reloadInvites')
 			},
 			onError: (error) => {
 				raiseToast(error.messages[0], 'error')

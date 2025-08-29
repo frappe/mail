@@ -170,7 +170,7 @@ export interface MailDomainRequest extends DocType {
 	tenant: string
 }
 
-// Last updated: 2025-08-06 15:05:28.556234
+// Last updated: 2025-08-19 15:58:31.062290
 export interface MailAccount extends DocType {
 	/** Enabled: Check */
 	enabled: 0 | 1
@@ -346,7 +346,7 @@ export interface MailMessagePart extends ChildDocType {
 	size?: number
 }
 
-// Last updated: 2025-08-15 18:43:26.294754
+// Last updated: 2025-08-19 17:25:24.459352
 export interface MailMessage extends DocType {
 	/** Account: Link (Mail Account) */
 	account: string

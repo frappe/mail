@@ -38,7 +38,7 @@ const srcdoc = computed(() => {
 			background: ${colors.value.button};
 			color: ${colors.value.text};
 			padding: 0.5px 6px;
-			border-radius: 4px;
+			border-radius: 8px;
 			cursor: pointer;
 			transition: background 0.2s;
 			margin: 12px 0;

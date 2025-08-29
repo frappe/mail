@@ -37,8 +37,8 @@
 							</span>
 							<span v-else> Mail </span>
 						</div>
-						<div v-if="userResource" class="text-ink-gray-6 mt-1 text-sm leading-none">
-							{{ convertToTitleCase(userResource.data?.full_name) }}
+						<div class="text-ink-gray-6 mt-1 text-sm leading-none">
+							{{ convertToTitleCase(user.data.full_name) }}
 						</div>
 					</div>
 					<div
@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { inject, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
 	ChevronDown,
@@ -74,15 +74,14 @@ import { Dropdown } from 'frappe-ui'
 import { convertToTitleCase } from '@/utils'
 import { useScreenSize, useTheme } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
-import { userStore } from '@/stores/user'
 import AppsMenu from '@/components/AppsMenu.vue'
 import MailLogo from '@/components/Icons/MailLogo.vue'
 import SettingsModal from '@/components/Modals/SettingsModal.vue'
 
+const user = inject('$user')
 const route = useRoute()
 const router = useRouter()
 const { logout, branding } = sessionStore()
-const { userResource } = userStore()
 const { isMobile } = useScreenSize()
 const { setTheme } = useTheme()
 
@@ -96,17 +95,15 @@ const userDropdownOptions = [
 		label: __('Mailbox'),
 		onClick: () => router.push('/mailbox'),
 		condition: () =>
-			userResource.data.is_mail_admin &&
-			userResource.data.default_outgoing &&
-			route.meta.isDashboard,
+			user.data.is_mail_admin && user.data.default_outgoing && route.meta.isDashboard,
 	},
 	{
 		icon: Crown,
 		label: __('Admin Dashboard'),
 		onClick: () => router.push('/dashboard'),
 		condition: () =>
-			userResource.data.is_mail_admin &&
-			userResource.data.default_outgoing &&
+			user.data.is_mail_admin &&
+			user.data.default_outgoing &&
 			!route.meta.isDashboard &&
 			!isMobile.value,
 	},
@@ -114,7 +111,7 @@ const userDropdownOptions = [
 		icon: SettingsIcon,
 		label: __('Settings'),
 		onClick: () => (showSettings.value = true),
-		condition: () => !userResource.data.is_tenant_owner && !isMobile.value,
+		condition: () => !user.data.is_tenant_owner && !isMobile.value,
 	},
 	{
 		icon: SunMoon,
@@ -139,7 +136,7 @@ const userDropdownOptions = [
 	},
 	{
 		component: AppsMenu,
-		condition: () => userResource.data.is_system_manager && !isMobile.value,
+		condition: () => user.data.is_system_manager && !isMobile.value,
 	},
 	{
 		icon: LogOut,

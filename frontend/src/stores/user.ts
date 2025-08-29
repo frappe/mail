@@ -6,21 +6,24 @@ import router from '@/router'
 
 import type { UserResource } from '@/types'
 
-type Mailbox = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
+export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
 
 export const userStore = defineStore('mail-users', () => {
 	const userResource: UserResource = createResource({
 		url: 'mail.api.account.get_user_info',
+		onSuccess: (data) => {
+			if (data) mailboxes.reload()
+		},
 		onError: (error) => {
 			if (error && error.exc_type === 'AuthenticationError') router.push('/login')
 		},
 		auto: true,
 	})
 
-	const mailboxes = createResource({ url: 'mail.api.mail.get_mailboxes', auto: true })
+	const mailboxes = createResource({ url: 'mail.api.mail.get_mailboxes' })
 
 	const mailboxIds = computed(() => {
-		const ids: Record<Mailbox, string> = {
+		const ids: Record<MailboxRole, string> = {
 			inbox: '',
 			sent: '',
 			drafts: '',
@@ -29,7 +32,7 @@ export const userStore = defineStore('mail-users', () => {
 			archive: '',
 			important: '',
 		}
-		mailboxes.data?.forEach((m: { role?: Mailbox; id: string }) => {
+		mailboxes.data?.forEach((m: { role?: MailboxRole; id: string }) => {
 			if (m.role) ids[m.role] = m.id
 		})
 		return ids

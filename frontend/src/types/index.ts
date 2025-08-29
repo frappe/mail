@@ -75,15 +75,19 @@ export interface Mail {
 
 export interface ComposeMailData {
 	name?: string
-	from_email: string
-	to: string[]
-	cc: string[]
-	bcc: string[]
-	subject: string
-	html_body: string
-	attachments: Attachment[]
-	in_reply_to: string
-	in_reply_to_id: string
+	_id?: string
+	from_email?: string
+	to?: string[]
+	cc?: string[]
+	bcc?: string[]
+	subject?: string
+	quoted_content?: string
+	html_body?: string
+	attachments?: Attachment[]
+	in_reply_to?: string
+	in_reply_to_id?: string
+	forwarded_from_id?: string
+	type?: 'reply' | 'replyAll' | 'forward'
 }
 
 export interface Thread {

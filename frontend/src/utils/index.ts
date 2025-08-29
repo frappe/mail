@@ -140,41 +140,6 @@ export const getFormattedDate = (date: Date) => {
 	return dayjs(date).format(isCurrentYear ? 'D MMMM' : 'D MMMM YYYY')
 }
 
-export const textEditorButtons = [
-	'Paragraph',
-	['Heading 2', 'Heading 3', 'Heading 4', 'Heading 5', 'Heading 6'],
-	'Separator',
-	'Bold',
-	'Italic',
-	'FontColor',
-	'Separator',
-	'Align Left',
-	'Align Center',
-	'Align Right',
-	'Separator',
-	'Bullet List',
-	'Numbered List',
-	'Separator',
-	'Image',
-	'Link',
-	'Horizontal Rule',
-	[
-		'InsertTable',
-		'AddColumnBefore',
-		'AddColumnAfter',
-		'DeleteColumn',
-		'AddRowBefore',
-		'AddRowAfter',
-		'DeleteRow',
-		'MergeCells',
-		'SplitCell',
-		'ToggleHeaderColumn',
-		'ToggleHeaderRow',
-		'ToggleHeaderCell',
-		'DeleteTable',
-	],
-]
-
 export const getFirstAlphabet = (str?: string) => str?.match(/[A-Za-z]/)?.[0]
 
 export const getTheme = (
@@ -191,4 +156,23 @@ export const getTheme = (
 		default:
 			return 'blue'
 	}
+}
+
+export const extractQuotedContent = (htmlBody?: string) => {
+	if (!htmlBody) return { quoted_content: '', html_body: '' }
+
+	const parser = new DOMParser()
+	const doc = parser.parseFromString(htmlBody, 'text/html')
+
+	const topLevelDiv = Array.from(doc.body.children).find(
+		(el) => el.tagName.toLowerCase() === 'div' && el.classList.contains('frappe_mail_quote'),
+	)
+
+	let quoted_content = ''
+	if (topLevelDiv) {
+		quoted_content = topLevelDiv.outerHTML
+		topLevelDiv.remove()
+	}
+
+	return { quoted_content, html_body: doc.body.innerHTML }
 }

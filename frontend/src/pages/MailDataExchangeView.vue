@@ -71,9 +71,13 @@ const mailDataExchange = createResource({
 const operationDetails = computed(() => {
 	let details = mailDataExchange.data?.operation
 	if (mailDataExchange.data?.started_at)
-		details += ` · Started at ${dayjs(mailDataExchange.data?.started_at).format('MMM D, YYYY h:mm A')}`
+		details += __(` · Started at {0}`, [
+			dayjs(mailDataExchange.data?.started_at).format('MMM D, YYYY h:mm A'),
+		])
 	if (mailDataExchange.data?.completed_at)
-		details += ` · Completed at ${dayjs(mailDataExchange.data?.completed_at).format('MMM D, YYYY h:mm A')}`
+		details += __(` · Completed at {0}`, [
+			dayjs(mailDataExchange.data?.completed_at).format('MMM D, YYYY h:mm A'),
+		])
 	return details
 })
 
