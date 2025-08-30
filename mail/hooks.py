@@ -206,7 +206,11 @@ website_route_rules = [
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {}
+doc_events = {
+	"User": {
+		"on_update": "mail.utils.user_events.on_user_password_change",
+	}
+}
 
 # Scheduled Tasks
 # ---------------

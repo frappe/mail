@@ -271,17 +271,21 @@ class MailAccount(Document):
 			self.normalized_email = normalize_email(self.email)
 
 	def validate_password(self) -> None:
-		"""Generates secret if password is changed"""
+		"""Generates secret and app password if password is changed"""
 
 		if not self.password:
 			self._generate_password()
 
+		password_changed = True
 		if not self.is_new():
 			if previous_doc := self.get_doc_before_save():
 				if previous_doc.get_password("password") == self.get_password("password"):
-					return
+					password_changed = False
 
-		self.generate_secret()
+		if password_changed:
+			self.generate_secret()
+			if not self.app_password:
+				self._generate_app_password()
 
 	def validate_default_outgoing_email(self) -> None:
 		"""Validates the default outgoing email."""
@@ -339,6 +343,13 @@ class MailAccount(Document):
 
 		validate_permission_for_account(self.name)
 		return self.get_password("password")
+
+	@frappe.whitelist()
+	def get_app_password(self) -> str:
+		"""Returns the app password for JMAP access."""
+
+		validate_permission_for_account(self.name)
+		return self.get_password("app_password")
 
 	@frappe.whitelist()
 	def sync_jmap_identities(self) -> None:
@@ -425,10 +436,25 @@ class MailAccount(Document):
 
 		frappe.msgprint(_("Password has been regenerated."), alert=True, indicator="green")
 
+	@frappe.whitelist()
+	def regenerate_app_password(self) -> None:
+		"""Regenerates the app password for JMAP access."""
+
+		validate_permission_for_account(self.name)
+		self._generate_app_password()
+		self.save()
+
+		frappe.msgprint(_("App password has been regenerated."), alert=True, indicator="green")
+
 	def _generate_password(self) -> None:
 		"""Generates a random password for the Mail Account."""
 
 		self.password = random_string(length=20)
+
+	def _generate_app_password(self) -> None:
+		"""Generates a random app password for JMAP access."""
+
+		self.app_password = random_string(length=32)
 
 	def _sync_jmap_identities(self) -> None:
 		"""Syncs JMAP identities for the Mail Account."""
@@ -557,6 +583,11 @@ def create_mail_account(
 	account.domain_name = email.split("@")[1]
 	account.user = user
 	account.backup_email = backup_email
+	
+	# Set the same password as the user
+	if password:
+		account.password = password
+	
 	account.insert(ignore_permissions=True)
 
 	return account

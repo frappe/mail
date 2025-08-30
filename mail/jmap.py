@@ -839,7 +839,9 @@ def get_jmap_client(account: str, server: str | None = None, cache: bool = True)
 
 			host = server_base_url
 
-		return JMAPClient(host, account_doc.email, account_doc.get_password())
+		# Use app password for JMAP authentication if available, otherwise fallback to main password
+		password = account_doc.get_password("app_password") or account_doc.get_password("password")
+		return JMAPClient(host, account_doc.email, password)
 
 	if cache and not server:
 		return frappe.cache.hget("jmap:client", account, generator)

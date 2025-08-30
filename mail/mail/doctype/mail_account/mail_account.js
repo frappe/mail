@@ -34,6 +34,10 @@ frappe.ui.form.on('Mail Account', {
 		if (frm.doc.password) {
 			frm.add_custom_button(__('Show Password'), () => frm.trigger('get_account_password'))
 		}
+		
+		if (frm.doc.app_password) {
+			frm.add_custom_button(__('Show App Password'), () => frm.trigger('get_app_password'))
+		}
 	},
 
 	add_actions(frm) {
@@ -62,6 +66,12 @@ frappe.ui.form.on('Mail Account', {
 			() => frm.trigger('regenerate_password'),
 			__('Actions'),
 		)
+
+		frm.add_custom_button(
+			__('Re-generate App Password'),
+			() => frm.trigger('regenerate_app_password'),
+			__('Actions'),
+		)
 	},
 
 	get_account_password(frm) {
@@ -70,6 +80,20 @@ frappe.ui.form.on('Mail Account', {
 			method: 'get_account_password',
 			freeze: true,
 			freeze_message: __('Getting Password...'),
+			callback: (r) => {
+				if (!r.exc) {
+					frappe.msgprint(r.message)
+				}
+			},
+		})
+	},
+
+	get_app_password(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'get_app_password',
+			freeze: true,
+			freeze_message: __('Getting App Password...'),
 			callback: (r) => {
 				if (!r.exc) {
 					frappe.msgprint(r.message)
@@ -224,6 +248,20 @@ frappe.ui.form.on('Mail Account', {
 			method: 'regenerate_password',
 			freeze: true,
 			freeze_message: __('Regenerating Password...'),
+			callback: (r) => {
+				if (!r.exc) {
+					frm.refresh()
+				}
+			},
+		})
+	},
+
+	regenerate_app_password(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'regenerate_app_password',
+			freeze: true,
+			freeze_message: __('Regenerating App Password...'),
 			callback: (r) => {
 				if (!r.exc) {
 					frm.refresh()

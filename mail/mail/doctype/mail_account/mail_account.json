@@ -16,6 +16,7 @@
   "email",
   "normalized_email",
   "password",
+  "app_password",
   "secret",
   "default_outgoing_email",
   "backup_email",
@@ -134,6 +135,14 @@
    "fieldtype": "Password",
    "hidden": 1,
    "label": "Password",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "app_password",
+   "fieldtype": "Password",
+   "hidden": 1,
+   "label": "App Password",
    "no_copy": 1,
    "read_only": 1
   },
