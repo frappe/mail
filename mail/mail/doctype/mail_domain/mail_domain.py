@@ -241,6 +241,6 @@ def get_permission_query_condition(user: str | None = None) -> str:
 
 	if has_role(user, "Mail User"):
 		if linked_domains := get_user_linked_domains(user):
-			return f'(`tabMail Domain`.`domain_name` IN ({", ".join([frappe.db.escape(domain) for domain in linked_domains])}))'
+			return f"(`tabMail Domain`.`domain_name` IN ({', '.join([frappe.db.escape(domain) for domain in linked_domains])}))"
 
 	return "1=0"

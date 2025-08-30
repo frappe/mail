@@ -92,7 +92,7 @@ def get_permission_query_condition(user: str | None = None) -> str:
 	if has_role(user, "Mail Admin"):
 		if tenant := get_tenant_for_user(user):
 			if mailing_lists := get_mailing_lists_owned_by_tenant(tenant):
-				return f'(`tabMailing List Member`.`mailing_list` IN ({", ".join([frappe.db.escape(mailing_list) for mailing_list in mailing_lists])}))'
+				return f"(`tabMailing List Member`.`mailing_list` IN ({', '.join([frappe.db.escape(mailing_list) for mailing_list in mailing_lists])}))"
 
 	if has_role(user, "Mail User"):
 		if account := get_account_for_user(user):

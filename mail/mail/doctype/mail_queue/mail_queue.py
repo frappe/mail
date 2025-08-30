@@ -915,7 +915,7 @@ def process_pending_emails(mails: list[str]) -> None:
 	total_count = len(mails)
 
 	for mail in mails:
-		doc: "MailQueue" = frappe.get_doc("Mail Queue", mail)
+		doc: MailQueue = frappe.get_doc("Mail Queue", mail)
 		doc._process()
 
 		if doc.status in ["Failed", "Failed to Draft", "Failed to Submit"]:
