@@ -583,11 +583,11 @@ def create_mail_account(
 	account.domain_name = email.split("@")[1]
 	account.user = user
 	account.backup_email = backup_email
-	
+
 	# Set the same password as the user
 	if password:
 		account.password = password
-	
+
 	account.insert(ignore_permissions=True)
 
 	return account
