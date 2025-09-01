@@ -43,7 +43,7 @@ def add_rate_limits() -> None:
 		# mail.api.outbound
 		{"method_path": "mail.api.outbound.upload_attachment", "limit": 60, "seconds": 60},
 		{"method_path": "mail.api.outbound.send", "limit": 300, "seconds": 60},
-		{"method_path": "mail.api.outbound.send_raw", "limit": 300, "seconds": 60},
+		{"method_path": "mail.api.outbound.send_raw", "limit": 300, "seconds": 120},
 		# mail.api.spamd
 		{"method_path": "mail.api.spamd.scan", "limit": 60, "seconds": 60},
 		{"method_path": "mail.api.spamd.get_spam_score", "limit": 60, "seconds": 60},
