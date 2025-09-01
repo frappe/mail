@@ -313,6 +313,14 @@ def get_mail_app_path() -> str:
 	return os.path.join(get_bench_path(), "apps/mail")
 
 
+def get_messages_directory() -> str:
+	"""Returns the path to the messages directory for the current site."""
+
+	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "raw_messages")
+	os.makedirs(directory, exist_ok=True)
+	return directory
+
+
 def get_import_directory() -> str:
 	"""Returns the path to the import directory for the current site."""
 

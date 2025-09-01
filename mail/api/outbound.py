@@ -1,11 +1,14 @@
+import os
 from email.utils import parseaddr
 
 import frappe
 from frappe import _
 from frappe.utils.file_manager import save_file
 from werkzeug.datastructures.file_storage import FileStorage
+from werkzeug.utils import secure_filename
 
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
+from mail.utils import get_messages_directory
 from mail.utils.cache import get_account_for_user
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import has_role
@@ -98,25 +101,22 @@ def send_raw(
 	raw_message: str | None = None,
 	is_newsletter: bool = False,
 ) -> str:
-	"""Send Raw Mail."""
+	"""Send raw email. Supports both single-shot and chunked upload."""
 
-	from_name, from_email = parseaddr(from_)
+	chunk_index = frappe.form_dict.get("chunk_index")
+	total_chunks = frappe.form_dict.get("total_chunk_count")
+	upload_session = frappe.form_dict.get("uuid")
+
+	if chunk_index is not None and total_chunks is not None and upload_session:
+		return _handle_chunked_upload(
+			from_, to, is_newsletter, int(chunk_index), int(total_chunks), str(upload_session)
+		)
+
 	raw_message = raw_message or get_message_from_files()
 	if not raw_message:
 		frappe.throw(_("The raw message is required."), frappe.MandatoryError)
 
-	doc = MailQueue._create(
-		account=get_account(),
-		from_name=from_name,
-		from_email=from_email,
-		recipients=format_recipients(to),
-		via_api=True,
-		newsletter=is_newsletter,
-		raw_message=raw_message,
-		delivery_mode="Batch" if is_newsletter else "Enqueue",
-	)
-
-	return doc.name
+	return _enqueue_mail(from_, to, raw_message, is_newsletter)
 
 
 def get_account() -> str:
@@ -131,7 +131,7 @@ def get_account() -> str:
 
 
 def get_message_from_files() -> str | None:
-	"""Returns the message from the files"""
+	"""Extracts message from uploaded file in single upload mode."""
 
 	files = frappe._dict(frappe.request.files)
 
@@ -164,6 +164,35 @@ def format_reply_to(reply_to: str | list[str] | None) -> list[dict]:
 	return _normalize_recipients(reply_to)
 
 
+def _handle_chunked_upload(
+	from_: str, to: str | list[str], is_newsletter: bool, chunk_index: int, total_chunks: int, session_id: str
+) -> str:
+	"""Handle chunked uploads for large emails."""
+
+	file = frappe.request.files.get("raw_message")
+	if not file:
+		frappe.throw(_("No file part named 'raw_message' found."))
+
+	upload_dir = get_messages_directory()
+	filename = secure_filename(f"{session_id}.eml")
+	temp_path = os.path.join(upload_dir, filename)
+	offset = int(frappe.form_dict.get("chunk_byte_offset", 0))
+
+	with open(temp_path, "ab") as f:
+		f.seek(offset)
+		f.write(file.stream.read())
+
+	if chunk_index < total_chunks - 1:
+		return f"Chunk {chunk_index + 1} of {total_chunks} received."
+
+	with open(temp_path, "rb") as f:
+		raw_message = f.read().decode("utf-8")
+
+	os.remove(temp_path)
+
+	return _enqueue_mail(from_, to, raw_message, is_newsletter)
+
+
 def _normalize_recipients(
 	recipients: str | list[str] | None, recipient_type: str | None = None
 ) -> list[dict]:
@@ -181,3 +210,24 @@ def _normalize_recipients(
 		result.append(recipient_dict)
 
 	return result
+
+
+def _enqueue_mail(from_: str, to: str | list[str], raw_message: str, is_newsletter: bool = False) -> str:
+	"""Enqueue mail in MailQueue."""
+
+	from_name, from_email = parseaddr(from_)
+	if not raw_message:
+		frappe.throw(_("The raw message is required."), frappe.MandatoryError)
+
+	doc = MailQueue._create(
+		account=get_account(),
+		from_name=from_name,
+		from_email=from_email,
+		recipients=format_recipients(to),
+		via_api=True,
+		newsletter=is_newsletter,
+		raw_message=raw_message,
+		delivery_mode="Batch" if is_newsletter else "Enqueue",
+	)
+
+	return doc.name
