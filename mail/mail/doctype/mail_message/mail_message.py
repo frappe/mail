@@ -910,6 +910,9 @@ def fetch_blob(account: str, blob_id: str, name: str | None = None) -> bytes:
 def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 	"""Returns a formatted message dictionary for the provided message data."""
 
+	if not message["sentAt"]:
+		message["sentAt"] = message["receivedAt"]
+
 	sent_at = parse_iso_datetime(message["sentAt"])
 	received_at = parse_iso_datetime(message["receivedAt"])
 	formatted_message = {
