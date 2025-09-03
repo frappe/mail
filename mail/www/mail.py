@@ -9,4 +9,10 @@ def get_context():
 
 
 def get_boot():
-	return frappe._dict({"site_name": frappe.local.site, "csrf_token": frappe.sessions.get_csrf_token()})
+	return frappe._dict(
+		{
+			"site_name": frappe.local.site,
+			"csrf_token": frappe.sessions.get_csrf_token(),
+			"push_relay_server_url": frappe.conf.get("push_relay_server_url") or "",
+		}
+	)

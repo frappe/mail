@@ -11,18 +11,48 @@ import translationPlugin from '@/translation'
 import dayjs from '@/utils/dayjs'
 import { userStore } from '@/stores/user'
 
-const pinia = createPinia()
-const app = createApp(App)
+import FrappePushNotification from '../public/frappe-push-notification'
+
 setConfig('resourceFetcher', frappeRequest)
 
-app.use(pinia)
+const app = createApp(App)
 app.use(router)
+app.use(createPinia())
 app.use(translationPlugin)
 app.use(pageMetaPlugin)
-app.provide('$dayjs', dayjs)
-app.provide('$socket', initSocket())
-app.mount('#app')
 
 const { userResource } = userStore()
 app.provide('$user', userResource)
-app.config.globalProperties.$user = userResource
+app.provide('$dayjs', dayjs)
+app.provide('$socket', initSocket())
+
+const registerServiceWorker = async () => {
+	if (!('serviceWorker' in navigator))
+		return console.error('Service worker not enabled/supported by the browser')
+
+	window.frappePushNotification = new FrappePushNotification('mail')
+	let serviceWorkerURL = '/assets/mail/frontend/sw.js'
+	let config = ''
+
+	try {
+		config = await window.frappePushNotification.fetchWebConfig()
+		serviceWorkerURL = `${serviceWorkerURL}?config=${encodeURIComponent(JSON.stringify(config))}`
+	} catch (err) {
+		console.error('Failed to fetch FCM config', err)
+	}
+
+	navigator.serviceWorker
+		.register(serviceWorkerURL, { type: 'module' })
+		.then((registration) => {
+			if (config)
+				window.frappePushNotification
+					.initialize(registration)
+					.then(() => console.log('Frappe Push Notification initialized'))
+		})
+		.catch((err) => console.error('Failed to register service worker', err))
+}
+
+router.isReady().then(() => {
+	registerServiceWorker()
+	app.mount('#app')
+})

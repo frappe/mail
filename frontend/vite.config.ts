@@ -51,8 +51,15 @@ export default defineConfig({
 		}),
 		VitePWA({
 			registerType: 'autoUpdate',
+			strategies: 'injectManifest',
+			injectRegister: null,
+			filename: 'sw.ts',
+			injectManifest: {
+				maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+			},
 			devOptions: {
 				enabled: true,
+				type: 'module',
 			},
 			workbox: {
 				cleanupOutdatedCaches: true,
