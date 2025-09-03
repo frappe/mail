@@ -22,7 +22,7 @@ from mail.mail.doctype.jmap_sync_state.jmap_sync_state import (
 )
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
-from mail.utils import enqueue_job, extract_filter_values, user_context
+from mail.utils import enqueue_job, parse_filters, user_context
 from mail.utils.cache import get_account_for_user
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.email_parser import EmailParser
@@ -187,13 +187,8 @@ class MailMessage(Document):
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
-		filters = filters or []
-		account_values = extract_filter_values(filters, [{"account": "="}])
-		account = (
-			account_values[0]
-			if account_values and account_values[0]
-			else get_account_for_user(frappe.session.user)
-		)
+		filters = parse_filters(filters)
+		account = filters.get("account") or get_account_for_user(frappe.session.user)
 
 		if not account:
 			frappe.msgprint(_("Please select a account to view messages."), alert=True)
@@ -225,14 +220,8 @@ class MailMessage(Document):
 
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
-		filters = filters or []
-		account_values = extract_filter_values(filters, [{"account": "="}])
-		account = (
-			account_values[0]
-			if account_values and account_values[0]
-			else get_account_for_user(frappe.session.user)
-		)
-
+		filters = parse_filters(filters)
+		account = filters.get("account") or get_account_for_user(frappe.session.user)
 		return frappe.cache.get_value(_get_total_cache_key(account)) if account else 0
 
 	@staticmethod

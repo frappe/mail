@@ -16,6 +16,7 @@ import bcrypt
 import frappe
 from bs4 import BeautifulSoup
 from frappe import _
+from frappe.types.filter import FilterTuple
 from frappe.utils import get_bench_path
 from frappe.utils.caching import redis_cache
 
@@ -220,6 +221,23 @@ def extract_filter_values(filters: list, conditions: list[dict]) -> tuple:
 			values[key] = value.replace("%", "") if operator == "like" else value
 
 	return tuple(values[key] for key in values)
+
+
+def parse_filters(filters: list | None) -> dict:
+	"""Parses a list of filters into a dictionary of fieldname-value pairs for equality conditions."""
+
+	if not filters:
+		return {}
+
+	result = {}
+	for f in filters:
+		if isinstance(f, list):
+			f = FilterTuple(f)
+
+		if f.operator == "=":
+			result[f.fieldname] = f.value
+
+	return result
 
 
 def sanitize_cli_output(text: str) -> str:

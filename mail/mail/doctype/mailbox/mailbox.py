@@ -10,7 +10,7 @@ from frappe.utils import cint, today
 from uuid_utils import uuid7
 
 from mail.jmap import get_jmap_client
-from mail.utils import extract_filter_values
+from mail.utils import parse_filters
 from mail.utils.cache import get_account_for_user
 from mail.utils.user import has_role, is_system_manager
 from mail.utils.validation import validate_permission_for_account
@@ -46,13 +46,8 @@ class Mailbox(Document):
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
-		filters = filters or []
-		account_values = extract_filter_values(filters, [{"account": "="}])
-		account = (
-			account_values[0]
-			if account_values and account_values[0]
-			else get_account_for_user(frappe.session.user)
-		)
+		filters = parse_filters(filters)
+		account = filters.get("account") or get_account_for_user(frappe.session.user)
 
 		if not account:
 			frappe.msgprint(_("Please select a account to view mailboxes."), alert=True)
@@ -68,14 +63,8 @@ class Mailbox(Document):
 
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
-		filters = filters or []
-		account_values = extract_filter_values(filters, [{"account": "="}])
-		account = (
-			account_values[0]
-			if account_values and account_values[0]
-			else get_account_for_user(frappe.session.user)
-		)
-
+		filters = parse_filters(filters)
+		account = filters.get("account") or get_account_for_user(frappe.session.user)
 		return frappe.cache.get_value(get_total_cache_key(account)) if account else 0
 
 	@staticmethod
