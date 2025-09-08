@@ -35,6 +35,24 @@ def verify_password(password: str, hashed_password: str) -> bool:
 	return bcrypt.checkpw(password.encode(), hashed_password.encode())
 
 
+def reformat_pbkdf2_hash(passlib_hash: str, dklen: int | None = None) -> str:
+	"""Normalize a PBKDF2 hash into a consistent format."""
+
+	prefix, iterations, salt_mod, hash_b64 = passlib_hash.strip("$").split("$")
+	iterations = int(iterations)
+	salt_std = salt_mod.replace(".", "+").replace("-", "/")
+	salt_bytes = base64.b64decode(salt_std + "===")
+	salt_b64 = base64.b64encode(salt_bytes).decode().rstrip("=")
+	hash_bytes = base64.b64decode(hash_b64 + "===")
+	if dklen is None:
+		dklen = len(hash_bytes)
+
+	hash_clean = base64.b64encode(hash_bytes).decode().rstrip("=")
+	stalwart_hash = f"${prefix}$i={iterations},l={dklen}${salt_b64}${hash_clean}"
+
+	return stalwart_hash
+
+
 @contextmanager
 def user_context(user: str) -> Generator[None, None, None]:
 	"""Context manager to temporarily switch the user context."""

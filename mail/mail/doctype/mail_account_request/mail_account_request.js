@@ -106,6 +106,7 @@ frappe.ui.form.on('Mail Account Request', {
 					label: __('Last Name'),
 					fieldname: 'last_name',
 					fieldtype: 'Data',
+					reqd: 1,
 				},
 				{
 					label: __('Password'),

@@ -134,7 +134,7 @@ class MailBackendManagerBase:
 class MailBackendDKIMManager(MailBackendManagerBase):
 	"""Class to manage DKIM keys on the Mail Backend."""
 
-	def create(self, domain_name: str, rsa_private_key: str) -> None:
+	def create(self, domain_name: str, rsa_private_key: str) -> "MailBackendRequest":
 		"""Creates a DKIM key on the backend."""
 
 		from mail.mail.doctype.mail_cluster.mail_cluster import reload_clusters_config
@@ -164,7 +164,7 @@ class MailBackendDKIMManager(MailBackendManagerBase):
 			on_end = reload_servers_config
 			on_end_kwargs = {"servers": [self.backend_name]}
 
-		self.create_request(
+		return self.create_request(
 			method="POST",
 			endpoint="/api/settings",
 			request_data=request_data,
@@ -172,7 +172,7 @@ class MailBackendDKIMManager(MailBackendManagerBase):
 			on_end_kwargs=on_end_kwargs,
 		)
 
-	def delete(self, domain_name: str) -> None:
+	def delete(self, domain_name: str) -> "MailBackendRequest":
 		"""Deletes a DKIM key from the backend."""
 
 		request_data = json.dumps(
@@ -183,7 +183,7 @@ class MailBackendDKIMManager(MailBackendManagerBase):
 				}
 			]
 		)
-		self.create_request(
+		return self.create_request(
 			method="POST",
 			endpoint="/api/settings",
 			request_data=request_data,
@@ -193,22 +193,24 @@ class MailBackendDKIMManager(MailBackendManagerBase):
 class MailBackendDomainManager(MailBackendManagerBase):
 	"""Class to manage domains on the Mail Backend."""
 
-	def create(self, domain_name: str) -> None:
+	def create(self, domain_name: str) -> "MailBackendRequest":
 		"""Creates a domain on the backend."""
 
 		principal = Principal(name=domain_name, type="domain").__dict__
-		self.create_request(method="POST", endpoint="/api/principal", request_data=json.dumps(principal))
+		return self.create_request(
+			method="POST", endpoint="/api/principal", request_data=json.dumps(principal), do_not_enqueue=True
+		)
 
-	def delete(self, domain_name: str) -> None:
+	def delete(self, domain_name: str) -> "MailBackendRequest":
 		"""Deletes a domain from the backend."""
 
-		self.create_request(method="DELETE", endpoint=f"/api/principal/{domain_name}")
+		return self.create_request(method="DELETE", endpoint=f"/api/principal/{domain_name}")
 
 
 class MailBackendAccountManager(MailBackendManagerBase):
 	"""Class to manage accounts on the Mail Backend."""
 
-	def create(self, email: str, display_name: str, quota: int, secret: str) -> None:
+	def create(self, email: str, display_name: str, quota: int, secret: str) -> "MailBackendRequest":
 		"""Creates an account on the backend."""
 
 		from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import (
@@ -224,15 +226,16 @@ class MailBackendAccountManager(MailBackendManagerBase):
 			emails=[email],
 			roles=["user"],
 		).__dict__
-		self.create_request(
+		return self.create_request(
 			method="POST",
 			endpoint="/api/principal",
 			request_data=json.dumps(principal),
 			on_end=create_jmap_push_subscriptions,
 			on_end_kwargs={"account": email},
+			do_not_enqueue=True,
 		)
 
-	def update(self, email: str, display_name: str, new_secret: str, old_secret: str) -> None:
+	def update(self, email: str, display_name: str, new_secret: str, old_secret: str) -> "MailBackendRequest":
 		"""Updates an account on the backend."""
 
 		request_data = [
@@ -260,9 +263,11 @@ class MailBackendAccountManager(MailBackendManagerBase):
 			)
 
 		request_data = json.dumps(request_data)
-		self.create_request(method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data)
+		return self.create_request(
+			method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data
+		)
 
-	def set_quota(self, email: str, quota: int) -> None:
+	def set_quota(self, email: str, quota: int) -> "MailBackendRequest":
 		"""Sets the quota for an account on the backend."""
 
 		request_data = json.dumps(
@@ -274,16 +279,18 @@ class MailBackendAccountManager(MailBackendManagerBase):
 				}
 			]
 		)
-		self.create_request(method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data)
+		return self.create_request(
+			method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data
+		)
 
-	def delete(self, email: str) -> None:
+	def delete(self, email: str) -> "MailBackendRequest":
 		"""Deletes an account from the backend."""
 
 		from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import (
 			delete_jmap_push_subscriptions,
 		)
 
-		self.create_request(
+		return self.create_request(
 			method="DELETE",
 			endpoint=f"/api/principal/{email}",
 			on_start=delete_jmap_push_subscriptions,
@@ -300,7 +307,7 @@ class MailBackendMailingListManager(MailBackendManagerBase):
 		display_name: str,
 		members: list[str] | None = None,
 		external_members: list[str] | None = None,
-	) -> None:
+	) -> "MailBackendRequest":
 		"""Creates a mailing list on the backend."""
 
 		principal = Principal(
@@ -311,9 +318,11 @@ class MailBackendMailingListManager(MailBackendManagerBase):
 			members=members or [],
 			externalMembers=external_members or [],
 		).__dict__
-		self.create_request(method="POST", endpoint="/api/principal", request_data=json.dumps(principal))
+		return self.create_request(
+			method="POST", endpoint="/api/principal", request_data=json.dumps(principal)
+		)
 
-	def update(self, email: str, display_name: str) -> None:
+	def update(self, email: str, display_name: str) -> "MailBackendRequest":
 		"""Updates a mailing list on the backend."""
 
 		request_data = json.dumps(
@@ -325,40 +334,42 @@ class MailBackendMailingListManager(MailBackendManagerBase):
 				}
 			]
 		)
-		self.create_request(method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data)
+		return self.create_request(
+			method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data
+		)
 
-	def delete(self, email: str) -> None:
+	def delete(self, email: str) -> "MailBackendRequest":
 		"""Deletes a mailing list from the backend."""
 
-		self.create_request(method="DELETE", endpoint=f"/api/principal/{email}")
+		return self.create_request(method="DELETE", endpoint=f"/api/principal/{email}")
 
-	def add_member(self, email: str, member: str, is_external: bool = False) -> None:
+	def add_member(self, email: str, member: str, is_external: bool = False) -> "MailBackendRequest":
 		"""Adds a mailing list member on the backend."""
 
 		endpoint = f"/api/principal/{email}"
 		field = "externalMembers" if is_external else "members"
 		request_data = json.dumps([{"action": "addItem", "field": field, "value": member}])
-		self.create_request(method="PATCH", endpoint=endpoint, request_data=request_data)
+		return self.create_request(method="PATCH", endpoint=endpoint, request_data=request_data)
 
-	def remove_member(self, email: str, member: str, is_external: bool = False) -> None:
+	def remove_member(self, email: str, member: str, is_external: bool = False) -> "MailBackendRequest":
 		"""Removes a mailing list member from the backend."""
 
 		endpoint = f"/api/principal/{email}"
 		field = "externalMembers" if is_external else "members"
 		request_data = json.dumps([{"action": "removeItem", "field": field, "value": member}])
-		self.create_request(method="PATCH", endpoint=endpoint, request_data=request_data)
+		return self.create_request(method="PATCH", endpoint=endpoint, request_data=request_data)
 
 
 class MailBackendAliasManager(MailBackendManagerBase):
 	"""Class to manage aliases on the Mail Backend."""
 
-	def create(self, email: str, alias: str) -> None:
+	def create(self, email: str, alias: str) -> "MailBackendRequest":
 		"""Creates an alias on the backend."""
 
 		from mail.mail.doctype.mail_account.mail_account import sync_jmap_identities
 
 		request_data = json.dumps([{"action": "addItem", "field": "emails", "value": alias}])
-		self.create_request(
+		return self.create_request(
 			method="PATCH",
 			endpoint=f"/api/principal/{email}",
 			request_data=request_data,
@@ -372,13 +383,13 @@ class MailBackendAliasManager(MailBackendManagerBase):
 		self.delete(old_email, alias)
 		self.create(new_email, alias)
 
-	def delete(self, email: str, alias: str) -> None:
+	def delete(self, email: str, alias: str) -> "MailBackendRequest":
 		"""Deletes an alias from the backend."""
 
 		from mail.mail.doctype.mail_account.mail_account import sync_jmap_identities
 
 		request_data = json.dumps([{"action": "removeItem", "field": "emails", "value": alias}])
-		self.create_request(
+		return self.create_request(
 			method="PATCH",
 			endpoint=f"/api/principal/{email}",
 			request_data=request_data,
@@ -392,7 +403,7 @@ class MailBackendIdentityManager(MailBackendManagerBase):
 		self,
 		account_id: str,
 		identities: dict[str, dict[str, Any]],
-	) -> None:
+	) -> "MailBackendRequest":
 		"""Synchronizes identities with the backend."""
 
 		payload = {
@@ -424,7 +435,7 @@ class MailBackendIdentityManager(MailBackendManagerBase):
 			],
 		}
 
-		self.create_request(method="POST", endpoint="/jmap", request_json=payload, do_not_enqueue=True)
+		return self.create_request(method="POST", endpoint="/jmap", request_json=payload, do_not_enqueue=True)
 
 
 def get_mail_backend_api(
