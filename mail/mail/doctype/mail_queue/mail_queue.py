@@ -665,6 +665,7 @@ class MailQueue(Document):
 				call_id += 1
 
 			if not self.save_as_draft:
+				recipients = list({rcpt["email"] for rcpt in json_loads(self.recipients)})
 				submission_call = [
 					"EmailSubmission/set",
 					{
@@ -684,13 +685,13 @@ class MailQueue(Document):
 									},
 									"rcptTo": [
 										{
-											"email": rcpt["email"],
+											"email": rcpt,
 											"parameters": {
 												"NOTIFY": "DELAY,FAILURE",
-												"ORCPT": f"rfc822;{rcpt['email']}",
+												"ORCPT": f"rfc822;{rcpt}",
 											},
 										}
-										for rcpt in json_loads(self.recipients)
+										for rcpt in recipients
 									],
 								},
 							}
