@@ -232,7 +232,7 @@ def validate_jmap_structure(base_dir: str, raise_exception: bool = False) -> lis
 	if missing and raise_exception:
 		frappe.throw(
 			_("Missing required files/directories for JMAP format: {0}").format(
-				", ".join(f"<code>{m}</code>" for m in missing)
+				", ".join(f"{m}" for m in missing)
 			),
 			title=_("Invalid JMAP Structure"),
 		)
