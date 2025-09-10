@@ -51,7 +51,11 @@
 
 			<MailThreadPlaceholder v-if="thread.loading" />
 
-			<div v-else class="space-y-4 sm:px-5 sm:py-6">
+			<div
+				v-else
+				class="space-y-4 sm:px-5 sm:py-6"
+				:class="{ 'pb-16': isMobile && !thread.data?.at(-1)?.draft }"
+			>
 				<div
 					v-for="mail in thread.data"
 					:key="mail.name"
@@ -106,7 +110,10 @@
 										>
 											{{ `<${mail.from_email}>` }}
 										</span>
-										<MailDetailsPopover v-if="!isCollapsed(mail)" :mail />
+										<MailDetailsPopover
+											v-if="!isCollapsed(mail) && !mail.draft"
+											:mail
+										/>
 									</div>
 									<div class="truncate">
 										{{ getFormattedRecipients(mail.recipients) }}
@@ -114,58 +121,36 @@
 								</div>
 								<div class="flex items-center space-x-1 self-start">
 									<MailDate :datetime="mail.received_at" />
-									<Tooltip
-										v-if="mail.flagged && mailbox !== mailboxIds.trash"
-										:text="__('Unstar')"
-									>
-										<Button
-											variant="ghost"
-											@click.stop="
-												starMails.submit({
-													_ids: [mail._id],
-													flagged: false,
-												})
-											"
-										>
-											<template #icon>
-												<Star
-													class="fill-ink-amber-2 text-ink-amber-2 h-4 w-4"
-												/>
-											</template>
-										</Button>
-									</Tooltip>
-									<Tooltip
-										v-for="action in mailActions(mail).filter(
-											(d) => d.condition !== false && !isCollapsed(mail),
-										)"
-										:key="action.label"
-										:text="action.label"
-									>
-										<Button variant="ghost" @click.stop="action.onClick">
-											<template #icon>
-												<component
-													:is="action.icon"
-													class="text-ink-gray-5 h-4 w-4"
-												/>
-											</template>
-										</Button>
-									</Tooltip>
-									<Tooltip
-										v-if="!mail.draft && !isCollapsed(mail)"
-										:text="__('More')"
-									>
-										<Dropdown :options="moreActions(mail)">
-											<span @click.stop>
-												<Button variant="ghost">
-													<template #icon>
-														<Ellipsis
-															class="text-ink-gray-5 h-4 w-4"
-														/>
-													</template>
-												</Button>
-											</span>
-										</Dropdown>
-									</Tooltip>
+									<MailActions
+										:mailbox
+										:mail
+										:is-collapsed="isCollapsed(mail)"
+										:show-reply-all="showReplyAll(mail)"
+										:pop-out-draft
+										:reply
+										:reply-all
+										:forward
+										@reload-mails="emit('reloadMails')"
+										@star-mails="
+											(_ids: string[], flagged: 0 | 1) =>
+												_ids.forEach(
+													(_id) =>
+														(thread.data.find(
+															(m: Mail) => m._id === _id,
+														).flagged = flagged),
+												)
+										"
+										@delete-mails="
+											() => {
+												if (thread.data.length == 1)
+													router.push({
+														name: 'Mailbox',
+														params: { mailbox },
+													})
+												emit('reloadMails')
+											}
+										"
+									/>
 								</div>
 							</div>
 						</div>
@@ -201,27 +186,21 @@
 
 				<div
 					v-if="thread.data.length && !thread.data?.at(-1)?.draft"
-					class="flex items-center space-x-2"
-					:class="{ 'px-3': isMobile }"
+					class="flex"
+					:class="
+						isMobile
+							? 'bg-surface-white absolute bottom-0 left-0 right-0 z-20 items-stretch border-t'
+							: 'items-center space-x-2'
+					"
 				>
 					<Button
-						:icon-left="Reply"
-						:label="__('Reply')"
-						variant="outline"
-						@click="reply(thread.data.at(-1))"
-					/>
-					<Button
-						v-if="showReplyAll(thread.data.at(-1))"
-						:icon-left="ReplyAll"
-						:label="__('Reply All')"
-						variant="outline"
-						@click="replyAll(thread.data.at(-1))"
-					/>
-					<Button
-						:icon-left="Forward"
-						:label="__('Forward')"
-						variant="outline"
-						@click="forward(thread.data.at(-1))"
+						v-for="action in replyForwardActions"
+						:key="action.label"
+						:icon-left="action.icon"
+						:label="action.label"
+						:variant="isMobile ? 'ghost' : 'outline'"
+						:class="{ '!h-16 flex-1 rounded-none': isMobile }"
+						@click="action.onClick"
 					/>
 				</div>
 			</div>
@@ -253,16 +232,12 @@
 import { computed, inject, nextTick, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-	Code,
-	Ellipsis,
-	ExternalLink,
 	FolderInput,
 	Forward,
 	Mail as MailIcon,
 	Reply,
 	ReplyAll,
 	SquarePen,
-	Star,
 	Trash2,
 } from 'lucide-vue-next'
 import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
@@ -279,6 +254,7 @@ import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
 import ComposeMailEditor from '@/components/ComposeMailEditor.vue'
 import EmailContent from '@/components/EmailContent.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
+import MailActions from '@/components/MailActions.vue'
 import MailDate from '@/components/MailDate.vue'
 import MailDetailsPopover from '@/components/MailDetailsPopover.vue'
 import MailThreadPlaceholder from '@/components/MailThreadPlaceholder.vue'
@@ -290,9 +266,9 @@ const { mailbox, threadID } = defineProps<{ mailbox: string; threadID?: string }
 
 const emit = defineEmits(['reloadMails', 'setSeen', 'moveThread', 'deleteThread'])
 
+const router = useRouter()
 const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
-const router = useRouter()
 const { mailboxes, mailboxIds } = userStore()
 
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
@@ -385,82 +361,29 @@ const threadActions = computed((): MailAction[] =>
 	].filter((action) => action.condition !== false),
 )
 
-const mailActions = (mail: Mail): MailAction[] => [
-	{
-		label: __('Star'),
-		onClick: () => starMails.submit({ _ids: [mail._id], flagged: true }),
-		icon: Star,
-		condition: !mail.flagged && !mail.draft && mailbox !== mailboxIds.trash,
-	},
-	{
-		label: __('Edit Draft'),
-		onClick: () => popOutDraft(mail),
-		icon: SquarePen,
-		condition: !!mail.draft && isMobile.value,
-	},
-	{
-		label: __('Reply'),
-		onClick: () => reply(mail),
-		icon: Reply,
-		condition: !mail.draft,
-	},
-]
+const replyForwardActions = computed(() =>
+	[
+		{
+			label: __('Reply'),
+			onClick: () => reply(thread.data.at(-1)),
+			icon: Reply,
+		},
+		{
+			label: __('Reply All'),
+			onClick: () => replyAll(thread.data.at(-1)),
+			icon: Reply,
+			condition: showReplyAll(thread.data.at(-1)),
+		},
+		{
+			label: __('Forward'),
+			onClick: () => forward(thread.data.at(-1)),
+			icon: Forward,
+		},
+	].filter((action) => action.condition !== false),
+)
 
-interface GroupedAction {
-	group: string
-	items: MailAction[]
-}
-
-const moreActions = (mail: Mail): GroupedAction[] => [
-	{
-		group: '',
-		items: [
-			{
-				label: __('Reply All'),
-				onClick: () => replyAll(mail),
-				icon: ReplyAll,
-				condition: () => showReplyAll(mail),
-			},
-			{
-				label: __('Forward'),
-				onClick: () => forward(mail),
-				icon: Forward,
-				condition: () => !mail.draft,
-			},
-			{
-				label: __('Move to Trash'),
-				onClick: () => moveMail.submit({ _ids: [mail._id], mailbox: mailboxIds.trash }),
-				icon: Trash2,
-				condition: () => mailbox !== mailboxIds.trash,
-			},
-			{
-				label: __('Delete Message'),
-				onClick: () => deleteMails.submit([mail.name]),
-				icon: Trash2,
-				condition: () => mailbox === mailboxIds.trash,
-			},
-		],
-	},
-	{
-		group: '',
-		items: [
-			{
-				label: __('See MIME Message'),
-				onClick: () => window.open(`/mail/mime-message/${mail.name}`, '_blank')?.focus(),
-				icon: Code,
-				condition: () => !mail.draft && !isMobile.value,
-			},
-			{
-				label: __('View in Desk'),
-				onClick: () => window.open(`/app/mail-message/${mail.name}`, '_blank')?.focus(),
-				icon: ExternalLink,
-				condition: () => user.data.is_system_manager,
-			},
-		],
-	},
-]
-
-const isCollapsed = (mail: Mail) => mail.collapsed && mail !== thread.data[thread.data.length - 1]
+const isCollapsed = (mail: Mail) =>
+	!!(mail.collapsed && mail !== thread.data[thread.data.length - 1])
 
 const showReplyAll = (mail: Mail) =>
 	!mail.draft &&
@@ -468,33 +391,6 @@ const showReplyAll = (mail: Mail) =>
 	mail.groupedRecipients.to
 		?.concat(mail.groupedRecipients.cc)
 		.filter((m) => m !== user.data.email).length > 0
-
-const moveMail = createResource({
-	url: 'mail.api.mail.move_mails',
-	makeParams: ({ _ids, mailbox }: { _ids: string[]; mailbox: string }) => ({ _ids, mailbox }),
-	onSuccess: () => emit('reloadMails'),
-})
-
-const deleteMails = createResource({
-	url: 'mail.mail.doctype.mail_message.mail_message.bulk_delete',
-	makeParams: (names: string[]) => ({ names }),
-	onSuccess: () => {
-		if (thread.data.length == 1) router.push({ name: 'Mailbox', params: { mailbox } })
-		emit('reloadMails')
-	},
-})
-
-const starMails = createResource({
-	url: 'mail.api.mail.set_flagged',
-	makeParams: ({ _ids, flagged }: { _ids: string[]; flagged: boolean }) => ({
-		_ids,
-		flagged,
-	}),
-	onSuccess: ({ _ids, flagged }: { _ids: string[]; flagged: boolean }) =>
-		_ids.forEach(
-			(_id) => (thread.data.find((m: Mail) => m._id === _id).flagged = Number(flagged)),
-		),
-})
 
 const populateDraftMails = (mail: Mail) =>
 	(draftMails[mail.name] = {
