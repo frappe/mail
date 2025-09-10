@@ -1,7 +1,7 @@
 @import 'frappe-ui/src/style.css';
 
 html {
-	@apply text-ink-gray-8 bg-surface-white;
+	@apply text-ink-gray-8 bg-surface-white text-xl sm:text-lg;
 }
 
 h1 {
@@ -9,5 +9,5 @@ h1 {
 }
 
 h2 {
-	@apply text-lg font-medium;
+	@apply text-xl font-medium sm:text-lg;
 }

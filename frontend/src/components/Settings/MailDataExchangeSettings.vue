@@ -95,6 +95,7 @@ const mailDataExchanges = useList({
 	immediate: true,
 	fields: ['name', 'operation', 'status'],
 	filters: { account: user.data.name },
+	limit: 1000,
 })
 
 const noOfActiveOperations = computed(

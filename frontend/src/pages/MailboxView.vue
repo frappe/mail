@@ -7,7 +7,9 @@
 				:items="[{ label: mailboxName, route: { name: 'Mailbox', params: { mailbox } } }]"
 			>
 				<template v-if="mailbox !== 'starred'" #suffix>
-					<div class="text-ink-gray-5 ml-2 self-end text-xs">{{ noOfThreads }}</div>
+					<span class="text-ink-gray-5 ml-2 self-end pb-px text-xs">
+						{{ noOfThreads }}
+					</span>
 				</template>
 			</Breadcrumbs>
 		</div>

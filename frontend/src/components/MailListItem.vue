@@ -47,7 +47,7 @@
 						v-if="!mail.seen"
 						class="mr-1.5 min-h-2 min-w-2 rounded-full bg-blue-500"
 					/>
-					<span class="truncate text-base font-semibold">
+					<span class="truncate text-[15px] !font-semibold sm:text-base">
 						{{ header }}
 					</span>
 				</h3>
@@ -58,13 +58,13 @@
 				/>
 			</div>
 			<h4
-				class="truncate text-sm leading-[1.5]"
+				class="truncate text-sm !leading-[1.5]"
 				:class="{ italic: !mail.subject, '!text-base': isFullWidth }"
 			>
 				{{ mail.subject || __('[No subject]') }}
 			</h4>
 			<h5
-				class="text-ink-gray-6 truncate text-sm leading-[1.5]"
+				class="text-ink-gray-6 truncate text-sm !leading-[1.5]"
 				:class="{ italic: !mail.preview, 'min-w-0 flex-1 !text-base': isFullWidth }"
 			>
 				{{ mail.preview || __('— No message body —') }}

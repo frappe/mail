@@ -307,7 +307,7 @@ const onMailUpdateSuccess = ({
 	if (_id) mail._id = _id
 	updateOriginalMail()
 	if (error) return raiseToast(error, 'error')
-	if (!isInThread) reloadMails()
+	if (!isInThread || status === 'Submitted') reloadMails()
 
 	if (show.value) return
 	if (status === 'Drafted') raiseToast(__('Draft saved.'))

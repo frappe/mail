@@ -44,7 +44,7 @@
 		</div>
 		<div class="flex-1 overflow-y-auto">
 			<div v-if="isMobile && !thread.loading" class="border-b px-3 py-3.5">
-				<h2 class="font-semibold leading-5">
+				<h2 class="text-lg font-semibold leading-5">
 					{{ thread?.data?.[0].subject || __('[No subject]') }}
 				</h2>
 			</div>
@@ -56,8 +56,8 @@
 					v-for="mail in thread.data"
 					:key="mail.name"
 					:class="{
-						'p-3.5': isMobile,
-						'border-b p-3.5 sm:rounded-xl sm:border':
+						'p-5': isMobile,
+						'border-b p-5 sm:rounded-xl sm:border':
 							thread.data.length > 1 || mail.draft,
 						'cursor-pointer': isCollapsed(mail),
 						'shadow-elevation-light-md': mail.draft && !isMobile,
@@ -97,7 +97,7 @@
 							<div class="flex flex-1 justify-between truncate text-sm">
 								<div class="mr-3 flex flex-col space-y-1 truncate">
 									<div class="flex items-center space-x-1.5">
-										<span class="text-base font-semibold">
+										<span class="text-[15px] !font-semibold sm:text-base">
 											{{ mail.from_name || mail.from_email }}
 										</span>
 										<span
@@ -176,8 +176,10 @@
 							<EmailContent v-if="mail.html_body" :content="mail.html_body" />
 							<pre
 								v-else-if="mail.text_body"
-								class="text-wrap pt-4 text-sm leading-5"
-								>{{ mail.text_body }}</pre
+								class="text-wrap pt-4 text-base !leading-5 sm:text-sm"
+							>
+							{{ mail.text_body }}
+							</pre
 							>
 
 							<div
