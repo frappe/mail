@@ -36,21 +36,25 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 
 def reformat_pbkdf2_hash(passlib_hash: str, dklen: int | None = None) -> str:
-	"""Normalize a PBKDF2 hash into a consistent format."""
+	"""Normalize a PBKDF2 hash from Passlib crypt-base64 format."""
 
-	prefix, iterations, salt_mod, hash_b64 = passlib_hash.strip("$").split("$")
+	crypt_b64 = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	std_b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+	trans = str.maketrans(crypt_b64, std_b64)
+
+	prefix, iterations, salt_mod, hash_mod = passlib_hash.strip("$").split("$")
 	iterations = int(iterations)
-	salt_std = salt_mod.replace(".", "+").replace("-", "/")
-	salt_bytes = base64.b64decode(salt_std + "===")
-	salt_b64 = base64.b64encode(salt_bytes).decode().rstrip("=")
-	hash_bytes = base64.b64decode(hash_b64 + "===")
+
+	salt_bytes = base64.b64decode(salt_mod.translate(trans) + "===")
+	hash_bytes = base64.b64decode(hash_mod.translate(trans) + "===")
+
 	if dklen is None:
 		dklen = len(hash_bytes)
 
-	hash_clean = base64.b64encode(hash_bytes).decode().rstrip("=")
-	stalwart_hash = f"${prefix}$i={iterations},l={dklen}${salt_b64}${hash_clean}"
+	salt_b64 = base64.b64encode(salt_bytes).decode().rstrip("=")
+	hash_b64 = base64.b64encode(hash_bytes).decode().rstrip("=")
 
-	return stalwart_hash
+	return f"${prefix}$i={iterations},l={dklen}${salt_b64}${hash_b64}"
 
 
 @contextmanager

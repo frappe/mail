@@ -19,13 +19,7 @@ from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 from mail.backend import MailBackendAccountManager, MailBackendIdentityManager, get_mail_backend_api
 from mail.jmap import get_jmap_client, invalidate_jmap_cache, invalidate_jmap_client_cache, raise_for_status
 from mail.mail.doctype.jmap_sync_state.jmap_sync_state import create_jmap_sync_state
-from mail.utils import (
-	convert_html_to_text,
-	generate_uuid_style_hash,
-	hash_password,
-	normalize_email,
-	reformat_pbkdf2_hash,
-)
+from mail.utils import convert_html_to_text, generate_uuid_style_hash, hash_password, normalize_email
 from mail.utils.cache import (
 	get_aliases_for_user,
 	get_cluster_for_tenant,
@@ -190,7 +184,7 @@ class MailAccount(Document):
 					self.email,
 					self.display_name,
 					cint(quota * (1024**3)),
-					reformat_pbkdf2_hash(self.secret_hash),
+					self.secret_hash,
 				)
 				if request.status != "Completed":
 					frappe.throw(
@@ -201,8 +195,8 @@ class MailAccount(Document):
 				MailBackendAccountManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).update(
 					self.email,
 					self.display_name,
-					reformat_pbkdf2_hash(self.secret_hash),
-					reformat_pbkdf2_hash(self.get_doc_before_save().secret_hash),
+					self.secret_hash,
+					self.get_doc_before_save().secret_hash,
 				)
 
 				if self.has_value_changed("secret_hash"):

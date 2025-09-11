@@ -9,7 +9,7 @@ import requests
 from frappe import _
 
 from mail.mail.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
-from mail.utils import get_dkim_selector
+from mail.utils import get_dkim_selector, reformat_pbkdf2_hash
 
 if TYPE_CHECKING:
 	from mail.mail.doctype.mail_backend_request.mail_backend_request import MailBackendRequest
@@ -210,6 +210,13 @@ class MailBackendDomainManager(MailBackendManagerBase):
 class MailBackendAccountManager(MailBackendManagerBase):
 	"""Class to manage accounts on the Mail Backend."""
 
+	def get(self, email: str, do_not_enqueue: bool = True) -> "MailBackendRequest":
+		"""Returns the account details from the backend."""
+
+		return self.create_request(
+			method="GET", endpoint=f"/api/principal/{email}", do_not_enqueue=do_not_enqueue
+		)
+
 	def create(self, email: str, display_name: str, quota: int, secret: str) -> "MailBackendRequest":
 		"""Creates an account on the backend."""
 
@@ -222,7 +229,7 @@ class MailBackendAccountManager(MailBackendManagerBase):
 			type="individual",
 			description=display_name,
 			quota=quota,
-			secrets=[secret],
+			secrets=[reformat_pbkdf2_hash(secret)],
 			emails=[email],
 			roles=["user"],
 		).__dict__
@@ -247,24 +254,20 @@ class MailBackendAccountManager(MailBackendManagerBase):
 		]
 
 		if old_secret != new_secret:
-			request_data.extend(
-				[
-					{
-						"action": "addItem",
-						"field": "secrets",
-						"value": new_secret,
-					},
-					{
-						"action": "removeItem",
-						"field": "secrets",
-						"value": old_secret,
-					},
-				]
-			)
+			if account_details := self.get(email, do_not_enqueue=True):
+				secrets = json.loads(account_details.response_json or "{}").get("data", {}).get("secrets", [])
+
+				for secret in secrets:
+					if not secret.startswith("$app$"):
+						request_data.append({"action": "removeItem", "field": "secrets", "value": secret})
+
+				request_data.append(
+					{"action": "addItem", "field": "secrets", "value": reformat_pbkdf2_hash(new_secret)}
+				)
 
 		request_data = json.dumps(request_data)
 		return self.create_request(
-			method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data
+			method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data, do_not_enqueue=True
 		)
 
 	def set_quota(self, email: str, quota: int) -> "MailBackendRequest":
