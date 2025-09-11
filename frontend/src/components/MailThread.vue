@@ -53,7 +53,7 @@
 
 			<div
 				v-else
-				class="space-y-4 sm:px-5 sm:py-6"
+				class="sm:space-y-4 sm:px-5 sm:py-6"
 				:class="{ 'pb-16': isMobile && !thread.data?.at(-1)?.draft }"
 			>
 				<div
@@ -83,6 +83,43 @@
 
 					<template v-else-if="!mail.name.startsWith('draft')">
 						<div
+							v-if="isMobile && !isCollapsed(mail)"
+							class="flex items-center justify-between pb-2"
+							@click.stop="mail.collapsed = !mail.collapsed"
+						>
+							<MailDate :datetime="mail.received_at" />
+							<MailActions
+								:mailbox
+								:mail
+								:is-collapsed="isCollapsed(mail)"
+								:show-reply-all="showReplyAll(mail)"
+								:pop-out-draft
+								:reply
+								:reply-all
+								:forward
+								@reload-mails="emit('reloadMails')"
+								@star-mails="
+									(_ids: string[], flagged: 0 | 1) =>
+										_ids.forEach(
+											(_id) =>
+												(thread.data.find(
+													(m: Mail) => m._id === _id,
+												).flagged = flagged),
+										)
+								"
+								@delete-mails="
+									() => {
+										if (thread.data.length == 1)
+											router.push({
+												name: 'Mailbox',
+												params: { mailbox },
+											})
+										emit('reloadMails')
+									}
+								"
+							/>
+						</div>
+						<div
 							class="flex space-x-3"
 							:class="{
 								'cursor-pointer': mail !== thread.data[thread.data.length - 1],
@@ -101,12 +138,14 @@
 							<div class="flex flex-1 justify-between truncate text-sm">
 								<div class="mr-3 flex flex-col space-y-1 truncate">
 									<div class="flex items-center space-x-1.5">
-										<span class="text-[15px] !font-semibold sm:text-base">
+										<span
+											class="truncate text-[15px] !font-semibold sm:text-base"
+										>
 											{{ mail.from_name || mail.from_email }}
 										</span>
 										<span
 											v-if="mail.from_name && !isMobile"
-											class="text-ink-gray-5"
+											class="text-ink-gray-5 truncate"
 										>
 											{{ `<${mail.from_email}>` }}
 										</span>
@@ -120,8 +159,12 @@
 									</div>
 								</div>
 								<div class="flex items-center space-x-1 self-start">
-									<MailDate :datetime="mail.received_at" />
+									<MailDate
+										v-if="!isMobile || isCollapsed(mail)"
+										:datetime="mail.received_at"
+									/>
 									<MailActions
+										v-if="!isMobile"
 										:mailbox
 										:mail
 										:is-collapsed="isCollapsed(mail)"
@@ -371,7 +414,7 @@ const replyForwardActions = computed(() =>
 		{
 			label: __('Reply All'),
 			onClick: () => replyAll(thread.data.at(-1)),
-			icon: Reply,
+			icon: ReplyAll,
 			condition: showReplyAll(thread.data.at(-1)),
 		},
 		{
