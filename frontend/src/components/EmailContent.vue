@@ -72,6 +72,7 @@ const srcdoc = computed(() => {
 					font-size: 14px;
 					line-height: 1.25rem;
 					background-color: ${colors.value.background};
+					margin: 0;
 				}
 
 				blockquote {

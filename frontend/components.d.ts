@@ -40,6 +40,7 @@ declare module 'vue' {
     LinkControl: typeof import('./src/components/Controls/LinkControl.vue')['default']
     LoginLayout: typeof import('./src/components/LoginLayout.vue')['default']
     MailAccountModal: typeof import('./src/components/Modals/MailAccountModal.vue')['default']
+    MailActions: typeof import('./src/components/MailActions.vue')['default']
     MailDataExchangeSettings: typeof import('./src/components/Settings/MailDataExchangeSettings.vue')['default']
     MailDate: typeof import('./src/components/MailDate.vue')['default']
     MailDetailsPopover: typeof import('./src/components/MailDetailsPopover.vue')['default']

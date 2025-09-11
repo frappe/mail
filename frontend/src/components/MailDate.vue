@@ -15,13 +15,17 @@ const { datetime, inList = false } = defineProps<{ datetime: string; inList?: bo
 const dayjs = inject('$dayjs')
 
 const formattedDate = computed(() => {
-	if (!inList) return __(useTimeAgo(datetime).value)
+	if (!inList) {
+		const timeAgo = useTimeAgo(datetime).value
+		return __(timeAgo.charAt(0).toUpperCase() + timeAgo.slice(1))
+	}
 	if (dayjs(datetime).isToday()) return dayjs(datetime).format('h:mm A')
 	if (dayjs(datetime).isYesterday()) return __('Yesterday')
-	return dayjs(datetime).format('DD MMM YYYY')
+	if (dayjs(datetime).year() === dayjs().year()) return dayjs(datetime).format('D MMM')
+	return dayjs(datetime).format('D MMM YYYY')
 })
 
 const tooltipText = computed(() =>
-	__(`${dayjs(datetime).format('DD MMM YYYY')} at ${dayjs(datetime).format('h:mm A')}`),
+	__(`${dayjs(datetime).format('D MMM YYYY')} at ${dayjs(datetime).format('h:mm A')}`),
 )
 </script>
