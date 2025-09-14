@@ -1,21 +1,25 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-from datetime import datetime
+import base64
+from datetime import datetime, timezone
 from email.utils import parseaddr
 from functools import cached_property
+from urllib.parse import urljoin
 
 import frappe
+import requests
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, now, random_string, validate_email_address
+from frappe.utils import cint, now, validate_email_address
 from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 
 from mail.backend import MailBackendAccountManager, MailBackendIdentityManager, get_mail_backend_api
-from mail.jmap import get_jmap_client, invalidate_jmap_cache
+from mail.jmap import get_jmap_client, invalidate_jmap_cache, invalidate_jmap_client_cache, raise_for_status
 from mail.mail.doctype.jmap_sync_state.jmap_sync_state import create_jmap_sync_state
 from mail.utils import (
 	convert_html_to_text,
+	generate_random_phrase,
 	generate_uuid_style_hash,
 	hash_password,
 	normalize_email,
@@ -27,7 +31,7 @@ from mail.utils.cache import (
 	get_tenant_for_user,
 )
 from mail.utils.dt import convert_to_utc
-from mail.utils.user import has_role, is_system_manager, is_tenant_admin
+from mail.utils.user import get_user_hashed_password, has_role, is_system_manager, is_tenant_admin
 from mail.utils.validation import (
 	is_email_assigned,
 	is_subaddressed_email,
@@ -162,7 +166,8 @@ class MailAccount(Document):
 		self.validate_tenant_max_accounts()
 		self.validate_email()
 		self.set_normalized_email()
-		self.validate_password()
+		self.validate_app_password()
+		self.validate_secret_hash()
 		self.validate_default_outgoing_email()
 		self.validate_display_name()
 		self.validate_reply_to()
@@ -177,15 +182,28 @@ class MailAccount(Document):
 		if self.enabled:
 			if self.has_value_changed("enabled") or self.has_value_changed("email"):
 				quota = cint(frappe.db.get_value("Mail Domain", self.domain_name, "default_disk_quota")) or 10
-				MailBackendAccountManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).create(
-					self.email, self.display_name, cint(quota * (1024**3)), self.secret
+				request = MailBackendAccountManager(
+					"Mail Cluster", get_cluster_for_tenant(self.tenant)
+				).create(
+					self.email,
+					self.display_name,
+					cint(quota * (1024**3)),
+					self.secret_hash,
 				)
-			elif self.has_value_changed("display_name") or self.has_value_changed("secret"):
+				if request.status != "Completed":
+					frappe.throw(
+						_("Failed to create account {0} on the mail server.").format(frappe.bold(self.email)),
+						title=_("Account Creation Failed"),
+					)
+			elif self.has_value_changed("display_name") or self.has_value_changed("secret_hash"):
 				MailBackendAccountManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).update(
-					self.email, self.display_name, self.secret, self.get_doc_before_save().secret
+					self.email,
+					self.display_name,
+					self.secret_hash,
+					self.get_doc_before_save().secret_hash,
 				)
 
-				if self.has_value_changed("secret"):
+				if self.has_value_changed("secret_hash"):
 					invalidate_jmap_cache(self.name)
 		elif self.has_value_changed("enabled"):
 			MailBackendAccountManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).delete(self.email)
@@ -270,18 +288,22 @@ class MailAccount(Document):
 		if not self.normalized_email:
 			self.normalized_email = normalize_email(self.email)
 
-	def validate_password(self) -> None:
-		"""Generates secret if password is changed"""
+	def validate_app_password(self) -> None:
+		"""Validates the app password."""
 
-		if not self.password:
-			self._generate_password()
+		if self.is_new() or self.app_password:
+			return
 
-		if not self.is_new():
-			if previous_doc := self.get_doc_before_save():
-				if previous_doc.get_password("password") == self.get_password("password"):
-					return
+		frappe.throw(_("App Password is mandatory."))
 
-		self.generate_secret()
+	def validate_secret_hash(self) -> None:
+		"""Validates the secret hash."""
+
+		if not self.secret_hash:
+			self.secret_hash = get_user_hashed_password(self.user)
+
+			if not self.secret_hash:
+				frappe.throw(_("Could not fetch password for user {0}.").format(frappe.bold(self.user)))
 
 	def validate_default_outgoing_email(self) -> None:
 		"""Validates the default outgoing email."""
@@ -327,18 +349,12 @@ class MailAccount(Document):
 		frappe.cache.hdel(f"user|{self.user}", ["account", "default_outgoing_email"])
 		frappe.cache.hdel(f"email|{self.email}", "account")
 
-	def generate_secret(self) -> None:
-		"""Generates secret from password"""
-
-		password = self.get_password("password")
-		self.secret = hash_password(password)
-
 	@frappe.whitelist()
-	def get_account_password(self) -> str:
-		"""Returns the password for the Mail Account."""
+	def get_account_app_password(self) -> str:
+		"""Returns the app password for the Mail Account."""
 
 		validate_permission_for_account(self.name)
-		return self.get_password("password")
+		return self.get_password("app_password")
 
 	@frappe.whitelist()
 	def sync_jmap_identities(self) -> None:
@@ -416,19 +432,48 @@ class MailAccount(Document):
 			frappe.throw(_("Failed to set vacation response."))
 
 	@frappe.whitelist()
-	def regenerate_password(self) -> None:
-		"""Regenerates the password for the Mail Account."""
+	def regenerate_app_password(self, account_password: str) -> None:
+		"""Regenerates the app password for the Mail Account."""
 
 		validate_permission_for_account(self.name)
-		self._generate_password()
-		self.save()
+		self._generate_app_password(account_password, save=True)
 
-		frappe.msgprint(_("Password has been regenerated."), alert=True, indicator="green")
+		frappe.msgprint(_("App Password has been regenerated."), alert=True, indicator="green")
 
-	def _generate_password(self) -> None:
-		"""Generates a random password for the Mail Account."""
+	def _generate_app_password(self, account_password: str, save: bool = True) -> None:
+		"""Generates a app password for the Mail Account."""
 
-		self.password = random_string(length=20)
+		if not account_password:
+			frappe.throw(_("Account password is required to generate app password."))
+
+		self.app_password = generate_random_phrase()
+		base_url = frappe.db.get_value("Mail Cluster", get_cluster_for_tenant(self.tenant), "base_url")
+
+		try:
+			data = [
+				{
+					"type": "addAppPassword",
+					"name": base64.b64encode(
+						f"{frappe.local.site}${datetime.now(timezone.utc).isoformat(timespec='milliseconds')}".encode()
+					).decode(),
+					"password": hash_password(self.app_password),
+				}
+			]
+			response = requests.post(
+				urljoin(base_url, "api/account/auth"), json=data, auth=(self.email, account_password)
+			)
+			raise_for_status(response)
+
+			if save:
+				self.save()
+
+			invalidate_jmap_client_cache(self.name)
+		except Exception:
+			frappe.log_error(
+				title=_("Failed to generate app password"),
+				message=frappe.get_traceback(with_context=True),
+			)
+			frappe.throw(_("Failed to generate app password. Please check your account password."))
 
 	def _sync_jmap_identities(self) -> None:
 		"""Syncs JMAP identities for the Mail Account."""
@@ -542,14 +587,17 @@ def create_mail_account(
 	email: str,
 	backup_email: str,
 	first_name: str,
-	last_name: str | None = None,
-	password: str | None = None,
+	last_name: str,
+	password: str,
 	is_admin: bool = False,
 ) -> "MailAccount":
 	"""Creates a Mail Account"""
 
 	if frappe.db.exists("Mail Account", email):
 		frappe.throw(_("Mail Account {0} already exists.").format(frappe.bold(email)))
+
+	if not password:
+		frappe.throw(_("Password is required to create account."))
 
 	user = _create_user_for_mail_account(email, first_name, last_name, password, is_admin)
 	_add_user_to_tenant(tenant, user, is_admin)
@@ -558,6 +606,7 @@ def create_mail_account(
 	account.user = user
 	account.backup_email = backup_email
 	account.insert(ignore_permissions=True)
+	account._generate_app_password(account_password=password)
 
 	return account
 

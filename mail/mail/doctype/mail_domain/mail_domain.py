@@ -38,7 +38,14 @@ class MailDomain(Document):
 		self.validate_is_verified()
 
 	def after_insert(self) -> None:
-		MailBackendDomainManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).create(self.domain_name)
+		request = MailBackendDomainManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).create(
+			self.domain_name
+		)
+		if request.status != "Completed":
+			frappe.throw(
+				_("Failed to create domain {0} on the mail server.").format(frappe.bold(self.domain_name)),
+				title=_("Domain Creation Failed"),
+			)
 
 	def on_update(self) -> None:
 		self.clear_cache()

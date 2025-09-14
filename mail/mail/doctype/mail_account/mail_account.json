@@ -15,11 +15,13 @@
   "user",
   "email",
   "normalized_email",
-  "password",
-  "secret",
   "default_outgoing_email",
   "backup_email",
-  "section_break_wzwp",
+  "authentication_section",
+  "app_password",
+  "column_break_oxwx",
+  "secret_hash",
+  "quota_section",
   "_disk_quota",
   "disk_quota",
   "_used_quota",
@@ -128,22 +130,6 @@
   {
    "fieldname": "column_break_yyco",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "password",
-   "fieldtype": "Password",
-   "hidden": 1,
-   "label": "Password",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "secret",
-   "fieldtype": "Small Text",
-   "hidden": 1,
-   "label": "Secret",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "fieldname": "default_outgoing_email",
@@ -297,10 +283,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "section_break_wzwp",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "column_break_rrsz",
    "fieldtype": "Column Break"
   },
@@ -345,6 +327,40 @@
    "no_copy": 1,
    "options": "File Size",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "app_password",
+   "fieldtype": "Password",
+   "label": "App Password",
+   "mandatory_depends_on": "eval: !doc.__islocal",
+   "no_copy": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: false",
+   "fieldname": "authentication_section",
+   "fieldtype": "Section Break",
+   "label": "Authentication"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
+   "fieldname": "quota_section",
+   "fieldtype": "Section Break",
+   "label": "Quota"
+  },
+  {
+   "fieldname": "column_break_oxwx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "secret_hash",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Secret Hash",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -386,7 +402,7 @@
    "link_fieldname": "account"
   }
  ],
- "modified": "2025-08-19 15:58:31.062290",
+ "modified": "2025-09-08 21:42:49.180617",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Account",

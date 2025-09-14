@@ -3,6 +3,7 @@ from urllib.parse import urljoin
 import frappe
 from frappe import _
 from frappe.core.doctype.user.user import generate_keys
+from frappe.query_builder import Table
 from frappe.utils.caching import request_cache
 
 from mail.utils import user_context
@@ -108,6 +109,26 @@ def generate_user_keys(user: str) -> dict:
 			return generate_keys(user)
 
 	frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+
+def get_user_hashed_password(user: str) -> str | None:
+	"""Returns the hashed password for a given user."""
+
+	Auth = Table("__Auth")
+	result = (
+		frappe.qb.from_(Auth)
+		.select(Auth.password)
+		.where(
+			(Auth.doctype == "User")
+			& (Auth.name == user)
+			& (Auth.fieldname == "password")
+			& (Auth.encrypted == 0)
+		)
+		.limit(1)
+		.run()
+	)
+	if result:
+		return result[0][0]
 
 
 def get_caldav_settings(user: str) -> dict:

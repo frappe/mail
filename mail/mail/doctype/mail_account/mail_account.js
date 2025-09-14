@@ -7,7 +7,7 @@ frappe.ui.form.on('Mail Account', {
 	},
 
 	refresh(frm) {
-		frm.trigger('add_show_password')
+		frm.trigger('add_show_app_password')
 		frm.trigger('add_actions')
 	},
 
@@ -28,11 +28,13 @@ frappe.ui.form.on('Mail Account', {
 		}))
 	},
 
-	add_show_password(frm) {
+	add_show_app_password(frm) {
 		if (frm.doc.__islocal) return
 
-		if (frm.doc.password) {
-			frm.add_custom_button(__('Show Password'), () => frm.trigger('get_account_password'))
+		if (frm.doc.app_password) {
+			frm.add_custom_button(__('Show App Password'), () =>
+				frm.trigger('get_account_app_password'),
+			)
 		}
 	},
 
@@ -58,18 +60,18 @@ frappe.ui.form.on('Mail Account', {
 		)
 
 		frm.add_custom_button(
-			__('Re-generate Password'),
-			() => frm.trigger('regenerate_password'),
+			__('Re-generate App Password'),
+			() => frm.trigger('regenerate_app_password'),
 			__('Actions'),
 		)
 	},
 
-	get_account_password(frm) {
+	get_account_app_password(frm) {
 		frappe.call({
 			doc: frm.doc,
-			method: 'get_account_password',
+			method: 'get_account_app_password',
 			freeze: true,
-			freeze_message: __('Getting Password...'),
+			freeze_message: __('Getting App Password...'),
 			callback: (r) => {
 				if (!r.exc) {
 					frappe.msgprint(r.message)
@@ -218,17 +220,41 @@ frappe.ui.form.on('Mail Account', {
 		dialog.show()
 	},
 
-	regenerate_password(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: 'regenerate_password',
-			freeze: true,
-			freeze_message: __('Regenerating Password...'),
-			callback: (r) => {
-				if (!r.exc) {
-					frm.refresh()
-				}
+	regenerate_app_password(frm) {
+		const dialog = new frappe.ui.Dialog({
+			title: __('Regenerate App Password'),
+			size: 'small',
+			fields: [
+				{
+					fieldname: 'account_password',
+					fieldtype: 'Password',
+					label: __('Account Password'),
+					description: __(
+						'Your main account password is required to regenerate the app password.',
+					),
+					reqd: 1,
+				},
+			],
+			primary_action_label: __('Regenerate'),
+			primary_action: (data) => {
+				frappe.call({
+					doc: frm.doc,
+					method: 'regenerate_app_password',
+					args: {
+						account_password: data.account_password,
+					},
+					freeze: true,
+					freeze_message: __('Regenerating App Password...'),
+					callback: (r) => {
+						if (!r.exc) {
+							frm.refresh()
+							dialog.hide()
+						}
+					},
+				})
 			},
 		})
+
+		dialog.show()
 	},
 })

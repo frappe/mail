@@ -123,7 +123,6 @@ def create_account(request_key: str, first_name: str, last_name: str, password: 
 
 	if account_request.account:
 		account_request.create_account(first_name, last_name, password)
-
 	else:
 		create_user(account_request.email, first_name, last_name, password, ["Mail Admin"])
 
