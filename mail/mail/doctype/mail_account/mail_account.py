@@ -2,8 +2,6 @@
 # For license information, please see license.txt
 
 import base64
-import random
-import string
 from datetime import datetime, timezone
 from email.utils import parseaddr
 from functools import cached_property
@@ -19,7 +17,13 @@ from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 from mail.backend import MailBackendAccountManager, MailBackendIdentityManager, get_mail_backend_api
 from mail.jmap import get_jmap_client, invalidate_jmap_cache, invalidate_jmap_client_cache, raise_for_status
 from mail.mail.doctype.jmap_sync_state.jmap_sync_state import create_jmap_sync_state
-from mail.utils import convert_html_to_text, generate_uuid_style_hash, hash_password, normalize_email
+from mail.utils import (
+	convert_html_to_text,
+	generate_random_phrase,
+	generate_uuid_style_hash,
+	hash_password,
+	normalize_email,
+)
 from mail.utils.cache import (
 	get_aliases_for_user,
 	get_cluster_for_tenant,
@@ -442,9 +446,7 @@ class MailAccount(Document):
 		if not account_password:
 			frappe.throw(_("Account password is required to generate app password."))
 
-		self.app_password = " ".join(
-			["".join(random.choices(string.ascii_lowercase, k=l)) for l in (5, 4, 4, 4, 3)]
-		)
+		self.app_password = generate_random_phrase()
 		base_url = frappe.db.get_value("Mail Cluster", get_cluster_for_tenant(self.tenant), "base_url")
 
 		try:

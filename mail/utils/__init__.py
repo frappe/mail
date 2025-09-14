@@ -2,6 +2,7 @@ import base64
 import gzip
 import hashlib
 import os
+import random
 import re
 import secrets
 import string
@@ -35,26 +36,36 @@ def verify_password(password: str, hashed_password: str) -> bool:
 	return bcrypt.checkpw(password.encode(), hashed_password.encode())
 
 
-def reformat_pbkdf2_hash(passlib_hash: str, dklen: int | None = None) -> str:
-	"""Normalize a PBKDF2 hash from Passlib crypt-base64 format."""
+def generate_random_phrase() -> str:
+	"""Generate a random passphrase consisting of 5 words."""
 
-	crypt_b64 = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-	std_b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-	trans = str.maketrans(crypt_b64, std_b64)
+	return " ".join(["".join(random.choices(string.ascii_lowercase, k=l)) for l in (5, 4, 4, 4, 3)])
+
+
+def reformat_pbkdf2_hash(passlib_hash: str, dklen: int | None = None) -> str:
+	"""Normalize a PBKDF2 hash into a consistent format."""
 
 	prefix, iterations, salt_mod, hash_mod = passlib_hash.strip("$").split("$")
 	iterations = int(iterations)
 
-	salt_bytes = base64.b64decode(salt_mod.translate(trans) + "===")
-	hash_bytes = base64.b64decode(hash_mod.translate(trans) + "===")
+	def b64decode_mod(s: str) -> bytes:
+		s = s.replace(".", "+").replace("-", "/")
+		pad_len = (-len(s)) % 4
+		return base64.b64decode(s + ("=" * pad_len))
 
+	def b64encode_std(b: bytes) -> str:
+		return base64.b64encode(b).decode().rstrip("=")
+
+	salt_bytes = b64decode_mod(salt_mod)
+	salt_b64 = b64encode_std(salt_bytes)
+
+	hash_bytes = b64decode_mod(hash_mod)
 	if dklen is None:
 		dklen = len(hash_bytes)
+	hash_clean = b64encode_std(hash_bytes)
 
-	salt_b64 = base64.b64encode(salt_bytes).decode().rstrip("=")
-	hash_b64 = base64.b64encode(hash_bytes).decode().rstrip("=")
-
-	return f"${prefix}$i={iterations},l={dklen}${salt_b64}${hash_b64}"
+	formatted_hash = f"${prefix}$i={iterations},l={dklen}${salt_b64}${hash_clean}"
+	return formatted_hash
 
 
 @contextmanager
