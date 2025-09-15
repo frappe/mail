@@ -142,6 +142,8 @@ def get_caldav_settings(user: str) -> dict:
 		base_url = frappe.db.get_value("Mail Cluster", cluster, "base_url")
 		caldav_url = urljoin(base_url, ".well-known/caldav")
 
-		caldav_settings.update({"url": caldav_url, "auth": (account.email, account.get_account_password())})
+		caldav_settings.update(
+			{"url": caldav_url, "auth": (account.email, account.get_account_app_password())}
+		)
 
 	return caldav_settings
