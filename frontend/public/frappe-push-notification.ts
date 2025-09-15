@@ -130,19 +130,11 @@ class FrappePushNotification {
 			throw new Error('Push notifications are not supported on your device')
 
 		// Return if token already presence in the instance
-		if (this.token != null)
-			return {
-				permission_granted: true,
-				token: this.token,
-			}
+		if (this.token != null) return { permission_granted: true, token: this.token }
 
 		// ask for permission
 		const permission = await Notification.requestPermission()
-		if (permission !== 'granted')
-			return {
-				permission_granted: false,
-				token: '',
-			}
+		if (permission !== 'granted') return { permission_granted: false, token: '' }
 
 		// check in local storage for old token
 		const oldToken = localStorage.getItem(`firebase_token_${this.projectName}`)
@@ -165,10 +157,7 @@ class FrappePushNotification {
 			localStorage.setItem(`firebase_token_${this.projectName}`, newToken)
 		}
 		this.token = newToken
-		return {
-			permission_granted: true,
-			token: newToken,
-		}
+		return { permission_granted: true, token: newToken }
 	}
 
 	// This will delete token from firebase and unsubscribe from push notification
@@ -206,9 +195,7 @@ class FrappePushNotification {
 					this.projectName,
 				{
 					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-					},
+					headers: { 'Content-Type': 'application/json' },
 				},
 			)
 			return response.status === 200

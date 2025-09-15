@@ -52,7 +52,15 @@ const registerServiceWorker = async () => {
 		.catch((err) => console.error('Failed to register service worker', err))
 }
 
-router.isReady().then(() => {
+router.isReady().then(async () => {
+	if (import.meta.env.DEV)
+		await frappeRequest({ url: '/api/method/mail.www.mail.get_context_for_dev' }).then(
+			async (values) => {
+				if (!window.frappe) window.frappe = {}
+				window.frappe.boot = values
+			},
+		)
+
 	registerServiceWorker()
 	app.mount('#app')
 })
