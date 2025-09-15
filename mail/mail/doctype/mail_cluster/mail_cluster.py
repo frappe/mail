@@ -336,8 +336,6 @@ class MailCluster(Document):
 def reload_clusters_config(clusters: str | list[str]) -> None:
 	"""Reloads the configuration of the specified clusters."""
 
-	frappe.only_for("System Manager")
-
 	if isinstance(clusters, str):
 		clusters = json.loads(clusters)
 
