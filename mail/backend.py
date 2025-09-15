@@ -220,10 +220,6 @@ class MailBackendAccountManager(MailBackendManagerBase):
 	def create(self, email: str, display_name: str, quota: int, secret: str) -> "MailBackendRequest":
 		"""Creates an account on the backend."""
 
-		from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import (
-			create_jmap_push_subscriptions,
-		)
-
 		principal = Principal(
 			name=email,
 			type="individual",
@@ -237,8 +233,6 @@ class MailBackendAccountManager(MailBackendManagerBase):
 			method="POST",
 			endpoint="/api/principal",
 			request_data=json.dumps(principal),
-			on_end=create_jmap_push_subscriptions,
-			on_end_kwargs={"account": email},
 			do_not_enqueue=True,
 		)
 

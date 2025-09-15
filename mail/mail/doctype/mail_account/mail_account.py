@@ -16,6 +16,7 @@ from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 
 from mail.backend import MailBackendAccountManager, MailBackendIdentityManager, get_mail_backend_api
 from mail.jmap import get_jmap_client, invalidate_jmap_cache, invalidate_jmap_client_cache, raise_for_status
+from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import create_jmap_push_subscriptions
 from mail.mail.doctype.jmap_sync_state.jmap_sync_state import create_jmap_sync_state
 from mail.utils import (
 	convert_html_to_text,
@@ -607,6 +608,7 @@ def create_mail_account(
 	account.backup_email = backup_email
 	account.insert(ignore_permissions=True)
 	account._generate_app_password(account_password=password)
+	create_jmap_push_subscriptions(account.name)
 
 	return account
 
