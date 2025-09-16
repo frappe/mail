@@ -30,7 +30,7 @@ type OnMessageCallback = (payload: MessagePayload) => void
 
 class FrappePushNotification {
 	static get relayServerBaseURL(): string {
-		return 'http://notification.relay:8000'
+		return window.frappe?.boot.push_relay_server_url
 	}
 
 	// client info
