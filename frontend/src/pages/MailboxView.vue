@@ -210,6 +210,7 @@
 				<MailThread
 					:mailbox
 					:thread-i-d
+					:threads="threadIDs"
 					@reload-mails="reloadMails"
 					@set-seen="(seen: boolean) => setSeen.submit({ thread_ids: [threadID], seen })"
 					@move-thread="
@@ -217,6 +218,8 @@
 							moveThreads.submit({ thread_ids: [threadID], move_to_mailbox })
 					"
 					@delete-thread="deleteThreads.submit([threadID])"
+					@prev-thread="goToPrevThread"
+					@next-thread="goToNextThread"
 				/>
 			</div>
 		</template>
@@ -545,6 +548,16 @@ const deleteThreads = createResource({
 		reloadMails()
 	},
 })
+
+const goToPrevThread = () => {
+	const prevThread = threadIDs.value[threadIDs.value.indexOf(threadID) - 1]
+	router.push({ name: 'Mail', params: { mailbox, threadID: prevThread } })
+}
+
+const goToNextThread = () => {
+	const nextThread = threadIDs.value[threadIDs.value.indexOf(threadID) + 1]
+	router.push({ name: 'Mail', params: { mailbox, threadID: nextThread } })
+}
 
 const showEmptyMailbox = ref(false)
 
