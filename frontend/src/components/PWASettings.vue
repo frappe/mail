@@ -50,7 +50,7 @@ const isPushNotificationsSettingEnabled = ref(
 const isLoading = ref(false)
 
 const isPushNotificationEnabled = computed(
-	() => window.frappe?.boot.push_relay_server_url && isPushNotificationRelayEnabled.data,
+	() => window.push_relay_server_url && isPushNotificationRelayEnabled.data,
 )
 
 const description = computed(() =>
@@ -90,7 +90,8 @@ const enablePushNotifications = async () => {
 }
 
 const isPushNotificationRelayEnabled = createResource({
-	url: 'mail.api.is_push_notification_relay_enabled',
+	url: 'mail.api.account.is_push_notification_relay_enabled',
+	cache: 'mail:push_notifications_enabled',
 	auto: true,
 })
 </script>

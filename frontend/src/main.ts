@@ -55,10 +55,7 @@ const registerServiceWorker = async () => {
 router.isReady().then(async () => {
 	if (import.meta.env.DEV)
 		await frappeRequest({ url: '/api/method/mail.www.mail.get_context_for_dev' }).then(
-			async (values) => {
-				if (!window.frappe) window.frappe = {}
-				window.frappe.boot = values
-			},
+			(values) => Object.keys(values).forEach((key) => (window[key] = values[key])),
 		)
 
 	registerServiceWorker()

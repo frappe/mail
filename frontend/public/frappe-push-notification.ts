@@ -30,7 +30,7 @@ type OnMessageCallback = (payload: MessagePayload) => void
 
 class FrappePushNotification {
 	static get relayServerBaseURL(): string {
-		return window.frappe?.boot.push_relay_server_url
+		return window.push_relay_server_url
 	}
 
 	// client info
@@ -85,30 +85,22 @@ class FrappePushNotification {
 	async fetchWebConfig(): Promise<WebConfigType> {
 		if (this.webConfig !== null && this.webConfig !== undefined) return this.webConfig
 
-		try {
-			const url = `${FrappePushNotification.relayServerBaseURL}/api/method/notification_relay.api.get_config?project_name=${this.projectName}`
-			const response = await fetch(url)
-			const response_json = await response.json()
-			this.webConfig = response_json.config
-			return this.webConfig!
-		} catch {
-			throw new Error('Push Notification Relay is not configured properly on your site.')
-		}
+		const url = `${FrappePushNotification.relayServerBaseURL}/api/method/notification_relay.api.get_config?project_name=${this.projectName}`
+		const response = await fetch(url)
+		const response_json = await response.json()
+		this.webConfig = response_json.config
+		return this.webConfig!
 	}
 
 	// Fetch VAPID public key
 	async fetchVapidPublicKey(): Promise<string> {
 		if (this.vapidPublicKey !== '') return this.vapidPublicKey
 
-		try {
-			const url = `${FrappePushNotification.relayServerBaseURL}/api/method/notification_relay.api.get_config?project_name=${this.projectName}`
-			const response = await fetch(url)
-			const response_json = await response.json()
-			this.vapidPublicKey = response_json.vapid_public_key
-			return this.vapidPublicKey
-		} catch {
-			throw new Error('Push Notification Relay is not configured properly on your site.')
-		}
+		const url = `${FrappePushNotification.relayServerBaseURL}/api/method/notification_relay.api.get_config?project_name=${this.projectName}`
+		const response = await fetch(url)
+		const response_json = await response.json()
+		this.vapidPublicKey = response_json.vapid_public_key
+		return this.vapidPublicKey
 	}
 
 	// Register on message handler
