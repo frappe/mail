@@ -661,6 +661,25 @@ def search_messages(account: str, filter: dict, position: int = 0, limit: int = 
 	return messages
 
 
+def relevance_search_messages(account: str, text: str, limit: int = 20) -> list[dict]:
+	"""Returns a list of messages based on relevance search for the provided text."""
+
+	validate_permission_for_account(account)
+
+	client = get_jmap_client(account)
+	result = client.relevance_search(text, limit)
+	_ids = result["ids"]
+
+	if not _ids:
+		return []
+
+	fetched_messages = get_messages(account, _ids=_ids, sort_asc=False)
+	msg_by_id = {msg["_id"]: msg for msg in fetched_messages}
+	messages = [msg_by_id[mid] for mid in _ids if mid in msg_by_id]
+
+	return messages[:limit]
+
+
 def get_messages(account: str, _ids: list[str], sort_asc: bool = False) -> list[dict]:
 	"""Returns a list of messages for the provided IDs."""
 

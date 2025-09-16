@@ -399,6 +399,47 @@ class JMAPClient:
 
 		return {"ids": _ids[:limit], "total": total}
 
+	def relevance_search(self, text: str, limit: int = 50) -> dict:
+		"""Returns emails matching the given text in subject, to, cc, bcc, body or text."""
+
+		filters = [
+			{"subject": text},
+			{"to": text},
+			{"cc": text},
+			{"bcc": text},
+			{"body": text},
+			{"text": text},
+		]
+
+		method_calls = []
+		for i, filter in enumerate(filters):
+			method_calls.append(
+				[
+					"Email/query",
+					{
+						"accountId": self.account_id,
+						"filter": filter,
+						"position": 0,
+						"limit": limit,
+						"sort": [{"property": "receivedAt", "isAscending": False}],
+						"calculateTotal": True if i == len(filters) - 1 else False,
+					},
+					str(i),
+				]
+			)
+		response = self._make_request(using=["urn:ietf:params:jmap:mail"], method_calls=method_calls)
+
+		_ids = []
+		total = 0
+		for method_response in response["methodResponses"]:
+			_method, result, _call_id = method_response
+			total = result.get("total", total)
+			for _id in result.get("ids", []):
+				if _id not in _ids:
+					_ids.append(_id)
+
+		return {"ids": _ids[:limit], "total": total}
+
 	def thread_query(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
 	) -> list[str] | dict[str, list]:
