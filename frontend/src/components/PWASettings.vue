@@ -15,8 +15,8 @@
 				size="md"
 				:label="__('Enable Push Notifications')"
 				:class="{ 'p-2': description }"
-				:model-value="isPushNotificationsEnabled"
-				:disabled="!hasPushRelayServer || isLoading"
+				:model-value="isPushNotificationsSettingEnabled"
+				:disabled="!isPushNotificationEnabled || isLoading"
 				:description
 				@update:model-value="togglePushNotifications"
 			/>
@@ -25,7 +25,7 @@
 				<LoadingIndicator class="text-ink-gray-7 h-3 w-3" />
 				<span class="text-sm">
 					{{
-						isPushNotificationsEnabled
+						isPushNotificationsSettingEnabled
 							? __('Disabling Push Notifications...')
 							: __('Enabling Push Notifications...')
 					}}
@@ -38,19 +38,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { ChevronLeft } from 'lucide-vue-next'
-import { Button, LoadingIndicator, Switch } from 'frappe-ui'
+import { Button, LoadingIndicator, Switch, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 
 const emit = defineEmits(['close'])
 
-const isPushNotificationsEnabled = ref(window.frappePushNotification?.isNotificationEnabled())
+const isPushNotificationsSettingEnabled = ref(
+	window.frappePushNotification?.isNotificationEnabled(),
+)
 const isLoading = ref(false)
 
-const hasPushRelayServer = computed(() => window.frappe?.boot.push_relay_server_url)
+const isPushNotificationEnabled = computed(
+	() => window.frappe?.boot.push_relay_server_url && isPushNotificationRelayEnabled.data,
+)
 
 const description = computed(() =>
-	!hasPushRelayServer.value ? __('Push notifications have been disabled on your site') : '',
+	!isPushNotificationEnabled.value
+		? __('Push notifications have been disabled on your site')
+		: '',
 )
 
 const togglePushNotifications = async (isEnabled: boolean) => {
@@ -59,7 +65,7 @@ const togglePushNotifications = async (isEnabled: boolean) => {
 	isLoading.value = true
 	try {
 		await window.frappePushNotification.disableNotification()
-		isPushNotificationsEnabled.value = false
+		isPushNotificationsSettingEnabled.value = false
 		raiseToast(__('Push notifications disabled'))
 	} catch (error) {
 		raiseToast(__(error.message), 'error')
@@ -71,15 +77,20 @@ const enablePushNotifications = async () => {
 	isLoading.value = true
 	try {
 		const data = await window.frappePushNotification.enableNotification()
-		if (data.permission_granted) isPushNotificationsEnabled.value = true
+		if (data.permission_granted) isPushNotificationsSettingEnabled.value = true
 		else {
 			raiseToast(__('Push Notification permission denied'), 'error')
-			isPushNotificationsEnabled.value = false
+			isPushNotificationsSettingEnabled.value = false
 		}
 	} catch (error) {
 		raiseToast(__(error.message), 'error')
-		isPushNotificationsEnabled.value = false
+		isPushNotificationsSettingEnabled.value = false
 	}
 	isLoading.value = false
 }
+
+const isPushNotificationRelayEnabled = createResource({
+	url: 'mail.api.is_push_notification_relay_enabled',
+	auto: true,
+})
 </script>

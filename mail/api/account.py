@@ -250,3 +250,8 @@ def create_mail_data_exchange(
 	doc.export_archive_type = export_archive_type
 	doc.insert()
 	doc.submit()
+
+
+@frappe.whitelist()
+def is_push_notification_relay_enabled() -> bool:
+	return frappe.db.get_single_value("Push Notification Settings", "enable_push_notification_relay")

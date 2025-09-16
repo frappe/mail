@@ -11,6 +11,7 @@ import frappe
 from bs4 import BeautifulSoup
 from frappe import _
 from frappe.model.document import Document
+from frappe.push_notification import PushNotification
 from frappe.utils import add_to_date, cint, escape_html, get_datetime, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
@@ -1111,8 +1112,15 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 							mailboxes.add(mailbox["mailbox_id"])
 
 							if mailbox["mailbox_id"] == inbox_id:
-								# Send Push Notification
-								pass
+								push_notification = PushNotification("mail")
+								if push_notification.is_enabled():
+									push_notification.send_notification_to_user(
+										user,
+										message["from_name"] or message["from_email"],
+										message["subject"] or _("[No subject]"),
+										f"{frappe.utils.get_url()}/mail/mailbox/{inbox_id}/{message['thread_id']}",
+										"public/manifest/manifest-icon-192.maskable.png",
+									)
 
 				if mailboxes:
 					frappe.publish_realtime("new_mail_created", list(mailboxes), user=user)
