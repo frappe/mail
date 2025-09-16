@@ -12,7 +12,7 @@ from mail.mail.doctype.mail_message.mail_message import (
 	fetch_threads,
 	get_message_ids,
 	move_messages,
-	search_messages,
+	relevance_search_messages,
 	set_flagged_status,
 	set_seen_status,
 )
@@ -430,4 +430,4 @@ def search_mails(query) -> dict:
 	"""Returns search results for the given query."""
 
 	account = get_account_for_user(frappe.session.user)
-	return search_messages(account, {"text": query}, 0, 10)
+	return relevance_search_messages(account, text=query, limit=10)
