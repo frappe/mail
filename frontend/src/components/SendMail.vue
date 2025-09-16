@@ -2,7 +2,7 @@
 	<component
 		:is="isMobile ? SendMailMobileLayout : Dialog"
 		v-model="show"
-		:options="{ title: __('Compose Mail'), size: '7xl' }"
+		:options="{ title: __('Compose Mail'), size: '6xl' }"
 		@send-mail="editor?.sendMail()"
 		@discard-mail="editor?.discardMail()"
 	>

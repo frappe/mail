@@ -260,7 +260,7 @@ const isDraftUpdated = computed(() => JSON.stringify(mail) !== JSON.stringify(or
 
 onMounted(() => {
 	updateOriginalMail()
-	if (mailDetails?.type === 'forward') setTimeout(() => toInput.value?.setFocus(), 50)
+	if (!mailDetails?.in_reply_to) setTimeout(() => toInput.value?.setFocus(), 50)
 })
 
 onUnmounted(() => saveDraft())

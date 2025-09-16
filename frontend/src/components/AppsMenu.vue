@@ -7,7 +7,7 @@
 				@click.prevent="togglePopover()"
 			>
 				<div class="flex gap-2">
-					<FeatherIcon name="grid" class="size-4" />
+					<FeatherIcon name="grid" class="text-ink-gray-6 size-4" />
 					<span class="text-ink-gray-7">{{ __('Apps') }}</span>
 				</div>
 				<FeatherIcon name="chevron-right" class="text-ink-gray-6 size-4" />

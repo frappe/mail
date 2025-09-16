@@ -122,7 +122,9 @@ const srcdoc = computed(() => {
 				document.addEventListener('click', (e) => {
 					if (e.target.tagName === 'A') {
 						e.preventDefault();
-						window.open(e.target.href, '_blank');
+						if (e.target.getAttribute('href')?.trim()) {
+							window.open(e.target.href, '_blank');
+						}
 					}
 				});
 				${colors.value.script}

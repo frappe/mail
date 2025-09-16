@@ -9,9 +9,10 @@
     "strict": true,
     "noImplicitAny": true,
     "skipLibCheck": true,
+    "lib": ["dom", "webworker"],
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "public/**/*.ts"]
 }

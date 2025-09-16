@@ -51,6 +51,7 @@ declare module 'vue' {
     MultiselectInputControl: typeof import('./src/components/Controls/MultiselectInputControl.vue')['default']
     NoMails: typeof import('./src/components/Icons/NoMails.vue')['default']
     ProfileSettings: typeof import('./src/components/Settings/ProfileSettings.vue')['default']
+    PWASettings: typeof import('./src/components/PWASettings.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SearchModal: typeof import('./src/components/Modals/SearchModal.vue')['default']

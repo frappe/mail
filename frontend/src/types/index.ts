@@ -111,3 +111,12 @@ export interface Thread {
 }
 
 export type LayoutType = 'split' | 'full'
+
+export interface NotificationPayload {
+	data?: {
+		title?: string
+		body?: string
+		notification_icon?: string
+		click_action?: string
+	}
+}

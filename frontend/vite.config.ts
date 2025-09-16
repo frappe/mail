@@ -51,8 +51,15 @@ export default defineConfig({
 		}),
 		VitePWA({
 			registerType: 'autoUpdate',
+			strategies: 'injectManifest',
+			injectRegister: null,
+			filename: 'sw.ts',
+			injectManifest: {
+				maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+			},
 			devOptions: {
 				enabled: true,
+				type: 'module',
 			},
 			workbox: {
 				cleanupOutdatedCaches: true,
@@ -100,6 +107,7 @@ export default defineConfig({
 	},
 	optimizeDeps: {
 		include: [
+			'tailwind.config.js',
 			'frappe-ui > feather-icons',
 			'interactjs',
 			'engine.io-client',
