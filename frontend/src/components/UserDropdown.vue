@@ -54,7 +54,8 @@
 				</button>
 			</template>
 		</Dropdown>
-		<SettingsModal v-model="showSettings" />
+		<SettingsModal v-if="!isMobile" v-model="showSettings" />
+		<PWASettings v-else-if="showSettings" @close="closeSidebar" />
 	</div>
 </template>
 
@@ -72,17 +73,19 @@ import {
 import { Dropdown } from 'frappe-ui'
 
 import { convertToTitleCase } from '@/utils'
-import { useScreenSize, useTheme } from '@/utils/composables'
+import { useScreenSize, useSidebar, useTheme } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import AppsMenu from '@/components/AppsMenu.vue'
 import MailLogo from '@/components/Icons/MailLogo.vue'
 import SettingsModal from '@/components/Modals/SettingsModal.vue'
+import PWASettings from '@/components/PWASettings.vue'
 
 const user = inject('$user')
 const route = useRoute()
 const router = useRouter()
 const { logout, branding } = sessionStore()
 const { isMobile } = useScreenSize()
+const { closeSidebar } = useSidebar()
 const { setTheme } = useTheme()
 
 const showSettings = ref(false)
@@ -111,7 +114,7 @@ const userDropdownOptions = [
 		icon: SettingsIcon,
 		label: __('Settings'),
 		onClick: () => (showSettings.value = true),
-		condition: () => !user.data.is_tenant_owner && !isMobile.value,
+		condition: () => !user.data.is_tenant_owner,
 	},
 	{
 		icon: SunMoon,
