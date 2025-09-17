@@ -667,8 +667,7 @@ def relevance_search_messages(account: str, text: str, limit: int = 20) -> list[
 	validate_permission_for_account(account)
 
 	client = get_jmap_client(account)
-	result = client.relevance_search(text, limit)
-	_ids = result["ids"]
+	_ids = client.relevance_search(text, limit)
 
 	if not _ids:
 		return []

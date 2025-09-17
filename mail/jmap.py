@@ -399,8 +399,17 @@ class JMAPClient:
 
 		return {"ids": _ids[:limit], "total": total}
 
-	def relevance_search(self, text: str, limit: int = 50) -> dict:
+	def relevance_search(self, text: str, limit: int = 50, batch_call: bool = True) -> list[str]:
 		"""Returns emails matching the given text in subject, to, cc, bcc, body or text."""
+
+		def _extract_ids_from_response(response: dict) -> list[str]:
+			_ids = []
+			for method_response in response["methodResponses"]:
+				_method, result, _call_id = method_response
+				for _id in result.get("ids", []):
+					if _id not in _ids:
+						_ids.append(_id)
+			return _ids
 
 		filters = [
 			{"subject": text},
@@ -422,23 +431,27 @@ class JMAPClient:
 						"position": 0,
 						"limit": limit,
 						"sort": [{"property": "receivedAt", "isAscending": False}],
-						"calculateTotal": True if i == len(filters) - 1 else False,
+						"calculateTotal": False,
 					},
 					str(i),
 				]
 			)
-		response = self._make_request(using=["urn:ietf:params:jmap:mail"], method_calls=method_calls)
 
 		_ids = []
-		total = 0
-		for method_response in response["methodResponses"]:
-			_method, result, _call_id = method_response
-			total = result.get("total", total)
-			for _id in result.get("ids", []):
-				if _id not in _ids:
-					_ids.append(_id)
+		if batch_call:
+			response = self._make_request(using=["urn:ietf:params:jmap:mail"], method_calls=method_calls)
+			_ids = _extract_ids_from_response(response)
+		else:
+			for method_call in method_calls:
+				response = self._make_request(using=["urn:ietf:params:jmap:mail"], method_calls=[method_call])
+				for _id in _extract_ids_from_response(response):
+					if _id not in _ids:
+						_ids.append(_id)
 
-		return {"ids": _ids[:limit], "total": total}
+				if len(_ids) >= limit:
+					break
+
+		return _ids[:limit]
 
 	def thread_query(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
