@@ -136,7 +136,9 @@
 				<!-- Mail list -->
 				<div
 					v-if="threads?.data?.length"
+					ref="mailList"
 					class="h-full overflow-y-auto overscroll-contain"
+					@click="mailListClicked = true"
 					@scroll="loadMoreEmails"
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
@@ -218,8 +220,8 @@
 							moveThreads.submit({ thread_ids: [threadID], move_to_mailbox })
 					"
 					@delete-thread="deleteThreads.submit([threadID])"
-					@prev-thread="goToPrevThread"
-					@next-thread="goToNextThread"
+					@prev-thread="goToThreadByOffset(-1)"
+					@next-thread="goToThreadByOffset(1)"
 				/>
 			</div>
 		</template>
@@ -245,7 +247,7 @@ import {
 	watch,
 } from 'vue'
 import { useRouter } from 'vue-router'
-import { useDebounceFn } from '@vueuse/core'
+import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import {
 	FolderInput,
 	ListFilter,
@@ -293,6 +295,10 @@ const dayjs = inject('$dayjs')
 const { mailboxes, mailboxIds } = userStore()
 
 // Selection
+
+const mailList = useTemplateRef('mailList')
+const mailListClicked = ref(true)
+onClickOutside(mailList, () => (mailListClicked.value = false))
 
 const mailItems = useTemplateRef('mailItems')
 
@@ -356,7 +362,21 @@ watch(allSelected, (val) => {
 
 const handleKeyDown = (e: KeyboardEvent) => {
 	if (e.key === 'Shift') isShiftPressed.value = true
+
+	if (mailListClicked.value && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+		e.preventDefault()
+
+		const offset = e.key === 'ArrowUp' ? -1 : 1
+		if (isShiftPressed.value) {
+			const thread = getThreadByOffset(offset)
+			if (thread) {
+				if (selections.value.includes(thread)) deselectThread(thread, false)
+				else selectThread(thread, false)
+			}
+		} else goToThreadByOffset(offset)
+	}
 }
+
 const handleKeyUp = (e: KeyboardEvent) => {
 	if (e.key === 'Shift') isShiftPressed.value = false
 }
@@ -549,14 +569,16 @@ const deleteThreads = createResource({
 	},
 })
 
-const goToPrevThread = () => {
-	const prevThread = threadIDs.value[threadIDs.value.indexOf(threadID) - 1]
-	router.push({ name: 'Mail', params: { mailbox, threadID: prevThread } })
-}
+const getThreadByOffset = (offset: number) =>
+	threadIDs.value[threadIDs.value.indexOf(threadID) + offset]
 
-const goToNextThread = () => {
-	const nextThread = threadIDs.value[threadIDs.value.indexOf(threadID) + 1]
-	router.push({ name: 'Mail', params: { mailbox, threadID: nextThread } })
+const goToThreadByOffset = (offset: number) => {
+	const targetThread = getThreadByOffset(offset)
+	if (!targetThread) return
+
+	router.push({ name: 'Mail', params: { mailbox, threadID: targetThread } })
+	const el = mailItems.value?.find((el) => el?.id === targetThread)?.$el
+	el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
 const showEmptyMailbox = ref(false)

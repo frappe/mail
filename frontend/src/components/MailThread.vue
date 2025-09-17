@@ -19,6 +19,26 @@
 					{{ thread?.data?.[0]?.subject || __('[No subject]') }}
 				</h2>
 				<div class="ml-auto shrink-0 space-x-2">
+					<Tooltip v-if="mailbox !== 'starred'" :text="__('Move To')">
+						<Dropdown :options="moveToOptions">
+							<Button variant="ghost">
+								<template #icon>
+									<FolderInput class="text-ink-gray-5 h-4 w-4" />
+								</template>
+							</Button>
+						</Dropdown>
+					</Tooltip>
+					<Tooltip
+						v-for="action in threadActions"
+						:key="action.label"
+						:text="action.label"
+					>
+						<Button variant="ghost" @click="action.onClick">
+							<template #icon>
+								<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
+							</template>
+						</Button>
+					</Tooltip>
 					<template v-if="threads.includes(threadID)">
 						<Tooltip :text="__('Previous Thread')">
 							<Button
@@ -43,26 +63,6 @@
 							</Button>
 						</Tooltip>
 					</template>
-					<Tooltip v-if="mailbox !== 'starred'" :text="__('Move To')">
-						<Dropdown :options="moveToOptions">
-							<Button variant="ghost">
-								<template #icon>
-									<FolderInput class="text-ink-gray-5 h-4 w-4" />
-								</template>
-							</Button>
-						</Dropdown>
-					</Tooltip>
-					<Tooltip
-						v-for="action in threadActions"
-						:key="action.label"
-						:text="action.label"
-					>
-						<Button variant="ghost" @click="action.onClick">
-							<template #icon>
-								<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
-							</template>
-						</Button>
-					</Tooltip>
 				</div>
 			</template>
 		</div>
