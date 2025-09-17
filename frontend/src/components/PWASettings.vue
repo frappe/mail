@@ -21,7 +21,7 @@
 				@update:model-value="togglePushNotifications"
 			/>
 
-			<div v-if="isLoading" class="-mt-2 flex items-center justify-center gap-2">
+			<div v-if="isLoading" class="-mt-0.5 flex items-center gap-2 px-3">
 				<LoadingIndicator class="text-ink-gray-7 h-3 w-3" />
 				<span class="text-sm">
 					{{

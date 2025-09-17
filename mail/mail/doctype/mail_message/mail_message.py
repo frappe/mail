@@ -1129,12 +1129,13 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 							if mailbox["mailbox_id"] == inbox_id:
 								push_notification = PushNotification("mail")
 								if push_notification.is_enabled():
+									url = frappe.utils.get_url()
 									push_notification.send_notification_to_user(
 										user,
 										message["from_name"] or message["from_email"],
 										message["subject"] or _("[No subject]"),
-										f"{frappe.utils.get_url()}/mail/mailbox/{inbox_id}/{message['thread_id']}",
-										"public/manifest/manifest-icon-192.maskable.png",
+										f"{url}/mail/mailbox/{inbox_id}/{message['thread_id']}",
+										f"{url}/assets/mail/frontend/manifest/manifest-icon-192.maskable.png",
 									)
 
 				if mailboxes:

@@ -8,7 +8,10 @@ export const showNotification = (payload: NotificationPayload): void => {
 	if (!registration) return
 
 	const notificationTitle = payload?.data?.title
-	const notificationOptions: NotificationOptions = { body: payload?.data?.body || '' }
+	const notificationOptions: NotificationOptions = {
+		body: payload?.data?.body || '',
+		badge: '/assets/mail/frontend/logo-96-96.png',
+	}
 	if (payload?.data?.notification_icon)
 		notificationOptions['icon'] = payload.data.notification_icon
 
