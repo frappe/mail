@@ -23,7 +23,14 @@ from mail.mail.doctype.jmap_sync_state.jmap_sync_state import (
 )
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
-from mail.utils import convert_text_to_html, enqueue_job, parse_filters, user_context
+from mail.utils import (
+	convert_html_to_text,
+	enqueue_job,
+	ensure_html,
+	ensure_text,
+	parse_filters,
+	user_context,
+)
 from mail.utils.cache import get_account_for_user
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.email_parser import EmailParser
@@ -966,8 +973,15 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 			else None
 		)
 
-		if key == "htmlBody" and value and ("<" not in value or ">" not in value):
-			value = convert_text_to_html(value)
+		if value:
+			if key == "htmlBody":
+				value = ensure_html(value)
+				if preview := convert_html_to_text(value)[:196]:
+					if len(preview) == 196 and not preview.endswith(" "):
+						preview += "...."
+					formatted_message["preview"] = preview
+			else:
+				value = ensure_text(value)
 
 		formatted_message[field] = value
 
