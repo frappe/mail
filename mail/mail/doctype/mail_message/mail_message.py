@@ -23,7 +23,7 @@ from mail.mail.doctype.jmap_sync_state.jmap_sync_state import (
 )
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
-from mail.utils import enqueue_job, parse_filters, user_context
+from mail.utils import convert_text_to_html, enqueue_job, parse_filters, user_context
 from mail.utils.cache import get_account_for_user
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.email_parser import EmailParser
@@ -960,11 +960,16 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 				)
 
 	for key, field in {"htmlBody": "html_body", "textBody": "text_body"}.items():
-		formatted_message[field] = (
+		value = (
 			message.get("bodyValues", {}).get(message[key][0]["partId"], {}).get("value")
 			if message.get(key)
 			else None
 		)
+
+		if key == "htmlBody" and value and ("<" not in value or ">" not in value):
+			value = convert_text_to_html(value)
+
+		formatted_message[field] = value
 
 	formatted_message["mailboxes"] = []
 	for mailbox_id, value in message["mailboxIds"].items():

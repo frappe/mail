@@ -20,6 +20,7 @@ from frappe import _
 from frappe.types.filter import FilterTuple
 from frappe.utils import get_bench_path
 from frappe.utils.caching import redis_cache
+from markdown_it import MarkdownIt
 
 
 def hash_password(password: str) -> str:
@@ -240,6 +241,13 @@ def convert_html_to_text(html: str) -> str:
 	soup = BeautifulSoup(html, "html.parser")
 	text = soup.get_text(separator=" ")
 	return re.sub(r"\s+", " ", text).strip()
+
+
+def convert_text_to_html(text: str) -> str:
+	"""Convert plain text to HTML."""
+
+	parsed_html = MarkdownIt().render(text)
+	return BeautifulSoup(parsed_html, "html.parser").prettify()
 
 
 def extract_filter_values(filters: list, conditions: list[dict]) -> tuple:
