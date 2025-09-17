@@ -7,6 +7,7 @@ import re
 import secrets
 import string
 import tarfile
+import unicodedata
 import zipfile
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
@@ -21,6 +22,15 @@ from frappe.types.filter import FilterTuple
 from frappe.utils import get_bench_path
 from frappe.utils.caching import redis_cache
 from markdown_it import MarkdownIt
+
+INVISIBLE_CHARS = (
+	r"[\u0000-\u001F\u007F-\u009F"  # ASCII control chars
+	r"\u200B-\u200F\u202A-\u202E"  # zero-width & directional
+	r"\u2060-\u206F"  # word joiners etc
+	r"\uFEFF"  # byte order mark
+	r"\u00AD"  # soft hyphen
+	r"\u034F]"  # combining grapheme joiner
+)
 
 
 def hash_password(password: str) -> str:
@@ -232,15 +242,42 @@ def rename_keys(data: dict, rename_map: dict) -> dict:
 	return {rename_map.get(k, k): v for k, v in data.items()}
 
 
+def clean_text(text: str) -> str:
+	"""Collapse multiple spaces into a single space and trim leading/trailing spaces."""
+
+	if not text:
+		return ""
+
+	text = unicodedata.normalize("NFKC", text)
+	text = re.sub(INVISIBLE_CHARS, "", text)
+	text = re.sub(r"([,.!?])(?=\w)", r"\1 ", text)
+
+	return re.sub(r"\s+", " ", text).strip()
+
+
+def is_html(content: str) -> bool:
+	"""Naive check if content looks like HTML."""
+
+	soup = BeautifulSoup(content, "html.parser")
+	return bool(soup.find())
+
+
 def convert_html_to_text(html: str) -> str:
-	"""Returns plain text from HTML content."""
+	"""Returns plain text from HTML <body> content, excluding links & buttons."""
 
 	if not html:
 		return ""
 
 	soup = BeautifulSoup(html, "html.parser")
-	text = soup.get_text(separator=" ")
-	return re.sub(r"\s+", " ", text).strip()
+	body = soup.body or soup
+
+	for tag in body.find_all(["a", "button", "input"]):
+		if tag.name == "input" and tag.get("type") not in ("button", "submit", "reset"):
+			continue
+		tag.decompose()
+
+	text = body.get_text(separator=" ")
+	return clean_text(text)
 
 
 def convert_text_to_html(text: str) -> str:
@@ -248,6 +285,24 @@ def convert_text_to_html(text: str) -> str:
 
 	parsed_html = MarkdownIt().render(text)
 	return BeautifulSoup(parsed_html, "html.parser").prettify()
+
+
+def ensure_html(content: str | None = None) -> str | None:
+	"""Ensure content is in HTML format."""
+
+	if content and not is_html(content):
+		content = convert_text_to_html(content)
+
+	return content
+
+
+def ensure_text(content: str | None = None) -> str | None:
+	"""Ensure content is in plain text format."""
+
+	if content and is_html(content):
+		content = convert_html_to_text(content)
+
+	return content
 
 
 def extract_filter_values(filters: list, conditions: list[dict]) -> tuple:
