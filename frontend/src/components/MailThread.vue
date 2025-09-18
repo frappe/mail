@@ -19,15 +19,6 @@
 					{{ thread?.data?.[0]?.subject || __('[No subject]') }}
 				</h2>
 				<div class="ml-auto shrink-0 space-x-2">
-					<Tooltip v-if="mailbox !== 'starred'" :text="__('Move To')">
-						<Dropdown :options="moveToOptions">
-							<Button variant="ghost">
-								<template #icon>
-									<FolderInput class="text-ink-gray-5 h-4 w-4" />
-								</template>
-							</Button>
-						</Dropdown>
-					</Tooltip>
 					<Tooltip
 						v-for="action in threadActions"
 						:key="action.label"
@@ -38,6 +29,15 @@
 								<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
 							</template>
 						</Button>
+					</Tooltip>
+					<Tooltip v-if="mailbox !== 'starred'" :text="__('Move To')">
+						<Dropdown :options="moveToOptions">
+							<Button variant="ghost">
+								<template #icon>
+									<FolderInput class="text-ink-gray-5 h-4 w-4" />
+								</template>
+							</Button>
+						</Dropdown>
 					</Tooltip>
 					<template v-if="threads.includes(threadID)">
 						<Tooltip :text="__('Previous Thread')">
@@ -121,7 +121,6 @@
 								:reply
 								:reply-all
 								:forward
-								@reload-mails="emit('reloadMails')"
 								@star-mails="
 									(_ids: string[], flagged: 0 | 1) =>
 										_ids.forEach(
@@ -131,7 +130,7 @@
 												).flagged = flagged),
 										)
 								"
-								@delete-mails="
+								@reload-mails="
 									() => {
 										if (thread.data.length == 1)
 											router.push({
@@ -197,7 +196,6 @@
 										:reply
 										:reply-all
 										:forward
-										@reload-mails="emit('reloadMails')"
 										@star-mails="
 											(_ids: string[], flagged: 0 | 1) =>
 												_ids.forEach(
@@ -207,7 +205,7 @@
 														).flagged = flagged),
 												)
 										"
-										@delete-mails="
+										@reload-mails="
 											() => {
 												if (thread.data.length == 1)
 													router.push({
@@ -299,6 +297,8 @@
 import { computed, inject, nextTick, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
+	BadgeAlert,
+	BadgeCheck,
 	ChevronLeft,
 	ChevronRight,
 	FolderInput,
@@ -339,9 +339,10 @@ const { mailbox, threadID, threads } = defineProps<{
 
 const emit = defineEmits([
 	'reloadMails',
+	'setSpamStatus',
+	'deleteThread',
 	'setSeen',
 	'moveThread',
-	'deleteThread',
 	'prevThread',
 	'nextThread',
 ])
@@ -422,9 +423,16 @@ interface MailAction {
 const threadActions = computed((): MailAction[] =>
 	[
 		{
-			label: __('Mark as Unread'),
-			onClick: () => emit('setSeen', false),
-			icon: MailIcon,
+			label: __('Mark as Junk'),
+			onClick: () => emit('setSpamStatus', true),
+			icon: BadgeAlert,
+			condition: ![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
+		},
+		{
+			label: __('Mark as Not Junk'),
+			onClick: () => emit('setSpamStatus', false),
+			icon: BadgeCheck,
+			condition: mailbox === mailboxIds.junk,
 		},
 		{
 			label: __('Move to Trash'),
@@ -437,6 +445,11 @@ const threadActions = computed((): MailAction[] =>
 			onClick: () => emit('deleteThread'),
 			icon: Trash2,
 			condition: mailbox === mailboxIds.trash,
+		},
+		{
+			label: __('Mark as Unread'),
+			onClick: () => emit('setSeen', false),
+			icon: MailIcon,
 		},
 	].filter((action) => action.condition !== false),
 )

@@ -221,6 +221,10 @@
 						(move_to_mailbox: string) =>
 							moveThreads.submit({ thread_ids: [threadID], move_to_mailbox })
 					"
+					@set-spam-status="
+						(spam: boolean) =>
+							setThreadsSpamStatus.submit({ thread_ids: [threadID], spam })
+					"
 					@delete-thread="deleteThreads.submit([threadID])"
 					@prev-thread="goToThreadByOffset(-1)"
 					@next-thread="goToThreadByOffset(1)"
@@ -251,6 +255,8 @@ import {
 import { useRouter } from 'vue-router'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import {
+	BadgeAlert,
+	BadgeCheck,
 	FolderInput,
 	ListFilter,
 	LoaderCircle,
@@ -398,6 +404,26 @@ interface SelectAction {
 const selectActions = computed((): SelectAction[] =>
 	[
 		{
+			label: __('Mark as Junk'),
+			onClick: () =>
+				setThreadsSpamStatus.submit({ thread_ids: selections.value, mailbox, spam: true }),
+			icon: BadgeAlert,
+			condition:
+				!!selections.value.length &&
+				![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
+		},
+		{
+			label: __('Mark as Not Junk'),
+			onClick: () =>
+				setThreadsSpamStatus.submit({
+					thread_ids: selections.value,
+					mailbox,
+					spam: false,
+				}),
+			icon: BadgeCheck,
+			condition: !!selections.value.length && mailbox === mailboxIds.junk,
+		},
+		{
 			label: __('Move to Trash'),
 			onClick: () =>
 				moveThreads.submit({
@@ -520,7 +546,7 @@ interface SetSeenParams {
 
 const setSeen = createResource({
 	url: 'mail.api.mail.set_seen',
-	makeParams: (values: SetSeenParams) => ({ ...values, mailbox }),
+	makeParams: ({ thread_ids, seen }: SetSeenParams) => ({ thread_ids, seen, mailbox }),
 	onSuccess: ({ thread_ids, seen }: SetSeenParams) => {
 		mailboxes.reload()
 		threads.data
@@ -536,15 +562,14 @@ const setSeen = createResource({
 	},
 })
 
+interface MoveThreadsParams {
+	thread_ids: string[]
+	move_to_mailbox: string
+}
+
 const moveThreads = createResource({
 	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: ({
-		thread_ids,
-		move_to_mailbox,
-	}: {
-		thread_ids: string[]
-		move_to_mailbox: string
-	}) => ({
+	makeParams: ({ thread_ids, move_to_mailbox }: MoveThreadsParams) => ({
 		thread_ids,
 		mailbox,
 		move_to_mailbox,
@@ -565,6 +590,25 @@ const moveToOptions = computed(() =>
 				moveThreads.submit({ thread_ids: selections.value, move_to_mailbox: m.id }),
 		})),
 )
+
+interface SetThreadsSpamStatusParams {
+	thread_ids: string[]
+	spam: boolean
+}
+
+const setThreadsSpamStatus = createResource({
+	url: 'mail.api.mail.set_threads_spam_status',
+	makeParams: ({ thread_ids, spam }: SetThreadsSpamStatusParams) => ({
+		thread_ids,
+		mailbox,
+		spam,
+	}),
+	onSuccess: (thread_ids: string[]) => {
+		if (threadID && thread_ids.includes(threadID))
+			router.push({ name: 'Mailbox', params: { mailbox } })
+		reloadMails()
+	},
+})
 
 const deleteThreads = createResource({
 	url: 'mail.api.mail.delete_threads',
