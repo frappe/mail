@@ -39,6 +39,30 @@
 							</template>
 						</Button>
 					</Tooltip>
+					<template v-if="threads.includes(threadID)">
+						<Tooltip :text="__('Previous Thread')">
+							<Button
+								variant="ghost"
+								:disabled="threadID === threads[0]"
+								@click="emit('prevThread')"
+							>
+								<template #icon>
+									<ChevronLeft class="text-ink-gray-5 h-4 w-4" />
+								</template>
+							</Button>
+						</Tooltip>
+						<Tooltip :text="__('Next Thread')">
+							<Button
+								variant="ghost"
+								:disabled="threadID === threads.at(-1)"
+								@click="emit('nextThread')"
+							>
+								<template #icon>
+									<ChevronRight class="text-ink-gray-5 h-4 w-4" />
+								</template>
+							</Button>
+						</Tooltip>
+					</template>
 				</div>
 			</template>
 		</div>
@@ -275,6 +299,8 @@
 import { computed, inject, nextTick, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
+	ChevronLeft,
+	ChevronRight,
 	FolderInput,
 	Forward,
 	Mail as MailIcon,
@@ -305,9 +331,20 @@ import SendMail from '@/components/SendMail.vue'
 
 import type { ComposeMailData, Mail } from '@/types'
 
-const { mailbox, threadID } = defineProps<{ mailbox: string; threadID?: string }>()
+const { mailbox, threadID, threads } = defineProps<{
+	mailbox: string
+	threadID?: string
+	threads: string[]
+}>()
 
-const emit = defineEmits(['reloadMails', 'setSeen', 'moveThread', 'deleteThread'])
+const emit = defineEmits([
+	'reloadMails',
+	'setSeen',
+	'moveThread',
+	'deleteThread',
+	'prevThread',
+	'nextThread',
+])
 
 const router = useRouter()
 const { isMobile } = useScreenSize()

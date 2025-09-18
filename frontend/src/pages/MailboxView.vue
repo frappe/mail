@@ -57,11 +57,13 @@
 				<!-- Toolbar/Actions -->
 				<div class="flex items-center justify-between border-b px-3.5 py-2.5 sm:px-5">
 					<div class="text-base">
-						<span v-if="selections.length">{{
-							selections.length === 1
-								? __('1 item selected')
-								: __('{0} items selected', [String(selections.length)])
-						}}</span>
+						<span v-if="selections.length">
+							{{
+								selections.length === 1
+									? __('1 item selected')
+									: __('{0} items selected', [String(selections.length)])
+							}}
+						</span>
 						<span v-else>{{ title }}</span>
 					</div>
 					<div class="flex items-center space-x-1.5 sm:space-x-3">
@@ -136,7 +138,9 @@
 				<!-- Mail list -->
 				<div
 					v-if="threads?.data?.length"
+					ref="mailList"
 					class="h-full overflow-y-auto overscroll-contain"
+					@click="mailListClicked = true"
 					@scroll="loadMoreEmails"
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
@@ -149,7 +153,7 @@
 							:key="mail.thread_id"
 							:mail
 							:user-layout
-							:class="{ 'bg-surface-gray-1': mail.thread_id == threadID }"
+							:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"
 							@click="
 								router.push({
 									name: 'Mail',
@@ -210,6 +214,7 @@
 				<MailThread
 					:mailbox
 					:thread-i-d
+					:threads="threadIDs"
 					@reload-mails="reloadMails"
 					@set-seen="(seen: boolean) => setSeen.submit({ thread_ids: [threadID], seen })"
 					@move-thread="
@@ -217,6 +222,8 @@
 							moveThreads.submit({ thread_ids: [threadID], move_to_mailbox })
 					"
 					@delete-thread="deleteThreads.submit([threadID])"
+					@prev-thread="goToThreadByOffset(-1)"
+					@next-thread="goToThreadByOffset(1)"
 				/>
 			</div>
 		</template>
@@ -242,7 +249,7 @@ import {
 	watch,
 } from 'vue'
 import { useRouter } from 'vue-router'
-import { useDebounceFn } from '@vueuse/core'
+import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import {
 	FolderInput,
 	ListFilter,
@@ -290,6 +297,10 @@ const dayjs = inject('$dayjs')
 const { mailboxes, mailboxIds } = userStore()
 
 // Selection
+
+const mailList = useTemplateRef('mailList')
+const mailListClicked = ref(true)
+onClickOutside(mailList, () => (mailListClicked.value = false))
 
 const mailItems = useTemplateRef('mailItems')
 
@@ -353,7 +364,26 @@ watch(allSelected, (val) => {
 
 const handleKeyDown = (e: KeyboardEvent) => {
 	if (e.key === 'Shift') isShiftPressed.value = true
+
+	if (
+		userLayout.value === 'split' &&
+		mailListClicked.value &&
+		(e.key === 'ArrowUp' || e.key === 'ArrowDown')
+	) {
+		e.preventDefault()
+
+		const offset = e.key === 'ArrowUp' ? -1 : 1
+		goToThreadByOffset(offset)
+
+		// const thread = getThreadByOffset(offset)
+		// if (thread) {
+		// 	const item = mailItems.value?.find((el) => el?.id === thread)
+		// 	if (selections.value.includes(thread)) selections.value.push(thread)
+		// 	else selections.value = selections.value.filter((m) => m !== thread)
+		// }
+	}
 }
+
 const handleKeyUp = (e: KeyboardEvent) => {
 	if (e.key === 'Shift') isShiftPressed.value = false
 }
@@ -545,6 +575,18 @@ const deleteThreads = createResource({
 		reloadMails()
 	},
 })
+
+const getThreadByOffset = (offset: number) =>
+	threadIDs.value[threadIDs.value.indexOf(threadID) + offset]
+
+const goToThreadByOffset = (offset: number) => {
+	const targetThread = getThreadByOffset(offset)
+	if (!targetThread) return
+
+	router.push({ name: 'Mail', params: { mailbox, threadID: targetThread } })
+	const el = mailItems.value?.find((el) => el?.id === targetThread)?.$el
+	el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
 
 const showEmptyMailbox = ref(false)
 

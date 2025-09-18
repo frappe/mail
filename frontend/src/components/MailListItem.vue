@@ -30,6 +30,7 @@
 				v-else
 				:label="getFirstAlphabet(mail.from_name) || getFirstAlphabet(mail.from_email)"
 				:size="isFullWidth ? 'lg' : '2xl'"
+				class="border"
 				@click.stop="isSelected = true"
 			/>
 		</div>
