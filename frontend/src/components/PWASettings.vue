@@ -7,7 +7,7 @@
 				</template>
 			</Button>
 
-			<h2 class="font-semibold leading-5">{{ __('Settings') }}</h2>
+			<h2 class="text-lg font-semibold leading-5">{{ __('Settings') }}</h2>
 		</div>
 
 		<div class="px-3 py-4">
