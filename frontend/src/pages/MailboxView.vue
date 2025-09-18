@@ -57,11 +57,13 @@
 				<!-- Toolbar/Actions -->
 				<div class="flex items-center justify-between border-b px-3.5 py-2.5 sm:px-5">
 					<div class="text-base">
-						<span v-if="selections.length">{{
-							selections.length === 1
-								? __('1 item selected')
-								: __('{0} items selected', [String(selections.length)])
-						}}</span>
+						<span v-if="selections.length">
+							{{
+								selections.length === 1
+									? __('1 item selected')
+									: __('{0} items selected', [String(selections.length)])
+							}}
+						</span>
 						<span v-else>{{ title }}</span>
 					</div>
 					<div class="flex items-center space-x-1.5 sm:space-x-3">
@@ -151,7 +153,7 @@
 							:key="mail.thread_id"
 							:mail
 							:user-layout
-							:class="{ 'bg-surface-gray-1': mail.thread_id == threadID }"
+							:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"
 							@click="
 								router.push({
 									name: 'Mail',
@@ -363,17 +365,22 @@ watch(allSelected, (val) => {
 const handleKeyDown = (e: KeyboardEvent) => {
 	if (e.key === 'Shift') isShiftPressed.value = true
 
-	if (mailListClicked.value && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+	if (
+		userLayout.value === 'split' &&
+		mailListClicked.value &&
+		(e.key === 'ArrowUp' || e.key === 'ArrowDown')
+	) {
 		e.preventDefault()
 
 		const offset = e.key === 'ArrowUp' ? -1 : 1
-		if (isShiftPressed.value) {
-			const thread = getThreadByOffset(offset)
-			if (thread) {
-				if (selections.value.includes(thread)) deselectThread(thread, false)
-				else selectThread(thread, false)
-			}
-		} else goToThreadByOffset(offset)
+		goToThreadByOffset(offset)
+
+		// const thread = getThreadByOffset(offset)
+		// if (thread) {
+		// 	const item = mailItems.value?.find((el) => el?.id === thread)
+		// 	if (selections.value.includes(thread)) selections.value.push(thread)
+		// 	else selections.value = selections.value.filter((m) => m !== thread)
+		// }
 	}
 }
 
