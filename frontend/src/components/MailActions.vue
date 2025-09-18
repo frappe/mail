@@ -27,6 +27,7 @@
 <script lang="ts" setup>
 import { h, inject } from 'vue'
 import {
+	BadgeAlert,
 	Code,
 	Ellipsis,
 	ExternalLink,
@@ -56,7 +57,7 @@ const { mailbox, mail, isCollapsed, showReplyAll, popOutDraft, reply, replyAll, 
 		forward: (mail: Mail) => void
 	}>()
 
-const emit = defineEmits(['reloadMails', 'deleteMails', 'starMails'])
+const emit = defineEmits(['reloadMails', 'starMails'])
 
 const { isMobile } = useScreenSize()
 const { mailboxIds } = userStore()
@@ -142,6 +143,12 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				condition: () => !mail.flagged && !mail.draft && mailbox !== mailboxIds.trash,
 			},
 			{
+				label: __('Mark as Junk'),
+				onClick: () => markAsSpam.submit([mail._id]),
+				icon: BadgeAlert,
+				condition: () => ![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
+			},
+			{
 				label: __('Move to Trash'),
 				onClick: () => moveMail.submit({ _ids: [mail._id], mailbox: mailboxIds.trash }),
 				icon: Trash2,
@@ -169,6 +176,12 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 	},
 ]
 
+const markAsSpam = createResource({
+	url: 'mail.api.mail.set_mails_spam_status',
+	makeParams: (_ids: string[]) => ({ _ids, spam: true }),
+	onSuccess: () => emit('reloadMails'),
+})
+
 const moveMail = createResource({
 	url: 'mail.api.mail.move_mails',
 	makeParams: ({ _ids, mailbox }: { _ids: string[]; mailbox: string }) => ({ _ids, mailbox }),
@@ -178,7 +191,7 @@ const moveMail = createResource({
 const deleteMails = createResource({
 	url: 'mail.mail.doctype.mail_message.mail_message.bulk_delete',
 	makeParams: (names: string[]) => ({ names }),
-	onSuccess: () => emit('deleteMails'),
+	onSuccess: () => emit('reloadMails'),
 })
 
 const starMails = createResource({

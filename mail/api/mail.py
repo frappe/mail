@@ -15,6 +15,7 @@ from mail.mail.doctype.mail_message.mail_message import (
 	relevance_search_messages,
 	set_flagged_status,
 	set_seen_status,
+	set_spam_status,
 )
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
 from mail.utils import convert_html_to_text
@@ -402,6 +403,29 @@ def set_threads_mailbox(thread_ids: list[str], mailbox: str, move_to_mailbox) ->
 		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
 	messages = get_message_ids(account, thread_ids, mailbox)
 	move_messages(account, messages, move_to_mailbox)
+
+	return thread_ids
+
+
+@frappe.whitelist()
+def set_mails_spam_status(_ids: list[str], spam: bool) -> list[str]:
+	"""Sets spam status of the given mails."""
+
+	account = get_account_for_user(frappe.session.user)
+	set_spam_status(account, _ids, spam)
+
+	return _ids
+
+
+@frappe.whitelist()
+def set_threads_spam_status(thread_ids: list[str], mailbox: str, spam: bool) -> list[str]:
+	"""Sets spam status for the mails belonging to the given threads."""
+
+	account = get_account_for_user(frappe.session.user)
+	if mailbox == "starred":
+		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	messages = get_message_ids(account, thread_ids, mailbox)
+	set_spam_status(account, messages, spam)
 
 	return thread_ids
 
