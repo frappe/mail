@@ -43,6 +43,7 @@ MSG_BUCKET_SIZE = 5000
 BLOB_CACHE_TTL = 12 * 60 * 60  # 12 hours
 BLOB_BUCKET_SIZE = 1000
 FETCH_LOCK_TIMEOUT = 300
+MAX_PUSH_NOTIFICATIONS = 5
 
 
 class MailMessage(Document):
@@ -1125,27 +1126,32 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 					"Mail Account", account, ["user", "create_mail_contact"]
 				)
 
-				mailboxes = set()
-				for message in messages:
-					if should_create_contact:
+				if should_create_contact:
+					for message in messages:
 						for recipient in message["recipients"]:
 							create_mail_contact(user, recipient["email"], recipient["display_name"])
 
+				mailboxes = set()
+				notify_candidates = []
+				for message in messages:
 					if not message["draft"] and not message["seen"]:
 						for mailbox in message["mailboxes"]:
 							mailboxes.add(mailbox["mailbox_id"])
-
 							if mailbox["mailbox_id"] == inbox_id:
-								push_notification = PushNotification("mail")
-								if push_notification.is_enabled():
-									url = frappe.utils.get_url()
-									push_notification.send_notification_to_user(
-										user,
-										message["from_name"] or message["from_email"],
-										message["subject"] or _("[No subject]"),
-										f"{url}/mail/mailbox/{inbox_id}/{message['thread_id']}",
-										f"{url}/assets/mail/frontend/manifest/manifest-icon-192.maskable.png",
-									)
+								notify_candidates.append(message)
+
+				recent_messages = notify_candidates[:MAX_PUSH_NOTIFICATIONS]
+				pn = PushNotification("mail")
+				if pn.is_enabled():
+					url = frappe.utils.get_url()
+					for message in recent_messages:
+						pn.send_notification_to_user(
+							user,
+							message["from_name"] or message["from_email"],
+							message["subject"] or _("[No subject]"),
+							f"{url}/mail/mailbox/{inbox_id}/{message['thread_id']}",
+							f"{url}/assets/mail/frontend/manifest/manifest-icon-192.maskable.png",
+						)
 
 				if mailboxes:
 					frappe.publish_realtime("new_mail_created", list(mailboxes), user=user)
