@@ -803,11 +803,6 @@ def move_messages(account: str, _ids: list[str], mailbox_id: str) -> None:
 
 	try:
 		client = get_jmap_client(account)
-
-		if mailbox_role := client.get_mailbox_role_by_id(mailbox_id):
-			spam = mailbox_role == "junk"
-			client.email_set_keywords(_ids, {"$junk": spam, "$notjunk": not spam})
-
 		client.email_set_mailbox(_ids, mailbox_id)
 		_remove_messages_from_cache(account, _ids)
 	except Exception:
