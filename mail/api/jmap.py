@@ -4,7 +4,10 @@ import frappe
 from frappe import _
 
 from mail.jmap import invalidate_jmap_identities_cache, invalidate_jmap_mailboxes_cache
-from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import JMAPPushSubscription
+from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import (
+	JMAPPushSubscription,
+	is_jmap_push_notifications_frozen,
+)
 from mail.mail.doctype.mail_message.mail_message import enqueue_fetch_changes
 
 
@@ -33,7 +36,8 @@ def push_notification() -> dict:
 			for change in changes:
 				for key, state in change.items():
 					if key == "Email":
-						enqueue_fetch_changes(account, state)
+						if not is_jmap_push_notifications_frozen(account):
+							enqueue_fetch_changes(account, state)
 					elif key == "Mailbox":
 						invalidate_jmap_mailboxes_cache(account)
 					elif key == "Identity":
