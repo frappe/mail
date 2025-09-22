@@ -19,6 +19,12 @@ def create_jmap_sync_state(account: str) -> "JMAPSyncState":
 	return doc
 
 
+def clear_jmap_sync_state(account: str) -> None:
+	"""Clear the JMAP Sync State for the given account."""
+
+	frappe.db.set_value("JMAP Sync State", account, "current_state", None)
+
+
 def get_current_state(account: str) -> str | None:
 	"""Returns the current state for the given account."""
 

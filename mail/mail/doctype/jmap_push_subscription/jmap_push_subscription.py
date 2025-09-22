@@ -344,6 +344,24 @@ def renew_push_subscriptions() -> None:
 			push_subscription.renew()
 
 
+def freeze_jmap_push_notifications(account: str) -> None:
+	"""Freezes JMAP push notifications for the given account."""
+
+	frappe.cache.hset("frozen_jmap_push_notifications", account, True)
+
+
+def unfreeze_jmap_push_notifications(account: str) -> None:
+	"""Unfreezes JMAP push notifications for the given account."""
+
+	frappe.cache.hdel("frozen_jmap_push_notifications", account)
+
+
+def is_jmap_push_notifications_frozen(account: str) -> bool:
+	"""Returns True if JMAP push notifications are frozen for the given account."""
+
+	return frappe.cache.hget("frozen_jmap_push_notifications", account) is True
+
+
 def on_doctype_update() -> None:
 	frappe.db.add_unique(
 		"JMAP Push Subscription", ["account", "server"], constraint_name="unique_push_subscription"
