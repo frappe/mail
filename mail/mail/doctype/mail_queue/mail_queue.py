@@ -111,7 +111,19 @@ class MailQueue(Document):
 		doc.raw_message = kwargs.raw_message
 
 		if not do_not_save:
-			doc.insert()
+			if frappe.flags.read_only:
+				if not doc.name:
+					doc.set_new_name()
+
+				doc.delivery_mode = "Immediate"
+				doc.validate()
+				doc._process()
+
+				if doc.status in ["Failed", "Failed to Draft", "Failed to Submit"]:
+					error_message = doc.error_message or "Request Failed"
+					frappe.throw(error_message)
+			else:
+				doc.insert()
 
 		return doc
 
@@ -786,7 +798,11 @@ class MailQueue(Document):
 				}
 			)
 
-		self._db_set(notify=True, **kwargs)
+		if frappe.flags.read_only:
+			for key, value in kwargs.items():
+				setattr(self, key, value)
+		else:
+			self._db_set(notify=True, **kwargs)
 
 	def _draft_mail(self, draft_mailbox_id: str, attachments: list[dict] | None = None) -> dict:
 		"""Returns the draft mail object."""
