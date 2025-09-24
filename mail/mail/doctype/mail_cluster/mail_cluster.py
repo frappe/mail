@@ -2,9 +2,11 @@
 # For license information, please see license.txt
 
 import base64
+import io
 import json
 
 import frappe
+import paramiko
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import random_string
@@ -99,6 +101,9 @@ class MailCluster(Document):
 		self.validate_storage()
 		self.validate_listeners()
 		self.validate_traces()
+
+	def before_insert(self) -> None:
+		self.generate_ssh_keypair()
 
 	def on_update(self) -> None:
 		if self.has_value_changed("enabled"):
@@ -240,6 +245,18 @@ class MailCluster(Document):
 				)
 
 			tracer_ids.append(trace.tracer_id)
+
+	def generate_ssh_keypair(self, save: bool = False) -> None:
+		"""Generates an SSH key pair for the cluster."""
+
+		key = paramiko.RSAKey.generate(4096)
+		private_io = io.StringIO()
+		key.write_private_key(private_io)
+		self.ssh_private_key = private_io.getvalue()
+		self.ssh_public_key = f"{key.get_name()} {key.get_base64()} frappe-mail-cluster"
+
+		if save:
+			self.save()
 
 	@frappe.whitelist()
 	def initialize_defaults(self) -> None:
