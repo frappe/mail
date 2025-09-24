@@ -20,6 +20,15 @@
   "public_ipv6",
   "cluster_settings_section",
   "cluster_node_id",
+  "ssh_tab",
+  "section_break_rmju",
+  "column_break_mwtr",
+  "ssh_verified",
+  "column_break_xzft",
+  "ssh_user",
+  "ssh_port",
+  "ssh_key_section",
+  "public_key",
   "tls_tab",
   "acme_providers",
   "tls_certificates",
@@ -164,6 +173,59 @@
    "reqd": 1,
    "set_only_once": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "ssh_tab",
+   "fieldtype": "Tab Break",
+   "label": "SSH"
+  },
+  {
+   "fieldname": "ssh_key_section",
+   "fieldtype": "Section Break",
+   "label": "SSH Key"
+  },
+  {
+   "description": "<p>This is the SSH public key generated for the Mail Cluster.</p>\n<p>Copy and add it to the <code>~/.ssh/authorized_keys</code> file of this Mail Server to allow Frappe Mail to securely provision and manage this server.</p>",
+   "fetch_from": "cluster.ssh_public_key",
+   "fieldname": "public_key",
+   "fieldtype": "Code",
+   "label": "Public Key",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_rmju",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "22",
+   "fieldname": "ssh_port",
+   "fieldtype": "Int",
+   "label": "SSH Port",
+   "reqd": 1
+  },
+  {
+   "default": "frappe",
+   "fieldname": "ssh_user",
+   "fieldtype": "Data",
+   "label": "SSH User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_mwtr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "ssh_verified",
+   "fieldtype": "Check",
+   "label": "Verified",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_xzft",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -185,7 +247,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-08-12 11:52:15.761533",
+ "modified": "2025-09-24 15:42:06.556399",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",

@@ -2,10 +2,13 @@
 # For license information, please see license.txt
 
 
+import io
 import json
+import socket
 from typing import TYPE_CHECKING
 
 import frappe
+import paramiko
 from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import Order
@@ -214,6 +217,58 @@ class MailServer(Document):
 		create_mail_backend_request(
 			self.doctype, self.name, method="GET", endpoint="/api/reload", do_not_enqueue=True
 		)
+
+	@frappe.whitelist()
+	def verify_ssh_connection(self) -> None:
+		"""Verifies the SSH connection to the server."""
+
+		frappe.only_for("System Manager")
+		success, message = self._verify_ssh_connection()
+
+		if success:
+			self._db_set(ssh_verified=1, notify=True)
+			frappe.msgprint(message, indicator="green", alert=True)
+		else:
+			self._db_set(ssh_verified=0, notify=True)
+			frappe.msgprint(message, indicator="red", alert=False)
+
+	def _verify_ssh_connection(self) -> tuple[bool, str]:
+		"""Verifies the SSH connection to the server."""
+
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock.settimeout(5)
+		try:
+			sock.connect((self.hostname, self.ssh_port))
+		except Exception as e:
+			return False, _("Could not connect to {0}:{1}. Error: {2}").format(
+				self.hostname, self.ssh_port, str(e)
+			)
+		finally:
+			sock.close()
+
+		cluster = frappe.get_doc("Mail Cluster", self.cluster)
+		try:
+			client = paramiko.SSHClient()
+			client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+			key = paramiko.RSAKey.from_private_key(io.StringIO(cluster.get_password("ssh_private_key")))
+			client.connect(
+				hostname=self.hostname, port=self.ssh_port, username=self.ssh_user, pkey=key, timeout=10
+			)
+			client.close()
+			return True, _("SSH connection successful.")
+		except Exception as e:
+			return False, _("SSH connection failed. Error: {0}").format(str(e))
+
+	def _db_set(
+		self,
+		update_modified: bool = True,
+		commit: bool = False,
+		notify: bool = False,
+		**kwargs,
+	) -> None:
+		"""Updates the document with the given key-value pairs."""
+
+		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
 
 
 @frappe.whitelist()

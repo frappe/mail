@@ -40,6 +40,14 @@ frappe.ui.form.on('Mail Server', {
 				__('Actions'),
 			)
 		}
+
+		frm.add_custom_button(
+			__('Verify SSH Connection'),
+			() => {
+				frm.trigger('verify_ssh_connection')
+			},
+			__('Actions'),
+		)
 	},
 
 	generate_config(frm) {
@@ -68,6 +76,15 @@ frappe.ui.form.on('Mail Server', {
 					frm.refresh()
 				}
 			},
+		})
+	},
+
+	verify_ssh_connection(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'verify_ssh_connection',
+			freeze: true,
+			freeze_message: __('Verifying SSH Connection...'),
 		})
 	},
 })
