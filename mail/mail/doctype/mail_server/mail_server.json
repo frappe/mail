@@ -205,7 +205,7 @@
    "reqd": 1
   },
   {
-   "default": "frappe",
+   "default": "root",
    "fieldname": "ssh_user",
    "fieldtype": "Data",
    "label": "SSH User",
@@ -245,9 +245,14 @@
    "group": "Reference",
    "link_doctype": "JMAP Push Subscription",
    "link_fieldname": "server"
+  },
+  {
+   "group": "Job",
+   "link_doctype": "Mail Server Job",
+   "link_fieldname": "server"
   }
  ],
- "modified": "2025-09-24 15:42:06.556399",
+ "modified": "2025-09-25 10:44:05.841484",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",
