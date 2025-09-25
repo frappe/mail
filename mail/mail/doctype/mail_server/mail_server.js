@@ -48,6 +48,16 @@ frappe.ui.form.on('Mail Server', {
 			},
 			__('Actions'),
 		)
+
+		if (frm.doc.ssh_verified) {
+			frm.add_custom_button(
+				__('Setup Dependencies'),
+				() => {
+					frm.trigger('setup_dependencies')
+				},
+				__('Actions'),
+			)
+		}
 	},
 
 	generate_config(frm) {
@@ -85,6 +95,15 @@ frappe.ui.form.on('Mail Server', {
 			method: 'verify_ssh_connection',
 			freeze: true,
 			freeze_message: __('Verifying SSH Connection...'),
+		})
+	},
+
+	setup_dependencies(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'setup_dependencies',
+			freeze: true,
+			freeze_message: __('Setting up dependencies...'),
 		})
 	},
 })

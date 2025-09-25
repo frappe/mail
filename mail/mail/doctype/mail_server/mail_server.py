@@ -259,6 +259,36 @@ class MailServer(Document):
 		except Exception as e:
 			return False, _("SSH connection failed. Error: {0}").format(str(e))
 
+	@frappe.whitelist()
+	def setup_dependencies(self) -> None:
+		"""Sets up the dependencies for the Mail Server."""
+
+		frappe.only_for("System Manager")
+
+		if not self.ssh_verified:
+			frappe.throw(_("Please verify the SSH connection before setting up dependencies."))
+
+		self._setup_dependencies()
+		frappe.msgprint(_("Setup of dependencies initiated."), indicator="green", alert=True)
+
+	def _setup_dependencies(self) -> None:
+		"""Sets up the dependencies for the Mail Server."""
+
+		commands = [
+			# Ansible
+			"which ansible || (echo 'Installing Ansible...' && sudo apt-get update && sudo apt-get install -y ansible)",
+			# Docker
+			"which docker || (echo 'Installing Docker...' && sudo apt-get update && sudo apt-get install -y docker.io && sudo systemctl enable --now docker)",
+			# Docker Compose
+			"which docker-compose || (echo 'Installing Docker Compose...' && sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose)",
+		]
+
+		job = frappe.new_doc("Mail Server Job")
+		job.status = "Pending"
+		job.server = self.name
+		job._commands = json.dumps(commands)
+		job.insert(ignore_permissions=True)
+
 	def _db_set(
 		self,
 		update_modified: bool = True,
