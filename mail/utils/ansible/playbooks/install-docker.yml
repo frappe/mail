@@ -1,0 +1,34 @@
+---
+- name: Setup Mail Server Dependencies
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install required apt packages
+      apt:
+        name:
+          - curl
+          - gnupg
+          - software-properties-common
+        state: present
+        update_cache: true
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Enable and start Docker
+      systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Install Docker Compose
+      get_url:
+        url: "https://github.com/docker/compose/releases/latest/download/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
+        dest: /usr/local/bin/docker-compose
+        mode: "0755"
+
+    - name: Verify docker-compose installation
+      command: docker-compose --version

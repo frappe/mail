@@ -51,9 +51,17 @@ frappe.ui.form.on('Mail Server', {
 
 		if (frm.doc.ssh_verified) {
 			frm.add_custom_button(
-				__('Setup Dependencies'),
+				__('Install Ansible (Job)'),
 				() => {
-					frm.trigger('setup_dependencies')
+					frm.trigger('install_ansible')
+				},
+				__('Actions'),
+			)
+
+			frm.add_custom_button(
+				__('Install Docker (Playbook)'),
+				() => {
+					frm.trigger('install_docker')
 				},
 				__('Actions'),
 			)
@@ -98,12 +106,31 @@ frappe.ui.form.on('Mail Server', {
 		})
 	},
 
-	setup_dependencies(frm) {
+	install_ansible(frm) {
 		frappe.call({
 			doc: frm.doc,
-			method: 'setup_dependencies',
+			method: 'install_ansible',
 			freeze: true,
-			freeze_message: __('Setting up dependencies...'),
+			freeze_message: __('Installing Ansible...'),
+			callback: (r) => {
+				if (!r.exc) {
+					frm.refresh()
+				}
+			},
+		})
+	},
+
+	install_docker(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'install_docker',
+			freeze: true,
+			freeze_message: __('Installing Docker...'),
+			callback: (r) => {
+				if (!r.exc) {
+					frm.refresh()
+				}
+			},
 		})
 	},
 })

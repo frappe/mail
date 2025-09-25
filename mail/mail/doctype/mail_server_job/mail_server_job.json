@@ -146,7 +146,9 @@
    "fieldtype": "Float",
    "is_virtual": 1,
    "label": "Started After (Seconds)",
-   "precision": "3"
+   "no_copy": 1,
+   "precision": "3",
+   "read_only": 1
   },
   {
    "collapsible": 1,
@@ -164,6 +166,7 @@
   },
   {
    "collapsible": 1,
+   "collapsible_depends_on": "eval: false",
    "fieldname": "error_log_section",
    "fieldtype": "Section Break",
    "label": "Error Log"
@@ -182,7 +185,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-25 13:11:55.143246",
+ "modified": "2025-09-25 17:33:07.569358",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Job",

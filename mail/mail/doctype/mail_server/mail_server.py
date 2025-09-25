@@ -260,34 +260,51 @@ class MailServer(Document):
 			return False, _("SSH connection failed. Error: {0}").format(str(e))
 
 	@frappe.whitelist()
-	def setup_dependencies(self) -> None:
-		"""Sets up the dependencies for the Mail Server."""
+	def install_ansible(self) -> None:
+		"""Installs Ansible on the Mail Server."""
 
 		frappe.only_for("System Manager")
 
 		if not self.ssh_verified:
-			frappe.throw(_("Please verify the SSH connection before setting up dependencies."))
+			frappe.throw(_("Please verify the SSH connection before installing Ansible."))
 
-		self._setup_dependencies()
-		frappe.msgprint(_("Setup of dependencies initiated."), indicator="green", alert=True)
+		self._install_ansible()
+		frappe.msgprint(_("Install of Ansible initiated."), indicator="green", alert=True)
 
-	def _setup_dependencies(self) -> None:
-		"""Sets up the dependencies for the Mail Server."""
+	def _install_ansible(self) -> None:
+		"""Installs Ansible on the Mail Server."""
 
 		commands = [
-			# Ansible
 			"which ansible || (echo 'Installing Ansible...' && sudo apt-get update && sudo apt-get install -y ansible)",
-			# Docker
-			"which docker || (echo 'Installing Docker...' && sudo apt-get update && sudo apt-get install -y docker.io && sudo systemctl enable --now docker)",
-			# Docker Compose
-			"which docker-compose || (echo 'Installing Docker Compose...' && sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose)",
+			"sudo apt-get update && sudo apt-get install -y python3 python3-apt python3-pip",
 		]
-
 		job = frappe.new_doc("Mail Server Job")
 		job.status = "Pending"
 		job.server = self.name
 		job._commands = json.dumps(commands)
 		job.insert(ignore_permissions=True)
+
+	@frappe.whitelist()
+	def install_docker(self) -> None:
+		"""Installs Docker on the Mail Server."""
+
+		frappe.only_for("System Manager")
+
+		if not self.ssh_verified:
+			frappe.throw(_("Please verify the SSH connection before installing Docker."))
+
+		self._install_docker()
+		frappe.msgprint(_("Install of Docker initiated."), indicator="green", alert=True)
+
+	def _install_docker(self) -> None:
+		"""Installs Docker on the Mail Server."""
+
+		pb = frappe.new_doc("Mail Server Playbook")
+		pb.status = "Pending"
+		pb.server = self.name
+		pb.playbook = "install-docker.yml"
+		pb.playbook_kwargs = "{}"
+		pb.insert(ignore_permissions=True)
 
 	def _db_set(
 		self,

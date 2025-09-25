@@ -1,22 +1,24 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import io
 import json
-import time
+import os
+import subprocess
+import tempfile
 
 import frappe
-import paramiko
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import now, time_diff_in_seconds
 from uuid_utils import uuid7
 
+from mail.utils import get_mail_app_path
 
-class MailServerJob(Document):
+
+class MailServerPlaybook(Document):
 	@property
 	def started_after(self) -> float:
-		"""Returns the time taken to start the job in seconds."""
+		"""Returns the time taken to start the playbook in seconds."""
 
 		if self.started_at and self.creation:
 			started_after = time_diff_in_seconds(self.started_at, self.creation)
@@ -27,7 +29,7 @@ class MailServerJob(Document):
 
 	@property
 	def duration(self) -> float:
-		"""Returns the duration of the job in seconds."""
+		"""Returns the duration of the playbook in seconds."""
 
 		if self.started_at and self.ended_at:
 			duration = time_diff_in_seconds(self.ended_at, self.started_at)
@@ -37,18 +39,10 @@ class MailServerJob(Document):
 		return 0.0
 
 	@property
-	def commands(self) -> str | None:
-		"""Returns the commands as a pretty-printed JSON string."""
+	def playbook_path(self) -> str:
+		"""Returns the absolute path of the playbook."""
 
-		_commands = json.loads(self._commands or "[]")
-		return json.dumps(_commands, indent=4) if _commands else None
-
-	@property
-	def results(self) -> str | None:
-		"""Returns the results as a pretty-printed JSON string."""
-
-		_results = json.loads(self._results or "{}")
-		return json.dumps(_results, indent=4) if _results else None
+		return os.path.join(get_mail_app_path(), "mail/utils/ansible/playbooks", self.playbook)
 
 	def autoname(self) -> None:
 		self.name = str(uuid7())
@@ -56,7 +50,7 @@ class MailServerJob(Document):
 	def validate(self) -> None:
 		self.validate_status()
 		self.validate_server()
-		self.validate_commands()
+		self.validate_playbook()
 
 	def after_insert(self) -> None:
 		if frappe.flags.do_not_enqueue:
@@ -84,18 +78,16 @@ class MailServerJob(Document):
 		elif not frappe.db.get_value("Mail Server", self.server, "ssh_verified"):
 			frappe.throw(_("Please verify SSH connection for Mail Server {0}").format(self.server))
 
-	def validate_commands(self) -> None:
-		"""Validate if _commands are set."""
+	def validate_playbook(self) -> None:
+		"""Validate if the playbook path is valid."""
 
-		_commands = json.loads(self._commands or "[]")
-
-		if not _commands:
-			frappe.throw(_("Please add at least one command to execute."))
-		else:
-			self._commands = json.dumps(_commands)
+		if not self.playbook:
+			frappe.throw(_("Playbook is required"))
+		elif not os.path.isfile(self.playbook_path):
+			frappe.throw(_("Playbook {0} does not exist.").format(self.playbook))
 
 	def execute(self) -> None:
-		"""Executes the commands on the Mail Server via SSH."""
+		"""Executes the Ansible playbook."""
 
 		kwargs = {}
 		self._db_set(status="Running", started_at=now(), error_log=None, commit=True, notify=True)
@@ -105,33 +97,43 @@ class MailServerJob(Document):
 
 			server = frappe.get_doc("Mail Server", self.server)
 			cluster = frappe.get_doc("Mail Cluster", server.cluster)
-			key = paramiko.RSAKey.from_private_key(io.StringIO(cluster.get_password("ssh_private_key")))
 
-			client = paramiko.SSHClient()
-			client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-			client.connect(
-				hostname=server.hostname, port=server.ssh_port, username=server.ssh_user, pkey=key, timeout=30
-			)
+			private_key_file = tempfile.NamedTemporaryFile(delete=False)
+			private_key_file.write(cluster.get_password("ssh_private_key").encode())
+			private_key_file.close()
 
-			_results = {}
-			for cmd in json.loads(self._commands):
-				cmd_start = time.time()
-				_stdin, stdout, stderr = client.exec_command(cmd)
-				exit_status = stdout.channel.recv_exit_status()
-				cmd_end = time.time()
+			inventory = f"""
+			[mailserver]
+			{server.hostname} ansible_port={server.ssh_port} ansible_user={server.ssh_user}
+			"""
+			inventory_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
+			inventory_file.write(inventory)
+			inventory_file.close()
 
-				_results[cmd] = {
-					"stdout": stdout.read().decode(),
-					"stderr": stderr.read().decode(),
-					"exit_code": exit_status,
-					"duration": round(cmd_end - cmd_start, 2),
-				}
+			cmd = [
+				"ansible-playbook",
+				"-i",
+				inventory_file.name,
+				self.playbook_path,
+				"--private-key",
+				private_key_file.name,
+			]
 
-			client.close()
+			if playbook_kwargs := json.loads(self.playbook_kwargs or "{}"):
+				cmd.extend(["--extra-vars", playbook_kwargs])
+
+			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			stdout, stderr = process.communicate()
+
+			os.remove(private_key_file.name)
+			os.remove(inventory_file.name)
+
 			kwargs.update(
 				{
-					"status": "Success" if all(r["exit_code"] == 0 for r in _results.values()) else "Failed",
-					"_results": json.dumps(_results, indent=4),
+					"status": "Success" if process.returncode == 0 else "Failed",
+					"exit_code": process.returncode,
+					"stdout": stdout.decode(),
+					"stderr": stderr.decode(),
 				}
 			)
 
@@ -152,12 +154,12 @@ class MailServerJob(Document):
 
 	@frappe.whitelist()
 	def retry(self) -> None:
-		"""Retries a failed job."""
+		"""Retries a failed playbook."""
 
 		frappe.only_for("System Manager")
 
 		if self.status != "Failed":
-			frappe.throw(_("Only failed jobs can be retried."))
+			frappe.throw(_("Only failed playbooks can be retried."))
 
 		self._db_set(status="Pending", notify=True)
 
