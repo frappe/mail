@@ -6,6 +6,7 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from uuid_utils import uuid7
 
 from mail.backend import get_mail_backend_api
 from mail.jmap import raise_for_status
@@ -76,6 +77,9 @@ class MailServerConfig(Document):
 
 		if self.config_toml:
 			return self.get_password("config_toml")
+
+	def autoname(self) -> None:
+		self.name = str(uuid7())
 
 	def before_insert(self) -> None:
 		self.generate_config_toml()

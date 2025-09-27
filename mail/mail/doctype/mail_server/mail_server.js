@@ -65,6 +65,14 @@ frappe.ui.form.on('Mail Server', {
 				},
 				__('Actions'),
 			)
+
+			frm.add_custom_button(
+				__('Install Stalwart (Deployment)'),
+				() => {
+					frm.trigger('install_stalwart')
+				},
+				__('Actions'),
+			)
 		}
 	},
 
@@ -126,6 +134,20 @@ frappe.ui.form.on('Mail Server', {
 			method: 'install_docker',
 			freeze: true,
 			freeze_message: __('Installing Docker...'),
+			callback: (r) => {
+				if (!r.exc) {
+					frm.refresh()
+				}
+			},
+		})
+	},
+
+	install_stalwart(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'install_stalwart',
+			freeze: true,
+			freeze_message: __('Installing Stalwart...'),
 			callback: (r) => {
 				if (!r.exc) {
 					frm.refresh()

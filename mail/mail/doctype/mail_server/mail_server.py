@@ -317,6 +317,31 @@ class MailServer(Document):
 
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
 
+	@frappe.whitelist()
+	def install_stalwart(self) -> None:
+		"""Installs Stalwart on the Mail Server."""
+
+		frappe.only_for("System Manager")
+
+		if not self.ssh_verified:
+			frappe.throw(_("Please verify the SSH connection before installing Stalwart."))
+
+		self._install_stalwart()
+		frappe.msgprint(_("Install of Stalwart initiated."), indicator="green", alert=True)
+
+	def _install_stalwart(self) -> None:
+		"""Installs Stalwart on the Mail Server."""
+
+		latest_config = frappe.db.get_value("Mail Server Config", {"server": self.name})
+		if not latest_config:
+			frappe.throw(_("Please generate the Mail Server Config before installing Stalwart."))
+
+		deployment = frappe.new_doc("Mail Server Deployment")
+		deployment.status = "Pending"
+		deployment.server = self.name
+		deployment.config = latest_config
+		deployment.insert(ignore_permissions=True)
+
 
 @frappe.whitelist()
 def reload_servers_config(servers: str | list[str]) -> None:
