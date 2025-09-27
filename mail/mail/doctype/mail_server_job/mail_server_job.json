@@ -6,7 +6,7 @@
  "field_order": [
   "section_break_uroi",
   "status",
-  "failed_count",
+  "retries",
   "column_break_cfom",
   "server",
   "section_break_x3ha",
@@ -103,18 +103,6 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.failed_count",
-   "fieldname": "failed_count",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Failed Count",
-   "no_copy": 1,
-   "non_negative": 1,
-   "options": "0",
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "bold": 1,
    "fieldname": "results",
    "fieldtype": "JSON",
@@ -180,12 +168,24 @@
    "label": "Commands (JSON)",
    "reqd": 1,
    "set_only_once": 1
+  },
+  {
+   "depends_on": "eval: doc.retries",
+   "fieldname": "retries",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Retries",
+   "no_copy": 1,
+   "non_negative": 1,
+   "options": "0",
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-25 17:33:07.569358",
+ "modified": "2025-09-27 19:05:19.220009",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Job",

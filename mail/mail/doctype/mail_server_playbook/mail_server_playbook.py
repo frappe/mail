@@ -138,14 +138,14 @@ class MailServerPlaybook(Document):
 			)
 
 			if kwargs["status"] == "Failed":
-				kwargs["failed_count"] = cint(self.failed_count) + 1
+				kwargs["retries"] = cint(self.retries) + 1
 
 		except Exception:
-			failed_count = cint(self.failed_count) + 1
+			retries = cint(self.retries) + 1
 			kwargs.update(
 				{
 					"status": "Failed",
-					"failed_count": failed_count,
+					"retries": retries,
 					"error_log": frappe.get_traceback(with_context=True),
 				}
 			)

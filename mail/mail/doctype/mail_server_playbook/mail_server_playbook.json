@@ -6,7 +6,7 @@
  "field_order": [
   "section_break_ecmu",
   "status",
-  "failed_count",
+  "retries",
   "column_break_gaur",
   "server",
   "section_break_3tra",
@@ -100,17 +100,6 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.failed_count",
-   "fieldname": "failed_count",
-   "fieldtype": "Int",
-   "in_list_view": 1,
-   "label": "Failed Count",
-   "no_copy": 1,
-   "non_negative": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "section_break_3tra",
    "fieldtype": "Section Break"
   },
@@ -193,12 +182,23 @@
    "label": "Playbook Path",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.retries",
+   "fieldname": "retries",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Retries",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-26 11:21:38.982147",
+ "modified": "2025-09-27 19:05:37.111443",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Playbook",
