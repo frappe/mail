@@ -15,6 +15,12 @@
         state: directory
         mode: "0755"
 
+    - name: Ensure logs directory exists
+      file:
+        path: "{{ stalwart_root }}/logs"
+        state: directory
+        mode: "0755"
+
     - name: Copy config.toml
       copy:
         content: "{{ stalwart_config_content }}"
