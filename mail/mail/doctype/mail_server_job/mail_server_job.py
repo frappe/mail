@@ -9,6 +9,7 @@ import frappe
 import paramiko
 from frappe import _
 from frappe.model.document import Document
+from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
@@ -179,3 +180,22 @@ class MailServerJob(Document):
 		"""Updates the document with the given key-value pairs."""
 
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
+
+
+def retry_failed_jobs() -> None:
+	"""Called by the scheduler to retry failed jobs."""
+
+	JOB = frappe.qb.DocType("Mail Server Job")
+	jobs = (
+		frappe.qb.from_(JOB)
+		.select(JOB.name)
+		.where((JOB.status == "Failed") & (JOB.retries > 0) & (JOB.retries < JOB.max_retries))
+		.orderby(JOB.creation, order=Order.asc)
+	).run(pluck="name")
+
+	if not jobs:
+		return
+
+	for job in jobs:
+		doc = frappe.get_doc("Mail Server Job", job)
+		doc.retry()

@@ -6,9 +6,12 @@
  "field_order": [
   "section_break_uroi",
   "status",
-  "retries",
   "column_break_cfom",
   "server",
+  "section_break_oxhz",
+  "retries",
+  "column_break_kyft",
+  "max_retries",
   "section_break_x3ha",
   "started_at",
   "ended_at",
@@ -180,12 +183,32 @@
    "options": "0",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_break_oxhz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_kyft",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "3",
+   "depends_on": "eval: doc.__islocal || doc.retries",
+   "fieldname": "max_retries",
+   "fieldtype": "Int",
+   "label": "Max Retries",
+   "no_copy": 1,
+   "non_negative": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-27 19:05:19.220009",
+ "modified": "2025-09-27 19:54:01.724195",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Job",
