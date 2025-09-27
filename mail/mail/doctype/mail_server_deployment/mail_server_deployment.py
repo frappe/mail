@@ -133,6 +133,7 @@ class MailServerDeployment(Document):
 			pb = frappe.new_doc("Mail Server Playbook")
 			pb.status = "Pending"
 			pb.server = self.server
+			pb.max_retries = 0
 			pb.playbook = "deploy-mail-server.yml"
 			pb.playbook_kwargs = json.dumps(playbook_kwargs)
 			frappe.flags.do_not_enqueue = True

@@ -243,6 +243,7 @@ scheduler_events = {
 		"*/5 * * * *": [
 			"mail.mail.doctype.mail_server_job.mail_server_job.retry_failed_jobs",
 			"mail.mail.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
+			"mail.mail.doctype.mail_server_playbook.mail_server_playbook.retry_failed_playbooks",
 			"mail.mail.doctype.jmap_push_verification_queue.jmap_push_verification_queue.process_verifications",
 		],
 	},

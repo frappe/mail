@@ -9,6 +9,7 @@ import tempfile
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
@@ -181,3 +182,22 @@ class MailServerPlaybook(Document):
 		"""Updates the document with the given key-value pairs."""
 
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
+
+
+def retry_failed_playbooks() -> None:
+	"""Called by the scheduler to retry failed playbooks."""
+
+	PB = frappe.qb.DocType("Mail Server Playbook")
+	playbooks = (
+		frappe.qb.from_(PB)
+		.select(PB.name)
+		.where((PB.status == "Failed") & (PB.retries > 0) & (PB.retries < PB.max_retries))
+		.orderby(PB.creation, order=Order.asc)
+	).run(pluck="name")
+
+	if not playbooks:
+		return
+
+	for playbook in playbooks:
+		doc = frappe.get_doc("Mail Server Playbook", playbook)
+		doc.retry()
