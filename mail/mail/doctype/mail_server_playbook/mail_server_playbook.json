@@ -15,7 +15,7 @@
   "column_break_mdcx",
   "started_after",
   "duration",
-  "section_break_rlon",
+  "playbook_section",
   "playbook",
   "playbook_path",
   "column_break_azhw",
@@ -59,10 +59,6 @@
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
-  },
-  {
-   "fieldname": "section_break_rlon",
-   "fieldtype": "Section Break"
   },
   {
    "fieldname": "column_break_azhw",
@@ -193,12 +189,19 @@
    "non_negative": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: false",
+   "fieldname": "playbook_section",
+   "fieldtype": "Section Break",
+   "label": "Playbook"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-27 19:05:37.111443",
+ "modified": "2025-09-27 19:35:59.206982",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Playbook",
