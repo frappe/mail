@@ -8,6 +8,7 @@ import os
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
@@ -116,7 +117,7 @@ class MailServerDeployment(Document):
 			self.config_checksum = hashlib.sha256(self.config_toml.encode("utf-8")).hexdigest()
 
 	def execute(self) -> None:
-		"""Executes the Ansible playbook."""
+		"""Executes the deployment."""
 
 		kwargs = {}
 		self._db_set(status="Running", started_at=now(), error_log=None, commit=True, notify=True)
@@ -192,3 +193,22 @@ class MailServerDeployment(Document):
 		"""Updates the document with the given key-value pairs."""
 
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
+
+
+def retry_failed_deployments() -> None:
+	"""Called by the scheduler to retry failed deployments."""
+
+	MSD = frappe.qb.DocType("Mail Server Deployment")
+	deployments = (
+		frappe.qb.from_(MSD)
+		.select(MSD.name)
+		.where((MSD.status == "Failed") & (MSD.retries > 0) & (MSD.retries < MSD.max_retries))
+		.orderby(MSD.creation, order=Order.asc)
+	).run(pluck="name")
+
+	if not deployments:
+		return
+
+	for deployment in deployments:
+		doc = frappe.get_doc("Mail Server Deployment", deployment)
+		doc.retry()
