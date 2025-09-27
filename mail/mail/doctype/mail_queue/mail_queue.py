@@ -759,12 +759,12 @@ class MailQueue(Document):
 					}
 				)
 			elif response["methodResponses"][0][1].get("notCreated", {}).get(f"draft-{self.name}"):
-				failed_count = self.failed_count + 1
+				retries = self.retries + 1
 				kwargs.update(
 					{
 						"status": "Failed to Draft",
-						"failed_count": failed_count,
-						"next_retry_after": get_next_retry_after(failed_count),
+						"retries": retries,
+						"next_retry_after": get_next_retry_after(retries),
 					}
 				)
 
@@ -779,21 +779,21 @@ class MailQueue(Document):
 						}
 					)
 				elif response["methodResponses"][idx][1].get("notCreated", {}).get(f"submit-{self.name}"):
-					failed_count = self.failed_count + 1
+					retries = self.retries + 1
 					kwargs.update(
 						{
 							"status": "Failed to Submit",
-							"failed_count": failed_count,
-							"next_retry_after": get_next_retry_after(failed_count),
+							"retries": retries,
+							"next_retry_after": get_next_retry_after(retries),
 						}
 					)
 		except Exception:
-			failed_count = self.failed_count + 1
+			retries = self.retries + 1
 			kwargs.update(
 				{
 					"status": "Failed",
-					"failed_count": failed_count,
-					"next_retry_after": get_next_retry_after(failed_count),
+					"retries": retries,
+					"next_retry_after": get_next_retry_after(retries),
 					"error_log": frappe.get_traceback(with_context=True),
 				}
 			)
@@ -918,10 +918,10 @@ def json_loads(data: str | None, default: Any = None) -> list | dict | None:
 	return default
 
 
-def get_next_retry_after(failed_count: int) -> str:
+def get_next_retry_after(retries: int) -> str:
 	"""Returns the next retry after datetime."""
 
-	next_retry_after_minutes = failed_count * (failed_count + 1)  # 2, 6, 12, 20, 30 ...
+	next_retry_after_minutes = retries * (retries + 1)  # 2, 6, 12, 20, 30 ...
 	return add_to_date(now(), minutes=next_retry_after_minutes)
 
 
@@ -938,15 +938,15 @@ def process_pending_emails(mails: list[str]) -> None:
 		if doc.status in ["Failed", "Failed to Draft", "Failed to Submit"]:
 			failed_mails.append(mail)
 
-			failed_count = len(failed_mails)
-			failure_ratio = failed_count / total_count
+			retries = len(failed_mails)
+			failure_ratio = retries / total_count
 
-			if failure_ratio > 0.33 and failed_count > 50:
+			if failure_ratio > 0.33 and retries > 50:
 				frappe.throw(
 					_(
-						"Email processing aborted: {failed_count} out of {total_count} emails failed "
+						"Email processing aborted: {retries} out of {total_count} emails failed "
 						"({failure_rate:.2%} failure rate). Please investigate the issue before retrying."
-					).format(failed_count=failed_count, total_count=total_count, failure_rate=failure_ratio)
+					).format(retries=retries, total_count=total_count, failure_rate=failure_ratio)
 				)
 
 
@@ -967,14 +967,14 @@ def enqueue_process_pending_emails(batch_process_size: int = 1_000, max_batch_si
 		.where(
 			(MQ.status == "Pending")
 			| (
-				(MQ.failed_count > 0)
-				& (MQ.failed_count < 3)
+				(MQ.retries > 0)
+				& (MQ.retries < MQ.max_retries)
 				& (MQ.next_retry_after <= now_datetime())
 				& (MQ.status.isin(["Failed", "Failed to Draft", "Failed to Submit"]))
 			)
 			| ((MQ.status == "Queued") & (MQ.queued_at <= get_datetime(add_to_date(now(), minutes=-30))))
 		)
-		.orderby(priority_order, MQ.creation, MQ.failed_count, order=Order.asc)
+		.orderby(priority_order, MQ.creation, MQ.retries, order=Order.asc)
 		.limit(max_batch_size)
 	).run(pluck="name")
 

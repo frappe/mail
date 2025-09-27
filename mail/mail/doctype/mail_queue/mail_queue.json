@@ -18,7 +18,8 @@
   "priority",
   "delivery_mode",
   "section_break_nug2",
-  "failed_count",
+  "retries",
+  "max_retries",
   "column_break_caio",
   "next_retry_after",
   "reply_to_section",
@@ -408,18 +409,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "0",
-   "depends_on": "eval: doc.failed_count > 0",
-   "fieldname": "failed_count",
-   "fieldtype": "Int",
-   "in_standard_filter": 1,
-   "label": "Failed Count",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
-   "depends_on": "eval: doc.failed_count > 0",
+   "depends_on": "eval: doc.retries > 0",
    "fieldname": "next_retry_after",
    "fieldtype": "Datetime",
    "label": "Next Retry After",
@@ -538,12 +528,34 @@
   {
    "fieldname": "column_break_lnat",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.retries > 0",
+   "fieldname": "retries",
+   "fieldtype": "Int",
+   "in_standard_filter": 1,
+   "label": "Retries",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "3",
+   "fieldname": "max_retries",
+   "fieldtype": "Int",
+   "label": "Max Retries",
+   "no_copy": 1,
+   "non_negative": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-28 15:14:12.396905",
+ "modified": "2025-09-27 18:47:14.334641",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Queue",

@@ -8,7 +8,7 @@
   "amended_from",
   "section_break_hiuo",
   "status",
-  "failed_count",
+  "retries",
   "column_break_3krp",
   "account",
   "tenant",
@@ -146,17 +146,6 @@
    "read_only": 1
   },
   {
-   "default": "0",
-   "depends_on": "eval: doc.failed_count",
-   "fieldname": "failed_count",
-   "fieldtype": "Int",
-   "label": "Failed Count",
-   "no_copy": 1,
-   "non_negative": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "depends_on": "eval: doc.operation == \"Import\"",
    "description": "Supported: <code>.zip</code>, <code>.tgz</code>, <code>.tar.gz</code>",
    "fieldname": "import_file",
@@ -205,13 +194,24 @@
    "read_only": 1,
    "search_index": 1,
    "set_only_once": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.retries",
+   "fieldname": "retries",
+   "fieldtype": "Int",
+   "label": "Retries",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-08-06 15:03:07.049029",
+ "modified": "2025-09-27 18:54:53.609407",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Data Exchange",
