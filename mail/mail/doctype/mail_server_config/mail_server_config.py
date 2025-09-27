@@ -571,4 +571,4 @@ def get_config_toml(server: str) -> str | None:
 
 			toml_lines.append(f"{key} = {formatted_value}")
 
-	return "\n".join(toml_lines)
+	return "\n".join(toml_lines) + "\n"
