@@ -9,7 +9,7 @@ import frappe
 import paramiko
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import now, time_diff_in_seconds
+from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
 
@@ -136,10 +136,10 @@ class MailServerJob(Document):
 			)
 
 			if kwargs["status"] == "Failed":
-				kwargs["failed_count"] = self.failed_count + 1
+				kwargs["failed_count"] = cint(self.failed_count) + 1
 
 		except Exception:
-			failed_count = self.failed_count + 1
+			failed_count = cint(self.failed_count) + 1
 			kwargs.update(
 				{
 					"status": "Failed",

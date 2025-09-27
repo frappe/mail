@@ -9,7 +9,7 @@ import tempfile
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import now, time_diff_in_seconds
+from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
 from mail.utils import get_mail_app_path
@@ -119,8 +119,8 @@ class MailServerPlaybook(Document):
 				private_key_file.name,
 			]
 
-			if playbook_kwargs := json.loads(self.playbook_kwargs or "{}"):
-				cmd.extend(["--extra-vars", playbook_kwargs])
+			if json.loads(self.playbook_kwargs or "{}"):
+				cmd.extend(["--extra-vars", self.playbook_kwargs])
 
 			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			stdout, stderr = process.communicate()
@@ -138,10 +138,10 @@ class MailServerPlaybook(Document):
 			)
 
 			if kwargs["status"] == "Failed":
-				kwargs["failed_count"] = self.failed_count + 1
+				kwargs["failed_count"] = cint(self.failed_count) + 1
 
 		except Exception:
-			failed_count = self.failed_count + 1
+			failed_count = cint(self.failed_count) + 1
 			kwargs.update(
 				{
 					"status": "Failed",

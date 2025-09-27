@@ -759,7 +759,7 @@ class MailQueue(Document):
 					}
 				)
 			elif response["methodResponses"][0][1].get("notCreated", {}).get(f"draft-{self.name}"):
-				retries = self.retries + 1
+				retries = cint(self.retries) + 1
 				kwargs.update(
 					{
 						"status": "Failed to Draft",
@@ -779,7 +779,7 @@ class MailQueue(Document):
 						}
 					)
 				elif response["methodResponses"][idx][1].get("notCreated", {}).get(f"submit-{self.name}"):
-					retries = self.retries + 1
+					retries = cint(self.retries) + 1
 					kwargs.update(
 						{
 							"status": "Failed to Submit",
@@ -788,7 +788,7 @@ class MailQueue(Document):
 						}
 					)
 		except Exception:
-			retries = self.retries + 1
+			retries = cint(self.retries) + 1
 			kwargs.update(
 				{
 					"status": "Failed",
