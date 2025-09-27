@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  stalwart:
+    image: stalwartlabs/stalwart:latest
+    container_name: stalwart_{{ server_hostname }}
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "8080:8080"
+      - "25:25"
+      - "587:587"
+      - "465:465"
+      - "143:143"
+      - "993:993"
+      - "4190:4190"
+      - "110:110"
+      - "995:995"
+    volumes:
+      - {{ stalwart_root }}:/opt/stalwart
