@@ -7,6 +7,8 @@
     stalwart_config_dir: "{{ stalwart_root }}/etc"
     stalwart_config_content: "{{ config_toml }}"
     stalwart_compose_template: "{{ compose_template_path }}"
+    port_mappings: "{{ port_mappings }}"
+    install_redis: "{{ install_redis }}"
 
   tasks:
     - name: Ensure etc directory exists
@@ -45,6 +47,11 @@
       args:
         chdir: "{{ stalwart_root }}"
       ignore_errors: yes
+
+    - name: Remove Redis container if not required
+      command: docker rm -f redis_{{ server_hostname }}
+      ignore_errors: yes
+      when: not install_redis
 
     - name: Start/Restart docker stack
       command: docker-compose up -d

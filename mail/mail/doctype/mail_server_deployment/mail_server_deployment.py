@@ -129,6 +129,7 @@ class MailServerDeployment(Document):
 				"server_hostname": frappe.db.get_value("Mail Server", self.server, "hostname"),
 				"config_toml": self.config_toml,
 				"port_mappings": self.port_mappings,
+				"install_redis": cint(self.install_redis),
 				"compose_template_path": self.compose_template_path,
 			}
 			pb = frappe.new_doc("Mail Server Playbook")
@@ -145,6 +146,7 @@ class MailServerDeployment(Document):
 					"status": pb.status,
 					"stdout": pb.stdout,
 					"stderr": pb.stderr,
+					"error_log": pb.error_log,
 					"exit_code": cint(pb.exit_code),
 				}
 			)

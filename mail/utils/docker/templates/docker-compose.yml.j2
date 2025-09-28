@@ -11,3 +11,18 @@ services:
 {% endfor %}
     volumes:
       - {{ stalwart_root }}:/opt/stalwart
+{% if install_redis %}
+    depends_on:
+      - redis
+{% endif %}
+
+{% if install_redis %}
+  redis:
+    image: redis:7-alpine
+    container_name: redis_{{ server_hostname }}
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - {{ stalwart_root }}/redis:/opt/stalwart/redis
+{% endif %}

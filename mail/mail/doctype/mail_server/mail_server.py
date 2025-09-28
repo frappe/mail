@@ -336,10 +336,18 @@ class MailServer(Document):
 		if not latest_config:
 			frappe.throw(_("Please generate the Mail Server Config before installing Stalwart."))
 
+		install_redis = 0
+		cluster = frappe.get_doc("Mail Cluster", self.cluster)
+		for store in cluster.stores:
+			if store.type == "Redis/Memcached" and "redis://redis:6379" in store.urls:
+				install_redis = 1
+				break
+
 		deployment = frappe.new_doc("Mail Server Deployment")
 		deployment.status = "Pending"
 		deployment.server = self.name
 		deployment.config = latest_config
+		deployment.install_redis = install_redis
 		deployment.insert(ignore_permissions=True)
 
 
