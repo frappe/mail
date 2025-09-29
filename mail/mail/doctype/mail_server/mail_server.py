@@ -37,6 +37,8 @@ class MailServer(Document):
 		self.validate_hostname()
 		self.validate_cluster()
 		self.validate_base_url()
+		self.validate_outbound_only()
+		self.validate_priority()
 		self.validate_cluster_node_id()
 		self.validate_acme_providers()
 		self.validate_tls_certificates()
@@ -95,6 +97,31 @@ class MailServer(Document):
 
 		if not self.base_url:
 			self.base_url = f"https://{self.hostname}/"
+
+	def validate_outbound_only(self) -> None:
+		"""Validates the outbound only setting."""
+
+		if self.outbound_only:
+			self.include_in_mx_records = 0
+
+	def validate_priority(self) -> None:
+		"""Validates the priority of the server."""
+
+		if not self.include_in_mx_records:
+			self.priority = 0
+		else:
+			if not self.priority or self.priority < 1:
+				frappe.throw(_("Priority must be greater than 0."))
+
+			if frappe.db.exists(
+				"Mail Server",
+				{"enabled": 1, "cluster": self.cluster, "priority": self.priority, "name": ["!=", self.name]},
+			):
+				frappe.throw(
+					_("Priority {0} is already assigned to another Mail Server.").format(
+						frappe.bold(self.priority)
+					)
+				)
 
 	def validate_cluster_node_id(self) -> None:
 		"""Validates the cluster node ID."""

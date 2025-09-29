@@ -93,7 +93,6 @@ class MailCluster(Document):
 		self.validate_enabled()
 		self.validate_public()
 		self.validate_hostname()
-		self.validate_priority()
 		self.validate_fallback_admin_password()
 		self.generate_fallback_admin_secret()
 		self.validate_base_url()
@@ -149,17 +148,6 @@ class MailCluster(Document):
 
 		self.ipv4_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "A") or []])
 		self.ipv6_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "AAAA") or []])
-
-	def validate_priority(self) -> None:
-		"""Validates the priority of the cluster."""
-
-		if frappe.db.exists(
-			"Mail Cluster",
-			{"enabled": 1, "priority": self.priority, "name": ["!=", self.name]},
-		):
-			frappe.throw(
-				_("Mail Cluster with priority {0} already exists.").format(frappe.bold(self.priority))
-			)
 
 	def validate_fallback_admin_password(self) -> None:
 		if self.fallback_admin_password:

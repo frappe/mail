@@ -203,19 +203,25 @@ def get_dns_records(tenant: str, domain_name: str) -> list[dict]:
 		}
 	)
 
-	# MX Record
+	# MX Record(s)
 	cluster = get_cluster_for_tenant(tenant)
-	priority = frappe.db.get_value("Mail Cluster", cluster, "priority")
-	records.append(
-		{
-			"category": "Receiving Record",
-			"type": "MX",
-			"host": domain_name,
-			"value": f"{cluster.split(':')[0]}.",
-			"priority": priority,
-			"ttl": mail_settings.default_ttl,
-		}
+	servers = frappe.db.get_all(
+		"Mail Server",
+		{"cluster": cluster, "enabled": 1, "outbound_only": 0, "include_in_mx_records": 1},
+		["hostname", "priority"],
+		order_by="priority asc",
 	)
+	for server in servers:
+		records.append(
+			{
+				"category": "Receiving Record",
+				"type": "MX",
+				"host": domain_name,
+				"value": f"{server['hostname'].split(':')[0]}.",
+				"priority": server["priority"],
+				"ttl": mail_settings.default_ttl,
+			}
+		)
 
 	return records
 

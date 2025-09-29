@@ -9,10 +9,12 @@
   "section_break_excr",
   "enabled",
   "outbound_only",
+  "include_in_mx_records",
   "column_break_0mtp",
   "cluster",
   "hostname",
   "base_url",
+  "priority",
   "network_settings_section",
   "server_max_connections",
   "column_break_3m4p",
@@ -230,6 +232,26 @@
   {
    "fieldname": "column_break_xzft",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "description": "If checked, this server will be included in DNS MX records.",
+   "fieldname": "include_in_mx_records",
+   "fieldtype": "Check",
+   "label": "Include in MX Records",
+   "read_only_depends_on": "eval: doc.outbound_only"
+  },
+  {
+   "depends_on": "eval: doc.include_in_mx_records",
+   "description": "MX record priority for handling inbound mail. Lower values have higher priority.",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "in_standard_filter": 1,
+   "label": "Priority",
+   "mandatory_depends_on": "eval: !doc.outbound_only && doc.include_in_mx_records",
+   "no_copy": 1,
+   "non_negative": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
@@ -266,7 +288,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-09-29 12:25:20.084653",
+ "modified": "2025-09-29 13:06:48.204586",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",
