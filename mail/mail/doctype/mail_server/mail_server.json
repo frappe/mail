@@ -199,6 +199,7 @@
   },
   {
    "default": "22",
+   "description": "Port to use for SSH access.",
    "fieldname": "ssh_port",
    "fieldtype": "Int",
    "label": "SSH Port",
@@ -207,6 +208,7 @@
   },
   {
    "default": "root",
+   "description": "The Linux user account to use for SSH connections.",
    "fieldname": "ssh_user",
    "fieldtype": "Data",
    "label": "SSH User",
@@ -218,6 +220,7 @@
   },
   {
    "default": "0",
+   "description": "Verifies that the server is reachable with the provided SSH details.",
    "fieldname": "ssh_verified",
    "fieldtype": "Check",
    "label": "Verified",
@@ -263,7 +266,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-09-27 10:38:54.769965",
+ "modified": "2025-09-29 12:25:20.084653",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",
