@@ -4,6 +4,7 @@
 
 import io
 import json
+import os
 import socket
 from typing import TYPE_CHECKING
 
@@ -19,6 +20,7 @@ from mail.mail.doctype.mail_server_config.mail_server_config import create_mail_
 from mail.mail.doctype.mail_settings.mail_settings import (
 	validate_mail_settings,
 )
+from mail.utils import get_mail_app_path
 from mail.utils.dns import get_dns_record
 
 if TYPE_CHECKING:
@@ -301,14 +303,14 @@ class MailServer(Document):
 	def _install_ansible(self) -> None:
 		"""Installs Ansible on the Mail Server."""
 
-		commands = [
-			"which ansible || (echo 'Installing Ansible...' && sudo apt-get update && sudo apt-get install -y ansible)",
-			"sudo apt-get update && sudo apt-get install -y python3 python3-apt python3-pip",
-		]
+		script_path = os.path.join(get_mail_app_path(), "mail/utils/ansible/install_ansible.sh")
+		with open(script_path) as f:
+			script_content = f.read()
+
 		job = frappe.new_doc("Mail Server Job")
 		job.status = "Pending"
 		job.server = self.name
-		job._commands = json.dumps(commands)
+		job._commands = json.dumps([script_content])
 		job.insert(ignore_permissions=True)
 
 	@frappe.whitelist()
