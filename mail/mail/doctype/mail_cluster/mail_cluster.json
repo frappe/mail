@@ -815,6 +815,7 @@
   },
   {
    "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
    "fieldname": "ssh_key_section",
    "fieldtype": "Section Break",
    "label": "SSH Key"
@@ -839,7 +840,7 @@
    "link_fieldname": "backend_name"
   }
  ],
- "modified": "2025-09-24 15:11:41.730237",
+ "modified": "2025-09-29 12:02:52.614245",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

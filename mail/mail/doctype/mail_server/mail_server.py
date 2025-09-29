@@ -306,17 +306,6 @@ class MailServer(Document):
 		pb.playbook_kwargs = "{}"
 		pb.insert(ignore_permissions=True)
 
-	def _db_set(
-		self,
-		update_modified: bool = True,
-		commit: bool = False,
-		notify: bool = False,
-		**kwargs,
-	) -> None:
-		"""Updates the document with the given key-value pairs."""
-
-		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
-
 	@frappe.whitelist()
 	def install_stalwart(self) -> None:
 		"""Installs Stalwart on the Mail Server."""
@@ -329,11 +318,11 @@ class MailServer(Document):
 		self._install_stalwart()
 		frappe.msgprint(_("Install of Stalwart initiated."), indicator="green", alert=True)
 
-	def _install_stalwart(self) -> None:
+	def _install_stalwart(self, config: str | None = None) -> None:
 		"""Installs Stalwart on the Mail Server."""
 
-		latest_config = frappe.db.get_value("Mail Server Config", {"server": self.name})
-		if not latest_config:
+		config = config or frappe.db.get_value("Mail Server Config", {"server": self.name})
+		if not config:
 			frappe.throw(_("Please generate the Mail Server Config before installing Stalwart."))
 
 		install_redis = 0
@@ -346,9 +335,20 @@ class MailServer(Document):
 		deployment = frappe.new_doc("Mail Server Deployment")
 		deployment.status = "Pending"
 		deployment.server = self.name
-		deployment.config = latest_config
+		deployment.config = config
 		deployment.install_redis = install_redis
 		deployment.insert(ignore_permissions=True)
+
+	def _db_set(
+		self,
+		update_modified: bool = True,
+		commit: bool = False,
+		notify: bool = False,
+		**kwargs,
+	) -> None:
+		"""Updates the document with the given key-value pairs."""
+
+		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
 
 
 @frappe.whitelist()

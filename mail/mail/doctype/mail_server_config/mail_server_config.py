@@ -92,12 +92,25 @@ class MailServerConfig(Document):
 
 	@frappe.whitelist()
 	def deploy(self) -> None:
-		"""Deploys the configuration to the Mail Server."""
+		"""Deploys Stalwart with the current configuration."""
+
+		frappe.only_for("System Manager")
+
+		server = frappe.get_doc("Mail Server", self.server)
+		server._install_stalwart(config=self.name)
+		frappe.msgprint(_("Deploy of Stalwart initiated."), indicator="green", alert=True)
+
+	@frappe.whitelist()
+	def update_config_on_server(self) -> None:
+		"""Updates the configuration on the Mail Server."""
 
 		frappe.only_for("System Manager")
 
 		values = []
 		for cfg in self.get_password("config_toml").split("\n"):
+			if not cfg.strip() or cfg.strip().startswith("#"):
+				continue
+
 			key, value = cfg.split("=", 1)
 			key = key.strip()
 			value = value.strip().strip('"')
@@ -118,18 +131,18 @@ class MailServerConfig(Document):
 		if response_json := response.json():
 			if response_json.get("error"):
 				frappe.throw(
-					title=_("Failed to deploy configuration"), msg=json.dumps(response_json, indent=4)
+					title=_("Failed to update configuration"), msg=json.dumps(response_json, indent=4)
 				)
 			elif response_json.get("data") is None:
 				frappe.msgprint(
-					_("Configuration deployed successfully."),
+					_("Configuration updated successfully."),
 					alert=True,
 					indicator="green",
 				)
 			else:
 				frappe.msgprint(
 					_(
-						"Configuration deployed successfully, but the response from the server was unexpected: {response}"
+						"Configuration updated successfully, but the response from the server was unexpected: {response}"
 					).format(response=json.dumps(response_json))
 				)
 
