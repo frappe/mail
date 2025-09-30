@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class EmailParser:
 	def __init__(self, message: str) -> None:
 		self.message = self.get_parsed_message(message)
-		self.content_id_and_file_url_map = {}
+		self.cid_and_file_url_map = {}
 
 	@staticmethod
 	def get_parsed_message(message: str) -> "Message":
@@ -143,10 +143,10 @@ class EmailParser:
 				disposition = disposition.lower()
 
 				if disposition.startswith("inline"):
-					if content_id := re.sub(r"[<>]", "", part.get("Content-ID", "")):
+					if cid := re.sub(r"[<>]", "", part.get("Content-ID", "")):
 						if payload := part.get_payload(decode=True):
 							file = save_attachment(filename, payload, doctype, docname, is_private)
-							self.content_id_and_file_url_map[content_id] = file["file_url"]
+							self.cid_and_file_url_map[cid] = file["file_url"]
 
 				elif disposition.startswith("attachment"):
 					if payload := part.get_payload(decode=True):
@@ -170,10 +170,10 @@ class EmailParser:
 					charset = part.get_content_charset() or "utf-8"
 					body_plain += payload.decode(charset, "ignore")
 
-		if self.content_id_and_file_url_map:
-			for content_id, file_url in self.content_id_and_file_url_map.items():
-				body_html = body_html.replace(f"cid:{content_id}", file_url)
-				body_plain = body_plain.replace(f"cid:{content_id}", file_url)
+		if self.cid_and_file_url_map:
+			for cid, file_url in self.cid_and_file_url_map.items():
+				body_html = body_html.replace(f"cid:{cid}", file_url)
+				body_plain = body_plain.replace(f"cid:{cid}", file_url)
 
 		return body_html or None, body_plain or None
 

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-09-27 18:57+0553\n"
-"PO-Revision-Date: 2025-09-27 18:57+0553\n"
+"POT-Creation-Date: 2025-09-30 19:34+0553\n"
+"PO-Revision-Date: 2025-09-30 19:34+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -1114,7 +1114,7 @@ msgstr ""
 msgid "Container"
 msgstr ""
 
-#. Label of the content_id (Data) field in DocType 'Mail Message Part'
+#. Label of the cid (Data) field in DocType 'Mail Message Part'
 #: mail/mail/doctype/mail_message_part/mail_message_part.json
 msgid "Content ID"
 msgstr ""
@@ -2106,7 +2106,7 @@ msgstr ""
 msgid "Error uploading attachment"
 msgstr ""
 
-#: mail/jmap.py:998
+#: mail/jmap.py:1000
 msgid "Error {0}: {1}"
 msgstr ""
 
@@ -4333,7 +4333,7 @@ msgstr ""
 msgid "No blocked IPs found."
 msgstr ""
 
-#: mail/jmap.py:878
+#: mail/jmap.py:880
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.py:288
 msgid "No cluster found for the account {0}."
 msgstr ""
@@ -6677,7 +6677,7 @@ msgstr ""
 msgid "The security token for the S3 account."
 msgstr ""
 
-#: mail/jmap.py:889
+#: mail/jmap.py:891
 msgid "The server {0} does not belong to the same cluster as the account {1}."
 msgstr ""
 
