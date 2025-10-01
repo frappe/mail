@@ -311,7 +311,7 @@ class MailServer(Document):
 		job.status = "Pending"
 		job.server = self.name
 		job.job = "Install Ansible"
-		job._commands = json.dumps([script_content])
+		job.append("commands", {"command": script_content})
 		job.insert(ignore_permissions=True)
 
 	@frappe.whitelist()

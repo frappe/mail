@@ -2,8 +2,6 @@
 # For license information, please see license.txt
 
 import io
-import json
-import time
 
 import frappe
 import paramiko
@@ -15,20 +13,6 @@ from uuid_utils import uuid7
 
 
 class MailServerJob(Document):
-	@property
-	def commands(self) -> str | None:
-		"""Returns the commands as a pretty-printed JSON string."""
-
-		_commands = json.loads(self._commands or "[]")
-		return json.dumps(_commands, indent=4) if _commands else None
-
-	@property
-	def results(self) -> str | None:
-		"""Returns the results as a pretty-printed JSON string."""
-
-		_results = json.loads(self._results or "{}")
-		return json.dumps(_results, indent=4) if _results else None
-
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -64,29 +48,44 @@ class MailServerJob(Document):
 			frappe.throw(_("Please verify SSH connection for Mail Server {0}").format(self.server))
 
 	def validate_commands(self) -> None:
-		"""Validate if _commands are set."""
+		"""Validates that at least one command is provided."""
 
-		_commands = json.loads(self._commands or "[]")
-
-		if not _commands:
+		if not self.commands:
 			frappe.throw(_("Please add at least one command to execute."))
-		else:
-			self._commands = json.dumps(_commands)
 
 	def execute(self) -> None:
 		"""Executes the commands on the Mail Server via SSH."""
 
-		kwargs = {}
 		started_at = now()
 		self._db_set(
 			status="Running",
 			started_at=started_at,
+			ended_at=None,
 			started_after=time_diff_in_seconds(started_at, self.creation),
+			duration=0,
+			success=0,
+			failed=0,
 			error_log=None,
 			commit=True,
 			notify=True,
 		)
+		frappe.db.set_value(
+			"Mail Server Job Command",
+			{"parenttype": self.doctype, "parent": self.name},
+			{
+				"status": "Pending",
+				"started_at": None,
+				"ended_at": None,
+				"duration": 0,
+				"exit_code": 0,
+				"stdout": None,
+				"stderr": None,
+			},
+		)
 
+		kwargs = {}
+		success_count = 0
+		failed_count = 0
 		try:
 			self.validate_server()
 
@@ -100,44 +99,54 @@ class MailServerJob(Document):
 				hostname=server.hostname, port=server.ssh_port, username=server.ssh_user, pkey=key, timeout=30
 			)
 
-			_results = {}
-			for cmd in json.loads(self._commands):
-				cmd_start = time.time()
-				_stdin, stdout, stderr = client.exec_command(cmd)
-				exit_status = stdout.channel.recv_exit_status()
-				cmd_end = time.time()
+			for command in self.commands:
+				cmd_started_at = now()
+				command._db_set(status="Running", started_at=cmd_started_at, commit=True)
 
-				_results[cmd] = {
-					"stdout": stdout.read().decode(),
-					"stderr": stderr.read().decode(),
-					"exit_code": exit_status,
-					"duration": round(cmd_end - cmd_start, 2),
-				}
+				_stdin, stdout, stderr = client.exec_command(command.command)
+				exit_code = stdout.channel.recv_exit_status()
+
+				cmd_ended_at = now()
+				command._db_set(
+					status="Success" if exit_code == 0 else "Failed",
+					ended_at=cmd_ended_at,
+					exit_code=exit_code,
+					stdout=stdout.read().decode(),
+					stderr=stderr.read().decode(),
+					duration=time_diff_in_seconds(cmd_ended_at, cmd_started_at),
+					commit=True,
+				)
+
+				if exit_code == 0:
+					success_count += 1
+				elif not command.ignore_errors:
+					failed_count += 1
+					frappe.throw(
+						_("Command '{0}' failed with exit code {1}").format(
+							f"{command.command[:20]} ...", exit_code
+						)
+					)
 
 			client.close()
-			kwargs.update(
-				{
-					"status": "Success" if all(r["exit_code"] == 0 for r in _results.values()) else "Failed",
-					"_results": json.dumps(_results, indent=4),
-				}
-			)
-
-			if kwargs["status"] == "Failed":
-				kwargs["retries"] = cint(self.retries) + 1
+			kwargs["status"] = "Success"
 
 		except Exception:
-			retries = cint(self.retries) + 1
 			kwargs.update(
 				{
 					"status": "Failed",
-					"retries": retries,
+					"retries": cint(self.retries) + 1,
 					"error_log": frappe.get_traceback(with_context=True),
 				}
 			)
 
 		ended_at = now()
 		self._db_set(
-			ended_at=ended_at, duration=time_diff_in_seconds(ended_at, started_at), notify=True, **kwargs
+			ended_at=ended_at,
+			duration=time_diff_in_seconds(ended_at, started_at),
+			success=success_count,
+			failed=failed_count,
+			notify=True,
+			**kwargs,
 		)
 
 	@frappe.whitelist()
