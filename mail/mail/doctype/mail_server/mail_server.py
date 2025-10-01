@@ -310,6 +310,7 @@ class MailServer(Document):
 		job = frappe.new_doc("Mail Server Job")
 		job.status = "Pending"
 		job.server = self.name
+		job.job = "Install Ansible"
 		job._commands = json.dumps([script_content])
 		job.insert(ignore_permissions=True)
 

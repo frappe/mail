@@ -17,34 +17,6 @@ from mail.utils import get_mail_app_path
 
 
 class MailServerAnsiblePlay(Document):
-	@property
-	def started_after(self) -> float:
-		"""Returns the time taken to start the ansible play in seconds."""
-
-		if self.started_at and self.creation:
-			started_after = time_diff_in_seconds(self.started_at, self.creation)
-			if started_after > 0:
-				return started_after
-
-		return 0.0
-
-	@property
-	def duration(self) -> float:
-		"""Returns the duration of the ansible play in seconds."""
-
-		if self.started_at and self.ended_at:
-			duration = time_diff_in_seconds(self.ended_at, self.started_at)
-			if duration > 0:
-				return duration
-
-		return 0.0
-
-	@property
-	def playbook_path(self) -> str:
-		"""Returns the absolute path of the playbook."""
-
-		return os.path.join(get_mail_app_path(), "mail/utils/ansible/playbooks", self.playbook)
-
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -84,14 +56,22 @@ class MailServerAnsiblePlay(Document):
 
 		if not self.playbook:
 			frappe.throw(_("Playbook is required"))
-		elif not os.path.isfile(self.playbook_path):
+		elif not os.path.isfile(self._get_playbook_path()):
 			frappe.throw(_("Playbook {0} does not exist.").format(self.playbook))
 
 	def execute(self) -> None:
 		"""Executes the Ansible playbook."""
 
 		kwargs = {}
-		self._db_set(status="Running", started_at=now(), error_log=None, commit=True, notify=True)
+		started_at = now()
+		self._db_set(
+			status="Running",
+			started_at=started_at,
+			started_after=time_diff_in_seconds(started_at, self.creation),
+			error_log=None,
+			commit=True,
+			notify=True,
+		)
 
 		try:
 			self.validate_server()
@@ -115,7 +95,7 @@ class MailServerAnsiblePlay(Document):
 				"ansible-playbook",
 				"-i",
 				inventory_file.name,
-				self.playbook_path,
+				self._get_playbook_path(),
 				"--private-key",
 				private_key_file.name,
 			]
@@ -151,7 +131,10 @@ class MailServerAnsiblePlay(Document):
 				}
 			)
 
-		self._db_set(notify=True, ended_at=now(), **kwargs)
+		ended_at = now()
+		self._db_set(
+			ended_at=ended_at, duration=time_diff_in_seconds(ended_at, started_at), notify=True, **kwargs
+		)
 
 	@frappe.whitelist()
 	def retry(self) -> None:
@@ -171,6 +154,11 @@ class MailServerAnsiblePlay(Document):
 			queue="long",
 			enqueue_after_commit=True,
 		)
+
+	def _get_playbook_path(self) -> str:
+		"""Returns the absolute path of the playbook."""
+
+		return os.path.join(get_mail_app_path(), "mail/utils/ansible/playbooks", self.playbook)
 
 	def _db_set(
 		self,

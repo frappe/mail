@@ -17,28 +17,6 @@ from mail.utils import get_mail_app_path
 
 class MailServerDeployment(Document):
 	@property
-	def started_after(self) -> float:
-		"""Returns the time taken to start the deployment in seconds."""
-
-		if self.started_at and self.creation:
-			started_after = time_diff_in_seconds(self.started_at, self.creation)
-			if started_after > 0:
-				return started_after
-
-		return 0.0
-
-	@property
-	def duration(self) -> float:
-		"""Returns the duration of the deployment in seconds."""
-
-		if self.started_at and self.ended_at:
-			duration = time_diff_in_seconds(self.ended_at, self.started_at)
-			if duration > 0:
-				return duration
-
-		return 0.0
-
-	@property
 	def config_toml(self) -> str | None:
 		"""Returns the config.toml content."""
 
@@ -120,7 +98,15 @@ class MailServerDeployment(Document):
 		"""Executes the deployment."""
 
 		kwargs = {}
-		self._db_set(status="Running", started_at=now(), error_log=None, commit=True, notify=True)
+		started_at = now()
+		self._db_set(
+			status="Running",
+			started_at=started_at,
+			started_after=time_diff_in_seconds(started_at, self.creation),
+			error_log=None,
+			commit=True,
+			notify=True,
+		)
 
 		try:
 			self.validate_server()
@@ -165,7 +151,10 @@ class MailServerDeployment(Document):
 				}
 			)
 
-		self._db_set(notify=True, ended_at=now(), **kwargs)
+		ended_at = now()
+		self._db_set(
+			ended_at=ended_at, duration=time_diff_in_seconds(ended_at, started_at), notify=True, **kwargs
+		)
 
 	@frappe.whitelist()
 	def retry(self) -> None:

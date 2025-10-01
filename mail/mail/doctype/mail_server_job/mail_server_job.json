@@ -6,6 +6,7 @@
  "field_order": [
   "section_break_uroi",
   "status",
+  "job",
   "column_break_cfom",
   "server",
   "section_break_oxhz",
@@ -99,11 +100,13 @@
    "description": "Ended At - Started At",
    "fieldname": "duration",
    "fieldtype": "Float",
-   "is_virtual": 1,
+   "in_list_view": 1,
    "label": "Duration (Seconds)",
    "no_copy": 1,
+   "non_negative": 1,
    "precision": "3",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "bold": 1,
@@ -135,11 +138,13 @@
    "description": "Started At - Creation",
    "fieldname": "started_after",
    "fieldtype": "Float",
-   "is_virtual": 1,
+   "in_list_view": 1,
    "label": "Started After (Seconds)",
    "no_copy": 1,
+   "non_negative": 1,
    "precision": "3",
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "collapsible": 1,
@@ -204,12 +209,22 @@
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
+  },
+  {
+   "fieldname": "job",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Job",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-27 20:06:27.984046",
+ "modified": "2025-10-01 15:33:39.429664",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Job",
@@ -231,5 +246,6 @@
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "job"
 }
