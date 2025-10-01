@@ -6,6 +6,9 @@
  "field_order": [
   "section_break_ecmu",
   "status",
+  "play",
+  "playbook",
+  "playbook_path",
   "column_break_gaur",
   "server",
   "section_break_jwfm",
@@ -18,11 +21,8 @@
   "column_break_mdcx",
   "started_after",
   "duration",
-  "playbook_section",
-  "playbook",
-  "playbook_path",
-  "column_break_azhw",
-  "playbook_kwargs",
+  "section_break_6og3",
+  "variables",
   "section_break_ywvv",
   "exit_code",
   "stdout",
@@ -61,18 +61,6 @@
    "options": "Mail Server",
    "reqd": 1,
    "search_index": 1,
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "column_break_azhw",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "{}",
-   "fieldname": "playbook_kwargs",
-   "fieldtype": "JSON",
-   "label": "Playbook Kwargs",
-   "reqd": 1,
    "set_only_once": 1
   },
   {
@@ -194,13 +182,6 @@
    "search_index": 1
   },
   {
-   "collapsible": 1,
-   "collapsible_depends_on": "eval: false",
-   "fieldname": "playbook_section",
-   "fieldtype": "Section Break",
-   "label": "Playbook"
-  },
-  {
    "fieldname": "section_break_jwfm",
    "fieldtype": "Section Break"
   },
@@ -220,15 +201,38 @@
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
+  },
+  {
+   "default": "{}",
+   "fieldname": "variables",
+   "fieldtype": "JSON",
+   "label": "Variables",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "collapsible_depends_on": "eval: false",
+   "fieldname": "section_break_6og3",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "play",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Play",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-27 20:06:36.079510",
+ "modified": "2025-10-01 15:13:17.868022",
  "modified_by": "Administrator",
  "module": "Mail",
- "name": "Mail Server Playbook",
+ "name": "Mail Server Ansible Play",
  "owner": "Administrator",
  "permissions": [
   {
@@ -247,5 +251,6 @@
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "play"
 }

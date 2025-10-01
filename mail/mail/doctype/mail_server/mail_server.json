@@ -279,7 +279,7 @@
   },
   {
    "group": "Deployment",
-   "link_doctype": "Mail Server Playbook",
+   "link_doctype": "Mail Server Ansible Play",
    "link_fieldname": "server"
   },
   {
@@ -288,7 +288,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-09-29 13:06:48.204586",
+ "modified": "2025-10-01 14:51:58.118915",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",

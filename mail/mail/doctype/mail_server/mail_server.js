@@ -59,7 +59,7 @@ frappe.ui.form.on('Mail Server', {
 			)
 
 			frm.add_custom_button(
-				__('Install Docker (Playbook)'),
+				__('Install Docker (Ansible Play)'),
 				() => {
 					frm.trigger('install_docker')
 				},

@@ -16,10 +16,10 @@ from uuid_utils import uuid7
 from mail.utils import get_mail_app_path
 
 
-class MailServerPlaybook(Document):
+class MailServerAnsiblePlay(Document):
 	@property
 	def started_after(self) -> float:
-		"""Returns the time taken to start the playbook in seconds."""
+		"""Returns the time taken to start the ansible play in seconds."""
 
 		if self.started_at and self.creation:
 			started_after = time_diff_in_seconds(self.started_at, self.creation)
@@ -30,7 +30,7 @@ class MailServerPlaybook(Document):
 
 	@property
 	def duration(self) -> float:
-		"""Returns the duration of the playbook in seconds."""
+		"""Returns the duration of the ansible play in seconds."""
 
 		if self.started_at and self.ended_at:
 			duration = time_diff_in_seconds(self.ended_at, self.started_at)
@@ -120,8 +120,8 @@ class MailServerPlaybook(Document):
 				private_key_file.name,
 			]
 
-			if json.loads(self.playbook_kwargs or "{}"):
-				cmd.extend(["--extra-vars", self.playbook_kwargs])
+			if json.loads(self.variables or "{}"):
+				cmd.extend(["--extra-vars", self.variables])
 
 			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			stdout, stderr = process.communicate()
@@ -155,12 +155,12 @@ class MailServerPlaybook(Document):
 
 	@frappe.whitelist()
 	def retry(self) -> None:
-		"""Retries a failed playbook."""
+		"""Retries a failed ansible play."""
 
 		frappe.only_for("System Manager")
 
 		if self.status != "Failed":
-			frappe.throw(_("Only failed playbooks can be retried."))
+			frappe.throw(_("Only failed ansible plays can be retried."))
 
 		self._db_set(status="Pending", notify=True)
 
@@ -184,20 +184,20 @@ class MailServerPlaybook(Document):
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
 
 
-def retry_failed_playbooks() -> None:
-	"""Called by the scheduler to retry failed playbooks."""
+def retry_failed_ansible_plays() -> None:
+	"""Called by the scheduler to retry failed ansible plays."""
 
-	PB = frappe.qb.DocType("Mail Server Playbook")
-	playbooks = (
+	PB = frappe.qb.DocType("")
+	plays = (
 		frappe.qb.from_(PB)
 		.select(PB.name)
 		.where((PB.status == "Failed") & (PB.retries > 0) & (PB.retries < PB.max_retries))
 		.orderby(PB.creation, order=Order.asc)
 	).run(pluck="name")
 
-	if not playbooks:
+	if not plays:
 		return
 
-	for playbook in playbooks:
-		doc = frappe.get_doc("Mail Server Playbook", playbook)
+	for play in plays:
+		doc = frappe.get_doc("Mail Server Ansible Play", play)
 		doc.retry()

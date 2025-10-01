@@ -328,12 +328,13 @@ class MailServer(Document):
 	def _install_docker(self) -> None:
 		"""Installs Docker on the Mail Server."""
 
-		pb = frappe.new_doc("Mail Server Playbook")
-		pb.status = "Pending"
-		pb.server = self.name
-		pb.playbook = "install-docker.yml"
-		pb.playbook_kwargs = "{}"
-		pb.insert(ignore_permissions=True)
+		play = frappe.new_doc("Mail Server Ansible Play")
+		play.status = "Pending"
+		play.server = self.name
+		play.play = "Install Docker"
+		play.playbook = "install-docker.yml"
+		play.variables = "{}"
+		play.insert(ignore_permissions=True)
 
 	@frappe.whitelist()
 	def install_stalwart(self) -> None:

@@ -125,29 +125,30 @@ class MailServerDeployment(Document):
 		try:
 			self.validate_server()
 
-			playbook_kwargs = {
+			variables = {
 				"server_hostname": frappe.db.get_value("Mail Server", self.server, "hostname"),
 				"config_toml": self.config_toml,
 				"port_mappings": self.port_mappings,
 				"install_redis": cint(self.install_redis),
 				"compose_template_path": self.compose_template_path,
 			}
-			pb = frappe.new_doc("Mail Server Playbook")
-			pb.status = "Pending"
-			pb.server = self.server
-			pb.max_retries = 0
-			pb.playbook = "deploy-mail-server.yml"
-			pb.playbook_kwargs = json.dumps(playbook_kwargs)
+			play = frappe.new_doc("Mail Server Ansible Play")
+			play.status = "Pending"
+			play.server = self.server
+			play.max_retries = 0
+			play.play = "Deploy Mail Server"
+			play.playbook = "deploy-mail-server.yml"
+			play.variables = json.dumps(variables)
 			frappe.flags.do_not_enqueue = True
-			pb.insert(ignore_permissions=True)
+			play.insert(ignore_permissions=True)
 
 			kwargs.update(
 				{
-					"status": pb.status,
-					"stdout": pb.stdout,
-					"stderr": pb.stderr,
-					"error_log": pb.error_log,
-					"exit_code": cint(pb.exit_code),
+					"status": play.status,
+					"stdout": play.stdout,
+					"stderr": play.stderr,
+					"error_log": play.error_log,
+					"exit_code": cint(play.exit_code),
 				}
 			)
 
