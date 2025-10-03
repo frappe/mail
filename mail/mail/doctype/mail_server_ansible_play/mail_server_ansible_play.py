@@ -100,8 +100,15 @@ class MailServerAnsiblePlay(Document):
 				private_key_file.name,
 			]
 
-			if json.loads(self.variables or "{}"):
-				cmd.extend(["--extra-vars", self.variables])
+			if self.variables:
+				extra_vars = {}
+				for variable in self.variables:
+					try:
+						extra_vars[variable.key_] = json.loads(variable.value)
+					except (TypeError, json.JSONDecodeError):
+						extra_vars[variable.key_] = variable.value
+
+				cmd.extend(["--extra-vars", json.dumps(extra_vars)])
 
 			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			stdout, stderr = process.communicate()

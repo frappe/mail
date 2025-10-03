@@ -124,7 +124,15 @@ class MailServerDeployment(Document):
 			play.max_retries = 0
 			play.play = "Deploy Mail Server"
 			play.playbook = "deploy-mail-server.yml"
-			play.variables = json.dumps(variables)
+
+			for key, value in variables.items():
+				if isinstance(value, int | bool):
+					value = str(value)
+				elif isinstance(value, list | dict):
+					value = json.dumps(value, indent=4)
+
+				play.append("variables", {"key_": key, "value": value})
+
 			frappe.flags.do_not_enqueue = True
 			play.insert(ignore_permissions=True)
 

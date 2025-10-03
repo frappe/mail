@@ -207,11 +207,10 @@
    "set_only_once": 1
   },
   {
-   "default": "{}",
    "fieldname": "variables",
-   "fieldtype": "JSON",
+   "fieldtype": "Table",
    "label": "Variables",
-   "reqd": 1,
+   "options": "Ansible Play Variable",
    "set_only_once": 1
   },
   {
@@ -233,7 +232,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-01 15:27:42.318093",
+ "modified": "2025-10-03 12:15:54.972762",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Ansible Play",

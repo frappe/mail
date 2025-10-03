@@ -334,7 +334,6 @@ class MailServer(Document):
 		play.server = self.name
 		play.play = "Install Docker"
 		play.playbook = "install-docker.yml"
-		play.variables = "{}"
 		play.insert(ignore_permissions=True)
 
 	@frappe.whitelist()
