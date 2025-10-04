@@ -20,7 +20,6 @@ from mail.mail.doctype.mail_server_config.mail_server_config import create_mail_
 from mail.mail.doctype.mail_settings.mail_settings import (
 	validate_mail_settings,
 )
-from mail.utils import get_mail_app_path
 from mail.utils.dns import get_dns_record
 
 if TYPE_CHECKING:
@@ -303,7 +302,7 @@ class MailServer(Document):
 	def _install_ansible(self) -> None:
 		"""Installs Ansible on the Mail Server."""
 
-		script_path = os.path.join(get_mail_app_path(), "mail/utils/ansible/install_ansible.sh")
+		script_path = os.path.join(frappe.get_app_path("mail", "utils", "ansible"), "install_ansible.sh")
 		with open(script_path) as f:
 			script_content = f.read()
 

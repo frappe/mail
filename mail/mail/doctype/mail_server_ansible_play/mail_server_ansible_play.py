@@ -13,8 +13,6 @@ from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
-from mail.utils import get_mail_app_path
-
 
 class MailServerAnsiblePlay(Document):
 	def autoname(self) -> None:
@@ -165,7 +163,7 @@ class MailServerAnsiblePlay(Document):
 	def _get_playbook_path(self) -> str:
 		"""Returns the absolute path of the playbook."""
 
-		return os.path.join(get_mail_app_path(), "mail/utils/ansible/playbooks", self.playbook)
+		return os.path.join(frappe.get_app_path("mail", "utils", "ansible", "playbooks"), self.playbook)
 
 	def _db_set(
 		self,

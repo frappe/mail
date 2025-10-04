@@ -12,8 +12,6 @@ from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
-from mail.utils import get_mail_app_path
-
 
 class MailServerDeployment(Document):
 	@property
@@ -41,7 +39,9 @@ class MailServerDeployment(Document):
 	def compose_template_path(self) -> str:
 		"""Returns the path to the docker-compose template."""
 
-		return os.path.join(get_mail_app_path(), "mail/utils/docker/templates/docker-compose.yml.j2")
+		return os.path.join(
+			frappe.get_app_path("mail", "utils", "docker", "templates"), "docker-compose.yml.j2"
+		)
 
 	def autoname(self) -> None:
 		self.name = str(uuid7())
