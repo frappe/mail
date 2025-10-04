@@ -8,9 +8,9 @@
   "status",
   "play",
   "playbook",
-  "playbook_path",
   "column_break_gaur",
   "server",
+  "deployment",
   "section_break_jwfm",
   "retries",
   "column_break_arkm",
@@ -21,12 +21,18 @@
   "column_break_mdcx",
   "started_after",
   "duration",
+  "statistics_section",
+  "ok",
+  "changed",
+  "failures",
+  "unreachable",
+  "column_break_fpay",
+  "skipped",
+  "rescued",
+  "ignored",
+  "processed",
   "section_break_6og3",
   "variables",
-  "section_break_ywvv",
-  "exit_code",
-  "stdout",
-  "stderr",
   "error_log_section",
   "error_log"
  ],
@@ -64,29 +70,6 @@
    "set_only_once": 1
   },
   {
-   "fieldname": "stdout",
-   "fieldtype": "Code",
-   "label": "Output",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "stderr",
-   "fieldtype": "Code",
-   "label": "Error",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval: doc.exit_code != 0",
-   "fieldname": "exit_code",
-   "fieldtype": "Int",
-   "label": "Exit Code",
-   "no_copy": 1,
-   "non_negative": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "section_break_3tra",
    "fieldtype": "Section Break"
   },
@@ -109,13 +92,6 @@
   {
    "fieldname": "column_break_mdcx",
    "fieldtype": "Column Break"
-  },
-  {
-   "collapsible": 1,
-   "collapsible_depends_on": "eval: false",
-   "fieldname": "section_break_ywvv",
-   "fieldtype": "Section Break",
-   "label": "Result"
   },
   {
    "depends_on": "eval: doc.started_at",
@@ -162,17 +138,8 @@
    "fieldtype": "Data",
    "label": "Playbook",
    "reqd": 1,
+   "search_index": 1,
    "set_only_once": 1
-  },
-  {
-   "depends_on": "eval: doc.playbook",
-   "fieldname": "playbook_path",
-   "fieldtype": "Small Text",
-   "hidden": 1,
-   "is_virtual": 1,
-   "label": "Playbook Path",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "depends_on": "eval: doc.retries",
@@ -227,12 +194,94 @@
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
+  },
+  {
+   "depends_on": "eval: ![\"Pending\", \"Running\"].includes(doc.status)",
+   "fieldname": "statistics_section",
+   "fieldtype": "Section Break",
+   "label": "Statistics"
+  },
+  {
+   "fieldname": "ok",
+   "fieldtype": "Int",
+   "label": "OK",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "changed",
+   "fieldtype": "Int",
+   "label": "Changed",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "failures",
+   "fieldtype": "Int",
+   "label": "Failures",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_fpay",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "skipped",
+   "fieldtype": "Int",
+   "label": "Skipped",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rescued",
+   "fieldtype": "Int",
+   "label": "Rescued",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "ignored",
+   "fieldtype": "Int",
+   "label": "Ignored",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "processed",
+   "fieldtype": "Int",
+   "label": "Processed",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "unreachable",
+   "fieldtype": "Int",
+   "label": "Unreachable",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.deployment",
+   "fieldname": "deployment",
+   "fieldtype": "Link",
+   "label": "Deployment",
+   "no_copy": 1,
+   "options": "Mail Server Deployment",
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-10-03 12:15:54.972762",
+ "links": [
+  {
+   "group": "Reference",
+   "link_doctype": "Ansible Play Task",
+   "link_fieldname": "play"
+  }
+ ],
+ "modified": "2025-10-04 21:53:28.695774",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Ansible Play",

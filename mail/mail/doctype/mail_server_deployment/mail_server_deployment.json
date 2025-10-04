@@ -23,10 +23,6 @@
   "config_checksum",
   "column_break_qjvy",
   "install_redis",
-  "result_section",
-  "exit_code",
-  "stdout",
-  "stderr",
   "error_log_section",
   "error_log"
  ],
@@ -133,37 +129,8 @@
   {
    "fieldname": "config_checksum",
    "fieldtype": "Small Text",
+   "hidden": 1,
    "label": "Config Checksum",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "collapsible": 1,
-   "collapsible_depends_on": "eval: false",
-   "fieldname": "result_section",
-   "fieldtype": "Section Break",
-   "label": "Result"
-  },
-  {
-   "depends_on": "eval: doc.exit_code != 0",
-   "fieldname": "exit_code",
-   "fieldtype": "Int",
-   "label": "Exit Code",
-   "no_copy": 1,
-   "non_negative": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "stdout",
-   "fieldtype": "Code",
-   "label": "Output",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "stderr",
-   "fieldtype": "Code",
-   "label": "Error",
    "no_copy": 1,
    "read_only": 1
   },
@@ -225,8 +192,14 @@
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-10-01 15:31:36.290208",
+ "links": [
+  {
+   "group": "Reference",
+   "link_doctype": "Mail Server Ansible Play",
+   "link_fieldname": "deployment"
+  }
+ ],
+ "modified": "2025-10-04 21:54:16.244887",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Deployment",

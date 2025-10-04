@@ -1,10 +1,7 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import json
 import os
-import subprocess
-import tempfile
 
 import frappe
 from frappe import _
@@ -12,6 +9,8 @@ from frappe.model.document import Document
 from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
+
+from mail.ansible import Ansible
 
 
 class MailServerAnsiblePlay(Document):
@@ -60,86 +59,36 @@ class MailServerAnsiblePlay(Document):
 	def execute(self) -> None:
 		"""Executes the Ansible playbook."""
 
-		kwargs = {}
-		started_at = now()
-		self._db_set(
-			status="Running",
-			started_at=started_at,
-			started_after=time_diff_in_seconds(started_at, self.creation),
-			error_log=None,
-			commit=True,
-			notify=True,
-		)
+		if self.status == "Running":
+			frappe.throw(_("Ansible play is already running."))
 
 		try:
 			self.validate_server()
+			ansible = Ansible.from_play(self.name)
+			ansible._create_task_records()
+			ansible.run()
 
-			server = frappe.get_doc("Mail Server", self.server)
-			cluster = frappe.get_doc("Mail Cluster", server.cluster)
-
-			private_key_file = tempfile.NamedTemporaryFile(delete=False)
-			private_key_file.write(cluster.get_password("ssh_private_key").encode())
-			private_key_file.close()
-
-			inventory = f"""
-			[mailserver]
-			{server.hostname} ansible_port={server.ssh_port} ansible_user={server.ssh_user}
-			"""
-			inventory_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
-			inventory_file.write(inventory)
-			inventory_file.close()
-
-			cmd = [
-				"ansible-playbook",
-				"-i",
-				inventory_file.name,
-				self._get_playbook_path(),
-				"--private-key",
-				private_key_file.name,
-			]
-
-			if self.variables:
-				extra_vars = {}
-				for variable in self.variables:
-					try:
-						extra_vars[variable.key_] = json.loads(variable.value)
-					except (TypeError, json.JSONDecodeError):
-						extra_vars[variable.key_] = variable.value
-
-				cmd.extend(["--extra-vars", json.dumps(extra_vars)])
-
-			process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-			stdout, stderr = process.communicate()
-
-			os.remove(private_key_file.name)
-			os.remove(inventory_file.name)
-
-			kwargs.update(
-				{
-					"status": "Success" if process.returncode == 0 else "Failed",
-					"exit_code": process.returncode,
-					"stdout": stdout.decode(),
-					"stderr": stderr.decode(),
-				}
-			)
-
-			if kwargs["status"] == "Failed":
-				kwargs["retries"] = cint(self.retries) + 1
+			self.reload()
+			if self.status == "Failed":
+				self._db_set(retries=cint(self.retries) + 1, notify=True)
 
 		except Exception:
-			retries = cint(self.retries) + 1
-			kwargs.update(
-				{
-					"status": "Failed",
-					"retries": retries,
-					"error_log": frappe.get_traceback(with_context=True),
-				}
-			)
+			kwargs = {
+				"status": "Failed",
+				"retries": cint(self.retries) + 1,
+				"error_log": frappe.get_traceback(with_context=True),
+			}
 
-		ended_at = now()
-		self._db_set(
-			ended_at=ended_at, duration=time_diff_in_seconds(ended_at, started_at), notify=True, **kwargs
-		)
+			if self.started_at:
+				ended_at = now()
+				kwargs.update(
+					{
+						"ended_at": ended_at,
+						"duration": time_diff_in_seconds(ended_at, self.started_at),
+					}
+				)
+
+			self._db_set(notify=True, **kwargs)
 
 	@frappe.whitelist()
 	def retry(self) -> None:
@@ -150,7 +99,38 @@ class MailServerAnsiblePlay(Document):
 		if self.status != "Failed":
 			frappe.throw(_("Only failed ansible plays can be retried."))
 
-		self._db_set(status="Pending", notify=True)
+		kwargs = {
+			"status": "Pending",
+			"started_at": None,
+			"started_after": 0,
+			"ended_at": None,
+			"duration": 0,
+			"ok": 0,
+			"changed": 0,
+			"failures": 0,
+			"unreachable": 0,
+			"skipped": 0,
+			"rescued": 0,
+			"ignored": 0,
+			"processed": 0,
+			"error_log": None,
+		}
+		self._db_set(notify=True, **kwargs)
+
+		frappe.db.set_value(
+			"Ansible Play Task",
+			{"play": self.name},
+			{
+				"status": "Pending",
+				"started_at": None,
+				"ended_at": None,
+				"duration": 0,
+				"stdout": None,
+				"stderr": None,
+				"exception": None,
+				"result": None,
+			},
+		)
 
 		frappe.enqueue_doc(
 			self.doctype,

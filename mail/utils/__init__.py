@@ -16,6 +16,7 @@ from typing import Any, Literal
 
 import bcrypt
 import frappe
+import wrapt
 from bs4 import BeautifulSoup
 from frappe import _
 from frappe.types.filter import FilterTuple
@@ -31,6 +32,22 @@ INVISIBLE_CHARS = (
 	r"\u00AD"  # soft hyphen
 	r"\u034F]"  # combining grapheme joiner
 )
+
+
+def reconnect_on_failure() -> callable:
+	"""Decorator to reconnect to the database if a connection error occurs."""
+
+	@wrapt.decorator
+	def wrapper(wrapped, instance, args, kwargs):
+		try:
+			return wrapped(*args, **kwargs)
+		except Exception as e:
+			if frappe.db.is_interface_error(e):
+				frappe.db.connect()
+				return wrapped(*args, **kwargs)
+			raise
+
+	return wrapper
 
 
 def hash_password(password: str) -> str:

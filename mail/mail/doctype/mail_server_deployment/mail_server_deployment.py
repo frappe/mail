@@ -121,6 +121,7 @@ class MailServerDeployment(Document):
 			play = frappe.new_doc("Mail Server Ansible Play")
 			play.status = "Pending"
 			play.server = self.server
+			play.deployment = self.name
 			play.max_retries = 0
 			play.play = "Deploy Mail Server"
 			play.playbook = "deploy-mail-server.yml"
@@ -139,10 +140,7 @@ class MailServerDeployment(Document):
 			kwargs.update(
 				{
 					"status": play.status,
-					"stdout": play.stdout,
-					"stderr": play.stderr,
 					"error_log": play.error_log,
-					"exit_code": cint(play.exit_code),
 				}
 			)
 
