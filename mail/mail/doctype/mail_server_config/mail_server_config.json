@@ -53,8 +53,14 @@
  "grid_page_length": 50,
  "in_create": 1,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-03-10 16:05:03.458576",
+ "links": [
+  {
+   "group": "Reference",
+   "link_doctype": "Mail Server Deployment",
+   "link_fieldname": "config"
+  }
+ ],
+ "modified": "2025-09-27 11:33:26.552955",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Config",

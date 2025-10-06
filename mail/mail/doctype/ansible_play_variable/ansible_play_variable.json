@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-10-03 11:25:24.935224",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_f71j",
+  "key_",
+  "value"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_f71j",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Value",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "key_",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Key",
+   "reqd": 1,
+   "set_only_once": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-03 11:44:28.387802",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "Ansible Play Variable",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,79 @@
+---
+- name: Deploy Mail Server
+  hosts: all
+  become: true
+  vars:
+    stalwart_root: "/opt/stalwart/{{ server_hostname }}"
+    stalwart_config_dir: "{{ stalwart_root }}/etc"
+    stalwart_config_content: "{{ config_toml }}"
+    stalwart_compose_template: "{{ compose_template_path }}"
+    port_mappings: "{{ port_mappings }}"
+    install_redis: "{{ install_redis }}"
+
+  tasks:
+    - name: Ensure `etc` directory exists
+      file:
+        path: "{{ stalwart_config_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure `logs` directory exists
+      file:
+        path: "{{ stalwart_root }}/logs"
+        state: directory
+        mode: "0755"
+
+    - name: Copy `config.toml`
+      copy:
+        content: "{{ stalwart_config_content }}"
+        dest: "{{ stalwart_config_dir }}/config.toml"
+        mode: "0644"
+
+    - name: Deploy `docker-compose.yml` from template
+      template:
+        src: "{{ stalwart_compose_template }}"
+        dest: "{{ stalwart_root }}/docker-compose.yml"
+        mode: "0644"
+
+    - name: Pull images (optional)
+      command: docker-compose pull
+      args:
+        chdir: "{{ stalwart_root }}"
+      register: pull_result
+      ignore_errors: yes
+
+    - name: Stop existing stalwart container (if any)
+      command: docker-compose down
+      args:
+        chdir: "{{ stalwart_root }}"
+      ignore_errors: yes
+
+    - name: Remove Redis container if not required
+      command: docker rm -f redis_{{ server_hostname }}
+      ignore_errors: yes
+      when: not install_redis
+
+    - name: Start/Restart docker stack
+      command: docker-compose up -d
+      args:
+        chdir: "{{ stalwart_root }}"
+      register: compose_up
+
+    - name: Wait for JMAP port 8080 to be listening (local)
+      wait_for:
+        host: 127.0.0.1
+        port: 8080
+        timeout: 60
+      register: wait_result
+      ignore_errors: yes
+
+    - name: Check container health via `docker-compose ps`
+      command: docker-compose ps
+      args:
+        chdir: "{{ stalwart_root }}"
+      register: ps_result
+      ignore_errors: yes
+
+    - name: Debug outputs for playbook (ps)
+      debug:
+        var: ps_result.stdout_lines

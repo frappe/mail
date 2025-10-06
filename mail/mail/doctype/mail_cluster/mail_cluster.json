@@ -10,7 +10,6 @@
   "public",
   "column_break_fkha",
   "hostname",
-  "priority",
   "authentication_section",
   "fallback_admin_user",
   "fallback_admin_password",
@@ -25,6 +24,10 @@
   "ipv4_addresses",
   "column_break_uhc3",
   "ipv6_addresses",
+  "ssh_tab",
+  "ssh_key_section",
+  "ssh_public_key",
+  "ssh_private_key",
   "section_break_r4np",
   "stores_section",
   "stores",
@@ -121,18 +124,6 @@
   {
    "fieldname": "column_break_fkha",
    "fieldtype": "Column Break"
-  },
-  {
-   "description": "MX record priority for handling inbound mail. Lower values have higher priority.",
-   "fieldname": "priority",
-   "fieldtype": "Int",
-   "in_standard_filter": 1,
-   "label": "Priority",
-   "no_copy": 1,
-   "non_negative": 1,
-   "placeholder": "5",
-   "reqd": 1,
-   "search_index": 1
   },
   {
    "fieldname": "section_break_r4np",
@@ -787,6 +778,34 @@
    "fieldtype": "Table",
    "label": "Traces",
    "options": "Mail Cluster Trace"
+  },
+  {
+   "fieldname": "ssh_tab",
+   "fieldtype": "Tab Break",
+   "label": "SSH"
+  },
+  {
+   "description": "<p>This is the SSH public key generated for this Mail Cluster.</p>\n<p>Copy and add it to the <code>~/.ssh/authorized_keys</code> file of the target server(s) to allow Frappe Mail to securely provision and manage this cluster.</p>",
+   "fieldname": "ssh_public_key",
+   "fieldtype": "Code",
+   "label": "Public Key",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "ssh_private_key",
+   "fieldtype": "Password",
+   "hidden": 1,
+   "label": "Private Key",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
+   "fieldname": "ssh_key_section",
+   "fieldtype": "Section Break",
+   "label": "SSH Key"
   }
  ],
  "grid_page_length": 50,
@@ -808,7 +827,7 @@
    "link_fieldname": "backend_name"
   }
  ],
- "modified": "2025-08-21 22:06:02.097830",
+ "modified": "2025-09-29 13:13:04.552045",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-09-30 19:34+0553\n"
-"PO-Revision-Date: 2025-09-30 19:34+0553\n"
+"POT-Creation-Date: 2025-10-06 11:56+0553\n"
+"PO-Revision-Date: 2025-10-06 11:56+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -81,6 +81,20 @@ msgstr ""
 #. Description of the 'Used Quota' (Int) field in DocType 'Mail Account'
 #: mail/mail/doctype/mail_account/mail_account.json
 msgid "<code><b>0</b></code> means no usage."
+msgstr ""
+
+#. Description of the 'Public Key' (Code) field in DocType 'Mail Server'
+#: mail/mail/doctype/mail_server/mail_server.json
+msgid ""
+"<p>This is the SSH public key generated for the Mail Cluster.</p>\n"
+"<p>Copy and add it to the <code>~/.ssh/authorized_keys</code> file of this Mail Server to allow Frappe Mail to securely provision and manage this server.</p>"
+msgstr ""
+
+#. Description of the 'Public Key' (Code) field in DocType 'Mail Cluster'
+#: mail/mail/doctype/mail_cluster/mail_cluster.json
+msgid ""
+"<p>This is the SSH public key generated for this Mail Cluster.</p>\n"
+"<p>Copy and add it to the <code>~/.ssh/authorized_keys</code> file of the target server(s) to allow Frappe Mail to securely provision and manage this cluster.</p>"
 msgstr ""
 
 #. Description of the 'Delivery Mode' (Select) field in DocType 'Mail Queue'
@@ -313,7 +327,16 @@ msgstr ""
 #: mail/mail/doctype/mail_queue/mail_queue.js:38
 #: mail/mail/doctype/mail_server/mail_server.js:31
 #: mail/mail/doctype/mail_server/mail_server.js:40
-#: mail/mail/doctype/mail_server_config/mail_server_config.js:13
+#: mail/mail/doctype/mail_server/mail_server.js:49
+#: mail/mail/doctype/mail_server/mail_server.js:58
+#: mail/mail/doctype/mail_server/mail_server.js:66
+#: mail/mail/doctype/mail_server/mail_server.js:76
+#: mail/mail/doctype/mail_server/mail_server.js:84
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.js:30
+#: mail/mail/doctype/mail_server_config/mail_server_config.js:20
+#: mail/mail/doctype/mail_server_config/mail_server_config.js:29
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.js:16
+#: mail/mail/doctype/mail_server_job/mail_server_job.js:16
 msgid "Actions"
 msgstr ""
 
@@ -495,6 +518,24 @@ msgstr ""
 msgid "Amended From"
 msgstr ""
 
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.js:13
+msgid "Ansible Play Progress"
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
+msgid "Ansible Play Task"
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/ansible_play_variable/ansible_play_variable.json
+msgid "Ansible Play Variable"
+msgstr ""
+
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.py:63
+msgid "Ansible play is already running."
+msgstr ""
+
 #. Label of the answered (Check) field in DocType 'Mail Message'
 #: mail/mail/doctype/mail_message/mail_message.json
 msgid "Answered"
@@ -541,6 +582,12 @@ msgstr ""
 msgid "Are you sure you want to delete the selected lists?"
 msgstr ""
 
+#: mail/mail/doctype/mail_server/mail_server.js:72
+#: mail/mail/doctype/mail_server_config/mail_server_config.js:16
+#: mail/mail/doctype/mail_server_config/mail_server_config.js:25
+msgid "Are you sure you want to proceed?"
+msgstr ""
+
 #: mail/mail/doctype/mail_domain/mail_domain.js:23
 msgid "Are you sure you want to refresh the DNS records? If there are any changes, you'll need to update the DNS settings with your DNS provider accordingly."
 msgstr ""
@@ -564,7 +611,7 @@ msgstr ""
 msgid "Assigned Role"
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:135
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:139
 msgid "At least one public cluster must be enabled. This cluster has been made public."
 msgstr ""
 
@@ -685,7 +732,7 @@ msgstr ""
 msgid "Base URL"
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:299
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:304
 msgid "Base URL is required."
 msgstr ""
 
@@ -727,7 +774,7 @@ msgstr ""
 #. Label of the blob_storage_section (Section Break) field in DocType 'Mail
 #. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:361
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:366
 msgid "Blob Storage"
 msgstr ""
 
@@ -895,6 +942,11 @@ msgstr ""
 msgid "Change Theme"
 msgstr ""
 
+#. Label of the changed (Int) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Changed"
+msgstr ""
+
 #. Label of the jmap_protocol_changes_max_results (Int) field in DocType 'Mail
 #. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
@@ -1005,6 +1057,20 @@ msgstr ""
 msgid "Code copied to clipboard"
 msgstr ""
 
+#. Label of the command (Small Text) field in DocType 'Mail Server Job Command'
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
+msgid "Command"
+msgstr ""
+
+#: mail/mail/doctype/mail_server_job/mail_server_job.py:125
+msgid "Command '{0}' failed with exit code {1}"
+msgstr ""
+
+#. Label of the commands (Table) field in DocType 'Mail Server Job'
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+msgid "Commands"
+msgstr ""
+
 #. Option for the 'Status' (Select) field in DocType 'Mail Backend Request'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
 #: frontend/src/pages/MailDataExchangesView.vue:91
@@ -1049,8 +1115,24 @@ msgstr ""
 
 #. Label of the config_toml (Password) field in DocType 'Mail Server Config'
 #. Label of the config (Code) field in DocType 'Mail Server Config'
+#. Label of the config (Link) field in DocType 'Mail Server Deployment'
 #: mail/mail/doctype/mail_server_config/mail_server_config.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
 msgid "Config"
+msgstr ""
+
+#. Label of the config_checksum (Small Text) field in DocType 'Mail Server
+#. Deployment'
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+msgid "Config Checksum"
+msgstr ""
+
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.py:91
+msgid "Config does not belong to the selected server."
+msgstr ""
+
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.py:87
+msgid "Config is required."
 msgstr ""
 
 #. Label of the configuration_section (Section Break) field in DocType 'Mail
@@ -1059,19 +1141,19 @@ msgstr ""
 msgid "Configuration"
 msgstr ""
 
-#: mail/mail/doctype/mail_server_config/mail_server_config.py:126
-msgid "Configuration deployed successfully, but the response from the server was unexpected: {response}"
-msgstr ""
-
-#: mail/mail/doctype/mail_server_config/mail_server_config.py:120
-msgid "Configuration deployed successfully."
-msgstr ""
-
 #: mail/mail/doctype/mail_cluster/mail_cluster.js:210
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:352
-#: mail/mail/doctype/mail_server/mail_server.js:67
-#: mail/mail/doctype/mail_server/mail_server.py:238
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:357
+#: mail/mail/doctype/mail_server/mail_server.js:111
+#: mail/mail/doctype/mail_server/mail_server.py:402
 msgid "Configuration reloaded."
+msgstr ""
+
+#: mail/mail/doctype/mail_server_config/mail_server_config.py:144
+msgid "Configuration updated successfully, but the response from the server was unexpected: {response}"
+msgstr ""
+
+#: mail/mail/doctype/mail_server_config/mail_server_config.py:138
+msgid "Configuration updated successfully."
 msgstr ""
 
 #: frontend/src/components/Modals/AddMailingListExternalMemberModal.vue:8
@@ -1135,6 +1217,10 @@ msgstr ""
 
 #: mail/mail/doctype/spam_check_log/spam_check_log.py:133
 msgid "Could not connect to SpamAssassin (spamd). Please ensure it's running on {0}:{1}"
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:271
+msgid "Could not connect to {0}:{1}. Error: {2}"
 msgstr ""
 
 #: mail/mail/doctype/mail_account/mail_account.py:307
@@ -1352,7 +1438,7 @@ msgstr ""
 #. Label of the data_storage_section (Section Break) field in DocType 'Mail
 #. Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:360
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:365
 msgid "Data Storage"
 msgstr ""
 
@@ -1504,12 +1590,23 @@ msgstr ""
 msgid "Delivery retried successfully."
 msgstr ""
 
-#: mail/mail/doctype/mail_server_config/mail_server_config.js:13
+#: mail/mail/doctype/mail_server_config/mail_server_config.js:14
 msgid "Deploy"
 msgstr ""
 
-#: mail/mail/doctype/mail_server_config/mail_server_config.js:22
+#: mail/mail/doctype/mail_server_config/mail_server_config.py:101
+msgid "Deploy of Stalwart initiated."
+msgstr ""
+
+#: mail/mail/doctype/mail_server_config/mail_server_config.js:39
 msgid "Deploying Configuration..."
+msgstr ""
+
+#. Group in Mail Server's connections
+#. Label of the deployment (Link) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/mail_server/mail_server.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Deployment"
 msgstr ""
 
 #. Label of the destroy_after_submission (Check) field in DocType 'Mail Queue'
@@ -1572,7 +1669,7 @@ msgstr ""
 #. Label of the directory_storage_section (Section Break) field in DocType
 #. 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:359
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:364
 msgid "Directory Storage"
 msgstr ""
 
@@ -1834,11 +1931,21 @@ msgstr ""
 msgid "Duplicate Record"
 msgstr ""
 
+#. Label of the duration (Float) field in DocType 'Ansible Play Task'
 #. Label of the duration (Float) field in DocType 'Mail Backend Request'
 #. Label of the duration (Float) field in DocType 'Mail Data Exchange'
+#. Label of the duration (Float) field in DocType 'Mail Server Ansible Play'
+#. Label of the duration (Float) field in DocType 'Mail Server Deployment'
+#. Label of the duration (Float) field in DocType 'Mail Server Job'
+#. Label of the duration (Float) field in DocType 'Mail Server Job Command'
 #. Label of the duration (Float) field in DocType 'Spam Check Log'
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/doctype/mail_backend_request/mail_backend_request.json
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/mail/doctype/spam_check_log/spam_check_log.json
 msgid "Duration (Seconds)"
 msgstr ""
@@ -1870,7 +1977,7 @@ msgstr ""
 msgid "Either blob_id or file_url is required for attachments."
 msgstr ""
 
-#: mail/utils/__init__.py:150
+#: mail/utils/__init__.py:167
 msgid "Either file path or file data is required."
 msgstr ""
 
@@ -2040,9 +2147,34 @@ msgstr ""
 msgid "End Kwargs"
 msgstr ""
 
+#. Label of the ended_at (Datetime) field in DocType 'Ansible Play Task'
 #. Label of the ended_at (Datetime) field in DocType 'Mail Backend Request'
+#. Label of the ended_at (Datetime) field in DocType 'Mail Server Ansible Play'
+#. Label of the ended_at (Datetime) field in DocType 'Mail Server Deployment'
+#. Label of the ended_at (Datetime) field in DocType 'Mail Server Job'
+#. Label of the ended_at (Datetime) field in DocType 'Mail Server Job Command'
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/doctype/mail_backend_request/mail_backend_request.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
 msgid "Ended At"
+msgstr ""
+
+#. Description of the 'Duration (Seconds)' (Float) field in DocType 'Mail
+#. Server Ansible Play'
+#. Description of the 'Duration (Seconds)' (Float) field in DocType 'Mail
+#. Server Deployment'
+#. Description of the 'Duration (Seconds)' (Float) field in DocType 'Mail
+#. Server Job'
+#. Description of the 'Duration (Seconds)' (Float) field in DocType 'Mail
+#. Server Job Command'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
+msgid "Ended At - Started At"
 msgstr ""
 
 #. Label of the endpoint (Data) field in DocType 'JMAP Push Subscription'
@@ -2081,25 +2213,43 @@ msgstr ""
 msgid "Envelope To"
 msgstr ""
 
+#. Label of the stderr (Code) field in DocType 'Ansible Play Task'
 #. Option for the 'Logging Level' (Select) field in DocType 'Mail Cluster
 #. Trace'
 #. Label of the error_section (Section Break) field in DocType 'Mail Queue'
+#. Label of the stderr (Code) field in DocType 'Mail Server Job Command'
 #: frontend/src/pages/MimeMessageView.vue:30
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/doctype/mail_cluster_trace/mail_cluster_trace.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
 msgid "Error"
 msgstr ""
 
 #. Label of the error_log (Code) field in DocType 'Mail Backend Request'
 #. Label of the error_log (Code) field in DocType 'Mail Queue'
+#. Label of the error_log_section (Section Break) field in DocType 'Mail Server
+#. Ansible Play'
+#. Label of the error_log (Code) field in DocType 'Mail Server Ansible Play'
+#. Label of the error_log_section (Section Break) field in DocType 'Mail Server
+#. Deployment'
+#. Label of the error_log (Code) field in DocType 'Mail Server Deployment'
+#. Label of the error_log (Code) field in DocType 'Mail Server Job'
 #: mail/mail/doctype/mail_backend_request/mail_backend_request.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
 msgid "Error Log"
 msgstr ""
 
 #. Label of the error_message (Small Text) field in DocType 'Mail Queue'
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "Error Message"
+msgstr ""
+
+#: mail/ansible.py:124
+msgid "Error parsing playbook {0}: {1}"
 msgstr ""
 
 #: mail/api/outbound.py:50
@@ -2120,9 +2270,19 @@ msgstr ""
 msgid "Establishes the maximum number of objects that can be modified in a single method call."
 msgstr ""
 
+#. Label of the exception (Code) field in DocType 'Ansible Play Task'
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
+msgid "Exception"
+msgstr ""
+
 #. Option for the 'Scanning Mode' (Select) field in DocType 'Mail Settings'
 #: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Exclude Attachments"
+msgstr ""
+
+#. Label of the exit_code (Int) field in DocType 'Mail Server Job Command'
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
+msgid "Exit Code"
 msgstr ""
 
 #. Label of the jmap_protocol_upload_ttl (Int) field in DocType 'Mail Cluster'
@@ -2195,17 +2355,28 @@ msgstr ""
 msgid "FQDN of the proxy or load balancer forwarding requests to mail servers."
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'JMAP Push Verification
 #. Queue'
 #. Option for the 'Status' (Select) field in DocType 'Mail Backend Request'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Deployment'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Job'
+#. Label of the failed (Int) field in DocType 'Mail Server Job'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Job Command'
 #. Label of a shortcut in the Mail Workspace
 #: frontend/src/pages/MailDataExchangesView.vue:92
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/mail/doctype/mail_backend_request/mail_backend_request.json
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Failed"
 msgstr ""
@@ -2269,10 +2440,6 @@ msgstr ""
 msgid "Failed to delete mail(s)."
 msgstr ""
 
-#: mail/mail/doctype/mail_server_config/mail_server_config.py:116
-msgid "Failed to deploy configuration"
-msgstr ""
-
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.py:80
 msgid "Failed to destroy push subscription(s)"
 msgstr ""
@@ -2319,6 +2486,10 @@ msgstr ""
 msgid "Failed to fetch message IDs."
 msgstr ""
 
+#: mail/patches/generate_ssh_keypair_for_cluster.py:12
+msgid "Failed to generate SSH keypair"
+msgstr ""
+
 #: mail/mail/doctype/mail_account/mail_account.py:474
 msgid "Failed to generate app password"
 msgstr ""
@@ -2343,7 +2514,7 @@ msgstr ""
 msgid "Failed to handle JMAP Push Notification."
 msgstr ""
 
-#: mail/utils/__init__.py:170
+#: mail/utils/__init__.py:187
 msgid "Failed to load content from the compressed file."
 msgstr ""
 
@@ -2411,8 +2582,17 @@ msgstr ""
 msgid "Failed to subscribe to JMAP Push Subscription."
 msgstr ""
 
+#: mail/mail/doctype/mail_server_config/mail_server_config.py:134
+msgid "Failed to update configuration"
+msgstr ""
+
 #: frontend/src/components/Modals/AddDomainModal.vue:92
 msgid "Failed to verify DNS record."
+msgstr ""
+
+#. Label of the failures (Int) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Failures"
 msgstr ""
 
 #. Label of the import_file (Attach) field in DocType 'Mail Data Exchange'
@@ -2435,7 +2615,7 @@ msgstr ""
 msgid "File URL"
 msgstr ""
 
-#: mail/utils/__init__.py:177
+#: mail/utils/__init__.py:194
 msgid "File not found: {0}"
 msgstr ""
 
@@ -2568,7 +2748,7 @@ msgstr ""
 #. Label of the full_text_index_storage_section (Section Break) field in
 #. DocType 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:362
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:367
 msgid "Full Text Index Storage"
 msgstr ""
 
@@ -2597,7 +2777,7 @@ msgstr ""
 msgid "Generating API Key..."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.js:50
+#: mail/mail/doctype/mail_server/mail_server.js:94
 msgid "Generating Config..."
 msgstr ""
 
@@ -2852,15 +3032,32 @@ msgstr ""
 msgid "Identity not found for email {0}"
 msgstr ""
 
+#. Description of the 'Include in MX Records' (Check) field in DocType 'Mail
+#. Server'
+#: mail/mail/doctype/mail_server/mail_server.json
+msgid "If checked, this server will be included in DNS MX records."
+msgstr ""
+
 #. Description of the 'Destroy After Submission' (Check) field in DocType 'Mail
 #. Queue'
 #: mail/mail/doctype/mail_queue/mail_queue.json
 msgid "If enabled, the message will be deleted after successful submission."
 msgstr ""
 
+#. Label of the ignore_errors (Check) field in DocType 'Mail Server Job
+#. Command'
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
+msgid "Ignore Errors"
+msgstr ""
+
 #. Label of the ignore_in_developer_mode (Check) field in DocType 'Rate Limit'
 #: mail/mail/doctype/rate_limit/rate_limit.json
 msgid "Ignore in Developer Mode"
+msgstr ""
+
+#. Label of the ignored (Int) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Ignored"
 msgstr ""
 
 #. Option for the 'Delivery Mode' (Select) field in DocType 'Mail Queue'
@@ -2923,13 +3120,18 @@ msgstr ""
 #. Label of the in_memory_storage_section (Section Break) field in DocType
 #. 'Mail Cluster'
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:363
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:368
 msgid "In-Memory Storage"
 msgstr ""
 
 #. Option for the 'Scanning Mode' (Select) field in DocType 'Mail Settings'
 #: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Include Attachments"
+msgstr ""
+
+#. Label of the include_in_mx_records (Check) field in DocType 'Mail Server'
+#: mail/mail/doctype/mail_server/mail_server.json
+msgid "Include in MX Records"
 msgstr ""
 
 #: frontend/src/components/Settings/AccountSettings.vue:34
@@ -2961,9 +3163,51 @@ msgstr ""
 msgid "Install"
 msgstr ""
 
+#: mail/mail/doctype/mail_server/mail_server.js:54
+msgid "Install Ansible (Job)"
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.js:62
+msgid "Install Docker (Ansible Play)"
+msgstr ""
+
 #: frontend/src/components/InstallPrompt.vue:4
 #: frontend/src/components/InstallPrompt.vue:25
 msgid "Install Frappe Mail"
+msgstr ""
+
+#. Label of the install_redis (Check) field in DocType 'Mail Server Deployment'
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+msgid "Install Redis"
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.js:70
+#: mail/mail/doctype/mail_server/mail_server.js:80
+msgid "Install Stalwart (Deployment)"
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:300
+msgid "Install of Ansible initiated."
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:326
+msgid "Install of Docker initiated."
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:348
+msgid "Install of Stalwart initiated."
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.js:132
+msgid "Installing Ansible..."
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.js:146
+msgid "Installing Docker..."
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.js:160
+msgid "Installing Stalwart..."
 msgstr ""
 
 #: frontend/src/pages/dashboard/MailingListView.vue:39
@@ -3108,8 +3352,15 @@ msgstr ""
 msgid "JMAP Sync State"
 msgstr ""
 
+#. Label of the job (Data) field in DocType 'Mail Server Job'
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+msgid "Job"
+msgstr ""
+
+#. Label of the key_ (Data) field in DocType 'Ansible Play Variable'
 #. Label of the dns_provider_key (Data) field in DocType 'Mail Settings'
 #. Label of the key_ (Data) field in DocType 'Rate Limit'
+#: mail/mail/doctype/ansible_play_variable/ansible_play_variable.json
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/mail/doctype/rate_limit/rate_limit.json
 msgid "Key"
@@ -3344,8 +3595,8 @@ msgstr ""
 msgid "MX"
 msgstr ""
 
-#. Description of the 'Priority' (Int) field in DocType 'Mail Cluster'
-#: mail/mail/doctype/mail_cluster/mail_cluster.json
+#. Description of the 'Priority' (Int) field in DocType 'Mail Server'
+#: mail/mail/doctype/mail_server/mail_server.json
 msgid "MX record priority for handling inbound mail. Lower values have higher priority."
 msgstr ""
 
@@ -3447,17 +3698,13 @@ msgstr ""
 msgid "Mail Cluster Trace"
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:156
-msgid "Mail Cluster with priority {0} already exists."
-msgstr ""
-
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:143
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:147
 msgid "Mail Cluster {0} already exists."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:327
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:349
-#: mail/mail/doctype/mail_server/mail_server.py:88
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:332
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:354
+#: mail/mail/doctype/mail_server/mail_server.py:94
 msgid "Mail Cluster {0} is disabled."
 msgstr ""
 
@@ -3583,12 +3830,32 @@ msgid "Mail Server ACME Provider"
 msgstr ""
 
 #. Name of a DocType
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Mail Server Ansible Play"
+msgstr ""
+
+#. Name of a DocType
 #: mail/mail/doctype/mail_server_config/mail_server_config.json
 msgid "Mail Server Config"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:178
+#: mail/mail/doctype/mail_server/mail_server.py:209
 msgid "Mail Server Config created."
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+msgid "Mail Server Deployment"
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+msgid "Mail Server Job"
+msgstr ""
+
+#. Name of a DocType
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
+msgid "Mail Server Job Command"
 msgstr ""
 
 #. Name of a DocType
@@ -3601,7 +3868,7 @@ msgstr ""
 msgid "Mail Server TLS Certificate"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:62
+#: mail/mail/doctype/mail_server/mail_server.py:68
 msgid "Mail Server {0} already exists."
 msgstr ""
 
@@ -3615,12 +3882,18 @@ msgstr ""
 msgid "Mail Server {0} does not have a cluster."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:212
-#: mail/mail/doctype/mail_server/mail_server.py:235
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.py:47
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.py:79
+#: mail/mail/doctype/mail_server_job/mail_server_job.py:46
+msgid "Mail Server {0} is disabled"
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:243
+#: mail/mail/doctype/mail_server/mail_server.py:399
 msgid "Mail Server {0} is disabled."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:124
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:128
 msgid "Mail Server {0} is enabled. Please disable it first."
 msgstr ""
 
@@ -3649,7 +3922,7 @@ msgstr ""
 msgid "Mail Tenant Member"
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:121
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:125
 msgid "Mail Tenant {0} is using this cluster."
 msgstr ""
 
@@ -3907,7 +4180,13 @@ msgid "Max Results"
 msgstr ""
 
 #. Label of the max_retries (Int) field in DocType 'Mail Queue'
+#. Label of the max_retries (Int) field in DocType 'Mail Server Ansible Play'
+#. Label of the max_retries (Int) field in DocType 'Mail Server Deployment'
+#. Label of the max_retries (Int) field in DocType 'Mail Server Job'
 #: mail/mail/doctype/mail_queue/mail_queue.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
 msgid "Max Retries"
 msgstr ""
 
@@ -4202,11 +4481,11 @@ msgstr ""
 msgid "Multiline entries"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:67
+#: mail/mail/doctype/mail_server/mail_server.py:73
 msgid "Multiple IPv4 addresses found for Mail Server {0}. Found: {1}."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:77
+#: mail/mail/doctype/mail_server/mail_server.py:83
 msgid "Multiple IPv6 addresses found for Mail Server {0}. Found: {1}."
 msgstr ""
 
@@ -4389,7 +4668,7 @@ msgstr ""
 msgid "Node ID"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:108
+#: mail/mail/doctype/mail_server/mail_server.py:139
 msgid "Node ID {0} already assigned to another Mail Server."
 msgstr ""
 
@@ -4459,6 +4738,11 @@ msgstr ""
 msgid "Number of worker threads to use for the store, defaults to the number of cores."
 msgstr ""
 
+#. Label of the ok (Int) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "OK"
+msgstr ""
+
 #. Label of the otp (Data) field in DocType 'Mail Account Request'
 #: mail/mail/doctype/mail_account_request/mail_account_request.json
 msgid "OTP"
@@ -4478,7 +4762,7 @@ msgstr ""
 msgid "Only Administrator can delete DKIM Key."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:109
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:113
 msgid "Only Administrator can delete Mail Cluster."
 msgstr ""
 
@@ -4486,7 +4770,7 @@ msgstr ""
 msgid "Only Administrator can delete Mail Domain."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:52
+#: mail/mail/doctype/mail_server/mail_server.py:58
 msgid "Only Administrator can delete Mail Server."
 msgstr ""
 
@@ -4494,15 +4778,27 @@ msgstr ""
 msgid "Only data exchange with status 'Queued', 'In Progress', or 'Failed' can be retried."
 msgstr ""
 
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.py:100
+msgid "Only failed ansible plays can be retried."
+msgstr ""
+
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.py:174
+msgid "Only failed deployments can be retried."
+msgstr ""
+
+#: mail/mail/doctype/mail_server_job/mail_server_job.py:159
+msgid "Only failed jobs can be retried."
+msgstr ""
+
 #: mail/mail/doctype/jmap_push_verification_queue/jmap_push_verification_queue.py:48
 msgid "Only failed verifications can be retried."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:131
+#: mail/mail/doctype/mail_server/mail_server.py:162
 msgid "Only one ACME Provider can be default."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:156
+#: mail/mail/doctype/mail_server/mail_server.py:187
 msgid "Only one TLS Certificate can be default."
 msgstr ""
 
@@ -4562,9 +4858,13 @@ msgstr ""
 msgid "Outgoing"
 msgstr ""
 
+#. Label of the stdout (Code) field in DocType 'Ansible Play Task'
 #. Label of the output (Code) field in DocType 'Mail Data Exchange'
+#. Label of the stdout (Code) field in DocType 'Mail Server Job Command'
 #: frontend/src/pages/MailDataExchangeView.vue:17
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
 msgid "Output"
 msgstr ""
 
@@ -4641,7 +4941,7 @@ msgstr ""
 msgid "Password is required to create account."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:162
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:155
 msgid "Password must be at least 16 characters long."
 msgstr ""
 
@@ -4680,13 +4980,23 @@ msgstr ""
 msgid "Pausing Queue..."
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'JMAP Push Verification
 #. Queue'
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Deployment'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Job'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Job Command'
 #. Label of a shortcut in the Mail Workspace
 #: frontend/src/pages/dashboard/InvitesView.vue:210
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Pending"
 msgstr ""
@@ -4721,6 +5031,38 @@ msgstr ""
 msgid "Personal signup is disabled."
 msgstr ""
 
+#. Label of the play (Link) field in DocType 'Ansible Play Task'
+#. Label of the play (Data) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Play"
+msgstr ""
+
+#: mail/ansible.py:100
+msgid "Play record must be created before creating task records."
+msgstr ""
+
+#. Label of the playbook (Data) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Playbook"
+msgstr ""
+
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.py:55
+msgid "Playbook is required"
+msgstr ""
+
+#: mail/ansible.py:118
+msgid "Playbook {0} does not exist"
+msgstr ""
+
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.py:57
+msgid "Playbook {0} does not exist."
+msgstr ""
+
+#: mail/mail/doctype/mail_server_job/mail_server_job.py:54
+msgid "Please add at least one command to execute."
+msgstr ""
+
 #: frontend/src/components/ComposeMailEditor.vue:284
 #: mail/mail/doctype/mail_queue/mail_queue.py:478
 msgid "Please add at least one recipient."
@@ -4728,6 +5070,10 @@ msgstr ""
 
 #: mail/mail/doctype/mail_account_request/mail_account_request.py:180
 msgid "Please confirm your email address by clicking the button below."
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:355
+msgid "Please generate the Mail Server Config before installing Stalwart."
 msgstr ""
 
 #: mail/mail/doctype/mailbox/mailbox.py:53
@@ -4778,6 +5124,24 @@ msgstr ""
 msgid "Please set the {0} in the Mail Settings."
 msgstr ""
 
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.py:49
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.py:81
+#: mail/mail/doctype/mail_server_job/mail_server_job.py:48
+msgid "Please verify SSH connection for Mail Server {0}"
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:297
+msgid "Please verify the SSH connection before installing Ansible."
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:323
+msgid "Please verify the SSH connection before installing Docker."
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:345
+msgid "Please verify the SSH connection before installing Stalwart."
+msgstr ""
+
 #: mail/mail/doctype/mail_account_request/mail_account_request.py:221
 msgid "Please verify the email address first."
 msgstr ""
@@ -4813,6 +5177,11 @@ msgstr ""
 msgid "Port of the database server."
 msgstr ""
 
+#. Description of the 'SSH Port' (Int) field in DocType 'Mail Server'
+#: mail/mail/doctype/mail_server/mail_server.json
+msgid "Port to use for SSH access."
+msgstr ""
+
 #. Option for the 'Type' (Select) field in DocType 'Mail Cluster Store'
 #: mail/mail/doctype/mail_cluster_store/mail_cluster_store.json
 msgid "PostgreSQL"
@@ -4838,20 +5207,30 @@ msgid "Previous Thread"
 msgstr ""
 
 #. Label of the priority (Int) field in DocType 'DNS Record'
-#. Label of the priority (Int) field in DocType 'Mail Cluster'
 #. Label of the priority (Int) field in DocType 'Mail Domain DNS Record'
 #. Label of the priority (Select) field in DocType 'Mail Queue'
+#. Label of the priority (Int) field in DocType 'Mail Server'
 #: mail/mail/doctype/dns_record/dns_record.json
-#: mail/mail/doctype/mail_cluster/mail_cluster.json
 #: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
+#: mail/mail/doctype/mail_server/mail_server.json
 msgid "Priority"
 msgstr ""
 
+#: mail/mail/doctype/mail_server/mail_server.py:115
+msgid "Priority must be greater than 0."
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:122
+msgid "Priority {0} is already assigned to another Mail Server."
+msgstr ""
+
 #. Label of the rsa_private_key (Password) field in DocType 'DKIM Key'
+#. Label of the ssh_private_key (Password) field in DocType 'Mail Cluster'
 #. Label of the private_key (Text) field in DocType 'Mail Server TLS
 #. Certificate'
 #: mail/mail/doctype/dkim_key/dkim_key.json
+#: mail/mail/doctype/mail_cluster/mail_cluster.json
 #: mail/mail/doctype/mail_server_tls_certificate/mail_server_tls_certificate.json
 msgid "Private Key"
 msgstr ""
@@ -4876,6 +5255,11 @@ msgstr ""
 
 #: mail/mail/doctype/jmap_push_verification_queue/jmap_push_verification_queue.js:15
 msgid "Process Now"
+msgstr ""
+
+#. Label of the processed (Int) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Processed"
 msgstr ""
 
 #: mail/mail/doctype/jmap_push_verification_queue/jmap_push_verification_queue.js:20
@@ -4980,7 +5364,11 @@ msgid "Public IPv6 addresses assigned to this cluster."
 msgstr ""
 
 #. Label of the rsa_public_key (Text) field in DocType 'DKIM Key'
+#. Label of the ssh_public_key (Code) field in DocType 'Mail Cluster'
+#. Label of the public_key (Code) field in DocType 'Mail Server'
 #: mail/mail/doctype/dkim_key/dkim_key.json
+#: mail/mail/doctype/mail_cluster/mail_cluster.json
+#: mail/mail/doctype/mail_server/mail_server.json
 msgid "Public Key"
 msgstr ""
 
@@ -5212,12 +5600,18 @@ msgstr ""
 #. Group in Mail Cluster's connections
 #. Group in Mail Domain's connections
 #. Group in Mail Server's connections
+#. Group in Mail Server Ansible Play's connections
+#. Group in Mail Server Config's connections
+#. Group in Mail Server Deployment's connections
 #. Group in Mailing List's connections
 #: mail/mail/doctype/dkim_key/dkim_key.json
 #: mail/mail/doctype/mail_account/mail_account.json
 #: mail/mail/doctype/mail_cluster/mail_cluster.json
 #: mail/mail/doctype/mail_domain/mail_domain.json
 #: mail/mail/doctype/mail_server/mail_server.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_config/mail_server_config.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/mail/doctype/mailing_list/mailing_list.json
 msgid "Reference"
 msgstr ""
@@ -5266,7 +5660,7 @@ msgstr ""
 
 #: mail/mail/doctype/mail_cluster/mail_cluster.js:207
 #: mail/mail/doctype/mail_cluster/mail_cluster_list.js:18
-#: mail/mail/doctype/mail_server/mail_server.js:64
+#: mail/mail/doctype/mail_server/mail_server.js:108
 #: mail/mail/doctype/mail_server/mail_server_list.js:18
 msgid "Reloading Configuration..."
 msgstr ""
@@ -5437,6 +5831,11 @@ msgstr ""
 msgid "Request failed for {0}"
 msgstr ""
 
+#. Label of the rescued (Int) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Rescued"
+msgstr ""
+
 #: frontend/src/pages/BusinessSignupView.vue:55
 msgid "Resend OTP"
 msgstr ""
@@ -5483,6 +5882,8 @@ msgstr ""
 msgid "Resubscribing..."
 msgstr ""
 
+#. Label of the result (JSON) field in DocType 'Ansible Play Task'
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/report/dmarc_report_viewer/dmarc_report_viewer.py:51
 msgid "Result"
 msgstr ""
@@ -5498,9 +5899,15 @@ msgstr ""
 #. Label of the retry_total (Int) field in DocType 'Mail Cluster Store'
 #. Label of the retries (Int) field in DocType 'Mail Data Exchange'
 #. Label of the retries (Int) field in DocType 'Mail Queue'
+#. Label of the retries (Int) field in DocType 'Mail Server Ansible Play'
+#. Label of the retries (Int) field in DocType 'Mail Server Deployment'
+#. Label of the retries (Int) field in DocType 'Mail Server Job'
 #: mail/mail/doctype/mail_cluster_store/mail_cluster_store.json
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
 msgid "Retries"
 msgstr ""
 
@@ -5508,6 +5915,9 @@ msgstr ""
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.js:16
 #: mail/mail/doctype/mail_queue/mail_queue.js:27
 #: mail/mail/doctype/mail_queue/mail_queue_list.js:26
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.js:30
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.js:16
+#: mail/mail/doctype/mail_server_job/mail_server_job.js:16
 #: mail/mail/doctype/message_queue/message_queue_list.js:84
 msgid "Retry"
 msgstr ""
@@ -5537,6 +5947,9 @@ msgstr ""
 #: mail/mail/doctype/jmap_push_verification_queue/jmap_push_verification_queue.js:34
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.js:25
 #: mail/mail/doctype/mail_queue/mail_queue.js:48
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.js:39
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.js:25
+#: mail/mail/doctype/mail_server_job/mail_server_job.js:25
 msgid "Retrying..."
 msgstr ""
 
@@ -5593,15 +6006,15 @@ msgstr ""
 msgid "Rotating DKIM Keys..."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:144
+#: mail/mail/doctype/mail_server/mail_server.py:175
 msgid "Row #{0}: Certificate ID {1} is duplicated."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:151
+#: mail/mail/doctype/mail_server/mail_server.py:182
 msgid "Row #{0}: Certificate or Certificate Path is required."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:124
+#: mail/mail/doctype/mail_server/mail_server.py:155
 msgid "Row #{0}: Directory ID {1} is duplicated."
 msgstr ""
 
@@ -5609,25 +6022,35 @@ msgstr ""
 msgid "Row #{0}: Failed to verify {1} : {2}."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:223
-#: mail/mail/doctype/mail_server/mail_server.py:165
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:216
+#: mail/mail/doctype/mail_server/mail_server.py:196
 msgid "Row #{0}: Listener ID {1} is duplicated."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:153
+#: mail/mail/doctype/mail_server/mail_server.py:184
 msgid "Row #{0}: Private Key or Private Key Path is required."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:185
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:178
 msgid "Row #{0}: Store ID {1} is duplicated."
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:237
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:230
 msgid "Row #{0}: Tracer ID {1} is duplicated."
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Mail Backend Request'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Deployment'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Job'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Job Command'
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/doctype/mail_backend_request/mail_backend_request.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
 msgid "Running"
 msgstr ""
 
@@ -5690,6 +6113,38 @@ msgstr ""
 #. Option for the 'Type' (Select) field in DocType 'Mail Cluster Store'
 #: mail/mail/doctype/mail_cluster_store/mail_cluster_store.json
 msgid "SQLite"
+msgstr ""
+
+#. Label of the ssh_tab (Tab Break) field in DocType 'Mail Cluster'
+#. Label of the ssh_tab (Tab Break) field in DocType 'Mail Server'
+#: mail/mail/doctype/mail_cluster/mail_cluster.json
+#: mail/mail/doctype/mail_server/mail_server.json
+msgid "SSH"
+msgstr ""
+
+#. Label of the ssh_key_section (Section Break) field in DocType 'Mail Cluster'
+#. Label of the ssh_key_section (Section Break) field in DocType 'Mail Server'
+#: mail/mail/doctype/mail_cluster/mail_cluster.json
+#: mail/mail/doctype/mail_server/mail_server.json
+msgid "SSH Key"
+msgstr ""
+
+#. Label of the ssh_port (Int) field in DocType 'Mail Server'
+#: mail/mail/doctype/mail_server/mail_server.json
+msgid "SSH Port"
+msgstr ""
+
+#. Label of the ssh_user (Data) field in DocType 'Mail Server'
+#: mail/mail/doctype/mail_server/mail_server.json
+msgid "SSH User"
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:288
+msgid "SSH connection failed. Error: {0}"
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.py:286
+msgid "SSH connection successful."
 msgstr ""
 
 #: frontend/src/components/Modals/AddAliasModal.vue:8
@@ -5846,10 +6301,16 @@ msgid "Sent At"
 msgstr ""
 
 #. Label of the server (Link) field in DocType 'JMAP Push Subscription'
+#. Label of the server (Link) field in DocType 'Mail Server Ansible Play'
 #. Label of the server (Link) field in DocType 'Mail Server Config'
+#. Label of the server (Link) field in DocType 'Mail Server Deployment'
+#. Label of the server (Link) field in DocType 'Mail Server Job'
 #. Label of a shortcut in the Mail Workspace
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
 #: mail/mail/doctype/mail_server_config/mail_server_config.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Server"
 msgstr ""
@@ -5957,6 +6418,13 @@ msgstr ""
 msgid "Size of the write buffer in bytes, used to batch writes to the store."
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
+#. Label of the skipped (Int) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Skipped"
+msgstr ""
+
 #. Label of the sort_order (Int) field in DocType 'Mailbox'
 #. Label of the _sort_order (Int) field in DocType 'Mailbox'
 #: mail/mail/doctype/mailbox/mailbox.json
@@ -6061,7 +6529,7 @@ msgstr ""
 msgid "Specifies the maximum size for an email attachment."
 msgstr ""
 
-#: mail/utils/__init__.py:460
+#: mail/utils/__init__.py:477
 msgid "Stalwart CLI not found at {0}."
 msgstr ""
 
@@ -6086,18 +6554,49 @@ msgid "Start Kwargs"
 msgstr ""
 
 #. Label of the started_after (Float) field in DocType 'Mail Data Exchange'
+#. Label of the started_after (Float) field in DocType 'Mail Server Ansible
+#. Play'
+#. Label of the started_after (Float) field in DocType 'Mail Server Deployment'
+#. Label of the started_after (Float) field in DocType 'Mail Server Job'
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
 msgid "Started After (Seconds)"
 msgstr ""
 
+#. Label of the started_at (Datetime) field in DocType 'Ansible Play Task'
 #. Label of the started_at (Datetime) field in DocType 'Mail Backend Request'
 #. Label of the started_at (Datetime) field in DocType 'Mail Data Exchange'
+#. Label of the started_at (Datetime) field in DocType 'Mail Server Ansible
+#. Play'
+#. Label of the started_at (Datetime) field in DocType 'Mail Server Deployment'
+#. Label of the started_at (Datetime) field in DocType 'Mail Server Job'
+#. Label of the started_at (Datetime) field in DocType 'Mail Server Job
+#. Command'
 #. Label of the started_at (Datetime) field in DocType 'Spam Check Log'
 #: frontend/src/pages/MailDataExchangesView.vue:127
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/doctype/mail_backend_request/mail_backend_request.json
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/mail/doctype/spam_check_log/spam_check_log.json
 msgid "Started At"
+msgstr ""
+
+#. Description of the 'Started After (Seconds)' (Float) field in DocType 'Mail
+#. Server Ansible Play'
+#. Description of the 'Started After (Seconds)' (Float) field in DocType 'Mail
+#. Server Deployment'
+#. Description of the 'Started After (Seconds)' (Float) field in DocType 'Mail
+#. Server Job'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+msgid "Started At - Creation"
 msgstr ""
 
 #. Description of the 'Started After (Seconds)' (Float) field in DocType 'Mail
@@ -6106,11 +6605,25 @@ msgstr ""
 msgid "Started At - Queued At"
 msgstr ""
 
+#. Label of the statistics_section (Section Break) field in DocType 'Mail
+#. Server Ansible Play'
+#. Label of the statistics_section (Section Break) field in DocType 'Mail
+#. Server Job'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+msgid "Statistics"
+msgstr ""
+
+#. Label of the status (Select) field in DocType 'Ansible Play Task'
 #. Label of the status (Select) field in DocType 'JMAP Push Subscription'
 #. Label of the status (Select) field in DocType 'JMAP Push Verification Queue'
 #. Label of the status (Select) field in DocType 'Mail Backend Request'
 #. Label of the status (Select) field in DocType 'Mail Data Exchange'
 #. Label of the status (Select) field in DocType 'Mail Queue'
+#. Label of the status (Select) field in DocType 'Mail Server Ansible Play'
+#. Label of the status (Select) field in DocType 'Mail Server Deployment'
+#. Label of the status (Select) field in DocType 'Mail Server Job'
+#. Label of the status (Select) field in DocType 'Mail Server Job Command'
 #. Label of the status (Data) field in DocType 'Message Queue Recipient'
 #: frontend/src/pages/MailDataExchangesView.vue:17
 #: frontend/src/pages/MailDataExchangesView.vue:129
@@ -6120,11 +6633,16 @@ msgstr ""
 #: frontend/src/pages/dashboard/MailAliasesView.vue:166
 #: frontend/src/pages/dashboard/MailingListsView.vue:15
 #: frontend/src/pages/dashboard/MailingListsView.vue:148
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.json
 #: mail/mail/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/mail/doctype/mail_backend_request/mail_backend_request.json
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/mail/doctype/message_queue/message_queue.js:60
 #: mail/mail/doctype/message_queue_recipient/message_queue_recipient.json
 msgid "Status"
@@ -6161,7 +6679,7 @@ msgstr ""
 msgid "Store ID"
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:202
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:195
 msgid "Store with Store ID {0} not found."
 msgstr ""
 
@@ -6277,6 +6795,20 @@ msgstr ""
 msgid "Subscription already verified."
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Deployment'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Job'
+#. Label of the success (Int) field in DocType 'Mail Server Job'
+#. Option for the 'Status' (Select) field in DocType 'Mail Server Job Command'
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
+#: mail/mail/doctype/mail_server_job_command/mail_server_job_command.json
+msgid "Success"
+msgstr ""
+
 #: mail/mail/doctype/mail_queue/mail_queue.py:906
 msgid "Successfully retried {0} emails."
 msgstr ""
@@ -6309,6 +6841,7 @@ msgstr ""
 
 #. Name of a role
 #: mail/mail/doctype/allowed_ip/allowed_ip.json
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
 #: mail/mail/doctype/blocked_ip/blocked_ip.json
 #: mail/mail/doctype/dkim_key/dkim_key.json
 #: mail/mail/doctype/dmarc_report/dmarc_report.json
@@ -6328,7 +6861,10 @@ msgstr ""
 #: mail/mail/doctype/mail_message/mail_message.json
 #: mail/mail/doctype/mail_queue/mail_queue.json
 #: mail/mail/doctype/mail_server/mail_server.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
 #: mail/mail/doctype/mail_server_config/mail_server_config.json
+#: mail/mail/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/mail/doctype/mail_server_job/mail_server_job.json
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/mail/doctype/mail_sync_history/mail_sync_history.json
 #: mail/mail/doctype/mail_tenant/mail_tenant.json
@@ -6396,6 +6932,15 @@ msgstr ""
 #: mail/mail/doctype/dns_record/dns_record.json
 #: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "TXT"
+msgstr ""
+
+#. Label of the task (Data) field in DocType 'Ansible Play Task'
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
+msgid "Task"
+msgstr ""
+
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.py:24
+msgid "Task {0} already exists in play {1}"
 msgstr ""
 
 #: mail/templates/emails/generic.html:18
@@ -6473,6 +7018,11 @@ msgstr ""
 #. Provider'
 #: mail/mail/doctype/mail_server_acme_provider/mail_server_acme_provider.json
 msgid "The External Account Binding (EAB) key ID."
+msgstr ""
+
+#. Description of the 'SSH User' (Data) field in DocType 'Mail Server'
+#: mail/mail/doctype/mail_server/mail_server.json
+msgid "The Linux user account to use for SSH connections."
 msgstr ""
 
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.py:143
@@ -7006,6 +7556,13 @@ msgstr ""
 msgid "Unique identifier for your DNS zone."
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
+#. Label of the unreachable (Int) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/ansible_play_task/ansible_play_task.json
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Unreachable"
+msgstr ""
+
 #: frontend/src/pages/MailboxView.vue:672
 msgid "Unread"
 msgstr ""
@@ -7033,12 +7590,20 @@ msgstr ""
 msgid "Unsupported algorithm. Use 'rsa-sha256' or 'ed25519-sha256'."
 msgstr ""
 
-#: mail/utils/__init__.py:188
+#: mail/utils/__init__.py:205
 msgid "Unsupported file format: {0}"
 msgstr ""
 
-#: mail/utils/__init__.py:219
+#: mail/utils/__init__.py:236
 msgid "Unsupported output file format. Supported formats are .zip, .tgz, and .tar.gz."
+msgstr ""
+
+#: mail/mail/doctype/mail_server_config/mail_server_config.js:23
+msgid "Update config.toml"
+msgstr ""
+
+#: mail/mail/doctype/mail_server_config/mail_server_config.js:53
+msgid "Updating Configuration..."
 msgstr ""
 
 #: frontend/src/components/Settings/MailDataExchangeSettings.vue:25
@@ -7241,11 +7806,22 @@ msgstr ""
 msgid "Vacation response settings saved successfully"
 msgstr ""
 
+#. Label of the value (Small Text) field in DocType 'Ansible Play Variable'
 #. Label of the value (Text) field in DocType 'DNS Record'
 #. Label of the value (Text) field in DocType 'Mail Domain DNS Record'
+#: mail/mail/doctype/ansible_play_variable/ansible_play_variable.json
 #: mail/mail/doctype/dns_record/dns_record.json
 #: mail/mail/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 msgid "Value"
+msgstr ""
+
+#: mail/ansible.py:87
+msgid "Variable value cannot be of type {0}"
+msgstr ""
+
+#. Label of the variables (Table) field in DocType 'Mail Server Ansible Play'
+#: mail/mail/doctype/mail_server_ansible_play/mail_server_ansible_play.json
+msgid "Variables"
 msgstr ""
 
 #. Label of the verification_code (Password) field in DocType 'JMAP Push
@@ -7289,12 +7865,14 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'JMAP Push Verification
 #. Queue'
 #. Label of the is_verified (Check) field in DocType 'Mail Domain'
+#. Label of the ssh_verified (Check) field in DocType 'Mail Server'
 #: frontend/src/pages/dashboard/DomainView.vue:151
 #: frontend/src/pages/dashboard/DomainsView.vue:120
 #: mail/mail/doctype/dns_record/dns_record.json
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.json
 #: mail/mail/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/mail/doctype/mail_domain/mail_domain.json
+#: mail/mail/doctype/mail_server/mail_server.json
 msgid "Verified"
 msgstr ""
 
@@ -7308,6 +7886,11 @@ msgstr ""
 msgid "Verified {0}:{1} record."
 msgstr ""
 
+#. Description of the 'Verified' (Check) field in DocType 'Mail Server'
+#: mail/mail/doctype/mail_server/mail_server.json
+msgid "Verifies that the server is reachable with the provided SSH details."
+msgstr ""
+
 #: mail/mail/doctype/mail_account_request/mail_account_request.py:181
 msgid "Verify Account"
 msgstr ""
@@ -7318,6 +7901,10 @@ msgstr ""
 
 #: mail/mail/doctype/mail_domain/mail_domain.js:12
 msgid "Verify DNS Records"
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.js:45
+msgid "Verify SSH Connection"
 msgstr ""
 
 #: mail/mail/doctype/mail_domain_request/mail_domain_request.js:14
@@ -7334,6 +7921,10 @@ msgstr ""
 
 #: mail/mail/doctype/mail_domain/mail_domain.js:53
 msgid "Verifying DNS Records..."
+msgstr ""
+
+#: mail/mail/doctype/mail_server/mail_server.js:123
+msgid "Verifying SSH Connection..."
 msgstr ""
 
 #: frontend/src/pages/MailboxView.vue:714
@@ -7654,7 +8245,7 @@ msgstr ""
 msgid "{0} emptied successfully"
 msgstr ""
 
-#: mail/mail/doctype/mail_cluster/mail_cluster.py:207
+#: mail/mail/doctype/mail_cluster/mail_cluster.py:200
 msgid "{0} has an invalid store type '{1}'. Allowed types are: {2}."
 msgstr ""
 

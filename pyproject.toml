@@ -9,13 +9,16 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=15.0.0" # Installed and managed by bench.
+    "wrapt~=1.17.3",
     "bcrypt~=4.2.1",
     "py3dns~=4.0.2",
     "pexpect~=4.9.0",
+    "paramiko~=4.0.0",
     "dnspython~=2.4.2",
     "xmltodict~=0.14.2",
     "dns-lexicon~=3.20.1",
     "markdown-it-py~=4.0.0",
+    "ansible-runner~=2.4.1",
     "validate-email-address~=1.0.0",
 ]
 

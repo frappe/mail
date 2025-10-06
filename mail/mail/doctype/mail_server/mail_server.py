@@ -2,10 +2,14 @@
 # For license information, please see license.txt
 
 
+import io
 import json
+import os
+import socket
 from typing import TYPE_CHECKING
 
 import frappe
+import paramiko
 from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import Order
@@ -34,6 +38,8 @@ class MailServer(Document):
 		self.validate_hostname()
 		self.validate_cluster()
 		self.validate_base_url()
+		self.validate_outbound_only()
+		self.validate_priority()
 		self.validate_cluster_node_id()
 		self.validate_acme_providers()
 		self.validate_tls_certificates()
@@ -92,6 +98,31 @@ class MailServer(Document):
 
 		if not self.base_url:
 			self.base_url = f"https://{self.hostname}/"
+
+	def validate_outbound_only(self) -> None:
+		"""Validates the outbound only setting."""
+
+		if self.outbound_only:
+			self.include_in_mx_records = 0
+
+	def validate_priority(self) -> None:
+		"""Validates the priority of the server."""
+
+		if not self.include_in_mx_records:
+			self.priority = 0
+		else:
+			if not self.priority or self.priority < 1:
+				frappe.throw(_("Priority must be greater than 0."))
+
+			if frappe.db.exists(
+				"Mail Server",
+				{"enabled": 1, "cluster": self.cluster, "priority": self.priority, "name": ["!=", self.name]},
+			):
+				frappe.throw(
+					_("Priority {0} is already assigned to another Mail Server.").format(
+						frappe.bold(self.priority)
+					)
+				)
 
 	def validate_cluster_node_id(self) -> None:
 		"""Validates the cluster node ID."""
@@ -214,6 +245,139 @@ class MailServer(Document):
 		create_mail_backend_request(
 			self.doctype, self.name, method="GET", endpoint="/api/reload", do_not_enqueue=True
 		)
+
+	@frappe.whitelist()
+	def verify_ssh_connection(self) -> None:
+		"""Verifies the SSH connection to the server."""
+
+		frappe.only_for("System Manager")
+		success, message = self._verify_ssh_connection()
+
+		if success:
+			self._db_set(ssh_verified=1, notify=True)
+			frappe.msgprint(message, indicator="green", alert=True)
+		else:
+			self._db_set(ssh_verified=0, notify=True)
+			frappe.msgprint(message, indicator="red", alert=False)
+
+	def _verify_ssh_connection(self) -> tuple[bool, str]:
+		"""Verifies the SSH connection to the server."""
+
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock.settimeout(5)
+		try:
+			sock.connect((self.hostname, self.ssh_port))
+		except Exception as e:
+			return False, _("Could not connect to {0}:{1}. Error: {2}").format(
+				self.hostname, self.ssh_port, str(e)
+			)
+		finally:
+			sock.close()
+
+		cluster = frappe.get_doc("Mail Cluster", self.cluster)
+		try:
+			client = paramiko.SSHClient()
+			client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+			key = paramiko.RSAKey.from_private_key(io.StringIO(cluster.get_password("ssh_private_key")))
+			client.connect(
+				hostname=self.hostname, port=self.ssh_port, username=self.ssh_user, pkey=key, timeout=10
+			)
+			client.close()
+			return True, _("SSH connection successful.")
+		except Exception as e:
+			return False, _("SSH connection failed. Error: {0}").format(str(e))
+
+	@frappe.whitelist()
+	def install_ansible(self) -> None:
+		"""Installs Ansible on the Mail Server."""
+
+		frappe.only_for("System Manager")
+
+		if not self.ssh_verified:
+			frappe.throw(_("Please verify the SSH connection before installing Ansible."))
+
+		self._install_ansible()
+		frappe.msgprint(_("Install of Ansible initiated."), indicator="green", alert=True)
+
+	def _install_ansible(self) -> None:
+		"""Installs Ansible on the Mail Server."""
+
+		script_path = os.path.join(frappe.get_app_path("mail", "utils", "ansible"), "install_ansible.sh")
+		with open(script_path) as f:
+			script_content = f.read()
+
+		job = frappe.new_doc("Mail Server Job")
+		job.status = "Pending"
+		job.server = self.name
+		job.job = "Install Ansible"
+		job.append("commands", {"command": script_content})
+		job.insert(ignore_permissions=True)
+
+	@frappe.whitelist()
+	def install_docker(self) -> None:
+		"""Installs Docker on the Mail Server."""
+
+		frappe.only_for("System Manager")
+
+		if not self.ssh_verified:
+			frappe.throw(_("Please verify the SSH connection before installing Docker."))
+
+		self._install_docker()
+		frappe.msgprint(_("Install of Docker initiated."), indicator="green", alert=True)
+
+	def _install_docker(self) -> None:
+		"""Installs Docker on the Mail Server."""
+
+		play = frappe.new_doc("Mail Server Ansible Play")
+		play.status = "Pending"
+		play.server = self.name
+		play.play = "Install Docker"
+		play.playbook = "install-docker.yml"
+		play.insert(ignore_permissions=True)
+
+	@frappe.whitelist()
+	def install_stalwart(self) -> None:
+		"""Installs Stalwart on the Mail Server."""
+
+		frappe.only_for("System Manager")
+
+		if not self.ssh_verified:
+			frappe.throw(_("Please verify the SSH connection before installing Stalwart."))
+
+		self._install_stalwart()
+		frappe.msgprint(_("Install of Stalwart initiated."), indicator="green", alert=True)
+
+	def _install_stalwart(self, config: str | None = None) -> None:
+		"""Installs Stalwart on the Mail Server."""
+
+		config = config or frappe.db.get_value("Mail Server Config", {"server": self.name})
+		if not config:
+			frappe.throw(_("Please generate the Mail Server Config before installing Stalwart."))
+
+		install_redis = 0
+		cluster = frappe.get_doc("Mail Cluster", self.cluster)
+		for store in cluster.stores:
+			if store.type == "Redis/Memcached" and "redis://redis:6379" in store.urls:
+				install_redis = 1
+				break
+
+		deployment = frappe.new_doc("Mail Server Deployment")
+		deployment.status = "Pending"
+		deployment.server = self.name
+		deployment.config = config
+		deployment.install_redis = install_redis
+		deployment.insert(ignore_permissions=True)
+
+	def _db_set(
+		self,
+		update_modified: bool = True,
+		commit: bool = False,
+		notify: bool = False,
+		**kwargs,
+	) -> None:
+		"""Updates the document with the given key-value pairs."""
+
+		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
 
 
 @frappe.whitelist()

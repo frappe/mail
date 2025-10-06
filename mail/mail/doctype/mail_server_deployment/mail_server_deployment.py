@@ -1,0 +1,214 @@
+# Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
+# For license information, please see license.txt
+
+import hashlib
+import json
+import os
+
+import frappe
+from frappe import _
+from frappe.model.document import Document
+from frappe.query_builder import Order
+from frappe.utils import cint, now, time_diff_in_seconds
+from uuid_utils import uuid7
+
+
+class MailServerDeployment(Document):
+	@property
+	def config_toml(self) -> str | None:
+		"""Returns the config.toml content."""
+
+		if self.config:
+			return frappe.get_doc("Mail Server Config", self.config).config
+
+	@property
+	def port_mappings(self) -> list[str]:
+		"""Returns the port mappings for the Mail Server."""
+
+		server = frappe.get_doc("Mail Server", self.server)
+		cluster = frappe.get_doc("Mail Cluster", server.cluster)
+
+		port_mappings = []
+		for listener in server.listeners or cluster.listeners:
+			for bind in listener.bind.split("\n"):
+				if bind:
+					port = bind.split(":")[-1]
+					port_mappings.append(f"{port}:{port}")
+
+		return port_mappings
+
+	@property
+	def compose_template_path(self) -> str:
+		"""Returns the path to the docker-compose template."""
+
+		return os.path.join(
+			frappe.get_app_path("mail", "utils", "docker", "templates"), "docker-compose.yml.j2"
+		)
+
+	def autoname(self) -> None:
+		self.name = str(uuid7())
+
+	def validate(self) -> None:
+		self.validate_status()
+		self.validate_server()
+		self.validate_config()
+		self.validate_config_checksum()
+
+	def after_insert(self) -> None:
+		if frappe.flags.do_not_enqueue:
+			self.execute()
+		else:
+			frappe.enqueue_doc(
+				self.doctype,
+				self.name,
+				"execute",
+				queue="long",
+				enqueue_after_commit=True,
+			)
+
+	def validate_status(self) -> None:
+		"""Sets the status to 'Pending' if not set."""
+
+		if not self.status:
+			self.status = "Pending"
+
+	def validate_server(self) -> None:
+		"""Validate if the mail server is enabled."""
+
+		if not frappe.db.get_value("Mail Server", self.server, "enabled"):
+			frappe.throw(_("Mail Server {0} is disabled").format(self.server))
+		elif not frappe.db.get_value("Mail Server", self.server, "ssh_verified"):
+			frappe.throw(_("Please verify SSH connection for Mail Server {0}").format(self.server))
+
+	def validate_config(self) -> None:
+		"""Validates if the config belongs to the selected server."""
+
+		if not self.config:
+			frappe.throw(_("Config is required."))
+
+		config_server = frappe.db.get_value("Mail Server Config", self.config, "server")
+		if config_server != self.server:
+			frappe.throw(_("Config does not belong to the selected server."))
+
+	def validate_config_checksum(self) -> None:
+		"""Sets the config checksum if not set."""
+
+		if not self.config_checksum:
+			self.config_checksum = hashlib.sha256(self.config_toml.encode("utf-8")).hexdigest()
+
+	def execute(self) -> None:
+		"""Executes the deployment."""
+
+		kwargs = {}
+		started_at = now()
+		self._db_set(
+			status="Running",
+			started_at=started_at,
+			started_after=time_diff_in_seconds(started_at, self.creation),
+			error_log=None,
+			commit=True,
+			notify=True,
+		)
+
+		try:
+			self.validate_server()
+
+			variables = {
+				"server_hostname": frappe.db.get_value("Mail Server", self.server, "hostname"),
+				"config_toml": self.config_toml,
+				"port_mappings": self.port_mappings,
+				"install_redis": cint(self.install_redis),
+				"compose_template_path": self.compose_template_path,
+			}
+			play = frappe.new_doc("Mail Server Ansible Play")
+			play.status = "Pending"
+			play.server = self.server
+			play.deployment = self.name
+			play.max_retries = 0
+			play.play = "Deploy Mail Server"
+			play.playbook = "deploy-mail-server.yml"
+
+			for key, value in variables.items():
+				if isinstance(value, int | bool):
+					value = str(value)
+				elif isinstance(value, list | dict):
+					value = json.dumps(value, indent=4)
+
+				play.append("variables", {"key_": key, "value": value})
+
+			frappe.flags.do_not_enqueue = True
+			play.insert(ignore_permissions=True)
+
+			kwargs.update(
+				{
+					"status": play.status,
+					"error_log": play.error_log,
+				}
+			)
+
+			if kwargs["status"] == "Failed":
+				kwargs["retries"] = cint(self.retries) + 1
+
+		except Exception:
+			retries = cint(self.retries) + 1
+			kwargs.update(
+				{
+					"status": "Failed",
+					"retries": retries,
+					"error_log": frappe.get_traceback(with_context=True),
+				}
+			)
+
+		ended_at = now()
+		self._db_set(
+			ended_at=ended_at, duration=time_diff_in_seconds(ended_at, started_at), notify=True, **kwargs
+		)
+
+	@frappe.whitelist()
+	def retry(self) -> None:
+		"""Retries a failed deployment."""
+
+		frappe.only_for("System Manager")
+
+		if self.status != "Failed":
+			frappe.throw(_("Only failed deployments can be retried."))
+
+		self._db_set(status="Pending", notify=True)
+
+		frappe.enqueue_doc(
+			self.doctype,
+			self.name,
+			"execute",
+			queue="long",
+			enqueue_after_commit=True,
+		)
+
+	def _db_set(
+		self,
+		update_modified: bool = True,
+		commit: bool = False,
+		notify: bool = False,
+		**kwargs,
+	) -> None:
+		"""Updates the document with the given key-value pairs."""
+
+		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
+
+
+def retry_failed_deployments() -> None:
+	"""Called by the scheduler to retry failed deployments."""
+
+	MSD = frappe.qb.DocType("Mail Server Deployment")
+	deployments = (
+		frappe.qb.from_(MSD)
+		.select(MSD.name)
+		.where((MSD.status == "Failed") & (MSD.retries > 0) & (MSD.retries < MSD.max_retries))
+		.orderby(MSD.creation, order=Order.asc)
+	).run(pluck="name")
+
+	if not deployments:
+		return
+
+	for deployment in deployments:
+		doc = frappe.get_doc("Mail Server Deployment", deployment)
+		doc.retry()

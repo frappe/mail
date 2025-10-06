@@ -1,0 +1,96 @@
+---
+- name: Install Docker
+  hosts: all
+  become: true
+
+  tasks:
+    # -------------------------
+    # Debian / Ubuntu
+    # -------------------------
+    - name: Install dependencies (Debian/Ubuntu)
+      apt:
+        name:
+          - curl
+          - gnupg
+          - software-properties-common
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Debian"
+
+    - name: Install Docker (Debian/Ubuntu)
+      apt:
+        name: docker.io
+        state: present
+      when: ansible_os_family == "Debian"
+
+    # -------------------------
+    # RHEL / CentOS / Rocky / AlmaLinux
+    # -------------------------
+    - name: Install dependencies (RHEL)
+      yum:
+        name:
+          - curl
+          - gnupg2
+          - yum-utils
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Docker (RHEL)
+      yum:
+        name: docker
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    # -------------------------
+    # Fedora
+    # -------------------------
+    - name: Install dependencies (Fedora)
+      dnf:
+        name:
+          - curl
+          - gnupg2
+          - dnf-plugins-core
+        state: present
+      when: ansible_distribution == "Fedora"
+
+    - name: Install Docker (Fedora)
+      dnf:
+        name: docker
+        state: present
+      when: ansible_distribution == "Fedora"
+
+    # -------------------------
+    # Arch Linux
+    # -------------------------
+    - name: Install dependencies (Arch)
+      pacman:
+        name:
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+      when: ansible_os_family == "Archlinux"
+
+    - name: Install Docker (Arch)
+      pacman:
+        name: docker
+        state: present
+      when: ansible_os_family == "Archlinux"
+
+    # -------------------------
+    # Common steps (all distros)
+    # -------------------------
+    - name: Enable and start Docker
+      systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Install Docker Compose
+      get_url:
+        url: "https://github.com/docker/compose/releases/latest/download/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
+        dest: /usr/local/bin/docker-compose
+        mode: "0755"
+
+    - name: Verify `docker-compose` installation
+      command: docker-compose --version

@@ -9,10 +9,12 @@
   "section_break_excr",
   "enabled",
   "outbound_only",
+  "include_in_mx_records",
   "column_break_0mtp",
   "cluster",
   "hostname",
   "base_url",
+  "priority",
   "network_settings_section",
   "server_max_connections",
   "column_break_3m4p",
@@ -20,6 +22,15 @@
   "public_ipv6",
   "cluster_settings_section",
   "cluster_node_id",
+  "ssh_tab",
+  "section_break_rmju",
+  "column_break_mwtr",
+  "ssh_verified",
+  "column_break_xzft",
+  "ssh_user",
+  "ssh_port",
+  "ssh_key_section",
+  "public_key",
   "tls_tab",
   "acme_providers",
   "tls_certificates",
@@ -164,6 +175,83 @@
    "reqd": 1,
    "set_only_once": 1,
    "unique": 1
+  },
+  {
+   "fieldname": "ssh_tab",
+   "fieldtype": "Tab Break",
+   "label": "SSH"
+  },
+  {
+   "fieldname": "ssh_key_section",
+   "fieldtype": "Section Break",
+   "label": "SSH Key"
+  },
+  {
+   "description": "<p>This is the SSH public key generated for the Mail Cluster.</p>\n<p>Copy and add it to the <code>~/.ssh/authorized_keys</code> file of this Mail Server to allow Frappe Mail to securely provision and manage this server.</p>",
+   "fetch_from": "cluster.ssh_public_key",
+   "fieldname": "public_key",
+   "fieldtype": "Code",
+   "label": "Public Key",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_rmju",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "22",
+   "description": "Port to use for SSH access.",
+   "fieldname": "ssh_port",
+   "fieldtype": "Int",
+   "label": "SSH Port",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "root",
+   "description": "The Linux user account to use for SSH connections.",
+   "fieldname": "ssh_user",
+   "fieldtype": "Data",
+   "label": "SSH User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_mwtr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Verifies that the server is reachable with the provided SSH details.",
+   "fieldname": "ssh_verified",
+   "fieldtype": "Check",
+   "label": "Verified",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_xzft",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "description": "If checked, this server will be included in DNS MX records.",
+   "fieldname": "include_in_mx_records",
+   "fieldtype": "Check",
+   "label": "Include in MX Records",
+   "read_only_depends_on": "eval: doc.outbound_only"
+  },
+  {
+   "depends_on": "eval: doc.include_in_mx_records",
+   "description": "MX record priority for handling inbound mail. Lower values have higher priority.",
+   "fieldname": "priority",
+   "fieldtype": "Int",
+   "in_standard_filter": 1,
+   "label": "Priority",
+   "mandatory_depends_on": "eval: !doc.outbound_only && doc.include_in_mx_records",
+   "no_copy": 1,
+   "non_negative": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
@@ -183,9 +271,24 @@
    "group": "Reference",
    "link_doctype": "JMAP Push Subscription",
    "link_fieldname": "server"
+  },
+  {
+   "group": "Deployment",
+   "link_doctype": "Mail Server Job",
+   "link_fieldname": "server"
+  },
+  {
+   "group": "Deployment",
+   "link_doctype": "Mail Server Ansible Play",
+   "link_fieldname": "server"
+  },
+  {
+   "group": "Deployment",
+   "link_doctype": "Mail Server Deployment",
+   "link_fieldname": "server"
   }
  ],
- "modified": "2025-08-12 11:52:15.761533",
+ "modified": "2025-10-01 14:51:58.118915",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",

@@ -2,9 +2,11 @@
 # For license information, please see license.txt
 
 import base64
+import io
 import json
 
 import frappe
+import paramiko
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import random_string
@@ -91,7 +93,6 @@ class MailCluster(Document):
 		self.validate_enabled()
 		self.validate_public()
 		self.validate_hostname()
-		self.validate_priority()
 		self.validate_fallback_admin_password()
 		self.generate_fallback_admin_secret()
 		self.validate_base_url()
@@ -99,6 +100,9 @@ class MailCluster(Document):
 		self.validate_storage()
 		self.validate_listeners()
 		self.validate_traces()
+
+	def before_insert(self) -> None:
+		self.generate_ssh_keypair()
 
 	def on_update(self) -> None:
 		if self.has_value_changed("enabled"):
@@ -144,17 +148,6 @@ class MailCluster(Document):
 
 		self.ipv4_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "A") or []])
 		self.ipv6_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "AAAA") or []])
-
-	def validate_priority(self) -> None:
-		"""Validates the priority of the cluster."""
-
-		if frappe.db.exists(
-			"Mail Cluster",
-			{"enabled": 1, "priority": self.priority, "name": ["!=", self.name]},
-		):
-			frappe.throw(
-				_("Mail Cluster with priority {0} already exists.").format(frappe.bold(self.priority))
-			)
 
 	def validate_fallback_admin_password(self) -> None:
 		if self.fallback_admin_password:
@@ -240,6 +233,18 @@ class MailCluster(Document):
 				)
 
 			tracer_ids.append(trace.tracer_id)
+
+	def generate_ssh_keypair(self, save: bool = False) -> None:
+		"""Generates an SSH key pair for the cluster."""
+
+		key = paramiko.RSAKey.generate(4096)
+		private_io = io.StringIO()
+		key.write_private_key(private_io)
+		self.ssh_private_key = private_io.getvalue()
+		self.ssh_public_key = f"{key.get_name()} {key.get_base64()} frappe-mail-cluster"
+
+		if save:
+			self.save()
 
 	@frappe.whitelist()
 	def initialize_defaults(self) -> None:
