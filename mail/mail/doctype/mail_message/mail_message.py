@@ -433,16 +433,19 @@ class MailMessage(Document):
 		if not any([self.attachments, self._html_body, self._text_body]):
 			return
 
+		blobs = []
 		for attachment in self.attachments:
 			if (include_inline and attachment.disposition == "inline") or (
 				include_regular and attachment.disposition == "attachment"
 			):
-				fetch_blob(self.account, attachment.blob_id, attachment.filename)
+				blobs.append((attachment.blob_id, attachment.filename))
 
 		if include_inline:
 			for body_part in self._html_body + self._text_body:
 				if body_part.disposition == "inline":
-					fetch_blob(self.account, body_part.blob_id, body_part.filename)
+					blobs.append((body_part.blob_id, body_part.filename))
+
+		fetch_blobs(self.account, blobs)
 
 	def clear_cached_properties(self) -> None:
 		"""Clear cached properties to avoid stale data."""
@@ -897,25 +900,46 @@ def set_spam_status(account: str, _ids: list[str], spam: bool = True) -> None:
 def fetch_blob(account: str, blob_id: str, name: str | None = None) -> bytes:
 	"""Fetch the content of a blob."""
 
-	if not account or not blob_id:
-		frappe.throw(_("Account and blob ID are required."))
+	return fetch_blobs(account, [(blob_id, name)])[blob_id]
+
+
+def fetch_blobs(account: str, blobs: list[str] | list[tuple[str, str | None]]) -> dict[str, bytes]:
+	"""Fetch blobs for the provided blob IDs."""
+
+	if not account:
+		frappe.throw(_("Account is required."))
 
 	validate_permission_for_account(account)
 
-	if content := _get_blob_from_cache(account, blob_id):
-		return content
+	if isinstance(blobs, list) and all(isinstance(b, str) for b in blobs):
+		blobs = [(blob_id, None) for blob_id in blobs]
+
+	result = {}
+	blobs_to_fetch = []
+	for blob_id, name in blobs:
+		if content := _get_blob_from_cache(account, blob_id):
+			result[blob_id] = content
+		else:
+			blobs_to_fetch.append((blob_id, name))
+
+	if not blobs_to_fetch:
+		return result
 
 	try:
 		client = get_jmap_client(account)
-		content = client.download_blob(blob_id, name)
-		_store_blob_in_cache(account, blob_id, content)
-		return content
+		fetched_blobs = client.download_blobs_concurrently(blobs_to_fetch)
+
+		for blob_id, content in fetched_blobs.items():
+			_store_blob_in_cache(account, blob_id, content)
+			result[blob_id] = content
+
+		return result
 	except Exception:
 		frappe.log_error(
-			title=_("Failed to fetch blob"),
+			title=_("Failed to fetch blob(s)"),
 			message=frappe.get_traceback(with_context=True),
 		)
-		frappe.throw(_("Failed to fetch blob."))
+		frappe.throw(_("Failed to fetch blob(s)."))
 
 
 def format_message(account: str, mailbox_map: dict, message: dict) -> dict:

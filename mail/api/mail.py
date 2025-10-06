@@ -8,6 +8,7 @@ from mail.mail.doctype.mail_message.mail_message import (
 	delete_messages,
 	empty_mailbox,
 	fetch_blob,
+	fetch_blobs,
 	fetch_thread,
 	fetch_threads,
 	get_message_ids,
@@ -146,10 +147,15 @@ def serialize_mail(mail: dict) -> dict:
 
 	attachments = serialize_attachments(mail.get("attachments", []))
 	if attachments:
+		blobs = []
 		for attachment in attachments:
 			if attachment["disposition"] == "inline" and attachment["cid"] and attachment["blob_id"]:
+				blobs.append((attachment["blob_id"], attachment["filename"]))
 				url = get_attachment_url(attachment["blob_id"], attachment["filename"])
 				mail["html_body"] = convert_img_src_from_cid_to_url(mail["html_body"], attachment["cid"], url)
+
+		if blobs:
+			fetch_blobs(mail["account"], blobs)
 
 	return {
 		**{field: mail[field] for field in mail_fields},
@@ -157,7 +163,7 @@ def serialize_mail(mail: dict) -> dict:
 	}
 
 
-def serialize_attachments(attachments: list[dict]) -> dict:
+def serialize_attachments(attachments: list[dict]) -> list[dict]:
 	"""Serializes attachment for response."""
 
 	attachment_fields = ["filename", "type", "size", "blob_id", "disposition", "cid"]

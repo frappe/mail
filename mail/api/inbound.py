@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
-from frappe.utils import convert_utc_to_system_timezone, now
+from frappe.utils import convert_utc_to_system_timezone, create_batch, now
 
 from mail.api.auth import validate_user
 from mail.jmap import get_mailbox_id_by_role
-from mail.mail.doctype.mail_message.mail_message import fetch_messages
+from mail.mail.doctype.mail_message.mail_message import fetch_blobs, fetch_messages
 from mail.mail.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
 from mail.utils.cache import get_account_for_user
 from mail.utils.dt import convert_to_utc
@@ -26,7 +26,10 @@ def fetch_blob(blob_id: str, as_bytes: bool = False) -> str | bytes:
 	"""Fetches the blob for the given blob_id."""
 
 	validate_user()
-	blob = _fetch_blob(blob_id)
+
+	from mail.mail.doctype.mail_message.mail_message import fetch_blob as _fetch_blob
+
+	blob = _fetch_blob(get_account(), blob_id)
 	return blob if as_bytes else base64.b64encode(blob).decode("utf-8")
 
 
@@ -72,14 +75,6 @@ def pull_raw(
 	result["last_received_at"] = convert_to_utc(result["last_received_at"])
 
 	return result
-
-
-def _fetch_blob(blob_id: str) -> bytes:
-	"""Fetches the blob for the given blob_id."""
-
-	from mail.mail.doctype.mail_message.mail_message import fetch_blob
-
-	return fetch_blob(get_account(), blob_id)
 
 
 def validate_max_sync_limit(limit: int) -> None:
@@ -148,9 +143,10 @@ def get_raw_mails(
 	result = get_mails(mailbox, limit, last_received_at)
 
 	mails = []
-	for message in result["mails"]:
-		blob = _fetch_blob(message["blob_id"])
-		mails.append(blob.decode("utf-8"))
+	account = get_account()
+	for messages in create_batch(result["mails"], 20):
+		for _blob_id, blob in fetch_blobs(account, [message["blob_id"] for message in messages]).items():
+			mails.append(blob.decode("utf-8"))
 
 	result["mails"] = mails
 	return result
