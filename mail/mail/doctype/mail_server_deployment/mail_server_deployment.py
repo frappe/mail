@@ -30,8 +30,10 @@ class MailServerDeployment(Document):
 
 		port_mappings = []
 		for listener in server.listeners or cluster.listeners:
-			port = listener.bind.split(":")[-1]
-			port_mappings.append(f"{port}:{port}")
+			for bind in listener.bind.split("\n"):
+				if bind:
+					port = bind.split(":")[-1]
+					port_mappings.append(f"{port}:{port}")
 
 		return port_mappings
 
