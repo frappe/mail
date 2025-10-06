@@ -10,10 +10,22 @@ frappe.ui.form.on('Mail Server Config', {
 		if (frm.doc.__islocal) return
 
 		if (frappe.user_roles.includes('System Manager')) {
-			frm.add_custom_button(__('Deploy'), () => frm.trigger('deploy'), __('Actions'))
+			frm.add_custom_button(
+				__('Deploy'),
+				() => {
+					frappe.confirm(__('Are you sure you want to proceed?'), () =>
+						frm.trigger('deploy'),
+					)
+				},
+				__('Actions'),
+			)
 			frm.add_custom_button(
 				__('Update config.toml'),
-				() => frm.trigger('update_config_on_server'),
+				() => {
+					frappe.confirm(__('Are you sure you want to proceed?'), () =>
+						frm.trigger('update_config_on_server'),
+					)
+				},
 				__('Actions'),
 			)
 		}

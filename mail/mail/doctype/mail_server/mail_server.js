@@ -69,6 +69,16 @@ frappe.ui.form.on('Mail Server', {
 			frm.add_custom_button(
 				__('Install Stalwart (Deployment)'),
 				() => {
+					frappe.confirm(__('Are you sure you want to proceed?'), () =>
+						frm.trigger('install_stalwart'),
+					)
+				},
+				__('Actions'),
+			)
+
+			frm.add_custom_button(
+				__('Install Stalwart (Deployment)'),
+				() => {
 					frm.trigger('install_stalwart')
 				},
 				__('Actions'),
