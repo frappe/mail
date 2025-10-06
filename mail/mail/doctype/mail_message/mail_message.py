@@ -936,10 +936,10 @@ def fetch_blobs(account: str, blobs: list[str] | list[tuple[str, str | None]]) -
 		return result
 	except Exception:
 		frappe.log_error(
-			title=_("Failed to fetch blobs"),
+			title=_("Failed to fetch blob(s)"),
 			message=frappe.get_traceback(with_context=True),
 		)
-		frappe.throw(_("Failed to fetch blobs."))
+		frappe.throw(_("Failed to fetch blob(s)."))
 
 
 def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
