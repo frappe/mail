@@ -75,14 +75,6 @@ frappe.ui.form.on('Mail Server', {
 				},
 				__('Actions'),
 			)
-
-			frm.add_custom_button(
-				__('Install Stalwart (Deployment)'),
-				() => {
-					frm.trigger('install_stalwart')
-				},
-				__('Actions'),
-			)
 		}
 	},
 

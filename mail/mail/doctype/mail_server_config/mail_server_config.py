@@ -108,7 +108,8 @@ class MailServerConfig(Document):
 
 		values = []
 		for cfg in self.get_password("config_toml").split("\n"):
-			if not cfg.strip() or cfg.strip().startswith("#"):
+			stripped = cfg.strip()
+			if not stripped or stripped.startswith("#"):
 				continue
 
 			key, value = cfg.split("=", 1)
