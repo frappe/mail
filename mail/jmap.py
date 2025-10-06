@@ -614,6 +614,22 @@ class JMAPClient:
 
 		return response.content
 
+	def download_blobs_concurrently(self, blobs: list[tuple[str, str | None]]) -> dict[str, bytes]:
+		"""Downloads multiple blobs concurrently and returns a dictionary containing the blob data."""
+
+		if len(blobs) == 1:
+			blob_id, name = blobs[0]
+			return {blob_id: self.download_blob(blob_id, name)}
+
+		results = {}
+		with ThreadPoolExecutor(max_workers=5) as executor:
+			futures = {executor.submit(self.download_blob, blob_id, name): blob_id for blob_id, name in blobs}
+			for future in as_completed(futures):
+				blob_id = futures[future]
+				results[blob_id] = future.result()
+
+		return results
+
 	def upload_blob(self, blob: bytes | str, content_type: str = "message/rfc822") -> dict:
 		"""Uploads the blob data and returns a dictionary containing the response."""
 
@@ -626,17 +642,16 @@ class JMAPClient:
 	def upload_blobs_concurrently(self, blobs: list[tuple[bytes | str, str]]) -> list[dict]:
 		"""Uploads multiple blobs concurrently and returns a list of dictionaries containing the responses."""
 
-		upload_url = self.upload_url.format(accountId=self.account_id)
-
-		def upload_single_blob(blob: tuple[bytes | str, str]) -> dict:
-			content, content_type = blob
-			response = self.__session.post(upload_url, data=content, headers={"Content-Type": content_type})
-			raise_for_status(response)
-			return response.json()
+		if len(blobs) == 1:
+			blob, content_type = blobs[0]
+			return [self.upload_blob(blob, content_type)]
 
 		results = []
 		with ThreadPoolExecutor(max_workers=self.max_concurrent_upload) as executor:
-			futures = {executor.submit(upload_single_blob, blob): blob for blob in blobs}
+			futures = {
+				executor.submit(self.upload_blob, blob, content_type): (blob, content_type)
+				for blob, content_type in blobs
+			}
 			for future in as_completed(futures):
 				results.append(future.result())
 
