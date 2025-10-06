@@ -179,7 +179,6 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: !doc.__islocal",
    "fieldname": "success",
    "fieldtype": "Int",
    "label": "Success",
@@ -194,7 +193,6 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: !doc.__islocal",
    "fieldname": "failed",
    "fieldtype": "Int",
    "label": "Failed",
@@ -204,6 +202,7 @@
    "search_index": 1
   },
   {
+   "depends_on": "eval: ![\"Pending\", \"Running\"].includes(doc.status)",
    "fieldname": "statistics_section",
    "fieldtype": "Section Break",
    "label": "Statistics"
@@ -212,7 +211,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-04 09:23:16.437427",
+ "modified": "2025-10-06 10:41:04.942039",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server Job",

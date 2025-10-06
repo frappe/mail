@@ -47,6 +47,7 @@ class Ansible:
 			except (TypeError, json.JSONDecodeError):
 				self.variables[variable.key_] = variable.value
 
+		self.tasks = {}
 		if tasks := frappe.db.get_all(
 			"Ansible Play Task",
 			filters={"play": self.play},
@@ -124,7 +125,7 @@ class Ansible:
 
 		return plays[0]
 
-	def run(self) -> "MailServerAnsiblePlay":
+	def run(self, quiet: bool = True) -> "MailServerAnsiblePlay":
 		"""Run the playbook using ansible-runner and track its progress."""
 
 		server = frappe.get_doc("Mail Server", self.server)
@@ -146,6 +147,7 @@ class Ansible:
 			inventory=inventory,
 			extravars=self.variables,
 			event_handler=self.event_handler,
+			quiet=quiet,
 		)
 
 		os.remove(private_key_file.name)
@@ -161,42 +163,42 @@ class Ansible:
 				if callable(method):
 					method(event.get("event_data"))
 
-	def playbook_on_start(self, event: dict) -> None:
+	def playbook_on_start(self, event_data: dict) -> None:
 		"""Called when the playbook starts."""
 
 		self.update_play(status="Running")
 
-	def playbook_on_task_start(self, event: dict) -> None:
+	def playbook_on_task_start(self, event_data: dict) -> None:
 		"""Called when a task starts."""
 
-		self.update_task(status="Running", task=event)
+		self.update_task(status="Running", task=event_data)
 
-	def runner_on_ok(self, event: dict) -> None:
+	def runner_on_ok(self, event_data: dict) -> None:
 		"""Called when a task completes successfully."""
 
-		self.update_task(status="Success", result=event)
+		self.update_task(status="Success", result=event_data)
 
-	def runner_on_failed(self, event: dict) -> None:
+	def runner_on_failed(self, event_data: dict) -> None:
 		"""Called when a task fails."""
 
-		self.update_task(status="Failed", result=event)
+		self.update_task(status="Failed", result=event_data)
 
-	def runner_on_unreachable(self, event: dict) -> None:
+	def runner_on_unreachable(self, event_data: dict) -> None:
 		"""Called when a host is unreachable."""
 
-		self.update_task(status="Unreachable", result=event)
+		self.update_task(status="Unreachable", result=event_data)
 
-	def runner_on_skipped(self, event: dict) -> None:
+	def runner_on_skipped(self, event_data: dict) -> None:
 		"""Called when a task is skipped."""
 
-		self.update_task(status="Skipped", result=event)
+		self.update_task(status="Skipped", result=event_data)
 
-	def playbook_on_stats(self, event: dict) -> None:
+	def playbook_on_stats(self, event_data: dict) -> None:
 		"""Called when the playbook finishes. Update the play record with final stats."""
 
 		stats = {}
 		for key in ["changed", "dark", "failures", "ignored", "ok", "processed", "rescued", "skipped"]:
-			stats[key] = event.get(key, {}).get(self.server, 0)
+			stats[key] = event_data.get(key, {}).get(self.server, 0)
 		stats["unreachable"] = stats.pop("dark", 0)
 		self.update_play(stats=stats)
 
@@ -234,7 +236,7 @@ class Ansible:
 			parsed = frappe._dict()
 		else:
 			name = result["task"]
-			parsed = frappe._dict(result.get("res", {}) or {})
+			parsed = frappe._dict(result.get("res") or {})
 
 		task_name = self.tasks.get(name)
 		if not task_name:
@@ -246,7 +248,7 @@ class Ansible:
 		if parsed:
 			kwargs.update({"stdout": parsed.stdout, "stderr": parsed.stderr, "exception": parsed.msg})
 			for key in ("stdout", "stdout_lines", "stderr", "stderr_lines", "msg"):
-				result.pop(key, None)
+				result["res"].pop(key, None)
 
 			kwargs["result"] = json.dumps(result, indent=4)
 

@@ -1,5 +1,5 @@
 ---
-- name: Deploy Stalwart Mail Server
+- name: Deploy Mail Server
   hosts: all
   become: true
   vars:
@@ -11,25 +11,25 @@
     install_redis: "{{ install_redis }}"
 
   tasks:
-    - name: Ensure etc directory exists
+    - name: Ensure `etc` directory exists
       file:
         path: "{{ stalwart_config_dir }}"
         state: directory
         mode: "0755"
 
-    - name: Ensure logs directory exists
+    - name: Ensure `logs` directory exists
       file:
         path: "{{ stalwart_root }}/logs"
         state: directory
         mode: "0755"
 
-    - name: Copy config.toml
+    - name: Copy `config.toml`
       copy:
         content: "{{ stalwart_config_content }}"
         dest: "{{ stalwart_config_dir }}/config.toml"
         mode: "0644"
 
-    - name: Deploy docker-compose.yml from template
+    - name: Deploy `docker-compose.yml` from template
       template:
         src: "{{ stalwart_compose_template }}"
         dest: "{{ stalwart_root }}/docker-compose.yml"
@@ -67,7 +67,7 @@
       register: wait_result
       ignore_errors: yes
 
-    - name: Check container health via docker-compose ps
+    - name: Check container health via `docker-compose ps`
       command: docker-compose ps
       args:
         chdir: "{{ stalwart_root }}"

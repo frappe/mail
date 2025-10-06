@@ -1,5 +1,5 @@
 ---
-- name: Setup Mail Server Dependencies
+- name: Install Docker
   hosts: all
   become: true
 
@@ -92,5 +92,5 @@
         dest: /usr/local/bin/docker-compose
         mode: "0755"
 
-    - name: Verify docker-compose installation
+    - name: Verify `docker-compose` installation
       command: docker-compose --version
