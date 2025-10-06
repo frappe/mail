@@ -160,12 +160,12 @@ class MailServerAnsiblePlay(Document):
 def retry_failed_ansible_plays() -> None:
 	"""Called by the scheduler to retry failed ansible plays."""
 
-	PB = frappe.qb.DocType("")
+	PLAY = frappe.qb.DocType("Mail Server Ansible Play")
 	plays = (
-		frappe.qb.from_(PB)
-		.select(PB.name)
-		.where((PB.status == "Failed") & (PB.retries > 0) & (PB.retries < PB.max_retries))
-		.orderby(PB.creation, order=Order.asc)
+		frappe.qb.from_(PLAY)
+		.select(PLAY.name)
+		.where((PLAY.status == "Failed") & (PLAY.retries > 0) & (PLAY.retries < PLAY.max_retries))
+		.orderby(PLAY.creation, order=Order.asc)
 	).run(pluck="name")
 
 	if not plays:
