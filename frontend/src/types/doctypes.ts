@@ -341,7 +341,7 @@ export interface MailMessagePart extends ChildDocType {
 	/** Blob ID: Data */
 	blob_id?: string
 	/** Content ID: Data */
-	content_id?: string
+	cid?: string
 	/** Size: Int */
 	size?: number
 }

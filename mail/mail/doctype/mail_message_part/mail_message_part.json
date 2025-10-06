@@ -16,7 +16,7 @@
   "column_break_cmeu",
   "type",
   "blob_id",
-  "content_id",
+  "cid",
   "size"
  ],
  "fields": [
@@ -87,17 +87,17 @@
    "read_only": 1
   },
   {
-   "fieldname": "content_id",
-   "fieldtype": "Data",
-   "label": "Content ID"
-  },
-  {
    "fieldname": "size",
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Size",
    "options": "File Size",
    "read_only": 1
+  },
+  {
+   "fieldname": "cid",
+   "fieldtype": "Data",
+   "label": "Content ID"
   }
  ],
  "grid_page_length": 50,
@@ -105,7 +105,7 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-14 19:19:58.972374",
+ "modified": "2025-09-30 19:33:57.028536",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Message Part",
