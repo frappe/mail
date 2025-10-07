@@ -38,12 +38,12 @@ from mail.utils.lock import acquire_lock, release_lock
 from mail.utils.user import get_account_email_addresses
 from mail.utils.validation import validate_permission_for_account
 
-MSG_CACHE_TTL = 2 * 24 * 60 * 60  # 2 days
-MSG_BUCKET_SIZE = 5000
-BLOB_CACHE_TTL = 12 * 60 * 60  # 12 hours
-BLOB_BUCKET_SIZE = 1000
-FETCH_LOCK_TIMEOUT = 300
-MAX_PUSH_NOTIFICATIONS = 5
+MSG_CACHE_TTL = cint(frappe.conf.msg_cache_ttl) or 2 * 24 * 60 * 60  # 2 days
+MSG_BUCKET_SIZE = cint(frappe.conf.msg_bucket_size) or 5000
+BLOB_CACHE_TTL = cint(frappe.conf.blob_cache_ttl) or 12 * 60 * 60  # 12 hours
+BLOB_BUCKET_SIZE = cint(frappe.conf.blob_bucket_size) or 1000
+FETCH_LOCK_TIMEOUT = cint(frappe.conf.fetch_lock_timeout) or 300
+MAX_PUSH_NOTIFICATIONS = cint(frappe.conf.max_push_notifications) or 5
 
 
 class MailMessage(Document):

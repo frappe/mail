@@ -2,19 +2,25 @@ import time
 
 import frappe
 from frappe import _
+from frappe.utils import cint
 from redis.exceptions import WatchError
 from uuid_utils import uuid7
 
 
-def acquire_lock(lockname: str, acquire_timeout: int, lock_timeout: int) -> str | None:
+def acquire_lock(
+	lockname: str, acquire_timeout: int | None = None, lock_timeout: int | None = None
+) -> str | None:
 	"""
 	Acquire a distributed lock using Redis.
 	Returns a unique identifier for the lock if acquired, else None.
 
 	:param lockname: Unique lock name
-	:param acquire_timeout: How long to wait for lock (0 = no wait)
-	:param lock_timeout: TTL for lock in seconds
+	:param acquire_timeout: How long to wait for lock (0 = no wait), default: 0
+	:param lock_timeout: TTL for lock in seconds, default: 10
 	"""
+
+	acquire_timeout = acquire_timeout or cint(frappe.conf.lock_acquire_timeout) or 0
+	lock_timeout = lock_timeout or cint(frappe.conf.lock_timeout) or 10
 
 	if lock_timeout <= 0:
 		frappe.throw(_("Lock timeout must be greater than 0 seconds."))

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
-from frappe.utils import convert_utc_to_system_timezone, create_batch, now
+from frappe.utils import cint, convert_utc_to_system_timezone, create_batch, now
 
 from mail.api.auth import validate_user
 from mail.jmap import get_mailbox_id_by_role
@@ -16,8 +16,6 @@ from mail.utils.rate_limiter import dynamic_rate_limit
 
 if TYPE_CHECKING:
 	from mail.mail.doctype.mail_sync_history.mail_sync_history import MailSyncHistory
-
-MAX_SYNC = 100
 
 
 @frappe.whitelist(methods=["GET"])
@@ -80,8 +78,10 @@ def pull_raw(
 def validate_max_sync_limit(limit: int) -> None:
 	"""Validates if the limit is within the maximum limit."""
 
-	if limit > MAX_SYNC:
-		frappe.throw(_("Cannot fetch more than {0} emails at a time.").format(MAX_SYNC))
+	max_sync = cint(frappe.conf.max_email_sync_limit) or 100
+
+	if limit > max_sync:
+		frappe.throw(_("Cannot fetch more than {0} emails at a time.").format(max_sync))
 
 
 def get_source() -> str:

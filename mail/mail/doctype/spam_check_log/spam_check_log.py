@@ -109,7 +109,7 @@ def scan_message(host: str, port: int, message: str) -> str:
 
 	try:
 		with socket.create_connection((host, port), timeout=60) as sock:
-			sock.settimeout(60 * 2)
+			sock.settimeout(frappe.conf.scan_message_timeout or 60 * 2)
 			command = "SYMBOLS SPAMC/1.5\r\n\r\n"
 			sock.sendall(command.encode("utf-8"))
 			sock.sendall(message.encode("utf-8"))

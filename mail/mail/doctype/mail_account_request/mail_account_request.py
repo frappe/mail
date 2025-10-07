@@ -7,6 +7,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import (
 	add_to_date,
+	cint,
 	get_datetime,
 	get_url,
 	now,
@@ -155,7 +156,7 @@ class MailAccountRequest(Document):
 		frappe.cache.set_value(
 			f"account_request_otp_hash:{self.name}",
 			frappe.utils.sha256_hash(str(self.otp)),
-			expires_in_sec=60 * 10,
+			expires_in_sec=cint(frappe.conf.expires_otp_in_sec) or 60 * 10,
 		)
 
 	@frappe.whitelist()

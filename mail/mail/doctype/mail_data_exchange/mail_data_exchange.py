@@ -94,7 +94,7 @@ class MailDataExchange(Document):
 				self.name,
 				"_import",
 				queue="long",
-				timeout=1800,
+				timeout=cint(frappe.conf.data_exchange_import_timeout) or 3600,
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -106,7 +106,7 @@ class MailDataExchange(Document):
 				self.name,
 				"_export",
 				queue="long",
-				timeout=1800,
+				timeout=cint(frappe.conf.data_exchange_export_timeout) or 3600,
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -384,12 +384,13 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	return False
 
 
-def _run_stalwart_cli_command(command: str | list[str], _credentials: str, timeout: int = 1500) -> str:
+def _run_stalwart_cli_command(command: str | list[str], _credentials: str, timeout: int | None = None) -> str:
 	"""Runs the stalwart CLI command with the provided credentials and returns the output."""
 
 	if isinstance(command, list):
 		command = " ".join(shlex.quote(arg) for arg in command)
 
+	timeout = timeout or cint(frappe.conf.stalwart_cli_command_timeout) or 3600
 	child = pexpect.spawn(command, encoding="utf-8", timeout=timeout)
 	child.expect("Enter administrator credentials or press \\[ENTER\\] to use OAuth:")
 	child.sendline(_credentials)

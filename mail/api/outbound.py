@@ -3,6 +3,7 @@ from email.utils import parseaddr
 
 import frappe
 from frappe import _
+from frappe.utils import cint
 from frappe.utils.file_manager import save_file
 from werkzeug.datastructures.file_storage import FileStorage
 from werkzeug.utils import secure_filename
@@ -13,7 +14,7 @@ from mail.utils.cache import get_account_for_user
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import has_role
 
-MAX_MESSAGE_SIZE = 25 * 1024 * 1024  # 25 MB
+MAX_MESSAGE_PAYLOAD_SIZE = cint(frappe.conf.max_message_payload_size) or 25 * 1024 * 1024  # 25 MB
 
 
 @frappe.whitelist(methods=["POST"])
@@ -118,8 +119,12 @@ def send_raw(
 	if not raw_message:
 		frappe.throw(_("The raw message is required."), frappe.MandatoryError)
 
-	if len(raw_message.encode("utf-8")) > MAX_MESSAGE_SIZE:
-		frappe.throw(_("The raw message exceeds the maximum allowed size of 25 MB."))
+	if len(raw_message.encode("utf-8")) > MAX_MESSAGE_PAYLOAD_SIZE:
+		frappe.throw(
+			_("The raw message exceeds the maximum allowed size of {0} MB.").format(
+				MAX_MESSAGE_PAYLOAD_SIZE // (1024 * 1024)
+			)
+		)
 
 	return _enqueue_mail(from_, to, raw_message, is_newsletter)
 
@@ -188,9 +193,13 @@ def _handle_chunked_upload(
 		f.write(file.stream.read())
 
 	current_size = os.path.getsize(temp_path)
-	if current_size > MAX_MESSAGE_SIZE:
+	if current_size > MAX_MESSAGE_PAYLOAD_SIZE:
 		os.remove(temp_path)
-		frappe.throw(_("The raw message exceeds the maximum allowed size of 25 MB."))
+		frappe.throw(
+			_("The raw message exceeds the maximum allowed size of {0} MB.").format(
+				MAX_MESSAGE_PAYLOAD_SIZE // (1024 * 1024)
+			)
+		)
 
 	if chunk_index < total_chunks - 1:
 		return f"Chunk {chunk_index + 1} of {total_chunks} received."

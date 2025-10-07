@@ -30,6 +30,7 @@ class MailServerJob(Document):
 				self.name,
 				"execute",
 				queue="long",
+				timeout=cint(frappe.conf.server_job_timeout) or 1500,
 				enqueue_after_commit=True,
 			)
 
@@ -165,6 +166,7 @@ class MailServerJob(Document):
 			self.name,
 			"execute",
 			queue="long",
+			timeout=cint(frappe.conf.server_job_timeout) or 1500,
 			enqueue_after_commit=True,
 		)
 

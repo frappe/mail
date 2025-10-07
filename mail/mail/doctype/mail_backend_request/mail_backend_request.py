@@ -38,6 +38,7 @@ class MailBackendRequest(Document):
 				self.doctype,
 				self.name,
 				"execute",
+				queue="short",
 				enqueue_after_commit=True,
 			)
 

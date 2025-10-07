@@ -63,6 +63,7 @@ class MailServerDeployment(Document):
 				self.name,
 				"execute",
 				queue="long",
+				timeout=cint(frappe.conf.server_deployment_timeout) or 1500,
 				enqueue_after_commit=True,
 			)
 
@@ -180,6 +181,7 @@ class MailServerDeployment(Document):
 			self.name,
 			"execute",
 			queue="long",
+			timeout=cint(frappe.conf.ansible_play_timeout) or 1500,
 			enqueue_after_commit=True,
 		)
 

@@ -950,8 +950,14 @@ def process_pending_emails(mails: list[str]) -> None:
 				)
 
 
-def enqueue_process_pending_emails(batch_process_size: int = 1_000, max_batch_size: int = 10_000) -> None:
+def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size: int | None = None) -> None:
 	"""Enqueue process pending emails."""
+
+	batch_size = batch_size or cint(frappe.conf.process_pending_emails_batch_size) or 2_500
+	max_batch_size = max_batch_size or cint(frappe.conf.process_pending_emails_max_batch_size) or 25_000
+
+	if batch_size > max_batch_size:
+		batch_size = max_batch_size
 
 	MQ = frappe.qb.DocType("Mail Queue")
 
@@ -989,10 +995,11 @@ def enqueue_process_pending_emails(batch_process_size: int = 1_000, max_batch_si
 			.where((MQ.name.isin(mails)) & (MQ.status.notin(["Drafted", "Submitted"])))
 		).run()
 
-		for i, batch in enumerate(create_batch(mails, batch_process_size), start=1):
+		for i, batch in enumerate(create_batch(mails, batch_size), start=1):
 			frappe.enqueue(
 				process_pending_emails,
 				queue="long",
+				timeout=cint(frappe.conf.process_pending_emails_timeout) or 1500,
 				job_name=f"process_pending_emails_{i}_{len(batch)}",
 				enqueue_after_commit=False,
 				mails=batch,
@@ -1000,7 +1007,7 @@ def enqueue_process_pending_emails(batch_process_size: int = 1_000, max_batch_si
 
 		# Recursively process next batch if the limit was reached.
 		if len(mails) == max_batch_size:
-			enqueue_process_pending_emails(batch_process_size, max_batch_size)
+			enqueue_process_pending_emails(batch_size, max_batch_size)
 
 	except Exception:
 		frappe.log_error(
