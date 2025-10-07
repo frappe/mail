@@ -27,6 +27,12 @@ if TYPE_CHECKING:
 
 
 class MailServer(Document):
+	@property
+	def ssh_public_key(self) -> str | None:
+		"""Returns the SSH public key of the cluster."""
+
+		return frappe.db.get_value("Mail Cluster", self.cluster, "ssh_public_key")
+
 	def autoname(self) -> None:
 		self.hostname = self.hostname.lower()
 		self.name = self.hostname

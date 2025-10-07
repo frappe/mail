@@ -30,7 +30,7 @@
   "ssh_user",
   "ssh_port",
   "ssh_key_section",
-  "public_key",
+  "ssh_public_key",
   "tls_tab",
   "acme_providers",
   "tls_certificates",
@@ -187,15 +187,6 @@
    "label": "SSH Key"
   },
   {
-   "description": "<p>This is the SSH public key generated for the Mail Cluster.</p>\n<p>Copy and add it to the <code>~/.ssh/authorized_keys</code> file of this Mail Server to allow Frappe Mail to securely provision and manage this server.</p>",
-   "fetch_from": "cluster.ssh_public_key",
-   "fieldname": "public_key",
-   "fieldtype": "Code",
-   "label": "Public Key",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "section_break_rmju",
    "fieldtype": "Section Break"
   },
@@ -252,6 +243,15 @@
    "no_copy": 1,
    "non_negative": 1,
    "search_index": 1
+  },
+  {
+   "description": "<p>This is the SSH public key generated for the Mail Cluster.</p>\n<p>Copy and add it to the <code>~/.ssh/authorized_keys</code> file of this Mail Server to allow Frappe Mail to securely provision and manage this server.</p>",
+   "fieldname": "ssh_public_key",
+   "fieldtype": "Code",
+   "is_virtual": 1,
+   "label": "Public Key",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -288,7 +288,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-10-01 14:51:58.118915",
+ "modified": "2025-10-07 11:23:29.863665",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",
