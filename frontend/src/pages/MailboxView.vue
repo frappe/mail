@@ -146,17 +146,27 @@
 					<div v-for="(group, key) in groupedThreads" :key="key">
 						<Tooltip :text="__(collapsedGroups.includes(key) ? 'Expand' : 'Collapse')">
 							<div
-								class="text-ink-gray-6 flex cursor-pointer items-center justify-between border-b p-3.5 text-xs font-semibold sm:px-5"
+								class="text-ink-gray-6 group flex cursor-pointer items-center border-b p-3.5 text-xs font-semibold sm:px-5"
 								@click="collapseOrExpandGroup(key)"
 							>
+								<Checkbox
+									v-if="!collapsedGroups.includes(key)"
+									:model-value="isGroupSelected(key)"
+									size="md"
+									class="ml-1.5 mr-[11px] items-center group-hover:inline-flex"
+									:class="{ hidden: !isGroupSelected(key) }"
+									@update:model-value="toggleGroupSelection(key, $event)"
+									@click.stop
+								/>
 								<span class="select-none">
 									{{ getFormattedDate(key).toUpperCase() }}
 								</span>
+
 								<ChevronLeft
 									v-if="collapsedGroups.includes(key)"
-									class="text-ink-gray-5 h-4 w-4"
+									class="text-ink-gray-5 h-4.5 w-4.5 ml-auto"
 								/>
-								<ChevronDown v-else class="text-ink-gray-5 h-4 w-4" />
+								<ChevronDown v-else class="text-ink-gray-5 h-4.5 w-4.5 ml-auto" />
 							</div>
 						</Tooltip>
 						<template v-if="!collapsedGroups.includes(key)">
@@ -342,15 +352,39 @@ const collapseOrExpandGroup = (key: string) => {
 	// todo: reset selections
 }
 
+const getGroupThreads = (key: string) => groupedThreads.value[key]?.map((t) => t.thread_id)
+
 watch(
 	() => threadID,
-	() => {
+	(val) => {
+		if (!val) return
+
 		for (const group of collapsedGroups.value) {
-			if (groupedThreads.value[group]?.some((thread) => thread.thread_id === threadID))
+			if (getGroupThreads(group).includes(val))
 				return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== group))
 		}
 	},
 )
+
+const isGroupSelected = (key: string) =>
+	getGroupThreads(key).every((id) => selections.value.includes(id))
+
+const toggleGroupSelection = (key: string, checked: boolean) => {
+	const groupThreads = getGroupThreads(key)
+
+	if (checked) {
+		const newSelections = new Set([...selections.value, ...groupThreads])
+		selections.value = Array.from(newSelections)
+		mailItems.value?.forEach((item) => {
+			if (item?.id && groupThreads.includes(item.id)) item?.setIsSelected(true)
+		})
+	} else {
+		selections.value = selections.value.filter((id) => !groupThreads.includes(id))
+		mailItems.value?.forEach((item) => {
+			if (item?.id && groupThreads.includes(item.id)) item?.setIsSelected(false)
+		})
+	}
+}
 
 // Selection
 
