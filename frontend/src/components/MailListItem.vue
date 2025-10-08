@@ -17,7 +17,7 @@
 				v-if="(isHovered || isSelected) && !isMobile"
 				:model-value="isSelected"
 				size="md"
-				@update:model-value="emit('setSelected', !isSelected)"
+				@update:model-value="emit('setSelected', $event)"
 				@click.stop
 			/>
 			<div

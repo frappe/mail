@@ -153,7 +153,7 @@
 									v-if="!collapsedGroups.includes(key)"
 									:model-value="isGroupSelected(key)"
 									size="md"
-									class="ml-1.5 mr-[11px] items-center group-hover:inline-flex"
+									class="ml-1.5 mr-[11px] group-hover:inline-flex"
 									:class="{ hidden: !isGroupSelected(key) }"
 									@update:model-value="
 										toggleSelect(getGroupThreads(key), $event)
@@ -378,10 +378,29 @@ const isAllSelected = computed(
 )
 
 const isShiftPressed = ref(false)
+const lastSelected = ref<string[]>()
 
 const toggleSelect = (threadIDs: string[], selected: boolean) => {
-	if (selected) selections.value = Array.from(new Set([...selections.value, ...threadIDs]))
-	else selections.value = selections.value.filter((id) => !threadIDs.includes(id))
+	const allIDs = new Set([...threadIDs, ...getShiftSelectedIDs(threadIDs[0])])
+	if (selected) selections.value = [...new Set([...selections.value, ...allIDs])]
+	else selections.value = selections.value.filter((id) => !allIDs.has(id))
+	lastSelected.value = threadIDs
+}
+
+const getShiftSelectedIDs = (thread: string) => {
+	if (!(isShiftPressed.value && lastSelected.value?.length)) return []
+
+	const currentIndex = threadIDs.value.indexOf(thread)
+	const firstIndex = threadIDs.value.indexOf(lastSelected.value[0])
+	const lastIndex = threadIDs.value.indexOf(lastSelected.value.at(-1))
+
+	const farthestIndex =
+		Math.abs(currentIndex - firstIndex) > Math.abs(currentIndex - lastIndex)
+			? firstIndex
+			: lastIndex
+
+	const [lower, higher] = [farthestIndex, currentIndex].sort((a, b) => a - b)
+	return threadIDs.value.slice(lower, higher + 1)
 }
 
 const toggleSelectAll = (selected: boolean) => {
@@ -389,6 +408,12 @@ const toggleSelectAll = (selected: boolean) => {
 		selections.value = [...threadIDs.value]
 		collapsedGroups.value = []
 	} else selections.value = []
+	lastSelected.value = undefined
+}
+
+const resetSelections = () => {
+	selections.value = []
+	lastSelected.value = undefined
 }
 
 const isGroupSelected = (key: string) =>
@@ -507,7 +532,7 @@ const reloadMails: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) => 
 ) => {
 	if (mailboxRoles.length && !mailboxRoles.map((m) => mailboxIds[m]).includes(mailbox)) return
 
-	selections.value = []
+	resetSelections()
 	threads.reload()
 	if (reloadMailboxes) mailboxes.reload()
 }
@@ -701,7 +726,7 @@ const setFilter = (value: string | null) => {
 	filter.value = value
 	localStorage.setItem(`user:${user.data.name}:filter:${mailbox}`, value ?? '')
 	threads.reload()
-	selections.value = []
+	resetSelections()
 }
 
 // Layout
