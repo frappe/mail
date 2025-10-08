@@ -26,6 +26,7 @@ from mail.utils import (
 	get_import_directory,
 	get_mbox_files,
 	get_stalwart_cli_path,
+	reconnect_on_failure,
 	sanitize_cli_output,
 )
 from mail.utils.cache import get_account_for_user, get_tenant_for_user
@@ -141,6 +142,7 @@ class MailDataExchange(Document):
 		self._db_set(status="Queued", queued_at=now(), notify=True)
 		self.process()
 
+	@reconnect_on_failure()
 	def _import(self) -> None:
 		"""Imports the account data."""
 
@@ -237,6 +239,7 @@ class MailDataExchange(Document):
 				now=True,
 			)
 
+	@reconnect_on_failure()
 	def _export(self) -> None:
 		"""Exports the account data."""
 
