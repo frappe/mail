@@ -28,6 +28,7 @@ from frappe.utils import (
 )
 from uuid_utils import uuid7
 
+from mail import __version__
 from mail.jmap import get_identities, get_jmap_client, get_mailbox_id_by_role
 from mail.utils.cache import get_account_for_email, get_account_for_user
 from mail.utils.dt import convert_to_utc, parsedate_to_datetime
@@ -432,12 +433,14 @@ class MailQueue(Document):
 			"in-reply-to",
 			"references",
 			"reply-to",
+			"user-agent",
 			"sender",
 			"return-path",
 			"mime-version",
 			"content-type",
 			"content-transfer-encoding",
 			"content-language",
+			"x-mailer",
 			"x-priority",
 			"x-mail-queue",
 		}
@@ -825,6 +828,8 @@ class MailQueue(Document):
 			{
 				"sentAt": convert_to_utc(self.sent_at).isoformat(),
 				"header:Message-ID": f"<{self.message_id}>",
+				"header:User-Agent": f"Frappe Mail v{__version__} (Frappe v{frappe.__version__})",
+				"header:X-Mailer": "Frappe Mail",
 			}
 		)
 
