@@ -171,7 +171,7 @@ def serialize_attachments(attachments: list[dict]) -> list[dict]:
 	return [
 		{field: attachment[field] for field in attachment_fields}
 		for attachment in attachments
-		if attachment.get("filename")
+		if attachment.get("filename") and attachment.get("disposition") == "attachment"
 	]
 
 

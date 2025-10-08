@@ -144,42 +144,56 @@
 					@scroll="loadMoreEmails"
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
-						<div class="text-ink-gray-6 border-b p-3.5 text-xs font-semibold sm:px-5">
-							{{ getFormattedDate(key).toUpperCase() }}
-						</div>
-						<MailListItem
-							v-for="mail in group"
-							ref="mailItems"
-							:key="mail.thread_id"
-							:mail
-							:user-layout
-							:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"
-							@click="
-								router.push({
-									name: 'Mail',
-									params: { mailbox, threadID: mail.thread_id },
-								})
-							"
-							@select-thread="
-								(isManuallySelected: boolean) =>
-									selectThread(mail.thread_id, isManuallySelected)
-							"
-							@deselect-thread="
-								(isManuallySelected: boolean) =>
-									deselectThread(mail.thread_id, isManuallySelected)
-							"
-							@set-seen="
-								(seen: boolean) =>
-									setSeen.submit({ thread_ids: [mail.thread_id], seen })
-							"
-							@trash-thread="
-								moveThreads.submit({
-									thread_ids: [mail.thread_id],
-									move_to_mailbox: mailboxIds.trash,
-								})
-							"
-							@delete-thread="deleteThreads.submit([mail.thread_id])"
-						/>
+						<Tooltip :text="__(collapsedGroups.includes(key) ? 'Expand' : 'Collapse')">
+							<div
+								class="text-ink-gray-6 flex cursor-pointer items-center justify-between border-b p-3.5 text-xs font-semibold sm:px-5"
+								@click="collapseOrExpandGroup(key)"
+							>
+								<span class="select-none">
+									{{ getFormattedDate(key).toUpperCase() }}
+								</span>
+								<ChevronLeft
+									v-if="collapsedGroups.includes(key)"
+									class="text-ink-gray-5 h-4 w-4"
+								/>
+								<ChevronDown v-else class="text-ink-gray-5 h-4 w-4" />
+							</div>
+						</Tooltip>
+						<template v-if="!collapsedGroups.includes(key)">
+							<MailListItem
+								v-for="mail in group"
+								ref="mailItems"
+								:key="mail.thread_id"
+								:mail
+								:user-layout
+								:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"
+								@click="
+									router.push({
+										name: 'Mail',
+										params: { mailbox, threadID: mail.thread_id },
+									})
+								"
+								@select-thread="
+									(isManuallySelected: boolean) =>
+										selectThread(mail.thread_id, isManuallySelected)
+								"
+								@deselect-thread="
+									(isManuallySelected: boolean) =>
+										deselectThread(mail.thread_id, isManuallySelected)
+								"
+								@set-seen="
+									(seen: boolean) =>
+										setSeen.submit({ thread_ids: [mail.thread_id], seen })
+								"
+								@trash-thread="
+									moveThreads.submit({
+										thread_ids: [mail.thread_id],
+										move_to_mailbox: mailboxIds.trash,
+									})
+								"
+								@delete-thread="deleteThreads.submit([mail.thread_id])"
+							/>
+						</template>
 					</div>
 					<div v-if="threads.loading" class="flex items-center justify-center py-4">
 						<div class="text-ink-gray-5 flex items-center space-x-2">
@@ -257,6 +271,8 @@ import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import {
 	BadgeAlert,
 	BadgeCheck,
+	ChevronDown,
+	ChevronLeft,
 	FolderInput,
 	ListFilter,
 	LoaderCircle,
@@ -301,6 +317,40 @@ const user = inject('$user') as UserResource
 const dayjs = inject('$dayjs')
 
 const { mailboxes, mailboxIds } = userStore()
+
+// Thread Groups
+
+const groupedThreads = computed<Record<string, Thread[]>>(() =>
+	threads?.data?.reduce((groups: Record<string, Thread[]>, thread: Thread) => {
+		const date = dayjs(thread.received_at).format('YYYY-MM-DD')
+		if (!groups[date]) groups[date] = []
+
+		groups[date].push(thread)
+		return groups
+	}, {}),
+)
+
+const collapsedGroups = ref<string[]>([])
+
+const collapseOrExpandGroup = (key: string) => {
+	if (collapsedGroups.value.includes(key))
+		return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== key))
+
+	collapsedGroups.value.push(key)
+	if (groupedThreads.value[key]?.some((thread) => thread.thread_id === threadID))
+		router.push({ name: 'Mailbox', params: { mailbox } })
+	// todo: reset selections
+}
+
+watch(
+	() => threadID,
+	() => {
+		for (const group of collapsedGroups.value) {
+			if (groupedThreads.value[group]?.some((thread) => thread.thread_id === threadID))
+				return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== group))
+		}
+	},
+)
 
 // Selection
 
@@ -479,16 +529,6 @@ const threads = createResource({
 })
 
 const threadIDs = computed(() => threads.data?.map((thread: Thread) => thread.thread_id) || [])
-
-const groupedThreads = computed(() =>
-	threads?.data?.reduce((groups, thread: Thread) => {
-		const date = dayjs(thread.received_at).format('YYYY-MM-DD')
-		if (!groups[date]) groups[date] = []
-
-		groups[date].push(thread)
-		return groups
-	}, {}),
-)
 
 const reloadMails: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) => void = (
 	reloadMailboxes = true,

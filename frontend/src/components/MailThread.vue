@@ -15,7 +15,7 @@
 				}"
 			/>
 			<template v-else>
-				<h2 v-if="!isMobile" class="mr-2 truncate font-semibold leading-5">
+				<h2 v-if="!isMobile" class="mr-2 select-none truncate font-semibold leading-5">
 					{{ thread?.data?.[0]?.subject || __('[No subject]') }}
 				</h2>
 				<div class="ml-auto shrink-0 space-x-2">
