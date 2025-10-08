@@ -55,8 +55,18 @@
 				:class="!isMobile && userLayout === 'split' ? 'w-1/3' : 'w-full'"
 			>
 				<!-- Toolbar/Actions -->
-				<div class="flex items-center justify-between border-b px-3.5 py-2.5 sm:px-5">
-					<div class="text-base">
+				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
+					<div class="sm:mr-5.5 ml-3 mr-3.5">
+						<Tooltip :text="__('Select All')">
+							<Checkbox
+								v-model="allSelected"
+								size="md"
+								class=""
+								@change="allSelectedManuallyToggled = true"
+							/>
+						</Tooltip>
+					</div>
+					<div class="mr-auto text-base">
 						<span v-if="selections.length">
 							{{
 								selections.length === 1
@@ -123,15 +133,6 @@
 								</Button>
 							</Dropdown>
 						</Tooltip>
-
-						<div class="flex items-center border-l pl-3.5 sm:pl-5">
-							<Tooltip :text="__('Select All')">
-								<Checkbox
-									v-model="allSelected"
-									@change="allSelectedManuallyToggled = true"
-								/>
-							</Tooltip>
-						</div>
 					</div>
 				</div>
 
@@ -352,7 +353,7 @@ const collapseOrExpandGroup = (key: string) => {
 	// todo: reset selections
 }
 
-const getGroupThreads = (key: string) => groupedThreads.value[key]?.map((t) => t.thread_id)
+const getGroupThreads = (group: string) => groupedThreads.value[group]?.map((t) => t.thread_id)
 
 watch(
 	() => threadID,
