@@ -264,16 +264,7 @@
 	<Dialog v-model="showEmptyMailbox" :options="emptyMailboxOptions" />
 </template>
 <script setup lang="ts">
-import {
-	computed,
-	inject,
-	// nextTick,
-	onMounted,
-	onUnmounted,
-	ref,
-	useTemplateRef,
-	watch,
-} from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import {
@@ -425,19 +416,20 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	if (
 		userLayout.value === 'split' &&
 		mailListClicked.value &&
+		threadID &&
 		(e.key === 'ArrowUp' || e.key === 'ArrowDown')
 	) {
 		e.preventDefault()
 
 		const offset = e.key === 'ArrowUp' ? -1 : 1
 		goToThreadByOffset(offset)
+		lastSelected.value = [threadID]
 
-		// const thread = getThreadByOffset(offset)
-		// if (thread) {
-		// 	const item = mailItems.value?.find((el) => el?.id === thread)
-		// 	if (selections.value.includes(thread)) selections.value.push(thread)
-		// 	else selections.value = selections.value.filter((m) => m !== thread)
-		// }
+		const thread = getThreadByOffset(offset)
+		if (thread && isShiftPressed.value) {
+			if (selections.value.includes(thread)) toggleSelect([threadID, thread], false)
+			else toggleSelect([threadID, thread], true)
+		}
 	}
 }
 
@@ -665,7 +657,7 @@ const goToThreadByOffset = (offset: number) => {
 
 	router.push({ name: 'Mail', params: { mailbox, threadID: targetThread } })
 	const el = mailItems.value?.find((el) => el?.id === targetThread)?.$el
-	el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+	if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
 const showEmptyMailbox = ref(false)
