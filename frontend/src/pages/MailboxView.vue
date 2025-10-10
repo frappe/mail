@@ -76,46 +76,36 @@
 						<span v-else>{{ title }}</span>
 					</div>
 					<div class="flex items-center space-x-1.5 sm:space-x-3">
-						<Tooltip v-if="!selections.length" :text="__('Filter')">
-							<Dropdown :options="FILTER_OPTIONS">
-								<Button variant="ghost">
-									<template #icon>
-										<component
-											:is="ListFilter"
-											class="text-ink-gray-7 h-4 w-4"
-										/>
-									</template>
-								</Button>
-							</Dropdown>
-						</Tooltip>
-
-						<Tooltip
-							v-for="action in selectActions"
-							:key="action.label"
-							:text="action.label"
-						>
-							<Button variant="ghost" @click="action.onClick">
+						<Dropdown v-if="!selections.length" :options="FILTER_OPTIONS">
+							<Button variant="ghost" :tooltip="__('Filter')">
 								<template #icon>
-									<component :is="action.icon" class="text-ink-gray-7 h-4 w-4" />
+									<component :is="ListFilter" class="text-ink-gray-7 h-4 w-4" />
 								</template>
 							</Button>
-						</Tooltip>
+						</Dropdown>
 
-						<Tooltip
-							v-if="!!selections.length && mailbox !== 'starred'"
-							:text="__('Move To')"
+						<Button
+							v-for="action in selectActions"
+							:key="action.label"
+							:tooltip="action.label"
+							variant="ghost"
+							@click="action.onClick"
 						>
-							<Dropdown :options="moveToOptions">
-								<Button variant="ghost">
-									<template #icon>
-										<component
-											:is="FolderInput"
-											class="text-ink-gray-7 h-4 w-4"
-										/>
-									</template>
-								</Button>
-							</Dropdown>
-						</Tooltip>
+							<template #icon>
+								<component :is="action.icon" class="text-ink-gray-7 h-4 w-4" />
+							</template>
+						</Button>
+
+						<Dropdown
+							v-if="!!selections.length && mailbox !== 'starred'"
+							:options="moveToOptions"
+						>
+							<Button variant="ghost" :tooltip="__('Move To')">
+								<template #icon>
+									<component :is="FolderInput" class="text-ink-gray-7 h-4 w-4" />
+								</template>
+							</Button>
+						</Dropdown>
 					</div>
 				</div>
 
@@ -150,7 +140,7 @@
 									"
 									@click.stop
 								/>
-								<span class="select-none">
+								<span class="select-none pt-px">
 									{{
 										getFormattedDate(
 											key,

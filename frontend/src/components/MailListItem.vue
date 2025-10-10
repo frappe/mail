@@ -106,13 +106,17 @@
 			class="flex items-center justify-end space-x-2"
 			:class="{ 'w-[82px] shrink-0': isFullWidth }"
 		>
-			<Tooltip v-for="action in actions" :key="action.label" :text="action.label">
-				<Button variant="ghost" @click.stop="action.onClick">
-					<template #icon>
-						<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
-					</template>
-				</Button>
-			</Tooltip>
+			<Button
+				v-for="action in actions"
+				:key="action.label"
+				:tooltip="action.label"
+				variant="ghost"
+				@click.stop="action.onClick"
+			>
+				<template #icon>
+					<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
+				</template>
+			</Button>
 		</div>
 	</div>
 </template>
@@ -120,7 +124,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Check, Mail, MailOpen, Trash2 } from 'lucide-vue-next'
-import { Avatar, Badge, Button, Checkbox, Tooltip } from 'frappe-ui'
+import { Avatar, Badge, Button, Checkbox } from 'frappe-ui'
 
 import { getFirstAlphabet, getFormattedRecipients } from '@/utils'
 import { useLayout, useScreenSize } from '@/utils/composables'
