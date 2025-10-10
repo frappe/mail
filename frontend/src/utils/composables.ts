@@ -50,6 +50,25 @@ export const useTheme = () => {
 	return { currentTheme, getSystemTheme, setTheme, activeTheme }
 }
 
+export type GroupMessagesBy = 'none' | 'day' | 'month'
+
+const showReadingPane = ref(false)
+const groupMessagesBy = ref<GroupMessagesBy>('day')
+
+export const useLayout = () => {
+	const setShowReadingPane = (user: string, show: boolean) => {
+		showReadingPane.value = show
+		localStorage.setItem(`user:${user}:showReadingPane`, String(show))
+	}
+
+	const setGroupMessagesBy = (user: string, groupBy: GroupMessagesBy) => {
+		groupMessagesBy.value = groupBy
+		localStorage.setItem(`user:${user}:groupMessagesBy`, groupBy)
+	}
+
+	return { showReadingPane, setShowReadingPane, groupMessagesBy, setGroupMessagesBy }
+}
+
 export const useTextEditorButtons = () => {
 	const { isMobile } = useScreenSize()
 

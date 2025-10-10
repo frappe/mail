@@ -39,11 +39,12 @@
 </template>
 <script setup lang="ts">
 import { markRaw, ref } from 'vue'
-import { Code, DatabaseBackup, Mailbox, TreePalm, User } from 'lucide-vue-next'
+import { Code, DatabaseBackup, Mailbox, Palette, TreePalm, User } from 'lucide-vue-next'
 import { Button, Dialog } from 'frappe-ui'
 
 import AccountSettings from '@/components/Settings/AccountSettings.vue'
 import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
+import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
 import MailDataExchangeSettings from '@/components/Settings/MailDataExchangeSettings.vue'
 import ProfileSettings from '@/components/Settings/ProfileSettings.vue'
 import VacationResponseSettings from '@/components/Settings/VacationResponseSettings.vue'
@@ -60,6 +61,11 @@ const tabs = [
 		label: __('Account'),
 		icon: Mailbox,
 		component: markRaw(AccountSettings),
+	},
+	{
+		label: __('Appearance'),
+		icon: Palette,
+		component: markRaw(AppearanceSettings),
 	},
 	{
 		label: __('Vacation Response'),

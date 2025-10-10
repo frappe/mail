@@ -19,7 +19,7 @@
 		v-if="
 			[mailboxIds.trash, mailboxIds.junk].includes(mailbox) &&
 			threads.data?.length &&
-			(userLayout === 'split' || !threadID)
+			(showReadingPane || !threadID)
 		"
 		class="space-x-1 border-b px-3 py-2.5 sm:px-5"
 	>
@@ -52,7 +52,7 @@
 			<div
 				ref="mailSidebar"
 				class="sticky top-16 flex flex-col border-r"
-				:class="!isMobile && userLayout === 'split' ? 'w-1/3' : 'w-full'"
+				:class="!isMobile && showReadingPane ? 'w-1/3' : 'w-full'"
 			>
 				<!-- Toolbar/Actions -->
 				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
@@ -76,22 +76,6 @@
 						<span v-else>{{ title }}</span>
 					</div>
 					<div class="flex items-center space-x-1.5 sm:space-x-3">
-						<Tooltip
-							v-if="!isMobile && !selections.length"
-							:text="__('Select Layout')"
-						>
-							<Dropdown :options="LAYOUT_OPTIONS">
-								<Button variant="ghost">
-									<template #icon>
-										<component
-											:is="userLayout === 'full' ? Rows4 : PanelLeft"
-											class="text-ink-gray-7 h-4 w-4"
-										/>
-									</template>
-								</Button>
-							</Dropdown>
-						</Tooltip>
-
 						<Tooltip v-if="!selections.length" :text="__('Filter')">
 							<Dropdown :options="FILTER_OPTIONS">
 								<Button variant="ghost">
@@ -145,6 +129,7 @@
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
 						<Tooltip
+							v-if="groupMessagesBy !== 'none'"
 							:text="
 								isLastGroup(key)
 									? ''
@@ -166,7 +151,12 @@
 									@click.stop
 								/>
 								<span class="select-none">
-									{{ getFormattedDate(key).toUpperCase() }}
+									{{
+										getFormattedDate(
+											key,
+											groupMessagesBy === 'month',
+										).toUpperCase()
+									}}
 								</span>
 
 								<component
@@ -184,7 +174,6 @@
 								ref="mailItems"
 								:key="mail.thread_id"
 								:mail
-								:user-layout
 								:is-selected="selections.includes(mail.thread_id)"
 								:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"
 								@click="
@@ -234,10 +223,10 @@
 			<div
 				class="bg-surface-white overflow-y-auto"
 				:class="{
-					'w-2/3': !isMobile && userLayout === 'split',
-					'absolute bottom-0 left-0 right-0 top-0': !isMobile && userLayout === 'full',
+					'w-2/3': !isMobile && showReadingPane,
+					'absolute bottom-0 left-0 right-0 top-0': !isMobile && !showReadingPane,
 					'fixed inset-0': isMobile,
-					hidden: (isMobile || userLayout === 'full') && !threadID,
+					hidden: (isMobile || !showReadingPane) && !threadID,
 				}"
 			>
 				<MailThread
@@ -285,10 +274,8 @@ import {
 	Mail,
 	MailOpen,
 	Mails,
-	PanelLeft,
 	Paperclip,
 	RefreshCw,
-	Rows4,
 	Star,
 	Trash2,
 } from 'lucide-vue-next'
@@ -303,20 +290,21 @@ import {
 } from 'frappe-ui'
 
 import { getFormattedDate, raiseToast, startResizing } from '@/utils'
-import { useScreenSize, useSidebar } from '@/utils/composables'
+import { useLayout, useScreenSize, useSidebar } from '@/utils/composables'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
 import MailListItem from '@/components/MailListItem.vue'
 import MailThread from '@/components/MailThread.vue'
 
-import type { LayoutType, Thread, UserResource } from '@/types'
+import type { Thread, UserResource } from '@/types'
 
 const { mailbox, threadID } = defineProps<{ mailbox: string; threadID?: string }>()
 
 const router = useRouter()
 const { isMobile } = useScreenSize()
 const { openSidebar } = useSidebar()
+const { showReadingPane, groupMessagesBy } = useLayout()
 
 const socket = inject('$socket')
 const user = inject('$user') as UserResource
@@ -328,9 +316,10 @@ const { mailboxes, mailboxIds } = userStore()
 
 const groupedThreads = computed<Record<string, Thread[]>>(() =>
 	threads?.data?.reduce((groups: Record<string, Thread[]>, thread: Thread) => {
-		const date = dayjs(thread.received_at).format('YYYY-MM-DD')
+		const date = dayjs(thread.received_at).format(
+			groupMessagesBy.value === 'day' ? 'YYYY-MM-DD' : 'YYYY-MM',
+		)
 		if (!groups[date]) groups[date] = []
-
 		groups[date].push(thread)
 		return groups
 	}, {}),
@@ -353,6 +342,8 @@ const toggleGroupCollapse = (key: string) => {
 }
 
 const getGroupThreads = (group: string) => groupedThreads.value[group]?.map((t) => t.thread_id)
+
+watch(groupMessagesBy, () => (collapsedGroups.value = []))
 
 watch(
 	() => threadID,
@@ -429,7 +420,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	if (e.key === 'Shift') isShiftPressed.value = true
 
 	if (
-		userLayout.value === 'split' &&
+		showReadingPane.value &&
 		mailListClicked.value &&
 		threadID &&
 		(e.key === 'ArrowUp' || e.key === 'ArrowDown')
@@ -735,30 +726,6 @@ const setFilter = (value: string | null) => {
 	threads.reload()
 	resetSelections()
 }
-
-// Layout
-
-const userLayout = ref<LayoutType>(
-	(localStorage.getItem(`user:${user.data.name}:layout`) as LayoutType) || 'split',
-)
-
-const setUserLayout = (type: LayoutType) => {
-	userLayout.value = type
-	localStorage.setItem(`user:${user.data.name}:layout`, type)
-}
-
-const LAYOUT_OPTIONS = [
-	{
-		label: __('Full Width'),
-		icon: Rows4,
-		onClick: () => setUserLayout('full'),
-	},
-	{
-		label: __('Vertical Split'),
-		icon: PanelLeft,
-		onClick: () => setUserLayout('split'),
-	},
-]
 
 // UI formatting
 
