@@ -17,6 +17,7 @@ declare module 'vue' {
     AddMailingListModal: typeof import('./src/components/Modals/AddMailingListModal.vue')['default']
     AddMemberModal: typeof import('./src/components/Modals/AddMemberModal.vue')['default']
     AdvancedSettings: typeof import('./src/components/Settings/AdvancedSettings.vue')['default']
+    AppearanceSettings: typeof import('./src/components/Settings/AppearanceSettings.vue')['default']
     AppSidebar: typeof import('./src/components/AppSidebar.vue')['default']
     AppsMenu: typeof import('./src/components/AppsMenu.vue')['default']
     AttachmentCapsule: typeof import('./src/components/AttachmentCapsule.vue')['default']

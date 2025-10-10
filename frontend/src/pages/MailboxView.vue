@@ -76,22 +76,6 @@
 						<span v-else>{{ title }}</span>
 					</div>
 					<div class="flex items-center space-x-1.5 sm:space-x-3">
-						<Tooltip
-							v-if="!isMobile && !selections.length"
-							:text="__('Select Layout')"
-						>
-							<Dropdown :options="LAYOUT_OPTIONS">
-								<Button variant="ghost">
-									<template #icon>
-										<component
-											:is="userLayout === 'full' ? Rows4 : PanelLeft"
-											class="text-ink-gray-7 h-4 w-4"
-										/>
-									</template>
-								</Button>
-							</Dropdown>
-						</Tooltip>
-
 						<Tooltip v-if="!selections.length" :text="__('Filter')">
 							<Dropdown :options="FILTER_OPTIONS">
 								<Button variant="ghost">
@@ -285,10 +269,8 @@ import {
 	Mail,
 	MailOpen,
 	Mails,
-	PanelLeft,
 	Paperclip,
 	RefreshCw,
-	Rows4,
 	Star,
 	Trash2,
 } from 'lucide-vue-next'
@@ -323,6 +305,10 @@ const user = inject('$user') as UserResource
 const dayjs = inject('$dayjs')
 
 const { mailboxes, mailboxIds } = userStore()
+
+const userLayout = computed(
+	() => (localStorage.getItem(`user:${user.data.name}:layout`) as LayoutType) || 'split',
+)
 
 // Thread Groups
 
@@ -735,30 +721,6 @@ const setFilter = (value: string | null) => {
 	threads.reload()
 	resetSelections()
 }
-
-// Layout
-
-const userLayout = ref<LayoutType>(
-	(localStorage.getItem(`user:${user.data.name}:layout`) as LayoutType) || 'split',
-)
-
-const setUserLayout = (type: LayoutType) => {
-	userLayout.value = type
-	localStorage.setItem(`user:${user.data.name}:layout`, type)
-}
-
-const LAYOUT_OPTIONS = [
-	{
-		label: __('Full Width'),
-		icon: Rows4,
-		onClick: () => setUserLayout('full'),
-	},
-	{
-		label: __('Vertical Split'),
-		icon: PanelLeft,
-		onClick: () => setUserLayout('split'),
-	},
-]
 
 // UI formatting
 
