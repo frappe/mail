@@ -129,6 +129,7 @@
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
 						<Tooltip
+							v-if="groupMessagesBy !== 'none'"
 							:text="
 								isLastGroup(key)
 									? ''
@@ -150,7 +151,12 @@
 									@click.stop
 								/>
 								<span class="select-none">
-									{{ getFormattedDate(key).toUpperCase() }}
+									{{
+										getFormattedDate(
+											key,
+											groupMessagesBy === 'month',
+										).toUpperCase()
+									}}
 								</span>
 
 								<component
@@ -310,9 +316,10 @@ const { mailboxes, mailboxIds } = userStore()
 
 const groupedThreads = computed<Record<string, Thread[]>>(() =>
 	threads?.data?.reduce((groups: Record<string, Thread[]>, thread: Thread) => {
-		const date = dayjs(thread.received_at).format('YYYY-MM-DD')
+		const date = dayjs(thread.received_at).format(
+			groupMessagesBy.value === 'day' ? 'YYYY-MM-DD' : 'YYYY-MM',
+		)
 		if (!groups[date]) groups[date] = []
-
 		groups[date].push(thread)
 		return groups
 	}, {}),
@@ -335,6 +342,8 @@ const toggleGroupCollapse = (key: string) => {
 }
 
 const getGroupThreads = (group: string) => groupedThreads.value[group]?.map((t) => t.thread_id)
+
+watch(groupMessagesBy, () => (collapsedGroups.value = []))
 
 watch(
 	() => threadID,

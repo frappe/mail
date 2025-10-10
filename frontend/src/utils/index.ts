@@ -133,11 +133,13 @@ export const getFormattedRecipients = (mailRecipients: Recipient[]) => {
 	return formattedRecipients
 }
 
-export const getFormattedDate = (date: Date | string) => {
-	if (dayjs(date).isToday()) return __('Today')
-	if (dayjs(date).isYesterday()) return __('Yesterday')
-	const isCurrentYear = dayjs(date).year() === dayjs().year()
-	return dayjs(date).format(isCurrentYear ? 'D MMMM' : 'D MMMM YYYY')
+export const getFormattedDate = (date: Date | string, omitDate = false) => {
+	const dateObj = dayjs(date)
+	const isCurrentYear = dateObj.year() === dayjs().year()
+	if (omitDate) return dateObj.format(isCurrentYear ? 'MMMM' : 'MMMM YYYY')
+	if (dateObj.isToday()) return __('Today')
+	if (dateObj.isYesterday()) return __('Yesterday')
+	return dateObj.format(isCurrentYear ? 'D MMMM' : 'D MMMM YYYY')
 }
 
 export const getFirstAlphabet = (str?: string) => str?.match(/[A-Za-z]/)?.[0]
