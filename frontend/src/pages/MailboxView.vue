@@ -144,28 +144,38 @@
 					@scroll="loadMoreEmails"
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
-						<Tooltip :text="__(collapsedGroups.includes(key) ? 'Expand' : 'Collapse')">
+						<Tooltip
+							:text="
+								isLastGroup(key)
+									? ''
+									: __(collapsedGroups.includes(key) ? 'Expand' : 'Collapse')
+							"
+						>
 							<div
-								class="text-ink-gray-6 group flex cursor-pointer items-center border-b p-3.5 text-xs font-semibold sm:px-5"
+								class="text-ink-gray-6 group flex items-center border-b p-3.5 text-xs font-semibold sm:px-5"
+								:class="{ 'cursor-pointer': !isLastGroup(key) }"
 								@click="toggleGroupCollapse(key)"
 							>
 								<Checkbox
 									:model-value="isGroupSelected(key)"
 									size="md"
-									class="ml-1.5 mr-[11px] group-hover:visible"
-									:class="{ invisible: !isGroupSelected(key) }"
-									@update:model-value="toggleGroupSelect(key, $event)"
+									class="ml-1.5 mr-[11px]"
+									@update:model-value="
+										toggleSelect(getGroupThreads(key), $event)
+									"
 									@click.stop
 								/>
 								<span class="select-none">
 									{{ getFormattedDate(key).toUpperCase() }}
 								</span>
 
-								<ChevronRight
-									v-if="collapsedGroups.includes(key)"
-									class="text-ink-gray-5 h-4.5 w-4.5 ml-auto"
+								<component
+									:is="
+										collapsedGroups.includes(key) ? ChevronRight : ChevronDown
+									"
+									v-if="!isLastGroup(key)"
+									class="text-ink-gray-5 ml-auto h-4 w-4"
 								/>
-								<ChevronDown v-else class="text-ink-gray-5 h-4.5 w-4.5 ml-auto" />
 							</div>
 						</Tooltip>
 						<template v-if="!collapsedGroups.includes(key)">
@@ -326,9 +336,13 @@ const groupedThreads = computed<Record<string, Thread[]>>(() =>
 	}, {}),
 )
 
+const isLastGroup = (key: string) => Object.keys(groupedThreads.value).at(-1) === key
+
 const collapsedGroups = ref<string[]>([])
 
 const toggleGroupCollapse = (key: string) => {
+	if (isLastGroup(key)) return
+
 	if (collapsedGroups.value.includes(key))
 		return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== key))
 
@@ -352,11 +366,6 @@ watch(
 	},
 )
 
-const toggleGroupSelect = (key: string, selected: boolean) => {
-	if (selected) collapsedGroups.value = collapsedGroups.value.filter((d) => d !== key)
-	toggleSelect(getGroupThreads(key), selected)
-}
-
 // Selection
 
 const mailList = useTemplateRef('mailList')
@@ -366,12 +375,18 @@ onClickOutside(mailList, () => (mailListClicked.value = false))
 const mailItems = useTemplateRef('mailItems')
 
 const selections = ref<string[]>([])
+const lastSelected = ref<string[]>()
+const isShiftPressed = ref(false)
+
 const isAllSelected = computed(
 	() => threadIDs.value.length && selections.value.length === threadIDs.value.length,
 )
 
-const isShiftPressed = ref(false)
-const lastSelected = ref<string[]>()
+watch(selections, (val) => {
+	collapsedGroups.value = collapsedGroups.value.filter(
+		(group) => !getGroupThreads(group).some((thread) => val.includes(thread)),
+	)
+})
 
 const toggleSelect = (threadIDs: string[], selected: boolean) => {
 	const allIDs = new Set([...threadIDs, ...getShiftSelectedIDs(threadIDs[0])])
@@ -397,10 +412,8 @@ const getShiftSelectedIDs = (thread: string) => {
 }
 
 const toggleSelectAll = (selected: boolean) => {
-	if (selected) {
-		selections.value = [...threadIDs.value]
-		collapsedGroups.value = []
-	} else selections.value = []
+	if (selected) selections.value = [...threadIDs.value]
+	else selections.value = []
 	lastSelected.value = undefined
 }
 
