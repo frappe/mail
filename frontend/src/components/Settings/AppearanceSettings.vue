@@ -9,37 +9,41 @@
 		@update:model-value="setTheme($event)"
 	/>
 	<Switch
-		:model-value="userLayout === 'split'"
+		:model-value="showReadingPane"
 		:label="__('Show Reading Pane')"
 		:description="__('Display message preview beside your mail list')"
-		@update:model-value="setUserLayout($event ? 'split' : 'full')"
+		@update:model-value="setShowReadingPane(user.data.name, $event)"
+	/>
+	<FormControl
+		:model-value="groupMessagesBy"
+		:label="__('Group Messages By')"
+		type="select"
+		variant="outline"
+		:options="GROUP_MESSAGES_OPTIONS"
+		@update:model-value="setGroupMessagesBy(user.data.name, $event)"
 	/>
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject } from 'vue'
 import { FormControl, Switch } from 'frappe-ui'
 
-import { useTheme } from '@/utils/composables'
-
-import type { LayoutType } from '@/types'
-
-const user = inject('$user')
-
-const userLayout = ref<LayoutType>(
-	(localStorage.getItem(`user:${user.data.name}:layout`) as LayoutType) || 'split',
-)
-
-const setUserLayout = (type: LayoutType) => {
-	localStorage.setItem(`user:${user.data.name}:layout`, type)
-	userLayout.value = type
-}
+import { useLayout, useTheme } from '@/utils/composables'
 
 const { currentTheme, setTheme } = useTheme()
+const { showReadingPane, setShowReadingPane, groupMessagesBy, setGroupMessagesBy } = useLayout()
+
+const user = inject('$user')
 
 const COLOR_SCHEMES = [
 	{ label: __('Light Mode'), value: 'light' },
 	{ label: __('Dark Mode'), value: 'dark' },
 	{ label: __('System Default'), value: 'system' },
+]
+
+const GROUP_MESSAGES_OPTIONS = [
+	{ label: __('None'), value: 'none' },
+	{ label: __('Day'), value: 'day' },
+	{ label: __('Month'), value: 'month' },
 ]
 </script>

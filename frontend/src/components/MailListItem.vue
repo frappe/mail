@@ -123,27 +123,24 @@ import { Check, Mail, MailOpen, Trash2 } from 'lucide-vue-next'
 import { Avatar, Badge, Button, Checkbox, Tooltip } from 'frappe-ui'
 
 import { getFirstAlphabet, getFormattedRecipients } from '@/utils'
-import { useScreenSize } from '@/utils/composables'
+import { useLayout, useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
 import MailDate from '@/components/MailDate.vue'
 
-import type { LayoutType, Thread } from '@/types'
+import type { Thread } from '@/types'
 
-const { mail, userLayout, isSelected } = defineProps<{
-	mail: Thread
-	userLayout: LayoutType
-	isSelected: boolean
-}>()
+const { mail, isSelected } = defineProps<{ mail: Thread; isSelected: boolean }>()
 
 const emit = defineEmits(['setSeen', 'trashThread', 'deleteThread', 'setSelected'])
 
 const { isMobile } = useScreenSize()
+const { showReadingPane } = useLayout()
 const { mailboxIds } = userStore()
 
 const mailboxes = computed(() => mail.mailboxes.map((m) => m.mailbox_id))
 
-const isFullWidth = computed(() => userLayout === 'full' && !isMobile.value)
+const isFullWidth = computed(() => !(showReadingPane.value || isMobile.value))
 
 const header = computed(() => {
 	const isOutgoing =

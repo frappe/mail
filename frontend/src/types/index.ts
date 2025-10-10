@@ -110,8 +110,6 @@ export interface Thread {
 	attachments: Attachment[]
 }
 
-export type LayoutType = 'split' | 'full'
-
 export interface NotificationPayload {
 	data?: {
 		title?: string
