@@ -19,49 +19,48 @@
 					{{ thread?.data?.[0]?.subject || __('[No subject]') }}
 				</h2>
 				<div class="ml-auto shrink-0 space-x-2">
-					<Tooltip
+					<Button
 						v-for="action in threadActions"
 						:key="action.label"
-						:text="action.label"
+						:tooltip="action.label"
+						variant="ghost"
+						@click="action.onClick"
 					>
-						<Button variant="ghost" @click="action.onClick">
+						<template #icon>
+							<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
+						</template>
+					</Button>
+
+					<Dropdown v-if="mailbox !== 'starred'" :options="moveToOptions">
+						<Button variant="ghost" :tooltip="__('Move To')">
 							<template #icon>
-								<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
+								<FolderInput class="text-ink-gray-5 h-4 w-4" />
 							</template>
 						</Button>
-					</Tooltip>
-					<Tooltip v-if="mailbox !== 'starred'" :text="__('Move To')">
-						<Dropdown :options="moveToOptions">
-							<Button variant="ghost">
-								<template #icon>
-									<FolderInput class="text-ink-gray-5 h-4 w-4" />
-								</template>
-							</Button>
-						</Dropdown>
-					</Tooltip>
+					</Dropdown>
+
 					<template v-if="threads.includes(threadID)">
-						<Tooltip :text="__('Previous Thread')">
-							<Button
-								variant="ghost"
-								:disabled="threadID === threads[0]"
-								@click="emit('prevThread')"
-							>
-								<template #icon>
-									<ChevronLeft class="text-ink-gray-5 h-4 w-4" />
-								</template>
-							</Button>
-						</Tooltip>
-						<Tooltip :text="__('Next Thread')">
-							<Button
-								variant="ghost"
-								:disabled="threadID === threads.at(-1)"
-								@click="emit('nextThread')"
-							>
-								<template #icon>
-									<ChevronRight class="text-ink-gray-5 h-4 w-4" />
-								</template>
-							</Button>
-						</Tooltip>
+						<Button
+							variant="ghost"
+							:tooltip="__('Previous Thread')"
+							:disabled="threadID === threads[0]"
+							@click="emit('prevThread')"
+						>
+							<template #icon>
+								<ChevronLeft class="text-ink-gray-5 h-4 w-4" />
+							</template>
+						</Button>
+
+						<Button
+							variant="ghost"
+							:tooltip="__('Next Thread')"
+							:disabled="threadID === threads.at(-1)"
+							@click="emit('nextThread')"
+						>
+							<template #icon>
+								<ChevronRight class="text-ink-gray-5 h-4 w-4" />
+							</template>
+						</Button>
 					</template>
 				</div>
 			</template>
@@ -309,7 +308,7 @@ import {
 	SquarePen,
 	Trash2,
 } from 'lucide-vue-next'
-import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
+import { Avatar, Button, Dropdown, createResource } from 'frappe-ui'
 
 import {
 	extractQuotedContent,

@@ -1,20 +1,19 @@
 <template>
 	<div class="bg-surface-gray-1 flex justify-between rounded p-3">
 		<pre class="text-wrap p-1 text-base">{{ code }}</pre>
-		<Tooltip :text="__('Copy Code')">
-			<Button
-				icon="copy"
-				size="sm"
-				variant="ghost"
-				class="shrink-0"
-				@click="copyToClipBoard"
-			/>
-		</Tooltip>
+		<Button
+			icon="copy"
+			size="sm"
+			variant="ghost"
+			class="shrink-0"
+			:tooltip="__('Copy Code')"
+			@click="copyToClipBoard"
+		/>
 	</div>
 </template>
 
 <script setup lang="ts">
-import { Button, Tooltip } from 'frappe-ui'
+import { Button } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 

@@ -1,27 +1,25 @@
 <template>
-	<Tooltip
+	<Button
 		v-for="action in primaryActions(mail).filter((d) => d.condition !== false && !isCollapsed)"
 		:key="action.label"
-		:text="action.label"
+		variant="ghost"
+		:tooltip="action.label"
+		@click.stop="action.onClick"
 	>
-		<Button variant="ghost" @click.stop="action.onClick">
-			<template #icon>
-				<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
-			</template>
-		</Button>
-	</Tooltip>
+		<template #icon>
+			<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
+		</template>
+	</Button>
 
-	<Tooltip v-if="!mail.draft && !isCollapsed" :text="__('More')">
-		<Dropdown :options="moreActions(mail)">
-			<span @click.stop>
-				<Button variant="ghost">
-					<template #icon>
-						<Ellipsis class="text-ink-gray-5 h-4 w-4" />
-					</template>
-				</Button>
-			</span>
-		</Dropdown>
-	</Tooltip>
+	<Dropdown v-if="!mail.draft && !isCollapsed" :options="moreActions(mail)">
+		<span @click.stop>
+			<Button variant="ghost" :tooltip="__('More')">
+				<template #icon>
+					<Ellipsis class="text-ink-gray-5 h-4 w-4" />
+				</template>
+			</Button>
+		</span>
+	</Dropdown>
 </template>
 
 <script lang="ts" setup>
@@ -38,7 +36,7 @@ import {
 	Star,
 	Trash2,
 } from 'lucide-vue-next'
-import { Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
+import { Button, Dropdown, createResource } from 'frappe-ui'
 
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
