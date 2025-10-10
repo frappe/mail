@@ -150,21 +150,18 @@
 								@click="toggleGroupCollapse(key)"
 							>
 								<Checkbox
-									v-if="!collapsedGroups.includes(key)"
 									:model-value="isGroupSelected(key)"
 									size="md"
-									class="ml-1.5 mr-[11px] group-hover:inline-flex"
-									:class="{ hidden: !isGroupSelected(key) }"
-									@update:model-value="
-										toggleSelect(getGroupThreads(key), $event)
-									"
+									class="ml-1.5 mr-[11px] group-hover:visible"
+									:class="{ invisible: !isGroupSelected(key) }"
+									@update:model-value="toggleGroupSelect(key, $event)"
 									@click.stop
 								/>
 								<span class="select-none">
 									{{ getFormattedDate(key).toUpperCase() }}
 								</span>
 
-								<ChevronLeft
+								<ChevronRight
 									v-if="collapsedGroups.includes(key)"
 									class="text-ink-gray-5 h-4.5 w-4.5 ml-auto"
 								/>
@@ -271,7 +268,7 @@ import {
 	BadgeAlert,
 	BadgeCheck,
 	ChevronDown,
-	ChevronLeft,
+	ChevronRight,
 	FolderInput,
 	ListFilter,
 	LoaderCircle,
@@ -354,6 +351,11 @@ watch(
 		}
 	},
 )
+
+const toggleGroupSelect = (key: string, selected: boolean) => {
+	if (selected) collapsedGroups.value = collapsedGroups.value.filter((d) => d !== key)
+	toggleSelect(getGroupThreads(key), selected)
+}
 
 // Selection
 
