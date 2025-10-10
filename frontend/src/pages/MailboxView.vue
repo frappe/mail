@@ -55,8 +55,17 @@
 				:class="!isMobile && userLayout === 'split' ? 'w-1/3' : 'w-full'"
 			>
 				<!-- Toolbar/Actions -->
-				<div class="flex items-center justify-between border-b px-3.5 py-2.5 sm:px-5">
-					<div class="text-base">
+				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
+					<div class="sm:mr-5.5 ml-3 mr-3.5">
+						<Tooltip :text="__('Select All')">
+							<Checkbox
+								:model-value="isAllSelected"
+								size="md"
+								@update:model-value="toggleSelectAll"
+							/>
+						</Tooltip>
+					</div>
+					<div class="mr-auto text-base">
 						<span v-if="selections.length">
 							{{
 								selections.length === 1
@@ -123,15 +132,6 @@
 								</Button>
 							</Dropdown>
 						</Tooltip>
-
-						<div class="flex items-center border-l pl-3.5 sm:pl-5">
-							<Tooltip :text="__('Select All')">
-								<Checkbox
-									v-model="allSelected"
-									@change="allSelectedManuallyToggled = true"
-								/>
-							</Tooltip>
-						</div>
 					</div>
 				</div>
 
@@ -144,42 +144,71 @@
 					@scroll="loadMoreEmails"
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
-						<div class="text-ink-gray-6 border-b p-3.5 text-xs font-semibold sm:px-5">
-							{{ getFormattedDate(key).toUpperCase() }}
-						</div>
-						<MailListItem
-							v-for="mail in group"
-							ref="mailItems"
-							:key="mail.thread_id"
-							:mail
-							:user-layout
-							:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"
-							@click="
-								router.push({
-									name: 'Mail',
-									params: { mailbox, threadID: mail.thread_id },
-								})
+						<Tooltip
+							:text="
+								isLastGroup(key)
+									? ''
+									: __(collapsedGroups.includes(key) ? 'Expand' : 'Collapse')
 							"
-							@select-thread="
-								(isManuallySelected: boolean) =>
-									selectThread(mail.thread_id, isManuallySelected)
-							"
-							@deselect-thread="
-								(isManuallySelected: boolean) =>
-									deselectThread(mail.thread_id, isManuallySelected)
-							"
-							@set-seen="
-								(seen: boolean) =>
-									setSeen.submit({ thread_ids: [mail.thread_id], seen })
-							"
-							@trash-thread="
-								moveThreads.submit({
-									thread_ids: [mail.thread_id],
-									move_to_mailbox: mailboxIds.trash,
-								})
-							"
-							@delete-thread="deleteThreads.submit([mail.thread_id])"
-						/>
+						>
+							<div
+								class="text-ink-gray-6 group flex items-center border-b p-3.5 text-xs font-semibold sm:px-5"
+								:class="{ 'cursor-pointer': !isLastGroup(key) }"
+								@click="toggleGroupCollapse(key)"
+							>
+								<Checkbox
+									:model-value="isGroupSelected(key)"
+									size="md"
+									class="ml-1.5 mr-[11px]"
+									@update:model-value="
+										toggleSelect(getGroupThreads(key), $event)
+									"
+									@click.stop
+								/>
+								<span class="select-none">
+									{{ getFormattedDate(key).toUpperCase() }}
+								</span>
+
+								<component
+									:is="
+										collapsedGroups.includes(key) ? ChevronRight : ChevronDown
+									"
+									v-if="!isLastGroup(key)"
+									class="text-ink-gray-5 ml-auto h-4 w-4"
+								/>
+							</div>
+						</Tooltip>
+						<template v-if="!collapsedGroups.includes(key)">
+							<MailListItem
+								v-for="mail in group"
+								ref="mailItems"
+								:key="mail.thread_id"
+								:mail
+								:user-layout
+								:is-selected="selections.includes(mail.thread_id)"
+								:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"
+								@click="
+									router.push({
+										name: 'Mail',
+										params: { mailbox, threadID: mail.thread_id },
+									})
+								"
+								@set-seen="
+									(seen: boolean) =>
+										setSeen.submit({ thread_ids: [mail.thread_id], seen })
+								"
+								@trash-thread="
+									moveThreads.submit({
+										thread_ids: [mail.thread_id],
+										move_to_mailbox: mailboxIds.trash,
+									})
+								"
+								@delete-thread="deleteThreads.submit([mail.thread_id])"
+								@set-selected="
+									(selected: boolean) => toggleSelect([mail.thread_id], selected)
+								"
+							/>
+						</template>
 					</div>
 					<div v-if="threads.loading" class="flex items-center justify-center py-4">
 						<div class="text-ink-gray-5 flex items-center space-x-2">
@@ -242,21 +271,14 @@
 	<Dialog v-model="showEmptyMailbox" :options="emptyMailboxOptions" />
 </template>
 <script setup lang="ts">
-import {
-	computed,
-	inject,
-	// nextTick,
-	onMounted,
-	onUnmounted,
-	ref,
-	useTemplateRef,
-	watch,
-} from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import {
 	BadgeAlert,
 	BadgeCheck,
+	ChevronDown,
+	ChevronRight,
 	FolderInput,
 	ListFilter,
 	LoaderCircle,
@@ -302,6 +324,48 @@ const dayjs = inject('$dayjs')
 
 const { mailboxes, mailboxIds } = userStore()
 
+// Thread Groups
+
+const groupedThreads = computed<Record<string, Thread[]>>(() =>
+	threads?.data?.reduce((groups: Record<string, Thread[]>, thread: Thread) => {
+		const date = dayjs(thread.received_at).format('YYYY-MM-DD')
+		if (!groups[date]) groups[date] = []
+
+		groups[date].push(thread)
+		return groups
+	}, {}),
+)
+
+const isLastGroup = (key: string) => Object.keys(groupedThreads.value).at(-1) === key
+
+const collapsedGroups = ref<string[]>([])
+
+const toggleGroupCollapse = (key: string) => {
+	if (isLastGroup(key)) return
+
+	if (collapsedGroups.value.includes(key))
+		return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== key))
+
+	collapsedGroups.value.push(key)
+	if (groupedThreads.value[key]?.some((thread) => thread.thread_id === threadID))
+		router.push({ name: 'Mailbox', params: { mailbox } })
+	toggleSelect(getGroupThreads(key), false)
+}
+
+const getGroupThreads = (group: string) => groupedThreads.value[group]?.map((t) => t.thread_id)
+
+watch(
+	() => threadID,
+	(val) => {
+		if (!val) return
+
+		for (const group of collapsedGroups.value) {
+			if (getGroupThreads(group).includes(val))
+				return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== group))
+		}
+	},
+)
+
 // Selection
 
 const mailList = useTemplateRef('mailList')
@@ -311,62 +375,55 @@ onClickOutside(mailList, () => (mailListClicked.value = false))
 const mailItems = useTemplateRef('mailItems')
 
 const selections = ref<string[]>([])
-const allSelectedManuallyToggled = ref(false)
-const allSelected = ref(false)
-
-const lastSelected = ref<string>()
+const lastSelected = ref<string[]>()
 const isShiftPressed = ref(false)
 
-const resetSelections = () => {
-	allSelectedManuallyToggled.value = false
-	allSelected.value = false
-	mailItems.value?.forEach((item) => item?.setIsSelected(false))
-	selections.value = []
-}
+const isAllSelected = computed(
+	() => threadIDs.value.length && selections.value.length === threadIDs.value.length,
+)
 
-const selectThread = (thread: string, isManuallySelected: boolean) => {
-	if (selections.value.includes(thread)) return
-	if (isShiftPressed.value) {
-		const shiftSelectedIDs = getShiftSelectedIDs(thread)
-		mailItems.value?.forEach((item) => {
-			if (shiftSelectedIDs.includes(item?.id)) item?.setIsSelected(true)
-		})
-		selections.value = Array.from(new Set([...selections.value, ...shiftSelectedIDs]))
-	} else selections.value.push(thread)
-	if (isManuallySelected) lastSelected.value = thread
-}
+watch(selections, (val) => {
+	collapsedGroups.value = collapsedGroups.value.filter(
+		(group) => !getGroupThreads(group).some((thread) => val.includes(thread)),
+	)
+})
 
-const deselectThread = (thread: string, isManuallySelected: boolean) => {
-	if (isShiftPressed.value) {
-		const shiftSelectedIDs = getShiftSelectedIDs(thread)
-		mailItems.value?.forEach((item) => {
-			if (shiftSelectedIDs.includes(item?.id)) item?.setIsSelected(false)
-		})
-		selections.value = selections.value.filter((m) => !shiftSelectedIDs.includes(m))
-	} else selections.value = selections.value.filter((m) => m !== thread)
-	if (isManuallySelected) lastSelected.value = thread
+const toggleSelect = (threadIDs: string[], selected: boolean) => {
+	const allIDs = new Set([...threadIDs, ...getShiftSelectedIDs(threadIDs[0])])
+	if (selected) selections.value = [...new Set([...selections.value, ...allIDs])]
+	else selections.value = selections.value.filter((id) => !allIDs.has(id))
+	lastSelected.value = threadIDs
 }
 
 const getShiftSelectedIDs = (thread: string) => {
-	const startIndex = threadIDs.value.indexOf(lastSelected.value)
-	const endIndex = threadIDs.value.indexOf(thread)
-	const lower = Math.min(startIndex, endIndex)
-	const higher = Math.max(startIndex, endIndex)
+	if (!(isShiftPressed.value && lastSelected.value?.length)) return []
+
+	const currentIndex = threadIDs.value.indexOf(thread)
+	const firstIndex = threadIDs.value.indexOf(lastSelected.value[0])
+	const lastIndex = threadIDs.value.indexOf(lastSelected.value.at(-1))
+
+	const farthestIndex =
+		Math.abs(currentIndex - firstIndex) > Math.abs(currentIndex - lastIndex)
+			? firstIndex
+			: lastIndex
+
+	const [lower, higher] = [farthestIndex, currentIndex].sort((a, b) => a - b)
 	return threadIDs.value.slice(lower, higher + 1)
 }
 
-watch(
-	() => selections.value.length,
-	(val) => {
-		allSelectedManuallyToggled.value = false
-		allSelected.value = val === threads.data.length
-	},
-)
+const toggleSelectAll = (selected: boolean) => {
+	if (selected) selections.value = [...threadIDs.value]
+	else selections.value = []
+	lastSelected.value = undefined
+}
 
-watch(allSelected, (val) => {
-	if (allSelectedManuallyToggled.value)
-		mailItems.value?.forEach((item) => item?.setIsSelected(val))
-})
+const resetSelections = () => {
+	selections.value = []
+	lastSelected.value = undefined
+}
+
+const isGroupSelected = (key: string) =>
+	getGroupThreads(key).every((id) => selections.value.includes(id))
 
 const handleKeyDown = (e: KeyboardEvent) => {
 	if (e.key === 'Shift') isShiftPressed.value = true
@@ -374,19 +431,20 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	if (
 		userLayout.value === 'split' &&
 		mailListClicked.value &&
+		threadID &&
 		(e.key === 'ArrowUp' || e.key === 'ArrowDown')
 	) {
 		e.preventDefault()
 
 		const offset = e.key === 'ArrowUp' ? -1 : 1
 		goToThreadByOffset(offset)
+		lastSelected.value = [threadID]
 
-		// const thread = getThreadByOffset(offset)
-		// if (thread) {
-		// 	const item = mailItems.value?.find((el) => el?.id === thread)
-		// 	if (selections.value.includes(thread)) selections.value.push(thread)
-		// 	else selections.value = selections.value.filter((m) => m !== thread)
-		// }
+		const thread = getThreadByOffset(offset)
+		if (thread && isShiftPressed.value) {
+			if (selections.value.includes(thread)) toggleSelect([threadID, thread], false)
+			else toggleSelect([threadID, thread], true)
+		}
 	}
 }
 
@@ -471,24 +529,9 @@ const filter = ref<string | null>(
 const threads = createResource({
 	url: 'mail.api.mail.get_threads',
 	makeParams: () => ({ mailbox, limit: limit.value, filter_by: filter.value }),
-	// onSuccess: () => {
-	// 	if (allSelected.value && allSelectedManuallyToggled.value) {
-	// 		nextTick(() => mailItems.value?.forEach((item) => item?.setIsSelected(true)))
-	// 	}
-	// },
 })
 
 const threadIDs = computed(() => threads.data?.map((thread: Thread) => thread.thread_id) || [])
-
-const groupedThreads = computed(() =>
-	threads?.data?.reduce((groups, thread: Thread) => {
-		const date = dayjs(thread.received_at).format('YYYY-MM-DD')
-		if (!groups[date]) groups[date] = []
-
-		groups[date].push(thread)
-		return groups
-	}, {}),
-)
 
 const reloadMails: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) => void = (
 	reloadMailboxes = true,
@@ -629,7 +672,7 @@ const goToThreadByOffset = (offset: number) => {
 
 	router.push({ name: 'Mail', params: { mailbox, threadID: targetThread } })
 	const el = mailItems.value?.find((el) => el?.id === targetThread)?.$el
-	el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+	if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
 const showEmptyMailbox = ref(false)

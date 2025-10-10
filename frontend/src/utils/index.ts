@@ -133,7 +133,7 @@ export const getFormattedRecipients = (mailRecipients: Recipient[]) => {
 	return formattedRecipients
 }
 
-export const getFormattedDate = (date: Date) => {
+export const getFormattedDate = (date: Date | string) => {
 	if (dayjs(date).isToday()) return __('Today')
 	if (dayjs(date).isYesterday()) return __('Yesterday')
 	const isCurrentYear = dayjs(date).year() === dayjs().year()
