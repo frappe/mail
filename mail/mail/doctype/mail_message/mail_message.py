@@ -38,13 +38,6 @@ from mail.utils.lock import acquire_lock, release_lock
 from mail.utils.user import get_account_email_addresses
 from mail.utils.validation import validate_permission_for_account
 
-MSG_CACHE_TTL = cint(frappe.conf.msg_cache_ttl) or 2 * 24 * 60 * 60  # 2 days
-MSG_BUCKET_SIZE = cint(frappe.conf.msg_bucket_size) or 5000
-BLOB_CACHE_TTL = cint(frappe.conf.blob_cache_ttl) or 12 * 60 * 60  # 12 hours
-BLOB_BUCKET_SIZE = cint(frappe.conf.blob_bucket_size) or 1000
-FETCH_LOCK_TIMEOUT = cint(frappe.conf.fetch_lock_timeout) or 300
-MAX_PUSH_NOTIFICATIONS = cint(frappe.conf.max_push_notifications) or 5
-
 
 class MailMessage(Document):
 	@property
@@ -1077,13 +1070,15 @@ def _store_message_in_cache(account: str, _id: str, message: dict) -> None:
 
 	cache_key = _get_message_cache_key(account, _id)
 	list_key = f"jmap:message:{account}:_ids"
+	msg_bucket_size = cint(frappe.conf.msg_bucket_size) or 5000
 
-	frappe.cache.set_value(cache_key, message, expires_in_sec=MSG_CACHE_TTL)
+	msg_cache_ttl = cint(frappe.conf.msg_cache_ttl) or 2 * 24 * 60 * 60  # 2 days
+	frappe.cache.set_value(cache_key, message, expires_in_sec=msg_cache_ttl)
 	frappe.cache.lpush(list_key, _id)
 
-	frappe.cache.ltrim(list_key, 0, MSG_BUCKET_SIZE - 1)
+	frappe.cache.ltrim(list_key, 0, msg_bucket_size - 1)
 
-	while frappe.cache.llen(list_key) > MSG_BUCKET_SIZE:
+	while frappe.cache.llen(list_key) > msg_bucket_size:
 		if oldest_id := frappe.cache.rpop(list_key):
 			frappe.cache.delete_key(_get_message_cache_key(account, oldest_id))
 
@@ -1116,12 +1111,15 @@ def _store_blob_in_cache(account: str, blob_id: str, content: bytes) -> None:
 	cache_key = _get_blob_cache_key(account, blob_id)
 	list_key = f"jmap:blob:{account}:blob_ids"
 
-	frappe.cache.set_value(cache_key, content, expires_in_sec=BLOB_CACHE_TTL)
+	blob_cache_ttl = cint(frappe.conf.blob_cache_ttl) or 12 * 60 * 60  # 12 hours
+	blob_bucket_size = cint(frappe.conf.blob_bucket_size) or 1000
+
+	frappe.cache.set_value(cache_key, content, expires_in_sec=blob_cache_ttl)
 	frappe.cache.lpush(list_key, blob_id)
 
-	frappe.cache.ltrim(list_key, 0, BLOB_BUCKET_SIZE - 1)
+	frappe.cache.ltrim(list_key, 0, blob_bucket_size - 1)
 
-	while frappe.cache.llen(list_key) > BLOB_BUCKET_SIZE:
+	while frappe.cache.llen(list_key) > blob_bucket_size:
 		if oldest_id := frappe.cache.rpop(list_key):
 			frappe.cache.delete_key(_get_blob_cache_key(account, oldest_id))
 
@@ -1164,7 +1162,8 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 							if mailbox["mailbox_id"] == inbox_id:
 								notify_candidates.append(message)
 
-				recent_messages = notify_candidates[:MAX_PUSH_NOTIFICATIONS]
+				max_push_notifications = cint(frappe.conf.max_push_notifications) or 5
+				recent_messages = notify_candidates[:max_push_notifications]
 				pn = PushNotification("mail")
 				if pn.is_enabled():
 					url = frappe.utils.get_url()
@@ -1211,7 +1210,8 @@ def enqueue_fetch_changes(account: str, email_state: str | None = None) -> None:
 	"""Enqueue the fetch_changes job for the specified account."""
 
 	lockname = f"fetch_changes:{account}"
-	identifier = acquire_lock(lockname, acquire_timeout=0, lock_timeout=FETCH_LOCK_TIMEOUT)
+	fetch_lock_timeout = cint(frappe.conf.fetch_lock_timeout) or 300
+	identifier = acquire_lock(lockname, acquire_timeout=0, lock_timeout=fetch_lock_timeout)
 
 	if not identifier:
 		return

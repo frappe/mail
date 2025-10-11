@@ -14,8 +14,6 @@ from mail.utils.cache import get_account_for_user
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import has_role
 
-MAX_MESSAGE_PAYLOAD_SIZE = cint(frappe.conf.max_message_payload_size) or 25 * 1024 * 1024  # 25 MB
-
 
 @frappe.whitelist(methods=["POST"])
 @dynamic_rate_limit()
@@ -119,10 +117,11 @@ def send_raw(
 	if not raw_message:
 		frappe.throw(_("The raw message is required."), frappe.MandatoryError)
 
-	if len(raw_message.encode("utf-8")) > MAX_MESSAGE_PAYLOAD_SIZE:
+	max_message_size = _get_max_message_payload_size()
+	if len(raw_message.encode("utf-8")) > max_message_size:
 		frappe.throw(
 			_("The raw message exceeds the maximum allowed size of {0} MB.").format(
-				MAX_MESSAGE_PAYLOAD_SIZE // (1024 * 1024)
+				max_message_size // (1024 * 1024)
 			)
 		)
 
@@ -193,11 +192,12 @@ def _handle_chunked_upload(
 		f.write(file.stream.read())
 
 	current_size = os.path.getsize(temp_path)
-	if current_size > MAX_MESSAGE_PAYLOAD_SIZE:
+	max_message_size = _get_max_message_payload_size()
+	if current_size > max_message_size:
 		os.remove(temp_path)
 		frappe.throw(
 			_("The raw message exceeds the maximum allowed size of {0} MB.").format(
-				MAX_MESSAGE_PAYLOAD_SIZE // (1024 * 1024)
+				max_message_size // (1024 * 1024)
 			)
 		)
 
@@ -229,6 +229,12 @@ def _normalize_recipients(
 		result.append(recipient_dict)
 
 	return result
+
+
+def _get_max_message_payload_size() -> int:
+	"""Returns the maximum message payload size from configuration."""
+
+	return cint(frappe.conf.max_message_payload_size) or 25 * 1024 * 1024  # 25 MB
 
 
 def _enqueue_mail(from_: str, to: str | list[str], raw_message: str, is_newsletter: bool = False) -> str:
