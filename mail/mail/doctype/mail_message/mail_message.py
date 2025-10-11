@@ -1230,13 +1230,20 @@ def enqueue_fetch_changes(account: str, email_state: str | None = None) -> None:
 def schedule_fetch_changes() -> None:
 	"""Scheduled job to fetch changes for accounts that haven't been synced in the last 3 hours."""
 
+	ACCOUNT = frappe.qb.DocType("Mail Account")
 	SYNC_STATE = frappe.qb.DocType("JMAP Sync State")
+
 	accounts = (
 		frappe.qb.from_(SYNC_STATE)
+		.join(ACCOUNT)
+		.on(SYNC_STATE.account == ACCOUNT.name)
 		.select(SYNC_STATE.account)
 		.where(
-			SYNC_STATE.last_synced_at.isnull() | SYNC_STATE.last_synced_at
-			< get_datetime(add_to_date(now(), hours=-3))
+			(ACCOUNT.enabled == 1)
+			& (
+				(SYNC_STATE.last_synced_at.isnull())
+				| (SYNC_STATE.last_synced_at < get_datetime(add_to_date(now(), hours=-3)))
+			)
 		)
 	).run(pluck="account")
 
