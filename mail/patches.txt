@@ -4,3 +4,4 @@
 mail.patches.rename_fields_based_on_config_toml
 mail.patches.set_account_password
 mail.patches.generate_ssh_keypair_for_cluster
+mail.patches.set_cluster_spf_identifier

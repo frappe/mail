@@ -9,7 +9,7 @@ from frappe.utils import cint
 
 from mail.backend import MailBackendDomainManager
 from mail.mail.doctype.dkim_key.dkim_key import create_dkim_key
-from mail.utils import get_dkim_host, get_dkim_selector
+from mail.utils import get_dkim_host, get_dkim_selector, get_spf_host_for_cluster
 from mail.utils.cache import (
 	get_cluster_for_tenant,
 	get_root_domain_name,
@@ -167,16 +167,19 @@ def get_dns_records(tenant: str, domain_name: str) -> list[dict]:
 	"""Returns the DNS Records for the given domain."""
 
 	records = []
-	mail_settings = frappe.get_cached_doc("Mail Settings")
+	root_domain_name = get_root_domain_name()
+	default_ttl = frappe.db.get_single_value("Mail Settings", "default_ttl")
 
 	# SPF Record
+	cluster = get_cluster_for_tenant(frappe.db.get_value("Mail Domain", domain_name, "tenant"))
+	spf_host = get_spf_host_for_cluster(cluster)
 	records.append(
 		{
 			"category": "Sending Record",
 			"type": "TXT",
 			"host": domain_name,
-			"value": f"v=spf1 include:{mail_settings.spf_host}.{mail_settings.root_domain_name} ~all",
-			"ttl": mail_settings.default_ttl,
+			"value": f"v=spf1 include:{spf_host}.{root_domain_name} ~all",
+			"ttl": default_ttl,
 		},
 	)
 
@@ -186,8 +189,8 @@ def get_dns_records(tenant: str, domain_name: str) -> list[dict]:
 			"category": "Sending Record",
 			"type": "CNAME",
 			"host": f"{get_dkim_selector('rsa')}._domainkey.{domain_name}",
-			"value": f"{get_dkim_host(domain_name, 'rsa')}._domainkey.{mail_settings.root_domain_name}.",
-			"ttl": mail_settings.default_ttl,
+			"value": f"{get_dkim_host(domain_name, 'rsa')}._domainkey.{root_domain_name}.",
+			"ttl": default_ttl,
 		}
 	)
 
@@ -199,7 +202,7 @@ def get_dns_records(tenant: str, domain_name: str) -> list[dict]:
 			"type": "TXT",
 			"host": f"_dmarc.{domain_name}",
 			"value": f"v=DMARC1; p=reject; rua=mailto:{dmarc_address}; ruf=mailto:{dmarc_address}; fo=1; aspf=s; adkim=s; pct=100;",
-			"ttl": mail_settings.default_ttl,
+			"ttl": default_ttl,
 		}
 	)
 
@@ -219,7 +222,7 @@ def get_dns_records(tenant: str, domain_name: str) -> list[dict]:
 				"host": domain_name,
 				"value": f"{server['hostname'].split(':')[0]}.",
 				"priority": server["priority"],
-				"ttl": mail_settings.default_ttl,
+				"ttl": default_ttl,
 			}
 		)
 

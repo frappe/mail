@@ -240,8 +240,6 @@ export interface PersonalSignupDomain extends ChildDocType {
 export interface MailSettings extends DocType {
 	/** Root Domain Name: Data */
 	root_domain_name: string
-	/** SPF Host: Data */
-	spf_host: string
 	/** DNS Provider: Select */
 	dns_provider?:
 		| ''
