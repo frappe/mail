@@ -580,7 +580,11 @@ def forward(source_name: str, target_doc=None) -> "MailQueue":
 
 
 def fetch_messages(
-	account: str, filter: dict | None = None, position: int = 0, limit: int = 50, sort_asc: bool = False
+	account: str,
+	filter: dict | None = None,
+	position: int = 0,
+	limit: int = 50,
+	sort: list[dict] | None = None,
 ) -> list[dict]:
 	"""Returns a list of messages based on the provided filter."""
 
@@ -590,14 +594,14 @@ def fetch_messages(
 	client = get_jmap_client(account)
 
 	while len(messages) < limit:
-		result = client.email_query(filter, position, limit, sort_asc)
+		result = client.email_query(filter, position, limit, sort)
 		_ids = result["ids"]
 		total = result["total"]
 
 		if not _ids:
 			break
 
-		messages.extend(get_messages(account, _ids=_ids, sort_asc=sort_asc))
+		messages.extend(get_messages(account, _ids=_ids))
 
 		if len(messages) >= limit:
 			break
@@ -632,12 +636,14 @@ def fetch_thread(account: str, thread_id: str) -> list[dict]:
 	client = get_jmap_client(account)
 	result = client.thread_get([thread_id])
 	_ids = result.get(thread_id, [])
-	messages = get_messages(account, _ids=_ids, sort_asc=True)
+	messages = get_messages(account, _ids=_ids)
 
-	return messages
+	return sorted(messages, key=lambda m: m["received_at"], reverse=False)
 
 
-def search_messages(account: str, filter: dict, position: int = 0, limit: int = 20) -> list[dict]:
+def search_messages(
+	account: str, filter: dict, position: int = 0, limit: int = 20, sort: list[dict] | None = None
+) -> list[dict]:
 	"""Returns a list of messages based on the provided filter and position."""
 
 	if not account or not filter:
@@ -658,7 +664,7 @@ def search_messages(account: str, filter: dict, position: int = 0, limit: int = 
 	]
 
 	messages = []
-	for message in fetch_messages(account, filter=filter, position=position, limit=limit):
+	for message in fetch_messages(account, filter=filter, position=position, limit=limit, sort=sort):
 		result = {field: message[field] for field in fields}
 		messages.append(result)
 
@@ -676,24 +682,24 @@ def relevance_search_messages(account: str, text: str, limit: int = 20) -> list[
 	if not _ids:
 		return []
 
-	fetched_messages = get_messages(account, _ids=_ids, sort_asc=False)
+	fetched_messages = get_messages(account, _ids=_ids)
 	msg_by_id = {msg["_id"]: msg for msg in fetched_messages}
 	messages = [msg_by_id[mid] for mid in _ids if mid in msg_by_id]
 
 	return messages[:limit]
 
 
-def get_messages(account: str, _ids: list[str], sort_asc: bool = False) -> list[dict]:
-	"""Returns a list of messages for the provided IDs."""
+def get_messages(account: str, _ids: list[str]) -> list[dict]:
+	"""Returns a list of messages for the provided IDs in the same order as _ids."""
 
 	validate_permission_for_account(account)
 
-	messages = []
+	messages = {}
 	_ids_to_fetch = []
 
 	for _id in _ids:
 		if message := _get_message_from_cache(account, _id):
-			messages.append(message)
+			messages[_id] = message
 		else:
 			_ids_to_fetch.append(_id)
 
@@ -706,9 +712,9 @@ def get_messages(account: str, _ids: list[str], sort_asc: bool = False) -> list[
 		for email in emails:
 			message = format_message(account, mailbox_map, email)
 			_store_message_in_cache(account, message["_id"], message)
-			messages.append(message)
+			messages[message["_id"]] = message
 
-	return sorted(messages, key=lambda m: m["received_at"], reverse=not sort_asc)
+	return [messages[_id] for _id in _ids if _id in messages]
 
 
 def get_message_ids(
