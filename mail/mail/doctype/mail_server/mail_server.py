@@ -421,7 +421,7 @@ def create_or_update_spf_dns_record(spf_host: str | None = None) -> None:
 		.join(SERVER)
 		.on(CLUSTER.name == SERVER.cluster)
 		.select(SERVER.name)
-		.where((CLUSTER.enabled == 1) & (SERVER.enabled == 1))
+		.where((CLUSTER.enabled == 1) & (SERVER.enabled == 1) & (SERVER.include_in_spf_record == 1))
 		.orderby(SERVER.name, order=Order.asc)
 	).run(pluck="name")
 
@@ -434,9 +434,8 @@ def create_or_update_spf_dns_record(spf_host: str | None = None) -> None:
 			ttl=mail_settings.default_ttl,
 			category="Server Record",
 		)
-	else:
-		if spf_dns_record := frappe.db.exists("DNS Record", {"host": spf_host, "type": "TXT"}):
-			frappe.delete_doc("DNS Record", spf_dns_record, ignore_permissions=True)
+	elif spf_dns_record := frappe.db.exists("DNS Record", {"host": spf_host, "type": "TXT"}):
+		frappe.delete_doc("DNS Record", spf_dns_record, ignore_permissions=True)
 
 
 def on_doctype_update() -> None:

@@ -9,6 +9,7 @@
   "section_break_excr",
   "enabled",
   "outbound_only",
+  "include_in_spf_record",
   "include_in_mx_records",
   "column_break_0mtp",
   "cluster",
@@ -138,7 +139,8 @@
    "description": "Disable email delivery to local domains and perform an MX lookup to route emails externally.",
    "fieldname": "outbound_only",
    "fieldtype": "Check",
-   "label": "Outbound Only"
+   "label": "Outbound Only",
+   "search_index": 1
   },
   {
    "fieldname": "tls_tab",
@@ -230,7 +232,8 @@
    "fieldname": "include_in_mx_records",
    "fieldtype": "Check",
    "label": "Include in MX Records",
-   "read_only_depends_on": "eval: doc.outbound_only"
+   "read_only_depends_on": "eval: doc.outbound_only",
+   "search_index": 1
   },
   {
    "depends_on": "eval: doc.include_in_mx_records",
@@ -252,6 +255,14 @@
    "label": "Public Key",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "If checked, this server will be included in DNS SPF record.",
+   "fieldname": "include_in_spf_record",
+   "fieldtype": "Check",
+   "label": "Include in SPF Record",
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
@@ -288,7 +299,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-10-07 11:23:29.863665",
+ "modified": "2025-10-13 11:44:08.256385",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",
