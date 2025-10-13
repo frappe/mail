@@ -6,14 +6,12 @@ from frappe import _
 from frappe.model.document import Document
 
 from mail.mail.doctype.dns_record.dns_record import get_dns_provider
-from mail.utils.validation import is_valid_host
 
 
 class MailSettings(Document):
 	def validate(self) -> None:
 		self.validate_root_domain_name()
 		self.validate_dns_provider()
-		self.validate_spf_host()
 		self.validate_personal_signup_domains()
 
 	def on_update(self) -> None:
@@ -21,7 +19,6 @@ class MailSettings(Document):
 
 		if self.has_value_changed("root_domain_name"):
 			self.handle_root_domain_change()
-			create_dmarc_dns_record_for_external_domains()
 
 	def validate_root_domain_name(self) -> None:
 		"""Validates the Root Domain Name."""
@@ -66,30 +63,6 @@ class MailSettings(Document):
 			dns_provider = get_dns_provider(self)
 			dns_provider.read_dns_records("MX")
 
-	def validate_spf_host(self) -> None:
-		"""Validates the SPF Host."""
-
-		if not self.has_value_changed("spf_host"):
-			return
-
-		from mail.mail.doctype.mail_server.mail_server import create_or_update_spf_dns_record
-
-		self.spf_host = self.spf_host.lower()
-		if not is_valid_host(self.spf_host):
-			msg = _(
-				"SPF Host {0} is invalid. It can be alphanumeric but should not contain spaces or special characters, excluding underscores."
-			).format(frappe.bold(self.spf_host))
-			frappe.throw(msg)
-
-		previous_doc = self.get_doc_before_save()
-		if previous_doc and previous_doc.spf_host:
-			if spf_dns_record := frappe.db.exists(
-				"DNS Record", {"host": previous_doc.spf_host, "type": "TXT"}
-			):
-				frappe.delete_doc("DNS Record", spf_dns_record, ignore_permissions=True)
-
-		create_or_update_spf_dns_record(self.spf_host)
-
 	def validate_personal_signup_domains(self) -> None:
 		"""Validates the Personal Signup Domains."""
 
@@ -133,28 +106,11 @@ class MailSettings(Document):
 		frappe.cache.delete_value("mail-settings")
 
 
-def create_dmarc_dns_record_for_external_domains() -> None:
-	"""Creates the DMARC DNS Record for external domains."""
-
-	from mail.mail.doctype.dns_record.dns_record import create_or_update_dns_record
-
-	create_or_update_dns_record(
-		host="*._report._dmarc",
-		type="TXT",
-		value="v=DMARC1",
-		category="Server Record",
-	)
-
-
 def validate_mail_settings() -> None:
 	"""Validates the mandatory fields in the Mail Settings."""
 
 	mail_settings = frappe.get_doc("Mail Settings")
-	mandatory_fields = [
-		"root_domain_name",
-		"spf_host",
-		"default_ttl",
-	]
+	mandatory_fields = ["root_domain_name", "default_ttl"]
 
 	for field in mandatory_fields:
 		if not mail_settings.get(field):

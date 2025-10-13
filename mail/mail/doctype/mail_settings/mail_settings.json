@@ -7,7 +7,6 @@
   "section_break_hrww",
   "root_domain_name",
   "column_break_4ccc",
-  "spf_host",
   "dns_provider_section",
   "dns_provider",
   "column_break_pntn",
@@ -47,15 +46,6 @@
    "in_list_view": 1,
    "label": "Root Domain Name",
    "placeholder": "frappemail.com",
-   "reqd": 1
-  },
-  {
-   "default": "_spf",
-   "description": "Used to add allowed SMTP servers and included by other domains in their SPF records.",
-   "fieldname": "spf_host",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "SPF Host",
    "reqd": 1
   },
   {
@@ -281,7 +271,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-16 10:50:56.921888",
+ "modified": "2025-10-13 12:32:43.976269",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
