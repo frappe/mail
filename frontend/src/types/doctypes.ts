@@ -126,7 +126,7 @@ export interface MailAlias extends DocType {
 	normalized_email?: string
 }
 
-// Last updated: 2025-08-06 15:04:33.093678
+// Last updated: 2025-08-21 18:54:47.654063
 export interface MailTenant extends DocType {
 	/** Tenant Name: Data */
 	tenant_name: string
@@ -170,7 +170,7 @@ export interface MailDomainRequest extends DocType {
 	tenant: string
 }
 
-// Last updated: 2025-08-19 15:58:31.062290
+// Last updated: 2025-09-15 18:39:21.316684
 export interface MailAccount extends DocType {
 	/** Enabled: Check */
 	enabled: 0 | 1
@@ -186,10 +186,6 @@ export interface MailAccount extends DocType {
 	display_name?: string
 	/** Reply To: Small Text */
 	reply_to?: string
-	/** Password: Password */
-	password?: string
-	/** Secret: Small Text */
-	secret?: string
 	/** Default Email: Data */
 	default_outgoing_email?: string
 	/** Tenant: Link (Mail Tenant) */
@@ -228,6 +224,10 @@ export interface MailAccount extends DocType {
 	_disk_quota?: number
 	/** Used Quota: Int */
 	_used_quota?: number
+	/** App Password: Password */
+	app_password?: string
+	/** Secret Hash: Small Text */
+	secret_hash?: string
 }
 
 // Last updated: 2025-03-26 11:43:10.481605

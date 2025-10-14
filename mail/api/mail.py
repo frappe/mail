@@ -13,7 +13,7 @@ from mail.mail.doctype.mail_message.mail_message import (
 	fetch_threads,
 	get_message_ids,
 	move_messages,
-	relevance_search_messages,
+	search_messages,
 	set_flagged_status,
 	set_seen_status,
 	set_spam_status,
@@ -499,8 +499,8 @@ def empty_user_mailbox(mailbox: str) -> None:
 
 
 @frappe.whitelist()
-def search_mails(query) -> dict:
+def search_mails(filter, limit=10) -> tuple[list[dict], int]:
 	"""Returns search results for the given query."""
 
 	account = get_account_for_user(frappe.session.user)
-	return relevance_search_messages(account, text=query, limit=10)
+	return search_messages(account, filter, limit=limit)

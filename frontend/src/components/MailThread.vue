@@ -15,9 +15,11 @@
 				}"
 			/>
 			<template v-else>
-				<h2 v-if="!isMobile" class="mr-2 select-none truncate font-semibold leading-5">
-					{{ thread?.data?.[0]?.subject || __('[No subject]') }}
-				</h2>
+				<Tooltip v-if="!isMobile" :text="thread?.data?.[0]?.subject">
+					<h2 class="mr-2 select-none truncate font-semibold leading-5">
+						{{ thread?.data?.[0]?.subject || __('[No subject]') }}
+					</h2>
+				</Tooltip>
 				<div class="ml-auto shrink-0 space-x-2">
 					<Button
 						v-for="action in threadActions"
@@ -231,17 +233,14 @@
 							</pre
 							>
 
-							<div
-								v-if="mail.attachments?.length"
-								class="mt-8 flex flex-wrap space-x-2"
-							>
+							<div v-if="mail.attachments?.length" class="mt-8 flex flex-wrap">
 								<AttachmentCapsule
 									v-for="attachment in mail.attachments"
 									:key="attachment.name"
 									:file-name="attachment.filename"
 									:blob-i-d="attachment.blob_id"
 									:type="attachment.type"
-									class="mb-2"
+									class="mb-2 mr-2"
 								/>
 							</div>
 						</div>
@@ -308,7 +307,7 @@ import {
 	SquarePen,
 	Trash2,
 } from 'lucide-vue-next'
-import { Avatar, Button, Dropdown, createResource } from 'frappe-ui'
+import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
 
 import {
 	extractQuotedContent,
