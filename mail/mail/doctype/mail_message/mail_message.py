@@ -201,7 +201,8 @@ class MailMessage(Document):
 			return []
 
 		limit = cint(kwargs.get("start")) + page_length
-		messages = fetch_messages(account, limit=limit)
+		messages, total = fetch_messages(account, limit=limit)
+		frappe.cache.set_value(_get_total_cache_key(account), total, expires_in_sec=600)
 
 		fields_to_remove = [
 			"mailboxes",
@@ -593,8 +594,8 @@ def fetch_messages(
 	position: int = 0,
 	limit: int = 50,
 	sort: list[dict] | None = None,
-) -> list[dict]:
-	"""Returns a list of messages based on the provided filter."""
+) -> tuple[list[dict], int]:
+	"""Returns a list of messages and total count based on the provided filter."""
 
 	has_permission_for_account(account)
 
@@ -619,9 +620,7 @@ def fetch_messages(
 		if position >= total:
 			break
 
-	frappe.cache.set_value(_get_total_cache_key(account), total, expires_in_sec=600)
-
-	return messages[:limit]
+	return messages[:limit], total
 
 
 def fetch_threads(account: str, filter: dict | None = None, position: int = 0, limit: int = 50) -> list[dict]:
@@ -651,8 +650,8 @@ def fetch_thread(account: str, thread_id: str) -> list[dict]:
 
 def search_messages(
 	account: str, filter: dict, position: int = 0, limit: int = 20, sort: list[dict] | None = None
-) -> list[dict]:
-	"""Returns a list of messages based on the provided filter and position."""
+) -> tuple[list[dict], int]:
+	"""Returns a list of messages and total count based on the provided search filter."""
 
 	if not account or not filter:
 		frappe.throw(_("Account and filter are required."))
@@ -671,12 +670,8 @@ def search_messages(
 		"mailboxes",
 	]
 
-	messages = []
-	for message in fetch_messages(account, filter=filter, position=position, limit=limit, sort=sort):
-		result = {field: message[field] for field in fields}
-		messages.append(result)
-
-	return messages
+	messages, total = fetch_messages(account, filter=filter, position=position, limit=limit, sort=sort)
+	return [{field: message[field] for field in fields} for message in messages], total
 
 
 def relevance_search_messages(account: str, text: str, limit: int = 20) -> list[dict]:

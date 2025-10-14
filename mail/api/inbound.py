@@ -117,9 +117,8 @@ def get_mails(
 		dt_utc = dt.astimezone(timezone.utc)
 		filter["after"] = dt_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-	messages = fetch_messages(
-		account, filter, limit=limit, sort=[{"property": "receivedAt", "isAscending": True}]
-	)
+	sort = [{"property": "receivedAt", "isAscending": True}]
+	messages, _total = fetch_messages(account, filter, limit=limit, sort=sort)
 	last_received_at = messages[-1]["received_at"] if messages else now()
 	last_received_mail = messages[-1]["name"] if messages else None
 
