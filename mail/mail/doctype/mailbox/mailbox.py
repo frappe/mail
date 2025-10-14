@@ -12,13 +12,13 @@ from uuid_utils import uuid7
 from mail.jmap import get_jmap_client
 from mail.utils import parse_filters
 from mail.utils.cache import get_account_for_user
-from mail.utils.user import has_role, is_system_manager
-from mail.utils.validation import validate_permission_for_account
+from mail.utils.user import has_role, is_administrator
+from mail.utils.validation import has_permission_for_account
 
 
 class Mailbox(Document):
 	def db_insert(self, *args, **kwargs) -> None:
-		validate_permission_for_account(self.account)
+		has_permission_for_account(self.account)
 		parent = self._parent.replace(f"{self.account}|", "") if self._parent else None
 		self.id = add_mailbox(
 			self.account, self._name, self.role, parent, self.sort_order, bool(self.subscribed)
@@ -27,12 +27,12 @@ class Mailbox(Document):
 
 	def load_from_db(self) -> "Mailbox":
 		account, id = self.name.split("|")
-		validate_permission_for_account(account)
+		has_permission_for_account(account)
 		mailbox = get_mailbox(account, id)
 		return super(Document, self).__init__(mailbox)
 
 	def db_update(self) -> None:
-		validate_permission_for_account(self.account)
+		has_permission_for_account(self.account)
 		parent = self._parent.replace(f"{self.account}|", "") if self._parent else None
 		update_mailbox(
 			self.account, self.id, self._name, self.role, parent, self.sort_order, bool(self.subscribed)
@@ -41,7 +41,7 @@ class Mailbox(Document):
 
 	def delete(self) -> None:
 		account, id = self.name.split("|")
-		validate_permission_for_account(account)
+		has_permission_for_account(account)
 		delete_mailbox(account, id)
 
 	@staticmethod
@@ -53,7 +53,7 @@ class Mailbox(Document):
 			frappe.msgprint(_("Please select a account to view mailboxes."), alert=True)
 			return []
 
-		validate_permission_for_account(account)
+		has_permission_for_account(account)
 		mailboxes = fetch_mailboxes(account, limit=page_length)
 
 		if not mailboxes:
@@ -214,7 +214,7 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 
 	user = user or frappe.session.user
 
-	if is_system_manager(user):
+	if is_administrator(user):
 		return True
 
 	if has_role(user, "Mail User"):

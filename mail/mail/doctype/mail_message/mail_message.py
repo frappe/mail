@@ -36,7 +36,7 @@ from mail.utils.dt import parse_iso_datetime
 from mail.utils.email_parser import EmailParser
 from mail.utils.lock import acquire_lock, release_lock
 from mail.utils.user import get_account_email_addresses
-from mail.utils.validation import validate_permission_for_account
+from mail.utils.validation import has_permission_for_account
 
 
 class MailMessage(Document):
@@ -196,6 +196,10 @@ class MailMessage(Document):
 			frappe.msgprint(_("Please select a account to view messages."), alert=True)
 			return []
 
+		if not has_permission_for_account(account, raise_exception=False):
+			frappe.msgprint(_("You do not have permission to view messages for this account."), alert=True)
+			return []
+
 		limit = cint(kwargs.get("start")) + page_length
 		messages = fetch_messages(account, limit=limit)
 
@@ -224,7 +228,11 @@ class MailMessage(Document):
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
 		account = filters.get("account") or get_account_for_user(frappe.session.user)
-		return frappe.cache.get_value(_get_total_cache_key(account)) if account else 0
+		return (
+			frappe.cache.get_value(_get_total_cache_key(account))
+			if account and has_permission_for_account(account, raise_exception=False)
+			else 0
+		)
 
 	@staticmethod
 	def get_stats(**kwargs) -> dict:
@@ -588,7 +596,7 @@ def fetch_messages(
 ) -> list[dict]:
 	"""Returns a list of messages based on the provided filter."""
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	messages = []
 	client = get_jmap_client(account)
@@ -619,7 +627,7 @@ def fetch_messages(
 def fetch_threads(account: str, filter: dict | None = None, position: int = 0, limit: int = 50) -> list[dict]:
 	"""Returns a list of threads based on the provided filter."""
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	_ids = client.thread_query(filter, position, limit, fetch_all=False)
@@ -631,7 +639,7 @@ def fetch_threads(account: str, filter: dict | None = None, position: int = 0, l
 def fetch_thread(account: str, thread_id: str) -> list[dict]:
 	"""Returns a list of messages in a thread based on the provided thread ID."""
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	result = client.thread_get([thread_id])
@@ -674,7 +682,7 @@ def search_messages(
 def relevance_search_messages(account: str, text: str, limit: int = 20) -> list[dict]:
 	"""Returns a list of messages based on relevance search for the provided text."""
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	_ids = client.relevance_search(text, limit)
@@ -692,7 +700,7 @@ def relevance_search_messages(account: str, text: str, limit: int = 20) -> list[
 def get_messages(account: str, _ids: list[str]) -> list[dict]:
 	"""Returns a list of messages for the provided IDs in the same order as _ids."""
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	messages = {}
 	_ids_to_fetch = []
@@ -725,7 +733,7 @@ def get_message_ids(
 	if not account or not thread_ids:
 		frappe.throw(_("Account and Thread IDs are required."))
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
@@ -752,7 +760,7 @@ def delete_messages(account: str, _ids: list[str]) -> None:
 	if not account or not _ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
@@ -772,7 +780,7 @@ def empty_mailbox(account: str, mailbox_id: str) -> None:
 	if not account or not mailbox_id:
 		frappe.throw(_("Account and Mailbox ID are required."))
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
@@ -802,7 +810,7 @@ def move_messages(account: str, _ids: list[str], mailbox_id: str) -> None:
 	if not account or not _ids or not mailbox_id:
 		frappe.throw(_("Account, Mail IDs, and Mailbox ID are required."))
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
@@ -822,7 +830,7 @@ def set_seen_status(account: str, _ids: list[str], seen: bool = True) -> None:
 	if not account or not _ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
@@ -851,7 +859,7 @@ def set_flagged_status(account: str, _ids: list[str], flagged: bool = True) -> N
 	if not account or not _ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
@@ -880,7 +888,7 @@ def set_spam_status(account: str, _ids: list[str], spam: bool = True) -> None:
 	if not account or not _ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
@@ -908,7 +916,7 @@ def fetch_blobs(account: str, blobs: list[str] | list[tuple[str, str | None]]) -
 	if not account:
 		frappe.throw(_("Account is required."))
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 
 	if isinstance(blobs, list) and all(isinstance(b, str) for b in blobs):
 		blobs = [(blob_id, None) for blob_id in blobs]

@@ -10,11 +10,17 @@ from mail.utils import user_context
 from mail.utils.cache import get_account_for_user, get_aliases_for_user, get_tenant_for_user
 
 
+def is_administrator(user: str) -> bool:
+	"""Returns True if the user is Administrator else False."""
+
+	return user == "Administrator"
+
+
 @request_cache
 def is_system_manager(user: str) -> bool:
 	"""Returns True if the user is Administrator or System Manager else False."""
 
-	return user == "Administrator" or has_role(user, "System Manager")
+	return is_administrator(user) or has_role(user, "System Manager")
 
 
 def get_user_email_addresses(user: str) -> list:

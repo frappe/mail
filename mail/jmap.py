@@ -9,7 +9,7 @@ from frappe import _
 from frappe.utils import create_batch
 
 from mail.utils.cache import get_cluster_for_tenant
-from mail.utils.validation import validate_permission_for_account
+from mail.utils.validation import has_permission_for_account
 
 
 class JMAPClient:
@@ -982,7 +982,7 @@ def get_mailbox_name_by_id(account: str, id: str, raise_exception: bool = False)
 def get_mailboxes_for_account(account: str) -> list[dict]:
 	"""Returns the mailboxes for the given account."""
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 	return get_mailboxes(account)
 
 
@@ -990,7 +990,7 @@ def get_mailboxes_for_account(account: str) -> list[dict]:
 def get_mailbox_id_for_account(account: str, role: str, raise_exception: bool = False) -> str | None:
 	"""Returns the mailbox ID for the given role."""
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 	return get_mailbox_id_by_role(account, role, raise_exception=raise_exception)
 
 
@@ -998,7 +998,7 @@ def get_mailbox_id_for_account(account: str, role: str, raise_exception: bool = 
 def get_mailbox_name_for_account(account: str, id: str, raise_exception: bool = False) -> str | None:
 	"""Returns the mailbox name for the given ID."""
 
-	validate_permission_for_account(account)
+	has_permission_for_account(account)
 	return get_mailbox_name_by_id(account, id, raise_exception=raise_exception)
 
 

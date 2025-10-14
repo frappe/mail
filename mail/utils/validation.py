@@ -11,7 +11,7 @@ from validate_email_address import validate_email
 
 from mail.utils import normalize_email
 from mail.utils.cache import get_account_for_user, get_tenant_for_domain, get_tenant_for_user
-from mail.utils.user import has_role, is_system_manager
+from mail.utils.user import has_role, is_administrator
 
 
 def is_valid_host(host: str) -> bool:
@@ -158,7 +158,7 @@ def validate_domain_and_user_tenant(domain_name: str, user: str) -> None:
 
 
 def validate_user_has_mail_admin_role(user: str) -> None:
-	"""Validate if the user has Mail Admin role or System Manager role."""
+	"""Validate if the user has Mail Admin role."""
 
 	if not has_role(user, "Mail Admin"):
 		frappe.throw(_("You are not authorized to perform this action."), frappe.PermissionError)
@@ -317,9 +317,13 @@ def validate_nested_maildir_tree(base_dir: str, raise_exception: bool = False) -
 	return invalid_dirs
 
 
-def validate_permission_for_account(account: str) -> None:
-	"""Validate if the user has permission to access the account."""
+def has_permission_for_account(account: str, raise_exception: bool = True) -> bool:
+	"""Checks if the current user has permission to access the given Mail Account."""
 
 	user = frappe.session.user
-	if not is_system_manager(user) and account != get_account_for_user(user):
+	has_permission = account == get_account_for_user(user) or is_administrator(user)
+
+	if not has_permission and raise_exception:
 		frappe.throw(_("You do not have permission to access this resource."), frappe.PermissionError)
+
+	return has_permission

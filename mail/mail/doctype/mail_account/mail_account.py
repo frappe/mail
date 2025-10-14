@@ -34,12 +34,12 @@ from mail.utils.cache import (
 from mail.utils.dt import convert_to_utc
 from mail.utils.user import get_user_hashed_password, has_role, is_system_manager, is_tenant_admin
 from mail.utils.validation import (
+	has_permission_for_account,
 	is_email_assigned,
 	is_subaddressed_email,
 	is_valid_email_for_domain,
 	validate_domain_is_enabled_and_verified,
 	validate_domain_owned_by_tenant,
-	validate_permission_for_account,
 )
 
 
@@ -354,7 +354,7 @@ class MailAccount(Document):
 	def get_account_app_password(self) -> str:
 		"""Returns the app password for the Mail Account."""
 
-		validate_permission_for_account(self.name)
+		has_permission_for_account(self.name)
 		return self.get_password("app_password")
 
 	@frappe.whitelist()
@@ -393,7 +393,7 @@ class MailAccount(Document):
 	) -> None:
 		"""Sets the vacation response for the Mail Account."""
 
-		validate_permission_for_account(self.name)
+		has_permission_for_account(self.name)
 
 		if not self.enabled:
 			frappe.throw(_("Cannot set vacation response for a disabled account."))
@@ -436,7 +436,7 @@ class MailAccount(Document):
 	def regenerate_app_password(self, account_password: str) -> None:
 		"""Regenerates the app password for the Mail Account."""
 
-		validate_permission_for_account(self.name)
+		has_permission_for_account(self.name)
 		self._generate_app_password(account_password, save=True)
 
 		frappe.msgprint(_("App Password has been regenerated."), alert=True, indicator="green")
