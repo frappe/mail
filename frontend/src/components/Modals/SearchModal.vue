@@ -4,12 +4,12 @@
 			<div class="flex items-center px-4 py-2">
 				<Search class="text-ink-gray-5 h-4 w-4" />
 				<input
-					v-model="searchFilter.text"
+					v-model="filter.text"
 					icon-left="search"
 					type="text"
 					class="placeholder-ink-gray-4 w-full border-none bg-transparent text-base focus:ring-0"
 					placeholder="Search"
-					@keyup.enter="search"
+					@keyup.enter="openSearchPage"
 				/>
 				<Button variant="ghost" @click="showAdvancedFilters = !showAdvancedFilters">
 					<template #icon>
@@ -20,25 +20,25 @@
 			<template v-if="showAdvancedFilters">
 				<div class="space-y-4 border-t p-4">
 					<FormControl
-						v-model="searchFilter.inMailbox"
+						v-model="filter.inMailbox"
 						type="select"
 						:label="__('Folder')"
 						:options="mailboxOptions"
 					/>
-					<FormControl v-model="searchFilter.subject" :label="__('Subject')" />
-					<FormControl v-model="searchFilter.from" :label="__('From')" />
-					<FormControl v-model="searchFilter.to" :label="__('To')" />
-					<FormControl v-model="searchFilter.cc" :label="__('Cc')" />
-					<FormControl v-model="searchFilter.bcc" :label="__('Bcc')" />
+					<FormControl v-model="filter.subject" :label="__('Subject')" />
+					<FormControl v-model="filter.from" :label="__('From')" />
+					<FormControl v-model="filter.to" :label="__('To')" />
+					<FormControl v-model="filter.cc" :label="__('Cc')" />
+					<FormControl v-model="filter.bcc" :label="__('Bcc')" />
 					<div class="flex space-x-4">
 						<FormControl
-							v-model="searchFilter.after"
+							v-model="filter.after"
 							type="date"
 							:label="__('From Date')"
 							class="w-full"
 						/>
 						<FormControl
-							v-model="searchFilter.before"
+							v-model="filter.before"
 							type="date"
 							:label="__('To Date')"
 							class="w-full"
@@ -46,8 +46,17 @@
 					</div>
 				</div>
 				<div class="flex w-full justify-end space-x-4 border-t p-4">
-					<Button :label="__('Clear Filters')" class="w-32" @click="resetSearchFilter" />
-					<Button :label="__('Search')" variant="solid" class="w-32" @click="search" />
+					<Button
+						:label="__('Clear Filters')"
+						class="w-32"
+						@click="Object.assign(filter, DEFAULT_FILTER)"
+					/>
+					<Button
+						:label="__('Search')"
+						variant="solid"
+						class="w-32"
+						@click="openSearchPage"
+					/>
 				</div>
 			</template>
 			<div v-else-if="results?.data?.length" class="px-2 pb-2">
@@ -55,7 +64,7 @@
 					v-for="(result, idx) in results.data[0]"
 					:key="idx"
 					class="hover:bg-surface-gray-3 flex rounded p-2 hover:cursor-pointer"
-					@click="openMail(result.mailboxes[0].mailbox_id, result.thread_id)"
+					@click="openThread(result.mailboxes[0].mailbox_id, result.thread_id)"
 				>
 					<div class="mr-2 space-y-1 truncate">
 						<p class="truncate text-base font-semibold">
@@ -73,14 +82,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { watchDebounced } from '@vueuse/core'
 import { Search, SlidersHorizontal } from 'lucide-vue-next'
 import { Button, Dialog, FormControl, createResource } from 'frappe-ui'
 
 import { getFormattedDate } from '@/utils'
-import { searchStore } from '@/stores/search'
 import { userStore } from '@/stores/user'
 
 import type { Recipient } from '@/types'
@@ -88,8 +96,22 @@ import type { Recipient } from '@/types'
 const show = defineModel<boolean>()
 
 const { mailboxes } = userStore()
-const { searchFilter, resetSearchFilter } = searchStore()
 
+const DEFAULT_FILTER = {
+	text: '',
+	inMailbox: '',
+	subject: '',
+	from: '',
+	to: '',
+	cc: '',
+	bcc: '',
+	after: '',
+	before: '',
+}
+const filter = reactive({ ...DEFAULT_FILTER })
+const filteredFilter = computed(() =>
+	Object.fromEntries(Object.entries(filter).filter(([, v]) => Boolean(v))),
+)
 const showAdvancedFilters = ref(false)
 
 const mailboxOptions = computed(() =>
@@ -103,13 +125,11 @@ const mailboxOptions = computed(() =>
 
 const results = createResource({
 	url: 'mail.api.mail.search_mails',
-	makeParams: () => ({
-		filter: Object.fromEntries(Object.entries(searchFilter).filter(([, v]) => Boolean(v))),
-	}),
+	makeParams: () => ({ filter: filteredFilter.value }),
 })
 
 watchDebounced(
-	() => searchFilter.text,
+	() => filter.text,
 	(val) => {
 		if (val) results.reload()
 		else results.reset()
@@ -117,16 +137,16 @@ watchDebounced(
 	{ debounce: 250 },
 )
 
-const search = () => {
-	router.push({ name: 'Mailbox', params: { mailbox: 'search' } })
+const openSearchPage = () => {
+	router.push({ name: 'Mailbox', params: { mailbox: 'search' }, query: filteredFilter.value })
 	show.value = false
 }
 
 const router = useRouter()
 
-const openMail = (mailbox: string, threadID: string) => {
+const openThread = (mailbox: string, threadID: string) => {
 	router.push({ name: 'Mail', params: { mailbox, threadID } })
-	resetSearchFilter()
+	Object.assign(filter, DEFAULT_FILTER)
 	show.value = false
 }
 

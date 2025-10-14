@@ -13,7 +13,7 @@
 				</template>
 			</Breadcrumbs>
 		</div>
-		<HeaderActions @reload-mails="reloadMails(true, ['drafts', 'sent'])" />
+		<HeaderActions @reload-mails="reloadThreads(true, ['drafts', 'sent'])" />
 	</header>
 	<div
 		v-if="
@@ -76,7 +76,10 @@
 						<span v-else>{{ title }}</span>
 					</div>
 					<div class="flex items-center space-x-1.5 sm:space-x-3">
-						<Dropdown v-if="!selections.length" :options="FILTER_OPTIONS">
+						<Dropdown
+							v-if="!selections.length && mailbox !== 'search'"
+							:options="FILTER_OPTIONS"
+						>
 							<Button variant="ghost" :tooltip="__('Filter')">
 								<template #icon>
 									<component :is="ListFilter" class="text-ink-gray-7 h-4 w-4" />
@@ -166,12 +169,7 @@
 								:mail
 								:is-selected="selections.includes(mail.thread_id)"
 								:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"
-								@click="
-									router.push({
-										name: 'Mail',
-										params: { mailbox, threadID: mail.thread_id },
-									})
-								"
+								@click="goToThread(mail.thread_id)"
 								@set-seen="
 									(seen: boolean) =>
 										setSeen.submit({ thread_ids: [mail.thread_id], seen })
@@ -226,7 +224,7 @@
 					:mailbox
 					:thread-i-d
 					:threads="threadIDs"
-					@reload-mails="reloadMails"
+					@reload-mails="reloadThreads"
 					@set-seen="(seen: boolean) => setSeen.submit({ thread_ids: [threadID], seen })"
 					@move-thread="
 						(move_to_mailbox: string) =>
@@ -260,7 +258,7 @@
 </template>
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import {
 	BadgeAlert,
@@ -290,7 +288,6 @@ import {
 
 import { getFormattedDate, raiseToast, startResizing } from '@/utils'
 import { useLayout, useScreenSize, useSidebar } from '@/utils/composables'
-import { searchStore } from '@/stores/search'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
@@ -301,6 +298,7 @@ import type { Thread, UserResource } from '@/types'
 
 const { mailbox, threadID } = defineProps<{ mailbox: string; threadID?: string }>()
 
+const route = useRoute()
 const router = useRouter()
 const { isMobile } = useScreenSize()
 const { openSidebar } = useSidebar()
@@ -336,8 +334,7 @@ const toggleGroupCollapse = (key: string) => {
 		return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== key))
 
 	collapsedGroups.value.push(key)
-	if (groupedThreads.value[key]?.some((thread) => thread.thread_id === threadID))
-		router.push({ name: 'Mailbox', params: { mailbox } })
+	if (groupedThreads.value[key]?.some((thread) => thread.thread_id === threadID)) goToMailbox()
 	toggleSelect(getGroupThreads(key), false)
 }
 
@@ -503,7 +500,7 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Refresh'),
-			onClick: () => reloadMails(),
+			onClick: () => reloadThreads(),
 			icon: RefreshCw,
 			condition: !selections.value.length,
 		},
@@ -512,21 +509,26 @@ const selectActions = computed((): SelectAction[] =>
 
 // Search
 
-const { searchFilter } = searchStore()
-
 const noOfSearchResults = ref(0)
 
 const searchResults = createResource({
 	url: 'mail.api.mail.search_mails',
-	makeParams: () => ({
-		filter: Object.fromEntries(Object.entries(searchFilter).filter(([, v]) => Boolean(v))),
-		limit: limit.value,
-	}),
+	makeParams: () => ({ filter: route.query, limit: limit.value }),
 	transform: (data: [Thread[], number]) => {
 		noOfSearchResults.value = data[1]
 		return data[0]
 	},
 })
+
+watch(
+	() => JSON.stringify(route.query),
+	() => {
+		if (mailbox === 'search') {
+			limit.value = 50
+			searchResults.reload()
+		}
+	},
+)
 
 // Main data
 
@@ -546,7 +548,7 @@ const threadIDs = computed(
 	() => threadsResource.value.data?.map((thread: Thread) => thread.thread_id) || [],
 )
 
-const reloadMails: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) => void = (
+const reloadThreads: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) => void = (
 	reloadMailboxes = true,
 	mailboxRoles = [],
 ) => {
@@ -562,7 +564,7 @@ watch(
 	() => {
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
 		limit.value = 50
-		reloadMails(false)
+		reloadThreads(false)
 	},
 	{ immediate: true },
 )
@@ -572,7 +574,7 @@ onMounted(() => {
 	window.addEventListener('keyup', handleKeyUp)
 
 	socket.on('new_mail_created', (updatedMailboxes: string[]) => {
-		if (updatedMailboxes.includes(mailbox)) reloadMails()
+		if (updatedMailboxes.includes(mailbox)) reloadThreads()
 	})
 })
 
@@ -596,6 +598,11 @@ const loadMoreThreads = useDebounceFn((e) => {
 	}
 }, 500)
 
+const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
+
+const goToThread = (threadID: string) =>
+	router.push({ name: 'Mail', params: { mailbox, threadID }, query: route.query })
+
 // Actions
 
 interface SetSeenParams {
@@ -617,7 +624,7 @@ const setSeen = createResource({
 			(thread_ids.includes(threadID) ||
 				!threadsResource.value.data.some((m: Thread) => thread_ids.includes(m.thread_id)))
 		)
-			router.push({ name: 'Mailbox', params: { mailbox } })
+			goToMailbox()
 	},
 })
 
@@ -634,9 +641,8 @@ const moveThreads = createResource({
 		move_to_mailbox,
 	}),
 	onSuccess: (thread_ids: string[]) => {
-		if (threadID && thread_ids.includes(threadID))
-			router.push({ name: 'Mailbox', params: { mailbox } })
-		reloadMails()
+		if (threadID && thread_ids.includes(threadID)) goToMailbox()
+		reloadThreads()
 	},
 })
 
@@ -663,9 +669,8 @@ const setThreadsSpamStatus = createResource({
 		spam,
 	}),
 	onSuccess: (thread_ids: string[]) => {
-		if (threadID && thread_ids.includes(threadID))
-			router.push({ name: 'Mailbox', params: { mailbox } })
-		reloadMails()
+		if (threadID && thread_ids.includes(threadID)) goToMailbox()
+		reloadThreads()
 	},
 })
 
@@ -673,9 +678,8 @@ const deleteThreads = createResource({
 	url: 'mail.api.mail.delete_threads',
 	makeParams: (thread_ids: string[]) => ({ thread_ids, mailbox }),
 	onSuccess: (thread_ids: string[]) => {
-		if (threadID && thread_ids.includes(threadID))
-			router.push({ name: 'Mailbox', params: { mailbox } })
-		reloadMails()
+		if (threadID && thread_ids.includes(threadID)) goToMailbox()
+		reloadThreads()
 	},
 })
 
@@ -686,7 +690,7 @@ const goToThreadByOffset = (offset: number) => {
 	const targetThread = getThreadByOffset(offset)
 	if (!targetThread) return
 
-	router.push({ name: 'Mail', params: { mailbox, threadID: targetThread } })
+	goToThread(targetThread)
 	const el = mailItems.value?.find((el) => el?.id === targetThread)?.$el
 	if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
@@ -698,7 +702,7 @@ const emptyMailbox = createResource({
 	makeParams: () => ({ mailbox }),
 	onSuccess: () => {
 		raiseToast(__('{0} emptied successfully', [mailboxName.value]))
-		reloadMails()
+		reloadThreads()
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })
