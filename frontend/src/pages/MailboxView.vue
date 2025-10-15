@@ -100,7 +100,7 @@
 						</Button>
 
 						<Dropdown
-							v-if="!!selections.length && mailbox !== 'starred'"
+							v-if="!!selections.length && !['search', 'starred'].includes(mailbox)"
 							:options="moveToOptions"
 						>
 							<Button variant="ghost" :tooltip="__('Move To')">

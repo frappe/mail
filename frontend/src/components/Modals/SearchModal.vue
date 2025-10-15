@@ -1,7 +1,7 @@
 <template>
-	<Dialog v-model="show" :options="{ size: '2xl', position: 'top' }">
+	<Dialog v-model="show" :options="{ size: '2xl' }">
 		<template #body>
-			<div class="flex items-center px-4 py-2">
+			<div class="flex items-center border-b px-4 py-2">
 				<Search class="text-ink-gray-5 h-4 w-4" />
 				<input
 					v-model="filter.text"
@@ -18,7 +18,7 @@
 				</Button>
 			</div>
 			<template v-if="showAdvancedFilters">
-				<div class="space-y-4 border-t p-4">
+				<div class="space-y-4 p-4">
 					<FormControl
 						v-model="filter.inMailbox"
 						type="select"
@@ -59,11 +59,11 @@
 					/>
 				</div>
 			</template>
-			<div v-else-if="results?.data?.length" class="px-2 pb-2">
+			<div v-else-if="results?.data?.[0]?.length" class="max-h-[70vh] overflow-y-auto p-2">
 				<div
 					v-for="(result, idx) in results.data[0]"
 					:key="idx"
-					class="hover:bg-surface-gray-3 flex rounded p-2 hover:cursor-pointer"
+					class="hover:bg-surface-gray-1 group flex rounded p-2 hover:cursor-pointer"
 					@click="openThread(result.mailboxes[0].mailbox_id, result.thread_id)"
 				>
 					<div class="mr-2 space-y-1 truncate">
@@ -71,10 +71,26 @@
 							{{ result.subject || __('[No subject]') }}
 						</p>
 						<p class="truncate text-sm">{{ getInterlocutors(result) }}</p>
+						<div
+							v-for="m in result.mailboxes"
+							:key="m.mailbox_id"
+							class="bg-surface-gray-2 group-hover:bg-surface-gray-3 mr-1.5 inline-flex rounded p-1 text-sm"
+						>
+							{{ m.mailbox_name }}
+						</div>
 					</div>
-					<p class="text-ink-gray-4 ml-auto shrink-0 text-xs">
-						{{ getFormattedDate(result.received_at) }}
-					</p>
+					<div
+						class="text-ink-gray-4 ml-auto flex shrink-0 flex-col justify-between text-xs"
+					>
+						<span>{{ getFormattedDate(result.received_at) }}</span>
+						<div
+							v-if="noOfAttachments(result)"
+							class="ml-auto flex items-center space-x-1"
+						>
+							<Paperclip class="text-ink-gray-4 h-3.5 w-3.5" />
+							<span> {{ noOfAttachments(result) }} </span>
+						</div>
+					</div>
 				</div>
 			</div>
 		</template>
@@ -85,7 +101,7 @@
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { watchDebounced } from '@vueuse/core'
-import { Search, SlidersHorizontal } from 'lucide-vue-next'
+import { Paperclip, Search, SlidersHorizontal } from 'lucide-vue-next'
 import { Button, Dialog, FormControl, createResource } from 'frappe-ui'
 
 import { getFormattedDate } from '@/utils'
@@ -127,6 +143,9 @@ const results = createResource({
 	url: 'mail.api.mail.search_mails',
 	makeParams: () => ({ filter: filteredFilter.value }),
 })
+
+const noOfAttachments = (result) =>
+	result.attachments?.filter((m) => m.filename && m.disposition === 'attachment').length || 0
 
 watchDebounced(
 	() => filter.text,
