@@ -165,7 +165,8 @@
 							<MailListItem
 								v-for="mail in group"
 								ref="mailItems"
-								:key="mail.thread_id"
+								:key="mail.name"
+								:mailbox
 								:mail
 								:is-selected="selections.includes(mail.thread_id)"
 								:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"

@@ -236,7 +236,7 @@ export interface PersonalSignupDomain extends ChildDocType {
 	domain_name: string
 }
 
-// Last updated: 2025-06-16 10:50:56.921888
+// Last updated: 2025-10-13 12:32:43.976269
 export interface MailSettings extends DocType {
 	/** Root Domain Name: Data */
 	root_domain_name: string

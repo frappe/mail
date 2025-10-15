@@ -419,6 +419,8 @@ def set_seen(thread_ids: list[str], seen: bool, mailbox: str) -> dict:
 	account = get_account_for_user(frappe.session.user)
 	if mailbox == "starred":
 		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	elif mailbox == "search":
+		mailbox = None
 	messages = get_message_ids(account, thread_ids, mailbox)
 	set_seen_status(account, messages, seen)
 

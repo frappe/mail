@@ -5,7 +5,7 @@
 				icon="chevron-left"
 				variant="ghost"
 				class="mr-2 shrink-0"
-				@click="router.push({ name: 'Mailbox', params: { mailbox } })"
+				@click="goToMailbox"
 			/>
 			<span
 				v-if="thread.loading"
@@ -33,7 +33,7 @@
 						</template>
 					</Button>
 
-					<Dropdown v-if="mailbox !== 'starred'" :options="moveToOptions">
+					<Dropdown :options="moveToOptions">
 						<Button variant="ghost" :tooltip="__('Move To')">
 							<template #icon>
 								<FolderInput class="text-ink-gray-5 h-4 w-4" />
@@ -133,11 +133,7 @@
 								"
 								@reload-mails="
 									() => {
-										if (thread.data.length == 1)
-											router.push({
-												name: 'Mailbox',
-												params: { mailbox },
-											})
+										if (thread.data.length == 1) goToMailbox()
 										emit('reloadMails')
 									}
 								"
@@ -208,11 +204,7 @@
 										"
 										@reload-mails="
 											() => {
-												if (thread.data.length == 1)
-													router.push({
-														name: 'Mailbox',
-														params: { mailbox },
-													})
+												if (thread.data.length == 1) goToMailbox()
 												emit('reloadMails')
 											}
 										"
@@ -293,7 +285,7 @@
 
 <script setup lang="ts">
 import { computed, inject, nextTick, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
 	BadgeAlert,
 	BadgeCheck,
@@ -345,12 +337,15 @@ const emit = defineEmits([
 	'nextThread',
 ])
 
-const router = useRouter()
 const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const { mailboxes, mailboxIds } = userStore()
 
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
+
+const route = useRoute()
+const router = useRouter()
+const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
 const thread = createResource({
 	url: 'mail.api.mail.get_thread',
@@ -367,7 +362,7 @@ const thread = createResource({
 			})),
 	onSuccess: (data: Mail[]) => {
 		if (!data.filter((mail) => filterRelevantMails(mail)).length) {
-			router.push({ name: 'Mailbox', params: { mailbox } })
+			goToMailbox()
 			emit('reloadMails')
 			return
 		}
@@ -388,10 +383,14 @@ const thread = createResource({
 			}
 		})
 	},
-	onError: () => router.push({ name: 'Mailbox', params: { mailbox } }),
+	onError: () => goToMailbox(),
 })
 
+const threadMailboxes = computed(() => thread?.data?.[0]?.mailboxes.map((m) => m.mailbox_id) || [])
+
 const filterRelevantMails = (mail: Mail) => {
+	if (mailbox === 'search') return true
+
 	const mailboxes = mail.mailboxes.map((m) => m.mailbox_id)
 	const trash = mailboxIds.trash
 	return mailbox === trash ? mailboxes.includes(trash) : !mailboxes.includes(trash)
@@ -405,11 +404,16 @@ watch(() => threadID, reload)
 
 const user = inject('$user')
 
-const moveToOptions = computed(() =>
-	mailboxes.data
-		?.filter((m) => ![mailbox, mailboxIds.sent, mailboxIds.drafts].includes(m.id))
-		.map((m) => ({ label: m._name, onClick: () => emit('moveThread', m.id) })),
-)
+const moveToOptions = computed(() => {
+	const excludedMailboxes = new Set([
+		mailboxIds.sent,
+		mailboxIds.drafts,
+		...threadMailboxes.value,
+	])
+	return mailboxes.data
+		?.filter((m) => !excludedMailboxes.has(m.id))
+		.map((m) => ({ label: m._name, onClick: () => emit('moveThread', m.id) }))
+})
 
 interface MailAction {
 	label: string
@@ -424,25 +428,27 @@ const threadActions = computed((): MailAction[] =>
 			label: __('Mark as Junk'),
 			onClick: () => emit('setSpamStatus', true),
 			icon: BadgeAlert,
-			condition: ![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
+			condition: !threadMailboxes.value.some((m: string) =>
+				[mailboxIds.junk, mailboxIds.drafts].includes(m),
+			),
 		},
 		{
 			label: __('Mark as Not Junk'),
 			onClick: () => emit('setSpamStatus', false),
 			icon: BadgeCheck,
-			condition: mailbox === mailboxIds.junk,
+			condition: threadMailboxes.value.includes(mailboxIds.junk),
 		},
 		{
 			label: __('Move to Trash'),
 			onClick: () => emit('moveThread', mailboxIds.trash),
 			icon: Trash2,
-			condition: mailbox !== mailboxIds.trash,
+			condition: !threadMailboxes.value.includes(mailboxIds.trash),
 		},
 		{
 			label: __('Delete Thread'),
 			onClick: () => emit('deleteThread'),
 			icon: Trash2,
-			condition: mailbox === mailboxIds.trash,
+			condition: threadMailboxes.value.includes(mailboxIds.trash),
 		},
 		{
 			label: __('Mark as Unread'),
