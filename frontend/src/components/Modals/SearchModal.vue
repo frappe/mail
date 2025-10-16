@@ -23,14 +23,16 @@
 						<FormControl
 							v-model="filter.inMailbox"
 							type="select"
-							:label="__('Folder')"
+							:label="__('Look In')"
 							:options="mailboxOptions"
 						/>
 						<FormControl v-model="filter.subject" :label="__('Subject')" />
 						<FormControl v-model="filter.from" :label="__('From')" />
 						<FormControl v-model="filter.to" :label="__('To')" />
-						<FormControl v-model="filter.cc" :label="__('Cc')" />
-						<FormControl v-model="filter.bcc" :label="__('Bcc')" />
+						<div class="flex space-x-4">
+							<FormControl v-model="filter.cc" :label="__('Cc')" class="w-full" />
+							<FormControl v-model="filter.bcc" :label="__('Bcc')" class="w-full" />
+						</div>
 						<div class="flex space-x-4">
 							<FormControl
 								v-model="filter.after"
@@ -47,15 +49,22 @@
 						</div>
 						<FormControl
 							v-model="filter.hasAttachment"
-							type="checkbox"
-							:label="__('Has Attachment')"
+							type="select"
+							:label="__('Attachment')"
+							:options="ATTACHMENT_OPTIONS"
+						/>
+						<FormControl
+							v-model="filter.isRead"
+							type="select"
+							:label="__('Read Status')"
+							:options="READ_STATUS_OPTIONS"
 						/>
 					</div>
 					<div class="flex w-full justify-end space-x-4 border-t p-4">
 						<Button
 							:label="__('Clear Filters')"
 							class="w-28"
-							@click="Object.assign(filter, DEFAULT_FILTER)"
+							@click="Object.assign(filter, getDefaultFilter(true))"
 						/>
 						<Button
 							:label="__('Search')"
@@ -124,7 +133,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { watchDebounced } from '@vueuse/core'
 import { Paperclip, Search, SlidersHorizontal } from 'lucide-vue-next'
 import { Button, Dialog, FormControl, createResource } from 'frappe-ui'
@@ -138,19 +147,26 @@ const show = defineModel<boolean>()
 
 const { mailboxes } = userStore()
 
-const DEFAULT_FILTER = {
-	text: '',
-	inMailbox: '',
-	subject: '',
-	from: '',
-	to: '',
-	cc: '',
-	bcc: '',
-	after: '',
-	before: '',
-	hasAttachment: false,
-}
-const filter = reactive({ ...DEFAULT_FILTER })
+const route = useRoute()
+
+const getDefaultFilter = (reset = false) =>
+	Object.fromEntries(
+		[
+			'text',
+			'inMailbox',
+			'subject',
+			'from',
+			'to',
+			'cc',
+			'bcc',
+			'after',
+			'before',
+			'hasAttachment',
+			'isRead',
+		].map((key) => [key, reset ? '' : route.query[key] || '']),
+	)
+
+const filter = reactive({ ...getDefaultFilter() })
 const filteredFilter = computed(() =>
 	Object.fromEntries(Object.entries(filter).filter(([, v]) => Boolean(v))),
 )
@@ -191,7 +207,6 @@ const router = useRouter()
 
 const openThread = (mailbox: string, threadID: string) => {
 	router.push({ name: 'Mail', params: { mailbox, threadID } })
-	Object.assign(filter, DEFAULT_FILTER)
 	show.value = false
 }
 
@@ -211,4 +226,16 @@ const getInterlocutors = (result: {
 
 	return `${sender}, ${recipients}`
 }
+
+const ATTACHMENT_OPTIONS = [
+	{ label: __('All'), value: '' },
+	{ label: __('With Attachments'), value: 'true' },
+	{ label: __('Without Attachments'), value: 'false' },
+]
+
+const READ_STATUS_OPTIONS = [
+	{ label: __('All'), value: '' },
+	{ label: __('Read'), value: 'true' },
+	{ label: __('Unread'), value: 'false' },
+]
 </script>

@@ -65,16 +65,7 @@
 							/>
 						</Tooltip>
 					</div>
-					<div class="mr-auto text-base">
-						<span v-if="selections.length">
-							{{
-								selections.length === 1
-									? __('1 item selected')
-									: __('{0} items selected', [String(selections.length)])
-							}}
-						</span>
-						<span v-else>{{ title }}</span>
-					</div>
+					<p class="mr-auto pb-[2px]">{{ title }}</p>
 					<div class="flex items-center space-x-1.5 sm:space-x-3">
 						<Dropdown
 							v-if="!selections.length && mailbox !== 'search'"
@@ -143,7 +134,7 @@
 									"
 									@click.stop
 								/>
-								<span class="select-none pt-px">
+								<span class="select-none pt-[2px]">
 									{{
 										getFormattedDate(
 											key,
@@ -262,10 +253,10 @@ import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } 
 import { useRoute, useRouter } from 'vue-router'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import {
-	BadgeAlert,
-	BadgeCheck,
 	ChevronDown,
 	ChevronRight,
+	CircleAlert,
+	CircleCheck,
 	FolderInput,
 	ListFilter,
 	LoaderCircle,
@@ -454,7 +445,7 @@ const selectActions = computed((): SelectAction[] =>
 			label: __('Mark as Junk'),
 			onClick: () =>
 				setThreadsSpamStatus.submit({ thread_ids: selections.value, mailbox, spam: true }),
-			icon: BadgeAlert,
+			icon: CircleAlert,
 			condition:
 				!!selections.value.length &&
 				![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
@@ -467,7 +458,7 @@ const selectActions = computed((): SelectAction[] =>
 					mailbox,
 					spam: false,
 				}),
-			icon: BadgeCheck,
+			icon: CircleCheck,
 			condition: !!selections.value.length && mailbox === mailboxIds.junk,
 		},
 		{
@@ -777,6 +768,11 @@ const noOfThreads = computed(() => {
 })
 
 const title = computed(() => {
+	if (selections.value.length)
+		return selections.value.length === 1
+			? __('1 item selected')
+			: __('{0} items selected', [String(selections.value.length)])
+
 	switch (filter.value) {
 		case 'unread':
 			return __('Unread Mails')

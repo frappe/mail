@@ -287,10 +287,10 @@
 import { computed, inject, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-	BadgeAlert,
-	BadgeCheck,
 	ChevronLeft,
 	ChevronRight,
+	CircleAlert,
+	CircleCheck,
 	FolderInput,
 	Forward,
 	Mail as MailIcon,
@@ -427,7 +427,7 @@ const threadActions = computed((): MailAction[] =>
 		{
 			label: __('Mark as Junk'),
 			onClick: () => emit('setSpamStatus', true),
-			icon: BadgeAlert,
+			icon: CircleAlert,
 			condition: !threadMailboxes.value.some((m: string) =>
 				[mailboxIds.junk, mailboxIds.drafts].includes(m),
 			),
@@ -435,7 +435,7 @@ const threadActions = computed((): MailAction[] =>
 		{
 			label: __('Mark as Not Junk'),
 			onClick: () => emit('setSpamStatus', false),
-			icon: BadgeCheck,
+			icon: CircleCheck,
 			condition: threadMailboxes.value.includes(mailboxIds.junk),
 		},
 		{

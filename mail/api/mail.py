@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import frappe
 from bs4 import BeautifulSoup
 from frappe import _
@@ -508,5 +510,34 @@ def empty_user_mailbox(mailbox: str) -> None:
 def search_mails(filter, limit=5) -> tuple[list[dict], int]:
 	"""Returns search results for the given query."""
 
+	if not filter:
+		return ([], 0)
+
+	normalized_filter = normalize_search_filter(filter)
 	account = get_account_for_user(frappe.session.user)
-	return search_messages(account, filter, limit=limit)
+	return search_messages(account, normalized_filter, limit=limit)
+
+
+def normalize_search_filter(filter: dict) -> dict:
+	"""Normalize and transform filter parameters for email search."""
+
+	filter = filter.copy()
+
+	if filter.get("hasAttachment") in ["true", "false"]:
+		filter["hasAttachment"] = filter["hasAttachment"] == "true"
+
+	if filter.get("isRead"):
+		key = "hasKeyword" if filter["isRead"] == "true" else "notKeyword"
+		filter[key] = "$seen"
+		del filter["isRead"]
+
+	for date_key in ["after", "before"]:
+		if filter.get(date_key):
+			filter[date_key] = parse_date_to_utc_iso(filter[date_key])
+
+	return filter
+
+
+def parse_date_to_utc_iso(date_str: str) -> str:
+	"""Parse date string and convert to ISO format with UTC timezone."""
+	return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).isoformat()
