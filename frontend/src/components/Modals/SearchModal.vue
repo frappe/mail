@@ -1,96 +1,121 @@
 <template>
 	<Dialog v-model="show" :options="{ size: '2xl' }">
 		<template #body>
-			<div class="flex items-center border-b px-4 py-2">
-				<Search class="text-ink-gray-5 h-4 w-4" />
-				<input
-					v-model="filter.text"
-					icon-left="search"
-					type="text"
-					class="placeholder-ink-gray-4 w-full border-none bg-transparent text-base focus:ring-0"
-					placeholder="Search"
-					@keyup.enter="openSearchPage"
-				/>
-				<Button variant="ghost" @click="showAdvancedFilters = !showAdvancedFilters">
-					<template #icon>
-						<SlidersHorizontal class="text-ink-gray-5 h-4 w-4" />
-					</template>
-				</Button>
-			</div>
-			<template v-if="showAdvancedFilters">
-				<div class="space-y-4 p-4">
-					<FormControl
-						v-model="filter.inMailbox"
-						type="select"
-						:label="__('Folder')"
-						:options="mailboxOptions"
+			<div class="bg-surface-white">
+				<div class="flex items-center border-b px-4 py-2">
+					<Search class="text-ink-gray-5 h-4 w-4" />
+					<input
+						v-model="filter.text"
+						icon-left="search"
+						type="text"
+						class="placeholder-ink-gray-4 w-full border-none bg-transparent text-base focus:ring-0"
+						placeholder="Search"
+						@keyup.enter="openSearchPage"
 					/>
-					<FormControl v-model="filter.subject" :label="__('Subject')" />
-					<FormControl v-model="filter.from" :label="__('From')" />
-					<FormControl v-model="filter.to" :label="__('To')" />
-					<FormControl v-model="filter.cc" :label="__('Cc')" />
-					<FormControl v-model="filter.bcc" :label="__('Bcc')" />
-					<div class="flex space-x-4">
+					<Button variant="ghost" @click="showAdvancedFilters = !showAdvancedFilters">
+						<template #icon>
+							<SlidersHorizontal class="text-ink-gray-5 h-4 w-4" />
+						</template>
+					</Button>
+				</div>
+				<template v-if="showAdvancedFilters">
+					<div class="space-y-4 p-4">
 						<FormControl
-							v-model="filter.after"
-							type="date"
-							:label="__('From Date')"
-							class="w-full"
+							v-model="filter.inMailbox"
+							type="select"
+							:label="__('Folder')"
+							:options="mailboxOptions"
 						/>
+						<FormControl v-model="filter.subject" :label="__('Subject')" />
+						<FormControl v-model="filter.from" :label="__('From')" />
+						<FormControl v-model="filter.to" :label="__('To')" />
+						<FormControl v-model="filter.cc" :label="__('Cc')" />
+						<FormControl v-model="filter.bcc" :label="__('Bcc')" />
+						<div class="flex space-x-4">
+							<FormControl
+								v-model="filter.after"
+								type="date"
+								:label="__('From Date')"
+								class="w-full"
+							/>
+							<FormControl
+								v-model="filter.before"
+								type="date"
+								:label="__('To Date')"
+								class="w-full"
+							/>
+						</div>
 						<FormControl
-							v-model="filter.before"
-							type="date"
-							:label="__('To Date')"
-							class="w-full"
+							v-model="filter.hasAttachment"
+							type="checkbox"
+							:label="__('Has Attachment')"
 						/>
 					</div>
-				</div>
-				<div class="flex w-full justify-end space-x-4 border-t p-4">
-					<Button
-						:label="__('Clear Filters')"
-						class="w-32"
-						@click="Object.assign(filter, DEFAULT_FILTER)"
-					/>
-					<Button
-						:label="__('Search')"
-						variant="solid"
-						class="w-32"
-						@click="openSearchPage"
-					/>
-				</div>
-			</template>
-			<div v-else-if="results?.data?.[0]?.length" class="max-h-[70vh] overflow-y-auto p-2">
+					<div class="flex w-full justify-end space-x-4 border-t p-4">
+						<Button
+							:label="__('Clear Filters')"
+							class="w-28"
+							@click="Object.assign(filter, DEFAULT_FILTER)"
+						/>
+						<Button
+							:label="__('Search')"
+							variant="solid"
+							class="w-28"
+							@click="openSearchPage"
+						/>
+					</div>
+				</template>
 				<div
-					v-for="(result, idx) in results.data[0]"
-					:key="idx"
-					class="hover:bg-surface-gray-1 group flex rounded p-2 hover:cursor-pointer"
-					@click="openThread(result.mailboxes[0].mailbox_id, result.thread_id)"
+					v-else-if="results?.data?.[0]?.length"
+					class="max-h-[70vh] overflow-y-auto p-2"
 				>
-					<div class="mr-2 space-y-1 truncate">
-						<p class="truncate text-base font-semibold">
-							{{ result.subject || __('[No subject]') }}
-						</p>
-						<p class="truncate text-sm">{{ getInterlocutors(result) }}</p>
+					<div
+						v-for="(result, idx) in results.data[0]"
+						:key="idx"
+						class="hover:bg-surface-gray-1 group flex rounded p-2 hover:cursor-pointer"
+						@click="openThread(result.mailboxes[0].mailbox_id, result.thread_id)"
+					>
+						<div class="mr-2 space-y-1 truncate">
+							<p class="truncate text-base font-semibold">
+								{{ result.subject || __('[No subject]') }}
+							</p>
+							<p class="truncate text-sm">{{ getInterlocutors(result) }}</p>
+							<div
+								v-for="m in result.mailboxes"
+								:key="m.mailbox_id"
+								class="bg-surface-gray-2 group-hover:bg-surface-gray-3 mr-1.5 inline-flex rounded p-1 text-sm"
+							>
+								{{ m.mailbox_name }}
+							</div>
+						</div>
 						<div
-							v-for="m in result.mailboxes"
-							:key="m.mailbox_id"
-							class="bg-surface-gray-2 group-hover:bg-surface-gray-3 mr-1.5 inline-flex rounded p-1 text-sm"
+							class="text-ink-gray-4 ml-auto flex shrink-0 flex-col justify-between text-xs"
 						>
-							{{ m.mailbox_name }}
+							<span>{{ getFormattedDate(result.received_at) }}</span>
+							<div
+								v-if="noOfAttachments(result)"
+								class="ml-auto flex items-center space-x-1"
+							>
+								<Paperclip class="text-ink-gray-4 h-3.5 w-3.5" />
+								<span>{{ noOfAttachments(result) }}</span>
+							</div>
 						</div>
 					</div>
 					<div
-						class="text-ink-gray-4 ml-auto flex shrink-0 flex-col justify-between text-xs"
+						v-if="results.data[1] > 5"
+						class="text-ink-gray-4 my-2 text-center text-sm"
 					>
-						<span>{{ getFormattedDate(result.received_at) }}</span>
-						<div
-							v-if="noOfAttachments(result)"
-							class="ml-auto flex items-center space-x-1"
-						>
-							<Paperclip class="text-ink-gray-4 h-3.5 w-3.5" />
-							<span> {{ noOfAttachments(result) }} </span>
-						</div>
+						{{ __('Showing top 5 results. ') }}
+						<a class="cursor-pointer hover:underline" @click="openSearchPage">
+							{{ __('View more.') }}
+						</a>
 					</div>
+				</div>
+				<div
+					v-else-if="!results?.loading && results?.data?.[1] === 0"
+					class="text-ink-gray-4 my-3 text-center text-sm"
+				>
+					{{ __('No results found for the given query.') }}
 				</div>
 			</div>
 		</template>
@@ -123,6 +148,7 @@ const DEFAULT_FILTER = {
 	bcc: '',
 	after: '',
 	before: '',
+	hasAttachment: false,
 }
 const filter = reactive({ ...DEFAULT_FILTER })
 const filteredFilter = computed(() =>

@@ -452,6 +452,8 @@ def set_threads_mailbox(thread_ids: list[str], mailbox: str, move_to_mailbox) ->
 	account = get_account_for_user(frappe.session.user)
 	if mailbox == "starred":
 		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	elif mailbox == "search":
+		mailbox = None
 	messages = get_message_ids(account, thread_ids, mailbox)
 	move_messages(account, messages, move_to_mailbox)
 
@@ -475,6 +477,8 @@ def set_threads_spam_status(thread_ids: list[str], mailbox: str, spam: bool) -> 
 	account = get_account_for_user(frappe.session.user)
 	if mailbox == "starred":
 		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	elif mailbox == "search":
+		mailbox = None
 	messages = get_message_ids(account, thread_ids, mailbox)
 	set_spam_status(account, messages, spam)
 
@@ -501,7 +505,7 @@ def empty_user_mailbox(mailbox: str) -> None:
 
 
 @frappe.whitelist()
-def search_mails(filter, limit=10) -> tuple[list[dict], int]:
+def search_mails(filter, limit=5) -> tuple[list[dict], int]:
 	"""Returns search results for the given query."""
 
 	account = get_account_for_user(frappe.session.user)

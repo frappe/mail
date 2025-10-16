@@ -658,6 +658,7 @@ def search_messages(
 
 	fields = [
 		"name",
+		"_id",
 		"subject",
 		"preview",
 		"recipients",

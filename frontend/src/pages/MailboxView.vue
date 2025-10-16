@@ -248,7 +248,7 @@
 			<p>
 				{{
 					mailbox === 'search'
-						? __('No mails found for the given query.')
+						? __('No results found for the given query.')
 						: __('You have no mails in this folder.')
 				}}
 			</p>
