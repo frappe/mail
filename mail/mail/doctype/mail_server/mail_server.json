@@ -19,8 +19,8 @@
   "network_settings_section",
   "server_max_connections",
   "column_break_3m4p",
-  "public_ipv4",
-  "public_ipv6",
+  "ipv4_addresses",
+  "ipv6_addresses",
   "cluster_settings_section",
   "cluster_node_id",
   "ssh_tab",
@@ -86,24 +86,8 @@
    "search_index": 1
   },
   {
-   "description": "Public IPv4 address of this mail server (used for external communication).",
-   "fieldname": "public_ipv4",
-   "fieldtype": "Data",
-   "label": "Public IPv4",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "column_break_3m4p",
    "fieldtype": "Column Break"
-  },
-  {
-   "description": "Public IPv6 address of this mail server (used for external communication).",
-   "fieldname": "public_ipv6",
-   "fieldtype": "Data",
-   "label": "Public IPv6",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "fieldname": "listeners_tab",
@@ -263,6 +247,22 @@
    "fieldtype": "Check",
    "label": "Include in SPF Record",
    "search_index": 1
+  },
+  {
+   "description": "Public IPv4 address of this mail server (used for external communication).",
+   "fieldname": "ipv4_addresses",
+   "fieldtype": "Small Text",
+   "label": "Public IPv4",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "Public IPv6 address of this mail server (used for external communication).",
+   "fieldname": "ipv6_addresses",
+   "fieldtype": "Small Text",
+   "label": "Public IPv6",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -299,7 +299,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-10-13 11:44:08.256385",
+ "modified": "2025-10-17 15:11:33.207655",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Server",

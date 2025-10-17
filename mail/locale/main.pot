@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-10-13 19:31+0553\n"
-"PO-Revision-Date: 2025-10-13 19:31+0553\n"
+"POT-Creation-Date: 2025-10-17 15:12+0553\n"
+"PO-Revision-Date: 2025-10-17 15:12+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -252,22 +252,22 @@ msgstr ""
 msgid "Account Request"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:747
-#: mail/mail/doctype/mail_message/mail_message.py:817
-#: mail/mail/doctype/mail_message/mail_message.py:846
-#: mail/mail/doctype/mail_message/mail_message.py:875
+#: mail/mail/doctype/mail_message/mail_message.py:756
+#: mail/mail/doctype/mail_message/mail_message.py:826
+#: mail/mail/doctype/mail_message/mail_message.py:855
+#: mail/mail/doctype/mail_message/mail_message.py:884
 msgid "Account and Mail IDs are required."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:767
+#: mail/mail/doctype/mail_message/mail_message.py:776
 msgid "Account and Mailbox ID are required."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:720
+#: mail/mail/doctype/mail_message/mail_message.py:729
 msgid "Account and Thread IDs are required."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:644
+#: mail/mail/doctype/mail_message/mail_message.py:657
 msgid "Account and filter are required."
 msgstr ""
 
@@ -279,7 +279,7 @@ msgstr ""
 msgid "Account is already verified and created."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:903
+#: mail/mail/doctype/mail_message/mail_message.py:912
 #: mail/mail/doctype/mail_queue/mail_queue.py:285
 msgid "Account is required."
 msgstr ""
@@ -298,7 +298,7 @@ msgstr ""
 msgid "Account username for the DNS provider."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:797
+#: mail/mail/doctype/mail_message/mail_message.py:806
 msgid "Account, Mail IDs, and Mailbox ID are required."
 msgstr ""
 
@@ -1149,7 +1149,7 @@ msgstr ""
 #: mail/mail/doctype/mail_cluster/mail_cluster.js:210
 #: mail/mail/doctype/mail_cluster/mail_cluster.py:368
 #: mail/mail/doctype/mail_server/mail_server.js:109
-#: mail/mail/doctype/mail_server/mail_server.py:413
+#: mail/mail/doctype/mail_server/mail_server.py:396
 msgid "Configuration reloaded."
 msgstr ""
 
@@ -1224,7 +1224,7 @@ msgstr ""
 msgid "Could not connect to SpamAssassin (spamd). Please ensure it's running on {0}:{1}"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:282
+#: mail/mail/doctype/mail_server/mail_server.py:265
 msgid "Could not connect to {0}:{1}. Error: {2}"
 msgstr ""
 
@@ -2277,7 +2277,7 @@ msgstr ""
 msgid "Error uploading attachment"
 msgstr ""
 
-#: mail/jmap.py:1013
+#: mail/jmap.py:1014
 msgid "Error {0}: {1}"
 msgstr ""
 
@@ -2453,11 +2453,11 @@ msgstr ""
 msgid "Failed to create domain {0} on the mail server."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:757
+#: mail/mail/doctype/mail_message/mail_message.py:766
 msgid "Failed to delete mail(s)"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:760
+#: mail/mail/doctype/mail_message/mail_message.py:769
 msgid "Failed to delete mail(s)."
 msgstr ""
 
@@ -2469,11 +2469,11 @@ msgstr ""
 msgid "Failed to destroy push subscription(s)."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:787
+#: mail/mail/doctype/mail_message/mail_message.py:796
 msgid "Failed to empty mailbox"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:790
+#: mail/mail/doctype/mail_message/mail_message.py:799
 msgid "Failed to empty mailbox."
 msgstr ""
 
@@ -2490,20 +2490,20 @@ msgstr ""
 msgid "Failed to fetch Vacation Response"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:932
+#: mail/mail/doctype/mail_message/mail_message.py:941
 msgid "Failed to fetch blob(s)"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:935
+#: mail/mail/doctype/mail_message/mail_message.py:944
 msgid "Failed to fetch blob(s)."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:1195
+#: mail/mail/doctype/mail_message/mail_message.py:1204
 msgid "Failed to fetch changes"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:739
-#: mail/mail/doctype/mail_message/mail_message.py:740
+#: mail/mail/doctype/mail_message/mail_message.py:748
+#: mail/mail/doctype/mail_message/mail_message.py:749
 msgid "Failed to fetch message IDs."
 msgstr ""
 
@@ -2539,11 +2539,11 @@ msgstr ""
 msgid "Failed to load content from the compressed file."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:807
+#: mail/mail/doctype/mail_message/mail_message.py:816
 msgid "Failed to move mail(s) to mailbox"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:810
+#: mail/mail/doctype/mail_message/mail_message.py:819
 msgid "Failed to move mail(s) to mailbox."
 msgstr ""
 
@@ -2559,11 +2559,11 @@ msgstr ""
 msgid "Failed to renew push subscription."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:865
+#: mail/mail/doctype/mail_message/mail_message.py:874
 msgid "Failed to set flagged status for mail(s)"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:868
+#: mail/mail/doctype/mail_message/mail_message.py:877
 msgid "Failed to set flagged status for mail(s)."
 msgstr ""
 
@@ -2571,19 +2571,19 @@ msgstr ""
 msgid "Failed to set password for account {0}"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:836
+#: mail/mail/doctype/mail_message/mail_message.py:845
 msgid "Failed to set seen status for mail(s)"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:839
+#: mail/mail/doctype/mail_message/mail_message.py:848
 msgid "Failed to set seen status for mail(s)."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:887
+#: mail/mail/doctype/mail_message/mail_message.py:896
 msgid "Failed to set spam status for mail(s)"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:890
+#: mail/mail/doctype/mail_message/mail_message.py:899
 msgid "Failed to set spam status for mail(s)."
 msgstr ""
 
@@ -3217,15 +3217,15 @@ msgstr ""
 msgid "Install Stalwart (Deployment)"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:311
+#: mail/mail/doctype/mail_server/mail_server.py:294
 msgid "Install of Ansible initiated."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:337
+#: mail/mail/doctype/mail_server/mail_server.py:320
 msgid "Install of Docker initiated."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:359
+#: mail/mail/doctype/mail_server/mail_server.py:342
 msgid "Install of Stalwart initiated."
 msgstr ""
 
@@ -3743,7 +3743,7 @@ msgstr ""
 
 #: mail/mail/doctype/mail_cluster/mail_cluster.py:343
 #: mail/mail/doctype/mail_cluster/mail_cluster.py:365
-#: mail/mail/doctype/mail_server/mail_server.py:102
+#: mail/mail/doctype/mail_server/mail_server.py:85
 msgid "Mail Cluster {0} is disabled."
 msgstr ""
 
@@ -3834,19 +3834,19 @@ msgstr ""
 msgid "Mail Message Reply To"
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:417
+#: mail/mail/doctype/mail_message/mail_message.py:426
 msgid "Mail Message does not have a blob ID."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:238
+#: mail/mail/doctype/mail_message/mail_message.py:247
 msgid "Mail Message {0} is a draft. Please send it before performing this action."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:459
+#: mail/mail/doctype/mail_message/mail_message.py:468
 msgid "Mail Message {0} is not a draft."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:555
+#: mail/mail/doctype/mail_message/mail_message.py:564
 msgid "Mail Messages deleted successfully."
 msgstr ""
 
@@ -3878,7 +3878,7 @@ msgstr ""
 msgid "Mail Server Config"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:217
+#: mail/mail/doctype/mail_server/mail_server.py:200
 msgid "Mail Server Config created."
 msgstr ""
 
@@ -3927,8 +3927,8 @@ msgstr ""
 msgid "Mail Server {0} is disabled"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:254
-#: mail/mail/doctype/mail_server/mail_server.py:410
+#: mail/mail/doctype/mail_server/mail_server.py:237
+#: mail/mail/doctype/mail_server/mail_server.py:393
 msgid "Mail Server {0} is disabled."
 msgstr ""
 
@@ -4524,14 +4524,6 @@ msgstr ""
 msgid "Multiline entries"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:81
-msgid "Multiple IPv4 addresses found for Mail Server {0}. Found: {1}."
-msgstr ""
-
-#: mail/mail/doctype/mail_server/mail_server.py:91
-msgid "Multiple IPv6 addresses found for Mail Server {0}. Found: {1}."
-msgstr ""
-
 #: mail/mail/doctype/mail_data_exchange/mail_data_exchange.py:179
 msgid "Multiple {0} files found. Please provide only one."
 msgstr ""
@@ -4635,7 +4627,7 @@ msgstr ""
 msgid "No DMARC reports found."
 msgstr ""
 
-#: mail/api/inbound.py:181 mail/api/outbound.py:139
+#: mail/api/inbound.py:182 mail/api/outbound.py:139
 msgid "No Mail Account found for the user {0}."
 msgstr ""
 
@@ -4655,7 +4647,7 @@ msgstr ""
 msgid "No blocked IPs found."
 msgstr ""
 
-#: mail/jmap.py:893
+#: mail/jmap.py:894
 #: mail/mail/doctype/jmap_push_subscription/jmap_push_subscription.py:288
 msgid "No cluster found for the account {0}."
 msgstr ""
@@ -4697,7 +4689,7 @@ msgstr ""
 msgid "No members found."
 msgstr ""
 
-#: mail/mail/doctype/mail_message/mail_message.py:219
+#: mail/mail/doctype/mail_message/mail_message.py:224
 #: mail/mail/doctype/message_queue/message_queue.py:39
 msgid "No messages found."
 msgstr ""
@@ -4711,7 +4703,7 @@ msgstr ""
 msgid "Node ID"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:147
+#: mail/mail/doctype/mail_server/mail_server.py:130
 msgid "Node ID {0} already assigned to another Mail Server."
 msgstr ""
 
@@ -4738,7 +4730,7 @@ msgstr ""
 msgid "Not Verified"
 msgstr ""
 
-#: mail/utils/user.py:111
+#: mail/utils/user.py:117
 msgid "Not permitted"
 msgstr ""
 
@@ -4841,11 +4833,11 @@ msgstr ""
 msgid "Only failed verifications can be retried."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:170
+#: mail/mail/doctype/mail_server/mail_server.py:153
 msgid "Only one ACME Provider can be default."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:195
+#: mail/mail/doctype/mail_server/mail_server.py:178
 msgid "Only one TLS Certificate can be default."
 msgstr ""
 
@@ -5119,7 +5111,7 @@ msgstr ""
 msgid "Please confirm your email address by clicking the button below."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:366
+#: mail/mail/doctype/mail_server/mail_server.py:349
 msgid "Please generate the Mail Server Config before installing Stalwart."
 msgstr ""
 
@@ -5177,15 +5169,15 @@ msgstr ""
 msgid "Please verify SSH connection for Mail Server {0}"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:308
+#: mail/mail/doctype/mail_server/mail_server.py:291
 msgid "Please verify the SSH connection before installing Ansible."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:334
+#: mail/mail/doctype/mail_server/mail_server.py:317
 msgid "Please verify the SSH connection before installing Docker."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:356
+#: mail/mail/doctype/mail_server/mail_server.py:339
 msgid "Please verify the SSH connection before installing Stalwart."
 msgstr ""
 
@@ -5264,11 +5256,11 @@ msgstr ""
 msgid "Priority"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:123
+#: mail/mail/doctype/mail_server/mail_server.py:106
 msgid "Priority must be greater than 0."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:130
+#: mail/mail/doctype/mail_server/mail_server.py:113
 msgid "Priority {0} is already assigned to another Mail Server."
 msgstr ""
 
@@ -5378,12 +5370,12 @@ msgstr ""
 msgid "Public"
 msgstr ""
 
-#. Label of the public_ipv4 (Data) field in DocType 'Mail Server'
+#. Label of the ipv4_addresses (Small Text) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Public IPv4"
 msgstr ""
 
-#. Description of the 'Public IPv4' (Data) field in DocType 'Mail Server'
+#. Description of the 'Public IPv4' (Small Text) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Public IPv4 address of this mail server (used for external communication)."
 msgstr ""
@@ -5394,12 +5386,12 @@ msgstr ""
 msgid "Public IPv4 addresses assigned to this cluster."
 msgstr ""
 
-#. Label of the public_ipv6 (Data) field in DocType 'Mail Server'
+#. Label of the ipv6_addresses (Small Text) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Public IPv6"
 msgstr ""
 
-#. Description of the 'Public IPv6' (Data) field in DocType 'Mail Server'
+#. Description of the 'Public IPv6' (Small Text) field in DocType 'Mail Server'
 #: mail/mail/doctype/mail_server/mail_server.json
 msgid "Public IPv6 address of this mail server (used for external communication)."
 msgstr ""
@@ -6053,15 +6045,15 @@ msgstr ""
 msgid "Rotating DKIM Keys..."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:183
+#: mail/mail/doctype/mail_server/mail_server.py:166
 msgid "Row #{0}: Certificate ID {1} is duplicated."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:190
+#: mail/mail/doctype/mail_server/mail_server.py:173
 msgid "Row #{0}: Certificate or Certificate Path is required."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:163
+#: mail/mail/doctype/mail_server/mail_server.py:146
 msgid "Row #{0}: Directory ID {1} is duplicated."
 msgstr ""
 
@@ -6070,11 +6062,11 @@ msgid "Row #{0}: Failed to verify {1} : {2}."
 msgstr ""
 
 #: mail/mail/doctype/mail_cluster/mail_cluster.py:227
-#: mail/mail/doctype/mail_server/mail_server.py:204
+#: mail/mail/doctype/mail_server/mail_server.py:187
 msgid "Row #{0}: Listener ID {1} is duplicated."
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:192
+#: mail/mail/doctype/mail_server/mail_server.py:175
 msgid "Row #{0}: Private Key or Private Key Path is required."
 msgstr ""
 
@@ -6182,11 +6174,11 @@ msgstr ""
 msgid "SSH User"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:299
+#: mail/mail/doctype/mail_server/mail_server.py:282
 msgid "SSH connection failed. Error: {0}"
 msgstr ""
 
-#: mail/mail/doctype/mail_server/mail_server.py:297
+#: mail/mail/doctype/mail_server/mail_server.py:280
 msgid "SSH connection successful."
 msgstr ""
 
@@ -7274,7 +7266,7 @@ msgstr ""
 msgid "The security token for the S3 account."
 msgstr ""
 
-#: mail/jmap.py:904
+#: mail/jmap.py:905
 msgid "The server {0} does not belong to the same cluster as the account {1}."
 msgstr ""
 
@@ -8093,7 +8085,7 @@ msgstr ""
 msgid "You cannot send email from {0} using account {1}. Please use the email address associated with the account."
 msgstr ""
 
-#: mail/utils/validation.py:325
+#: mail/utils/validation.py:327
 msgid "You do not have permission to access this resource."
 msgstr ""
 
@@ -8111,6 +8103,10 @@ msgstr ""
 
 #: mail/mail/doctype/mail_domain/mail_domain.py:126
 msgid "You do not have permission to verify DNS Records."
+msgstr ""
+
+#: mail/mail/doctype/mail_message/mail_message.py:200
+msgid "You do not have permission to view messages for this account."
 msgstr ""
 
 #: mail/mail/doctype/mail_account_request/mail_account_request.py:174
@@ -8150,7 +8146,7 @@ msgstr ""
 #: frontend/src/components/MailThread.vue:19
 #: frontend/src/components/MailThread.vue:71
 #: frontend/src/components/Modals/SearchModal.vue:23
-#: mail/mail/doctype/mail_message/mail_message.py:1174
+#: mail/mail/doctype/mail_message/mail_message.py:1183
 msgid "[No subject]"
 msgstr ""
 

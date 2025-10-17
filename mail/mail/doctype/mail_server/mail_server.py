@@ -75,25 +75,8 @@ class MailServer(Document):
 		if self.is_new() and frappe.db.exists("Mail Server", self.hostname):
 			frappe.throw(_("Mail Server {0} already exists.").format(frappe.bold(self.hostname)))
 
-		if ipv4_addresses := [r.address for r in get_dns_record(self.hostname, "A") or []]:
-			if len(ipv4_addresses) > 1:
-				frappe.throw(
-					_("Multiple IPv4 addresses found for Mail Server {0}. Found: {1}.").format(
-						frappe.bold(self.hostname), ", ".join(ipv4_addresses)
-					)
-				)
-
-			self.public_ipv4 = ipv4_addresses[0]
-
-		if ipv6_addresses := [r.address for r in get_dns_record(self.hostname, "AAAA") or []]:
-			if len(ipv6_addresses) > 1:
-				frappe.throw(
-					_("Multiple IPv6 addresses found for Mail Server {0}. Found: {1}.").format(
-						frappe.bold(self.hostname), ", ".join(ipv6_addresses)
-					)
-				)
-
-			self.public_ipv6 = ipv6_addresses[0]
+		self.ipv4_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "A") or []])
+		self.ipv6_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "AAAA") or []])
 
 	def validate_cluster(self) -> None:
 		"""Validates the cluster."""
