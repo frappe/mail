@@ -658,6 +658,7 @@ def search_messages(
 
 	fields = [
 		"name",
+		"_id",
 		"subject",
 		"preview",
 		"recipients",
@@ -668,6 +669,8 @@ def search_messages(
 		"_id",
 		"thread_id",
 		"mailboxes",
+		"attachments",
+		"seen",
 	]
 
 	messages, total = fetch_messages(account, filter=filter, position=position, limit=limit, sort=sort)

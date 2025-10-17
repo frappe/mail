@@ -5,7 +5,7 @@
 				icon="chevron-left"
 				variant="ghost"
 				class="mr-2 shrink-0"
-				@click="router.push({ name: 'Mailbox', params: { mailbox } })"
+				@click="goToMailbox"
 			/>
 			<span
 				v-if="thread.loading"
@@ -15,9 +15,11 @@
 				}"
 			/>
 			<template v-else>
-				<h2 v-if="!isMobile" class="mr-2 select-none truncate font-semibold leading-5">
-					{{ thread?.data?.[0]?.subject || __('[No subject]') }}
-				</h2>
+				<Tooltip v-if="!isMobile" :text="thread?.data?.[0]?.subject">
+					<h2 class="mr-2 select-none truncate font-semibold leading-5">
+						{{ thread?.data?.[0]?.subject || __('[No subject]') }}
+					</h2>
+				</Tooltip>
 				<div class="ml-auto shrink-0 space-x-2">
 					<Button
 						v-for="action in threadActions"
@@ -31,7 +33,7 @@
 						</template>
 					</Button>
 
-					<Dropdown v-if="mailbox !== 'starred'" :options="moveToOptions">
+					<Dropdown :options="moveToOptions">
 						<Button variant="ghost" :tooltip="__('Move To')">
 							<template #icon>
 								<FolderInput class="text-ink-gray-5 h-4 w-4" />
@@ -131,11 +133,7 @@
 								"
 								@reload-mails="
 									() => {
-										if (thread.data.length == 1)
-											router.push({
-												name: 'Mailbox',
-												params: { mailbox },
-											})
+										if (thread.data.length == 1) goToMailbox()
 										emit('reloadMails')
 									}
 								"
@@ -206,11 +204,7 @@
 										"
 										@reload-mails="
 											() => {
-												if (thread.data.length == 1)
-													router.push({
-														name: 'Mailbox',
-														params: { mailbox },
-													})
+												if (thread.data.length == 1) goToMailbox()
 												emit('reloadMails')
 											}
 										"
@@ -231,17 +225,14 @@
 							</pre
 							>
 
-							<div
-								v-if="mail.attachments?.length"
-								class="mt-8 flex flex-wrap space-x-2"
-							>
+							<div v-if="mail.attachments?.length" class="mt-8 flex flex-wrap">
 								<AttachmentCapsule
 									v-for="attachment in mail.attachments"
 									:key="attachment.name"
 									:file-name="attachment.filename"
 									:blob-i-d="attachment.blob_id"
 									:type="attachment.type"
-									class="mb-2"
+									class="mb-2 mr-2"
 								/>
 							</div>
 						</div>
@@ -294,12 +285,12 @@
 
 <script setup lang="ts">
 import { computed, inject, nextTick, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
-	BadgeAlert,
-	BadgeCheck,
 	ChevronLeft,
 	ChevronRight,
+	CircleAlert,
+	CircleCheck,
 	FolderInput,
 	Forward,
 	Mail as MailIcon,
@@ -308,7 +299,7 @@ import {
 	SquarePen,
 	Trash2,
 } from 'lucide-vue-next'
-import { Avatar, Button, Dropdown, createResource } from 'frappe-ui'
+import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
 
 import {
 	extractQuotedContent,
@@ -346,12 +337,15 @@ const emit = defineEmits([
 	'nextThread',
 ])
 
-const router = useRouter()
 const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const { mailboxes, mailboxIds } = userStore()
 
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
+
+const route = useRoute()
+const router = useRouter()
+const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
 const thread = createResource({
 	url: 'mail.api.mail.get_thread',
@@ -368,7 +362,7 @@ const thread = createResource({
 			})),
 	onSuccess: (data: Mail[]) => {
 		if (!data.filter((mail) => filterRelevantMails(mail)).length) {
-			router.push({ name: 'Mailbox', params: { mailbox } })
+			goToMailbox()
 			emit('reloadMails')
 			return
 		}
@@ -389,10 +383,14 @@ const thread = createResource({
 			}
 		})
 	},
-	onError: () => router.push({ name: 'Mailbox', params: { mailbox } }),
+	onError: () => goToMailbox(),
 })
 
+const threadMailboxes = computed(() => thread?.data?.[0]?.mailboxes.map((m) => m.mailbox_id) || [])
+
 const filterRelevantMails = (mail: Mail) => {
+	if (mailbox === 'search') return true
+
 	const mailboxes = mail.mailboxes.map((m) => m.mailbox_id)
 	const trash = mailboxIds.trash
 	return mailbox === trash ? mailboxes.includes(trash) : !mailboxes.includes(trash)
@@ -406,11 +404,16 @@ watch(() => threadID, reload)
 
 const user = inject('$user')
 
-const moveToOptions = computed(() =>
-	mailboxes.data
-		?.filter((m) => ![mailbox, mailboxIds.sent, mailboxIds.drafts].includes(m.id))
-		.map((m) => ({ label: m._name, onClick: () => emit('moveThread', m.id) })),
-)
+const moveToOptions = computed(() => {
+	const excludedMailboxes = new Set([
+		mailboxIds.sent,
+		mailboxIds.drafts,
+		...threadMailboxes.value,
+	])
+	return mailboxes.data
+		?.filter((m) => !excludedMailboxes.has(m.id))
+		.map((m) => ({ label: m._name, onClick: () => emit('moveThread', m.id) }))
+})
 
 interface MailAction {
 	label: string
@@ -424,26 +427,28 @@ const threadActions = computed((): MailAction[] =>
 		{
 			label: __('Mark as Junk'),
 			onClick: () => emit('setSpamStatus', true),
-			icon: BadgeAlert,
-			condition: ![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
+			icon: CircleAlert,
+			condition: !threadMailboxes.value.some((m: string) =>
+				[mailboxIds.junk, mailboxIds.drafts].includes(m),
+			),
 		},
 		{
 			label: __('Mark as Not Junk'),
 			onClick: () => emit('setSpamStatus', false),
-			icon: BadgeCheck,
-			condition: mailbox === mailboxIds.junk,
+			icon: CircleCheck,
+			condition: threadMailboxes.value.includes(mailboxIds.junk),
 		},
 		{
 			label: __('Move to Trash'),
 			onClick: () => emit('moveThread', mailboxIds.trash),
 			icon: Trash2,
-			condition: mailbox !== mailboxIds.trash,
+			condition: !threadMailboxes.value.includes(mailboxIds.trash),
 		},
 		{
 			label: __('Delete Thread'),
 			onClick: () => emit('deleteThread'),
 			icon: Trash2,
-			condition: mailbox === mailboxIds.trash,
+			condition: threadMailboxes.value.includes(mailboxIds.trash),
 		},
 		{
 			label: __('Mark as Unread'),

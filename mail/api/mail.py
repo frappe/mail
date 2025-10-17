@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import frappe
 from bs4 import BeautifulSoup
 from frappe import _
@@ -13,7 +15,7 @@ from mail.mail.doctype.mail_message.mail_message import (
 	fetch_threads,
 	get_message_ids,
 	move_messages,
-	relevance_search_messages,
+	search_messages,
 	set_flagged_status,
 	set_seen_status,
 	set_spam_status,
@@ -419,6 +421,8 @@ def set_seen(thread_ids: list[str], seen: bool, mailbox: str) -> dict:
 	account = get_account_for_user(frappe.session.user)
 	if mailbox == "starred":
 		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	elif mailbox == "search":
+		mailbox = None
 	messages = get_message_ids(account, thread_ids, mailbox)
 	set_seen_status(account, messages, seen)
 
@@ -450,6 +454,8 @@ def set_threads_mailbox(thread_ids: list[str], mailbox: str, move_to_mailbox) ->
 	account = get_account_for_user(frappe.session.user)
 	if mailbox == "starred":
 		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	elif mailbox == "search":
+		mailbox = None
 	messages = get_message_ids(account, thread_ids, mailbox)
 	move_messages(account, messages, move_to_mailbox)
 
@@ -473,6 +479,8 @@ def set_threads_spam_status(thread_ids: list[str], mailbox: str, spam: bool) -> 
 	account = get_account_for_user(frappe.session.user)
 	if mailbox == "starred":
 		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+	elif mailbox == "search":
+		mailbox = None
 	messages = get_message_ids(account, thread_ids, mailbox)
 	set_spam_status(account, messages, spam)
 
@@ -499,8 +507,37 @@ def empty_user_mailbox(mailbox: str) -> None:
 
 
 @frappe.whitelist()
-def search_mails(query) -> dict:
+def search_mails(filter, limit=5) -> tuple[list[dict], int]:
 	"""Returns search results for the given query."""
 
+	if not filter:
+		return ([], 0)
+
+	normalized_filter = normalize_search_filter(filter)
 	account = get_account_for_user(frappe.session.user)
-	return relevance_search_messages(account, text=query, limit=10)
+	return search_messages(account, normalized_filter, limit=limit)
+
+
+def normalize_search_filter(filter: dict) -> dict:
+	"""Normalize and transform filter parameters for email search."""
+
+	filter = filter.copy()
+
+	if filter.get("hasAttachment") in ["true", "false"]:
+		filter["hasAttachment"] = filter["hasAttachment"] == "true"
+
+	if filter.get("isRead"):
+		key = "hasKeyword" if filter["isRead"] == "true" else "notKeyword"
+		filter[key] = "$seen"
+		del filter["isRead"]
+
+	for date_key in ["after", "before"]:
+		if filter.get(date_key):
+			filter[date_key] = parse_date_to_utc_iso(filter[date_key])
+
+	return {"operator": "AND", "conditions": [{k: v} for k, v in filter.items()]}
+
+
+def parse_date_to_utc_iso(date_str: str) -> str:
+	"""Parse date string and convert to ISO format with UTC timezone."""
+	return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).isoformat()

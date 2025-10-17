@@ -1,20 +1,18 @@
 <template>
 	<div>
 		<div class="flex flex-wrap gap-1">
-			<Button
+			<div
 				v-for="value in values"
 				ref="emails"
 				:key="value"
-				:label="value"
 				theme="gray"
 				variant="subtle"
-				class="!text-ink-gray-7 rounded"
+				class="!text-ink-gray-7 bg-surface-gray-2 flex cursor-default items-center rounded px-2 text-base"
 				@keydown.delete.capture.stop="removeLastValue"
 			>
-				<template #suffix>
-					<X class="h-3.5" name="x" @click.stop="removeValue(value)" />
-				</template>
-			</Button>
+				<span>{{ value }}</span>
+				<X class="h-3.5 cursor-pointer" @click.stop="removeValue(value)" />
+			</div>
 			<div class="flex-1">
 				<Combobox v-model="selectedValue" nullable>
 					<Popover v-model:show="showOptions" class="w-full">
@@ -93,7 +91,7 @@ import { computed, nextTick, ref } from 'vue'
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue'
 import { watchDebounced } from '@vueuse/core'
 import { X } from 'lucide-vue-next'
-import { Avatar, Button, ErrorMessage, Popover, createResource } from 'frappe-ui'
+import { Avatar, ErrorMessage, Popover, createResource } from 'frappe-ui'
 
 const props = defineProps({
 	validate: {

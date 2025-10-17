@@ -1,6 +1,6 @@
 <template>
 	<div
-		class="sm:hover:bg-surface-gray-1 flex cursor-pointer select-none space-x-2.5 border-b px-3.5 py-2.5 sm:px-5"
+		class="sm:hover:bg-surface-gray-1 group flex cursor-pointer select-none space-x-2.5 border-b px-3.5 py-2.5 sm:px-5"
 		:class="{
 			'!bg-surface-blue-1': isSelected || isTouching,
 			'!py-2': isFullWidth,
@@ -30,7 +30,7 @@
 			<Avatar
 				v-else
 				:label="getFirstAlphabet(mail.from_name) || getFirstAlphabet(mail.from_email)"
-				:size="isFullWidth ? 'lg' : '2xl'"
+				:size="isFullWidth ? 'xl' : '2xl'"
 				class="border"
 				@click.stop="emit('setSelected', true)"
 			/>
@@ -72,22 +72,28 @@
 				{{ mail.preview || __('— No message body —') }}
 			</h5>
 			<div
-				v-if="mail.attachments || mail.draft"
+				v-if="attachments.length || mail.draft || ['starred', 'search'].includes(mailbox)"
 				class="flex items-center"
 				:class="{ 'ml-auto min-w-fit': isFullWidth }"
 			>
-				<AttachmentCapsule
-					v-for="(attachment, idx) in mail.attachments?.slice(0, 2)"
+				<Tooltip
+					v-for="(attachment, idx) in attachments.slice(0, 2)"
 					:key="idx"
-					:file-name="attachment.filename"
-					:blob-i-d="attachment.blob_id"
-					:type="attachment.type"
-					class="mr-2 max-w-32"
-					@click.stop.prevent
-				/>
+					:text="attachment.filename"
+				>
+					<AttachmentCapsule
+						:file-name="attachment.filename"
+						:blob-i-d="attachment.blob_id"
+						:type="attachment.type"
+						class="mr-2"
+						:class="isFullWidth ? 'max-w-32' : 'max-w-20'"
+						@click.stop.prevent
+					/>
+				</Tooltip>
 				<AttachmentCapsule
-					v-if="mail.attachments?.length > 2"
-					:file-name="__('+{0} more', [String(mail.attachments.length - 2)])"
+					v-if="attachments.length > 2"
+					:file-name="__('+{0}', [String(attachments.length - 2)])"
+					class="mr-2"
 				/>
 				<Badge
 					v-if="mail.draft"
@@ -96,10 +102,28 @@
 					:label="__('Draft')"
 					theme="red"
 				/>
+				<template v-if="isFullWidth && ['starred', 'search'].includes(mailbox)">
+					<div
+						v-for="m in mail.mailboxes"
+						:key="m.mailbox_id"
+						class="bg-surface-gray-2 group-hover:bg-surface-gray-3 inline-flex rounded p-1.5 text-xs"
+					>
+						{{ m.mailbox_name }}
+					</div>
+				</template>
 			</div>
 			<div v-if="isFullWidth && !isHovered" class="flex w-20 shrink-0 justify-end">
 				<MailDate :datetime="mail.received_at" :in-list="true" />
 			</div>
+			<template v-if="!isFullWidth && ['starred', 'search'].includes(mailbox)">
+				<div
+					v-for="m in mail.mailboxes"
+					:key="m.mailbox_id"
+					class="bg-surface-gray-2 group-hover:bg-surface-gray-3 mr-1.5 inline-flex rounded p-1.5 text-xs"
+				>
+					{{ m.mailbox_name }}
+				</div>
+			</template>
 		</div>
 		<div
 			v-if="isHovered && !isMobile"
@@ -124,7 +148,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Check, Mail, MailOpen, Trash2 } from 'lucide-vue-next'
-import { Avatar, Badge, Button, Checkbox } from 'frappe-ui'
+import { Avatar, Badge, Button, Checkbox, Tooltip } from 'frappe-ui'
 
 import { getFirstAlphabet, getFormattedRecipients } from '@/utils'
 import { useLayout, useScreenSize } from '@/utils/composables'
@@ -134,7 +158,11 @@ import MailDate from '@/components/MailDate.vue'
 
 import type { Thread } from '@/types'
 
-const { mail, isSelected } = defineProps<{ mail: Thread; isSelected: boolean }>()
+const { mailbox, mail, isSelected } = defineProps<{
+	mailbox: string
+	mail: Thread
+	isSelected: boolean
+}>()
 
 const emit = defineEmits(['setSeen', 'trashThread', 'deleteThread', 'setSelected'])
 
@@ -143,6 +171,10 @@ const { showReadingPane } = useLayout()
 const { mailboxIds } = userStore()
 
 const mailboxes = computed(() => mail.mailboxes.map((m) => m.mailbox_id))
+
+const attachments = computed(
+	() => mail.attachments.filter((m) => m.filename && m.disposition === 'attachment') || [],
+)
 
 const isFullWidth = computed(() => !(showReadingPane.value || isMobile.value))
 

@@ -13,12 +13,12 @@
 				</template>
 			</Breadcrumbs>
 		</div>
-		<HeaderActions @reload-mails="reloadMails(true, ['drafts', 'sent'])" />
+		<HeaderActions @reload-mails="reloadThreads(true, ['drafts', 'sent'])" />
 	</header>
 	<div
 		v-if="
 			[mailboxIds.trash, mailboxIds.junk].includes(mailbox) &&
-			threads.data?.length &&
+			threadsResource.data?.length &&
 			(showReadingPane || !threadID)
 		"
 		class="space-x-1 border-b px-3 py-2.5 sm:px-5"
@@ -39,7 +39,7 @@
 	>
 		<!-- Loading -->
 		<div
-			v-if="threads?.loading && limit === 50"
+			v-if="threadsResource?.loading && limit === 50"
 			class="flex w-full flex-col items-center justify-center"
 		>
 			<div class="text-ink-gray-5 flex items-center space-x-2">
@@ -48,7 +48,7 @@
 			</div>
 		</div>
 
-		<template v-else-if="threads?.data?.length || filter">
+		<template v-else-if="threadsResource?.data?.length || filter">
 			<div
 				ref="mailSidebar"
 				class="sticky top-16 flex flex-col border-r"
@@ -65,18 +65,12 @@
 							/>
 						</Tooltip>
 					</div>
-					<div class="mr-auto text-base">
-						<span v-if="selections.length">
-							{{
-								selections.length === 1
-									? __('1 item selected')
-									: __('{0} items selected', [String(selections.length)])
-							}}
-						</span>
-						<span v-else>{{ title }}</span>
-					</div>
+					<p class="mr-auto pb-[2px]">{{ title }}</p>
 					<div class="flex items-center space-x-1.5 sm:space-x-3">
-						<Dropdown v-if="!selections.length" :options="FILTER_OPTIONS">
+						<Dropdown
+							v-if="!selections.length && mailbox !== 'search'"
+							:options="FILTER_OPTIONS"
+						>
 							<Button variant="ghost" :tooltip="__('Filter')">
 								<template #icon>
 									<component :is="ListFilter" class="text-ink-gray-7 h-4 w-4" />
@@ -97,7 +91,7 @@
 						</Button>
 
 						<Dropdown
-							v-if="!!selections.length && mailbox !== 'starred'"
+							v-if="!!selections.length && !['search', 'starred'].includes(mailbox)"
 							:options="moveToOptions"
 						>
 							<Button variant="ghost" :tooltip="__('Move To')">
@@ -111,11 +105,11 @@
 
 				<!-- Mail list -->
 				<div
-					v-if="threads?.data?.length"
+					v-if="threadsResource?.data?.length"
 					ref="mailList"
 					class="h-full overflow-y-auto overscroll-contain"
 					@click="mailListClicked = true"
-					@scroll="loadMoreEmails"
+					@scroll="loadMoreThreads"
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
 						<Tooltip
@@ -140,7 +134,7 @@
 									"
 									@click.stop
 								/>
-								<span class="select-none pt-px">
+								<span class="select-none pt-[2px]">
 									{{
 										getFormattedDate(
 											key,
@@ -162,16 +156,12 @@
 							<MailListItem
 								v-for="mail in group"
 								ref="mailItems"
-								:key="mail.thread_id"
+								:key="mail.name"
+								:mailbox
 								:mail
 								:is-selected="selections.includes(mail.thread_id)"
 								:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"
-								@click="
-									router.push({
-										name: 'Mail',
-										params: { mailbox, threadID: mail.thread_id },
-									})
-								"
+								@click="goToThread(mail.thread_id)"
 								@set-seen="
 									(seen: boolean) =>
 										setSeen.submit({ thread_ids: [mail.thread_id], seen })
@@ -189,7 +179,10 @@
 							/>
 						</template>
 					</div>
-					<div v-if="threads.loading" class="flex items-center justify-center py-4">
+					<div
+						v-if="threadsResource.loading"
+						class="flex items-center justify-center py-4"
+					>
 						<div class="text-ink-gray-5 flex items-center space-x-2">
 							<LoaderCircle class="h-4 w-4 animate-spin" />
 							<span class="text-sm">{{ __('Loading more mails...') }}</span>
@@ -223,7 +216,7 @@
 					:mailbox
 					:thread-i-d
 					:threads="threadIDs"
-					@reload-mails="reloadMails"
+					@reload-mails="reloadThreads"
 					@set-seen="(seen: boolean) => setSeen.submit({ thread_ids: [threadID], seen })"
 					@move-thread="
 						(move_to_mailbox: string) =>
@@ -243,7 +236,13 @@
 		<!-- No mails -->
 		<div v-else class="text-ink-gray-5 flex w-full flex-col items-center justify-center">
 			<NoMails class="text-ink-gray-2 mb-2 h-16 w-16" />
-			<p>{{ __('You have no mails in this folder.') }}</p>
+			<p>
+				{{
+					mailbox === 'search'
+						? __('No results found for the given query.')
+						: __('You have no mails in this folder.')
+				}}
+			</p>
 		</div>
 	</div>
 
@@ -251,13 +250,13 @@
 </template>
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import {
-	BadgeAlert,
-	BadgeCheck,
 	ChevronDown,
 	ChevronRight,
+	CircleAlert,
+	CircleCheck,
 	FolderInput,
 	ListFilter,
 	LoaderCircle,
@@ -291,6 +290,7 @@ import type { Thread, UserResource } from '@/types'
 
 const { mailbox, threadID } = defineProps<{ mailbox: string; threadID?: string }>()
 
+const route = useRoute()
 const router = useRouter()
 const { isMobile } = useScreenSize()
 const { openSidebar } = useSidebar()
@@ -305,7 +305,7 @@ const { mailboxes, mailboxIds } = userStore()
 // Thread Groups
 
 const groupedThreads = computed<Record<string, Thread[]>>(() =>
-	threads?.data?.reduce((groups: Record<string, Thread[]>, thread: Thread) => {
+	threadsResource.value?.data?.reduce((groups: Record<string, Thread[]>, thread: Thread) => {
 		const date = dayjs(thread.received_at).format(
 			groupMessagesBy.value === 'day' ? 'YYYY-MM-DD' : 'YYYY-MM',
 		)
@@ -326,8 +326,7 @@ const toggleGroupCollapse = (key: string) => {
 		return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== key))
 
 	collapsedGroups.value.push(key)
-	if (groupedThreads.value[key]?.some((thread) => thread.thread_id === threadID))
-		router.push({ name: 'Mailbox', params: { mailbox } })
+	if (groupedThreads.value[key]?.some((thread) => thread.thread_id === threadID)) goToMailbox()
 	toggleSelect(getGroupThreads(key), false)
 }
 
@@ -446,7 +445,7 @@ const selectActions = computed((): SelectAction[] =>
 			label: __('Mark as Junk'),
 			onClick: () =>
 				setThreadsSpamStatus.submit({ thread_ids: selections.value, mailbox, spam: true }),
-			icon: BadgeAlert,
+			icon: CircleAlert,
 			condition:
 				!!selections.value.length &&
 				![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
@@ -459,7 +458,7 @@ const selectActions = computed((): SelectAction[] =>
 					mailbox,
 					spam: false,
 				}),
-			icon: BadgeCheck,
+			icon: CircleCheck,
 			condition: !!selections.value.length && mailbox === mailboxIds.junk,
 		},
 		{
@@ -493,11 +492,34 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Refresh'),
-			onClick: () => reloadMails(),
+			onClick: () => reloadThreads(),
 			icon: RefreshCw,
 			condition: !selections.value.length,
 		},
 	].filter((action) => action.condition),
+)
+
+// Search
+
+const noOfSearchResults = ref(0)
+
+const searchResults = createResource({
+	url: 'mail.api.mail.search_mails',
+	makeParams: () => ({ filter: route.query, limit: limit.value }),
+	transform: (data: [Thread[], number]) => {
+		noOfSearchResults.value = data[1]
+		return data[0]
+	},
+})
+
+watch(
+	() => JSON.stringify(route.query),
+	() => {
+		if (mailbox === 'search') {
+			limit.value = 50
+			searchResults.reload()
+		}
+	},
 )
 
 // Main data
@@ -512,16 +534,20 @@ const threads = createResource({
 	makeParams: () => ({ mailbox, limit: limit.value, filter_by: filter.value }),
 })
 
-const threadIDs = computed(() => threads.data?.map((thread: Thread) => thread.thread_id) || [])
+const threadsResource = computed(() => (mailbox === 'search' ? searchResults : threads))
 
-const reloadMails: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) => void = (
+const threadIDs = computed(
+	() => threadsResource.value.data?.map((thread: Thread) => thread.thread_id) || [],
+)
+
+const reloadThreads: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) => void = (
 	reloadMailboxes = true,
 	mailboxRoles = [],
 ) => {
 	if (mailboxRoles.length && !mailboxRoles.map((m) => mailboxIds[m]).includes(mailbox)) return
 
 	resetSelections()
-	threads.reload()
+	threadsResource.value.reload()
 	if (reloadMailboxes) mailboxes.reload()
 }
 
@@ -530,7 +556,7 @@ watch(
 	() => {
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
 		limit.value = 50
-		reloadMails(false)
+		reloadThreads(false)
 	},
 	{ immediate: true },
 )
@@ -540,7 +566,7 @@ onMounted(() => {
 	window.addEventListener('keyup', handleKeyUp)
 
 	socket.on('new_mail_created', (updatedMailboxes: string[]) => {
-		if (updatedMailboxes.includes(mailbox)) reloadMails()
+		if (updatedMailboxes.includes(mailbox)) reloadThreads()
 	})
 })
 
@@ -549,17 +575,25 @@ onUnmounted(() => {
 	window.removeEventListener('keyup', handleKeyUp)
 })
 
-const loadMoreEmails = useDebounceFn((e) => {
+const loadMoreThreads = useDebounceFn((e) => {
 	const { scrollTop, scrollHeight, clientHeight } = e.target
-	if (scrollTop + clientHeight >= scrollHeight - 10 && threads?.data?.length === limit.value) {
+	if (
+		scrollTop + clientHeight >= scrollHeight - 10 &&
+		threadsResource.value?.data?.length === limit.value
+	) {
 		limit.value += 50
-		threads.reload()
+		threadsResource.value.reload()
 		setTimeout(
 			() => e.target.scrollTo({ top: e.target.scrollHeight, behavior: 'smooth' }),
 			100,
 		)
 	}
 }, 500)
+
+const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
+
+const goToThread = (threadID: string) =>
+	router.push({ name: 'Mail', params: { mailbox, threadID }, query: route.query })
 
 // Actions
 
@@ -573,16 +607,16 @@ const setSeen = createResource({
 	makeParams: ({ thread_ids, seen }: SetSeenParams) => ({ thread_ids, seen, mailbox }),
 	onSuccess: ({ thread_ids, seen }: SetSeenParams) => {
 		mailboxes.reload()
-		threads.data
+		threadsResource.value.data
 			.filter((thread: Thread) => thread_ids.includes(thread.thread_id))
 			.forEach((thread: Thread) => (thread.seen = seen ? 1 : 0))
 		if (
 			!seen &&
 			threadID &&
 			(thread_ids.includes(threadID) ||
-				!threads.data.some((m: Thread) => thread_ids.includes(m.thread_id)))
+				!threadsResource.value.data.some((m: Thread) => thread_ids.includes(m.thread_id)))
 		)
-			router.push({ name: 'Mailbox', params: { mailbox } })
+			goToMailbox()
 	},
 })
 
@@ -599,9 +633,8 @@ const moveThreads = createResource({
 		move_to_mailbox,
 	}),
 	onSuccess: (thread_ids: string[]) => {
-		if (threadID && thread_ids.includes(threadID))
-			router.push({ name: 'Mailbox', params: { mailbox } })
-		reloadMails()
+		if (threadID && thread_ids.includes(threadID)) goToMailbox()
+		reloadThreads()
 	},
 })
 
@@ -628,9 +661,8 @@ const setThreadsSpamStatus = createResource({
 		spam,
 	}),
 	onSuccess: (thread_ids: string[]) => {
-		if (threadID && thread_ids.includes(threadID))
-			router.push({ name: 'Mailbox', params: { mailbox } })
-		reloadMails()
+		if (threadID && thread_ids.includes(threadID)) goToMailbox()
+		reloadThreads()
 	},
 })
 
@@ -638,9 +670,8 @@ const deleteThreads = createResource({
 	url: 'mail.api.mail.delete_threads',
 	makeParams: (thread_ids: string[]) => ({ thread_ids, mailbox }),
 	onSuccess: (thread_ids: string[]) => {
-		if (threadID && thread_ids.includes(threadID))
-			router.push({ name: 'Mailbox', params: { mailbox } })
-		reloadMails()
+		if (threadID && thread_ids.includes(threadID)) goToMailbox()
+		reloadThreads()
 	},
 })
 
@@ -651,7 +682,7 @@ const goToThreadByOffset = (offset: number) => {
 	const targetThread = getThreadByOffset(offset)
 	if (!targetThread) return
 
-	router.push({ name: 'Mail', params: { mailbox, threadID: targetThread } })
+	goToThread(targetThread)
 	const el = mailItems.value?.find((el) => el?.id === targetThread)?.$el
 	if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
@@ -663,7 +694,7 @@ const emptyMailbox = createResource({
 	makeParams: () => ({ mailbox }),
 	onSuccess: () => {
 		raiseToast(__('{0} emptied successfully', [mailboxName.value]))
-		reloadMails()
+		reloadThreads()
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })
@@ -720,15 +751,28 @@ const setFilter = (value: string | null) => {
 // UI formatting
 
 const mailboxObj = computed(() => mailboxes.data?.find((m) => m.id === mailbox))
-const mailboxName = computed(() =>
-	mailbox === 'starred' ? __('Starred') : mailboxObj.value?._name,
-)
-const noOfThreads = computed(
-	() =>
-		`${mailboxObj.value?.total_threads} ${mailboxObj.value?.total_threads == 1 ? __('thread') : __('threads')}`,
-)
+const mailboxName = computed(() => {
+	switch (mailbox) {
+		case 'starred':
+			return __('Starred')
+		case 'search':
+			return __('Search')
+		default:
+			return mailboxObj.value?._name
+	}
+})
+const noOfThreads = computed(() => {
+	if (mailbox === 'search')
+		return `${noOfSearchResults.value} ${noOfSearchResults.value == 1 ? __('result') : __('results')}`
+	return `${mailboxObj.value?.total_threads} ${mailboxObj.value?.total_threads == 1 ? __('thread') : __('threads')}`
+})
 
 const title = computed(() => {
+	if (selections.value.length)
+		return selections.value.length === 1
+			? __('1 item selected')
+			: __('{0} items selected', [String(selections.value.length)])
+
 	switch (filter.value) {
 		case 'unread':
 			return __('Unread Mails')
