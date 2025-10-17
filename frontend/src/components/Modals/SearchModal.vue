@@ -1,5 +1,5 @@
 <template>
-	<Dialog v-model="show" :options="{ size: '2xl' }">
+	<Dialog v-model="show" :options="{ size: '2xl', paddingTop: '2%' }">
 		<template #body>
 			<div class="bg-surface-white">
 				<div class="flex items-center px-4 py-2">
@@ -15,7 +15,7 @@
 					<div class="group">
 						<span
 							v-if="advancedFiltersLength"
-							class="bg-surface-gray-7 text-ink-gray-1 border-outline-white absolute right-4 top-3 flex h-3 w-3 items-center justify-center rounded-full border text-[6px] group-hover:invisible"
+							class="bg-surface-gray-7 text-ink-gray-1 border-outline-white absolute right-4 top-3 flex h-3 w-3 items-center justify-center rounded-full border text-[6px] font-bold group-hover:invisible"
 						>
 							{{ advancedFiltersLength }}
 						</span>
@@ -85,10 +85,7 @@
 						/>
 					</div>
 				</template>
-				<div
-					v-else-if="results?.data?.[0]?.length"
-					class="max-h-[70vh] overflow-y-auto border-t p-2"
-				>
+				<div v-else-if="results?.data?.[0]?.length" class="border-t p-2">
 					<div
 						v-for="(result, idx) in results.data[0]"
 						:key="idx"
@@ -103,7 +100,7 @@
 							<div
 								v-for="m in result.mailboxes"
 								:key="m.mailbox_id"
-								class="bg-surface-gray-2 group-hover:bg-surface-gray-3 mr-1.5 inline-flex rounded p-1 text-sm"
+								class="bg-surface-gray-2 group-hover:bg-surface-gray-3 mr-1.5 inline-flex rounded p-1 text-xs"
 							>
 								{{ m.mailbox_name }}
 							</div>

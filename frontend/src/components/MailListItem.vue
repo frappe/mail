@@ -106,7 +106,7 @@
 					<div
 						v-for="m in mail.mailboxes"
 						:key="m.mailbox_id"
-						class="bg-surface-gray-2 group-hover:bg-surface-gray-3 inline-flex rounded p-1.5 text-sm"
+						class="bg-surface-gray-2 group-hover:bg-surface-gray-3 inline-flex rounded p-1.5 text-xs"
 					>
 						{{ m.mailbox_name }}
 					</div>
@@ -119,7 +119,7 @@
 				<div
 					v-for="m in mail.mailboxes"
 					:key="m.mailbox_id"
-					class="bg-surface-gray-2 group-hover:bg-surface-gray-3 mr-1.5 inline-flex rounded p-1.5 text-sm"
+					class="bg-surface-gray-2 group-hover:bg-surface-gray-3 mr-1.5 inline-flex rounded p-1.5 text-xs"
 				>
 					{{ m.mailbox_name }}
 				</div>
