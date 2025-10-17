@@ -535,7 +535,7 @@ def normalize_search_filter(filter: dict) -> dict:
 		if filter.get(date_key):
 			filter[date_key] = parse_date_to_utc_iso(filter[date_key])
 
-	return filter
+	return {"operator": "AND", "conditions": [{k: v} for k, v in filter.items()]}
 
 
 def parse_date_to_utc_iso(date_str: str) -> str:

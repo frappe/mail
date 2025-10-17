@@ -2,24 +2,35 @@
 	<Dialog v-model="show" :options="{ size: '2xl' }">
 		<template #body>
 			<div class="bg-surface-white">
-				<div class="flex items-center border-b px-4 py-2">
+				<div class="flex items-center px-4 py-2">
 					<Search class="text-ink-gray-5 h-4 w-4" />
 					<input
 						v-model="filter.text"
 						icon-left="search"
-						type="text"
+						type="search"
 						class="placeholder-ink-gray-4 w-full border-none bg-transparent text-base focus:ring-0"
 						placeholder="Search"
 						@keyup.enter="openSearchPage"
 					/>
-					<Button variant="ghost" @click="showAdvancedFilters = !showAdvancedFilters">
-						<template #icon>
-							<SlidersHorizontal class="text-ink-gray-5 h-4 w-4" />
-						</template>
-					</Button>
+					<div class="group">
+						<span
+							v-if="advancedFiltersLength"
+							class="bg-surface-gray-7 text-ink-gray-1 border-outline-white absolute right-4 top-3 flex h-3 w-3 items-center justify-center rounded-full border text-[6px] group-hover:invisible"
+						>
+							{{ advancedFiltersLength }}
+						</span>
+						<Button
+							variant="ghost"
+							@click="showAdvancedFilters = !showAdvancedFilters"
+						>
+							<template #icon>
+								<SlidersHorizontal class="text-ink-gray-5 h-4 w-4" />
+							</template>
+						</Button>
+					</div>
 				</div>
 				<template v-if="showAdvancedFilters">
-					<div class="space-y-4 p-4">
+					<div class="space-y-4 border-t p-4">
 						<FormControl
 							v-model="filter.inMailbox"
 							type="select"
@@ -50,7 +61,7 @@
 						<FormControl
 							v-model="filter.hasAttachment"
 							type="select"
-							:label="__('Attachment')"
+							:label="__('Attachments')"
 							:options="ATTACHMENT_OPTIONS"
 						/>
 						<FormControl
@@ -76,7 +87,7 @@
 				</template>
 				<div
 					v-else-if="results?.data?.[0]?.length"
-					class="max-h-[70vh] overflow-y-auto p-2"
+					class="max-h-[70vh] overflow-y-auto border-t p-2"
 				>
 					<div
 						v-for="(result, idx) in results.data[0]"
@@ -122,7 +133,7 @@
 				</div>
 				<div
 					v-else-if="!results?.loading && results?.data?.[1] === 0"
-					class="text-ink-gray-4 my-3 text-center text-sm"
+					class="text-ink-gray-4 border-t py-3 text-center text-sm"
 				>
 					{{ __('No results found for the given query.') }}
 				</div>
@@ -169,6 +180,9 @@ const getDefaultFilter = (reset = false) =>
 const filter = reactive({ ...getDefaultFilter() })
 const filteredFilter = computed(() =>
 	Object.fromEntries(Object.entries(filter).filter(([, v]) => Boolean(v))),
+)
+const advancedFiltersLength = computed(
+	() => Object.keys(filteredFilter.value).filter((k) => k !== 'text').length,
 )
 const showAdvancedFilters = ref(false)
 
