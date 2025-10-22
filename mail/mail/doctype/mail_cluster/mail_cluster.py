@@ -337,7 +337,8 @@ class MailCluster(Document):
 	def reload_config(self) -> None:
 		"""Reloads the Mail Cluster configuration."""
 
-		frappe.only_for("System Manager")
+		if not frappe.flags.ignore_permissions:
+			frappe.only_for("System Manager")
 
 		if not self.enabled:
 			frappe.throw(_("Mail Cluster {0} is disabled.").format(frappe.bold(self.name)))
@@ -351,6 +352,8 @@ class MailCluster(Document):
 @frappe.whitelist()
 def reload_clusters_config(clusters: str | list[str]) -> None:
 	"""Reloads the configuration of the specified clusters."""
+
+	frappe.flags.ignore_permissions = True
 
 	if isinstance(clusters, str):
 		clusters = json.loads(clusters)
