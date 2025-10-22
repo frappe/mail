@@ -2,6 +2,7 @@
 - name: Install Docker
   hosts: all
   become: true
+  gather_facts: yes
 
   tasks:
     # -------------------------
@@ -12,15 +13,36 @@
         name:
           - curl
           - gnupg
+          - lsb-release
+          - ca-certificates
           - software-properties-common
         state: present
         update_cache: true
       when: ansible_os_family == "Debian"
 
-    - name: Install Docker (Debian/Ubuntu)
-      apt:
-        name: docker.io
+    - name: Add Docker GPG key (Debian/Ubuntu)
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
         state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Add Docker repository (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: >
+          deb [arch={{ ansible_architecture }}]
+          https://download.docker.com/linux/{{ ansible_distribution | lower }}
+          {{ ansible_distribution_release }} stable
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install Docker Engine (Debian/Ubuntu)
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: true
       when: ansible_os_family == "Debian"
 
     # -------------------------
@@ -35,9 +57,21 @@
         state: present
       when: ansible_os_family == "RedHat"
 
+    - name: Add Docker repository (RHEL)
+      ansible.builtin.yum_repository:
+        name: docker-ce
+        description: Docker CE Stable - $basearch
+        baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+        gpgcheck: yes
+        gpgkey: https://download.docker.com/linux/centos/gpg
+      when: ansible_os_family == "RedHat"
+
     - name: Install Docker (RHEL)
       yum:
-        name: docker
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
         state: present
       when: ansible_os_family == "RedHat"
 
@@ -53,9 +87,18 @@
         state: present
       when: ansible_distribution == "Fedora"
 
+    - name: Add Docker repository (Fedora)
+      command: dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+      args:
+        creates: /etc/yum.repos.d/docker-ce.repo
+      when: ansible_distribution == "Fedora"
+
     - name: Install Docker (Fedora)
       dnf:
-        name: docker
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
         state: present
       when: ansible_distribution == "Fedora"
 
@@ -92,5 +135,10 @@
         dest: /usr/local/bin/docker-compose
         mode: "0755"
 
+    - name: Verify Docker installation
+      command: docker --version
+      changed_when: false
+
     - name: Verify `docker-compose` installation
       command: docker-compose --version
+      changed_when: false

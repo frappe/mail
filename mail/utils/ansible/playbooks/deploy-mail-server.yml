@@ -11,17 +11,18 @@
     install_redis: "{{ install_redis }}"
 
   tasks:
-    - name: Ensure `etc` directory exists
+    # -------------------------------------------------------------------------
+    # Directories and Configuration
+    # -------------------------------------------------------------------------
+    - name: Ensure Stalwart root directories exist
       file:
-        path: "{{ stalwart_config_dir }}"
+        path: "{{ item }}"
         state: directory
         mode: "0755"
-
-    - name: Ensure `logs` directory exists
-      file:
-        path: "{{ stalwart_root }}/logs"
-        state: directory
-        mode: "0755"
+      loop:
+        - "{{ stalwart_root }}"
+        - "{{ stalwart_config_dir }}"
+        - "{{ stalwart_root }}/logs"
 
     - name: Copy `config.toml`
       copy:
@@ -35,15 +36,18 @@
         dest: "{{ stalwart_root }}/docker-compose.yml"
         mode: "0644"
 
+    # -------------------------------------------------------------------------
+    # Docker Image and Container Management
+    # -------------------------------------------------------------------------
     - name: Pull images (optional)
-      command: docker-compose pull
+      command: docker compose pull
       args:
         chdir: "{{ stalwart_root }}"
       register: pull_result
       ignore_errors: yes
 
-    - name: Stop existing stalwart container (if any)
-      command: docker-compose down
+    - name: Stop any existing Stalwart container
+      command: docker compose down
       args:
         chdir: "{{ stalwart_root }}"
       ignore_errors: yes
@@ -53,27 +57,36 @@
       ignore_errors: yes
       when: not install_redis
 
-    - name: Start/Restart docker stack
-      command: docker-compose up -d
+    # -------------------------------------------------------------------------
+    # Start stack
+    # -------------------------------------------------------------------------
+    - name: Start docker stack
+      command: docker compose up -d
       args:
         chdir: "{{ stalwart_root }}"
       register: compose_up
 
-    - name: Wait for JMAP port 8080 to be listening (local)
+    # -------------------------------------------------------------------------
+    # Health Checks
+    # -------------------------------------------------------------------------
+    - name: Wait for Stalwart JMAP port (8080) to be ready
       wait_for:
         host: 127.0.0.1
         port: 8080
-        timeout: 60
+        timeout: 90
       register: wait_result
       ignore_errors: yes
 
-    - name: Check container health via `docker-compose ps`
-      command: docker-compose ps
+    - name: Check container health via `docker compose ps`
+      command: docker compose ps
       args:
         chdir: "{{ stalwart_root }}"
       register: ps_result
       ignore_errors: yes
 
-    - name: Debug outputs for playbook (ps)
+    # -------------------------------------------------------------------------
+    # Debug Info
+    # -------------------------------------------------------------------------
+    - name: Display container status
       debug:
         var: ps_result.stdout_lines
