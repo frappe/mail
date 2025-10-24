@@ -593,14 +593,21 @@ const handleKeydown = (e: KeyboardEvent) => {
 		return
 	}
 
-	// Reply/Forward shortcut
 	const lastMail = thread.data?.at(-1)
-	if ((key === 'r' || key === 'f') && lastMail && !lastMail.draft) {
+	if (!lastMail || lastMail.draft) return
+
+	// Reply/Reply All shortcut
+	if (key === 'r') {
 		e.preventDefault()
-		if (key === 'r')
-			if (e.shiftKey) replyAll(lastMail)
-			else reply(lastMail)
-		else forward(lastMail)
+		if (e.shiftKey) replyAll(lastMail)
+		else reply(lastMail)
+		return
+	}
+
+	// Forward shortcut
+	if (key === 'f') {
+		e.preventDefault()
+		forward(lastMail)
 	}
 }
 

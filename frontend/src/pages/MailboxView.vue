@@ -437,21 +437,21 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	if (
 		(e.key === 'ArrowUp' || e.key === 'ArrowDown') &&
 		showReadingPane.value &&
-		mailListClicked.value &&
-		threadID
+		mailListClicked.value
 	) {
 		e.preventDefault()
 		const offset = e.key === 'ArrowUp' ? -1 : 1
-		goToThreadByOffset(offset)
-		lastSelected.value = [threadID]
+		if (threadID) {
+			goToThreadByOffset(offset)
+			lastSelected.value = [threadID]
+		} else goToThread(threadIDs.value[0])
+		if (!isShiftPressed.value) return
 
-		if (isShiftPressed.value) {
-			const thread = getThreadByOffset(offset)
-			if (thread) {
-				const shouldSelect = !selections.value.includes(thread)
-				toggleSelect([threadID, thread], shouldSelect)
-			}
-		}
+		const thread = getThreadByOffset(offset)
+		if (!thread) return
+
+		const shouldSelect = !selections.value.includes(thread)
+		toggleSelect(threadID ? [threadID, thread] : [thread], shouldSelect)
 	}
 }
 
@@ -509,13 +509,25 @@ const selectActions = computed((): SelectAction[] =>
 			label: __('Mark as Read'),
 			onClick: () => setSeen.submit({ thread_ids: selections.value, seen: true }),
 			icon: MailOpen,
-			condition: !!selections.value.length,
+			condition:
+				!!selections.value.length &&
+				selections.value.some(
+					(threadID) =>
+						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+							.seen === 0,
+				),
 		},
 		{
 			label: __('Mark as Unread'),
 			onClick: () => setSeen.submit({ thread_ids: selections.value, seen: false }),
 			icon: Mail,
-			condition: !!selections.value.length,
+			condition:
+				!!selections.value.length &&
+				selections.value.some(
+					(threadID) =>
+						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+							.seen === 1,
+				),
 		},
 		{
 			label: __('Refresh'),
