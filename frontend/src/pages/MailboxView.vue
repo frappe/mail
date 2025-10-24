@@ -57,7 +57,13 @@
 				<!-- Toolbar/Actions -->
 				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
 					<div class="sm:mr-5.5 ml-3 mr-3.5">
-						<Tooltip :text="__('Select All')">
+						<Tooltip
+							:text="
+								isAllSelected
+									? __('Clear All (Esc)')
+									: __('Select All ({0}+A)', [modifier])
+							"
+						>
 							<Checkbox
 								:model-value="isAllSelected"
 								size="md"
@@ -278,7 +284,7 @@ import {
 	createResource,
 } from 'frappe-ui'
 
-import { getFormattedDate, raiseToast, startResizing } from '@/utils'
+import { getFormattedDate, isMac, raiseToast, startResizing } from '@/utils'
 import { useLayout, useScreenSize, useSidebar } from '@/utils/composables'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
@@ -405,25 +411,46 @@ const resetSelections = () => {
 const isGroupSelected = (key: string) =>
 	getGroupThreads(key).every((id) => selections.value.includes(id))
 
+// Shortcuts
+
+const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
+
 const handleKeyDown = (e: KeyboardEvent) => {
 	if (e.key === 'Shift') isShiftPressed.value = true
 
+	// Select All shortcut
+	if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+		e.preventDefault()
+		toggleSelectAll(true)
+		return
+	}
+
+	// Escape shortcut
+	if (e.key === 'Escape') {
+		e.preventDefault()
+		resetSelections()
+		goToMailbox()
+		return
+	}
+
+	// Arrow key navigation
 	if (
+		(e.key === 'ArrowUp' || e.key === 'ArrowDown') &&
 		showReadingPane.value &&
 		mailListClicked.value &&
-		threadID &&
-		(e.key === 'ArrowUp' || e.key === 'ArrowDown')
+		threadID
 	) {
 		e.preventDefault()
-
 		const offset = e.key === 'ArrowUp' ? -1 : 1
 		goToThreadByOffset(offset)
 		lastSelected.value = [threadID]
 
-		const thread = getThreadByOffset(offset)
-		if (thread && isShiftPressed.value) {
-			if (selections.value.includes(thread)) toggleSelect([threadID, thread], false)
-			else toggleSelect([threadID, thread], true)
+		if (isShiftPressed.value) {
+			const thread = getThreadByOffset(offset)
+			if (thread) {
+				const shouldSelect = !selections.value.includes(thread)
+				toggleSelect([threadID, thread], shouldSelect)
+			}
 		}
 	}
 }

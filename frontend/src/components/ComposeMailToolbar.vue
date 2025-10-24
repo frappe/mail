@@ -76,7 +76,7 @@ import { computed } from 'vue'
 import { Laugh, Paperclip, SendHorizontal, Trash2 } from 'lucide-vue-next'
 import { Button, ErrorMessage, FileUploader, Progress, TextEditorFixedMenu } from 'frappe-ui'
 
-import { formatBytes } from '@/utils'
+import { formatBytes, isMac } from '@/utils'
 import { useScreenSize, useTextEditorButtons, useVisualViewport } from '@/utils/composables'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 
@@ -88,7 +88,7 @@ const { isSavingDraft, isLoading, isRecipientsEmpty } = defineProps<{
 
 const emit = defineEmits(['appendEmoji', 'addAttachment', 'discardMail', 'sendMail'])
 
-const modifier = computed(() => (navigator.platform.toUpperCase().includes('MAC') ? '⌘' : 'Ctrl'))
+const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 
 // Make toolbar hover over keyboard on mobile
 

@@ -21,6 +21,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { Button } from 'frappe-ui'
 
+import { isMac } from '@/utils'
 import SearchModal from '@/components/Modals/SearchModal.vue'
 import SendMail from '@/components/SendMail.vue'
 
@@ -29,21 +30,17 @@ const emit = defineEmits(['reloadMails'])
 const showSearchModal = ref(false)
 const showSendModal = ref(false)
 
-const modifier = computed(() => (navigator.platform.toUpperCase().includes('MAC') ? '⌘' : 'Ctrl'))
+const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 
 const handleKeydown = (e: KeyboardEvent) => {
-	handleSearchShortcut(e)
-	handleComposeShortcut(e)
-}
-
-const handleSearchShortcut = (e: KeyboardEvent) => {
+	// Search shortcut
 	if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
 		e.preventDefault()
 		showSearchModal.value = true
+		return
 	}
-}
 
-const handleComposeShortcut = (e: KeyboardEvent) => {
+	// Compose shortcut
 	if (e.key === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
 		const target = e.target as HTMLElement
 		if (

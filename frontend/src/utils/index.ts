@@ -178,3 +178,5 @@ export const extractQuotedContent = (htmlBody?: string) => {
 
 	return { quoted_content, html_body: doc.body.innerHTML }
 }
+
+export const isMac = navigator.platform.toUpperCase().includes('MAC')
