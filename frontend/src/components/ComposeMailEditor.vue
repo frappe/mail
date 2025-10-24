@@ -281,6 +281,8 @@ const saveDraft = async () => {
 }
 
 const sendMail = () => {
+	if (isLoading.value) return
+
 	if (isRecipientsEmpty.value) return raiseToast(__('Please add at least one recipient.'))
 	show.value = false
 	if (mail._id) updateDraft.submit()
@@ -288,6 +290,8 @@ const sendMail = () => {
 }
 
 const discardMail = () => {
+	if (isLoading.value) return
+
 	show.value = false
 	if (mail._id) deleteMail.submit()
 	else emit('discardMail')
@@ -463,4 +467,32 @@ const TYPE_ICON_MAP = {
 	replyAll: ReplyAll,
 	forward: Forward,
 }
+
+// Shortcuts
+
+const handleKeydown = (e: KeyboardEvent) => {
+	if (!show.value) return
+
+	handleSendShortcut(e)
+	handleDiscardShortcut(e)
+}
+
+const handleSendShortcut = (e: KeyboardEvent) => {
+	if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+		e.preventDefault()
+		e.stopPropagation()
+		sendMail()
+	}
+}
+
+const handleDiscardShortcut = (e: KeyboardEvent) => {
+	if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
+		e.preventDefault()
+		e.stopPropagation()
+		discardMail()
+	}
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeydown, true))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown, true))
 </script>

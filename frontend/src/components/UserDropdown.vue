@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ChevronDown, Crown, LogOut, Mailbox, Settings as SettingsIcon } from 'lucide-vue-next'
 import { Dropdown } from 'frappe-ui'
@@ -118,4 +118,16 @@ const userDropdownOptions = [
 		onClick: logout.submit,
 	},
 ]
+
+// Shortcuts
+
+const handleKeyDown = (e: KeyboardEvent) => {
+	if ((e.metaKey || e.ctrlKey) && e.key === ',') {
+		e.preventDefault()
+		showSettings.value = true
+	}
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeyDown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeyDown))
 </script>
