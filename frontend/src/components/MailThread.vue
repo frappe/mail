@@ -308,6 +308,7 @@ import {
 	getFormattedRecipients,
 	getGroupedRecipients,
 	isMac,
+	shouldIgnoreKeypress,
 } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
@@ -554,45 +555,10 @@ const discardLocalDraft = (mail: string) => {
 
 // Shortcuts
 
-const shouldIgnoreKeypress = (e: KeyboardEvent): boolean => {
-	const target = e.target as HTMLElement
-	return (
-		target.tagName === 'INPUT' ||
-		target.tagName === 'TEXTAREA' ||
-		target.isContentEditable ||
-		e.metaKey ||
-		e.ctrlKey ||
-		e.altKey
-	)
-}
-
 const handleKeydown = (e: KeyboardEvent) => {
 	if (shouldIgnoreKeypress(e)) return
 
 	const key = e.key.toLowerCase()
-
-	// Trash/Delete shortcut
-	if (key === (isMac ? 'backspace' : 'delete')) {
-		e.preventDefault()
-		if (e.shiftKey) emit('deleteThread')
-		else emit('moveThread', mailboxIds.trash)
-		return
-	}
-
-	// Mark as junk shortcut
-	if (key === 'j') {
-		e.preventDefault()
-		emit('moveThread', mailboxIds.junk)
-		return
-	}
-
-	// Mark as unread shortcut
-	if (key === 'u') {
-		e.preventDefault()
-		emit('setSeen', false)
-		return
-	}
-
 	const lastMail = thread.data?.at(-1)
 	if (!lastMail || lastMail.draft) return
 

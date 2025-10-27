@@ -180,3 +180,15 @@ export const extractQuotedContent = (htmlBody?: string) => {
 }
 
 export const isMac = navigator.platform.toUpperCase().includes('MAC')
+
+export const shouldIgnoreKeypress = (e: KeyboardEvent): boolean => {
+	const target = e.target as HTMLElement
+	return (
+		(target.tagName === 'INPUT' && (target as HTMLInputElement).type !== 'checkbox') ||
+		target.tagName === 'TEXTAREA' ||
+		target.isContentEditable ||
+		e.metaKey ||
+		e.ctrlKey ||
+		e.altKey
+	)
+}

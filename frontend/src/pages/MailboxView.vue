@@ -53,6 +53,7 @@
 				ref="mailSidebar"
 				class="sticky top-16 flex flex-col border-r"
 				:class="!isMobile && showReadingPane ? 'w-1/3' : 'w-full'"
+				@click="isListInContext = true"
 			>
 				<!-- Toolbar/Actions -->
 				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
@@ -114,7 +115,6 @@
 					v-if="threadsResource?.data?.length"
 					ref="mailList"
 					class="h-full overflow-y-auto overscroll-contain"
-					@click="mailListClicked = true"
 					@scroll="loadMoreThreads"
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
@@ -284,7 +284,7 @@ import {
 	createResource,
 } from 'frappe-ui'
 
-import { getFormattedDate, isMac, raiseToast, startResizing } from '@/utils'
+import { getFormattedDate, isMac, raiseToast, shouldIgnoreKeypress, startResizing } from '@/utils'
 import { useLayout, useScreenSize, useSidebar } from '@/utils/composables'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
@@ -343,7 +343,7 @@ watch(groupMessagesBy, () => (collapsedGroups.value = []))
 watch(
 	() => threadID,
 	(val) => {
-		if (!val) return
+		if (!val) return (isListInContext.value = true)
 
 		for (const group of collapsedGroups.value) {
 			if (getGroupThreads(group).includes(val))
@@ -355,8 +355,8 @@ watch(
 // Selection
 
 const mailList = useTemplateRef('mailList')
-const mailListClicked = ref(true)
-onClickOutside(mailList, () => (mailListClicked.value = false))
+const isListInContext = ref(true)
+onClickOutside(mailList, () => (isListInContext.value = false))
 
 const mailItems = useTemplateRef('mailItems')
 
@@ -418,27 +418,50 @@ const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 const handleKeyDown = (e: KeyboardEvent) => {
 	if (e.key === 'Shift') isShiftPressed.value = true
 
+	const key = e.key.toLowerCase()
+
 	// Select All shortcut
-	if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
+	if ((e.metaKey || e.ctrlKey) && key === 'a' && isListInContext.value) {
 		e.preventDefault()
-		toggleSelectAll(true)
-		return
+		return toggleSelectAll(true)
 	}
+
+	if (shouldIgnoreKeypress(e)) return
+
+	if (selections.value.length || threadID) {
+		const thread_ids = selections.value.length ? selections.value : [threadID]
+
+		// Trash/Delete shortcut
+		if (key === (isMac ? 'backspace' : 'delete')) {
+			e.preventDefault()
+			if (e.shiftKey) return deleteThreads.submit(selections.value)
+			return moveThreads.submit({ thread_ids, mailbox, move_to_mailbox: mailboxIds.trash })
+		}
+
+		// Mark as junk shortcut
+		if (key === 'j') {
+			e.preventDefault()
+			return setThreadsSpamStatus.submit({ thread_ids, mailbox, spam: true })
+		}
+
+		// Mark as unread shortcut
+		if (key === 'u') {
+			e.preventDefault()
+			return setSeen.submit({ thread_ids, seen: e.shiftKey })
+		}
+	}
+
+	if (!isListInContext.value) return
 
 	// Escape shortcut
 	if (e.key === 'Escape') {
 		e.preventDefault()
 		resetSelections()
-		goToMailbox()
-		return
+		return goToMailbox()
 	}
 
 	// Arrow key navigation
-	if (
-		(e.key === 'ArrowUp' || e.key === 'ArrowDown') &&
-		showReadingPane.value &&
-		mailListClicked.value
-	) {
+	if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && showReadingPane.value) {
 		e.preventDefault()
 		const offset = e.key === 'ArrowUp' ? -1 : 1
 		if (threadID) {
@@ -824,3 +847,11 @@ const title = computed(() => {
 	}
 })
 </script>
+
+<!-- TODO:
+escape close compose mail & search mail
+consider last selected for arrow keys(?)
+shortcuts dont work if clicked on mail
+show all shortcuts with '?'
+settings in admin dashboard
+filter not passed for search error -->
