@@ -364,7 +364,6 @@ const mailItems = useTemplateRef('mailItems')
 
 const selections = ref<string[]>([])
 const lastSelected = ref<string[]>()
-const isShiftPressed = ref(false)
 
 const isAllSelected = computed(
 	() => threadIDs.value.length && selections.value.length === threadIDs.value.length,
@@ -419,6 +418,10 @@ const showShortcuts = ref(false)
 
 const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 
+const isShiftPressed = ref(false)
+const isGPressed = ref(false)
+const gPressTimeout = ref<ReturnType<typeof setTimeout>>()
+
 const handleKeyDown = (e: KeyboardEvent) => {
 	if (e.shiftKey) isShiftPressed.value = true
 
@@ -432,8 +435,27 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 	if (shouldIgnoreKeypress(e)) return
 
+	if (key === 'g') {
+		clearTimeout(gPressTimeout.value)
+		isGPressed.value = true
+		return (gPressTimeout.value = setTimeout(() => (isGPressed.value = false), 750))
+	} else if (isGPressed.value) {
+		if (key === 'i') {
+			e.preventDefault()
+			return router.push({ name: 'Mailbox', params: { mailbox: mailboxIds.inbox } })
+		}
+		if (key === 's') {
+			e.preventDefault()
+			return router.push({ name: 'Mailbox', params: { mailbox: mailboxIds.sent } })
+		}
+		if (key === 'd') {
+			e.preventDefault()
+			return router.push({ name: 'Mailbox', params: { mailbox: mailboxIds.drafts } })
+		}
+	}
+
 	// Show Shortcuts modal
-	if (e.key === '?') {
+	if (key === '?') {
 		e.preventDefault()
 		return (showShortcuts.value = true)
 	}
@@ -464,16 +486,16 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	if (!isListInContext.value) return
 
 	// Escape shortcut
-	if (e.key === 'Escape') {
+	if (key === 'escape') {
 		e.preventDefault()
 		resetSelections()
 		return goToMailbox()
 	}
 
 	// Arrow key navigation
-	if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && showReadingPane.value) {
+	if ((key === 'arrowup' || key === 'arrowdown') && showReadingPane.value) {
 		e.preventDefault()
-		const offset = e.key === 'ArrowUp' ? -1 : 1
+		const offset = key === 'arrowup' ? -1 : 1
 		if (threadID) {
 			goToThreadByOffset(offset)
 			lastSelected.value = [threadID]

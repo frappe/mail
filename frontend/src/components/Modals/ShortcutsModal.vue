@@ -32,10 +32,15 @@ import { computed } from 'vue'
 import { Dialog } from 'frappe-ui'
 
 import { isMac } from '@/utils'
+import { type MailboxRole, userStore } from '@/stores/user'
+
+const { mailboxes } = userStore()
+
+const mailboxName = (role: MailboxRole) => mailboxes.data?.find((m) => m.role === role)._name
 
 const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 
-const shortcutGroups = [
+const shortcutGroups = computed(() => [
 	{
 		title: __('Compose'),
 		shortcuts: [
@@ -52,6 +57,9 @@ const shortcutGroups = [
 		shortcuts: [
 			[['↓'], __('Go to Next Mail')],
 			[['↑'], __('Go to Previous Mail')],
+			[['G', 'I'], __('Go to {0}', [mailboxName('inbox')])],
+			[['G', 'S'], __('Go to {0}', [mailboxName('sent')])],
+			[['G', 'D'], __('Go to {0}', [mailboxName('drafts')])],
 			[[modifier.value, 'K'], __('Search Mail')],
 		],
 	},
@@ -75,5 +83,5 @@ const shortcutGroups = [
 			[['?'], __('View Shortcuts')],
 		],
 	},
-]
+])
 </script>
