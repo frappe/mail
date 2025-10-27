@@ -53,7 +53,6 @@
 				ref="mailSidebar"
 				class="sticky top-16 flex flex-col border-r"
 				:class="!isMobile && showReadingPane ? 'w-1/3' : 'w-full'"
-				@click="isListInContext = true"
 			>
 				<!-- Toolbar/Actions -->
 				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
@@ -258,7 +257,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { onClickOutside, useDebounceFn } from '@vueuse/core'
+import { useDebounceFn } from '@vueuse/core'
 import {
 	ChevronDown,
 	ChevronRight,
@@ -345,8 +344,9 @@ watch(groupMessagesBy, () => (collapsedGroups.value = []))
 watch(
 	() => threadID,
 	(val) => {
-		if (!val) return (isListInContext.value = true)
+		if (!val) return
 
+		lastOpened.value = val
 		for (const group of collapsedGroups.value) {
 			if (getGroupThreads(group).includes(val))
 				return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== group))
@@ -356,14 +356,11 @@ watch(
 
 // Selection
 
-const mailList = useTemplateRef('mailList')
-const isListInContext = ref(true)
-onClickOutside(mailList, () => (isListInContext.value = false))
-
 const mailItems = useTemplateRef('mailItems')
 
 const selections = ref<string[]>([])
 const lastSelected = ref<string[]>()
+const lastOpened = ref<string>()
 
 const isAllSelected = computed(
 	() => threadIDs.value.length && selections.value.length === threadIDs.value.length,
@@ -428,8 +425,9 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	const key = e.key.toLowerCase()
 
 	// Select All shortcut
-	if ((e.metaKey || e.ctrlKey) && key === 'a' && isListInContext.value) {
+	if ((e.metaKey || e.ctrlKey) && key === 'a' && !shouldIgnoreKeypress(e, true)) {
 		e.preventDefault()
+		isGPressed.value = false
 		return toggleSelectAll(true)
 	}
 
@@ -437,9 +435,15 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 	if (key === 'g') {
 		clearTimeout(gPressTimeout.value)
+		if (e.shiftKey) return goToThread(threadIDs.value.at(-1))
+		if (isGPressed.value) {
+			isGPressed.value = false
+			return goToThread(threadIDs.value[0])
+		}
 		isGPressed.value = true
 		return (gPressTimeout.value = setTimeout(() => (isGPressed.value = false), 750))
 	} else if (isGPressed.value) {
+		isGPressed.value = false
 		if (key === 'i') {
 			e.preventDefault()
 			return router.push({ name: 'Mailbox', params: { mailbox: mailboxIds.inbox } })
@@ -453,6 +457,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
 			return router.push({ name: 'Mailbox', params: { mailbox: mailboxIds.drafts } })
 		}
 	}
+	isGPressed.value = false
 
 	// Show Shortcuts modal
 	if (key === '?') {
@@ -483,8 +488,6 @@ const handleKeyDown = (e: KeyboardEvent) => {
 		}
 	}
 
-	if (!isListInContext.value) return
-
 	// Escape shortcut
 	if (key === 'escape') {
 		e.preventDefault()
@@ -499,7 +502,10 @@ const handleKeyDown = (e: KeyboardEvent) => {
 		if (threadID) {
 			goToThreadByOffset(offset)
 			lastSelected.value = [threadID]
-		} else goToThread(threadIDs.value[0])
+		} else
+			goToThread(
+				threadIDs.value.includes(lastOpened.value) ? lastOpened.value : threadIDs.value[0],
+			)
 		if (!isShiftPressed.value) return
 
 		const thread = getThreadByOffset(offset)
@@ -650,6 +656,7 @@ watch(
 	() => {
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
 		limit.value = 50
+		lastOpened.value = undefined
 		reloadThreads(false)
 	},
 	{ immediate: true },
@@ -686,8 +693,13 @@ const loadMoreThreads = useDebounceFn((e) => {
 
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
-const goToThread = (threadID: string) =>
+const goToThread = (threadID: string) => {
+	if (!threadID) return
+
 	router.push({ name: 'Mail', params: { mailbox, threadID }, query: route.query })
+	const el = mailItems.value?.find((el) => el?.id === threadID)?.$el
+	if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
 
 // Actions
 
@@ -772,14 +784,7 @@ const deleteThreads = createResource({
 const getThreadByOffset = (offset: number) =>
 	threadIDs.value[threadIDs.value.indexOf(threadID) + offset]
 
-const goToThreadByOffset = (offset: number) => {
-	const targetThread = getThreadByOffset(offset)
-	if (!targetThread) return
-
-	goToThread(targetThread)
-	const el = mailItems.value?.find((el) => el?.id === targetThread)?.$el
-	if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-}
+const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
 
 const showEmptyMailbox = ref(false)
 
@@ -881,6 +886,7 @@ const title = computed(() => {
 </script>
 
 <!-- TODO:
-escape close compose mail & search mail
-consider last selected for arrow keys(?)
-confirmation for delete permanently & discard mail -->
+don't trigger keys when modals are open
+confirmation for delete permanently & discard mail
+refactor shortcut logic
+-->

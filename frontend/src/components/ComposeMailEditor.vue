@@ -261,6 +261,7 @@ const isDraftUpdated = computed(() => JSON.stringify(mail) !== JSON.stringify(or
 onMounted(() => {
 	updateOriginalMail()
 	if (!mailDetails?.in_reply_to) setTimeout(() => toInput.value?.setFocus(), 50)
+	else textEditor.value.editor.commands.focus()
 })
 
 onUnmounted(() => saveDraft())
