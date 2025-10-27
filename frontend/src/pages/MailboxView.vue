@@ -253,6 +253,7 @@
 	</div>
 
 	<Dialog v-model="showEmptyMailbox" :options="emptyMailboxOptions" />
+	<ShortcutsModal v-model="showShortcuts" />
 </template>
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
@@ -291,6 +292,7 @@ import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
 import MailListItem from '@/components/MailListItem.vue'
 import MailThread from '@/components/MailThread.vue'
+import ShortcutsModal from '@/components/Modals/ShortcutsModal.vue'
 
 import type { Thread, UserResource } from '@/types'
 
@@ -413,10 +415,12 @@ const isGroupSelected = (key: string) =>
 
 // Shortcuts
 
+const showShortcuts = ref(false)
+
 const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 
 const handleKeyDown = (e: KeyboardEvent) => {
-	if (e.key === 'Shift') isShiftPressed.value = true
+	if (e.shiftKey) isShiftPressed.value = true
 
 	const key = e.key.toLowerCase()
 
@@ -427,6 +431,12 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	}
 
 	if (shouldIgnoreKeypress(e)) return
+
+	// Show Shortcuts modal
+	if (e.key === '?') {
+		e.preventDefault()
+		return (showShortcuts.value = true)
+	}
 
 	if (selections.value.length || threadID) {
 		const thread_ids = selections.value.length ? selections.value : [threadID]
@@ -852,6 +862,5 @@ const title = computed(() => {
 escape close compose mail & search mail
 consider last selected for arrow keys(?)
 shortcuts dont work if clicked on mail
-show all shortcuts with '?'
 settings in admin dashboard
-filter not passed for search error -->
+reply mail input focus on editor -->
