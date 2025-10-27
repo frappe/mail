@@ -884,5 +884,4 @@ const title = computed(() => {
 escape close compose mail & search mail
 consider last selected for arrow keys(?)
 shortcuts dont work if clicked on mail
-settings in admin dashboard
 reply mail input focus on editor -->

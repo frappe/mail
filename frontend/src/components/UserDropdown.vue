@@ -106,7 +106,6 @@ const userDropdownOptions = [
 		icon: SettingsIcon,
 		label: __('Settings'),
 		onClick: () => (showSettings.value = true),
-		condition: () => !user.data.is_tenant_owner,
 	},
 	{
 		component: AppsMenu,

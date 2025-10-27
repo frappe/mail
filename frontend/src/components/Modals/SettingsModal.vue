@@ -38,7 +38,7 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
-import { markRaw, ref } from 'vue'
+import { computed, inject, markRaw, ref } from 'vue'
 import { Code, DatabaseBackup, Mailbox, Palette, TreePalm, User } from 'lucide-vue-next'
 import { Button, Dialog } from 'frappe-ui'
 
@@ -51,37 +51,44 @@ import VacationResponseSettings from '@/components/Settings/VacationResponseSett
 
 const show = defineModel<boolean>()
 
-const tabs = [
-	{
-		label: __('Profile'),
-		icon: User,
-		component: markRaw(ProfileSettings),
-	},
-	{
-		label: __('Account'),
-		icon: Mailbox,
-		component: markRaw(AccountSettings),
-	},
-	{
-		label: __('Appearance'),
-		icon: Palette,
-		component: markRaw(AppearanceSettings),
-	},
-	{
-		label: __('Vacation Response'),
-		icon: TreePalm,
-		component: markRaw(VacationResponseSettings),
-	},
-	{
-		label: __('Mail Data Exchange'),
-		icon: DatabaseBackup,
-		component: markRaw(MailDataExchangeSettings),
-	},
-	{
-		label: __('Advanced'),
-		icon: Code,
-		component: markRaw(AdvancedSettings),
-	},
-]
-const activeTab = ref(tabs[0])
+const user = inject('$user')
+
+const tabs = computed(() => {
+	const allTabs = [
+		{
+			label: __('Profile'),
+			icon: User,
+			component: markRaw(ProfileSettings),
+			showNonMailUser: true,
+		},
+		{
+			label: __('Account'),
+			icon: Mailbox,
+			component: markRaw(AccountSettings),
+		},
+		{
+			label: __('Appearance'),
+			icon: Palette,
+			component: markRaw(AppearanceSettings),
+			showNonMailUser: true,
+		},
+		{
+			label: __('Vacation Response'),
+			icon: TreePalm,
+			component: markRaw(VacationResponseSettings),
+		},
+		{
+			label: __('Mail Data Exchange'),
+			icon: DatabaseBackup,
+			component: markRaw(MailDataExchangeSettings),
+		},
+		{
+			label: __('Advanced'),
+			icon: Code,
+			component: markRaw(AdvancedSettings),
+		},
+	]
+	return user.data.is_mail_user ? allTabs : allTabs.filter((tab) => tab.showNonMailUser)
+})
+const activeTab = ref(tabs.value[0])
 </script>
