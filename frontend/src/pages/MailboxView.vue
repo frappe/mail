@@ -471,7 +471,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
 		}
 
 		// Mark as junk shortcut
-		if (key === 'j') {
+		if (key === '!') {
 			e.preventDefault()
 			return setThreadsSpamStatus.submit({ thread_ids, mailbox, spam: true })
 		}
@@ -493,9 +493,9 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	}
 
 	// Arrow key navigation
-	if ((key === 'arrowup' || key === 'arrowdown') && showReadingPane.value) {
+	if (['arrowup', 'arrowdown', 'j', 'k'].includes(key) && showReadingPane.value) {
 		e.preventDefault()
-		const offset = key === 'arrowup' ? -1 : 1
+		const offset = ['arrowup', 'k'].includes(key) ? -1 : 1
 		if (threadID) {
 			goToThreadByOffset(offset)
 			lastSelected.value = [threadID]
@@ -883,5 +883,4 @@ const title = computed(() => {
 <!-- TODO:
 escape close compose mail & search mail
 consider last selected for arrow keys(?)
-shortcuts dont work if clicked on mail
-reply mail input focus on editor -->
+confirmation for delete permanently & discard mail -->

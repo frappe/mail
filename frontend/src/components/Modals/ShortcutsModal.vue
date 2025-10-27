@@ -15,7 +15,11 @@
 								<span
 									v-for="(key, kIndex) in shortcut[0]"
 									:key="kIndex"
-									class="bg-surface-gray-2 border-outline-gray-2 text-ink-gray-8 rounded-sm border px-2 py-0.5 font-mono text-xs shadow-sm"
+									class="text-ink-gray-8 my-auto text-xs"
+									:class="{
+										'bg-surface-gray-2 border-outline-gray-2 rounded-sm border px-2 py-0.5 font-mono shadow-sm':
+											key !== 'or',
+									}"
 								>
 									{{ key }}
 								</span>
@@ -55,8 +59,8 @@ const shortcutGroups = computed(() => [
 	{
 		title: __('Navigation'),
 		shortcuts: [
-			[['↓'], __('Go to Next Mail')],
-			[['↑'], __('Go to Previous Mail')],
+			[['↓', 'or', 'J'], __('Go to Next Mail')],
+			[['↑', 'or', 'K'], __('Go to Previous Mail')],
 			[['G', 'I'], __('Go to {0}', [mailboxName('inbox')])],
 			[['G', 'S'], __('Go to {0}', [mailboxName('sent')])],
 			[['G', 'D'], __('Go to {0}', [mailboxName('drafts')])],
@@ -68,7 +72,7 @@ const shortcutGroups = computed(() => [
 		shortcuts: [
 			[[modifier.value, 'A'], __('Select All Mails')],
 			[['Esc'], __('Clear All Mails')],
-			[['J'], __('Mark as Junk')],
+			[['!'], __('Mark as Junk')],
 			[['U'], __('Mark as Unread')],
 			[['Shift', 'U'], __('Mark as Read')],
 			[['Delete'], __('Move to Trash')],
