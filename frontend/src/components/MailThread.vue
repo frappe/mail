@@ -307,7 +307,6 @@ import {
 	getFirstAlphabet,
 	getFormattedRecipients,
 	getGroupedRecipients,
-	isMac,
 	shouldIgnoreKeypress,
 } from '@/utils'
 import { useScreenSize } from '@/utils/composables'

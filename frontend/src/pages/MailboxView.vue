@@ -177,7 +177,7 @@
 										move_to_mailbox: mailboxIds.trash,
 									})
 								"
-								@delete-thread="deleteThreads.submit([mail.thread_id])"
+								@delete-thread="junkOrDeleteThreads([mail.thread_id], false)"
 								@set-selected="
 									(selected: boolean) => toggleSelect([mail.thread_id], selected)
 								"
@@ -229,9 +229,11 @@
 					"
 					@set-spam-status="
 						(spam: boolean) =>
-							setThreadsSpamStatus.submit({ thread_ids: [threadID], spam })
+							spam
+								? junkOrDeleteThreads([threadID!], true)
+								: setThreadsSpamStatus.submit({ thread_ids: [threadID], spam })
 					"
-					@delete-thread="deleteThreads.submit([threadID])"
+					@delete-thread="junkOrDeleteThreads([threadID!], false)"
 					@prev-thread="goToThreadByOffset(-1)"
 					@next-thread="goToThreadByOffset(1)"
 				/>
@@ -252,6 +254,7 @@
 	</div>
 
 	<Dialog v-model="showEmptyMailbox" :options="emptyMailboxOptions" />
+	<Dialog v-model="showJunkOrDeleteThreads" :options="junkOrDeleteThreadsOptions" />
 	<ShortcutsModal v-model="showShortcuts" />
 </template>
 <script setup lang="ts">
@@ -466,19 +469,19 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	}
 
 	if (selections.value.length || threadID) {
-		const thread_ids = selections.value.length ? selections.value : [threadID]
+		const thread_ids = selections.value.length ? selections.value : [threadID!]
 
 		// Trash/Delete shortcut
 		if (key === (isMac ? 'backspace' : 'delete')) {
 			e.preventDefault()
-			if (e.shiftKey) return deleteThreads.submit(selections.value)
+			if (e.shiftKey) return junkOrDeleteThreads(thread_ids, false)
 			return moveThreads.submit({ thread_ids, mailbox, move_to_mailbox: mailboxIds.trash })
 		}
 
 		// Mark as junk shortcut
 		if (key === '!') {
 			e.preventDefault()
-			return setThreadsSpamStatus.submit({ thread_ids, mailbox, spam: true })
+			return junkOrDeleteThreads(thread_ids, true)
 		}
 
 		// Mark as unread shortcut
@@ -531,8 +534,7 @@ const selectActions = computed((): SelectAction[] =>
 	[
 		{
 			label: __('Mark as Junk'),
-			onClick: () =>
-				setThreadsSpamStatus.submit({ thread_ids: selections.value, mailbox, spam: true }),
+			onClick: () => junkOrDeleteThreads(selections.value, true),
 			icon: CircleAlert,
 			condition:
 				!!selections.value.length &&
@@ -562,7 +564,7 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Delete Threads'),
-			onClick: () => deleteThreads.submit(selections.value),
+			onClick: () => junkOrDeleteThreads(selections.value, false),
 			icon: Trash2,
 			condition: !!selections.value.length && mailbox === mailboxIds.trash,
 		},
@@ -772,6 +774,70 @@ const setThreadsSpamStatus = createResource({
 	},
 })
 
+const getThreadByOffset = (offset: number) =>
+	threadIDs.value[threadIDs.value.indexOf(threadID) + offset]
+
+const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
+
+const showJunkOrDeleteThreads = ref(false)
+const threadsToBeJunkedOrDeleted = ref<string[]>([])
+const isJunkAction = ref(false)
+
+const junkOrDeleteThreads = (threadIDs: string[], isJunk: boolean) => {
+	if (!threadIDs?.length) return
+
+	threadsToBeJunkedOrDeleted.value = threadIDs
+	isJunkAction.value = isJunk
+	showJunkOrDeleteThreads.value = true
+}
+
+const junkOrDeleteTitle = computed(() =>
+	isJunkAction.value
+		? __('Mark {0} {1} as Junk', [
+				threadsToBeJunkedOrDeleted.value.length === 1
+					? ''
+					: threadsToBeJunkedOrDeleted.value.length.toString(),
+				threadsToBeJunkedOrDeleted.value.length === 1 ? __('Thread') : __('Threads'),
+			])
+		: __('Permanently Delete {0} {1}', [
+				threadsToBeJunkedOrDeleted.value.length === 1
+					? ''
+					: threadsToBeJunkedOrDeleted.value.length.toString(),
+				threadsToBeJunkedOrDeleted.value.length === 1 ? __('Thread') : __('Threads'),
+			]),
+)
+
+const junkOrDeleteMessage = computed(() =>
+	isJunkAction.value
+		? __('Are you sure you want to mark the selected {0} as junk?', [
+				threadsToBeJunkedOrDeleted.value.length === 1 ? __('thread') : __('threads'),
+			])
+		: __('Are you sure you want to permanently delete the selected {0}?', [
+				threadsToBeJunkedOrDeleted.value.length === 1 ? __('thread') : __('threads'),
+			]),
+)
+
+const junkOrDeleteThreadsOptions = computed(() => ({
+	title: junkOrDeleteTitle.value,
+	message: junkOrDeleteMessage.value,
+	icon: { name: 'alert-triangle', appearance: 'warning' },
+	actions: [
+		{
+			label: __('Confirm'),
+			variant: 'solid',
+			onClick: () => {
+				if (isJunkAction.value)
+					setThreadsSpamStatus.submit({
+						thread_ids: threadsToBeJunkedOrDeleted.value,
+						spam: true,
+					})
+				else deleteThreads.submit(threadsToBeJunkedOrDeleted.value)
+				showJunkOrDeleteThreads.value = false
+			},
+		},
+	],
+}))
+
 const deleteThreads = createResource({
 	url: 'mail.api.mail.delete_threads',
 	makeParams: (thread_ids: string[]) => ({ thread_ids, mailbox }),
@@ -780,11 +846,6 @@ const deleteThreads = createResource({
 		reloadThreads()
 	},
 })
-
-const getThreadByOffset = (offset: number) =>
-	threadIDs.value[threadIDs.value.indexOf(threadID) + offset]
-
-const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
 
 const showEmptyMailbox = ref(false)
 
@@ -887,6 +948,6 @@ const title = computed(() => {
 
 <!-- TODO:
 don't trigger keys when modals are open
-confirmation for delete permanently & discard mail
+discarding compose discards quick compose too
 refactor shortcut logic
 -->
