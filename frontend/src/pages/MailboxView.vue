@@ -424,10 +424,9 @@ const gPressTimeout = ref<ReturnType<typeof setTimeout>>()
 
 const handleKeyDown = (e: KeyboardEvent) => {
 	isShiftPressed.value = e.shiftKey
-
 	const key = e.key.toLowerCase()
 
-	// Select All shortcut
+	// Handle Ctrl/Cmd+A (Select All)
 	if ((e.metaKey || e.ctrlKey) && key === 'a' && !shouldIgnoreKeypress(e, true)) {
 		e.preventDefault()
 		isGPressed.value = false
@@ -436,87 +435,108 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 	if (shouldIgnoreKeypress(e)) return
 
-	if (key === 'g') {
-		clearTimeout(gPressTimeout.value)
-		if (e.shiftKey) return goToThread(threadIDs.value.at(-1))
-		if (isGPressed.value) {
-			isGPressed.value = false
-			return goToThread(threadIDs.value[0])
-		}
-		isGPressed.value = true
-		return (gPressTimeout.value = setTimeout(() => (isGPressed.value = false), 750))
-	} else if (isGPressed.value) {
+	if (key === 'g') return handleGKeyPress(e)
+	if (isGPressed.value) return handleGMenuNavigation(e, key)
+	if (key === '?') return handleShowShortcuts(e)
+	if (key === 'escape') return handleEscape(e)
+
+	const hasSelection = selections.value.length > 0 || threadID
+	if (hasSelection) handleThreadActions(e, key)
+	if (showReadingPane.value) handleArrowNavigation(e, key)
+}
+
+const handleGKeyPress = (e: KeyboardEvent) => {
+	clearTimeout(gPressTimeout.value)
+
+	if (e.shiftKey) return goToThread(threadIDs.value.at(-1))
+
+	if (isGPressed.value) {
 		isGPressed.value = false
-		if (key === 'i') {
-			e.preventDefault()
-			return router.push({ name: 'Mailbox', params: { mailbox: mailboxIds.inbox } })
-		}
-		if (key === 's') {
-			e.preventDefault()
-			return router.push({ name: 'Mailbox', params: { mailbox: mailboxIds.sent } })
-		}
-		if (key === 'd') {
-			e.preventDefault()
-			return router.push({ name: 'Mailbox', params: { mailbox: mailboxIds.drafts } })
-		}
+		return goToThread(threadIDs.value[0])
 	}
+
+	isGPressed.value = true
+	gPressTimeout.value = setTimeout(() => (isGPressed.value = false), 750)
+}
+
+const handleGMenuNavigation = (e: KeyboardEvent, key: string) => {
 	isGPressed.value = false
 
-	// Show Shortcuts modal
-	if (key === '?') {
+	const navigationMap: Record<string, string> = {
+		i: mailboxIds.inbox,
+		s: mailboxIds.sent,
+		d: mailboxIds.drafts,
+	}
+
+	const mailboxId = navigationMap[key]
+	if (mailboxId) {
 		e.preventDefault()
-		return (showShortcuts.value = true)
+		router.push({ name: 'Mailbox', params: { mailbox: mailboxId } })
 	}
+}
 
-	if (selections.value.length || threadID) {
-		const thread_ids = selections.value.length ? selections.value : [threadID!]
+const handleShowShortcuts = (e: KeyboardEvent) => {
+	e.preventDefault()
+	showShortcuts.value = true
+}
 
-		// Trash/Delete shortcut
-		if (key === (isMac ? 'backspace' : 'delete')) {
-			e.preventDefault()
-			if (e.shiftKey) return junkOrDeleteThreads(thread_ids, false)
-			return moveThreads.submit({ thread_ids, mailbox, move_to_mailbox: mailboxIds.trash })
-		}
+const handleEscape = (e: KeyboardEvent) => {
+	e.preventDefault()
+	resetSelections()
+	goToMailbox()
+}
 
-		// Mark as junk shortcut
-		if (key === '!') {
-			e.preventDefault()
-			return junkOrDeleteThreads(thread_ids, true)
-		}
+const handleThreadActions = (e: KeyboardEvent, key: string) => {
+	const thread_ids = selections.value.length ? selections.value : [threadID!]
 
-		// Mark as unread shortcut
-		if (key === 'u') {
-			e.preventDefault()
-			return setSeen.submit({ thread_ids, seen: e.shiftKey })
-		}
-	}
-
-	// Escape shortcut
-	if (key === 'escape') {
+	// Delete/Trash (Backspace on Mac, Delete on Windows)
+	if (key === (isMac ? 'backspace' : 'delete')) {
 		e.preventDefault()
-		resetSelections()
-		return goToMailbox()
+		if (e.shiftKey) return junkOrDeleteThreads(thread_ids, false)
+
+		return moveThreads.submit({ thread_ids, mailbox, move_to_mailbox: mailboxIds.trash })
 	}
 
-	// Arrow key navigation
-	if (['arrowup', 'arrowdown', 'j', 'k'].includes(key) && showReadingPane.value) {
+	// Mark as junk (!)
+	if (key === '!') {
 		e.preventDefault()
-		const offset = ['arrowup', 'k'].includes(key) ? -1 : 1
-		if (threadID) {
-			goToThreadByOffset(offset)
-			lastSelected.value = [threadID]
-		} else
-			goToThread(
-				threadIDs.value.includes(lastOpened.value) ? lastOpened.value : threadIDs.value[0],
-			)
-		if (!isShiftPressed.value) return
-
-		const thread = getThreadByOffset(offset)
-		if (!thread) return
-
-		const shouldSelect = !selections.value.includes(thread)
-		toggleSelect(threadID ? [threadID, thread] : [thread], shouldSelect)
+		return junkOrDeleteThreads(thread_ids, true)
 	}
+
+	// Mark as read/unread (u)
+	if (key === 'u') {
+		e.preventDefault()
+		return setSeen.submit({ thread_ids, seen: e.shiftKey })
+	}
+}
+
+const handleArrowNavigation = (e: KeyboardEvent, key: string) => {
+	const navigationKeys = ['arrowup', 'arrowdown', 'j', 'k']
+	if (!navigationKeys.includes(key)) return
+
+	e.preventDefault()
+
+	const offset = ['arrowup', 'k'].includes(key) ? -1 : 1
+
+	if (threadID) {
+		goToThreadByOffset(offset)
+		lastSelected.value = [threadID]
+	} else {
+		const targetThread = threadIDs.value.includes(lastOpened.value)
+			? lastOpened.value
+			: threadIDs.value[0]
+		goToThread(targetThread)
+	}
+
+	// Handle shift+arrow selection
+	if (!isShiftPressed.value) return
+
+	const thread = getThreadByOffset(offset)
+	if (!thread) return
+
+	const threadsToToggle = threadID ? [threadID, thread] : [thread]
+	const shouldSelect = !selections.value.includes(thread)
+	toggleSelect(threadsToToggle, shouldSelect)
 }
 
 const handleKeyUp = (e: KeyboardEvent) => {
@@ -791,51 +811,39 @@ const junkOrDeleteThreads = (threadIDs: string[], isJunk: boolean) => {
 	showJunkOrDeleteThreads.value = true
 }
 
-const junkOrDeleteTitle = computed(() =>
-	isJunkAction.value
-		? __('Mark {0} {1} as Junk', [
-				threadsToBeJunkedOrDeleted.value.length === 1
-					? ''
-					: threadsToBeJunkedOrDeleted.value.length.toString(),
-				threadsToBeJunkedOrDeleted.value.length === 1 ? __('Thread') : __('Threads'),
-			])
-		: __('Permanently Delete {0} {1}', [
-				threadsToBeJunkedOrDeleted.value.length === 1
-					? ''
-					: threadsToBeJunkedOrDeleted.value.length.toString(),
-				threadsToBeJunkedOrDeleted.value.length === 1 ? __('Thread') : __('Threads'),
-			]),
-)
+const junkOrDeleteThreadCount = computed(() => threadsToBeJunkedOrDeleted.value.length)
 
-const junkOrDeleteMessage = computed(() =>
-	isJunkAction.value
-		? __('Are you sure you want to mark the selected {0} as junk?', [
-				threadsToBeJunkedOrDeleted.value.length === 1 ? __('thread') : __('threads'),
-			])
-		: __('Are you sure you want to permanently delete the selected {0}?', [
-				threadsToBeJunkedOrDeleted.value.length === 1 ? __('thread') : __('threads'),
-			]),
-)
+const junkOrDeleteTitle = computed(() => {
+	const count =
+		junkOrDeleteThreadCount.value === 1 ? '' : junkOrDeleteThreadCount.value.toString()
+	const noun = junkOrDeleteThreadCount.value > 1 ? __('Threads') : __('Thread')
+
+	return isJunkAction.value
+		? __('Mark {0} {1} as Junk', [count, noun])
+		: __('Permanently Delete {0} {1}', [count, noun])
+})
+
+const junkOrDeleteMessage = computed(() => {
+	const noun = junkOrDeleteThreadCount.value > 1 ? __('threads') : __('thread')
+
+	return isJunkAction.value
+		? __('Are you sure you want to mark the selected {0} as junk?', [noun])
+		: __('Are you sure you want to permanently delete the selected {0}?', [noun])
+})
+
+const handleJunkOrDelete = () => {
+	if (isJunkAction.value)
+		setThreadsSpamStatus.submit({ thread_ids: threadsToBeJunkedOrDeleted.value, spam: true })
+	else deleteThreads.submit(threadsToBeJunkedOrDeleted.value)
+
+	showJunkOrDeleteThreads.value = false
+}
 
 const junkOrDeleteThreadsOptions = computed(() => ({
 	title: junkOrDeleteTitle.value,
 	message: junkOrDeleteMessage.value,
 	icon: { name: 'alert-triangle', appearance: 'warning' },
-	actions: [
-		{
-			label: __('Confirm'),
-			variant: 'solid',
-			onClick: () => {
-				if (isJunkAction.value)
-					setThreadsSpamStatus.submit({
-						thread_ids: threadsToBeJunkedOrDeleted.value,
-						spam: true,
-					})
-				else deleteThreads.submit(threadsToBeJunkedOrDeleted.value)
-				showJunkOrDeleteThreads.value = false
-			},
-		},
-	],
+	actions: [{ label: __('Confirm'), variant: 'solid', onClick: handleJunkOrDelete }],
 }))
 
 const deleteThreads = createResource({
@@ -945,5 +953,3 @@ const title = computed(() => {
 	}
 })
 </script>
-
-<!-- TODO: refactor shortcut logic -->

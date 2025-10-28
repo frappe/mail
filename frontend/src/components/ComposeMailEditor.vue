@@ -481,7 +481,6 @@ const handleKeydown = (e: KeyboardEvent) => {
 const handleSendShortcut = (e: KeyboardEvent) => {
 	if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
 		e.preventDefault()
-		e.stopPropagation()
 		sendMail()
 	}
 }
@@ -489,11 +488,10 @@ const handleSendShortcut = (e: KeyboardEvent) => {
 const handleDiscardShortcut = (e: KeyboardEvent) => {
 	if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
 		e.preventDefault()
-		e.stopPropagation()
 		discardMail()
 	}
 }
 
-onMounted(() => window.addEventListener('keydown', handleKeydown, true))
-onUnmounted(() => window.removeEventListener('keydown', handleKeydown, true))
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 </script>
