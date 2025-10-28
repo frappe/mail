@@ -423,7 +423,7 @@ const isGPressed = ref(false)
 const gPressTimeout = ref<ReturnType<typeof setTimeout>>()
 
 const handleKeyDown = (e: KeyboardEvent) => {
-	if (e.shiftKey) isShiftPressed.value = true
+	isShiftPressed.value = e.shiftKey
 
 	const key = e.key.toLowerCase()
 
@@ -946,8 +946,4 @@ const title = computed(() => {
 })
 </script>
 
-<!-- TODO:
-don't trigger keys when modals are open
-discarding compose discards quick compose too
-refactor shortcut logic
--->
+<!-- TODO: refactor shortcut logic -->

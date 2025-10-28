@@ -182,7 +182,7 @@ import { Button, Dropdown, FeatherIcon, TextEditor, createResource } from 'frapp
 import { ImageExtension } from 'frappe-ui/src/components/TextEditor/extensions/image'
 import { useFileUpload } from 'frappe-ui/src/utils/useFileUpload'
 
-import { formatBytes, raiseToast, validateEmail } from '@/utils'
+import { formatBytes, isOverlayPresent, raiseToast, validateEmail } from '@/utils'
 import { useScreenSize, useVisualViewport } from '@/utils/composables'
 import ComposeMailToolbar from '@/components/ComposeMailToolbar.vue'
 import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
@@ -472,7 +472,7 @@ const TYPE_ICON_MAP = {
 // Shortcuts
 
 const handleKeydown = (e: KeyboardEvent) => {
-	if (!show.value) return
+	if (!show.value || (isInThread && isOverlayPresent())) return
 
 	handleSendShortcut(e)
 	handleDiscardShortcut(e)

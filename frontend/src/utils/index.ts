@@ -181,10 +181,17 @@ export const extractQuotedContent = (htmlBody?: string) => {
 
 export const isMac = navigator.platform.toUpperCase().includes('MAC')
 
+export const isOverlayPresent = () =>
+	!!document.querySelector(
+		'[role="dialog"], [role="alertdialog"], .modal-open, [data-state="open"]',
+	)
+
 export const shouldIgnoreKeypress = (
 	e: KeyboardEvent,
 	allowCtrlAndMeta: boolean = false,
 ): boolean => {
+	if (isOverlayPresent()) return true
+
 	if (!allowCtrlAndMeta && (e.ctrlKey || e.metaKey)) return true
 
 	const target = e.target as HTMLElement
