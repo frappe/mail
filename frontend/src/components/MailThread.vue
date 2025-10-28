@@ -253,6 +253,7 @@
 						:key="action.label"
 						:icon-left="action.icon"
 						:label="action.label"
+						:tooltip="action.tooltip"
 						:variant="isMobile ? 'ghost' : 'outline'"
 						:class="{ '!h-16 flex-1 rounded-none': isMobile }"
 						@click="action.onClick"
@@ -284,7 +285,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, nextTick, reactive, ref, watch } from 'vue'
+import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
 	ChevronLeft,
@@ -306,6 +307,7 @@ import {
 	getFirstAlphabet,
 	getFormattedRecipients,
 	getGroupedRecipients,
+	shouldIgnoreKeypress,
 } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
@@ -462,17 +464,20 @@ const replyForwardActions = computed(() =>
 	[
 		{
 			label: __('Reply'),
+			tooltip: __('Reply (R)'),
 			onClick: () => reply(thread.data.at(-1)),
 			icon: Reply,
 		},
 		{
 			label: __('Reply All'),
+			tooltip: __('Reply All (Shift+R)'),
 			onClick: () => replyAll(thread.data.at(-1)),
 			icon: ReplyAll,
 			condition: showReplyAll(thread.data.at(-1)),
 		},
 		{
 			label: __('Forward'),
+			tooltip: __('Forward (F)'),
 			onClick: () => forward(thread.data.at(-1)),
 			icon: Forward,
 		},
@@ -546,6 +551,33 @@ const discardLocalDraft = (mail: string) => {
 	delete draftMails[mail]
 	thread.data = thread.data.filter((m: Mail) => m.name !== mail)
 }
+
+// Shortcuts
+
+const handleKeydown = (e: KeyboardEvent) => {
+	if (shouldIgnoreKeypress(e)) return
+
+	const key = e.key.toLowerCase()
+	const lastMail = thread.data?.at(-1)
+	if (!lastMail || lastMail.draft) return
+
+	// Reply/Reply All shortcut
+	if (key === 'r') {
+		e.preventDefault()
+		if (e.shiftKey) replyAll(lastMail)
+		else reply(lastMail)
+		return
+	}
+
+	// Forward shortcut
+	if (key === 'f') {
+		e.preventDefault()
+		forward(lastMail)
+	}
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 
 const focusedDraft = ref<string>()
 const showSendModal = ref(false)

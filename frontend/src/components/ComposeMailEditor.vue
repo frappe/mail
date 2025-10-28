@@ -182,7 +182,7 @@ import { Button, Dropdown, FeatherIcon, TextEditor, createResource } from 'frapp
 import { ImageExtension } from 'frappe-ui/src/components/TextEditor/extensions/image'
 import { useFileUpload } from 'frappe-ui/src/utils/useFileUpload'
 
-import { formatBytes, raiseToast, validateEmail } from '@/utils'
+import { formatBytes, isOverlayPresent, raiseToast, validateEmail } from '@/utils'
 import { useScreenSize, useVisualViewport } from '@/utils/composables'
 import ComposeMailToolbar from '@/components/ComposeMailToolbar.vue'
 import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
@@ -261,6 +261,7 @@ const isDraftUpdated = computed(() => JSON.stringify(mail) !== JSON.stringify(or
 onMounted(() => {
 	updateOriginalMail()
 	if (!mailDetails?.in_reply_to) setTimeout(() => toInput.value?.setFocus(), 50)
+	else textEditor.value.editor.commands.focus()
 })
 
 onUnmounted(() => saveDraft())
@@ -281,6 +282,8 @@ const saveDraft = async () => {
 }
 
 const sendMail = () => {
+	if (isLoading.value) return
+
 	if (isRecipientsEmpty.value) return raiseToast(__('Please add at least one recipient.'))
 	show.value = false
 	if (mail._id) updateDraft.submit()
@@ -288,6 +291,8 @@ const sendMail = () => {
 }
 
 const discardMail = () => {
+	if (isLoading.value) return
+
 	show.value = false
 	if (mail._id) deleteMail.submit()
 	else emit('discardMail')
@@ -463,4 +468,30 @@ const TYPE_ICON_MAP = {
 	replyAll: ReplyAll,
 	forward: Forward,
 }
+
+// Shortcuts
+
+const handleKeydown = (e: KeyboardEvent) => {
+	if (!show.value || (isInThread && isOverlayPresent())) return
+
+	handleSendShortcut(e)
+	handleDiscardShortcut(e)
+}
+
+const handleSendShortcut = (e: KeyboardEvent) => {
+	if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+		e.preventDefault()
+		sendMail()
+	}
+}
+
+const handleDiscardShortcut = (e: KeyboardEvent) => {
+	if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
+		e.preventDefault()
+		discardMail()
+	}
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 </script>

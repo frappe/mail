@@ -178,3 +178,27 @@ export const extractQuotedContent = (htmlBody?: string) => {
 
 	return { quoted_content, html_body: doc.body.innerHTML }
 }
+
+export const isMac = navigator.platform.toUpperCase().includes('MAC')
+
+export const isOverlayPresent = () =>
+	!!document.querySelector(
+		'[role="dialog"], [role="alertdialog"], .modal-open, [data-state="open"]',
+	)
+
+export const shouldIgnoreKeypress = (
+	e: KeyboardEvent,
+	allowCtrlAndMeta: boolean = false,
+): boolean => {
+	if (isOverlayPresent()) return true
+
+	if (!allowCtrlAndMeta && (e.ctrlKey || e.metaKey)) return true
+
+	const target = e.target as HTMLElement
+	return (
+		(target.tagName === 'INPUT' && (target as HTMLInputElement).type !== 'checkbox') ||
+		target.tagName === 'TEXTAREA' ||
+		target.isContentEditable ||
+		e.altKey
+	)
+}

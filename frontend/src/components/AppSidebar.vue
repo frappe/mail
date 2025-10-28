@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStorage } from '@vueuse/core'
 import { ArrowLeftFromLine } from 'lucide-vue-next'
@@ -133,6 +133,18 @@ const sidebarLinks = computed(() => {
 
 	return mailboxes.data?.length ? [mailboxItems[0], starredItem, ...mailboxItems.slice(1)] : []
 })
+
+// Shortcuts
+
+const handleKeyDown = (event: KeyboardEvent) => {
+	if ((event.metaKey || event.ctrlKey) && event.key === ';') {
+		event.preventDefault()
+		isSidebarCollapsed.value = !isSidebarCollapsed.value
+	}
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeyDown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeyDown))
 </script>
 
 <style scoped>

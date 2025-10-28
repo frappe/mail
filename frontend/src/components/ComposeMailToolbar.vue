@@ -52,6 +52,7 @@
 					<template v-else>
 						<Button
 							:label="__('Discard')"
+							:tooltip="__('Discard ({0}+D)', [modifier])"
 							:icon-left="Trash2"
 							:disabled="isLoading"
 							@click="emit('discardMail')"
@@ -59,6 +60,7 @@
 						<Button
 							variant="solid"
 							:label="__('Send')"
+							:tooltip="__('Send ({0}+Enter)', [modifier])"
 							:icon-left="SendHorizontal"
 							:disabled="isRecipientsEmpty || isLoading"
 							@click="emit('sendMail')"
@@ -70,10 +72,11 @@
 	</FileUploader>
 </template>
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Laugh, Paperclip, SendHorizontal, Trash2 } from 'lucide-vue-next'
 import { Button, ErrorMessage, FileUploader, Progress, TextEditorFixedMenu } from 'frappe-ui'
 
-import { formatBytes } from '@/utils'
+import { formatBytes, isMac } from '@/utils'
 import { useScreenSize, useTextEditorButtons, useVisualViewport } from '@/utils/composables'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 
@@ -84,6 +87,8 @@ const { isSavingDraft, isLoading, isRecipientsEmpty } = defineProps<{
 }>()
 
 const emit = defineEmits(['appendEmoji', 'addAttachment', 'discardMail', 'sendMail'])
+
+const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 
 // Make toolbar hover over keyboard on mobile
 

@@ -7,7 +7,7 @@
 				:key="value"
 				theme="gray"
 				variant="subtle"
-				class="!text-ink-gray-7 bg-surface-gray-2 flex cursor-default items-center rounded px-2 text-base"
+				class="!text-ink-gray-7 bg-surface-gray-2 flex min-h-7 cursor-default items-center rounded px-2 text-base"
 				@keydown.delete.capture.stop="removeLastValue"
 			>
 				<span>{{ value }}</span>

@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 // eslint-disable-next-line import/no-unresolved
 import IframeResizer from '@iframe-resizer/vue/sfc'
 import DOMPurify from 'dompurify'
@@ -30,6 +30,25 @@ const { content } = defineProps<{ content: string }>()
 const { activeTheme } = useTheme()
 
 const isIframeReady = ref(false)
+
+// Listen for keyboard events from iframe
+const handleMessage = (event: MessageEvent) => {
+	if (event.data?.type !== 'keyboard') return
+
+	// Create a synthetic keyboard event in the parent
+	const keyboardEvent = new KeyboardEvent(event.data.eventType, {
+		key: event.data.key,
+		ctrlKey: event.data.ctrlKey,
+		shiftKey: event.data.shiftKey,
+		altKey: event.data.altKey,
+		metaKey: event.data.metaKey,
+		bubbles: true,
+	})
+	document.dispatchEvent(keyboardEvent)
+}
+
+onMounted(() => window.addEventListener('message', handleMessage))
+onUnmounted(() => window.removeEventListener('message', handleMessage))
 
 const srcdoc = computed(() => {
 	const collapseButton = `
@@ -119,6 +138,22 @@ const srcdoc = computed(() => {
 		<body>
 			${transformedContent}
 			<script>
+				// Forward keyboard events to parent
+				['keydown', 'keyup', 'keypress'].forEach(eventType => {
+					document.addEventListener(eventType, (e) => {
+						window.parent.postMessage({
+							type: 'keyboard',
+							eventType: eventType,
+							key: e.key,
+							ctrlKey: e.ctrlKey,
+							shiftKey: e.shiftKey,
+							altKey: e.altKey,
+							metaKey: e.metaKey,
+						}, '*');
+					});
+				});
+
+				// Forward link clicks to parent
 				document.addEventListener('click', (e) => {
 					if (e.target.tagName === 'A') {
 						e.preventDefault();

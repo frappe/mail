@@ -57,7 +57,13 @@
 				<!-- Toolbar/Actions -->
 				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
 					<div class="sm:mr-5.5 ml-3 mr-3.5">
-						<Tooltip :text="__('Select All')">
+						<Tooltip
+							:text="
+								isAllSelected
+									? __('Clear All (Esc)')
+									: __('Select All ({0}+A)', [modifier])
+							"
+						>
 							<Checkbox
 								:model-value="isAllSelected"
 								size="md"
@@ -108,7 +114,6 @@
 					v-if="threadsResource?.data?.length"
 					ref="mailList"
 					class="h-full overflow-y-auto overscroll-contain"
-					@click="mailListClicked = true"
 					@scroll="loadMoreThreads"
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
@@ -172,7 +177,7 @@
 										move_to_mailbox: mailboxIds.trash,
 									})
 								"
-								@delete-thread="deleteThreads.submit([mail.thread_id])"
+								@delete-thread="junkOrDeleteThreads([mail.thread_id], false)"
 								@set-selected="
 									(selected: boolean) => toggleSelect([mail.thread_id], selected)
 								"
@@ -224,9 +229,11 @@
 					"
 					@set-spam-status="
 						(spam: boolean) =>
-							setThreadsSpamStatus.submit({ thread_ids: [threadID], spam })
+							spam
+								? junkOrDeleteThreads([threadID!], true)
+								: setThreadsSpamStatus.submit({ thread_ids: [threadID], spam })
 					"
-					@delete-thread="deleteThreads.submit([threadID])"
+					@delete-thread="junkOrDeleteThreads([threadID!], false)"
 					@prev-thread="goToThreadByOffset(-1)"
 					@next-thread="goToThreadByOffset(1)"
 				/>
@@ -247,11 +254,13 @@
 	</div>
 
 	<Dialog v-model="showEmptyMailbox" :options="emptyMailboxOptions" />
+	<Dialog v-model="showJunkOrDeleteThreads" :options="junkOrDeleteThreadsOptions" />
+	<ShortcutsModal v-model="showShortcuts" />
 </template>
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { onClickOutside, useDebounceFn } from '@vueuse/core'
+import { useDebounceFn } from '@vueuse/core'
 import {
 	ChevronDown,
 	ChevronRight,
@@ -278,13 +287,14 @@ import {
 	createResource,
 } from 'frappe-ui'
 
-import { getFormattedDate, raiseToast, startResizing } from '@/utils'
+import { getFormattedDate, isMac, raiseToast, shouldIgnoreKeypress, startResizing } from '@/utils'
 import { useLayout, useScreenSize, useSidebar } from '@/utils/composables'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
 import MailListItem from '@/components/MailListItem.vue'
 import MailThread from '@/components/MailThread.vue'
+import ShortcutsModal from '@/components/Modals/ShortcutsModal.vue'
 
 import type { Thread, UserResource } from '@/types'
 
@@ -339,6 +349,7 @@ watch(
 	(val) => {
 		if (!val) return
 
+		lastOpened.value = val
 		for (const group of collapsedGroups.value) {
 			if (getGroupThreads(group).includes(val))
 				return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== group))
@@ -348,15 +359,11 @@ watch(
 
 // Selection
 
-const mailList = useTemplateRef('mailList')
-const mailListClicked = ref(true)
-onClickOutside(mailList, () => (mailListClicked.value = false))
-
 const mailItems = useTemplateRef('mailItems')
 
 const selections = ref<string[]>([])
 const lastSelected = ref<string[]>()
-const isShiftPressed = ref(false)
+const lastOpened = ref<string>()
 
 const isAllSelected = computed(
 	() => threadIDs.value.length && selections.value.length === threadIDs.value.length,
@@ -405,27 +412,131 @@ const resetSelections = () => {
 const isGroupSelected = (key: string) =>
 	getGroupThreads(key).every((id) => selections.value.includes(id))
 
+// Shortcuts
+
+const showShortcuts = ref(false)
+
+const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
+
+const isShiftPressed = ref(false)
+const isGPressed = ref(false)
+const gPressTimeout = ref<ReturnType<typeof setTimeout>>()
+
 const handleKeyDown = (e: KeyboardEvent) => {
-	if (e.key === 'Shift') isShiftPressed.value = true
+	isShiftPressed.value = e.shiftKey
+	const key = e.key.toLowerCase()
 
-	if (
-		showReadingPane.value &&
-		mailListClicked.value &&
-		threadID &&
-		(e.key === 'ArrowUp' || e.key === 'ArrowDown')
-	) {
+	// Handle Ctrl/Cmd+A (Select All)
+	if ((e.metaKey || e.ctrlKey) && key === 'a' && !shouldIgnoreKeypress(e, true)) {
 		e.preventDefault()
+		isGPressed.value = false
+		return toggleSelectAll(true)
+	}
 
-		const offset = e.key === 'ArrowUp' ? -1 : 1
+	if (shouldIgnoreKeypress(e)) return
+
+	if (key === 'g') return handleGKeyPress(e)
+	if (isGPressed.value) return handleGMenuNavigation(e, key)
+	if (key === '?') return handleShowShortcuts(e)
+	if (key === 'escape') return handleEscape(e)
+
+	const hasSelection = selections.value.length > 0 || threadID
+	if (hasSelection) handleThreadActions(e, key)
+	if (showReadingPane.value) handleArrowNavigation(e, key)
+}
+
+const handleGKeyPress = (e: KeyboardEvent) => {
+	clearTimeout(gPressTimeout.value)
+
+	if (e.shiftKey) return goToThread(threadIDs.value.at(-1))
+
+	if (isGPressed.value) {
+		isGPressed.value = false
+		return goToThread(threadIDs.value[0])
+	}
+
+	isGPressed.value = true
+	gPressTimeout.value = setTimeout(() => (isGPressed.value = false), 750)
+}
+
+const handleGMenuNavigation = (e: KeyboardEvent, key: string) => {
+	isGPressed.value = false
+
+	const navigationMap: Record<string, string> = {
+		i: mailboxIds.inbox,
+		s: mailboxIds.sent,
+		d: mailboxIds.drafts,
+	}
+
+	const mailboxId = navigationMap[key]
+	if (mailboxId) {
+		e.preventDefault()
+		router.push({ name: 'Mailbox', params: { mailbox: mailboxId } })
+	}
+}
+
+const handleShowShortcuts = (e: KeyboardEvent) => {
+	e.preventDefault()
+	showShortcuts.value = true
+}
+
+const handleEscape = (e: KeyboardEvent) => {
+	e.preventDefault()
+	resetSelections()
+	goToMailbox()
+}
+
+const handleThreadActions = (e: KeyboardEvent, key: string) => {
+	const thread_ids = selections.value.length ? selections.value : [threadID!]
+
+	// Delete/Trash (Backspace on Mac, Delete on Windows)
+	if (key === (isMac ? 'backspace' : 'delete')) {
+		e.preventDefault()
+		if (e.shiftKey) return junkOrDeleteThreads(thread_ids, false)
+
+		return moveThreads.submit({ thread_ids, mailbox, move_to_mailbox: mailboxIds.trash })
+	}
+
+	// Mark as junk (!)
+	if (key === '!') {
+		e.preventDefault()
+		return junkOrDeleteThreads(thread_ids, true)
+	}
+
+	// Mark as read/unread (u)
+	if (key === 'u') {
+		e.preventDefault()
+		return setSeen.submit({ thread_ids, seen: e.shiftKey })
+	}
+}
+
+const handleArrowNavigation = (e: KeyboardEvent, key: string) => {
+	const navigationKeys = ['arrowup', 'arrowdown', 'j', 'k']
+	if (!navigationKeys.includes(key)) return
+
+	e.preventDefault()
+
+	const offset = ['arrowup', 'k'].includes(key) ? -1 : 1
+
+	if (threadID) {
 		goToThreadByOffset(offset)
 		lastSelected.value = [threadID]
-
-		const thread = getThreadByOffset(offset)
-		if (thread && isShiftPressed.value) {
-			if (selections.value.includes(thread)) toggleSelect([threadID, thread], false)
-			else toggleSelect([threadID, thread], true)
-		}
+	} else {
+		const targetThread = threadIDs.value.includes(lastOpened.value)
+			? lastOpened.value
+			: threadIDs.value[0]
+		goToThread(targetThread)
 	}
+
+	// Handle shift+arrow selection
+	if (!isShiftPressed.value) return
+
+	const thread = getThreadByOffset(offset)
+	if (!thread) return
+
+	const threadsToToggle = threadID ? [threadID, thread] : [thread]
+	const shouldSelect = !selections.value.includes(thread)
+	toggleSelect(threadsToToggle, shouldSelect)
 }
 
 const handleKeyUp = (e: KeyboardEvent) => {
@@ -443,8 +554,7 @@ const selectActions = computed((): SelectAction[] =>
 	[
 		{
 			label: __('Mark as Junk'),
-			onClick: () =>
-				setThreadsSpamStatus.submit({ thread_ids: selections.value, mailbox, spam: true }),
+			onClick: () => junkOrDeleteThreads(selections.value, true),
 			icon: CircleAlert,
 			condition:
 				!!selections.value.length &&
@@ -474,7 +584,7 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Delete Threads'),
-			onClick: () => deleteThreads.submit(selections.value),
+			onClick: () => junkOrDeleteThreads(selections.value, false),
 			icon: Trash2,
 			condition: !!selections.value.length && mailbox === mailboxIds.trash,
 		},
@@ -482,13 +592,25 @@ const selectActions = computed((): SelectAction[] =>
 			label: __('Mark as Read'),
 			onClick: () => setSeen.submit({ thread_ids: selections.value, seen: true }),
 			icon: MailOpen,
-			condition: !!selections.value.length,
+			condition:
+				!!selections.value.length &&
+				selections.value.some(
+					(threadID) =>
+						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+							.seen === 0,
+				),
 		},
 		{
 			label: __('Mark as Unread'),
 			onClick: () => setSeen.submit({ thread_ids: selections.value, seen: false }),
 			icon: Mail,
-			condition: !!selections.value.length,
+			condition:
+				!!selections.value.length &&
+				selections.value.some(
+					(threadID) =>
+						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+							.seen === 1,
+				),
 		},
 		{
 			label: __('Refresh'),
@@ -556,6 +678,7 @@ watch(
 	() => {
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
 		limit.value = 50
+		lastOpened.value = undefined
 		reloadThreads(false)
 	},
 	{ immediate: true },
@@ -592,8 +715,13 @@ const loadMoreThreads = useDebounceFn((e) => {
 
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
-const goToThread = (threadID: string) =>
+const goToThread = (threadID: string) => {
+	if (!threadID) return
+
 	router.push({ name: 'Mail', params: { mailbox, threadID }, query: route.query })
+	const el = mailItems.value?.find((el) => el?.id === threadID)?.$el
+	if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
 
 // Actions
 
@@ -666,6 +794,58 @@ const setThreadsSpamStatus = createResource({
 	},
 })
 
+const getThreadByOffset = (offset: number) =>
+	threadIDs.value[threadIDs.value.indexOf(threadID) + offset]
+
+const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
+
+const showJunkOrDeleteThreads = ref(false)
+const threadsToBeJunkedOrDeleted = ref<string[]>([])
+const isJunkAction = ref(false)
+
+const junkOrDeleteThreads = (threadIDs: string[], isJunk: boolean) => {
+	if (!threadIDs?.length) return
+
+	threadsToBeJunkedOrDeleted.value = threadIDs
+	isJunkAction.value = isJunk
+	showJunkOrDeleteThreads.value = true
+}
+
+const junkOrDeleteThreadCount = computed(() => threadsToBeJunkedOrDeleted.value.length)
+
+const junkOrDeleteTitle = computed(() => {
+	const count =
+		junkOrDeleteThreadCount.value === 1 ? '' : junkOrDeleteThreadCount.value.toString()
+	const noun = junkOrDeleteThreadCount.value > 1 ? __('Threads') : __('Thread')
+
+	return isJunkAction.value
+		? __('Mark {0} {1} as Junk', [count, noun])
+		: __('Permanently Delete {0} {1}', [count, noun])
+})
+
+const junkOrDeleteMessage = computed(() => {
+	const noun = junkOrDeleteThreadCount.value > 1 ? __('threads') : __('thread')
+
+	return isJunkAction.value
+		? __('Are you sure you want to mark the selected {0} as junk?', [noun])
+		: __('Are you sure you want to permanently delete the selected {0}?', [noun])
+})
+
+const handleJunkOrDelete = () => {
+	if (isJunkAction.value)
+		setThreadsSpamStatus.submit({ thread_ids: threadsToBeJunkedOrDeleted.value, spam: true })
+	else deleteThreads.submit(threadsToBeJunkedOrDeleted.value)
+
+	showJunkOrDeleteThreads.value = false
+}
+
+const junkOrDeleteThreadsOptions = computed(() => ({
+	title: junkOrDeleteTitle.value,
+	message: junkOrDeleteMessage.value,
+	icon: { name: 'alert-triangle', appearance: 'warning' },
+	actions: [{ label: __('Confirm'), variant: 'solid', onClick: handleJunkOrDelete }],
+}))
+
 const deleteThreads = createResource({
 	url: 'mail.api.mail.delete_threads',
 	makeParams: (thread_ids: string[]) => ({ thread_ids, mailbox }),
@@ -674,18 +854,6 @@ const deleteThreads = createResource({
 		reloadThreads()
 	},
 })
-
-const getThreadByOffset = (offset: number) =>
-	threadIDs.value[threadIDs.value.indexOf(threadID) + offset]
-
-const goToThreadByOffset = (offset: number) => {
-	const targetThread = getThreadByOffset(offset)
-	if (!targetThread) return
-
-	goToThread(targetThread)
-	const el = mailItems.value?.find((el) => el?.id === targetThread)?.$el
-	if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-}
 
 const showEmptyMailbox = ref(false)
 

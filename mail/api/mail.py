@@ -507,7 +507,7 @@ def empty_user_mailbox(mailbox: str) -> None:
 
 
 @frappe.whitelist()
-def search_mails(filter, limit=5) -> tuple[list[dict], int]:
+def search_mails(filter: dict | None = None, limit: int = 5) -> tuple[list[dict], int]:
 	"""Returns search results for the given query."""
 
 	if not filter:

@@ -8,20 +8,22 @@
 		:options="COLOR_SCHEMES"
 		@update:model-value="setTheme($event)"
 	/>
-	<Switch
-		:model-value="showReadingPane"
-		:label="__('Show Reading Pane')"
-		:description="__('Display message preview beside your mail list')"
-		@update:model-value="setShowReadingPane(user.data.name, $event)"
-	/>
-	<FormControl
-		:model-value="groupMessagesBy"
-		:label="__('Group Messages By')"
-		type="select"
-		variant="outline"
-		:options="GROUP_MESSAGES_OPTIONS"
-		@update:model-value="setGroupMessagesBy(user.data.name, $event)"
-	/>
+	<template v-if="user.data.is_mail_user">
+		<Switch
+			:model-value="showReadingPane"
+			:label="__('Show Reading Pane')"
+			:description="__('Display message preview beside your mail list')"
+			@update:model-value="setShowReadingPane(user.data.name, $event)"
+		/>
+		<FormControl
+			:model-value="groupMessagesBy"
+			:label="__('Group Messages By')"
+			type="select"
+			variant="outline"
+			:options="GROUP_MESSAGES_OPTIONS"
+			@update:model-value="setGroupMessagesBy(user.data.name, $event)"
+		/>
+	</template>
 </template>
 
 <script setup lang="ts">
