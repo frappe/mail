@@ -1,5 +1,5 @@
 <template>
-	<Dialog :options="{ title: __('Shortcuts'), size: '4xl' }">
+	<Dialog :options="{ title: __('Shortcuts'), size: '5xl' }">
 		<template #body-content>
 			<div class="grid w-full grid-cols-2 gap-10 py-1">
 				<div v-for="group in shortcutGroups" :key="group.title" class="pb-4">
@@ -11,7 +11,7 @@
 							class="flex items-start justify-between"
 						>
 							<div class="text-ink-gray-7 text-base">{{ shortcut[1] }}</div>
-							<div class="flex w-[9rem] justify-start gap-1 space-x-1">
+							<div class="flex w-[14rem] justify-start gap-1 space-x-1">
 								<span
 									v-for="(key, kIndex) in shortcut[0]"
 									:key="kIndex"
@@ -67,6 +67,7 @@ const shortcutGroups = computed(() => [
 			[['G', 'S'], __('Go to {0}', [mailboxName('sent')])],
 			[['G', 'D'], __('Go to {0}', [mailboxName('drafts')])],
 			[[modifier.value, 'K'], __('Search Mail')],
+			[['Enter'], __('Open Mail')],
 		],
 	},
 	{
@@ -74,6 +75,8 @@ const shortcutGroups = computed(() => [
 		shortcuts: [
 			[[modifier.value, 'A'], __('Select All Mails')],
 			[['Esc'], __('Clear All Mails')],
+			[['Shift', '↓', 'or', 'Shift', 'J'], __('Toggle Select Downwards')],
+			[['Shift', '↑', 'or', 'Shift', 'K'], __('Toggle Select Upwards')],
 			[['!'], __('Mark as Junk')],
 			[['U'], __('Mark as Unread')],
 			[['Shift', 'U'], __('Mark as Read')],
