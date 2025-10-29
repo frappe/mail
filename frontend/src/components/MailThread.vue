@@ -1,12 +1,11 @@
 <template>
 	<div v-if="threadID" class="relative flex h-full flex-col overflow-hidden">
 		<div class="bg-surface-white sticky top-0 flex items-center border-b p-2.5 sm:px-5">
-			<Button
-				icon="chevron-left"
-				variant="ghost"
-				class="mr-2 shrink-0"
-				@click="goToMailbox"
-			/>
+			<Button variant="ghost" class="mr-2 shrink-0" @click="goToMailbox">
+				<template #icon>
+					<ChevronLeft class="text-ink-gray-5 h-4 w-4" />
+				</template>
+			</Button>
 			<span
 				v-if="thread.loading"
 				class="bg-surface-gray-3 h-3.5 animate-pulse"
@@ -44,23 +43,23 @@
 					<template v-if="threads.includes(threadID)">
 						<Button
 							variant="ghost"
-							:tooltip="__('Previous Thread')"
+							:tooltip="__('Previous Thread (↑/K)')"
 							:disabled="threadID === threads[0]"
 							@click="emit('prevThread')"
 						>
 							<template #icon>
-								<ChevronLeft class="text-ink-gray-5 h-4 w-4" />
+								<ArrowLeft class="text-ink-gray-5 h-4 w-4" />
 							</template>
 						</Button>
 
 						<Button
 							variant="ghost"
-							:tooltip="__('Next Thread')"
+							:tooltip="__('Next Thread (↓/J)')"
 							:disabled="threadID === threads.at(-1)"
 							@click="emit('nextThread')"
 						>
 							<template #icon>
-								<ChevronRight class="text-ink-gray-5 h-4 w-4" />
+								<ArrowRight class="text-ink-gray-5 h-4 w-4" />
 							</template>
 						</Button>
 					</template>
@@ -288,8 +287,9 @@
 import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
+	ArrowLeft,
+	ArrowRight,
 	ChevronLeft,
-	ChevronRight,
 	CircleAlert,
 	CircleCheck,
 	FolderInput,

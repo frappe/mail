@@ -165,7 +165,11 @@
 								:mailbox
 								:mail
 								:is-selected="selections.includes(mail.thread_id)"
-								:class="{ '!bg-surface-blue-1': mail.thread_id == threadID }"
+								class="border-l border-l-transparent"
+								:class="{
+									'!bg-surface-blue-1': mail.thread_id === threadID,
+									'!border-l-blue-500': mail.thread_id === threadInFocus,
+								}"
 								@click="goToThread(mail.thread_id)"
 								@set-seen="
 									(seen: boolean) =>
@@ -344,17 +348,20 @@ const getGroupThreads = (group: string) => groupedThreads.value[group]?.map((t) 
 
 watch(groupMessagesBy, () => (collapsedGroups.value = []))
 
+const threadInFocus = ref<string>()
+
 watch(
 	() => threadID,
 	(val) => {
 		if (!val) return
 
-		lastOpened.value = val
+		setTimeout(() => focusOnThread(val))
 		for (const group of collapsedGroups.value) {
 			if (getGroupThreads(group).includes(val))
 				return (collapsedGroups.value = collapsedGroups.value.filter((d) => d !== group))
 		}
 	},
+	{ immediate: true },
 )
 
 // Selection
@@ -363,7 +370,6 @@ const mailItems = useTemplateRef('mailItems')
 
 const selections = ref<string[]>([])
 const lastSelected = ref<string[]>()
-const lastOpened = ref<string>()
 
 const isAllSelected = computed(
 	() => threadIDs.value.length && selections.value.length === threadIDs.value.length,
@@ -375,8 +381,15 @@ watch(selections, (val) => {
 	)
 })
 
-const toggleSelect = (threadIDs: string[], selected: boolean) => {
-	const allIDs = new Set([...threadIDs, ...getShiftSelectedIDs(threadIDs[0])])
+const toggleSelect = (
+	threadIDs: string[],
+	selected: boolean,
+	isKeyboardSelect: boolean = false,
+) => {
+	const allIDs = new Set([
+		...threadIDs,
+		...(isKeyboardSelect ? [] : getShiftSelectedIDs(threadIDs[0])),
+	])
 	if (selected) selections.value = [...new Set([...selections.value, ...allIDs])]
 	else selections.value = selections.value.filter((id) => !allIDs.has(id))
 	lastSelected.value = threadIDs
@@ -437,22 +450,29 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 	if (key === 'g') return handleGKeyPress(e)
 	if (isGPressed.value) return handleGMenuNavigation(e, key)
-	if (key === '?') return handleShowShortcuts(e)
+	if (key === 'enter') return handleEnter(e)
 	if (key === 'escape') return handleEscape(e)
+	if (key === '?') return handleShowShortcuts(e)
 
 	const hasSelection = selections.value.length > 0 || threadID
 	if (hasSelection) handleThreadActions(e, key)
-	if (showReadingPane.value) handleArrowNavigation(e, key)
+	handleArrowNavigation(e, key)
 }
 
 const handleGKeyPress = (e: KeyboardEvent) => {
 	clearTimeout(gPressTimeout.value)
 
-	if (e.shiftKey) return goToThread(threadIDs.value.at(-1))
+	if (e.shiftKey) {
+		const lastThread = threadIDs.value.at(-1)
+		if (threadID) return goToThread(lastThread)
+		return focusOnThread(lastThread)
+	}
 
 	if (isGPressed.value) {
 		isGPressed.value = false
-		return goToThread(threadIDs.value[0])
+		const firstThread = threadIDs.value[0]
+		if (threadID) return goToThread(firstThread)
+		return focusOnThread(firstThread)
 	}
 
 	isGPressed.value = true
@@ -478,6 +498,11 @@ const handleGMenuNavigation = (e: KeyboardEvent, key: string) => {
 const handleShowShortcuts = (e: KeyboardEvent) => {
 	e.preventDefault()
 	showShortcuts.value = true
+}
+
+const handleEnter = (e: KeyboardEvent) => {
+	e.preventDefault()
+	if (threadInFocus.value) goToThread(threadInFocus.value)
 }
 
 const handleEscape = (e: KeyboardEvent) => {
@@ -516,27 +541,25 @@ const handleArrowNavigation = (e: KeyboardEvent, key: string) => {
 
 	e.preventDefault()
 
+	const prevThreadInFocus = threadInFocus.value
 	const offset = ['arrowup', 'k'].includes(key) ? -1 : 1
 
 	if (threadID) {
 		goToThreadByOffset(offset)
 		lastSelected.value = [threadID]
 	} else {
-		const targetThread = threadIDs.value.includes(lastOpened.value)
-			? lastOpened.value
-			: threadIDs.value[0]
-		goToThread(targetThread)
+		if (threadIDs.value.includes(threadInFocus.value)) focusOnThreadByOffset(offset)
+		else focusOnThread(threadIDs.value[0])
 	}
 
 	// Handle shift+arrow selection
-	if (!isShiftPressed.value) return
+	if (!(isShiftPressed.value && threadInFocus.value)) return
 
-	const thread = getThreadByOffset(offset)
-	if (!thread) return
-
-	const threadsToToggle = threadID ? [threadID, thread] : [thread]
-	const shouldSelect = !selections.value.includes(thread)
-	toggleSelect(threadsToToggle, shouldSelect)
+	const threadsToToggle = prevThreadInFocus
+		? [prevThreadInFocus, threadInFocus.value]
+		: [threadInFocus.value]
+	const shouldSelect = !selections.value.includes(threadInFocus.value)
+	toggleSelect(threadsToToggle, shouldSelect, true)
 }
 
 const handleKeyUp = (e: KeyboardEvent) => {
@@ -678,7 +701,7 @@ watch(
 	() => {
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
 		limit.value = 50
-		lastOpened.value = undefined
+		threadInFocus.value = undefined
 		reloadThreads(false)
 	},
 	{ immediate: true },
@@ -715,10 +738,26 @@ const loadMoreThreads = useDebounceFn((e) => {
 
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
+const getThreadByOffset = (offset: number, currentThread: string = threadID!) =>
+	threadIDs.value[threadIDs.value.indexOf(currentThread) + offset]
+
 const goToThread = (threadID: string) => {
+	if (threadID) router.push({ name: 'Mail', params: { mailbox, threadID }, query: route.query })
+}
+
+const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
+
+const focusOnThread = (threadID: string) => {
 	if (!threadID) return
 
-	router.push({ name: 'Mail', params: { mailbox, threadID }, query: route.query })
+	threadInFocus.value = threadID
+	scrollIntoView(threadID)
+}
+
+const focusOnThreadByOffset = (offset: number) =>
+	focusOnThread(getThreadByOffset(offset, threadInFocus.value))
+
+const scrollIntoView = (threadID: string) => {
 	const el = mailItems.value?.find((el) => el?.id === threadID)?.$el
 	if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
@@ -793,11 +832,6 @@ const setThreadsSpamStatus = createResource({
 		reloadThreads()
 	},
 })
-
-const getThreadByOffset = (offset: number) =>
-	threadIDs.value[threadIDs.value.indexOf(threadID) + offset]
-
-const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
 
 const showJunkOrDeleteThreads = ref(false)
 const threadsToBeJunkedOrDeleted = ref<string[]>([])
