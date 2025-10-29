@@ -507,8 +507,8 @@ const handleEnter = (e: KeyboardEvent) => {
 
 const handleEscape = (e: KeyboardEvent) => {
 	e.preventDefault()
-	resetSelections()
-	goToMailbox()
+	if (threadID) goToMailbox()
+	else resetSelections()
 }
 
 const handleThreadActions = (e: KeyboardEvent, key: string) => {
@@ -541,24 +541,25 @@ const handleArrowNavigation = (e: KeyboardEvent, key: string) => {
 
 	e.preventDefault()
 
-	const prevThreadInFocus = threadInFocus.value
+	const prevThread = threadInFocus.value
 	const offset = ['arrowup', 'k'].includes(key) ? -1 : 1
 
+	let newThread = undefined
+
 	if (threadID) {
-		goToThreadByOffset(offset)
-		lastSelected.value = [threadID]
+		newThread = getThreadByOffset(offset) || threadInFocus.value
+		goToThread(newThread)
 	} else {
 		if (threadIDs.value.includes(threadInFocus.value)) focusOnThreadByOffset(offset)
 		else focusOnThread(threadIDs.value[0])
+		newThread = threadInFocus.value
 	}
 
 	// Handle shift+arrow selection
-	if (!(isShiftPressed.value && threadInFocus.value)) return
+	if (!(isShiftPressed.value && newThread)) return
 
-	const threadsToToggle = prevThreadInFocus
-		? [prevThreadInFocus, threadInFocus.value]
-		: [threadInFocus.value]
-	const shouldSelect = !selections.value.includes(threadInFocus.value)
+	const threadsToToggle = prevThread ? [prevThread, newThread] : [newThread]
+	const shouldSelect = !selections.value.includes(newThread)
 	toggleSelect(threadsToToggle, shouldSelect, true)
 }
 
