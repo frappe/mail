@@ -14,6 +14,7 @@
 					</Button>
 					<Search v-else class="text-ink-gray-5 h-4 w-4" />
 					<input
+						ref="searchInput"
 						v-model="filter.text"
 						icon-left="search"
 						type="search"
@@ -82,7 +83,8 @@
 						/>
 					</div>
 					<div
-						class="flex w-full flex-col space-y-4 p-4 sm:flex-row sm:justify-end sm:space-x-4"
+						class="flex w-full p-4"
+						:class="isMobile ? 'flex-col space-y-4' : 'justify-end space-x-4'"
 					>
 						<Button
 							:label="__('Clear Filters')"
@@ -152,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { watchDebounced } from '@vueuse/core'
 import { ChevronLeft, Paperclip, Search, SlidersHorizontal } from 'lucide-vue-next'
@@ -171,6 +173,11 @@ const { mailboxes } = userStore()
 
 const route = useRoute()
 const { isMobile } = useScreenSize()
+
+const searchInput = useTemplateRef('searchInput')
+watch(show, (val) => {
+	if (val) nextTick(() => searchInput.value?.focus())
+})
 
 const getDefaultFilter = (reset = false) =>
 	Object.fromEntries(

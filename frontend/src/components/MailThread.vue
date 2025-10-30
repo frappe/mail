@@ -168,10 +168,22 @@
 										>
 											{{ `<${mail.from_email}>` }}
 										</span>
-										<MailDetailsPopover
-											v-if="!isCollapsed(mail) && !mail.draft"
-											:mail
-										/>
+										<template v-if="!(isCollapsed(mail) || mail.draft)">
+											<ChevronDown
+												v-if="isMobile"
+												class="text-ink-gray-6 h-3.5 w-3.5 rounded-sm transition-transform duration-200"
+												:class="{
+													'rotate-180': showMailDetails === mail.name,
+												}"
+												@click.stop="
+													showMailDetails =
+														showMailDetails === mail.name
+															? undefined
+															: mail.name
+												"
+											/>
+											<MailDetailsPopover v-else :mail />
+										</template>
 									</div>
 									<div class="truncate">
 										{{ getFormattedRecipients(mail.recipients) }}
@@ -211,6 +223,12 @@
 								</div>
 							</div>
 						</div>
+
+						<MailDetails
+							v-if="!isCollapsed(mail) && showMailDetails === mail.name"
+							:mail
+							class="mb-4"
+						/>
 
 						<div v-show="isCollapsed(mail)" class="truncate">{{ mail.preview }}</div>
 
@@ -289,6 +307,7 @@ import { useRoute, useRouter } from 'vue-router'
 import {
 	ArrowLeft,
 	ArrowRight,
+	ChevronDown,
 	ChevronLeft,
 	CircleAlert,
 	CircleCheck,
@@ -317,6 +336,7 @@ import EmailContent from '@/components/EmailContent.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
 import MailActions from '@/components/MailActions.vue'
 import MailDate from '@/components/MailDate.vue'
+import MailDetails from '@/components/MailDetails.vue'
 import MailDetailsPopover from '@/components/MailDetailsPopover.vue'
 import MailThreadPlaceholder from '@/components/MailThreadPlaceholder.vue'
 import SendMail from '@/components/SendMail.vue'
@@ -483,6 +503,8 @@ const replyForwardActions = computed(() =>
 		},
 	].filter((action) => action.condition !== false),
 )
+
+const showMailDetails = ref<string>()
 
 const isCollapsed = (mail: Mail) =>
 	!!(mail.collapsed && mail !== thread.data[thread.data.length - 1])
