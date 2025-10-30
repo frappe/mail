@@ -56,7 +56,7 @@
 			>
 				<!-- Toolbar/Actions -->
 				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
-					<div class="sm:mr-5.5 ml-3 mr-3.5">
+					<div class="sm:mr-5.5 ml-3 mr-5">
 						<Tooltip
 							:text="
 								isAllSelected
@@ -165,7 +165,7 @@
 								:mailbox
 								:mail
 								:is-selected="selections.includes(mail.thread_id)"
-								class="border-l border-l-transparent"
+								class="border-l-transparent sm:border-l"
 								:class="{
 									'!bg-surface-blue-1': mail.thread_id === threadID,
 									'!border-l-blue-500': mail.thread_id === threadInFocus,
@@ -508,7 +508,8 @@ const handleEnter = (e: KeyboardEvent) => {
 const handleEscape = (e: KeyboardEvent) => {
 	e.preventDefault()
 	if (threadID) goToMailbox()
-	else resetSelections()
+	else if (selections.value.length) resetSelections()
+	else threadInFocus.value = undefined
 }
 
 const handleThreadActions = (e: KeyboardEvent, key: string) => {

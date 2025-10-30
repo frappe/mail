@@ -56,6 +56,7 @@ declare module 'vue' {
     PWASettings: typeof import('./src/components/PWASettings.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SearchMobileLayout: typeof import('./src/components/SearchMobileLayout.vue')['default']
     SearchModal: typeof import('./src/components/Modals/SearchModal.vue')['default']
     SendMail: typeof import('./src/components/SendMail.vue')['default']
     SendMailMobileLayout: typeof import('./src/components/SendMailMobileLayout.vue')['default']

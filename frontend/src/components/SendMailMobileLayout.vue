@@ -44,7 +44,6 @@ watch(show, (val) => {
 })
 
 onMounted(() => window.addEventListener('popstate', close))
-
 onUnmounted(() => window.removeEventListener('popstate', close))
 
 const ACTIONS = [
