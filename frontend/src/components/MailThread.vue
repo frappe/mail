@@ -115,6 +115,7 @@
 							<MailActions
 								:mailbox
 								:mail
+								:draft-mail="draftMails[mail.name]"
 								:is-collapsed="isCollapsed(mail)"
 								:show-reply-all="showReplyAll(mail)"
 								:pop-out-draft
@@ -316,7 +317,6 @@ import {
 	Mail as MailIcon,
 	Reply,
 	ReplyAll,
-	SquarePen,
 	Trash2,
 } from 'lucide-vue-next'
 import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
@@ -440,7 +440,7 @@ const moveToOptions = computed(() => {
 interface MailAction {
 	label: string
 	onClick: () => void
-	icon: typeof SquarePen
+	icon: typeof ArrowLeft
 	condition?: boolean | (() => boolean)
 }
 
