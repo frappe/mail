@@ -2,9 +2,9 @@
 	<div
 		ref="multiselectInput"
 		:class="[$attrs.class, 'flex w-full flex-wrap items-center gap-2']"
-		@click="isFocused = true"
+		@click="handleClick"
 	>
-		<div
+		<button
 			v-for="value in displayedValues"
 			ref="valueRefs"
 			:key="value"
@@ -19,11 +19,11 @@
 				class="ml-1.5 h-3.5 w-3.5 cursor-pointer"
 				@click.stop="removeValue(value)"
 			/>
-		</div>
+		</button>
 		<span v-if="isMobile && !isFocused && values.length > 2" class="text-ink-gray-6">
 			{{ `+${values.length - 2}` }}
 		</span>
-		<div class="flex-1">
+		<div class="flex-1" :class="{ hidden: isMobile && !isFocused }">
 			<Combobox v-model="selectedValue" nullable>
 				<Popover v-model:show="showOptions" class="w-full">
 					<template #target="{ togglePopover }">
@@ -34,9 +34,9 @@
 							:value="query"
 							autocomplete="off"
 							@change="handleQueryChange"
-							@keydown.enter="handleEnterKey"
+							@keydown.enter="addValue(query)"
 							@focus="handleFocus(togglePopover)"
-							@blur="handleBlur"
+							@blur="isSearchFocused = false"
 							@keydown.delete.capture.stop="removeLastValue"
 						/>
 					</template>
@@ -86,7 +86,7 @@
 			</Combobox>
 		</div>
 	</div>
-	<ErrorMessage v-if="error" class="mt-2 pl-2" :message="error" />
+	<ErrorMessage v-if="!isMobile && error" class="mt-2 pl-2" :message="error" />
 </template>
 
 <script setup lang="ts">
@@ -120,14 +120,20 @@ const multiselectInput = useTemplateRef('multiselectInput')
 const valueRefs = useTemplateRef('valueRefs')
 const searchInput = useTemplateRef('searchInput')
 
-const isFocused = ref(false)
+const isClicked = ref(false)
+const isSearchFocused = ref(false)
+const isFocused = computed(() => isClicked.value || isSearchFocused.value)
+
+const handleClick = () => {
+	isClicked.value = true
+	nextTick(setFocus)
+}
+
+onClickOutside(multiselectInput, () => (isClicked.value = false))
+
 const query = ref('')
 const error = ref<string | null>(null)
 const showOptions = ref(false)
-
-onClickOutside(multiselectInput, () => {
-	isFocused.value = false
-})
 
 const { isMobile } = useScreenSize()
 
@@ -148,8 +154,7 @@ const mailContacts = createResource({
 				label: option.full_name || option.email,
 				value: option.email,
 				image: option.user_image,
-			}))
-			.filter((d) => !values.value?.includes(d.value)),
+			})),
 	auto: false,
 })
 
@@ -159,7 +164,8 @@ const debouncedSearch = useDebounceFn(
 )
 
 const options = computed<Option[]>(() => {
-	const searchedContacts = mailContacts.data || []
+	const searchedContacts =
+		mailContacts.data?.filter((d) => !values.value?.includes(d.value)) || []
 
 	if (query.value && !searchedContacts.some((c) => c.value === query.value))
 		return [...searchedContacts, { label: query.value, value: query.value }]
@@ -187,14 +193,10 @@ const handleQueryChange = (e: Event) => {
 	if (newValue) debouncedSearch(newValue)
 }
 
-const handleEnterKey = () => addValue(query.value)
-
 const handleFocus = (togglePopover: () => void) => {
 	togglePopover()
-	isFocused.value = true
+	isSearchFocused.value = true
 }
-
-const handleBlur = () => (isFocused.value = false)
 
 const addValue = (input: string) => {
 	error.value = null
@@ -220,19 +222,17 @@ const addValue = (input: string) => {
 const removeValue = (value: string) => (values.value = values.value.filter((v) => v !== value))
 
 const removeLastValue = () => {
-	if (query.value) return
+	if (query.value || isMobile.value) return
 
-	const lastValueRef = valueRefs.value?.[valueRefs.value.length - 1]?.$el
+	const lastValueRef = valueRefs.value?.[valueRefs.value.length - 1]
 
 	if (document.activeElement !== lastValueRef) return lastValueRef?.focus()
 
 	values.value.pop()
 
 	nextTick(() => {
-		if (values.value.length) {
-			const newLastRef = valueRefs.value[valueRefs.value.length - 1].$el
-			newLastRef?.focus()
-		} else setFocus()
+		if (values.value.length) valueRefs.value?.at(-1)?.focus()
+		else setFocus()
 	})
 }
 
