@@ -578,7 +578,7 @@ interface SelectAction {
 const selectActions = computed((): SelectAction[] =>
 	[
 		{
-			label: __('Mark as Junk'),
+			label: __('Mark as Junk (!)'),
 			onClick: () => junkOrDeleteThreads(selections.value, true),
 			icon: CircleAlert,
 			condition:
@@ -597,7 +597,7 @@ const selectActions = computed((): SelectAction[] =>
 			condition: !!selections.value.length && mailbox === mailboxIds.junk,
 		},
 		{
-			label: __('Move to Trash'),
+			label: __('Move to Trash (Delete)'),
 			onClick: () =>
 				moveThreads.submit({
 					thread_ids: selections.value,
@@ -608,13 +608,13 @@ const selectActions = computed((): SelectAction[] =>
 			condition: !!selections.value.length && mailbox !== mailboxIds.trash,
 		},
 		{
-			label: __('Delete Threads'),
+			label: __('Delete Threads (Shift+Delete)'),
 			onClick: () => junkOrDeleteThreads(selections.value, false),
 			icon: Trash2,
 			condition: !!selections.value.length && mailbox === mailboxIds.trash,
 		},
 		{
-			label: __('Mark as Read'),
+			label: __('Mark as Read (Shift+U)'),
 			onClick: () => setSeen.submit({ thread_ids: selections.value, seen: true }),
 			icon: MailOpen,
 			condition:
@@ -626,7 +626,7 @@ const selectActions = computed((): SelectAction[] =>
 				),
 		},
 		{
-			label: __('Mark as Unread'),
+			label: __('Mark as Unread (U)'),
 			onClick: () => setSeen.submit({ thread_ids: selections.value, seen: false }),
 			icon: Mail,
 			condition:

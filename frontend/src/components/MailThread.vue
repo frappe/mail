@@ -455,7 +455,7 @@ interface MailAction {
 const threadActions = computed((): MailAction[] =>
 	[
 		{
-			label: __('Mark as Junk'),
+			label: __('Mark as Junk (!)'),
 			onClick: () => emit('setSpamStatus', true),
 			icon: CircleAlert,
 			condition: !threadMailboxes.value.some((m: string) =>
@@ -469,19 +469,19 @@ const threadActions = computed((): MailAction[] =>
 			condition: threadMailboxes.value.includes(mailboxIds.junk),
 		},
 		{
-			label: __('Move to Trash'),
+			label: __('Move to Trash (Delete)'),
 			onClick: () => emit('moveThread', mailboxIds.trash),
 			icon: Trash2,
 			condition: !threadMailboxes.value.includes(mailboxIds.trash),
 		},
 		{
-			label: __('Delete Thread'),
+			label: __('Delete Thread (Shift+Delete)'),
 			onClick: () => emit('deleteThread'),
 			icon: Trash2,
 			condition: threadMailboxes.value.includes(mailboxIds.trash),
 		},
 		{
-			label: __('Mark as Unread'),
+			label: __('Mark as Unread (U)'),
 			onClick: () => emit('setSeen', false),
 			icon: MailIcon,
 		},
