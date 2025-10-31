@@ -142,7 +142,7 @@ export const getFormattedDate = (date: Date | string, omitDate = false) => {
 	return dateObj.format(isCurrentYear ? 'D MMMM' : 'D MMMM YYYY')
 }
 
-export const getFirstAlphabet = (str?: string) => str?.match(/[A-Za-z]/)?.[0]
+export const getFirstAlphabet = (str?: string) => str?.match(/\p{L}/u)?.[0]
 
 export const getTheme = (
 	status: 'Draft' | 'Queued' | 'In Progress' | 'Completed' | 'Failed' | 'Cancelled',

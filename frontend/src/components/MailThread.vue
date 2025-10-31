@@ -111,7 +111,15 @@
 							class="flex items-center justify-between pb-2"
 							@click.stop="mail.collapsed = !mail.collapsed"
 						>
-							<MailDate :datetime="mail.received_at" />
+							<div class="flex items-center space-x-2">
+								<Badge
+									v-if="mail.draft"
+									:label="__('Draft')"
+									theme="red"
+									class="w-fit"
+								/>
+								<MailDate :datetime="mail.received_at" />
+							</div>
 							<MailActions
 								:mailbox
 								:mail
@@ -140,7 +148,7 @@
 							/>
 						</div>
 						<div
-							class="flex space-x-3"
+							class="flex items-center space-x-3"
 							:class="{
 								'cursor-pointer': mail !== thread.data[thread.data.length - 1],
 								'pb-6': mail.preview,
@@ -153,7 +161,7 @@
 									getFirstAlphabet(mail.from_email)
 								"
 								:image="mail.user_image"
-								size="xl"
+								size="2xl"
 							/>
 							<div class="flex flex-1 justify-between truncate text-sm">
 								<div class="mr-3 flex flex-col space-y-1 truncate">
@@ -319,7 +327,7 @@ import {
 	ReplyAll,
 	Trash2,
 } from 'lucide-vue-next'
-import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
+import { Avatar, Badge, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
 
 import {
 	extractQuotedContent,
