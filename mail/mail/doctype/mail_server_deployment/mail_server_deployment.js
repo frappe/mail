@@ -2,11 +2,23 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Mail Server Deployment', {
+	setup(frm) {
+		frm.trigger('set_queries')
+	},
+
 	refresh(frm) {
 		if (!frm.doc.__islocal) {
 			frm.disable_save()
 			frm.trigger('add_actions')
 		}
+	},
+
+	set_queries(frm) {
+		frm.set_query('config', () => ({
+			filters: {
+				server: frm.doc.server,
+			},
+		}))
 	},
 
 	add_actions(frm) {
