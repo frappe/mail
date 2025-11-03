@@ -22,12 +22,37 @@ class MailServerDeployment(Document):
 			return frappe.get_doc("Mail Server Config", self.config).config
 
 	@property
-	def compose_template_path(self) -> str:
-		"""Returns the path to the docker-compose template."""
+	def docker_compose(self) -> str | None:
+		"""Returns the docker-compose.yml content."""
 
-		return os.path.join(
-			frappe.get_app_path("mail", "utils", "docker", "templates"), "docker-compose.yml.j2"
-		)
+		if self.services:
+			docker_compose = "services:\n"
+			for service in self.services:
+				docker_compose += f"  {service.service}:\n"
+				docker_compose += f"    image: {service.image}\n"
+				docker_compose += f"    container_name: {service.container}\n"
+				docker_compose += f"    restart: {service.restart}\n"
+				docker_compose += f"    network_mode: {service.network_mode}\n"
+
+				depends_on = json.loads(service.depends_on) if service.depends_on else []
+				if depends_on:
+					docker_compose += "    depends_on:\n"
+					for dependency in depends_on:
+						docker_compose += f"      - {dependency}\n"
+
+				ports = json.loads(service.ports) if service.ports else []
+				if ports:
+					docker_compose += "    ports:\n"
+					for port in ports:
+						docker_compose += f'      - "{port}"\n'
+
+				volumes = json.loads(service.volumes) if service.volumes else []
+				if volumes:
+					docker_compose += "    volumes:\n"
+					for volume in volumes:
+						docker_compose += f"      - {volume}\n"
+
+			return docker_compose
 
 	def autoname(self) -> None:
 		self.name = str(uuid7())
@@ -37,6 +62,7 @@ class MailServerDeployment(Document):
 		self.validate_server()
 		self.validate_config()
 		self.validate_config_checksum()
+		self.validate_services()
 
 	def after_insert(self) -> None:
 		if frappe.flags.do_not_enqueue:
@@ -81,6 +107,51 @@ class MailServerDeployment(Document):
 		if not self.config_checksum:
 			self.config_checksum = hashlib.sha256(self.config_toml.encode("utf-8")).hexdigest()
 
+	def validate_services(self) -> None:
+		"""Validates and prepares the services for deployment."""
+
+		server_hostname = frappe.db.get_value("Mail Server", self.server, "hostname")
+		services = {
+			"stalwart": {
+				"image": "stalwartlabs/stalwart:latest",
+				"container": f"stalwart_{server_hostname}",
+				"restart": "unless-stopped",
+				"network_mode": "host",
+				"depends_on": json.dumps(["redis"] if self.install_redis else [], indent=4),
+				"ports": json.dumps([], indent=4),
+				"volumes": json.dumps(["{{ stalwart_root }}:/opt/stalwart"], indent=4),
+			}
+		}
+
+		if self.install_redis:
+			services["redis"] = {
+				"image": "redis:7-alpine",
+				"container": f"redis_{server_hostname}",
+				"restart": "unless-stopped",
+				"network_mode": "host",
+				"depends_on": json.dumps([], indent=4),
+				"ports": json.dumps([], indent=4),
+				"volumes": json.dumps(["{{ stalwart_root }}/redis:/opt/stalwart/redis"], indent=4),
+			}
+
+		for service in self.services:
+			services[service.service] = {
+				"image": service.image,
+				"container": service.container,
+				"restart": service.restart,
+				"network_mode": service.network_mode,
+				"depends_on": json.dumps(
+					json.loads(service.depends_on) if service.depends_on else [], indent=4
+				),
+				"ports": json.dumps(json.loads(service.ports) if service.ports else [], indent=4),
+				"volumes": json.dumps(json.loads(service.volumes) if service.volumes else [], indent=4),
+			}
+
+		self.services = []
+		for name, service in services.items():
+			service["service"] = name
+			self.append("services", service)
+
 	def execute(self) -> None:
 		"""Executes the deployment."""
 
@@ -101,8 +172,8 @@ class MailServerDeployment(Document):
 			variables = {
 				"server_hostname": frappe.db.get_value("Mail Server", self.server, "hostname"),
 				"config_toml": self.config_toml,
+				"docker_compose": self.docker_compose,
 				"install_redis": cint(self.install_redis),
-				"compose_template_path": self.compose_template_path,
 			}
 			play = frappe.new_doc("Mail Server Ansible Play")
 			play.status = "Pending"
