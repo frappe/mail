@@ -24,9 +24,58 @@ frappe.ui.form.on('Mail Server Deployment', {
 	add_actions(frm) {
 		if (!frappe.user_roles.includes('System Manager')) return
 
+		if (frm.doc.status === 'Success') {
+			frm.add_custom_button(
+				__('Post Deployment SSL Setup (FC)'),
+				() => frm.trigger('fc_post_deploy_ssl_setup'),
+				__('Actions'),
+			)
+		}
+
 		if (frm.doc.status === 'Failed') {
 			frm.add_custom_button(__('Retry'), () => frm.trigger('retry'), __('Actions'))
 		}
+	},
+
+	fc_post_deploy_ssl_setup(frm) {
+		const dialog = new frappe.ui.Dialog({
+			title: __('Post Deployment SSL Setup (FC)'),
+			size: 'small',
+			fields: [
+				{
+					fieldname: 'contact_email',
+					fieldtype: 'Data',
+					label: __('Contact Email'),
+					reqd: 1,
+				},
+			],
+			primary_action_label: __('Setup SSL'),
+			primary_action: (data) => {
+				const contact_email = data.contact_email
+				if (!contact_email) {
+					frappe.msgprint(__('Please enter a contact email'))
+					return
+				}
+
+				frappe.call({
+					doc: frm.doc,
+					method: 'fc_post_deploy_ssl_setup',
+					args: {
+						contact_email: contact_email,
+					},
+					freeze: true,
+					freeze_message: __('Setting up SSL...'),
+					callback: (r) => {
+						if (!r.exc) {
+							frm.refresh()
+							dialog.hide()
+						}
+					},
+				})
+			},
+		})
+
+		dialog.show()
 	},
 
 	retry(frm) {

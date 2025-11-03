@@ -6,7 +6,7 @@
     stalwart_root: "/opt/stalwart/{{ server_hostname }}"
     stalwart_config_dir: "{{ stalwart_root }}/etc"
     stalwart_config_content: "{{ config_toml }}"
-    stalwart_compose_template: "{{ compose_template_path }}"
+    docker_compose_content: "{{ docker_compose }}"
     install_redis: "{{ install_redis }}"
 
   tasks:
@@ -29,9 +29,9 @@
         dest: "{{ stalwart_config_dir }}/config.toml"
         mode: "0644"
 
-    - name: Deploy `docker-compose.yml` from template
-      template:
-        src: "{{ stalwart_compose_template }}"
+    - name: Copy `docker-compose.yml`
+      copy:
+        content: "{{ docker_compose_content }}"
         dest: "{{ stalwart_root }}/docker-compose.yml"
         mode: "0644"
 
