@@ -220,6 +220,40 @@ class MailServerDeployment(Document):
 		)
 
 	@frappe.whitelist()
+	def fc_post_deploy_ssl_setup(self, contact_email: str) -> None:
+		"""Creates a Mail Server Job to setup SSL post deployment for Frappe Cloud."""
+
+		frappe.only_for("System Manager")
+
+		container_name = None
+		for service in self.services:
+			if service.service == "stalwart":
+				container_name = service.container
+				break
+
+		if not container_name:
+			frappe.throw(_("Stalwart service not found in deployment {0}").format(self.name))
+
+		script_path = os.path.join(frappe.get_app_path("mail", "utils", "fc"), "post_deploy_ssl_setup.sh")
+		with open(script_path) as f:
+			script_content = f.read()
+
+		script_content = (
+			script_content.replace("{{ server }}", self.server)
+			.replace("{{ contact_email }}", contact_email)
+			.replace("{{ container_name }}", container_name)
+		)
+
+		job = frappe.new_doc("Mail Server Job")
+		job.status = "Pending"
+		job.server = self.server
+		job.job = "Post Deployment SSL Setup (FC)"
+		job.append("commands", {"command": script_content})
+		job.insert(ignore_permissions=True)
+
+		frappe.msgprint(_("SSL setup job has been created."), indicator="green", alert=True)
+
+	@frappe.whitelist()
 	def retry(self) -> None:
 		"""Retries a failed deployment."""
 
