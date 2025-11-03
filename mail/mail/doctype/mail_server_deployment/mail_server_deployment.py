@@ -22,22 +22,6 @@ class MailServerDeployment(Document):
 			return frappe.get_doc("Mail Server Config", self.config).config
 
 	@property
-	def port_mappings(self) -> list[str]:
-		"""Returns the port mappings for the Mail Server."""
-
-		server = frappe.get_doc("Mail Server", self.server)
-		cluster = frappe.get_doc("Mail Cluster", server.cluster)
-
-		port_mappings = []
-		for listener in server.listeners or cluster.listeners:
-			for bind in listener.bind.split("\n"):
-				if bind:
-					port = bind.split(":")[-1]
-					port_mappings.append(f"{port}:{port}")
-
-		return port_mappings
-
-	@property
 	def compose_template_path(self) -> str:
 		"""Returns the path to the docker-compose template."""
 
@@ -117,7 +101,6 @@ class MailServerDeployment(Document):
 			variables = {
 				"server_hostname": frappe.db.get_value("Mail Server", self.server, "hostname"),
 				"config_toml": self.config_toml,
-				"port_mappings": self.port_mappings,
 				"install_redis": cint(self.install_redis),
 				"compose_template_path": self.compose_template_path,
 			}

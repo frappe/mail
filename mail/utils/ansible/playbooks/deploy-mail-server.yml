@@ -7,7 +7,6 @@
     stalwart_config_dir: "{{ stalwart_root }}/etc"
     stalwart_config_content: "{{ config_toml }}"
     stalwart_compose_template: "{{ compose_template_path }}"
-    port_mappings: "{{ port_mappings }}"
     install_redis: "{{ install_redis }}"
 
   tasks:
