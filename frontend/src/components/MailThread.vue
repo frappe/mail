@@ -84,8 +84,8 @@
 					v-for="mail in thread.data"
 					:key="mail.name"
 					:class="{
-						'p-5': isMobile,
-						'border-b p-5 sm:rounded-xl sm:border':
+						'px-3 py-5': isMobile,
+						'border-b sm:rounded-xl sm:border sm:p-5':
 							thread.data.length > 1 || mail.draft,
 						'cursor-pointer': isCollapsed(mail),
 						'shadow-elevation-light-md': mail.draft && !isMobile,
