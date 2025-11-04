@@ -48,7 +48,11 @@
 								"
 							/>
 							<div class="flex gap-1.5">
-								<Button variant="ghost" @click="toggleCcBcc">
+								<Button
+									v-if="!(mail.cc?.length || mail.bcc?.length)"
+									variant="ghost"
+									@click="toggleCcBcc"
+								>
 									<template #icon>
 										<component
 											:is="showCcBcc ? ChevronUp : ChevronDown"

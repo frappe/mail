@@ -13,7 +13,7 @@
 			class="!text-ink-gray-7 bg-surface-gray-2 flex min-h-7 cursor-default items-center rounded px-2 text-base"
 			@keydown.delete.capture.stop="removeLastValue"
 		>
-			<span>{{ value }}</span>
+			<span :class="{ 'max-w-28 truncate': isMobile && !isFocused }">{{ value }}</span>
 			<X
 				v-if="!isMobile || isFocused"
 				class="ml-1.5 h-3.5 w-3.5 cursor-pointer"
