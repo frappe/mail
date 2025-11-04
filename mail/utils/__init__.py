@@ -17,7 +17,7 @@ from typing import Any, Literal
 import bcrypt
 import frappe
 import wrapt
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 from frappe import _
 from frappe.types.filter import FilterTuple
 from frappe.utils import get_bench_path
@@ -280,7 +280,7 @@ def is_html(content: str) -> bool:
 
 
 def convert_html_to_text(html: str) -> str:
-	"""Returns plain text from HTML <body> content, excluding links & buttons."""
+	"""Returns plain text from HTML <body> content, excluding interactive elements but keeping anchor text."""
 
 	if not html:
 		return ""
@@ -289,9 +289,12 @@ def convert_html_to_text(html: str) -> str:
 	body = soup.body or soup
 
 	for tag in body.find_all(["a", "button", "input"]):
-		if tag.name == "input" and tag.get("type") not in ("button", "submit", "reset"):
+		if tag.name == "a":
+			tag.unwrap()
+		elif tag.name == "input" and tag.get("type") not in ("button", "submit", "reset"):
 			continue
-		tag.decompose()
+		else:
+			tag.decompose()
 
 	text = body.get_text(separator=" ")
 	return clean_text(text)
@@ -320,6 +323,57 @@ def ensure_text(content: str | None = None) -> str | None:
 		content = convert_html_to_text(content)
 
 	return content
+
+
+def extract_latest_email_body(html: str) -> str:
+	"""Extract the latest visible message from an HTML email, removing quoted replies and signatures."""
+
+	if not html:
+		return html
+
+	soup = BeautifulSoup(html, "html.parser")
+
+	# 1. Remove scripts, styles, hidden elements, and comments
+	for tag in soup(["script", "style", "head", "title", "meta", "link"]):
+		tag.decompose()
+	for el in soup.select('[style*="display:none"], [style*="visibility:hidden"], [class*="hidden"]'):
+		el.decompose()
+	for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+		comment.extract()
+
+	# 2. Remove known quoted/previous message containers
+	for selector in [
+		".frappe_mail_quote",
+		"blockquote",
+		".gmail_quote",
+		".yahoo_quoted",
+		".OutlookMessageHeader",
+		"div[id^='divRplyFwdMsg']",
+		"hr[style*='width:100%']",
+	]:
+		for el in soup.select(selector):
+			el.decompose()
+
+	# 3. Remove common plain-text reply markers (e.g. “On Mon, John Doe wrote:”)
+	text = str(soup)
+	reply_markers = [
+		r"(?im)^\s*on\s.+?wrote[:：-]\s*$",
+		r"(?im)^from:\s.+$",
+		r"(?im)^sent:\s.+$",
+		r"(?im)^subject:\s.+$",
+	]
+	for pat in reply_markers:
+		m = re.search(pat, text)
+		if m:
+			text = text[: m.start()].strip()
+			break
+
+	# 4. Return cleaned, properly wrapped HTML
+	cleaned = text.strip()
+	if not cleaned:
+		return None
+
+	return f"<!DOCTYPE html>\n<html>\n<body>\n{cleaned}\n</body>\n</html>"
 
 
 def extract_filter_values(filters: list, conditions: list[dict]) -> tuple:
