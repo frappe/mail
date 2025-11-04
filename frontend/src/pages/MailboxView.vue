@@ -39,7 +39,7 @@
 	>
 		<!-- Loading -->
 		<div
-			v-if="threadsResource?.loading && limit === 50"
+			v-if="!threadsResource?.data?.length && threadsResource?.loading && limit === 50"
 			class="flex w-full flex-col items-center justify-center"
 		>
 			<div class="text-ink-gray-5 flex items-center space-x-2">

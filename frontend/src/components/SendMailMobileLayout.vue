@@ -20,9 +20,7 @@
 				</template>
 			</Button>
 		</div>
-		<div class="px-3 py-2.5">
-			<slot name="body-content" />
-		</div>
+		<slot name="body-content" />
 	</div>
 </template>
 

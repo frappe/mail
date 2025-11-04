@@ -4,16 +4,16 @@
 		editor-class="not-prose prose-sm max-w-none"
 		:extensions="[CustomImageExtension]"
 		:content="mail.html_body"
-		class="flex flex-col"
+		class="flex flex-col max-sm:overflow-y-auto"
 		:class="{ 'pointer-events-none opacity-50': !show, 'sm:h-[75vh]': !isInThread }"
 		:style="isMobile && { height: editorHeight }"
 		@change="(val: string) => (mail.html_body = val)"
 	>
 		<template #top>
-			<div class="flex flex-col gap-2.5 border-b pb-2.5">
+			<div class="flex flex-col gap-2.5 border-b pb-2.5 max-sm:px-3 max-sm:pt-2.5">
 				<div v-if="!mailDetails?.type || isMobile" class="flex justify-between gap-2">
 					<div class="flex items-center gap-2">
-						<span class="text-ink-gray-4 text-xs">{{ __('From') }}</span>
+						<span class="text-ink-gray-4 text-sm">{{ __('From') }}</span>
 						<AutocompleteControl
 							v-model="mail.from_email"
 							:options="user.data?.email_addresses || []"
@@ -36,7 +36,7 @@
 					</Dropdown>
 					<div class="flex flex-1 flex-col gap-2.5">
 						<div class="flex gap-2">
-							<span class="text-ink-gray-4 text-xs leading-7"> {{ __('To') }} </span>
+							<span class="text-ink-gray-4 text-sm leading-7"> {{ __('To') }} </span>
 							<MultiselectInputControl
 								ref="toInput"
 								v-model="mail.to"
@@ -64,7 +64,7 @@
 						</div>
 						<template v-if="showCcBcc">
 							<div class="flex gap-2">
-								<span class="text-ink-gray-4 text-xs leading-7">
+								<span class="text-ink-gray-4 text-sm leading-7">
 									{{ __('Cc') }}
 								</span>
 								<MultiselectInputControl
@@ -79,7 +79,7 @@
 								/>
 							</div>
 							<div class="flex gap-2">
-								<span class="text-ink-gray-4 text-xs leading-7">
+								<span class="text-ink-gray-4 text-sm leading-7">
 									{{ __('Bcc') }}
 								</span>
 								<MultiselectInputControl
@@ -96,7 +96,7 @@
 					</div>
 				</div>
 				<div v-if="!mailDetails?.type || isMobile" class="flex items-center gap-2">
-					<span class="text-ink-gray-4 text-xs">{{ __('Subject') }}</span>
+					<span class="text-ink-gray-4 text-sm">{{ __('Subject') }}</span>
 					<input
 						v-model="mail.subject"
 						class="flex-1 border-none bg-inherit text-base focus-visible:!ring-0"
@@ -106,7 +106,7 @@
 		</template>
 		<template #editor="{ editor }">
 			<div
-				class="my-2.5 flex flex-1 cursor-text flex-col overflow-y-auto text-sm"
+				class="flex flex-1 cursor-text flex-col py-2.5 text-sm max-sm:px-3 sm:overflow-y-auto"
 				:class="{ 'max-h-96 min-h-32': isInThread }"
 				@click="editor.commands.focus('end')"
 			>
@@ -221,7 +221,7 @@ const appendEmoji = (emoji: string) => {
 }
 
 const editorHeight = useVisualViewport(
-	(viewport) => `${viewport.height - viewport.offsetTop - 112}px`,
+	(viewport) => `${viewport.height - viewport.offsetTop - 113}px`,
 )
 
 // Setup & hooks
