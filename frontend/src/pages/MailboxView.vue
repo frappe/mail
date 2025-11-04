@@ -39,7 +39,7 @@
 	>
 		<!-- Loading -->
 		<div
-			v-if="threadsResource?.loading && limit === 50"
+			v-if="!threadsResource?.data?.length && threadsResource?.loading && limit === 50"
 			class="flex w-full flex-col items-center justify-center"
 		>
 			<div class="text-ink-gray-5 flex items-center space-x-2">
@@ -56,7 +56,7 @@
 			>
 				<!-- Toolbar/Actions -->
 				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
-					<div class="sm:mr-5.5 ml-3 mr-3.5">
+					<div class="sm:mr-5.5 ml-3 mr-5">
 						<Tooltip
 							:text="
 								isAllSelected
@@ -165,7 +165,7 @@
 								:mailbox
 								:mail
 								:is-selected="selections.includes(mail.thread_id)"
-								class="border-l border-l-transparent"
+								class="border-l-transparent sm:border-l"
 								:class="{
 									'!bg-surface-blue-1': mail.thread_id === threadID,
 									'!border-l-blue-500': mail.thread_id === threadInFocus,
@@ -508,7 +508,8 @@ const handleEnter = (e: KeyboardEvent) => {
 const handleEscape = (e: KeyboardEvent) => {
 	e.preventDefault()
 	if (threadID) goToMailbox()
-	else resetSelections()
+	else if (selections.value.length) resetSelections()
+	else threadInFocus.value = undefined
 }
 
 const handleThreadActions = (e: KeyboardEvent, key: string) => {
@@ -577,7 +578,7 @@ interface SelectAction {
 const selectActions = computed((): SelectAction[] =>
 	[
 		{
-			label: __('Mark as Junk'),
+			label: __('Mark as Junk (!)'),
 			onClick: () => junkOrDeleteThreads(selections.value, true),
 			icon: CircleAlert,
 			condition:
@@ -596,7 +597,7 @@ const selectActions = computed((): SelectAction[] =>
 			condition: !!selections.value.length && mailbox === mailboxIds.junk,
 		},
 		{
-			label: __('Move to Trash'),
+			label: __('Move to Trash (Delete)'),
 			onClick: () =>
 				moveThreads.submit({
 					thread_ids: selections.value,
@@ -607,13 +608,13 @@ const selectActions = computed((): SelectAction[] =>
 			condition: !!selections.value.length && mailbox !== mailboxIds.trash,
 		},
 		{
-			label: __('Delete Threads'),
+			label: __('Delete Threads (Shift+Delete)'),
 			onClick: () => junkOrDeleteThreads(selections.value, false),
 			icon: Trash2,
 			condition: !!selections.value.length && mailbox === mailboxIds.trash,
 		},
 		{
-			label: __('Mark as Read'),
+			label: __('Mark as Read (Shift+U)'),
 			onClick: () => setSeen.submit({ thread_ids: selections.value, seen: true }),
 			icon: MailOpen,
 			condition:
@@ -625,7 +626,7 @@ const selectActions = computed((): SelectAction[] =>
 				),
 		},
 		{
-			label: __('Mark as Unread'),
+			label: __('Mark as Unread (U)'),
 			onClick: () => setSeen.submit({ thread_ids: selections.value, seen: false }),
 			icon: Mail,
 			condition:

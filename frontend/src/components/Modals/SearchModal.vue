@@ -1,10 +1,20 @@
 <template>
-	<Dialog v-model="show" :options="{ size: '2xl', paddingTop: '2%' }">
+	<component
+		:is="isMobile ? SearchMobileLayout : Dialog"
+		v-model="show"
+		:options="{ size: '2xl', paddingTop: '2%' }"
+	>
 		<template #body>
 			<div class="bg-surface-white">
-				<div class="flex items-center px-4 py-2">
-					<Search class="text-ink-gray-5 h-4 w-4" />
+				<div class="flex items-center border-b px-4 py-2">
+					<Button v-if="isMobile" variant="ghost" @click="show = false">
+						<template #icon>
+							<ChevronLeft class="text-ink-gray-5 h-4 w-4" />
+						</template>
+					</Button>
+					<Search v-else class="text-ink-gray-5 h-4 w-4" />
 					<input
+						ref="searchInput"
 						v-model="filter.text"
 						icon-left="search"
 						type="search"
@@ -31,7 +41,7 @@
 					</div>
 				</div>
 				<template v-if="showAdvancedFilters">
-					<div class="space-y-4 border-t p-4">
+					<div class="space-y-4 p-4">
 						<FormControl
 							v-model="filter.inMailbox"
 							type="select"
@@ -72,21 +82,24 @@
 							:options="READ_STATUS_OPTIONS"
 						/>
 					</div>
-					<div class="flex w-full justify-end space-x-4 border-t p-4">
+					<div
+						class="flex w-full p-4"
+						:class="isMobile ? 'flex-col space-y-4' : 'justify-end space-x-4'"
+					>
 						<Button
 							:label="__('Clear Filters')"
-							class="w-28"
+							class="w-full sm:w-28"
 							@click="Object.assign(filter, getDefaultFilter(true))"
 						/>
 						<Button
 							:label="__('Search')"
 							variant="solid"
-							class="w-28"
+							class="w-full sm:w-28"
 							@click="openSearchPage"
 						/>
 					</div>
 				</template>
-				<div v-else-if="results?.data?.[0]?.length" class="border-t p-2">
+				<div v-else-if="results?.data?.[0]?.length" class="p-2">
 					<div
 						v-for="(result, idx) in results.data[0]"
 						:key="idx"
@@ -131,24 +144,26 @@
 				</div>
 				<div
 					v-else-if="!results?.loading && results?.data?.[1] === 0"
-					class="text-ink-gray-4 border-t py-3 text-center text-sm"
+					class="text-ink-gray-4 py-4 text-center text-sm"
 				>
 					{{ __('No results found for the given query.') }}
 				</div>
 			</div>
 		</template>
-	</Dialog>
+	</component>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { watchDebounced } from '@vueuse/core'
-import { Paperclip, Search, SlidersHorizontal } from 'lucide-vue-next'
+import { ChevronLeft, Paperclip, Search, SlidersHorizontal } from 'lucide-vue-next'
 import { Button, Dialog, FormControl, createResource } from 'frappe-ui'
 
 import { getFormattedDate } from '@/utils'
+import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
+import SearchMobileLayout from '@/components/SearchMobileLayout.vue'
 
 import type { Recipient } from '@/types'
 
@@ -157,6 +172,12 @@ const show = defineModel<boolean>()
 const { mailboxes } = userStore()
 
 const route = useRoute()
+const { isMobile } = useScreenSize()
+
+const searchInput = useTemplateRef('searchInput')
+watch(show, (val) => {
+	if (val) nextTick(() => searchInput.value?.focus())
+})
 
 const getDefaultFilter = (reset = false) =>
 	Object.fromEntries(

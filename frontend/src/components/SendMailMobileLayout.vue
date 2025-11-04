@@ -14,15 +14,13 @@
 					</template>
 				</Button>
 			</Dropdown>
-			<Button variant="ghost" @click="emit('send-mail')">
+			<Button variant="ghost" @click="emit('sendMail')">
 				<template #icon>
 					<SendHorizontal class="text-ink-gray-5 h-4 w-4" />
 				</template>
 			</Button>
 		</div>
-		<div class="px-3 py-2.5">
-			<slot name="body-content" />
-		</div>
+		<slot name="body-content" />
 	</div>
 </template>
 
@@ -33,10 +31,13 @@ import { Button, Dropdown } from 'frappe-ui'
 
 const show = defineModel<boolean>()
 
-const emit = defineEmits(['send-mail', 'discard-mail'])
+const emit = defineEmits(['reloadMails', 'sendMail', 'discardMail'])
 
 const close = () => {
-	if (show.value) show.value = false
+	if (show.value) {
+		show.value = false
+		emit('reloadMails')
+	}
 }
 
 watch(show, (val) => {
@@ -44,13 +45,12 @@ watch(show, (val) => {
 })
 
 onMounted(() => window.addEventListener('popstate', close))
-
 onUnmounted(() => window.removeEventListener('popstate', close))
 
 const ACTIONS = [
 	{
 		label: __('Discard'),
-		onClick: () => emit('discard-mail'),
+		onClick: () => emit('discardMail'),
 		icon: Trash2,
 	},
 ]

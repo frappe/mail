@@ -41,19 +41,29 @@ import { Button, Dropdown, createResource } from 'frappe-ui'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
-import type { Mail } from '@/types'
+import type { ComposeMailData, Mail } from '@/types'
 
-const { mailbox, mail, isCollapsed, showReplyAll, popOutDraft, reply, replyAll, forward } =
-	defineProps<{
-		mailbox: string
-		mail: Mail
-		isCollapsed: boolean
-		showReplyAll: boolean
-		popOutDraft: (mail: Mail) => void
-		reply: (mail: Mail) => void
-		replyAll: (mail: Mail) => void
-		forward: (mail: Mail) => void
-	}>()
+const {
+	mailbox,
+	mail,
+	draftMail,
+	isCollapsed,
+	showReplyAll,
+	popOutDraft,
+	reply,
+	replyAll,
+	forward,
+} = defineProps<{
+	mailbox: string
+	mail: Mail
+	draftMail?: ComposeMailData
+	isCollapsed: boolean
+	showReplyAll: boolean
+	popOutDraft: (mail: ComposeMailData) => void
+	reply: (mail: Mail) => void
+	replyAll: (mail: Mail) => void
+	forward: (mail: Mail) => void
+}>()
 
 const emit = defineEmits(['reloadMails', 'starMails'])
 
@@ -76,7 +86,7 @@ const primaryActions = (mail: Mail): MailAction[] => [
 	},
 	{
 		label: __('Edit Draft'),
-		onClick: () => popOutDraft(mail),
+		onClick: () => popOutDraft(draftMail!),
 		icon: SquarePen,
 		condition: !!mail.draft && isMobile.value,
 	},

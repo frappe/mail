@@ -1,177 +1,213 @@
 <template>
-	<div>
-		<div class="flex flex-wrap gap-1">
-			<div
-				v-for="value in values"
-				ref="emails"
-				:key="value"
-				theme="gray"
-				variant="subtle"
-				class="!text-ink-gray-7 bg-surface-gray-2 flex min-h-7 cursor-default items-center rounded px-2 text-base"
-				@keydown.delete.capture.stop="removeLastValue"
-			>
-				<span>{{ value }}</span>
-				<X class="h-3.5 cursor-pointer" @click.stop="removeValue(value)" />
-			</div>
-			<div class="flex-1">
-				<Combobox v-model="selectedValue" nullable>
-					<Popover v-model:show="showOptions" class="w-full">
-						<template #target="{ togglePopover }">
-							<ComboboxInput
-								ref="search"
-								class="search-input form-input w-full border-none !bg-inherit focus:border-none focus:!shadow-none focus-visible:!ring-0"
-								type="text"
-								:value="query"
-								autocomplete="off"
-								@change="
-									(e) => {
-										query = e.target.value
-										showOptions = true
-									}
-								"
-								@keydown.enter="() => addValue(query)"
-								@focus="() => togglePopover()"
-								@keydown.delete.capture.stop="removeLastValue"
-							/>
-						</template>
-						<template #body="{ isOpen }">
-							<div v-show="isOpen">
-								<div
-									v-if="query && options.length"
-									class="bg-surface-modal mt-1 rounded-lg py-1 text-sm shadow-2xl"
+	<div
+		ref="multiselectInput"
+		:class="[$attrs.class, 'flex w-full flex-wrap items-center gap-2']"
+		@click="handleClick"
+	>
+		<button
+			v-for="value in displayedValues"
+			ref="valueRefs"
+			:key="value"
+			theme="gray"
+			variant="subtle"
+			class="!text-ink-gray-7 bg-surface-gray-2 flex min-h-7 cursor-default items-center rounded px-2 text-base"
+			@keydown.delete.capture.stop="removeLastValue"
+		>
+			<span :class="{ 'max-w-28 truncate': isMobile && !isFocused }">{{ value }}</span>
+			<X
+				v-if="!isMobile || isFocused"
+				class="ml-1.5 h-3.5 w-3.5 cursor-pointer"
+				@click.stop="removeValue(value)"
+			/>
+		</button>
+		<span v-if="isMobile && !isFocused && values.length > 2" class="text-ink-gray-6">
+			{{ `+${values.length - 2}` }}
+		</span>
+		<div class="flex-1" :class="{ hidden: isMobile && !isFocused }">
+			<Combobox v-model="selectedValue" nullable>
+				<Popover v-model:show="showOptions" class="w-full">
+					<template #target="{ togglePopover }">
+						<ComboboxInput
+							ref="searchInput"
+							class="search-input form-input w-full border-none !bg-inherit focus:border-none focus:!shadow-none focus-visible:!ring-0"
+							type="text"
+							:value="query"
+							autocomplete="off"
+							@change="handleQueryChange"
+							@keydown.enter="addValue(query)"
+							@focus="handleFocus(togglePopover)"
+							@blur="isSearchFocused = false"
+							@keydown.delete.capture.stop="removeLastValue"
+						/>
+					</template>
+					<template #body="{ isOpen }">
+						<div v-show="isOpen">
+							<div
+								v-if="query && options.length"
+								class="bg-surface-modal mt-1 rounded-lg py-1 text-sm shadow-2xl"
+							>
+								<ComboboxOptions
+									class="my-1 max-h-[12rem] overflow-y-auto px-1.5"
+									static
 								>
-									<ComboboxOptions
-										class="my-1 max-h-[12rem] overflow-y-auto px-1.5"
-										static
+									<ComboboxOption
+										v-for="option in options"
+										:key="option.value"
+										v-slot="{ active }"
+										:value="option"
 									>
-										<ComboboxOption
-											v-for="option in options"
-											:key="option.value"
-											v-slot="{ active }"
-											:value="option"
+										<li
+											:class="[
+												'flex cursor-pointer items-center rounded px-2 py-1 text-base',
+												{ 'bg-surface-gray-2': active },
+											]"
 										>
-											<li
-												:class="[
-													'flex cursor-pointer items-center rounded px-2 py-1 text-base',
-													{ 'bg-surface-gray-2': active },
-												]"
-											>
-												<Avatar
-													class="mr-2"
-													:label="option.value"
-													:image="option.image"
-													size="lg"
-												/>
-												<div
-													class="text-ink-gray-7 flex flex-col gap-1 p-1"
-												>
-													<div class="text-sm font-medium">
-														{{ option.label }}
-													</div>
-													<div class="text-ink-gray-5 text-sm">
-														{{ option.value }}
-													</div>
+											<Avatar
+												class="mr-2"
+												:label="option.value"
+												:image="option.image"
+												size="lg"
+											/>
+											<div class="text-ink-gray-7 flex flex-col gap-1 p-1">
+												<div class="text-sm font-medium">
+													{{ option.label }}
 												</div>
-											</li>
-										</ComboboxOption>
-									</ComboboxOptions>
-								</div>
+												<div class="text-ink-gray-5 text-sm">
+													{{ option.value }}
+												</div>
+											</div>
+										</li>
+									</ComboboxOption>
+								</ComboboxOptions>
 							</div>
-						</template>
-					</Popover>
-				</Combobox>
-			</div>
+						</div>
+					</template>
+				</Popover>
+			</Combobox>
 		</div>
-		<ErrorMessage v-if="error" class="mt-2 pl-2" :message="error" />
 	</div>
+	<ErrorMessage v-if="!isMobile && error" class="mt-2 pl-2" :message="error" />
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, useTemplateRef } from 'vue'
 import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/vue'
-import { watchDebounced } from '@vueuse/core'
+import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import { X } from 'lucide-vue-next'
 import { Avatar, ErrorMessage, Popover, createResource } from 'frappe-ui'
 
-const props = defineProps({
-	validate: {
-		type: Function,
-		default: null,
-	},
-	errorMessage: {
-		type: Function,
-		default: (value) => `${value} is an Invalid value`,
-	},
+import { useScreenSize } from '@/utils/composables'
+
+interface Option {
+	label: string
+	value: string
+	image?: string
+}
+
+interface Props {
+	validate?: (value: string) => boolean
+	errorMessage?: (value: string) => string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+	validate: undefined,
+	errorMessage: (value: string) => `${value} is an Invalid value`,
 })
 
-const values = defineModel()
+const values = defineModel<string[]>({ default: () => [] })
 
-const emails = ref([])
-const search = ref(null)
-const error = ref(null)
+const multiselectInput = useTemplateRef('multiselectInput')
+const valueRefs = useTemplateRef('valueRefs')
+const searchInput = useTemplateRef('searchInput')
+
+const isClicked = ref(false)
+const isSearchFocused = ref(false)
+const isFocused = computed(() => isClicked.value || isSearchFocused.value)
+
+const handleClick = () => {
+	isClicked.value = true
+	nextTick(setFocus)
+}
+
+onClickOutside(multiselectInput, () => (isClicked.value = false))
+
 const query = ref('')
-const text = ref('')
+const error = ref<string | null>(null)
 const showOptions = ref(false)
+
+const { isMobile } = useScreenSize()
+
+const displayedValues = computed(() => {
+	if (!values.value?.length) return []
+	if (values.value.length <= 2 || !isMobile.value || isFocused.value) return values.value
+
+	return values.value.slice(0, 2)
+})
+
+const mailContacts = createResource({
+	url: 'mail.api.mail.get_mail_contacts',
+	makeParams: (params: { txt: string }) => ({ txt: params.txt }),
+	transform: (data: Array<{ full_name?: string; email: string; user_image?: string }>) =>
+		data
+			.filter((option) => option.email)
+			.map((option) => ({
+				label: option.full_name || option.email,
+				value: option.email,
+				image: option.user_image,
+			})),
+	auto: false,
+})
+
+const debouncedSearch = useDebounceFn(
+	(searchText: string) => mailContacts.reload({ txt: searchText }),
+	300,
+)
+
+const options = computed<Option[]>(() => {
+	const searchedContacts =
+		mailContacts.data?.filter((d) => !values.value?.includes(d.value)) || []
+
+	if (query.value && !searchedContacts.some((c) => c.value === query.value))
+		return [...searchedContacts, { label: query.value, value: query.value }]
+
+	return searchedContacts
+})
 
 const selectedValue = computed({
 	get: () => query.value || '',
-	set: (val) => {
+	set: (val: string | Option | null) => {
 		query.value = ''
 		if (val) showOptions.value = false
-		if (val?.value) addValue(val.value)
+
+		if (val && typeof val === 'object' && 'value' in val) addValue(val.value)
 	},
 })
 
-watchDebounced(
-	query,
-	(val) => {
-		val = val || ''
-		if (text.value === val && options.value?.length) return
-		text.value = val
-		filterOptions.reload({ txt: val })
-	},
-	{ debounce: 300 },
-)
+const handleQueryChange = (e: Event) => {
+	const target = e.target as HTMLInputElement
+	const newValue = target.value || ''
 
-const filterOptions = createResource({
-	url: 'mail.api.mail.get_mail_contacts',
-	makeParams: (values) => ({ txt: values.txt }),
-	transform: (data) => {
-		const allData = data.map((option) => {
-			const fullName = option['full_name']
-			const email = option['email']
-			const name = option['email']
-			return {
-				label: fullName || name || email,
-				value: email,
-				image: option['user_image'],
-			}
-		})
-		return allData
-	},
-})
+	query.value = newValue
+	showOptions.value = true
 
-const options = computed(() => {
-	const searchedContacts = filterOptions.data || []
-	if (!searchedContacts.length && query.value) {
-		searchedContacts.push({
-			label: query.value,
-			value: query.value,
-		})
-	}
-	return searchedContacts
-})
+	if (newValue) debouncedSearch(newValue)
+}
+
+const handleFocus = (togglePopover: () => void) => {
+	togglePopover()
+	isSearchFocused.value = true
+}
 
 const addValue = (input: string) => {
 	error.value = null
 	if (!input) return
 
-	const valArr = input
+	const newValues = input
 		.split(',')
 		.map((v) => v.trim())
 		.filter(Boolean)
 
-	for (const val of valArr) {
+	for (const val of newValues) {
 		if (values.value?.includes(val)) continue
 
 		if (props.validate && !props.validate(val)) {
@@ -183,32 +219,24 @@ const addValue = (input: string) => {
 	}
 }
 
-const removeValue = (value) => {
-	values.value = values.value.filter((v) => v !== value)
-}
+const removeValue = (value: string) => (values.value = values.value.filter((v) => v !== value))
 
 const removeLastValue = () => {
-	if (query.value) return
+	if (query.value || isMobile.value) return
 
-	let emailRef = emails.value[emails.value.length - 1]?.$el
-	if (document.activeElement === emailRef) {
-		values.value.pop()
-		nextTick(() => {
-			if (values.value.length) {
-				emailRef = emails.value[emails.value.length - 1].$el
-				emailRef?.focus()
-			} else {
-				setFocus()
-			}
-		})
-	} else {
-		emailRef?.focus()
-	}
+	const lastValueRef = valueRefs.value?.[valueRefs.value.length - 1]
+
+	if (document.activeElement !== lastValueRef) return lastValueRef?.focus()
+
+	values.value.pop()
+
+	nextTick(() => {
+		if (values.value.length) valueRefs.value?.at(-1)?.focus()
+		else setFocus()
+	})
 }
 
-function setFocus() {
-	search.value.$el.focus()
-}
+const setFocus = () => searchInput.value?.$el?.focus()
 
 defineExpose({ setFocus })
 </script>

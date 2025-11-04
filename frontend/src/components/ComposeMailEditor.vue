@@ -4,16 +4,16 @@
 		editor-class="not-prose prose-sm max-w-none"
 		:extensions="[CustomImageExtension]"
 		:content="mail.html_body"
-		class="flex flex-col"
+		class="flex flex-col max-sm:overflow-y-auto"
 		:class="{ 'pointer-events-none opacity-50': !show, 'sm:h-[75vh]': !isInThread }"
 		:style="isMobile && { height: editorHeight }"
 		@change="(val: string) => (mail.html_body = val)"
 	>
 		<template #top>
-			<div class="flex flex-col gap-2.5 border-b pb-2.5">
+			<div class="flex flex-col gap-2.5 border-b pb-2.5 max-sm:px-3 max-sm:pt-2.5">
 				<div v-if="!mailDetails?.type || isMobile" class="flex justify-between gap-2">
 					<div class="flex items-center gap-2">
-						<span class="text-ink-gray-4 text-xs">{{ __('From') }}:</span>
+						<span class="text-ink-gray-4 text-sm">{{ __('From') }}</span>
 						<AutocompleteControl
 							v-model="mail.from_email"
 							:options="user.data?.email_addresses || []"
@@ -35,8 +35,8 @@
 						<Button variant="ghost" :icon="TYPE_ICON_MAP[mailDetails.type]"> </Button>
 					</Dropdown>
 					<div class="flex flex-1 flex-col gap-2.5">
-						<div class="flex items-center gap-2">
-							<span class="text-ink-gray-4 text-xs">{{ __('To') }}:</span>
+						<div class="flex gap-2">
+							<span class="text-ink-gray-4 text-sm leading-7"> {{ __('To') }} </span>
 							<MultiselectInputControl
 								ref="toInput"
 								v-model="mail.to"
@@ -49,57 +49,54 @@
 							/>
 							<div class="flex gap-1.5">
 								<Button
-									:label="__('Cc')"
+									v-if="!(mail.cc?.length || mail.bcc?.length)"
 									variant="ghost"
-									:class="
-										cc
-											? '!bg-surface-gray-4 hover:bg-surface-gray-3'
-											: '!text-ink-gray-4'
-									"
-									@click="toggleCC()"
-								/>
-								<Button
-									:label="__('Bcc')"
-									variant="ghost"
-									:class="
-										bcc
-											? '!bg-surface-gray-4 hover:bg-surface-gray-3'
-											: '!text-ink-gray-4'
-									"
-									@click="toggleBCC()"
-								/>
+									@click="toggleCcBcc"
+								>
+									<template #icon>
+										<component
+											:is="showCcBcc ? ChevronUp : ChevronDown"
+											class="text-ink-gray-5 h-4 w-4"
+										/>
+									</template>
+								</Button>
 							</div>
 						</div>
-						<div v-if="cc" class="flex items-center gap-2">
-							<span class="text-ink-gray-4 text-xs">{{ __('Cc') }}:</span>
-							<MultiselectInputControl
-								ref="ccInput"
-								v-model="mail.cc"
-								class="flex-1 text-sm"
-								:validate="validateEmail"
-								:error-message="
-									(value: string) =>
-										__(`'{0}' is an invalid email address`, [value])
-								"
-							/>
-						</div>
-						<div v-if="bcc" class="flex items-center gap-2">
-							<span class="text-ink-gray-4 text-xs">{{ __('Bcc') }}:</span>
-							<MultiselectInputControl
-								ref="bccInput"
-								v-model="mail.bcc"
-								class="flex-1 text-sm"
-								:validate="validateEmail"
-								:error-message="
-									(value: string) =>
-										__(`'{0}' is an invalid email address`, [value])
-								"
-							/>
-						</div>
+						<template v-if="showCcBcc">
+							<div class="flex gap-2">
+								<span class="text-ink-gray-4 text-sm leading-7">
+									{{ __('Cc') }}
+								</span>
+								<MultiselectInputControl
+									ref="ccInput"
+									v-model="mail.cc"
+									class="flex-1 text-sm"
+									:validate="validateEmail"
+									:error-message="
+										(value: string) =>
+											__(`'{0}' is an invalid email address`, [value])
+									"
+								/>
+							</div>
+							<div class="flex gap-2">
+								<span class="text-ink-gray-4 text-sm leading-7">
+									{{ __('Bcc') }}
+								</span>
+								<MultiselectInputControl
+									v-model="mail.bcc"
+									class="flex-1 text-sm"
+									:validate="validateEmail"
+									:error-message="
+										(value: string) =>
+											__(`'{0}' is an invalid email address`, [value])
+									"
+								/>
+							</div>
+						</template>
 					</div>
 				</div>
 				<div v-if="!mailDetails?.type || isMobile" class="flex items-center gap-2">
-					<span class="text-ink-gray-4 text-xs">{{ __('Subject') }}:</span>
+					<span class="text-ink-gray-4 text-sm">{{ __('Subject') }}</span>
 					<input
 						v-model="mail.subject"
 						class="flex-1 border-none bg-inherit text-base focus-visible:!ring-0"
@@ -109,7 +106,7 @@
 		</template>
 		<template #editor="{ editor }">
 			<div
-				class="my-2.5 flex flex-1 cursor-text flex-col overflow-y-auto text-sm"
+				class="flex flex-1 cursor-text flex-col py-2.5 text-sm max-sm:px-3 sm:overflow-y-auto"
 				:class="{ 'max-h-96 min-h-32': isInThread }"
 				@click="editor.commands.focus('end')"
 			>
@@ -177,7 +174,7 @@ import {
 } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
 import { watchDebounced } from '@vueuse/core'
-import { ExternalLink, Forward, Reply, ReplyAll } from 'lucide-vue-next'
+import { ChevronDown, ChevronUp, ExternalLink, Forward, Reply, ReplyAll } from 'lucide-vue-next'
 import { Button, Dropdown, FeatherIcon, TextEditor, createResource } from 'frappe-ui'
 import { ImageExtension } from 'frappe-ui/src/components/TextEditor/extensions/image'
 import { useFileUpload } from 'frappe-ui/src/utils/useFileUpload'
@@ -211,18 +208,11 @@ const { isMobile } = useScreenSize()
 const textEditor = useTemplateRef('textEditor')
 const toInput = useTemplateRef('toInput')
 const ccInput = useTemplateRef('ccInput')
-const bccInput = useTemplateRef('bccInput')
 
-const cc = ref(!!mailDetails?.cc?.length)
-const toggleCC = () => {
-	cc.value = !cc.value
-	if (cc.value) nextTick(() => ccInput.value?.setFocus())
-}
-
-const bcc = ref(!!mailDetails?.bcc?.length)
-const toggleBCC = () => {
-	bcc.value = !bcc.value
-	if (bcc.value) nextTick(() => bccInput.value?.setFocus())
+const showCcBcc = ref(!!mailDetails?.cc?.length || !!mailDetails?.bcc?.length)
+const toggleCcBcc = () => {
+	showCcBcc.value = !showCcBcc.value
+	if (showCcBcc.value) nextTick(() => ccInput.value?.setFocus())
 }
 
 const appendEmoji = (emoji: string) => {
@@ -231,7 +221,7 @@ const appendEmoji = (emoji: string) => {
 }
 
 const editorHeight = useVisualViewport(
-	(viewport) => `${viewport.height - viewport.offsetTop - 112}px`,
+	(viewport) => `${viewport.height - viewport.offsetTop - 113}px`,
 )
 
 // Setup & hooks

@@ -84,8 +84,8 @@
 					v-for="mail in thread.data"
 					:key="mail.name"
 					:class="{
-						'p-5': isMobile,
-						'border-b p-5 sm:rounded-xl sm:border':
+						'px-3 py-5': isMobile,
+						'border-b sm:rounded-xl sm:border sm:p-5':
 							thread.data.length > 1 || mail.draft,
 						'cursor-pointer': isCollapsed(mail),
 						'shadow-elevation-light-md': mail.draft && !isMobile,
@@ -111,10 +111,19 @@
 							class="flex items-center justify-between pb-2"
 							@click.stop="mail.collapsed = !mail.collapsed"
 						>
-							<MailDate :datetime="mail.received_at" />
+							<div class="flex items-center space-x-2">
+								<Badge
+									v-if="mail.draft"
+									:label="__('Draft')"
+									theme="red"
+									class="w-fit"
+								/>
+								<MailDate :datetime="mail.received_at" />
+							</div>
 							<MailActions
 								:mailbox
 								:mail
+								:draft-mail="draftMails[mail.name]"
 								:is-collapsed="isCollapsed(mail)"
 								:show-reply-all="showReplyAll(mail)"
 								:pop-out-draft
@@ -139,7 +148,7 @@
 							/>
 						</div>
 						<div
-							class="flex space-x-3"
+							class="flex items-center space-x-3"
 							:class="{
 								'cursor-pointer': mail !== thread.data[thread.data.length - 1],
 								'pb-6': mail.preview,
@@ -152,7 +161,7 @@
 									getFirstAlphabet(mail.from_email)
 								"
 								:image="mail.user_image"
-								size="xl"
+								size="2xl"
 							/>
 							<div class="flex flex-1 justify-between truncate text-sm">
 								<div class="mr-3 flex flex-col space-y-1 truncate">
@@ -168,10 +177,22 @@
 										>
 											{{ `<${mail.from_email}>` }}
 										</span>
-										<MailDetailsPopover
-											v-if="!isCollapsed(mail) && !mail.draft"
-											:mail
-										/>
+										<template v-if="!(isCollapsed(mail) || mail.draft)">
+											<ChevronDown
+												v-if="isMobile"
+												class="text-ink-gray-6 h-3.5 w-3.5 rounded-sm transition-transform duration-200"
+												:class="{
+													'rotate-180': showMailDetails === mail.name,
+												}"
+												@click.stop="
+													showMailDetails =
+														showMailDetails === mail.name
+															? undefined
+															: mail.name
+												"
+											/>
+											<MailDetailsPopover v-else :mail />
+										</template>
 									</div>
 									<div class="truncate">
 										{{ getFormattedRecipients(mail.recipients) }}
@@ -211,6 +232,12 @@
 								</div>
 							</div>
 						</div>
+
+						<MailDetails
+							v-if="!isCollapsed(mail) && showMailDetails === mail.name"
+							:mail
+							class="mb-4"
+						/>
 
 						<div v-show="isCollapsed(mail)" class="truncate">{{ mail.preview }}</div>
 
@@ -289,6 +316,7 @@ import { useRoute, useRouter } from 'vue-router'
 import {
 	ArrowLeft,
 	ArrowRight,
+	ChevronDown,
 	ChevronLeft,
 	CircleAlert,
 	CircleCheck,
@@ -297,10 +325,9 @@ import {
 	Mail as MailIcon,
 	Reply,
 	ReplyAll,
-	SquarePen,
 	Trash2,
 } from 'lucide-vue-next'
-import { Avatar, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
+import { Avatar, Badge, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
 
 import {
 	extractQuotedContent,
@@ -317,6 +344,7 @@ import EmailContent from '@/components/EmailContent.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
 import MailActions from '@/components/MailActions.vue'
 import MailDate from '@/components/MailDate.vue'
+import MailDetails from '@/components/MailDetails.vue'
 import MailDetailsPopover from '@/components/MailDetailsPopover.vue'
 import MailThreadPlaceholder from '@/components/MailThreadPlaceholder.vue'
 import SendMail from '@/components/SendMail.vue'
@@ -420,14 +448,14 @@ const moveToOptions = computed(() => {
 interface MailAction {
 	label: string
 	onClick: () => void
-	icon: typeof SquarePen
+	icon: typeof ArrowLeft
 	condition?: boolean | (() => boolean)
 }
 
 const threadActions = computed((): MailAction[] =>
 	[
 		{
-			label: __('Mark as Junk'),
+			label: __('Mark as Junk (!)'),
 			onClick: () => emit('setSpamStatus', true),
 			icon: CircleAlert,
 			condition: !threadMailboxes.value.some((m: string) =>
@@ -441,19 +469,19 @@ const threadActions = computed((): MailAction[] =>
 			condition: threadMailboxes.value.includes(mailboxIds.junk),
 		},
 		{
-			label: __('Move to Trash'),
+			label: __('Move to Trash (Delete)'),
 			onClick: () => emit('moveThread', mailboxIds.trash),
 			icon: Trash2,
 			condition: !threadMailboxes.value.includes(mailboxIds.trash),
 		},
 		{
-			label: __('Delete Thread'),
+			label: __('Delete Thread (Shift+Delete)'),
 			onClick: () => emit('deleteThread'),
 			icon: Trash2,
 			condition: threadMailboxes.value.includes(mailboxIds.trash),
 		},
 		{
-			label: __('Mark as Unread'),
+			label: __('Mark as Unread (U)'),
 			onClick: () => emit('setSeen', false),
 			icon: MailIcon,
 		},
@@ -483,6 +511,8 @@ const replyForwardActions = computed(() =>
 		},
 	].filter((action) => action.condition !== false),
 )
+
+const showMailDetails = ref<string>()
 
 const isCollapsed = (mail: Mail) =>
 	!!(mail.collapsed && mail !== thread.data[thread.data.length - 1])
