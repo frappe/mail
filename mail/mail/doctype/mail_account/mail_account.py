@@ -355,7 +355,7 @@ class MailAccount(Document):
 		"""Returns the app password for the Mail Account."""
 
 		has_permission_for_account(self.name)
-		return self.get_password("app_password")
+		return self._get_account_app_password()
 
 	@frappe.whitelist()
 	def sync_jmap_identities(self) -> None:
@@ -440,6 +440,15 @@ class MailAccount(Document):
 		self._generate_app_password(account_password, save=True)
 
 		frappe.msgprint(_("App Password has been regenerated."), alert=True, indicator="green")
+
+	def _get_account_app_password(self) -> str:
+		"""Returns the app password for the Mail Account."""
+
+		app_password = self.get_password("app_password")
+		if not app_password:
+			frappe.throw(_("App Password is not set for the account {0}.").format(frappe.bold(self.name)))
+
+		return app_password
 
 	def _generate_app_password(self, account_password: str, save: bool = True) -> None:
 		"""Generates a app password for the Mail Account."""
