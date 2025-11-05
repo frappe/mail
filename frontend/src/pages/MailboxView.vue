@@ -484,8 +484,11 @@ const handleGMenuNavigation = (e: KeyboardEvent, key: string) => {
 
 	const navigationMap: Record<string, string> = {
 		i: mailboxIds.inbox,
+		f: 'starred',
 		s: mailboxIds.sent,
 		d: mailboxIds.drafts,
+		j: mailboxIds.junk,
+		t: mailboxIds.trash,
 	}
 
 	const mailboxId = navigationMap[key]
@@ -503,6 +506,7 @@ const handleShowShortcuts = (e: KeyboardEvent) => {
 const handleEnter = (e: KeyboardEvent) => {
 	e.preventDefault()
 	if (threadInFocus.value) goToThread(threadInFocus.value)
+	else focusOnThread(threadIDs.value[0])
 }
 
 const handleEscape = (e: KeyboardEvent) => {

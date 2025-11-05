@@ -40,6 +40,7 @@ const FIELDS = [
 	{
 		label: __('To: '),
 		value: () => recipients.value.to,
+		condition: () => !!recipients.value.to,
 	},
 	{
 		condition: !!recipients.value.cc,
