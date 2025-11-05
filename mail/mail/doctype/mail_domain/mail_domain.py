@@ -167,11 +167,11 @@ def get_dns_records(tenant: str, domain_name: str) -> list[dict]:
 	"""Returns the DNS Records for the given domain."""
 
 	records = []
+	cluster = get_cluster_for_tenant(tenant)
 	root_domain_name = get_root_domain_name()
 	default_ttl = frappe.db.get_single_value("Mail Settings", "default_ttl")
 
 	# SPF Record
-	cluster = get_cluster_for_tenant(frappe.db.get_value("Mail Domain", domain_name, "tenant"))
 	spf_host = get_spf_host_for_cluster(cluster)
 	records.append(
 		{
@@ -207,7 +207,6 @@ def get_dns_records(tenant: str, domain_name: str) -> list[dict]:
 	)
 
 	# MX Record(s)
-	cluster = get_cluster_for_tenant(tenant)
 	servers = frappe.db.get_all(
 		"Mail Server",
 		{"cluster": cluster, "enabled": 1, "outbound_only": 0, "include_in_mx_records": 1},
