@@ -444,11 +444,11 @@ class MailAccount(Document):
 	def _get_account_app_password(self) -> str:
 		"""Returns the app password for the Mail Account."""
 
-		app_password = self.get_password("app_password")
-		if not app_password:
-			frappe.throw(_("App Password is not set for the account {0}.").format(frappe.bold(self.name)))
+		if self.app_password:
+			if app_password := self.get_password("app_password"):
+				return app_password
 
-		return app_password
+		frappe.throw(_("App Password is not set for the account {0}.").format(frappe.bold(self.name)))
 
 	def _generate_app_password(self, account_password: str, save: bool = True) -> None:
 		"""Generates a app password for the Mail Account."""
