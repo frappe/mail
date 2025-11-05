@@ -181,6 +181,7 @@ has_permission = {
 	"Mail Domain": "mail.mail.doctype.mail_domain.mail_domain.has_permission",
 	"Mail Account": "mail.mail.doctype.mail_account.mail_account.has_permission",
 	"Mailbox": "mail.mail.doctype.mailbox.mailbox.has_permission",
+	"AddressBook": "mail.mail.doctype.address_book.address_book.has_permission",
 	"Mailing List": "mail.mail.doctype.mailing_list.mailing_list.has_permission",
 	"Mailing List Member": "mail.mail.doctype.mailing_list_member.mailing_list_member.has_permission",
 	"Mailing List External Member": "mail.mail.doctype.mailing_list_external_member.mailing_list_external_member.has_permission",

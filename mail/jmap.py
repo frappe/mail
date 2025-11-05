@@ -286,24 +286,7 @@ class JMAPClient:
 	def mailbox_get(self, ids: list[str] | None = None) -> list[dict]:
 		"""Returns the mailboxes for the provided mailbox IDs."""
 
-		mailboxes = []
-		if ids and len(ids) > self.max_objects_in_get:
-			for ids_batch in create_batch(ids, self.max_objects_in_get):
-				response = self._make_request(
-					using=["urn:ietf:params:jmap:mail"],
-					method_calls=[
-						[
-							"Mailbox/get",
-							{
-								"accountId": self.primary_account_id,
-								"ids": ids_batch,
-							},
-							"0",
-						]
-					],
-				)
-				mailboxes.extend(response["methodResponses"][0][1]["list"])
-		else:
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
 			response = self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
@@ -311,15 +294,21 @@ class JMAPClient:
 						"Mailbox/get",
 						{
 							"accountId": self.primary_account_id,
-							"ids": ids or None,
+							"ids": ids_batch,
 						},
 						"0",
 					]
 				],
 			)
-			mailboxes.extend(response["methodResponses"][0][1]["list"])
+			return response["methodResponses"][0][1]["list"]
 
-		return mailboxes
+		if ids and len(ids) > self.max_objects_in_get:
+			mailboxes = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				mailboxes.extend(fetch(ids_batch))
+			return mailboxes
+
+		return fetch(ids)
 
 	def mailbox_update(
 		self,
@@ -836,38 +825,28 @@ class JMAPClient:
 	def push_subscription_get(self, ids: list[str] | None = None) -> list[dict]:
 		"""Returns the push subscriptions for the provided subscription IDs."""
 
-		subscriptions = []
-		if ids and len(ids) > self.max_objects_in_get:
-			for ids_batch in create_batch(ids, self.max_objects_in_get):
-				response = self._make_request(
-					using=["urn:ietf:params:jmap:mail"],
-					method_calls=[
-						[
-							"PushSubscription/get",
-							{
-								"ids": ids_batch,
-							},
-							"0",
-						]
-					],
-				)
-				subscriptions.extend(response["methodResponses"][0][1]["list"])
-		else:
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
 			response = self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
 					[
 						"PushSubscription/get",
 						{
-							"ids": ids or None,
+							"ids": ids_batch,
 						},
 						"0",
 					]
 				],
 			)
-			subscriptions.extend(response["methodResponses"][0][1]["list"])
+			return response["methodResponses"][0][1]["list"]
 
-		return subscriptions
+		if ids and len(ids) > self.max_objects_in_get:
+			subscriptions = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				subscriptions.extend(fetch(ids_batch))
+			return subscriptions
+
+		return fetch(ids)
 
 	def push_subscription_update(
 		self, id: str, verification_code: str | None = None, expires: str | None = None
@@ -912,6 +891,131 @@ class JMAPClient:
 						"PushSubscription/set",
 						{
 							"destroy": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
+	# -------------------------------
+	# Address Book
+	# -------------------------------
+
+	def address_book_create(
+		self,
+		unique_id: str,
+		name: str,
+		description: str | None = None,
+		sort_order: int = 0,
+		default: bool = False,
+		subscribed: bool = True,
+	) -> dict:
+		"""Creates a address book with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:contacts"],
+			method_calls=[
+				[
+					"AddressBook/set",
+					{
+						"accountId": self.primary_account_id,
+						"create": {
+							unique_id: {
+								"name": name,
+								"description": description or None,
+								"sortOrder": sort_order or 0,
+								"isSubscribed": subscribed or False,
+							}
+						},
+						"onSuccessSetIsDefault": f"#{unique_id}" if default else None,
+					},
+					"0",
+				]
+			],
+		)
+		return response["methodResponses"][0][1]
+
+	def address_book_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the address books for the provided address book IDs."""
+
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:contacts"],
+				method_calls=[
+					[
+						"AddressBook/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			address_books = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				address_books.extend(fetch(ids_batch))
+			return address_books
+
+		return fetch(ids)
+
+	def address_book_update(
+		self,
+		id: str,
+		name: str,
+		description: str | None = None,
+		sort_order: int = 0,
+		default: bool = False,
+		subscribed: bool = True,
+	) -> dict:
+		"""Updates the address book with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:contacts"],
+			method_calls=[
+				[
+					"AddressBook/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							id: {
+								"name": name,
+								"description": description or None,
+								"sortOrder": sort_order or 0,
+								"isSubscribed": subscribed or False,
+							}
+						},
+						"onSuccessSetIsDefault": id if default else None,
+					},
+					"0",
+				]
+			],
+		)
+		return response["methodResponses"][0][1]
+
+	def address_book_delete(self, ids: list[str], remove_contents: bool = False) -> dict:
+		"""Destroys the address books with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:contacts"],
+				method_calls=[
+					[
+						"AddressBook/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
+							"onDestroyRemoveContents": remove_contents,
 						},
 						"0",
 					]
