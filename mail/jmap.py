@@ -373,7 +373,7 @@ class JMAPClient:
 						"Email/query",
 						{
 							"accountId": self.account_id,
-							"filter": filter,
+							"filter": filter or {},
 							"position": position,
 							"limit": batch_size,
 							"sort": sort,
@@ -471,7 +471,7 @@ class JMAPClient:
 						"Email/query",
 						{
 							"accountId": self.account_id,
-							"filter": filter,
+							"filter": filter or {},
 							"sort": [{"property": "receivedAt", "isAscending": False}],
 							"position": fetched,
 							"limit": batch_size,
