@@ -56,7 +56,6 @@
   "listeners",
   "jmap_tab",
   "push_subscription_section",
-  "jmap_push_max_total",
   "jmap_push_throttle",
   "jmap_push_retry_interval",
   "column_break_0q0i",
@@ -306,15 +305,6 @@
   {
    "fieldname": "column_break_68lj",
    "fieldtype": "Column Break"
-  },
-  {
-   "default": "100",
-   "description": "Total number of push subscriptions that a given user can activate.",
-   "fieldname": "jmap_push_max_total",
-   "fieldtype": "Int",
-   "label": "Max Subscriptions",
-   "non_negative": 1,
-   "reqd": 1
   },
   {
    "default": "1000",
@@ -839,7 +829,7 @@
    "link_fieldname": "backend_name"
   }
  ],
- "modified": "2025-11-04 09:48:59.214317",
+ "modified": "2025-11-06 20:50:57.402987",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

@@ -528,7 +528,6 @@ def get_config_toml(server: str) -> str | None:
 				"max-name-length": cluster.jmap_mailbox_max_name_length,
 			},
 			"push": {
-				"max-total": cluster.jmap_push_max_total,
 				"throttle": _format_value_or_zero(cluster.jmap_push_throttle, "ms"),
 				"attempts": {
 					"interval": _format_value_or_zero(cluster.jmap_push_attempts_interval, "ms"),
