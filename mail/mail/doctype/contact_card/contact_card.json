@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "creation": "2025-11-08 12:54:55.237464",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_04au",
+  "account",
+  "column_break_lrhc",
+  "id",
+  "kind",
+  "full_name",
+  "section_break_wo60",
+  "address_books",
+  "section_break_txzu",
+  "emails",
+  "section_break_tbm6",
+  "name_breakup"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_04au",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "no_copy": 1,
+   "options": "Mail Account",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "section_break_wo60",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "address_books",
+   "fieldtype": "Table",
+   "label": "Address Books",
+   "options": "Contact Card Address Book",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_lrhc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Full Name"
+  },
+  {
+   "fieldname": "section_break_txzu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "emails",
+   "fieldtype": "Table",
+   "label": "Emails",
+   "options": "Contact Card Email"
+  },
+  {
+   "default": "individual",
+   "fieldname": "kind",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Kind"
+  },
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_tbm6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "name_breakup",
+   "fieldtype": "JSON",
+   "label": "Name Breakup",
+   "no_copy": 1,
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2025-11-10 14:06:19.148487",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "Contact Card",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

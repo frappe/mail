@@ -97,15 +97,15 @@ def add_address_book(
 ) -> str:
 	"""Adds a address book for the given account with the specified parameters."""
 
-	unique_id = str(uuid7())
+	creation_id = str(uuid7())
 	client = get_jmap_client(account)
-	response = client.address_book_create(unique_id, name, description, sort_order, default, subscribed)
+	response = client.address_book_create(creation_id, name, description, sort_order, default, subscribed)
 
 	title = _("Address Book Creation Error")
 	if response.get("created"):
-		return response["created"][unique_id]["id"]
+		return response["created"][creation_id]["id"]
 	elif response.get("notCreated"):
-		frappe.throw(_(response["notCreated"][unique_id]["description"]), title=title)
+		frappe.throw(_(response["notCreated"][creation_id]["description"]), title=title)
 	else:
 		frappe.throw(_(response["description"]), title=title)
 

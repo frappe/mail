@@ -88,15 +88,15 @@ def add_mailbox(
 ) -> str:
 	"""Adds a mailbox for the given account with the specified parameters."""
 
-	unique_id = str(uuid7())
+	creation_id = str(uuid7())
 	client = get_jmap_client(account)
-	response = client.mailbox_create(unique_id, name, role, parent, sort_order, subscribed)
+	response = client.mailbox_create(creation_id, name, role, parent, sort_order, subscribed)
 
 	title = _("Mailbox Creation Error")
 	if response.get("created"):
-		return response["created"][unique_id]["id"]
+		return response["created"][creation_id]["id"]
 	elif response.get("notCreated"):
-		frappe.throw(_(response["notCreated"][unique_id]["description"]), title=title)
+		frappe.throw(_(response["notCreated"][creation_id]["description"]), title=title)
 	else:
 		frappe.throw(_(response["description"]), title=title)
 
