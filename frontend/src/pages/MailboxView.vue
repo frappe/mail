@@ -18,6 +18,7 @@
 	<div
 		v-if="
 			[mailboxIds.trash, mailboxIds.junk].includes(mailbox) &&
+			!threadsResource.data?.loading &&
 			threadsResource.data?.length &&
 			(showReadingPane || !threadID)
 		"

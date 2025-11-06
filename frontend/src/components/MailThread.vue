@@ -95,7 +95,7 @@
 					<ComposeMailEditor
 						v-if="mail.draft && !isMobile"
 						v-model="mail.show"
-						:reload-mails="() => reload()"
+						:reload-mails="reload"
 						:mail-details="draftMails[mail.name]"
 						:is-in-thread="true"
 						@discard-mail="discardLocalDraft(mail.name)"
@@ -130,21 +130,8 @@
 								:reply
 								:reply-all
 								:forward
-								@star-mails="
-									(_ids: string[], flagged: 0 | 1) =>
-										_ids.forEach(
-											(_id) =>
-												(thread.data.find(
-													(m: Mail) => m._id === _id,
-												).flagged = flagged),
-										)
-								"
-								@reload-mails="
-									() => {
-										if (thread.data.length == 1) goToMailbox()
-										emit('reloadMails')
-									}
-								"
+								@star-mails="handleStarred"
+								@reload-mails="handleReload"
 							/>
 						</div>
 						<div
@@ -213,21 +200,8 @@
 										:reply
 										:reply-all
 										:forward
-										@star-mails="
-											(_ids: string[], flagged: 0 | 1) =>
-												_ids.forEach(
-													(_id) =>
-														(thread.data.find(
-															(m: Mail) => m._id === _id,
-														).flagged = flagged),
-												)
-										"
-										@reload-mails="
-											() => {
-												if (thread.data.length == 1) goToMailbox()
-												emit('reloadMails')
-											}
-										"
+										@star-mails="handleStarred"
+										@reload-mails="handleReload"
 									/>
 								</div>
 							</div>
@@ -487,6 +461,16 @@ const threadActions = computed((): MailAction[] =>
 		},
 	].filter((action) => action.condition !== false),
 )
+
+const handleStarred = (_ids: string[], flagged: 0 | 1) =>
+	_ids.forEach((_id) => (thread.data.find((m: Mail) => m._id === _id).flagged = flagged))
+
+const handleReload = () => {
+	if (thread.data.length == 1) {
+		goToMailbox()
+		emit('reloadMails')
+	} else reload()
+}
 
 const replyForwardActions = computed(() =>
 	[
