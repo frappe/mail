@@ -678,24 +678,6 @@ def search_messages(
 	return [{field: message[field] for field in fields} for message in messages], total
 
 
-def relevance_search_messages(account: str, text: str, limit: int = 20) -> list[dict]:
-	"""Returns a list of messages based on relevance search for the provided text."""
-
-	has_permission_for_account(account)
-
-	client = get_jmap_client(account)
-	_ids = client.relevance_search(text, limit)
-
-	if not _ids:
-		return []
-
-	fetched_messages = get_messages(account, _ids=_ids)
-	msg_by_id = {msg["_id"]: msg for msg in fetched_messages}
-	messages = [msg_by_id[mid] for mid in _ids if mid in msg_by_id]
-
-	return messages[:limit]
-
-
 def get_messages(account: str, _ids: list[str]) -> list[dict]:
 	"""Returns a list of messages for the provided IDs in the same order as _ids."""
 
@@ -763,7 +745,7 @@ def delete_messages(account: str, _ids: list[str]) -> None:
 
 	try:
 		client = get_jmap_client(account)
-		client.email_set_destroy(_ids)
+		client.email_delete(_ids)
 		_remove_messages_from_cache(account, _ids)
 	except Exception:
 		frappe.log_error(
@@ -793,7 +775,7 @@ def empty_mailbox(account: str, mailbox_id: str) -> None:
 			if not _ids:
 				break
 
-			client.email_set_destroy(_ids)
+			client.email_delete(_ids)
 			_remove_messages_from_cache(account, _ids)
 	except Exception:
 		frappe.log_error(
@@ -813,7 +795,7 @@ def move_messages(account: str, _ids: list[str], mailbox_id: str) -> None:
 
 	try:
 		client = get_jmap_client(account)
-		client.email_set_mailbox(_ids, mailbox_id)
+		client.email_update(_ids, mailbox_id)
 		_remove_messages_from_cache(account, _ids)
 	except Exception:
 		frappe.log_error(
@@ -833,7 +815,7 @@ def set_seen_status(account: str, _ids: list[str], seen: bool = True) -> None:
 
 	try:
 		client = get_jmap_client(account)
-		client.email_set_keywords(_ids, {"$seen": bool(seen)})
+		client.email_update(_ids, keywords={"$seen": bool(seen)})
 
 		for _id in _ids:
 			if message := _get_message_from_cache(account, _id):
@@ -862,7 +844,7 @@ def set_flagged_status(account: str, _ids: list[str], flagged: bool = True) -> N
 
 	try:
 		client = get_jmap_client(account)
-		client.email_set_keywords(_ids, {"$flagged": bool(flagged)})
+		client.email_update(_ids, keywords={"$flagged": bool(flagged)})
 
 		for _id in _ids:
 			if message := _get_message_from_cache(account, _id):
@@ -892,8 +874,7 @@ def set_spam_status(account: str, _ids: list[str], spam: bool = True) -> None:
 	try:
 		client = get_jmap_client(account)
 		mailbox_id = client.get_mailbox_id_by_role("junk" if spam else "inbox", raise_exception=True)
-		client.email_set_keywords(_ids, {"$junk": spam, "$notjunk": not spam})
-		client.email_set_mailbox(_ids, mailbox_id)
+		client.email_update(_ids, mailbox_id, {"$junk": spam, "$notjunk": not spam})
 		_remove_messages_from_cache(account, _ids)
 	except Exception:
 		frappe.log_error(

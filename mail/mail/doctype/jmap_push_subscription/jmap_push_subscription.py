@@ -74,7 +74,7 @@ class JMAPPushSubscription(Document):
 				for subscription in client.push_subscription_get():
 					subscription_ids.append(subscription["id"])
 
-			client.push_subscription_set_destroy(subscription_ids)
+			client.push_subscription_delete(subscription_ids)
 		except Exception:
 			frappe.log_error(
 				title=_("Failed to destroy push subscription(s)"),
@@ -193,7 +193,7 @@ class JMAPPushSubscription(Document):
 			frappe.throw(_("Subscription already verified."))
 
 		client = get_jmap_client(self.account, self.server, cache=False)
-		response = client.push_subscription_set_verification_code(self.subscription_id, verification_code)
+		response = client.push_subscription_update(self.subscription_id, verification_code)
 
 		kwargs = {"_verification_response": json.dumps(response)}
 		if response[0][1].get("updated"):
@@ -220,7 +220,7 @@ class JMAPPushSubscription(Document):
 
 		try:
 			client = get_jmap_client(self.account, self.server, cache=False)
-			response = client.push_subscription_set_expires(self.subscription_id)
+			response = client.push_subscription_update(self.subscription_id)
 
 			kwargs = {"_renew_response": json.dumps(response)}
 			if response[0][1].get("updated"):

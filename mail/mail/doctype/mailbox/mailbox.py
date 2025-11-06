@@ -130,7 +130,7 @@ def update_mailbox(
 		frappe.throw(_("Mailbox cannot be a parent of itself."), title=title)
 
 	client = get_jmap_client(account)
-	response = client.mailbox_set(id, name, role, parent, sort_order, subscribed)
+	response = client.mailbox_update(id, name, role, parent, sort_order, subscribed)
 
 	if not response.get("updated"):
 		if response.get("notUpdated"):
@@ -143,7 +143,7 @@ def delete_mailbox(account: str, id: str) -> None:
 	"""Deletes a mailbox for the given account by its ID."""
 
 	client = get_jmap_client(account)
-	response = client.mailbox_destroy([id], remove_emails=True)
+	response = client.mailbox_delete([id], remove_emails=True)
 
 	if response.get("notDestroyed"):
 		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Mailbox Deletion Error"))

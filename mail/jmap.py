@@ -82,6 +82,36 @@ class JMAPClient:
 		return self.__config["capabilities"]
 
 	@property
+	def max_size_upload(self) -> int:
+		"""Returns the maximum size of uploads supported by the JMAP server."""
+
+		return self.capabilities["urn:ietf:params:jmap:core"]["maxSizeUpload"]
+
+	@property
+	def max_concurrent_upload(self) -> int:
+		"""Returns the maximum number of concurrent uploads supported by the JMAP server."""
+
+		return self.capabilities["urn:ietf:params:jmap:core"]["maxConcurrentUpload"]
+
+	@property
+	def max_size_request(self) -> int:
+		"""Returns the maximum size of a request supported by the JMAP server."""
+
+		return self.capabilities["urn:ietf:params:jmap:core"]["maxSizeRequest"]
+
+	@property
+	def max_concurrent_requests(self) -> int:
+		"""Returns the maximum number of concurrent requests supported by the JMAP server."""
+
+		return self.capabilities["urn:ietf:params:jmap:core"]["maxConcurrentRequests"]
+
+	@property
+	def max_calls_in_request(self) -> int:
+		"""Returns the maximum number of calls in a single request."""
+
+		return self.capabilities["urn:ietf:params:jmap:core"]["maxCallsInRequest"]
+
+	@property
 	def max_objects_in_get(self) -> int:
 		"""Returns the maximum number of objects in a single get request."""
 
@@ -92,6 +122,27 @@ class JMAPClient:
 		"""Returns the maximum number of objects in a single set request."""
 
 		return self.capabilities["urn:ietf:params:jmap:core"]["maxObjectsInSet"]
+
+	@property
+	def supports_websocket(self) -> bool:
+		"""Returns True if the JMAP server supports WebSocket, False otherwise."""
+
+		return "urn:ietf:params:jmap:websocket" in self.capabilities
+
+	@property
+	def websocket_url(self) -> str | None:
+		"""Returns the WebSocket URL for the JMAP server, if supported."""
+
+		if self.supports_websocket:
+			return self.capabilities["urn:ietf:params:jmap:websocket"]["url"]
+
+	@property
+	def websocket_supports_push(self) -> bool:
+		"""Returns True if the JMAP server supports WebSocket push, False otherwise."""
+
+		if self.supports_websocket:
+			return self.capabilities["urn:ietf:params:jmap:websocket"].get("supportsPush", False)
+		return False
 
 	@property
 	def accounts(self) -> dict:
@@ -106,12 +157,6 @@ class JMAPClient:
 		return list(self.__config["accounts"].keys())
 
 	@property
-	def account_id(self) -> str:
-		"""Returns the primary account ID for the logged-in user."""
-
-		return self.primary_accounts["urn:ietf:params:jmap:mail"]
-
-	@property
 	def has_multiple_accounts(self) -> bool:
 		"""Returns True if the user has multiple accounts, False otherwise."""
 
@@ -122,6 +167,12 @@ class JMAPClient:
 		"""Returns the primary accounts for the logged-in user."""
 
 		return self.__config["primaryAccounts"]
+
+	@property
+	def primary_account_id(self) -> str:
+		"""Returns the primary account ID for the logged-in user."""
+
+		return self.primary_accounts["urn:ietf:params:jmap:mail"]
 
 	@property
 	def username(self) -> str:
@@ -160,12 +211,6 @@ class JMAPClient:
 		return self.__config["state"]
 
 	@property
-	def max_concurrent_upload(self) -> int:
-		"""Returns the maximum number of concurrent uploads supported by the JMAP server."""
-
-		return self.capabilities["urn:ietf:params:jmap:core"].get("maxConcurrentUpload", 4)
-
-	@property
 	def mailboxes(self) -> list[dict]:
 		"""Returns the mailboxes for the logged-in user."""
 
@@ -194,10 +239,148 @@ class JMAPClient:
 		def generator() -> list[dict]:
 			return self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
-				method_calls=[["Identity/get", {"accountId": self.account_id}, "0"]],
+				method_calls=[["Identity/get", {"accountId": self.primary_account_id}, "0"]],
 			)["methodResponses"][0][1]["list"]
 
 		return frappe.cache.hget("jmap:identities", self.__session.auth[0], generator)
+
+	# -------------------------------
+	# Mailbox
+	# -------------------------------
+
+	def mailbox_create(
+		self,
+		unique_id: str,
+		name: str,
+		role: str | None = None,
+		parent: str | None = None,
+		sort_order: int = 0,
+		subscribed: bool = True,
+	) -> dict:
+		"""Creates a mailbox with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:mail"],
+			method_calls=[
+				[
+					"Mailbox/set",
+					{
+						"accountId": self.primary_account_id,
+						"create": {
+							unique_id: {
+								"name": name,
+								"role": role or None,
+								"parentId": parent or None,
+								"sortOrder": sort_order or 0,
+								"isSubscribed": subscribed or False,
+							}
+						},
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	def mailbox_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the mailboxes for the provided mailbox IDs."""
+
+		mailboxes = []
+		if ids and len(ids) > self.max_objects_in_get:
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				response = self._make_request(
+					using=["urn:ietf:params:jmap:mail"],
+					method_calls=[
+						[
+							"Mailbox/get",
+							{
+								"accountId": self.primary_account_id,
+								"ids": ids_batch,
+							},
+							"0",
+						]
+					],
+				)
+				mailboxes.extend(response["methodResponses"][0][1]["list"])
+		else:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Mailbox/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids or None,
+						},
+						"0",
+					]
+				],
+			)
+			mailboxes.extend(response["methodResponses"][0][1]["list"])
+
+		return mailboxes
+
+	def mailbox_update(
+		self,
+		id: str,
+		name: str,
+		role: str | None = None,
+		parent: str | None = None,
+		sort_order: int = 0,
+		subscribed: bool = True,
+	) -> dict:
+		"""Updates the mailbox with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:mail"],
+			method_calls=[
+				[
+					"Mailbox/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							id: {
+								"name": name,
+								"role": role or None,
+								"parentId": parent or None,
+								"sortOrder": sort_order or 0,
+								"isSubscribed": subscribed or False,
+							}
+						},
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	def mailbox_delete(self, ids: list[str], remove_emails: bool = False) -> dict:
+		"""Destroys the mailboxes with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Mailbox/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
+							"onDestroyRemoveEmails": remove_emails,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
 
 	def get_mailbox_id_by_role(self, role: str, raise_exception: bool = False) -> str | None:
 		"""Returns the mailbox ID for the given role."""
@@ -242,118 +425,11 @@ class JMAPClient:
 				)
 			)
 
-	def mailbox_get(self, mailbox_ids: list[str] | None = None) -> list[dict]:
-		"""Returns the mailboxes for the provided mailbox IDs."""
+		# -------------------------------
 
-		response = self._make_request(
-			using=["urn:ietf:params:jmap:mail"],
-			method_calls=[
-				[
-					"Mailbox/get",
-					{
-						"accountId": self.account_id,
-						"ids": mailbox_ids,
-					},
-					"0",
-				]
-			],
-		)
-
-		return response["methodResponses"][0][1]["list"]
-
-	def mailbox_create(
-		self,
-		unique_id: str,
-		name: str,
-		role: str | None = None,
-		parent: str | None = None,
-		sort_order: int = 0,
-		subscribed: bool = True,
-	) -> dict:
-		"""Creates a mailbox with the given parameters."""
-
-		response = self._make_request(
-			using=["urn:ietf:params:jmap:mail"],
-			method_calls=[
-				[
-					"Mailbox/set",
-					{
-						"accountId": self.account_id,
-						"create": {
-							unique_id: {
-								"name": name,
-								"role": role or None,
-								"parentId": parent or None,
-								"sortOrder": sort_order or 0,
-								"isSubscribed": subscribed or False,
-							}
-						},
-					},
-					"0",
-				]
-			],
-		)
-		return response["methodResponses"][0][1]
-
-	def mailbox_set(
-		self,
-		mailbox_id: str,
-		name: str,
-		role: str | None = None,
-		parent: str | None = None,
-		sort_order: int = 0,
-		subscribed: bool = True,
-	) -> dict:
-		"""Updates the mailbox with the given parameters."""
-
-		response = self._make_request(
-			using=["urn:ietf:params:jmap:mail"],
-			method_calls=[
-				[
-					"Mailbox/set",
-					{
-						"accountId": self.account_id,
-						"update": {
-							mailbox_id: {
-								"name": name,
-								"role": role or None,
-								"parentId": parent or None,
-								"sortOrder": sort_order or 0,
-								"isSubscribed": subscribed or False,
-							}
-						},
-					},
-					"0",
-				]
-			],
-		)
-		return response["methodResponses"][0][1]
-
-	def mailbox_destroy(self, mailbox_ids: list[str], remove_emails: bool = False) -> dict:
-		"""Destroys the mailboxes with the given IDs."""
-
-		result = {"destroyed": [], "notDestroyed": {}}
-		for ids_batch in create_batch(mailbox_ids, self.max_objects_in_set):
-			response = self._make_request(
-				using=["urn:ietf:params:jmap:mail"],
-				method_calls=[
-					[
-						"Mailbox/set",
-						{
-							"accountId": self.account_id,
-							"destroy": ids_batch,
-							"onDestroyRemoveEmails": remove_emails,
-						},
-						"0",
-					]
-				],
-			)
-
-			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
-			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
-				result["notDestroyed"].update(not_destroyed)
-
-		return result
+	# -------------------------------
+	# Email/Thread
+	# -------------------------------
 
 	def email_query(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, sort: list[dict] | None = None
@@ -372,7 +448,7 @@ class JMAPClient:
 					[
 						"Email/query",
 						{
-							"accountId": self.account_id,
+							"accountId": self.primary_account_id,
 							"filter": filter or {},
 							"position": position,
 							"limit": batch_size,
@@ -400,60 +476,6 @@ class JMAPClient:
 
 		return {"ids": _ids[:limit], "total": total}
 
-	def relevance_search(self, text: str, limit: int = 50, batch_call: bool = True) -> list[str]:
-		"""Returns emails matching the given text in subject, to, cc, bcc, body or text."""
-
-		def _extract_ids_from_response(response: dict) -> list[str]:
-			_ids = []
-			for method_response in response["methodResponses"]:
-				_method, result, _call_id = method_response
-				for _id in result.get("ids", []):
-					if _id not in _ids:
-						_ids.append(_id)
-			return _ids
-
-		filters = [
-			{"subject": text},
-			{"to": text},
-			{"cc": text},
-			{"bcc": text},
-			{"body": text},
-			{"text": text},
-		]
-
-		method_calls = []
-		for i, filter in enumerate(filters):
-			method_calls.append(
-				[
-					"Email/query",
-					{
-						"accountId": self.account_id,
-						"filter": filter,
-						"position": 0,
-						"limit": limit,
-						"sort": [{"property": "receivedAt", "isAscending": False}],
-						"calculateTotal": False,
-					},
-					str(i),
-				]
-			)
-
-		_ids = []
-		if batch_call:
-			response = self._make_request(using=["urn:ietf:params:jmap:mail"], method_calls=method_calls)
-			_ids = _extract_ids_from_response(response)
-		else:
-			for method_call in method_calls:
-				response = self._make_request(using=["urn:ietf:params:jmap:mail"], method_calls=[method_call])
-				for _id in _extract_ids_from_response(response):
-					if _id not in _ids:
-						_ids.append(_id)
-
-				if len(_ids) >= limit:
-					break
-
-		return _ids[:limit]
-
 	def thread_query(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
 	) -> list[str] | dict[str, list]:
@@ -470,7 +492,7 @@ class JMAPClient:
 					[
 						"Email/query",
 						{
-							"accountId": self.account_id,
+							"accountId": self.primary_account_id,
 							"filter": filter or {},
 							"sort": [{"property": "receivedAt", "isAscending": False}],
 							"position": fetched,
@@ -481,7 +503,7 @@ class JMAPClient:
 					[
 						"Email/get",
 						{
-							"accountId": self.account_id,
+							"accountId": self.primary_account_id,
 							"#ids": {"resultOf": "0", "name": "Email/query", "path": "/ids"},
 							"properties": ["id", "threadId"],
 						},
@@ -506,32 +528,61 @@ class JMAPClient:
 
 		return threads
 
-	def thread_get(self, thread_ids: list[str]) -> dict[str, list]:
-		"""Returns the threads for the provided thread IDs."""
+	def relevance_search(self, text: str, limit: int = 50, batch_call: bool = True) -> list[str]:
+		"""Returns emails matching the given text in subject, to, cc, bcc, body or text."""
 
-		result = {}
-		for ids_batch in create_batch(thread_ids, self.max_objects_in_get):
-			response = self._make_request(
-				using=["urn:ietf:params:jmap:mail"],
-				method_calls=[
-					[
-						"Thread/get",
-						{
-							"accountId": self.account_id,
-							"ids": ids_batch,
-							"properties": ["emailIds"],
-						},
-						"0",
-					]
-				],
+		def _extract_ids_from_response(response: dict) -> list[str]:
+			ids = []
+			for method_response in response["methodResponses"]:
+				_method, result, _call_id = method_response
+				for id in result.get("ids", []):
+					if id not in ids:
+						ids.append(id)
+			return ids
+
+		filters = [
+			{"subject": text},
+			{"to": text},
+			{"cc": text},
+			{"bcc": text},
+			{"body": text},
+			{"text": text},
+		]
+
+		method_calls = []
+		for i, filter in enumerate(filters):
+			method_calls.append(
+				[
+					"Email/query",
+					{
+						"accountId": self.primary_account_id,
+						"filter": filter,
+						"position": 0,
+						"limit": limit,
+						"sort": [{"property": "receivedAt", "isAscending": False}],
+						"calculateTotal": False,
+					},
+					str(i),
+				]
 			)
 
-			if threads := response["methodResponses"][0][1]["list"]:
-				result.update({thread["id"]: thread["emailIds"] for thread in threads})
+		ids = []
+		if batch_call:
+			response = self._make_request(using=["urn:ietf:params:jmap:mail"], method_calls=method_calls)
+			ids = _extract_ids_from_response(response)
+		else:
+			for method_call in method_calls:
+				response = self._make_request(using=["urn:ietf:params:jmap:mail"], method_calls=[method_call])
+				for id in _extract_ids_from_response(response):
+					if id not in ids:
+						ids.append(id)
 
-		return result
+				if len(ids) >= limit:
+					break
 
-	def email_get(self, _ids: list[str], properties: list[str] | None = None) -> tuple[list[dict], str]:
+		return ids[:limit]
+
+	def email_get(self, ids: list[str], properties: list[str] | None = None) -> tuple[list[dict], str]:
 		"""Returns the emails for the provided email IDs."""
 
 		properties = properties or [
@@ -563,14 +614,14 @@ class JMAPClient:
 
 		emails = []
 		state = None
-		for ids_batch in create_batch(_ids, self.max_objects_in_get):
+		for ids_batch in create_batch(ids, self.max_objects_in_get):
 			response = self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
 					[
 						"Email/get",
 						{
-							"accountId": self.account_id,
+							"accountId": self.primary_account_id,
 							"ids": ids_batch,
 							"properties": properties,
 							"fetchAllBodyValues": True,
@@ -584,6 +635,96 @@ class JMAPClient:
 
 		return emails, state
 
+	def thread_get(self, ids: list[str]) -> dict[str, list]:
+		"""Returns the threads for the provided thread IDs."""
+
+		result = {}
+		for ids_batch in create_batch(ids, self.max_objects_in_get):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Thread/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+							"properties": ["emailIds"],
+						},
+						"0",
+					]
+				],
+			)
+
+			if threads := response["methodResponses"][0][1]["list"]:
+				result.update({thread["id"]: thread["emailIds"] for thread in threads})
+
+		return result
+
+	def email_update(
+		self, ids: list[str], mailbox_id: str | None = None, keywords: dict[str, bool] | None = None
+	) -> dict:
+		"""Update email mailbox or keywords."""
+
+		if not mailbox_id and not keywords:
+			frappe.throw(_("Either mailbox_id or keywords must be provided."))
+
+		result = {"updated": {}, "notUpdated": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			updates = {}
+			for id in ids_batch:
+				update = {}
+				if keywords:
+					update.update({f"keywords/{keyword}": value for keyword, value in keywords.items()})
+				if mailbox_id:
+					update["mailboxIds"] = {mailbox_id: True}
+
+				updates[id] = update
+
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Email/set",
+						{
+							"accountId": self.primary_account_id,
+							"update": updates,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["updated"].update(response["methodResponses"][0][1].get("updated", {}))
+			if not_updated := response["methodResponses"][0][1].get("notUpdated", {}):
+				result["notUpdated"].update(not_updated)
+
+		return result
+
+	def email_delete(self, ids: list[str]) -> dict:
+		"""Destroy emails."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Email/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
 	def email_changes(self, since_state: str) -> dict:
 		"""Returns the changes in emails since the provided state."""
 
@@ -593,7 +734,7 @@ class JMAPClient:
 				[
 					"Email/changes",
 					{
-						"accountId": self.account_id,
+						"accountId": self.primary_account_id,
 						"sinceState": since_state,
 					},
 					"0",
@@ -603,135 +744,68 @@ class JMAPClient:
 
 		return response["methodResponses"][0][1]
 
-	def download_blob(self, blob_id: str, name: str | None = None) -> bytes:
-		"""Returns the blob data for the provided blob ID."""
+	# -------------------------------
+	# Vacation Response
+	# -------------------------------
 
-		name = name or "blob"
-		download_url = self.download_url.format(
-			accountId=self.account_id, blobId=blob_id, name=name, type="application/octet-stream"
-		)
-		response = self.__session.get(download_url)
-		raise_for_status(response)
-
-		return response.content
-
-	def download_blobs_concurrently(self, blobs: list[tuple[str, str | None]]) -> dict[str, bytes]:
-		"""Downloads multiple blobs concurrently and returns a dictionary containing the blob data."""
-
-		if len(blobs) == 1:
-			blob_id, name = blobs[0]
-			return {blob_id: self.download_blob(blob_id, name)}
-
-		results = {}
-		with ThreadPoolExecutor(max_workers=5) as executor:
-			futures = {executor.submit(self.download_blob, blob_id, name): blob_id for blob_id, name in blobs}
-			for future in as_completed(futures):
-				blob_id = futures[future]
-				results[blob_id] = future.result()
-
-		return results
-
-	def upload_blob(self, blob: bytes | str, content_type: str = "message/rfc822") -> dict:
-		"""Uploads the blob data and returns a dictionary containing the response."""
-
-		upload_url = self.upload_url.format(accountId=self.account_id)
-		response = self.__session.post(upload_url, data=blob, headers={"Content-Type": content_type})
-		raise_for_status(response)
-
-		return response.json()
-
-	def upload_blobs_concurrently(self, blobs: list[tuple[bytes | str, str]]) -> list[dict]:
-		"""Uploads multiple blobs concurrently and returns a list of dictionaries containing the responses."""
-
-		if len(blobs) == 1:
-			blob, content_type = blobs[0]
-			return [self.upload_blob(blob, content_type)]
-
-		results = []
-		with ThreadPoolExecutor(max_workers=self.max_concurrent_upload) as executor:
-			futures = {
-				executor.submit(self.upload_blob, blob, content_type): (blob, content_type)
-				for blob, content_type in blobs
-			}
-			for future in as_completed(futures):
-				results.append(future.result())
-
-		return results
-
-	def email_set_keywords(self, _ids: list[str], keywords: dict[str, bool]) -> None:
-		"""Update email keywords."""
-
-		for ids_batch in create_batch(_ids, self.max_objects_in_set):
-			self._make_request(
-				using=["urn:ietf:params:jmap:mail"],
-				method_calls=[
-					[
-						"Email/set",
-						{
-							"accountId": self.account_id,
-							"update": {
-								_id: {f"keywords/{keyword}": value for keyword, value in keywords.items()}
-								for _id in ids_batch
-							},
-						},
-						"0",
-					]
-				],
-			)
-
-	def email_set_mailbox(self, _ids: list[str], mailbox_id: str) -> None:
-		"""Update emails mailbox."""
-
-		for ids_batch in create_batch(_ids, self.max_objects_in_set):
-			self._make_request(
-				using=["urn:ietf:params:jmap:mail"],
-				method_calls=[
-					[
-						"Email/set",
-						{
-							"accountId": self.account_id,
-							"update": {_id: {"mailboxIds": {mailbox_id: True}} for _id in ids_batch},
-						},
-						"0",
-					]
-				],
-			)
-
-	def email_set_destroy(self, _ids: list[str]) -> None:
-		"""Destroy emails."""
-
-		for ids_batch in create_batch(_ids, self.max_objects_in_set):
-			self._make_request(
-				using=["urn:ietf:params:jmap:mail"],
-				method_calls=[
-					[
-						"Email/set",
-						{
-							"accountId": self.account_id,
-							"destroy": ids_batch,
-						},
-						"0",
-					]
-				],
-			)
-
-	def push_subscription_get(self, subscription_ids: list[str] | None = None) -> list[dict]:
-		"""Returns the push subscriptions for the provided subscription IDs."""
+	def vacation_response_get(self) -> dict:
+		"""Returns the vacation response for the primary account."""
 
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:mail"],
+			using=["urn:ietf:params:jmap:mail", "urn:ietf:params:jmap:vacationresponse"],
 			method_calls=[
 				[
-					"PushSubscription/get",
+					"VacationResponse/get",
 					{
-						"ids": subscription_ids,
+						"accountId": self.primary_account_id,
 					},
 					"0",
 				]
 			],
 		)
 
-		return response["methodResponses"][0][1]["list"]
+		vacation_responses = response["methodResponses"][0][1]["list"]
+		return vacation_responses[0] if vacation_responses else {}
+
+	def vacation_response_update(
+		self,
+		enabled: bool,
+		from_date: str | None = None,
+		to_date: str | None = None,
+		subject: str | None = None,
+		text_body: str | None = None,
+		html_body: str | None = None,
+	) -> dict:
+		"""Sets the vacation response for the primary account."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:mail", "urn:ietf:params:jmap:vacationresponse"],
+			method_calls=[
+				[
+					"VacationResponse/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							"singleton": {
+								"isEnabled": enabled,
+								"fromDate": from_date or None,
+								"toDate": to_date or None,
+								"subject": subject or None,
+								"textBody": text_body or None,
+								"htmlBody": html_body or None,
+							}
+						},
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	# -------------------------------
+	# Push Subscription
+	# -------------------------------
 
 	def push_subscription_create(
 		self, unique_id: str, device_client_id: str, url: str, types: list[str] | None = None
@@ -759,10 +833,46 @@ class JMAPClient:
 
 		return response["methodResponses"][0][1]
 
-	def push_subscription_set_verification_code(
-		self, subscription_id: str, verification_code: str
+	def push_subscription_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the push subscriptions for the provided subscription IDs."""
+
+		subscriptions = []
+		if ids and len(ids) > self.max_objects_in_get:
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				response = self._make_request(
+					using=["urn:ietf:params:jmap:mail"],
+					method_calls=[
+						[
+							"PushSubscription/get",
+							{
+								"ids": ids_batch,
+							},
+							"0",
+						]
+					],
+				)
+				subscriptions.extend(response["methodResponses"][0][1]["list"])
+		else:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"PushSubscription/get",
+						{
+							"ids": ids or None,
+						},
+						"0",
+					]
+				],
+			)
+			subscriptions.extend(response["methodResponses"][0][1]["list"])
+
+		return subscriptions
+
+	def push_subscription_update(
+		self, id: str, verification_code: str | None = None, expires: str | None = None
 	) -> list[list]:
-		"""Sets the verification code for a push subscription."""
+		"""Updates the push subscription with either a new verification code or expiration date."""
 
 		response = self._make_request(
 			using=["urn:ietf:params:jmap:mail"],
@@ -770,14 +880,18 @@ class JMAPClient:
 				[
 					"PushSubscription/set",
 					{
-						"update": {subscription_id: {"verificationCode": verification_code}},
+						"update": {
+							id: {"verificationCode": verification_code}
+							if verification_code
+							else {"expires": expires}
+						},
 					},
 					"0",
 				],
 				[
 					"PushSubscription/get",
 					{
-						"ids": [subscription_id],
+						"ids": [id],
 					},
 					"1",
 				],
@@ -786,35 +900,12 @@ class JMAPClient:
 
 		return response["methodResponses"]
 
-	def push_subscription_set_expires(self, subscription_id: str, expires: str | None = None) -> list[list]:
-		"""Sets the expiration date for a push subscription."""
-
-		response = self._make_request(
-			using=["urn:ietf:params:jmap:mail"],
-			method_calls=[
-				[
-					"PushSubscription/set",
-					{
-						"update": {subscription_id: {"expires": expires}},
-					},
-					"0",
-				],
-				[
-					"PushSubscription/get",
-					{
-						"ids": [subscription_id],
-					},
-					"1",
-				],
-			],
-		)
-		return response["methodResponses"]
-
-	def push_subscription_set_destroy(self, subscription_ids: list[str]) -> None:
+	def push_subscription_delete(self, ids: list[str]) -> dict:
 		"""Destroys push subscriptions."""
 
-		for ids_batch in create_batch(subscription_ids, self.max_objects_in_set):
-			self._make_request(
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
 					[
@@ -827,60 +918,70 @@ class JMAPClient:
 				],
 			)
 
-	def vacation_response_get(self) -> dict:
-		"""Returns the vacation response for the logged-in user."""
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
 
-		response = self._make_request(
-			using=["urn:ietf:params:jmap:mail"],
-			method_calls=[
-				[
-					"VacationResponse/get",
-					{
-						"accountId": self.account_id,
-					},
-					"0",
-				]
-			],
+		return result
+
+	# -------------------------------
+	# Blob
+	# -------------------------------
+
+	def upload_blob(self, blob: bytes | str, content_type: str = "message/rfc822") -> dict:
+		"""Uploads the blob data and returns a dictionary containing the response."""
+
+		upload_url = self.upload_url.format(accountId=self.primary_account_id)
+		response = self.__session.post(upload_url, data=blob, headers={"Content-Type": content_type})
+		raise_for_status(response)
+
+		return response.json()
+
+	def upload_blobs_concurrently(self, blobs: list[tuple[bytes | str, str]]) -> list[dict]:
+		"""Uploads multiple blobs concurrently and returns a list of dictionaries containing the responses."""
+
+		if len(blobs) == 1:
+			blob, content_type = blobs[0]
+			return [self.upload_blob(blob, content_type)]
+
+		results = []
+		with ThreadPoolExecutor(max_workers=self.max_concurrent_upload) as executor:
+			futures = {
+				executor.submit(self.upload_blob, blob, content_type): (blob, content_type)
+				for blob, content_type in blobs
+			}
+			for future in as_completed(futures):
+				results.append(future.result())
+
+		return results
+
+	def download_blob(self, blob_id: str, name: str | None = None) -> bytes:
+		"""Returns the blob data for the provided blob ID."""
+
+		name = name or "blob"
+		download_url = self.download_url.format(
+			accountId=self.primary_account_id, blobId=blob_id, name=name, type="application/octet-stream"
 		)
+		response = self.__session.get(download_url)
+		raise_for_status(response)
 
-		vacation_responses = response["methodResponses"][0][1]["list"]
-		return vacation_responses[0] if vacation_responses else {}
+		return response.content
 
-	def vacation_response_set(
-		self,
-		enabled: bool,
-		from_date: str | None = None,
-		to_date: str | None = None,
-		subject: str | None = None,
-		text_body: str | None = None,
-		html_body: str | None = None,
-	) -> dict:
-		"""Sets the vacation response for the logged-in user."""
+	def download_blobs_concurrently(self, blobs: list[tuple[str, str | None]]) -> dict[str, bytes]:
+		"""Downloads multiple blobs concurrently and returns a dictionary containing the blob data."""
 
-		response = self._make_request(
-			using=["urn:ietf:params:jmap:mail"],
-			method_calls=[
-				[
-					"VacationResponse/set",
-					{
-						"accountId": self.account_id,
-						"update": {
-							"singleton": {
-								"isEnabled": enabled,
-								"fromDate": from_date or None,
-								"toDate": to_date or None,
-								"subject": subject or None,
-								"textBody": text_body or None,
-								"htmlBody": html_body or None,
-							}
-						},
-					},
-					"0",
-				]
-			],
-		)
+		if len(blobs) == 1:
+			blob_id, name = blobs[0]
+			return {blob_id: self.download_blob(blob_id, name)}
 
-		return response["methodResponses"][0][1]
+		results = {}
+		with ThreadPoolExecutor(max_workers=5) as executor:
+			futures = {executor.submit(self.download_blob, blob_id, name): blob_id for blob_id, name in blobs}
+			for future in as_completed(futures):
+				blob_id = futures[future]
+				results[blob_id] = future.result()
+
+		return results
 
 
 def get_jmap_client(account: str, server: str | None = None, cache: bool = True) -> "JMAPClient":
