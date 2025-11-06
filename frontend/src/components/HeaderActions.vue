@@ -33,24 +33,23 @@ const showSendModal = ref(false)
 const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 
 const handleKeydown = (e: KeyboardEvent) => {
+	const target = e.target as HTMLElement
+	if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+		return
+
+	const key = e.key.toLowerCase()
+
 	// Search shortcut
-	if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+	if ((e.metaKey || e.ctrlKey) && key === 'k') {
 		e.preventDefault()
 		showSearchModal.value = true
 		return
 	}
 
 	// Compose shortcut
-	if (e.key === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
-		const target = e.target as HTMLElement
-		if (
-			target.tagName !== 'INPUT' &&
-			target.tagName !== 'TEXTAREA' &&
-			!target.isContentEditable
-		) {
-			e.preventDefault()
-			showSendModal.value = true
-		}
+	if (key === 'c' && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+		e.preventDefault()
+		showSendModal.value = true
 	}
 }
 

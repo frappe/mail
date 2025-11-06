@@ -1,13 +1,16 @@
 <template>
 	<TextEditor
 		ref="textEditor"
-		editor-class="not-prose prose-sm max-w-none"
-		:extensions="[CustomImageExtension]"
-		:content="mail.html_body"
+		editor-class="prose-sm max-w-none"
+		:starterkit-options="{ paragraph: false }"
+		:extensions="[CustomImageExtension, CustomParagraphExtension]"
+		:content="mail.html_body.replaceAll('<div><br></div>', '<div></div>')"
 		class="flex flex-col max-sm:overflow-y-auto"
 		:class="{ 'pointer-events-none opacity-50': !show, 'sm:h-[75vh]': !isInThread }"
 		:style="isMobile && { height: editorHeight }"
-		@change="(val: string) => (mail.html_body = val)"
+		@change="
+			(val: string) => (mail.html_body = val.replaceAll('<div></div>', '<div><br></div>'))
+		"
 	>
 		<template #top>
 			<div class="flex flex-col gap-2.5 border-b pb-2.5 max-sm:px-3 max-sm:pt-2.5">
@@ -172,6 +175,7 @@ import {
 	ref,
 	useTemplateRef,
 } from 'vue'
+import { Node } from '@tiptap/core'
 import { EditorContent } from '@tiptap/vue-3'
 import { watchDebounced } from '@vueuse/core'
 import { ChevronDown, ChevronUp, ExternalLink, Forward, Reply, ReplyAll } from 'lucide-vue-next'
@@ -405,7 +409,7 @@ const isMailEmpty = computed(() => {
 })
 
 const openQuotedContent = () => {
-	mail.html_body += mail.quoted_content
+	mail.html_body += `<br>${mail.quoted_content}`
 	mail.quoted_content = ''
 }
 
@@ -425,6 +429,8 @@ const openAttachment = async (blob_id?: string, type?: string) => {
 	const url = URL.createObjectURL(blob)
 	window.open(url, '_blank')
 }
+
+// Custom Extensions
 
 const uploadFunction = async (file: File) => {
 	const fileUpload = useFileUpload()
@@ -451,6 +457,15 @@ const CustomImageExtension = ImageExtension.extend({
 				attributes['data-cid'] ? { 'data-cid': attributes['data-cid'] } : {},
 		},
 	}),
+})
+
+const CustomParagraphExtension = Node.create({
+	name: 'paragraph',
+	priority: 1000,
+	group: 'block',
+	content: 'inline*',
+	parseHTML: () => [{ tag: 'div' }, { tag: 'p' }],
+	renderHTML: ({ HTMLAttributes }) => ['div', HTMLAttributes, 0],
 })
 
 const TYPE_ICON_MAP = {
