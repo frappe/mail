@@ -662,14 +662,16 @@ const getQuotedContent = (mail: Mail) =>
 
 const getForwardedContent = (mail: Mail) =>
 	`
-		<br><br>
-		---------- Forwarded message ---------<br>
-		From: ${mail.from_name} < ${mail.from_email} ><br>
-		Date: ${dayjs(mail.received_at).format('ddd, MMM D, YYYY [at] h:mm A')}<br>
-		Subject: ${mail.subject || ''}<br>
-		To: ${mail.groupedRecipients.to.join(', ')}<br>
-		${mail.groupedRecipients.cc.length ? `Cc: ${mail.groupedRecipients.cc.join(', ')}<br>` : ''}
-		<br><br>
-		${mail.html_body || '&nbsp;'}
+		<div class="frappe_mail_quote">
+			<br><br>
+			---------- Forwarded message ---------<br>
+			From: ${mail.from_name} < ${mail.from_email} ><br>
+			Date: ${dayjs(mail.received_at).format('ddd, MMM D, YYYY [at] h:mm A')}<br>
+			Subject: ${mail.subject || ''}<br>
+			To: ${mail.groupedRecipients.to.join(', ')}<br>
+			${mail.groupedRecipients.cc.length ? `Cc: ${mail.groupedRecipients.cc.join(', ')}<br>` : ''}
+			<br><br>
+			${mail.html_body || '&nbsp;'}
+		</div>
 	`
 </script>

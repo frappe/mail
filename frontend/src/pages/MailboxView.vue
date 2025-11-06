@@ -705,6 +705,7 @@ const reloadThreads: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) =
 watch(
 	() => mailbox,
 	() => {
+		threadsResource.value.data = []
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
 		limit.value = 50
 		threadInFocus.value = undefined

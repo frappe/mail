@@ -72,9 +72,16 @@ const srcdoc = computed(() => {
 
 	const transformedContent = DOMPurify.sanitize(content, DOMPURIFY_CONFIG)
 		.replace(
-			/<div\s+class="(gmail_quote|frappe_mail_quote)"([^>]*)>([\s\S]*?)<\/div>/gi,
-			(_, quoteClass, otherAttrs, innerHtml) =>
-				`${collapseButton}<div class="quote-hidden ${quoteClass}"${otherAttrs}>${innerHtml}</div>`,
+			/<div\s+([^>]*)\bclass="([^"]*)"\s*([^>]*)>([\s\S]*?)<\/div>/gi,
+			(match, beforeAttrs, classValue, afterAttrs, innerHtml) => {
+				// Check if this div has gmail_quote or frappe_mail_quote class
+				if (/\b(gmail_quote|frappe_mail_quote)\b/.test(classValue)) {
+					const allAttrs = `${beforeAttrs} ${afterAttrs}`.trim()
+					const attrString = allAttrs ? ` ${allAttrs}` : ''
+					return `${collapseButton}<div class="quote-hidden ${classValue}"${attrString}>${innerHtml}</div>`
+				}
+				return match
+			},
 		)
 		.replace(/<([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>/g, '<b>&lt;$1&gt;</b>')
 
