@@ -623,7 +623,7 @@ class MailQueue(Document):
 					[
 						"Email/import",
 						{
-							"accountId": client.account_id,
+							"accountId": client.primary_account_id,
 							"emails": {
 								f"draft-{self.name}": {
 									"blobId": blob["blobId"],
@@ -642,7 +642,7 @@ class MailQueue(Document):
 						[
 							"Email/set",
 							{
-								"accountId": client.account_id,
+								"accountId": client.primary_account_id,
 								"destroy": [self._id] if self._id else None,
 							},
 							str(call_id),
@@ -666,7 +666,7 @@ class MailQueue(Document):
 					[
 						"Email/set",
 						{
-							"accountId": client.account_id,
+							"accountId": client.primary_account_id,
 							"create": {
 								f"draft-{self.name}": self._draft_mail(
 									draft_mailbox_id, attachments=attachments
@@ -684,7 +684,7 @@ class MailQueue(Document):
 				submission_call = [
 					"EmailSubmission/set",
 					{
-						"accountId": client.account_id,
+						"accountId": client.primary_account_id,
 						"create": {
 							f"submit-{self.name}": {
 								"identityId": self.identity_id,

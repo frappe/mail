@@ -424,7 +424,7 @@ class MailAccount(Document):
 
 		try:
 			client = get_jmap_client(self.name)
-			client.vacation_response_set(enabled, from_date, to_date, subject, text_body, html_body)
+			client.vacation_response_update(enabled, from_date, to_date, subject, text_body, html_body)
 		except Exception:
 			frappe.log_error(
 				title=_("Failed to set vacation response"),
@@ -488,7 +488,7 @@ class MailAccount(Document):
 	def _sync_jmap_identities(self) -> None:
 		"""Syncs JMAP identities for the Mail Account."""
 
-		account_id = get_jmap_client(self.name).account_id
+		account_id = get_jmap_client(self.name).primary_account_id
 		aliases = frappe.db.get_all(
 			"Mail Alias",
 			{"enabled": 1, "alias_for_type": "Mail Account", "alias_for_name": self.name},
