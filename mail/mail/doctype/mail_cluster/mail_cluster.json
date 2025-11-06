@@ -91,9 +91,13 @@
   "jmap_mailbox_max_name_length",
   "email_limits_section",
   "jmap_email_max_attachment_size",
-  "jmap_email_max_size",
   "column_break_wuz8",
+  "jmap_email_max_size",
+  "parsing_limits_section",
   "jmap_email_parse_max_items",
+  "column_break_cccs",
+  "jmap_calendar_parse_max_items",
+  "jmap_contact_parse_max_items",
   "log_metrics_tab",
   "section_break_rsr9",
   "traces",
@@ -630,10 +634,10 @@
   },
   {
    "default": "10",
-   "description": "Limits the maximum number of items that can be parsed from an email message.",
+   "description": "Limits the maximum number of e-mail message that can be parsed in a single request.",
    "fieldname": "jmap_email_parse_max_items",
    "fieldtype": "Int",
-   "label": "Parse Max",
+   "label": "Emails",
    "non_negative": 1,
    "reqd": 1
   },
@@ -808,6 +812,33 @@
    "label": "SPF Identifier",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "parsing_limits_section",
+   "fieldtype": "Section Break",
+   "label": "Parsing Limits"
+  },
+  {
+   "fieldname": "column_break_cccs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "10",
+   "description": "Limits the maximum number of vCard items that can be parsed in a single request.",
+   "fieldname": "jmap_contact_parse_max_items",
+   "fieldtype": "Int",
+   "label": "Contacts",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "10",
+   "description": "Limits the maximum number of iCalendar items that can be parsed in a single request.",
+   "fieldname": "jmap_calendar_parse_max_items",
+   "fieldtype": "Int",
+   "label": "Calendars",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
@@ -829,7 +860,7 @@
    "link_fieldname": "backend_name"
   }
  ],
- "modified": "2025-11-06 20:50:57.402987",
+ "modified": "2025-11-06 21:00:59.973298",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",

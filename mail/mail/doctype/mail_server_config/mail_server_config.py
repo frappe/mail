@@ -541,6 +541,12 @@ def get_config_toml(server: str) -> str | None:
 					"verify": _format_value_or_zero(cluster.jmap_push_timeout_verify, "ms"),
 				},
 			},
+			"calendar": {
+				"parse": {
+					"max-items": cluster.jmap_calendar_parse_max_items,
+				}
+			},
+			"contact": {"parse": {"max-items": cluster.jmap_contact_parse_max_items}},
 		},
 		"store": _get_stores(cluster.stores),
 		"metrics": {
