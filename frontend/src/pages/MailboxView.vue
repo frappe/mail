@@ -113,82 +113,90 @@
 				<!-- Mail list -->
 				<div
 					v-if="threadsResource?.data?.length"
-					ref="mailList"
 					class="h-full overflow-y-auto overscroll-contain"
 					@scroll="loadMoreThreads"
 				>
-					<div v-for="(group, key) in groupedThreads" :key="key">
-						<Tooltip
-							v-if="groupMessagesBy !== 'none'"
-							:text="
-								isLastGroup(key)
-									? ''
-									: __(collapsedGroups.includes(key) ? 'Expand' : 'Collapse')
-							"
-						>
-							<div
-								class="text-ink-gray-6 group flex items-center border-b p-3.5 text-xs font-semibold sm:px-5"
-								:class="{ 'cursor-pointer': !isLastGroup(key) }"
-								@click="toggleGroupCollapse(key)"
+					<TransitionGroup name="mail-group" tag="div">
+						<div v-for="(group, key) in groupedThreads" :key="key">
+							<Tooltip
+								v-if="groupMessagesBy !== 'none'"
+								:text="
+									isLastGroup(key)
+										? ''
+										: __(collapsedGroups.includes(key) ? 'Expand' : 'Collapse')
+								"
 							>
-								<Checkbox
-									:model-value="isGroupSelected(key)"
-									size="md"
-									class="ml-1.5 mr-[11px]"
-									@update:model-value="
-										toggleSelect(getGroupThreads(key), $event)
-									"
-									@click.stop
-								/>
-								<span class="select-none pt-[2px]">
-									{{
-										getFormattedDate(
-											key,
-											groupMessagesBy === 'month',
-										).toUpperCase()
-									}}
-								</span>
+								<div
+									class="text-ink-gray-6 group flex items-center border-b p-3.5 text-xs font-semibold sm:px-5"
+									:class="{ 'cursor-pointer': !isLastGroup(key) }"
+									@click="toggleGroupCollapse(key)"
+								>
+									<Checkbox
+										:model-value="isGroupSelected(key)"
+										size="md"
+										class="ml-1.5 mr-[11px]"
+										@update:model-value="
+											toggleSelect(getGroupThreads(key), $event)
+										"
+										@click.stop
+									/>
+									<span class="select-none pt-[2px]">
+										{{
+											getFormattedDate(
+												key,
+												groupMessagesBy === 'month',
+											).toUpperCase()
+										}}
+									</span>
 
-								<component
-									:is="
-										collapsedGroups.includes(key) ? ChevronRight : ChevronDown
+									<component
+										:is="
+											collapsedGroups.includes(key)
+												? ChevronRight
+												: ChevronDown
+										"
+										v-if="!isLastGroup(key)"
+										class="text-ink-gray-5 ml-auto h-4 w-4"
+									/>
+								</div>
+							</Tooltip>
+							<TransitionGroup
+								v-if="!collapsedGroups.includes(key)"
+								name="mail-item"
+								tag="div"
+							>
+								<MailListItem
+									v-for="mail in group"
+									ref="mailItems"
+									:key="mail.name"
+									:mailbox
+									:mail
+									:is-selected="selections.includes(mail.thread_id)"
+									class="border-l-transparent transition-all sm:border-l"
+									:class="{
+										'!bg-surface-blue-1': mail.thread_id === threadID,
+										'!border-l-blue-500': mail.thread_id === threadInFocus,
+									}"
+									@click="goToThread(mail.thread_id)"
+									@set-seen="
+										(seen: boolean) =>
+											setSeen.submit({ thread_ids: [mail.thread_id], seen })
 									"
-									v-if="!isLastGroup(key)"
-									class="text-ink-gray-5 ml-auto h-4 w-4"
+									@trash-thread="
+										moveThreads.submit({
+											thread_ids: [mail.thread_id],
+											move_to_mailbox: mailboxIds.trash,
+										})
+									"
+									@delete-thread="junkOrDeleteThreads([mail.thread_id], false)"
+									@set-selected="
+										(selected: boolean) =>
+											toggleSelect([mail.thread_id], selected)
+									"
 								/>
-							</div>
-						</Tooltip>
-						<template v-if="!collapsedGroups.includes(key)">
-							<MailListItem
-								v-for="mail in group"
-								ref="mailItems"
-								:key="mail.name"
-								:mailbox
-								:mail
-								:is-selected="selections.includes(mail.thread_id)"
-								class="border-l-transparent sm:border-l"
-								:class="{
-									'!bg-surface-blue-1': mail.thread_id === threadID,
-									'!border-l-blue-500': mail.thread_id === threadInFocus,
-								}"
-								@click="goToThread(mail.thread_id)"
-								@set-seen="
-									(seen: boolean) =>
-										setSeen.submit({ thread_ids: [mail.thread_id], seen })
-								"
-								@trash-thread="
-									moveThreads.submit({
-										thread_ids: [mail.thread_id],
-										move_to_mailbox: mailboxIds.trash,
-									})
-								"
-								@delete-thread="junkOrDeleteThreads([mail.thread_id], false)"
-								@set-selected="
-									(selected: boolean) => toggleSelect([mail.thread_id], selected)
-								"
-							/>
-						</template>
-					</div>
+							</TransitionGroup>
+						</div>
+					</TransitionGroup>
 					<div
 						v-if="threadsResource.loading"
 						class="flex items-center justify-center py-4"
@@ -524,7 +532,7 @@ const handleThreadActions = (e: KeyboardEvent, key: string) => {
 	if (key === (isMac ? 'backspace' : 'delete')) {
 		e.preventDefault()
 		if (e.shiftKey) return junkOrDeleteThreads(thread_ids, false)
-
+		if (mailbox === mailboxIds.trash) return
 		return moveThreads.submit({ thread_ids, mailbox, move_to_mailbox: mailboxIds.trash })
 	}
 
@@ -923,7 +931,9 @@ const handleSuccessAndRemoveFromList = (
 	reloadThreads()
 
 	if (excludeCommonMailboxes && ['search', 'starred'].includes(mailbox)) return
-	if (threadID && thread_ids.includes(threadID)) goToMailbox()
+	if (threadID && thread_ids.includes(threadID))
+		if (thread_ids.length === 1) goToThreadByOffset(1)
+		else goToMailbox()
 	threadsResource.value.data = threadsResource.value.data?.filter(
 		(thread: Thread) => !thread_ids.includes(thread.thread_id),
 	)
@@ -999,3 +1009,33 @@ const title = computed(() => {
 	}
 })
 </script>
+
+<style scoped>
+/* Mail item exit animation */
+.mail-item-leave-active {
+	transition: all 0.3s ease;
+}
+
+.mail-item-leave-to {
+	opacity: 0;
+	transform: translateX(-20px);
+}
+
+.mail-item-move {
+	transition: transform 0.3s ease;
+}
+
+/* Group exit animation */
+.mail-group-leave-active {
+	transition: all 0.3s ease;
+}
+
+.mail-group-leave-to {
+	opacity: 0;
+	transform: translateX(-20px);
+}
+
+.mail-group-move {
+	transition: transform 0.3s ease;
+}
+</style>
