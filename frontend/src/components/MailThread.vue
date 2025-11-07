@@ -428,6 +428,8 @@ interface MailAction {
 	condition?: boolean | (() => boolean)
 }
 
+// todo: fix junk condition & display
+
 const threadActions = computed((): MailAction[] =>
 	[
 		{

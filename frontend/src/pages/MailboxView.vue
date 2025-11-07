@@ -947,10 +947,7 @@ const handleSetSeen = (thread_ids: string[], seen: boolean) => {
 		return
 
 	toast.promise(setSeen.submit({ thread_ids, seen }), {
-		loading:
-			thread_ids.length === 1
-				? __('Marking thread as {0}...', [seen ? __('read') : __('unread')])
-				: __('Marking threads as {0}...', [seen ? __('read') : __('unread')]),
+		loading: seen ? __('Marking as read...') : __('Marking as unread...'),
 		success:
 			thread_ids.length === 1
 				? __('Thread marked as {0}.', [seen ? __('read') : __('unread')])
@@ -965,10 +962,7 @@ const handleMoveThreads = (thread_ids: string[], move_to_mailbox: string) => {
 	const moveToMailboxName = mailboxes.data?.find((m) => m.id === move_to_mailbox)._name
 
 	toast.promise(moveThreads.submit({ thread_ids, move_to_mailbox }), {
-		loading:
-			thread_ids.length === 1
-				? __('Moving thread to {0}...', [moveToMailboxName])
-				: __('Moving threads to {0}...', [moveToMailboxName]),
+		loading: __('Moving to {0}...', [moveToMailboxName]),
 		success:
 			thread_ids.length === 1
 				? __('Thread moved to {0}.', [moveToMailboxName])
@@ -981,10 +975,7 @@ const handleSetSpamStatus = (thread_ids: string[], spam: boolean) => {
 	if (!thread_ids?.length) return
 
 	toast.promise(setSpamStatus.submit({ thread_ids, spam }), {
-		loading:
-			thread_ids.length === 1
-				? __('Marking thread as {0}...', [spam ? __('Junk') : __('Not Junk')])
-				: __('Marking threads as {0}...', [spam ? __('Junk') : __('Not Junk')]),
+		loading: spam ? __('Marking as Junk...') : __('Marking as Not Junk...'),
 		success:
 			thread_ids.length === 1
 				? __('Thread marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
@@ -997,7 +988,7 @@ const handleDeleteThreads = (thread_ids: string[]) => {
 	if (!thread_ids?.length) return
 
 	toast.promise(deleteThreads.submit(thread_ids), {
-		loading: thread_ids.length === 1 ? __('Deleting thread...') : __('Deleting threads...'),
+		loading: __('Deleting...'),
 		success: thread_ids.length === 1 ? __('Thread deleted.') : __('Threads deleted.'),
 		error: __('Action failed. Please try again later.'),
 	})
