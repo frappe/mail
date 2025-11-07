@@ -40,7 +40,10 @@
 	>
 		<!-- Loading -->
 		<div
-			v-if="!threadsResource?.data?.length && threadsResource?.loading && limit === 50"
+			v-if="
+				(!threadsResource?.data?.length && threadsResource?.loading && limit === 50) ||
+				emptyMailbox.loading
+			"
 			class="flex w-full flex-col items-center justify-center"
 		>
 			<div class="text-ink-gray-5 flex items-center space-x-2">
@@ -179,14 +182,10 @@
 									}"
 									@click="goToThread(mail.thread_id)"
 									@set-seen="
-										(seen: boolean) =>
-											setSeen.submit({ thread_ids: [mail.thread_id], seen })
+										(seen: boolean) => handleSetSeen([mail.thread_id], seen)
 									"
 									@trash-thread="
-										moveThreads.submit({
-											thread_ids: [mail.thread_id],
-											move_to_mailbox: mailboxIds.trash,
-										})
+										handleMoveThreads([mail.thread_id], mailboxIds.trash)
 									"
 									@delete-thread="junkOrDeleteThreads([mail.thread_id], false)"
 									@set-selected="
@@ -235,16 +234,20 @@
 					:thread-i-d
 					:threads="threadIDs"
 					@reload-mails="reloadThreads"
-					@set-seen="(seen: boolean) => setSeen.submit({ thread_ids: [threadID], seen })"
+					@set-seen="
+						(seen: boolean) =>
+							seen
+								? setSeen.submit({ thread_ids: [threadID], seen })
+								: handleSetSeen([threadID], seen)
+					"
 					@move-thread="
-						(move_to_mailbox: string) =>
-							moveThreads.submit({ thread_ids: [threadID], move_to_mailbox })
+						(moveToMailbox: string) => handleMoveThreads([threadID], moveToMailbox)
 					"
 					@set-spam-status="
 						(spam: boolean) =>
 							spam
 								? junkOrDeleteThreads([threadID!], true)
-								: setThreadsSpamStatus.submit({ thread_ids: [threadID], spam })
+								: handleSetSpamStatus([threadID], spam)
 					"
 					@delete-thread="junkOrDeleteThreads([threadID!], false)"
 					@prev-thread="goToThreadByOffset(-1)"
@@ -298,6 +301,7 @@ import {
 	Dropdown,
 	Tooltip,
 	createResource,
+	toast,
 } from 'frappe-ui'
 
 import { getFormattedDate, isMac, raiseToast, shouldIgnoreKeypress, startResizing } from '@/utils'
@@ -531,9 +535,9 @@ const handleThreadActions = (e: KeyboardEvent, key: string) => {
 	// Delete/Trash (Backspace on Mac, Delete on Windows)
 	if (key === (isMac ? 'backspace' : 'delete')) {
 		e.preventDefault()
-		if (e.shiftKey) return junkOrDeleteThreads(thread_ids, false)
-		if (mailbox === mailboxIds.trash) return
-		return moveThreads.submit({ thread_ids, mailbox, move_to_mailbox: mailboxIds.trash })
+		if (e.shiftKey || mailbox === mailboxIds.trash)
+			return junkOrDeleteThreads(thread_ids, false)
+		return handleMoveThreads(thread_ids, mailboxIds.trash)
 	}
 
 	// Mark as junk (!)
@@ -545,7 +549,7 @@ const handleThreadActions = (e: KeyboardEvent, key: string) => {
 	// Mark as read/unread (u)
 	if (key === 'u') {
 		e.preventDefault()
-		return setSeen.submit({ thread_ids, seen: e.shiftKey })
+		return handleSetSeen(thread_ids, e.shiftKey)
 	}
 }
 
@@ -600,23 +604,13 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Mark as Not Junk'),
-			onClick: () =>
-				setThreadsSpamStatus.submit({
-					thread_ids: selections.value,
-					mailbox,
-					spam: false,
-				}),
+			onClick: () => handleSetSpamStatus(selections.value, false),
 			icon: CircleCheck,
 			condition: !!selections.value.length && mailbox === mailboxIds.junk,
 		},
 		{
 			label: __('Move to Trash (Delete)'),
-			onClick: () =>
-				moveThreads.submit({
-					thread_ids: selections.value,
-					mailbox,
-					move_to_mailbox: mailboxIds.trash,
-				}),
+			onClick: () => handleMoveThreads(selections.value, mailboxIds.trash),
 			icon: Trash2,
 			condition: !!selections.value.length && mailbox !== mailboxIds.trash,
 		},
@@ -628,26 +622,26 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Mark as Read (Shift+U)'),
-			onClick: () => setSeen.submit({ thread_ids: selections.value, seen: true }),
+			onClick: () => handleSetSeen(selections.value, true),
 			icon: MailOpen,
 			condition:
 				!!selections.value.length &&
 				selections.value.some(
 					(threadID) =>
 						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
-							.seen === 0,
+							?.seen === 0,
 				),
 		},
 		{
 			label: __('Mark as Unread (U)'),
-			onClick: () => setSeen.submit({ thread_ids: selections.value, seen: false }),
+			onClick: () => handleSetSeen(selections.value, false),
 			icon: Mail,
 			condition:
 				!!selections.value.length &&
 				selections.value.some(
 					(threadID) =>
 						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
-							.seen === 1,
+							?.seen === 1,
 				),
 		},
 		{
@@ -718,6 +712,7 @@ watch(
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
 		limit.value = 50
 		threadInFocus.value = undefined
+		collapsedGroups.value = []
 		reloadThreads(false)
 	},
 	{ immediate: true },
@@ -823,8 +818,7 @@ const moveToOptions = computed(() =>
 		?.filter((m) => ![mailbox, mailboxIds.sent, mailboxIds.drafts].includes(m.id))
 		.map((m) => ({
 			label: m._name,
-			onClick: () =>
-				moveThreads.submit({ thread_ids: selections.value, move_to_mailbox: m.id }),
+			onClick: () => handleMoveThreads(selections.value, m.id),
 		})),
 )
 
@@ -833,7 +827,7 @@ interface SetThreadsSpamStatusParams {
 	spam: boolean
 }
 
-const setThreadsSpamStatus = createResource({
+const setSpamStatus = createResource({
 	url: 'mail.api.mail.set_threads_spam_status',
 	makeParams: ({ thread_ids, spam }: SetThreadsSpamStatusParams) => ({
 		thread_ids,
@@ -876,9 +870,8 @@ const junkOrDeleteMessage = computed(() => {
 })
 
 const handleJunkOrDelete = () => {
-	if (isJunkAction.value)
-		setThreadsSpamStatus.submit({ thread_ids: threadsToBeJunkedOrDeleted.value, spam: true })
-	else deleteThreads.submit(threadsToBeJunkedOrDeleted.value)
+	if (isJunkAction.value) handleSetSpamStatus(threadsToBeJunkedOrDeleted.value, true)
+	else handleDeleteThreads(threadsToBeJunkedOrDeleted.value)
 
 	showJunkOrDeleteThreads.value = false
 }
@@ -902,6 +895,7 @@ const emptyMailbox = createResource({
 	url: 'mail.api.mail.empty_user_mailbox',
 	makeParams: () => ({ mailbox }),
 	onSuccess: () => {
+		threadsResource.value.data = []
 		raiseToast(__('{0} emptied successfully', [mailboxName.value]))
 		reloadThreads()
 	},
@@ -937,6 +931,76 @@ const handleSuccessAndRemoveFromList = (
 	threadsResource.value.data = threadsResource.value.data?.filter(
 		(thread: Thread) => !thread_ids.includes(thread.thread_id),
 	)
+}
+
+// Action handlers
+
+const handleSetSeen = (thread_ids: string[], seen: boolean) => {
+	if (
+		!thread_ids?.length ||
+		thread_ids.every(
+			(threadID) =>
+				threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)?.seen ==
+				seen,
+		)
+	)
+		return
+
+	toast.promise(setSeen.submit({ thread_ids, seen }), {
+		loading:
+			thread_ids.length === 1
+				? __('Marking thread as {0}...', [seen ? __('read') : __('unread')])
+				: __('Marking threads as {0}...', [seen ? __('read') : __('unread')]),
+		success:
+			thread_ids.length === 1
+				? __('Thread marked as {0}.', [seen ? __('read') : __('unread')])
+				: __('Threads marked as {0}.', [seen ? __('read') : __('unread')]),
+		error: __('Action failed. Please try again.'),
+	})
+}
+
+const handleMoveThreads = (thread_ids: string[], move_to_mailbox: string) => {
+	if (!thread_ids?.length) return
+
+	const moveToMailboxName = mailboxes.data?.find((m) => m.id === move_to_mailbox)._name
+
+	toast.promise(moveThreads.submit({ thread_ids, move_to_mailbox }), {
+		loading:
+			thread_ids.length === 1
+				? __('Moving thread to {0}...', [moveToMailboxName])
+				: __('Moving threads to {0}...', [moveToMailboxName]),
+		success:
+			thread_ids.length === 1
+				? __('Thread moved to {0}.', [moveToMailboxName])
+				: __('Threads moved to {0}.', [moveToMailboxName]),
+		error: __('Action failed. Please try again later.'),
+	})
+}
+
+const handleSetSpamStatus = (thread_ids: string[], spam: boolean) => {
+	if (!thread_ids?.length) return
+
+	toast.promise(setSpamStatus.submit({ thread_ids, spam }), {
+		loading:
+			thread_ids.length === 1
+				? __('Marking thread as {0}...', [spam ? __('Junk') : __('Not Junk')])
+				: __('Marking threads as {0}...', [spam ? __('Junk') : __('Not Junk')]),
+		success:
+			thread_ids.length === 1
+				? __('Thread marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
+				: __('Threads marked as {0}.', [spam ? __('Junk') : __('Not Junk')]),
+		error: __('Action failed. Please try again later.'),
+	})
+}
+
+const handleDeleteThreads = (thread_ids: string[]) => {
+	if (!thread_ids?.length) return
+
+	toast.promise(deleteThreads.submit(thread_ids), {
+		loading: thread_ids.length === 1 ? __('Deleting thread...') : __('Deleting threads...'),
+		success: thread_ids.length === 1 ? __('Thread deleted.') : __('Threads deleted.'),
+		error: __('Action failed. Please try again later.'),
+	})
 }
 
 // Filter
@@ -1013,29 +1077,27 @@ const title = computed(() => {
 <style scoped>
 /* Mail item exit animation */
 .mail-item-leave-active {
-	transition: all 0.3s ease;
+	@apply transition-all duration-300 ease-in-out;
 }
 
 .mail-item-leave-to {
-	opacity: 0;
-	transform: translateX(-20px);
+	@apply -translate-x-5 opacity-0;
 }
 
 .mail-item-move {
-	transition: transform 0.3s ease;
+	@apply transition-transform duration-300 ease-in-out;
 }
 
 /* Group exit animation */
 .mail-group-leave-active {
-	transition: all 0.3s ease;
+	@apply transition-all duration-300 ease-in-out;
 }
 
 .mail-group-leave-to {
-	opacity: 0;
-	transform: translateX(-20px);
+	@apply -translate-x-5 opacity-0;
 }
 
 .mail-group-move {
-	transition: transform 0.3s ease;
+	@apply transition-transform duration-300 ease-in-out;
 }
 </style>
