@@ -36,7 +36,7 @@ import {
 	Star,
 	Trash2,
 } from 'lucide-vue-next'
-import { Button, Dropdown, createResource } from 'frappe-ui'
+import { Button, Dropdown, createResource, toast } from 'frappe-ui'
 
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
@@ -68,7 +68,7 @@ const {
 const emit = defineEmits(['reloadMails', 'starMails'])
 
 const { isMobile } = useScreenSize()
-const { mailboxIds } = userStore()
+const { mailboxes, mailboxIds } = userStore()
 const user = inject('$user')
 
 const primaryActions = (mail: Mail): MailAction[] => [
@@ -152,19 +152,19 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 			},
 			{
 				label: __('Mark as Junk'),
-				onClick: () => markAsSpam.submit([mail._id]),
+				onClick: () => handleMarkAsSpam(),
 				icon: BadgeAlert,
 				condition: () => ![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
 			},
 			{
 				label: __('Move to Trash'),
-				onClick: () => moveMail.submit({ _ids: [mail._id], mailbox: mailboxIds.trash }),
+				onClick: () => handleMoveMail(mailboxIds.trash),
 				icon: Trash2,
 				condition: () => mailbox !== mailboxIds.trash,
 			},
 			{
 				label: __('Delete Message'),
-				onClick: () => deleteMails.submit([mail.name]),
+				onClick: () => handleDeleteMail(),
 				icon: Trash2,
 				condition: () => mailbox === mailboxIds.trash,
 			},
@@ -186,21 +186,45 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 
 const markAsSpam = createResource({
 	url: 'mail.api.mail.set_mails_spam_status',
-	makeParams: (_ids: string[]) => ({ _ids, spam: true }),
+	makeParams: () => ({ _ids: [mail._id], spam: true }),
 	onSuccess: () => emit('reloadMails'),
 })
+
+const handleMarkAsSpam = () =>
+	toast.promise(markAsSpam.submit(), {
+		loading: __('Marking as Junk...'),
+		success: __('Mail marked as Junk.'),
+		error: __('Action failed. Please try again later.'),
+	})
 
 const moveMail = createResource({
 	url: 'mail.api.mail.move_mails',
-	makeParams: ({ _ids, mailbox }: { _ids: string[]; mailbox: string }) => ({ _ids, mailbox }),
+	makeParams: (mailbox: string) => ({ _ids: [mail._id], mailbox }),
 	onSuccess: () => emit('reloadMails'),
 })
 
-const deleteMails = createResource({
+const handleMoveMail = (mailbox: string) => {
+	const mailboxName = mailboxes.data?.find((m) => m.id === mailbox)._name
+
+	toast.promise(moveMail.submit(mailbox), {
+		loading: __('Moving to {0}...', [mailboxName]),
+		success: __('Mail moved to {0}.', [mailboxName]),
+		error: __('Action failed. Please try again later.'),
+	})
+}
+
+const deleteMail = createResource({
 	url: 'mail.mail.doctype.mail_message.mail_message.bulk_delete',
-	makeParams: (names: string[]) => ({ names }),
+	makeParams: () => ({ names: [mail.name] }),
 	onSuccess: () => emit('reloadMails'),
 })
+
+const handleDeleteMail = () =>
+	toast.promise(deleteMail.submit(), {
+		loading: __('Deleting...'),
+		success: __('Mail deleted.'),
+		error: __('Action failed. Please try again later.'),
+	})
 
 const starMails = createResource({
 	url: 'mail.api.mail.set_flagged',

@@ -227,7 +227,9 @@
 
 							<div v-if="mail.attachments?.length" class="mt-8 flex flex-wrap">
 								<AttachmentCapsule
-									v-for="attachment in mail.attachments"
+									v-for="attachment in mail.attachments.filter(
+										(a: Attachment) => a.disposition === 'attachment',
+									)"
 									:key="attachment.name"
 									:file-name="attachment.filename"
 									:blob-i-d="attachment.blob_id"
@@ -323,7 +325,7 @@ import MailDetailsPopover from '@/components/MailDetailsPopover.vue'
 import MailThreadPlaceholder from '@/components/MailThreadPlaceholder.vue'
 import SendMail from '@/components/SendMail.vue'
 
-import type { ComposeMailData, Mail } from '@/types'
+import type { Attachment, ComposeMailData, Mail } from '@/types'
 
 const { mailbox, threadID, threads } = defineProps<{
 	mailbox: string
@@ -425,6 +427,8 @@ interface MailAction {
 	icon: typeof ArrowLeft
 	condition?: boolean | (() => boolean)
 }
+
+// todo: fix junk condition & display
 
 const threadActions = computed((): MailAction[] =>
 	[
