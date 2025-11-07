@@ -807,10 +807,7 @@ const moveThreads = createResource({
 		mailbox,
 		move_to_mailbox,
 	}),
-	onSuccess: (thread_ids: string[]) => {
-		if (threadID && thread_ids.includes(threadID)) goToMailbox()
-		reloadThreads()
-	},
+	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
 const moveToOptions = computed(() =>
@@ -835,10 +832,7 @@ const setThreadsSpamStatus = createResource({
 		mailbox,
 		spam,
 	}),
-	onSuccess: (thread_ids: string[]) => {
-		if (threadID && thread_ids.includes(threadID)) goToMailbox()
-		reloadThreads()
-	},
+	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
 const showJunkOrDeleteThreads = ref(false)
@@ -891,10 +885,7 @@ const junkOrDeleteThreadsOptions = computed(() => ({
 const deleteThreads = createResource({
 	url: 'mail.api.mail.delete_threads',
 	makeParams: (thread_ids: string[]) => ({ thread_ids, mailbox }),
-	onSuccess: (thread_ids: string[]) => {
-		if (threadID && thread_ids.includes(threadID)) goToMailbox()
-		reloadThreads()
-	},
+	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids, false),
 })
 
 const showEmptyMailbox = ref(false)
@@ -924,6 +915,19 @@ const emptyMailboxOptions = computed(() => ({
 		},
 	],
 }))
+
+const handleSuccessAndRemoveFromList = (
+	thread_ids: string[],
+	excludeCommonMailboxes: boolean = true,
+) => {
+	reloadThreads()
+
+	if (excludeCommonMailboxes && ['search', 'starred'].includes(mailbox)) return
+	if (threadID && thread_ids.includes(threadID)) goToMailbox()
+	threadsResource.value.data = threadsResource.value.data?.filter(
+		(thread: Thread) => !thread_ids.includes(thread.thread_id),
+	)
+}
 
 // Filter
 
