@@ -42,6 +42,17 @@ class ContactCard(Document):
 
 			return {k: list(v) for k, v in emails.items()}
 
+	@property
+	def formatted_phones(self) -> dict[str, list[str]] | None:
+		"""Returns phones in the format required by JMAP API."""
+
+		if self.phones:
+			phones = {}
+			for phone in self.phones:
+				phones.setdefault(phone.type, set()).add(phone.number)
+
+			return {k: list(v) for k, v in phones.items()}
+
 	def db_insert(self, *args, **kwargs) -> None:
 		has_permission_for_account(self.account)
 		self.id = add_contact_card(
@@ -49,6 +60,7 @@ class ContactCard(Document):
 			self.address_book_ids,
 			self.full_name,
 			self.formatted_emails,
+			self.formatted_phones,
 			self.kind,
 		)
 		self.name = f"{self.account}|{self.id}"
@@ -67,6 +79,7 @@ class ContactCard(Document):
 			self.address_book_ids,
 			self.full_name,
 			self.formatted_emails,
+			self.formatted_phones,
 			self.kind,
 		)
 		self.reload()
@@ -129,13 +142,14 @@ def add_contact_card(
 	address_book_ids: list[str],
 	full_name: str | None = None,
 	emails: dict[str, list[str]] | None = None,
+	phones: dict[str, list[str]] | None = None,
 	kind: str = "individual",
 ) -> str:
 	"""Adds a contact card for the given account with the specified parameters."""
 
 	creation_id = str(uuid7())
 	client = get_jmap_client(account)
-	response = client.contact_card_create(creation_id, address_book_ids, full_name, emails, kind)
+	response = client.contact_card_create(creation_id, address_book_ids, full_name, emails, phones, kind)
 
 	title = _("Contact Card Creation Error")
 	if response.get("created"):
@@ -165,12 +179,13 @@ def update_contact_card(
 	address_book_ids: list[str],
 	full_name: str | None = None,
 	emails: dict[str, list[str]] | None = None,
+	phones: dict[str, list[str]] | None = None,
 	kind: str = "individual",
 ) -> None:
 	"""Updates an existing contact card with the given parameters."""
 
 	client = get_jmap_client(account)
-	response = client.contact_card_update(id, address_book_ids, full_name, emails, kind)
+	response = client.contact_card_update(id, address_book_ids, full_name, emails, phones, kind)
 
 	title = _("Contact Card Update Error")
 	if not response.get("updated"):
@@ -246,6 +261,19 @@ def format_contact_card(account: str, contact_card: dict) -> dict:
 			}
 		)
 
+	phones = []
+	for phone in contact_card.get("phones", {}).values():
+		number = phone.get("number")
+		contexts = phone.get("contexts", {})
+		type = next(context for context in contexts.keys()) if contexts else None
+		phones.append(
+			{
+				"type": type,
+				"number": number,
+				"contexts": json.dumps(contexts, indent=4),
+			}
+		)
+
 	creation = modified = None
 	if contact_card.get("created"):
 		creation = parse_iso_datetime(contact_card["created"], as_str=True)
@@ -261,6 +289,7 @@ def format_contact_card(account: str, contact_card: dict) -> dict:
 		"full_name": full_name,
 		"address_books": address_books,
 		"emails": emails,
+		"phones": phones,
 		"created_at": contact_card.get("created"),
 		"updated_at": contact_card.get("updated"),
 		"creation": creation or modified or today(),

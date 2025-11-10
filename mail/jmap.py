@@ -1035,6 +1035,7 @@ class JMAPClient:
 		address_book_ids: list[str],
 		full_name: str | None = None,
 		emails: dict[str, list[str]] | None = None,
+		phones: dict[str, list[str]] | None = None,
 		kind: str = "individual",
 	) -> dict:
 		"""Creates a contact card with the given parameters."""
@@ -1046,14 +1047,6 @@ class JMAPClient:
 				"components": [{"kind": "given", "value": given}, {"kind": "surname", "value": surname}],
 				"isOrdered": True,
 			}
-
-		emails_map = {}
-		if emails:
-			counter = 0
-			for email_type, email_addresses in emails.items():
-				for email_address in email_addresses:
-					emails_map[f"{counter}"] = {"contexts": {email_type: True}, "address": email_address}
-					counter += 1
 
 		response = self._make_request(
 			using=["urn:ietf:params:jmap:contacts"],
@@ -1067,7 +1060,8 @@ class JMAPClient:
 								"addressBookIds": {ab_id: True for ab_id in address_book_ids},
 								"kind": kind,
 								"name": name,
-								"emails": emails_map,
+								"emails": _get_emails_map(emails),
+								"phones": _get_phones_map(phones),
 								"created": utcnow(),
 								"updated": utcnow(),
 							}
@@ -1203,6 +1197,7 @@ class JMAPClient:
 		address_book_ids: list[str],
 		full_name: str | None = None,
 		emails: dict[str, list[str]] | None = None,
+		phones: dict[str, list[str]] | None = None,
 		kind: str = "individual",
 	) -> dict:
 		"""Updates the contact card with the given parameters."""
@@ -1214,14 +1209,6 @@ class JMAPClient:
 				"components": [{"kind": "given", "value": given}, {"kind": "surname", "value": surname}],
 				"isOrdered": True,
 			}
-
-		emails_map = {}
-		if emails:
-			counter = 0
-			for email_type, email_addresses in emails.items():
-				for email_address in email_addresses:
-					emails_map[f"{counter}"] = {"contexts": {email_type: True}, "address": email_address}
-					counter += 1
 
 		response = self._make_request(
 			using=["urn:ietf:params:jmap:contacts"],
@@ -1235,7 +1222,8 @@ class JMAPClient:
 								"addressBookIds": {ab_id: True for ab_id in address_book_ids},
 								"kind": kind,
 								"name": name,
-								"emails": emails_map,
+								"emails": _get_emails_map(emails),
+								"phones": _get_phones_map(phones),
 								"updated": utcnow(),
 							}
 						},
@@ -1462,3 +1450,31 @@ def raise_for_status(response: requests.Response) -> None:
 
 		message = _("Error {0}: {1}").format(response.status_code, error_text)
 		raise requests.exceptions.HTTPError(message, response=response)
+
+
+def _get_emails_map(emails: dict[str, list[str]] | None = None) -> dict[str, dict] | None:
+	"""Returns the emails map for the given emails dictionary."""
+
+	if emails:
+		counter = 0
+		emails_map = {}
+		for email_type, email_addresses in emails.items():
+			for email_address in email_addresses:
+				emails_map[f"{counter}"] = {"contexts": {email_type: True}, "address": email_address}
+				counter += 1
+
+		return emails_map
+
+
+def _get_phones_map(phones: dict[str, list[str]] | None = None) -> dict[str, dict] | None:
+	"""Returns the phones map for the given phones dictionary."""
+
+	if phones:
+		counter = 0
+		phones_map = {}
+		for phone_type, phone_numbers in phones.items():
+			for phone_number in phone_numbers:
+				phones_map[f"{counter}"] = {"contexts": {phone_type: True}, "number": phone_number}
+				counter += 1
+
+		return phones_map
