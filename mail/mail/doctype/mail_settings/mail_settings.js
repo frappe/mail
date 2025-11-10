@@ -20,6 +20,18 @@ frappe.ui.form.on('Mail Settings', {
 		}))
 	},
 
+	dns_provider(frm) {
+		if (frm.doc.dns_provider && frm.doc.dns_provider === 'GoDaddy') {
+			frappe.msgprint({
+				title: __('Limited Access to GoDaddy DNS APIs'),
+				indicator: 'yellow',
+				message: __(
+					'Access to GoDaddy’s Domain Management and DNS APIs is restricted to accounts with 10 or more domains or an active Pro Discount Domain Club membership. Please verify that your account meets these requirements before proceeding.',
+				),
+			})
+		}
+	},
+
 	add_comments(frm) {
 		if (frm.doc.root_domain_name && (!frm.doc.dns_provider || !frm.doc.dns_provider_token)) {
 			const bold_root_domain_name = `<b>${frm.doc.root_domain_name}</b>`
