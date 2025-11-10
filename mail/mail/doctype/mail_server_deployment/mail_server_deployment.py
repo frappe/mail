@@ -220,6 +220,27 @@ class MailServerDeployment(Document):
 		)
 
 	@frappe.whitelist()
+	def fc_filebeat_stream_setup(self) -> None:
+		"""Creates a Mail Server Job to setup Filebeat stream for Frappe Cloud."""
+
+		frappe.only_for("System Manager")
+
+		script_path = os.path.join(frappe.get_app_path("mail", "utils", "fc"), "filebeat_stream_setup.sh")
+		with open(script_path) as f:
+			script_content = f.read()
+
+		script_content = script_content.replace("{{ server }}", self.server)
+
+		job = frappe.new_doc("Mail Server Job")
+		job.status = "Pending"
+		job.server = self.server
+		job.job = "Filebeat Stream Setup (FC)"
+		job.append("commands", {"command": script_content})
+		job.insert(ignore_permissions=True)
+
+		frappe.msgprint(_("Filebeat stream setup job has been created."), indicator="green", alert=True)
+
+	@frappe.whitelist()
 	def fc_post_deploy_ssl_setup(self, contact_email: str) -> None:
 		"""Creates a Mail Server Job to setup SSL post deployment for Frappe Cloud."""
 

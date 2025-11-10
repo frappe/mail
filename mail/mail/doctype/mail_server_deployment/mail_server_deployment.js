@@ -26,6 +26,12 @@ frappe.ui.form.on('Mail Server Deployment', {
 
 		if (frm.doc.status === 'Success') {
 			frm.add_custom_button(
+				__('Filebeat Stream Setup (FC)'),
+				() => frm.trigger('fc_filebeat_stream_setup'),
+				__('Actions'),
+			)
+
+			frm.add_custom_button(
 				__('Post Deployment SSL Setup (FC)'),
 				() => frm.trigger('fc_post_deploy_ssl_setup'),
 				__('Actions'),
@@ -35,6 +41,20 @@ frappe.ui.form.on('Mail Server Deployment', {
 		if (frm.doc.status === 'Failed') {
 			frm.add_custom_button(__('Retry'), () => frm.trigger('retry'), __('Actions'))
 		}
+	},
+
+	fc_filebeat_stream_setup(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'fc_filebeat_stream_setup',
+			freeze: true,
+			freeze_message: __('Setting up Filebeat Stream...'),
+			callback: (r) => {
+				if (!r.exc) {
+					frm.refresh()
+				}
+			},
+		})
 	},
 
 	fc_post_deploy_ssl_setup(frm) {
