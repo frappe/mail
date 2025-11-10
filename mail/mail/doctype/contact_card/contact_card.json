@@ -18,8 +18,8 @@
   "address_books",
   "section_break_txzu",
   "emails",
-  "section_break_ufao",
   "phones",
+  "addresses",
   "section_break_tbm6",
   "name_breakup"
  ],
@@ -119,21 +119,23 @@
    "read_only": 1
   },
   {
-   "fieldname": "section_break_ufao",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "phones",
    "fieldtype": "Table",
    "label": "Phones",
    "options": "Contact Card Phone"
+  },
+  {
+   "fieldname": "addresses",
+   "fieldtype": "Table",
+   "label": "Addresses",
+   "options": "Contact Card Address"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-10 16:26:35.232840",
+ "modified": "2025-11-10 18:49:51.588333",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Contact Card",

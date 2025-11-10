@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "creation": "2025-11-10 18:48:12.019733",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_xxw4",
+  "type",
+  "column_break_mmzp",
+  "street",
+  "locality",
+  "region",
+  "country",
+  "pincode",
+  "section_break_aruj",
+  "contexts"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_xxw4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "street",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Street",
+   "reqd": 1
+  },
+  {
+   "fieldname": "locality",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Locality",
+   "reqd": 1
+  },
+  {
+   "fieldname": "region",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Region",
+   "reqd": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Country",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_mmzp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_aruj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "contexts",
+   "fieldtype": "JSON",
+   "label": "Contexts",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "pincode",
+   "fieldtype": "Int",
+   "label": "Pincode",
+   "non_negative": 1,
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-10 19:18:21.370735",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "Contact Card Address",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
