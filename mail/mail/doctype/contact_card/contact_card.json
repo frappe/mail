@@ -8,8 +8,12 @@
   "account",
   "column_break_lrhc",
   "id",
+  "section_break_ngen",
   "kind",
   "full_name",
+  "column_break_dcka",
+  "created_at",
+  "updated_at",
   "section_break_wo60",
   "address_books",
   "section_break_txzu",
@@ -89,13 +93,35 @@
    "label": "Name Breakup",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_ngen",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dcka",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Data",
+   "label": "Created At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "updated_at",
+   "fieldtype": "Data",
+   "label": "Updated At",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-10 14:06:19.148487",
+ "modified": "2025-11-10 16:14:31.227142",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Contact Card",

@@ -12,6 +12,7 @@ from uuid_utils import uuid7
 from mail.jmap import get_jmap_client
 from mail.utils import parse_filters
 from mail.utils.cache import get_account_for_user
+from mail.utils.dt import parse_iso_datetime
 from mail.utils.user import has_role, is_administrator
 from mail.utils.validation import has_permission_for_account
 
@@ -245,6 +246,12 @@ def format_contact_card(account: str, contact_card: dict) -> dict:
 			}
 		)
 
+	creation = modified = None
+	if contact_card.get("created"):
+		creation = parse_iso_datetime(contact_card["created"], as_str=True)
+	if contact_card.get("updated"):
+		modified = parse_iso_datetime(contact_card["updated"], as_str=True)
+
 	return {
 		"name": f"{account}|{contact_card['id']}",
 		"account": account,
@@ -254,8 +261,10 @@ def format_contact_card(account: str, contact_card: dict) -> dict:
 		"full_name": full_name,
 		"address_books": address_books,
 		"emails": emails,
-		"creation": today(),
-		"modified": today(),
+		"created_at": contact_card.get("created"),
+		"updated_at": contact_card.get("updated"),
+		"creation": creation or modified or today(),
+		"modified": modified or creation or today(),
 	}
 
 

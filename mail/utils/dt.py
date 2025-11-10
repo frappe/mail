@@ -7,6 +7,12 @@ from frappe import _
 from frappe.utils import convert_utc_to_system_timezone, get_datetime, get_datetime_str, get_system_timezone
 
 
+def utcnow() -> "str":
+	"""Returns current UTC time in ISO format."""
+
+	return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def convert_to_utc(date_time: datetime | str, from_timezone: str | None = None) -> "datetime":
 	"""Converts the given datetime to UTC timezone."""
 

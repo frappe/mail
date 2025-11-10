@@ -9,6 +9,7 @@ from frappe import _
 from frappe.utils import create_batch
 
 from mail.utils.cache import get_cluster_for_tenant
+from mail.utils.dt import utcnow
 from mail.utils.validation import has_permission_for_account
 
 
@@ -1067,6 +1068,8 @@ class JMAPClient:
 								"kind": kind,
 								"name": name,
 								"emails": emails_map,
+								"created": utcnow(),
+								"updated": utcnow(),
 							}
 						},
 					},
@@ -1233,6 +1236,7 @@ class JMAPClient:
 								"kind": kind,
 								"name": name,
 								"emails": emails_map,
+								"updated": utcnow(),
 							}
 						},
 					},
