@@ -43,6 +43,13 @@ class JMAPClient:
 	def _validate_method_calls(self, method_calls: list[list]) -> None:
 		"""Validate the method calls against the server's capabilities."""
 
+		if self.max_calls_in_request and len(method_calls) > self.max_calls_in_request:
+			frappe.throw(
+				_("Number of method calls exceeds the maximum allowed: {0}.").format(
+					self.max_calls_in_request
+				)
+			)
+
 		call_ids = []
 		for method_call in method_calls:
 			if not isinstance(method_call, list) or len(method_call) != 3:
@@ -1101,6 +1108,15 @@ def get_mailbox_name_for_account(account: str, id: str, raise_exception: bool = 
 
 	has_permission_for_account(account)
 	return get_mailbox_name_by_id(account, id, raise_exception=raise_exception)
+
+
+@frappe.whitelist()
+def make_jmap_request(account: str, using: list[str], method_calls: list[list]) -> Any:
+	"""Makes a JMAP request for the given account."""
+
+	has_permission_for_account(account)
+	client = get_jmap_client(account)
+	return client._make_request(using, method_calls)
 
 
 def raise_for_status(response: requests.Response) -> None:
