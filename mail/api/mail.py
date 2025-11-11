@@ -428,13 +428,14 @@ def get_account_and_filtered_message_ids(thread_ids: list[str], mailbox: str) ->
 
 
 @frappe.whitelist()
-def set_seen(thread_ids: list[str], seen: bool, mailbox: str) -> dict:
+def set_seen(thread_ids: dict[bool, list[str]], mailbox: str) -> dict:
 	"""Sets seen for mails."""
 
-	account, messages = get_account_and_filtered_message_ids(thread_ids, mailbox)
-	set_seen_status(account, messages, seen)
+	for seen, ids in thread_ids.items():
+		account, messages = get_account_and_filtered_message_ids(ids, mailbox)
+		set_seen_status(account, messages, seen)
 
-	return {"thread_ids": thread_ids, "seen": seen}
+	return thread_ids
 
 
 @frappe.whitelist()
@@ -456,11 +457,12 @@ def move_mails(_ids: list[str], mailbox: str) -> None:
 
 
 @frappe.whitelist()
-def set_threads_mailbox(thread_ids: list[str], mailbox: str, move_to_mailbox) -> list[str]:
+def set_threads_mailbox(thread_ids: list[str], mailbox: str) -> list[str]:
 	"""Sets mailbox for threads."""
 
-	account, messages = get_account_and_filtered_message_ids(thread_ids, mailbox)
-	move_messages(account, messages, move_to_mailbox)
+	for move_to_mailbox, ids in thread_ids.items():
+		account, messages = get_account_and_filtered_message_ids(ids, mailbox)
+		move_messages(account, messages, move_to_mailbox)
 
 	return thread_ids
 
@@ -476,11 +478,12 @@ def set_mails_spam_status(_ids: list[str], spam: bool) -> list[str]:
 
 
 @frappe.whitelist()
-def set_threads_spam_status(thread_ids: list[str], mailbox: str, spam: bool) -> list[str]:
+def set_threads_spam_status(thread_ids: list[str], mailbox: str) -> list[str]:
 	"""Sets spam status for the mails belonging to the given threads."""
 
-	account, messages = get_account_and_filtered_message_ids(thread_ids, mailbox)
-	set_spam_status(account, messages, spam)
+	for spam_status, ids in thread_ids.items():
+		account, messages = get_account_and_filtered_message_ids(ids, mailbox)
+		set_spam_status(account, messages, spam_status)
 
 	return thread_ids
 

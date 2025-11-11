@@ -182,7 +182,8 @@
 									}"
 									@click="goToThread(mail.thread_id)"
 									@set-seen="
-										(seen: boolean) => handleSetSeen([mail.thread_id], seen)
+										(seen: boolean) =>
+											handleSetSeen({ [Number(seen)]: [mail.thread_id] })
 									"
 									@trash-thread="
 										handleMoveThreads([mail.thread_id], mailboxIds.trash)
@@ -237,8 +238,8 @@
 					@set-seen="
 						(seen: boolean) =>
 							seen
-								? setSeen.submit({ thread_ids: [threadID], seen })
-								: handleSetSeen([threadID], seen)
+								? setSeen.submit({ 1: [threadID] })
+								: handleSetSeen({ 0: [threadID] })
 					"
 					@move-thread="
 						(moveToMailbox: string) => handleMoveThreads([threadID], moveToMailbox)
@@ -556,7 +557,7 @@ const handleThreadActions = (e: KeyboardEvent, key: string) => {
 	// Mark as read/unread (u)
 	if (key === 'u') {
 		e.preventDefault()
-		return handleSetSeen(thread_ids, e.shiftKey)
+		return handleSetSeen({ [Number(e.shiftKey)]: thread_ids })
 	}
 }
 
@@ -629,7 +630,7 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Mark as Read (Shift+U)'),
-			onClick: () => handleSetSeen(selections.value, true),
+			onClick: () => handleSetSeen({ 1: selections.value }),
 			icon: MailOpen,
 			condition:
 				!!selections.value.length &&
@@ -641,7 +642,7 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Mark as Unread (U)'),
-			onClick: () => handleSetSeen(selections.value, false),
+			onClick: () => handleSetSeen({ 0: selections.value }),
 			icon: Mail,
 			condition:
 				!!selections.value.length &&
@@ -782,26 +783,29 @@ const scrollIntoView = (threadID: string) => {
 
 // Actions
 
-interface SetSeenParams {
-	thread_ids: string[]
-	seen: boolean
+type SetSeenParams = {
+	0?: string[]
+	1?: string[]
 }
 
 const setSeen = createResource({
 	url: 'mail.api.mail.set_seen',
-	makeParams: ({ thread_ids, seen }: SetSeenParams) => ({ thread_ids, seen, mailbox }),
-	onSuccess: ({ thread_ids, seen }: SetSeenParams) => {
+	makeParams: (thread_ids: SetSeenParams) => ({ thread_ids, mailbox }),
+	onSuccess: (thread_ids: SetSeenParams) => {
 		mailboxes.reload()
-		threadsResource.value.data
-			.filter((thread: Thread) => thread_ids.includes(thread.thread_id))
-			.forEach((thread: Thread) => (thread.seen = seen ? 1 : 0))
-		if (
-			!seen &&
-			threadID &&
-			(thread_ids.includes(threadID) ||
-				!threadsResource.value.data.some((m: Thread) => thread_ids.includes(m.thread_id)))
-		)
-			goToMailbox()
+		for (const [seenStr, ids] of Object.entries(thread_ids)) {
+			const seen = seenStr === 'true'
+			threadsResource.value.data
+				.filter((thread: Thread) => ids.includes(thread.thread_id))
+				.forEach((thread: Thread) => (thread.seen = seen ? 1 : 0))
+			if (
+				!seen &&
+				threadID &&
+				(ids.includes(threadID) ||
+					!threadsResource.value.data.some((m: Thread) => ids.includes(m.thread_id)))
+			)
+				goToMailbox()
+		}
 	},
 })
 
@@ -943,23 +947,35 @@ const handleSuccessAndRemoveFromList = (
 
 // Action handlers
 
-const handleSetSeen = (thread_ids: string[], seen: boolean) => {
-	if (
-		!thread_ids?.length ||
-		thread_ids.every(
-			(threadID) =>
-				threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)?.seen ==
-				seen,
-		)
+const handleSetSeen = (threadIDs: SetSeenParams, isUndo = false) => {
+	const selectedThreads = Object.values(threadIDs).flat()
+	const seenMap: Record<string, 0 | 1> = Object.fromEntries(
+		threadsResource.value.data.map(
+			({ thread_id, seen }: { thread_id: string; seen: 1 | 0 }) => [thread_id, seen],
+		),
 	)
-		return
+	const originalState: SetSeenParams = selectedThreads.reduce(
+		(acc: SetSeenParams, thread_id: string) => {
+			const key = seenMap[thread_id]
+			if (!acc[key]) acc[key] = []
+			acc[key].push(thread_id)
+			return acc
+		},
+		{},
+	)
+	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
 
+	const action = () => setSeen.submit(threadIDs)
+	if (isUndo) return raisePromiseToast(action, __('Undoing...'), __('Read status restored.'))
+
+	const seen = Object.keys(threadIDs)[0] === '1'
 	raisePromiseToast(
-		() => setSeen.submit({ thread_ids, seen }),
+		action,
 		seen ? __('Marking as read...') : __('Marking as unread...'),
-		thread_ids.length === 1
+		selectedThreads.length === 1
 			? __('Thread marked as {0}.', [seen ? __('read') : __('unread')])
 			: __('Threads marked as {0}.', [seen ? __('read') : __('unread')]),
+		() => handleSetSeen(originalState, true),
 	)
 }
 
