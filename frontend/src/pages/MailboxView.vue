@@ -304,7 +304,14 @@ import {
 	toast,
 } from 'frappe-ui'
 
-import { getFormattedDate, isMac, raiseToast, shouldIgnoreKeypress, startResizing } from '@/utils'
+import {
+	getFormattedDate,
+	isMac,
+	raisePromiseToast,
+	raiseToast,
+	shouldIgnoreKeypress,
+	startResizing,
+} from '@/utils'
 import { useLayout, useScreenSize, useSidebar } from '@/utils/composables'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
@@ -801,14 +808,15 @@ const setSeen = createResource({
 interface MoveThreadsParams {
 	thread_ids: string[]
 	move_to_mailbox: string
+	mailbox: string
 }
 
 const moveThreads = createResource({
 	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: ({ thread_ids, move_to_mailbox }: MoveThreadsParams) => ({
+	makeParams: ({ thread_ids, move_to_mailbox, mailbox }: MoveThreadsParams) => ({
 		thread_ids,
-		mailbox,
 		move_to_mailbox,
+		mailbox,
 	}),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
@@ -946,29 +954,44 @@ const handleSetSeen = (thread_ids: string[], seen: boolean) => {
 	)
 		return
 
-	toast.promise(setSeen.submit({ thread_ids, seen }), {
-		loading: seen ? __('Marking as read...') : __('Marking as unread...'),
-		success:
-			thread_ids.length === 1
-				? __('Thread marked as {0}.', [seen ? __('read') : __('unread')])
-				: __('Threads marked as {0}.', [seen ? __('read') : __('unread')]),
-		error: __('Action failed. Please try again.'),
-	})
+	raisePromiseToast(
+		() => setSeen.submit({ thread_ids, seen }),
+		seen ? __('Marking as read...') : __('Marking as unread...'),
+		thread_ids.length === 1
+			? __('Thread marked as {0}.', [seen ? __('read') : __('unread')])
+			: __('Threads marked as {0}.', [seen ? __('read') : __('unread')]),
+	)
 }
 
-const handleMoveThreads = (thread_ids: string[], move_to_mailbox: string) => {
+const handleMoveThreads = (
+	thread_ids: string[],
+	move_to_mailbox: string,
+	from_mailbox: string = mailbox,
+	is_undo: boolean = false,
+) => {
 	if (!thread_ids?.length) return
 
 	const moveToMailboxName = mailboxes.data?.find((m) => m.id === move_to_mailbox)._name
+	const action = () => moveThreads.submit({ thread_ids, move_to_mailbox, mailbox: from_mailbox })
 
-	toast.promise(moveThreads.submit({ thread_ids, move_to_mailbox }), {
-		loading: __('Moving to {0}...', [moveToMailboxName]),
-		success:
+	if (is_undo) {
+		const success =
 			thread_ids.length === 1
-				? __('Thread moved to {0}.', [moveToMailboxName])
-				: __('Threads moved to {0}.', [moveToMailboxName]),
-		error: __('Action failed. Please try again later.'),
-	})
+				? __('Thread moved back to {0}.', [moveToMailboxName])
+				: __('Threads moved back to {0}.', [moveToMailboxName])
+		return raisePromiseToast(action, __('Undoing...'), success)
+	}
+
+	const loading = __('Moving to {0}...', [moveToMailboxName])
+	const success =
+		thread_ids.length === 1
+			? __('Thread moved to {0}.', [moveToMailboxName])
+			: __('Threads moved to {0}.', [moveToMailboxName])
+
+	if (['starred', 'search'].includes(mailbox)) return raisePromiseToast(action, loading, success)
+
+	const undoAction = () => handleMoveThreads(thread_ids, from_mailbox, move_to_mailbox, true)
+	raisePromiseToast(action, loading, success, undoAction)
 }
 
 const handleSetSpamStatus = (thread_ids: string[], spam: boolean) => {
@@ -980,7 +1003,7 @@ const handleSetSpamStatus = (thread_ids: string[], spam: boolean) => {
 			thread_ids.length === 1
 				? __('Thread marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
 				: __('Threads marked as {0}.', [spam ? __('Junk') : __('Not Junk')]),
-		error: __('Action failed. Please try again later.'),
+		error: __('Action failed. Please try again in some time.'),
 	})
 }
 
@@ -990,7 +1013,7 @@ const handleDeleteThreads = (thread_ids: string[]) => {
 	toast.promise(deleteThreads.submit(thread_ids), {
 		loading: __('Deleting...'),
 		success: thread_ids.length === 1 ? __('Thread deleted.') : __('Threads deleted.'),
-		error: __('Action failed. Please try again later.'),
+		error: __('Action failed. Please try again in some time.'),
 	})
 }
 
@@ -1066,28 +1089,36 @@ const title = computed(() => {
 </script>
 
 <style scoped>
-/* Mail item exit animation */
+/* Mail item animations */
+.mail-item-enter-active {
+	@apply transition-all delay-300 duration-300 ease-in-out;
+}
+.mail-item-enter-from {
+	@apply translate-x-5 opacity-0;
+}
 .mail-item-leave-active {
 	@apply transition-all duration-300 ease-in-out;
 }
-
 .mail-item-leave-to {
 	@apply -translate-x-5 opacity-0;
 }
-
 .mail-item-move {
 	@apply transition-transform duration-300 ease-in-out;
 }
 
-/* Group exit animation */
+/* Group animations */
+.mail-group-enter-active {
+	@apply transition-all delay-300 duration-300 ease-in-out;
+}
+.mail-group-enter-from {
+	@apply translate-x-5 opacity-0;
+}
 .mail-group-leave-active {
 	@apply transition-all duration-300 ease-in-out;
 }
-
 .mail-group-leave-to {
 	@apply -translate-x-5 opacity-0;
 }
-
 .mail-group-move {
 	@apply transition-transform duration-300 ease-in-out;
 }

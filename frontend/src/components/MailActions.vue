@@ -194,7 +194,7 @@ const handleMarkAsSpam = () =>
 	toast.promise(markAsSpam.submit(), {
 		loading: __('Marking as Junk...'),
 		success: __('Mail marked as Junk.'),
-		error: __('Action failed. Please try again later.'),
+		error: __('Action failed. Please try again in some time.'),
 	})
 
 const moveMail = createResource({
@@ -209,7 +209,7 @@ const handleMoveMail = (mailbox: string) => {
 	toast.promise(moveMail.submit(mailbox), {
 		loading: __('Moving to {0}...', [mailboxName]),
 		success: __('Mail moved to {0}.', [mailboxName]),
-		error: __('Action failed. Please try again later.'),
+		error: __('Action failed. Please try again in some time.'),
 	})
 }
 
@@ -223,7 +223,7 @@ const handleDeleteMail = () =>
 	toast.promise(deleteMail.submit(), {
 		loading: __('Deleting...'),
 		success: __('Mail deleted.'),
-		error: __('Action failed. Please try again later.'),
+		error: __('Action failed. Please try again in some time.'),
 	})
 
 const starMails = createResource({

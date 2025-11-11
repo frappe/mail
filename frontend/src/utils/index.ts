@@ -77,6 +77,25 @@ export const raiseToast = (message: string, type = 'success') => {
 	toast.error(text)
 }
 
+export const raisePromiseToast = (
+	action: () => Promise<unknown>,
+	loading: string,
+	success: string,
+	undoAction?: () => void,
+) => {
+	const error = __('Action failed. Please try again in some time.')
+
+	if (undoAction)
+		return toast.promise(action(), {
+			loading,
+			success,
+			error,
+			successAction: { label: __('Undo'), onClick: () => undoAction() },
+		})
+
+	toast.promise(action(), { loading, success, error })
+}
+
 export const kebabToTitleCase = (str: string) =>
 	str
 		.split('-')
