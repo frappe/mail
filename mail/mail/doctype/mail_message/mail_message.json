@@ -40,6 +40,7 @@
   "section_break_i7gm",
   "draft",
   "seen",
+  "junk",
   "flagged",
   "answered",
   "forwarded",
@@ -450,6 +451,14 @@
    "fieldtype": "Code",
    "label": "Preview",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "junk",
+   "fieldtype": "Check",
+   "label": "Junk",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -457,7 +466,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-08-19 17:25:24.459352",
+ "modified": "2025-11-11 14:57:57.517275",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Message",
