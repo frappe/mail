@@ -106,8 +106,13 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
- "links": [],
- "modified": "2025-11-06 15:00:41.376263",
+ "links": [
+  {
+   "link_doctype": "Contact Card",
+   "link_fieldname": "address_book"
+  }
+ ],
+ "modified": "2025-11-11 12:24:27.126495",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Address Book",

@@ -245,6 +245,16 @@ class JMAPClient:
 
 		return frappe.cache.hget("jmap:identities", self.__session.auth[0], generator)
 
+	@property
+	def address_books(self) -> list[dict]:
+		"""Returns the address books for the logged-in user."""
+
+		def generator() -> list[dict]:
+			address_books = frappe.db.get_all("Address Book", {"account": self.__session.auth[0]})
+			return address_books
+
+		return frappe.cache.hget("jmap:address_books", self.__session.auth[0], generator)
+
 	# -------------------------------
 	# Mailbox
 	# -------------------------------
@@ -1076,11 +1086,6 @@ class JMAPClient:
 		_ids = []
 		total = None
 		batch_size = min(limit, self.max_objects_in_get)
-		sort = sort or [
-			{"property": "name/given", "isAscending": True},
-			{"property": "name/surname", "isAscending": True},
-			{"property": "name/surname2", "isAscending": True},
-		]
 
 		while len(_ids) < limit:
 			response = self._make_request(
@@ -1093,7 +1098,7 @@ class JMAPClient:
 							"filter": filter or {},
 							"position": position,
 							"limit": batch_size,
-							"sort": sort,
+							"sort": sort or [],
 							"calculateTotal": True if total is None else False,
 						},
 						"0",

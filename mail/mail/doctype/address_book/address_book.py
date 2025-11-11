@@ -81,6 +81,14 @@ class AddressBook(Document):
 		return {}
 
 
+def validate_address_book_name_format(name: str) -> None:
+	"""Validates that the address book name is in the format 'account|id'."""
+
+	parts = name.split("|")
+	if len(parts) != 2:
+		frappe.throw(_("Address Book name must be in the format 'account|id'."))
+
+
 def get_total_cache_key(account: str) -> str:
 	"""Returns a cache key for total address books count for the given account."""
 
