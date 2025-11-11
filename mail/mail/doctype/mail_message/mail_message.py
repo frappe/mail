@@ -1003,7 +1003,7 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 				}
 			)
 
-	for key in ["draft", "seen", "flagged", "answered", "forwarded"]:
+	for key in ["draft", "junk", "seen", "flagged", "answered", "forwarded"]:
 		formatted_message[key] = cint(message["keywords"].get(f"${key}", False))
 
 	for key, field in {"messageId": "message_id", "inReplyTo": "in_reply_to"}.items():
