@@ -7,6 +7,7 @@
  "field_order": [
   "section_break_pyok",
   "type",
+  "label",
   "column_break_pd4f",
   "number",
   "section_break_a5xr",
@@ -46,6 +47,12 @@
    "label": "Contexts",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
   }
  ],
  "grid_page_length": 50,
@@ -53,7 +60,7 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-10 16:25:30.389318",
+ "modified": "2025-11-11 16:16:51.970112",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Contact Card Phone",

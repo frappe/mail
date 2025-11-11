@@ -1044,9 +1044,9 @@ class JMAPClient:
 		creation_id: str,
 		address_book_ids: list[str],
 		full_name: str | None = None,
-		emails: dict[str, list[str]] | None = None,
-		phones: dict[str, list[str]] | None = None,
-		addresses: dict[str, list[dict]] | None = None,
+		emails: list[dict] | None = None,
+		phones: list[dict] | None = None,
+		addresses: list[dict] | None = None,
 		kind: str = "individual",
 	) -> dict:
 		"""Creates a contact card with the given parameters."""
@@ -1195,9 +1195,9 @@ class JMAPClient:
 		id: str,
 		address_book_ids: list[str],
 		full_name: str | None = None,
-		emails: dict[str, list[str]] | None = None,
-		phones: dict[str, list[str]] | None = None,
-		addresses: dict[str, list[dict]] | None = None,
+		emails: list[dict] | None = None,
+		phones: list[dict] | None = None,
+		addresses: list[dict] | None = None,
 		kind: str = "individual",
 	) -> dict:
 		"""Updates the contact card with the given parameters."""
@@ -1459,50 +1459,55 @@ def _get_name_map(full_name: str | None = None) -> dict:
 	return {}
 
 
-def _get_emails_map(emails: dict[str, list[str]] | None = None) -> dict[str, dict] | None:
+def _get_emails_map(emails: list[dict] | None = None) -> dict[str, dict] | None:
 	"""Returns the emails map for the given emails dictionary."""
 
 	if emails:
 		counter = 0
 		emails_map = {}
-		for email_type, email_addresses in emails.items():
-			for email_address in email_addresses:
-				emails_map[f"{counter}"] = {"contexts": {email_type: True}, "address": email_address}
-				counter += 1
+		for email in emails:
+			emails_map[f"{counter}"] = {
+				"address": email["address"],
+				"label": email.get("label"),
+				"contexts": {email["type"]: True},
+			}
+			counter += 1
 
 		return emails_map
 
 
-def _get_phones_map(phones: dict[str, list[str]] | None = None) -> dict[str, dict] | None:
+def _get_phones_map(phones: list[dict] | None = None) -> dict[str, dict] | None:
 	"""Returns the phones map for the given phones dictionary."""
 
 	if phones:
 		counter = 0
 		phones_map = {}
-		for phone_type, phone_numbers in phones.items():
-			for phone_number in phone_numbers:
-				phones_map[f"{counter}"] = {"contexts": {phone_type: True}, "number": phone_number}
-				counter += 1
+		for phone in phones:
+			phones_map[f"{counter}"] = {
+				"number": phone["number"],
+				"label": phone.get("label"),
+				"contexts": {phone["type"]: True},
+			}
+			counter += 1
 
 		return phones_map
 
 
-def _get_addresses_map(addresses: dict[str, list[dict]] | None = None) -> dict[str, dict] | None:
+def _get_addresses_map(addresses: list[dict] | None = None) -> dict[str, dict] | None:
 	"""Returns the addresses map for the given addresses dictionary."""
 
 	if addresses:
 		counter = 0
 		addresses_map = {}
-		for address_type, _addresses in addresses.items():
-			for address in _addresses:
-				addresses_map[f"{counter}"] = {
-					"street": {"components": [{"kind": "name", "value": address.get("street")}]},
-					"locality": address.get("locality"),
-					"region": address.get("region"),
-					"postcode": address.get("postcode"),
-					"country": address.get("country"),
-					"contexts": {address_type: True},
-				}
-				counter += 1
+		for address in addresses:
+			addresses_map[f"{counter}"] = {
+				"street": {"components": [{"kind": "name", "value": address.get("street")}]},
+				"locality": address.get("locality"),
+				"region": address.get("region"),
+				"postcode": address.get("postcode"),
+				"country": address.get("country"),
+				"contexts": {address["type"]: True},
+			}
+			counter += 1
 
 		return addresses_map

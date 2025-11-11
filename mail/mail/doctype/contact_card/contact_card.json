@@ -92,6 +92,7 @@
   {
    "fieldname": "name_breakup",
    "fieldtype": "JSON",
+   "hidden": 1,
    "label": "Name Breakup",
    "no_copy": 1,
    "read_only": 1
@@ -135,7 +136,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-11 12:24:01.499912",
+ "modified": "2025-11-11 16:38:41.717727",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Contact Card",

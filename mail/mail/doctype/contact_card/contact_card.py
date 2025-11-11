@@ -33,36 +33,49 @@ class ContactCard(Document):
 		return address_book_ids
 
 	@property
-	def formatted_emails(self) -> dict[str, list[str]] | None:
+	def formatted_emails(self) -> list[dict] | None:
 		"""Returns emails in the format required by JMAP API."""
 
 		if self.emails:
-			emails = {}
+			emails = []
 			for email in self.emails:
-				emails.setdefault(email.type, set()).add(email.address)
+				emails.append(
+					{
+						"type": email.type,
+						"label": email.label,
+						"address": email.address,
+					}
+				)
 
-			return {k: list(v) for k, v in emails.items()}
+			return emails
 
 	@property
-	def formatted_phones(self) -> dict[str, list[str]] | None:
+	def formatted_phones(self) -> list[dict] | None:
 		"""Returns phones in the format required by JMAP API."""
 
 		if self.phones:
-			phones = {}
+			phones = []
 			for phone in self.phones:
-				phones.setdefault(phone.type, set()).add(phone.number)
+				phones.append(
+					{
+						"type": phone.type,
+						"label": phone.label,
+						"number": phone.number,
+					}
+				)
 
-			return {k: list(v) for k, v in phones.items()}
+			return phones
 
 	@property
-	def formatted_addresses(self) -> dict[str, list[dict]] | None:
+	def formatted_addresses(self) -> list[dict] | None:
 		"""Returns addresses in the format required by JMAP API."""
 
 		if self.addresses:
-			addresses = {}
+			addresses = []
 			for address in self.addresses:
-				addresses.setdefault(address.type, []).append(
+				addresses.append(
 					{
+						"type": address.type,
 						"street": address.street,
 						"locality": address.locality,
 						"region": address.region,
@@ -208,9 +221,9 @@ def add_contact_card(
 	account: str,
 	address_book_ids: list[str],
 	full_name: str | None = None,
-	emails: dict[str, list[str]] | None = None,
-	phones: dict[str, list[str]] | None = None,
-	addresses: dict[str, list[dict]] | None = None,
+	emails: list[dict] | None = None,
+	phones: list[dict] | None = None,
+	addresses: list[dict] | None = None,
 	kind: str = "individual",
 ) -> str:
 	"""Adds a contact card for the given account with the specified parameters."""
@@ -300,9 +313,9 @@ def update_contact_card(
 	id: str,
 	address_book_ids: list[str],
 	full_name: str | None = None,
-	emails: dict[str, list[str]] | None = None,
-	phones: dict[str, list[str]] | None = None,
-	addresses: dict[str, list[dict]] | None = None,
+	emails: list[dict] | None = None,
+	phones: list[dict] | None = None,
+	addresses: list[dict] | None = None,
 	kind: str = "individual",
 ) -> None:
 	"""Updates an existing contact card with the given parameters."""
@@ -420,6 +433,7 @@ def format_contact_card(account: str, address_book_map: dict, contact_card: dict
 			{
 				"type": type,
 				"address": address,
+				"label": email.get("label"),
 				"contexts": json.dumps(contexts, indent=4),
 			}
 		)
@@ -433,6 +447,7 @@ def format_contact_card(account: str, address_book_map: dict, contact_card: dict
 			{
 				"type": type,
 				"number": number,
+				"label": phone.get("label"),
 				"contexts": json.dumps(contexts, indent=4),
 			}
 		)
