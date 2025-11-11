@@ -1,0 +1,66 @@
+{
+ "actions": [],
+ "creation": "2025-11-08 12:56:40.266221",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_nnlu",
+  "address_book",
+  "column_break_hizw",
+  "address_book_id",
+  "address_book_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_nnlu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "address_book",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Address Book",
+   "options": "Address Book",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_hizw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "address_book_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Address Book ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "address_book_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Address Book Name",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-10 13:00:18.092804",
+ "modified_by": "Administrator",
+ "module": "Mail",
+ "name": "Contact Card Address Book",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

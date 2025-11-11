@@ -9,6 +9,7 @@ from frappe import _
 from frappe.utils import create_batch
 
 from mail.utils.cache import get_cluster_for_tenant
+from mail.utils.dt import utcnow
 from mail.utils.validation import has_permission_for_account
 
 
@@ -251,13 +252,23 @@ class JMAPClient:
 
 		return frappe.cache.hget("jmap:identities", self.__session.auth[0], generator)
 
+	@property
+	def address_books(self) -> list[dict]:
+		"""Returns the address books for the logged-in user."""
+
+		def generator() -> list[dict]:
+			address_books = frappe.db.get_all("Address Book", {"account": self.__session.auth[0]})
+			return address_books
+
+		return frappe.cache.hget("jmap:address_books", self.__session.auth[0], generator)
+
 	# -------------------------------
 	# Mailbox
 	# -------------------------------
 
 	def mailbox_create(
 		self,
-		unique_id: str,
+		creation_id: str,
 		name: str,
 		role: str | None = None,
 		parent: str | None = None,
@@ -274,7 +285,7 @@ class JMAPClient:
 					{
 						"accountId": self.primary_account_id,
 						"create": {
-							unique_id: {
+							creation_id: {
 								"name": name,
 								"role": role or None,
 								"parentId": parent or None,
@@ -293,24 +304,7 @@ class JMAPClient:
 	def mailbox_get(self, ids: list[str] | None = None) -> list[dict]:
 		"""Returns the mailboxes for the provided mailbox IDs."""
 
-		mailboxes = []
-		if ids and len(ids) > self.max_objects_in_get:
-			for ids_batch in create_batch(ids, self.max_objects_in_get):
-				response = self._make_request(
-					using=["urn:ietf:params:jmap:mail"],
-					method_calls=[
-						[
-							"Mailbox/get",
-							{
-								"accountId": self.primary_account_id,
-								"ids": ids_batch,
-							},
-							"0",
-						]
-					],
-				)
-				mailboxes.extend(response["methodResponses"][0][1]["list"])
-		else:
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
 			response = self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
@@ -318,15 +312,21 @@ class JMAPClient:
 						"Mailbox/get",
 						{
 							"accountId": self.primary_account_id,
-							"ids": ids or None,
+							"ids": ids_batch,
 						},
 						"0",
 					]
 				],
 			)
-			mailboxes.extend(response["methodResponses"][0][1]["list"])
+			return response["methodResponses"][0][1]["list"]
 
-		return mailboxes
+		if ids and len(ids) > self.max_objects_in_get:
+			mailboxes = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				mailboxes.extend(fetch(ids_batch))
+			return mailboxes
+
+		return fetch(ids)
 
 	def mailbox_update(
 		self,
@@ -815,7 +815,7 @@ class JMAPClient:
 	# -------------------------------
 
 	def push_subscription_create(
-		self, unique_id: str, device_client_id: str, url: str, types: list[str] | None = None
+		self, creation_id: str, device_client_id: str, url: str, types: list[str] | None = None
 	) -> dict:
 		"""Creates a push subscription."""
 
@@ -826,7 +826,7 @@ class JMAPClient:
 					"PushSubscription/set",
 					{
 						"create": {
-							unique_id: {
+							creation_id: {
 								"deviceClientId": device_client_id,
 								"url": url,
 								"types": types,
@@ -843,38 +843,28 @@ class JMAPClient:
 	def push_subscription_get(self, ids: list[str] | None = None) -> list[dict]:
 		"""Returns the push subscriptions for the provided subscription IDs."""
 
-		subscriptions = []
-		if ids and len(ids) > self.max_objects_in_get:
-			for ids_batch in create_batch(ids, self.max_objects_in_get):
-				response = self._make_request(
-					using=["urn:ietf:params:jmap:mail"],
-					method_calls=[
-						[
-							"PushSubscription/get",
-							{
-								"ids": ids_batch,
-							},
-							"0",
-						]
-					],
-				)
-				subscriptions.extend(response["methodResponses"][0][1]["list"])
-		else:
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
 			response = self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
 					[
 						"PushSubscription/get",
 						{
-							"ids": ids or None,
+							"ids": ids_batch,
 						},
 						"0",
 					]
 				],
 			)
-			subscriptions.extend(response["methodResponses"][0][1]["list"])
+			return response["methodResponses"][0][1]["list"]
 
-		return subscriptions
+		if ids and len(ids) > self.max_objects_in_get:
+			subscriptions = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				subscriptions.extend(fetch(ids_batch))
+			return subscriptions
+
+		return fetch(ids)
 
 	def push_subscription_update(
 		self, id: str, verification_code: str | None = None, expires: str | None = None
@@ -918,6 +908,345 @@ class JMAPClient:
 					[
 						"PushSubscription/set",
 						{
+							"destroy": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
+	# -------------------------------
+	# Address Book & Contact Card
+	# -------------------------------
+
+	def address_book_create(
+		self,
+		creation_id: str,
+		name: str,
+		description: str | None = None,
+		sort_order: int = 0,
+		default: bool = False,
+		subscribed: bool = True,
+	) -> dict:
+		"""Creates a address book with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:contacts"],
+			method_calls=[
+				[
+					"AddressBook/set",
+					{
+						"accountId": self.primary_account_id,
+						"create": {
+							creation_id: {
+								"name": name,
+								"description": description or None,
+								"sortOrder": sort_order or 0,
+								"isSubscribed": subscribed or False,
+							}
+						},
+						"onSuccessSetIsDefault": f"#{creation_id}" if default else None,
+					},
+					"0",
+				]
+			],
+		)
+		return response["methodResponses"][0][1]
+
+	def address_book_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the address books for the provided address book IDs."""
+
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:contacts"],
+				method_calls=[
+					[
+						"AddressBook/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			address_books = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				address_books.extend(fetch(ids_batch))
+			return address_books
+
+		return fetch(ids)
+
+	def address_book_update(
+		self,
+		id: str,
+		name: str,
+		description: str | None = None,
+		sort_order: int = 0,
+		default: bool = False,
+		subscribed: bool = True,
+	) -> dict:
+		"""Updates the address book with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:contacts"],
+			method_calls=[
+				[
+					"AddressBook/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							id: {
+								"name": name,
+								"description": description or None,
+								"sortOrder": sort_order or 0,
+								"isSubscribed": subscribed or False,
+							}
+						},
+						"onSuccessSetIsDefault": id if default else None,
+					},
+					"0",
+				]
+			],
+		)
+		return response["methodResponses"][0][1]
+
+	def address_book_delete(self, ids: list[str], remove_contents: bool = False) -> dict:
+		"""Destroys the address books with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:contacts"],
+				method_calls=[
+					[
+						"AddressBook/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
+							"onDestroyRemoveContents": remove_contents,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
+	def contact_card_create(
+		self,
+		creation_id: str,
+		address_book_ids: list[str],
+		full_name: str | None = None,
+		emails: list[dict] | None = None,
+		phones: list[dict] | None = None,
+		addresses: list[dict] | None = None,
+		kind: str = "individual",
+	) -> dict:
+		"""Creates a contact card with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:contacts"],
+			method_calls=[
+				[
+					"ContactCard/set",
+					{
+						"accountId": self.primary_account_id,
+						"create": {
+							creation_id: {
+								"addressBookIds": {ab_id: True for ab_id in address_book_ids},
+								"kind": kind,
+								"name": _get_name_map(full_name),
+								"emails": _get_emails_map(emails),
+								"phones": _get_phones_map(phones),
+								"addresses": _get_addresses_map(addresses),
+								"created": utcnow(),
+								"updated": utcnow(),
+							}
+						},
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	def contact_card_query(
+		self, filter: dict | None = None, position: int = 0, limit: int = 50, sort: list[dict] | None = None
+	) -> dict:
+		"""Query contact cards in batches until reaching the limit."""
+
+		_ids = []
+		total = None
+		batch_size = min(limit, self.max_objects_in_get)
+
+		while len(_ids) < limit:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:contacts"],
+				method_calls=[
+					[
+						"ContactCard/query",
+						{
+							"accountId": self.primary_account_id,
+							"filter": filter or {},
+							"position": position,
+							"limit": batch_size,
+							"sort": sort or [],
+							"calculateTotal": True if total is None else False,
+						},
+						"0",
+					]
+				],
+			)
+			result = response["methodResponses"][0][1]
+
+			if total is None:
+				total = result["total"]
+
+			ids = result["ids"]
+			if not ids:
+				break
+
+			_ids.extend(ids)
+			position += len(ids)
+
+			if len(ids) < batch_size:
+				break
+
+		return {"ids": _ids[:limit], "total": total}
+
+	def contact_card_get(
+		self, ids: list[str] | None = None, properties: list[str] | None = None
+	) -> list[dict]:
+		"""Returns the contact cards for the provided contact card IDs."""
+
+		def fetch(ids_batch: list[str] | None, properties: list[str]) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:contacts"],
+				method_calls=[
+					[
+						"ContactCard/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+							"properties": properties,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		properties = properties or [
+			# --- JMAP-specific ---
+			"id",
+			"addressBookIds",
+			"blobId",
+			# --- JSContact core fields ---
+			"uid",
+			"kind",
+			"prodId",
+			"version",
+			"created",
+			"updated",
+			"fullName",
+			"name",
+			"nickNames",
+			"categories",
+			"notes",
+			"anniversaries",
+			"urls",
+			"relatedTo",
+			"organizations",
+			"titles",
+			"roles",
+			"emails",
+			"phones",
+			"addresses",
+			"onlineServices",
+			"preferredLanguages",
+			"speakToAs",
+			"gender",
+			"timeZones",
+			"photos",
+			"members",
+			"preferredContactChannels",
+			"localizations",
+			"extensions",
+		]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			contact_cards = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				contact_cards.extend(fetch(ids_batch, properties))
+			return contact_cards
+
+		return fetch(ids, properties)
+
+	def contact_card_update(
+		self,
+		id: str,
+		address_book_ids: list[str],
+		full_name: str | None = None,
+		emails: list[dict] | None = None,
+		phones: list[dict] | None = None,
+		addresses: list[dict] | None = None,
+		kind: str = "individual",
+	) -> dict:
+		"""Updates the contact card with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:contacts"],
+			method_calls=[
+				[
+					"ContactCard/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							id: {
+								"addressBookIds": {ab_id: True for ab_id in address_book_ids},
+								"kind": kind,
+								"name": _get_name_map(full_name),
+								"emails": _get_emails_map(emails),
+								"phones": _get_phones_map(phones),
+								"addresses": _get_addresses_map(addresses),
+								"updated": utcnow(),
+							}
+						},
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	def contact_card_delete(self, ids: list[str]) -> dict:
+		"""Destroys the contact cards with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:contacts"],
+				method_calls=[
+					[
+						"ContactCard/set",
+						{
+							"accountId": self.primary_account_id,
 							"destroy": ids_batch,
 						},
 						"0",
@@ -1130,3 +1459,71 @@ def raise_for_status(response: requests.Response) -> None:
 
 		message = _("Error {0}: {1}").format(response.status_code, error_text)
 		raise requests.exceptions.HTTPError(message, response=response)
+
+
+def _get_name_map(full_name: str | None = None) -> dict:
+	"""Returns the name map for the given full name."""
+
+	if full_name:
+		given, surname = full_name.split(" ", 1) if " " in full_name else (full_name, None)
+		return {
+			"full": full_name,
+			"components": [{"kind": "given", "value": given}, {"kind": "surname", "value": surname}],
+			"isOrdered": True,
+		}
+
+	return {}
+
+
+def _get_emails_map(emails: list[dict] | None = None) -> dict[str, dict] | None:
+	"""Returns the emails map for the given emails dictionary."""
+
+	if emails:
+		counter = 0
+		emails_map = {}
+		for email in emails:
+			emails_map[f"{counter}"] = {
+				"address": email["address"],
+				"label": email.get("label"),
+				"contexts": {email["type"]: True},
+			}
+			counter += 1
+
+		return emails_map
+
+
+def _get_phones_map(phones: list[dict] | None = None) -> dict[str, dict] | None:
+	"""Returns the phones map for the given phones dictionary."""
+
+	if phones:
+		counter = 0
+		phones_map = {}
+		for phone in phones:
+			phones_map[f"{counter}"] = {
+				"number": phone["number"],
+				"label": phone.get("label"),
+				"contexts": {phone["type"]: True},
+			}
+			counter += 1
+
+		return phones_map
+
+
+def _get_addresses_map(addresses: list[dict] | None = None) -> dict[str, dict] | None:
+	"""Returns the addresses map for the given addresses dictionary."""
+
+	if addresses:
+		counter = 0
+		addresses_map = {}
+		for address in addresses:
+			addresses_map[f"{counter}"] = {
+				"street": {"components": [{"kind": "name", "value": address.get("street")}]},
+				"locality": address.get("locality"),
+				"region": address.get("region"),
+				"postcode": address.get("postcode"),
+				"country": address.get("country"),
+				"contexts": {address["type"]: True},
+			}
+			counter += 1
+
+		return addresses_map

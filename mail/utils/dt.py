@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from email.utils import parsedate_to_datetime as parsedate
 from zoneinfo import ZoneInfo
 
@@ -7,7 +7,22 @@ from frappe import _
 from frappe.utils import convert_utc_to_system_timezone, get_datetime, get_datetime_str, get_system_timezone
 
 
-def convert_to_utc(date_time: datetime | str, from_timezone: str | None = None) -> "datetime":
+def get_utc_now(naive: bool = False) -> datetime:
+	"""Returns the current UTC datetime."""
+
+	now = datetime.now(timezone.utc)
+	return now.replace(tzinfo=None) if naive else now
+
+
+def utcnow() -> "str":
+	"""Returns current UTC time in ISO format."""
+
+	return get_utc_now().isoformat().replace("+00:00", "Z")
+
+
+def convert_to_utc(
+	date_time: datetime | str, from_timezone: str | None = None, naive: bool = False
+) -> "datetime":
 	"""Converts the given datetime to UTC timezone."""
 
 	dt = get_datetime(date_time)
@@ -15,7 +30,8 @@ def convert_to_utc(date_time: datetime | str, from_timezone: str | None = None) 
 		tz = ZoneInfo(from_timezone or get_system_timezone())
 		dt = dt.replace(tzinfo=tz)
 
-	return dt.astimezone(timezone.utc)
+	utc_dt = dt.astimezone(timezone.utc)
+	return utc_dt.replace(tzinfo=None) if naive else utc_dt
 
 
 def parsedate_to_datetime(date_header: str) -> "datetime":
@@ -53,3 +69,23 @@ def add_or_update_tzinfo(date_time: datetime | str, timezone: str | None = None)
 		date_time = date_time.astimezone(target_tz)
 
 	return str(date_time)
+
+
+def to_iso8601_z(dt: datetime) -> str:
+	"""
+	Convert a datetime (naive or aware) to an ISO 8601 string ending with 'Z' (UTC).
+
+	Rules:
+	- If naive, assume UTC.
+	- Always return a string like "YYYY-MM-DDTHH:MM:SS.sssZ".
+	"""
+
+	if isinstance(dt, date):
+		dt = get_datetime(dt)
+
+	if dt.tzinfo is None:
+		dt = dt.replace(tzinfo=timezone.utc)
+	else:
+		dt = dt.astimezone(timezone.utc)
+
+	return dt.isoformat().replace("+00:00", "Z")
