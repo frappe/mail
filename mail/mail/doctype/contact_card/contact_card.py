@@ -67,7 +67,7 @@ class ContactCard(Document):
 						"locality": address.locality,
 						"region": address.region,
 						"country": address.country,
-						"pincode": address.pincode,
+						"postcode": address.postcode,
 					}
 				)
 
@@ -384,9 +384,11 @@ def format_contact_card(account: str, address_book_map: dict, contact_card: dict
 	"""Formats contact card data for display."""
 
 	full_name = None
-	if contact_card.get("name"):
-		if components := contact_card["name"].get("components"):
-			if contact_card["name"].get("isOrdered", False):
+	if contact_name := contact_card.get("name"):
+		if components := contact_name.get("components"):
+			if contact_name.get("full"):
+				full_name = contact_name["full"]
+			elif contact_name.get("isOrdered", False):
 				full_name = " ".join([component["value"] for component in components])
 			else:
 				given = next(
@@ -439,14 +441,25 @@ def format_contact_card(account: str, address_book_map: dict, contact_card: dict
 	for address in contact_card.get("addresses", {}).values():
 		contexts = address.get("contexts", {})
 		type = next(context for context in contexts.keys()) if contexts else None
+
+		street = None
+		if _street := address.get("street"):
+			if isinstance(_street, dict):
+				components = _street.get("components", [])
+				street = next(
+					(component["value"] for component in components if component["kind"] == "name"), None
+				)
+			elif isinstance(_street, str):
+				street = _street
+
 		addresses.append(
 			{
 				"type": type,
-				"street": address.get("street"),
+				"street": street,
 				"locality": address.get("locality"),
 				"region": address.get("region"),
 				"country": address.get("country"),
-				"pincode": address.get("pincode"),
+				"postcode": address.get("postcode"),
 				"contexts": json.dumps(contexts, indent=4),
 			}
 		)

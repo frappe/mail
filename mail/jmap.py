@@ -1158,7 +1158,7 @@ class JMAPClient:
 			"updated",
 			"fullName",
 			"name",
-			"nicknames",
+			"nickNames",
 			"categories",
 			"notes",
 			"anniversaries",
@@ -1451,6 +1451,7 @@ def _get_name_map(full_name: str | None = None) -> dict:
 	if full_name:
 		given, surname = full_name.split(" ", 1) if " " in full_name else (full_name, None)
 		return {
+			"full": full_name,
 			"components": [{"kind": "given", "value": given}, {"kind": "surname", "value": surname}],
 			"isOrdered": True,
 		}
@@ -1494,7 +1495,14 @@ def _get_addresses_map(addresses: dict[str, list[dict]] | None = None) -> dict[s
 		addresses_map = {}
 		for address_type, _addresses in addresses.items():
 			for address in _addresses:
-				addresses_map[f"{counter}"] = {"contexts": {address_type: True}, **address}
+				addresses_map[f"{counter}"] = {
+					"street": {"components": [{"kind": "name", "value": address.get("street")}]},
+					"locality": address.get("locality"),
+					"region": address.get("region"),
+					"postcode": address.get("postcode"),
+					"country": address.get("country"),
+					"contexts": {address_type: True},
+				}
 				counter += 1
 
 		return addresses_map
