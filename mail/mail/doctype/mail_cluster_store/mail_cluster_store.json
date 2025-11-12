@@ -293,8 +293,7 @@
    "description": "Used when retrieving credentials from a shared credentials file. If specified, the server will use the access key ID, secret access key, and session token (if available) associated with the given profile.",
    "fieldname": "profile",
    "fieldtype": "Data",
-   "label": "Profile",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
+   "label": "Profile"
   },
   {
    "fieldname": "bucket_storage_account_section",
@@ -385,8 +384,7 @@
    "description": "The security token for the S3 account.",
    "fieldname": "security_token",
    "fieldtype": "Password",
-   "label": "Security Token",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
+   "label": "Security Token"
   },
   {
    "depends_on": "eval: doc.type == \"S3-compatible\"",
@@ -567,7 +565,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-06 23:03:43.299954",
+ "modified": "2025-11-12 18:57:32.503939",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster Store",
