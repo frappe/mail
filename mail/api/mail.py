@@ -466,11 +466,11 @@ def move_mails(_ids: list[str], mailbox: str) -> None:
 
 
 @frappe.whitelist()
-def set_threads_mailbox(thread_ids: list[str], mailbox: str) -> list[str]:
+def set_threads_mailbox(thread_ids: dict[str, list[str]]) -> dict:
 	"""Sets mailbox for threads."""
 
 	for move_to_mailbox, ids in thread_ids.items():
-		account, messages = get_account_and_filtered_message_ids(ids, mailbox)
+		account, messages = get_account_and_filtered_message_ids(ids)
 		move_messages(account, messages, move_to_mailbox)
 
 	return thread_ids

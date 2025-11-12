@@ -186,7 +186,7 @@
 											handleSetSeen({ [Number(seen)]: [mail.thread_id] })
 									"
 									@trash-thread="
-										handleMoveThreads([mail.thread_id], mailboxIds.trash)
+										handleMoveThreads({ [mailboxIds.trash]: [mail.thread_id] })
 									"
 									@delete-thread="junkOrDeleteThreads([mail.thread_id], false)"
 									@set-selected="
@@ -238,17 +238,18 @@
 					@set-seen="
 						(seen: boolean) =>
 							seen
-								? setSeen.submit({ 1: [threadID] })
-								: handleSetSeen({ 0: [threadID] })
+								? setSeen.submit({ 1: [threadID!] })
+								: handleSetSeen({ 0: [threadID!] })
 					"
 					@move-thread="
-						(moveToMailbox: string) => handleMoveThreads([threadID], moveToMailbox)
+						(moveToMailbox: string) =>
+							handleMoveThreads({ [moveToMailbox]: [threadID!] })
 					"
 					@set-spam-status="
 						(spam: boolean) =>
 							spam
 								? junkOrDeleteThreads([threadID!], true)
-								: handleSetSpamStatus({ 0: [threadID] })
+								: handleSetSpamStatus({ 0: [threadID!] })
 					"
 					@delete-thread="junkOrDeleteThreads([threadID!], false)"
 					@prev-thread="goToThreadByOffset(-1)"
@@ -545,7 +546,7 @@ const handleThreadActions = (e: KeyboardEvent, key: string) => {
 		e.preventDefault()
 		if (e.shiftKey || mailbox === mailboxIds.trash)
 			return junkOrDeleteThreads(thread_ids, false)
-		return handleMoveThreads(thread_ids, mailboxIds.trash)
+		return handleMoveThreads({ [mailboxIds.trash]: thread_ids })
 	}
 
 	// Mark as junk (!)
@@ -629,7 +630,7 @@ const selectActions = computed((): SelectAction[] =>
 		},
 		{
 			label: __('Move to Trash (Delete)'),
-			onClick: () => handleMoveThreads(selections.value, mailboxIds.trash),
+			onClick: () => handleMoveThreads({ [mailboxIds.trash]: selections.value }),
 			icon: Trash2,
 			condition: !!selections.value.length && mailbox !== mailboxIds.trash,
 		},
@@ -821,18 +822,13 @@ const setSeen = createResource({
 })
 
 interface MoveThreadsParams {
-	thread_ids: string[]
-	move_to_mailbox: string
+	thread_ids: Record<string, string[]>
 	mailbox: string
 }
 
 const moveThreads = createResource({
 	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: ({ thread_ids, move_to_mailbox, mailbox }: MoveThreadsParams) => ({
-		thread_ids,
-		move_to_mailbox,
-		mailbox,
-	}),
+	makeParams: ({ thread_ids, mailbox }: MoveThreadsParams) => ({ thread_ids, mailbox }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
@@ -841,7 +837,7 @@ const moveToOptions = computed(() =>
 		?.filter((m) => ![mailbox, mailboxIds.sent, mailboxIds.drafts].includes(m.id))
 		.map((m) => ({
 			label: m._name,
-			onClick: () => handleMoveThreads(selections.value, m.id),
+			onClick: () => handleMoveThreads({ [m.id]: selections.value }),
 		})),
 )
 
@@ -952,20 +948,7 @@ const handleSuccessAndRemoveFromList = (
 
 const handleSetSeen = (threadIDs: SetSeenParams, isUndo = false) => {
 	const selectedThreads = Object.values(threadIDs).flat()
-	const seenMap: Record<string, 0 | 1> = Object.fromEntries(
-		threadsResource.value.data.map(
-			({ thread_id, seen }: { thread_id: string; seen: 1 | 0 }) => [thread_id, seen],
-		),
-	)
-	const originalState: SetSeenParams = selectedThreads.reduce(
-		(acc: SetSeenParams, thread_id: string) => {
-			const key = seenMap[thread_id]
-			if (!acc[key]) acc[key] = []
-			acc[key].push(thread_id)
-			return acc
-		},
-		{},
-	)
+	const originalState = getOriginalState(selectedThreads, 'seen')
 	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
 
 	const action = () => setSeen.submit(threadIDs)
@@ -982,53 +965,48 @@ const handleSetSeen = (threadIDs: SetSeenParams, isUndo = false) => {
 	)
 }
 
-const handleMoveThreads = (
-	thread_ids: string[],
-	move_to_mailbox: string,
-	from_mailbox: string = mailbox,
-	is_undo: boolean = false,
-) => {
-	if (!thread_ids?.length) return
-
-	const moveToMailboxName = mailboxes.data?.find((m) => m.id === move_to_mailbox)._name
-	const action = () => moveThreads.submit({ thread_ids, move_to_mailbox, mailbox: from_mailbox })
-
-	if (is_undo) {
-		const success =
-			thread_ids.length === 1
-				? __('Thread moved back to {0}.', [moveToMailboxName])
-				: __('Threads moved back to {0}.', [moveToMailboxName])
-		return raisePromiseToast(action, __('Undoing...'), success)
-	}
-
-	const loading = __('Moving to {0}...', [moveToMailboxName])
-	const success =
-		thread_ids.length === 1
-			? __('Thread moved to {0}.', [moveToMailboxName])
-			: __('Threads moved to {0}.', [moveToMailboxName])
-
-	if (['starred', 'search'].includes(mailbox)) return raisePromiseToast(action, loading, success)
-
-	const undoAction = () => handleMoveThreads(thread_ids, from_mailbox, move_to_mailbox, true)
-	raisePromiseToast(action, loading, success, undoAction)
-}
-
-const handleSetSpamStatus = (threadIDs: SetSeenParams, isUndo = false) => {
+const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean = false) => {
 	const selectedThreads = Object.values(threadIDs).flat()
-	const junkMap: Record<string, 0 | 1> = Object.fromEntries(
-		threadsResource.value.data.map(
-			({ thread_id, junk }: { thread_id: string; junk: 1 | 0 }) => [thread_id, junk],
-		),
+	const statusMap: Record<string, string> = Object.fromEntries(
+		threadsResource.value.data.map((thread: Thread) => [
+			thread.thread_id,
+			thread['mailboxes'][0].mailbox_id,
+		]),
 	)
-	const originalState: SetSeenParams = selectedThreads.reduce(
-		(acc: SetSeenParams, thread_id: string) => {
-			const key = junkMap[thread_id]
+	const originalState: Record<string, string[]> = selectedThreads.reduce(
+		(acc: Record<string, string[]>, thread_id: string) => {
+			const key = statusMap[thread_id]
 			if (!acc[key]) acc[key] = []
 			acc[key].push(thread_id)
 			return acc
 		},
 		{},
 	)
+	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
+
+	const action = () => moveThreads.submit({ thread_ids: threadIDs })
+
+	if (isUndo) {
+		const success =
+			selectedThreads.length === 1 ? __('Thread moved back.') : __('Threads moved back.')
+		return raisePromiseToast(action, __('Undoing...'), success)
+	}
+
+	const moveToMailboxName = mailboxes.data?.find((m) => m.id === Object.keys(threadIDs)[0])._name
+	const loading = __('Moving to {0}...', [moveToMailboxName])
+	const success =
+		selectedThreads.length === 1
+			? __('Thread moved to {0}.', [moveToMailboxName])
+			: __('Threads moved to {0}.', [moveToMailboxName])
+
+	const undoAction = () => handleMoveThreads(originalState, true)
+
+	raisePromiseToast(action, loading, success, undoAction)
+}
+
+const handleSetSpamStatus = (threadIDs: SetSeenParams, isUndo = false) => {
+	const selectedThreads = Object.values(threadIDs).flat()
+	const originalState = getOriginalState(selectedThreads, 'junk')
 	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
 
 	const action = () => setSpamStatus.submit(threadIDs)
@@ -1053,6 +1031,28 @@ const handleDeleteThreads = (thread_ids: string[]) => {
 		success: thread_ids.length === 1 ? __('Thread deleted.') : __('Threads deleted.'),
 		error: __('Action failed. Please try again in some time.'),
 	})
+}
+
+const getOriginalState = (
+	selectedThreads: string[],
+	propertyName: 'seen' | 'junk',
+): SetSeenParams => {
+	const statusMap: Record<string, 0 | 1> = Object.fromEntries(
+		threadsResource.value.data.map((thread: Thread) => [
+			thread.thread_id,
+			thread[propertyName],
+		]),
+	)
+	const originalState: SetSeenParams = selectedThreads.reduce(
+		(acc: SetSeenParams, thread_id: string) => {
+			const key = statusMap[thread_id]
+			if (!acc[key]) acc[key] = []
+			acc[key].push(thread_id)
+			return acc
+		},
+		{},
+	)
+	return originalState
 }
 
 // Filter
