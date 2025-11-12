@@ -25,7 +25,8 @@
 <script lang="ts" setup>
 import { h, inject } from 'vue'
 import {
-	BadgeAlert,
+	CircleAlert,
+	CircleCheck,
 	Code,
 	Ellipsis,
 	ExternalLink,
@@ -152,9 +153,15 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 			},
 			{
 				label: __('Mark as Junk'),
-				onClick: () => handleMarkAsSpam(),
-				icon: BadgeAlert,
-				condition: () => ![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
+				onClick: () => handleMarkAsSpam(true),
+				icon: CircleAlert,
+				condition: () => mailbox !== mailboxIds.drafts && mail.junk === 0,
+			},
+			{
+				label: __('Mark as Not Junk'),
+				onClick: () => handleMarkAsSpam(false),
+				icon: CircleCheck,
+				condition: () => mail.junk === 1,
 			},
 			{
 				label: __('Move to Trash'),
@@ -186,14 +193,14 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 
 const markAsSpam = createResource({
 	url: 'mail.api.mail.set_mails_spam_status',
-	makeParams: () => ({ _ids: [mail._id], spam: true }),
+	makeParams: ({ spam }: { spam: boolean }) => ({ _ids: [mail._id], spam }),
 	onSuccess: () => emit('reloadMails'),
 })
 
-const handleMarkAsSpam = () =>
-	toast.promise(markAsSpam.submit(), {
-		loading: __('Marking as Junk...'),
-		success: __('Mail marked as Junk.'),
+const handleMarkAsSpam = (spam: boolean) =>
+	toast.promise(markAsSpam.submit({ spam }), {
+		loading: spam ? __('Marking as Junk...') : __('Marking as Not Junk...'),
+		success: spam ? __('Mail marked as Junk.') : __('Mail marked as Not Junk.'),
 		error: __('Action failed. Please try again in some time.'),
 	})
 

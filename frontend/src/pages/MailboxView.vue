@@ -198,7 +198,7 @@
 						</div>
 					</TransitionGroup>
 					<div
-						v-if="threadsResource.loading"
+						v-if="threadsResource.loading && threadsResource.data.length === limit"
 						class="flex items-center justify-center py-4"
 					>
 						<div class="text-ink-gray-5 flex items-center space-x-2">
@@ -248,7 +248,7 @@
 						(spam: boolean) =>
 							spam
 								? junkOrDeleteThreads([threadID!], true)
-								: handleSetSpamStatus([threadID], spam)
+								: handleSetSpamStatus({ 0: [threadID] })
 					"
 					@delete-thread="junkOrDeleteThreads([threadID!], false)"
 					@prev-thread="goToThreadByOffset(-1)"
@@ -608,13 +608,24 @@ const selectActions = computed((): SelectAction[] =>
 			icon: CircleAlert,
 			condition:
 				!!selections.value.length &&
-				![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
+				mailbox !== mailboxIds.drafts &&
+				selections.value.some(
+					(threadID) =>
+						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+							?.junk === 0,
+				),
 		},
 		{
 			label: __('Mark as Not Junk'),
-			onClick: () => handleSetSpamStatus(selections.value, false),
+			onClick: () => handleSetSpamStatus({ 0: selections.value }),
 			icon: CircleCheck,
-			condition: !!selections.value.length && mailbox === mailboxIds.junk,
+			condition:
+				!!selections.value.length &&
+				selections.value.some(
+					(threadID) =>
+						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+							?.junk === 1,
+				),
 		},
 		{
 			label: __('Move to Trash (Delete)'),
@@ -834,18 +845,9 @@ const moveToOptions = computed(() =>
 		})),
 )
 
-interface SetThreadsSpamStatusParams {
-	thread_ids: string[]
-	spam: boolean
-}
-
 const setSpamStatus = createResource({
 	url: 'mail.api.mail.set_threads_spam_status',
-	makeParams: ({ thread_ids, spam }: SetThreadsSpamStatusParams) => ({
-		thread_ids,
-		mailbox,
-		spam,
-	}),
+	makeParams: (thread_ids: SetSeenParams) => ({ thread_ids }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
@@ -882,7 +884,7 @@ const junkOrDeleteMessage = computed(() => {
 })
 
 const handleJunkOrDelete = () => {
-	if (isJunkAction.value) handleSetSpamStatus(threadsToBeJunkedOrDeleted.value, true)
+	if (isJunkAction.value) handleSetSpamStatus({ 1: threadsToBeJunkedOrDeleted.value })
 	else handleDeleteThreads(threadsToBeJunkedOrDeleted.value)
 
 	showJunkOrDeleteThreads.value = false
@@ -931,12 +933,13 @@ const emptyMailboxOptions = computed(() => ({
 }))
 
 const handleSuccessAndRemoveFromList = (
-	thread_ids: string[],
+	thread_ids: string[] | SetSeenParams,
 	excludeCommonMailboxes: boolean = true,
 ) => {
 	reloadThreads()
 
 	if (excludeCommonMailboxes && ['search', 'starred'].includes(mailbox)) return
+	if (thread_ids instanceof Array === false) thread_ids = Object.values(thread_ids).flat()
 	if (threadID && thread_ids.includes(threadID))
 		if (thread_ids.length === 1) goToThreadByOffset(1)
 		else goToMailbox()
@@ -1010,17 +1013,36 @@ const handleMoveThreads = (
 	raisePromiseToast(action, loading, success, undoAction)
 }
 
-const handleSetSpamStatus = (thread_ids: string[], spam: boolean) => {
-	if (!thread_ids?.length) return
+const handleSetSpamStatus = (threadIDs: SetSeenParams, isUndo = false) => {
+	const selectedThreads = Object.values(threadIDs).flat()
+	const junkMap: Record<string, 0 | 1> = Object.fromEntries(
+		threadsResource.value.data.map(
+			({ thread_id, junk }: { thread_id: string; junk: 1 | 0 }) => [thread_id, junk],
+		),
+	)
+	const originalState: SetSeenParams = selectedThreads.reduce(
+		(acc: SetSeenParams, thread_id: string) => {
+			const key = junkMap[thread_id]
+			if (!acc[key]) acc[key] = []
+			acc[key].push(thread_id)
+			return acc
+		},
+		{},
+	)
+	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
 
-	toast.promise(setSpamStatus.submit({ thread_ids, spam }), {
-		loading: spam ? __('Marking as Junk...') : __('Marking as Not Junk...'),
-		success:
-			thread_ids.length === 1
-				? __('Thread marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
-				: __('Threads marked as {0}.', [spam ? __('Junk') : __('Not Junk')]),
-		error: __('Action failed. Please try again in some time.'),
-	})
+	const action = () => setSpamStatus.submit(threadIDs)
+	if (isUndo) return raisePromiseToast(action, __('Undoing...'), __('Junk status restored.'))
+
+	const seen = Object.keys(threadIDs)[0] === '1'
+	raisePromiseToast(
+		action,
+		seen ? __('Marking as Junk...') : __('Marking as Not Junk...'),
+		selectedThreads.length === 1
+			? __('Thread marked as {0}.', [seen ? __('Junk') : __('Not Junk')])
+			: __('Threads marked as {0}.', [seen ? __('Junk') : __('Not Junk')]),
+		() => handleSetSpamStatus(originalState, true),
+	)
 }
 
 const handleDeleteThreads = (thread_ids: string[]) => {

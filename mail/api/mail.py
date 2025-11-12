@@ -53,7 +53,12 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 
 	if mailbox == "starred":
 		conditions = [
-			{"inMailboxOtherThan": [get_mailbox_id_by_role(account, "trash")]},
+			{
+				"inMailboxOtherThan": [
+					get_mailbox_id_by_role(account, "junk"),
+					get_mailbox_id_by_role(account, "trash"),
+				]
+			},
 			{"someInThreadHaveKeyword": "$flagged"},
 		]
 	else:
@@ -116,6 +121,7 @@ def serialize_thread(thread: dict) -> dict:
 		"recipients",
 		"seen",
 		"draft",
+		"junk",
 		"flagged",
 		"preview",
 	]
@@ -141,6 +147,7 @@ def serialize_mail(mail: dict) -> dict:
 		"received_at",
 		"draft",
 		"seen",
+		"junk",
 		"flagged",
 		"mailboxes",
 		"recipients",
@@ -414,7 +421,9 @@ def get_mime_message(name: str) -> dict:
 	return result
 
 
-def get_account_and_filtered_message_ids(thread_ids: list[str], mailbox: str) -> tuple[str, list[str]]:
+def get_account_and_filtered_message_ids(
+	thread_ids: list[str], mailbox: str | None = None
+) -> tuple[str, list[str]]:
 	"""Gets account and filtered message IDs for the given mailbox."""
 
 	account = get_account_for_user(frappe.session.user)
@@ -431,9 +440,9 @@ def get_account_and_filtered_message_ids(thread_ids: list[str], mailbox: str) ->
 def set_seen(thread_ids: dict[bool, list[str]], mailbox: str) -> dict:
 	"""Sets seen for mails."""
 
-	for seen, ids in thread_ids.items():
+	for is_seen, ids in thread_ids.items():
 		account, messages = get_account_and_filtered_message_ids(ids, mailbox)
-		set_seen_status(account, messages, seen)
+		set_seen_status(account, messages, is_seen)
 
 	return thread_ids
 
@@ -478,12 +487,12 @@ def set_mails_spam_status(_ids: list[str], spam: bool) -> list[str]:
 
 
 @frappe.whitelist()
-def set_threads_spam_status(thread_ids: list[str], mailbox: str) -> list[str]:
+def set_threads_spam_status(thread_ids: dict[bool, list[str]]) -> dict:
 	"""Sets spam status for the mails belonging to the given threads."""
 
-	for spam_status, ids in thread_ids.items():
-		account, messages = get_account_and_filtered_message_ids(ids, mailbox)
-		set_spam_status(account, messages, spam_status)
+	for is_spam, ids in thread_ids.items():
+		account, messages = get_account_and_filtered_message_ids(ids)
+		set_spam_status(account, messages, is_spam)
 
 	return thread_ids
 

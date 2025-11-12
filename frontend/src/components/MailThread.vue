@@ -399,7 +399,11 @@ const filterRelevantMails = (mail: Mail) => {
 
 	const mailboxes = mail.mailboxes.map((m) => m.mailbox_id)
 	const trash = mailboxIds.trash
-	return mailbox === trash ? mailboxes.includes(trash) : !mailboxes.includes(trash)
+	if (mailbox === trash) return mailboxes.includes(trash)
+
+	if (mailbox === mailboxIds.junk) return !!mail.junk
+
+	return !mailboxes.includes(trash) && !mail.junk
 }
 
 const reload = () => {
@@ -427,8 +431,6 @@ interface MailAction {
 	icon: typeof ArrowLeft
 	condition?: boolean | (() => boolean)
 }
-
-// todo: fix junk condition & display
 
 const threadActions = computed((): MailAction[] =>
 	[
