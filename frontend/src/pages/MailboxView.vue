@@ -314,7 +314,7 @@ import {
 	shouldIgnoreKeypress,
 	startResizing,
 } from '@/utils'
-import { useLayout, useScreenSize, useSidebar } from '@/utils/composables'
+import { useLayout, useScreenSize, useSidebar, useUndo } from '@/utils/composables'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
@@ -331,6 +331,7 @@ const router = useRouter()
 const { isMobile } = useScreenSize()
 const { openSidebar } = useSidebar()
 const { showReadingPane, groupMessagesBy } = useLayout()
+const { setUndoAction, undo } = useUndo()
 
 const socket = inject('$socket')
 const user = inject('$user') as UserResource
@@ -466,6 +467,13 @@ const handleKeyDown = (e: KeyboardEvent) => {
 		e.preventDefault()
 		isGPressed.value = false
 		return toggleSelectAll(true)
+	}
+
+	// Handle Ctrl/Cmd+Z (Undo)
+	if ((e.metaKey || e.ctrlKey) && key === 'z' && !shouldIgnoreKeypress(e, true)) {
+		e.preventDefault()
+		isGPressed.value = false
+		return undo()
 	}
 
 	if (shouldIgnoreKeypress(e)) return
@@ -954,15 +962,15 @@ const handleSetSeen = (threadIDs: SetSeenParams, isUndo = false) => {
 	const action = () => setSeen.submit(threadIDs)
 	if (isUndo) return raisePromiseToast(action, __('Undoing...'), __('Read status restored.'))
 
+	setUndoAction(() => handleSetSeen(originalState, true))
 	const seen = Object.keys(threadIDs)[0] === '1'
-	raisePromiseToast(
-		action,
-		seen ? __('Marking as read...') : __('Marking as unread...'),
+	const loading = seen ? __('Marking as read...') : __('Marking as unread...')
+	const success =
 		selectedThreads.length === 1
 			? __('Thread marked as {0}.', [seen ? __('read') : __('unread')])
-			: __('Threads marked as {0}.', [seen ? __('read') : __('unread')]),
-		() => handleSetSeen(originalState, true),
-	)
+			: __('Threads marked as {0}.', [seen ? __('read') : __('unread')])
+
+	raisePromiseToast(action, loading, success, undo)
 }
 
 const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean = false) => {
@@ -992,6 +1000,7 @@ const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean 
 		return raisePromiseToast(action, __('Undoing...'), success)
 	}
 
+	setUndoAction(() => handleMoveThreads(originalState, true))
 	const moveToMailboxName = mailboxes.data?.find((m) => m.id === Object.keys(threadIDs)[0])._name
 	const loading = __('Moving to {0}...', [moveToMailboxName])
 	const success =
@@ -999,9 +1008,7 @@ const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean 
 			? __('Thread moved to {0}.', [moveToMailboxName])
 			: __('Threads moved to {0}.', [moveToMailboxName])
 
-	const undoAction = () => handleMoveThreads(originalState, true)
-
-	raisePromiseToast(action, loading, success, undoAction)
+	raisePromiseToast(action, loading, success, undo)
 }
 
 const handleSetSpamStatus = (threadIDs: SetSeenParams, isUndo = false) => {
@@ -1012,15 +1019,15 @@ const handleSetSpamStatus = (threadIDs: SetSeenParams, isUndo = false) => {
 	const action = () => setSpamStatus.submit(threadIDs)
 	if (isUndo) return raisePromiseToast(action, __('Undoing...'), __('Junk status restored.'))
 
-	const seen = Object.keys(threadIDs)[0] === '1'
-	raisePromiseToast(
-		action,
-		seen ? __('Marking as Junk...') : __('Marking as Not Junk...'),
+	setUndoAction(() => handleSetSpamStatus(originalState, true))
+	const spam = Object.keys(threadIDs)[0] === '1'
+	const loading = spam ? __('Marking as Junk...') : __('Marking as Not Junk...')
+	const success =
 		selectedThreads.length === 1
-			? __('Thread marked as {0}.', [seen ? __('Junk') : __('Not Junk')])
-			: __('Threads marked as {0}.', [seen ? __('Junk') : __('Not Junk')]),
-		() => handleSetSpamStatus(originalState, true),
-	)
+			? __('Thread marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
+			: __('Threads marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
+
+	raisePromiseToast(action, loading, success, undo)
 }
 
 const handleDeleteThreads = (thread_ids: string[]) => {

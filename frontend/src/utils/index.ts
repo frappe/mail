@@ -83,7 +83,9 @@ export const raisePromiseToast = (
 	success: string,
 	undoAction?: () => void,
 ) => {
-	const error = __('Action failed. Please try again in some time.')
+	toast.removeAll()
+
+	const error = __('Action failed. Please try again later.')
 
 	if (undoAction)
 		return toast.promise(action(), {

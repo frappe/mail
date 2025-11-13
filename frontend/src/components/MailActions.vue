@@ -40,7 +40,7 @@ import {
 import { Button, Dropdown, createResource, toast } from 'frappe-ui'
 
 import { raisePromiseToast } from '@/utils'
-import { useScreenSize } from '@/utils/composables'
+import { useScreenSize, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
 import type { ComposeMailData, Mail } from '@/types'
@@ -73,6 +73,7 @@ const emit = defineEmits(['starMails'])
 
 const { isMobile } = useScreenSize()
 const { mailboxes, mailboxIds } = userStore()
+const { setUndoAction, undo } = useUndo()
 const user = inject('$user')
 
 const primaryActions = (mail: Mail): MailAction[] => [
@@ -205,11 +206,12 @@ const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
 
 	if (isUndo) return raisePromiseToast(action, __('Undoing...'), successMessage)
 
+	setUndoAction(() => handleMarkAsSpam(!spam, true))
 	raisePromiseToast(
 		action,
 		spam ? __('Marking as Junk...') : __('Marking as Not Junk...'),
 		successMessage,
-		() => handleMarkAsSpam(!spam, true),
+		undo,
 	)
 }
 
@@ -229,11 +231,12 @@ const handleMoveMail = (mailbox: string, isUndo = false) => {
 			__('Mail moved back to {0}.', [mailboxName]),
 		)
 
+	setUndoAction(() => handleMoveMail(mail.mailboxes[0].mailbox_id, true))
 	raisePromiseToast(
 		action,
 		__('Moving to {0}...', [mailboxName]),
 		__('Mail moved to {0}.', [mailboxName]),
-		() => handleMoveMail(mail.mailboxes[0].mailbox_id, true),
+		undo,
 	)
 }
 
