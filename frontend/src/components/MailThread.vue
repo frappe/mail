@@ -130,8 +130,8 @@
 								:reply
 								:reply-all
 								:forward
+								:reload-mails="handleReload"
 								@star-mails="handleStarred"
-								@reload-mails="handleReload"
 							/>
 						</div>
 						<div
@@ -200,8 +200,8 @@
 										:reply
 										:reply-all
 										:forward
+										:reload-mails="handleReload"
 										@star-mails="handleStarred"
-										@reload-mails="handleReload"
 									/>
 								</div>
 							</div>
@@ -471,11 +471,12 @@ const threadActions = computed((): MailAction[] =>
 const handleStarred = (_ids: string[], flagged: 0 | 1) =>
 	_ids.forEach((_id) => (thread.data.find((m: Mail) => m._id === _id).flagged = flagged))
 
-const handleReload = () => {
+const handleReload = (isUndo = false) => {
 	if (thread.data.length == 1) {
-		goToMailbox()
 		emit('reloadMails')
-	} else reload()
+		if (!isUndo) return goToMailbox()
+	}
+	reload()
 }
 
 const replyForwardActions = computed(() =>
