@@ -829,14 +829,11 @@ const setSeen = createResource({
 	},
 })
 
-interface MoveThreadsParams {
-	thread_ids: Record<string, string[]>
-	mailbox: string
-}
+type MoveThreadsParams = Record<string, string[]>
 
 const moveThreads = createResource({
 	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: ({ thread_ids, mailbox }: MoveThreadsParams) => ({ thread_ids, mailbox }),
+	makeParams: (thread_ids: MoveThreadsParams) => ({ thread_ids }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
@@ -876,7 +873,7 @@ const junkOrDeleteTitle = computed(() => {
 
 	return isJunkAction.value
 		? __('Mark {0} {1} as Junk', [count, noun])
-		: __('Permanently Delete {0} {1}', [count, noun])
+		: __('Delete {0} {1}', [count, noun])
 })
 
 const junkOrDeleteMessage = computed(() => {
@@ -943,7 +940,7 @@ const handleSuccessAndRemoveFromList = (
 	reloadThreads()
 
 	if (excludeCommonMailboxes && ['search', 'starred'].includes(mailbox)) return
-	if (thread_ids instanceof Array === false) thread_ids = Object.values(thread_ids).flat()
+	if (!Array.isArray(thread_ids)) thread_ids = Object.values(thread_ids).flat()
 	if (threadID && thread_ids.includes(threadID))
 		if (thread_ids.length === 1) goToThreadByOffset(1)
 		else goToMailbox()
@@ -975,7 +972,7 @@ const handleSetSeen = (threadIDs: SetSeenParams, isUndo = false) => {
 
 const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean = false) => {
 	const selectedThreads = Object.values(threadIDs).flat()
-	const statusMap: Record<string, string> = Object.fromEntries(
+	const mailboxMap: Record<string, string> = Object.fromEntries(
 		threadsResource.value.data.map((thread: Thread) => [
 			thread.thread_id,
 			thread['mailboxes'][0].mailbox_id,
@@ -983,7 +980,7 @@ const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean 
 	)
 	const originalState: Record<string, string[]> = selectedThreads.reduce(
 		(acc: Record<string, string[]>, thread_id: string) => {
-			const key = statusMap[thread_id]
+			const key = mailboxMap[thread_id]
 			if (!acc[key]) acc[key] = []
 			acc[key].push(thread_id)
 			return acc
@@ -992,7 +989,7 @@ const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean 
 	)
 	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
 
-	const action = () => moveThreads.submit({ thread_ids: threadIDs })
+	const action = () => moveThreads.submit(threadIDs)
 
 	if (isUndo) {
 		const success =

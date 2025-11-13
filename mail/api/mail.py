@@ -55,8 +55,8 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 		conditions = [
 			{
 				"inMailboxOtherThan": [
-					get_mailbox_id_by_role(account, "junk"),
-					get_mailbox_id_by_role(account, "trash"),
+					get_mailbox_id_by_role(account, "junk", raise_exception=True),
+					get_mailbox_id_by_role(account, "trash", raise_exception=True),
 				]
 			},
 			{"someInThreadHaveKeyword": "$flagged"},
@@ -438,7 +438,7 @@ def get_account_and_filtered_message_ids(
 
 @frappe.whitelist()
 def set_seen(thread_ids: dict[bool, list[str]], mailbox: str) -> dict:
-	"""Sets seen for mails."""
+	"""Sets seen for threads."""
 
 	for is_seen, ids in thread_ids.items():
 		account, messages = get_account_and_filtered_message_ids(ids, mailbox)
