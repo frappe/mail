@@ -61,6 +61,7 @@ export interface Mail {
 	draft: 0 | 1
 	flagged: 0 | 1
 	seen: 0 | 1
+	junk: 0 | 1
 	mailboxes: Mailbox[]
 	recipients: Recipient[]
 	groupedRecipients: {
@@ -104,6 +105,7 @@ export interface Thread {
 	recipients: Recipient[]
 	seen: 0 | 1
 	draft: 0 | 1
+	junk: 0 | 1
 	flagged: 0 | 1
 	answered: 0 | 1
 	forwarded: 0 | 1

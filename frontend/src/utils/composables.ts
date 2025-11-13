@@ -116,3 +116,17 @@ export const useVisualViewport = (calc: (viewport: VisualViewport) => string) =>
 
 	return value
 }
+
+const undoAction = ref<() => void>()
+
+export const useUndo = () => {
+	const setUndoAction = (action?: () => void) => (undoAction.value = action)
+
+	const undo = () => {
+		if (!undoAction.value) return
+		undoAction.value()
+		undoAction.value = undefined
+	}
+
+	return { setUndoAction, undo }
+}

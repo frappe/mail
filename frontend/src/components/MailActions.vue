@@ -25,7 +25,8 @@
 <script lang="ts" setup>
 import { h, inject } from 'vue'
 import {
-	BadgeAlert,
+	CircleAlert,
+	CircleCheck,
 	Code,
 	Ellipsis,
 	ExternalLink,
@@ -38,7 +39,8 @@ import {
 } from 'lucide-vue-next'
 import { Button, Dropdown, createResource, toast } from 'frappe-ui'
 
-import { useScreenSize } from '@/utils/composables'
+import { raisePromiseToast } from '@/utils'
+import { useScreenSize, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
 import type { ComposeMailData, Mail } from '@/types'
@@ -53,6 +55,7 @@ const {
 	reply,
 	replyAll,
 	forward,
+	reloadMails,
 } = defineProps<{
 	mailbox: string
 	mail: Mail
@@ -63,12 +66,14 @@ const {
 	reply: (mail: Mail) => void
 	replyAll: (mail: Mail) => void
 	forward: (mail: Mail) => void
+	reloadMails: (isUndo?: boolean) => void
 }>()
 
-const emit = defineEmits(['reloadMails', 'starMails'])
+const emit = defineEmits(['starMails'])
 
 const { isMobile } = useScreenSize()
 const { mailboxes, mailboxIds } = userStore()
+const { setUndoAction, undo } = useUndo()
 const user = inject('$user')
 
 const primaryActions = (mail: Mail): MailAction[] => [
@@ -152,9 +157,15 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 			},
 			{
 				label: __('Mark as Junk'),
-				onClick: () => handleMarkAsSpam(),
-				icon: BadgeAlert,
-				condition: () => ![mailboxIds.junk, mailboxIds.drafts].includes(mailbox),
+				onClick: () => handleMarkAsSpam(true),
+				icon: CircleAlert,
+				condition: () => mailbox !== mailboxIds.drafts && mail.junk === 0,
+			},
+			{
+				label: __('Mark as Not Junk'),
+				onClick: () => handleMarkAsSpam(false),
+				icon: CircleCheck,
+				condition: () => mail.junk === 1,
 			},
 			{
 				label: __('Move to Trash'),
@@ -186,44 +197,60 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 
 const markAsSpam = createResource({
 	url: 'mail.api.mail.set_mails_spam_status',
-	makeParams: () => ({ _ids: [mail._id], spam: true }),
-	onSuccess: () => emit('reloadMails'),
+	makeParams: ({ spam }: { spam: boolean }) => ({ _ids: [mail._id], spam }),
 })
 
-const handleMarkAsSpam = () =>
-	toast.promise(markAsSpam.submit(), {
-		loading: __('Marking as Junk...'),
-		success: __('Mail marked as Junk.'),
-		error: __('Action failed. Please try again later.'),
-	})
+const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
+	const action = () => markAsSpam.submit({ spam }).then(() => reloadMails(isUndo))
+	const successMessage = spam ? __('Mail marked as Junk.') : __('Mail marked as Not Junk.')
+
+	if (isUndo) return raisePromiseToast(action, __('Undoing...'), successMessage)
+
+	setUndoAction(() => handleMarkAsSpam(!spam, true))
+	raisePromiseToast(
+		action,
+		spam ? __('Marking as Junk...') : __('Marking as Not Junk...'),
+		successMessage,
+		undo,
+	)
+}
 
 const moveMail = createResource({
 	url: 'mail.api.mail.move_mails',
 	makeParams: (mailbox: string) => ({ _ids: [mail._id], mailbox }),
-	onSuccess: () => emit('reloadMails'),
 })
 
-const handleMoveMail = (mailbox: string) => {
+const handleMoveMail = (mailbox: string, isUndo = false) => {
+	const action = () => moveMail.submit(mailbox).then(() => reloadMails(isUndo))
 	const mailboxName = mailboxes.data?.find((m) => m.id === mailbox)._name
 
-	toast.promise(moveMail.submit(mailbox), {
-		loading: __('Moving to {0}...', [mailboxName]),
-		success: __('Mail moved to {0}.', [mailboxName]),
-		error: __('Action failed. Please try again later.'),
-	})
+	if (isUndo)
+		return raisePromiseToast(
+			action,
+			__('Undoing...'),
+			__('Mail moved back to {0}.', [mailboxName]),
+		)
+
+	setUndoAction(() => handleMoveMail(mail.mailboxes[0].mailbox_id, true))
+	raisePromiseToast(
+		action,
+		__('Moving to {0}...', [mailboxName]),
+		__('Mail moved to {0}.', [mailboxName]),
+		undo,
+	)
 }
 
 const deleteMail = createResource({
 	url: 'mail.mail.doctype.mail_message.mail_message.bulk_delete',
 	makeParams: () => ({ names: [mail.name] }),
-	onSuccess: () => emit('reloadMails'),
+	onSuccess: () => reloadMails(),
 })
 
 const handleDeleteMail = () =>
 	toast.promise(deleteMail.submit(), {
 		loading: __('Deleting...'),
 		success: __('Mail deleted.'),
-		error: __('Action failed. Please try again later.'),
+		error: __('Action failed. Please try again in some time.'),
 	})
 
 const starMails = createResource({

@@ -14,7 +14,7 @@
     "dayjs": "^1.11.11",
     "dompurify": "^3.2.6",
     "firebase": "^12.2.1",
-    "frappe-ui": "0.1.205",
+    "frappe-ui": "0.1.214",
     "gemoji": "^8.1.0",
     "lucide-vue-next": "^0.383.0",
     "pinia": "^2.1.7",

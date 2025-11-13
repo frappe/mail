@@ -318,7 +318,7 @@ export interface MailMessageReplyTo extends ChildDocType {
 	email: string
 }
 
-// Last updated: 2025-08-14 19:19:58.972374
+// Last updated: 2025-09-30 19:33:57.028536
 export interface MailMessagePart extends ChildDocType {
 	/** Part ID: Data */
 	part_id?: string
@@ -338,13 +338,13 @@ export interface MailMessagePart extends ChildDocType {
 	type?: string
 	/** Blob ID: Data */
 	blob_id?: string
-	/** Content ID: Data */
-	cid?: string
 	/** Size: Int */
 	size?: number
+	/** Content ID: Data */
+	cid?: string
 }
 
-// Last updated: 2025-08-19 17:25:24.459352
+// Last updated: 2025-11-11 14:57:57.517275
 export interface MailMessage extends DocType {
 	/** Account: Link (Mail Account) */
 	account: string
@@ -428,6 +428,8 @@ export interface MailMessage extends DocType {
 	mailboxes: MailMessageMailbox[]
 	/** Preview: Code */
 	preview?: string
+	/** Junk: Check */
+	junk: 0 | 1
 }
 
 // Last updated: 2025-01-15 11:46:42.917146

@@ -130,8 +130,8 @@
 								:reply
 								:reply-all
 								:forward
+								:reload-mails="handleReload"
 								@star-mails="handleStarred"
-								@reload-mails="handleReload"
 							/>
 						</div>
 						<div
@@ -200,8 +200,8 @@
 										:reply
 										:reply-all
 										:forward
+										:reload-mails="handleReload"
 										@star-mails="handleStarred"
-										@reload-mails="handleReload"
 									/>
 								</div>
 							</div>
@@ -399,7 +399,11 @@ const filterRelevantMails = (mail: Mail) => {
 
 	const mailboxes = mail.mailboxes.map((m) => m.mailbox_id)
 	const trash = mailboxIds.trash
-	return mailbox === trash ? mailboxes.includes(trash) : !mailboxes.includes(trash)
+	if (mailbox === trash) return mailboxes.includes(trash)
+
+	if (mailbox === mailboxIds.junk) return !!mail.junk
+
+	return !mailboxes.includes(trash) && !mail.junk
 }
 
 const reload = () => {
@@ -427,8 +431,6 @@ interface MailAction {
 	icon: typeof ArrowLeft
 	condition?: boolean | (() => boolean)
 }
-
-// todo: fix junk condition & display
 
 const threadActions = computed((): MailAction[] =>
 	[
@@ -469,11 +471,12 @@ const threadActions = computed((): MailAction[] =>
 const handleStarred = (_ids: string[], flagged: 0 | 1) =>
 	_ids.forEach((_id) => (thread.data.find((m: Mail) => m._id === _id).flagged = flagged))
 
-const handleReload = () => {
+const handleReload = (isUndo = false) => {
 	if (thread.data.length == 1) {
-		goToMailbox()
 		emit('reloadMails')
-	} else reload()
+		if (!isUndo) return goToMailbox()
+	}
+	reload()
 }
 
 const replyForwardActions = computed(() =>
