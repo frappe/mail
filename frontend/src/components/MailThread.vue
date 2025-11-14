@@ -468,8 +468,8 @@ const threadActions = computed((): MailAction[] =>
 	].filter((action) => action.condition !== false),
 )
 
-const handleStarred = (_ids: string[], flagged: 0 | 1) =>
-	_ids.forEach((_id) => (thread.data.find((m: Mail) => m._id === _id).flagged = flagged))
+const handleStarred = (ids: string[], flagged: 0 | 1) =>
+	ids.forEach((id) => (thread.data.find((m: Mail) => m.id === id).flagged = flagged))
 
 const handleReload = (isUndo = false) => {
 	if (thread.data.length == 1) {
@@ -518,14 +518,14 @@ const showReplyAll = (mail: Mail) =>
 const populateDraftMails = (mail: Mail) =>
 	(draftMails[mail.name] = {
 		name: mail.name,
-		_id: mail._id,
+		id: mail.id,
 		from_email: mail.from_email,
 		to: mail.groupedRecipients.to,
 		cc: mail.groupedRecipients.cc,
 		bcc: mail.groupedRecipients.bcc,
 		subject: mail.subject || '',
 		in_reply_to: mail.message_id,
-		in_reply_to_id: mail._id,
+		in_reply_to_id: mail.id,
 		attachments: mail.attachments || [],
 		...extractQuotedContent(mail.html_body),
 	})
@@ -549,7 +549,7 @@ const forward = (mail: Mail) =>
 		subject: `Fwd: ${mail.subject}`,
 		html_body: getForwardedContent(mail),
 		attachments: mail.attachments || [],
-		forwarded_from_id: mail._id,
+		forwarded_from_id: mail.id,
 		type: 'forward',
 	})
 
@@ -616,7 +616,7 @@ const getReplyDetails = (mail: Mail) => ({
 	subject: mail.subject?.startsWith('Re: ') ? mail.subject : `Re: ${mail.subject}`,
 	quoted_content: getQuotedContent(mail),
 	in_reply_to: mail.message_id,
-	in_reply_to_id: mail._id,
+	in_reply_to_id: mail.id,
 })
 
 const getReplyRecipients = (mail: Mail) => ({

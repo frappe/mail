@@ -175,8 +175,8 @@ class MailMessage(Document):
 		raise NotImplementedError
 
 	def load_from_db(self) -> "MailMessage":
-		account, _id = self.name.split("|")
-		if messages := get_messages(account, _ids=[_id]):
+		account, id = self.name.split("|")
+		if messages := get_messages(account, ids=[id]):
 			return super(Document, self).__init__(messages[0])
 
 		frappe.throw(_("Message not found or you do not have permission to view it."))
@@ -185,8 +185,8 @@ class MailMessage(Document):
 		raise NotImplementedError
 
 	def delete(self) -> None:
-		account, _id = self.name.split("|")
-		delete_messages(account, [_id])
+		account, id = self.name.split("|")
+		delete_messages(account, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -267,21 +267,21 @@ class MailMessage(Document):
 		"""Move the Mail Message to a specified mailbox."""
 
 		self.validate_draft()
-		move_messages(self.account, [self._id], mailbox_id)
+		move_messages(self.account, [self.id], mailbox_id)
 		self.reload()
 
 	@frappe.whitelist()
 	def set_seen(self, seen: bool) -> None:
 		"""Set the Mail Message as seen or unseen."""
 
-		set_seen_status(self.account, [self._id], seen)
+		set_seen_status(self.account, [self.id], seen)
 		self.reload()
 
 	@frappe.whitelist()
 	def set_flagged(self, flagged: bool) -> None:
 		"""Set the Mail Message as flagged or unflagged."""
 
-		set_flagged_status(self.account, [self._id], flagged)
+		set_flagged_status(self.account, [self.id], flagged)
 		self.reload()
 
 	@frappe.whitelist()
@@ -415,7 +415,7 @@ class MailMessage(Document):
 			html_body=forward_html_body,
 			text_body=forward_text_body,
 			attachments=attachments,
-			forwarded_from_id=self._id,
+			forwarded_from_id=self.id,
 			do_not_save=True,
 		)
 
@@ -510,7 +510,7 @@ class MailMessage(Document):
 			html_body=self.html_body,
 			text_body=self.text_body,
 			message_id=self.message_id,
-			_id=self._id,
+			id=self.id,
 			in_reply_to=self.in_reply_to,
 			save_as_draft=save_as_draft,
 			delivery_mode="Immediate",
@@ -530,7 +530,7 @@ class MailMessage(Document):
 			subject=subject,
 			recipients=recipients,
 			in_reply_to=self.message_id,
-			in_reply_to_id=self._id,
+			in_reply_to_id=self.id,
 			do_not_save=True,
 		)
 
@@ -556,11 +556,11 @@ def bulk_delete(names: str | list[str]) -> None:
 
 	account_ids_map = {}
 	for name in names:
-		account, _id = name.split("|")
-		account_ids_map.setdefault(account, []).append(_id)
+		account, id = name.split("|")
+		account_ids_map.setdefault(account, []).append(id)
 
-	for account, _ids in account_ids_map.items():
-		delete_messages(account, _ids)
+	for account, ids in account_ids_map.items():
+		delete_messages(account, ids)
 
 	frappe.msgprint(_("Mail Messages deleted successfully."), alert=True)
 
@@ -605,18 +605,18 @@ def fetch_messages(
 
 	while len(messages) < limit:
 		result = client.email_query(filter, position, limit, sort)
-		_ids = result["ids"]
+		ids = result["ids"]
 		total = result["total"]
 
-		if not _ids:
+		if not ids:
 			break
 
-		messages.extend(get_messages(account, _ids=_ids))
+		messages.extend(get_messages(account, ids=ids))
 
 		if len(messages) >= limit:
 			break
 
-		position += len(_ids)
+		position += len(ids)
 
 		if position >= total:
 			break
@@ -630,8 +630,8 @@ def fetch_threads(account: str, filter: dict | None = None, position: int = 0, l
 	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
-	_ids = client.thread_query(filter, position, limit, fetch_all=False)
-	messages = get_messages(account, _ids=_ids)
+	ids = client.thread_query(filter, position, limit, fetch_all=False)
+	messages = get_messages(account, ids=ids)
 
 	return messages
 
@@ -643,8 +643,8 @@ def fetch_thread(account: str, thread_id: str) -> list[dict]:
 
 	client = get_jmap_client(account)
 	result = client.thread_get([thread_id])
-	_ids = result.get(thread_id, [])
-	messages = get_messages(account, _ids=_ids)
+	ids = result.get(thread_id, [])
+	messages = get_messages(account, ids=ids)
 
 	return sorted(messages, key=lambda m: m["received_at"], reverse=False)
 
@@ -659,7 +659,7 @@ def search_messages(
 
 	fields = [
 		"name",
-		"_id",
+		"id",
 		"subject",
 		"preview",
 		"recipients",
@@ -667,7 +667,6 @@ def search_messages(
 		"received_at",
 		"from_name",
 		"from_email",
-		"_id",
 		"thread_id",
 		"mailboxes",
 		"attachments",
@@ -678,32 +677,32 @@ def search_messages(
 	return [{field: message[field] for field in fields} for message in messages], total
 
 
-def get_messages(account: str, _ids: list[str]) -> list[dict]:
-	"""Returns a list of messages for the provided IDs in the same order as _ids."""
+def get_messages(account: str, ids: list[str]) -> list[dict]:
+	"""Returns a list of messages for the provided IDs in the same order as ids."""
 
 	has_permission_for_account(account)
 
 	messages = {}
-	_ids_to_fetch = []
+	ids_to_fetch = []
 
-	for _id in _ids:
-		if message := _get_message_from_cache(account, _id):
-			messages[_id] = message
+	for id in ids:
+		if message := _get_message_from_cache(account, id):
+			messages[id] = message
 		else:
-			_ids_to_fetch.append(_id)
+			ids_to_fetch.append(id)
 
-	if _ids_to_fetch:
+	if ids_to_fetch:
 		client = get_jmap_client(account)
-		emails, _state = client.email_get(_ids_to_fetch)
+		emails, _state = client.email_get(ids_to_fetch)
 
 		mailbox_map = {mb["id"]: mb["_name"] for mb in client.mailboxes}
 
 		for email in emails:
 			message = format_message(account, mailbox_map, email)
-			_store_message_in_cache(account, message["_id"], message)
-			messages[message["_id"]] = message
+			_store_message_in_cache(account, message["id"], message)
+			messages[message["id"]] = message
 
-	return [messages[_id] for _id in _ids if _id in messages]
+	return [messages[id] for id in ids if id in messages]
 
 
 def get_message_ids(
@@ -719,12 +718,12 @@ def get_message_ids(
 	try:
 		client = get_jmap_client(account)
 		result = client.thread_get(thread_ids)
-		_ids = [_id for _thread_id, ids in result.items() for _id in ids]
+		ids = [id for _thread_id, ids in result.items() for id in ids]
 
 		if not mailbox_id:
-			return _ids
+			return ids
 
-		emails, _state = client.email_get(_ids, properties=["id", "mailboxIds"])
+		emails, _state = client.email_get(ids, properties=["id", "mailboxIds"])
 		if isinstance(mailbox_id, str):
 			return [email["id"] for email in emails if mailbox_id in email["mailboxIds"]]
 		else:
@@ -735,18 +734,18 @@ def get_message_ids(
 		frappe.throw(_("Failed to fetch message IDs."))
 
 
-def delete_messages(account: str, _ids: list[str]) -> None:
+def delete_messages(account: str, ids: list[str]) -> None:
 	"""Delete messages from the server and remove them from the cache."""
 
-	if not account or not _ids:
+	if not account or not ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
 	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
-		client.email_delete(_ids)
-		_remove_messages_from_cache(account, _ids)
+		client.email_delete(ids)
+		_remove_messages_from_cache(account, ids)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to delete mail(s)"),
@@ -771,12 +770,12 @@ def empty_mailbox(account: str, mailbox_id: str) -> None:
 				{"inMailbox": mailbox_id}, position=0, limit=client.max_objects_in_get
 			)
 
-			_ids = result["ids"]
-			if not _ids:
+			ids = result["ids"]
+			if not ids:
 				break
 
-			client.email_delete(_ids)
-			_remove_messages_from_cache(account, _ids)
+			client.email_delete(ids)
+			_remove_messages_from_cache(account, ids)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to empty mailbox"),
@@ -785,18 +784,18 @@ def empty_mailbox(account: str, mailbox_id: str) -> None:
 		frappe.throw(_("Failed to empty mailbox."))
 
 
-def move_messages(account: str, _ids: list[str], mailbox_id: str) -> None:
+def move_messages(account: str, ids: list[str], mailbox_id: str) -> None:
 	"""Move messages to a different mailbox."""
 
-	if not account or not _ids or not mailbox_id:
+	if not account or not ids or not mailbox_id:
 		frappe.throw(_("Account, Mail IDs, and Mailbox ID are required."))
 
 	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
-		client.email_update(_ids, mailbox_id)
-		_remove_messages_from_cache(account, _ids)
+		client.email_update(ids, mailbox_id)
+		_remove_messages_from_cache(account, ids)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to move mail(s) to mailbox"),
@@ -805,27 +804,27 @@ def move_messages(account: str, _ids: list[str], mailbox_id: str) -> None:
 		frappe.throw(_("Failed to move mail(s) to mailbox."))
 
 
-def set_seen_status(account: str, _ids: list[str], seen: bool = True) -> None:
+def set_seen_status(account: str, ids: list[str], seen: bool = True) -> None:
 	"""Set the seen status for messages."""
 
-	if not account or not _ids:
+	if not account or not ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
 	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
-		client.email_update(_ids, keywords={"$seen": bool(seen)})
+		client.email_update(ids, keywords={"$seen": bool(seen)})
 
-		for _id in _ids:
-			if message := _get_message_from_cache(account, _id):
+		for id in ids:
+			if message := _get_message_from_cache(account, id):
 				keywords = json.loads(message["keywords"])
 				keywords["$seen"] = bool(seen)
 
 				message["seen"] = cint(seen)
 				message["keywords"] = json.dumps(keywords, indent=4)
 
-				_store_message_in_cache(account, message["_id"], message)
+				_store_message_in_cache(account, message["id"], message)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to set seen status for mail(s)"),
@@ -834,27 +833,27 @@ def set_seen_status(account: str, _ids: list[str], seen: bool = True) -> None:
 		frappe.throw(_("Failed to set seen status for mail(s)."))
 
 
-def set_flagged_status(account: str, _ids: list[str], flagged: bool = True) -> None:
+def set_flagged_status(account: str, ids: list[str], flagged: bool = True) -> None:
 	"""Set the flagged status for messages."""
 
-	if not account or not _ids:
+	if not account or not ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
 	has_permission_for_account(account)
 
 	try:
 		client = get_jmap_client(account)
-		client.email_update(_ids, keywords={"$flagged": bool(flagged)})
+		client.email_update(ids, keywords={"$flagged": bool(flagged)})
 
-		for _id in _ids:
-			if message := _get_message_from_cache(account, _id):
+		for id in ids:
+			if message := _get_message_from_cache(account, id):
 				keywords = json.loads(message["keywords"])
 				keywords["$flagged"] = bool(flagged)
 
 				message["flagged"] = cint(flagged)
 				message["keywords"] = json.dumps(keywords, indent=4)
 
-				_store_message_in_cache(account, message["_id"], message)
+				_store_message_in_cache(account, message["id"], message)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to set flagged status for mail(s)"),
@@ -863,10 +862,10 @@ def set_flagged_status(account: str, _ids: list[str], flagged: bool = True) -> N
 		frappe.throw(_("Failed to set flagged status for mail(s)."))
 
 
-def set_spam_status(account: str, _ids: list[str], spam: bool = True) -> None:
+def set_spam_status(account: str, ids: list[str], spam: bool = True) -> None:
 	"""Set the spam status for messages."""
 
-	if not account or not _ids:
+	if not account or not ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
 	has_permission_for_account(account)
@@ -874,8 +873,8 @@ def set_spam_status(account: str, _ids: list[str], spam: bool = True) -> None:
 	try:
 		client = get_jmap_client(account)
 		mailbox_id = client.get_mailbox_id_by_role("junk" if spam else "inbox", raise_exception=True)
-		client.email_update(_ids, mailbox_id, {"$junk": spam, "$notjunk": not spam})
-		_remove_messages_from_cache(account, _ids)
+		client.email_update(ids, mailbox_id, {"$junk": spam, "$notjunk": not spam})
+		_remove_messages_from_cache(account, ids)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to set spam status for mail(s)"),
@@ -941,7 +940,7 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 		"account": account,
 		"sent_at": sent_at,
 		"creation": sent_at,
-		"_id": message["id"],
+		"id": message["id"],
 		"size": message["size"],
 		"modified": received_at,
 		"received_at": received_at,
@@ -1034,10 +1033,10 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 	return formatted_message
 
 
-def _get_message_cache_key(account: str, _id: str) -> str:
+def _get_message_cache_key(account: str, id: str) -> str:
 	"""Returns cache key for message."""
 
-	return f"jmap:message:{account}:{_id}"
+	return f"jmap:message:{account}:{id}"
 
 
 def _get_blob_cache_key(account: str, blob_id: str) -> str:
@@ -1052,23 +1051,23 @@ def _get_total_cache_key(account: str) -> str:
 	return f"jmap:message:{account}:total"
 
 
-def _get_message_from_cache(account: str, _id: str) -> dict | None:
+def _get_message_from_cache(account: str, id: str) -> dict | None:
 	"""Returns a message from cache if it exists."""
 
-	cache_key = _get_message_cache_key(account, _id)
+	cache_key = _get_message_cache_key(account, id)
 	return frappe.cache.get_value(cache_key)
 
 
-def _store_message_in_cache(account: str, _id: str, message: dict) -> None:
+def _store_message_in_cache(account: str, id: str, message: dict) -> None:
 	"""Store a message in cache with TTL and maintain per-account bucket size."""
 
-	cache_key = _get_message_cache_key(account, _id)
-	list_key = f"jmap:message:{account}:_ids"
+	cache_key = _get_message_cache_key(account, id)
+	list_key = f"jmap:message:{account}:ids"
 	msg_bucket_size = cint(frappe.conf.msg_bucket_size) or 5000
 
 	msg_cache_ttl = cint(frappe.conf.msg_cache_ttl) or 2 * 24 * 60 * 60  # 2 days
 	frappe.cache.set_value(cache_key, message, expires_in_sec=msg_cache_ttl)
-	frappe.cache.lpush(list_key, _id)
+	frappe.cache.lpush(list_key, id)
 
 	frappe.cache.ltrim(list_key, 0, msg_bucket_size - 1)
 
@@ -1077,16 +1076,16 @@ def _store_message_in_cache(account: str, _id: str, message: dict) -> None:
 			frappe.cache.delete_key(_get_message_cache_key(account, oldest_id))
 
 
-def _remove_messages_from_cache(account: str, _ids: list[str]) -> None:
+def _remove_messages_from_cache(account: str, ids: list[str]) -> None:
 	"""Remove a message from cache."""
 
-	for _id in _ids:
-		cache_key = _get_message_cache_key(account, _id)
+	for id in ids:
+		cache_key = _get_message_cache_key(account, id)
 		frappe.cache.delete_value(cache_key)
 
-	list_key = f"jmap:message:{account}:_ids"
-	for _id in _ids:
-		frappe.cache.lrem(list_key, 0, _id)
+	list_key = f"jmap:message:{account}:ids"
+	for id in ids:
+		frappe.cache.lrem(list_key, 0, id)
 
 	if not frappe.cache.llen(list_key):
 		frappe.cache.delete_value(list_key)
@@ -1136,7 +1135,7 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 		result = client.email_changes(current_state)
 
 		if created_ids := result["created"]:
-			if messages := get_messages(account, _ids=created_ids):
+			if messages := get_messages(account, ids=created_ids):
 				inbox_id = client.get_mailbox_id_by_role("inbox", raise_exception=True)
 				user, should_create_contact = frappe.db.get_value(
 					"Mail Account", account, ["user", "create_mail_contact"]

@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_xmmn",
-  "_id",
+  "id",
   "cluster",
   "column_break_bgdm",
   "domain_name",
@@ -121,12 +121,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "_id",
-   "fieldtype": "Data",
-   "label": "ID",
-   "read_only": 1
-  },
-  {
    "fieldname": "cluster",
    "fieldtype": "Link",
    "in_standard_filter": 1,
@@ -164,13 +158,19 @@
   {
    "fieldname": "column_break_bfle",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "label": "ID",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-06-13 17:17:43.017468",
+ "modified": "2025-11-14 10:58:22.508348",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "DMARC Report",
@@ -193,5 +193,5 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "_id"
+ "title_field": "id"
 }

@@ -24,7 +24,7 @@
   "attachments",
   "more_info_tab",
   "message_id",
-  "_id",
+  "id",
   "blob_id",
   "size",
   "has_attachment",
@@ -177,13 +177,6 @@
    "fieldname": "message_id",
    "fieldtype": "Data",
    "label": "Message ID",
-   "read_only": 1
-  },
-  {
-   "fieldname": "_id",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Mail ID",
    "read_only": 1
   },
   {
@@ -459,6 +452,13 @@
    "fieldtype": "Check",
    "label": "Junk",
    "read_only": 1
+  },
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Mail ID",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -466,7 +466,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-11 14:57:57.517275",
+ "modified": "2025-11-14 11:01:16.911587",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Message",

@@ -51,7 +51,7 @@ export interface Attachment {
 export interface Mail {
 	name: string
 	message_id: string
-	_id: string
+	id: string
 	from_name: string
 	from_email: string
 	subject: string
@@ -76,7 +76,7 @@ export interface Mail {
 
 export interface ComposeMailData {
 	name?: string
-	_id?: string
+	id?: string
 	from_email?: string
 	to?: string[]
 	cc?: string[]

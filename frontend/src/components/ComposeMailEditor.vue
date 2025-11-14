@@ -234,7 +234,7 @@ const user = inject('$user') as UserResource
 
 const mail = reactive<ComposeMailData>({
 	name: mailDetails?.name || '',
-	_id: mailDetails?._id || '',
+	id: mailDetails?.id || '',
 	from_email: mailDetails?.from_email || user.data.default_outgoing,
 	to: mailDetails?.to || [],
 	cc: mailDetails?.cc || [],
@@ -270,7 +270,7 @@ const saveDraft = async () => {
 	if (!isDraftUpdated.value || isLoading.value) return
 
 	isSavingDraft.value = true
-	if (mail._id) await updateDraft.submit()
+	if (mail.id) await updateDraft.submit()
 	else if (!isMailEmpty.value) await createMail.submit()
 	isSavingDraft.value = false
 }
@@ -280,7 +280,7 @@ const sendMail = () => {
 
 	if (isRecipientsEmpty.value) return raiseToast(__('Please add at least one recipient.'))
 	show.value = false
-	if (mail._id) updateDraft.submit()
+	if (mail.id) updateDraft.submit()
 	else createMail.submit()
 }
 
@@ -288,22 +288,22 @@ const discardMail = () => {
 	if (isLoading.value) return
 
 	show.value = false
-	if (mail._id) deleteMail.submit()
+	if (mail.id) deleteMail.submit()
 	else emit('discardMail')
 }
 
 defineExpose({ sendMail, discardMail })
 
 const onMailUpdateSuccess = ({
-	_id,
+	id,
 	status,
 	error,
 }: {
-	_id: string
+	id: string
 	status: string
 	error: string
 }) => {
-	if (_id) mail._id = _id
+	if (id) mail.id = id
 	updateOriginalMail()
 	if (error) return raiseToast(error, 'error')
 	if (!isInThread || status === 'Submitted') reloadMails()
@@ -339,7 +339,7 @@ const updateDraft = createResource({
 
 const deleteMail = createResource({
 	url: 'mail.api.mail.delete_mail',
-	makeParams: () => ({ _id: mail._id }),
+	makeParams: () => ({ id: mail.id }),
 	onSuccess: () => {
 		reloadMails()
 		raiseToast(__('Draft discarded.'))

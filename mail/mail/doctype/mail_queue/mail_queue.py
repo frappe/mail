@@ -100,7 +100,7 @@ class MailQueue(Document):
 		doc.text_body = kwargs.text_body
 		doc.forwarded_from_id = kwargs.forwarded_from_id
 		doc.message_id = kwargs.message_id
-		doc._id = kwargs._id
+		doc.id = kwargs.id
 		doc.via_api = cint(kwargs.via_api)
 		doc.newsletter = cint(kwargs.newsletter)
 		doc.sent_at = kwargs.sent_at
@@ -575,8 +575,8 @@ class MailQueue(Document):
 			try:
 				client = get_jmap_client(self.account)
 				result = client.email_query({"header": ["Message-ID", self.in_reply_to]})
-				if _ids := result["ids"]:
-					self.in_reply_to_id = _ids[0]
+				if ids := result["ids"]:
+					self.in_reply_to_id = ids[0]
 			except Exception:
 				self.in_reply_to_id = None
 				frappe.log_error(_("Failed to fetch In Reply To ID"), frappe.get_traceback(with_context=True))
@@ -637,13 +637,13 @@ class MailQueue(Document):
 				)
 				call_id += 1
 
-				if self._id:
+				if self.id:
 					method_calls.append(
 						[
 							"Email/set",
 							{
 								"accountId": client.primary_account_id,
-								"destroy": [self._id] if self._id else None,
+								"destroy": [self.id] if self.id else None,
 							},
 							str(call_id),
 						]
@@ -672,7 +672,7 @@ class MailQueue(Document):
 									draft_mailbox_id, attachments=attachments
 								)
 							},
-							"destroy": [self._id] if self._id else None,
+							"destroy": [self.id] if self.id else None,
 						},
 						str(call_id),
 					]
@@ -728,18 +728,18 @@ class MailQueue(Document):
 					}
 
 				if self.forwarded_from_id or self.in_reply_to_id:
-					for _id, keyword in [
+					for id, keyword in [
 						(self.forwarded_from_id, "$forwarded"),
 						(self.in_reply_to_id, "$answered"),
 					]:
-						if not _id:
+						if not id:
 							continue
 
-						updates.setdefault(_id, {}).update({f"keywords/{keyword}": True})
+						updates.setdefault(id, {}).update({f"keywords/{keyword}": True})
 
 				if updates:
 					submission_call[1]["onSuccessUpdateEmail"] = {
-						_id: _updates for _id, _updates in updates.items()
+						id: _updates for id, _updates in updates.items()
 					}
 
 				using.append("urn:ietf:params:jmap:submission")
@@ -753,7 +753,7 @@ class MailQueue(Document):
 				kwargs.update(
 					{
 						"status": "Drafted",
-						"_id": data["id"],
+						"id": data["id"],
 						"blob_id": data["blobId"],
 						"size": data["size"],
 						"drafted_at": now(),
@@ -772,7 +772,7 @@ class MailQueue(Document):
 				)
 
 			if not self.save_as_draft:
-				idx = 2 if self.raw_message and self._id else 1
+				idx = 2 if self.raw_message and self.id else 1
 				if response["methodResponses"][idx][1].get("created", {}).get(f"submit-{self.name}"):
 					kwargs.update(
 						{

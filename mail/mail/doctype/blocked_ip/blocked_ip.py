@@ -166,7 +166,7 @@ def format_blocked_ip(blocked_ip: dict, cluster_name: str) -> dict:
 	"""Formats a blocked ip dictionary to match expected output."""
 
 	creation = now()
-	blocked_ip = rename_keys(blocked_ip, {"_id": "ip_address"})
+	blocked_ip = rename_keys(blocked_ip, {"id": "ip_address"})
 	blocked_ip.update(
 		{
 			"creation": creation,

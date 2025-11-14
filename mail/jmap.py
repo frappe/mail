@@ -443,12 +443,12 @@ class JMAPClient:
 	) -> dict:
 		"""Query emails in batches until reaching the limit."""
 
-		_ids = []
+		ids = []
 		total = None
 		batch_size = min(limit, self.max_objects_in_get)
 		sort = sort or [{"property": "receivedAt", "isAscending": False}]
 
-		while len(_ids) < limit:
+		while len(ids) < limit:
 			response = self._make_request(
 				using=["urn:ietf:params:jmap:mail"],
 				method_calls=[
@@ -471,17 +471,17 @@ class JMAPClient:
 			if total is None:
 				total = result["total"]
 
-			ids = result["ids"]
-			if not ids:
+			_ids = result["ids"]
+			if not _ids:
 				break
 
-			_ids.extend(ids)
-			position += len(ids)
+			ids.extend(_ids)
+			position += len(_ids)
 
-			if len(ids) < batch_size:
+			if len(_ids) < batch_size:
 				break
 
-		return {"ids": _ids[:limit], "total": total}
+		return {"ids": ids[:limit], "total": total}
 
 	def thread_query(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
@@ -1067,7 +1067,7 @@ class JMAPClient:
 						"accountId": self.primary_account_id,
 						"create": {
 							creation_id: {
-								"addressBookIds": {ab_id: True for ab_id in address_book_ids},
+								"addressBookIds": {id: True for id in address_book_ids},
 								"kind": kind,
 								"name": _get_name_map(full_name),
 								"emails": _get_emails_map(emails),
@@ -1090,11 +1090,11 @@ class JMAPClient:
 	) -> dict:
 		"""Query contact cards in batches until reaching the limit."""
 
-		_ids = []
+		ids = []
 		total = None
 		batch_size = min(limit, self.max_objects_in_get)
 
-		while len(_ids) < limit:
+		while len(ids) < limit:
 			response = self._make_request(
 				using=["urn:ietf:params:jmap:contacts"],
 				method_calls=[
@@ -1117,17 +1117,17 @@ class JMAPClient:
 			if total is None:
 				total = result["total"]
 
-			ids = result["ids"]
-			if not ids:
+			_ids = result["ids"]
+			if not _ids:
 				break
 
-			_ids.extend(ids)
-			position += len(ids)
+			ids.extend(_ids)
+			position += len(_ids)
 
-			if len(ids) < batch_size:
+			if len(_ids) < batch_size:
 				break
 
-		return {"ids": _ids[:limit], "total": total}
+		return {"ids": ids[:limit], "total": total}
 
 	def contact_card_get(
 		self, ids: list[str] | None = None, properties: list[str] | None = None
@@ -1218,7 +1218,7 @@ class JMAPClient:
 						"accountId": self.primary_account_id,
 						"update": {
 							id: {
-								"addressBookIds": {ab_id: True for ab_id in address_book_ids},
+								"addressBookIds": {id: True for id in address_book_ids},
 								"kind": kind,
 								"name": _get_name_map(full_name),
 								"emails": _get_emails_map(emails),

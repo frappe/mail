@@ -367,7 +367,7 @@ export interface MailMessage extends DocType {
 	/** Message ID: Data */
 	message_id?: string
 	/** Mail ID: Data */
-	_id?: string
+	id?: string
 	/** Blob ID: Data */
 	blob_id?: string
 	/** Size: Int */

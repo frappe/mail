@@ -79,13 +79,13 @@ const user = inject('$user')
 const primaryActions = (mail: Mail): MailAction[] => [
 	{
 		label: __('Unstar'),
-		onClick: () => starMails.submit({ _ids: [mail._id], flagged: false }),
+		onClick: () => starMails.submit({ ids: [mail.id], flagged: false }),
 		icon: () => h(Star, { class: 'fill-ink-amber-2 text-ink-amber-2 stroke-ink-amber-2' }),
 		condition: !!mail.flagged && mailbox !== mailboxIds.trash && !isMobile.value,
 	},
 	{
 		label: __('Star'),
-		onClick: () => starMails.submit({ _ids: [mail._id], flagged: true }),
+		onClick: () => starMails.submit({ ids: [mail.id], flagged: true }),
 		icon: Star,
 		condition: !mail.flagged && !mail.draft && mailbox !== mailboxIds.trash && !isMobile.value,
 	},
@@ -144,14 +144,14 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 		items: [
 			{
 				label: __('Unstar'),
-				onClick: () => starMails.submit({ _ids: [mail._id], flagged: false }),
+				onClick: () => starMails.submit({ ids: [mail.id], flagged: false }),
 				icon: () =>
 					h(Star, { class: 'fill-ink-amber-2 text-ink-amber-2 stroke-ink-amber-2' }),
 				condition: () => !!mail.flagged && mailbox !== mailboxIds.trash,
 			},
 			{
 				label: __('Star'),
-				onClick: () => starMails.submit({ _ids: [mail._id], flagged: true }),
+				onClick: () => starMails.submit({ ids: [mail.id], flagged: true }),
 				icon: Star,
 				condition: () => !mail.flagged && !mail.draft && mailbox !== mailboxIds.trash,
 			},
@@ -197,7 +197,7 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 
 const markAsSpam = createResource({
 	url: 'mail.api.mail.set_mails_spam_status',
-	makeParams: ({ spam }: { spam: boolean }) => ({ _ids: [mail._id], spam }),
+	makeParams: ({ spam }: { spam: boolean }) => ({ ids: [mail.id], spam }),
 })
 
 const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
@@ -217,7 +217,7 @@ const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
 
 const moveMail = createResource({
 	url: 'mail.api.mail.move_mails',
-	makeParams: (mailbox: string) => ({ _ids: [mail._id], mailbox }),
+	makeParams: (mailbox: string) => ({ ids: [mail.id], mailbox }),
 })
 
 const handleMoveMail = (mailbox: string, isUndo = false) => {
@@ -255,11 +255,11 @@ const handleDeleteMail = () =>
 
 const starMails = createResource({
 	url: 'mail.api.mail.set_flagged',
-	makeParams: ({ _ids, flagged }: { _ids: string[]; flagged: boolean }) => ({
-		_ids,
+	makeParams: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => ({
+		ids,
 		flagged,
 	}),
-	onSuccess: ({ _ids, flagged }: { _ids: string[]; flagged: boolean }) =>
-		emit('starMails', _ids, Number(flagged)),
+	onSuccess: ({ ids, flagged }: { ids: string[]; flagged: boolean }) =>
+		emit('starMails', ids, Number(flagged)),
 })
 </script>
