@@ -137,7 +137,7 @@ def serialize_mail(mail: dict) -> dict:
 	mail_fields = [
 		"name",
 		"message_id",
-		"_id",
+		"id",
 		"from_name",
 		"from_email",
 		"subject",
@@ -270,12 +270,12 @@ def create_mail(
 		save_as_draft=save_as_draft,
 	)
 
-	return {"_id": doc._id, "status": doc.status, "error": doc.error_message}
+	return {"id": doc.id, "status": doc.status, "error": doc.error_message}
 
 
 @frappe.whitelist()
 def update_draft_mail(
-	_id: str,
+	id: str,
 	from_email: str,
 	to: list[str],
 	cc: list[str],
@@ -289,7 +289,7 @@ def update_draft_mail(
 
 	account = get_account_for_user(frappe.session.user)
 
-	doc = frappe.get_doc("Mail Message", f"{account}|{_id}")
+	doc = frappe.get_doc("Mail Message", f"{account}|{id}")
 	doc.check_permission(permtype="write")
 
 	doc.from_email = from_email
@@ -326,7 +326,7 @@ def update_draft_mail(
 
 	new_doc = doc.submit() if submit else doc.save_draft()
 
-	return {"_id": new_doc._id, "status": new_doc.status, "error": new_doc.error_message}
+	return {"id": new_doc.id, "status": new_doc.status, "error": new_doc.error_message}
 
 
 def convert_img_src_from_file_url_to_cid(html_body: str, file_url: str, cid: str) -> str:
@@ -372,11 +372,11 @@ def convert_img_src_from_cid_to_url(html_body: str, cid: str, url: str) -> str:
 
 
 @frappe.whitelist()
-def delete_mail(_id: str) -> None:
+def delete_mail(id: str) -> None:
 	"""Deletes the given mail."""
 
 	account = get_account_for_user(frappe.session.user)
-	delete_messages(account, [_id])
+	delete_messages(account, [id])
 
 
 @frappe.whitelist()
@@ -448,21 +448,21 @@ def set_seen(thread_ids: dict[bool, list[str]], mailbox: str) -> dict:
 
 
 @frappe.whitelist()
-def set_flagged(_ids: list[str], flagged: bool) -> dict:
+def set_flagged(ids: list[str], flagged: bool) -> dict:
 	"""Sets flagged for mails."""
 
 	account = get_account_for_user(frappe.session.user)
-	set_flagged_status(account, _ids, flagged)
+	set_flagged_status(account, ids, flagged)
 
-	return {"_ids": _ids, "flagged": flagged}
+	return {"ids": ids, "flagged": flagged}
 
 
 @frappe.whitelist()
-def move_mails(_ids: list[str], mailbox: str) -> None:
+def move_mails(ids: list[str], mailbox: str) -> None:
 	"""Sets mailbox for mails."""
 
 	account = get_account_for_user(frappe.session.user)
-	move_messages(account, _ids, mailbox)
+	move_messages(account, ids, mailbox)
 
 
 @frappe.whitelist()
@@ -477,13 +477,13 @@ def set_threads_mailbox(thread_ids: dict[str, list[str]]) -> dict:
 
 
 @frappe.whitelist()
-def set_mails_spam_status(_ids: list[str], spam: bool) -> list[str]:
+def set_mails_spam_status(ids: list[str], spam: bool) -> list[str]:
 	"""Sets spam status of the given mails."""
 
 	account = get_account_for_user(frappe.session.user)
-	set_spam_status(account, _ids, spam)
+	set_spam_status(account, ids, spam)
 
-	return _ids
+	return ids
 
 
 @frappe.whitelist()

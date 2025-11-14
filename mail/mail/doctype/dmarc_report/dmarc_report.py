@@ -16,7 +16,7 @@ from mail.utils import extract_filter_values
 
 class DMARCReport(Document):
 	def autoname(self) -> None:
-		self.name = f"{self.cluster}|{self._id}"
+		self.name = f"{self.cluster}|{self.id}"
 
 	def db_insert(self, *args, **kwargs) -> None:
 		raise NotImplementedError
@@ -88,7 +88,7 @@ def fetch_dmarc_reports(cluster_name: str, page: int = 1, limit: int = 10, text:
 		data = response.json()["data"]
 		frappe.cache.set_value(get_total_cache_key(cluster_name, text), data["total"], expires_in_sec=600)
 
-		return [fetch_dmarc_report_details(f"{cluster_name}|{_id}") for _id in data["items"]]
+		return [fetch_dmarc_report_details(f"{cluster_name}|{id}") for id in data["items"]]
 
 	frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
 
@@ -99,13 +99,13 @@ def fetch_dmarc_report_details(name: str) -> dict:
 	if report := frappe.cache.hget("dmarc_reports", name):
 		return report
 
-	cluster_name, _id = name.split("|")
+	cluster_name, id = name.split("|")
 	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	response = backend_api.request(method="GET", endpoint=f"/api/reports/dmarc/{_id}")
+	response = backend_api.request(method="GET", endpoint=f"/api/reports/dmarc/{id}")
 
 	if response.status_code == 200:
 		report = response.json()["data"]
-		report["_id"] = _id
+		report["id"] = id
 		report = format_report(report, cluster_name)
 		frappe.cache.hset("dmarc_reports", name, report)
 
@@ -117,9 +117,9 @@ def fetch_dmarc_report_details(name: str) -> dict:
 def remove_dmarc_report(name: str) -> None:
 	"""Removes a DMARC report from the mail server."""
 
-	cluster_name, _id = name.split("|")
+	cluster_name, id = name.split("|")
 	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	response = backend_api.request(method="DELETE", endpoint=f"/api/reports/dmarc/{_id}")
+	response = backend_api.request(method="DELETE", endpoint=f"/api/reports/dmarc/{id}")
 	if response.status_code != 200:
 		frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
 
@@ -143,9 +143,9 @@ def format_report(report: dict, cluster_name: str) -> dict:
 	)
 
 	formatted_report = {
-		"_id": report["_id"],
+		"id": report["id"],
 		"cluster": cluster_name,
-		"name": f"{cluster_name}|{report['_id']}",
+		"name": f"{cluster_name}|{report['id']}",
 		"report_id": report["report"]["report_metadata"]["report_id"],
 		"organization_name": report["report"]["report_metadata"]["org_name"],
 		"email": report["report"]["report_metadata"]["email"],

@@ -166,7 +166,7 @@ def format_allowed_ip(allowed_ip: dict, cluster_name: str) -> dict:
 	"""Formats a allowed ip dictionary to match expected output."""
 
 	creation = now()
-	allowed_ip = rename_keys(allowed_ip, {"_id": "ip_address"})
+	allowed_ip = rename_keys(allowed_ip, {"id": "ip_address"})
 	allowed_ip.update(
 		{
 			"creation": creation,

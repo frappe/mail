@@ -261,18 +261,18 @@ def fetch_contact_cards(
 
 	while len(contact_cards) < limit:
 		result = client.contact_card_query(filter, position, limit, sort)
-		_ids = result["ids"]
+		ids = result["ids"]
 		total = result["total"]
 
-		if not _ids:
+		if not ids:
 			break
 
-		contact_cards.extend(get_contact_cards(account, _ids))
+		contact_cards.extend(get_contact_cards(account, ids))
 
 		if len(contact_cards) >= limit:
 			break
 
-		position += len(_ids)
+		position += len(ids)
 
 		if position >= total:
 			break
