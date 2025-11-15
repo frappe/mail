@@ -30,6 +30,7 @@ LOCAL_KEYS = [
 	"storage.fts",
 	"storage.directory",
 	"storage.full-text.*",
+	"storage.undelete.retention",
 	"certificate.*",
 	"account.purge.frequency",
 	"jmap.push.*",
@@ -487,6 +488,11 @@ def get_config_toml(server: str) -> str | None:
 			"fts": cluster.storage_fts,
 			"full-text": {"default-language": cluster.storage_full_text_default_language},
 			"lookup": cluster.storage_lookup,
+			"undelete": {
+				"retention": _format_value_or_zero(cluster.storage_undelete_retention, "d")
+				if cluster.storage_undelete_retention
+				else False
+			},
 		},
 		"account": {"purge": {"frequency": cluster.account_purge_frequency}},
 		"email": {

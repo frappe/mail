@@ -41,6 +41,8 @@
   "email_encryption_append",
   "blob_storage_section",
   "storage_blob",
+  "column_break_xupm",
+  "storage_undelete_retention",
   "full_text_index_storage_section",
   "storage_fts",
   "column_break_a9m0",
@@ -396,7 +398,8 @@
    "description": "Default language to use when language detection is not possible.",
    "fieldname": "storage_full_text_default_language",
    "fieldtype": "Data",
-   "label": "Default Language"
+   "label": "Default Language",
+   "reqd": 1
   },
   {
    "default": "frappe",
@@ -839,6 +842,19 @@
    "label": "Calendars",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_xupm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "How long to keep deleted emails before they are permanently removed from the system.",
+   "fieldname": "storage_undelete_retention",
+   "fieldtype": "Int",
+   "label": "Un-delete Period (Days)",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
@@ -860,7 +876,7 @@
    "link_fieldname": "backend_name"
   }
  ],
- "modified": "2025-11-06 21:00:59.973298",
+ "modified": "2025-11-15 10:39:17.675250",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Cluster",
