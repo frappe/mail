@@ -63,12 +63,12 @@ def create_default_tenant() -> None:
 	tenant.insert(ignore_permissions=True)
 
 
-def install_stalwart_cli() -> str:
+def install_stalwart_cli(version: str | None = None) -> str:
 	"""Download and install the Stalwart CLI tool."""
 
 	print("Installing Stalwart CLI...")
 
-	url, filename = _get_stalwart_cli_download_url()
+	url, filename = _get_stalwart_cli_download_url(version)
 	install_dir = get_mail_app_path()
 	tar_path = os.path.join(install_dir, filename)
 
@@ -96,10 +96,12 @@ def install_stalwart_cli() -> str:
 	return cli_path
 
 
-def _get_stalwart_cli_download_url() -> str:
+def _get_stalwart_cli_download_url(version: str | None = None) -> str:
 	"""Returns the download URL and filename for the Stalwart CLI tool."""
 
 	github_release_base = "https://github.com/stalwartlabs/stalwart/releases/latest/download"
+	if version:
+		github_release_base = f"https://github.com/stalwartlabs/stalwart/releases/download/{version}"
 
 	system = platform.system().lower()
 	arch = platform.machine().lower()
