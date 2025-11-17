@@ -5,8 +5,7 @@ from bs4 import BeautifulSoup
 from frappe import _
 from frappe.utils import format_datetime, get_url, random_string
 
-from mail.jmap import get_mailbox_id_by_role
-from mail.mail.doctype.mail_message.mail_message import (
+from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
 	empty_mailbox,
 	fetch_blob,
@@ -20,6 +19,7 @@ from mail.mail.doctype.mail_message.mail_message import (
 	set_seen_status,
 	set_spam_status,
 )
+from mail.jmap import get_mailbox_id_by_role
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
 from mail.utils import convert_html_to_text
 from mail.utils.cache import get_account_for_user

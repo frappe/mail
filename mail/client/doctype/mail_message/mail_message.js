@@ -65,7 +65,7 @@ frappe.ui.form.on('Mail Message', {
 			__('Reply'),
 			() => {
 				frappe.model.open_mapped_doc({
-					method: 'mail.mail.doctype.mail_message.mail_message.reply',
+					method: 'mail.client.doctype.mail_message.mail_message.reply',
 					frm: frm,
 					freeze: true,
 					freeze_message: __('Loading...'),
@@ -78,7 +78,7 @@ frappe.ui.form.on('Mail Message', {
 			__('Reply All'),
 			() => {
 				frappe.model.open_mapped_doc({
-					method: 'mail.mail.doctype.mail_message.mail_message.reply_all',
+					method: 'mail.client.doctype.mail_message.mail_message.reply_all',
 					frm: frm,
 					freeze: true,
 					freeze_message: __('Loading...'),
@@ -91,7 +91,7 @@ frappe.ui.form.on('Mail Message', {
 			__('Forward'),
 			() => {
 				frappe.model.open_mapped_doc({
-					method: 'mail.mail.doctype.mail_message.mail_message.forward',
+					method: 'mail.client.doctype.mail_message.mail_message.forward',
 					frm: frm,
 					freeze: true,
 					freeze_message: __('Loading...'),

@@ -200,7 +200,7 @@ class MailQueue(Document):
 	def message(self) -> str | None:
 		"""Returns the message content if available."""
 
-		from mail.mail.doctype.mail_message.mail_message import _get_blob_cache_key
+		from mail.client.doctype.mail_message.mail_message import _get_blob_cache_key
 
 		cache_key = _get_blob_cache_key(self.account, self.blob_id)
 		if content := frappe.cache.get_value(cache_key):
@@ -599,7 +599,7 @@ class MailQueue(Document):
 		if not self.blob_id:
 			frappe.throw(_("Email does not have a blob ID."))
 
-		from mail.mail.doctype.mail_message.mail_message import fetch_blob
+		from mail.client.doctype.mail_message.mail_message import fetch_blob
 
 		return fetch_blob(self.account, self.blob_id).decode("utf-8")
 

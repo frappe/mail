@@ -233,7 +233,7 @@ scheduler_events = {
 		"mail.server.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",
 	],
 	"hourly_long": [
-		"mail.mail.doctype.mail_message.mail_message.schedule_fetch_changes",
+		"mail.client.doctype.mail_message.mail_message.schedule_fetch_changes",
 	],
 	# "weekly": [
 	#     "mail.tasks.weekly"

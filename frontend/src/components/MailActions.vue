@@ -241,7 +241,7 @@ const handleMoveMail = (mailbox: string, isUndo = false) => {
 }
 
 const deleteMail = createResource({
-	url: 'mail.mail.doctype.mail_message.mail_message.bulk_delete',
+	url: 'mail.client.doctype.mail_message.mail_message.bulk_delete',
 	makeParams: () => ({ names: [mail.name] }),
 	onSuccess: () => reloadMails(),
 })
