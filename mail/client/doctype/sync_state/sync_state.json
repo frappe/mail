@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "autoname": "field:account",
+ "creation": "2025-04-24 09:53:26.466810",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_q3ee",
+  "account",
+  "last_synced_at",
+  "column_break_u03s",
+  "previous_state",
+  "current_state"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_q3ee",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "no_copy": 1,
+   "options": "Mail Account",
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "previous_state",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Previous State",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_state",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Current State",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_synced_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Last Synced At",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "column_break_u03s",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-04-24 11:19:05.404830",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Sync State",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

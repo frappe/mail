@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "creation": "2025-11-10 16:23:05.842673",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_pyok",
+  "type",
+  "label",
+  "column_break_pd4f",
+  "number",
+  "section_break_a5xr",
+  "contexts"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_pyok",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_pd4f",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Number",
+   "options": "Phone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_a5xr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "contexts",
+   "fieldtype": "JSON",
+   "label": "Contexts",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-11 16:16:51.970112",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Contact Card Phone",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

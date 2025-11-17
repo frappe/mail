@@ -1,0 +1,129 @@
+{
+ "actions": [],
+ "creation": "2025-06-12 19:41:37.374066",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_syrx",
+  "header_from",
+  "envelope_from",
+  "envelope_to",
+  "source_ip",
+  "count",
+  "column_break_gk3f",
+  "disposition",
+  "dkim_result",
+  "spf_result",
+  "auth_results_section",
+  "reason",
+  "dkim_results",
+  "spf_results"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_syrx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "source_ip",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Source IP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "disposition",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Disposition",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.envelope_from",
+   "fieldname": "envelope_from",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "From",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.envelope_to",
+   "fieldname": "envelope_to",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "To",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.header_from",
+   "fieldname": "header_from",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Header From",
+   "read_only": 1
+  },
+  {
+   "fieldname": "count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Count",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "JSON",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dkim_results",
+   "fieldtype": "JSON",
+   "label": "DKIM Results",
+   "read_only": 1
+  },
+  {
+   "fieldname": "spf_results",
+   "fieldtype": "JSON",
+   "label": "SPF Results",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "auth_results_section",
+   "fieldtype": "Section Break",
+   "label": "Auth Results"
+  },
+  {
+   "fieldname": "column_break_gk3f",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "dkim_result",
+   "fieldtype": "Data",
+   "label": "DKIM Result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "spf_result",
+   "fieldtype": "Data",
+   "label": "SPF Result",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-06-13 16:50:45.025031",
+ "modified_by": "Administrator",
+ "module": "Server",
+ "name": "DMARC Report Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,255 @@
+{
+ "actions": [],
+ "creation": "2025-07-08 14:04:55.891273",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_gdkn",
+  "amended_from",
+  "section_break_hiuo",
+  "status",
+  "retries",
+  "column_break_3krp",
+  "account",
+  "tenant",
+  "operation",
+  "import_format",
+  "import_file",
+  "export_format",
+  "export_archive_type",
+  "section_break_4a28",
+  "queued_at",
+  "started_at",
+  "completed_at",
+  "column_break_2bsb",
+  "started_after",
+  "duration",
+  "section_break_gizx",
+  "output"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_gdkn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Mail Data Exchange",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Operation",
+   "options": "\nImport\nExport",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Draft",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft\nQueued\nIn Progress\nCompleted\nFailed\nCancelled",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_3krp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_hiuo",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "options": "Mail Account",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "output",
+   "fieldtype": "Code",
+   "label": "Output",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_gizx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_4a28",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "queued_at",
+   "fieldtype": "Datetime",
+   "label": "Queued At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2bsb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.docstatus != 0",
+   "description": "Started At - Queued At",
+   "fieldname": "started_after",
+   "fieldtype": "Float",
+   "label": "Started After (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.docstatus != 0",
+   "description": "Completed At - Started At",
+   "fieldname": "duration",
+   "fieldtype": "Float",
+   "label": "Duration (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.operation == \"Import\"",
+   "description": "Supported: <code>.zip</code>, <code>.tgz</code>, <code>.tar.gz</code>",
+   "fieldname": "import_file",
+   "fieldtype": "Attach",
+   "label": "File",
+   "mandatory_depends_on": "eval: doc.operation == \"Import\"",
+   "no_copy": 1
+  },
+  {
+   "default": "jmap",
+   "depends_on": "eval: doc.operation == \"Import\"",
+   "fieldname": "import_format",
+   "fieldtype": "Select",
+   "label": "Format",
+   "mandatory_depends_on": "eval: doc.operation == \"Import\"",
+   "no_copy": 1,
+   "options": "jmap\nmbox\nmaildir\nmaildir-nested"
+  },
+  {
+   "default": ".zip",
+   "depends_on": "eval: doc.operation == \"Export\"",
+   "fieldname": "export_archive_type",
+   "fieldtype": "Select",
+   "label": "Archive Type",
+   "mandatory_depends_on": "eval: doc.operation == \"Export\"",
+   "options": ".zip\n.tgz\n.tar.gz"
+  },
+  {
+   "default": "jmap",
+   "depends_on": "eval: doc.operation == \"Export\"",
+   "fieldname": "export_format",
+   "fieldtype": "Select",
+   "label": "Format",
+   "mandatory_depends_on": "eval: doc.operation == \"Export\"",
+   "options": "jmap"
+  },
+  {
+   "fetch_from": "account.tenant",
+   "fieldname": "tenant",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Tenant",
+   "no_copy": 1,
+   "options": "Mail Tenant",
+   "read_only": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.retries",
+   "fieldname": "retries",
+   "fieldtype": "Int",
+   "label": "Retries",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-09-27 18:54:53.609407",
+ "modified_by": "Administrator",
+ "module": "Server",
+ "name": "Mail Data Exchange",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail User",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail Admin",
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

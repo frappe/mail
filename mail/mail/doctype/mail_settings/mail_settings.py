@@ -5,7 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from mail.mail.doctype.dns_record.dns_record import get_dns_provider
+from mail.server.doctype.dns_record.dns_record import get_dns_provider
 
 
 class MailSettings(Document):

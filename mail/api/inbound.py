@@ -7,15 +7,15 @@ from frappe import _
 from frappe.utils import cint, convert_utc_to_system_timezone, create_batch, now
 
 from mail.api.auth import validate_user
+from mail.client.doctype.mail_message.mail_message import fetch_blobs, fetch_messages
+from mail.client.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
 from mail.jmap import get_mailbox_id_by_role
-from mail.mail.doctype.mail_message.mail_message import fetch_blobs, fetch_messages
-from mail.mail.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
 from mail.utils.cache import get_account_for_user
 from mail.utils.dt import convert_to_utc
 from mail.utils.rate_limiter import dynamic_rate_limit
 
 if TYPE_CHECKING:
-	from mail.mail.doctype.mail_sync_history.mail_sync_history import MailSyncHistory
+	from mail.client.doctype.mail_sync_history.mail_sync_history import MailSyncHistory
 
 
 @frappe.whitelist(methods=["GET"])
@@ -25,7 +25,7 @@ def fetch_blob(blob_id: str, as_bytes: bool = False) -> str | bytes:
 
 	validate_user()
 
-	from mail.mail.doctype.mail_message.mail_message import fetch_blob as _fetch_blob
+	from mail.client.doctype.mail_message.mail_message import fetch_blob as _fetch_blob
 
 	blob = _fetch_blob(get_account(), blob_id)
 	return blob if as_bytes else base64.b64encode(blob).decode("utf-8")

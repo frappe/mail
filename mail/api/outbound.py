@@ -8,7 +8,7 @@ from frappe.utils.file_manager import save_file
 from werkzeug.datastructures.file_storage import FileStorage
 from werkzeug.utils import secure_filename
 
-from mail.mail.doctype.mail_queue.mail_queue import MailQueue
+from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.utils import get_messages_directory
 from mail.utils.cache import get_account_for_user
 from mail.utils.rate_limiter import dynamic_rate_limit

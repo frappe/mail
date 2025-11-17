@@ -1,0 +1,201 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-08-06 20:26:07.025939",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tracer_configuration_section",
+  "type",
+  "tracer_id",
+  "column_break_50om",
+  "level",
+  "options_section",
+  "path",
+  "prefix",
+  "rotate",
+  "transport",
+  "endpoint",
+  "timeout",
+  "throttle",
+  "column_break_mxza",
+  "ansi",
+  "multiline",
+  "buffer",
+  "enable_log_exporter",
+  "enable_span_exporter",
+  "lossy"
+ ],
+ "fields": [
+  {
+   "fieldname": "tracer_configuration_section",
+   "fieldtype": "Section Break",
+   "label": "Tracer configuration"
+  },
+  {
+   "description": "Unique identifier for the tracer.",
+   "fieldname": "tracer_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tracer ID",
+   "reqd": 1
+  },
+  {
+   "fieldname": "options_section",
+   "fieldtype": "Section Break",
+   "label": "Options"
+  },
+  {
+   "depends_on": "eval: doc.type == \"Log file\"",
+   "description": "The path to the log file.",
+   "fieldname": "path",
+   "fieldtype": "Data",
+   "label": "Path",
+   "mandatory_depends_on": "eval: doc.type == \"Log file\"",
+   "placeholder": "/var/log"
+  },
+  {
+   "depends_on": "eval: doc.type == \"Log file\"",
+   "description": "The prefix for the log file.",
+   "fieldname": "prefix",
+   "fieldtype": "Data",
+   "label": "Prefix",
+   "mandatory_depends_on": "eval: doc.type == \"Log file\"",
+   "placeholder": "stalwart.log"
+  },
+  {
+   "description": "The type of tracer.",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Method",
+   "options": "\nLog file\nConsole\nSystemd Journal\nOpen Telemetry",
+   "reqd": 1
+  },
+  {
+   "description": "The logging level for this tracer.",
+   "fieldname": "level",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Logging Level",
+   "options": "\nError\nWarn\nInfo\nDebug\nTrace",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_50om",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_mxza",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.type == \"Open Telemetry\"",
+   "description": "The transport protocol for Open Telemetry.",
+   "fieldname": "transport",
+   "fieldtype": "Select",
+   "label": "Transport",
+   "mandatory_depends_on": "eval: doc.type == \"Open Telemetry\"",
+   "options": "\nHTTP\ngRPC"
+  },
+  {
+   "depends_on": "eval: doc.type == \"Open Telemetry\"",
+   "description": "The endpoint for Open Telemetry.",
+   "fieldname": "endpoint",
+   "fieldtype": "Data",
+   "label": "Endpoint",
+   "mandatory_depends_on": "eval: doc.type == \"Open Telemetry\"",
+   "placeholder": "https://tracing.example.com/v1/otel"
+  },
+  {
+   "depends_on": "eval: doc.type == \"Open Telemetry\"",
+   "description": "Maximum amount of time that Stalwart will wait for a response from the OpenTelemetry endpoint.",
+   "fieldname": "timeout",
+   "fieldtype": "Int",
+   "label": "Timeout (Seconds)",
+   "mandatory_depends_on": "eval: doc.type == \"Open Telemetry\"",
+   "non_negative": 1
+  },
+  {
+   "depends_on": "eval: doc.type == \"Open Telemetry\"",
+   "description": "The minimum amount of time that must pass between each request to the OpenTelemetry endpoint.",
+   "fieldname": "throttle",
+   "fieldtype": "Int",
+   "label": "Throttle (Milliseconds)",
+   "mandatory_depends_on": "eval: doc.type == \"Open Telemetry\"",
+   "non_negative": 1
+  },
+  {
+   "depends_on": "eval: doc.type == \"Log file\"",
+   "description": "The frequency to rotate the log file.",
+   "fieldname": "rotate",
+   "fieldtype": "Select",
+   "label": "Rotate Frequency",
+   "mandatory_depends_on": "eval: doc.type == \"Log file\"",
+   "options": "\nDaily\nHourly\nMinutely\nNever"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: [\"Log file\", \"Console\"].includes(doc.type)",
+   "description": "Whether to use ANSI colors in logs.",
+   "fieldname": "ansi",
+   "fieldtype": "Check",
+   "label": "Use ANSI colors"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.type == \"Open Telemetry\"",
+   "description": "Whether to export logs to OpenTelemetry.",
+   "fieldname": "enable_log_exporter",
+   "fieldtype": "Check",
+   "label": "Export logs"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.type == \"Open Telemetry\"",
+   "description": "Whether to export spans to OpenTelemetry.",
+   "fieldname": "enable_span_exporter",
+   "fieldtype": "Check",
+   "label": "Export spans"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: [\"Log file\", \"Console\", \"Systemd Journal\", \"Open Telemetry\"].includes(doc.type)",
+   "description": "Whether to drop log entries if there is backlog.",
+   "fieldname": "lossy",
+   "fieldtype": "Check",
+   "label": "Lossy mode"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: [\"Log file\", \"Console\"].includes(doc.type)",
+   "description": "Whether to write log entries as a single line or multiline.",
+   "fieldname": "multiline",
+   "fieldtype": "Check",
+   "label": "Multiline entries"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.type == \"Console\"",
+   "description": "Whether to buffer log entries before writing to console.",
+   "fieldname": "buffer",
+   "fieldtype": "Check",
+   "label": "Buffered writes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-08-07 12:12:19.659090",
+ "modified_by": "Administrator",
+ "module": "Server",
+ "name": "Mail Cluster Trace",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

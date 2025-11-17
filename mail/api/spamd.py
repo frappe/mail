@@ -3,7 +3,7 @@ from html import unescape
 import frappe
 from frappe import _
 
-from mail.mail.doctype.spam_check_log.spam_check_log import create_spam_check_log
+from mail.server.doctype.spam_check_log.spam_check_log import create_spam_check_log
 from mail.utils.rate_limiter import dynamic_rate_limit
 
 

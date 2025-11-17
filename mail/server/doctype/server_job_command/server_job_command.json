@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "creation": "2025-10-01 15:47:48.193117",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_nhmx",
+  "status",
+  "column_break_hb9x",
+  "ignore_errors",
+  "section_break_7qvh",
+  "started_at",
+  "ended_at",
+  "column_break_lefk",
+  "duration",
+  "section_break_isxx",
+  "command",
+  "section_break_yy8m",
+  "exit_code",
+  "stdout",
+  "stderr"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_nhmx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "Pending",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Pending\nRunning\nSuccess\nFailed",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "command",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Command",
+   "placeholder": "sudo apt-get update",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_hb9x",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_isxx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_7qvh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "ended_at",
+   "fieldtype": "Datetime",
+   "label": "Ended At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_lefk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_yy8m",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "exit_code",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Exit Code",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "depends_on": "eval: doc.duration",
+   "description": "Ended At - Started At",
+   "fieldname": "duration",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Duration (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "stdout",
+   "fieldtype": "Code",
+   "label": "Output",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "stderr",
+   "fieldtype": "Code",
+   "label": "Error",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "ignore_errors",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Ignore Errors",
+   "set_only_once": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-10-01 18:30:04.959778",
+ "modified_by": "Administrator",
+ "module": "Server",
+ "name": "Server Job Command",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

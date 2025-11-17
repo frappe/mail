@@ -1,0 +1,211 @@
+{
+ "actions": [],
+ "creation": "2025-04-25 13:11:49.985072",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_xjjk",
+  "verified",
+  "column_break_ivre",
+  "verified_at",
+  "section_break_ktdh",
+  "status",
+  "account",
+  "server",
+  "endpoint",
+  "expires_at",
+  "subscription_id",
+  "column_break_wbrq",
+  "notification_types",
+  "section_break_gjbl",
+  "_subscription_response",
+  "subscription_response",
+  "_verification_response",
+  "verification_response",
+  "_renew_response",
+  "renew_response"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_xjjk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "options": "Mail Account",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "default": "Email\nMailbox\nIdentity",
+   "fieldname": "notification_types",
+   "fieldtype": "Small Text",
+   "label": "Notification Types",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "expires_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Expires At",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "\nActive\nExpired\nFailed to Verify\nFailed to Renew\nFailed to Subscribe\nPending Verification",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_gjbl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "endpoint",
+   "fieldtype": "Data",
+   "label": "Endpoint",
+   "length": 255,
+   "no_copy": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_wbrq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subscription_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Subscription ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.verified",
+   "fieldname": "verified",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Verified",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_ktdh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "verification_response",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "Verification Response",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "renew_response",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "Renew Response",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "subscription_response",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "Subscription Response",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ivre",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.verified",
+   "fieldname": "verified_at",
+   "fieldtype": "Datetime",
+   "label": "Verified At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "_subscription_response",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Subscription Response",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "_verification_response",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Verification Response",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "_renew_response",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Renew Response",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "server",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Server",
+   "options": "Mail Server",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-07-16 11:02:31.835423",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Push Subscription",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "account"
+}

@@ -10,7 +10,7 @@ from mail.utils.user import get_user_email_addresses, is_tenant_admin
 from mail.utils.validation import has_permission_for_account
 
 if TYPE_CHECKING:
-	from mail.mail.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
+	from mail.client.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
 
 
 @frappe.whitelist()

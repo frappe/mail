@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "creation": "2025-11-10 18:48:12.019733",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_xxw4",
+  "type",
+  "section_break_cxsb",
+  "street",
+  "column_break_lnyv",
+  "locality",
+  "region",
+  "postcode",
+  "country",
+  "section_break_aruj",
+  "contexts"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_xxw4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "street",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Street",
+   "reqd": 1
+  },
+  {
+   "fieldname": "locality",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Locality"
+  },
+  {
+   "fieldname": "region",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Region"
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Country"
+  },
+  {
+   "fieldname": "section_break_aruj",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "contexts",
+   "fieldtype": "JSON",
+   "label": "Contexts",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "postcode",
+   "fieldtype": "Data",
+   "label": "Postcode"
+  },
+  {
+   "fieldname": "section_break_cxsb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_lnyv",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-11 16:37:52.873849",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Contact Card Address",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

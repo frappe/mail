@@ -1,0 +1,590 @@
+{
+ "actions": [],
+ "creation": "2025-05-19 12:13:04.277760",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_zwhk",
+  "status",
+  "account",
+  "from_name",
+  "from_email",
+  "column_break_vzib",
+  "subject",
+  "section_break_agmx",
+  "save_as_draft",
+  "destroy_after_submission",
+  "column_break_lnat",
+  "priority",
+  "delivery_mode",
+  "section_break_nug2",
+  "retries",
+  "max_retries",
+  "column_break_caio",
+  "next_retry_after",
+  "reply_to_section",
+  "reply_to",
+  "headers_section",
+  "headers",
+  "recipients_section",
+  "recipients",
+  "body_section",
+  "html_body",
+  "text_body",
+  "attachments_section",
+  "attachments",
+  "more_info_tab",
+  "forwarded_from_id",
+  "message_id",
+  "id",
+  "blob_id",
+  "size",
+  "from_ip",
+  "via_api",
+  "newsletter",
+  "column_break_qxot",
+  "sent_at",
+  "received_after",
+  "queued_at",
+  "queued_after",
+  "drafted_at",
+  "drafted_after",
+  "submitted_at",
+  "submitted_after",
+  "column_break_kuap",
+  "in_reply_to",
+  "in_reply_to_id",
+  "mailbox_id",
+  "thread_id",
+  "message_section",
+  "raw_message",
+  "message",
+  "response_section",
+  "_response",
+  "response",
+  "error_section",
+  "error_message",
+  "error_log"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_zwhk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "\nPending\nQueued\nFailed\nDrafted\nFailed to Draft\nSubmitted\nFailed to Submit",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "options": "Mail Account",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "from_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "From Name",
+   "no_copy": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "from_email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "From Email",
+   "length": 255,
+   "no_copy": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_vzib",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Small Text",
+   "in_standard_filter": 1,
+   "label": "Subject",
+   "set_only_once": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: doc.reply_to",
+   "fieldname": "reply_to_section",
+   "fieldtype": "Section Break",
+   "label": "Reply To"
+  },
+  {
+   "depends_on": "eval: doc.__islocal || doc.reply_to && doc.reply_to != \"[]\"",
+   "description": "Provide a JSON array of objects with display_name and email. <br>\nExample: <code>[{\"display_name\": \"Jane Smith\", \"email\": \"jane@example.com\"}]</code>",
+   "fieldname": "reply_to",
+   "fieldtype": "JSON",
+   "label": "Reply To",
+   "set_only_once": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: doc.headers",
+   "fieldname": "headers_section",
+   "fieldtype": "Section Break",
+   "label": "Headers"
+  },
+  {
+   "depends_on": "eval: doc.__islocal || doc.headers && doc.headers != \"{}\"",
+   "description": "Provide a JSON object with header name\u2013value pairs. <br>\nExample: <code>{\"X-Custom-Header\": \"Value\"}</code>",
+   "fieldname": "headers",
+   "fieldtype": "JSON",
+   "label": "Headers",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "recipients_section",
+   "fieldtype": "Section Break",
+   "label": "Recipients"
+  },
+  {
+   "depends_on": "eval: doc.__islocal || doc.recipients && doc.recipients != \"[]\"",
+   "description": "Provide a JSON array of recipients with type, display_name, and email. <br>\n<b>type</b> must be \"To\", \"Cc\", or \"Bcc\". <br>\nExample: <code>[{\"type\": \"To\", \"display_name\": \"Jane Smith\", \"email\": \"jane@example.com\"}]</code>",
+   "fieldname": "recipients",
+   "fieldtype": "JSON",
+   "label": "Recipients",
+   "set_only_once": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "body_section",
+   "fieldtype": "Section Break",
+   "label": "Body"
+  },
+  {
+   "fieldname": "html_body",
+   "fieldtype": "Code",
+   "label": "HTML",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "text_body",
+   "fieldtype": "Code",
+   "label": "Text",
+   "set_only_once": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: doc.attachments",
+   "fieldname": "attachments_section",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "depends_on": "eval: doc.__islocal || doc.attachments && doc.attachments != \"[]\"",
+   "description": "Provide a JSON array with file_url, disposition (inline or attachment), and cid. <br>\nExample: <code>[{\"file_url\": \"/private/files/image.png\", \"disposition\": \"inline\", \"cid\": \"j80BhiEC5o\"}]</code>",
+   "fieldname": "attachments",
+   "fieldtype": "JSON",
+   "label": "Attachments",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "message_id",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Message ID",
+   "length": 255,
+   "no_copy": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "blob_id",
+   "fieldtype": "Data",
+   "label": "Blob ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qxot",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sent_at",
+   "fieldtype": "Datetime",
+   "label": "Sent At",
+   "no_copy": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_kuap",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mailbox_id",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Mailbox ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "thread_id",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Thread ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "message_section",
+   "fieldtype": "Section Break",
+   "label": "Message"
+  },
+  {
+   "fieldname": "raw_message",
+   "fieldtype": "Code",
+   "label": "Raw Message",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Code",
+   "is_virtual": 1,
+   "label": "Message",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "response",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "Response",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "_response",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Response",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "is_virtual": 1,
+   "label": "Error Message",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "more_info_tab",
+   "fieldtype": "Tab Break",
+   "label": "More Info"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "response_section",
+   "fieldtype": "Section Break",
+   "label": "Response"
+  },
+  {
+   "default": "0",
+   "description": "When checked, the email will be saved as a draft instead of being sent.",
+   "fieldname": "save_as_draft",
+   "fieldtype": "Check",
+   "label": " Save as Draft",
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "section_break_agmx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.save_as_draft",
+   "description": "If enabled, the message will be deleted after successful submission.",
+   "fieldname": "destroy_after_submission",
+   "fieldtype": "Check",
+   "label": "Destroy After Submission",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "in_reply_to",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "In Reply To (Message ID)",
+   "length": 255,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "size",
+   "fieldtype": "Int",
+   "label": "Size",
+   "no_copy": 1,
+   "non_negative": 1,
+   "options": "File Size",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.save_as_draft",
+   "fieldname": "drafted_at",
+   "fieldtype": "Datetime",
+   "label": "Drafted At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: !doc.save_as_draft",
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "Immediate",
+   "description": "<pre><b>Immediate</b> \u2014 send right after insert (after_insert).\n<b>Enqueue</b> \u2014 enqueue a job (using frappe.enqueue).\n<b>Batch</b> \u2014 wait to be picked up by a scheduled background job.\n</pre>",
+   "fieldname": "delivery_mode",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Delivery Mode",
+   "no_copy": 1,
+   "options": "Immediate\nEnqueue\nBatch",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "error_section",
+   "fieldtype": "Section Break",
+   "label": "Error"
+  },
+  {
+   "fieldname": "error_log",
+   "fieldtype": "Code",
+   "label": "Error Log",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_nug2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_caio",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.retries > 0",
+   "fieldname": "next_retry_after",
+   "fieldtype": "Datetime",
+   "label": "Next Retry After",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "queued_at",
+   "fieldtype": "Datetime",
+   "label": "Queued At",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "in_reply_to_id",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "In Reply To (Email ID)",
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "forwarded_from_id",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Forwarded From (Email ID)",
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "depends_on": "eval: doc.submitted_at",
+   "description": "Submitted At - Creation",
+   "fieldname": "submitted_after",
+   "fieldtype": "Float",
+   "is_virtual": 1,
+   "label": "Submitted After (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.queued_at",
+   "description": "Queued At - Creation",
+   "fieldname": "queued_after",
+   "fieldtype": "Float",
+   "is_virtual": 1,
+   "label": "Queued After (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.save_as_draft && doc.drafted_at",
+   "description": "Drafted At - Creation",
+   "fieldname": "drafted_after",
+   "fieldtype": "Float",
+   "is_virtual": 1,
+   "label": "Drafted After (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.sent_at",
+   "description": "Creation - Sent At",
+   "fieldname": "received_after",
+   "fieldtype": "Float",
+   "is_virtual": 1,
+   "label": "Received After (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_ip",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "From IP",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "via_api",
+   "fieldtype": "Check",
+   "label": "API",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "newsletter",
+   "fieldtype": "Check",
+   "label": "Newsletter",
+   "no_copy": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Priority",
+   "no_copy": 1,
+   "options": "\nLow\nNormal\nHigh",
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_lnat",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.retries > 0",
+   "fieldname": "retries",
+   "fieldtype": "Int",
+   "in_standard_filter": 1,
+   "label": "Retries",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "default": "3",
+   "depends_on": "eval: doc.__islocal || doc.retries",
+   "fieldname": "max_retries",
+   "fieldtype": "Int",
+   "label": "Max Retries",
+   "no_copy": 1,
+   "non_negative": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Mail ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "read_only_depends_on": "eval: !doc.__islocal",
+   "search_index": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-11-14 11:04:58.529343",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Mail Queue",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Mail User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "subject"
+}

@@ -12,7 +12,7 @@ from frappe.utils import now, time_diff_in_seconds
 from mail.utils import reconnect_on_failure
 
 if TYPE_CHECKING:
-	from mail.mail.doctype.mail_server_ansible_play.mail_server_ansible_play import MailServerAnsiblePlay
+	from mail.server.doctype.server_ansible_play.server_ansible_play import ServerAnsiblePlay
 
 
 class Ansible:
@@ -31,17 +31,17 @@ class Ansible:
 
 	@classmethod
 	def from_play(cls, play_name: str) -> "Ansible":
-		"""Create an Ansible instance from an existing Mail Server Ansible Play record."""
+		"""Create an Ansible instance from an existing Server Ansible Play record."""
 
-		pdoc = frappe.get_doc("Mail Server Ansible Play", play_name)
+		play = frappe.get_doc("Server Ansible Play", play_name)
 
 		self = cls.__new__(cls)
-		self.play = pdoc.name
-		self.server = pdoc.server
-		self.playbook = pdoc.playbook
+		self.play = play.name
+		self.server = play.server
+		self.playbook = play.playbook
 
 		self.variables = {}
-		for variable in pdoc.variables:
+		for variable in play.variables:
 			try:
 				self.variables[variable.key_] = json.loads(variable.value)
 			except (TypeError, json.JSONDecodeError):
@@ -49,7 +49,7 @@ class Ansible:
 
 		self.tasks = {}
 		if tasks := frappe.db.get_all(
-			"Ansible Play Task",
+			"Server Ansible Play Task",
 			filters={"play": self.play},
 			fields=["task", "name"],
 			order_by="creation asc",
@@ -66,17 +66,17 @@ class Ansible:
 		return os.path.join(frappe.get_app_path("mail", "utils", "ansible", "playbooks"), self.playbook)
 
 	def _create_play_record(self) -> None:
-		"""Creates a Mail Server Ansible Play record and associated Ansible Play Task records."""
+		"""Creates a Server Ansible Play record and associated Server Ansible Play Task records."""
 
 		if hasattr(self, "play") and self.play:
 			return
 
 		play = self._get_play()
 
-		pdoc = frappe.new_doc("Mail Server Ansible Play")
-		pdoc.server = self.server
-		pdoc.play = play["name"]
-		pdoc.playbook = self.playbook
+		play = frappe.new_doc("Server Ansible Play")
+		play.server = self.server
+		play.play = play["name"]
+		play.playbook = self.playbook
 
 		for key, value in self.variables.items():
 			if isinstance(value, int | bool):
@@ -86,15 +86,15 @@ class Ansible:
 			elif not isinstance(value, str):
 				frappe.throw(_("Variable value cannot be of type {0}").format(type(value)))
 
-			pdoc.append("variables", {"key_": key, "value": value})
+			play.append("variables", {"key_": key, "value": value})
 
-		pdoc.insert(ignore_permissions=True)
-		self.play = pdoc.name
+		play.insert(ignore_permissions=True)
+		self.play = play.name
 
 		self._create_task_records(play=play)
 
 	def _create_task_records(self, play: dict | None = None) -> None:
-		"""Creates Ansible Play Task records for each task in the play."""
+		"""Creates Server Ansible Play Task records for each task in the play."""
 
 		if not hasattr(self, "play") or not self.play:
 			frappe.throw(_("Play record must be created before creating task records."))
@@ -105,11 +105,11 @@ class Ansible:
 
 		self.tasks = {}
 		for task in play["tasks"]:
-			tdoc = frappe.new_doc("Ansible Play Task")
-			tdoc.play = self.play
-			tdoc.task = task["name"]
-			tdoc.insert(ignore_permissions=True)
-			self.tasks[tdoc.task] = tdoc.name
+			task = frappe.new_doc("Server Ansible Play Task")
+			task.play = self.play
+			task.task = task["name"]
+			task.insert(ignore_permissions=True)
+			self.tasks[task.task] = task.name
 
 	def _get_play(self) -> dict:
 		"""Returns the first play from the playbook."""
@@ -125,7 +125,7 @@ class Ansible:
 
 		return plays[0]
 
-	def run(self, quiet: bool = True) -> "MailServerAnsiblePlay":
+	def run(self, quiet: bool = True) -> "ServerAnsiblePlay":
 		"""Run the playbook using ansible-runner and track its progress."""
 
 		server = frappe.get_doc("Mail Server", self.server)
@@ -152,7 +152,7 @@ class Ansible:
 
 		os.remove(private_key_file.name)
 
-		return frappe.get_doc("Mail Server Ansible Play", self.play)
+		return frappe.get_doc("Server Ansible Play", self.play)
 
 	def event_handler(self, event: dict) -> None:
 		"""Handle events from ansible-runner and update the play and task records accordingly."""
@@ -204,29 +204,29 @@ class Ansible:
 
 	@reconnect_on_failure()
 	def update_play(self, status: str | None = None, stats: dict | None = None) -> None:
-		"""Updates the Mail Server Ansible Play record with the given status and stats."""
+		"""Updates the Server Ansible Play record with the given status and stats."""
 
 		if not status and not stats:
 			return
 
-		pdoc = frappe.get_doc("Mail Server Ansible Play", self.play)
+		play = frappe.get_doc("Server Ansible Play", self.play)
 
 		if stats:
 			ended_at = now()
-			duration = time_diff_in_seconds(ended_at, pdoc.started_at)
+			duration = time_diff_in_seconds(ended_at, play.started_at)
 			status = "Failed" if stats["failures"] or stats["unreachable"] else "Success"
 			kwargs = {**stats, "status": status, "ended_at": ended_at, "duration": duration}
-			pdoc._db_set(commit=True, notify=True, **kwargs)
+			play._db_set(commit=True, notify=True, **kwargs)
 		else:
 			started_at = now()
-			started_after = time_diff_in_seconds(started_at, pdoc.creation)
-			pdoc._db_set(
+			started_after = time_diff_in_seconds(started_at, play.creation)
+			play._db_set(
 				status=status, started_at=started_at, started_after=started_after, commit=True, notify=True
 			)
 
 	@reconnect_on_failure()
 	def update_task(self, status: str, task: dict | None = None, result: dict | None = None) -> None:
-		"""Updates the Ansible Play Task record with the given status, task, and result."""
+		"""Updates the Server Ansible Play Task record with the given status, task, and result."""
 
 		if not any([task, result]):
 			return
@@ -242,7 +242,7 @@ class Ansible:
 		if not task_name:
 			return
 
-		tdoc = frappe.get_doc("Ansible Play Task", task_name)
+		tdoc = frappe.get_doc("Server Ansible Play Task", task_name)
 
 		kwargs = {"status": status}
 		if parsed:
@@ -269,7 +269,7 @@ class Ansible:
 		frappe.publish_realtime(
 			"ansible_play_progress",
 			{"progress": task_list.index(task), "total": len(task_list), "play": self.play},
-			doctype="Mail Server Ansible Play",
+			doctype="Server Ansible Play",
 			docname=self.play,
 			user=frappe.session.user,
 		)

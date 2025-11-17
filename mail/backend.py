@@ -8,11 +8,11 @@ import frappe
 import requests
 from frappe import _
 
-from mail.mail.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
+from mail.server.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
 from mail.utils import get_dkim_selector, reformat_pbkdf2_hash
 
 if TYPE_CHECKING:
-	from mail.mail.doctype.mail_backend_request.mail_backend_request import MailBackendRequest
+	from mail.server.doctype.mail_backend_request.mail_backend_request import MailBackendRequest
 
 
 @dataclass
@@ -137,8 +137,8 @@ class MailBackendDKIMManager(MailBackendManagerBase):
 	def create(self, domain_name: str, rsa_private_key: str) -> "MailBackendRequest":
 		"""Creates a DKIM key on the backend."""
 
-		from mail.mail.doctype.mail_cluster.mail_cluster import reload_clusters_config
-		from mail.mail.doctype.mail_server.mail_server import reload_servers_config
+		from mail.server.doctype.mail_cluster.mail_cluster import reload_clusters_config
+		from mail.server.doctype.mail_server.mail_server import reload_servers_config
 
 		request_data = json.dumps(
 			[
@@ -283,14 +283,14 @@ class MailBackendAccountManager(MailBackendManagerBase):
 	def delete(self, email: str) -> "MailBackendRequest":
 		"""Deletes an account from the backend."""
 
-		from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import (
-			delete_jmap_push_subscriptions,
+		from mail.client.doctype.push_subscription.push_subscription import (
+			delete_push_subscriptions,
 		)
 
 		return self.create_request(
 			method="DELETE",
 			endpoint=f"/api/principal/{email}",
-			on_start=delete_jmap_push_subscriptions,
+			on_start=delete_push_subscriptions,
 			on_start_kwargs={"account": email},
 		)
 
@@ -363,7 +363,7 @@ class MailBackendAliasManager(MailBackendManagerBase):
 	def create(self, email: str, alias: str) -> "MailBackendRequest":
 		"""Creates an alias on the backend."""
 
-		from mail.mail.doctype.mail_account.mail_account import sync_jmap_identities
+		from mail.client.doctype.mail_account.mail_account import sync_jmap_identities
 
 		request_data = json.dumps([{"action": "addItem", "field": "emails", "value": alias}])
 		return self.create_request(
@@ -383,7 +383,7 @@ class MailBackendAliasManager(MailBackendManagerBase):
 	def delete(self, email: str, alias: str) -> "MailBackendRequest":
 		"""Deletes an alias from the backend."""
 
-		from mail.mail.doctype.mail_account.mail_account import sync_jmap_identities
+		from mail.client.doctype.mail_account.mail_account import sync_jmap_identities
 
 		request_data = json.dumps([{"action": "removeItem", "field": "emails", "value": alias}])
 		return self.create_request(

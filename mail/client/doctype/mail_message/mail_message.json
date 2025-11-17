@@ -1,0 +1,505 @@
+{
+ "actions": [],
+ "creation": "2025-08-14 19:21:53.251118",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_8xbl",
+  "account",
+  "from_name",
+  "from_email",
+  "column_break_nwlx",
+  "subject",
+  "mailboxes_section",
+  "mailboxes",
+  "reply_to_section",
+  "reply_to",
+  "recipients_section",
+  "recipients",
+  "body_section",
+  "preview",
+  "html_body",
+  "text_body",
+  "section_break_oulc",
+  "attachments",
+  "more_info_tab",
+  "message_id",
+  "id",
+  "blob_id",
+  "size",
+  "has_attachment",
+  "column_break_n9mu",
+  "sent_at",
+  "received_at",
+  "received_after",
+  "column_break_qnli",
+  "sender_name",
+  "sender_email",
+  "in_reply_to",
+  "thread_id",
+  "section_break_i7gm",
+  "draft",
+  "seen",
+  "junk",
+  "flagged",
+  "answered",
+  "forwarded",
+  "column_break_edwu",
+  "keywords",
+  "section_break_pzqa",
+  "from_ip",
+  "from_host",
+  "column_break_aftg",
+  "spam_score",
+  "section_break_ddkg",
+  "spf_pass",
+  "dkim_pass",
+  "dmarc_pass",
+  "column_break_srmh",
+  "spf_description",
+  "dkim_description",
+  "dmarc_description",
+  "body_parts_section",
+  "_html_body",
+  "_text_body",
+  "message_section",
+  "message"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_8xbl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "options": "Mail Account",
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "from_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "From Name",
+   "read_only": 1,
+   "read_only_depends_on": "eval: !doc.draft"
+  },
+  {
+   "fieldname": "from_email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "From Email",
+   "read_only": 1,
+   "read_only_depends_on": "eval: !doc.draft"
+  },
+  {
+   "fieldname": "column_break_nwlx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Subject",
+   "read_only": 1,
+   "read_only_depends_on": "eval: !doc.draft"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: doc.reply_to.length > 0",
+   "fieldname": "reply_to_section",
+   "fieldtype": "Section Break",
+   "label": "Reply To"
+  },
+  {
+   "fieldname": "reply_to",
+   "fieldtype": "Table",
+   "options": "Mail Message Reply To",
+   "read_only_depends_on": "eval: !doc.draft"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
+   "fieldname": "recipients_section",
+   "fieldtype": "Section Break",
+   "label": "Recipients"
+  },
+  {
+   "fieldname": "recipients",
+   "fieldtype": "Table",
+   "options": "Mail Message Recipient",
+   "read_only_depends_on": "eval: !doc.draft"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "body_section",
+   "fieldtype": "Section Break",
+   "label": "Body"
+  },
+  {
+   "fieldname": "html_body",
+   "fieldtype": "Code",
+   "label": "HTML",
+   "read_only": 1,
+   "read_only_depends_on": "eval: !doc.draft"
+  },
+  {
+   "fieldname": "text_body",
+   "fieldtype": "Code",
+   "label": "Text",
+   "read_only": 1,
+   "read_only_depends_on": "eval: !doc.draft"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_oulc",
+   "fieldtype": "Section Break",
+   "label": "Attachments"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Table",
+   "label": "Attachments",
+   "options": "Mail Message Part",
+   "read_only_depends_on": "eval: !doc.draft"
+  },
+  {
+   "fieldname": "more_info_tab",
+   "fieldtype": "Tab Break",
+   "label": "More Info"
+  },
+  {
+   "fieldname": "message_id",
+   "fieldtype": "Data",
+   "label": "Message ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "blob_id",
+   "fieldtype": "Data",
+   "label": "Blob ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "size",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Size",
+   "options": "File Size",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "has_attachment",
+   "fieldtype": "Check",
+   "label": "Has Attachment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_n9mu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sent_at",
+   "fieldtype": "Datetime",
+   "label": "Sent At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received At",
+   "read_only": 1
+  },
+  {
+   "description": "Received At - Sent At",
+   "fieldname": "received_after",
+   "fieldtype": "Float",
+   "label": "Received After (Seconds)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qnli",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sender_name",
+   "fieldtype": "Data",
+   "label": "Sender Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sender_email",
+   "fieldtype": "Data",
+   "label": "Sender Email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "in_reply_to",
+   "fieldtype": "Data",
+   "label": "In Reply To (Message ID)",
+   "read_only": 1,
+   "read_only_depends_on": "eval: !doc.draft"
+  },
+  {
+   "fieldname": "thread_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Thread ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_i7gm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "draft",
+   "fieldtype": "Check",
+   "label": "Draft",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "seen",
+   "fieldtype": "Check",
+   "label": "Seen",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "flagged",
+   "fieldtype": "Check",
+   "label": "Flagged",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "answered",
+   "fieldtype": "Check",
+   "label": "Answered",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "forwarded",
+   "fieldtype": "Check",
+   "label": "Forwarded",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_edwu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "keywords",
+   "fieldtype": "JSON",
+   "label": "Keywords",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: !doc.draft && doc.message",
+   "fieldname": "section_break_pzqa",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "from_ip",
+   "fieldtype": "Data",
+   "is_virtual": 1,
+   "label": "From IP",
+   "read_only": 1
+  },
+  {
+   "fieldname": "from_host",
+   "fieldtype": "Data",
+   "is_virtual": 1,
+   "label": "From Host",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_aftg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "spam_score",
+   "fieldtype": "Float",
+   "is_virtual": 1,
+   "label": "Spam Score",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: !doc.draft && doc.message",
+   "fieldname": "section_break_ddkg",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "spf_pass",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "SPF",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "dkim_pass",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "DKIM",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "dmarc_pass",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "DMARC",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_srmh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "spf_description",
+   "fieldtype": "Small Text",
+   "is_virtual": 1,
+   "label": "SPF Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dkim_description",
+   "fieldtype": "Small Text",
+   "is_virtual": 1,
+   "label": "DKIM Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "dmarc_description",
+   "fieldtype": "Small Text",
+   "is_virtual": 1,
+   "label": "DMARC Description",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "body_parts_section",
+   "fieldtype": "Section Break",
+   "label": "Body Parts"
+  },
+  {
+   "fieldname": "_html_body",
+   "fieldtype": "Table",
+   "label": "HTML Body",
+   "options": "Mail Message Part",
+   "read_only": 1
+  },
+  {
+   "fieldname": "_text_body",
+   "fieldtype": "Table",
+   "label": "Text Body",
+   "options": "Mail Message Part",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "message_section",
+   "fieldtype": "Section Break",
+   "label": "Message"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Code",
+   "is_virtual": 1,
+   "label": "Message",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
+   "fieldname": "mailboxes_section",
+   "fieldtype": "Section Break",
+   "label": "Mailboxes"
+  },
+  {
+   "fieldname": "mailboxes",
+   "fieldtype": "Table",
+   "options": "Mail Message Mailbox",
+   "read_only": 1
+  },
+  {
+   "fieldname": "preview",
+   "fieldtype": "Code",
+   "label": "Preview",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "junk",
+   "fieldtype": "Check",
+   "label": "Junk",
+   "read_only": 1
+  },
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Mail ID",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2025-11-14 11:01:16.911587",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Mail Message",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "role": "Mail Admin",
+   "select": 1
+  },
+  {
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Mail User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

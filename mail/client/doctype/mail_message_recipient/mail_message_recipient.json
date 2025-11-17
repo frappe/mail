@@ -1,0 +1,62 @@
+{
+ "actions": [],
+ "creation": "2025-08-14 19:07:37.204444",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_tl9i",
+  "type",
+  "column_break_id93",
+  "display_name",
+  "email"
+ ],
+ "fields": [
+  {
+   "default": "To",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "To\nCc\nBcc",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_id93",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "display_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Display Name"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email",
+   "options": "Email",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_tl9i",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "grid_page_length": 100,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-08-14 19:12:30.003138",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Mail Message Recipient",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

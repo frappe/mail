@@ -1,0 +1,155 @@
+{
+ "actions": [],
+ "creation": "2025-03-26 19:23:11.587142",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_yoky",
+  "env_id",
+  "created_at",
+  "return_path",
+  "message_size",
+  "column_break_0til",
+  "cluster",
+  "queue_id",
+  "blob_hash",
+  "section_break_nxzs",
+  "text",
+  "domains",
+  "section_break_x3li",
+  "recipients",
+  "section_break_l6ts",
+  "message"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_yoky",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "return_path",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Return Path",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Created At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "message_size",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Message Size",
+   "non_negative": 1,
+   "options": "File Size",
+   "read_only": 1
+  },
+  {
+   "fieldname": "blob_hash",
+   "fieldtype": "Data",
+   "label": "Blob Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cluster",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Cluster",
+   "options": "Mail Cluster",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recipients",
+   "fieldtype": "Table",
+   "label": "Recipients",
+   "options": "Message Queue Recipient",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_0til",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "domains",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Domains",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_x3li",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_l6ts",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: doc.env_id",
+   "fieldname": "env_id",
+   "fieldtype": "Data",
+   "label": "Env ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "queue_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Queue ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "text",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Text",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_nxzs",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Code",
+   "label": "Message",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2025-07-16 13:17:16.580833",
+ "modified_by": "Administrator",
+ "module": "Server",
+ "name": "Message Queue",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
