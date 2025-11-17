@@ -50,7 +50,7 @@
 		/>
 		<Button
 			v-if="isVerificationStep"
-			type="button"
+			type="submit"
 			:loading="resendOtp.loading"
 			:label="__('Resend OTP')"
 			@click="resendOtp.submit()"

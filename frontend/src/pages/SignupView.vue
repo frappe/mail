@@ -79,8 +79,9 @@
 		<ErrorMessage :message="validateUsername.error || signup.error" />
 		<Button
 			variant="solid"
-			:label="__(route.query.step === '3' ? 'Sign Up' : 'Next')"
+			:label="route.query.step === '3' ? __('Sign Up') : __('Next')"
 			:loading="validateUsername.loading || signup.loading"
+			type="submit"
 		/>
 		<Button
 			v-if="route.name === 'PersonalSignUp' && route.query.step"

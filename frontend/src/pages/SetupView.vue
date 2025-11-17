@@ -14,7 +14,12 @@
 			required
 		/>
 		<ErrorMessage :message="createTenant.error?.messages[0]" />
-		<Button variant="solid" :loading="createTenant.loading"> Create Organization </Button>
+		<Button
+			variant="solid"
+			:loading="createTenant.loading"
+			type="submit"
+			:label="__('Create Organization')"
+		/>
 	</form>
 	<div class="mt-6 text-center">
 		<button class="text-center text-base font-medium hover:underline" @click="logout.submit()">

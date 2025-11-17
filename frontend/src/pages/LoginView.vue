@@ -22,7 +22,7 @@
 			</router-link>
 		</div>
 		<ErrorMessage :message="login.error" />
-		<Button variant="solid" :loading="login.loading" :label="__('Log In')" />
+		<Button variant="solid" :loading="login.loading" :label="__('Log In')" type="submit" />
 	</form>
 	<div
 		v-if="

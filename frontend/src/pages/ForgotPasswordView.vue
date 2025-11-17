@@ -18,7 +18,7 @@
 				required
 			/>
 			<ErrorMessage :message="sendResetLink.error" />
-			<Button variant="solid" :loading="sendResetLink.loading">
+			<Button variant="solid" :loading="sendResetLink.loading" type="submit">
 				{{ __('Send Reset Link') }}
 			</Button>
 		</form>
