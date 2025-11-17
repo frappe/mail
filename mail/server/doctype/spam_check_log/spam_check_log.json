@@ -147,7 +147,7 @@
  "links": [],
  "modified": "2025-06-09 16:07:35.473702",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Spam Check Log",
  "owner": "Administrator",
  "permissions": [
