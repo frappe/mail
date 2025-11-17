@@ -63,7 +63,7 @@
  "modified": "2025-09-27 11:33:26.552955",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Server Config",
+ "name": "Server Config",
  "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [

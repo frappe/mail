@@ -19,7 +19,7 @@ class MailServerDeployment(Document):
 		"""Returns the config.toml content."""
 
 		if self.config:
-			return frappe.get_doc("Mail Server Config", self.config).config
+			return frappe.get_doc("Server Config", self.config).config
 
 	@property
 	def docker_compose(self) -> str | None:
@@ -97,7 +97,7 @@ class MailServerDeployment(Document):
 		if not self.config:
 			frappe.throw(_("Config is required."))
 
-		config_server = frappe.db.get_value("Mail Server Config", self.config, "server")
+		config_server = frappe.db.get_value("Server Config", self.config, "server")
 		if config_server != self.server:
 			frappe.throw(_("Config does not belong to the selected server."))
 

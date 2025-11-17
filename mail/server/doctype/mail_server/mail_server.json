@@ -270,7 +270,7 @@
  "links": [
   {
    "group": "Reference",
-   "link_doctype": "Mail Server Config",
+   "link_doctype": "Server Config",
    "link_fieldname": "server"
   },
   {
@@ -299,7 +299,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-11-17 11:04:14.131654",
+ "modified": "2025-11-17 11:08:37.534528",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Server",

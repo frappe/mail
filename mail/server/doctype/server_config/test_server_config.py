@@ -11,18 +11,18 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class UnitTestMailServerConfig(UnitTestCase):
+class UnitTestServerConfig(UnitTestCase):
 	"""
-	Unit tests for MailServerConfig.
+	Unit tests for ServerConfig.
 	Use this class for testing individual functions and methods.
 	"""
 
 	pass
 
 
-class IntegrationTestMailServerConfig(IntegrationTestCase):
+class IntegrationTestServerConfig(IntegrationTestCase):
 	"""
-	Integration tests for MailServerConfig.
+	Integration tests for ServerConfig.
 	Use this class for testing interactions between multiple components.
 	"""
 

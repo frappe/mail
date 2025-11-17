@@ -19,13 +19,13 @@ from mail.mail.doctype.mail_settings.mail_settings import (
 from mail.server.doctype.dns_record.dns_record import create_or_update_dns_record
 from mail.server.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
 from mail.server.doctype.mail_cluster.mail_cluster import create_or_update_spf_dns_record_for_cluster
-from mail.server.doctype.mail_server_config.mail_server_config import create_mail_server_config
+from mail.server.doctype.server_config.server_config import create_server_config
 from mail.utils import get_spf_host_for_cluster
 from mail.utils.cache import get_root_domain_name
 from mail.utils.dns import get_dns_record
 
 if TYPE_CHECKING:
-	from mail.server.doctype.mail_server_config.mail_server_config import MailServerConfig
+	from mail.server.doctype.server_config.server_config import ServerConfig
 
 
 class MailServer(Document):
@@ -193,16 +193,16 @@ class MailServer(Document):
 
 	@frappe.whitelist()
 	def generate_config(self) -> None:
-		"""Generates the Mail Server Config."""
+		"""Generates the Server Config."""
 
 		frappe.only_for("System Manager")
 		self._generate_config()
-		frappe.msgprint(_("Mail Server Config created."), indicator="green", alert=True)
+		frappe.msgprint(_("Server Config created."), indicator="green", alert=True)
 
-	def _generate_config(self) -> "MailServerConfig":
-		"""Generates the Mail Server Config."""
+	def _generate_config(self) -> "ServerConfig":
+		"""Generates the Server Config."""
 
-		return create_mail_server_config(self.name)
+		return create_server_config(self.name)
 
 	def create_or_delete_spf_ehlo_dns_record(self) -> None:
 		"""Creates or deletes the SPF EHLO DNS Record."""
@@ -229,7 +229,7 @@ class MailServer(Document):
 
 	@frappe.whitelist()
 	def reload_config(self) -> None:
-		"""Reloads the Mail Server configuration."""
+		"""Reloads the Server configuration."""
 
 		frappe.only_for("System Manager")
 
@@ -344,9 +344,9 @@ class MailServer(Document):
 	def _install_stalwart(self, config: str | None = None) -> None:
 		"""Installs Stalwart on the Mail Server."""
 
-		config = config or frappe.db.get_value("Mail Server Config", {"server": self.name})
+		config = config or frappe.db.get_value("Server Config", {"server": self.name})
 		if not config:
-			frappe.throw(_("Please generate the Mail Server Config before installing Stalwart."))
+			frappe.throw(_("Please generate the Server Config before installing Stalwart."))
 
 		install_redis = 0
 		cluster = frappe.get_doc("Mail Cluster", self.cluster)

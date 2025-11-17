@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-17 11:01+0553\n"
-"PO-Revision-Date: 2025-11-17 11:01+0553\n"
+"POT-Creation-Date: 2025-11-17 11:12+0553\n"
+"PO-Revision-Date: 2025-11-17 11:12+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -339,16 +339,16 @@ msgstr ""
 #: mail/server/doctype/mail_server/mail_server.js:37
 #: mail/server/doctype/mail_server/mail_server.js:46
 #: mail/server/doctype/mail_server/mail_server.js:55
-#: mail/server/doctype/mail_server/mail_server.js:64
+#: mail/server/doctype/mail_server/mail_server.js:64w
 #: mail/server/doctype/mail_server/mail_server.js:72
 #: mail/server/doctype/mail_server/mail_server.js:82
-#: mail/server/doctype/mail_server_config/mail_server_config.js:20
-#: mail/server/doctype/mail_server_config/mail_server_config.js:29
 #: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:31
 #: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:37
 #: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:42
 #: mail/server/doctype/mail_server_job/mail_server_job.js:16
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:30
+#: mail/server/doctype/server_config/server_config.js:20
+#: mail/server/doctype/server_config/server_config.js:29
 msgid "Actions"
 msgstr ""
 
@@ -681,8 +681,8 @@ msgid "Are you sure you want to permanently delete the selected {0}?"
 msgstr ""
 
 #: mail/server/doctype/mail_server/mail_server.js:78
-#: mail/server/doctype/mail_server_config/mail_server_config.js:16
-#: mail/server/doctype/mail_server_config/mail_server_config.js:25
+#: mail/server/doctype/server_config/server_config.js:16
+#: mail/server/doctype/server_config/server_config.js:25
 msgid "Are you sure you want to proceed?"
 msgstr ""
 
@@ -1244,11 +1244,11 @@ msgstr ""
 msgid "Concurrent"
 msgstr ""
 
-#. Label of the config_toml (Password) field in DocType 'Mail Server Config'
-#. Label of the config (Code) field in DocType 'Mail Server Config'
 #. Label of the config (Link) field in DocType 'Mail Server Deployment'
-#: mail/server/doctype/mail_server_config/mail_server_config.json
+#. Label of the config_toml (Password) field in DocType 'Server Config'
+#. Label of the config (Code) field in DocType 'Server Config'
 #: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/server/doctype/server_config/server_config.json
 msgid "Config"
 msgstr ""
 
@@ -1279,11 +1279,11 @@ msgstr ""
 msgid "Configuration reloaded."
 msgstr ""
 
-#: mail/server/doctype/mail_server_config/mail_server_config.py:148
+#: mail/server/doctype/server_config/server_config.py:148
 msgid "Configuration updated successfully, but the response from the server was unexpected: {response}"
 msgstr ""
 
-#: mail/server/doctype/mail_server_config/mail_server_config.py:142
+#: mail/server/doctype/server_config/server_config.py:142
 msgid "Configuration updated successfully."
 msgstr ""
 
@@ -1834,15 +1834,15 @@ msgstr ""
 msgid "Depends On"
 msgstr ""
 
-#: mail/server/doctype/mail_server_config/mail_server_config.js:14
+#: mail/server/doctype/server_config/server_config.js:14
 msgid "Deploy"
 msgstr ""
 
-#: mail/server/doctype/mail_server_config/mail_server_config.py:104
+#: mail/server/doctype/server_config/server_config.py:104
 msgid "Deploy of Stalwart initiated."
 msgstr ""
 
-#: mail/server/doctype/mail_server_config/mail_server_config.js:39
+#: mail/server/doctype/server_config/server_config.js:39
 msgid "Deploying Configuration..."
 msgstr ""
 
@@ -2860,7 +2860,7 @@ msgstr ""
 msgid "Failed to subscribe to JMAP Push Subscription."
 msgstr ""
 
-#: mail/server/doctype/mail_server_config/mail_server_config.py:138
+#: mail/server/doctype/server_config/server_config.py:138
 msgid "Failed to update configuration"
 msgstr ""
 
@@ -4248,15 +4248,6 @@ msgid "Mail Server ACME Provider"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_server_config/mail_server_config.json
-msgid "Mail Server Config"
-msgstr ""
-
-#: mail/server/doctype/mail_server/mail_server.py:200
-msgid "Mail Server Config created."
-msgstr ""
-
-#. Name of a DocType
 #: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 msgid "Mail Server Deployment"
 msgstr ""
@@ -5636,7 +5627,7 @@ msgid "Please enter a contact email"
 msgstr ""
 
 #: mail/server/doctype/mail_server/mail_server.py:349
-msgid "Please generate the Mail Server Config before installing Stalwart."
+msgid "Please generate the Server Config before installing Stalwart."
 msgstr ""
 
 #: mail/client/doctype/address_book/address_book.py:62
@@ -6199,18 +6190,18 @@ msgstr ""
 #. Group in DKIM Key's connections
 #. Group in Mail Cluster's connections
 #. Group in Mail Server's connections
-#. Group in Mail Server Config's connections
 #. Group in Mail Server Deployment's connections
 #. Group in Server Ansible Play's connections
+#. Group in Server Config's connections
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_domain/mail_domain.json
 #: mail/client/doctype/mailing_list/mailing_list.json
 #: mail/server/doctype/dkim_key/dkim_key.json
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_server/mail_server.json
-#: mail/server/doctype/mail_server_config/mail_server_config.json
 #: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_config/server_config.json
 msgid "Reference"
 msgstr ""
 
@@ -6947,22 +6938,31 @@ msgstr ""
 
 #. Label of the server (Link) field in DocType 'JMAP Push Subscription'
 #. Label of a shortcut in the Mail Workspace
-#. Label of the server (Link) field in DocType 'Mail Server Config'
 #. Label of the server (Link) field in DocType 'Mail Server Deployment'
 #. Label of the server (Link) field in DocType 'Mail Server Job'
 #. Label of the server (Link) field in DocType 'Server Ansible Play'
+#. Label of the server (Link) field in DocType 'Server Config'
 #: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
 #: mail/mail/workspace/mail/mail.json
-#: mail/server/doctype/mail_server_config/mail_server_config.json
 #: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_config/server_config.json
 msgid "Server"
 msgstr ""
 
 #. Name of a DocType
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 msgid "Server Ansible Play"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/server_config/server_config.json
+msgid "Server Config"
+msgstr ""
+
+#: mail/server/doctype/mail_server/mail_server.py:200
+msgid "Server Config created."
 msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Mail Domain DNS Record'
@@ -7572,11 +7572,11 @@ msgstr ""
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/mail_server/mail_server.json
-#: mail/server/doctype/mail_server_config/mail_server_config.json
 #: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/message_queue/message_queue.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_config/server_config.json
 #: mail/server/doctype/spam_check_log/spam_check_log.json
 msgid "System Manager"
 msgstr ""
@@ -8381,7 +8381,7 @@ msgstr ""
 msgid "Unsupported output file format. Supported formats are .zip, .tgz, and .tar.gz."
 msgstr ""
 
-#: mail/server/doctype/mail_server_config/mail_server_config.js:23
+#: mail/server/doctype/server_config/server_config.js:23
 msgid "Update config.toml"
 msgstr ""
 
@@ -8390,7 +8390,7 @@ msgstr ""
 msgid "Updated At"
 msgstr ""
 
-#: mail/server/doctype/mail_server_config/mail_server_config.js:53
+#: mail/server/doctype/server_config/server_config.js:53
 msgid "Updating Configuration..."
 msgstr ""
 

@@ -119,7 +119,7 @@
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "Config",
-   "options": "Mail Server Config",
+   "options": "Server Config",
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
@@ -212,7 +212,7 @@
    "link_fieldname": "deployment"
   }
  ],
- "modified": "2025-11-17 11:04:51.628804",
+ "modified": "2025-11-17 11:07:41.374586",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Server Deployment",

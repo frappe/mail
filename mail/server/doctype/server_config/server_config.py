@@ -69,7 +69,7 @@ PROTOCOL_MAP = {
 }
 
 
-class MailServerConfig(Document):
+class ServerConfig(Document):
 	@property
 	def config(self) -> str | None:
 		"""Returns the TOML configuration for the Mail Server."""
@@ -151,21 +151,21 @@ class MailServerConfig(Document):
 				)
 
 
-def create_mail_server_config(server: str) -> "MailServerConfig":
-	"""Creates a new Mail Server Config."""
+def create_server_config(server: str) -> "ServerConfig":
+	"""Creates a new Server Config."""
 
-	config = frappe.new_doc("Mail Server Config")
+	config = frappe.new_doc("Server Config")
 	config.server = server
 	config.insert()
 
 	return config
 
 
-def get_mail_server_config(server: str) -> MailServerConfig | None:
-	"""Returns the Mail Server Config."""
+def get_server_config(server: str) -> ServerConfig | None:
+	"""Returns the Server Config."""
 
-	if config := frappe.db.exists("Mail Server Config", {"server": server}):
-		return frappe.get_doc("Mail Server Config", config)
+	if config := frappe.db.exists("Server Config", {"server": server}):
+		return frappe.get_doc("Server Config", config)
 
 
 def get_config_toml(server: str) -> str | None:
