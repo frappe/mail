@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-17 11:27+0553\n"
-"PO-Revision-Date: 2025-11-17 11:27+0553\n"
+"POT-Creation-Date: 2025-11-17 11:29+0553\n"
+"PO-Revision-Date: 2025-11-17 11:29+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -1369,9 +1369,9 @@ msgid "Contacts"
 msgstr ""
 
 #. Label of the container (Data) field in DocType 'Mail Cluster Store'
-#. Label of the container (Data) field in DocType 'Mail Server Service'
+#. Label of the container (Data) field in DocType 'Server Deployment Service'
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Container"
 msgstr ""
 
@@ -1389,8 +1389,9 @@ msgstr ""
 msgid "Contexts"
 msgstr ""
 
-#. Description of the 'Restart' (Select) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Description of the 'Restart' (Select) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Controls if the container restarts automatically."
 msgstr ""
 
@@ -1723,9 +1724,9 @@ msgstr ""
 msgid "Define custom listeners for this mail server. If not set, the cluster’s listeners will be used."
 msgstr ""
 
-#. Description of the 'Network Mode' (Select) field in DocType 'Mail Server
-#. Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Description of the 'Network Mode' (Select) field in DocType 'Server
+#. Deployment Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Defines how the container connects to the network."
 msgstr ""
 
@@ -1819,8 +1820,8 @@ msgstr ""
 msgid "Delivery retried successfully."
 msgstr ""
 
-#. Label of the depends_on (JSON) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Label of the depends_on (JSON) field in DocType 'Server Deployment Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Depends On"
 msgstr ""
 
@@ -2003,8 +2004,9 @@ msgstr ""
 msgid "Disposition"
 msgstr ""
 
-#. Description of the 'Image' (Data) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Description of the 'Image' (Data) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Docker image with tag (e.g. stalwartlabs/stalwart:latest, redis:7-alpine)."
 msgstr ""
 
@@ -3394,8 +3396,8 @@ msgstr ""
 msgid "Ignored"
 msgstr ""
 
-#. Label of the image (Data) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Label of the image (Data) field in DocType 'Server Deployment Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Image"
 msgstr ""
 
@@ -3857,13 +3859,15 @@ msgstr ""
 msgid "List & Alias"
 msgstr ""
 
-#. Description of the 'Ports' (JSON) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Description of the 'Ports' (JSON) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "List of port mappings, e.g. [\"25:25\", \"8080:8080\"]."
 msgstr ""
 
-#. Description of the 'Volumes' (JSON) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Description of the 'Volumes' (JSON) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "List of volume mappings, e.g. [\"/data:/opt/data\"]."
 msgstr ""
 
@@ -4239,11 +4243,6 @@ msgstr ""
 #. Name of a DocType
 #: mail/server/doctype/mail_server_listener/mail_server_listener.json
 msgid "Mail Server Listener"
-msgstr ""
-
-#. Name of a DocType
-#: mail/server/doctype/mail_server_service/mail_server_service.json
-msgid "Mail Server Service"
 msgstr ""
 
 #. Name of a DocType
@@ -4953,8 +4952,9 @@ msgstr ""
 msgid "Name Length"
 msgstr ""
 
-#. Description of the 'Container' (Data) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Description of the 'Container' (Data) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Name for the container."
 msgstr ""
 
@@ -4963,8 +4963,9 @@ msgstr ""
 msgid "Name of the database."
 msgstr ""
 
-#. Description of the 'Service' (Data) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Description of the 'Service' (Data) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Name of the service (e.g. stalwart, redis)."
 msgstr ""
 
@@ -4986,8 +4987,9 @@ msgstr ""
 msgid "Nested Depth"
 msgstr ""
 
-#. Label of the network_mode (Select) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Label of the network_mode (Select) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Network Mode"
 msgstr ""
 
@@ -5358,9 +5360,9 @@ msgstr ""
 msgid "Other"
 msgstr ""
 
-#. Description of the 'Depends On' (JSON) field in DocType 'Mail Server
+#. Description of the 'Depends On' (JSON) field in DocType 'Server Deployment
 #. Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Other services this one depends on."
 msgstr ""
 
@@ -5718,8 +5720,8 @@ msgstr ""
 msgid "Port to use for SSH access."
 msgstr ""
 
-#. Label of the ports (JSON) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Label of the ports (JSON) field in DocType 'Server Deployment Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Ports"
 msgstr ""
 
@@ -6440,8 +6442,8 @@ msgstr ""
 msgid "Response (JSON)"
 msgstr ""
 
-#. Label of the restart (Select) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Label of the restart (Select) field in DocType 'Server Deployment Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Restart"
 msgstr ""
 
@@ -6955,6 +6957,11 @@ msgid "Server Deployment"
 msgstr ""
 
 #. Name of a DocType
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
+msgid "Server Deployment Service"
+msgstr ""
+
+#. Name of a DocType
 #: mail/server/doctype/server_job/server_job.json
 msgid "Server Job"
 msgstr ""
@@ -6983,8 +6990,8 @@ msgstr ""
 msgid "Server Type"
 msgstr ""
 
-#. Label of the service (Data) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Label of the service (Data) field in DocType 'Server Deployment Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Service"
 msgstr ""
 
@@ -8735,8 +8742,8 @@ msgstr ""
 msgid "View more."
 msgstr ""
 
-#. Label of the volumes (JSON) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Label of the volumes (JSON) field in DocType 'Server Deployment Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "Volumes"
 msgstr ""
 
@@ -8915,8 +8922,9 @@ msgstr ""
 msgid "[No subject]"
 msgstr ""
 
-#. Option for the 'Restart' (Select) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Option for the 'Restart' (Select) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "always"
 msgstr ""
 
@@ -8930,9 +8938,9 @@ msgstr ""
 msgid "attachment"
 msgstr ""
 
-#. Option for the 'Network Mode' (Select) field in DocType 'Mail Server
+#. Option for the 'Network Mode' (Select) field in DocType 'Server Deployment
 #. Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "bridge"
 msgstr ""
 
@@ -8961,9 +8969,9 @@ msgstr ""
 msgid "gRPC"
 msgstr ""
 
-#. Option for the 'Network Mode' (Select) field in DocType 'Mail Server
+#. Option for the 'Network Mode' (Select) field in DocType 'Server Deployment
 #. Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "host"
 msgstr ""
 
@@ -9016,14 +9024,15 @@ msgstr ""
 msgid "mySQL"
 msgstr ""
 
-#. Option for the 'Restart' (Select) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Option for the 'Restart' (Select) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "no"
 msgstr ""
 
-#. Option for the 'Network Mode' (Select) field in DocType 'Mail Server
+#. Option for the 'Network Mode' (Select) field in DocType 'Server Deployment
 #. Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "none"
 msgstr ""
 
@@ -9044,8 +9053,9 @@ msgstr ""
 msgid "notUpdateddescription"
 msgstr ""
 
-#. Option for the 'Restart' (Select) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Option for the 'Restart' (Select) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "on-failure"
 msgstr ""
 
@@ -9100,8 +9110,9 @@ msgstr ""
 msgid "trash"
 msgstr ""
 
-#. Option for the 'Restart' (Select) field in DocType 'Mail Server Service'
-#: mail/server/doctype/mail_server_service/mail_server_service.json
+#. Option for the 'Restart' (Select) field in DocType 'Server Deployment
+#. Service'
+#: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "unless-stopped"
 msgstr ""
 

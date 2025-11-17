@@ -11,9 +11,9 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class IntegrationTestMailServerService(IntegrationTestCase):
+class IntegrationTestServerDeploymentService(IntegrationTestCase):
 	"""
-	Integration tests for MailServerService.
+	Integration tests for ServerDeploymentService.
 	Use this class for testing interactions between multiple components.
 	"""
 

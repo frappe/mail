@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class MailServerService(Document):
+class ServerDeploymentService(Document):
 	pass

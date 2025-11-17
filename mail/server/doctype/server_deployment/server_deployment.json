@@ -199,7 +199,7 @@
    "fieldname": "services",
    "fieldtype": "Table",
    "label": "Services",
-   "options": "Mail Server Service",
+   "options": "Server Deployment Service",
    "set_only_once": 1
   }
  ],
@@ -212,7 +212,7 @@
    "link_fieldname": "deployment"
   }
  ],
- "modified": "2025-11-17 11:07:41.374586",
+ "modified": "2025-11-17 11:29:27.009137",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Server Deployment",

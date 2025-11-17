@@ -102,7 +102,7 @@
  "modified": "2025-11-07 12:38:48.566967",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Server Service",
+ "name": "Server Deployment Service",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
