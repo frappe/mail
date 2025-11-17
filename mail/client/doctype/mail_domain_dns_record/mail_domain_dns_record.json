@@ -82,7 +82,7 @@
  "links": [],
  "modified": "2025-02-03 17:11:17.517836",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mail Domain DNS Record",
  "owner": "Administrator",
  "permissions": [],

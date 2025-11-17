@@ -152,7 +152,7 @@
  ],
  "modified": "2025-07-15 16:20:27.181885",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mail Domain",
  "naming_rule": "Set by user",
  "owner": "Administrator",

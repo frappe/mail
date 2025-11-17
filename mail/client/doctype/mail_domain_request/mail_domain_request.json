@@ -81,7 +81,7 @@
  "links": [],
  "modified": "2025-01-28 15:33:09.730936",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mail Domain Request",
  "naming_rule": "Random",
  "owner": "Administrator",
