@@ -243,7 +243,7 @@ scheduler_events = {
 	# ],
 	"cron": {
 		"*/5 * * * *": [
-			"mail.server.doctype.mail_server_job.mail_server_job.retry_failed_jobs",
+			"mail.server.doctype.server_job.server_job.retry_failed_jobs",
 			"mail.client.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
 			"mail.server.doctype.server_deployment.server_deployment.retry_failed_deployments",
 			"mail.server.doctype.server_ansible_play.server_ansible_play.retry_failed_ansible_plays",

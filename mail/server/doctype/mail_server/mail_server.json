@@ -285,7 +285,7 @@
   },
   {
    "group": "Deployment",
-   "link_doctype": "Mail Server Job",
+   "link_doctype": "Server Job",
    "link_fieldname": "server"
   },
   {
@@ -299,7 +299,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-11-17 11:14:21.516003",
+ "modified": "2025-11-17 11:17:34.138786",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Server",

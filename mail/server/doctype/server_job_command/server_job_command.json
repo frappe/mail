@@ -134,7 +134,7 @@
  "modified": "2025-10-01 18:30:04.959778",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Server Job Command",
+ "name": "Server Job Command",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

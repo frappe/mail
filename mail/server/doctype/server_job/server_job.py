@@ -12,7 +12,7 @@ from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
 
-class MailServerJob(Document):
+class ServerJob(Document):
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -71,7 +71,7 @@ class MailServerJob(Document):
 			notify=True,
 		)
 		frappe.db.set_value(
-			"Mail Server Job Command",
+			"Server Job Command",
 			{"parenttype": self.doctype, "parent": self.name},
 			{
 				"status": "Pending",
@@ -185,7 +185,7 @@ class MailServerJob(Document):
 def retry_failed_jobs() -> None:
 	"""Called by the scheduler to retry failed jobs."""
 
-	JOB = frappe.qb.DocType("Mail Server Job")
+	JOB = frappe.qb.DocType("Server Job")
 	jobs = (
 		frappe.qb.from_(JOB)
 		.select(JOB.name)
@@ -197,5 +197,5 @@ def retry_failed_jobs() -> None:
 		return
 
 	for job in jobs:
-		doc = frappe.get_doc("Mail Server Job", job)
+		doc = frappe.get_doc("Server Job", job)
 		doc.retry()

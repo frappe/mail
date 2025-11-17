@@ -11,9 +11,9 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class IntegrationTestMailServerJob(IntegrationTestCase):
+class IntegrationTestServerJobCommand(IntegrationTestCase):
 	"""
-	Integration tests for MailServerJob.
+	Integration tests for ServerJobCommand.
 	Use this class for testing interactions between multiple components.
 	"""
 

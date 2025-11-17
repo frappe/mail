@@ -169,7 +169,7 @@
    "fieldname": "commands",
    "fieldtype": "Table",
    "label": "Commands",
-   "options": "Mail Server Job Command",
+   "options": "Server Job Command",
    "reqd": 1,
    "set_only_once": 1
   },
@@ -211,10 +211,10 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-06 10:41:04.942039",
+ "modified": "2025-11-17 11:18:05.365742",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Server Job",
+ "name": "Server Job",
  "owner": "Administrator",
  "permissions": [
   {

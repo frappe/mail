@@ -1,7 +1,7 @@
 // Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Mail Server Job', {
+frappe.ui.form.on('Server Job', {
 	refresh(frm) {
 		if (!frm.doc.__islocal) {
 			frm.disable_save()

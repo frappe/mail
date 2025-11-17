@@ -5,7 +5,7 @@
 from frappe.model.document import Document
 
 
-class MailServerJobCommand(Document):
+class ServerJobCommand(Document):
 	def _db_set(
 		self,
 		update_modified: bool = True,

@@ -1,7 +1,7 @@
 // Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.listview_settings['Mail Server Job'] = {
+frappe.listview_settings['Server Job'] = {
 	get_indicator: (doc) => {
 		const status_colors = {
 			Pending: 'orange',

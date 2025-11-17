@@ -300,7 +300,7 @@ class MailServer(Document):
 		with open(script_path) as f:
 			script_content = f.read()
 
-		job = frappe.new_doc("Mail Server Job")
+		job = frappe.new_doc("Server Job")
 		job.status = "Pending"
 		job.server = self.name
 		job.job = "Install Ansible"
