@@ -15,8 +15,8 @@ from frappe.utils import cint, now, validate_email_address
 from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 
 from mail.backend import MailBackendAccountManager, MailBackendIdentityManager, get_mail_backend_api
-from mail.client.doctype.jmap_sync_state.jmap_sync_state import create_jmap_sync_state
 from mail.client.doctype.push_subscription.push_subscription import create_push_subscriptions
+from mail.client.doctype.sync_state.sync_state import create_sync_state
 from mail.jmap import get_jmap_client, invalidate_jmap_cache, invalidate_jmap_client_cache, raise_for_status
 from mail.utils import (
 	convert_html_to_text,
@@ -175,7 +175,7 @@ class MailAccount(Document):
 		self.validate_backup_email()
 
 	def after_insert(self) -> None:
-		create_jmap_sync_state(self.name)
+		create_sync_state(self.name)
 
 	def on_update(self) -> None:
 		self.clear_cache()

@@ -11,18 +11,18 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class UnitTestJMAPSyncState(UnitTestCase):
+class UnitTestSyncState(UnitTestCase):
 	"""
-	Unit tests for JMAPSyncState.
+	Unit tests for SyncState.
 	Use this class for testing individual functions and methods.
 	"""
 
 	pass
 
 
-class IntegrationTestJMAPSyncState(IntegrationTestCase):
+class IntegrationTestSyncState(IntegrationTestCase):
 	"""
-	Integration tests for JMAPSyncState.
+	Integration tests for SyncState.
 	Use this class for testing interactions between multiple components.
 	"""
 

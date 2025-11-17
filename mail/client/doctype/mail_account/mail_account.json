@@ -378,7 +378,7 @@
   },
   {
    "group": "Reference",
-   "link_doctype": "JMAP Sync State",
+   "link_doctype": "Sync State",
    "link_fieldname": "account"
   },
   {
@@ -407,7 +407,7 @@
    "link_fieldname": "account"
   }
  ],
- "modified": "2025-11-17 11:41:13.842468",
+ "modified": "2025-11-17 11:41:14.842468",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Account",

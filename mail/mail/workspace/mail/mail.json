@@ -87,7 +87,7 @@
    "color": "Grey",
    "doc_view": "List",
    "label": "Sync State",
-   "link_to": "JMAP Sync State",
+   "link_to": "Sync State",
    "stats_filter": "[]",
    "type": "DocType"
   },

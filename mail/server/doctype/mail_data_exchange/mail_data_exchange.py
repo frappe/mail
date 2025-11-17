@@ -14,11 +14,11 @@ from frappe.query_builder import Order
 from frappe.utils import add_to_date, cint, get_bench_path, get_datetime, get_url, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
-from mail.client.doctype.jmap_sync_state.jmap_sync_state import clear_jmap_sync_state
 from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
+from mail.client.doctype.sync_state.sync_state import clear_sync_state
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,
@@ -201,7 +201,7 @@ class MailDataExchange(Document):
 					title=_("Failed to clean import output"), message=frappe.get_traceback(with_context=True)
 				)
 
-			clear_jmap_sync_state(self.account)
+			clear_sync_state(self.account)
 			kwargs.update({"status": "Completed", "output": output})
 
 			mail_details = {

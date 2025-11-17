@@ -15,13 +15,13 @@ from frappe.push_notification import PushNotification
 from frappe.utils import add_to_date, cint, escape_html, get_datetime, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
-from mail.client.doctype.jmap_sync_state.jmap_sync_state import (
-	create_jmap_sync_state,
+from mail.client.doctype.mail_contact.mail_contact import create_mail_contact
+from mail.client.doctype.mail_queue.mail_queue import MailQueue
+from mail.client.doctype.sync_state.sync_state import (
+	create_sync_state,
 	get_current_state,
 	update_current_state,
 )
-from mail.client.doctype.mail_contact.mail_contact import create_mail_contact
-from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_jmap_client
 from mail.utils import (
 	convert_html_to_text,
@@ -1123,8 +1123,8 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 	current_state = get_current_state(account)
 
 	if not current_state:
-		if not bool(frappe.db.exists("JMAP Sync State", account)):
-			create_jmap_sync_state(account)
+		if not bool(frappe.db.exists("Sync State", account)):
+			create_sync_state(account)
 
 		return update_current_state(account, email_state)
 	elif email_state == current_state:
@@ -1224,7 +1224,7 @@ def schedule_fetch_changes() -> None:
 	"""Scheduled job to fetch changes for accounts that haven't been synced in the last 3 hours."""
 
 	ACCOUNT = frappe.qb.DocType("Mail Account")
-	SYNC_STATE = frappe.qb.DocType("JMAP Sync State")
+	SYNC_STATE = frappe.qb.DocType("Sync State")
 
 	accounts = (
 		frappe.qb.from_(SYNC_STATE)

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-17 11:49+0553\n"
-"PO-Revision-Date: 2025-11-17 11:49+0553\n"
+"POT-Creation-Date: 2025-11-17 11:52+0553\n"
+"PO-Revision-Date: 2025-11-17 11:52+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -218,7 +218,6 @@ msgstr ""
 
 #. Label of the account (Link) field in DocType 'Address Book'
 #. Label of the account (Link) field in DocType 'Contact Card'
-#. Label of the account (Link) field in DocType 'JMAP Sync State'
 #. Label of the account (Data) field in DocType 'Mail Account Request'
 #. Group in Mail Domain's connections
 #. Label of the account (Link) field in DocType 'Mail Message'
@@ -228,12 +227,12 @@ msgstr ""
 #. Label of the account (Link) field in DocType 'Mailbox'
 #. Label of the account (Link) field in DocType 'Push Subscription'
 #. Label of the account (Link) field in DocType 'Push Verification Queue'
+#. Label of the account (Link) field in DocType 'Sync State'
 #. Label of a shortcut in the Mail Workspace
 #. Label of the account (Link) field in DocType 'Mail Data Exchange'
 #: frontend/src/components/Modals/SettingsModal.vue:65
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/contact_card/contact_card.json
-#: mail/client/doctype/jmap_sync_state/jmap_sync_state.json
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_domain/mail_domain.json
 #: mail/client/doctype/mail_message/mail_message.json
@@ -243,6 +242,7 @@ msgstr ""
 #: mail/client/doctype/mailbox/mailbox.json
 #: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/client/doctype/push_verification_queue/push_verification_queue.json
+#: mail/client/doctype/sync_state/sync_state.json
 #: mail/mail/workspace/mail/mail.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Account"
@@ -1496,8 +1496,8 @@ msgstr ""
 msgid "Current Password"
 msgstr ""
 
-#. Label of the current_state (Data) field in DocType 'JMAP Sync State'
-#: mail/client/doctype/jmap_sync_state/jmap_sync_state.json
+#. Label of the current_state (Data) field in DocType 'Sync State'
+#: mail/client/doctype/sync_state/sync_state.json
 msgid "Current State"
 msgstr ""
 
@@ -3681,11 +3681,6 @@ msgstr ""
 msgid "JMAP"
 msgstr ""
 
-#. Name of a DocType
-#: mail/client/doctype/jmap_sync_state/jmap_sync_state.json
-msgid "JMAP Sync State"
-msgstr ""
-
 #. Label of the job (Data) field in DocType 'Server Job'
 #: mail/server/doctype/server_job/server_job.json
 msgid "Job"
@@ -3796,8 +3791,8 @@ msgstr ""
 msgid "Last Received Mail"
 msgstr ""
 
-#. Label of the last_synced_at (Datetime) field in DocType 'JMAP Sync State'
-#: mail/client/doctype/jmap_sync_state/jmap_sync_state.json
+#. Label of the last_synced_at (Datetime) field in DocType 'Sync State'
+#: mail/client/doctype/sync_state/sync_state.json
 msgid "Last Synced At"
 msgstr ""
 
@@ -5738,8 +5733,8 @@ msgstr ""
 msgid "Preview"
 msgstr ""
 
-#. Label of the previous_state (Data) field in DocType 'JMAP Sync State'
-#: mail/client/doctype/jmap_sync_state/jmap_sync_state.json
+#. Label of the previous_state (Data) field in DocType 'Sync State'
+#: mail/client/doctype/sync_state/sync_state.json
 msgid "Previous State"
 msgstr ""
 
@@ -7521,7 +7516,9 @@ msgstr ""
 msgid "Sync JMAP Identities"
 msgstr ""
 
+#. Name of a DocType
 #. Label of a shortcut in the Mail Workspace
+#: mail/client/doctype/sync_state/sync_state.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Sync State"
 msgstr ""
@@ -7541,7 +7538,6 @@ msgstr ""
 #. Name of a role
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/contact_card/contact_card.json
-#: mail/client/doctype/jmap_sync_state/jmap_sync_state.json
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_alias/mail_alias.json
@@ -7559,6 +7555,7 @@ msgstr ""
 #: mail/client/doctype/mailing_list_member/mailing_list_member.json
 #: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/client/doctype/push_verification_queue/push_verification_queue.json
+#: mail/client/doctype/sync_state/sync_state.json
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/mail/doctype/rate_limit/rate_limit.json
 #: mail/server/doctype/allowed_ip/allowed_ip.json
