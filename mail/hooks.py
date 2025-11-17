@@ -169,7 +169,7 @@ permission_query_conditions = {
 	"Mailing List External Member": "mail.mail.doctype.mailing_list_external_member.mailing_list_external_member.get_permission_query_condition",
 	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.get_permission_query_condition",
 	"Mail Contact": "mail.client.doctype.mail_contact.mail_contact.get_permission_query_condition",
-	"Mail Queue": "mail.mail.doctype.mail_queue.mail_queue.get_permission_query_condition",
+	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
 	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.get_permission_query_condition",
 }
 
@@ -188,7 +188,7 @@ has_permission = {
 	"Mailing List External Member": "mail.mail.doctype.mailing_list_external_member.mailing_list_external_member.has_permission",
 	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.has_permission",
 	"Mail Contact": "mail.client.doctype.mail_contact.mail_contact.has_permission",
-	"Mail Queue": "mail.mail.doctype.mail_queue.mail_queue.has_permission",
+	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.has_permission",
 	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.has_permission",
 }
 
@@ -244,7 +244,7 @@ scheduler_events = {
 	"cron": {
 		"*/5 * * * *": [
 			"mail.mail.doctype.mail_server_job.mail_server_job.retry_failed_jobs",
-			"mail.mail.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
+			"mail.client.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
 			"mail.mail.doctype.mail_server_deployment.mail_server_deployment.retry_failed_deployments",
 			"mail.mail.doctype.mail_server_ansible_play.mail_server_ansible_play.retry_failed_ansible_plays",
 			"mail.client.doctype.jmap_push_verification_queue.jmap_push_verification_queue.process_verifications",

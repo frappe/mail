@@ -558,7 +558,7 @@
  "links": [],
  "modified": "2025-11-14 11:04:58.529343",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mail Queue",
  "owner": "Administrator",
  "permissions": [

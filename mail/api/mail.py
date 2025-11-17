@@ -19,8 +19,8 @@ from mail.client.doctype.mail_message.mail_message import (
 	set_seen_status,
 	set_spam_status,
 )
+from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_mailbox_id_by_role
-from mail.mail.doctype.mail_queue.mail_queue import MailQueue
 from mail.utils import convert_html_to_text
 from mail.utils.cache import get_account_for_user
 from mail.utils.user import has_role

@@ -25,7 +25,7 @@ frappe.listview_settings['Mail Queue'] = {
 function add_bulk_retry_button_to_actions(listview) {
 	listview.page.add_actions_menu_item(__('Retry'), () => {
 		frappe.call({
-			method: 'mail.mail.doctype.mail_queue.mail_queue.bulk_retry',
+			method: 'mail.client.doctype.mail_queue.mail_queue.bulk_retry',
 			args: {
 				names: listview.get_checked_items(true),
 			},

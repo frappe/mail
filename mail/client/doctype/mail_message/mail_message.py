@@ -21,8 +21,8 @@ from mail.client.doctype.jmap_sync_state.jmap_sync_state import (
 	update_current_state,
 )
 from mail.client.doctype.mail_contact.mail_contact import create_mail_contact
+from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_jmap_client
-from mail.mail.doctype.mail_queue.mail_queue import MailQueue
 from mail.utils import (
 	convert_html_to_text,
 	enqueue_job,
