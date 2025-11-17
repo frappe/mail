@@ -7,7 +7,7 @@ from frappe.model.document import Document
 from uuid_utils import uuid7
 
 
-class AnsiblePlayTask(Document):
+class ServerAnsiblePlayTask(Document):
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -18,7 +18,7 @@ class AnsiblePlayTask(Document):
 		"""Validates that the task is unique within the play."""
 
 		if frappe.db.exists(
-			"Ansible Play Task", {"play": self.name, "task": self.task, "name": ["!=", self.name]}
+			"Server Ansible Play Task", {"play": self.name, "task": self.task, "name": ["!=", self.name]}
 		):
 			frappe.throw(
 				_("Task {0} already exists in play {1}").format(self.task, self.play),
@@ -38,4 +38,4 @@ class AnsiblePlayTask(Document):
 
 
 def on_doctype_update() -> None:
-	frappe.db.add_unique("Ansible Play Task", ["play", "task"])
+	frappe.db.add_unique("Server Ansible Play Task", ["play", "task"])

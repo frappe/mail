@@ -144,7 +144,7 @@
  "modified": "2025-11-17 11:01:15.558278",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Ansible Play Task",
+ "name": "Server Ansible Play Task",
  "owner": "Administrator",
  "permissions": [
   {

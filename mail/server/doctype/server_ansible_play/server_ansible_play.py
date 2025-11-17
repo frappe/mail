@@ -119,7 +119,7 @@ class ServerAnsiblePlay(Document):
 		self._db_set(notify=True, **kwargs)
 
 		frappe.db.set_value(
-			"Ansible Play Task",
+			"Server Ansible Play Task",
 			{"play": self.name},
 			{
 				"status": "Pending",

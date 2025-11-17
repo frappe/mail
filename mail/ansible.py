@@ -49,7 +49,7 @@ class Ansible:
 
 		self.tasks = {}
 		if tasks := frappe.db.get_all(
-			"Ansible Play Task",
+			"Server Ansible Play Task",
 			filters={"play": self.play},
 			fields=["task", "name"],
 			order_by="creation asc",
@@ -66,7 +66,7 @@ class Ansible:
 		return os.path.join(frappe.get_app_path("mail", "utils", "ansible", "playbooks"), self.playbook)
 
 	def _create_play_record(self) -> None:
-		"""Creates a Server Ansible Play record and associated Ansible Play Task records."""
+		"""Creates a Server Ansible Play record and associated Server Ansible Play Task records."""
 
 		if hasattr(self, "play") and self.play:
 			return
@@ -94,7 +94,7 @@ class Ansible:
 		self._create_task_records(play=play)
 
 	def _create_task_records(self, play: dict | None = None) -> None:
-		"""Creates Ansible Play Task records for each task in the play."""
+		"""Creates Server Ansible Play Task records for each task in the play."""
 
 		if not hasattr(self, "play") or not self.play:
 			frappe.throw(_("Play record must be created before creating task records."))
@@ -105,11 +105,11 @@ class Ansible:
 
 		self.tasks = {}
 		for task in play["tasks"]:
-			tdoc = frappe.new_doc("Ansible Play Task")
-			tdoc.play = self.play
-			tdoc.task = task["name"]
-			tdoc.insert(ignore_permissions=True)
-			self.tasks[tdoc.task] = tdoc.name
+			task = frappe.new_doc("Server Ansible Play Task")
+			task.play = self.play
+			task.task = task["name"]
+			task.insert(ignore_permissions=True)
+			self.tasks[task.task] = task.name
 
 	def _get_play(self) -> dict:
 		"""Returns the first play from the playbook."""
@@ -226,7 +226,7 @@ class Ansible:
 
 	@reconnect_on_failure()
 	def update_task(self, status: str, task: dict | None = None, result: dict | None = None) -> None:
-		"""Updates the Ansible Play Task record with the given status, task, and result."""
+		"""Updates the Server Ansible Play Task record with the given status, task, and result."""
 
 		if not any([task, result]):
 			return
@@ -242,7 +242,7 @@ class Ansible:
 		if not task_name:
 			return
 
-		tdoc = frappe.get_doc("Ansible Play Task", task_name)
+		tdoc = frappe.get_doc("Server Ansible Play Task", task_name)
 
 		kwargs = {"status": status}
 		if parsed:

@@ -278,11 +278,11 @@
  "links": [
   {
    "group": "Reference",
-   "link_doctype": "Ansible Play Task",
+   "link_doctype": "Server Ansible Play Task",
    "link_fieldname": "play"
   }
  ],
- "modified": "2025-11-17 11:14:08.541532",
+ "modified": "2025-11-17 11:24:54.806810",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Server Ansible Play",

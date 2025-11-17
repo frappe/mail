@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-17 11:20+0553\n"
-"PO-Revision-Date: 2025-11-17 11:20+0553\n"
+"POT-Creation-Date: 2025-11-17 11:26+0553\n"
+"PO-Revision-Date: 2025-11-17 11:26+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -601,11 +601,6 @@ msgstr ""
 
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:13
 msgid "Ansible Play Progress"
-msgstr ""
-
-#. Name of a DocType
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
-msgid "Ansible Play Task"
 msgstr ""
 
 #. Name of a DocType
@@ -2198,18 +2193,18 @@ msgstr ""
 msgid "Duplicate Record"
 msgstr ""
 
-#. Label of the duration (Float) field in DocType 'Ansible Play Task'
 #. Label of the duration (Float) field in DocType 'Mail Backend Request'
 #. Label of the duration (Float) field in DocType 'Mail Data Exchange'
 #. Label of the duration (Float) field in DocType 'Server Ansible Play'
+#. Label of the duration (Float) field in DocType 'Server Ansible Play Task'
 #. Label of the duration (Float) field in DocType 'Server Deployment'
 #. Label of the duration (Float) field in DocType 'Server Job'
 #. Label of the duration (Float) field in DocType 'Server Job Command'
 #. Label of the duration (Float) field in DocType 'Spam Check Log'
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/server_job/server_job.json
 #: mail/server/doctype/server_job_command/server_job_command.json
@@ -2421,15 +2416,15 @@ msgstr ""
 msgid "End Kwargs"
 msgstr ""
 
-#. Label of the ended_at (Datetime) field in DocType 'Ansible Play Task'
 #. Label of the ended_at (Datetime) field in DocType 'Mail Backend Request'
 #. Label of the ended_at (Datetime) field in DocType 'Server Ansible Play'
+#. Label of the ended_at (Datetime) field in DocType 'Server Ansible Play Task'
 #. Label of the ended_at (Datetime) field in DocType 'Server Deployment'
 #. Label of the ended_at (Datetime) field in DocType 'Server Job'
 #. Label of the ended_at (Datetime) field in DocType 'Server Job Command'
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/server_job/server_job.json
 #: mail/server/doctype/server_job_command/server_job_command.json
@@ -2488,14 +2483,14 @@ msgid "Envelope To"
 msgstr ""
 
 #. Label of the error_section (Section Break) field in DocType 'Mail Queue'
-#. Label of the stderr (Code) field in DocType 'Ansible Play Task'
 #. Option for the 'Logging Level' (Select) field in DocType 'Mail Cluster
 #. Trace'
+#. Label of the stderr (Code) field in DocType 'Server Ansible Play Task'
 #. Label of the stderr (Code) field in DocType 'Server Job Command'
 #: frontend/src/pages/MimeMessageView.vue:30
 #: mail/client/doctype/mail_queue/mail_queue.json
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_cluster_trace/mail_cluster_trace.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_job_command/server_job_command.json
 msgid "Error"
 msgstr ""
@@ -2548,8 +2543,8 @@ msgstr ""
 msgid "Establishes the maximum number of objects that can be modified in a single method call."
 msgstr ""
 
-#. Label of the exception (Code) field in DocType 'Ansible Play Task'
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
+#. Label of the exception (Code) field in DocType 'Server Ansible Play Task'
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 msgid "Exception"
 msgstr ""
 
@@ -2637,10 +2632,10 @@ msgstr ""
 #. Queue'
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
 #. Label of a shortcut in the Mail Workspace
-#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Mail Backend Request'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Server Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Server Deployment'
 #. Option for the 'Status' (Select) field in DocType 'Server Job'
 #. Label of the failed (Int) field in DocType 'Server Job'
@@ -2649,10 +2644,10 @@ msgstr ""
 #: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/mail/workspace/mail/mail.json
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/server_job/server_job.json
 #: mail/server/doctype/server_job_command/server_job_command.json
@@ -5383,12 +5378,12 @@ msgstr ""
 msgid "Outgoing"
 msgstr ""
 
-#. Label of the stdout (Code) field in DocType 'Ansible Play Task'
 #. Label of the output (Code) field in DocType 'Mail Data Exchange'
+#. Label of the stdout (Code) field in DocType 'Server Ansible Play Task'
 #. Label of the stdout (Code) field in DocType 'Server Job Command'
 #: frontend/src/pages/MailDataExchangeView.vue:17
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_job_command/server_job_command.json
 msgid "Output"
 msgstr ""
@@ -5509,8 +5504,8 @@ msgstr ""
 #. Queue'
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
 #. Label of a shortcut in the Mail Workspace
-#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Server Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Server Deployment'
 #. Option for the 'Status' (Select) field in DocType 'Server Job'
 #. Option for the 'Status' (Select) field in DocType 'Server Job Command'
@@ -5518,8 +5513,8 @@ msgstr ""
 #: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/mail/workspace/mail/mail.json
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/server_job/server_job.json
 #: mail/server/doctype/server_job_command/server_job_command.json
@@ -5565,10 +5560,10 @@ msgstr ""
 msgid "Phones"
 msgstr ""
 
-#. Label of the play (Link) field in DocType 'Ansible Play Task'
 #. Label of the play (Data) field in DocType 'Server Ansible Play'
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
+#. Label of the play (Link) field in DocType 'Server Ansible Play Task'
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 msgid "Play"
 msgstr ""
 
@@ -6478,8 +6473,8 @@ msgstr ""
 msgid "Resubscribing..."
 msgstr ""
 
-#. Label of the result (JSON) field in DocType 'Ansible Play Task'
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
+#. Label of the result (JSON) field in DocType 'Server Ansible Play Task'
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/report/dmarc_report_viewer/dmarc_report_viewer.py:51
 msgid "Result"
 msgstr ""
@@ -6641,15 +6636,15 @@ msgstr ""
 msgid "Row #{0}: Tracer ID {1} is duplicated."
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Mail Backend Request'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Server Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Server Deployment'
 #. Option for the 'Status' (Select) field in DocType 'Server Job'
 #. Option for the 'Status' (Select) field in DocType 'Server Job Command'
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/server_job/server_job.json
 #: mail/server/doctype/server_job_command/server_job_command.json
@@ -6941,6 +6936,11 @@ msgid "Server Ansible Play"
 msgstr ""
 
 #. Name of a DocType
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
+msgid "Server Ansible Play Task"
+msgstr ""
+
+#. Name of a DocType
 #: mail/server/doctype/server_config/server_config.json
 msgid "Server Config"
 msgstr ""
@@ -7101,10 +7101,10 @@ msgstr ""
 msgid "Size of the write buffer in bytes, used to batch writes to the store."
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Label of the skipped (Int) field in DocType 'Server Ansible Play'
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
+#. Option for the 'Status' (Select) field in DocType 'Server Ansible Play Task'
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 msgid "Skipped"
 msgstr ""
 
@@ -7253,19 +7253,20 @@ msgstr ""
 msgid "Started After (Seconds)"
 msgstr ""
 
-#. Label of the started_at (Datetime) field in DocType 'Ansible Play Task'
 #. Label of the started_at (Datetime) field in DocType 'Mail Backend Request'
 #. Label of the started_at (Datetime) field in DocType 'Mail Data Exchange'
 #. Label of the started_at (Datetime) field in DocType 'Server Ansible Play'
+#. Label of the started_at (Datetime) field in DocType 'Server Ansible Play
+#. Task'
 #. Label of the started_at (Datetime) field in DocType 'Server Deployment'
 #. Label of the started_at (Datetime) field in DocType 'Server Job'
 #. Label of the started_at (Datetime) field in DocType 'Server Job Command'
 #. Label of the started_at (Datetime) field in DocType 'Spam Check Log'
 #: frontend/src/pages/MailDataExchangesView.vue:127
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/server_job/server_job.json
 #: mail/server/doctype/server_job_command/server_job_command.json
@@ -7303,11 +7304,11 @@ msgstr ""
 #. Label of the status (Select) field in DocType 'JMAP Push Subscription'
 #. Label of the status (Select) field in DocType 'JMAP Push Verification Queue'
 #. Label of the status (Select) field in DocType 'Mail Queue'
-#. Label of the status (Select) field in DocType 'Ansible Play Task'
 #. Label of the status (Select) field in DocType 'Mail Backend Request'
 #. Label of the status (Select) field in DocType 'Mail Data Exchange'
 #. Label of the status (Data) field in DocType 'Message Queue Recipient'
 #. Label of the status (Select) field in DocType 'Server Ansible Play'
+#. Label of the status (Select) field in DocType 'Server Ansible Play Task'
 #. Label of the status (Select) field in DocType 'Server Deployment'
 #. Label of the status (Select) field in DocType 'Server Job'
 #. Label of the status (Select) field in DocType 'Server Job Command'
@@ -7322,12 +7323,12 @@ msgstr ""
 #: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
 #: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/mail_queue/mail_queue.json
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/message_queue/message_queue.js:60
 #: mail/server/doctype/message_queue_recipient/message_queue_recipient.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/server_job/server_job.json
 #: mail/server/doctype/server_job_command/server_job_command.json
@@ -7489,14 +7490,14 @@ msgstr ""
 msgid "Subscription already verified."
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Server Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Server Deployment'
 #. Option for the 'Status' (Select) field in DocType 'Server Job'
 #. Label of the success (Int) field in DocType 'Server Job'
 #. Option for the 'Status' (Select) field in DocType 'Server Job Command'
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/server_job/server_job.json
 #: mail/server/doctype/server_job_command/server_job_command.json
@@ -7561,7 +7562,6 @@ msgstr ""
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/mail/doctype/rate_limit/rate_limit.json
 #: mail/server/doctype/allowed_ip/allowed_ip.json
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/blocked_ip/blocked_ip.json
 #: mail/server/doctype/dkim_key/dkim_key.json
 #: mail/server/doctype/dmarc_report/dmarc_report.json
@@ -7572,6 +7572,7 @@ msgstr ""
 #: mail/server/doctype/mail_server/mail_server.json
 #: mail/server/doctype/message_queue/message_queue.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_config/server_config.json
 #: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/server_job/server_job.json
@@ -7634,12 +7635,12 @@ msgstr ""
 msgid "TXT"
 msgstr ""
 
-#. Label of the task (Data) field in DocType 'Ansible Play Task'
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
+#. Label of the task (Data) field in DocType 'Server Ansible Play Task'
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 msgid "Task"
 msgstr ""
 
-#: mail/server/doctype/ansible_play_task/ansible_play_task.py:24
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.py:24
 msgid "Task {0} already exists in play {1}"
 msgstr ""
 
@@ -8336,10 +8337,10 @@ msgstr ""
 msgid "Unique identifier for your DNS zone."
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Label of the unreachable (Int) field in DocType 'Server Ansible Play'
-#: mail/server/doctype/ansible_play_task/ansible_play_task.json
+#. Option for the 'Status' (Select) field in DocType 'Server Ansible Play Task'
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 msgid "Unreachable"
 msgstr ""
 
