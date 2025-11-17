@@ -190,7 +190,7 @@
  "links": [],
  "modified": "2025-08-07 12:12:19.659090",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Mail Cluster Trace",
  "owner": "Administrator",
  "permissions": [],

@@ -137,8 +137,8 @@ class MailBackendDKIMManager(MailBackendManagerBase):
 	def create(self, domain_name: str, rsa_private_key: str) -> "MailBackendRequest":
 		"""Creates a DKIM key on the backend."""
 
-		from mail.mail.doctype.mail_cluster.mail_cluster import reload_clusters_config
 		from mail.mail.doctype.mail_server.mail_server import reload_servers_config
+		from mail.server.doctype.mail_cluster.mail_cluster import reload_clusters_config
 
 		request_data = json.dumps(
 			[

@@ -10,7 +10,7 @@ frappe.listview_settings['Mail Cluster'] = {
 function add_reload_config_button(listview) {
 	listview.page.add_actions_menu_item(__('Reload Configuration'), () => {
 		frappe.call({
-			method: 'mail.mail.doctype.mail_cluster.mail_cluster.reload_clusters_config',
+			method: 'mail.server.doctype.mail_cluster.mail_cluster.reload_clusters_config',
 			args: {
 				clusters: listview.get_checked_items(true),
 			},

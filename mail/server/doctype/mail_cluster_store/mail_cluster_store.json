@@ -567,7 +567,7 @@
  "links": [],
  "modified": "2025-11-12 18:57:32.503939",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Mail Cluster Store",
  "naming_rule": "Random",
  "owner": "Administrator",
