@@ -12,7 +12,7 @@
  "letterhead": null,
  "modified": "2025-06-13 17:07:13.913224",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "DMARC Report Viewer",
  "owner": "Administrator",
  "prepared_report": 0,
