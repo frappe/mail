@@ -95,7 +95,7 @@
  ],
  "modified": "2025-03-29 15:49:34.992080",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "DKIM Key",
  "owner": "Administrator",
  "permissions": [
