@@ -16,7 +16,7 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.mail.doctype.mail_account.mail_account import create_mail_account
+from mail.client.doctype.mail_account.mail_account import create_mail_account
 from mail.utils import generate_otp
 from mail.utils.cache import get_tenant_for_user
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin

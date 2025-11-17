@@ -363,7 +363,7 @@ class MailBackendAliasManager(MailBackendManagerBase):
 	def create(self, email: str, alias: str) -> "MailBackendRequest":
 		"""Creates an alias on the backend."""
 
-		from mail.mail.doctype.mail_account.mail_account import sync_jmap_identities
+		from mail.client.doctype.mail_account.mail_account import sync_jmap_identities
 
 		request_data = json.dumps([{"action": "addItem", "field": "emails", "value": alias}])
 		return self.create_request(
@@ -383,7 +383,7 @@ class MailBackendAliasManager(MailBackendManagerBase):
 	def delete(self, email: str, alias: str) -> "MailBackendRequest":
 		"""Deletes an alias from the backend."""
 
-		from mail.mail.doctype.mail_account.mail_account import sync_jmap_identities
+		from mail.client.doctype.mail_account.mail_account import sync_jmap_identities
 
 		request_data = json.dumps([{"action": "removeItem", "field": "emails", "value": alias}])
 		return self.create_request(

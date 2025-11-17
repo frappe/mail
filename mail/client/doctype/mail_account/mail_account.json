@@ -409,7 +409,7 @@
  ],
  "modified": "2025-09-15 18:39:21.316684",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mail Account",
  "naming_rule": "Set by user",
  "owner": "Administrator",

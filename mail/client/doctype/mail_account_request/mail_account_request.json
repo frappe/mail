@@ -197,7 +197,7 @@
  "links": [],
  "modified": "2025-07-17 13:00:14.427328",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mail Account Request",
  "naming_rule": "Random",
  "owner": "Administrator",
