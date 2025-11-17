@@ -23,3 +23,4 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 			current_hashed_password,
 			old_secret=account_doc.secret_hash,
 		)
+		frappe.db.set_value("Mail Account", account_doc.name, "secret_hash", current_hashed_password)
