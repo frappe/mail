@@ -39,7 +39,7 @@
  "modified": "2025-10-03 11:44:28.387802",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Ansible Play Variable",
+ "name": "Server Ansible Play Variable",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-17 11:26+0553\n"
-"PO-Revision-Date: 2025-11-17 11:26+0553\n"
+"POT-Creation-Date: 2025-11-17 11:27+0553\n"
+"PO-Revision-Date: 2025-11-17 11:27+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -601,11 +601,6 @@ msgstr ""
 
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:13
 msgid "Ansible Play Progress"
-msgstr ""
-
-#. Name of a DocType
-#: mail/server/doctype/ansible_play_variable/ansible_play_variable.json
-msgid "Ansible Play Variable"
 msgstr ""
 
 #: mail/server/doctype/server_ansible_play/server_ansible_play.py:64
@@ -3716,10 +3711,10 @@ msgstr ""
 
 #. Label of the dns_provider_key (Data) field in DocType 'Mail Settings'
 #. Label of the key_ (Data) field in DocType 'Rate Limit'
-#. Label of the key_ (Data) field in DocType 'Ansible Play Variable'
+#. Label of the key_ (Data) field in DocType 'Server Ansible Play Variable'
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/mail/doctype/rate_limit/rate_limit.json
-#: mail/server/doctype/ansible_play_variable/ansible_play_variable.json
+#: mail/server/doctype/server_ansible_play_variable/server_ansible_play_variable.json
 msgid "Key"
 msgstr ""
 
@@ -6941,6 +6936,11 @@ msgid "Server Ansible Play Task"
 msgstr ""
 
 #. Name of a DocType
+#: mail/server/doctype/server_ansible_play_variable/server_ansible_play_variable.json
+msgid "Server Ansible Play Variable"
+msgstr ""
+
+#. Name of a DocType
 #: mail/server/doctype/server_config/server_config.json
 msgid "Server Config"
 msgstr ""
@@ -8589,11 +8589,12 @@ msgid "Vacation response settings saved successfully"
 msgstr ""
 
 #. Label of the value (Text) field in DocType 'Mail Domain DNS Record'
-#. Label of the value (Small Text) field in DocType 'Ansible Play Variable'
 #. Label of the value (Text) field in DocType 'DNS Record'
+#. Label of the value (Small Text) field in DocType 'Server Ansible Play
+#. Variable'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
-#: mail/server/doctype/ansible_play_variable/ansible_play_variable.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/server_ansible_play_variable/server_ansible_play_variable.json
 msgid "Value"
 msgstr ""
 

@@ -5,5 +5,5 @@
 from frappe.model.document import Document
 
 
-class AnsiblePlayVariable(Document):
+class ServerAnsiblePlayVariable(Document):
 	pass
