@@ -6,7 +6,7 @@ import json
 import frappe
 from frappe import _
 
-from mail.mail.doctype.dmarc_report.dmarc_report import DMARCReport
+from mail.server.doctype.dmarc_report.dmarc_report import DMARCReport
 
 
 def execute(filters: dict | None = None) -> tuple:

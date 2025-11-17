@@ -118,7 +118,7 @@
  "links": [],
  "modified": "2025-06-13 16:50:45.025031",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "DMARC Report Detail",
  "owner": "Administrator",
  "permissions": [],

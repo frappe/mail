@@ -172,7 +172,7 @@
  "links": [],
  "modified": "2025-11-14 10:58:22.508348",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "DMARC Report",
  "owner": "Administrator",
  "permissions": [
