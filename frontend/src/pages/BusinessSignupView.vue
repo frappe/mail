@@ -47,10 +47,10 @@
 			variant="solid"
 			:loading="signUp.loading || verifyOtp.loading || createAccount.loading"
 			:label="buttonLabel"
+			type="submit"
 		/>
 		<Button
 			v-if="isVerificationStep"
-			type="submit"
 			:loading="resendOtp.loading"
 			:label="__('Resend OTP')"
 			@click="resendOtp.submit()"
