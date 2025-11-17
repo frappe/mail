@@ -242,8 +242,7 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 		return True
 
 	if is_tenant_admin(doc.tenant, user):
-		if ptype in ("create", "read", "write"):
-			return True
+		return True
 
 	return False
 
