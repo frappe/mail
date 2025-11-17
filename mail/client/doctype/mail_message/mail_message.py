@@ -201,6 +201,9 @@ class MailMessage(Document):
 			frappe.msgprint(_("You do not have permission to view messages for this account."), alert=True)
 			return []
 
+		if not bool(frappe.get_cached_value("Mail Account", account, "enabled")):
+			return []
+
 		limit = cint(kwargs.get("start")) + page_length
 		messages, total = fetch_messages(account, limit=limit)
 		frappe.cache.set_value(_get_total_cache_key(account), total, expires_in_sec=600)
