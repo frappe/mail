@@ -9,8 +9,8 @@ from frappe.model.document import Document
 from frappe.utils import cint, today
 from uuid_utils import uuid7
 
+from mail.client.doctype.address_book.address_book import validate_address_book_name_format
 from mail.jmap import get_jmap_client
-from mail.mail.doctype.address_book.address_book import validate_address_book_name_format
 from mail.utils import parse_filters
 from mail.utils.cache import get_account_for_user
 from mail.utils.dt import parse_iso_datetime

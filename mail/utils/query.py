@@ -1,6 +1,6 @@
 import frappe
 
-from mail.mail.doctype.address_book.address_book import fetch_address_books
+from mail.client.doctype.address_book.address_book import fetch_address_books
 from mail.mail.doctype.mailbox.mailbox import fetch_mailboxes
 from mail.utils.cache import get_account_for_user
 
