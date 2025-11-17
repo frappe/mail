@@ -11,9 +11,9 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class IntegrationTestMailServerAnsiblePlay(IntegrationTestCase):
+class IntegrationTestServerAnsiblePlay(IntegrationTestCase):
 	"""
-	Integration tests for MailServerAnsiblePlay.
+	Integration tests for ServerAnsiblePlay.
 	Use this class for testing interactions between multiple components.
 	"""
 

@@ -59,7 +59,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Play",
-   "options": "Mail Server Ansible Play",
+   "options": "Server Ansible Play",
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
@@ -141,7 +141,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-04 14:58:07.096739",
+ "modified": "2025-11-17 11:01:15.558278",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Ansible Play Task",

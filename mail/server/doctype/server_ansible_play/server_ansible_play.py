@@ -13,7 +13,7 @@ from uuid_utils import uuid7
 from mail.ansible import Ansible
 
 
-class MailServerAnsiblePlay(Document):
+class ServerAnsiblePlay(Document):
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -162,7 +162,7 @@ class MailServerAnsiblePlay(Document):
 def retry_failed_ansible_plays() -> None:
 	"""Called by the scheduler to retry failed ansible plays."""
 
-	PLAY = frappe.qb.DocType("Mail Server Ansible Play")
+	PLAY = frappe.qb.DocType("Server Ansible Play")
 	plays = (
 		frappe.qb.from_(PLAY)
 		.select(PLAY.name)
@@ -174,5 +174,5 @@ def retry_failed_ansible_plays() -> None:
 		return
 
 	for play in plays:
-		doc = frappe.get_doc("Mail Server Ansible Play", play)
+		doc = frappe.get_doc("Server Ansible Play", play)
 		doc.retry()

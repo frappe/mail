@@ -175,7 +175,7 @@ class MailServerDeployment(Document):
 				"docker_compose": self.docker_compose,
 				"install_redis": cint(self.install_redis),
 			}
-			play = frappe.new_doc("Mail Server Ansible Play")
+			play = frappe.new_doc("Server Ansible Play")
 			play.status = "Pending"
 			play.server = self.server
 			play.deployment = self.name

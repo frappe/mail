@@ -208,11 +208,11 @@
  "links": [
   {
    "group": "Reference",
-   "link_doctype": "Mail Server Ansible Play",
+   "link_doctype": "Server Ansible Play",
    "link_fieldname": "deployment"
   }
  ],
- "modified": "2025-11-03 12:47:56.141349",
+ "modified": "2025-11-17 11:04:51.628804",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Server Deployment",

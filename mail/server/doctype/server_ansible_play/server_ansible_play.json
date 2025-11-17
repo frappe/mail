@@ -285,7 +285,7 @@
  "modified": "2025-10-06 10:46:26.215858",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Server Ansible Play",
+ "name": "Server Ansible Play",
  "owner": "Administrator",
  "permissions": [
   {

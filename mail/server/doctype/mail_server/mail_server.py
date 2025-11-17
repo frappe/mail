@@ -322,7 +322,7 @@ class MailServer(Document):
 	def _install_docker(self) -> None:
 		"""Installs Docker on the Mail Server."""
 
-		play = frappe.new_doc("Mail Server Ansible Play")
+		play = frappe.new_doc("Server Ansible Play")
 		play.status = "Pending"
 		play.server = self.name
 		play.play = "Install Docker"
