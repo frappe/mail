@@ -111,7 +111,7 @@
  "links": [],
  "modified": "2025-07-17 13:00:45.874699",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mail Alias",
  "naming_rule": "Set by user",
  "owner": "Administrator",
