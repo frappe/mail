@@ -283,7 +283,7 @@ class MailBackendAccountManager(MailBackendManagerBase):
 	def delete(self, email: str) -> "MailBackendRequest":
 		"""Deletes an account from the backend."""
 
-		from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import (
+		from mail.client.doctype.jmap_push_subscription.jmap_push_subscription import (
 			delete_jmap_push_subscriptions,
 		)
 

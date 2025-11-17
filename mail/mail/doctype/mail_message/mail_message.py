@@ -15,12 +15,12 @@ from frappe.push_notification import PushNotification
 from frappe.utils import add_to_date, cint, escape_html, get_datetime, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
-from mail.jmap import get_jmap_client
-from mail.mail.doctype.jmap_sync_state.jmap_sync_state import (
+from mail.client.doctype.jmap_sync_state.jmap_sync_state import (
 	create_jmap_sync_state,
 	get_current_state,
 	update_current_state,
 )
+from mail.jmap import get_jmap_client
 from mail.mail.doctype.mail_contact.mail_contact import create_mail_contact
 from mail.mail.doctype.mail_queue.mail_queue import MailQueue
 from mail.utils import (

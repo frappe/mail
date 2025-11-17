@@ -227,7 +227,7 @@ scheduler_events = {
 		"mail.mail.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
 	],
 	"daily_long": [
-		"mail.mail.doctype.jmap_push_subscription.jmap_push_subscription.renew_push_subscriptions",
+		"mail.client.doctype.jmap_push_subscription.jmap_push_subscription.renew_push_subscriptions",
 	],
 	"hourly": [
 		"mail.mail.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",
@@ -247,7 +247,7 @@ scheduler_events = {
 			"mail.mail.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
 			"mail.mail.doctype.mail_server_deployment.mail_server_deployment.retry_failed_deployments",
 			"mail.mail.doctype.mail_server_ansible_play.mail_server_ansible_play.retry_failed_ansible_plays",
-			"mail.mail.doctype.jmap_push_verification_queue.jmap_push_verification_queue.process_verifications",
+			"mail.client.doctype.jmap_push_verification_queue.jmap_push_verification_queue.process_verifications",
 		],
 	},
 }

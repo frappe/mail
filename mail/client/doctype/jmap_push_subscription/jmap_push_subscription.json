@@ -186,7 +186,7 @@
  "links": [],
  "modified": "2025-07-16 11:02:31.835423",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "JMAP Push Subscription",
  "owner": "Administrator",
  "permissions": [

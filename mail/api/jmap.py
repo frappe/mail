@@ -3,11 +3,11 @@ from urllib.parse import unquote
 import frappe
 from frappe import _
 
-from mail.jmap import invalidate_jmap_identities_cache, invalidate_jmap_mailboxes_cache
-from mail.mail.doctype.jmap_push_subscription.jmap_push_subscription import (
+from mail.client.doctype.jmap_push_subscription.jmap_push_subscription import (
 	JMAPPushSubscription,
 	is_jmap_push_notifications_frozen,
 )
+from mail.jmap import invalidate_jmap_identities_cache, invalidate_jmap_mailboxes_cache
 from mail.mail.doctype.mail_message.mail_message import enqueue_fetch_changes
 
 
