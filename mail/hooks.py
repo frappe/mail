@@ -180,7 +180,7 @@ has_permission = {
 	"Mail Domain Request": "mail.client.doctype.mail_domain_request.mail_domain_request.has_permission",
 	"Mail Domain": "mail.client.doctype.mail_domain.mail_domain.has_permission",
 	"Mail Account": "mail.client.doctype.mail_account.mail_account.has_permission",
-	"Mailbox": "mail.mail.doctype.mailbox.mailbox.has_permission",
+	"Mailbox": "mail.client.doctype.mailbox.mailbox.has_permission",
 	"Address Book": "mail.client.doctype.address_book.address_book.has_permission",
 	"Contact Card": "mail.client.doctype.contact_card.contact_card.has_permission",
 	"Mailing List": "mail.mail.doctype.mailing_list.mailing_list.has_permission",

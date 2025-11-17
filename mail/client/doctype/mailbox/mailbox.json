@@ -179,7 +179,7 @@
  "links": [],
  "modified": "2025-08-06 09:52:53.537831",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mailbox",
  "owner": "Administrator",
  "permissions": [
