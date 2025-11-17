@@ -214,7 +214,7 @@
  ],
  "modified": "2025-11-03 12:47:56.141349",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Mail Server Deployment",
  "owner": "Administrator",
  "permissions": [

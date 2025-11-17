@@ -213,7 +213,7 @@
  "links": [],
  "modified": "2025-10-06 10:41:04.942039",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Mail Server Job",
  "owner": "Administrator",
  "permissions": [

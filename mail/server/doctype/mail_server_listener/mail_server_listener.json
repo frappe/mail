@@ -67,7 +67,7 @@
  "links": [],
  "modified": "2025-04-29 23:49:22.381106",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Mail Server Listener",
  "owner": "Administrator",
  "permissions": [],

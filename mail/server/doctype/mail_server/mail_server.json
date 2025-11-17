@@ -301,7 +301,7 @@
  ],
  "modified": "2025-10-17 15:11:33.207655",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Mail Server",
  "naming_rule": "Set by user",
  "owner": "Administrator",

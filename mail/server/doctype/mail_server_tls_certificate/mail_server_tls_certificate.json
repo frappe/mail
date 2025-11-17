@@ -97,7 +97,7 @@
  "links": [],
  "modified": "2025-05-28 12:11:05.286896",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Mail Server TLS Certificate",
  "owner": "Administrator",
  "permissions": [],

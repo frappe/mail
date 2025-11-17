@@ -101,7 +101,7 @@
  "links": [],
  "modified": "2025-11-07 12:38:48.566967",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Mail Server Service",
  "owner": "Administrator",
  "permissions": [],
