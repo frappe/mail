@@ -20,7 +20,7 @@ function add_pause_resume_buttons(listview) {
 	if (!cluster) return
 
 	frappe.call({
-		method: 'mail.mail.doctype.message_queue.message_queue.get_queue_status',
+		method: 'mail.server.doctype.message_queue.message_queue.get_queue_status',
 		args: {
 			cluster_name: cluster,
 		},
@@ -50,7 +50,7 @@ function update_pause_resume_buttons(listview, cluster, status) {
 
 function pause_queue(listview, cluster) {
 	frappe.call({
-		method: 'mail.mail.doctype.message_queue.message_queue.pause_queue',
+		method: 'mail.server.doctype.message_queue.message_queue.pause_queue',
 		args: {
 			cluster_name: cluster,
 		},
@@ -66,7 +66,7 @@ function pause_queue(listview, cluster) {
 
 function resume_queue(listview, cluster) {
 	frappe.call({
-		method: 'mail.mail.doctype.message_queue.message_queue.resume_queue',
+		method: 'mail.server.doctype.message_queue.message_queue.resume_queue',
 		args: {
 			cluster_name: cluster,
 		},
@@ -83,7 +83,7 @@ function resume_queue(listview, cluster) {
 function add_bulk_retry_button_to_actions(listview) {
 	listview.page.add_actions_menu_item(__('Retry'), () => {
 		frappe.call({
-			method: 'mail.mail.doctype.message_queue.message_queue.bulk_retry_delivery',
+			method: 'mail.server.doctype.message_queue.message_queue.bulk_retry_delivery',
 			args: {
 				names: listview.get_checked_items(true),
 			},

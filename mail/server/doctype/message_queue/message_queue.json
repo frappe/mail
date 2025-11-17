@@ -131,7 +131,7 @@
  "links": [],
  "modified": "2025-07-16 13:17:16.580833",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Message Queue",
  "owner": "Administrator",
  "permissions": [

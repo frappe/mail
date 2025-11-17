@@ -120,7 +120,7 @@
  "links": [],
  "modified": "2025-08-13 17:42:34.698050",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Message Queue Recipient",
  "owner": "Administrator",
  "permissions": [],
