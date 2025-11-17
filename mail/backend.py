@@ -8,11 +8,11 @@ import frappe
 import requests
 from frappe import _
 
-from mail.mail.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
+from mail.server.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
 from mail.utils import get_dkim_selector, reformat_pbkdf2_hash
 
 if TYPE_CHECKING:
-	from mail.mail.doctype.mail_backend_request.mail_backend_request import MailBackendRequest
+	from mail.server.doctype.mail_backend_request.mail_backend_request import MailBackendRequest
 
 
 @dataclass
