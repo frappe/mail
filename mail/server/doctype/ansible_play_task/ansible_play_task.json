@@ -143,7 +143,7 @@
  "links": [],
  "modified": "2025-10-04 14:58:07.096739",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Ansible Play Task",
  "owner": "Administrator",
  "permissions": [
