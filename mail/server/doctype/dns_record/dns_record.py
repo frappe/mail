@@ -6,7 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, now
 
-from mail.mail.doctype.dns_record.dns_provider import DNSProvider
+from mail.server.doctype.dns_record.dns_provider import DNSProvider
 from mail.utils import enqueue_job, password_or_none, user_context
 from mail.utils.cache import get_root_domain_name
 from mail.utils.dns import verify_dns_record

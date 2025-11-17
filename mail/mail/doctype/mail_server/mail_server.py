@@ -13,13 +13,13 @@ import paramiko
 from frappe import _
 from frappe.model.document import Document
 
-from mail.mail.doctype.dns_record.dns_record import create_or_update_dns_record
 from mail.mail.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
 from mail.mail.doctype.mail_cluster.mail_cluster import create_or_update_spf_dns_record_for_cluster
 from mail.mail.doctype.mail_server_config.mail_server_config import create_mail_server_config
 from mail.mail.doctype.mail_settings.mail_settings import (
 	validate_mail_settings,
 )
+from mail.server.doctype.dns_record.dns_record import create_or_update_dns_record
 from mail.utils import get_spf_host_for_cluster
 from mail.utils.cache import get_root_domain_name
 from mail.utils.dns import get_dns_record

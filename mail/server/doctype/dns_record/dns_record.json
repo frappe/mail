@@ -138,7 +138,7 @@
  "links": [],
  "modified": "2025-01-04 23:06:39.128271",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "DNS Record",
  "naming_rule": "Random",
  "owner": "Administrator",
