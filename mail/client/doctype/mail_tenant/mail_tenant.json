@@ -134,7 +134,7 @@
  ],
  "modified": "2025-08-21 18:54:47.654063",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mail Tenant",
  "naming_rule": "Random",
  "owner": "Administrator",
