@@ -213,7 +213,7 @@
  "links": [],
  "modified": "2025-09-27 18:54:53.609407",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Server",
  "name": "Mail Data Exchange",
  "owner": "Administrator",
  "permissions": [

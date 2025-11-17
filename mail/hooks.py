@@ -170,7 +170,7 @@ permission_query_conditions = {
 	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.get_permission_query_condition",
 	"Mail Contact": "mail.client.doctype.mail_contact.mail_contact.get_permission_query_condition",
 	"Mail Queue": "mail.mail.doctype.mail_queue.mail_queue.get_permission_query_condition",
-	"Mail Data Exchange": "mail.mail.doctype.mail_data_exchange.mail_data_exchange.get_permission_query_condition",
+	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.get_permission_query_condition",
 }
 
 has_permission = {
@@ -189,7 +189,7 @@ has_permission = {
 	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.has_permission",
 	"Mail Contact": "mail.client.doctype.mail_contact.mail_contact.has_permission",
 	"Mail Queue": "mail.mail.doctype.mail_queue.mail_queue.has_permission",
-	"Mail Data Exchange": "mail.mail.doctype.mail_data_exchange.mail_data_exchange.has_permission",
+	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.has_permission",
 }
 
 website_route_rules = [
@@ -224,13 +224,13 @@ scheduler_events = {
 	#     "mail.tasks.all"
 	# ],
 	"daily": [
-		"mail.mail.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
+		"mail.server.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
 	],
 	"daily_long": [
 		"mail.client.doctype.jmap_push_subscription.jmap_push_subscription.renew_push_subscriptions",
 	],
 	"hourly": [
-		"mail.mail.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",
+		"mail.server.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",
 	],
 	"hourly_long": [
 		"mail.mail.doctype.mail_message.mail_message.schedule_fetch_changes",
