@@ -11,18 +11,18 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class UnitTestJMAPPushSubscription(UnitTestCase):
+class UnitTestPushSubscription(UnitTestCase):
 	"""
-	Unit tests for JMAPPushSubscription.
+	Unit tests for PushSubscription.
 	Use this class for testing individual functions and methods.
 	"""
 
 	pass
 
 
-class IntegrationTestJMAPPushSubscription(IntegrationTestCase):
+class IntegrationTestPushSubscription(IntegrationTestCase):
 	"""
-	Integration tests for JMAPPushSubscription.
+	Integration tests for PushSubscription.
 	Use this class for testing interactions between multiple components.
 	"""
 

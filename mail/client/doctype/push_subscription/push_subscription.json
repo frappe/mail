@@ -187,7 +187,7 @@
  "modified": "2025-07-16 11:02:31.835423",
  "modified_by": "Administrator",
  "module": "Client",
- "name": "JMAP Push Subscription",
+ "name": "Push Subscription",
  "owner": "Administrator",
  "permissions": [
   {

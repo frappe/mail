@@ -231,7 +231,7 @@ scheduler_events = {
 		"mail.server.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
 	],
 	"daily_long": [
-		"mail.client.doctype.jmap_push_subscription.jmap_push_subscription.renew_push_subscriptions",
+		"mail.client.doctype.push_subscription.push_subscription.renew_push_subscriptions",
 	],
 	"hourly": [
 		"mail.server.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",

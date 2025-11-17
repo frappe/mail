@@ -71,8 +71,8 @@
    "color": "Green",
    "doc_view": "List",
    "label": "Active",
-   "link_to": "JMAP Push Subscription",
-   "stats_filter": "[[\"JMAP Push Subscription\",\"status\",\"=\",\"Active\",false]]",
+   "link_to": "Push Subscription",
+   "stats_filter": "[[\"Push Subscription\",\"status\",\"=\",\"Active\",false]]",
    "type": "DocType"
   },
   {
@@ -111,16 +111,16 @@
    "color": "Red",
    "doc_view": "List",
    "label": "Expired",
-   "link_to": "JMAP Push Subscription",
-   "stats_filter": "[[\"JMAP Push Subscription\",\"status\",\"=\",\"Expired\",false]]",
+   "link_to": "Push Subscription",
+   "stats_filter": "[[\"Push Subscription\",\"status\",\"=\",\"Expired\",false]]",
    "type": "DocType"
   },
   {
    "color": "Yellow",
    "doc_view": "List",
    "label": "Pending Verification",
-   "link_to": "JMAP Push Subscription",
-   "stats_filter": "[[\"JMAP Push Subscription\",\"status\",\"=\",\"Pending Verification\",false]]",
+   "link_to": "Push Subscription",
+   "stats_filter": "[[\"Push Subscription\",\"status\",\"=\",\"Pending Verification\",false]]",
    "type": "DocType"
   },
   {
@@ -143,8 +143,8 @@
    "color": "Red",
    "doc_view": "List",
    "label": "Failed to Verify",
-   "link_to": "JMAP Push Subscription",
-   "stats_filter": "[[\"JMAP Push Subscription\",\"status\",\"=\",\"Failed to Verify\",false]]",
+   "link_to": "Push Subscription",
+   "stats_filter": "[[\"Push Subscription\",\"status\",\"=\",\"Failed to Verify\",false]]",
    "type": "DocType"
   },
   {
@@ -175,8 +175,8 @@
    "color": "Red",
    "doc_view": "List",
    "label": "Failed to Renew",
-   "link_to": "JMAP Push Subscription",
-   "stats_filter": "[[\"JMAP Push Subscription\",\"status\",\"=\",\"Failed to Renew\",false]]",
+   "link_to": "Push Subscription",
+   "stats_filter": "[[\"Push Subscription\",\"status\",\"=\",\"Failed to Renew\",false]]",
    "type": "DocType"
   },
   {
@@ -207,8 +207,8 @@
    "color": "Red",
    "doc_view": "List",
    "label": "Failed to Subscribe",
-   "link_to": "JMAP Push Subscription",
-   "stats_filter": "[[\"JMAP Push Subscription\",\"status\",\"=\",\"Failed to Subscribe\",false]]",
+   "link_to": "Push Subscription",
+   "stats_filter": "[[\"Push Subscription\",\"status\",\"=\",\"Failed to Subscribe\",false]]",
    "type": "DocType"
   },
   {

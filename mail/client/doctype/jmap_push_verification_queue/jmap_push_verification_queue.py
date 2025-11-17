@@ -26,13 +26,13 @@ class JMAPPushVerificationQueue(Document):
 
 		kwargs = {}
 		subscription_name = frappe.db.get_value(
-			"JMAP Push Subscription",
+			"Push Subscription",
 			{"account": self.account, "subscription_id": self.subscription_id},
 			"name",
 		)
 
 		if subscription_name:
-			subscription = frappe.get_doc("JMAP Push Subscription", subscription_name)
+			subscription = frappe.get_doc("Push Subscription", subscription_name)
 			subscription._verify(self.get_password("verification_code"))
 			kwargs["status"] = "Verified"
 		else:

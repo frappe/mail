@@ -14,11 +14,11 @@ from frappe.query_builder import Order
 from frappe.utils import add_to_date, cint, get_bench_path, get_datetime, get_url, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
-from mail.client.doctype.jmap_push_subscription.jmap_push_subscription import (
+from mail.client.doctype.jmap_sync_state.jmap_sync_state import clear_jmap_sync_state
+from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
-from mail.client.doctype.jmap_sync_state.jmap_sync_state import clear_jmap_sync_state
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,

@@ -280,7 +280,7 @@
   },
   {
    "group": "Reference",
-   "link_doctype": "JMAP Push Subscription",
+   "link_doctype": "Push Subscription",
    "link_fieldname": "server"
   },
   {
@@ -299,7 +299,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-11-17 11:17:34.138786",
+ "modified": "2025-11-17 11:43:08.843927",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Server",

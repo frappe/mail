@@ -3,11 +3,11 @@ from urllib.parse import unquote
 import frappe
 from frappe import _
 
-from mail.client.doctype.jmap_push_subscription.jmap_push_subscription import (
-	JMAPPushSubscription,
+from mail.client.doctype.mail_message.mail_message import enqueue_fetch_changes
+from mail.client.doctype.push_subscription.push_subscription import (
+	PushSubscription,
 	is_jmap_push_notifications_frozen,
 )
-from mail.client.doctype.mail_message.mail_message import enqueue_fetch_changes
 from mail.jmap import invalidate_jmap_identities_cache, invalidate_jmap_mailboxes_cache
 
 
@@ -24,7 +24,7 @@ def push_notification() -> dict:
 		request_data = frappe.request.get_json()
 
 		if request_data["@type"] == "PushVerification":
-			JMAPPushSubscription.verify_push_subscription(
+			PushSubscription.verify_push_subscription(
 				account, request_data["pushSubscriptionId"], request_data["verificationCode"]
 			)
 			return {}

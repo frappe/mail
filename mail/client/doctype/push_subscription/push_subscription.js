@@ -1,7 +1,7 @@
 // Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('JMAP Push Subscription', {
+frappe.ui.form.on('Push Subscription', {
 	refresh(frm) {
 		frm.trigger('add_actions')
 		frm.trigger('add_comments')

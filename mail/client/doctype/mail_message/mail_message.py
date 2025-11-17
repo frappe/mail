@@ -1206,7 +1206,7 @@ def enqueue_fetch_changes(account: str, email_state: str | None = None) -> None:
 	fetch_lock_timeout = cint(frappe.conf.fetch_lock_timeout) or 300
 	identifier = acquire_lock(lockname, acquire_timeout=0, lock_timeout=fetch_lock_timeout)
 
-	if not identifier or not frappe.db.exists("JMAP Push Subscription", {"account": account}):
+	if not identifier or not frappe.db.exists("Push Subscription", {"account": account}):
 		return
 
 	with user_context("Administrator"):
