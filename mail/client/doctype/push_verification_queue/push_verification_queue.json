@@ -65,7 +65,7 @@
  "modified": "2025-08-25 17:04:55.097551",
  "modified_by": "Administrator",
  "module": "Client",
- "name": "JMAP Push Verification Queue",
+ "name": "Push Verification Queue",
  "owner": "Administrator",
  "permissions": [
   {

@@ -6,7 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 
 
-class JMAPPushVerificationQueue(Document):
+class PushVerificationQueue(Document):
 	def validate(self):
 		self.validate_status()
 
@@ -22,7 +22,7 @@ class JMAPPushVerificationQueue(Document):
 
 	@frappe.whitelist()
 	def process(self) -> None:
-		"""Process the JMAP Push Verification Queue."""
+		"""Process the Push Verification Queue."""
 
 		kwargs = {}
 		subscription_name = frappe.db.get_value(
@@ -63,7 +63,7 @@ class JMAPPushVerificationQueue(Document):
 
 
 def process_verifications() -> None:
-	"""Called by the scheduler to process pending JMAP Push Verification Queue entries."""
+	"""Called by the scheduler to process pending Push Verification Queue entries."""
 
-	for x in frappe.db.get_all("JMAP Push Verification Queue", filters={"status": "Pending"}, pluck="name"):
-		frappe.get_doc("JMAP Push Verification Queue", x).process()
+	for x in frappe.db.get_all("Push Verification Queue", filters={"status": "Pending"}, pluck="name"):
+		frappe.get_doc("Push Verification Queue", x).process()

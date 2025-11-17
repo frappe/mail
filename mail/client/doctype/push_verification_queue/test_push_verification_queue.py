@@ -11,9 +11,9 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class IntegrationTestJMAPPushVerificationQueue(IntegrationTestCase):
+class IntegrationTestPushVerificationQueue(IntegrationTestCase):
 	"""
-	Integration tests for JMAPPushVerificationQueue.
+	Integration tests for PushVerificationQueue.
 	Use this class for testing interactions between multiple components.
 	"""
 

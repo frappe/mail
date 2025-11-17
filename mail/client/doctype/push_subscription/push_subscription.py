@@ -31,11 +31,11 @@ class PushSubscription(Document):
 
 		if not subscription_name:
 			if verification_name := frappe.db.exists(
-				"JMAP Push Verification Queue", {"account": account, "subscription_id": subscription_id}
+				"Push Verification Queue", {"account": account, "subscription_id": subscription_id}
 			):
-				frappe.db.set_value("JMAP Push Verification Queue", verification_name, "status", "Expired")
+				frappe.db.set_value("Push Verification Queue", verification_name, "status", "Expired")
 
-			doc = frappe.new_doc("JMAP Push Verification Queue")
+			doc = frappe.new_doc("Push Verification Queue")
 			doc.status = "Pending"
 			doc.account = account
 			doc.subscription_id = subscription_id

@@ -253,7 +253,7 @@ scheduler_events = {
 			"mail.server.doctype.server_ansible_play.server_ansible_play.retry_failed_ansible_plays",
 			# Client
 			"mail.client.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
-			"mail.client.doctype.jmap_push_verification_queue.jmap_push_verification_queue.process_verifications",
+			"mail.client.doctype.push_verification_queue.push_verification_queue.process_verifications",
 		],
 	},
 }

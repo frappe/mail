@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-17 11:38+0553\n"
-"PO-Revision-Date: 2025-11-17 11:38+0553\n"
+"POT-Creation-Date: 2025-11-17 11:49+0553\n"
+"PO-Revision-Date: 2025-11-17 11:49+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -218,8 +218,6 @@ msgstr ""
 
 #. Label of the account (Link) field in DocType 'Address Book'
 #. Label of the account (Link) field in DocType 'Contact Card'
-#. Label of the account (Link) field in DocType 'JMAP Push Subscription'
-#. Label of the account (Link) field in DocType 'JMAP Push Verification Queue'
 #. Label of the account (Link) field in DocType 'JMAP Sync State'
 #. Label of the account (Data) field in DocType 'Mail Account Request'
 #. Group in Mail Domain's connections
@@ -228,13 +226,13 @@ msgstr ""
 #. Label of the account (Link) field in DocType 'Mail Sync History'
 #. Group in Mail Tenant's connections
 #. Label of the account (Link) field in DocType 'Mailbox'
+#. Label of the account (Link) field in DocType 'Push Subscription'
+#. Label of the account (Link) field in DocType 'Push Verification Queue'
 #. Label of a shortcut in the Mail Workspace
 #. Label of the account (Link) field in DocType 'Mail Data Exchange'
 #: frontend/src/components/Modals/SettingsModal.vue:65
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/contact_card/contact_card.json
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/jmap_sync_state/jmap_sync_state.json
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_domain/mail_domain.json
@@ -242,7 +240,10 @@ msgstr ""
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/client/doctype/mail_sync_history/mail_sync_history.json
 #: mail/client/doctype/mail_tenant/mail_tenant.json
-#: mail/client/doctype/mailbox/mailbox.json mail/mail/workspace/mail/mail.json
+#: mail/client/doctype/mailbox/mailbox.json
+#: mail/client/doctype/push_subscription/push_subscription.json
+#: mail/client/doctype/push_verification_queue/push_verification_queue.json
+#: mail/mail/workspace/mail/mail.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Account"
 msgstr ""
@@ -316,8 +317,6 @@ msgid "Action failed. Please try again in some time."
 msgstr ""
 
 #: frontend/src/components/Modals/ShortcutsModal.vue:66
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.js:23
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.js:41
 #: mail/client/doctype/mail_account/mail_account.js:48
 #: mail/client/doctype/mail_account/mail_account.js:53
 #: mail/client/doctype/mail_account/mail_account.js:59
@@ -331,6 +330,8 @@ msgstr ""
 #: mail/client/doctype/mail_message/mail_message.js:171
 #: mail/client/doctype/mail_queue/mail_queue.js:27
 #: mail/client/doctype/mail_queue/mail_queue.js:38
+#: mail/client/doctype/push_subscription/push_subscription.js:23
+#: mail/client/doctype/push_subscription/push_subscription.js:41
 #: mail/server/doctype/dns_record/dns_record.js:16
 #: mail/server/doctype/dns_record/dns_record.js:25
 #: mail/server/doctype/mail_cluster/mail_cluster.js:159
@@ -352,9 +353,9 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'JMAP Push Subscription'
+#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
 #. Label of a shortcut in the Mail Workspace
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Active"
 msgstr ""
@@ -970,15 +971,15 @@ msgstr ""
 msgid "Cannot remove the owner of the tenant."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:217
+#: mail/client/doctype/push_subscription/push_subscription.py:217
 msgid "Cannot renew a non-verified subscription."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:219
+#: mail/client/doctype/push_subscription/push_subscription.py:219
 msgid "Cannot renew a subscription that is not active or expired."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:262
+#: mail/client/doctype/push_subscription/push_subscription.py:262
 msgid "Cannot resubscribe a subscription that is not expired or failed."
 msgstr ""
 
@@ -2443,13 +2444,13 @@ msgstr ""
 msgid "Ended At - Started At"
 msgstr ""
 
-#. Label of the endpoint (Data) field in DocType 'JMAP Push Subscription'
+#. Label of the endpoint (Data) field in DocType 'Push Subscription'
 #. Label of the endpoint (Data) field in DocType 'Mail Backend Request'
 #. Label of the metrics_open_telemetry_endpoint (Data) field in DocType 'Mail
 #. Cluster'
 #. Label of the endpoint (Data) field in DocType 'Mail Cluster Store'
 #. Label of the endpoint (Data) field in DocType 'Mail Cluster Trace'
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
@@ -2560,13 +2561,12 @@ msgstr ""
 msgid "Expire After (Hours)"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'JMAP Push Subscription'
-#. Option for the 'Status' (Select) field in DocType 'JMAP Push Verification
-#. Queue'
+#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
+#. Option for the 'Status' (Select) field in DocType 'Push Verification Queue'
 #. Label of a shortcut in the Mail Workspace
 #: frontend/src/pages/dashboard/InvitesView.vue:212
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
+#: mail/client/doctype/push_subscription/push_subscription.json
+#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Expired"
 msgstr ""
@@ -2577,12 +2577,12 @@ msgstr ""
 msgid "Expires"
 msgstr ""
 
-#. Label of the expires_at (Datetime) field in DocType 'JMAP Push Subscription'
 #. Label of the expires_at (Datetime) field in DocType 'Mail Account Request'
+#. Label of the expires_at (Datetime) field in DocType 'Push Subscription'
 #: frontend/src/components/Modals/AddMemberModal.vue:62
 #: frontend/src/components/Modals/EditInviteModal.vue:42
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
 #: mail/client/doctype/mail_account_request/mail_account_request.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 msgid "Expires At"
 msgstr ""
 
@@ -2625,9 +2625,8 @@ msgstr ""
 msgid "FQDN of the proxy or load balancer forwarding requests to mail servers."
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'JMAP Push Verification
-#. Queue'
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
+#. Option for the 'Status' (Select) field in DocType 'Push Verification Queue'
 #. Label of a shortcut in the Mail Workspace
 #. Option for the 'Status' (Select) field in DocType 'Mail Backend Request'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
@@ -2638,8 +2637,8 @@ msgstr ""
 #. Label of the failed (Int) field in DocType 'Server Job'
 #. Option for the 'Status' (Select) field in DocType 'Server Job Command'
 #: frontend/src/pages/MailDataExchangesView.vue:92
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/mail_queue/mail_queue.json
+#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/mail/workspace/mail/mail.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
@@ -2658,9 +2657,9 @@ msgstr ""
 msgid "Failed to Draft"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'JMAP Push Subscription'
+#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
 #. Label of a shortcut in the Mail Workspace
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Failed to Renew"
 msgstr ""
@@ -2672,16 +2671,16 @@ msgstr ""
 msgid "Failed to Submit"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'JMAP Push Subscription'
+#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
 #. Label of a shortcut in the Mail Workspace
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Failed to Subscribe"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'JMAP Push Subscription'
+#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
 #. Label of a shortcut in the Mail Workspace
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Failed to Verify"
 msgstr ""
@@ -2710,11 +2709,11 @@ msgstr ""
 msgid "Failed to delete mail(s)."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:80
+#: mail/client/doctype/push_subscription/push_subscription.py:80
 msgid "Failed to destroy push subscription(s)"
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:83
+#: mail/client/doctype/push_subscription/push_subscription.py:83
 msgid "Failed to destroy push subscription(s)."
 msgstr ""
 
@@ -2768,11 +2767,11 @@ msgstr ""
 msgid "Failed to generate app password. Please check your account password."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:58
+#: mail/client/doctype/push_subscription/push_subscription.py:58
 msgid "Failed to get push subscriptions"
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:61
+#: mail/client/doctype/push_subscription/push_subscription.py:61
 msgid "Failed to get push subscriptions."
 msgstr ""
 
@@ -2796,15 +2795,15 @@ msgstr ""
 msgid "Failed to move mail(s) to mailbox."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:241
-msgid "Failed to renew JMAP Push Subscription."
+#: mail/client/doctype/push_subscription/push_subscription.py:241
+msgid "Failed to renew Push Subscription."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:246
+#: mail/client/doctype/push_subscription/push_subscription.py:246
 msgid "Failed to renew push subscription"
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:249
+#: mail/client/doctype/push_subscription/push_subscription.py:249
 msgid "Failed to renew push subscription."
 msgstr ""
 
@@ -2844,12 +2843,12 @@ msgstr ""
 msgid "Failed to set vacation response."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:183
-msgid "Failed to subscribe to JMAP Push Subscription"
+#: mail/client/doctype/push_subscription/push_subscription.py:183
+msgid "Failed to subscribe to Push Subscription"
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:178
-msgid "Failed to subscribe to JMAP Push Subscription."
+#: mail/client/doctype/push_subscription/push_subscription.py:178
+msgid "Failed to subscribe to Push Subscription."
 msgstr ""
 
 #: mail/server/doctype/server_config/server_config.py:138
@@ -3609,7 +3608,7 @@ msgstr ""
 msgid "Invalid file type."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:26
+#: mail/client/doctype/push_subscription/push_subscription.py:26
 msgid "Invalid parameters for push subscription verification."
 msgstr ""
 
@@ -3680,16 +3679,6 @@ msgstr ""
 #. Label of the jmap_tab (Tab Break) field in DocType 'Mail Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "JMAP"
-msgstr ""
-
-#. Name of a DocType
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
-msgid "JMAP Push Subscription"
-msgstr ""
-
-#. Name of a DocType
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
-msgid "JMAP Push Verification Queue"
 msgstr ""
 
 #. Name of a DocType
@@ -5084,7 +5073,7 @@ msgstr ""
 msgid "No blocked IPs found."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:288
+#: mail/client/doctype/push_subscription/push_subscription.py:288
 #: mail/jmap.py:1331
 msgid "No cluster found for the account {0}."
 msgstr ""
@@ -5189,9 +5178,9 @@ msgstr ""
 msgid "Note: DNS changes may take up to 48 hours to propagate globally."
 msgstr ""
 
-#. Label of the notification_types (Small Text) field in DocType 'JMAP Push
+#. Label of the notification_types (Small Text) field in DocType 'Push
 #. Subscription'
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 msgid "Notification Types"
 msgstr ""
 
@@ -5289,7 +5278,7 @@ msgstr ""
 msgid "Only failed jobs can be retried."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.py:48
+#: mail/client/doctype/push_verification_queue/push_verification_queue.py:48
 msgid "Only failed verifications can be retried."
 msgstr ""
 
@@ -5497,9 +5486,8 @@ msgstr ""
 msgid "Pausing Queue..."
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'JMAP Push Verification
-#. Queue'
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
+#. Option for the 'Status' (Select) field in DocType 'Push Verification Queue'
 #. Label of a shortcut in the Mail Workspace
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play Task'
@@ -5507,8 +5495,8 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'Server Job'
 #. Option for the 'Status' (Select) field in DocType 'Server Job Command'
 #: frontend/src/pages/dashboard/InvitesView.vue:210
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/mail_queue/mail_queue.json
+#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/mail/workspace/mail/mail.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
@@ -5518,9 +5506,9 @@ msgstr ""
 msgid "Pending"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'JMAP Push Subscription'
+#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
 #. Label of a shortcut in the Mail Workspace
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/mail/workspace/mail/mail.json
 msgid "Pending Verification"
 msgstr ""
@@ -5806,7 +5794,7 @@ msgstr ""
 msgid "Private key in PEM format."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.js:15
+#: mail/client/doctype/push_verification_queue/push_verification_queue.js:15
 msgid "Process Now"
 msgstr ""
 
@@ -5815,7 +5803,7 @@ msgstr ""
 msgid "Processed"
 msgstr ""
 
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.js:20
+#: mail/client/doctype/push_verification_queue/push_verification_queue.js:20
 msgid "Processing..."
 msgstr ""
 
@@ -5951,8 +5939,10 @@ msgstr ""
 msgid "Push Notification permission denied"
 msgstr ""
 
+#. Name of a DocType
 #. Label of the push_subscription_section (Section Break) field in DocType
 #. 'Mail Cluster'
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "Push Subscription"
 msgstr ""
@@ -5961,6 +5951,11 @@ msgstr ""
 #. Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "Push Timeouts"
+msgstr ""
+
+#. Name of a DocType
+#: mail/client/doctype/push_verification_queue/push_verification_queue.json
+msgid "Push Verification Queue"
 msgstr ""
 
 #: frontend/src/components/PWASettings.vue:69
@@ -6257,7 +6252,7 @@ msgstr ""
 msgid "Remove Members"
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.js:19
+#: mail/client/doctype/push_subscription/push_subscription.js:19
 msgid "Renew"
 msgstr ""
 
@@ -6266,14 +6261,13 @@ msgstr ""
 msgid "Renew Before (Days)"
 msgstr ""
 
-#. Label of the renew_response (JSON) field in DocType 'JMAP Push Subscription'
-#. Label of the _renew_response (JSON) field in DocType 'JMAP Push
-#. Subscription'
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#. Label of the renew_response (JSON) field in DocType 'Push Subscription'
+#. Label of the _renew_response (JSON) field in DocType 'Push Subscription'
+#: mail/client/doctype/push_subscription/push_subscription.json
 msgid "Renew Response"
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.js:61
+#: mail/client/doctype/push_subscription/push_subscription.js:61
 msgid "Renewing..."
 msgstr ""
 
@@ -6462,11 +6456,11 @@ msgstr ""
 msgid "Restricts the number of concurrent requests a user can make to the JMAP server."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.js:37
+#: mail/client/doctype/push_subscription/push_subscription.js:37
 msgid "Resubscribe"
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.js:75
+#: mail/client/doctype/push_subscription/push_subscription.js:75
 msgid "Resubscribing..."
 msgstr ""
 
@@ -6499,9 +6493,9 @@ msgstr ""
 msgid "Retries"
 msgstr ""
 
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.js:29
 #: mail/client/doctype/mail_queue/mail_queue.js:27
 #: mail/client/doctype/mail_queue/mail_queue_list.js:26
+#: mail/client/doctype/push_verification_queue/push_verification_queue.js:29
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.js:16
 #: mail/server/doctype/message_queue/message_queue_list.js:84
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:30
@@ -6532,8 +6526,8 @@ msgstr ""
 msgid "Retrying Delivery..."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.js:34
 #: mail/client/doctype/mail_queue/mail_queue.js:48
+#: mail/client/doctype/push_verification_queue/push_verification_queue.js:34
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.js:25
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:39
 #: mail/server/doctype/server_deployment/server_deployment.js:106
@@ -6912,13 +6906,13 @@ msgstr ""
 msgid "Sent At"
 msgstr ""
 
-#. Label of the server (Link) field in DocType 'JMAP Push Subscription'
+#. Label of the server (Link) field in DocType 'Push Subscription'
 #. Label of a shortcut in the Mail Workspace
 #. Label of the server (Link) field in DocType 'Server Ansible Play'
 #. Label of the server (Link) field in DocType 'Server Config'
 #. Label of the server (Link) field in DocType 'Server Deployment'
 #. Label of the server (Link) field in DocType 'Server Job'
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/mail/workspace/mail/mail.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_config/server_config.json
@@ -7308,9 +7302,9 @@ msgstr ""
 msgid "Statistics"
 msgstr ""
 
-#. Label of the status (Select) field in DocType 'JMAP Push Subscription'
-#. Label of the status (Select) field in DocType 'JMAP Push Verification Queue'
 #. Label of the status (Select) field in DocType 'Mail Queue'
+#. Label of the status (Select) field in DocType 'Push Subscription'
+#. Label of the status (Select) field in DocType 'Push Verification Queue'
 #. Label of the status (Select) field in DocType 'Mail Backend Request'
 #. Label of the status (Select) field in DocType 'Mail Data Exchange'
 #. Label of the status (Data) field in DocType 'Message Queue Recipient'
@@ -7327,9 +7321,9 @@ msgstr ""
 #: frontend/src/pages/dashboard/MailAliasesView.vue:166
 #: frontend/src/pages/dashboard/MailingListsView.vue:15
 #: frontend/src/pages/dashboard/MailingListsView.vue:148
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/mail_queue/mail_queue.json
+#: mail/client/doctype/push_subscription/push_subscription.json
+#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/message_queue/message_queue.js:60
@@ -7476,24 +7470,23 @@ msgstr ""
 msgid "Subscribed"
 msgstr ""
 
-#. Label of the subscription_id (Data) field in DocType 'JMAP Push
-#. Subscription'
-#. Label of the subscription_id (Data) field in DocType 'JMAP Push Verification
+#. Label of the subscription_id (Data) field in DocType 'Push Subscription'
+#. Label of the subscription_id (Data) field in DocType 'Push Verification
 #. Queue'
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
+#: mail/client/doctype/push_subscription/push_subscription.json
+#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 msgid "Subscription ID"
 msgstr ""
 
-#. Label of the subscription_response (JSON) field in DocType 'JMAP Push
+#. Label of the subscription_response (JSON) field in DocType 'Push
 #. Subscription'
-#. Label of the _subscription_response (JSON) field in DocType 'JMAP Push
+#. Label of the _subscription_response (JSON) field in DocType 'Push
 #. Subscription'
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 msgid "Subscription Response"
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:193
+#: mail/client/doctype/push_subscription/push_subscription.py:193
 msgid "Subscription already verified."
 msgstr ""
 
@@ -7548,8 +7541,6 @@ msgstr ""
 #. Name of a role
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/contact_card/contact_card.json
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/jmap_sync_state/jmap_sync_state.json
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_account_request/mail_account_request.json
@@ -7566,6 +7557,8 @@ msgstr ""
 #: mail/client/doctype/mailing_list/mailing_list.json
 #: mail/client/doctype/mailing_list_external_member/mailing_list_external_member.json
 #: mail/client/doctype/mailing_list_member/mailing_list_member.json
+#: mail/client/doctype/push_subscription/push_subscription.json
+#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/mail/doctype/rate_limit/rate_limit.json
 #: mail/server/doctype/allowed_ip/allowed_ip.json
@@ -7733,7 +7726,7 @@ msgstr ""
 msgid "The Linux user account to use for SSH connections."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.py:143
+#: mail/client/doctype/push_subscription/push_subscription.py:143
 msgid "The Mail Server {0} does not belong to the same cluster as the account {1}."
 msgstr ""
 
@@ -7829,7 +7822,7 @@ msgstr ""
 msgid "The endpoint for Open Telemetry."
 msgstr ""
 
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.js:49
+#: mail/client/doctype/push_subscription/push_subscription.js:49
 msgid "The endpoint must start with 'https://'."
 msgstr ""
 
@@ -8614,10 +8607,10 @@ msgstr ""
 msgid "Variables"
 msgstr ""
 
-#. Label of the verification_code (Password) field in DocType 'JMAP Push
+#. Label of the verification_code (Password) field in DocType 'Push
 #. Verification Queue'
 #: frontend/src/pages/BusinessSignupView.vue:15
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
+#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 msgid "Verification Code"
 msgstr ""
 
@@ -8633,11 +8626,11 @@ msgstr ""
 msgid "Verification Key"
 msgstr ""
 
-#. Label of the verification_response (JSON) field in DocType 'JMAP Push
+#. Label of the verification_response (JSON) field in DocType 'Push
 #. Subscription'
-#. Label of the _verification_response (JSON) field in DocType 'JMAP Push
+#. Label of the _verification_response (JSON) field in DocType 'Push
 #. Subscription'
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 msgid "Verification Response"
 msgstr ""
 
@@ -8650,25 +8643,23 @@ msgstr ""
 msgid "Verification email sent successfully."
 msgstr ""
 
-#. Label of the verified (Check) field in DocType 'JMAP Push Subscription'
-#. Option for the 'Status' (Select) field in DocType 'JMAP Push Verification
-#. Queue'
 #. Label of the is_verified (Check) field in DocType 'Mail Domain'
+#. Label of the verified (Check) field in DocType 'Push Subscription'
+#. Option for the 'Status' (Select) field in DocType 'Push Verification Queue'
 #. Label of the is_verified (Check) field in DocType 'DNS Record'
 #. Label of the ssh_verified (Check) field in DocType 'Mail Server'
 #: frontend/src/pages/dashboard/DomainView.vue:151
 #: frontend/src/pages/dashboard/DomainsView.vue:120
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
-#: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/mail_domain/mail_domain.json
+#: mail/client/doctype/push_subscription/push_subscription.json
+#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/server/doctype/dns_record/dns_record.json
 #: mail/server/doctype/mail_server/mail_server.json
 msgid "Verified"
 msgstr ""
 
-#. Label of the verified_at (Datetime) field in DocType 'JMAP Push
-#. Subscription'
-#: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
+#. Label of the verified_at (Datetime) field in DocType 'Push Subscription'
+#: mail/client/doctype/push_subscription/push_subscription.json
 msgid "Verified At"
 msgstr ""
 
