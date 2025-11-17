@@ -13,7 +13,7 @@ from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
 
-class MailServerDeployment(Document):
+class ServerDeployment(Document):
 	@property
 	def config_toml(self) -> str | None:
 		"""Returns the config.toml content."""
@@ -309,17 +309,21 @@ class MailServerDeployment(Document):
 def retry_failed_deployments() -> None:
 	"""Called by the scheduler to retry failed deployments."""
 
-	MSD = frappe.qb.DocType("Mail Server Deployment")
+	DEPLOYMENT = frappe.qb.DocType("Server Deployment")
 	deployments = (
-		frappe.qb.from_(MSD)
-		.select(MSD.name)
-		.where((MSD.status == "Failed") & (MSD.retries > 0) & (MSD.retries < MSD.max_retries))
-		.orderby(MSD.creation, order=Order.asc)
+		frappe.qb.from_(DEPLOYMENT)
+		.select(DEPLOYMENT.name)
+		.where(
+			(DEPLOYMENT.status == "Failed")
+			& (DEPLOYMENT.retries > 0)
+			& (DEPLOYMENT.retries < DEPLOYMENT.max_retries)
+		)
+		.orderby(DEPLOYMENT.creation, order=Order.asc)
 	).run(pluck="name")
 
 	if not deployments:
 		return
 
 	for deployment in deployments:
-		doc = frappe.get_doc("Mail Server Deployment", deployment)
+		doc = frappe.get_doc("Server Deployment", deployment)
 		doc.retry()

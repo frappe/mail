@@ -295,11 +295,11 @@
   },
   {
    "group": "Deployment",
-   "link_doctype": "Mail Server Deployment",
+   "link_doctype": "Server Deployment",
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-11-17 11:08:37.534528",
+ "modified": "2025-11-17 11:14:21.516003",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Server",

@@ -1,7 +1,7 @@
 // Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Mail Server Deployment', {
+frappe.ui.form.on('Server Deployment', {
 	setup(frm) {
 		frm.trigger('set_queries')
 	},

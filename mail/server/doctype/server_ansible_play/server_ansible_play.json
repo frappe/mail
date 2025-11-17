@@ -267,7 +267,7 @@
    "fieldtype": "Link",
    "label": "Deployment",
    "no_copy": 1,
-   "options": "Mail Server Deployment",
+   "options": "Server Deployment",
    "read_only": 1,
    "search_index": 1,
    "set_only_once": 1
@@ -282,7 +282,7 @@
    "link_fieldname": "play"
   }
  ],
- "modified": "2025-10-06 10:46:26.215858",
+ "modified": "2025-11-17 11:14:08.541532",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Server Ansible Play",

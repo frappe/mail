@@ -355,7 +355,7 @@ class MailServer(Document):
 				install_redis = 1
 				break
 
-		deployment = frappe.new_doc("Mail Server Deployment")
+		deployment = frappe.new_doc("Server Deployment")
 		deployment.status = "Pending"
 		deployment.server = self.name
 		deployment.config = config

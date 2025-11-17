@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-17 11:12+0553\n"
-"PO-Revision-Date: 2025-11-17 11:12+0553\n"
+"POT-Creation-Date: 2025-11-17 11:16+0553\n"
+"PO-Revision-Date: 2025-11-17 11:16+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -339,16 +339,16 @@ msgstr ""
 #: mail/server/doctype/mail_server/mail_server.js:37
 #: mail/server/doctype/mail_server/mail_server.js:46
 #: mail/server/doctype/mail_server/mail_server.js:55
-#: mail/server/doctype/mail_server/mail_server.js:64w
+#: mail/server/doctype/mail_server/mail_server.js:64
 #: mail/server/doctype/mail_server/mail_server.js:72
 #: mail/server/doctype/mail_server/mail_server.js:82
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:31
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:37
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:42
 #: mail/server/doctype/mail_server_job/mail_server_job.js:16
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:30
 #: mail/server/doctype/server_config/server_config.js:20
 #: mail/server/doctype/server_config/server_config.js:29
+#: mail/server/doctype/server_deployment/server_deployment.js:31
+#: mail/server/doctype/server_deployment/server_deployment.js:37
+#: mail/server/doctype/server_deployment/server_deployment.js:42
 msgid "Actions"
 msgstr ""
 
@@ -1244,25 +1244,25 @@ msgstr ""
 msgid "Concurrent"
 msgstr ""
 
-#. Label of the config (Link) field in DocType 'Mail Server Deployment'
 #. Label of the config_toml (Password) field in DocType 'Server Config'
 #. Label of the config (Code) field in DocType 'Server Config'
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
+#. Label of the config (Link) field in DocType 'Server Deployment'
 #: mail/server/doctype/server_config/server_config.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Config"
 msgstr ""
 
-#. Label of the config_checksum (Small Text) field in DocType 'Mail Server
+#. Label of the config_checksum (Small Text) field in DocType 'Server
 #. Deployment'
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Config Checksum"
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.py:102
+#: mail/server/doctype/server_deployment/server_deployment.py:102
 msgid "Config does not belong to the selected server."
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.py:98
+#: mail/server/doctype/server_deployment/server_deployment.py:98
 msgid "Config is required."
 msgstr ""
 
@@ -1362,7 +1362,7 @@ msgstr ""
 msgid "Contact Cards deleted successfully."
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:68
+#: mail/server/doctype/server_deployment/server_deployment.js:68
 msgid "Contact Email"
 msgstr ""
 
@@ -2201,18 +2201,18 @@ msgstr ""
 #. Label of the duration (Float) field in DocType 'Ansible Play Task'
 #. Label of the duration (Float) field in DocType 'Mail Backend Request'
 #. Label of the duration (Float) field in DocType 'Mail Data Exchange'
-#. Label of the duration (Float) field in DocType 'Mail Server Deployment'
 #. Label of the duration (Float) field in DocType 'Mail Server Job'
 #. Label of the duration (Float) field in DocType 'Mail Server Job Command'
 #. Label of the duration (Float) field in DocType 'Server Ansible Play'
+#. Label of the duration (Float) field in DocType 'Server Deployment'
 #. Label of the duration (Float) field in DocType 'Spam Check Log'
 #: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/spam_check_log/spam_check_log.json
 msgid "Duration (Seconds)"
 msgstr ""
@@ -2423,31 +2423,31 @@ msgstr ""
 
 #. Label of the ended_at (Datetime) field in DocType 'Ansible Play Task'
 #. Label of the ended_at (Datetime) field in DocType 'Mail Backend Request'
-#. Label of the ended_at (Datetime) field in DocType 'Mail Server Deployment'
 #. Label of the ended_at (Datetime) field in DocType 'Mail Server Job'
 #. Label of the ended_at (Datetime) field in DocType 'Mail Server Job Command'
 #. Label of the ended_at (Datetime) field in DocType 'Server Ansible Play'
+#. Label of the ended_at (Datetime) field in DocType 'Server Deployment'
 #: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Ended At"
 msgstr ""
 
-#. Description of the 'Duration (Seconds)' (Float) field in DocType 'Mail
-#. Server Deployment'
 #. Description of the 'Duration (Seconds)' (Float) field in DocType 'Mail
 #. Server Job'
 #. Description of the 'Duration (Seconds)' (Float) field in DocType 'Mail
 #. Server Job Command'
 #. Description of the 'Duration (Seconds)' (Float) field in DocType 'Server
 #. Ansible Play'
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
+#. Description of the 'Duration (Seconds)' (Float) field in DocType 'Server
+#. Deployment'
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Ended At - Started At"
 msgstr ""
 
@@ -2502,18 +2502,18 @@ msgstr ""
 
 #. Label of the error_log (Code) field in DocType 'Mail Queue'
 #. Label of the error_log (Code) field in DocType 'Mail Backend Request'
-#. Label of the error_log_section (Section Break) field in DocType 'Mail Server
-#. Deployment'
-#. Label of the error_log (Code) field in DocType 'Mail Server Deployment'
 #. Label of the error_log (Code) field in DocType 'Mail Server Job'
 #. Label of the error_log_section (Section Break) field in DocType 'Server
 #. Ansible Play'
 #. Label of the error_log (Code) field in DocType 'Server Ansible Play'
+#. Label of the error_log_section (Section Break) field in DocType 'Server
+#. Deployment'
+#. Label of the error_log (Code) field in DocType 'Server Deployment'
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Error Log"
 msgstr ""
 
@@ -2640,11 +2640,11 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Mail Backend Request'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
-#. Option for the 'Status' (Select) field in DocType 'Mail Server Deployment'
 #. Option for the 'Status' (Select) field in DocType 'Mail Server Job'
 #. Label of the failed (Int) field in DocType 'Mail Server Job'
 #. Option for the 'Status' (Select) field in DocType 'Mail Server Job Command'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Server Deployment'
 #: frontend/src/pages/MailDataExchangesView.vue:92
 #: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/mail_queue/mail_queue.json
@@ -2652,10 +2652,10 @@ msgstr ""
 #: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Failed"
 msgstr ""
 
@@ -2913,11 +2913,11 @@ msgstr ""
 msgid "File uploaded: {0}"
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:29
+#: mail/server/doctype/server_deployment/server_deployment.js:29
 msgid "Filebeat Stream Setup (FC)"
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.py:241
+#: mail/server/doctype/server_deployment/server_deployment.py:241
 msgid "Filebeat stream setup job has been created."
 msgstr ""
 
@@ -3531,8 +3531,8 @@ msgstr ""
 msgid "Install Frappe Mail"
 msgstr ""
 
-#. Label of the install_redis (Check) field in DocType 'Mail Server Deployment'
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
+#. Label of the install_redis (Check) field in DocType 'Server Deployment'
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Install Redis"
 msgstr ""
 
@@ -4248,11 +4248,6 @@ msgid "Mail Server ACME Provider"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
-msgid "Mail Server Deployment"
-msgstr ""
-
-#. Name of a DocType
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 msgid "Mail Server Job"
 msgstr ""
@@ -4291,9 +4286,9 @@ msgstr ""
 msgid "Mail Server {0} does not have a cluster."
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.py:90
 #: mail/server/doctype/mail_server_job/mail_server_job.py:47
 #: mail/server/doctype/server_ansible_play/server_ansible_play.py:48
+#: mail/server/doctype/server_deployment/server_deployment.py:90
 msgid "Mail Server {0} is disabled"
 msgstr ""
 
@@ -4646,13 +4641,13 @@ msgid "Max Results"
 msgstr ""
 
 #. Label of the max_retries (Int) field in DocType 'Mail Queue'
-#. Label of the max_retries (Int) field in DocType 'Mail Server Deployment'
 #. Label of the max_retries (Int) field in DocType 'Mail Server Job'
 #. Label of the max_retries (Int) field in DocType 'Server Ansible Play'
+#. Label of the max_retries (Int) field in DocType 'Server Deployment'
 #: mail/client/doctype/mail_queue/mail_queue.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Max Retries"
 msgstr ""
 
@@ -5305,7 +5300,7 @@ msgstr ""
 msgid "Only failed ansible plays can be retried."
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.py:284
+#: mail/server/doctype/server_deployment/server_deployment.py:284
 msgid "Only failed deployments can be retried."
 msgstr ""
 
@@ -5526,19 +5521,19 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
 #. Label of a shortcut in the Mail Workspace
 #. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
-#. Option for the 'Status' (Select) field in DocType 'Mail Server Deployment'
 #. Option for the 'Status' (Select) field in DocType 'Mail Server Job'
 #. Option for the 'Status' (Select) field in DocType 'Mail Server Job Command'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Server Deployment'
 #: frontend/src/pages/dashboard/InvitesView.vue:210
 #: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/mail/workspace/mail/mail.json
 #: mail/server/doctype/ansible_play_task/ansible_play_task.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Pending"
 msgstr ""
 
@@ -5622,7 +5617,7 @@ msgstr ""
 msgid "Please confirm your email address by clicking the button below."
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:76
+#: mail/server/doctype/server_deployment/server_deployment.js:76
 msgid "Please enter a contact email"
 msgstr ""
 
@@ -5686,9 +5681,9 @@ msgstr ""
 msgid "Please set the {0} in the Mail Settings."
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.py:92
 #: mail/server/doctype/mail_server_job/mail_server_job.py:49
 #: mail/server/doctype/server_ansible_play/server_ansible_play.py:50
+#: mail/server/doctype/server_deployment/server_deployment.py:92
 msgid "Please verify SSH connection for Mail Server {0}"
 msgstr ""
 
@@ -5749,8 +5744,8 @@ msgstr ""
 msgid "Ports"
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:35
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:62
+#: mail/server/doctype/server_deployment/server_deployment.js:35
+#: mail/server/doctype/server_deployment/server_deployment.js:62
 msgid "Post Deployment SSL Setup (FC)"
 msgstr ""
 
@@ -6190,18 +6185,18 @@ msgstr ""
 #. Group in DKIM Key's connections
 #. Group in Mail Cluster's connections
 #. Group in Mail Server's connections
-#. Group in Mail Server Deployment's connections
 #. Group in Server Ansible Play's connections
 #. Group in Server Config's connections
+#. Group in Server Deployment's connections
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_domain/mail_domain.json
 #: mail/client/doctype/mailing_list/mailing_list.json
 #: mail/server/doctype/dkim_key/dkim_key.json
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_server/mail_server.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_config/server_config.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Reference"
 msgstr ""
 
@@ -6511,15 +6506,15 @@ msgstr ""
 #. Label of the retries (Int) field in DocType 'Mail Queue'
 #. Label of the retry_total (Int) field in DocType 'Mail Cluster Store'
 #. Label of the retries (Int) field in DocType 'Mail Data Exchange'
-#. Label of the retries (Int) field in DocType 'Mail Server Deployment'
 #. Label of the retries (Int) field in DocType 'Mail Server Job'
 #. Label of the retries (Int) field in DocType 'Server Ansible Play'
+#. Label of the retries (Int) field in DocType 'Server Deployment'
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Retries"
 msgstr ""
 
@@ -6527,10 +6522,10 @@ msgstr ""
 #: mail/client/doctype/mail_queue/mail_queue.js:27
 #: mail/client/doctype/mail_queue/mail_queue_list.js:26
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.js:16
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:42
 #: mail/server/doctype/mail_server_job/mail_server_job.js:16
 #: mail/server/doctype/message_queue/message_queue_list.js:84
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:30
+#: mail/server/doctype/server_deployment/server_deployment.js:42
 msgid "Retry"
 msgstr ""
 
@@ -6559,9 +6554,9 @@ msgstr ""
 #: mail/client/doctype/jmap_push_verification_queue/jmap_push_verification_queue.js:34
 #: mail/client/doctype/mail_queue/mail_queue.js:48
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.js:25
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:106
 #: mail/server/doctype/mail_server_job/mail_server_job.js:25
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:39
+#: mail/server/doctype/server_deployment/server_deployment.js:106
 msgid "Retrying..."
 msgstr ""
 
@@ -6659,16 +6654,16 @@ msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Mail Backend Request'
-#. Option for the 'Status' (Select) field in DocType 'Mail Server Deployment'
 #. Option for the 'Status' (Select) field in DocType 'Mail Server Job'
 #. Option for the 'Status' (Select) field in DocType 'Mail Server Job Command'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Server Deployment'
 #: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Running"
 msgstr ""
 
@@ -6761,7 +6756,7 @@ msgstr ""
 msgid "SSH connection successful."
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.py:275
+#: mail/server/doctype/server_deployment/server_deployment.py:275
 msgid "SSL setup job has been created."
 msgstr ""
 
@@ -6938,16 +6933,16 @@ msgstr ""
 
 #. Label of the server (Link) field in DocType 'JMAP Push Subscription'
 #. Label of a shortcut in the Mail Workspace
-#. Label of the server (Link) field in DocType 'Mail Server Deployment'
 #. Label of the server (Link) field in DocType 'Mail Server Job'
 #. Label of the server (Link) field in DocType 'Server Ansible Play'
 #. Label of the server (Link) field in DocType 'Server Config'
+#. Label of the server (Link) field in DocType 'Server Deployment'
 #: mail/client/doctype/jmap_push_subscription/jmap_push_subscription.json
 #: mail/mail/workspace/mail/mail.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_config/server_config.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Server"
 msgstr ""
 
@@ -6963,6 +6958,11 @@ msgstr ""
 
 #: mail/server/doctype/mail_server/mail_server.py:200
 msgid "Server Config created."
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/server_deployment/server_deployment.json
+msgid "Server Deployment"
 msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Mail Domain DNS Record'
@@ -6989,8 +6989,8 @@ msgstr ""
 msgid "Service"
 msgstr ""
 
-#. Label of the services (Table) field in DocType 'Mail Server Deployment'
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
+#. Label of the services (Table) field in DocType 'Server Deployment'
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Services"
 msgstr ""
 
@@ -7033,11 +7033,11 @@ msgstr ""
 msgid "Setting Vacation Response..."
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:51
+#: mail/server/doctype/server_deployment/server_deployment.js:51
 msgid "Setting up Filebeat Stream..."
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:87
+#: mail/server/doctype/server_deployment/server_deployment.js:87
 msgid "Setting up SSL..."
 msgstr ""
 
@@ -7048,7 +7048,7 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.js:72
+#: mail/server/doctype/server_deployment/server_deployment.js:72
 msgid "Setup SSL"
 msgstr ""
 
@@ -7219,7 +7219,7 @@ msgstr ""
 msgid "Stalwart CLI not found at {0}."
 msgstr ""
 
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.py:256
+#: mail/server/doctype/server_deployment/server_deployment.py:256
 msgid "Stalwart service not found in deployment {0}"
 msgstr ""
 
@@ -7244,46 +7244,46 @@ msgid "Start Kwargs"
 msgstr ""
 
 #. Label of the started_after (Float) field in DocType 'Mail Data Exchange'
-#. Label of the started_after (Float) field in DocType 'Mail Server Deployment'
 #. Label of the started_after (Float) field in DocType 'Mail Server Job'
 #. Label of the started_after (Float) field in DocType 'Server Ansible Play'
+#. Label of the started_after (Float) field in DocType 'Server Deployment'
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Started After (Seconds)"
 msgstr ""
 
 #. Label of the started_at (Datetime) field in DocType 'Ansible Play Task'
 #. Label of the started_at (Datetime) field in DocType 'Mail Backend Request'
 #. Label of the started_at (Datetime) field in DocType 'Mail Data Exchange'
-#. Label of the started_at (Datetime) field in DocType 'Mail Server Deployment'
 #. Label of the started_at (Datetime) field in DocType 'Mail Server Job'
 #. Label of the started_at (Datetime) field in DocType 'Mail Server Job
 #. Command'
 #. Label of the started_at (Datetime) field in DocType 'Server Ansible Play'
+#. Label of the started_at (Datetime) field in DocType 'Server Deployment'
 #. Label of the started_at (Datetime) field in DocType 'Spam Check Log'
 #: frontend/src/pages/MailDataExchangesView.vue:127
 #: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/spam_check_log/spam_check_log.json
 msgid "Started At"
 msgstr ""
 
 #. Description of the 'Started After (Seconds)' (Float) field in DocType 'Mail
-#. Server Deployment'
-#. Description of the 'Started After (Seconds)' (Float) field in DocType 'Mail
 #. Server Job'
 #. Description of the 'Started After (Seconds)' (Float) field in DocType
 #. 'Server Ansible Play'
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
+#. Description of the 'Started After (Seconds)' (Float) field in DocType
+#. 'Server Deployment'
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Started At - Creation"
 msgstr ""
 
@@ -7308,11 +7308,11 @@ msgstr ""
 #. Label of the status (Select) field in DocType 'Ansible Play Task'
 #. Label of the status (Select) field in DocType 'Mail Backend Request'
 #. Label of the status (Select) field in DocType 'Mail Data Exchange'
-#. Label of the status (Select) field in DocType 'Mail Server Deployment'
 #. Label of the status (Select) field in DocType 'Mail Server Job'
 #. Label of the status (Select) field in DocType 'Mail Server Job Command'
 #. Label of the status (Data) field in DocType 'Message Queue Recipient'
 #. Label of the status (Select) field in DocType 'Server Ansible Play'
+#. Label of the status (Select) field in DocType 'Server Deployment'
 #: frontend/src/pages/MailDataExchangesView.vue:17
 #: frontend/src/pages/MailDataExchangesView.vue:129
 #: frontend/src/pages/dashboard/DomainsView.vue:15
@@ -7327,12 +7327,12 @@ msgstr ""
 #: mail/server/doctype/ansible_play_task/ansible_play_task.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/server/doctype/message_queue/message_queue.js:60
 #: mail/server/doctype/message_queue_recipient/message_queue_recipient.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Status"
 msgstr ""
 
@@ -7492,16 +7492,16 @@ msgid "Subscription already verified."
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Ansible Play Task'
-#. Option for the 'Status' (Select) field in DocType 'Mail Server Deployment'
 #. Option for the 'Status' (Select) field in DocType 'Mail Server Job'
 #. Label of the success (Int) field in DocType 'Mail Server Job'
 #. Option for the 'Status' (Select) field in DocType 'Mail Server Job Command'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
+#. Option for the 'Status' (Select) field in DocType 'Server Deployment'
 #: mail/server/doctype/ansible_play_task/ansible_play_task.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/mail_server_job_command/mail_server_job_command.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 msgid "Success"
 msgstr ""
 
@@ -7572,11 +7572,11 @@ msgstr ""
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/mail_server/mail_server.json
-#: mail/server/doctype/mail_server_deployment/mail_server_deployment.json
 #: mail/server/doctype/mail_server_job/mail_server_job.json
 #: mail/server/doctype/message_queue/message_queue.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_config/server_config.json
+#: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/spam_check_log/spam_check_log.json
 msgid "System Manager"
 msgstr ""

@@ -56,7 +56,7 @@
  "links": [
   {
    "group": "Reference",
-   "link_doctype": "Mail Server Deployment",
+   "link_doctype": "Server Deployment",
    "link_fieldname": "config"
   }
  ],
