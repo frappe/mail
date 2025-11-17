@@ -51,7 +51,7 @@
  "links": [],
  "modified": "2025-07-17 12:57:42.832157",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mailing List External Member",
  "naming_rule": "Random",
  "owner": "Administrator",

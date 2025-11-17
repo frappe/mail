@@ -61,7 +61,7 @@
  "links": [],
  "modified": "2025-06-02 13:39:11.904000",
  "modified_by": "Administrator",
- "module": "Mail",
+ "module": "Client",
  "name": "Mailing List Member",
  "naming_rule": "Random",
  "owner": "Administrator",
