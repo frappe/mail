@@ -158,38 +158,42 @@ after_migrate = "mail.install.after_migrate"
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-	"Mail Account Request": "mail.client.doctype.mail_account_request.mail_account_request.get_permission_query_condition",
-	"Mail Tenant": "mail.client.doctype.mail_tenant.mail_tenant.get_permission_query_condition",
-	"Mail Tenant Member": "mail.client.doctype.mail_tenant_member.mail_tenant_member.get_permission_query_condition",
-	"Mail Domain Request": "mail.client.doctype.mail_domain_request.mail_domain_request.get_permission_query_condition",
-	"Mail Domain": "mail.client.doctype.mail_domain.mail_domain.get_permission_query_condition",
+	# Server
+	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.get_permission_query_condition",
+	# Client
 	"Mail Account": "mail.client.doctype.mail_account.mail_account.get_permission_query_condition",
-	"Mailing List": "mail.client.doctype.mailing_list.mailing_list.get_permission_query_condition",
-	"Mailing List Member": "mail.client.doctype.mailing_list_member.mailing_list_member.get_permission_query_condition",
-	"Mailing List External Member": "mail.client.doctype.mailing_list_external_member.mailing_list_external_member.get_permission_query_condition",
+	"Mail Account Request": "mail.client.doctype.mail_account_request.mail_account_request.get_permission_query_condition",
 	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.get_permission_query_condition",
 	"Mail Contact": "mail.client.doctype.mail_contact.mail_contact.get_permission_query_condition",
+	"Mail Domain": "mail.client.doctype.mail_domain.mail_domain.get_permission_query_condition",
+	"Mail Domain Request": "mail.client.doctype.mail_domain_request.mail_domain_request.get_permission_query_condition",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
-	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.get_permission_query_condition",
+	"Mail Tenant": "mail.client.doctype.mail_tenant.mail_tenant.get_permission_query_condition",
+	"Mail Tenant Member": "mail.client.doctype.mail_tenant_member.mail_tenant_member.get_permission_query_condition",
+	"Mailing List": "mail.client.doctype.mailing_list.mailing_list.get_permission_query_condition",
+	"Mailing List External Member": "mail.client.doctype.mailing_list_external_member.mailing_list_external_member.get_permission_query_condition",
+	"Mailing List Member": "mail.client.doctype.mailing_list_member.mailing_list_member.get_permission_query_condition",
 }
 
 has_permission = {
-	"Mail Account Request": "mail.client.doctype.mail_account_request.mail_account_request.has_permission",
-	"Mail Tenant": "mail.client.doctype.mail_tenant.mail_tenant.has_permission",
-	"Mail Tenant Member": "mail.client.doctype.mail_tenant_member.mail_tenant_member.has_permission",
-	"Mail Domain Request": "mail.client.doctype.mail_domain_request.mail_domain_request.has_permission",
-	"Mail Domain": "mail.client.doctype.mail_domain.mail_domain.has_permission",
-	"Mail Account": "mail.client.doctype.mail_account.mail_account.has_permission",
-	"Mailbox": "mail.client.doctype.mailbox.mailbox.has_permission",
+	# Server
+	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.has_permission",
+	# Client
 	"Address Book": "mail.client.doctype.address_book.address_book.has_permission",
 	"Contact Card": "mail.client.doctype.contact_card.contact_card.has_permission",
-	"Mailing List": "mail.client.doctype.mailing_list.mailing_list.has_permission",
-	"Mailing List Member": "mail.client.doctype.mailing_list_member.mailing_list_member.has_permission",
-	"Mailing List External Member": "mail.client.doctype.mailing_list_external_member.mailing_list_external_member.has_permission",
+	"Mail Account": "mail.client.doctype.mail_account.mail_account.has_permission",
+	"Mail Account Request": "mail.client.doctype.mail_account_request.mail_account_request.has_permission",
 	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.has_permission",
 	"Mail Contact": "mail.client.doctype.mail_contact.mail_contact.has_permission",
+	"Mail Domain": "mail.client.doctype.mail_domain.mail_domain.has_permission",
+	"Mail Domain Request": "mail.client.doctype.mail_domain_request.mail_domain_request.has_permission",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.has_permission",
-	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.has_permission",
+	"Mail Tenant": "mail.client.doctype.mail_tenant.mail_tenant.has_permission",
+	"Mail Tenant Member": "mail.client.doctype.mail_tenant_member.mail_tenant_member.has_permission",
+	"Mailbox": "mail.client.doctype.mailbox.mailbox.has_permission",
+	"Mailing List": "mail.client.doctype.mailing_list.mailing_list.has_permission",
+	"Mailing List External Member": "mail.client.doctype.mailing_list_external_member.mailing_list_external_member.has_permission",
+	"Mailing List Member": "mail.client.doctype.mailing_list_member.mailing_list_member.has_permission",
 }
 
 website_route_rules = [
@@ -243,10 +247,12 @@ scheduler_events = {
 	# ],
 	"cron": {
 		"*/5 * * * *": [
+			# Server
 			"mail.server.doctype.server_job.server_job.retry_failed_jobs",
-			"mail.client.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
 			"mail.server.doctype.server_deployment.server_deployment.retry_failed_deployments",
 			"mail.server.doctype.server_ansible_play.server_ansible_play.retry_failed_ansible_plays",
+			# Client
+			"mail.client.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
 			"mail.client.doctype.jmap_push_verification_queue.jmap_push_verification_queue.process_verifications",
 		],
 	},
