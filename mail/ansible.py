@@ -33,15 +33,15 @@ class Ansible:
 	def from_play(cls, play_name: str) -> "Ansible":
 		"""Create an Ansible instance from an existing Server Ansible Play record."""
 
-		play = frappe.get_doc("Server Ansible Play", play_name)
+		pdoc = frappe.get_doc("Server Ansible Play", play_name)
 
 		self = cls.__new__(cls)
-		self.play = play.name
-		self.server = play.server
-		self.playbook = play.playbook
+		self.play = pdoc.name
+		self.server = pdoc.server
+		self.playbook = pdoc.playbook
 
 		self.variables = {}
-		for variable in play.variables:
+		for variable in pdoc.variables:
 			try:
 				self.variables[variable.key_] = json.loads(variable.value)
 			except (TypeError, json.JSONDecodeError):
@@ -56,7 +56,6 @@ class Ansible:
 			as_list=True,
 		):
 			self.tasks = frappe._dict(tasks)
-
 		return self
 
 	@property
@@ -73,10 +72,10 @@ class Ansible:
 
 		play = self._get_play()
 
-		play = frappe.new_doc("Server Ansible Play")
-		play.server = self.server
-		play.play = play["name"]
-		play.playbook = self.playbook
+		pdoc = frappe.new_doc("Server Ansible Play")
+		pdoc.server = self.server
+		pdoc.play = play["name"]
+		pdoc.playbook = self.playbook
 
 		for key, value in self.variables.items():
 			if isinstance(value, int | bool):
@@ -86,10 +85,10 @@ class Ansible:
 			elif not isinstance(value, str):
 				frappe.throw(_("Variable value cannot be of type {0}").format(type(value)))
 
-			play.append("variables", {"key_": key, "value": value})
+			pdoc.append("variables", {"key_": key, "value": value})
 
-		play.insert(ignore_permissions=True)
-		self.play = play.name
+		pdoc.insert(ignore_permissions=True)
+		self.play = pdoc.name
 
 		self._create_task_records(play=play)
 
@@ -100,16 +99,15 @@ class Ansible:
 			frappe.throw(_("Play record must be created before creating task records."))
 		elif hasattr(self, "tasks") and self.tasks:
 			return
-
 		play = play or self._get_play()
 
 		self.tasks = {}
 		for task in play["tasks"]:
-			task = frappe.new_doc("Server Ansible Play Task")
-			task.play = self.play
-			task.task = task["name"]
-			task.insert(ignore_permissions=True)
-			self.tasks[task.task] = task.name
+			tdoc = frappe.new_doc("Server Ansible Play Task")
+			tdoc.play = self.play
+			tdoc.task = task["name"]
+			tdoc.insert(ignore_permissions=True)
+			self.tasks[tdoc.task] = tdoc.name
 
 	def _get_play(self) -> dict:
 		"""Returns the first play from the playbook."""
@@ -209,18 +207,18 @@ class Ansible:
 		if not status and not stats:
 			return
 
-		play = frappe.get_doc("Server Ansible Play", self.play)
+		pdoc = frappe.get_doc("Server Ansible Play", self.play)
 
 		if stats:
 			ended_at = now()
-			duration = time_diff_in_seconds(ended_at, play.started_at)
+			duration = time_diff_in_seconds(ended_at, pdoc.started_at)
 			status = "Failed" if stats["failures"] or stats["unreachable"] else "Success"
 			kwargs = {**stats, "status": status, "ended_at": ended_at, "duration": duration}
-			play._db_set(commit=True, notify=True, **kwargs)
+			pdoc._db_set(commit=True, notify=True, **kwargs)
 		else:
 			started_at = now()
-			started_after = time_diff_in_seconds(started_at, play.creation)
-			play._db_set(
+			started_after = time_diff_in_seconds(started_at, pdoc.creation)
+			pdoc._db_set(
 				status=status, started_at=started_at, started_after=started_after, commit=True, notify=True
 			)
 
