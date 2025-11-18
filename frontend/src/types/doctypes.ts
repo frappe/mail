@@ -170,7 +170,7 @@ export interface MailDomainRequest extends DocType {
 	tenant: string
 }
 
-// Last updated: 2025-09-15 18:39:21.316684
+// Last updated: 2025-11-17 11:41:14.842468
 export interface MailAccount extends DocType {
 	/** Enabled: Check */
 	enabled: 0 | 1
@@ -344,7 +344,7 @@ export interface MailMessagePart extends ChildDocType {
 	cid?: string
 }
 
-// Last updated: 2025-11-11 14:57:57.517275
+// Last updated: 2025-11-14 11:01:16.911587
 export interface MailMessage extends DocType {
 	/** Account: Link (Mail Account) */
 	account: string
@@ -366,8 +366,6 @@ export interface MailMessage extends DocType {
 	attachments: MailMessagePart[]
 	/** Message ID: Data */
 	message_id?: string
-	/** Mail ID: Data */
-	id?: string
 	/** Blob ID: Data */
 	blob_id?: string
 	/** Size: Int */
@@ -430,6 +428,8 @@ export interface MailMessage extends DocType {
 	preview?: string
 	/** Junk: Check */
 	junk: 0 | 1
+	/** Mail ID: Data */
+	id?: string
 }
 
 // Last updated: 2025-01-15 11:46:42.917146

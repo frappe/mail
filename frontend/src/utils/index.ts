@@ -4,7 +4,7 @@ import dayjs from '@/utils/dayjs'
 
 import type { Recipient } from '@/types'
 
-export const convertToTitleCase = (str: string) =>
+export const toTitleCase = (str: string) =>
 	str
 		?.toLowerCase()
 		.split(' ')

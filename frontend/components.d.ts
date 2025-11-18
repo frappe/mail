@@ -19,7 +19,6 @@ declare module 'vue' {
     AdvancedSettings: typeof import('./src/components/Settings/AdvancedSettings.vue')['default']
     AppearanceSettings: typeof import('./src/components/Settings/AppearanceSettings.vue')['default']
     AppSidebar: typeof import('./src/components/AppSidebar.vue')['default']
-    AppsMenu: typeof import('./src/components/AppsMenu.vue')['default']
     AttachmentCapsule: typeof import('./src/components/AttachmentCapsule.vue')['default']
     AutocompleteControl: typeof import('./src/components/Controls/AutocompleteControl.vue')['default']
     ChangePasswordModal: typeof import('./src/components/Modals/ChangePasswordModal.vue')['default']
@@ -62,8 +61,7 @@ declare module 'vue' {
     SendMailMobileLayout: typeof import('./src/components/SendMailMobileLayout.vue')['default']
     SettingsModal: typeof import('./src/components/Modals/SettingsModal.vue')['default']
     ShortcutsModal: typeof import('./src/components/Modals/ShortcutsModal.vue')['default']
-    SidebarLink: typeof import('./src/components/SidebarLink.vue')['default']
-    UserDropdown: typeof import('./src/components/UserDropdown.vue')['default']
+    StorageBar: typeof import('./src/components/StorageBar.vue')['default']
     VacationResponseSettings: typeof import('./src/components/Settings/VacationResponseSettings.vue')['default']
   }
 }
