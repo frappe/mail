@@ -1,5 +1,6 @@
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import cached_property
 from typing import Any
 from urllib.parse import urljoin
 
@@ -252,15 +253,12 @@ class JMAPClient:
 
 		return frappe.cache.hget("jmap:identities", self.__session.auth[0], generator)
 
-	@property
+	@cached_property
 	def address_books(self) -> list[dict]:
 		"""Returns the address books for the logged-in user."""
 
-		def generator() -> list[dict]:
-			address_books = frappe.db.get_all("Address Book", {"account": self.__session.auth[0]})
-			return address_books
-
-		return frappe.cache.hget("jmap:address_books", self.__session.auth[0], generator)
+		address_books = frappe.db.get_all("Address Book", {"account": self.__session.auth[0]})
+		return address_books
 
 	# -------------------------------
 	# Mailbox
@@ -1360,7 +1358,6 @@ def invalidate_jmap_cache(account: str) -> None:
 	invalidate_jmap_client_cache(account)
 	invalidate_jmap_mailboxes_cache(account)
 	invalidate_jmap_identities_cache(account)
-	invalidate_jmap_address_books_cache(account)
 
 
 def invalidate_jmap_client_cache(account: str) -> None:
@@ -1379,12 +1376,6 @@ def invalidate_jmap_identities_cache(account: str) -> None:
 	"""Invalidates the JMAP identities cache for the given account."""
 
 	frappe.cache.hdel("jmap:identities", account)
-
-
-def invalidate_jmap_address_books_cache(account: str) -> None:
-	"""Invalidates the JMAP address books cache for the given account."""
-
-	frappe.cache.hdel("jmap:address_books", account)
 
 
 def get_mailboxes(account: str) -> list[dict]:
