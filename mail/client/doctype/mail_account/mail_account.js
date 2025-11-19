@@ -53,7 +53,7 @@ frappe.ui.form.on('Mail Account', {
 				() => {
 					frappe.confirm(
 						__(
-							'Are you sure you want to invalidate the JMAP cache? This action will permanently remove all cached connections, mailboxes, and message data.',
+							'Are you sure you want to invalidate the JMAP cache? This action will permanently remove all cached connections, mailboxes, identities, and address books data.',
 						),
 						() => frm.trigger('invalidate_jmap_cache'),
 					)

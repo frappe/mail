@@ -1360,6 +1360,7 @@ def invalidate_jmap_cache(account: str) -> None:
 	invalidate_jmap_client_cache(account)
 	invalidate_jmap_mailboxes_cache(account)
 	invalidate_jmap_identities_cache(account)
+	invalidate_jmap_address_books_cache(account)
 
 
 def invalidate_jmap_client_cache(account: str) -> None:
@@ -1378,6 +1379,12 @@ def invalidate_jmap_identities_cache(account: str) -> None:
 	"""Invalidates the JMAP identities cache for the given account."""
 
 	frappe.cache.hdel("jmap:identities", account)
+
+
+def invalidate_jmap_address_books_cache(account: str) -> None:
+	"""Invalidates the JMAP address books cache for the given account."""
+
+	frappe.cache.hdel("jmap:address_books", account)
 
 
 def get_mailboxes(account: str) -> list[dict]:
