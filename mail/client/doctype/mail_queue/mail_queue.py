@@ -29,9 +29,9 @@ from frappe.utils import (
 from uuid_utils import uuid7
 
 from mail import __version__
-from mail.jmap import get_identities, get_jmap_client, get_mailbox_id_by_role
+from mail.jmap import get_jmap_client
 from mail.utils.cache import get_account_for_email, get_account_for_user
-from mail.utils.dt import convert_to_utc, parsedate_to_datetime
+from mail.utils.dt import parsedate_to_datetime
 from mail.utils.user import get_account_email_addresses, is_account_owner, is_system_manager
 from mail.utils.validation import validate_domain_is_enabled_and_verified, validate_email_address
 
@@ -129,15 +129,15 @@ class MailQueue(Document):
 		return doc
 
 	@property
-	def _priority(self) -> str:
+	def _priority(self) -> int:
 		"""Returns the MT-Priority value based on the priority field."""
 
 		mt_priority_map = {
-			"Low": "-4",
-			"Normal": "0",
-			"High": "4",
+			"Low": -4,
+			"Normal": 0,
+			"High": 4,
 		}
-		return mt_priority_map.get(self.priority, "0")
+		return mt_priority_map.get(self.priority, 0)
 
 	@property
 	def to(self) -> list[dict[str, str | None]]:
@@ -185,16 +185,6 @@ class MailQueue(Document):
 		"""Returns the time difference in seconds between submitted and creation time."""
 
 		return time_diff_in_seconds(self.submitted_at, self.creation) if self.submitted_at else 0.0
-
-	@property
-	def identity_id(self) -> str:
-		"""Returns the identity ID for the from email."""
-
-		for identity in get_identities(self.account):
-			if identity["email"] == self.from_email:
-				return identity["id"]
-
-		frappe.throw(_("Identity not found for email {0}").format(self.from_email))
 
 	@property
 	def message(self) -> str | None:
@@ -610,47 +600,17 @@ class MailQueue(Document):
 
 		try:
 			client = get_jmap_client(self.account)
-			draft_mailbox_id = get_mailbox_id_by_role(self.account, role="drafts", raise_exception=True)
-			sent_mailbox_id = get_mailbox_id_by_role(self.account, role="sent", raise_exception=True)
+			draft_mailbox_id = client.get_mailbox_id_by_role("drafts", raise_exception=True)
+			sent_mailbox_id = client.get_mailbox_id_by_role("sent", raise_exception=True)
 
-			using = ["urn:ietf:params:jmap:mail"]
-			method_calls = []
-			call_id = 0
+			headers = {}
+			reply_to = []
+			attachments = []
 
-			if self.raw_message:
-				blob = client.upload_blob(self.raw_message.encode("utf-8"), content_type="message/rfc822")
-				method_calls.append(
-					[
-						"Email/import",
-						{
-							"accountId": client.primary_account_id,
-							"emails": {
-								f"draft-{self.name}": {
-									"blobId": blob["blobId"],
-									"mailboxIds": {draft_mailbox_id: True},
-									"keywords": {"$draft": True, "$seen": True},
-								}
-							},
-						},
-						str(call_id),
-					]
-				)
-				call_id += 1
+			if not self.raw_message:
+				headers = json_loads(self.headers, default={})
+				reply_to = json_loads(self.reply_to, default=[])
 
-				if self.id:
-					method_calls.append(
-						[
-							"Email/set",
-							{
-								"accountId": client.primary_account_id,
-								"destroy": [self.id] if self.id else None,
-							},
-							str(call_id),
-						]
-					)
-					call_id += 1
-			else:
-				attachments = []
 				for a in json_loads(self.attachments, default=[]):
 					blob_id = a.get("blob_id")
 					if not blob_id:
@@ -662,91 +622,29 @@ class MailQueue(Document):
 					attachments.append(a)
 
 				kwargs["attachments"] = json.dumps(attachments)
-				method_calls.append(
-					[
-						"Email/set",
-						{
-							"accountId": client.primary_account_id,
-							"create": {
-								f"draft-{self.name}": self._draft_mail(
-									draft_mailbox_id, attachments=attachments
-								)
-							},
-							"destroy": [self.id] if self.id else None,
-						},
-						str(call_id),
-					]
-				)
-				call_id += 1
 
-			if not self.save_as_draft:
-				recipients = list({rcpt["email"] for rcpt in json_loads(self.recipients)})
-				submission_call = [
-					"EmailSubmission/set",
-					{
-						"accountId": client.primary_account_id,
-						"create": {
-							f"submit-{self.name}": {
-								"identityId": self.identity_id,
-								"emailId": f"#draft-{self.name}",
-								"envelope": {
-									"mailFrom": {
-										"email": self.from_email,
-										"parameters": {
-											"RET": "FULL",
-											"ENVID": self.name,
-											"MT-PRIORITY": self._priority,
-										},
-									},
-									"rcptTo": [
-										{
-											"email": rcpt,
-											"parameters": {
-												"NOTIFY": "DELAY,FAILURE",
-												"ORCPT": f"rfc822;{rcpt}",
-											},
-										}
-										for rcpt in recipients
-									],
-								},
-							}
-						},
-					},
-					str(call_id),
-				]
-
-				updates = {}
-
-				if self.destroy_after_submission:
-					submission_call[1]["onSuccessDestroyEmail"] = [f"#submit-{self.name}"]
-				else:
-					updates[f"#submit-{self.name}"] = {
-						f"mailboxIds/{draft_mailbox_id}": None,
-						f"mailboxIds/{sent_mailbox_id}": True,
-						"keywords/$draft": None,
-						"keywords/$seen": True,
-					}
-
-				if self.forwarded_from_id or self.in_reply_to_id:
-					for id, keyword in [
-						(self.forwarded_from_id, "$forwarded"),
-						(self.in_reply_to_id, "$answered"),
-					]:
-						if not id:
-							continue
-
-						updates.setdefault(id, {}).update({f"keywords/{keyword}": True})
-
-				if updates:
-					submission_call[1]["onSuccessUpdateEmail"] = {
-						id: _updates for id, _updates in updates.items()
-					}
-
-				using.append("urn:ietf:params:jmap:submission")
-				method_calls.append(submission_call)
-				call_id += 1
-
-			response = client._make_request(using=using, method_calls=method_calls)
+			response = client.email_create(
+				self.name,
+				self.from_email,
+				json_loads(self.recipients),
+				self.from_name,
+				self.subject,
+				self.sent_at,
+				self.message_id,
+				reply_to,
+				self.in_reply_to,
+				headers,
+				self.text_body,
+				self.html_body,
+				attachments,
+				self.raw_message,
+				self.id,
+				bool(self.save_as_draft),
+				self._priority,
+				bool(self.destroy_after_submission),
+				self.forwarded_from_id,
+				self.in_reply_to_id,
+			)
 
 			kwargs.update({"status": "Failed", "_response": json.dumps(response)})
 			if data := response["methodResponses"][0][1].get("created", {}).get(f"draft-{self.name}"):
@@ -806,68 +704,6 @@ class MailQueue(Document):
 				setattr(self, key, value)
 		else:
 			self._db_set(notify=True, **kwargs)
-
-	def _draft_mail(self, draft_mailbox_id: str, attachments: list[dict] | None = None) -> dict:
-		"""Returns the draft mail object."""
-
-		mail = {
-			"mailboxIds": {draft_mailbox_id: True},
-			"keywords": {"$draft": True, "$seen": True},
-			"from": [{"name": self.from_name, "email": self.from_email}],
-		}
-
-		for field in ["to", "cc", "bcc"]:
-			if hasattr(self, field):
-				if value := getattr(self, field):
-					mail[field] = value
-
-		if self.subject:
-			mail["subject"] = self.subject
-
-		mail.update(
-			{
-				"sentAt": convert_to_utc(self.sent_at).isoformat(),
-				"header:Message-ID": f"<{self.message_id}>",
-				"header:User-Agent": f"Frappe Mail v{__version__} (Frappe v{frappe.__version__})",
-				"header:X-Mailer": "Frappe Mail",
-			}
-		)
-
-		if reply_to := json_loads(self.reply_to):
-			mail["header:Reply-To"] = ", ".join(
-				[f'"{rt["display_name"]}" <{rt["email"]}>' for rt in reply_to]
-			)
-
-		if self.in_reply_to:
-			mail["header:In-Reply-To"] = f"<{self.in_reply_to}>"
-
-		mail["header:X-Mail-Queue"] = str(self.name)
-		if headers := json_loads(self.headers):
-			for key, value in headers.items():
-				mail[f"header:{key}"] = str(value)
-
-		mail["bodyValues"] = {}
-		if self.text_body:
-			mail["textBody"] = [{"partId": "text", "type": "text/plain"}]
-			mail["bodyValues"]["text"] = {"value": self.text_body, "charset": "utf-8", "isTruncated": False}
-		if self.html_body:
-			mail["htmlBody"] = [{"partId": "html", "type": "text/html"}]
-			mail["bodyValues"]["html"] = {"value": self.html_body, "charset": "utf-8", "isTruncated": False}
-
-		_attachments = []
-		for a in attachments or json_loads(self.attachments, default=[]):
-			_attachments.append(
-				{
-					"name": a["filename"],
-					"type": a["type"],
-					"cid": a["cid"],
-					"blobId": a["blob_id"],
-					"disposition": a["disposition"],
-				}
-			)
-		mail["attachments"] = _attachments
-
-		return mail
 
 	def _get_recipients(self, type: Literal["To", "Cc", "Bcc"] | None = None) -> list[dict[str, str | None]]:
 		"""Returns the recipients."""

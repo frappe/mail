@@ -1,7 +1,7 @@
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import cached_property
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urljoin
 
 import frappe
@@ -9,8 +9,9 @@ import requests
 from frappe import _
 from frappe.utils import create_batch
 
+from mail import __version__
 from mail.utils.cache import get_cluster_for_tenant
-from mail.utils.dt import utcnow
+from mail.utils.dt import convert_to_utc, utcnow
 from mail.utils.validation import has_permission_for_account
 
 
@@ -435,6 +436,249 @@ class JMAPClient:
 	# -------------------------------
 	# Email/Thread
 	# -------------------------------
+
+	def email_create(
+		self,
+		creation_id: str,
+		from_email: str,
+		recipients: list[dict],
+		from_name: str | None = None,
+		subject: str | None = None,
+		sent_at: str | None = None,
+		message_id: str | None = None,
+		reply_to: list[dict] | None = None,
+		in_reply_to: str | None = None,
+		headers: dict | None = None,
+		text_body: str | None = None,
+		html_body: str | None = None,
+		attachments: list[dict] | None = None,
+		raw_message: str | None = None,
+		existing_id: str | None = None,
+		save_as_draft: bool = False,
+		priority: int = 0,
+		destroy_after_submit: bool = False,
+		forwarded_id: str | None = None,
+		reply_to_id: str | None = None,
+	) -> dict:
+		"""
+		Creates and submits an email.
+		If `save_as_draft=True`, the email is only created as a draft and not submitted.
+		"""
+
+		# ----------------------------------------------------------------------
+		# HELPERS
+		# ----------------------------------------------------------------------
+
+		def filter_recipients(kind: Literal["to", "cc", "bcc"]) -> list[dict[str, str | None]]:
+			return [
+				{"name": r.get("name", r["display_name"]), "email": r["email"]}
+				for r in recipients
+				if r["type"].lower() == kind
+			]
+
+		def build_draft_payload(draft_mbox: str) -> dict:
+			payload = {
+				"mailboxIds": {draft_mbox: True},
+				"keywords": {"$draft": True, "$seen": True},
+				"from": [{"name": from_name, "email": from_email}],
+			}
+
+			# Add TO/CC/BCC
+			for kind in ("to", "cc", "bcc"):
+				if rcpts := filter_recipients(kind):
+					payload[kind] = rcpts
+
+			if subject:
+				payload["subject"] = subject
+
+			# Headers
+			payload.update(
+				{
+					"sentAt": convert_to_utc(sent_at).isoformat(),
+					"header:Message-ID": f"<{message_id}>",
+					"header:User-Agent": f"Frappe Mail v{__version__} (Frappe v{frappe.__version__})",
+					"header:X-Mailer": "Frappe Mail",
+					"header:X-Mail-Queue": str(creation_id),
+				}
+			)
+
+			if reply_to:
+				payload["header:Reply-To"] = ", ".join(
+					f'"{r.get("name", r["display_name"])}" <{r["email"]}>' for r in reply_to
+				)
+
+			if in_reply_to:
+				payload["header:In-Reply-To"] = f"<{in_reply_to}>"
+
+			if headers:
+				for k, v in headers.items():
+					payload[f"header:{k}"] = str(v)
+
+			# Body parts
+			payload["bodyValues"] = {}
+
+			if text_body:
+				payload["textBody"] = [{"partId": "text", "type": "text/plain"}]
+				payload["bodyValues"]["text"] = {"value": text_body, "charset": "utf-8", "isTruncated": False}
+
+			if html_body:
+				payload["htmlBody"] = [{"partId": "html", "type": "text/html"}]
+				payload["bodyValues"]["html"] = {"value": html_body, "charset": "utf-8", "isTruncated": False}
+
+			# Attachments
+			if attachments:
+				payload["attachments"] = [
+					{
+						"name": a.get("name", a["filename"]),
+						"type": a["type"],
+						"cid": a["cid"],
+						"blobId": a["blob_id"],
+						"disposition": a["disposition"],
+					}
+					for a in attachments
+				]
+
+			return payload
+
+		draft_mailbox_id = self.get_mailbox_id_by_role("drafts", raise_exception=True)
+		sent_mailbox_id = self.get_mailbox_id_by_role("sent", raise_exception=not save_as_draft)
+
+		identity_id = next((i["id"] for i in self.identities if i["email"] == from_email), None)
+		if not identity_id:
+			frappe.throw(
+				_("No identity found for email {0} in account {1}.").format(
+					frappe.bold(from_email), frappe.bold(self.__session.auth[0])
+				)
+			)
+
+		using = ["urn:ietf:params:jmap:mail"]
+		method_calls = []
+		call_id = 0
+
+		draft_ref = f"draft-{creation_id}"
+		submit_ref = f"submit-{creation_id}"
+
+		# ----------------------------------------------------------------------
+		# STEP 1 — CREATE DRAFT
+		# ----------------------------------------------------------------------
+
+		if raw_message:
+			blob = self.upload_blob(raw_message.encode("utf-8"), content_type="message/rfc822")
+			method_calls.append(
+				[
+					"Email/import",
+					{
+						"accountId": self.primary_account_id,
+						"emails": {
+							draft_ref: {
+								"blobId": blob["blobId"],
+								"mailboxIds": {draft_mailbox_id: True},
+								"keywords": {"$draft": True, "$seen": True},
+							}
+						},
+					},
+					str(call_id),
+				]
+			)
+			call_id += 1
+
+			if existing_id:
+				method_calls.append(
+					[
+						"Email/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": [existing_id],
+						},
+						str(call_id),
+					]
+				)
+				call_id += 1
+
+		else:
+			method_calls.append(
+				[
+					"Email/set",
+					{
+						"accountId": self.primary_account_id,
+						"create": {draft_ref: build_draft_payload(draft_mailbox_id)},
+						"destroy": [existing_id] if existing_id else None,
+					},
+					str(call_id),
+				]
+			)
+			call_id += 1
+
+		if save_as_draft:
+			return self._make_request(using=using, method_calls=method_calls)
+
+		# ----------------------------------------------------------------------
+		# STEP 2 — SUBMIT EMAIL
+		# ----------------------------------------------------------------------
+
+		using.append("urn:ietf:params:jmap:submission")
+
+		submission = {
+			"identityId": identity_id,
+			"emailId": f"#{draft_ref}",
+			"envelope": {
+				"mailFrom": {
+					"email": from_email,
+					"parameters": {
+						"RET": "FULL",
+						"ENVID": creation_id,
+						"MT-PRIORITY": str(priority),
+					},
+				},
+				"rcptTo": [
+					{
+						"email": rcpt,
+						"parameters": {
+							"NOTIFY": "DELAY,FAILURE",
+							"ORCPT": f"rfc822;{rcpt}",
+						},
+					}
+					for rcpt in sorted({r["email"] for r in recipients})
+				],
+			},
+		}
+
+		submit_call = [
+			"EmailSubmission/set",
+			{
+				"accountId": self.primary_account_id,
+				"create": {submit_ref: submission},
+			},
+			str(call_id),
+		]
+
+		# ----------------------------------------------------------------------
+		# STEP 3 — SUCCESS UPDATES
+		# ----------------------------------------------------------------------
+
+		updates = {}
+
+		if destroy_after_submit:
+			submit_call[1]["onSuccessDestroyEmail"] = [f"#{submit_ref}"]
+		else:
+			updates[f"#{submit_ref}"] = {
+				f"mailboxIds/{draft_mailbox_id}": None,
+				f"mailboxIds/{sent_mailbox_id}": True,
+				"keywords/$draft": None,
+				"keywords/$seen": True,
+			}
+
+		# Forward/reply keywords
+		for id, keyword in [(forwarded_id, "$forwarded"), (reply_to_id, "$answered")]:
+			if id:
+				updates.setdefault(id, {})[f"keywords/{keyword}"] = True
+
+		if updates:
+			submit_call[1]["onSuccessUpdateEmail"] = updates
+
+		method_calls.append(submit_call)
+
+		return self._make_request(using=using, method_calls=method_calls)
 
 	def email_query(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, sort: list[dict] | None = None
