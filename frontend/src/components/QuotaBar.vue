@@ -9,8 +9,10 @@
 		<div class="bg-surface-gray-4 h-1 w-auto rounded-full">
 			<div
 				class="h-1 rounded-full"
-				:class="quota.data.used_percentage > 80 ? 'bg-surface-red-6' : 'bg-surface-gray-7'"
-				:style="{ width: `${quota.data.used_percentage}%`, maxWidth: '100%' }"
+				:class="
+					quota.data?.used_percentage > 80 ? 'bg-surface-red-6' : 'bg-surface-gray-7'
+				"
+				:style="{ width: `${quota.data?.used_percentage || 0}%`, maxWidth: '100%' }"
 			/>
 		</div>
 		<span class="text-ink-gray-5 line-clamp-1 text-xs" :class="{ invisible: isCollapsed }">

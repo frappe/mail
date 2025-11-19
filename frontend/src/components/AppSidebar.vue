@@ -25,7 +25,10 @@
 			:disable-collapse="isMobile"
 		>
 			<template #footer-items="{ isCollapsed }">
-				<QuotaBar :is-collapsed />
+				<QuotaBar
+					v-if="['Mailbox', 'Mail'].includes(route.name as string)"
+					:is-collapsed
+				/>
 			</template>
 			<template #sidebar-item="{ item }">
 				<SidebarItem
