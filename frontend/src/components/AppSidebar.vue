@@ -1,4 +1,3 @@
-<!-- eslint-disable import/no-unresolved -->
 <template>
 	<div
 		v-if="isMobile && isSidebarOpen"

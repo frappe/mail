@@ -26,6 +26,9 @@ export default config(
         },
       },
     },
+    rules: {
+      'import/no-unresolved': ['error', { ignore: ['^~icons/lucide/'] }],
+    },
   },
   {
     languageOptions: {
