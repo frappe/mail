@@ -1258,6 +1258,25 @@ class JMAPClient:
 
 		return result
 
+	def contact_card_changes(self, since_state: str) -> dict:
+		"""Returns the changes in contact cards since the provided state."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:contacts"],
+			method_calls=[
+				[
+					"ContactCard/changes",
+					{
+						"accountId": self.primary_account_id,
+						"sinceState": since_state,
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
 	# -------------------------------
 	# Blob
 	# -------------------------------

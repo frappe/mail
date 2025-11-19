@@ -380,15 +380,15 @@ def _store_contact_card_in_cache(account: str, id: str, contact_card: dict) -> N
 
 	cache_key = _get_contact_card_cache_key(account, id)
 	list_key = f"jmap:contact_card:{account}:ids"
-	card_bucket_size = cint(frappe.conf.card_bucket_size) or 5000
+	contact_card_bucket_size = cint(frappe.conf.contact_card_bucket_size) or 5000
 
-	card_cache_ttl = cint(frappe.conf.card_cache_ttl) or 2 * 24 * 60 * 60  # 2 days
-	frappe.cache.set_value(cache_key, contact_card, expires_in_sec=card_cache_ttl)
+	contact_card_cache_ttl = cint(frappe.conf.contact_card_cache_ttl) or 2 * 24 * 60 * 60  # 2 days
+	frappe.cache.set_value(cache_key, contact_card, expires_in_sec=contact_card_cache_ttl)
 	frappe.cache.lpush(list_key, id)
 
-	frappe.cache.ltrim(list_key, 0, card_bucket_size - 1)
+	frappe.cache.ltrim(list_key, 0, contact_card_bucket_size - 1)
 
-	while frappe.cache.llen(list_key) > card_bucket_size:
+	while frappe.cache.llen(list_key) > contact_card_bucket_size:
 		if oldest_id := frappe.cache.rpop(list_key):
 			frappe.cache.delete_key(_get_contact_card_cache_key(account, oldest_id))
 
