@@ -1,5 +1,6 @@
 <template>
-	<div
+	<router-link
+		:to="{ name: 'Mail', params: { mailbox, threadID: mail.thread_id }, query: $route.query }"
 		class="sm:hover:bg-surface-gray-1 group flex cursor-pointer select-none space-x-2.5 border-b px-3.5 py-2.5 sm:px-5"
 		:class="{
 			'!bg-surface-blue-1': isSelected || isTouching,
@@ -23,7 +24,7 @@
 			<div
 				v-else-if="isSelected && isMobile"
 				class="bg-surface-gray-3 flex h-10 min-h-10 w-10 min-w-10 rounded-full"
-				@click.stop="emit('setSelected', false)"
+				@click.stop.prevent="emit('setSelected', false)"
 			>
 				<Check class="text-ink-gray-5 m-auto h-5 w-5" />
 			</div>
@@ -32,7 +33,7 @@
 				:label="getFirstAlphabet(mail.from_name) || getFirstAlphabet(mail.from_email)"
 				:size="isFullWidth ? 'xl' : '2xl'"
 				class="border"
-				@click.stop="emit('setSelected', true)"
+				@click.stop.prevent="emit('setSelected', true)"
 			/>
 		</div>
 
@@ -135,14 +136,14 @@
 				:key="action.label"
 				:tooltip="action.label"
 				variant="ghost"
-				@click.stop="action.onClick"
+				@click.stop.prevent="action.onClick"
 			>
 				<template #icon>
 					<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
 				</template>
 			</Button>
 		</div>
-	</div>
+	</router-link>
 </template>
 
 <script setup lang="ts">
