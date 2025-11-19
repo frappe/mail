@@ -180,7 +180,6 @@
 										'!bg-surface-blue-1': mail.thread_id === threadID,
 										'!border-l-blue-500': mail.thread_id === threadInFocus,
 									}"
-									@click="goToThread(mail.thread_id)"
 									@set-seen="
 										(seen: boolean) =>
 											handleSetSeen({ [Number(seen)]: [mail.thread_id] })

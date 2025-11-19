@@ -5,9 +5,9 @@ from frappe import _
 from frappe.query_builder import Case, Order
 from frappe.utils import cint
 
+from mail.utils.cache import get_tenant_for_user
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import get_user_email_addresses, is_tenant_admin
-from mail.utils.validation import has_permission_for_account
 
 if TYPE_CHECKING:
 	from mail.client.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
@@ -173,5 +173,8 @@ def delete_account_requests(names: list) -> None:
 def get_user_addresses(user: str) -> list:
 	"""Fetches user email addresses."""
 
-	has_permission_for_account(user)
+	tenant = get_tenant_for_user(user)
+	if not is_tenant_admin(tenant, frappe.session.user):
+		frappe.throw(_("User {0} is not a Mail Admin of Tenant {1}.").format(frappe.session.user, tenant))
+
 	return get_user_email_addresses(user)
