@@ -53,6 +53,7 @@ declare module 'vue' {
     NoMails: typeof import('./src/components/Icons/NoMails.vue')['default']
     ProfileSettings: typeof import('./src/components/Settings/ProfileSettings.vue')['default']
     PWASettings: typeof import('./src/components/PWASettings.vue')['default']
+    QuotaBar: typeof import('./src/components/QuotaBar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SearchMobileLayout: typeof import('./src/components/SearchMobileLayout.vue')['default']

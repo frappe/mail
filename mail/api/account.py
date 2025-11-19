@@ -254,3 +254,17 @@ def create_mail_data_exchange(
 @frappe.whitelist()
 def is_push_notification_relay_enabled() -> bool:
 	return frappe.db.get_single_value("Push Notification Settings", "enable_push_notification_relay")
+
+
+@frappe.whitelist()
+def get_quota() -> dict:
+	"""Return quota usage for the user"""
+
+	account = get_account_for_user(frappe.session.user)
+	mail_account = frappe.get_doc("Mail Account", account)
+
+	return {
+		"disk_quota": mail_account._disk_quota,
+		"used_quota": mail_account._used_quota,
+		"used_percentage": mail_account.quota_usage,
+	}

@@ -10,7 +10,7 @@
 		<Sidebar
 			v-if="!isMobile || isSidebarOpen"
 			id="sidebar"
-			v-model:collapsed="isCollapsed"
+			v-model:collapsed="isSidebarCollapsed"
 			:header="{
 				title:
 					branding.data?.brand_name && branding.data?.brand_name != 'Frappe'
@@ -24,9 +24,9 @@
 			:class="{ 'fixed left-0 top-0 z-10 w-60': isMobile }"
 			:disable-collapse="isMobile"
 		>
-			<!-- <template #footer-items="{ isCollapsed }">
-				<StorageBar v-if="teamExists.data" :is-expanded="!isCollapsed" />
-			</template> -->
+			<template #footer-items="{ isCollapsed }">
+				<QuotaBar :is-collapsed />
+			</template>
 			<template #sidebar-item="{ item }">
 				<SidebarItem
 					:label="item.label"
@@ -35,12 +35,11 @@
 					:to="item.to"
 					:is-active="
 						item.activeFor.includes(
-							['Mailbox', 'Mail'].includes(route.name)
+							['Mailbox', 'Mail'].includes(route.name as string)
 								? route.params.mailbox
 								: route.name,
 						)
 					"
-					:is-collapsed
 					:on-click="item.onClick"
 				/>
 			</template>
@@ -62,6 +61,7 @@ import { useScreenSize, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 import MailLogo from '@/components/Icons/MailLogo.vue'
+import QuotaBar from '@/components/QuotaBar.vue'
 
 import AtSign from '~icons/lucide/at-sign'
 import Crown from '~icons/lucide/crown'
@@ -84,7 +84,7 @@ const route = useRoute()
 const router = useRouter()
 const { isMobile } = useScreenSize()
 const { isSidebarOpen, closeSidebar } = useSidebar()
-const isCollapsed = useStorage('isSidebarCollapsed', false)
+const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)
 const { logout, branding } = sessionStore()
 const { mailboxes } = userStore()
 
@@ -218,7 +218,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
 	if (event.metaKey || event.ctrlKey) {
 		if (event.key === ';') {
 			event.preventDefault()
-			isCollapsed.value = !isCollapsed.value
+			isSidebarCollapsed.value = !isSidebarCollapsed.value
 			return
 		}
 		if (event.key === ',') {
