@@ -47,6 +47,19 @@ frappe.ui.form.on('Mail Account', {
 				() => frm.trigger('sync_jmap_identities'),
 				__('Actions'),
 			)
+
+			frm.add_custom_button(
+				__('Invalidate JMAP Cache'),
+				() => {
+					frappe.confirm(
+						__(
+							'Are you sure you want to invalidate the JMAP cache? This action will permanently remove all cached connections, mailboxes, and message data.',
+						),
+						() => frm.trigger('invalidate_jmap_cache'),
+					)
+				},
+				__('Actions'),
+			)
 		}
 
 		if (frm.doc.enabled && frappe.user_roles.includes('Mail Admin')) {
@@ -86,6 +99,20 @@ frappe.ui.form.on('Mail Account', {
 			method: 'sync_jmap_identities',
 			freeze: true,
 			freeze_message: __('Syncing JMAP Identities...'),
+			callback: (r) => {
+				if (!r.exc) {
+					frm.refresh()
+				}
+			},
+		})
+	},
+
+	invalidate_jmap_cache(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'invalidate_jmap_cache',
+			freeze: true,
+			freeze_message: __('Invalidating JMAP Cache...'),
 			callback: (r) => {
 				if (!r.exc) {
 					frm.refresh()
@@ -228,9 +255,9 @@ frappe.ui.form.on('Mail Account', {
 				{
 					fieldname: 'account_password',
 					fieldtype: 'Password',
-					label: __('Account Password'),
+					label: __('Login/Account Password'),
 					description: __(
-						'Your main account password is required to regenerate the app password.',
+						'Your main login/account password is required to regenerate the app password.',
 					),
 					reqd: 1,
 				},

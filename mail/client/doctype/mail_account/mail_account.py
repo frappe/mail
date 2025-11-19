@@ -205,7 +205,7 @@ class MailAccount(Document):
 				)
 
 				if self.has_value_changed("secret_hash"):
-					invalidate_jmap_cache(self.name)
+					self.invalidate_jmap_cache()
 		elif self.has_value_changed("enabled"):
 			MailBackendAccountManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).delete(self.email)
 
@@ -356,6 +356,12 @@ class MailAccount(Document):
 
 		has_permission_for_account(self.name)
 		return self._get_account_app_password()
+
+	@frappe.whitelist()
+	def invalidate_jmap_cache(self) -> None:
+		"""Invalidates JMAP cache for the Mail Account."""
+
+		invalidate_jmap_cache(self.name)
 
 	@frappe.whitelist()
 	def sync_jmap_identities(self) -> None:
@@ -527,7 +533,7 @@ class MailAccount(Document):
 			account_id, identities
 		)
 
-		invalidate_jmap_cache(self.name)
+		self.invalidate_jmap_cache()
 
 	def _db_set(
 		self,
