@@ -194,8 +194,6 @@ export interface MailAccount extends DocType {
 	normalized_email?: string
 	/** Backup Email: Data */
 	backup_email: string
-	/** Override Reply To: Check */
-	override_reply_to: 0 | 1
 	/** Enabled: Check */
 	vacation_response_enabled: 0 | 1
 	/** From Date: Datetime */

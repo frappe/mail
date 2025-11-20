@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-20 18:32+0553\n"
-"PO-Revision-Date: 2025-11-20 18:32+0553\n"
+"POT-Creation-Date: 2025-11-20 18:40+0553\n"
+"PO-Revision-Date: 2025-11-20 18:40+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -951,7 +951,7 @@ msgstr ""
 msgid "Cannot resubscribe a subscription that is not expired or failed."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:582
+#: mail/client/doctype/mail_queue/mail_queue.py:561
 msgid "Cannot retry a mail with status {0}"
 msgstr ""
 
@@ -2190,7 +2190,7 @@ msgstr ""
 msgid "Edit Photo"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:522
+#: mail/client/doctype/mail_queue/mail_queue.py:501
 msgid "Either blob_id or file_url is required for attachments."
 msgstr ""
 
@@ -2262,7 +2262,7 @@ msgstr ""
 msgid "Email address {0} is not associated with the user {1}."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:591
+#: mail/client/doctype/mail_queue/mail_queue.py:570
 msgid "Email does not have a blob ID."
 msgstr ""
 
@@ -2278,7 +2278,7 @@ msgstr ""
 msgid "Email is required to send invite"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:788
+#: mail/client/doctype/mail_queue/mail_queue.py:767
 msgid "Email processing aborted: {retries} out of {total_count} emails failed ({failure_rate:.2%} failure rate). Please investigate the issue before retrying."
 msgstr ""
 
@@ -2680,7 +2680,7 @@ msgstr ""
 msgid "Failed to fetch Account Details"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:573
+#: mail/client/doctype/mail_queue/mail_queue.py:552
 msgid "Failed to fetch In Reply To ID"
 msgstr ""
 
@@ -3556,11 +3556,11 @@ msgstr ""
 msgid "Invalid domain name"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:461
+#: mail/client/doctype/mail_queue/mail_queue.py:440
 msgid "Invalid email address: {0}"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:506
+#: mail/client/doctype/mail_queue/mail_queue.py:485
 msgid "Invalid file URL: {0}. File URLs must start with '/files/' or '/private/files/'."
 msgstr ""
 
@@ -5330,11 +5330,6 @@ msgstr ""
 msgid "Output"
 msgstr ""
 
-#. Label of the override_reply_to (Check) field in DocType 'Mail Account'
-#: mail/client/doctype/mail_account/mail_account.json
-msgid "Override Reply To"
-msgstr ""
-
 #. Option for the 'Method' (Select) field in DocType 'Mail Backend Request'
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 msgid "PATCH"
@@ -5525,7 +5520,7 @@ msgid "Please add at least one command to execute."
 msgstr ""
 
 #: frontend/src/components/ComposeMailEditor.vue:281
-#: mail/client/doctype/mail_queue/mail_queue.py:472
+#: mail/client/doctype/mail_queue/mail_queue.py:451
 msgid "Please add at least one recipient."
 msgstr ""
 
@@ -7463,7 +7458,7 @@ msgstr ""
 msgid "Success"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:748
+#: mail/client/doctype/mail_queue/mail_queue.py:727
 msgid "Successfully retried {0} emails."
 msgstr ""
 
@@ -7797,7 +7792,7 @@ msgstr ""
 msgid "The geographical region where the bucket resides."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:443
+#: mail/client/doctype/mail_queue/mail_queue.py:422
 msgid "The header <b>{0}</b> is a standard email header and cannot be overridden. Please use custom headers prefixed with <code>X-</code>."
 msgstr ""
 

@@ -383,32 +383,11 @@ class MailQueue(Document):
 		if self.raw_message:
 			return
 
-		default_reply_to, override_reply_to = frappe.db.get_value(
-			"Mail Account", self.account, ["reply_to", "override_reply_to"]
-		)
-
-		reply_to = []
-		if not override_reply_to:
-			for rt in json_loads(self.reply_to, default=[]):
-				reply_to.append(
-					{
-						"display_name": rt.get("display_name"),
-						"email": rt["email"],
-					}
-				)
-
-		if not reply_to and default_reply_to:
-			for rt in default_reply_to.split(","):
-				display_name, email = parseaddr(rt)
-				if email:
-					reply_to.append(
-						{
-							"display_name": display_name,
-							"email": email,
-						}
-					)
-
-		self.reply_to = json.dumps(reply_to)
+		if not json_loads(self.reply_to):
+			for identity in get_identities(self.account):
+				if self.from_email.lower() == identity.get("email").lower():
+					if reply_to := identity["reply_to"]:
+						self.reply_to = json.dumps(reply_to)
 
 	def validate_headers(self) -> None:
 		"""Validates the headers."""
