@@ -78,6 +78,7 @@ def get_total_cache_key(account: str) -> str:
 	return f"{account}:mailboxes:total"
 
 
+@frappe.whitelist()
 def add_mailbox(
 	account: str,
 	name: str,
@@ -87,6 +88,8 @@ def add_mailbox(
 	subscribed: bool = True,
 ) -> str:
 	"""Adds a mailbox for the given account with the specified parameters."""
+
+	has_permission_for_account(account)
 
 	creation_id = str(uuid7())
 	client = get_jmap_client(account)
@@ -101,8 +104,11 @@ def add_mailbox(
 		frappe.throw(_(response["description"]), title=title)
 
 
+@frappe.whitelist()
 def get_mailbox(account: str, id: str) -> dict:
 	"""Returns mailbox details for the given name in the format 'account|id'."""
+
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	if mailboxes := client.mailbox_get([id]):
@@ -114,6 +120,7 @@ def get_mailbox(account: str, id: str) -> dict:
 	)
 
 
+@frappe.whitelist()
 def update_mailbox(
 	account: str,
 	id: str,
@@ -124,6 +131,8 @@ def update_mailbox(
 	subscribed: bool = True,
 ) -> None:
 	"""Updates an existing mailbox with the given parameters."""
+
+	has_permission_for_account(account)
 
 	title = _("Mailbox Update Error")
 	if parent and id == parent:
@@ -139,8 +148,11 @@ def update_mailbox(
 			frappe.throw(_(response["description"]), title=title)
 
 
+@frappe.whitelist()
 def delete_mailbox(account: str, id: str) -> None:
 	"""Deletes a mailbox for the given account by its ID."""
+
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	response = client.mailbox_delete([id], remove_emails=True)
@@ -149,8 +161,11 @@ def delete_mailbox(account: str, id: str) -> None:
 		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Mailbox Deletion Error"))
 
 
+@frappe.whitelist()
 def fetch_mailboxes(account: str, page: int = 1, limit: int = 10) -> list:
 	"""Returns a list of mailboxes for the given account."""
+
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	mailboxes = client.mailbox_get()
