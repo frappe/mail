@@ -181,6 +181,7 @@ has_permission = {
 	# Client
 	"Address Book": "mail.client.doctype.address_book.address_book.has_permission",
 	"Contact Card": "mail.client.doctype.contact_card.contact_card.has_permission",
+	"Identity": "mail.client.doctype.identity.identity.has_permission",
 	"Mail Account": "mail.client.doctype.mail_account.mail_account.has_permission",
 	"Mail Account Request": "mail.client.doctype.mail_account_request.mail_account_request.has_permission",
 	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.has_permission",

@@ -14,14 +14,13 @@ from frappe.model.document import Document
 from frappe.utils import cint, now, validate_email_address
 from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 
-from mail.backend import MailBackendAccountManager, MailBackendIdentityManager, get_mail_backend_api
+from mail.backend import MailBackendAccountManager, get_mail_backend_api
 from mail.client.doctype.push_subscription.push_subscription import create_push_subscriptions
 from mail.client.doctype.sync_state.sync_state import create_sync_state
 from mail.jmap import get_jmap_client, invalidate_jmap_cache, invalidate_jmap_client_cache, raise_for_status
 from mail.utils import (
 	convert_html_to_text,
 	generate_random_phrase,
-	generate_uuid_style_hash,
 	hash_password,
 	normalize_email,
 )
@@ -494,44 +493,29 @@ class MailAccount(Document):
 	def _sync_jmap_identities(self) -> None:
 		"""Syncs JMAP identities for the Mail Account."""
 
-		account_id = get_jmap_client(self.name).primary_account_id
+		identities = frappe.db.get_all("Identity", {"account": self.name})
+		identities_emails_map = {identity["email"]: identity["name"] for identity in identities}
+		identities_emails = set(identities_emails_map.keys())
+
 		aliases = frappe.db.get_all(
 			"Mail Alias",
 			{"enabled": 1, "alias_for_type": "Mail Account", "alias_for_name": self.name},
 			pluck="email",
 		)
+		user_emails = {self.email, *aliases}
 
-		reply_to = []
-		if self.reply_to:
-			for rt in self.reply_to.split(","):
-				rt = rt.strip()
-				display_name, email = parseaddr(rt)
-				reply_to.append({"name": display_name, "email": email})
+		identities_to_remove = identities_emails - user_emails
+		identities_to_add = user_emails - identities_emails
 
-		identities = {
-			generate_uuid_style_hash(self.email): {
-				"name": self.display_name,
-				"email": self.email,
-				"replyTo": reply_to or None,
-				"bcc": None,
-				"textSignature": None,
-				"htmlSignature": None,
-			}
-		}
+		for email in identities_to_remove:
+			identity_name = identities_emails_map[email]
+			frappe.delete_doc("Identity", identity_name)
 
-		for alias in aliases:
-			identities[generate_uuid_style_hash(alias)] = {
-				"name": self.display_name,
-				"email": alias,
-				"replyTo": reply_to or None,
-				"bcc": None,
-				"textSignature": None,
-				"htmlSignature": None,
-			}
-
-		MailBackendIdentityManager("Mail Cluster", get_cluster_for_tenant(self.tenant)).sync(
-			account_id, identities
-		)
+		for email in identities_to_add:
+			identity = frappe.new_doc("Identity")
+			identity.account = self.name
+			identity.email = email
+			identity.save(ignore_permissions=True)
 
 		self.invalidate_jmap_cache()
 

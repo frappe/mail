@@ -247,10 +247,8 @@ class JMAPClient:
 		"""Returns the identities for the logged-in user."""
 
 		def generator() -> list[dict]:
-			return self._make_request(
-				using=["urn:ietf:params:jmap:mail"],
-				method_calls=[["Identity/get", {"accountId": self.primary_account_id}, "0"]],
-			)["methodResponses"][0][1]["list"]
+			identities = frappe.db.get_all("Identity", {"account": self.__session.auth[0]})
+			return identities
 
 		return frappe.cache.hget("jmap:identities", self.__session.auth[0], generator)
 
@@ -260,6 +258,111 @@ class JMAPClient:
 
 		address_books = frappe.db.get_all("Address Book", {"account": self.__session.auth[0]})
 		return address_books
+
+	# -------------------------------
+	# Identity
+	# -------------------------------
+
+	def identity_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the identities for the provided identity IDs."""
+
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Identity/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			identities = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				identities.extend(fetch(ids_batch))
+			return identities
+
+		return fetch(ids)
+
+	def identity_update(
+		self,
+		id: str,
+		name: str | None = None,
+		reply_to: list[dict] | None = None,
+		bcc: list[dict] | None = None,
+		text_signature: str | None = None,
+		html_signature: str | None = None,
+	) -> dict:
+		"""Updates the identity with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:mail"],
+			method_calls=[
+				[
+					"Identity/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							id: {
+								"name": name or "",
+								"replyTo": reply_to or [],
+								"bcc": bcc or [],
+								"textSignature": text_signature or "",
+								"htmlSignature": html_signature or "",
+							}
+						},
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	def identity_delete(self, ids: list[str]) -> dict:
+		"""Destroys the identities with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Identity/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
+	def get_identity_id_by_email(self, email: str, raise_exception: bool = False) -> str | None:
+		"""Returns the identity ID for the given email."""
+
+		for identity in self.identities:
+			if identity["email"].lower() == email.lower():
+				return identity["id"]
+
+		if raise_exception:
+			frappe.throw(
+				_("Identity with email {0} not found for account {1}.").format(
+					frappe.bold(email), frappe.bold(self.__session.auth[0])
+				)
+			)
 
 	# -------------------------------
 	# Mailbox
@@ -540,16 +643,9 @@ class JMAPClient:
 
 			return payload
 
+		identity_id = self.get_identity_id_by_email(from_email, raise_exception=True)
 		draft_mailbox_id = self.get_mailbox_id_by_role("drafts", raise_exception=True)
 		sent_mailbox_id = self.get_mailbox_id_by_role("sent", raise_exception=not save_as_draft)
-
-		identity_id = next((i["id"] for i in self.identities if i["email"] == from_email), None)
-		if not identity_id:
-			frappe.throw(
-				_("No identity found for email {0} in account {1}.").format(
-					frappe.bold(from_email), frappe.bold(self.__session.auth[0])
-				)
-			)
 
 		using = ["urn:ietf:params:jmap:mail"]
 		method_calls = []
@@ -1641,18 +1737,25 @@ def invalidate_jmap_identities_cache(account: str) -> None:
 	frappe.cache.hdel("jmap:identities", account)
 
 
-def get_mailboxes(account: str) -> list[dict]:
-	"""Returns the mailboxes for the given account."""
-
-	client = get_jmap_client(account)
-	return client.mailboxes
-
-
 def get_identities(account: str) -> list[dict]:
 	"""Returns the identities for the given account."""
 
 	client = get_jmap_client(account)
 	return client.identities
+
+
+def get_identity_id_by_email(account: str, email: str, raise_exception: bool = False) -> str | None:
+	"""Returns the identity ID for the given email."""
+
+	client = get_jmap_client(account)
+	return client.get_identity_id_by_email(email, raise_exception=raise_exception)
+
+
+def get_mailboxes(account: str) -> list[dict]:
+	"""Returns the mailboxes for the given account."""
+
+	client = get_jmap_client(account)
+	return client.mailboxes
 
 
 def get_mailbox_id_by_role(account: str, role: str, raise_exception: bool = False) -> str | None:
