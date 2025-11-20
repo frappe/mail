@@ -95,43 +95,43 @@ class JMAPClient:
 	def max_size_upload(self) -> int:
 		"""Returns the maximum size of uploads supported by the JMAP server."""
 
-		return self.capabilities["urn:ietf:params:jmap:core"]["maxSizeUpload"]
+		return self.capabilities["urn:ietf:params:jmap:core"].get("maxSizeUpload") or 50_000_000
 
 	@property
 	def max_concurrent_upload(self) -> int:
 		"""Returns the maximum number of concurrent uploads supported by the JMAP server."""
 
-		return self.capabilities["urn:ietf:params:jmap:core"]["maxConcurrentUpload"]
+		return self.capabilities["urn:ietf:params:jmap:core"].get("maxConcurrentUpload") or 4
 
 	@property
 	def max_size_request(self) -> int:
 		"""Returns the maximum size of a request supported by the JMAP server."""
 
-		return self.capabilities["urn:ietf:params:jmap:core"]["maxSizeRequest"]
+		return self.capabilities["urn:ietf:params:jmap:core"].get("maxSizeRequest") or 10_000_000
 
 	@property
 	def max_concurrent_requests(self) -> int:
 		"""Returns the maximum number of concurrent requests supported by the JMAP server."""
 
-		return self.capabilities["urn:ietf:params:jmap:core"]["maxConcurrentRequests"]
+		return self.capabilities["urn:ietf:params:jmap:core"].get("maxConcurrentRequests") or 4
 
 	@property
 	def max_calls_in_request(self) -> int:
 		"""Returns the maximum number of calls in a single request."""
 
-		return self.capabilities["urn:ietf:params:jmap:core"]["maxCallsInRequest"]
+		return self.capabilities["urn:ietf:params:jmap:core"].get("maxCallsInRequest") or 16
 
 	@property
 	def max_objects_in_get(self) -> int:
 		"""Returns the maximum number of objects in a single get request."""
 
-		return self.capabilities["urn:ietf:params:jmap:core"]["maxObjectsInGet"]
+		return self.capabilities["urn:ietf:params:jmap:core"].get("maxObjectsInGet") or 500
 
 	@property
 	def max_objects_in_set(self) -> int:
 		"""Returns the maximum number of objects in a single set request."""
 
-		return self.capabilities["urn:ietf:params:jmap:core"]["maxObjectsInSet"]
+		return self.capabilities["urn:ietf:params:jmap:core"].get("maxObjectsInSet") or 500
 
 	@property
 	def supports_websocket(self) -> bool:
