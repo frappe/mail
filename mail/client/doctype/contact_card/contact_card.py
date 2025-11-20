@@ -87,7 +87,6 @@ class ContactCard(Document):
 			return addresses
 
 	def db_insert(self, *args, **kwargs) -> None:
-		has_permission_for_account(self.account)
 		self.id = add_contact_card(
 			self.account,
 			self.address_book_ids,
@@ -101,7 +100,6 @@ class ContactCard(Document):
 
 	def load_from_db(self) -> "ContactCard":
 		account, id = self.name.split("|")
-		has_permission_for_account(account)
 		if contact_cards := get_contact_cards(account, id):
 			return super(Document, self).__init__(contact_cards[0])
 
@@ -113,7 +111,6 @@ class ContactCard(Document):
 		)
 
 	def db_update(self) -> None:
-		has_permission_for_account(self.account)
 		update_contact_card(
 			self.account,
 			self.id,
@@ -128,7 +125,6 @@ class ContactCard(Document):
 
 	def delete(self) -> None:
 		account, id = self.name.split("|")
-		has_permission_for_account(account)
 		delete_contact_cards(account, [id])
 
 	@staticmethod
@@ -155,8 +151,6 @@ class ContactCard(Document):
 		if not account:
 			frappe.msgprint(_("Please select a account to view contact cards."), alert=True)
 			return []
-
-		has_permission_for_account(account)
 
 		filter = {}
 		if address_book_id:
@@ -320,6 +314,8 @@ def update_contact_card(
 ) -> None:
 	"""Updates an existing contact card with the given parameters."""
 
+	has_permission_for_account(account)
+
 	client = get_jmap_client(account)
 	response = client.contact_card_update(id, address_book_ids, full_name, emails, phones, addresses, kind)
 
@@ -335,6 +331,8 @@ def update_contact_card(
 
 def delete_contact_cards(account: str, ids: list[str]) -> None:
 	"""Deletes contact cards for the given account by its IDs."""
+
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	client.contact_card_delete(ids)
