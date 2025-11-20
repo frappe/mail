@@ -1,14 +1,16 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import json
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, today
 from uuid_utils import uuid7
 
-from mail.backend import MailBackendManagerBase
 from mail.jmap import get_jmap_client
+from mail.server.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
 from mail.utils import parse_filters
 from mail.utils.cache import get_account_for_user, get_cluster_for_tenant
 from mail.utils.user import has_role, is_administrator, is_tenant_admin
@@ -35,7 +37,7 @@ class Identity(Document):
 		return reply_to
 
 	def db_insert(self, *args, **kwargs) -> None:
-		self.id = create_identity(
+		self.id = add_identity(
 			self.account,
 			self.email,
 			self._name,
@@ -101,7 +103,7 @@ def get_total_cache_key(account: str) -> str:
 
 
 @frappe.whitelist()
-def create_identity(
+def add_identity(
 	account: str,
 	email: str,
 	name: str | None = None,
@@ -110,6 +112,8 @@ def create_identity(
 	text_signature: str | None = None,
 	html_signature: str | None = None,
 ) -> str:
+	"""Adds an identity for the given account with the specified parameters."""
+
 	user = frappe.session.user
 	tenant = frappe.db.get_value("Mail Account", account, "tenant")
 	if not (is_administrator(user) or is_tenant_admin(tenant, user)):
@@ -143,8 +147,26 @@ def create_identity(
 		],
 	}
 
-	backend = MailBackendManagerBase("Mail Cluster", get_cluster_for_tenant(tenant))
-	backend.create_request(method="POST", endpoint="/jmap", request_json=payload, do_not_enqueue=True)
+	request = create_mail_backend_request(
+		"Mail Cluster",
+		get_cluster_for_tenant(tenant),
+		method="POST",
+		endpoint="/jmap",
+		request_json=payload,
+		do_not_enqueue=True,
+	)
+
+	title = _("Identity Creation Error")
+	if request.status == "Completed":
+		response = json.loads(request.response_json)["methodResponses"][0][1]
+		if response.get("created"):
+			return response["created"][creation_id]["id"]
+		elif response.get("notCreated"):
+			frappe.throw(_(response["notCreated"][creation_id]["description"]), title=title)
+		else:
+			frappe.throw(_(response["description"]), title=title)
+
+	frappe.throw(_("Identity creation request failed."), title=title)
 
 
 @frappe.whitelist()
