@@ -50,6 +50,7 @@ declare module 'vue' {
     MailThread: typeof import('./src/components/MailThread.vue')['default']
     MailThreadPlaceholder: typeof import('./src/components/MailThreadPlaceholder.vue')['default']
     MultiselectInputControl: typeof import('./src/components/Controls/MultiselectInputControl.vue')['default']
+    NewFolderModal: typeof import('./src/components/Modals/NewFolderModal.vue')['default']
     NoMails: typeof import('./src/components/Icons/NoMails.vue')['default']
     ProfileSettings: typeof import('./src/components/Settings/ProfileSettings.vue')['default']
     PWASettings: typeof import('./src/components/PWASettings.vue')['default']

@@ -36,7 +36,7 @@
 					:suffix="item.suffix"
 					:to="item.to"
 					:is-active="
-						item.activeFor.includes(
+						item.activeFor?.includes(
 							['Mailbox', 'Mail'].includes(route.name as string)
 								? route.params.mailbox
 								: route.name,
@@ -47,8 +47,10 @@
 			</template>
 		</Sidebar>
 	</Transition>
+
 	<SettingsModal v-if="!isMobile" v-model="showSettings" />
 	<PWASettings v-else-if="showSettings" @close="showSettings = false" />
+	<NewFolderModal v-model="showNewFolder" />
 </template>
 
 <script setup lang="ts">
@@ -63,11 +65,13 @@ import { useScreenSize, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 import MailLogo from '@/components/Icons/MailLogo.vue'
+import NewFolderModal from '@/components/Modals/NewFolderModal.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
 
 import AtSign from '~icons/lucide/at-sign'
 import Crown from '~icons/lucide/crown'
 import Edit3 from '~icons/lucide/edit-3'
+import Folder from '~icons/lucide/folder'
 import Globe from '~icons/lucide/globe'
 import Inbox from '~icons/lucide/inbox'
 import LayoutGrid from '~icons/lucide/layout-grid'
@@ -75,10 +79,10 @@ import LogOut from '~icons/lucide/log-out'
 import MailWarning from '~icons/lucide/mail-warning'
 import Mailbox from '~icons/lucide/mailbox'
 import Mails from '~icons/lucide/mails'
+import Plus from '~icons/lucide/plus'
 import Send from '~icons/lucide/send'
 import Settings from '~icons/lucide/settings'
 import Star from '~icons/lucide/star'
-import Tag from '~icons/lucide/tag'
 import Trash2 from '~icons/lucide/trash-2'
 import Users from '~icons/lucide/users'
 
@@ -95,6 +99,7 @@ const user = inject('$user')
 const apps = createResource({ url: 'mail.api.get_apps', cache: 'otherApps', auto: true })
 
 const showSettings = ref(false)
+const showNewFolder = ref(false)
 
 const menuItems = computed(() => [
 	{
@@ -195,7 +200,7 @@ const sidebarItems = computed(() => {
 				icon:
 					mailbox.role && mailbox.role in MAILBOX_ICONS
 						? MAILBOX_ICONS[mailbox.role as keyof typeof MAILBOX_ICONS]
-						: Tag,
+						: Folder,
 				to: { name: 'Mailbox', params: { mailbox: mailbox.id } },
 				suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
 				activeFor: [mailbox.id],
@@ -209,8 +214,14 @@ const sidebarItems = computed(() => {
 		activeFor: ['starred'],
 	}
 
+	const newFolderItem = {
+		label: __('New Folder'),
+		icon: Plus,
+		onClick: () => (showNewFolder.value = true),
+	}
+
 	return mailboxes.data?.length
-		? [{ items: [mailboxItems[0], starredItem, ...mailboxItems.slice(1)] }]
+		? [{ items: [mailboxItems[0], starredItem, ...mailboxItems.slice(1), newFolderItem] }]
 		: []
 })
 
