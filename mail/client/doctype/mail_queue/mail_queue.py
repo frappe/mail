@@ -388,6 +388,7 @@ class MailQueue(Document):
 				if self.from_email.lower() == identity.get("email").lower():
 					if reply_to := identity["reply_to"]:
 						self.reply_to = json.dumps(reply_to)
+					break
 
 	def validate_headers(self) -> None:
 		"""Validates the headers."""
