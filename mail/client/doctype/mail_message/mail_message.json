@@ -119,7 +119,7 @@
   {
    "fieldname": "reply_to",
    "fieldtype": "Table",
-   "options": "Mail Message Reply To",
+   "options": "Email Address",
    "read_only_depends_on": "eval: !doc.draft"
   },
   {
@@ -466,7 +466,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-14 11:01:16.911587",
+ "modified": "2025-11-20 15:22:07.630230",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message",
