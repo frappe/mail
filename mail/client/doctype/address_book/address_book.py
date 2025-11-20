@@ -18,7 +18,6 @@ from mail.utils.validation import has_permission_for_account
 
 class AddressBook(Document):
 	def db_insert(self, *args, **kwargs) -> None:
-		has_permission_for_account(self.account)
 		self.id = add_address_book(
 			self.account,
 			self._name,
@@ -31,12 +30,10 @@ class AddressBook(Document):
 
 	def load_from_db(self) -> "AddressBook":
 		account, id = self.name.split("|")
-		has_permission_for_account(account)
 		address_book = get_address_book(account, id)
 		return super(Document, self).__init__(address_book)
 
 	def db_update(self) -> None:
-		has_permission_for_account(self.account)
 		update_address_book(
 			self.account,
 			self.id,
@@ -50,7 +47,6 @@ class AddressBook(Document):
 
 	def delete(self) -> None:
 		account, id = self.name.split("|")
-		has_permission_for_account(account)
 		delete_address_book(account, id)
 
 	@staticmethod
@@ -62,7 +58,6 @@ class AddressBook(Document):
 			frappe.msgprint(_("Please select a account to view address books."), alert=True)
 			return []
 
-		has_permission_for_account(account)
 		address_books = fetch_address_books(account, limit=page_length)
 
 		if not address_books:
@@ -95,6 +90,7 @@ def get_total_cache_key(account: str) -> str:
 	return f"{account}:address_books:total"
 
 
+@frappe.whitelist()
 def add_address_book(
 	account: str,
 	name: str,
@@ -104,6 +100,8 @@ def add_address_book(
 	subscribed: bool = True,
 ) -> str:
 	"""Adds a address book for the given account with the specified parameters."""
+
+	has_permission_for_account(account)
 
 	creation_id = str(uuid7())
 	client = get_jmap_client(account)
@@ -118,8 +116,11 @@ def add_address_book(
 		frappe.throw(_(response["description"]), title=title)
 
 
+@frappe.whitelist()
 def get_address_book(account: str, id: str) -> dict:
 	"""Returns address book details for the given name in the format 'account|id'."""
+
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	if address_books := client.address_book_get([id]):
@@ -131,6 +132,7 @@ def get_address_book(account: str, id: str) -> dict:
 	)
 
 
+@frappe.whitelist()
 def update_address_book(
 	account: str,
 	id: str,
@@ -141,6 +143,8 @@ def update_address_book(
 	subscribed: bool = True,
 ) -> None:
 	"""Updates an existing address book with the given parameters."""
+
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	response = client.address_book_update(id, name, description, sort_order, default, subscribed)
@@ -153,8 +157,11 @@ def update_address_book(
 			frappe.throw(_(response["description"]), title=title)
 
 
+@frappe.whitelist()
 def delete_address_book(account: str, id: str) -> None:
 	"""Deletes a address book for the given account by its ID."""
+
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	response = client.address_book_delete([id], remove_contents=True)
@@ -163,8 +170,11 @@ def delete_address_book(account: str, id: str) -> None:
 		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Address Book Deletion Error"))
 
 
+@frappe.whitelist()
 def fetch_address_books(account: str, page: int = 1, limit: int = 10) -> list:
 	"""Returns a list of address books for the given account."""
+
+	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
 	address_books = client.address_book_get()

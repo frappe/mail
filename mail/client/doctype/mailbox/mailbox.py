@@ -18,7 +18,6 @@ from mail.utils.validation import has_permission_for_account
 
 class Mailbox(Document):
 	def db_insert(self, *args, **kwargs) -> None:
-		has_permission_for_account(self.account)
 		parent = self._parent.replace(f"{self.account}|", "") if self._parent else None
 		self.id = add_mailbox(
 			self.account, self._name, self.role, parent, self.sort_order, bool(self.subscribed)
@@ -27,12 +26,10 @@ class Mailbox(Document):
 
 	def load_from_db(self) -> "Mailbox":
 		account, id = self.name.split("|")
-		has_permission_for_account(account)
 		mailbox = get_mailbox(account, id)
 		return super(Document, self).__init__(mailbox)
 
 	def db_update(self) -> None:
-		has_permission_for_account(self.account)
 		parent = self._parent.replace(f"{self.account}|", "") if self._parent else None
 		update_mailbox(
 			self.account, self.id, self._name, self.role, parent, self.sort_order, bool(self.subscribed)
@@ -41,7 +38,6 @@ class Mailbox(Document):
 
 	def delete(self) -> None:
 		account, id = self.name.split("|")
-		has_permission_for_account(account)
 		delete_mailbox(account, id)
 
 	@staticmethod
@@ -53,7 +49,6 @@ class Mailbox(Document):
 			frappe.msgprint(_("Please select a account to view mailboxes."), alert=True)
 			return []
 
-		has_permission_for_account(account)
 		mailboxes = fetch_mailboxes(account, limit=page_length)
 
 		if not mailboxes:
