@@ -395,46 +395,6 @@ class MailBackendAliasManager(MailBackendManagerBase):
 		)
 
 
-class MailBackendIdentityManager(MailBackendManagerBase):
-	def sync(
-		self,
-		account_id: str,
-		identities: dict[str, dict[str, Any]],
-	) -> "MailBackendRequest":
-		"""Synchronizes identities with the backend."""
-
-		payload = {
-			"using": ["urn:ietf:params:jmap:mail"],
-			"methodCalls": [
-				[
-					"Identity/get",
-					{
-						"accountId": account_id,
-					},
-					"0",
-				],
-				[
-					"Identity/set",
-					{
-						"accountId": account_id,
-						"#destroy": {"resultOf": "0", "name": "Identity/get", "path": "/list/*/id"},
-					},
-					"1",
-				],
-				[
-					"Identity/set",
-					{
-						"accountId": account_id,
-						"create": identities,
-					},
-					"2",
-				],
-			],
-		}
-
-		return self.create_request(method="POST", endpoint="/jmap", request_json=payload, do_not_enqueue=True)
-
-
 def get_mail_backend_api(
 	backend_type: Literal["Mail Cluster", "Mail Server"], backend_name: str
 ) -> MailBackendAPI:

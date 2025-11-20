@@ -30,10 +30,8 @@
   "quota_usage",
   "section_break_gexs",
   "display_name",
-  "override_display_name",
   "column_break_yyco",
   "reply_to",
-  "override_reply_to",
   "vacation_response_tab",
   "vacation_response_enabled",
   "column_break_xhfw",
@@ -171,18 +169,6 @@
    "label": "Backup Email",
    "length": 255,
    "reqd": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "override_display_name",
-   "fieldtype": "Check",
-   "label": "Override Display Name"
-  },
-  {
-   "default": "0",
-   "fieldname": "override_reply_to",
-   "fieldtype": "Check",
-   "label": "Override Reply To"
   },
   {
    "depends_on": "eval: !doc.__islocal && doc.enabled",
@@ -407,7 +393,7 @@
    "link_fieldname": "account"
   }
  ],
- "modified": "2025-11-17 11:41:14.842468",
+ "modified": "2025-11-20 18:34:10.958010",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Account",

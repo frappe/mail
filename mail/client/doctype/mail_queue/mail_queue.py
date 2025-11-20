@@ -29,7 +29,7 @@ from frappe.utils import (
 from uuid_utils import uuid7
 
 from mail import __version__
-from mail.jmap import get_jmap_client
+from mail.jmap import get_identities, get_jmap_client
 from mail.utils.cache import get_account_for_email, get_account_for_user
 from mail.utils.dt import parsedate_to_datetime
 from mail.utils.user import get_account_email_addresses, is_account_owner, is_system_manager
@@ -336,11 +336,12 @@ class MailQueue(Document):
 		if self.raw_message:
 			return
 
-		display_name, override_display_name = frappe.db.get_value(
-			"Mail Account", self.account, ["display_name", "override_display_name"]
-		)
-		if not self.from_name or override_display_name:
-			self.from_name = display_name
+		if not self.from_name:
+			for identity in get_identities(self.account):
+				if self.from_email.lower() == identity.get("email").lower():
+					if display_name := identity["_name"]:
+						self.from_name = display_name
+					break
 
 	def validate_from_email(self) -> None:
 		"""Validates the from email."""
@@ -382,32 +383,12 @@ class MailQueue(Document):
 		if self.raw_message:
 			return
 
-		default_reply_to, override_reply_to = frappe.db.get_value(
-			"Mail Account", self.account, ["reply_to", "override_reply_to"]
-		)
-
-		reply_to = []
-		if not override_reply_to:
-			for rt in json_loads(self.reply_to, default=[]):
-				reply_to.append(
-					{
-						"display_name": rt.get("display_name"),
-						"email": rt["email"],
-					}
-				)
-
-		if not reply_to and default_reply_to:
-			for rt in default_reply_to.split(","):
-				display_name, email = parseaddr(rt)
-				if email:
-					reply_to.append(
-						{
-							"display_name": display_name,
-							"email": email,
-						}
-					)
-
-		self.reply_to = json.dumps(reply_to)
+		if not json_loads(self.reply_to):
+			for identity in get_identities(self.account):
+				if self.from_email.lower() == identity.get("email").lower():
+					if reply_to := identity["reply_to"]:
+						self.reply_to = json.dumps(reply_to)
+					break
 
 	def validate_headers(self) -> None:
 		"""Validates the headers."""

@@ -194,10 +194,6 @@ export interface MailAccount extends DocType {
 	normalized_email?: string
 	/** Backup Email: Data */
 	backup_email: string
-	/** Override Display Name: Check */
-	override_display_name: 0 | 1
-	/** Override Reply To: Check */
-	override_reply_to: 0 | 1
 	/** Enabled: Check */
 	vacation_response_enabled: 0 | 1
 	/** From Date: Datetime */
@@ -311,7 +307,7 @@ export interface MailMessageRecipient extends ChildDocType {
 }
 
 // Last updated: 2025-08-14 19:12:08.055725
-export interface MailMessageReplyTo extends ChildDocType {
+export interface EmailAddress extends ChildDocType {
 	/** Display Name: Data */
 	display_name?: string
 	/** Email: Data */
@@ -354,8 +350,8 @@ export interface MailMessage extends DocType {
 	from_email?: string
 	/** Subject: Small Text */
 	subject?: string
-	/** undefined: Table (Mail Message Reply To) */
-	reply_to: MailMessageReplyTo[]
+	/** undefined: Table (Email Address) */
+	reply_to: EmailAddress[]
 	/** undefined: Table (Mail Message Recipient) */
 	recipients: MailMessageRecipient[]
 	/** HTML: Code */
