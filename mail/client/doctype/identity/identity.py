@@ -133,8 +133,8 @@ def add_identity(
 					"accountId": get_jmap_client(account).primary_account_id,
 					"create": {
 						creation_id: {
-							"name": name or "",
 							"email": email,
+							"name": name or "",
 							"replyTo": reply_to or [],
 							"bcc": bcc or [],
 							"textSignature": text_signature or "",

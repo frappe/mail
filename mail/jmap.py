@@ -264,6 +264,43 @@ class JMAPClient:
 	# Identity
 	# -------------------------------
 
+	def identity_create(
+		self,
+		creation_id: str,
+		email: str,
+		name: str | None = None,
+		reply_to: list[dict] | None = None,
+		bcc: list[dict] | None = None,
+		text_signature: str | None = None,
+		html_signature: str | None = None,
+	) -> dict:
+		"""Creates a identity with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:mail"],
+			method_calls=[
+				[
+					"Identity/set",
+					{
+						"accountId": self.primary_account_id,
+						"create": {
+							creation_id: {
+								"email": email,
+								"name": name or "",
+								"replyTo": reply_to or [],
+								"bcc": bcc or [],
+								"textSignature": text_signature or "",
+								"htmlSignature": html_signature or "",
+							}
+						},
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
 	def identity_get(self, ids: list[str] | None = None) -> list[dict]:
 		"""Returns the identities for the provided identity IDs."""
 
