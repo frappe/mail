@@ -36,7 +36,9 @@ def get_mailboxes() -> list[dict]:
 
 	fields = ["id", "_name", "role", "total_threads", "unread_threads"]
 	mailboxes = get_account_mailboxes(get_account_for_user(user))
-	return [{field: mailbox[field] for field in fields} for mailbox in mailboxes]
+	return [
+		{field: mailbox[field] for field in fields} for mailbox in mailboxes if mailbox["subscribed"] == 1
+	]
 
 
 def get_account_mailboxes(account) -> list[dict]:
