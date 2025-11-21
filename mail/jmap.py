@@ -13,6 +13,7 @@ from uuid_utils import uuid7
 from mail import __version__
 from mail.utils.cache import get_cluster_for_tenant
 from mail.utils.dt import convert_to_utc, utcnow
+from mail.utils.user import is_administrator
 from mail.utils.validation import has_permission_for_account
 
 
@@ -1866,6 +1867,38 @@ def get_jmap_client(account: str, server: str | None = None, cache: bool = True)
 
 	if cache and not server:
 		return frappe.cache.hget("jmap:client", account, generator)
+	else:
+		return generator()
+
+
+def get_jmap_client_for_user(user: str, ignore_permissions: bool = False, cache: bool = True) -> "JMAPClient":
+	"""Returns a JMAP client for the given user."""
+
+	def generator() -> "JMAPClient":
+		user_doc = frappe.get_doc("User", user)
+
+		if not user_doc.jmap_server_url or not user_doc.jmap_username or not user_doc.jmap_app_password:
+			frappe.throw(
+				_("JMAP settings are not configured for user {0}.").format(frappe.bold(user)),
+				frappe.ValidationError,
+			)
+
+		return JMAPClient(
+			user_doc.jmap_server_url, user_doc.jmap_username, user_doc.get_password("jmap_app_password")
+		)
+
+	if not ignore_permissions:
+		session_user = frappe.session.user
+		if user != session_user and not is_administrator(session_user):
+			frappe.throw(
+				_("You do not have permission to access the JMAP client for user {0}.").format(
+					frappe.bold(user)
+				),
+				frappe.PermissionError,
+			)
+
+	if cache:
+		return frappe.cache.hget("jmap:client", user, generator)
 	else:
 		return generator()
 
