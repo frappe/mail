@@ -8,6 +8,7 @@ import frappe
 import requests
 from frappe import _
 from frappe.utils import create_batch
+from uuid_utils import uuid7
 
 from mail import __version__
 from mail.utils.cache import get_cluster_for_tenant
@@ -491,20 +492,43 @@ class JMAPClient:
 
 		return result
 
-	def get_mailbox_id_by_role(self, role: str, raise_exception: bool = False) -> str | None:
-		"""Returns the mailbox ID for the given role."""
+	def get_mailbox_id_by_role(
+		self, role: str, create_if_not_exists: bool = False, raise_exception: bool = False
+	) -> str | None:
+		"""Return the mailbox ID for a given role, optionally creating it if missing."""
 
-		for mailbox in self.mailboxes:
-			mailbox_role = mailbox.get("role") or ""
-			if role and mailbox_role.lower() == role.lower():
-				return mailbox["id"]
+		def find_id(role: str) -> str | None:
+			role = role.lower()
+			for mailbox in self.mailboxes:
+				mailbox_role = (mailbox.get("role") or "").lower()
+				if mailbox_role == role:
+					return mailbox.get("id")
+			return None
 
-		if raise_exception:
-			frappe.throw(
-				_("Mailbox with role {0} not found for account {1}.").format(
-					frappe.bold(role), frappe.bold(self.__session.auth[0])
+		if mailbox_id := find_id(role):
+			return mailbox_id
+
+		if not create_if_not_exists:
+			if raise_exception:
+				frappe.throw(
+					_("Mailbox with role {0} not found for account {1}.").format(
+						frappe.bold(role), frappe.bold(self.__session.auth[0])
+					)
 				)
-			)
+			return None
+
+		creation_id = str(uuid7())
+		response = self.mailbox_create(creation_id, role.title(), role, subscribed=True)
+
+		if response.get("notCreated"):
+			if raise_exception:
+				frappe.throw(
+					_(response["notCreated"][creation_id]["description"]), title=_("Mailbox Creation Error")
+				)
+			return None
+
+		invalidate_jmap_mailboxes_cache(self.__session.auth[0])
+		return find_id(role)
 
 	def get_mailbox_role_by_id(self, id: str, raise_exception: bool = False) -> str | None:
 		"""Returns the mailbox role for the given ID."""
@@ -644,8 +668,12 @@ class JMAPClient:
 			return payload
 
 		identity_id = self.get_identity_id_by_email(from_email, raise_exception=True)
-		draft_mailbox_id = self.get_mailbox_id_by_role("drafts", raise_exception=True)
-		sent_mailbox_id = self.get_mailbox_id_by_role("sent", raise_exception=not save_as_draft)
+		draft_mailbox_id = self.get_mailbox_id_by_role(
+			"drafts", create_if_not_exists=True, raise_exception=True
+		)
+		sent_mailbox_id = self.get_mailbox_id_by_role(
+			"sent", create_if_not_exists=not save_as_draft, raise_exception=not save_as_draft
+		)
 
 		using = ["urn:ietf:params:jmap:mail"]
 		method_calls = []
@@ -1758,11 +1786,15 @@ def get_mailboxes(account: str) -> list[dict]:
 	return client.mailboxes
 
 
-def get_mailbox_id_by_role(account: str, role: str, raise_exception: bool = False) -> str | None:
+def get_mailbox_id_by_role(
+	account: str, role: str, create_if_not_exists: bool = False, raise_exception: bool = False
+) -> str | None:
 	"""Returns the mailbox ID for the given role."""
 
 	client = get_jmap_client(account)
-	return client.get_mailbox_id_by_role(role, raise_exception=raise_exception)
+	return client.get_mailbox_id_by_role(
+		role, create_if_not_exists=create_if_not_exists, raise_exception=raise_exception
+	)
 
 
 def get_mailbox_role_by_id(account: str, id: str, raise_exception: bool = False) -> str | None:
@@ -1788,11 +1820,15 @@ def get_mailboxes_for_account(account: str) -> list[dict]:
 
 
 @frappe.whitelist()
-def get_mailbox_id_for_account(account: str, role: str, raise_exception: bool = False) -> str | None:
+def get_mailbox_id_for_account(
+	account: str, role: str, create_if_not_exists: bool = False, raise_exception: bool = False
+) -> str | None:
 	"""Returns the mailbox ID for the given role."""
 
 	has_permission_for_account(account)
-	return get_mailbox_id_by_role(account, role, raise_exception=raise_exception)
+	return get_mailbox_id_by_role(
+		account, role, create_if_not_exists=create_if_not_exists, raise_exception=raise_exception
+	)
 
 
 @frappe.whitelist()

@@ -55,8 +55,8 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 		conditions = [
 			{
 				"inMailboxOtherThan": [
-					get_mailbox_id_by_role(account, "junk", raise_exception=True),
-					get_mailbox_id_by_role(account, "trash", raise_exception=True),
+					get_mailbox_id_by_role(account, "junk", create_if_not_exists=True, raise_exception=True),
+					get_mailbox_id_by_role(account, "trash", create_if_not_exists=True, raise_exception=True),
 				]
 			},
 			{"someInThreadHaveKeyword": "$flagged"},

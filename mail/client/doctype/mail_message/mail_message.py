@@ -875,7 +875,9 @@ def set_spam_status(account: str, ids: list[str], spam: bool = True) -> None:
 
 	try:
 		client = get_jmap_client(account)
-		mailbox_id = client.get_mailbox_id_by_role("junk" if spam else "inbox", raise_exception=True)
+		mailbox_id = client.get_mailbox_id_by_role(
+			"junk" if spam else "inbox", create_if_not_exists=True, raise_exception=True
+		)
 		client.email_update(ids, mailbox_id, {"$junk": spam, "$notjunk": not spam})
 		_remove_messages_from_cache(account, ids)
 	except Exception:
@@ -1139,7 +1141,9 @@ def fetch_changes(account: str, email_state: str | None = None) -> None:
 
 		if created_ids := result["created"]:
 			if messages := get_messages(account, ids=created_ids):
-				inbox_id = client.get_mailbox_id_by_role("inbox", raise_exception=True)
+				inbox_id = client.get_mailbox_id_by_role(
+					"inbox", create_if_not_exists=True, raise_exception=True
+				)
 				user, should_create_contact = frappe.db.get_value(
 					"Mail Account", account, ["user", "create_mail_contact"]
 				)

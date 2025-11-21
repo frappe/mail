@@ -581,8 +581,12 @@ class MailQueue(Document):
 
 		try:
 			client = get_jmap_client(self.account)
-			draft_mailbox_id = client.get_mailbox_id_by_role("drafts", raise_exception=True)
-			sent_mailbox_id = client.get_mailbox_id_by_role("sent", raise_exception=True)
+			draft_mailbox_id = client.get_mailbox_id_by_role(
+				"drafts", create_if_not_exists=True, raise_exception=True
+			)
+			sent_mailbox_id = client.get_mailbox_id_by_role(
+				"sent", create_if_not_exists=True, raise_exception=True
+			)
 
 			headers = {}
 			reply_to = []
