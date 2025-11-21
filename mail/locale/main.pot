@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-20 18:40+0553\n"
-"PO-Revision-Date: 2025-11-20 18:40+0553\n"
+"POT-Creation-Date: 2025-11-21 11:55+0553\n"
+"PO-Revision-Date: 2025-11-21 11:55+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -109,7 +109,7 @@ msgstr ""
 msgid "A"
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:194
+#: mail/client/doctype/contact_card/contact_card.py:188
 msgid "A contact card must belong to at least one address book."
 msgstr ""
 
@@ -198,6 +198,7 @@ msgstr ""
 #. Label of the account (Link) field in DocType 'Mailbox'
 #. Label of the account (Link) field in DocType 'Push Subscription'
 #. Label of the account (Link) field in DocType 'Push Verification Queue'
+#. Label of the account (Link) field in DocType 'Quota'
 #. Label of the account (Link) field in DocType 'Sync State'
 #. Label of the account (Link) field in DocType 'Mail Data Exchange'
 #: frontend/src/components/Modals/SettingsModal.vue:65
@@ -213,6 +214,7 @@ msgstr ""
 #: mail/client/doctype/mailbox/mailbox.json
 #: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/client/doctype/push_verification_queue/push_verification_queue.json
+#: mail/client/doctype/quota/quota.json
 #: mail/client/doctype/sync_state/sync_state.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Account"
@@ -249,7 +251,7 @@ msgstr ""
 msgid "Account is already verified and created."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:899
+#: mail/client/doctype/mail_message/mail_message.py:901
 #: mail/client/doctype/mail_queue/mail_queue.py:275
 msgid "Account is required."
 msgstr ""
@@ -372,11 +374,11 @@ msgstr ""
 msgid "Address Book"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:112
+#: mail/client/doctype/address_book/address_book.py:110
 msgid "Address Book Creation Error"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:163
+#: mail/client/doctype/address_book/address_book.py:170
 msgid "Address Book Deletion Error"
 msgstr ""
 
@@ -392,23 +394,23 @@ msgstr ""
 msgid "Address Book Name"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:130
+#: mail/client/doctype/address_book/address_book.py:131
 msgid "Address Book Not Found"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:148
+#: mail/client/doctype/address_book/address_book.py:152
 msgid "Address Book Update Error"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:89
+#: mail/client/doctype/address_book/address_book.py:84
 msgid "Address Book name must be in the format 'account|id'."
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:129
+#: mail/client/doctype/address_book/address_book.py:130
 msgid "Address Book with ID {0} not found in account {1}."
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:145
+#: mail/client/doctype/contact_card/contact_card.py:141
 msgid "Address Book {0} does not belong to Account {1}."
 msgstr ""
 
@@ -951,7 +953,7 @@ msgstr ""
 msgid "Cannot resubscribe a subscription that is not expired or failed."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:561
+#: mail/client/doctype/mail_queue/mail_queue.py:562
 msgid "Cannot retry a mail with status {0}"
 msgstr ""
 
@@ -1289,7 +1291,7 @@ msgstr ""
 msgid "Contact Card Address Book"
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:239
+#: mail/client/doctype/contact_card/contact_card.py:233
 msgid "Contact Card Creation Error"
 msgstr ""
 
@@ -1298,7 +1300,7 @@ msgstr ""
 msgid "Contact Card Email"
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:112
+#: mail/client/doctype/contact_card/contact_card.py:110
 msgid "Contact Card Not Found"
 msgstr ""
 
@@ -1307,15 +1309,15 @@ msgstr ""
 msgid "Contact Card Phone"
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:326
+#: mail/client/doctype/contact_card/contact_card.py:322
 msgid "Contact Card Update Error"
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:109
+#: mail/client/doctype/contact_card/contact_card.py:107
 msgid "Contact Card with ID {0} not found in account {1}."
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:217
+#: mail/client/doctype/contact_card/contact_card.py:211
 msgid "Contact Cards deleted successfully."
 msgstr ""
 
@@ -1812,7 +1814,9 @@ msgid "Deployment"
 msgstr ""
 
 #. Label of the description (Small Text) field in DocType 'Address Book'
+#. Label of the description (Small Text) field in DocType 'Quota'
 #: mail/client/doctype/address_book/address_book.json
+#: mail/client/doctype/quota/quota.json
 msgid "Description"
 msgstr ""
 
@@ -2190,7 +2194,7 @@ msgstr ""
 msgid "Edit Photo"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:501
+#: mail/client/doctype/mail_queue/mail_queue.py:502
 msgid "Either blob_id or file_url is required for attachments."
 msgstr ""
 
@@ -2202,7 +2206,7 @@ msgstr ""
 msgid "Either key or IP flag is required."
 msgstr ""
 
-#: mail/jmap.py:1014
+#: mail/jmap.py:1173
 msgid "Either mailbox_id or keywords must be provided."
 msgstr ""
 
@@ -2262,7 +2266,7 @@ msgstr ""
 msgid "Email address {0} is not associated with the user {1}."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:570
+#: mail/client/doctype/mail_queue/mail_queue.py:571
 msgid "Email does not have a blob ID."
 msgstr ""
 
@@ -2278,7 +2282,7 @@ msgstr ""
 msgid "Email is required to send invite"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:767
+#: mail/client/doctype/mail_queue/mail_queue.py:772
 msgid "Email processing aborted: {retries} out of {total_count} emails failed ({failure_rate:.2%} failure rate). Please investigate the issue before retrying."
 msgstr ""
 
@@ -2491,7 +2495,7 @@ msgstr ""
 msgid "Error uploading attachment"
 msgstr ""
 
-#: mail/jmap.py:1824
+#: mail/jmap.py:1991
 msgid "Error {0}: {1}"
 msgstr ""
 
@@ -2680,7 +2684,7 @@ msgstr ""
 msgid "Failed to fetch Account Details"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:552
+#: mail/client/doctype/mail_queue/mail_queue.py:553
 msgid "Failed to fetch In Reply To ID"
 msgstr ""
 
@@ -2688,15 +2692,15 @@ msgstr ""
 msgid "Failed to fetch Vacation Response"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:928
+#: mail/client/doctype/mail_message/mail_message.py:930
 msgid "Failed to fetch blob(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:931
+#: mail/client/doctype/mail_message/mail_message.py:933
 msgid "Failed to fetch blob(s)."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:1191
+#: mail/client/doctype/mail_message/mail_message.py:1195
 msgid "Failed to fetch changes"
 msgstr ""
 
@@ -2777,11 +2781,11 @@ msgstr ""
 msgid "Failed to set seen status for mail(s)."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:883
+#: mail/client/doctype/mail_message/mail_message.py:885
 msgid "Failed to set spam status for mail(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:886
+#: mail/client/doctype/mail_message/mail_message.py:888
 msgid "Failed to set spam status for mail(s)."
 msgstr ""
 
@@ -3119,6 +3123,11 @@ msgstr ""
 msgid "HTTP"
 msgstr ""
 
+#. Label of the hard_limit (Int) field in DocType 'Quota'
+#: mail/client/doctype/quota/quota.json
+msgid "Hard Limit"
+msgstr ""
+
 #. Label of the has_attachment (Check) field in DocType 'Mail Message'
 #: mail/client/doctype/mail_message/mail_message.json
 msgid "Has Attachment"
@@ -3263,11 +3272,13 @@ msgstr ""
 #. Label of the id (Data) field in DocType 'Contact Card'
 #. Label of the id (Data) field in DocType 'Identity'
 #. Label of the id (Data) field in DocType 'Mailbox'
+#. Label of the id (Data) field in DocType 'Quota'
 #. Label of the id (Data) field in DocType 'DMARC Report'
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/contact_card/contact_card.json
 #: mail/client/doctype/identity/identity.json
 #: mail/client/doctype/mailbox/mailbox.json
+#: mail/client/doctype/quota/quota.json
 #: mail/server/doctype/dmarc_report/dmarc_report.json
 msgid "ID"
 msgstr ""
@@ -3317,23 +3328,31 @@ msgstr ""
 msgid "Identity"
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:201
+#: mail/client/doctype/identity/identity.py:159
+msgid "Identity Creation Error"
+msgstr ""
+
+#: mail/client/doctype/identity/identity.py:223
 msgid "Identity Deletion Error"
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:162
+#: mail/client/doctype/identity/identity.py:184
 msgid "Identity Not Found"
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:184
+#: mail/client/doctype/identity/identity.py:206
 msgid "Identity Update Error"
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:161
+#: mail/client/doctype/identity/identity.py:169
+msgid "Identity creation request failed."
+msgstr ""
+
+#: mail/client/doctype/identity/identity.py:183
 msgid "Identity with ID {0} not found in account {1}."
 msgstr ""
 
-#: mail/jmap.py:362
+#: mail/jmap.py:400
 msgid "Identity with email {0} not found for account {1}."
 msgstr ""
 
@@ -3556,11 +3575,11 @@ msgstr ""
 msgid "Invalid domain name"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:440
+#: mail/client/doctype/mail_queue/mail_queue.py:441
 msgid "Invalid email address: {0}"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:485
+#: mail/client/doctype/mail_queue/mail_queue.py:486
 msgid "Invalid file URL: {0}. File URLs must start with '/files/' or '/private/files/'."
 msgstr ""
 
@@ -4308,11 +4327,11 @@ msgstr ""
 msgid "Mailbox"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:95
+#: mail/client/doctype/mailbox/mailbox.py:93 mail/jmap.py:563
 msgid "Mailbox Creation Error"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:149
+#: mail/client/doctype/mailbox/mailbox.py:156
 msgid "Mailbox Deletion Error"
 msgstr ""
 
@@ -4334,27 +4353,27 @@ msgstr ""
 msgid "Mailbox Name"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:113
+#: mail/client/doctype/mailbox/mailbox.py:114
 msgid "Mailbox Not Found"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:128
+#: mail/client/doctype/mailbox/mailbox.py:132
 msgid "Mailbox Update Error"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:130
+#: mail/client/doctype/mailbox/mailbox.py:134
 msgid "Mailbox cannot be a parent of itself."
 msgstr ""
 
-#: mail/jmap.py:518 mail/jmap.py:532
+#: mail/jmap.py:579 mail/jmap.py:593
 msgid "Mailbox with ID {0} not found for account {1}."
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:112
+#: mail/client/doctype/mailbox/mailbox.py:113
 msgid "Mailbox with ID {0} not found in account {1}."
 msgstr ""
 
-#: mail/jmap.py:504
+#: mail/jmap.py:551
 msgid "Mailbox with role {0} not found for account {1}."
 msgstr ""
 
@@ -4870,10 +4889,12 @@ msgstr ""
 #. Label of the _name (Data) field in DocType 'Address Book'
 #. Label of the _name (Data) field in DocType 'Identity'
 #. Label of the _name (Data) field in DocType 'Mailbox'
+#. Label of the _name (Data) field in DocType 'Quota'
 #: frontend/src/pages/dashboard/MailingListView.vue:239
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/identity/identity.json
 #: mail/client/doctype/mailbox/mailbox.json
+#: mail/client/doctype/quota/quota.json
 #: mail/server/report/dmarc_report_viewer/dmarc_report_viewer.py:22
 msgid "Name"
 msgstr ""
@@ -5005,7 +5026,7 @@ msgstr ""
 msgid "No Mail Account found for the user {0}."
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:69
+#: mail/client/doctype/address_book/address_book.py:64
 msgid "No address book found."
 msgstr ""
 
@@ -5026,11 +5047,11 @@ msgid "No blocked IPs found."
 msgstr ""
 
 #: mail/client/doctype/push_subscription/push_subscription.py:288
-#: mail/jmap.py:1688
+#: mail/jmap.py:1847
 msgid "No cluster found for the account {0}."
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:169
+#: mail/client/doctype/contact_card/contact_card.py:163
 msgid "No contact card found."
 msgstr ""
 
@@ -5046,7 +5067,7 @@ msgstr ""
 msgid "No file part named 'raw_message' found."
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:82
+#: mail/client/doctype/identity/identity.py:84
 msgid "No identities found."
 msgstr ""
 
@@ -5058,7 +5079,7 @@ msgstr ""
 msgid "No mail data exchanges found."
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:60
+#: mail/client/doctype/mailbox/mailbox.py:55
 msgid "No mailboxes found."
 msgstr ""
 
@@ -5078,6 +5099,10 @@ msgstr ""
 #: mail/client/doctype/mail_message/mail_message.py:228
 #: mail/server/doctype/message_queue/message_queue.py:39
 msgid "No messages found."
+msgstr ""
+
+#: mail/client/doctype/quota/quota.py:45
+msgid "No quotas found."
 msgstr ""
 
 #: frontend/src/components/Modals/SearchModal.vue:149
@@ -5155,7 +5180,7 @@ msgstr ""
 msgid "Number of Shards"
 msgstr ""
 
-#: mail/jmap.py:51
+#: mail/jmap.py:52
 msgid "Number of method calls exceeds the maximum allowed: {0}."
 msgstr ""
 
@@ -5520,7 +5545,7 @@ msgid "Please add at least one command to execute."
 msgstr ""
 
 #: frontend/src/components/ComposeMailEditor.vue:281
-#: mail/client/doctype/mail_queue/mail_queue.py:451
+#: mail/client/doctype/mail_queue/mail_queue.py:452
 msgid "Please add at least one recipient."
 msgstr ""
 
@@ -5536,24 +5561,28 @@ msgstr ""
 msgid "Please generate the Server Config before installing Stalwart."
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:62
+#: mail/client/doctype/address_book/address_book.py:58
 msgid "Please select a account to view address books."
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:156
+#: mail/client/doctype/contact_card/contact_card.py:152
 msgid "Please select a account to view contact cards."
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:76
+#: mail/client/doctype/identity/identity.py:78
 msgid "Please select a account to view identities."
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:53
+#: mail/client/doctype/mailbox/mailbox.py:49
 msgid "Please select a account to view mailboxes."
 msgstr ""
 
 #: mail/client/doctype/mail_message/mail_message.py:197
 msgid "Please select a account to view messages."
+msgstr ""
+
+#: mail/client/doctype/quota/quota.py:39
+msgid "Please select a account to view quotas."
 msgstr ""
 
 #: mail/server/doctype/dmarc_report/dmarc_report.py:55
@@ -5965,12 +5994,18 @@ msgid "Queued At - Creation"
 msgstr ""
 
 #. Label of the quota_section (Section Break) field in DocType 'Mail Account'
+#. Name of a DocType
 #: mail/client/doctype/mail_account/mail_account.json
+#: mail/client/doctype/quota/quota.json
 msgid "Quota"
 msgstr ""
 
 #: mail/client/doctype/mail_account/mail_account.js:132
 msgid "Quota (in GB)"
+msgstr ""
+
+#: mail/client/doctype/quota/quota.py:78
+msgid "Quota Not Found"
 msgstr ""
 
 #. Label of the quota_usage (Percent) field in DocType 'Mail Account'
@@ -5981,6 +6016,10 @@ msgstr ""
 #: mail/client/doctype/mail_account/mail_account.js:143
 #: mail/client/doctype/mail_account/mail_account.py:382
 msgid "Quota cannot be negative."
+msgstr ""
+
+#: mail/client/doctype/quota/quota.py:77
+msgid "Quota with ID {0} not found in account {1}."
 msgstr ""
 
 #. Name of a DocType
@@ -6365,6 +6404,11 @@ msgstr ""
 msgid "Reset Password"
 msgstr ""
 
+#. Label of the resource_type (Data) field in DocType 'Quota'
+#: mail/client/doctype/quota/quota.json
+msgid "Resource Type"
+msgstr ""
+
 #. Label of the response (JSON) field in DocType 'Mail Queue'
 #. Label of the _response (JSON) field in DocType 'Mail Queue'
 #. Label of the response_section (Section Break) field in DocType 'Mail Queue'
@@ -6705,6 +6749,8 @@ msgstr ""
 msgid "Scanning Mode"
 msgstr ""
 
+#. Label of the scope (Data) field in DocType 'Quota'
+#: mail/client/doctype/quota/quota.json
 #: mail/server/report/dmarc_report_viewer/dmarc_report_viewer.py:49
 msgid "Scope"
 msgstr ""
@@ -7062,6 +7108,11 @@ msgstr ""
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 msgid "Skipped"
+msgstr ""
+
+#. Label of the soft_limit (Int) field in DocType 'Quota'
+#: mail/client/doctype/quota/quota.json
+msgid "Soft Limit"
 msgstr ""
 
 #. Label of the sort_order (Int) field in DocType 'Address Book'
@@ -7458,7 +7509,7 @@ msgstr ""
 msgid "Success"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:727
+#: mail/client/doctype/mail_queue/mail_queue.py:732
 msgid "Successfully retried {0} emails."
 msgstr ""
 
@@ -7513,6 +7564,7 @@ msgstr ""
 #: mail/client/doctype/mailing_list_member/mailing_list_member.json
 #: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/client/doctype/push_verification_queue/push_verification_queue.json
+#: mail/client/doctype/quota/quota.json
 #: mail/client/doctype/sync_state/sync_state.json
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/mail/doctype/rate_limit/rate_limit.json
@@ -7792,7 +7844,7 @@ msgstr ""
 msgid "The geographical region where the bucket resides."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:422
+#: mail/client/doctype/mail_queue/mail_queue.py:423
 msgid "The header <b>{0}</b> is a standard email header and cannot be overridden. Please use custom headers prefixed with <code>X-</code>."
 msgstr ""
 
@@ -7883,7 +7935,7 @@ msgstr ""
 msgid "The security token for the S3 account."
 msgstr ""
 
-#: mail/jmap.py:1699
+#: mail/jmap.py:1858
 msgid "The server {0} does not belong to the same cluster as the account {1}."
 msgstr ""
 
@@ -8205,6 +8257,11 @@ msgstr ""
 msgid "Type of Redis server."
 msgstr ""
 
+#. Label of the types (JSON) field in DocType 'Quota'
+#: mail/client/doctype/quota/quota.json
+msgid "Types"
+msgstr ""
+
 #. Label of the url (Data) field in DocType 'Mail Cluster Store'
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 msgid "URL"
@@ -8381,6 +8438,11 @@ msgstr ""
 msgid "Use TLS to connect to the store."
 msgstr ""
 
+#. Label of the used (Int) field in DocType 'Quota'
+#: mail/client/doctype/quota/quota.json
+msgid "Used"
+msgstr ""
+
 #. Label of the _used_quota (Int) field in DocType 'Mail Account'
 #: frontend/src/components/Modals/MailAccountModal.vue:41
 #: mail/client/doctype/mail_account/mail_account.json
@@ -8457,7 +8519,7 @@ msgstr ""
 msgid "User {0} does not have Mail User role."
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:117
+#: mail/client/doctype/identity/identity.py:121
 msgid "User {0} does not have permission to create identity for account {1}."
 msgstr ""
 
@@ -8712,6 +8774,11 @@ msgstr ""
 msgid "Warn"
 msgstr ""
 
+#. Label of the warn_limit (Int) field in DocType 'Quota'
+#: mail/client/doctype/quota/quota.json
+msgid "Warn Limit"
+msgstr ""
+
 #: frontend/src/pages/ForgotPasswordView.vue:4
 msgid "We have sent an email to {0}. Please click on the link received to reset your password."
 msgstr ""
@@ -8877,7 +8944,7 @@ msgstr ""
 #: frontend/src/components/MailThread.vue:19
 #: frontend/src/components/MailThread.vue:72
 #: frontend/src/components/Modals/SearchModal.vue:111
-#: mail/client/doctype/mail_message/mail_message.py:1170
+#: mail/client/doctype/mail_message/mail_message.py:1174
 msgid "[No subject]"
 msgstr ""
 
@@ -8903,13 +8970,14 @@ msgstr ""
 msgid "bridge"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:118
-#: mail/client/doctype/address_book/address_book.py:153
-#: mail/client/doctype/contact_card/contact_card.py:245
-#: mail/client/doctype/contact_card/contact_card.py:331
-#: mail/client/doctype/identity/identity.py:188
-#: mail/client/doctype/mailbox/mailbox.py:101
-#: mail/client/doctype/mailbox/mailbox.py:139
+#: mail/client/doctype/address_book/address_book.py:116
+#: mail/client/doctype/address_book/address_book.py:157
+#: mail/client/doctype/contact_card/contact_card.py:239
+#: mail/client/doctype/contact_card/contact_card.py:327
+#: mail/client/doctype/identity/identity.py:167
+#: mail/client/doctype/identity/identity.py:210
+#: mail/client/doctype/mailbox/mailbox.py:99
+#: mail/client/doctype/mailbox/mailbox.py:143
 msgid "description"
 msgstr ""
 
@@ -8996,22 +9064,23 @@ msgstr ""
 msgid "none"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:116
-#: mail/client/doctype/contact_card/contact_card.py:243
-#: mail/client/doctype/mailbox/mailbox.py:99
+#: mail/client/doctype/address_book/address_book.py:114
+#: mail/client/doctype/contact_card/contact_card.py:237
+#: mail/client/doctype/identity/identity.py:165
+#: mail/client/doctype/mailbox/mailbox.py:97 mail/jmap.py:563
 msgid "notCreateddescription"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:163
-#: mail/client/doctype/identity/identity.py:201
-#: mail/client/doctype/mailbox/mailbox.py:149
+#: mail/client/doctype/address_book/address_book.py:170
+#: mail/client/doctype/identity/identity.py:223
+#: mail/client/doctype/mailbox/mailbox.py:156
 msgid "notDestroyeddescription"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:151
-#: mail/client/doctype/contact_card/contact_card.py:329
-#: mail/client/doctype/identity/identity.py:186
-#: mail/client/doctype/mailbox/mailbox.py:137
+#: mail/client/doctype/address_book/address_book.py:155
+#: mail/client/doctype/contact_card/contact_card.py:325
+#: mail/client/doctype/identity/identity.py:208
+#: mail/client/doctype/mailbox/mailbox.py:141
 msgid "notUpdateddescription"
 msgstr ""
 

@@ -598,6 +598,100 @@ class JMAPClient:
 		# -------------------------------
 
 	# -------------------------------
+	# Quota
+	# -------------------------------
+
+	def quota_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the quotas for the provided quota IDs."""
+
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:quota"],
+				method_calls=[
+					[
+						"Quota/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			quotas = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				quotas.extend(fetch(ids_batch))
+			return quotas
+
+		return fetch(ids)
+
+	def quota_query(
+		self, filter: dict | None = None, position: int = 0, limit: int = 50, sort: list[dict] | None = None
+	) -> dict:
+		"""Query quotas in batches until reaching the limit."""
+
+		ids = []
+		total = None
+		batch_size = min(limit, self.max_objects_in_get)
+
+		while len(ids) < limit:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:quota"],
+				method_calls=[
+					[
+						"Quota/query",
+						{
+							"accountId": self.primary_account_id,
+							"filter": filter or {},
+							"position": position,
+							"limit": batch_size,
+							"sort": sort or [],
+							"calculateTotal": True if total is None else False,
+						},
+						"0",
+					]
+				],
+			)
+			result = response["methodResponses"][0][1]
+
+			if total is None:
+				total = result["total"]
+
+			_ids = result["ids"]
+			if not _ids:
+				break
+
+			ids.extend(_ids)
+			position += len(_ids)
+
+			if len(_ids) < batch_size:
+				break
+
+		return {"ids": ids[:limit], "total": total}
+
+	def quota_changes(self, since_state: str) -> dict:
+		"""Returns the changes in quota since the provided state."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:quota"],
+			method_calls=[
+				[
+					"Quota/changes",
+					{
+						"accountId": self.primary_account_id,
+						"sinceState": since_state,
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	# -------------------------------
 	# Email/Thread
 	# -------------------------------
 
