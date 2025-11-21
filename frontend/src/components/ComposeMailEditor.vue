@@ -2,7 +2,6 @@
 	<TextEditor
 		ref="textEditor"
 		editor-class="prose-sm max-w-none"
-		:starterkit-options="{ paragraph: false }"
 		:extensions="[CustomImageExtension, CustomParagraphExtension]"
 		:content="mail.html_body.replaceAll('<div><br></div>', '<div></div>')"
 		class="flex flex-col max-sm:overflow-y-auto"
@@ -175,7 +174,6 @@ import {
 	ref,
 	useTemplateRef,
 } from 'vue'
-import { Node } from '@tiptap/core'
 import { EditorContent } from '@tiptap/vue-3'
 import { watchDebounced } from '@vueuse/core'
 import { ChevronDown, ChevronUp, ExternalLink, Forward, Reply, ReplyAll } from 'lucide-vue-next'
@@ -185,6 +183,7 @@ import { useFileUpload } from 'frappe-ui/src/utils/useFileUpload'
 
 import { formatBytes, isOverlayPresent, raiseToast, validateEmail } from '@/utils'
 import { useScreenSize, useVisualViewport } from '@/utils/composables'
+import { CustomParagraphExtension } from '@/utils/text-editor'
 import ComposeMailToolbar from '@/components/ComposeMailToolbar.vue'
 import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
 import MultiselectInputControl from '@/components/Controls/MultiselectInputControl.vue'
@@ -457,15 +456,6 @@ const CustomImageExtension = ImageExtension.extend({
 				attributes['data-cid'] ? { 'data-cid': attributes['data-cid'] } : {},
 		},
 	}),
-})
-
-const CustomParagraphExtension = Node.create({
-	name: 'paragraph',
-	priority: 1000,
-	group: 'block',
-	content: 'inline*',
-	parseHTML: () => [{ tag: 'div' }, { tag: 'p' }],
-	renderHTML: ({ HTMLAttributes }) => ['div', HTMLAttributes, 0],
 })
 
 const TYPE_ICON_MAP = {
