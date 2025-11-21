@@ -58,7 +58,6 @@ declare module 'vue' {
     ProfileSettings: typeof import('./src/components/Settings/ProfileSettings.vue')['default']
     PWASettings: typeof import('./src/components/PWASettings.vue')['default']
     QuotaBar: typeof import('./src/components/QuotaBar.vue')['default']
-    RenameMailboxModal: typeof import('./src/components/Modals/RenameMailboxModal.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SearchMobileLayout: typeof import('./src/components/SearchMobileLayout.vue')['default']
@@ -67,6 +66,7 @@ declare module 'vue' {
     SendMailMobileLayout: typeof import('./src/components/SendMailMobileLayout.vue')['default']
     SettingsModal: typeof import('./src/components/Modals/SettingsModal.vue')['default']
     ShortcutsModal: typeof import('./src/components/Modals/ShortcutsModal.vue')['default']
+    SignatureSettings: typeof import('./src/components/Settings/SignatureSettings.vue')['default']
     VacationResponseSettings: typeof import('./src/components/Settings/VacationResponseSettings.vue')['default']
   }
 }

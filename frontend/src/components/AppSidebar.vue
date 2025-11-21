@@ -91,7 +91,9 @@ import SettingsModal from '@/components/Modals/SettingsModal.vue'
 import PWASettings from '@/components/PWASettings.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
 
+import Archive from '~icons/lucide/archive'
 import AtSign from '~icons/lucide/at-sign'
+import Bookmark from '~icons/lucide/bookmark'
 import Crown from '~icons/lucide/crown'
 import Edit3 from '~icons/lucide/edit-3'
 import Ellipsis from '~icons/lucide/ellipsis'
@@ -215,6 +217,8 @@ const MAILBOX_ICONS = {
 	trash: Trash2,
 	junk: MailWarning,
 	drafts: Edit3,
+	archive: Archive,
+	important: Bookmark,
 }
 
 const sidebarItems = computed(() => {

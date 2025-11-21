@@ -39,7 +39,7 @@
 </template>
 <script setup lang="ts">
 import { computed, inject, markRaw, ref } from 'vue'
-import { Code, DatabaseBackup, Mailbox, Palette, TreePalm, User } from 'lucide-vue-next'
+import { Code, DatabaseBackup, Feather, Mailbox, Palette, TreePalm, User } from 'lucide-vue-next'
 import { Button, Dialog } from 'frappe-ui'
 
 import AccountSettings from '@/components/Settings/AccountSettings.vue'
@@ -47,6 +47,7 @@ import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
 import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
 import MailDataExchangeSettings from '@/components/Settings/MailDataExchangeSettings.vue'
 import ProfileSettings from '@/components/Settings/ProfileSettings.vue'
+import SignatureSettings from '@/components/Settings/SignatureSettings.vue'
 import VacationResponseSettings from '@/components/Settings/VacationResponseSettings.vue'
 
 const show = defineModel<boolean>()
@@ -71,6 +72,11 @@ const tabs = computed(() => {
 			icon: Palette,
 			component: markRaw(AppearanceSettings),
 			showNonMailUser: true,
+		},
+		{
+			label: __('Signature'),
+			icon: Feather,
+			component: markRaw(SignatureSettings),
 		},
 		{
 			label: __('Vacation Response'),
