@@ -144,13 +144,13 @@ def update_mailbox(
 
 
 @frappe.whitelist()
-def delete_mailbox(account: str, id: str) -> None:
+def delete_mailbox(account: str, id: str, remove_emails: bool = True) -> None:
 	"""Deletes a mailbox for the given account by its ID."""
 
 	has_permission_for_account(account)
 
 	client = get_jmap_client(account)
-	response = client.mailbox_delete([id], remove_emails=True)
+	response = client.mailbox_delete([id], remove_emails=remove_emails)
 
 	if response.get("notDestroyed"):
 		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Mailbox Deletion Error"))
