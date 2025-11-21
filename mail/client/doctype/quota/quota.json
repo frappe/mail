@@ -1,0 +1,160 @@
+{
+ "actions": [],
+ "creation": "2025-11-21 11:16:46.518799",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_i7qy",
+  "account",
+  "column_break_mzms",
+  "resource_type",
+  "section_break_onaw",
+  "id",
+  "scope",
+  "_name",
+  "description",
+  "column_break_baef",
+  "hard_limit",
+  "soft_limit",
+  "warn_limit",
+  "used",
+  "section_break_ltoq",
+  "types"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_i7qy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "no_copy": 1,
+   "options": "Mail Account",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_mzms",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "resource_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Resource Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_onaw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scope",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Scope",
+   "read_only": 1
+  },
+  {
+   "fieldname": "_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_baef",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hard_limit",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Hard Limit",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "soft_limit",
+   "fieldtype": "Int",
+   "label": "Soft Limit",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "warn_limit",
+   "fieldtype": "Int",
+   "label": "Warn Limit",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "used",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Used",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_ltoq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "types",
+   "fieldtype": "JSON",
+   "label": "Types",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2025-11-21 14:14:39.802080",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Quota",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Mail User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

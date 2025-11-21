@@ -260,11 +260,22 @@ def is_push_notification_relay_enabled() -> bool:
 def get_quota() -> dict:
 	"""Return quota usage for the user"""
 
-	account = get_account_for_user(frappe.session.user)
-	mail_account = frappe.get_doc("Mail Account", account)
-
-	return {
-		"disk_quota": mail_account._disk_quota,
-		"used_quota": mail_account._used_quota,
-		"used_percentage": mail_account.quota_usage,
+	result = {
+		"disk_quota": 0,
+		"used_quota": 0,
+		"used_percentage": 0,
 	}
+
+	account = get_account_for_user(frappe.session.user)
+	for quota in frappe.db.get_all("Quota", {"account": account}):
+		if scope := quota["scope"]:
+			if scope == "account":
+				result["disk_quota"] = quota["hard_limit"]
+				result["used_quota"] = quota["used"]
+
+				if result["disk_quota"] > 0:
+					result["used_percentage"] = (result["used_quota"] / result["disk_quota"]) * 100
+
+				break
+
+	return result

@@ -195,6 +195,7 @@ has_permission = {
 	"Mailing List": "mail.client.doctype.mailing_list.mailing_list.has_permission",
 	"Mailing List External Member": "mail.client.doctype.mailing_list_external_member.mailing_list_external_member.has_permission",
 	"Mailing List Member": "mail.client.doctype.mailing_list_member.mailing_list_member.has_permission",
+	"Quota": "mail.client.doctype.quota.quota.has_permission",
 }
 
 website_route_rules = [
