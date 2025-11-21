@@ -33,29 +33,50 @@
 				<SidebarItem
 					:label="item.label"
 					:icon="item.icon"
-					:suffix="item.suffix"
 					:to="item.to"
 					:is-active="
-						item.activeFor.includes(
+						item.activeFor?.includes(
 							['Mailbox', 'Mail'].includes(route.name as string)
 								? route.params.mailbox
 								: route.name,
 						)
 					"
 					:on-click="item.onClick"
-				/>
+					class="group"
+				>
+					<template #suffix>
+						<div class="flex items-center">
+							<Dropdown v-if="item.menuOptions" :options="item.menuOptions">
+								<Button variant="ghost" class="!bg-transparent" @click.stop>
+									<template #icon>
+										<Ellipsis
+											class="text-ink-gray-6 invisible h-4 w-4 group-hover:visible"
+										/>
+									</template>
+								</Button>
+							</Dropdown>
+							<span class="text-ink-gray-4 text-sm group-hover:hidden">
+								{{ item.suffix }}
+							</span>
+						</div>
+					</template>
+				</SidebarItem>
 			</template>
 		</Sidebar>
 	</Transition>
+
 	<SettingsModal v-if="!isMobile" v-model="showSettings" />
 	<PWASettings v-else-if="showSettings" @close="showSettings = false" />
+	<AddMailboxModal v-model="showAddMailbox" />
+	<EditMailboxModal v-model="showEditMailbox" :mailbox="selectedMailbox" />
+	<DeleteMailboxModal v-model="showDeleteMailbox" :mailbox="selectedMailbox" />
 </template>
 
 <script setup lang="ts">
 import { computed, h, inject, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStorage } from '@vueuse/core'
-import { Sidebar, createResource } from 'frappe-ui'
+import { Button, Dropdown, Sidebar, createResource } from 'frappe-ui'
 import SidebarItem from 'frappe-ui/src/components/Sidebar/SidebarItem.vue'
 
 import { toTitleCase } from '@/utils'
@@ -63,11 +84,18 @@ import { useScreenSize, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 import MailLogo from '@/components/Icons/MailLogo.vue'
+import AddMailboxModal from '@/components/Modals/AddMailboxModal.vue'
+import DeleteMailboxModal from '@/components/Modals/DeleteMailboxModal.vue'
+import EditMailboxModal from '@/components/Modals/EditMailboxModal.vue'
+import SettingsModal from '@/components/Modals/SettingsModal.vue'
+import PWASettings from '@/components/PWASettings.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
 
 import AtSign from '~icons/lucide/at-sign'
 import Crown from '~icons/lucide/crown'
 import Edit3 from '~icons/lucide/edit-3'
+import Ellipsis from '~icons/lucide/ellipsis'
+import Folder from '~icons/lucide/folder'
 import Globe from '~icons/lucide/globe'
 import Inbox from '~icons/lucide/inbox'
 import LayoutGrid from '~icons/lucide/layout-grid'
@@ -75,10 +103,10 @@ import LogOut from '~icons/lucide/log-out'
 import MailWarning from '~icons/lucide/mail-warning'
 import Mailbox from '~icons/lucide/mailbox'
 import Mails from '~icons/lucide/mails'
+import Plus from '~icons/lucide/plus'
 import Send from '~icons/lucide/send'
 import Settings from '~icons/lucide/settings'
 import Star from '~icons/lucide/star'
-import Tag from '~icons/lucide/tag'
 import Trash2 from '~icons/lucide/trash-2'
 import Users from '~icons/lucide/users'
 
@@ -95,6 +123,10 @@ const user = inject('$user')
 const apps = createResource({ url: 'mail.api.get_apps', cache: 'otherApps', auto: true })
 
 const showSettings = ref(false)
+const showAddMailbox = ref(false)
+const selectedMailbox = ref()
+const showEditMailbox = ref(false)
+const showDeleteMailbox = ref(false)
 
 const menuItems = computed(() => [
 	{
@@ -195,10 +227,26 @@ const sidebarItems = computed(() => {
 				icon:
 					mailbox.role && mailbox.role in MAILBOX_ICONS
 						? MAILBOX_ICONS[mailbox.role as keyof typeof MAILBOX_ICONS]
-						: Tag,
+						: Folder,
 				to: { name: 'Mailbox', params: { mailbox: mailbox.id } },
 				suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
 				activeFor: [mailbox.id],
+				menuOptions: [
+					{
+						label: __('Edit Folder'),
+						onClick: () => {
+							selectedMailbox.value = mailbox
+							showEditMailbox.value = true
+						},
+					},
+					{
+						label: __('Delete Folder'),
+						onClick: () => {
+							selectedMailbox.value = mailbox
+							showDeleteMailbox.value = true
+						},
+					},
+				],
 			}),
 		) || []
 
@@ -209,8 +257,14 @@ const sidebarItems = computed(() => {
 		activeFor: ['starred'],
 	}
 
+	const addMailboxItem = {
+		label: __('New Folder'),
+		icon: Plus,
+		onClick: () => (showAddMailbox.value = true),
+	}
+
 	return mailboxes.data?.length
-		? [{ items: [mailboxItems[0], starredItem, ...mailboxItems.slice(1)] }]
+		? [{ items: [mailboxItems[0], starredItem, ...mailboxItems.slice(1), addMailboxItem] }]
 		: []
 })
 

@@ -12,13 +12,11 @@
 	</Button>
 
 	<Dropdown v-if="!mail.draft && !isCollapsed" :options="moreActions(mail)">
-		<span @click.stop>
-			<Button variant="ghost" :tooltip="__('More')">
-				<template #icon>
-					<Ellipsis class="text-ink-gray-5 h-4 w-4" />
-				</template>
-			</Button>
-		</span>
+		<Button variant="ghost" :tooltip="__('More')" @click.stop>
+			<template #icon>
+				<Ellipsis class="text-ink-gray-5 h-4 w-4" />
+			</template>
+		</Button>
 	</Dropdown>
 </template>
 
