@@ -68,7 +68,8 @@
 	<SettingsModal v-if="!isMobile" v-model="showSettings" />
 	<PWASettings v-else-if="showSettings" @close="showSettings = false" />
 	<AddMailboxModal v-model="showAddMailbox" />
-	<DeleteMailboxModal v-model="showDeleteMailbox" :selected-mailbox />
+	<EditMailboxModal v-model="showEditMailbox" :mailbox="selectedMailbox" />
+	<DeleteMailboxModal v-model="showDeleteMailbox" :mailbox="selectedMailbox" />
 </template>
 
 <script setup lang="ts">
@@ -85,6 +86,9 @@ import { userStore } from '@/stores/user'
 import MailLogo from '@/components/Icons/MailLogo.vue'
 import AddMailboxModal from '@/components/Modals/AddMailboxModal.vue'
 import DeleteMailboxModal from '@/components/Modals/DeleteMailboxModal.vue'
+import EditMailboxModal from '@/components/Modals/EditMailboxModal.vue'
+import SettingsModal from '@/components/Modals/SettingsModal.vue'
+import PWASettings from '@/components/PWASettings.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
 
 import AtSign from '~icons/lucide/at-sign'
@@ -120,7 +124,8 @@ const apps = createResource({ url: 'mail.api.get_apps', cache: 'otherApps', auto
 
 const showSettings = ref(false)
 const showAddMailbox = ref(false)
-const selectedMailbox = ref('')
+const selectedMailbox = ref()
+const showEditMailbox = ref(false)
 const showDeleteMailbox = ref(false)
 
 const menuItems = computed(() => [
@@ -228,9 +233,16 @@ const sidebarItems = computed(() => {
 				activeFor: [mailbox.id],
 				menuOptions: [
 					{
+						label: __('Edit Folder'),
+						onClick: () => {
+							selectedMailbox.value = mailbox
+							showEditMailbox.value = true
+						},
+					},
+					{
 						label: __('Delete Folder'),
 						onClick: () => {
-							selectedMailbox.value = mailbox.id
+							selectedMailbox.value = mailbox
 							showDeleteMailbox.value = true
 						},
 					},

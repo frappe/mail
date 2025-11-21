@@ -2,13 +2,13 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			title: __('New Folder'),
+			title: __('Edit Folder'),
 			actions: [
 				{
 					label: __('Save'),
 					variant: 'solid',
 					disabled: !folder.name,
-					onClick: createFolder.submit,
+					onClick: updateFolder.submit,
 				},
 			],
 		}"
@@ -28,7 +28,11 @@ import { Dialog, FormControl, createResource } from 'frappe-ui'
 import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
+import type { MailboxData } from '@/types'
+
 const show = defineModel<boolean>()
+
+const { mailbox } = defineProps<{ mailbox: MailboxData }>()
 
 const user = inject('$user')
 const { mailboxes } = userStore()
@@ -37,19 +41,19 @@ const { mailboxes } = userStore()
 // 	mailboxes.data.map((mailbox) => ({ label: mailbox._name, value: mailbox.id })),
 // )
 
-const defaultFolder = {
+const folder = reactive({
 	account: user.data.name,
+	id: '',
 	name: '',
+	role: null,
 	parent: null,
-}
+})
 
-const folder = reactive({ ...defaultFolder })
-
-const createFolder = createResource({
-	url: 'mail.client.doctype.mailbox.mailbox.add_mailbox',
+const updateFolder = createResource({
+	url: 'mail.client.doctype.mailbox.mailbox.update_mailbox',
 	makeParams: () => folder,
 	onSuccess: () => {
-		raiseToast(__('Folder created successfully'))
+		raiseToast(__('Folder updated successfully'))
 		show.value = false
 		mailboxes.reload()
 	},
@@ -57,6 +61,9 @@ const createFolder = createResource({
 })
 
 watch(show, (val) => {
-	if (val) Object.assign(folder, defaultFolder)
+	if (!val) return
+	folder.id = mailbox.id
+	folder.name = mailbox._name
+	folder.role = mailbox.role
 })
 </script>

@@ -112,6 +112,14 @@ export interface Thread {
 	attachments: Attachment[]
 }
 
+export interface MailboxData {
+	id: string
+	role: string | null
+	total_threads: number
+	unread_threads: number
+	_name: string
+}
+
 export interface NotificationPayload {
 	data?: {
 		title?: string
