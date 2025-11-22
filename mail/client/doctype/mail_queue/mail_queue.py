@@ -29,11 +29,10 @@ from frappe.utils import (
 from uuid_utils import uuid7
 
 from mail import __version__
-from mail.jmap import get_identities, get_jmap_client
-from mail.utils.cache import get_account_for_email, get_account_for_user
+from mail.jmap import get_identities, get_jmap_client_for_user
 from mail.utils.dt import parsedate_to_datetime
-from mail.utils.user import get_account_email_addresses, is_account_owner, is_system_manager
-from mail.utils.validation import validate_domain_is_enabled_and_verified, validate_email_address
+from mail.utils.user import is_administrator
+from mail.utils.validation import has_permission_for_user, has_role, validate_email_address
 
 
 class MailQueue(Document):
@@ -87,7 +86,7 @@ class MailQueue(Document):
 		kwargs = frappe._dict(kwargs)
 
 		doc = frappe.new_doc("Mail Queue")
-		doc.account = kwargs.account
+		doc.user = kwargs.user
 		doc.from_name = kwargs.from_name
 		doc.from_email = kwargs.from_email
 		doc.subject = kwargs.subject
@@ -138,6 +137,20 @@ class MailQueue(Document):
 			"High": 4,
 		}
 		return mt_priority_map.get(self.priority, 0)
+
+	@property
+	def identity(self) -> dict:
+		"""Returns the identity used to send the email."""
+
+		identity = {}
+
+		if self.from_email:
+			for i in get_identities(self.user):
+				if self.from_email.lower() == i.get("email").lower():
+					identity = i
+					break
+
+		return identity
 
 	@property
 	def to(self) -> list[dict[str, str | None]]:
@@ -192,7 +205,7 @@ class MailQueue(Document):
 
 		from mail.client.doctype.mail_message.mail_message import _get_blob_cache_key
 
-		cache_key = _get_blob_cache_key(self.account, self.blob_id)
+		cache_key = _get_blob_cache_key(self.user, self.blob_id)
 		if content := frappe.cache.get_value(cache_key):
 			return content.decode("utf-8")
 
@@ -232,10 +245,9 @@ class MailQueue(Document):
 	def validate(self) -> None:
 		if self.is_new():
 			self.validate_status()
-			self.validate_account()
 			self.validate_raw_message()
-			self.validate_from_name()
 			self.validate_from_email()
+			self.validate_from_name()
 			self.validate_destroy_after_submission()
 			self.validate_delivery_mode()
 			self.validate_reply_to()
@@ -268,18 +280,6 @@ class MailQueue(Document):
 			self.status = "Pending"
 			self.queued_at = None
 
-	def validate_account(self) -> None:
-		"""Validates the account."""
-
-		if not self.account:
-			frappe.throw(_("Account is required."))
-
-		enabled, domain_name = frappe.db.get_value("Mail Account", self.account, ["enabled", "domain_name"])
-		if not enabled:
-			frappe.throw(_("Mail account {0} is disabled.").format(frappe.bold(self.account)))
-
-		validate_domain_is_enabled_and_verified(domain_name)
-
 	def validate_raw_message(self) -> None:
 		"""Validates the raw message."""
 
@@ -301,11 +301,6 @@ class MailQueue(Document):
 		message = message_from_string(self.raw_message)
 		if from_header := message.get("From"):
 			self.from_name, self.from_email = parseaddr(from_header)
-
-			if self.from_email not in get_account_email_addresses(self.account):
-				# If the `From` address doesn't match any of the account's associated addresses,
-				# reset it to fall back to the account's default email address.
-				self.from_email = None
 
 		if message_id := message.get("Message-ID"):
 			self.message_id = message_id.strip("<>")
@@ -330,31 +325,23 @@ class MailQueue(Document):
 		if in_reply_to := message.get("In-Reply-To"):
 			self.in_reply_to = in_reply_to.strip("<>")
 
-	def validate_from_name(self) -> None:
-		"""Validates the from name."""
-
-		if self.raw_message:
-			return
-
-		if not self.from_name:
-			for identity in get_identities(self.account):
-				if self.from_email.lower() == identity.get("email").lower():
-					if display_name := identity["_name"]:
-						self.from_name = display_name
-					break
-
 	def validate_from_email(self) -> None:
 		"""Validates the from email."""
 
 		if self.from_email:
-			if self.account != get_account_for_email(self.from_email):
+			if not any(self.from_email.lower() == i["email"].lower() for i in get_identities(self.user)):
 				frappe.throw(
 					_(
-						"You cannot send email from {0} using account {1}. Please use the email address associated with the account."
-					).format(frappe.bold(self.from_email), frappe.bold(self.account))
+						"You cannot send email from {0} using user {1}. Please use the email address associated with the user."
+					).format(frappe.bold(self.from_email), frappe.bold(self.user))
 				)
 		else:
-			self.from_email = frappe.db.get_value("Mail Account", self.account, "default_outgoing_email")
+			frappe.throw(_("From Email is required."))
+
+	def validate_from_name(self) -> None:
+		"""Validates the from name."""
+
+		self.from_name = self.from_name or self.identity["_name"]
 
 	def validate_destroy_after_submission(self) -> None:
 		"""Validates the destroy after submission setting."""
@@ -363,9 +350,9 @@ class MailQueue(Document):
 			return
 
 		if self.newsletter:
-			if frappe.db.get_value("Mail Account", self.account, "destroy_newsletter_after_submission"):
+			if frappe.db.get_value("User", self.user, "destroy_newsletter_after_submission"):
 				self.destroy_after_submission = 1
-		elif frappe.db.get_value("Mail Account", self.account, "destroy_email_after_submission"):
+		elif frappe.db.get_value("User", self.user, "destroy_email_after_submission"):
 			self.destroy_after_submission = 1
 
 	def validate_delivery_mode(self) -> None:
@@ -384,11 +371,8 @@ class MailQueue(Document):
 			return
 
 		if not json_loads(self.reply_to):
-			for identity in get_identities(self.account):
-				if self.from_email.lower() == identity.get("email").lower():
-					if reply_to := identity["reply_to"]:
-						self.reply_to = json.dumps(reply_to)
-					break
+			if reply_to := self.identity["reply_to"]:
+				self.reply_to = json.dumps(reply_to)
 
 	def validate_headers(self) -> None:
 		"""Validates the headers."""
@@ -456,9 +440,7 @@ class MailQueue(Document):
 	def validate_attachments(self) -> None:
 		"""Validates the attachments."""
 
-		user = frappe.session.user
-		if user == "Administrator":
-			user = frappe.db.get_value("Mail Account", self.account, "user")
+		user = self.user if frappe.session.user == "Administrator" else frappe.session.user
 
 		blob_ids = []
 		attachments = []
@@ -544,7 +526,7 @@ class MailQueue(Document):
 
 		if self.in_reply_to and not self.in_reply_to_id:
 			try:
-				client = get_jmap_client(self.account)
+				client = get_jmap_client_for_user(self.user)
 				result = client.email_query({"header": ["Message-ID", self.in_reply_to]})
 				if ids := result["ids"]:
 					self.in_reply_to_id = ids[0]
@@ -572,7 +554,7 @@ class MailQueue(Document):
 
 		from mail.client.doctype.mail_message.mail_message import fetch_blob
 
-		return fetch_blob(self.account, self.blob_id).decode("utf-8")
+		return fetch_blob(self.user, self.blob_id).decode("utf-8")
 
 	def _process(self) -> None:
 		"""Create, Update or Submit the Email."""
@@ -580,7 +562,7 @@ class MailQueue(Document):
 		kwargs = {}
 
 		try:
-			client = get_jmap_client(self.account)
+			client = get_jmap_client_for_user(self.user)
 			draft_mailbox_id = client.get_mailbox_id_by_role(
 				"drafts", create_if_not_exists=True, raise_exception=True
 			)
@@ -844,11 +826,10 @@ def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size
 def get_permission_query_condition(user: str | None = None) -> str:
 	user = user or frappe.session.user
 
-	if is_system_manager(user):
+	if is_administrator(user):
 		return ""
-
-	if account := get_account_for_user(user):
-		return f"(`tabMail Queue`.account = '{account}')"
+	elif has_role(user, "Mail User"):
+		return f"(`tabMail Queue`.user = '{user}')"
 	else:
 		return "1=0"
 
@@ -857,11 +838,4 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if doc.doctype != "Mail Queue":
 		return False
 
-	user = user or frappe.session.user
-	user_is_system_manager = is_system_manager(user)
-	user_is_account_owner = is_account_owner(doc.account, user)
-
-	if user_is_system_manager or user_is_account_owner:
-		return True
-
-	return False
+	return has_permission_for_user(doc.user, raise_exception=False)

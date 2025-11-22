@@ -14,7 +14,7 @@ from mail import __version__
 from mail.utils.cache import get_cluster_for_tenant
 from mail.utils.dt import convert_to_utc, utcnow
 from mail.utils.user import has_role
-from mail.utils.validation import has_permission_for_account, has_permission_for_user
+from mail.utils.validation import has_permission_for_user
 
 
 class JMAPClient:
@@ -398,7 +398,7 @@ class JMAPClient:
 
 		if raise_exception:
 			frappe.throw(
-				_("Identity with email {0} not found for account {1}.").format(
+				_("Identity with email {0} not found for user {1}.").format(
 					frappe.bold(email), frappe.bold(self.__session.auth[0])
 				)
 			)
@@ -549,7 +549,7 @@ class JMAPClient:
 		if not create_if_not_exists:
 			if raise_exception:
 				frappe.throw(
-					_("Mailbox with role {0} not found for account {1}.").format(
+					_("Mailbox with role {0} not found for user {1}.").format(
 						frappe.bold(role), frappe.bold(self.__session.auth[0])
 					)
 				)
@@ -577,7 +577,7 @@ class JMAPClient:
 
 		if raise_exception:
 			frappe.throw(
-				_("Mailbox with ID {0} not found for account {1}.").format(
+				_("Mailbox with ID {0} not found for user {1}.").format(
 					frappe.bold(id), frappe.bold(self.__session.auth[0])
 				)
 			)
@@ -591,7 +591,7 @@ class JMAPClient:
 
 		if raise_exception:
 			frappe.throw(
-				_("Mailbox with ID {0} not found for account {1}.").format(
+				_("Mailbox with ID {0} not found for user {1}.").format(
 					frappe.bold(id), frappe.bold(self.__session.auth[0])
 				)
 			)
@@ -1908,75 +1908,75 @@ def get_jmap_client_for_user(user: str, ignore_permissions: bool = False, cache:
 		return generator()
 
 
-def invalidate_jmap_cache(account: str) -> None:
-	"""Invalidates the JMAP cache for the given account."""
+def invalidate_jmap_cache(user: str) -> None:
+	"""Invalidates the JMAP cache for the given user."""
 
-	invalidate_jmap_client_cache(account)
-	invalidate_jmap_mailboxes_cache(account)
-	invalidate_jmap_identities_cache(account)
-
-
-def invalidate_jmap_client_cache(account: str) -> None:
-	"""Invalidates the JMAP client cache for the given account."""
-
-	frappe.cache.hdel("jmap:client", account)
+	invalidate_jmap_client_cache(user)
+	invalidate_jmap_mailboxes_cache(user)
+	invalidate_jmap_identities_cache(user)
 
 
-def invalidate_jmap_mailboxes_cache(account: str) -> None:
-	"""Invalidates the JMAP mailboxes cache for the given account."""
+def invalidate_jmap_client_cache(user: str) -> None:
+	"""Invalidates the JMAP client cache for the given user."""
 
-	frappe.cache.hdel("jmap:mailboxes", account)
-
-
-def invalidate_jmap_identities_cache(account: str) -> None:
-	"""Invalidates the JMAP identities cache for the given account."""
-
-	frappe.cache.hdel("jmap:identities", account)
+	frappe.cache.hdel("jmap:client", user)
 
 
-def get_identities(account: str) -> list[dict]:
-	"""Returns the identities for the given account."""
+def invalidate_jmap_mailboxes_cache(user: str) -> None:
+	"""Invalidates the JMAP mailboxes cache for the given user."""
 
-	client = get_jmap_client(account)
+	frappe.cache.hdel("jmap:mailboxes", user)
+
+
+def invalidate_jmap_identities_cache(user: str) -> None:
+	"""Invalidates the JMAP identities cache for the given user."""
+
+	frappe.cache.hdel("jmap:identities", user)
+
+
+def get_identities(user: str) -> list[dict]:
+	"""Returns the identities for the given user."""
+
+	client = get_jmap_client_for_user(user)
 	return client.identities
 
 
-def get_identity_id_by_email(account: str, email: str, raise_exception: bool = False) -> str | None:
+def get_identity_id_by_email(user: str, email: str, raise_exception: bool = False) -> str | None:
 	"""Returns the identity ID for the given email."""
 
-	client = get_jmap_client(account)
+	client = get_jmap_client_for_user(user)
 	return client.get_identity_id_by_email(email, raise_exception=raise_exception)
 
 
-def get_mailboxes(account: str) -> list[dict]:
-	"""Returns the mailboxes for the given account."""
+def get_mailboxes(user: str) -> list[dict]:
+	"""Returns the mailboxes for the given user."""
 
-	client = get_jmap_client(account)
+	client = get_jmap_client_for_user(user)
 	return client.mailboxes
 
 
 def get_mailbox_id_by_role(
-	account: str, role: str, create_if_not_exists: bool = False, raise_exception: bool = False
+	user: str, role: str, create_if_not_exists: bool = False, raise_exception: bool = False
 ) -> str | None:
 	"""Returns the mailbox ID for the given role."""
 
-	client = get_jmap_client(account)
+	client = get_jmap_client_for_user(user)
 	return client.get_mailbox_id_by_role(
 		role, create_if_not_exists=create_if_not_exists, raise_exception=raise_exception
 	)
 
 
-def get_mailbox_role_by_id(account: str, id: str, raise_exception: bool = False) -> str | None:
+def get_mailbox_role_by_id(user: str, id: str, raise_exception: bool = False) -> str | None:
 	"""Returns the mailbox role for the given ID."""
 
-	client = get_jmap_client(account)
+	client = get_jmap_client_for_user(user)
 	return client.get_mailbox_role_by_id(id, raise_exception=raise_exception)
 
 
-def get_mailbox_name_by_id(account: str, id: str, raise_exception: bool = False) -> str | None:
+def get_mailbox_name_by_id(user: str, id: str, raise_exception: bool = False) -> str | None:
 	"""Returns the mailbox name for the given ID."""
 
-	client = get_jmap_client(account)
+	client = get_jmap_client_for_user(user)
 	return client.get_mailbox_name_by_id(id, raise_exception=raise_exception)
 
 
@@ -1989,31 +1989,31 @@ def get_mailboxes_for_user(user: str) -> list[dict]:
 
 
 @frappe.whitelist()
-def get_mailbox_id_for_account(
-	account: str, role: str, create_if_not_exists: bool = False, raise_exception: bool = False
+def get_mailbox_id_for_user(
+	user: str, role: str, create_if_not_exists: bool = False, raise_exception: bool = False
 ) -> str | None:
 	"""Returns the mailbox ID for the given role."""
 
-	has_permission_for_account(account)
+	has_permission_for_user(user)
 	return get_mailbox_id_by_role(
-		account, role, create_if_not_exists=create_if_not_exists, raise_exception=raise_exception
+		user, role, create_if_not_exists=create_if_not_exists, raise_exception=raise_exception
 	)
 
 
 @frappe.whitelist()
-def get_mailbox_name_for_account(account: str, id: str, raise_exception: bool = False) -> str | None:
+def get_mailbox_name_for_user(user: str, id: str, raise_exception: bool = False) -> str | None:
 	"""Returns the mailbox name for the given ID."""
 
-	has_permission_for_account(account)
-	return get_mailbox_name_by_id(account, id, raise_exception=raise_exception)
+	has_permission_for_user(user)
+	return get_mailbox_name_by_id(user, id, raise_exception=raise_exception)
 
 
 @frappe.whitelist()
-def make_jmap_request(account: str, using: list[str], method_calls: list[list]) -> Any:
-	"""Makes a JMAP request for the given account."""
+def make_jmap_request(user: str, using: list[str], method_calls: list[list]) -> Any:
+	"""Makes a JMAP request for the given user."""
 
-	has_permission_for_account(account)
-	client = get_jmap_client(account)
+	has_permission_for_user(user)
+	client = get_jmap_client_for_user(user)
 	return client._make_request(using, method_calls)
 
 

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-22 12:47+0553\n"
-"PO-Revision-Date: 2025-11-22 12:47+0553\n"
+"POT-Creation-Date: 2025-11-22 16:54+0553\n"
+"PO-Revision-Date: 2025-11-22 16:54+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -188,7 +188,6 @@ msgstr ""
 
 #. Label of the account (Data) field in DocType 'Mail Account Request'
 #. Group in Mail Domain's connections
-#. Label of the account (Link) field in DocType 'Mail Queue'
 #. Label of the account (Link) field in DocType 'Mail Sync History'
 #. Group in Mail Tenant's connections
 #. Label of the account (Link) field in DocType 'Push Subscription'
@@ -198,7 +197,6 @@ msgstr ""
 #: frontend/src/components/Modals/SettingsModal.vue:65
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_domain/mail_domain.json
-#: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/client/doctype/mail_sync_history/mail_sync_history.json
 #: mail/client/doctype/mail_tenant/mail_tenant.json
 #: mail/client/doctype/push_subscription/push_subscription.json
@@ -218,10 +216,6 @@ msgstr ""
 
 #: mail/client/doctype/mail_account_request/mail_account_request.py:209
 msgid "Account is already verified and created."
-msgstr ""
-
-#: mail/client/doctype/mail_queue/mail_queue.py:275
-msgid "Account is required."
 msgstr ""
 
 #: mail/client/doctype/mail_account/mail_account.py:463
@@ -919,7 +913,7 @@ msgstr ""
 msgid "Cannot resubscribe a subscription that is not expired or failed."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:562
+#: mail/client/doctype/mail_queue/mail_queue.py:544
 msgid "Cannot retry a mail with status {0}"
 msgstr ""
 
@@ -2171,7 +2165,7 @@ msgstr ""
 msgid "Edit Photo"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:502
+#: mail/client/doctype/mail_queue/mail_queue.py:484
 msgid "Either blob_id or file_url is required for attachments."
 msgstr ""
 
@@ -2187,7 +2181,7 @@ msgstr ""
 msgid "Either mailbox_id or keywords must be provided."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:62
+#: mail/client/doctype/mail_queue/mail_queue.py:61
 msgid "Either name or file URL is required."
 msgstr ""
 
@@ -2243,7 +2237,7 @@ msgstr ""
 msgid "Email address {0} is not associated with the user {1}."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:571
+#: mail/client/doctype/mail_queue/mail_queue.py:553
 msgid "Email does not have a blob ID."
 msgstr ""
 
@@ -2259,7 +2253,7 @@ msgstr ""
 msgid "Email is required to send invite"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:772
+#: mail/client/doctype/mail_queue/mail_queue.py:754
 msgid "Email processing aborted: {retries} out of {total_count} emails failed ({failure_rate:.2%} failure rate). Please investigate the issue before retrying."
 msgstr ""
 
@@ -2661,7 +2655,7 @@ msgstr ""
 msgid "Failed to fetch Account Details"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:553
+#: mail/client/doctype/mail_queue/mail_queue.py:535
 msgid "Failed to fetch In Reply To ID"
 msgstr ""
 
@@ -2801,7 +2795,7 @@ msgstr ""
 msgid "File"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:71
+#: mail/client/doctype/mail_queue/mail_queue.py:70
 msgid "File <code>{0}</code> not found."
 msgstr ""
 
@@ -2955,6 +2949,10 @@ msgstr ""
 #: mail/client/doctype/mail_message/mail_message.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 msgid "From Email"
+msgstr ""
+
+#: mail/client/doctype/mail_queue/mail_queue.py:339
+msgid "From Email is required."
 msgstr ""
 
 #. Label of the from_host (Data) field in DocType 'Mail Message'
@@ -3348,7 +3346,7 @@ msgid "Identity with ID {0} not found in user {1}."
 msgstr ""
 
 #: mail/jmap.py:401
-msgid "Identity with email {0} not found for account {1}."
+msgid "Identity with email {0} not found for user {1}."
 msgstr ""
 
 #. Description of the 'Include in MX Records' (Check) field in DocType 'Mail
@@ -3562,7 +3560,7 @@ msgstr ""
 msgid "Invalid date format: {0}"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:376
+#: mail/client/doctype/mail_queue/mail_queue.py:363
 msgid "Invalid delivery mode: {0}"
 msgstr ""
 
@@ -3570,11 +3568,11 @@ msgstr ""
 msgid "Invalid domain name"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:441
+#: mail/client/doctype/mail_queue/mail_queue.py:425
 msgid "Invalid email address: {0}"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:486
+#: mail/client/doctype/mail_queue/mail_queue.py:468
 msgid "Invalid file URL: {0}. File URLs must start with '/files/' or '/private/files/'."
 msgstr ""
 
@@ -4284,10 +4282,6 @@ msgstr ""
 msgid "Mail User"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:279
-msgid "Mail account {0} is disabled."
-msgstr ""
-
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:293
 msgid "Mail data export for account {0} has failed."
 msgstr ""
@@ -4371,7 +4365,7 @@ msgid "Mailbox cannot be a parent of itself."
 msgstr ""
 
 #: mail/jmap.py:580 mail/jmap.py:594
-msgid "Mailbox with ID {0} not found for account {1}."
+msgid "Mailbox with ID {0} not found for user {1}."
 msgstr ""
 
 #: mail/client/doctype/mailbox/mailbox.py:115
@@ -4379,7 +4373,7 @@ msgid "Mailbox with ID {0} not found in user {1}."
 msgstr ""
 
 #: mail/jmap.py:552
-msgid "Mailbox with role {0} not found for account {1}."
+msgid "Mailbox with role {0} not found for user {1}."
 msgstr ""
 
 #. Label of the mailboxes_section (Section Break) field in DocType 'Mail
@@ -5555,7 +5549,7 @@ msgid "Please add at least one command to execute."
 msgstr ""
 
 #: frontend/src/components/ComposeMailEditor.vue:281
-#: mail/client/doctype/mail_queue/mail_queue.py:452
+#: mail/client/doctype/mail_queue/mail_queue.py:436
 msgid "Please add at least one recipient."
 msgstr ""
 
@@ -7526,7 +7520,7 @@ msgstr ""
 msgid "Success"
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:732
+#: mail/client/doctype/mail_queue/mail_queue.py:714
 msgid "Successfully retried {0} emails."
 msgstr ""
 
@@ -7861,7 +7855,7 @@ msgstr ""
 msgid "The geographical region where the bucket resides."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:423
+#: mail/client/doctype/mail_queue/mail_queue.py:407
 msgid "The header <b>{0}</b> is a standard email header and cannot be overridden. Please use custom headers prefixed with <code>X-</code>."
 msgstr ""
 
@@ -8489,6 +8483,7 @@ msgstr ""
 #. Label of the user (Link) field in DocType 'Mail Contact'
 #. Label of the user (Link) field in DocType 'Mail Domain Request'
 #. Label of the user (Link) field in DocType 'Mail Message'
+#. Label of the user (Link) field in DocType 'Mail Queue'
 #. Label of the user (Link) field in DocType 'Mail Sync History'
 #. Label of the user (Link) field in DocType 'Mail Tenant'
 #. Label of the user (Link) field in DocType 'Mail Tenant Member'
@@ -8506,6 +8501,7 @@ msgstr ""
 #: mail/client/doctype/mail_contact/mail_contact.json
 #: mail/client/doctype/mail_domain_request/mail_domain_request.json
 #: mail/client/doctype/mail_message/mail_message.json
+#: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/client/doctype/mail_sync_history/mail_sync_history.json
 #: mail/client/doctype/mail_tenant/mail_tenant.json
 #: mail/client/doctype/mail_tenant_member/mail_tenant_member.json
@@ -8555,7 +8551,7 @@ msgstr ""
 msgid "User with email {0} already exists."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:76
+#: mail/client/doctype/mail_queue/mail_queue.py:75
 msgid "User {0} do not have permission to access the file <code>{1}</code>."
 msgstr ""
 
@@ -8944,8 +8940,8 @@ msgstr ""
 msgid "You are not authorized to perform this action."
 msgstr ""
 
-#: mail/client/doctype/mail_queue/mail_queue.py:352
-msgid "You cannot send email from {0} using account {1}. Please use the email address associated with the account."
+#: mail/client/doctype/mail_queue/mail_queue.py:334
+msgid "You cannot send email from {0} using user {1}. Please use the email address associated with the user."
 msgstr ""
 
 #: mail/jmap.py:1893
