@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_nuoa",
-  "account",
+  "user",
   "column_break_5a4x",
   "subscribed",
   "section_break_cbgf",
@@ -108,16 +108,6 @@
    "set_only_once": 1
   },
   {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "options": "Mail Account",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "section_break_uvft",
    "fieldtype": "Section Break"
   },
@@ -171,13 +161,23 @@
    "non_negative": 1,
    "read_only": 1,
    "set_only_once": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-08-06 09:52:53.537831",
+ "modified": "2025-11-22 11:56:13.917339",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox",

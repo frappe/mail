@@ -227,7 +227,7 @@ class JMAPClient:
 		"""Returns the mailboxes for the logged-in user."""
 
 		def generator() -> list[dict]:
-			mailboxes = frappe.db.get_all("Mailbox", {"account": self.__session.auth[0]})
+			mailboxes = frappe.db.get_all("Mailbox", {"user": self.__session.auth[0]})
 			return [
 				{
 					"id": mailbox["id"],

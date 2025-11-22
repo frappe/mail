@@ -8,9 +8,9 @@ frappe.ui.form.on('Mailbox', {
 
 	set_queries(frm) {
 		frm.set_query('_parent', () => ({
-			query: 'mail.utils.query.get_account_mailboxes',
+			query: 'mail.utils.query.get_user_mailboxes',
 			filters: {
-				account: frm.doc.account,
+				user: frm.doc.user,
 			},
 		}))
 	},
