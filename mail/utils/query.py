@@ -120,7 +120,7 @@ def get_account_mailboxes(
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
-def get_account_address_books(
+def get_user_address_books(
 	doctype: str | None = None,
 	txt: str | None = None,
 	searchfield: str | None = None,
@@ -128,16 +128,16 @@ def get_account_address_books(
 	page_len: int = 20,
 	filters: dict | None = None,
 ) -> list:
-	"""Returns a list of address books for the account."""
+	"""Returns a list of address books for the user."""
 
 	filters = filters or {}
-	account = filters.get("account") or get_account_for_user(frappe.session.user)
+	user = filters.get("user") or frappe.session.user
 
-	if not account:
+	if not user or user in ("Guest", "Administrator"):
 		return []
 
 	result = []
-	if address_books := fetch_address_books(account):
+	if address_books := fetch_address_books(user):
 		for address_book in address_books:
 			if txt and txt.lower() not in address_book["id"].lower():
 				continue

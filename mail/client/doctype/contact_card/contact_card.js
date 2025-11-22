@@ -8,9 +8,9 @@ frappe.ui.form.on('Contact Card', {
 
 	set_queries(frm) {
 		frm.set_query('address_book', 'address_books', () => ({
-			query: 'mail.utils.query.get_account_address_books',
+			query: 'mail.utils.query.get_user_address_books',
 			filters: {
-				account: frm.doc.account,
+				user: frm.doc.user,
 			},
 		}))
 	},
