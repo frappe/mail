@@ -103,9 +103,9 @@ frappe.ui.form.on('Mail Message', {
 
 	add_move_buttons(frm) {
 		frappe.call({
-			method: 'mail.jmap.get_mailboxes_for_account',
+			method: 'mail.jmap.get_mailboxes_for_user',
 			args: {
-				account: frm.doc.account,
+				user: frm.doc.user,
 			},
 			freeze: true,
 			freeze_message: __('Loading Mailboxes...'),

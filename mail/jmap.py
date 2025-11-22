@@ -1896,6 +1896,9 @@ def get_jmap_client_for_user(user: str, ignore_permissions: bool = False, cache:
 				frappe.PermissionError,
 			)
 
+	if not bool(frappe.db.get_value("User", user, "enabled")):
+		frappe.throw(_("User {0} is disabled.").format(frappe.bold(user)))
+
 	if not has_role(user, ["Mail User"]):
 		frappe.throw(_("User {0} does not have the Mail User role.").format(frappe.bold(user)))
 
@@ -1978,11 +1981,11 @@ def get_mailbox_name_by_id(account: str, id: str, raise_exception: bool = False)
 
 
 @frappe.whitelist()
-def get_mailboxes_for_account(account: str) -> list[dict]:
-	"""Returns the mailboxes for the given account."""
+def get_mailboxes_for_user(user: str) -> list[dict]:
+	"""Returns the mailboxes for the given user."""
 
-	has_permission_for_account(account)
-	return get_mailboxes(account)
+	has_permission_for_user(user)
+	return get_mailboxes(user)
 
 
 @frappe.whitelist()

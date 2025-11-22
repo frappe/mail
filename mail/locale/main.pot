@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-22 12:16+0553\n"
-"PO-Revision-Date: 2025-11-22 12:16+0553\n"
+"POT-Creation-Date: 2025-11-22 12:47+0553\n"
+"PO-Revision-Date: 2025-11-22 12:47+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -188,7 +188,6 @@ msgstr ""
 
 #. Label of the account (Data) field in DocType 'Mail Account Request'
 #. Group in Mail Domain's connections
-#. Label of the account (Link) field in DocType 'Mail Message'
 #. Label of the account (Link) field in DocType 'Mail Queue'
 #. Label of the account (Link) field in DocType 'Mail Sync History'
 #. Group in Mail Tenant's connections
@@ -199,7 +198,6 @@ msgstr ""
 #: frontend/src/components/Modals/SettingsModal.vue:65
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_domain/mail_domain.json
-#: mail/client/doctype/mail_message/mail_message.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/client/doctype/mail_sync_history/mail_sync_history.json
 #: mail/client/doctype/mail_tenant/mail_tenant.json
@@ -214,25 +212,6 @@ msgstr ""
 msgid "Account Creation Failed"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:744
-#: mail/client/doctype/mail_message/mail_message.py:814
-#: mail/client/doctype/mail_message/mail_message.py:843
-#: mail/client/doctype/mail_message/mail_message.py:872
-msgid "Account and Mail IDs are required."
-msgstr ""
-
-#: mail/client/doctype/mail_message/mail_message.py:764
-msgid "Account and Mailbox ID are required."
-msgstr ""
-
-#: mail/client/doctype/mail_message/mail_message.py:717
-msgid "Account and Thread IDs are required."
-msgstr ""
-
-#: mail/client/doctype/mail_message/mail_message.py:661
-msgid "Account and filter are required."
-msgstr ""
-
 #: mail/client/doctype/mail_account_request/mail_account_request.py:130
 msgid "Account domain {0} does not match with domain {1}."
 msgstr ""
@@ -241,7 +220,6 @@ msgstr ""
 msgid "Account is already verified and created."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:901
 #: mail/client/doctype/mail_queue/mail_queue.py:275
 msgid "Account is required."
 msgstr ""
@@ -258,10 +236,6 @@ msgstr ""
 #. Description of the 'Username' (Data) field in DocType 'Mail Settings'
 #: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Account username for the DNS provider."
-msgstr ""
-
-#: mail/client/doctype/mail_message/mail_message.py:794
-msgid "Account, Mail IDs, and Mailbox ID are required."
 msgstr ""
 
 #: frontend/src/components/MailActions.vue:251
@@ -2498,7 +2472,7 @@ msgstr ""
 msgid "Error uploading attachment"
 msgstr ""
 
-#: mail/jmap.py:2026
+#: mail/jmap.py:2029
 msgid "Error {0}: {1}"
 msgstr ""
 
@@ -2658,11 +2632,11 @@ msgstr ""
 msgid "Failed to create domain {0} on the mail server."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:754
+#: mail/client/doctype/mail_message/mail_message.py:747
 msgid "Failed to delete mail(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:757
+#: mail/client/doctype/mail_message/mail_message.py:750
 msgid "Failed to delete mail(s)."
 msgstr ""
 
@@ -2674,11 +2648,11 @@ msgstr ""
 msgid "Failed to destroy push subscription(s)."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:784
+#: mail/client/doctype/mail_message/mail_message.py:777
 msgid "Failed to empty mailbox"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:787
+#: mail/client/doctype/mail_message/mail_message.py:780
 msgid "Failed to empty mailbox."
 msgstr ""
 
@@ -2695,20 +2669,20 @@ msgstr ""
 msgid "Failed to fetch Vacation Response"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:930
+#: mail/client/doctype/mail_message/mail_message.py:923
 msgid "Failed to fetch blob(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:933
+#: mail/client/doctype/mail_message/mail_message.py:926
 msgid "Failed to fetch blob(s)."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:1195
+#: mail/client/doctype/mail_message/mail_message.py:1180
 msgid "Failed to fetch changes"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:736
-#: mail/client/doctype/mail_message/mail_message.py:737
+#: mail/client/doctype/mail_message/mail_message.py:729
+#: mail/client/doctype/mail_message/mail_message.py:730
 msgid "Failed to fetch message IDs."
 msgstr ""
 
@@ -2744,11 +2718,11 @@ msgstr ""
 msgid "Failed to load content from the compressed file."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:804
+#: mail/client/doctype/mail_message/mail_message.py:797
 msgid "Failed to move mail(s) to mailbox"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:807
+#: mail/client/doctype/mail_message/mail_message.py:800
 msgid "Failed to move mail(s) to mailbox."
 msgstr ""
 
@@ -2764,11 +2738,11 @@ msgstr ""
 msgid "Failed to renew push subscription."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:862
+#: mail/client/doctype/mail_message/mail_message.py:855
 msgid "Failed to set flagged status for mail(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:865
+#: mail/client/doctype/mail_message/mail_message.py:858
 msgid "Failed to set flagged status for mail(s)."
 msgstr ""
 
@@ -2776,19 +2750,19 @@ msgstr ""
 msgid "Failed to set password for account {0}"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:833
+#: mail/client/doctype/mail_message/mail_message.py:826
 msgid "Failed to set seen status for mail(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:836
+#: mail/client/doctype/mail_message/mail_message.py:829
 msgid "Failed to set seen status for mail(s)."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:885
+#: mail/client/doctype/mail_message/mail_message.py:878
 msgid "Failed to set spam status for mail(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:888
+#: mail/client/doctype/mail_message/mail_message.py:881
 msgid "Failed to set spam status for mail(s)."
 msgstr ""
 
@@ -4186,19 +4160,19 @@ msgstr ""
 msgid "Mail Message Recipient"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:430
+#: mail/client/doctype/mail_message/mail_message.py:425
 msgid "Mail Message does not have a blob ID."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:251
+#: mail/client/doctype/mail_message/mail_message.py:246
 msgid "Mail Message {0} is a draft. Please send it before performing this action."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:472
+#: mail/client/doctype/mail_message/mail_message.py:467
 msgid "Mail Message {0} is not a draft."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:568
+#: mail/client/doctype/mail_message/mail_message.py:563
 msgid "Mail Messages deleted successfully."
 msgstr ""
 
@@ -4776,7 +4750,7 @@ msgstr ""
 msgid "Message deleted successfully."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:182
+#: mail/client/doctype/mail_message/mail_message.py:180
 msgid "Message not found or you do not have permission to view it."
 msgstr ""
 
@@ -5132,7 +5106,7 @@ msgstr ""
 msgid "No members found."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:228
+#: mail/client/doctype/mail_message/mail_message.py:223
 #: mail/server/doctype/message_queue/message_queue.py:39
 msgid "No messages found."
 msgstr ""
@@ -5597,10 +5571,6 @@ msgstr ""
 msgid "Please generate the Server Config before installing Stalwart."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:197
-msgid "Please select a account to view messages."
-msgstr ""
-
 #: mail/server/doctype/dmarc_report/dmarc_report.py:55
 msgid "Please select a cluster to view DMARC reports."
 msgstr ""
@@ -5631,6 +5601,10 @@ msgstr ""
 
 #: mail/client/doctype/mailbox/mailbox.py:47
 msgid "Please select a user to view mailboxes."
+msgstr ""
+
+#: mail/client/doctype/mail_message/mail_message.py:195
+msgid "Please select a user to view messages."
 msgstr ""
 
 #: mail/client/doctype/quota/quota.py:37
@@ -8514,6 +8488,7 @@ msgstr ""
 #. Label of the user (Link) field in DocType 'Mail Account'
 #. Label of the user (Link) field in DocType 'Mail Contact'
 #. Label of the user (Link) field in DocType 'Mail Domain Request'
+#. Label of the user (Link) field in DocType 'Mail Message'
 #. Label of the user (Link) field in DocType 'Mail Sync History'
 #. Label of the user (Link) field in DocType 'Mail Tenant'
 #. Label of the user (Link) field in DocType 'Mail Tenant Member'
@@ -8530,6 +8505,7 @@ msgstr ""
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_contact/mail_contact.json
 #: mail/client/doctype/mail_domain_request/mail_domain_request.json
+#: mail/client/doctype/mail_message/mail_message.json
 #: mail/client/doctype/mail_sync_history/mail_sync_history.json
 #: mail/client/doctype/mail_tenant/mail_tenant.json
 #: mail/client/doctype/mail_tenant_member/mail_tenant_member.json
@@ -8544,8 +8520,31 @@ msgstr ""
 msgid "User Details"
 msgstr ""
 
+#: mail/client/doctype/mail_message/mail_message.py:737
+#: mail/client/doctype/mail_message/mail_message.py:807
+#: mail/client/doctype/mail_message/mail_message.py:836
+#: mail/client/doctype/mail_message/mail_message.py:865
+msgid "User and Mail IDs are required."
+msgstr ""
+
+#: mail/client/doctype/mail_message/mail_message.py:757
+msgid "User and Mailbox ID are required."
+msgstr ""
+
+#: mail/client/doctype/mail_message/mail_message.py:710
+msgid "User and Thread IDs are required."
+msgstr ""
+
+#: mail/client/doctype/mail_message/mail_message.py:656
+msgid "User and filter are required."
+msgstr ""
+
 #: mail/client/doctype/mail_domain_request/mail_domain_request.py:37
 msgid "User is required"
+msgstr ""
+
+#: mail/client/doctype/mail_message/mail_message.py:894
+msgid "User is required."
 msgstr ""
 
 #: mail/client/doctype/mail_domain_request/mail_domain_request.py:58
@@ -8576,7 +8575,7 @@ msgstr ""
 msgid "User {0} does not have permission to create identity for user {1}."
 msgstr ""
 
-#: mail/jmap.py:1900
+#: mail/jmap.py:1903
 msgid "User {0} does not have the Mail User role."
 msgstr ""
 
@@ -8601,6 +8600,10 @@ msgstr ""
 msgid "User {0} is already registered."
 msgstr ""
 
+#: mail/jmap.py:1900
+msgid "User {0} is disabled."
+msgstr ""
+
 #: mail/api/admin.py:60 mail/api/admin.py:178
 msgid "User {0} is not a Mail Admin of Tenant {1}."
 msgstr ""
@@ -8615,6 +8618,10 @@ msgstr ""
 
 #: mail/client/doctype/mail_account_request/mail_account_request.py:106
 msgid "User {0} is not authorized to invite users to the tenant."
+msgstr ""
+
+#: mail/client/doctype/mail_message/mail_message.py:787
+msgid "User, Mail IDs, and Mailbox ID are required."
 msgstr ""
 
 #. Label of the jmap_username (Data) field in DocType 'User'
@@ -8965,8 +8972,8 @@ msgstr ""
 msgid "You do not have permission to verify DNS Records."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:201
-msgid "You do not have permission to view messages for this account."
+#: mail/client/doctype/mail_message/mail_message.py:199
+msgid "You do not have permission to view messages for this user."
 msgstr ""
 
 #: mail/client/doctype/mail_account_request/mail_account_request.py:174
@@ -9006,7 +9013,7 @@ msgstr ""
 #: frontend/src/components/MailThread.vue:19
 #: frontend/src/components/MailThread.vue:72
 #: frontend/src/components/Modals/SearchModal.vue:111
-#: mail/client/doctype/mail_message/mail_message.py:1174
+#: mail/client/doctype/mail_message/mail_message.py:1159
 msgid "[No subject]"
 msgstr ""
 
