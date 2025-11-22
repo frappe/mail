@@ -13,7 +13,7 @@ from uuid_utils import uuid7
 from mail import __version__
 from mail.utils.cache import get_cluster_for_tenant
 from mail.utils.dt import convert_to_utc, utcnow
-from mail.utils.user import has_role, is_administrator
+from mail.utils.user import has_role
 from mail.utils.validation import has_permission_for_account, has_permission_for_user
 
 
@@ -258,7 +258,7 @@ class JMAPClient:
 	def address_books(self) -> list[dict]:
 		"""Returns the address books for the logged-in user."""
 
-		address_books = frappe.db.get_all("Address Book", {"account": self.__session.auth[0]})
+		address_books = frappe.db.get_all("Address Book", {"user": self.__session.auth[0]})
 		return address_books
 
 	# -------------------------------

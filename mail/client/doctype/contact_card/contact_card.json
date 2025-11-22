@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_04au",
-  "account",
+  "user",
   "column_break_lrhc",
   "id",
   "section_break_ngen",
@@ -27,17 +27,6 @@
   {
    "fieldname": "section_break_04au",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "options": "Mail Account",
-   "reqd": 1,
-   "set_only_once": 1
   },
   {
    "fieldname": "section_break_wo60",
@@ -130,13 +119,24 @@
    "fieldtype": "Table",
    "label": "Addresses",
    "options": "Contact Card Address"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-11 16:38:41.717727",
+ "modified": "2025-11-22 10:37:44.748719",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Contact Card",

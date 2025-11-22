@@ -11,7 +11,6 @@ from uuid_utils import uuid7
 
 from mail.jmap import get_jmap_client_for_user
 from mail.utils import parse_filters
-from mail.utils.user import has_role, is_administrator
 from mail.utils.validation import has_permission_for_user
 
 
