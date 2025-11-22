@@ -13,8 +13,8 @@ from uuid_utils import uuid7
 from mail import __version__
 from mail.utils.cache import get_cluster_for_tenant
 from mail.utils.dt import convert_to_utc, utcnow
-from mail.utils.user import is_administrator
-from mail.utils.validation import has_permission_for_account
+from mail.utils.user import has_role, is_administrator
+from mail.utils.validation import has_permission_for_account, has_permission_for_user
 
 
 class JMAPClient:
@@ -1888,14 +1888,16 @@ def get_jmap_client_for_user(user: str, ignore_permissions: bool = False, cache:
 		)
 
 	if not ignore_permissions:
-		session_user = frappe.session.user
-		if user != session_user and not is_administrator(session_user):
+		if not has_permission_for_user(user, raise_exception=False):
 			frappe.throw(
 				_("You do not have permission to access the JMAP client for user {0}.").format(
 					frappe.bold(user)
 				),
 				frappe.PermissionError,
 			)
+
+	if not has_role(user, ["Mail User"]):
+		frappe.throw(_("User {0} does not have the Mail User role.").format(frappe.bold(user)))
 
 	if cache:
 		return frappe.cache.hget("jmap:client", user, generator)

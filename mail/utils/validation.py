@@ -327,3 +327,15 @@ def has_permission_for_account(account: str, raise_exception: bool = True) -> bo
 		frappe.throw(_("You do not have permission to access this resource."), frappe.PermissionError)
 
 	return has_permission
+
+
+def has_permission_for_user(user: str, raise_exception: bool = True) -> bool:
+	"""Checks if the current user has permission to access the given user."""
+
+	current_user = frappe.session.user
+	has_permission = user == current_user or is_administrator(current_user)
+
+	if not has_permission and raise_exception:
+		frappe.throw(_("You do not have permission to access this resource."), frappe.PermissionError)
+
+	return has_permission
