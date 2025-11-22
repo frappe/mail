@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-22 12:06+0553\n"
-"PO-Revision-Date: 2025-11-22 12:06+0553\n"
+"POT-Creation-Date: 2025-11-22 12:16+0553\n"
+"PO-Revision-Date: 2025-11-22 12:16+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -194,7 +194,6 @@ msgstr ""
 #. Group in Mail Tenant's connections
 #. Label of the account (Link) field in DocType 'Push Subscription'
 #. Label of the account (Link) field in DocType 'Push Verification Queue'
-#. Label of the account (Link) field in DocType 'Quota'
 #. Label of the account (Link) field in DocType 'Sync State'
 #. Label of the account (Link) field in DocType 'Mail Data Exchange'
 #: frontend/src/components/Modals/SettingsModal.vue:65
@@ -206,7 +205,6 @@ msgstr ""
 #: mail/client/doctype/mail_tenant/mail_tenant.json
 #: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/client/doctype/push_verification_queue/push_verification_queue.json
-#: mail/client/doctype/quota/quota.json
 #: mail/client/doctype/sync_state/sync_state.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Account"
@@ -4360,11 +4358,11 @@ msgstr ""
 msgid "Mailbox"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:96 mail/jmap.py:564
+#: mail/client/doctype/mailbox/mailbox.py:95 mail/jmap.py:564
 msgid "Mailbox Creation Error"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:159
+#: mail/client/doctype/mailbox/mailbox.py:158
 msgid "Mailbox Deletion Error"
 msgstr ""
 
@@ -4386,15 +4384,15 @@ msgstr ""
 msgid "Mailbox Name"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:117
+#: mail/client/doctype/mailbox/mailbox.py:116
 msgid "Mailbox Not Found"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:135
+#: mail/client/doctype/mailbox/mailbox.py:134
 msgid "Mailbox Update Error"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:137
+#: mail/client/doctype/mailbox/mailbox.py:136
 msgid "Mailbox cannot be a parent of itself."
 msgstr ""
 
@@ -4402,7 +4400,7 @@ msgstr ""
 msgid "Mailbox with ID {0} not found for account {1}."
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:116
+#: mail/client/doctype/mailbox/mailbox.py:115
 msgid "Mailbox with ID {0} not found in user {1}."
 msgstr ""
 
@@ -5117,7 +5115,7 @@ msgstr ""
 msgid "No mail data exchanges found."
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:54
+#: mail/client/doctype/mailbox/mailbox.py:53
 msgid "No mailboxes found."
 msgstr ""
 
@@ -5139,7 +5137,7 @@ msgstr ""
 msgid "No messages found."
 msgstr ""
 
-#: mail/client/doctype/quota/quota.py:45
+#: mail/client/doctype/quota/quota.py:43
 msgid "No quotas found."
 msgstr ""
 
@@ -5603,10 +5601,6 @@ msgstr ""
 msgid "Please select a account to view messages."
 msgstr ""
 
-#: mail/client/doctype/quota/quota.py:39
-msgid "Please select a account to view quotas."
-msgstr ""
-
 #: mail/server/doctype/dmarc_report/dmarc_report.py:55
 msgid "Please select a cluster to view DMARC reports."
 msgstr ""
@@ -5635,8 +5629,12 @@ msgstr ""
 msgid "Please select a user to view identities."
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:48
+#: mail/client/doctype/mailbox/mailbox.py:47
 msgid "Please select a user to view mailboxes."
+msgstr ""
+
+#: mail/client/doctype/quota/quota.py:37
+msgid "Please select a user to view quotas."
 msgstr ""
 
 #: mail/server/doctype/message_queue/message_queue.js:134
@@ -6042,7 +6040,7 @@ msgstr ""
 msgid "Quota (in GB)"
 msgstr ""
 
-#: mail/client/doctype/quota/quota.py:78
+#: mail/client/doctype/quota/quota.py:80
 msgid "Quota Not Found"
 msgstr ""
 
@@ -6056,8 +6054,8 @@ msgstr ""
 msgid "Quota cannot be negative."
 msgstr ""
 
-#: mail/client/doctype/quota/quota.py:77
-msgid "Quota with ID {0} not found in account {1}."
+#: mail/client/doctype/quota/quota.py:79
+msgid "Quota with ID {0} not found in user {1}."
 msgstr ""
 
 #. Name of a DocType
@@ -8520,6 +8518,7 @@ msgstr ""
 #. Label of the user (Link) field in DocType 'Mail Tenant'
 #. Label of the user (Link) field in DocType 'Mail Tenant Member'
 #. Label of the user (Link) field in DocType 'Mailbox'
+#. Label of the user (Link) field in DocType 'Quota'
 #: frontend/src/components/Modals/AddAliasModal.vue:43
 #: frontend/src/components/Modals/EditAliasModal.vue:27
 #: frontend/src/pages/dashboard/MailAliasesView.vue:180
@@ -8535,6 +8534,7 @@ msgstr ""
 #: mail/client/doctype/mail_tenant/mail_tenant.json
 #: mail/client/doctype/mail_tenant_member/mail_tenant_member.json
 #: mail/client/doctype/mailbox/mailbox.json
+#: mail/client/doctype/quota/quota.json
 msgid "User"
 msgstr ""
 
@@ -9039,8 +9039,8 @@ msgstr ""
 #: mail/client/doctype/identity/identity.py:171
 #: mail/client/doctype/identity/identity.py:200
 #: mail/client/doctype/identity/identity.py:241
-#: mail/client/doctype/mailbox/mailbox.py:102
-#: mail/client/doctype/mailbox/mailbox.py:146
+#: mail/client/doctype/mailbox/mailbox.py:101
+#: mail/client/doctype/mailbox/mailbox.py:145
 msgid "description"
 msgstr ""
 
@@ -9131,20 +9131,20 @@ msgstr ""
 #: mail/client/doctype/contact_card/contact_card.py:233
 #: mail/client/doctype/identity/identity.py:169
 #: mail/client/doctype/identity/identity.py:198
-#: mail/client/doctype/mailbox/mailbox.py:100 mail/jmap.py:564
+#: mail/client/doctype/mailbox/mailbox.py:99 mail/jmap.py:564
 msgid "notCreateddescription"
 msgstr ""
 
 #: mail/client/doctype/address_book/address_book.py:172
 #: mail/client/doctype/identity/identity.py:254
-#: mail/client/doctype/mailbox/mailbox.py:159
+#: mail/client/doctype/mailbox/mailbox.py:158
 msgid "notDestroyeddescription"
 msgstr ""
 
 #: mail/client/doctype/address_book/address_book.py:157
 #: mail/client/doctype/contact_card/contact_card.py:321
 #: mail/client/doctype/identity/identity.py:239
-#: mail/client/doctype/mailbox/mailbox.py:144
+#: mail/client/doctype/mailbox/mailbox.py:143
 msgid "notUpdateddescription"
 msgstr ""
 
