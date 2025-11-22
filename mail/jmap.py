@@ -249,7 +249,7 @@ class JMAPClient:
 		"""Returns the identities for the logged-in user."""
 
 		def generator() -> list[dict]:
-			identities = frappe.db.get_all("Identity", {"account": self.__session.auth[0]})
+			identities = frappe.db.get_all("Identity", {"user": self.__session.auth[0]})
 			return identities
 
 		return frappe.cache.hget("jmap:identities", self.__session.auth[0], generator)

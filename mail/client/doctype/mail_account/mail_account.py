@@ -15,6 +15,7 @@ from frappe.utils import cint, now, validate_email_address
 from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 
 from mail.backend import MailBackendAccountManager, get_mail_backend_api
+from mail.client.doctype.identity.identity import _add_identity as add_identity
 from mail.client.doctype.push_subscription.push_subscription import create_push_subscriptions
 from mail.client.doctype.sync_state.sync_state import create_sync_state
 from mail.jmap import get_jmap_client, invalidate_jmap_cache, invalidate_jmap_client_cache, raise_for_status
@@ -493,7 +494,7 @@ class MailAccount(Document):
 	def _sync_jmap_identities(self) -> None:
 		"""Syncs JMAP identities for the Mail Account."""
 
-		identities = frappe.db.get_all("Identity", {"account": self.name})
+		identities = frappe.db.get_all("Identity", {"user": self.user})
 		identities_emails_map = {identity["email"]: identity["name"] for identity in identities}
 		identities_emails = set(identities_emails_map.keys())
 
@@ -512,10 +513,7 @@ class MailAccount(Document):
 			frappe.delete_doc("Identity", identity_name)
 
 		for email in identities_to_add:
-			identity = frappe.new_doc("Identity")
-			identity.account = self.name
-			identity.email = email
-			identity.save(ignore_permissions=True)
+			add_identity(self.user, email)
 
 		self.invalidate_jmap_cache()
 

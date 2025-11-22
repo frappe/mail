@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-22 09:42+0553\n"
-"PO-Revision-Date: 2025-11-22 09:42+0553\n"
+"POT-Creation-Date: 2025-11-22 11:34+0553\n"
+"PO-Revision-Date: 2025-11-22 11:34+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -109,11 +109,11 @@ msgstr ""
 msgid "A"
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:188
+#: mail/client/doctype/contact_card/contact_card.py:184
 msgid "A contact card must belong to at least one address book."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:387
+#: mail/client/doctype/mail_account/mail_account.py:388
 msgid "A job has been queued to set the quota."
 msgstr ""
 
@@ -186,8 +186,6 @@ msgstr ""
 msgid "Access to GoDaddy’s Domain Management and DNS APIs is restricted to accounts with 10 or more domains or an active Pro Discount Domain Club membership. Please verify that your account meets these requirements before proceeding."
 msgstr ""
 
-#. Label of the account (Link) field in DocType 'Contact Card'
-#. Label of the account (Link) field in DocType 'Identity'
 #. Label of the account (Data) field in DocType 'Mail Account Request'
 #. Group in Mail Domain's connections
 #. Label of the account (Link) field in DocType 'Mail Message'
@@ -201,8 +199,6 @@ msgstr ""
 #. Label of the account (Link) field in DocType 'Sync State'
 #. Label of the account (Link) field in DocType 'Mail Data Exchange'
 #: frontend/src/components/Modals/SettingsModal.vue:65
-#: mail/client/doctype/contact_card/contact_card.json
-#: mail/client/doctype/identity/identity.json
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_domain/mail_domain.json
 #: mail/client/doctype/mail_message/mail_message.json
@@ -218,7 +214,7 @@ msgstr ""
 msgid "Account"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:196
+#: mail/client/doctype/mail_account/mail_account.py:197
 msgid "Account Creation Failed"
 msgstr ""
 
@@ -254,7 +250,7 @@ msgstr ""
 msgid "Account is required."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:462
+#: mail/client/doctype/mail_account/mail_account.py:463
 msgid "Account password is required to generate app password."
 msgstr ""
 
@@ -372,11 +368,11 @@ msgstr ""
 msgid "Address Book"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:109
+#: mail/client/doctype/address_book/address_book.py:112
 msgid "Address Book Creation Error"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:169
+#: mail/client/doctype/address_book/address_book.py:172
 msgid "Address Book Deletion Error"
 msgstr ""
 
@@ -392,24 +388,24 @@ msgstr ""
 msgid "Address Book Name"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:130
+#: mail/client/doctype/address_book/address_book.py:133
 msgid "Address Book Not Found"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:151
+#: mail/client/doctype/address_book/address_book.py:154
 msgid "Address Book Update Error"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:83
+#: mail/client/doctype/address_book/address_book.py:86
 msgid "Address Book name must be in the format 'user|id'."
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:129
+#: mail/client/doctype/address_book/address_book.py:132
 msgid "Address Book with ID {0} not found in user {1}."
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:141
-msgid "Address Book {0} does not belong to Account {1}."
+#: mail/client/doctype/contact_card/contact_card.py:137
+msgid "Address Book {0} does not belong to User {1}."
 msgstr ""
 
 #. Label of the address_books (Table) field in DocType 'Contact Card'
@@ -582,15 +578,15 @@ msgstr ""
 msgid "App Password"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:447
+#: mail/client/doctype/mail_account/mail_account.py:448
 msgid "App Password has been regenerated."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:297
+#: mail/client/doctype/mail_account/mail_account.py:298
 msgid "App Password is mandatory."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:456
+#: mail/client/doctype/mail_account/mail_account.py:457
 msgid "App Password is not set for the account {0}."
 msgstr ""
 
@@ -957,11 +953,11 @@ msgstr ""
 msgid "Cannot retry a mail with status {0}"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:380
+#: mail/client/doctype/mail_account/mail_account.py:381
 msgid "Cannot set quota for a disabled account."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:404
+#: mail/client/doctype/mail_account/mail_account.py:405
 msgid "Cannot set vacation response for a disabled account."
 msgstr ""
 
@@ -1292,7 +1288,7 @@ msgstr ""
 msgid "Contact Card Address Book"
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:233
+#: mail/client/doctype/contact_card/contact_card.py:229
 msgid "Contact Card Creation Error"
 msgstr ""
 
@@ -1301,7 +1297,7 @@ msgstr ""
 msgid "Contact Card Email"
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:110
+#: mail/client/doctype/contact_card/contact_card.py:106
 msgid "Contact Card Not Found"
 msgstr ""
 
@@ -1310,15 +1306,15 @@ msgstr ""
 msgid "Contact Card Phone"
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:322
+#: mail/client/doctype/contact_card/contact_card.py:318
 msgid "Contact Card Update Error"
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:107
-msgid "Contact Card with ID {0} not found in account {1}."
+#: mail/client/doctype/contact_card/contact_card.py:105
+msgid "Contact Card with ID {0} not found in user {1}."
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:211
+#: mail/client/doctype/contact_card/contact_card.py:207
 msgid "Contact Cards deleted successfully."
 msgstr ""
 
@@ -1387,7 +1383,7 @@ msgstr ""
 msgid "Could not connect to {0}:{1}. Error: {2}"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:306
+#: mail/client/doctype/mail_account/mail_account.py:307
 msgid "Could not fetch password for user {0}."
 msgstr ""
 
@@ -1668,7 +1664,7 @@ msgstr ""
 msgid "Default Email"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:315
+#: mail/client/doctype/mail_account/mail_account.py:316
 msgid "Default Email must be one of the email addresses assigned to the user."
 msgstr ""
 
@@ -2061,7 +2057,7 @@ msgstr ""
 msgid "Domain {0} and User {1} do not belong to the same tenant."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:259
+#: mail/client/doctype/mail_account/mail_account.py:260
 msgid "Domain {0} and User {1} must belong to the same tenant."
 msgstr ""
 
@@ -2285,7 +2281,7 @@ msgstr ""
 msgid "Email domain {0} does not match with domain {1}."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:280
+#: mail/client/doctype/mail_account/mail_account.py:281
 msgid "Email is mandatory."
 msgstr ""
 
@@ -2658,7 +2654,7 @@ msgstr ""
 msgid "Failed to copy code"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:195
+#: mail/client/doctype/mail_account/mail_account.py:196
 msgid "Failed to create account {0} on the mail server."
 msgstr ""
 
@@ -2690,8 +2686,8 @@ msgstr ""
 msgid "Failed to empty mailbox."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:59
-#: mail/client/doctype/mail_account/mail_account.py:62
+#: mail/client/doctype/mail_account/mail_account.py:60
+#: mail/client/doctype/mail_account/mail_account.py:63
 msgid "Failed to fetch Account Details"
 msgstr ""
 
@@ -2699,7 +2695,7 @@ msgstr ""
 msgid "Failed to fetch In Reply To ID"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:80
+#: mail/client/doctype/mail_account/mail_account.py:81
 msgid "Failed to fetch Vacation Response"
 msgstr ""
 
@@ -2724,11 +2720,11 @@ msgstr ""
 msgid "Failed to generate SSH keypair"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:488
+#: mail/client/doctype/mail_account/mail_account.py:489
 msgid "Failed to generate app password"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:491
+#: mail/client/doctype/mail_account/mail_account.py:492
 msgid "Failed to generate app password. Please check your account password."
 msgstr ""
 
@@ -2800,11 +2796,11 @@ msgstr ""
 msgid "Failed to set spam status for mail(s)."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:435
+#: mail/client/doctype/mail_account/mail_account.py:436
 msgid "Failed to set vacation response"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:438
+#: mail/client/doctype/mail_account/mail_account.py:439
 msgid "Failed to set vacation response."
 msgstr ""
 
@@ -2979,8 +2975,8 @@ msgstr ""
 #: frontend/src/components/Settings/VacationResponseSettings.vue:12
 #: mail/client/doctype/mail_account/mail_account.js:185
 #: mail/client/doctype/mail_account/mail_account.json
-#: mail/client/doctype/mail_account/mail_account.py:415
-#: mail/client/doctype/mail_account/mail_account.py:423
+#: mail/client/doctype/mail_account/mail_account.py:416
+#: mail/client/doctype/mail_account/mail_account.py:424
 msgid "From Date"
 msgstr ""
 
@@ -3356,28 +3352,29 @@ msgstr ""
 msgid "Identity"
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:159
+#: mail/client/doctype/identity/identity.py:163
+#: mail/client/doctype/identity/identity.py:194
 msgid "Identity Creation Error"
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:223
+#: mail/client/doctype/identity/identity.py:254
 msgid "Identity Deletion Error"
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:184
+#: mail/client/doctype/identity/identity.py:215
 msgid "Identity Not Found"
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:206
+#: mail/client/doctype/identity/identity.py:237
 msgid "Identity Update Error"
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:169
+#: mail/client/doctype/identity/identity.py:173
 msgid "Identity creation request failed."
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:183
-msgid "Identity with ID {0} not found in account {1}."
+#: mail/client/doctype/identity/identity.py:214
+msgid "Identity with ID {0} not found in user {1}."
 msgstr ""
 
 #: mail/jmap.py:401
@@ -3619,7 +3616,7 @@ msgstr ""
 msgid "Invalid parameters for push subscription verification."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:335
+#: mail/client/doctype/mail_account/mail_account.py:336
 msgid "Invalid reply-to address: {0}"
 msgstr ""
 
@@ -4031,7 +4028,7 @@ msgstr ""
 msgid "Mail Account not found for user {0}"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:597
+#: mail/client/doctype/mail_account/mail_account.py:595
 msgid "Mail Account {0} already exists."
 msgstr ""
 
@@ -5069,7 +5066,7 @@ msgstr ""
 msgid "No Mail Account found for the user {0}."
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:63
+#: mail/client/doctype/address_book/address_book.py:62
 msgid "No address book found."
 msgstr ""
 
@@ -5094,7 +5091,7 @@ msgstr ""
 msgid "No cluster found for the account {0}."
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:163
+#: mail/client/doctype/contact_card/contact_card.py:159
 msgid "No contact card found."
 msgstr ""
 
@@ -5457,7 +5454,7 @@ msgstr ""
 msgid "Password for administrative access to the cluster."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:600
+#: mail/client/doctype/mail_account/mail_account.py:598
 msgid "Password is required to create account."
 msgstr ""
 
@@ -5604,14 +5601,6 @@ msgstr ""
 msgid "Please generate the Server Config before installing Stalwart."
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:152
-msgid "Please select a account to view contact cards."
-msgstr ""
-
-#: mail/client/doctype/identity/identity.py:78
-msgid "Please select a account to view identities."
-msgstr ""
-
 #: mail/client/doctype/mailbox/mailbox.py:49
 msgid "Please select a account to view mailboxes."
 msgstr ""
@@ -5640,8 +5629,16 @@ msgstr ""
 msgid "Please select a cluster to view messages."
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:57
+#: mail/client/doctype/address_book/address_book.py:56
 msgid "Please select a user to view address books."
+msgstr ""
+
+#: mail/client/doctype/contact_card/contact_card.py:148
+msgid "Please select a user to view contact cards."
+msgstr ""
+
+#: mail/client/doctype/identity/identity.py:78
+msgid "Please select a user to view identities."
 msgstr ""
 
 #: mail/server/doctype/message_queue/message_queue.js:134
@@ -6057,7 +6054,7 @@ msgid "Quota Usage"
 msgstr ""
 
 #: mail/client/doctype/mail_account/mail_account.js:143
-#: mail/client/doctype/mail_account/mail_account.py:382
+#: mail/client/doctype/mail_account/mail_account.py:383
 msgid "Quota cannot be negative."
 msgstr ""
 
@@ -6621,7 +6618,7 @@ msgstr ""
 msgid "Rotating DKIM Keys..."
 msgstr ""
 
-#: mail/client/doctype/contact_card/contact_card.py:30
+#: mail/client/doctype/contact_card/contact_card.py:28
 msgid "Row #{0}: Address Book ID is required."
 msgstr ""
 
@@ -7823,11 +7820,11 @@ msgstr ""
 msgid "The access key for the Azure Storage Account."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:233
+#: mail/client/doctype/mail_account/mail_account.py:234
 msgid "The account is linked to Mail Alias {0}. Please disable it first."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:239
+#: mail/client/doctype/mail_account/mail_account.py:240
 msgid "The account is linked to a Mailing List as a member. Please remove it first."
 msgstr ""
 
@@ -8155,9 +8152,9 @@ msgstr ""
 #: frontend/src/components/Settings/VacationResponseSettings.vue:18
 #: mail/client/doctype/mail_account/mail_account.js:192
 #: mail/client/doctype/mail_account/mail_account.json
-#: mail/client/doctype/mail_account/mail_account.py:417
-#: mail/client/doctype/mail_account/mail_account.py:419
-#: mail/client/doctype/mail_account/mail_account.py:423
+#: mail/client/doctype/mail_account/mail_account.py:418
+#: mail/client/doctype/mail_account/mail_account.py:420
+#: mail/client/doctype/mail_account/mail_account.py:424
 msgid "To Date"
 msgstr ""
 
@@ -8516,6 +8513,8 @@ msgid "Used when retrieving credentials from a shared credentials file. If speci
 msgstr ""
 
 #. Label of the user (Link) field in DocType 'Address Book'
+#. Label of the user (Link) field in DocType 'Contact Card'
+#. Label of the user (Link) field in DocType 'Identity'
 #. Label of the user (Link) field in DocType 'Mail Account'
 #. Label of the user (Link) field in DocType 'Mail Contact'
 #. Label of the user (Link) field in DocType 'Mail Domain Request'
@@ -8528,6 +8527,8 @@ msgstr ""
 #: frontend/src/pages/dashboard/MailingListView.vue:282
 #: frontend/src/pages/dashboard/UsersView.vue:20
 #: mail/client/doctype/address_book/address_book.json
+#: mail/client/doctype/contact_card/contact_card.json
+#: mail/client/doctype/identity/identity.json
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_contact/mail_contact.json
 #: mail/client/doctype/mail_domain_request/mail_domain_request.json
@@ -8551,7 +8552,7 @@ msgstr ""
 msgid "User must be an admin of the tenant"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:544
+#: mail/client/doctype/mail_account/mail_account.py:542
 msgid "User with email {0} already exists."
 msgstr ""
 
@@ -8567,12 +8568,12 @@ msgstr ""
 msgid "User {0} does not have Mail Admin role."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:251
+#: mail/client/doctype/mail_account/mail_account.py:252
 msgid "User {0} does not have Mail User role."
 msgstr ""
 
-#: mail/client/doctype/identity/identity.py:121
-msgid "User {0} does not have permission to create identity for account {1}."
+#: mail/client/doctype/identity/identity.py:125
+msgid "User {0} does not have permission to create identity for user {1}."
 msgstr ""
 
 #: mail/jmap.py:1900
@@ -8650,16 +8651,16 @@ msgstr ""
 msgid "Users"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:422
+#: mail/client/doctype/mail_account/mail_account.py:423
 msgid "Vacation - {0} cannot be before Vacation - {1}."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:419
+#: mail/client/doctype/mail_account/mail_account.py:420
 msgid "Vacation - {0} cannot be in the past."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:415
-#: mail/client/doctype/mail_account/mail_account.py:417
+#: mail/client/doctype/mail_account/mail_account.py:416
+#: mail/client/doctype/mail_account/mail_account.py:418
 msgid "Vacation - {0} is required."
 msgstr ""
 
@@ -8956,7 +8957,7 @@ msgstr ""
 msgid "You do not have permission to rotate DKIM Keys."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:378
+#: mail/client/doctype/mail_account/mail_account.py:379
 msgid "You do not have permission to set quota for this account."
 msgstr ""
 
@@ -8980,7 +8981,7 @@ msgstr ""
 msgid "You have no mails in this folder."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:271
+#: mail/client/doctype/mail_account/mail_account.py:272
 msgid "You have reached the maximum limit of {0} accounts for the tenant."
 msgstr ""
 
@@ -9031,12 +9032,13 @@ msgstr ""
 msgid "bridge"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:115
-#: mail/client/doctype/address_book/address_book.py:156
-#: mail/client/doctype/contact_card/contact_card.py:239
-#: mail/client/doctype/contact_card/contact_card.py:327
-#: mail/client/doctype/identity/identity.py:167
-#: mail/client/doctype/identity/identity.py:210
+#: mail/client/doctype/address_book/address_book.py:118
+#: mail/client/doctype/address_book/address_book.py:159
+#: mail/client/doctype/contact_card/contact_card.py:235
+#: mail/client/doctype/contact_card/contact_card.py:323
+#: mail/client/doctype/identity/identity.py:171
+#: mail/client/doctype/identity/identity.py:200
+#: mail/client/doctype/identity/identity.py:241
 #: mail/client/doctype/mailbox/mailbox.py:99
 #: mail/client/doctype/mailbox/mailbox.py:143
 msgid "description"
@@ -9125,22 +9127,23 @@ msgstr ""
 msgid "none"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:113
-#: mail/client/doctype/contact_card/contact_card.py:237
-#: mail/client/doctype/identity/identity.py:165
+#: mail/client/doctype/address_book/address_book.py:116
+#: mail/client/doctype/contact_card/contact_card.py:233
+#: mail/client/doctype/identity/identity.py:169
+#: mail/client/doctype/identity/identity.py:198
 #: mail/client/doctype/mailbox/mailbox.py:97 mail/jmap.py:564
 msgid "notCreateddescription"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:169
-#: mail/client/doctype/identity/identity.py:223
+#: mail/client/doctype/address_book/address_book.py:172
+#: mail/client/doctype/identity/identity.py:254
 #: mail/client/doctype/mailbox/mailbox.py:156
 msgid "notDestroyeddescription"
 msgstr ""
 
-#: mail/client/doctype/address_book/address_book.py:154
-#: mail/client/doctype/contact_card/contact_card.py:325
-#: mail/client/doctype/identity/identity.py:208
+#: mail/client/doctype/address_book/address_book.py:157
+#: mail/client/doctype/contact_card/contact_card.py:321
+#: mail/client/doctype/identity/identity.py:239
 #: mail/client/doctype/mailbox/mailbox.py:141
 msgid "notUpdateddescription"
 msgstr ""

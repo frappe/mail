@@ -9,12 +9,12 @@ from frappe.model.document import Document
 from frappe.utils import cint, today
 from uuid_utils import uuid7
 
-from mail.jmap import get_jmap_client
+from mail.jmap import get_jmap_client_for_user
 from mail.server.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
 from mail.utils import parse_filters
-from mail.utils.cache import get_account_for_user, get_cluster_for_tenant
-from mail.utils.user import has_role, is_administrator, is_tenant_admin
-from mail.utils.validation import has_permission_for_account
+from mail.utils.cache import get_cluster_for_tenant
+from mail.utils.user import is_administrator, is_tenant_admin
+from mail.utils.validation import has_permission_for_user
 
 
 class Identity(Document):
@@ -38,7 +38,7 @@ class Identity(Document):
 
 	def db_insert(self, *args, **kwargs) -> None:
 		self.id = add_identity(
-			self.account,
+			self.user,
 			self.email,
 			self._name,
 			self._reply_to,
@@ -46,16 +46,16 @@ class Identity(Document):
 			self.text_signature,
 			self.html_signature,
 		)
-		self.name = f"{self.account}|{self.id}"
+		self.name = f"{self.user}|{self.id}"
 
 	def load_from_db(self) -> "Identity":
-		account, id = self.name.split("|")
-		identity = get_identity(account, id)
+		user, id = self.name.split("|")
+		identity = get_identity(user, id)
 		return super(Document, self).__init__(identity)
 
 	def db_update(self) -> None:
 		update_identity(
-			self.account,
+			self.user,
 			self.id,
 			self._name,
 			self._reply_to,
@@ -66,19 +66,19 @@ class Identity(Document):
 		self.reload()
 
 	def delete(self) -> None:
-		account, id = self.name.split("|")
-		delete_identity(account, id)
+		user, id = self.name.split("|")
+		delete_identity(user, id)
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
-		account = filters.get("account") or get_account_for_user(frappe.session.user)
+		user = filters.get("user") or frappe.session.user
 
-		if not account:
-			frappe.msgprint(_("Please select a account to view identities."), alert=True)
+		if not user or user in ("Guest", "Administrator"):
+			frappe.msgprint(_("Please select a user to view identities."), alert=True)
 			return []
 
-		identities = fetch_identities(account, limit=page_length)
+		identities = fetch_identities(user, limit=page_length)
 
 		if not identities:
 			frappe.msgprint(_("No identities found."), alert=True)
@@ -88,23 +88,27 @@ class Identity(Document):
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
-		account = filters.get("account") or get_account_for_user(frappe.session.user)
-		return frappe.cache.get_value(get_total_cache_key(account)) if account else 0
+		user = filters.get("user") or frappe.session.user
+		return (
+			frappe.cache.get_value(_get_total_cache_key(user))
+			if user and has_permission_for_user(user, raise_exception=False)
+			else 0
+		)
 
 	@staticmethod
 	def get_stats(**kwargs) -> dict:
 		return {}
 
 
-def get_total_cache_key(account: str) -> str:
-	"""Returns a cache key for total identities count for the given account."""
+def _get_total_cache_key(user: str) -> str:
+	"""Returns a cache key for total identities count for the given user."""
 
-	return f"{account}:identities:total"
+	return f"{user}:identities:total"
 
 
 @frappe.whitelist()
-def add_identity(
-	account: str,
+def _add_identity(
+	user: str,
 	email: str,
 	name: str | None = None,
 	reply_to: list[dict] | None = None,
@@ -112,14 +116,14 @@ def add_identity(
 	text_signature: str | None = None,
 	html_signature: str | None = None,
 ) -> str:
-	"""Adds an identity for the given account with the specified parameters."""
+	"""Adds an identity for the given user with the specified parameters."""
 
 	user = frappe.session.user
-	tenant = frappe.db.get_value("Mail Account", account, "tenant")
+	tenant = frappe.db.get_value("Mail Account", user, "tenant")
 	if not (is_administrator(user) or is_tenant_admin(tenant, user)):
 		frappe.throw(
-			_("User {0} does not have permission to create identity for account {1}.").format(
-				frappe.bold(user), frappe.bold(account)
+			_("User {0} does not have permission to create identity for user {1}.").format(
+				frappe.bold(user), frappe.bold(user)
 			)
 		)
 
@@ -130,7 +134,7 @@ def add_identity(
 			[
 				"Identity/set",
 				{
-					"accountId": get_jmap_client(account).primary_account_id,
+					"accountId": get_jmap_client_for_user(user).primary_account_id,
 					"create": {
 						creation_id: {
 							"email": email,
@@ -170,24 +174,51 @@ def add_identity(
 
 
 @frappe.whitelist()
-def get_identity(account: str, id: str) -> dict:
-	"""Returns identity details for the given name in the format 'account|id'."""
+def add_identity(
+	user: str,
+	email: str,
+	name: str | None = None,
+	reply_to: list[dict] | None = None,
+	bcc: list[dict] | None = None,
+	text_signature: str | None = None,
+	html_signature: str | None = None,
+) -> str:
+	"""Adds an identity for the given user with the specified parameters."""
 
-	has_permission_for_account(account)
+	has_permission_for_user(user)
 
-	client = get_jmap_client(account)
+	creation_id = str(uuid7())
+	client = get_jmap_client_for_user(user)
+	response = client.identity_create(creation_id, email, name, reply_to, bcc, text_signature, html_signature)
+
+	title = _("Identity Creation Error")
+	if response.get("created"):
+		return response["created"][creation_id]["id"]
+	elif response.get("notCreated"):
+		frappe.throw(_(response["notCreated"][creation_id]["description"]), title=title)
+	else:
+		frappe.throw(_(response["description"]), title=title)
+
+
+@frappe.whitelist()
+def get_identity(user: str, id: str) -> dict:
+	"""Returns identity details for the given name in the format 'user|id'."""
+
+	has_permission_for_user(user)
+
+	client = get_jmap_client_for_user(user)
 	if identities := client.identity_get([id]):
-		return format_identity(account, identities[0])
+		return format_identity(user, identities[0])
 
 	frappe.throw(
-		_("Identity with ID {0} not found in account {1}.").format(frappe.bold(id), frappe.bold(account)),
+		_("Identity with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
 		title=_("Identity Not Found"),
 	)
 
 
 @frappe.whitelist()
 def update_identity(
-	account: str,
+	user: str,
 	id: str,
 	name: str | None = None,
 	reply_to: list[dict] | None = None,
@@ -197,9 +228,9 @@ def update_identity(
 ) -> None:
 	"""Updates an existing identity with the given parameters."""
 
-	has_permission_for_account(account)
+	has_permission_for_user(user)
 
-	client = get_jmap_client(account)
+	client = get_jmap_client_for_user(user)
 	response = client.identity_update(id, name, reply_to, bcc, text_signature, html_signature)
 
 	if not response.get("updated"):
@@ -211,12 +242,12 @@ def update_identity(
 
 
 @frappe.whitelist()
-def delete_identity(account: str, id: str) -> None:
-	"""Deletes a identity for the given account by its ID."""
+def delete_identity(user: str, id: str) -> None:
+	"""Deletes a identity for the given user by its ID."""
 
-	has_permission_for_account(account)
+	has_permission_for_user(user)
 
-	client = get_jmap_client(account)
+	client = get_jmap_client_for_user(user)
 	response = client.identity_delete([id])
 
 	if response.get("notDestroyed"):
@@ -224,15 +255,15 @@ def delete_identity(account: str, id: str) -> None:
 
 
 @frappe.whitelist()
-def fetch_identities(account: str, page: int = 1, limit: int = 10) -> list:
-	"""Returns a list of identities for the given account."""
+def fetch_identities(user: str, page: int = 1, limit: int = 10) -> list:
+	"""Returns a list of identities for the given user."""
 
-	has_permission_for_account(account)
+	has_permission_for_user(user)
 
-	client = get_jmap_client(account)
+	client = get_jmap_client_for_user(user)
 	identities = client.identity_get()
-	formatted_identities = [format_identity(account, identity) for identity in identities]
-	frappe.cache.set_value(get_total_cache_key(account), len(identities), expires_in_sec=600)
+	formatted_identities = [format_identity(user, identity) for identity in identities]
+	frappe.cache.set_value(_get_total_cache_key(user), len(identities), expires_in_sec=600)
 
 	start = (page - 1) * limit
 	end = start + limit
@@ -240,7 +271,7 @@ def fetch_identities(account: str, page: int = 1, limit: int = 10) -> list:
 	return formatted_identities[start:end]
 
 
-def format_identity(account: str, identity: dict) -> dict:
+def format_identity(user: str, identity: dict) -> dict:
 	"""Formats identity data for display."""
 
 	bcc = []
@@ -252,8 +283,8 @@ def format_identity(account: str, identity: dict) -> dict:
 		reply_to.append({"display_name": r["name"], "email": r["email"]})
 
 	return {
-		"name": f"{account}|{identity['id']}",
-		"account": account,
+		"name": f"{user}|{identity['id']}",
+		"user": user,
 		"id": identity["id"],
 		"_name": identity["name"],
 		"email": identity["email"],
@@ -271,12 +302,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Identity":
 		return False
 
-	user = user or frappe.session.user
-
-	if is_administrator(user):
-		return True
-
-	if has_role(user, "Mail User"):
-		return doc.account == get_account_for_user(user)
-
-	return False
+	return has_permission_for_user(doc.user, raise_exception=False)

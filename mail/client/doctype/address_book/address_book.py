@@ -216,4 +216,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Address Book":
 		return False
 
-	return has_permission_for_user(user, raise_exception=False)
+	return has_permission_for_user(doc.user, raise_exception=False)
