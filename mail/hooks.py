@@ -177,6 +177,7 @@ permission_query_conditions = {
 has_permission = {
 	# Server
 	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.has_permission",
+	"Mail Principal": "mail.server.doctype.mail_principal.mail_principal.has_permission",
 	# Client
 	"Address Book": "mail.client.doctype.address_book.address_book.has_permission",
 	"Contact Card": "mail.client.doctype.contact_card.contact_card.has_permission",

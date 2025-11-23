@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-23 07:43+0553\n"
-"PO-Revision-Date: 2025-11-23 07:43+0553\n"
+"POT-Creation-Date: 2025-11-25 12:55+0553\n"
+"PO-Revision-Date: 2025-11-25 12:55+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -145,13 +145,18 @@ msgid "API Access"
 msgstr ""
 
 #. Label of the api_key (Password) field in DocType 'Mail Cluster'
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal'
+#. Option for the 'Principal Type' (Select) field in DocType 'Mail Principal
+#. Binding'
 #: frontend/src/components/Settings/AdvancedSettings.vue:3
 #: frontend/src/components/Settings/AdvancedSettings.vue:18
 #: mail/server/doctype/mail_cluster/mail_cluster.json
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
 msgid "API Key"
 msgstr ""
 
-#: mail/backend.py:60
+#: mail/backend.py:60 mail/server/doctype/mail_principal/principal.py:53
 msgid "API Key or Username and Password is required."
 msgstr ""
 
@@ -276,6 +281,11 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'Push Subscription'
 #: mail/client/doctype/push_subscription/push_subscription.json
 msgid "Active"
+msgstr ""
+
+#. Group in User's connections
+#: mail/client/custom/user.json
+msgid "Activity"
 msgstr ""
 
 #: frontend/src/pages/dashboard/MailAliasesView.vue:4
@@ -533,8 +543,9 @@ msgstr ""
 msgid "Answered"
 msgstr ""
 
-#. Label of the app_password (Password) field in DocType 'Mail Account'
 #. Label of the jmap_app_password (Password) field in DocType 'User'
+#. Label of the app_password (Password) field in DocType 'Mail Account'
+#: mail/client/custom/user.json
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/fixtures/custom_field.json
 msgid "App Password"
@@ -550,6 +561,11 @@ msgstr ""
 
 #: mail/client/doctype/mail_account/mail_account.py:457
 msgid "App Password is not set for the account {0}."
+msgstr ""
+
+#. Label of the app_passwords (Table) field in DocType 'Mail Principal'
+#: mail/server/doctype/mail_principal/mail_principal.json
+msgid "App Passwords"
 msgstr ""
 
 #: frontend/src/components/Modals/SettingsModal.vue:70
@@ -681,9 +697,12 @@ msgstr ""
 #. Cluster'
 #. Label of the authentication_section (Section Break) field in DocType 'Mail
 #. Cluster Store'
+#. Label of the authentication_tab (Tab Break) field in DocType 'Mail
+#. Principal'
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
+#: mail/server/doctype/mail_principal/mail_principal.json
 msgid "Authentication"
 msgstr ""
 
@@ -1607,9 +1626,11 @@ msgid "Dedicated to indexing for full-text search, enhancing the speed and effic
 msgstr ""
 
 #. Label of the default (Check) field in DocType 'Address Book'
+#. Option for the 'Value' (Select) field in DocType 'Mail Principal Permission'
 #. Label of the default (Check) field in DocType 'Mail Server ACME Provider'
 #. Label of the default (Check) field in DocType 'Mail Server TLS Certificate'
 #: mail/client/doctype/address_book/address_book.json
+#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
 #: mail/server/doctype/mail_server_acme_provider/mail_server_acme_provider.json
 #: mail/server/doctype/mail_server_tls_certificate/mail_server_tls_certificate.json
 msgid "Default"
@@ -1779,8 +1800,12 @@ msgstr ""
 
 #. Label of the description (Small Text) field in DocType 'Address Book'
 #. Label of the description (Small Text) field in DocType 'Quota'
+#. Label of the description (Small Text) field in DocType 'Mail Principal'
+#. Label of the description (Data) field in DocType 'Mail Principal Permission'
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/quota/quota.json
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
 msgid "Description"
 msgstr ""
 
@@ -1796,7 +1821,7 @@ msgid "Destroy Email After Submission"
 msgstr ""
 
 #. Label of the jmap_destroy_email_after_submit (Check) field in DocType 'User'
-#: mail/fixtures/custom_field.json
+#: mail/client/custom/user.json mail/fixtures/custom_field.json
 msgid "Destroy Email After Submit"
 msgstr ""
 
@@ -1808,7 +1833,7 @@ msgstr ""
 
 #. Label of the jmap_destroy_newsletter_after_submit (Check) field in DocType
 #. 'User'
-#: mail/fixtures/custom_field.json
+#: mail/client/custom/user.json mail/fixtures/custom_field.json
 msgid "Destroy Newsletter After Submit"
 msgstr ""
 
@@ -1885,11 +1910,13 @@ msgid "Disable to stop this mail server from sending or receiving emails."
 msgstr ""
 
 #. Option for the 'Transport' (Select) field in DocType 'Mail Cluster'
+#. Label of the disabled_permissions (JSON) field in DocType 'Mail Principal'
 #: frontend/src/pages/dashboard/DomainView.vue:154
 #: frontend/src/pages/dashboard/DomainsView.vue:122
 #: frontend/src/pages/dashboard/MailAliasesView.vue:187
 #: frontend/src/pages/dashboard/MailingListsView.vue:160
 #: mail/server/doctype/mail_cluster/mail_cluster.json
+#: mail/server/doctype/mail_principal/mail_principal.json
 msgid "Disabled"
 msgstr ""
 
@@ -1922,7 +1949,6 @@ msgstr ""
 
 #. Label of the display_name (Data) field in DocType 'Email Address'
 #. Label of the display_name (Data) field in DocType 'Mail Account'
-#. Label of the display_name (Data) field in DocType 'Mail Contact'
 #. Label of the display_name (Data) field in DocType 'Mail Message Recipient'
 #. Label of the display_name (Data) field in DocType 'Mailing List'
 #: frontend/src/components/Modals/AddMailingListModal.vue:39
@@ -1932,7 +1958,6 @@ msgstr ""
 #: frontend/src/pages/dashboard/MailingListsView.vue:147
 #: mail/client/doctype/email_address/email_address.json
 #: mail/client/doctype/mail_account/mail_account.json
-#: mail/client/doctype/mail_contact/mail_contact.json
 #: mail/client/doctype/mail_message_recipient/mail_message_recipient.json
 #: mail/client/doctype/mailing_list/mailing_list.json
 msgid "Display Name"
@@ -1958,10 +1983,15 @@ msgstr ""
 
 #. Label of the domain_name (Link) field in DocType 'Mail Account Request'
 #. Group in Mail Tenant's connections
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal'
+#. Option for the 'Principal Type' (Select) field in DocType 'Mail Principal
+#. Binding'
 #: frontend/src/components/Modals/AddMemberModal.vue:30
 #: frontend/src/pages/dashboard/DomainsView.vue:107
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_tenant/mail_tenant.json
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
 #: mail/server/report/dmarc_report_viewer/dmarc_report_viewer.py:50
 msgid "Domain"
 msgstr ""
@@ -2178,7 +2208,7 @@ msgstr ""
 msgid "Either blob_id or file_url is required for attachments."
 msgstr ""
 
-#: mail/utils/__init__.py:167
+#: mail/utils/__init__.py:253
 msgid "Either file path or file data is required."
 msgstr ""
 
@@ -2204,7 +2234,6 @@ msgstr ""
 #. Label of the email (Data) field in DocType 'Mail Account'
 #. Label of the email (Data) field in DocType 'Mail Account Request'
 #. Label of the email (Data) field in DocType 'Mail Alias'
-#. Label of the email (Data) field in DocType 'Mail Contact'
 #. Label of the email (Data) field in DocType 'Mail Message Recipient'
 #. Label of the email (Data) field in DocType 'Mailing List'
 #. Label of the member_email (Data) field in DocType 'Mailing List External
@@ -2222,7 +2251,6 @@ msgstr ""
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_alias/mail_alias.json
-#: mail/client/doctype/mail_contact/mail_contact.json
 #: mail/client/doctype/mail_message_recipient/mail_message_recipient.json
 #: mail/client/doctype/mailing_list/mailing_list.json
 #: mail/client/doctype/mailing_list_external_member/mailing_list_external_member.json
@@ -2252,6 +2280,10 @@ msgstr ""
 
 #: mail/utils/validation.py:102
 msgid "Email domain {0} does not match with domain {1}."
+msgstr ""
+
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:163
+msgid "Email domain {0} is not associated with tenant {1}."
 msgstr ""
 
 #: mail/client/doctype/mail_account/mail_account.py:281
@@ -2323,6 +2355,7 @@ msgstr ""
 #. Label of the enabled (Check) field in DocType 'Rate Limit'
 #. Label of the enabled (Check) field in DocType 'DKIM Key'
 #. Label of the enabled (Check) field in DocType 'Mail Cluster'
+#. Label of the enabled_permissions (JSON) field in DocType 'Mail Principal'
 #. Label of the enabled (Check) field in DocType 'Mail Server'
 #: frontend/src/components/Modals/EditAliasModal.vue:21
 #: frontend/src/components/Modals/MailAccountModal.vue:23
@@ -2338,6 +2371,7 @@ msgstr ""
 #: mail/mail/doctype/rate_limit/rate_limit.json
 #: mail/server/doctype/dkim_key/dkim_key.json
 #: mail/server/doctype/mail_cluster/mail_cluster.json
+#: mail/server/doctype/mail_principal/mail_principal.json
 #: mail/server/doctype/mail_server/mail_server.json
 msgid "Enabled"
 msgstr ""
@@ -2561,6 +2595,11 @@ msgstr ""
 msgid "External Account Binding"
 msgstr ""
 
+#. Label of the external_members (Table) field in DocType 'Mail Principal'
+#: mail/server/doctype/mail_principal/mail_principal.json
+msgid "External Members"
+msgstr ""
+
 #. Label of the extra_contact_info (Small Text) field in DocType 'DMARC Report'
 #: mail/server/doctype/dmarc_report/dmarc_report.json
 msgid "Extra Contact Info"
@@ -2619,6 +2658,10 @@ msgstr ""
 msgid "Failed to Verify"
 msgstr ""
 
+#: mail/server/doctype/mail_principal/mail_principal.py:359
+msgid "Failed to add principal {0}: {1}"
+msgstr ""
+
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:201
 msgid "Failed to clean import output"
 msgstr ""
@@ -2641,6 +2684,10 @@ msgstr ""
 
 #: mail/client/doctype/mail_message/mail_message.py:750
 msgid "Failed to delete mail(s)."
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:500
+msgid "Failed to delete principal {0}: {1}"
 msgstr ""
 
 #: mail/client/doctype/push_subscription/push_subscription.py:80
@@ -2689,6 +2736,10 @@ msgstr ""
 msgid "Failed to fetch message IDs."
 msgstr ""
 
+#: mail/server/doctype/mail_principal/mail_principal.py:237
+msgid "Failed to fetch principal {0}: {1}"
+msgstr ""
+
 #: mail/patches/generate_ssh_keypair_for_cluster.py:12
 msgid "Failed to generate SSH keypair"
 msgstr ""
@@ -2717,7 +2768,7 @@ msgstr ""
 msgid "Failed to handle JMAP Push Notification."
 msgstr ""
 
-#: mail/utils/__init__.py:187
+#: mail/utils/__init__.py:273
 msgid "Failed to load content from the compressed file."
 msgstr ""
 
@@ -2789,6 +2840,10 @@ msgstr ""
 msgid "Failed to update configuration"
 msgstr ""
 
+#: mail/server/doctype/mail_principal/mail_principal.py:484
+msgid "Failed to update principal {0}: {1}"
+msgstr ""
+
 #: frontend/src/components/Modals/AddDomainModal.vue:92
 msgid "Failed to verify DNS record."
 msgstr ""
@@ -2818,7 +2873,7 @@ msgstr ""
 msgid "File URL"
 msgstr ""
 
-#: mail/utils/__init__.py:194
+#: mail/utils/__init__.py:280
 msgid "File not found: {0}"
 msgstr ""
 
@@ -3083,12 +3138,21 @@ msgstr ""
 msgid "GoDaddy"
 msgstr ""
 
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal'
+#. Option for the 'Principal Type' (Select) field in DocType 'Mail Principal
+#. Binding'
 #: frontend/src/pages/dashboard/MailingListView.vue:283
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
 msgid "Group"
 msgstr ""
 
 #: frontend/src/components/Settings/AppearanceSettings.vue:20
 msgid "Group Messages By"
+msgstr ""
+
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:178
+msgid "Group {0} is not associated with tenant {1}."
 msgstr ""
 
 #. Label of the eab_hmac_key (Password) field in DocType 'Mail Server ACME
@@ -3275,12 +3339,14 @@ msgstr ""
 #. Label of the id (Data) field in DocType 'Mailbox'
 #. Label of the id (Data) field in DocType 'Quota'
 #. Label of the id (Data) field in DocType 'DMARC Report'
+#. Label of the id (Data) field in DocType 'Mail Principal'
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/contact_card/contact_card.json
 #: mail/client/doctype/identity/identity.json
 #: mail/client/doctype/mailbox/mailbox.json
 #: mail/client/doctype/quota/quota.json
 #: mail/server/doctype/dmarc_report/dmarc_report.json
+#: mail/server/doctype/mail_principal/mail_principal.json
 msgid "ID"
 msgstr ""
 
@@ -3316,6 +3382,11 @@ msgstr ""
 #. Label of the ipv6_addresses (Small Text) field in DocType 'Mail Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "IPv6 Addresses"
+msgstr ""
+
+#. Label of the identifier (Data) field in DocType 'Mail Principal Password'
+#: mail/server/doctype/mail_principal_password/mail_principal_password.json
+msgid "Identifier"
 msgstr ""
 
 #. Description of the 'Access Key' (Password) field in DocType 'Mail Cluster
@@ -3475,6 +3546,14 @@ msgstr ""
 msgid "Indicates whether the DNS zone is private."
 msgstr ""
 
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal'
+#. Option for the 'Principal Type' (Select) field in DocType 'Mail Principal
+#. Binding'
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
+msgid "Individual"
+msgstr ""
+
 #. Option for the 'Logging Level' (Select) field in DocType 'Mail Cluster
 #. Trace'
 #: mail/server/doctype/mail_cluster_trace/mail_cluster_trace.json
@@ -3535,6 +3614,11 @@ msgstr ""
 msgid "Installing Stalwart..."
 msgstr ""
 
+#. Group in User's connections
+#: mail/client/custom/user.json
+msgid "Integrations"
+msgstr ""
+
 #: frontend/src/pages/dashboard/MailingListView.vue:39
 #: frontend/src/pages/dashboard/MailingListView.vue:258
 msgid "Internal"
@@ -3575,6 +3659,11 @@ msgstr ""
 
 #: mail/client/doctype/mail_domain_request/mail_domain_request.py:49
 msgid "Invalid domain name"
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:299
+#: mail/server/doctype/mail_principal/mail_principal.py:419
+msgid "Invalid domain name provided for principal."
 msgstr ""
 
 #: mail/client/doctype/mail_queue/mail_queue.py:425
@@ -3671,7 +3760,7 @@ msgid "JMAP"
 msgstr ""
 
 #. Label of the jmap_settings (Section Break) field in DocType 'User'
-#: mail/fixtures/custom_field.json
+#: mail/client/custom/user.json mail/fixtures/custom_field.json
 msgid "JMAP Settings"
 msgstr ""
 
@@ -3832,6 +3921,14 @@ msgstr ""
 msgid "Linode"
 msgstr ""
 
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal'
+#. Option for the 'Principal Type' (Select) field in DocType 'Mail Principal
+#. Binding'
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
+msgid "List"
+msgstr ""
+
 #. Group in Mail Account's connections
 #. Group in Mail Domain's connections
 #. Group in Mail Tenant's connections
@@ -3851,6 +3948,10 @@ msgstr ""
 #. Service'
 #: mail/server/doctype/server_deployment_service/server_deployment_service.json
 msgid "List of volume mappings, e.g. [\"/data:/opt/data\"]."
+msgstr ""
+
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:193
+msgid "List {0} is not associated with tenant {1}."
 msgstr ""
 
 #. Label of the listener_id (Data) field in DocType 'Mail Server Listener'
@@ -3900,6 +4001,11 @@ msgstr ""
 msgid "Loading..."
 msgstr ""
 
+#. Label of the locale (Data) field in DocType 'Mail Principal'
+#: mail/server/doctype/mail_principal/mail_principal.json
+msgid "Locale"
+msgstr ""
+
 #. Label of the locality (Data) field in DocType 'Contact Card Address'
 #: mail/client/doctype/contact_card_address/contact_card_address.json
 msgid "Locality"
@@ -3946,6 +4052,11 @@ msgstr ""
 msgid "Logo"
 msgstr ""
 
+#. Group in User's connections
+#: mail/client/custom/user.json
+msgid "Logs"
+msgstr ""
+
 #: frontend/src/components/Modals/SearchModal.vue:48
 msgid "Look In"
 msgstr ""
@@ -3984,6 +4095,11 @@ msgstr ""
 #. Description of the 'Machine ID' (Data) field in DocType 'Mail Cluster Store'
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 msgid "Machine ID in the FoundationDB cluster."
+msgstr ""
+
+#. Label of the mail_settings (Tab Break) field in DocType 'User'
+#: mail/client/custom/user.json
+msgid "Mail"
 msgstr ""
 
 #. Name of a DocType
@@ -4077,11 +4193,6 @@ msgstr ""
 #: mail/server/doctype/mail_cluster/mail_cluster.py:368
 #: mail/server/doctype/mail_server/mail_server.py:85
 msgid "Mail Cluster {0} is disabled."
-msgstr ""
-
-#. Name of a DocType
-#: mail/client/doctype/mail_contact/mail_contact.json
-msgid "Mail Contact"
 msgstr ""
 
 #. Name of a DocType
@@ -4180,6 +4291,56 @@ msgid "Mail Messages deleted successfully."
 msgstr ""
 
 #. Name of a DocType
+#: mail/server/doctype/mail_principal/mail_principal.json
+msgid "Mail Principal"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
+msgid "Mail Principal Binding"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/mail_principal_email/mail_principal_email.json
+msgid "Mail Principal Email"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/mail_principal_list/mail_principal_list.json
+msgid "Mail Principal List"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/mail_principal_member/mail_principal_member.json
+msgid "Mail Principal Member"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/mail_principal_member_of/mail_principal_member_of.json
+msgid "Mail Principal Member Of"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/mail_principal_password/mail_principal_password.json
+msgid "Mail Principal Password"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
+msgid "Mail Principal Permission"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/mail_principal_role/mail_principal_role.json
+msgid "Mail Principal Role"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/mail_principal_url/mail_principal_url.json
+msgid "Mail Principal URL"
+msgstr ""
+
+#. Name of a DocType
 #: mail/client/doctype/mail_queue/mail_queue.json
 msgid "Mail Queue"
 msgstr ""
@@ -4213,11 +4374,13 @@ msgstr ""
 
 #: mail/backend.py:417
 #: mail/server/doctype/mail_backend_request/mail_backend_request.py:105
+#: mail/server/doctype/mail_principal/principal.py:104
 msgid "Mail Server {0} does not have a base URL."
 msgstr ""
 
 #: mail/backend.py:408
 #: mail/server/doctype/mail_backend_request/mail_backend_request.py:96
+#: mail/server/doctype/mail_principal/principal.py:95
 msgid "Mail Server {0} does not have a cluster."
 msgstr ""
 
@@ -4275,7 +4438,6 @@ msgstr ""
 #: mail/client/doctype/identity/identity.json
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_alias/mail_alias.json
-#: mail/client/doctype/mail_contact/mail_contact.json
 #: mail/client/doctype/mail_domain/mail_domain.json
 #: mail/client/doctype/mail_message/mail_message.json
 #: mail/client/doctype/mail_queue/mail_queue.json
@@ -4420,9 +4582,11 @@ msgstr ""
 msgid "Mailing List settings saved successfully"
 msgstr ""
 
+#. Label of the lists (Table) field in DocType 'Mail Principal'
 #: frontend/src/components/AppSidebar.vue:197
 #: frontend/src/pages/dashboard/MailingListView.vue:250
 #: frontend/src/pages/dashboard/MailingListsView.vue:3
+#: mail/server/doctype/mail_principal/mail_principal.json
 msgid "Mailing Lists"
 msgstr ""
 
@@ -4672,6 +4836,11 @@ msgstr ""
 msgid "Member (Type)"
 msgstr ""
 
+#. Label of the member_of (Table) field in DocType 'Mail Principal'
+#: mail/server/doctype/mail_principal/mail_principal.json
+msgid "Member Of"
+msgstr ""
+
 #: frontend/src/components/Modals/AddMemberModal.vue:40
 #: frontend/src/pages/dashboard/UsersView.vue:10
 msgid "Member Role"
@@ -4690,8 +4859,14 @@ msgstr ""
 msgid "Member removed successfully"
 msgstr ""
 
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:212
+msgid "Member {0} is not associated with tenant {1}."
+msgstr ""
+
+#. Label of the members (Table) field in DocType 'Mail Principal'
 #: frontend/src/components/AppSidebar.vue:191
 #: frontend/src/pages/dashboard/MembersView.vue:3
+#: mail/server/doctype/mail_principal/mail_principal.json
 msgid "Members"
 msgstr ""
 
@@ -4701,6 +4876,11 @@ msgstr ""
 
 #: frontend/src/pages/dashboard/MailingListView.vue:229
 msgid "Members removed successfully."
+msgstr ""
+
+#. Label of the memberships_tab (Tab Break) field in DocType 'Mail Principal'
+#: mail/server/doctype/mail_principal/mail_principal.json
+msgid "Memberships"
 msgstr ""
 
 #. Label of the message_section (Section Break) field in DocType 'Mail Message'
@@ -4894,11 +5074,13 @@ msgstr ""
 #. Label of the _name (Data) field in DocType 'Identity'
 #. Label of the _name (Data) field in DocType 'Mailbox'
 #. Label of the _name (Data) field in DocType 'Quota'
+#. Label of the _name (Data) field in DocType 'Mail Principal'
 #: frontend/src/pages/dashboard/MailingListView.vue:239
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/identity/identity.json
 #: mail/client/doctype/mailbox/mailbox.json
 #: mail/client/doctype/quota/quota.json
+#: mail/server/doctype/mail_principal/mail_principal.json
 #: mail/server/report/dmarc_report_viewer/dmarc_report_viewer.py:22
 msgid "Name"
 msgstr ""
@@ -5029,6 +5211,10 @@ msgstr ""
 
 #: mail/server/doctype/dmarc_report/dmarc_report.py:51
 msgid "No DMARC reports found."
+msgstr ""
+
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:136
+msgid "No Mail Principal Binding found for tenant: {0} and principal name: {1}"
 msgstr ""
 
 #: mail/client/doctype/address_book/address_book.py:62
@@ -5212,6 +5398,14 @@ msgstr ""
 msgid "Number of worker threads to use for the store, defaults to the number of cores."
 msgstr ""
 
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal'
+#. Option for the 'Principal Type' (Select) field in DocType 'Mail Principal
+#. Binding'
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
+msgid "OAuth Client"
+msgstr ""
+
 #. Label of the ok (Int) field in DocType 'Server Ansible Play'
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 msgid "OK"
@@ -5220,6 +5414,16 @@ msgstr ""
 #. Label of the otp (Data) field in DocType 'Mail Account Request'
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 msgid "OTP"
+msgstr ""
+
+#. Option for the 'Value' (Select) field in DocType 'Mail Principal Permission'
+#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
+msgid "Off"
+msgstr ""
+
+#. Option for the 'Value' (Select) field in DocType 'Mail Principal Permission'
+#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
+msgid "On"
 msgstr ""
 
 #. Label of the on_end (Data) field in DocType 'Mail Backend Request'
@@ -5341,6 +5545,11 @@ msgstr ""
 msgid "Other services this one depends on."
 msgstr ""
 
+#. Label of the mail_outbound (Section Break) field in DocType 'User'
+#: mail/client/custom/user.json
+msgid "Outbound"
+msgstr ""
+
 #. Label of the outbound_only (Check) field in DocType 'Mail Server'
 #: mail/server/doctype/mail_server/mail_server.json
 msgid "Outbound Only"
@@ -5399,12 +5608,14 @@ msgstr ""
 #. Label of the fallback_admin_password (Password) field in DocType 'Mail
 #. Cluster'
 #. Label of the password (Password) field in DocType 'Mail Cluster Store'
+#. Label of the password (Password) field in DocType 'Mail Principal'
 #: frontend/src/components/Modals/AddMemberModal.vue:79
 #: frontend/src/pages/BusinessSignupView.vue:37
 #: frontend/src/pages/LoginView.vue:12 frontend/src/pages/SignupView.vue:54
 #: mail/client/doctype/mail_account_request/mail_account_request.js:112
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
+#: mail/server/doctype/mail_principal/mail_principal.json
 msgid "Password"
 msgstr ""
 
@@ -5487,6 +5698,12 @@ msgstr ""
 
 #: frontend/src/components/Modals/ShortcutsModal.vue:76
 msgid "Permanently Delete"
+msgstr ""
+
+#. Label of the permissions_tab (Tab Break) field in DocType 'Mail Principal'
+#. Label of the permissions (Table) field in DocType 'Mail Principal'
+#: mail/server/doctype/mail_principal/mail_principal.json
+msgid "Permissions"
 msgstr ""
 
 #: frontend/src/pages/SignupView.vue:9
@@ -5630,6 +5847,10 @@ msgstr ""
 msgid "Please set the {0} in the Mail Settings."
 msgstr ""
 
+#: mail/server/doctype/mail_principal/mail_principal.py:137
+msgid "Please specify tenant to fetch principals."
+msgstr ""
+
 #: mail/server/doctype/server_ansible_play/server_ansible_play.py:50
 #: mail/server/doctype/server_deployment/server_deployment.py:92
 #: mail/server/doctype/server_job/server_job.py:49
@@ -5727,6 +5948,34 @@ msgstr ""
 msgid "Previous Thread (↑/K)"
 msgstr ""
 
+#. Label of the principal (Link) field in DocType 'Mail Principal Binding'
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
+msgid "Principal"
+msgstr ""
+
+#. Label of the principal_name (Data) field in DocType 'Mail Principal Binding'
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
+msgid "Principal Name"
+msgstr ""
+
+#. Label of the principal_type (Select) field in DocType 'Mail Principal
+#. Binding'
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
+msgid "Principal Type"
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:399
+msgid "Principal type cannot be changed."
+msgstr ""
+
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:147
+msgid "Principal {0} does not belong to tenant {1}."
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:241
+msgid "Principal {0} not found in backend."
+msgstr ""
+
 #. Label of the priority (Int) field in DocType 'Mail Domain DNS Record'
 #. Label of the priority (Select) field in DocType 'Mail Queue'
 #. Label of the priority (Int) field in DocType 'DNS Record'
@@ -5787,9 +6036,11 @@ msgstr ""
 msgid "Processing..."
 msgstr ""
 
+#. Group in User's connections
 #. Label of the profile (Data) field in DocType 'Mail Cluster Store'
 #: frontend/src/components/Modals/SettingsModal.vue:59
 #: frontend/src/components/Settings/ProfileSettings.vue:2
+#: mail/client/custom/user.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 msgid "Profile"
 msgstr ""
@@ -6000,8 +6251,10 @@ msgstr ""
 
 #. Label of the quota_section (Section Break) field in DocType 'Mail Account'
 #. Name of a DocType
+#. Label of the quota (Int) field in DocType 'Mail Principal'
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/quota/quota.json
+#: mail/server/doctype/mail_principal/mail_principal.json
 msgid "Quota"
 msgstr ""
 
@@ -6146,6 +6399,7 @@ msgstr ""
 #. Group in Mailing List's connections
 #. Group in DKIM Key's connections
 #. Group in Mail Cluster's connections
+#. Group in Mail Principal's connections
 #. Group in Mail Server's connections
 #. Group in Server Ansible Play's connections
 #. Group in Server Config's connections
@@ -6155,6 +6409,7 @@ msgstr ""
 #: mail/client/doctype/mailing_list/mailing_list.json
 #: mail/server/doctype/dkim_key/dkim_key.json
 #: mail/server/doctype/mail_cluster/mail_cluster.json
+#: mail/server/doctype/mail_principal/mail_principal.json
 #: mail/server/doctype/mail_server/mail_server.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_config/server_config.json
@@ -6550,12 +6805,22 @@ msgid "RocksDB"
 msgstr ""
 
 #. Label of the role (Select) field in DocType 'Mailbox'
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal'
+#. Option for the 'Principal Type' (Select) field in DocType 'Mail Principal
+#. Binding'
 #: mail/client/doctype/mailbox/mailbox.json
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
 msgid "Role"
 msgstr ""
 
 #: frontend/src/pages/dashboard/UsersView.vue:139
 msgid "Role updated successfully"
+msgstr ""
+
+#. Label of the roles (Table) field in DocType 'Mail Principal'
+#: mail/server/doctype/mail_principal/mail_principal.json
+msgid "Roles"
 msgstr ""
 
 #. Label of the is_root_domain (Check) field in DocType 'Mail Domain'
@@ -6980,7 +7245,7 @@ msgid "Server Type"
 msgstr ""
 
 #. Label of the jmap_server_url (Data) field in DocType 'User'
-#: mail/fixtures/custom_field.json
+#: mail/client/custom/user.json mail/fixtures/custom_field.json
 msgid "Server URL"
 msgstr ""
 
@@ -7045,10 +7310,11 @@ msgstr ""
 msgid "Setting up SSL..."
 msgstr ""
 
+#. Group in User's connections
 #: frontend/src/components/AppSidebar.vue:171
 #: frontend/src/components/Modals/SettingsModal.vue:2
 #: frontend/src/components/Modals/SettingsModal.vue:6
-#: frontend/src/components/PWASettings.vue:10
+#: frontend/src/components/PWASettings.vue:10 mail/client/custom/user.json
 msgid "Settings"
 msgstr ""
 
@@ -7233,7 +7499,7 @@ msgstr ""
 msgid "Specifies the maximum size for an email attachment."
 msgstr ""
 
-#: mail/utils/__init__.py:531
+#: mail/utils/__init__.py:617
 msgid "Stalwart CLI not found at {0}."
 msgstr ""
 
@@ -7562,7 +7828,6 @@ msgstr ""
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_alias/mail_alias.json
-#: mail/client/doctype/mail_contact/mail_contact.json
 #: mail/client/doctype/mail_domain/mail_domain.json
 #: mail/client/doctype/mail_domain_request/mail_domain_request.json
 #: mail/client/doctype/mail_message/mail_message.json
@@ -7588,6 +7853,8 @@ msgstr ""
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
 #: mail/server/doctype/mail_server/mail_server.json
 #: mail/server/doctype/message_queue/message_queue.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
@@ -7675,6 +7942,8 @@ msgstr ""
 #. Label of the tenant (Link) field in DocType 'Mail Tenant Member'
 #. Label of the tenant (Link) field in DocType 'Mailing List'
 #. Label of the tenant (Link) field in DocType 'Mail Data Exchange'
+#. Label of the tenant (Link) field in DocType 'Mail Principal'
+#. Label of the tenant (Link) field in DocType 'Mail Principal Binding'
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_alias/mail_alias.json
@@ -7683,6 +7952,8 @@ msgstr ""
 #: mail/client/doctype/mail_tenant_member/mail_tenant_member.json
 #: mail/client/doctype/mailing_list/mailing_list.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
 msgid "Tenant"
 msgstr ""
 
@@ -7694,6 +7965,15 @@ msgstr ""
 #: mail/client/doctype/mail_account_request/mail_account_request.py:99
 #: mail/client/doctype/mail_domain_request/mail_domain_request.py:39
 msgid "Tenant is required"
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:256
+msgid "Tenant must be provided to fetch principals."
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:283
+#: mail/server/doctype/mail_principal/mail_principal.py:390
+msgid "Tenant must be specified to add a principal."
 msgstr ""
 
 #. Label of the text_signature (Code) field in DocType 'Identity'
@@ -8249,6 +8529,8 @@ msgstr ""
 #. Label of the type (Select) field in DocType 'Mail Message Recipient'
 #. Label of the type (Select) field in DocType 'DNS Record'
 #. Label of the type (Select) field in DocType 'Mail Cluster Store'
+#. Label of the type (Select) field in DocType 'Mail Principal'
+#. Label of the type (Data) field in DocType 'Mail Principal Permission'
 #: frontend/src/pages/dashboard/MailAliasesView.vue:15
 #: frontend/src/pages/dashboard/MailingListView.vue:57
 #: frontend/src/pages/dashboard/MailingListView.vue:240
@@ -8260,6 +8542,8 @@ msgstr ""
 #: mail/client/doctype/mail_message_recipient/mail_message_recipient.json
 #: mail/server/doctype/dns_record/dns_record.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
 msgid "Type"
 msgstr ""
 
@@ -8298,6 +8582,11 @@ msgstr ""
 #. Cluster Store'
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 msgid "URL(s) of the Redis server(s)."
+msgstr ""
+
+#. Label of the urls_tab (Tab Break) field in DocType 'Mail Principal'
+#: mail/server/doctype/mail_principal/mail_principal.json
+msgid "URLs"
 msgstr ""
 
 #. Label of the storage_undelete_retention (Int) field in DocType 'Mail
@@ -8400,11 +8689,11 @@ msgstr ""
 msgid "Unsupported algorithm. Use 'rsa-sha256' or 'ed25519-sha256'."
 msgstr ""
 
-#: mail/utils/__init__.py:205
+#: mail/utils/__init__.py:291
 msgid "Unsupported file format: {0}"
 msgstr ""
 
-#: mail/utils/__init__.py:236
+#: mail/utils/__init__.py:322
 msgid "Unsupported output file format. Supported formats are .zip, .tgz, and .tar.gz."
 msgstr ""
 
@@ -8455,9 +8744,16 @@ msgstr ""
 msgid "Used"
 msgstr ""
 
+#. Label of the used_percentage (Percent) field in DocType 'Mail Principal'
+#: mail/server/doctype/mail_principal/mail_principal.json
+msgid "Used Percentage"
+msgstr ""
+
 #. Label of the _used_quota (Int) field in DocType 'Mail Account'
+#. Label of the used_quota (Int) field in DocType 'Mail Principal'
 #: frontend/src/components/Modals/MailAccountModal.vue:41
 #: mail/client/doctype/mail_account/mail_account.json
+#: mail/server/doctype/mail_principal/mail_principal.json
 msgid "Used Quota"
 msgstr ""
 
@@ -8481,7 +8777,6 @@ msgstr ""
 #. Label of the user (Link) field in DocType 'Contact Card'
 #. Label of the user (Link) field in DocType 'Identity'
 #. Label of the user (Link) field in DocType 'Mail Account'
-#. Label of the user (Link) field in DocType 'Mail Contact'
 #. Label of the user (Link) field in DocType 'Mail Domain Request'
 #. Label of the user (Link) field in DocType 'Mail Message'
 #. Label of the user (Link) field in DocType 'Mail Queue'
@@ -8499,7 +8794,6 @@ msgstr ""
 #: mail/client/doctype/contact_card/contact_card.json
 #: mail/client/doctype/identity/identity.json
 #: mail/client/doctype/mail_account/mail_account.json
-#: mail/client/doctype/mail_contact/mail_contact.json
 #: mail/client/doctype/mail_domain_request/mail_domain_request.json
 #: mail/client/doctype/mail_message/mail_message.json
 #: mail/client/doctype/mail_queue/mail_queue.json
@@ -8630,7 +8924,8 @@ msgstr ""
 #: frontend/src/components/Modals/AddAliasModal.vue:21
 #: frontend/src/components/Modals/AddMailingListModal.vue:20
 #: frontend/src/components/Modals/AddMemberModal.vue:20
-#: frontend/src/pages/SignupView.vue:18 mail/fixtures/custom_field.json
+#: frontend/src/pages/SignupView.vue:18 mail/client/custom/user.json
+#: mail/fixtures/custom_field.json
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
@@ -8682,10 +8977,26 @@ msgstr ""
 
 #. Label of the value (Text) field in DocType 'Mail Domain DNS Record'
 #. Label of the value (Text) field in DocType 'DNS Record'
+#. Label of the value (Data) field in DocType 'Mail Principal Email'
+#. Label of the value (Data) field in DocType 'Mail Principal List'
+#. Label of the value (Data) field in DocType 'Mail Principal Member'
+#. Label of the value (Data) field in DocType 'Mail Principal Member Of'
+#. Label of the value (Small Text) field in DocType 'Mail Principal Password'
+#. Label of the value (Select) field in DocType 'Mail Principal Permission'
+#. Label of the value (Data) field in DocType 'Mail Principal Role'
+#. Label of the value (Data) field in DocType 'Mail Principal URL'
 #. Label of the value (Small Text) field in DocType 'Server Ansible Play
 #. Variable'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal_email/mail_principal_email.json
+#: mail/server/doctype/mail_principal_list/mail_principal_list.json
+#: mail/server/doctype/mail_principal_member/mail_principal_member.json
+#: mail/server/doctype/mail_principal_member_of/mail_principal_member_of.json
+#: mail/server/doctype/mail_principal_password/mail_principal_password.json
+#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
+#: mail/server/doctype/mail_principal_role/mail_principal_role.json
+#: mail/server/doctype/mail_principal_url/mail_principal_url.json
 #: mail/server/doctype/server_ansible_play_variable/server_ansible_play_variable.json
 msgid "Value"
 msgstr ""
@@ -8943,6 +9254,14 @@ msgstr ""
 
 #: mail/client/doctype/mail_queue/mail_queue.py:334
 msgid "You cannot send email from {0} using user {1}. Please use the email address associated with the user."
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:254
+msgid "You do not have permission to access principals for this tenant."
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:139
+msgid "You do not have permission to access principals."
 msgstr ""
 
 #: mail/jmap.py:1893

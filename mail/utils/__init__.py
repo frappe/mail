@@ -11,6 +11,7 @@ import unicodedata
 import zipfile
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from io import BytesIO
 from typing import Any, Literal
 
@@ -23,6 +24,7 @@ from frappe.types.filter import FilterTuple
 from frappe.utils import get_bench_path
 from frappe.utils.caching import redis_cache
 from markdown_it import MarkdownIt
+from passlib.hash import pbkdf2_sha512
 
 INVISIBLE_CHARS = (
 	r"[\u0000-\u001F\u007F-\u009F"  # ASCII control chars
@@ -70,6 +72,30 @@ def generate_random_phrase() -> str:
 	return " ".join(["".join(random.choices(string.ascii_lowercase, k=l)) for l in (5, 4, 4, 4, 3)])
 
 
+def generate_app_password(source: str | None = None) -> str:
+	"""Generates an app password hash with metadata."""
+
+	source = source or frappe.local.site
+
+	phrase = os.urandom(32)
+	encoded_phrase = base64.b64encode(phrase).decode()
+
+	first_section = base64.b64encode(
+		f"{source}${datetime.now(timezone.utc).isoformat(timespec='milliseconds')}".encode()
+	).decode()
+
+	password_hash = pbkdf2_sha512.using(rounds=150000, salt_size=16).hash(encoded_phrase)
+
+	parts = password_hash.split("$")
+	algo = "app"
+	rounds = parts[2]
+	salt = parts[3]
+	digest = parts[4]
+
+	final_password = f"${algo}${first_section}$${rounds}${salt}/${digest}"
+	return final_password
+
+
 def reformat_pbkdf2_hash(passlib_hash: str, dklen: int | None = None) -> str:
 	"""Normalize a PBKDF2 hash into a consistent format."""
 
@@ -115,6 +141,13 @@ def user_context(user: str) -> Generator[None, None, None]:
 		frappe.session.data = session_data
 
 
+def snake_to_camel(input) -> str:
+	"""Convert snake_case string to camelCase."""
+
+	parts = input.split("_")
+	return parts[0] + "".join(word.capitalize() for word in parts[1:])
+
+
 def encode_image_to_base64(image_path: str) -> str:
 	"""Encodes an image to a base64 string with line breaks every 76 characters."""
 
@@ -148,6 +181,59 @@ def generate_secret(length: int = 32) -> str:
 
 	characters = string.ascii_letters + string.digits
 	return "".join(secrets.choice(characters) for _ in range(length))
+
+
+def parse_token(token: str) -> dict:
+	"""
+	Parses token formats like:
+	$app$<base64>$<hash...>
+	$app$<base64>$$<hash...>
+
+	Extracts:
+	- raw_base64
+	- decoded_metadata
+	- bcrypt details if recognizable
+	"""
+
+	if not token.startswith("$app$"):
+		raise ValueError("Invalid token format: must start with $app$")
+
+	parts = token.split("$")
+
+	if len(parts) < 4:
+		raise ValueError("Invalid token format structure")
+
+	raw_base64 = parts[2]
+	bcrypt_raw = "$".join(parts[3:]).lstrip("$")
+
+	try:
+		decoded_str = base64.b64decode(raw_base64).decode("utf-8")
+	except Exception:
+		raise ValueError("Invalid Base64 metadata")
+
+	bcrypt_parts = bcrypt_raw.split("$")
+	bcrypt_info = {
+		"version": None,
+		"cost": None,
+		"salt_hash": bcrypt_raw,
+		"raw": bcrypt_raw,
+	}
+
+	if len(bcrypt_parts) >= 3 and bcrypt_parts[0] in ("2a", "2b", "2y"):
+		bcrypt_info["version"] = bcrypt_parts[0]
+		bcrypt_info["cost"] = int(bcrypt_parts[1])
+		bcrypt_info["salt_hash"] = "$".join(bcrypt_parts[2:])
+
+	elif len(bcrypt_parts) >= 3:
+		bcrypt_info["version"] = bcrypt_parts[0]
+		bcrypt_info["cost"] = bcrypt_parts[1]
+		bcrypt_info["salt_hash"] = "$".join(bcrypt_parts[2:])
+
+	return {
+		"raw_base64": raw_base64,
+		"decoded_metadata": decoded_str,
+		"bcrypt": bcrypt_info,
+	}
 
 
 def load_compressed_file(file_path: str | None = None, file_data: bytes | None = None) -> str:

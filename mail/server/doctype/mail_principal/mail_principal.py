@@ -1,0 +1,632 @@
+# Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
+# For license information, please see license.txt
+
+import json
+from typing import Literal
+
+import frappe
+from frappe import _, unscrub
+from frappe.model.document import Document
+from frappe.utils import cint, today, validate_email_address
+
+from mail.server.doctype.mail_principal.principal import BackendAPI, get_backend_api
+from mail.server.doctype.mail_principal_binding.mail_principal_binding import (
+	create_principal_binding,
+	delete_principal_binding,
+	ensure_emails_belong_to_tenant_domains,
+	ensure_groups_belong_to_tenant,
+	ensure_lists_belong_to_tenant,
+	ensure_members_belong_to_tenant,
+	ensure_principal_belong_to_tenant,
+	get_tenant_principals,
+)
+from mail.utils import generate_app_password, hash_password, parse_filters, parse_token, snake_to_camel
+from mail.utils.cache import get_cluster_for_tenant
+from mail.utils.user import get_tenant_for_user, is_system_manager, is_tenant_admin
+
+PRINCIPAL_ENDPOINT = "/api/principal"
+TYPE_MAP = {
+	"apiKey": "API Key",
+	"domain": "Domain",
+	"group": "Group",
+	"individual": "Individual",
+	"list": "List",
+	"oauthClient": "OAuth Client",
+	"role": "Role",
+}
+
+
+class MailPrincipal(Document):
+	@property
+	def _app_passwords(self) -> list[str]:
+		"""Returns a list of app password identifiers."""
+
+		return [ap.identifier for ap in self.get("app_passwords") or []]
+
+	@property
+	def _emails(self) -> list[str]:
+		"""Returns a list of email addresses associated with the principal."""
+
+		return [e.value for e in self.get("emails") or []]
+
+	@property
+	def _member_of(self) -> list[str]:
+		"""Returns a list of groups the principal is a member of."""
+
+		return [m.value for m in self.get("member_of") or []]
+
+	@property
+	def _roles(self) -> list[str]:
+		"""Returns a list of roles assigned to the principal."""
+
+		return [r.value for r in self.get("roles") or []]
+
+	@property
+	def _lists(self) -> list[str]:
+		"""Returns a list of lists the principal is part of."""
+
+		return [l.value for l in self.get("lists") or []]
+
+	@property
+	def _members(self) -> list[str]:
+		"""Returns a list of members of the principal."""
+
+		return [m.value for m in self.get("members") or []]
+
+	@property
+	def _enabled_permissions(self) -> list[str]:
+		"""Returns a list of enabled permissions."""
+
+		return [p.type for p in self.get("permissions") or [] if p.value == "On"]
+
+	@property
+	def _disabled_permissions(self) -> list[str]:
+		"""Returns a list of disabled permissions."""
+
+		return [p.type for p in self.get("permissions") or [] if p.value == "Off"]
+
+	@property
+	def _external_members(self) -> list[str]:
+		"""Returns a list of external members of the principal."""
+
+		return [em.value for em in self.get("external_members") or []]
+
+	def db_insert(self, *args, **kwargs) -> None:
+		self.name = add_principal(
+			self.tenant,
+			self._name,
+			self.type,
+			cint(self.quota),
+			self.description,
+			self.get_password("password") if self.type == "Individual" else None,
+			self._app_passwords,
+			self._emails,
+			self._member_of,
+			self._roles,
+			self._lists,
+			self._members,
+			self._enabled_permissions,
+			self._disabled_permissions,
+			self._external_members,
+			self.locale,
+		)
+
+	def load_from_db(self) -> "MailPrincipal":
+		tenant, pname = self.name.split("|")
+		principal = get_principal(tenant, pname)
+		return super(Document, self).__init__(principal)
+
+	def db_update(self) -> None:
+		tenant, pname = self.name.split("|")
+		update_principal(tenant, pname, self)
+		self.reload()
+
+	def delete(self) -> None:
+		tenant, pname = self.name.split("|")
+		delete_principal(tenant, pname)
+
+	@staticmethod
+	def get_list(filters=None, page_length=20, **kwargs) -> list:
+		filters = parse_filters(filters)
+		tenant = filters.get("tenant") or get_tenant_for_user(frappe.session.user)
+		type = filters.get("type")
+		text = filters.get("text")
+
+		if not tenant:
+			if is_system_manager(frappe.session.user):
+				frappe.msgprint(_("Please specify tenant to fetch principals."), alert=True)
+				return []
+			frappe.throw(_("You do not have permission to access principals."))
+
+		limit = cint(kwargs.get("start", 1)) + page_length
+		principals, total = fetch_principals(tenant, type, limit=limit)
+
+		frappe.cache.set_value(_get_total_cache_key(tenant, type, text), total, expires_in_sec=600)
+
+		return principals
+
+	@staticmethod
+	def get_count(filters=None, **kwargs) -> int:
+		filters = parse_filters(filters)
+		tenant = filters.get("tenant") or get_tenant_for_user(frappe.session.user)
+		type = filters.get("type")
+		text = filters.get("text")
+
+		if not tenant:
+			return 0
+
+		ensure_access_to_tenant(tenant)
+
+		return cint(frappe.cache.get_value(_get_total_cache_key(tenant, type, text)))
+
+	@staticmethod
+	def get_stats(**kwargs) -> dict:
+		return {}
+
+
+def _get_local_type(principal_type: str) -> str:
+	"""Returns the local principal type for the given backend principal type."""
+
+	return TYPE_MAP[principal_type]
+
+
+def _get_principal_type(local_type: str) -> str:
+	"""Returns the backend principal type for the given local principal type."""
+
+	reversed_map = {v: k for k, v in TYPE_MAP.items()}
+	return reversed_map[local_type]
+
+
+def _get_total_cache_key(tenant: str, type: str | None, text: str | None) -> str:
+	"""Returns a cache key for storing total count of principals for the given tenant, type and text."""
+
+	return f"principals:{tenant}:{type}:{text}:total"
+
+
+def _get_principal_cache_key(tenant: str, pname: str) -> str:
+	"""Returns a cache key for the principal with the given tenant and principal name."""
+
+	return f"principal:{tenant}:{pname}"
+
+
+def _get_principal_from_cache(tenant: str, pname: str) -> dict | None:
+	"""Returns the principal from cache if exists."""
+
+	cache_key = _get_principal_cache_key(tenant, pname)
+	return frappe.cache.get_value(cache_key)
+
+
+def _store_principal_in_cache(tenant: str, pname: str, principal: dict) -> None:
+	"""Store a principal in cache with TTL and maintain per-tenant bucket size."""
+
+	cache_key = _get_principal_cache_key(tenant, pname)
+	list_key = f"principal:{tenant}:names"
+	principal_bucket_size = cint(frappe.conf.principal_bucket_size) or 100000
+
+	principal_cache_ttl = cint(frappe.conf.principal_cache_ttl) or 2 * 24 * 60 * 60  # 2 days
+	frappe.cache.set_value(cache_key, principal, expires_in_sec=principal_cache_ttl)
+	frappe.cache.lpush(list_key, pname)
+
+	frappe.cache.ltrim(list_key, 0, principal_bucket_size - 1)
+
+	while frappe.cache.llen(list_key) > principal_bucket_size:
+		if oldest_id := frappe.cache.rpop(list_key):
+			frappe.cache.delete_key(_get_principal_cache_key(tenant, oldest_id))
+
+
+def _remove_principal_from_cache(tenant: str, pname: str) -> None:
+	"""Removes a principal from cache."""
+
+	cache_key = _get_principal_cache_key(tenant, pname)
+	frappe.cache.delete_value(cache_key)
+
+	list_key = f"principal:{tenant}:names"
+	frappe.cache.lrem(list_key, 0, pname)
+
+	if not frappe.cache.llen(list_key):
+		frappe.cache.delete_value(list_key)
+
+
+def _get_principal(backend: BackendAPI, pname: str, ignore_not_found: bool = True) -> dict:
+	"""Fetches principal details from backend."""
+
+	endpoint = f"{PRINCIPAL_ENDPOINT}/{pname}"
+	response = backend.request("GET", endpoint)
+
+	if response.status_code != 200:
+		frappe.throw(_("Failed to fetch principal {0}: {1}").format(frappe.bold(pname), response.text))
+
+	if response.json().get("error") == "notFound":
+		if not ignore_not_found:
+			frappe.throw(_("Principal {0} not found in backend.").format(frappe.bold(pname)))
+
+		return {}
+
+	return response.json()["data"]
+
+
+def ensure_access_to_tenant(tenant: str) -> None:
+	"""Validates if the user has permission to access principals for the given tenant."""
+
+	user = frappe.session.user
+	if tenant:
+		if not is_tenant_admin(tenant, user) and not is_system_manager(user):
+			frappe.throw(_("You do not have permission to access principals for this tenant."))
+	else:
+		frappe.throw(_("Tenant must be provided to fetch principals."))
+
+
+@frappe.whitelist()
+def add_principal(
+	tenant: str,
+	pname: str,
+	type: Literal["API Key", "Domain", "Group", "Individual", "List", "OAuth Client", "Role"],
+	quota: int = 0,
+	description: str | None = None,
+	password: str | None = None,
+	app_passwords: list[str] | None = None,
+	emails: list[str] | None = None,
+	member_of: list[str] | None = None,
+	roles: list[str] | None = None,
+	lists: list[str] | None = None,
+	members: list[str] | None = None,
+	enabled_permissions: list[str] | None = None,
+	disabled_permissions: list[str] | None = None,
+	external_members: list[str] | None = None,
+	locale: str | None = None,
+) -> str:
+	"""Adds a new principal to the given tenant and returns the principal name in the format 'tenant|pname'."""
+
+	if type in ["API Key", "Group", "OAuth Client", "Role"]:
+		raise NotImplementedError(f"Principal type {type} is not supported yet.")
+	if not tenant:
+		frappe.throw(_("Tenant must be specified to add a principal."))
+
+	ensure_access_to_tenant(tenant=tenant)
+
+	_secrets = []
+	_emails = []
+	_member_of = []
+	_roles = []
+	_lists = []
+	_members = []
+	_enabled_permissions = []
+	_disabled_permissions = []
+	_external_members = []
+
+	if type == "Domain":
+		if "." not in pname:
+			frappe.throw(_("Invalid domain name provided for principal."))
+
+	if type == "Individual":
+		_roles = ["user"]
+		if password:
+			_secrets.append(hash_password(password))
+		if app_passwords:
+			for ap in app_passwords:
+				_secrets.append(generate_app_password(ap))
+
+	if type in ["Group", "Individual", "List"]:
+		_emails = [pname] + (emails or [])
+		for email in _emails:
+			validate_email_address(email, True)
+		ensure_emails_belong_to_tenant_domains(tenant, _emails)
+
+	if type in ["Group", "Individual"]:
+		if _member_of := member_of or []:
+			for group in _member_of:
+				validate_email_address(group, True)
+			ensure_groups_belong_to_tenant(tenant, _member_of)
+
+		if _lists := lists or []:
+			for lst in _lists:
+				validate_email_address(lst, True)
+			ensure_lists_belong_to_tenant(tenant, _lists)
+
+		_disabled_permissions = disabled_permissions or []
+
+	if type in ["Group", "List"]:
+		if _members := members or []:
+			for member in _members:
+				validate_email_address(member, True)
+			ensure_members_belong_to_tenant(tenant, _members)
+
+	if type == "List":
+		if _external_members := external_members or []:
+			for member in _external_members:
+				validate_email_address(member, True)
+
+	payload = {
+		"name": pname,
+		"type": _get_principal_type(type),
+		"quota": quota,
+		"description": description or "",
+		"secrets": _secrets,
+		"emails": _emails,
+		"memberOf": _member_of,
+		"roles": _roles,
+		"lists": _lists,
+		"members": _members,
+		"enabledPermissions": _enabled_permissions,
+		"disabledPermissions": _disabled_permissions,
+		"externalMembers": _external_members,
+		"locale": locale,
+	}
+	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	response = backend.request("POST", PRINCIPAL_ENDPOINT, data=json.dumps(payload))
+
+	if response.status_code != 200 or response.json().get("error"):
+		frappe.throw(_("Failed to add principal {0}: {1}").format(frappe.bold(pname), response.text))
+
+	create_principal_binding(tenant, f"{tenant}|{pname}", type)
+	return f"{tenant}|{pname}"
+
+
+@frappe.whitelist()
+def get_principal(tenant: str, pname: str) -> dict:
+	"""Returns principal details for the given principal name."""
+
+	ensure_access_to_tenant(tenant)
+	ensure_principal_belong_to_tenant(tenant, pname)
+
+	if cached := _get_principal_from_cache(tenant, pname):
+		return cached
+
+	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	principal = _get_principal(backend, pname, ignore_not_found=False)
+	formatted = format_principal(tenant, principal)
+	_store_principal_in_cache(tenant, pname, formatted)
+
+	return formatted
+
+
+@frappe.whitelist()
+def update_principal(tenant: str, pname: str, principal: "MailPrincipal") -> None:
+	"""Updates the principal with the given principal name."""
+
+	if principal.type in ["API Key", "Group", "OAuth Client", "Role"]:
+		raise NotImplementedError(f"Principal type {principal.type} is not supported yet.")
+	if not tenant:
+		frappe.throw(_("Tenant must be specified to add a principal."))
+
+	ensure_access_to_tenant(tenant=tenant)
+	ensure_principal_belong_to_tenant(tenant, pname)
+
+	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	existing_principal = frappe._dict(_get_principal(backend, pname, ignore_not_found=False))
+
+	if principal.type != TYPE_MAP[existing_principal.type]:
+		frappe.throw(_("Principal type cannot be changed."))
+
+	updates = {
+		"name": principal._name,
+		"quota": cint(principal.quota),
+		"description": principal.description or "",
+		"secrets": [],
+		"emails": [],
+		"member_of": [],
+		"roles": [],
+		"lists": [],
+		"members": [],
+		"enabled_permissions": [],
+		"disabled_permissions": [],
+		"external_members": [],
+		"locale": principal.locale,
+	}
+
+	if principal.type == "Domain":
+		if "." not in principal._name:
+			frappe.throw(_("Invalid domain name provided for principal."))
+
+	if principal.type == "Individual":
+		updates["roles"] = principal._roles
+		if principal.password:
+			updates["secrets"].append(hash_password(principal.get_password("password")))
+		else:
+			for password in existing_principal.secrets or []:
+				if not password.startswith("$app$"):
+					updates["secrets"].append(password)
+
+		if principal.app_passwords:
+			for ap in principal.app_passwords:
+				updates["secrets"].append(ap.value or generate_app_password(ap.identifier))
+
+	if principal.type in ["Group", "Individual", "List"]:
+		updates["emails"] = [principal._name] + principal._emails
+		for email in updates["emails"]:
+			validate_email_address(email, True)
+		ensure_emails_belong_to_tenant_domains(tenant, updates["emails"])
+
+	if principal.type in ["Group", "Individual"]:
+		updates["member_of"] = principal._member_of
+		for group in updates["member_of"]:
+			validate_email_address(group, True)
+		ensure_groups_belong_to_tenant(tenant, updates["member_of"])
+
+		updates["lists"] = principal._lists
+		for lst in updates["lists"]:
+			validate_email_address(lst, True)
+		ensure_lists_belong_to_tenant(tenant, updates["lists"])
+
+		updates["disabled_permissions"] = principal._disabled_permissions
+
+	if principal.type in ["Group", "List"]:
+		updates["members"] = principal._members
+		for member in updates["members"]:
+			validate_email_address(member, True)
+		ensure_members_belong_to_tenant(tenant, updates["members"])
+
+	if principal.type == "List":
+		updates["external_members"] = principal._external_members
+		for member in updates["external_members"]:
+			validate_email_address(member, True)
+
+	actions = []
+	for field, value in updates.items():
+		if field in ["name", "quota", "description", "locale"]:
+			if existing_principal.get(field) != value:
+				actions.append({"action": "set", "field": field, "value": value})
+			continue
+
+		server_field = snake_to_camel(field)
+		existing_values = existing_principal.get(server_field, [])
+		if values_to_add := set(value) - set(existing_values):
+			for v in values_to_add:
+				actions.append({"action": "addItem", "field": server_field, "value": v})
+		if values_to_remove := set(existing_values) - set(value):
+			for v in values_to_remove:
+				actions.append({"action": "removeItem", "field": server_field, "value": v})
+
+	endpoint = f"{PRINCIPAL_ENDPOINT}/{pname}"
+	response = backend.request("PATCH", endpoint, data=json.dumps(actions))
+
+	if response.status_code != 200 or response.json().get("error"):
+		frappe.throw(_("Failed to update principal {0}: {1}").format(frappe.bold(pname), response.text))
+
+	_remove_principal_from_cache(tenant, pname)
+
+
+@frappe.whitelist()
+def delete_principal(tenant: str, pname: str) -> None:
+	"""Deletes the principal with the given principal name."""
+
+	ensure_access_to_tenant(tenant)
+
+	endpoint = f"{PRINCIPAL_ENDPOINT}/{pname}"
+	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	response = backend.request("DELETE", endpoint)
+
+	if response.status_code != 200:
+		frappe.throw(_("Failed to delete principal {0}: {1}").format(frappe.bold(pname), response.text))
+
+	_remove_principal_from_cache(tenant, pname)
+	delete_principal_binding(tenant, pname, raise_exception=False)
+
+
+@frappe.whitelist()
+def fetch_principals(
+	tenant: str,
+	type: str | None = None,
+	filter: str | None = None,
+	page: int = 1,
+	limit: int = 10,
+) -> tuple[list, int]:
+	"""Returns a list of principals for the given tenant."""
+
+	ensure_access_to_tenant(tenant)
+
+	tenant_principals, total = get_tenant_principals(tenant, type, filter, page, limit)
+
+	if total == 0:
+		return [], total
+
+	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+
+	principals = []
+	for pname in tenant_principals:
+		if principal := _get_principal_from_cache(tenant, pname):
+			principals.append(principal)
+			continue
+
+		principal = _get_principal(backend, pname, ignore_not_found=True)
+
+		if not principal:
+			total -= 1
+			continue
+
+		formatted = format_principal(tenant, principal)
+		_store_principal_in_cache(tenant, pname, formatted)
+		principals.append(formatted)
+
+	return principals, total
+
+
+def format_principal(tenant: str, principal: dict) -> dict:
+	"""Formats the principal data from backend to local format."""
+
+	type = _get_local_type(principal["type"])
+	formatted = {
+		"type": type,
+		"tenant": tenant,
+		"id": principal["id"],
+		"_name": principal["name"],
+		"name": f"{tenant}|{principal['name']}",
+		"description": principal.get("description"),
+		"members": 0,
+		"creation": today(),
+		"modified": today(),
+	}
+
+	if type in ["API Key", "Group", "Individual"]:
+		permissions = [
+			{"description": unscrub(p), "type": p, "value": "On"}
+			for p in principal.get("enabledPermissions", [])
+		] + [
+			{"description": unscrub(p), "type": p, "value": "Off"}
+			for p in principal.get("disabledPermissions", [])
+		]
+		formatted.update(
+			{
+				"roles": [{"value": r} for r in principal.get("roles", [])],
+				"enabled_permissions": json.dumps(principal.get("enabledPermissions", []), indent=4),
+				"disabled_permissions": json.dumps(principal.get("disabledPermissions", []), indent=4),
+				"permissions": permissions,
+			}
+		)
+
+	if type in ["API Key", "Individual"]:
+		formatted["secrets"] = json.dumps(principal.get("secrets", []), indent=4)
+
+	if type in ["Group", "Individual"]:
+		quota = cint(principal.get("quota"))
+		used_quota = cint(principal.get("usedQuota"))
+		formatted.update(
+			{
+				"quota": quota,
+				"used_quota": used_quota,
+				"used_percentage": (cint(used_quota / quota * 100) if quota > 0 else 0),
+				"member_of": [{"value": m} for m in principal.get("memberOf", [])],
+				"lists": [{"value": l} for l in principal.get("lists", [])],
+			}
+		)
+
+	if type in ["Group", "Individual", "List"]:
+		formatted["emails"] = [{"value": e} for e in principal.get("emails", [])]
+
+	if type in ["Group", "List"]:
+		formatted["members"] = [{"value": m} for m in principal.get("members", [])]
+
+	if type == "Individual":
+		app_passwords = [
+			{"identifier": parse_token(s)["decoded_metadata"], "value": s}
+			for s in principal.get("secrets", [])
+			if s.startswith("$app$")
+		]
+		formatted.update(
+			{
+				"locale": principal.get("locale"),
+				"app_passwords": app_passwords,
+			}
+		)
+
+	if type == "List":
+		formatted["external_members"] = [{"value": m} for m in principal.get("externalMembers", [])]
+
+	return formatted
+
+
+def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
+	if doc.doctype != "Mail Principal":
+		return False
+
+	user = user or frappe.session.user
+	if is_system_manager(user):
+		return True
+	elif (
+		doc.tenant
+		and is_tenant_admin(doc.tenant, user)
+		and ensure_principal_belong_to_tenant(doc.tenant, doc._name)
+	):
+		return True
+
+	return False
