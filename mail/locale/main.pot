@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-22 16:54+0553\n"
-"PO-Revision-Date: 2025-11-22 16:54+0553\n"
+"POT-Creation-Date: 2025-11-23 07:07+0553\n"
+"PO-Revision-Date: 2025-11-23 07:07+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -188,7 +188,6 @@ msgstr ""
 
 #. Label of the account (Data) field in DocType 'Mail Account Request'
 #. Group in Mail Domain's connections
-#. Label of the account (Link) field in DocType 'Mail Sync History'
 #. Group in Mail Tenant's connections
 #. Label of the account (Link) field in DocType 'Push Subscription'
 #. Label of the account (Link) field in DocType 'Push Verification Queue'
@@ -197,7 +196,6 @@ msgstr ""
 #: frontend/src/components/Modals/SettingsModal.vue:65
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_domain/mail_domain.json
-#: mail/client/doctype/mail_sync_history/mail_sync_history.json
 #: mail/client/doctype/mail_tenant/mail_tenant.json
 #: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/client/doctype/push_verification_queue/push_verification_queue.json
@@ -893,7 +891,7 @@ msgstr ""
 msgid "Cancelling Delivery..."
 msgstr ""
 
-#: mail/api/inbound.py:84
+#: mail/api/inbound.py:83
 msgid "Cannot fetch more than {0} emails at a time."
 msgstr ""
 
@@ -2462,7 +2460,7 @@ msgstr ""
 msgid "Error setting SPF Identifier for Mail Cluster"
 msgstr ""
 
-#: mail/api/outbound.py:49
+#: mail/api/outbound.py:48
 msgid "Error uploading attachment"
 msgstr ""
 
@@ -3576,7 +3574,7 @@ msgstr ""
 msgid "Invalid file URL: {0}. File URLs must start with '/files/' or '/private/files/'."
 msgstr ""
 
-#: mail/api/outbound.py:30
+#: mail/api/outbound.py:29
 msgid "Invalid file type."
 msgstr ""
 
@@ -4243,7 +4241,7 @@ msgid "Mail Sync History"
 msgstr ""
 
 #: mail/client/doctype/mail_sync_history/mail_sync_history.py:20
-msgid "Mail Sync History already exists for this source, user and account"
+msgid "Mail Sync History already exists for this source and user."
 msgstr ""
 
 #. Name of a DocType
@@ -5026,10 +5024,6 @@ msgstr ""
 msgid "No DMARC reports found."
 msgstr ""
 
-#: mail/api/inbound.py:182 mail/api/outbound.py:139
-msgid "No Mail Account found for the user {0}."
-msgstr ""
-
 #: mail/client/doctype/address_book/address_book.py:62
 msgid "No address book found."
 msgstr ""
@@ -5063,11 +5057,11 @@ msgstr ""
 msgid "No domains found."
 msgstr ""
 
-#: mail/api/outbound.py:52
+#: mail/api/outbound.py:51
 msgid "No file found in the request."
 msgstr ""
 
-#: mail/api/outbound.py:183
+#: mail/api/outbound.py:171
 msgid "No file part named 'raw_message' found."
 msgstr ""
 
@@ -7926,11 +7920,11 @@ msgstr ""
 msgid "The protocol used by the listener."
 msgstr ""
 
-#: mail/api/outbound.py:123 mail/api/outbound.py:199
+#: mail/api/outbound.py:122 mail/api/outbound.py:187
 msgid "The raw message exceeds the maximum allowed size of {0} MB."
 msgstr ""
 
-#: mail/api/outbound.py:118 mail/api/outbound.py:245
+#: mail/api/outbound.py:117 mail/api/outbound.py:233
 msgid "The raw message is required."
 msgstr ""
 
@@ -8608,7 +8602,7 @@ msgstr ""
 msgid "User {0} is not allowed to send or receive emails."
 msgstr ""
 
-#: mail/api/outbound.py:26
+#: mail/api/outbound.py:25
 msgid "User {0} is not allowed to upload attachments."
 msgstr ""
 

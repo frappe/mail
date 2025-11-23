@@ -12,11 +12,5 @@ frappe.ui.form.on('Mail Sync History', {
 				enabled: 1,
 			},
 		}))
-
-		frm.set_query('account', () => ({
-			filters: {
-				enabled: 1,
-			},
-		}))
 	},
 })
