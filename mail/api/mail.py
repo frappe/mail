@@ -22,7 +22,6 @@ from mail.client.doctype.mail_message.mail_message import (
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_mailbox_id_by_role
 from mail.utils import convert_html_to_text
-from mail.utils.cache import get_account_for_user
 from mail.utils.user import has_role
 
 
@@ -35,7 +34,7 @@ def get_mailboxes() -> list[dict]:
 		return []
 
 	fields = ["id", "_name", "role", "total_threads", "unread_threads"]
-	mailboxes = get_account_mailboxes(get_account_for_user(user))
+	mailboxes = get_account_mailboxes(user)
 	return [
 		{field: mailbox[field] for field in fields} for mailbox in mailboxes if mailbox["subscribed"] == 1
 	]
@@ -51,14 +50,14 @@ def get_account_mailboxes(account) -> list[dict]:
 def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 	"""Returns threads from the selected mailbox for the current user."""
 
-	account = get_account_for_user(frappe.session.user)
+	user = frappe.session.user
 
 	if mailbox == "starred":
 		conditions = [
 			{
 				"inMailboxOtherThan": [
-					get_mailbox_id_by_role(account, "junk", create_if_not_exists=True, raise_exception=True),
-					get_mailbox_id_by_role(account, "trash", create_if_not_exists=True, raise_exception=True),
+					get_mailbox_id_by_role(user, "junk", create_if_not_exists=True, raise_exception=True),
+					get_mailbox_id_by_role(user, "trash", create_if_not_exists=True, raise_exception=True),
 				]
 			},
 			{"someInThreadHaveKeyword": "$flagged"},
@@ -79,15 +78,14 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 	else:
 		filter = {"operator": "AND", "conditions": conditions}
 
-	return [serialize_thread(thread) for thread in fetch_threads(account, filter, 0, limit)]
+	return [serialize_thread(thread) for thread in fetch_threads(user, filter, 0, limit)]
 
 
 @frappe.whitelist()
 def get_thread(thread_id: str) -> list[dict]:
 	"""Returns mails for the given thread id."""
 
-	account = get_account_for_user(frappe.session.user)
-	return [serialize_mail(mail) for mail in fetch_thread(account, thread_id)]
+	return [serialize_mail(mail) for mail in fetch_thread(frappe.session.user, thread_id)]
 
 
 @frappe.whitelist()
@@ -97,11 +95,7 @@ def get_attachment(blob_id: str, filename: str | None = None) -> None:
 	if not blob_id:
 		frappe.throw(_("Blob ID is required"))
 
-	account = get_account_for_user(frappe.session.user)
-	if not account:
-		frappe.throw(_("Mail Account not found for user {0}").format(frappe.session.user))
-
-	content = fetch_blob(account, blob_id, filename)
+	content = fetch_blob(frappe.session.user, blob_id, filename)
 
 	frappe.local.response.filename = filename or blob_id
 	frappe.local.response.filecontent = content
@@ -196,8 +190,7 @@ def get_attachment_url(blob_id: str, filename: str | None = None) -> str:
 def fetch_attachment(blob_id: str) -> bytes:
 	"""Returns the content of an attachment."""
 
-	account = get_account_for_user(frappe.session.user)
-	return fetch_blob(account, blob_id)
+	return fetch_blob(frappe.session.user, blob_id)
 
 
 @frappe.whitelist()
@@ -236,8 +229,6 @@ def create_mail(
 ) -> dict:
 	"""Creates new mail queue."""
 
-	account = get_account_for_user(frappe.session.user)
-
 	doc_attachments = []
 	for d in attachments:
 		cid = random_string(10)
@@ -260,7 +251,7 @@ def create_mail(
 	recipients += [{"type": "Bcc", "email": email} for email in bcc]
 
 	doc = MailQueue._create(
-		account=account,
+		user=frappe.session.user,
 		from_email=from_email,
 		subject=subject,
 		html_body=html_body,
@@ -289,9 +280,7 @@ def update_draft_mail(
 ) -> dict:
 	"""Creates new mail queue from existing draft message."""
 
-	account = get_account_for_user(frappe.session.user)
-
-	doc = frappe.get_doc("Mail Message", f"{account}|{id}")
+	doc = frappe.get_doc("Mail Message", f"{frappe.session.user}|{id}")
 	doc.check_permission(permtype="write")
 
 	doc.from_email = from_email
@@ -377,8 +366,7 @@ def convert_img_src_from_cid_to_url(html_body: str, cid: str, url: str) -> str:
 def delete_mail(id: str) -> None:
 	"""Deletes the given mail."""
 
-	account = get_account_for_user(frappe.session.user)
-	delete_messages(account, [id])
+	delete_messages(frappe.session.user, [id])
 
 
 @frappe.whitelist()
@@ -428,14 +416,14 @@ def get_account_and_filtered_message_ids(
 ) -> tuple[str, list[str]]:
 	"""Gets account and filtered message IDs for the given mailbox."""
 
-	account = get_account_for_user(frappe.session.user)
+	user = frappe.session.user
 	if mailbox == "starred":
-		mailbox = [d["id"] for d in get_account_mailboxes(account) if d["role"] != "trash"]
+		mailbox = [d["id"] for d in get_account_mailboxes(user) if d["role"] != "trash"]
 	elif mailbox == "search":
 		mailbox = None
-	messages = get_message_ids(account, thread_ids, mailbox)
+	messages = get_message_ids(user, thread_ids, mailbox)
 
-	return account, messages
+	return user, messages
 
 
 @frappe.whitelist()
@@ -453,8 +441,7 @@ def set_seen(thread_ids: dict[bool, list[str]], mailbox: str) -> dict:
 def set_flagged(ids: list[str], flagged: bool) -> dict:
 	"""Sets flagged for mails."""
 
-	account = get_account_for_user(frappe.session.user)
-	set_flagged_status(account, ids, flagged)
+	set_flagged_status(frappe.session.user, ids, flagged)
 
 	return {"ids": ids, "flagged": flagged}
 
@@ -463,8 +450,7 @@ def set_flagged(ids: list[str], flagged: bool) -> dict:
 def move_mails(ids: list[str], mailbox: str) -> None:
 	"""Sets mailbox for mails."""
 
-	account = get_account_for_user(frappe.session.user)
-	move_messages(account, ids, mailbox)
+	move_messages(frappe.session.user, ids, mailbox)
 
 
 @frappe.whitelist()
@@ -482,8 +468,7 @@ def set_threads_mailbox(thread_ids: dict[str, list[str]]) -> dict:
 def set_mails_spam_status(ids: list[str], spam: bool) -> list[str]:
 	"""Sets spam status of the given mails."""
 
-	account = get_account_for_user(frappe.session.user)
-	set_spam_status(account, ids, spam)
+	set_spam_status(frappe.session.user, ids, spam)
 
 	return ids
 
@@ -513,8 +498,7 @@ def delete_threads(thread_ids: list[str], mailbox: str) -> list[str]:
 def empty_user_mailbox(mailbox: str) -> None:
 	"""Empties the given mailbox."""
 
-	account = get_account_for_user(frappe.session.user)
-	empty_mailbox(account, mailbox)
+	empty_mailbox(frappe.session.user, mailbox)
 
 
 @frappe.whitelist()
@@ -525,8 +509,7 @@ def search_mails(filter: dict | None = None, limit: int = 5) -> tuple[list[dict]
 		return ([], 0)
 
 	normalized_filter = normalize_search_filter(filter)
-	account = get_account_for_user(frappe.session.user)
-	return search_messages(account, normalized_filter, limit=limit)
+	return search_messages(frappe.session.user, normalized_filter, limit=limit)
 
 
 def normalize_search_filter(filter: dict) -> dict:
