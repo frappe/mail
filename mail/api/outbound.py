@@ -86,7 +86,7 @@ def send(
 		newsletter=is_newsletter,
 		in_reply_to=in_reply_to,
 		save_as_draft=save_as_draft,
-		destroy_after_submission=False,
+		destroy_after_submit=False,
 		delivery_mode="Batch" if is_newsletter else "Enqueue",
 	)
 

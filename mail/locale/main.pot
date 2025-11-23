@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-23 07:07+0553\n"
-"PO-Revision-Date: 2025-11-23 07:07+0553\n"
+"POT-Creation-Date: 2025-11-23 07:43+0553\n"
+"PO-Revision-Date: 2025-11-23 07:43+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -25,11 +25,11 @@ msgstr ""
 msgid " Supported file formats: .zip, .tar, .tgz"
 msgstr ""
 
-#: mail/api/mail.py:394
+#: mail/api/mail.py:382
 msgid "'Fail'"
 msgstr ""
 
-#: mail/api/mail.py:394
+#: mail/api/mail.py:382
 msgid "'Pass'"
 msgstr ""
 
@@ -704,7 +704,7 @@ msgstr ""
 msgid "Azure Blob Storage"
 msgstr ""
 
-#: mail/api/mail.py:410
+#: mail/api/mail.py:398
 msgid "BCC"
 msgstr ""
 
@@ -789,7 +789,7 @@ msgstr ""
 msgid "Blob ID"
 msgstr ""
 
-#: mail/api/mail.py:98
+#: mail/api/mail.py:96
 msgid "Blob ID is required"
 msgstr ""
 
@@ -859,7 +859,7 @@ msgstr ""
 msgid "Business signup is disabled."
 msgstr ""
 
-#: mail/api/mail.py:409
+#: mail/api/mail.py:397
 msgid "CC"
 msgstr ""
 
@@ -1401,7 +1401,7 @@ msgstr ""
 msgid "Created At"
 msgstr ""
 
-#: mail/api/mail.py:400
+#: mail/api/mail.py:388
 msgid "Created at"
 msgstr ""
 
@@ -1438,7 +1438,7 @@ msgid "DELETE"
 msgstr ""
 
 #. Label of the dkim_pass (Check) field in DocType 'Mail Message'
-#: mail/api/mail.py:419 mail/client/doctype/mail_message/mail_message.json
+#: mail/api/mail.py:407 mail/client/doctype/mail_message/mail_message.json
 msgid "DKIM"
 msgstr ""
 
@@ -1483,7 +1483,7 @@ msgid "DKIM Results"
 msgstr ""
 
 #. Label of the dmarc_pass (Check) field in DocType 'Mail Message'
-#: mail/api/mail.py:421 mail/client/doctype/mail_message/mail_message.json
+#: mail/api/mail.py:409 mail/client/doctype/mail_message/mail_message.json
 msgid "DMARC"
 msgstr ""
 
@@ -1784,9 +1784,9 @@ msgstr ""
 msgid "Description"
 msgstr ""
 
-#. Label of the destroy_after_submission (Check) field in DocType 'Mail Queue'
+#. Label of the destroy_after_submit (Check) field in DocType 'Mail Queue'
 #: mail/client/doctype/mail_queue/mail_queue.json
-msgid "Destroy After Submission"
+msgid "Destroy After Submit"
 msgstr ""
 
 #. Label of the destroy_email_after_submission (Check) field in DocType 'Mail
@@ -1795,10 +1795,21 @@ msgstr ""
 msgid "Destroy Email After Submission"
 msgstr ""
 
+#. Label of the jmap_destroy_email_after_submit (Check) field in DocType 'User'
+#: mail/fixtures/custom_field.json
+msgid "Destroy Email After Submit"
+msgstr ""
+
 #. Label of the destroy_newsletter_after_submission (Check) field in DocType
 #. 'Mail Account'
 #: mail/client/doctype/mail_account/mail_account.json
 msgid "Destroy Newsletter After Submission"
+msgstr ""
+
+#. Label of the jmap_destroy_newsletter_after_submit (Check) field in DocType
+#. 'User'
+#: mail/fixtures/custom_field.json
+msgid "Destroy Newsletter After Submit"
 msgstr ""
 
 #. Label of the details_tab (Tab Break) field in DocType 'Mail Cluster'
@@ -2927,7 +2938,7 @@ msgstr ""
 
 #. Label of the envelope_from (Data) field in DocType 'DMARC Report Detail'
 #: frontend/src/components/ComposeMailEditor.vue:19
-#: frontend/src/components/Modals/SearchModal.vue:52 mail/api/mail.py:407
+#: frontend/src/components/Modals/SearchModal.vue:52 mail/api/mail.py:395
 #: mail/server/doctype/dmarc_report_detail/dmarc_report_detail.json
 msgid "From"
 msgstr ""
@@ -3359,7 +3370,7 @@ msgstr ""
 msgid "If checked, this server will be included in DNS SPF record."
 msgstr ""
 
-#. Description of the 'Destroy After Submission' (Check) field in DocType 'Mail
+#. Description of the 'Destroy After Submit' (Check) field in DocType 'Mail
 #. Queue'
 #: mail/client/doctype/mail_queue/mail_queue.json
 msgid "If enabled, the message will be deleted after successful submission."
@@ -3988,10 +3999,6 @@ msgstr ""
 #. Name of a DocType
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 msgid "Mail Account Request"
-msgstr ""
-
-#: mail/api/mail.py:102
-msgid "Mail Account not found for user {0}"
 msgstr ""
 
 #: mail/client/doctype/mail_account/mail_account.py:595
@@ -4714,7 +4721,7 @@ msgstr ""
 
 #. Label of the message_id (Data) field in DocType 'Mail Message'
 #. Label of the message_id (Data) field in DocType 'Mail Queue'
-#: mail/api/mail.py:398 mail/client/doctype/mail_message/mail_message.json
+#: mail/api/mail.py:386 mail/client/doctype/mail_message/mail_message.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 msgid "Message ID"
 msgstr ""
@@ -6650,7 +6657,7 @@ msgid "SMTP"
 msgstr ""
 
 #. Label of the spf_pass (Check) field in DocType 'Mail Message'
-#: mail/api/mail.py:415 mail/client/doctype/mail_message/mail_message.json
+#: mail/api/mail.py:403 mail/client/doctype/mail_message/mail_message.json
 msgid "SPF"
 msgstr ""
 
@@ -7422,7 +7429,7 @@ msgstr ""
 #: frontend/src/components/ComposeMailEditor.vue:102
 #: frontend/src/components/Modals/SearchModal.vue:51
 #: frontend/src/components/Settings/VacationResponseSettings.vue:23
-#: mail/api/mail.py:406 mail/client/doctype/mail_account/mail_account.js:202
+#: mail/api/mail.py:394 mail/client/doctype/mail_account/mail_account.js:202
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_message/mail_message.json
 #: mail/client/doctype/mail_queue/mail_queue.json
@@ -8099,7 +8106,7 @@ msgstr ""
 #. Option for the 'Type' (Select) field in DocType 'Mail Message Recipient'
 #. Label of the envelope_to (Data) field in DocType 'DMARC Report Detail'
 #: frontend/src/components/ComposeMailEditor.vue:42
-#: frontend/src/components/Modals/SearchModal.vue:53 mail/api/mail.py:408
+#: frontend/src/components/Modals/SearchModal.vue:53 mail/api/mail.py:396
 #: mail/client/doctype/mail_message_recipient/mail_message_recipient.json
 #: mail/server/doctype/dmarc_report_detail/dmarc_report_detail.json
 msgid "To"
@@ -9213,7 +9220,7 @@ msgstr ""
 msgid "unread"
 msgstr ""
 
-#: mail/api/mail.py:401
+#: mail/api/mail.py:389
 msgid "{0} (Delivered after {1} seconds)"
 msgstr ""
 
@@ -9249,7 +9256,7 @@ msgstr ""
 msgid "{0} job has been created."
 msgstr ""
 
-#: mail/api/mail.py:416
+#: mail/api/mail.py:404
 msgid "{0} with IP {1}"
 msgstr ""
 

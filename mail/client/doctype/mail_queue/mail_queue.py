@@ -106,7 +106,7 @@ class MailQueue(Document):
 		doc.in_reply_to = kwargs.in_reply_to
 		doc.in_reply_to_id = kwargs.in_reply_to_id
 		doc.save_as_draft = cint(kwargs.save_as_draft)
-		doc.destroy_after_submission = cint(kwargs.destroy_after_submission)
+		doc.destroy_after_submit = cint(kwargs.destroy_after_submit)
 		doc.delivery_mode = kwargs.delivery_mode or "Immediate"
 		doc.raw_message = kwargs.raw_message
 
@@ -248,7 +248,7 @@ class MailQueue(Document):
 			self.validate_raw_message()
 			self.validate_from_email()
 			self.validate_from_name()
-			self.validate_destroy_after_submission()
+			self.validate_destroy_after_submit()
 			self.validate_delivery_mode()
 			self.validate_reply_to()
 			self.validate_headers()
@@ -343,17 +343,17 @@ class MailQueue(Document):
 
 		self.from_name = self.from_name or self.identity["_name"]
 
-	def validate_destroy_after_submission(self) -> None:
-		"""Validates the destroy after submission setting."""
+	def validate_destroy_after_submit(self) -> None:
+		"""Validates the destroy after submit setting."""
 
-		if self.save_as_draft or self.destroy_after_submission:
+		if self.save_as_draft or self.destroy_after_submit:
 			return
 
 		if self.newsletter:
-			if frappe.db.get_value("User", self.user, "destroy_newsletter_after_submission"):
-				self.destroy_after_submission = 1
-		elif frappe.db.get_value("User", self.user, "destroy_email_after_submission"):
-			self.destroy_after_submission = 1
+			if frappe.db.get_value("User", self.user, "jmap_destroy_newsletter_after_submit"):
+				self.destroy_after_submit = 1
+		elif frappe.db.get_value("User", self.user, "jmap_destroy_email_after_submit"):
+			self.destroy_after_submit = 1
 
 	def validate_delivery_mode(self) -> None:
 		"""Validates the delivery mode."""
@@ -608,7 +608,7 @@ class MailQueue(Document):
 				self.id,
 				bool(self.save_as_draft),
 				self._priority,
-				bool(self.destroy_after_submission),
+				bool(self.destroy_after_submit),
 				self.forwarded_from_id,
 				self.in_reply_to_id,
 			)

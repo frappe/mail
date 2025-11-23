@@ -30,7 +30,7 @@ frappe.ui.form.on('Mail Queue', {
 		if (
 			frm.doc.blob_id &&
 			!frm.doc.message &&
-			(frm.doc.save_as_draft || !frm.doc.destroy_after_submission)
+			(frm.doc.save_as_draft || !frm.doc.destroy_after_submit)
 		) {
 			frm.add_custom_button(
 				__('Load MIME Message'),
