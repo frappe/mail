@@ -3,36 +3,39 @@
 		<h1>{{ __('Signatures') }}</h1>
 		<Button icon-left="plus" :label="__('New')" @click="showAddSignature = true" />
 	</div>
-	<AutocompleteControl
-		v-model="defaultSignature"
-		variant="outline"
-		:label="__('Default Signature')"
-		:show-search="false"
-		:options="
-			signatures?.data?.map((signature) => ({
-				label: signature.signature_name,
-				value: signature.name,
-			}))
-		"
-	/>
+	<template v-if="signatures?.data?.length">
+		<AutocompleteControl
+			v-model="defaultSignature"
+			variant="outline"
+			:label="__('Default Signature')"
+			:show-search="false"
+			:options="
+				signatures?.data?.map((signature) => ({
+					label: signature.signature_name,
+					value: signature.name,
+				}))
+			"
+		/>
 
-	<div>
-		<div class="text-ink-gray-5 pb-2 text-sm">{{ __('Signature name') }}</div>
-		<div
-			v-for="signature in signatures?.data"
-			:key="signature.name"
-			class="flex items-center justify-between border-t py-1"
-		>
-			<span class="text-base">{{ signature.signature_name }}</span>
-			<Dropdown :options="signatureOptions(signature.name)">
-				<Button variant="ghost" @click.stop>
-					<template #icon>
-						<Ellipsis class="text-ink-gray-5 h-4 w-4" />
-					</template>
-				</Button>
-			</Dropdown>
+		<div>
+			<div class="text-ink-gray-5 pb-2 text-sm">{{ __('Signature Name') }}</div>
+			<div
+				v-for="signature in signatures?.data"
+				:key="signature.name"
+				class="flex items-center justify-between border-t py-1"
+			>
+				<span class="text-base">{{ signature.signature_name }}</span>
+				<Dropdown :options="signatureOptions(signature.name)">
+					<Button variant="ghost" @click.stop>
+						<template #icon>
+							<Ellipsis class="text-ink-gray-5 h-4 w-4" />
+						</template>
+					</Button>
+				</Dropdown>
+			</div>
 		</div>
-	</div>
+	</template>
+	<div v-else class="text-ink-gray-5 text-sm">{{ __('No signatures found.') }}</div>
 
 	<AddSignatureModal v-model="showAddSignature" @reload-signatures="signatures.reload()" />
 	<EditSignatureModal

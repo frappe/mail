@@ -11,8 +11,9 @@
 				<div class="space-y-1.5">
 					<label class="text-ink-gray-5 block text-xs">{{ __('Signature Body') }}</label>
 					<TextEditor
-						editor-class="prose-sm min-h-[8rem] border rounded p-2 max-w-none border-outline-gray-2"
+						editor-class="prose-sm min-h-[8rem] border rounded-b-lg border-t-0 p-2 max-w-none border-outline-gray-2"
 						:extensions="[CustomParagraphExtension]"
+						:fixed-menu="buttons"
 						:placeholder="__('Write your signature here')"
 						:content="signature.doc.html_body"
 						@change="(val: string) => (signature.doc.html_body = val)"
@@ -29,6 +30,7 @@ import { Dialog, FormControl, TextEditor } from 'frappe-ui'
 import { useNewDoc } from 'frappe-ui/src/data-fetching'
 
 import { raiseToast } from '@/utils'
+import { useTextEditorButtons } from '@/utils/composables'
 import { CustomParagraphExtension } from '@/utils/text-editor'
 
 const user = inject('$user')
@@ -36,6 +38,8 @@ const user = inject('$user')
 const show = defineModel<boolean>()
 
 const emit = defineEmits(['reloadSignatures'])
+
+const { buttons } = useTextEditorButtons()
 
 const defaultSignature = reactive({
 	account: user.data.name,

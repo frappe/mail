@@ -4,6 +4,10 @@
 # import frappe
 from frappe.model.document import Document
 
+from mail.utils import convert_html_to_text
+
 
 class MailSignature(Document):
-	pass
+	def validate(self) -> None:
+		if self.html_body:
+			self.text_body = convert_html_to_text(self.html_body)
