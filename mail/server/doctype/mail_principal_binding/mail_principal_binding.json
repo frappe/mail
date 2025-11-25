@@ -4,6 +4,9 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_break_chsm",
+  "is_verified",
+  "column_break_fglr",
   "section_break_cbim",
   "tenant",
   "column_break_yzik",
@@ -59,12 +62,28 @@
    "no_copy": 1,
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "section_break_chsm",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_fglr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.principal_type == \"Domain\"",
+   "fieldname": "is_verified",
+   "fieldtype": "Check",
+   "label": "Verified",
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-25 12:07:41.306871",
+ "modified": "2025-11-25 17:48:04.018706",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Principal Binding",

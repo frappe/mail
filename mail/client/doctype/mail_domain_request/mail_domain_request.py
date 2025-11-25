@@ -48,7 +48,9 @@ class MailDomainRequest(Document):
 		if re.fullmatch(domain_regex, self.domain_name) is None:
 			frappe.throw(_("Invalid domain name"))
 
-		if frappe.db.exists("Mail Domain", {"domain_name": self.domain_name}):
+		if frappe.db.exists(
+			"Mail Principal Binding", {"principal_name": self.domain_name, "principal_type": "Domain"}
+		):
 			frappe.throw(_("Domain {0} already registered.").format(frappe.bold(self.domain_name)))
 
 	def validate_user_and_tenant(self) -> None:
@@ -83,14 +85,15 @@ class MailDomainRequest(Document):
 		return bool(self.is_verified)
 
 	def create_domain(self) -> str:
-		"""Create the mail domain"""
+		"""Create the principal domain."""
 
-		domain = frappe.new_doc("Mail Domain")
-		domain.tenant = self.tenant
-		domain.domain_name = self.domain_name
-		domain.insert(ignore_permissions=True)
+		principal = frappe.new_doc("Mail Principal")
+		principal.tenant = self.tenant
+		principal.type = "Domain"
+		principal._name = self.domain_name
+		principal.insert(ignore_permissions=True)
 
-		return domain.name
+		return principal.name
 
 
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:

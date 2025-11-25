@@ -97,42 +97,32 @@
    "link_fieldname": "tenant"
   },
   {
-   "group": "Domain",
+   "group": "Request",
    "link_doctype": "Mail Domain Request",
    "link_fieldname": "tenant"
   },
   {
-   "group": "Domain",
-   "link_doctype": "Mail Domain",
-   "link_fieldname": "tenant"
-  },
-  {
-   "group": "Account",
+   "group": "Request",
    "link_doctype": "Mail Account Request",
    "link_fieldname": "tenant"
   },
   {
-   "group": "Account",
-   "link_doctype": "Mail Account",
-   "link_fieldname": "tenant"
-  },
-  {
-   "group": "List & Alias",
-   "link_doctype": "Mailing List",
-   "link_fieldname": "tenant"
-  },
-  {
-   "group": "List & Alias",
-   "link_doctype": "Mail Alias",
-   "link_fieldname": "tenant"
-  },
-  {
-   "group": "Data Exchange",
+   "group": "Import & Export",
    "link_doctype": "Mail Data Exchange",
+   "link_fieldname": "tenant"
+  },
+  {
+   "group": "Principal",
+   "link_doctype": "Mail Principal",
+   "link_fieldname": "tenant"
+  },
+  {
+   "group": "Principal",
+   "link_doctype": "Mail Principal Binding",
    "link_fieldname": "tenant"
   }
  ],
- "modified": "2025-08-21 18:54:47.654063",
+ "modified": "2025-11-25 18:35:06.533431",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Tenant",

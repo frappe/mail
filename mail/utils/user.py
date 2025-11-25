@@ -8,7 +8,7 @@ from frappe.query_builder import Table
 from frappe.utils.caching import request_cache
 
 from mail.utils import user_context
-from mail.utils.cache import get_account_for_user, get_aliases_for_user, get_tenant_for_user
+from mail.utils.cache import get_account_for_user, get_tenant_for_user
 
 
 def is_administrator(user: str) -> bool:
@@ -24,16 +24,20 @@ def is_system_manager(user: str) -> bool:
 	return is_administrator(user) or has_role(user, "System Manager")
 
 
+def get_user_email_address(user: str) -> str | None:
+	"""Returns the primary email address of the user."""
+
+	return frappe.db.get_value("User", user, "email")
+
+
 def get_user_email_addresses(user: str) -> list:
 	"""Returns the list of email addresses associated with the user."""
 
-	email_addresses = []
-	if account := get_account_for_user(user):
-		email_addresses.append(account)
-	if aliases := get_aliases_for_user(user):
-		email_addresses.extend(aliases)
+	tenant = get_tenant_for_user(user)
+	account = get_account_for_user(user)
+	principal = frappe.get_doc("Mail Principal", f"{tenant}|{account}")
 
-	return email_addresses
+	return principal._emails
 
 
 def get_account_email_addresses(account: str) -> list:
@@ -52,6 +56,16 @@ def get_user_linked_domains(user: str) -> list:
 			linked_domains.add(email_address.split("@")[1])
 
 	return list(linked_domains)
+
+
+def user_linked_to_tenant(user: str, tenant: str | None = None) -> bool:
+	"""Returns True if the user is linked to the tenant else False."""
+
+	filters = {"user": user}
+	if tenant:
+		filters["tenant"] = tenant
+
+	return bool(frappe.db.exists("Mail Tenant Member", filters))
 
 
 @frappe.whitelist()

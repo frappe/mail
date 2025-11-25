@@ -10,7 +10,7 @@
   "status",
   "retries",
   "column_break_3krp",
-  "account",
+  "user",
   "tenant",
   "operation",
   "import_format",
@@ -73,16 +73,6 @@
   {
    "fieldname": "section_break_hiuo",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "options": "Mail Account",
-   "reqd": 1,
-   "search_index": 1
   },
   {
    "fieldname": "output",
@@ -183,7 +173,6 @@
    "options": "jmap"
   },
   {
-   "fetch_from": "account.tenant",
    "fieldname": "tenant",
    "fieldtype": "Link",
    "hidden": 1,
@@ -205,13 +194,23 @@
    "non_negative": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-09-27 18:54:53.609407",
+ "modified": "2025-11-25 16:46:10.097181",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Data Exchange",

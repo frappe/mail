@@ -19,6 +19,7 @@ from mail.server.doctype.mail_principal_binding.mail_principal_binding import (
 	ensure_members_belong_to_tenant,
 	ensure_principal_belong_to_tenant,
 	get_tenant_principals,
+	update_principal_binding,
 )
 from mail.utils import generate_app_password, hash_password, parse_filters, parse_token, snake_to_camel
 from mail.utils.cache import get_cluster_for_tenant
@@ -358,7 +359,7 @@ def add_principal(
 	if response.status_code != 200 or response.json().get("error"):
 		frappe.throw(_("Failed to add principal {0}: {1}").format(frappe.bold(pname), response.text))
 
-	create_principal_binding(tenant, f"{tenant}|{pname}", type)
+	create_principal_binding(tenant, pname, type)
 	return f"{tenant}|{pname}"
 
 
@@ -381,7 +382,9 @@ def get_principal(tenant: str, pname: str) -> dict:
 
 
 @frappe.whitelist()
-def update_principal(tenant: str, pname: str, principal: "MailPrincipal") -> None:
+def update_principal(
+	tenant: str, pname: str, principal: "MailPrincipal", do_not_commit: bool = False
+) -> None:
 	"""Updates the principal with the given principal name."""
 
 	if principal.type in ["API Key", "Group", "OAuth Client", "Role"]:
@@ -395,12 +398,11 @@ def update_principal(tenant: str, pname: str, principal: "MailPrincipal") -> Non
 	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
 	existing_principal = frappe._dict(_get_principal(backend, pname, ignore_not_found=False))
 
-	if principal.type != TYPE_MAP[existing_principal.type]:
-		frappe.throw(_("Principal type cannot be changed."))
+	if pname != principal._name or principal.type != TYPE_MAP[existing_principal.type]:
+		frappe.throw(_("Principal name or type cannot be changed directly. Please create a new principal."))
 
 	updates = {
 		"name": principal._name,
-		"quota": cint(principal.quota),
 		"description": principal.description or "",
 		"secrets": [],
 		"emails": [],
@@ -411,7 +413,6 @@ def update_principal(tenant: str, pname: str, principal: "MailPrincipal") -> Non
 		"enabled_permissions": [],
 		"disabled_permissions": [],
 		"external_members": [],
-		"locale": principal.locale,
 	}
 
 	if principal.type == "Domain":
@@ -419,6 +420,7 @@ def update_principal(tenant: str, pname: str, principal: "MailPrincipal") -> Non
 			frappe.throw(_("Invalid domain name provided for principal."))
 
 	if principal.type == "Individual":
+		updates["locale"] = principal.locale or ""
 		updates["roles"] = principal._roles
 		if principal.password:
 			updates["secrets"].append(hash_password(principal.get_password("password")))
@@ -438,6 +440,7 @@ def update_principal(tenant: str, pname: str, principal: "MailPrincipal") -> Non
 		ensure_emails_belong_to_tenant_domains(tenant, updates["emails"])
 
 	if principal.type in ["Group", "Individual"]:
+		updates["quota"] = cint(principal.quota)
 		updates["member_of"] = principal._member_of
 		for group in updates["member_of"]:
 			validate_email_address(group, True)
@@ -469,7 +472,10 @@ def update_principal(tenant: str, pname: str, principal: "MailPrincipal") -> Non
 			continue
 
 		server_field = snake_to_camel(field)
-		existing_values = existing_principal.get(server_field, [])
+		existing_values = existing_principal.get(server_field)
+		if not isinstance(existing_values, list):
+			existing_values = []
+
 		if values_to_add := set(value) - set(existing_values):
 			for v in values_to_add:
 				actions.append({"action": "addItem", "field": server_field, "value": v})
@@ -484,6 +490,13 @@ def update_principal(tenant: str, pname: str, principal: "MailPrincipal") -> Non
 		frappe.throw(_("Failed to update principal {0}: {1}").format(frappe.bold(pname), response.text))
 
 	_remove_principal_from_cache(tenant, pname)
+
+	if pname != principal._name or principal.type != TYPE_MAP[existing_principal.type]:
+		principal.name = f"{tenant}|{principal._name}"
+		update_principal_binding(tenant, pname, principal_name=principal._name, principal_type=principal.type)
+
+		if pname != principal._name and not do_not_commit:
+			frappe.db.commit()
 
 
 @frappe.whitelist()

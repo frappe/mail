@@ -9,7 +9,7 @@ from frappe import _
 from frappe.utils.caching import request_cache
 from validate_email_address import validate_email
 
-from mail.utils import normalize_email
+from mail.server.doctype.mail_principal_binding.mail_principal_binding import get_domain_tenant
 from mail.utils.cache import get_account_for_user, get_tenant_for_domain, get_tenant_for_user
 from mail.utils.user import has_role, is_administrator
 
@@ -58,36 +58,14 @@ def is_subaddressed_email(email: str, raise_exception: bool = False) -> bool:
 	return False
 
 
-def is_email_assigned(email: str, ignore_doctype: str | None = None, raise_exception: bool = False) -> bool:
+def is_email_assigned(email: str, raise_exception: bool = False) -> bool:
 	"""Returns True if the email is already assigned to Mail Account, Mailing List, or Mail Alias, else False."""
 
-	doctypes = ["Mail Account", "Mailing List", "Mail Alias"]
-	normalized_email = normalize_email(email)
+	if frappe.db.exists("Mail Principal Binding", {"principal_name": email}):
+		if raise_exception:
+			frappe.throw(_("The email address {0} is already assigned.").format(frappe.bold(email)))
+		return True
 
-	if ignore_doctype:
-		doctypes.remove(ignore_doctype)
-
-	for doctype in doctypes:
-		if frappe.db.exists(doctype, {"normalized_email": normalized_email}):
-			if raise_exception:
-				if email == normalized_email:
-					frappe.throw(
-						_("The email address {0} is already assigned as a {1}.").format(
-							frappe.bold(normalized_email), frappe.bold(doctype)
-						)
-					)
-				else:
-					frappe.throw(
-						_(
-							"The email address {0} cannot be used because it is too similar to an existing email in {1}. We ignore dots in the local part of the email (before '@'). For example, {2} and {3} are treated as the same address. Please use a different email."
-						).format(
-							frappe.bold(email),
-							frappe.bold(doctype),
-							frappe.bold(email),
-							frappe.bold(normalized_email),
-						)
-					)
-			return True
 	return False
 
 
@@ -117,14 +95,13 @@ def validate_email_address(
 
 
 @request_cache
-def validate_domain_is_enabled_and_verified(domain_name: str) -> None:
-	"""Validates if the domain is enabled and verified."""
+def validate_domain_is_verified(domain_name: str) -> None:
+	"""Validates if the domain is verified."""
 
-	enabled, is_verified = frappe.db.get_value("Mail Domain", domain_name, ["enabled", "is_verified"])
-
-	if not enabled:
-		frappe.throw(_("Domain {0} is disabled.").format(frappe.bold(domain_name)))
-	if not is_verified:
+	if not frappe.db.exists(
+		"Mail Principal Binding",
+		{"principal_name": domain_name, "principal_type": "Domain", "is_verified": 1},
+	):
 		frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(domain_name)))
 
 
@@ -132,63 +109,8 @@ def validate_domain_is_enabled_and_verified(domain_name: str) -> None:
 def validate_domain_owned_by_tenant(domain_name: str, tenant: str) -> None:
 	"""Validates if the domain is owned by the tenant."""
 
-	if tenant != frappe.db.get_value("Mail Domain", domain_name, "tenant"):
+	if tenant != get_domain_tenant(domain_name, raise_exception=False):
 		frappe.throw(_("Domain {0} is not owned by the tenant.").format(frappe.bold(domain_name)))
-
-
-@request_cache
-def validate_domain_owned_by_user_tenant(domain_name: str, user: str) -> None:
-	"""Validates if the domain is owned by the user tenant."""
-
-	validate_domain_owned_by_tenant(domain_name, get_tenant_for_user(user))
-
-
-def validate_domain_and_user_tenant(domain_name: str, user: str) -> None:
-	"""Validates if the domain and user belong to the same tenant."""
-
-	domain_tenant = get_tenant_for_domain(domain_name)
-	user_tenant = get_tenant_for_user(user)
-
-	if domain_tenant != user_tenant:
-		frappe.throw(
-			_("Domain {0} and User {1} do not belong to the same tenant.").format(
-				frappe.bold(domain_name), frappe.bold(user)
-			)
-		)
-
-
-def validate_user_has_mail_admin_role(user: str) -> None:
-	"""Validate if the user has Mail Admin role."""
-
-	if not has_role(user, "Mail Admin"):
-		frappe.throw(_("You are not authorized to perform this action."), frappe.PermissionError)
-
-
-def is_domain_exists(domain_name: str, exclude_disabled: bool = True, raise_exception: bool = False) -> bool:
-	"""Validate if the domain exists in the Mail Domain."""
-
-	filters = {"domain_name": domain_name}
-	if exclude_disabled:
-		filters["enabled"] = 1
-
-	if frappe.db.exists("Mail Domain", filters):
-		return True
-
-	if raise_exception:
-		if exclude_disabled:
-			frappe.throw(
-				_("Domain {0} does not exist or may be disabled in the Mail Domain.").format(
-					frappe.bold(domain_name)
-				),
-				frappe.DoesNotExistError,
-			)
-
-		frappe.throw(
-			_("Domain {0} not found in Mail Domain.").format(frappe.bold(domain_name)),
-			frappe.DoesNotExistError,
-		)
-
-	return False
 
 
 def is_valid_cron_expression(expression: str, raise_exception: bool = False) -> bool:
@@ -315,18 +237,6 @@ def validate_nested_maildir_tree(base_dir: str, raise_exception: bool = False) -
 		)
 
 	return invalid_dirs
-
-
-def has_permission_for_account(account: str, raise_exception: bool = True) -> bool:
-	"""Checks if the current user has permission to access the given Mail Account."""
-
-	user = frappe.session.user
-	has_permission = account == get_account_for_user(user) or is_administrator(user)
-
-	if not has_permission and raise_exception:
-		frappe.throw(_("You do not have permission to access this resource."), frappe.PermissionError)
-
-	return has_permission
 
 
 def has_permission_for_user(user: str, raise_exception: bool = True) -> bool:

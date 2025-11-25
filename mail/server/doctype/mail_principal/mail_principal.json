@@ -79,7 +79,8 @@
    "in_list_view": 1,
    "label": "Name",
    "no_copy": 1,
-   "reqd": 1
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "description",
@@ -278,7 +279,7 @@
    "link_fieldname": "principal"
   }
  ],
- "modified": "2025-11-25 11:29:25.859095",
+ "modified": "2025-11-26 07:51:18.620560",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Principal",
