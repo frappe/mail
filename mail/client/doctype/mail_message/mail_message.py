@@ -16,11 +16,6 @@ from frappe.utils import add_to_date, cint, escape_html, get_datetime, now, time
 from uuid_utils import uuid7
 
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
-from mail.client.doctype.sync_state.sync_state import (
-	create_sync_state,
-	get_current_state,
-	update_current_state,
-)
 from mail.jmap import get_jmap_client
 from mail.utils import (
 	convert_html_to_text,
@@ -34,7 +29,7 @@ from mail.utils import (
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.email_parser import EmailParser
 from mail.utils.lock import acquire_lock, release_lock
-from mail.utils.user import get_account_email_addresses
+from mail.utils.user import get_account_email_addresses, get_sync_state, update_sync_state
 from mail.utils.validation import has_permission_for_user
 
 
@@ -1118,13 +1113,10 @@ def _store_blob_in_cache(user: str, blob_id: str, content: bytes) -> None:
 def fetch_changes(user: str, email_state: str | None = None) -> None:
 	"""Fetch changes from the server and remove MailMessage documents from the cache."""
 
-	current_state = get_current_state(user)
+	current_state = get_sync_state(user, type="email")
 
 	if not current_state:
-		if not bool(frappe.db.exists("Sync State", user)):
-			create_sync_state(user)
-
-		return update_current_state(user, email_state)
+		return update_sync_state(user, type="email", state=email_state)
 	elif email_state == current_state:
 		return
 
@@ -1171,7 +1163,7 @@ def fetch_changes(user: str, email_state: str | None = None) -> None:
 			_remove_messages_from_cache(user, destroyed_ids)
 
 		new_state = result["newState"]
-		update_current_state(user, new_state)
+		update_sync_state(user, type="email", state=new_state)
 
 		if result["hasMoreChanges"]:
 			fetch_changes(user)
@@ -1216,18 +1208,15 @@ def schedule_fetch_changes() -> None:
 	"""Scheduled job to fetch changes for users that haven't been synced in the last 3 hours."""
 
 	USER = frappe.qb.DocType("User")
-	SYNC_STATE = frappe.qb.DocType("Sync State")
-
 	users = (
-		frappe.qb.from_(SYNC_STATE)
-		.join(USER)
-		.on(SYNC_STATE.user == USER.name)
-		.select(SYNC_STATE.user)
+		frappe.qb.from_(USER)
+		.select(USER.name)
 		.where(
 			(USER.enabled == 1)
+			& (USER.jmap_username.isnotnull())
 			& (
-				(SYNC_STATE.last_synced_at.isnull())
-				| (SYNC_STATE.last_synced_at < get_datetime(add_to_date(now(), hours=-3)))
+				USER.jmap_email_state_last_update.isnull()
+				| (USER.jmap_email_state_last_update < get_datetime(add_to_date(now(), hours=-3)))
 			)
 		)
 	).run(pluck="user")

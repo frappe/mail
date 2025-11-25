@@ -1,3 +1,4 @@
+from typing import Literal
 from urllib.parse import urljoin
 
 import frappe
@@ -153,3 +154,32 @@ def get_caldav_settings(user: str) -> dict:
 		)
 
 	return caldav_settings
+
+
+def get_sync_state(user: str, type: Literal["email"]) -> str | None:
+	"""Returns the Sync State for the given user and type."""
+
+	return frappe.db.get_value("User", user, f"jmap_{type}_current_state")
+
+
+def update_sync_state(user: str, type: Literal["email"], state: str) -> None:
+	"""Updates the Sync State for the given user and type."""
+
+	state_last_update = f"jmap_{type}_state_last_update"
+	previous_state = f"jmap_{type}_previous_state"
+	current_state = f"jmap_{type}_current_state"
+
+	USER = frappe.qb.DocType("User")
+	(
+		frappe.qb.update(USER)
+		.set(getattr(USER, state_last_update), frappe.utils.now())
+		.set(getattr(USER, previous_state), getattr(USER, current_state))
+		.set(getattr(USER, current_state), state)
+		.where(USER.name == user)
+	).run()
+
+
+def clear_sync_state(user: str, type: Literal["email"]) -> None:
+	"""Clear the Sync State for the given user and type."""
+
+	frappe.db.set_value("User", user, f"jmap_{type}_current_state", None, update_modified=False)

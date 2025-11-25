@@ -18,7 +18,6 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
-from mail.client.doctype.sync_state.sync_state import clear_sync_state
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,
@@ -30,7 +29,7 @@ from mail.utils import (
 	sanitize_cli_output,
 )
 from mail.utils.cache import get_account_for_user, get_tenant_for_user
-from mail.utils.user import has_role, is_account_owner, is_system_manager, is_tenant_admin
+from mail.utils.user import clear_sync_state, has_role, is_account_owner, is_system_manager, is_tenant_admin
 from mail.utils.validation import (
 	validate_jmap_structure,
 	validate_maildir_or_maildirpp,
@@ -201,7 +200,7 @@ class MailDataExchange(Document):
 					title=_("Failed to clean import output"), message=frappe.get_traceback(with_context=True)
 				)
 
-			clear_sync_state(self.account)
+			clear_sync_state(self.user, type="email")
 			kwargs.update({"status": "Completed", "output": output})
 
 			mail_details = {

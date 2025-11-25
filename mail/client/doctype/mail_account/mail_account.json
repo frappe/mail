@@ -364,11 +364,6 @@
   },
   {
    "group": "Reference",
-   "link_doctype": "Sync State",
-   "link_fieldname": "account"
-  },
-  {
-   "group": "Reference",
    "link_doctype": "Push Subscription",
    "link_fieldname": "account"
   },
@@ -393,7 +388,7 @@
    "link_fieldname": "account"
   }
  ],
- "modified": "2025-11-20 18:34:10.958010",
+ "modified": "2025-11-25 14:44:28.859103",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Account",
