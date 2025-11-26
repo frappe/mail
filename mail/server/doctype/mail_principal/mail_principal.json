@@ -1,6 +1,5 @@
 {
  "actions": [],
- "allow_rename": 1,
  "creation": "2025-11-23 08:36:35.977582",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -16,6 +15,7 @@
   "column_break_oglq",
   "_name",
   "description",
+  "is_verified",
   "section_break_wzvt",
   "dns_records",
   "section_break_xxrq",
@@ -281,6 +281,16 @@
    "label": "DNS Records",
    "options": "Mail Principal DNS Record",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_verified",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "is_virtual": 1,
+   "label": "Verified",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -293,7 +303,7 @@
    "link_fieldname": "principal"
   }
  ],
- "modified": "2025-11-26 08:12:51.101844",
+ "modified": "2025-11-26 12:25:36.278048",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Principal",

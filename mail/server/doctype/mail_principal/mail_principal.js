@@ -4,6 +4,7 @@
 frappe.ui.form.on('Mail Principal', {
 	refresh(frm) {
 		frm.trigger('add_actions')
+		frm.trigger('add_comments')
 	},
 
 	add_actions(frm) {
@@ -43,6 +44,19 @@ frappe.ui.form.on('Mail Principal', {
 				},
 				__('Actions'),
 			)
+		}
+	},
+
+	add_comments(frm) {
+		if (frm.doc.type === 'Domain') {
+			if (!frm.doc.is_verified) {
+				const bold_domain_name = `<b>${frm.doc._name}</b>`
+				const msg = __(
+					'DNS records for the domain {0} are not verified. Please ensure that the DNS records are correctly configured with your DNS provider to enable proper email authentication.',
+					[bold_domain_name],
+				)
+				frm.dashboard.add_comment(msg, 'yellow', true)
+			}
 		}
 	},
 

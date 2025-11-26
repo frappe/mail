@@ -104,6 +104,17 @@ class MailPrincipal(Document):
 
 		return [em.value for em in self.get("external_members") or []]
 
+	@property
+	def is_verified(self) -> bool | None:
+		if self.type != "Domain":
+			return None
+
+		return bool(
+			frappe.db.get_value(
+				"Mail Principal Binding", {"tenant": self.tenant, "principal_name": self._name}, "is_verified"
+			)
+		)
+
 	def db_insert(self, *args, **kwargs) -> None:
 		self.name = add_principal(
 			self.tenant,
