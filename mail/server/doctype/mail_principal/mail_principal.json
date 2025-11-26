@@ -16,6 +16,8 @@
   "column_break_oglq",
   "_name",
   "description",
+  "section_break_wzvt",
+  "dns_records",
   "section_break_xxrq",
   "emails",
   "authentication_tab",
@@ -267,6 +269,18 @@
    "fieldtype": "Table",
    "label": "Permissions",
    "options": "Mail Principal Permission"
+  },
+  {
+   "fieldname": "section_break_wzvt",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: doc.type == \"Domain\"",
+   "fieldname": "dns_records",
+   "fieldtype": "Table",
+   "label": "DNS Records",
+   "options": "Mail Principal DNS Record",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -279,7 +293,7 @@
    "link_fieldname": "principal"
   }
  ],
- "modified": "2025-11-26 07:51:18.620560",
+ "modified": "2025-11-26 08:12:51.101844",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Principal",

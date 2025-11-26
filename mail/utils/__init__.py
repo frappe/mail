@@ -96,6 +96,74 @@ def generate_app_password(source: str | None = None) -> str:
 	return final_password
 
 
+def generate_dkim_keys(
+	algorithm: Literal["rsa-sha256", "ed25519-sha256"], rsa_key_size: int = 2048
+) -> tuple[str, str]:
+	"""Generates the DKIM Keys for the specified algorithm."""
+
+	def get_filtered_dkim_key(key_pem: str) -> str:
+		"""Returns the filtered DKIM Key."""
+
+		key_pem = "".join(key_pem.split())
+		key_pem = (
+			key_pem.replace("-----BEGINPUBLICKEY-----", "")
+			.replace("-----ENDPUBLICKEY-----", "")
+			.replace("-----BEGINRSAPRIVATEKEY-----", "")
+			.replace("-----ENDRSAPRIVATEKEY-----", "")
+			.replace("-----BEGINPRIVATEKEY-----", "")
+			.replace("-----ENDPRIVATEKEY-----", "")
+		)
+
+		return key_pem
+
+	from cryptography.hazmat.primitives import serialization
+
+	if algorithm == "rsa-sha256":
+		from cryptography.hazmat.backends import default_backend
+		from cryptography.hazmat.primitives.asymmetric import rsa
+
+		private_key = rsa.generate_private_key(
+			public_exponent=65537, key_size=rsa_key_size, backend=default_backend()
+		)
+		public_key = private_key.public_key()
+
+		private_key_pem = private_key.private_bytes(
+			encoding=serialization.Encoding.PEM,
+			format=serialization.PrivateFormat.TraditionalOpenSSL,
+			encryption_algorithm=serialization.NoEncryption(),
+		).decode()
+		public_key_pem = public_key.public_bytes(
+			encoding=serialization.Encoding.PEM,
+			format=serialization.PublicFormat.SubjectPublicKeyInfo,
+		).decode()
+
+		return private_key_pem, get_filtered_dkim_key(public_key_pem)
+
+	elif algorithm == "ed25519-sha256":
+		import base64
+
+		from cryptography.hazmat.primitives.asymmetric import ed25519
+
+		private_key = ed25519.Ed25519PrivateKey.generate()
+		public_key = private_key.public_key()
+
+		private_key_pem = private_key.private_bytes(
+			encoding=serialization.Encoding.PEM,
+			format=serialization.PrivateFormat.PKCS8,
+			encryption_algorithm=serialization.NoEncryption(),
+		).decode()
+		public_key_raw = public_key.public_bytes(
+			encoding=serialization.Encoding.Raw,
+			format=serialization.PublicFormat.Raw,
+		)
+		public_key_encoded = base64.b64encode(public_key_raw).decode()
+
+		return private_key_pem, public_key_encoded
+
+	else:
+		frappe.throw(_("Unsupported algorithm. Use 'rsa-sha256' or 'ed25519-sha256'."))
+
+
 def reformat_pbkdf2_hash(passlib_hash: str, dklen: int | None = None) -> str:
 	"""Normalize a PBKDF2 hash into a consistent format."""
 

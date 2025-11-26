@@ -21,11 +21,22 @@ from mail.server.doctype.mail_principal_binding.mail_principal_binding import (
 	get_tenant_principals,
 	update_principal_binding,
 )
-from mail.utils import generate_app_password, hash_password, parse_filters, parse_token, snake_to_camel
+from mail.utils import (
+	generate_app_password,
+	generate_dkim_keys,
+	get_dkim_selector,
+	hash_password,
+	parse_filters,
+	parse_token,
+	snake_to_camel,
+)
 from mail.utils.cache import get_cluster_for_tenant
 from mail.utils.user import get_tenant_for_user, is_system_manager, is_tenant_admin
 
+SETTINGS_ENDPOINT = "/api/settings"
 PRINCIPAL_ENDPOINT = "/api/principal"
+DNS_RECORDS_ENDPOINT = "/api/dns/records"
+
 TYPE_MAP = {
 	"apiKey": "API Key",
 	"domain": "Domain",
@@ -228,11 +239,12 @@ def _remove_principal_from_cache(tenant: str, pname: str) -> None:
 		frappe.cache.delete_value(list_key)
 
 
-def _get_principal(backend: BackendAPI, pname: str, ignore_not_found: bool = True) -> dict:
+def _get_principal(
+	backend: BackendAPI, pname: str, skip_dns_records: bool = False, ignore_not_found: bool = True
+) -> dict:
 	"""Fetches principal details from backend."""
 
-	endpoint = f"{PRINCIPAL_ENDPOINT}/{pname}"
-	response = backend.request("GET", endpoint)
+	response = backend.request("GET", f"{PRINCIPAL_ENDPOINT}/{pname}")
 
 	if response.status_code != 200:
 		frappe.throw(_("Failed to fetch principal {0}: {1}").format(frappe.bold(pname), response.text))
@@ -243,7 +255,92 @@ def _get_principal(backend: BackendAPI, pname: str, ignore_not_found: bool = Tru
 
 		return {}
 
-	return response.json()["data"]
+	principal = response.json()["data"]
+
+	dns_records = []
+	if principal["type"] == "domain" and not skip_dns_records:
+		response = backend.request("GET", f"{DNS_RECORDS_ENDPOINT}/{pname}")
+
+		if response.status_code != 200:
+			frappe.throw(
+				_("Failed to fetch DNS records for domain {0}: {1}").format(frappe.bold(pname), response.text)
+			)
+
+		if response.json().get("error") == "notFound":
+			if not ignore_not_found:
+				frappe.throw(_("Domain {0} not found in backend.").format(frappe.bold(pname)))
+		else:
+			dns_records = response.json()["data"]
+
+	principal["dnsRecords"] = dns_records
+
+	return principal
+
+
+def _create_dkim_signature_for_domain(
+	backend: BackendAPI,
+	domain: str,
+	algorithm: Literal["rsa-sha256", "ed25519-sha256"],
+	raise_exception: bool = True,
+) -> None:
+	"""Creates DKIM signature for the given domain."""
+
+	key_type = algorithm.split("-")[0]
+	selector = get_dkim_selector(key_type)
+	rsa_key_size = cint(frappe.conf.rsa_key_size) or 2048
+	private_key, _public_key = generate_dkim_keys(algorithm, rsa_key_size)
+
+	payload = [
+		{
+			"type": "insert",
+			"prefix": f"signature.{key_type}-{domain}",
+			"values": [
+				["report", "true"],
+				["selector", selector],
+				["canonicalization", "relaxed/relaxed"],
+				["private-key", private_key],
+				["algorithm", algorithm],
+				["domain", domain],
+			],
+			"assert_empty": True,
+		}
+	]
+	response = backend.request("POST", SETTINGS_ENDPOINT, data=json.dumps(payload))
+
+	if response.status_code != 200 or response.json().get("error"):
+		message = _("Failed to create DKIM signature for domain {0}").format(frappe.bold(domain))
+		frappe.log_error(title=message, message=frappe.get_traceback(with_context=True))
+
+		if raise_exception:
+			frappe.throw(message)
+		else:
+			frappe.msgprint(message, alert=True)
+
+
+def _delete_dkim_signature_for_domain(
+	backend: BackendAPI,
+	domain: str,
+	algorithm: Literal["rsa-sha256", "ed25519-sha256"],
+	raise_exception: bool = True,
+) -> None:
+	"""Deletes DKIM signature for the given domain."""
+
+	key_type = algorithm.split("-")[0]
+	payload = [
+		{
+			"type": "clear",
+			"prefix": f"signature.{key_type}-{domain}",
+		}
+	]
+	response = backend.request("POST", SETTINGS_ENDPOINT, data=json.dumps(payload))
+	if response.status_code != 200 or response.json().get("error"):
+		message = _("Failed to delete DKIM signature for domain {0}").format(frappe.bold(domain))
+		frappe.log_error(title=message, message=frappe.get_traceback(with_context=True))
+
+		if raise_exception:
+			frappe.throw(message)
+		else:
+			frappe.msgprint(message, alert=True)
 
 
 def ensure_access_to_tenant(tenant: str) -> None:
@@ -360,6 +457,13 @@ def add_principal(
 		frappe.throw(_("Failed to add principal {0}: {1}").format(frappe.bold(pname), response.text))
 
 	create_principal_binding(tenant, pname, type)
+
+	if type == "Domain":
+		_create_dkim_signature_for_domain(backend, pname, "rsa-sha256", raise_exception=False)
+
+		if bool(frappe.conf.enable_ed25519_dkim):
+			_create_dkim_signature_for_domain(backend, pname, "ed25519-sha256", raise_exception=False)
+
 	return f"{tenant}|{pname}"
 
 
@@ -396,7 +500,9 @@ def update_principal(
 	ensure_principal_belong_to_tenant(tenant, pname)
 
 	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
-	existing_principal = frappe._dict(_get_principal(backend, pname, ignore_not_found=False))
+	existing_principal = frappe._dict(
+		_get_principal(backend, pname, skip_dns_records=True, ignore_not_found=False)
+	)
 
 	if pname != principal._name or principal.type != TYPE_MAP[existing_principal.type]:
 		frappe.throw(_("Principal name or type cannot be changed directly. Please create a new principal."))
@@ -554,6 +660,81 @@ def fetch_principals(
 	return principals, total
 
 
+def format_dns_records(dns_records: list[dict]) -> list[dict]:
+	"""Formats DNS records from backend to local format."""
+
+	def infer_category(record: dict) -> str:
+		"""Infers the category of the DNS record based on its type and name."""
+
+		t = record["type"]
+		name = record["name"]
+
+		if t == "MX":
+			return "Receiving"
+		if t == "TXT":
+			if name.startswith("_dmarc"):
+				return "DMARC"
+			if "spf1" in record["content"]:
+				return "Sending"
+			if "domainkey" in name:
+				return "DKIM"
+			if name.startswith("_smtp._tls"):
+				return "TLS Reporting"
+			return "TXT"
+		if t == "CNAME":
+			if "autoconfig" in name:
+				return "Auto-config"
+			if "autodiscover" in name:
+				return "Auto-discover"
+			return "Alias"
+		if t == "SRV":
+			if "_imap" in name or "_pop3" in name:
+				return "Receiving"
+			if "_submission" in name or "_submissions" in name:
+				return "Sending"
+			return "Server"
+		return "Other"
+
+	def parse_priority(record: dict) -> str:
+		"""Parses the priority from the DNS record content if applicable."""
+
+		if record["type"] in ["MX", "SRV"]:
+			parts = record["content"].split()
+			return str(parts[0])
+		return "-"
+
+	def is_mandatory(record: dict) -> bool:
+		"""Define which DNS records are required for proper email authentication."""
+
+		category = infer_category(record)
+
+		if category == "Sending" and "spf1" in record["content"]:
+			return True
+		if category == "DMARC":
+			return True
+		if category == "DKIM":
+			return True
+		if record["type"] == "MX":
+			return False
+
+		return False
+
+	formatted_records = []
+	for record in dns_records:
+		entry = {
+			"category": infer_category(record),
+			"type": record["type"],
+			"host": record["name"],
+			"priority": parse_priority(record),
+			"value": record["content"],
+			"mandatory": cint(is_mandatory(record)),
+			"ttl": 3600,
+		}
+		formatted_records.append(entry)
+
+	return formatted_records
+
+
 def format_principal(tenant: str, principal: dict) -> dict:
 	"""Formats the principal data from backend to local format."""
 
@@ -569,6 +750,9 @@ def format_principal(tenant: str, principal: dict) -> dict:
 		"creation": today(),
 		"modified": today(),
 	}
+
+	if type == "Domain":
+		formatted["dns_records"] = format_dns_records(principal["dnsRecords"])
 
 	if type in ["API Key", "Group", "Individual"]:
 		permissions = [
