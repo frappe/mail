@@ -31,6 +31,7 @@ from mail.utils import (
 	snake_to_camel,
 )
 from mail.utils.cache import get_cluster_for_tenant
+from mail.utils.dns import verify_dns_record
 from mail.utils.user import get_tenant_for_user, is_system_manager, is_tenant_admin
 
 SETTINGS_ENDPOINT = "/api/settings"
@@ -174,6 +175,49 @@ class MailPrincipal(Document):
 	@staticmethod
 	def get_stats(**kwargs) -> dict:
 		return {}
+
+	@frappe.whitelist()
+	def verify_dns_records(self) -> bool:
+		"""Verifies the DNS Records."""
+
+		if self.type != "Domain":
+			frappe.throw(_("DNS Records can only be verified for Domain principals."))
+
+		errors = []
+		warnings = []
+		is_verified = False
+
+		for record in self.dns_records:
+			if not verify_dns_record(record.host, record.type, record.value):
+				message = _("Row #{0}: Failed to verify {1} : {2}").format(
+					record.idx, frappe.bold(record.type), frappe.bold(record.host)
+				)
+				if record.mandatory:
+					errors.append(message)
+				else:
+					warnings.append(message)
+
+		if not errors:
+			is_verified = True
+			frappe.msgprint(_("DNS Records verified successfully."), indicator="green", alert=True)
+		else:
+			frappe.msgprint(errors, title="DNS Verification Failed", indicator="red", as_list=True)
+
+		update_principal_binding(self.tenant, self._name, is_verified=cint(is_verified))
+
+		return is_verified
+
+	@frappe.whitelist()
+	def refresh_dns_records(self) -> None:
+		"""Refreshes the DNS Records."""
+
+		if self.type != "Domain":
+			frappe.throw(_("DNS Records can only be refreshed for Domain principals."))
+
+		_remove_principal_from_cache(self.tenant, self._name)
+		self.reload()
+
+		frappe.msgprint(_("DNS Records refreshed successfully."), indicator="green", alert=True)
 
 
 def _get_local_type(principal_type: str) -> str:

@@ -9,27 +9,6 @@ frappe.ui.form.on('Mail Domain', {
 	add_actions(frm) {
 		if (!frm.doc.__islocal) {
 			frm.add_custom_button(
-				__('Verify DNS Records'),
-				() => {
-					frm.trigger('verify_dns_records')
-				},
-				__('Actions'),
-			)
-
-			frm.add_custom_button(
-				__('Refresh DNS Records'),
-				() => {
-					frappe.confirm(
-						__(
-							"Are you sure you want to refresh the DNS records? If there are any changes, you'll need to update the DNS settings with your DNS provider accordingly.",
-						),
-						() => frm.trigger('refresh_dns_records'),
-					)
-				},
-				__('Actions'),
-			)
-
-			frm.add_custom_button(
 				__('Rotate DKIM Keys'),
 				() => {
 					frappe.confirm(
