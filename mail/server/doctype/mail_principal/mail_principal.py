@@ -219,6 +219,29 @@ class MailPrincipal(Document):
 
 		frappe.msgprint(_("DNS Records refreshed successfully."), indicator="green", alert=True)
 
+	@frappe.whitelist()
+	def rotate_dkim_keys(self) -> None:
+		"""Rotates the DKIM Keys."""
+
+		if self.type != "Domain":
+			frappe.throw(_("DKIM Keys can only be rotated for Domain principals."))
+
+		backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(self.tenant))
+
+		_delete_dkim_signature_for_domain(backend, self._name, "rsa-sha256", raise_exception=False)
+		_create_dkim_signature_for_domain(backend, self._name, "rsa-sha256", raise_exception=False)
+
+		if bool(frappe.conf.enable_ed25519_dkim):
+			_delete_dkim_signature_for_domain(backend, self._name, "ed25519-sha256", raise_exception=False)
+			_create_dkim_signature_for_domain(backend, self._name, "ed25519-sha256", raise_exception=False)
+
+		update_principal_binding(self.tenant, self._name, is_verified=0)
+
+		_remove_principal_from_cache(self.tenant, self._name)
+		self.reload()
+
+		frappe.msgprint(_("DKIM Keys rotated successfully."), indicator="green", alert=True)
+
 
 def _get_local_type(principal_type: str) -> str:
 	"""Returns the local principal type for the given backend principal type."""
