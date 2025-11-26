@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 
-from mail.server.doctype.mail_principal_binding.mail_principal_binding import get_domain_tenant
+from mail.server.doctype.mail_principal_binding.mail_principal_binding import get_principal_tenant
 
 
 def get_root_domain_name() -> str | None:
@@ -36,7 +36,7 @@ def get_tenant_for_domain(domain_name: str) -> str | None:
 	"""Returns the tenant for the domain."""
 
 	def generator() -> str | None:
-		return get_domain_tenant(domain_name, raise_exception=False)
+		return get_principal_tenant(domain_name, raise_exception=False)
 
 	return frappe.cache.hget(f"domain|{domain_name}", "tenant", generator)
 

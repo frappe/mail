@@ -133,16 +133,10 @@ def get_tenant_emails(tenant: str, order_by: str = "creation desc") -> list[str]
 	)
 
 
-def get_principal_tenant(
-	principal_name: str, principal_type: str | None = None, raise_exception: bool = True
-) -> str | None:
+def get_principal_tenant(principal_name: str, raise_exception: bool = True) -> str | None:
 	"""Returns the tenant associated with the given principal name."""
 
-	filters = {"principal_name": principal_name}
-	if principal_type:
-		filters["principal_type"] = principal_type
-
-	if tenant := frappe.db.get_value("Mail Principal Binding", filters, "tenant"):
+	if tenant := frappe.db.get_value("Mail Principal Binding", {"principal_name": principal_name}, "tenant"):
 		return tenant
 
 	if raise_exception:
@@ -151,54 +145,25 @@ def get_principal_tenant(
 		)
 
 
-def get_domain_tenant(domain: str, raise_exception: bool = True) -> str | None:
-	"""Returns the tenant associated with the given domain."""
+def update_principal_binding(pname: str, **kwargs) -> None:
+	"""Update a Mail Principal Binding document."""
 
-	return get_principal_tenant(domain, principal_type="Domain", raise_exception=raise_exception)
-
-
-def get_group_tenant(group: str, raise_exception: bool = True) -> str | None:
-	"""Returns the tenant associated with the given group."""
-
-	return get_principal_tenant(group, principal_type="Group", raise_exception=raise_exception)
-
-
-def get_account_tenant(account: str, raise_exception: bool = True) -> str | None:
-	"""Returns the tenant associated with the given account."""
-
-	return get_principal_tenant(account, principal_type="Individual", raise_exception=raise_exception)
-
-
-def get_mailing_list_tenant(mailing_list: str, raise_exception: bool = True) -> str | None:
-	"""Returns the tenant associated with the given mailing list."""
-
-	return get_principal_tenant(mailing_list, principal_type="List", raise_exception=raise_exception)
-
-
-def update_principal_binding(tenant: str, pname: str, **kwargs) -> None:
-	"""Update a Mail Principal Binding document. If it does not exist, create one."""
-
-	if binding := frappe.db.exists("Mail Principal Binding", {"tenant": tenant, "principal_name": pname}):
+	if binding := frappe.db.exists("Mail Principal Binding", {"principal_name": pname}):
 		doc = frappe.get_doc("Mail Principal Binding", binding)
 		for key, value in kwargs.items():
 			setattr(doc, key, value)
+		doc.flags.ignore_links = True
 		doc.save(ignore_permissions=True)
-	else:
-		create_principal_binding(tenant, kwargs.get("principal_name", pname), kwargs["principal_type"])
 
 
-def delete_principal_binding(tenant: str, principal_name: str, raise_exception: bool = True) -> None:
+def delete_principal_binding(principal_name: str, raise_exception: bool = True) -> None:
 	"""Delete a Mail Principal Binding document."""
 
-	if binding := frappe.db.exists(
-		"Mail Principal Binding", {"tenant": tenant, "principal_name": principal_name}
-	):
+	if binding := frappe.db.exists("Mail Principal Binding", {"principal_name": principal_name}):
 		frappe.delete_doc("Mail Principal Binding", binding, ignore_permissions=True)
 	elif raise_exception:
 		frappe.throw(
-			_("No Mail Principal Binding found for tenant: {0} and principal name: {1}").format(
-				frappe.bold(tenant), frappe.bold(principal_name)
-			)
+			_("No Mail Principal Binding found for principal name: {0}").format(frappe.bold(principal_name))
 		)
 
 
@@ -276,11 +241,3 @@ def ensure_members_belong_to_tenant(tenant: str, members: list[str]) -> None:
 					frappe.bold(member), frappe.bold(tenant_name)
 				)
 			)
-
-
-def on_doctype_update() -> None:
-	frappe.db.add_unique(
-		"Mail Principal Binding",
-		["tenant", "principal_name"],
-		constraint_name="unique_tenant_principal_name",
-	)

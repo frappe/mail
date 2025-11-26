@@ -71,15 +71,6 @@ frappe.ui.form.on('Mail Account Request', {
 		}
 	},
 
-	set_domain_query(frm) {
-		frm.set_query('domain_name', () => ({
-			filters: {
-				tenant: frm.doc.tenant,
-				is_verified: 1,
-			},
-		}))
-	},
-
 	make_fields_read_only(frm) {
 		if (frappe.user_roles.includes('System Manager')) return
 

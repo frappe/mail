@@ -9,7 +9,7 @@ from frappe import _
 from frappe.utils.caching import request_cache
 from validate_email_address import validate_email
 
-from mail.server.doctype.mail_principal_binding.mail_principal_binding import get_domain_tenant
+from mail.server.doctype.mail_principal_binding.mail_principal_binding import get_principal_tenant
 from mail.utils.cache import get_account_for_user, get_tenant_for_domain, get_tenant_for_user
 from mail.utils.user import has_role, is_administrator
 
@@ -59,7 +59,7 @@ def is_subaddressed_email(email: str, raise_exception: bool = False) -> bool:
 
 
 def is_email_assigned(email: str, raise_exception: bool = False) -> bool:
-	"""Returns True if the email is already assigned to Mail Account, Mailing List, or Mail Alias, else False."""
+	"""Returns True if the email address is already assigned else False."""
 
 	if frappe.db.exists("Mail Principal Binding", {"principal_name": email}):
 		if raise_exception:
@@ -98,10 +98,7 @@ def validate_email_address(
 def validate_domain_is_verified(domain_name: str) -> None:
 	"""Validates if the domain is verified."""
 
-	if not frappe.db.exists(
-		"Mail Principal Binding",
-		{"principal_name": domain_name, "principal_type": "Domain", "is_verified": 1},
-	):
+	if not frappe.db.exists("Mail Principal Binding", {"principal_name": domain_name, "is_verified": 1}):
 		frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(domain_name)))
 
 
@@ -109,7 +106,7 @@ def validate_domain_is_verified(domain_name: str) -> None:
 def validate_domain_owned_by_tenant(domain_name: str, tenant: str) -> None:
 	"""Validates if the domain is owned by the tenant."""
 
-	if tenant != get_domain_tenant(domain_name, raise_exception=False):
+	if tenant != get_principal_tenant(domain_name, raise_exception=False):
 		frappe.throw(_("Domain {0} is not owned by the tenant.").format(frappe.bold(domain_name)))
 
 

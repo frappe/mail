@@ -24,7 +24,7 @@ from frappe.types.filter import FilterTuple
 from frappe.utils import get_bench_path
 from frappe.utils.caching import redis_cache
 from markdown_it import MarkdownIt
-from passlib.hash import pbkdf2_sha512
+from passlib.hash import pbkdf2_sha512, sha512_crypt
 
 INVISIBLE_CHARS = (
 	r"[\u0000-\u001F\u007F-\u009F"  # ASCII control chars
@@ -72,28 +72,21 @@ def generate_random_phrase() -> str:
 	return " ".join(["".join(random.choices(string.ascii_lowercase, k=l)) for l in (5, 4, 4, 4, 3)])
 
 
-def generate_app_password(source: str | None = None) -> str:
+def generate_app_password(app_name: str | None = None, password: str | None = None) -> str:
 	"""Generates an app password hash with metadata."""
 
-	source = source or frappe.local.site
+	app_name = app_name or "app_pass"
+	password = password or os.urandom(32)
 
-	phrase = os.urandom(32)
-	encoded_phrase = base64.b64encode(phrase).decode()
+	timestamp = datetime.now(timezone.utc).isoformat()
+	b64_part = base64.b64encode(f"{app_name}${timestamp}".encode()).decode()
+	hash_value = sha512_crypt.hash(password)
+	parts = hash_value.split("$", 3)
+	method = parts[1]
+	salt = parts[2]
+	hashed_password = parts[3]
 
-	first_section = base64.b64encode(
-		f"{source}${datetime.now(timezone.utc).isoformat(timespec='milliseconds')}".encode()
-	).decode()
-
-	password_hash = pbkdf2_sha512.using(rounds=150000, salt_size=16).hash(encoded_phrase)
-
-	parts = password_hash.split("$")
-	algo = "app"
-	rounds = parts[2]
-	salt = parts[3]
-	digest = parts[4]
-
-	final_password = f"${algo}${first_section}$${rounds}${salt}/${digest}"
-	return final_password
+	return f"$app${b64_part}$${method}${salt}${hashed_password}"
 
 
 def generate_dkim_keys(

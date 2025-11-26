@@ -110,30 +110,11 @@ class MailPrincipal(Document):
 			return None
 
 		return bool(
-			frappe.db.get_value(
-				"Mail Principal Binding", {"tenant": self.tenant, "principal_name": self._name}, "is_verified"
-			)
+			frappe.db.get_value("Mail Principal Binding", {"principal_name": self._name}, "is_verified")
 		)
 
 	def db_insert(self, *args, **kwargs) -> None:
-		self.name = add_principal(
-			self.tenant,
-			self._name,
-			self.type,
-			cint(self.quota),
-			self.description,
-			self.get_password("password") if self.type == "Individual" else None,
-			self._app_passwords,
-			self._emails,
-			self._member_of,
-			self._roles,
-			self._lists,
-			self._members,
-			self._enabled_permissions,
-			self._disabled_permissions,
-			self._external_members,
-			self.locale,
-		)
+		self.name = add_principal(self)
 
 	def load_from_db(self) -> "MailPrincipal":
 		tenant, pname = self.name.split("|")
@@ -433,32 +414,15 @@ def ensure_access_to_tenant(tenant: str) -> None:
 
 
 @frappe.whitelist()
-def add_principal(
-	tenant: str,
-	pname: str,
-	type: Literal["API Key", "Domain", "Group", "Individual", "List", "OAuth Client", "Role"],
-	quota: int = 0,
-	description: str | None = None,
-	password: str | None = None,
-	app_passwords: list[str] | None = None,
-	emails: list[str] | None = None,
-	member_of: list[str] | None = None,
-	roles: list[str] | None = None,
-	lists: list[str] | None = None,
-	members: list[str] | None = None,
-	enabled_permissions: list[str] | None = None,
-	disabled_permissions: list[str] | None = None,
-	external_members: list[str] | None = None,
-	locale: str | None = None,
-) -> str:
-	"""Adds a new principal to the given tenant and returns the principal name in the format 'tenant|pname'."""
+def add_principal(principal: "MailPrincipal") -> str:
+	"""Adds a new principal."""
 
-	if type in ["API Key", "Group", "OAuth Client", "Role"]:
-		raise NotImplementedError(f"Principal type {type} is not supported yet.")
-	if not tenant:
+	if principal.type in ["API Key", "Group", "OAuth Client", "Role"]:
+		raise NotImplementedError(f"Principal type {principal.type} is not supported yet.")
+	if not principal.tenant:
 		frappe.throw(_("Tenant must be specified to add a principal."))
 
-	ensure_access_to_tenant(tenant=tenant)
+	ensure_access_to_tenant(tenant=principal.tenant)
 
 	_secrets = []
 	_emails = []
@@ -470,53 +434,52 @@ def add_principal(
 	_disabled_permissions = []
 	_external_members = []
 
-	if type == "Domain":
-		if "." not in pname:
+	if principal.type == "Domain":
+		if "." not in principal._name:
 			frappe.throw(_("Invalid domain name provided for principal."))
 
-	if type == "Individual":
+	if principal.type == "Individual":
 		_roles = ["user"]
-		if password:
-			_secrets.append(hash_password(password))
-		if app_passwords:
-			for ap in app_passwords:
-				_secrets.append(generate_app_password(ap))
+		_secrets.append(hash_password(principal.get_password("password")))
+		if principal.app_passwords:
+			for ap in principal.app_passwords:
+				_secrets.append(generate_app_password(ap.identifier, ap.get_password("password")))
 
-	if type in ["Group", "Individual", "List"]:
-		_emails = [pname] + (emails or [])
+	if principal.type in ["Group", "Individual", "List"]:
+		_emails = [principal._name] + principal._emails
 		for email in _emails:
 			validate_email_address(email, True)
-		ensure_emails_belong_to_tenant_domains(tenant, _emails)
+		ensure_emails_belong_to_tenant_domains(principal.tenant, _emails)
 
-	if type in ["Group", "Individual"]:
-		if _member_of := member_of or []:
+	if principal.type in ["Group", "Individual"]:
+		if _member_of := principal._member_of:
 			for group in _member_of:
 				validate_email_address(group, True)
-			ensure_groups_belong_to_tenant(tenant, _member_of)
+			ensure_groups_belong_to_tenant(principal.tenant, _member_of)
 
-		if _lists := lists or []:
+		if _lists := principal._lists:
 			for lst in _lists:
 				validate_email_address(lst, True)
-			ensure_lists_belong_to_tenant(tenant, _lists)
+			ensure_lists_belong_to_tenant(principal.tenant, _lists)
 
-		_disabled_permissions = disabled_permissions or []
+		_disabled_permissions = principal._disabled_permissions
 
-	if type in ["Group", "List"]:
-		if _members := members or []:
+	if principal.type in ["Group", "List"]:
+		if _members := principal._members:
 			for member in _members:
 				validate_email_address(member, True)
-			ensure_members_belong_to_tenant(tenant, _members)
+			ensure_members_belong_to_tenant(principal.tenant, _members)
 
-	if type == "List":
-		if _external_members := external_members or []:
+	if principal.type == "List":
+		if _external_members := principal._external_members:
 			for member in _external_members:
 				validate_email_address(member, True)
 
 	payload = {
-		"name": pname,
-		"type": _get_principal_type(type),
-		"quota": quota,
-		"description": description or "",
+		"name": principal._name,
+		"type": _get_principal_type(principal.type),
+		"quota": principal.quota,
+		"description": principal.description or "",
 		"secrets": _secrets,
 		"emails": _emails,
 		"memberOf": _member_of,
@@ -526,23 +489,27 @@ def add_principal(
 		"enabledPermissions": _enabled_permissions,
 		"disabledPermissions": _disabled_permissions,
 		"externalMembers": _external_members,
-		"locale": locale,
+		"locale": principal.locale,
 	}
-	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(principal.tenant))
 	response = backend.request("POST", PRINCIPAL_ENDPOINT, data=json.dumps(payload))
 
 	if response.status_code != 200 or response.json().get("error"):
-		frappe.throw(_("Failed to add principal {0}: {1}").format(frappe.bold(pname), response.text))
+		frappe.throw(
+			_("Failed to add principal {0}: {1}").format(frappe.bold(principal._name), response.text)
+		)
 
-	create_principal_binding(tenant, pname, type)
+	create_principal_binding(principal.tenant, principal._name, principal.type)
 
-	if type == "Domain":
-		_create_dkim_signature_for_domain(backend, pname, "rsa-sha256", raise_exception=False)
+	if principal.type == "Domain":
+		_create_dkim_signature_for_domain(backend, principal._principal, "rsa-sha256", raise_exception=False)
 
 		if bool(frappe.conf.enable_ed25519_dkim):
-			_create_dkim_signature_for_domain(backend, pname, "ed25519-sha256", raise_exception=False)
+			_create_dkim_signature_for_domain(
+				backend, principal._name, "ed25519-sha256", raise_exception=False
+			)
 
-	return f"{tenant}|{pname}"
+	return f"{principal.tenant}|{principal._name}"
 
 
 @frappe.whitelist()
@@ -615,7 +582,9 @@ def update_principal(
 
 		if principal.app_passwords:
 			for ap in principal.app_passwords:
-				updates["secrets"].append(ap.value or generate_app_password(ap.identifier))
+				updates["secrets"].append(
+					ap.value or generate_app_password(ap.identifier, ap.get_password("password"))
+				)
 
 	if principal.type in ["Group", "Individual", "List"]:
 		updates["emails"] = [principal._name] + principal._emails
@@ -677,7 +646,7 @@ def update_principal(
 
 	if pname != principal._name or principal.type != TYPE_MAP[existing_principal.type]:
 		principal.name = f"{tenant}|{principal._name}"
-		update_principal_binding(tenant, pname, principal_name=principal._name, principal_type=principal.type)
+		update_principal_binding(pname, principal_name=principal._name, principal_type=principal.type)
 
 		if pname != principal._name and not do_not_commit:
 			frappe.db.commit()
@@ -688,6 +657,7 @@ def delete_principal(tenant: str, pname: str) -> None:
 	"""Deletes the principal with the given principal name."""
 
 	ensure_access_to_tenant(tenant)
+	ensure_principal_belong_to_tenant(tenant, pname)
 
 	endpoint = f"{PRINCIPAL_ENDPOINT}/{pname}"
 	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
@@ -697,7 +667,7 @@ def delete_principal(tenant: str, pname: str) -> None:
 		frappe.throw(_("Failed to delete principal {0}: {1}").format(frappe.bold(pname), response.text))
 
 	_remove_principal_from_cache(tenant, pname)
-	delete_principal_binding(tenant, pname, raise_exception=False)
+	delete_principal_binding(pname, raise_exception=False)
 
 
 @frappe.whitelist()

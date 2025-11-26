@@ -61,7 +61,7 @@
    "label": "Principal Name",
    "no_copy": 1,
    "reqd": 1,
-   "search_index": 1
+   "unique": 1
   },
   {
    "fieldname": "section_break_chsm",
@@ -83,7 +83,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-25 17:48:04.018706",
+ "modified": "2025-11-26 19:08:15.668346",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Principal Binding",
@@ -104,6 +104,7 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],

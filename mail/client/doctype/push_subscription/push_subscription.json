@@ -10,7 +10,7 @@
   "verified_at",
   "section_break_ktdh",
   "status",
-  "account",
+  "user",
   "server",
   "endpoint",
   "expires_at",
@@ -29,17 +29,6 @@
   {
    "fieldname": "section_break_xjjk",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "options": "Mail Account",
-   "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
   },
   {
    "default": "Email\nMailbox\nIdentity",
@@ -179,12 +168,23 @@
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-07-16 11:02:31.835423",
+ "modified": "2025-11-26 15:51:37.137118",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Push Subscription",
@@ -207,5 +207,5 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "account"
+ "title_field": "user"
 }

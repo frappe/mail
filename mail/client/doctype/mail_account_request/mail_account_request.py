@@ -16,9 +16,9 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.client.doctype.mail_account.mail_account import create_mail_account
-from mail.utils import generate_otp
-from mail.utils.cache import get_tenant_for_user
+from mail.client.doctype.push_subscription.push_subscription import create_push_subscriptions
+from mail.utils import generate_otp, generate_random_phrase
+from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin
 from mail.utils.validation import (
 	is_email_assigned,
@@ -221,15 +221,72 @@ class MailAccountRequest(Document):
 		if not self.is_verified:
 			frappe.throw(_("Please verify the email address first."))
 
-		create_mail_account(
-			tenant=self.tenant,
-			email=self.account,
-			backup_email=self.email,
-			first_name=first_name,
-			last_name=last_name,
-			password=password,
-			is_admin=self.is_admin,
-		)
+		if frappe.db.exists("Mail Principal Binding", {"principal_name": self.account}):
+			frappe.throw(_("Account {0} is already created.").format(self.account))
+
+		if not password:
+			frappe.throw(_("Password is required to create account."))
+
+		if frappe.db.exists("User", {"email": self.account}):
+			frappe.throw(_("User with email {0} already exists.").format(frappe.bold(self.account)))
+
+		roles = ["Mail User"]
+		if self.is_admin:
+			roles.append("Mail Admin")
+
+		user = create_user(self.account, first_name, last_name, password, roles)
+		_add_user_to_tenant(self.tenant, user, self.is_admin)
+
+		app_password = generate_random_phrase()
+		principal = frappe.new_doc("Mail Principal")
+		principal.tenant = self.tenant
+		principal.type = "Individual"
+		principal._name = self.account
+		principal.description = f"{first_name} {last_name}"
+		principal.password = password
+		principal.append("app_passwords", {"identifier": frappe.local.site, "password": app_password})
+		principal.insert(ignore_permissions=True)
+
+		jmap_server_url = frappe.db.get_value("Mail Cluster", get_cluster_for_tenant(self.tenant), "base_url")
+		user_doc = frappe.get_doc("User", user)
+		user_doc.jmap_server_url = jmap_server_url
+		user_doc.jmap_username = self.account
+		user_doc.jmap_app_password = app_password
+		user_doc.save(ignore_permissions=True)
+
+		create_push_subscriptions(user)
+
+
+def create_user(
+	email: str,
+	first_name: str,
+	last_name: str | None = None,
+	password: str | None = None,
+	roles: list[str] | None = None,
+) -> str:
+	"""Creates a User document"""
+
+	user = frappe.new_doc("User")
+	user.first_name = first_name
+	user.last_name = last_name
+	user.username = email
+	user.email = email
+	user.owner = email
+	user.send_welcome_email = 0
+	if roles:
+		user.append_roles(*roles)
+	if password:
+		user.new_password = password
+	user.insert(ignore_permissions=True)
+
+	return user.name
+
+
+def _add_user_to_tenant(tenant: str, user: str, is_admin: bool) -> None:
+	"""Adds a User to a Tenant"""
+
+	tenant = frappe.get_doc("Mail Tenant", tenant)
+	tenant.add_member(user, is_admin)
 
 
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
