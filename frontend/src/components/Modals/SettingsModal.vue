@@ -39,12 +39,22 @@
 </template>
 <script setup lang="ts">
 import { computed, inject, markRaw, ref } from 'vue'
-import { Code, DatabaseBackup, Feather, Mailbox, Palette, TreePalm, User } from 'lucide-vue-next'
+import {
+	Code,
+	DatabaseBackup,
+	Feather,
+	Fingerprint,
+	Mailbox,
+	Palette,
+	TreePalm,
+	User,
+} from 'lucide-vue-next'
 import { Button, Dialog } from 'frappe-ui'
 
 import AccountSettings from '@/components/Settings/AccountSettings.vue'
 import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
 import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
+import IdentitySettings from '@/components/Settings/IdentitySettings.vue'
 import MailDataExchangeSettings from '@/components/Settings/MailDataExchangeSettings.vue'
 import ProfileSettings from '@/components/Settings/ProfileSettings.vue'
 import SignatureSettings from '@/components/Settings/SignatureSettings.vue'
@@ -66,6 +76,11 @@ const tabs = computed(() => {
 			label: __('Account'),
 			icon: Mailbox,
 			component: markRaw(AccountSettings),
+		},
+		{
+			label: __('Identity'),
+			icon: Fingerprint,
+			component: markRaw(IdentitySettings),
 		},
 		{
 			label: __('Appearance'),

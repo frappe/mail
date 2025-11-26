@@ -177,9 +177,15 @@ import {
 import { EditorContent } from '@tiptap/vue-3'
 import { watchDebounced } from '@vueuse/core'
 import { ChevronDown, ChevronUp, ExternalLink, Forward, Reply, ReplyAll } from 'lucide-vue-next'
-import { Button, Dropdown, FeatherIcon, TextEditor, createResource } from 'frappe-ui'
-import { ImageExtension } from 'frappe-ui/src/components/TextEditor/extensions/image'
-import { useFileUpload } from 'frappe-ui/src/utils/useFileUpload'
+import {
+	Button,
+	Dropdown,
+	FeatherIcon,
+	ImageExtension,
+	TextEditor,
+	createResource,
+	useFileUpload,
+} from 'frappe-ui'
 
 import { formatBytes, isOverlayPresent, raiseToast, validateEmail } from '@/utils'
 import { useScreenSize, useVisualViewport } from '@/utils/composables'

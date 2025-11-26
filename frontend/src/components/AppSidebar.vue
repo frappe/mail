@@ -76,8 +76,7 @@
 import { computed, h, inject, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStorage } from '@vueuse/core'
-import { Button, Dropdown, Sidebar, createResource } from 'frappe-ui'
-import SidebarItem from 'frappe-ui/src/components/Sidebar/SidebarItem.vue'
+import { Button, Dropdown, Sidebar, SidebarItem, createResource } from 'frappe-ui'
 
 import { toTitleCase } from '@/utils'
 import { useScreenSize, useSidebar } from '@/utils/composables'

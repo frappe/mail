@@ -32,8 +32,7 @@
 
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { Dialog, createResource } from 'frappe-ui'
-import { useList } from 'frappe-ui/src/data-fetching'
+import { Dialog, createResource, useList } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import AddMailingListMemberInput from '@/components/AddMailingListMemberInput.vue'

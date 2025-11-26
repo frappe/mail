@@ -67,8 +67,8 @@ import {
 	ListRowItem,
 	ListRows,
 	ListView,
+	useList,
 } from 'frappe-ui'
-import { useList } from 'frappe-ui/src/data-fetching'
 
 import { getTheme } from '@/utils'
 

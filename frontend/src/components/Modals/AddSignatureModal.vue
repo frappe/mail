@@ -26,8 +26,7 @@
 
 <script setup lang="ts">
 import { computed, inject, reactive, watch } from 'vue'
-import { Dialog, FormControl, TextEditor } from 'frappe-ui'
-import { useNewDoc } from 'frappe-ui/src/data-fetching'
+import { Dialog, FormControl, TextEditor, useNewDoc } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import { useTextEditorButtons } from '@/utils/composables'

@@ -32,6 +32,7 @@ export default defineConfig({
 						'mail_contact',
 						'mail_recipient',
 						'mail_settings',
+						'identity',
 					],
 				},
 			},

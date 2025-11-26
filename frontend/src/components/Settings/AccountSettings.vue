@@ -8,11 +8,6 @@
 			:show-search="false"
 			:options="user.data.email_addresses"
 		/>
-		<FormControl
-			v-model="account.doc.display_name"
-			:label="__('Display Name')"
-			variant="outline"
-		/>
 		<Switch
 			v-model="createMailContact"
 			:label="__('Create Mail Contacts')"
@@ -31,24 +26,6 @@
 			:description="__('Automatically deletes the newsletter after it is sent.')"
 		/>
 
-		<h1>{{ __('Incoming') }}</h1>
-		<Switch
-			v-model="setCustomReplyTo"
-			:label="__('Set Custom Reply-To')"
-			:description="__('Replies will go to the addresses you specify.')"
-			@update:model-value="account.doc.reply_to = null"
-		/>
-		<FormControl
-			v-if="setCustomReplyTo"
-			v-model="account.doc.reply_to"
-			:label="__('Receive Replies On')"
-			placeholder="<John Doe> johndoe@example.com, <John> john@example.io"
-			:description="
-				__('Enter comma-separated email addresses where replies should be sent.')
-			"
-			variant="outline"
-		/>
-
 		<h1>{{ __('Recovery') }}</h1>
 		<FormControl
 			v-model="account.doc.backup_email"
@@ -58,7 +35,7 @@
 		/>
 		<ErrorMessage :message="account.save.error" />
 		<Button
-			:label="__('Save Changes')"
+			:label="__('Save')"
 			variant="solid"
 			:disabled="JSON.stringify(account.doc) === JSON.stringify(account.originalDoc)"
 			:loading="account.save.loading"
@@ -75,8 +52,6 @@ import { Button, ErrorMessage, FormControl, Switch, createDocumentResource } fro
 import { raiseToast } from '@/utils'
 import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
 
-import type { MailAccount } from '@/types/doctypes'
-
 const user = inject('$user')
 
 const account = createDocumentResource({
@@ -85,7 +60,6 @@ const account = createDocumentResource({
 	setValue: {
 		onSuccess: () => raiseToast(__('Account settings saved successfully')),
 	},
-	onSuccess: (data: MailAccount) => (setCustomReplyTo.value = !!data.reply_to),
 })
 
 const createMailContact = computed({
@@ -102,6 +76,4 @@ const destroyNewsletterAfterSubmission = computed({
 	get: () => !!account.doc.destroy_newsletter_after_submission,
 	set: (val: boolean) => (account.doc.destroy_newsletter_after_submission = val ? 1 : 0),
 })
-
-const setCustomReplyTo = ref(account.doc?.reply_to)
 </script>

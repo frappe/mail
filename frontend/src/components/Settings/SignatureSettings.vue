@@ -48,8 +48,7 @@
 <script setup lang="ts">
 import { inject, ref } from 'vue'
 import { Ellipsis } from 'lucide-vue-next'
-import { Button, Dropdown } from 'frappe-ui'
-import { useList } from 'frappe-ui/src/data-fetching'
+import { Button, Dropdown, useList } from 'frappe-ui'
 
 import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
 import AddSignatureModal from '@/components/Modals/AddSignatureModal.vue'
