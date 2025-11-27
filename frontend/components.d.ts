@@ -42,6 +42,7 @@ declare module 'vue' {
     HeaderActions: typeof import('./src/components/HeaderActions.vue')['default']
     HorizontalControl: typeof import('./src/components/Controls/HorizontalControl.vue')['default']
     IdentitySettings: typeof import('./src/components/Settings/IdentitySettings.vue')['default']
+    IdentitySettingsListView: typeof import('./src/components/IdentitySettingsListView.vue')['default']
     InstallPrompt: typeof import('./src/components/InstallPrompt.vue')['default']
     LinkControl: typeof import('./src/components/Controls/LinkControl.vue')['default']
     LoginLayout: typeof import('./src/components/LoginLayout.vue')['default']
