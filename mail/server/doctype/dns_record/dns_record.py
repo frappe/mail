@@ -137,8 +137,6 @@ def create_or_update_dns_record(
 	ttl: int | None = None,
 	priority: int | None = None,
 	category: str | None = None,
-	attached_to_doctype: str | None = None,
-	attached_to_docname: str | None = None,
 	do_not_enqueue: bool = False,
 ) -> "DNSRecord":
 	"""Creates or updates a DNS Record"""
@@ -157,8 +155,6 @@ def create_or_update_dns_record(
 	dns_record.ttl = ttl
 	dns_record.priority = priority
 	dns_record.category = category
-	dns_record.attached_to_doctype = attached_to_doctype
-	dns_record.attached_to_docname = attached_to_docname
 	dns_record.save(ignore_permissions=True)
 
 	return dns_record
