@@ -47,10 +47,9 @@
   },
   {
    "fieldname": "domain_name",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Domain Name",
-   "options": "Mail Domain",
    "read_only": 1
   },
   {
@@ -167,10 +166,11 @@
   }
  ],
  "grid_page_length": 50,
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-14 10:58:22.508348",
+ "modified": "2025-11-27 17:07:36.853434",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "DMARC Report",
