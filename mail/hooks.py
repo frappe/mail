@@ -194,6 +194,7 @@ has_permission = {
 	"Mailing List": "mail.client.doctype.mailing_list.mailing_list.has_permission",
 	"Mailing List External Member": "mail.client.doctype.mailing_list_external_member.mailing_list_external_member.has_permission",
 	"Mailing List Member": "mail.client.doctype.mailing_list_member.mailing_list_member.has_permission",
+	"Push Subscription": "mail.client.doctype.push_subscription.push_subscription.has_permission",
 	"Quota": "mail.client.doctype.quota.quota.has_permission",
 }
 
@@ -231,9 +232,9 @@ scheduler_events = {
 	"daily": [
 		"mail.server.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
 	],
-	"daily_long": [
-		"mail.client.doctype.push_subscription.push_subscription.renew_push_subscriptions",
-	],
+	# "daily_long": [
+	#     "mail.tasks.daily_long"
+	# ],
 	"hourly": [
 		"mail.server.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",
 	],
@@ -254,7 +255,6 @@ scheduler_events = {
 			"mail.server.doctype.server_ansible_play.server_ansible_play.retry_failed_ansible_plays",
 			# Client
 			"mail.client.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
-			"mail.client.doctype.push_verification_queue.push_verification_queue.process_verifications",
 		],
 	},
 }

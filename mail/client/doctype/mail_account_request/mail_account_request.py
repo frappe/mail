@@ -16,7 +16,6 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.client.doctype.push_subscription.push_subscription import create_push_subscriptions
 from mail.utils import generate_otp, generate_random_phrase
 from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin
@@ -237,7 +236,10 @@ class MailAccountRequest(Document):
 		user = create_user(self.account, first_name, last_name, password, roles)
 		_add_user_to_tenant(self.tenant, user, self.is_admin)
 
+		# Generate App Password
 		app_password = generate_random_phrase()
+
+		# Create Principal
 		principal = frappe.new_doc("Mail Principal")
 		principal.tenant = self.tenant
 		principal.type = "Individual"
@@ -247,6 +249,7 @@ class MailAccountRequest(Document):
 		principal.append("app_passwords", {"identifier": frappe.local.site, "password": app_password})
 		principal.insert(ignore_permissions=True)
 
+		# Update User JMAP settings
 		jmap_server_url = frappe.db.get_value("Mail Cluster", get_cluster_for_tenant(self.tenant), "base_url")
 		user_doc = frappe.get_doc("User", user)
 		user_doc.jmap_server_url = jmap_server_url
@@ -254,7 +257,11 @@ class MailAccountRequest(Document):
 		user_doc.jmap_app_password = app_password
 		user_doc.save(ignore_permissions=True)
 
-		create_push_subscriptions(user)
+		# Create Push Subscription
+		if frappe.utils.get_url().startswith("https"):
+			ps = frappe.new_doc("Push Subscription")
+			ps.user = user
+			ps.insert(ignore_permissions=True)
 
 
 def create_user(
