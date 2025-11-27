@@ -6,8 +6,8 @@ from frappe.utils import cint, get_datetime, get_url, now_datetime
 from frappe.utils.data import sha256_hash
 
 from mail.api.admin import add_member
+from mail.client.doctype.identity.identity import fetch_identities
 from mail.client.doctype.mail_account.mail_account import create_user
-from mail.jmap import get_identities
 from mail.utils import user_context
 from mail.utils.cache import (
 	get_account_for_user,
@@ -283,11 +283,9 @@ def get_quota() -> dict:
 
 
 @frappe.whitelist()
-def get_user_identities() -> list[dict]:
+def get_identities() -> list[dict]:
 	"""Return the email identities for the user"""
 
 	account = get_account_for_user(frappe.session.user)
 
-	return frappe.get_all(
-		"Identity", filters={"account": account}, fields=["name", "email", "html_signature"]
-	)
+	return fetch_identities(account, page=1, limit=100)

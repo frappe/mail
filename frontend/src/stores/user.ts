@@ -52,7 +52,7 @@ export const userStore = defineStore('mail-users', () => {
 		return ids
 	})
 
-	const identities = createResource({ url: 'mail.api.account.get_user_identities', auto: true })
+	const identities = createResource({ url: 'mail.api.account.get_identities', auto: true })
 
 	return { userResource, mailboxes, mailboxIds, identities }
 })

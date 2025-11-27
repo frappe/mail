@@ -9,8 +9,7 @@
   "column_break_yaxd",
   "signature_name",
   "section_break_tvbn",
-  "html_body",
-  "text_body"
+  "html_body"
  ],
  "fields": [
   {
@@ -40,17 +39,12 @@
    "fieldname": "html_body",
    "fieldtype": "Code",
    "label": "HTML"
-  },
-  {
-   "fieldname": "text_body",
-   "fieldtype": "Code",
-   "label": "Text"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-21 16:30:08.521652",
+ "modified": "2025-11-27 16:04:52.509091",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Signature",
