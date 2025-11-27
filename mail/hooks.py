@@ -194,6 +194,7 @@ has_permission = {
 	"Mailing List Member": "mail.client.doctype.mailing_list_member.mailing_list_member.has_permission",
 	"Push Subscription": "mail.client.doctype.push_subscription.push_subscription.has_permission",
 	"Quota": "mail.client.doctype.quota.quota.has_permission",
+	"Vacation Response": "mail.client.doctype.vacation_response.vacation_response.has_permission",
 }
 
 website_route_rules = [

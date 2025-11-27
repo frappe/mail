@@ -6,7 +6,7 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, today
+from frappe.utils import today
 from uuid_utils import uuid7
 
 from mail.jmap import get_jmap_client_for_user
