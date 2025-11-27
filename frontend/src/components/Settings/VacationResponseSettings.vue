@@ -37,8 +37,11 @@
 		<Button
 			:label="__('Save')"
 			variant="solid"
-			:disabled="JSON.stringify(account.doc) === JSON.stringify(account.originalDoc)"
-			:loading="account.setVacationResponse?.loading || account.get?.loading"
+			:disabled="
+				account.get.loading ||
+				JSON.stringify(account.doc) === JSON.stringify(account.originalDoc)
+			"
+			:loading="account.setVacationResponse?.loading"
 			class="min-h-7"
 			@click="() => account.setVacationResponse.submit()"
 		/>

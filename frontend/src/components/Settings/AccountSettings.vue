@@ -37,7 +37,10 @@
 		<Button
 			:label="__('Save')"
 			variant="solid"
-			:disabled="JSON.stringify(account.doc) === JSON.stringify(account.originalDoc)"
+			:disabled="
+				account.get.loading ||
+				JSON.stringify(account.doc) === JSON.stringify(account.originalDoc)
+			"
 			:loading="account.save.loading"
 			class="min-h-7"
 			@click="() => account.save.submit()"
@@ -46,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue'
+import { computed, inject } from 'vue'
 import { Button, ErrorMessage, FormControl, Switch, createDocumentResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'

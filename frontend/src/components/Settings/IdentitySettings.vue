@@ -32,7 +32,6 @@
 							@delete="(index: number) => identity.doc.reply_to.splice(index, 1)"
 						/>
 					</div>
-
 					<Button
 						:label="__('Add Reply To')"
 						class="min-h-7 w-full"
@@ -48,7 +47,6 @@
 							@delete="(index: number) => identity.doc.bcc.splice(index, 1)"
 						/>
 					</div>
-
 					<Button
 						:label="__('Add Bcc')"
 						class="min-h-7 w-full"
@@ -96,6 +94,7 @@
 					:label="__('Save')"
 					variant="solid"
 					:disabled="
+						identity.get.loading ||
 						JSON.stringify(identity.doc) === JSON.stringify(identity.originalDoc)
 					"
 					:loading="identity.save.loading"
@@ -148,29 +147,21 @@ import {
 	FormControl,
 	TextEditor,
 	createDocumentResource,
-	createResource,
 	useList,
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import { useTextEditorButtons } from '@/utils/composables'
 import { CustomParagraphExtension } from '@/utils/text-editor'
+import { userStore } from '@/stores/user'
 import IdentitySettingsListView from '@/components/IdentitySettingsListView.vue'
 
 import type { Identity } from '@/types'
 
 const user = inject('$user')
+const { identities } = userStore()
 
 const { buttons } = useTextEditorButtons()
-
-const identities = createResource({
-	url: 'mail.api.account.get_user_identities',
-	auto: true,
-	cache: ['identities', user.data.name],
-	onSuccess: (data: Identity[]) => {
-		if (data.length) identityName.value = data[0].name
-	},
-})
 
 const signatures = useList({
 	doctype: 'Mail Signature',
@@ -180,8 +171,22 @@ const signatures = useList({
 	cacheKey: ['mailSignatures', user.data.name],
 })
 
-const identityName = ref('')
-const identity = ref()
+const identityName = ref(identities.data?.[0]?.name || '')
+
+const getIdentity = () =>
+	createDocumentResource({
+		doctype: 'Identity',
+		name: identityName.value,
+		setValue: {
+			onSuccess: () => {
+				raiseToast(__('Identity updated successfully'))
+				identities.reload()
+			},
+			onError: (error) => raiseToast(error.messages[0], 'error'),
+		},
+	})
+
+const identity = ref(getIdentity())
 const savedSignature = ref('')
 
 const showDialog = ref(false)
@@ -206,14 +211,4 @@ const addEmailAddress = () => {
 watch(identityName, (val) => {
 	if (val) identity.value = getIdentity()
 })
-
-const getIdentity = () =>
-	createDocumentResource({
-		doctype: 'Identity',
-		name: identityName.value,
-		setValue: {
-			onSuccess: () => raiseToast(__('Identity updated successfully')),
-			onError: (error) => raiseToast(error.messages[0], 'error'),
-		},
-	})
 </script>

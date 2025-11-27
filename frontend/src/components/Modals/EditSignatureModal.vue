@@ -60,7 +60,7 @@ const getSignature = () =>
 	})
 
 const addSignatureOptions = computed(() => ({
-	title: __('New Signature'),
+	title: __('Edit Signature'),
 	actions: [
 		{
 			label: __('Save'),

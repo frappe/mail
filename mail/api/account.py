@@ -288,4 +288,6 @@ def get_user_identities() -> list[dict]:
 
 	account = get_account_for_user(frappe.session.user)
 
-	return [{field: d[field] for field in ["name", "email"]} for d in get_identities(account)]
+	return frappe.get_all(
+		"Identity", filters={"account": account}, fields=["name", "email", "html_signature"]
+	)
