@@ -25,12 +25,13 @@ from mail.utils import (
 	generate_app_password,
 	generate_dkim_keys,
 	get_dkim_selector,
+	get_spf_host_for_cluster,
 	hash_password,
 	parse_filters,
 	parse_token,
 	snake_to_camel,
 )
-from mail.utils.cache import get_cluster_for_tenant
+from mail.utils.cache import get_cluster_for_tenant, get_root_domain_name
 from mail.utils.dns import verify_dns_record
 from mail.utils.user import get_tenant_for_user, is_system_manager, is_tenant_admin
 
@@ -413,6 +414,20 @@ def ensure_access_to_tenant(tenant: str) -> None:
 		frappe.throw(_("Tenant must be provided to fetch principals."))
 
 
+def validate_max_domains(tenant: str) -> None:
+	"""Validates if the tenant has reached the maximum limit of domains."""
+
+	max_domains = frappe.db.get_value("Mail Tenant", tenant, "max_domains")
+	total_domains = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "type": "Domain"})
+
+	if total_domains >= max_domains:
+		frappe.throw(
+			_("You have reached the maximum limit of {0} domains for the tenant.").format(
+				frappe.bold(max_domains)
+			)
+		)
+
+
 @frappe.whitelist()
 def add_principal(principal: "MailPrincipal") -> str:
 	"""Adds a new principal."""
@@ -435,6 +450,7 @@ def add_principal(principal: "MailPrincipal") -> str:
 	_external_members = []
 
 	if principal.type == "Domain":
+		validate_max_domains(principal.tenant)
 		if "." not in principal._name:
 			frappe.throw(_("Invalid domain name provided for principal."))
 
@@ -708,8 +724,68 @@ def fetch_principals(
 	return principals, total
 
 
-def format_dns_records(dns_records: list[dict]) -> list[dict]:
-	"""Formats DNS records from backend to local format."""
+def format_dns_records(domain: str, cluster: str, dns_records: list[dict]) -> list[dict]:
+	"""Formats DNS records from mail server and rewrites hostname."""
+
+	def replace_mx_records() -> None:
+		"""Replace existing MX records with mail server MX records."""
+
+		nonlocal dns_records
+		dns_records = [record for record in dns_records if record["type"] != "MX"]
+
+		servers = frappe.db.get_all(
+			"Mail Server",
+			{"cluster": cluster, "enabled": 1, "outbound_only": 0, "include_in_mx_records": 1},
+			["hostname", "priority"],
+			order_by="priority asc",
+		)
+		for server in servers:
+			dns_records.append(
+				{
+					"type": "MX",
+					"name": domain,
+					"content": f"{server['priority']} {server['hostname'].split(':')[0]}.",
+				}
+			)
+
+	def replace_spf_record() -> None:
+		"""Replace existing SPF record with mail server SPF record."""
+
+		nonlocal dns_records
+		dns_records = [
+			record
+			for record in dns_records
+			if not (record["type"] == "TXT" and "v=spf1" in record["content"])
+		]
+
+		spf_host = get_spf_host_for_cluster(cluster)
+		dns_records.append(
+			{
+				"type": "TXT",
+				"name": domain,
+				"content": f"v=spf1 include:{spf_host}.{get_root_domain_name()} ~all",
+			}
+		)
+
+	def is_internal_hostname(host: str) -> bool:
+		"""Return True if the hostname does NOT end with domain."""
+
+		host = host.rstrip(".")
+		return not host.endswith(domain)
+
+	def rewrite_last_hostname(content: str) -> str:
+		"""Rewrite only the last token in DNS content (SRV, CNAME)."""
+
+		parts = content.split()
+		if not parts:
+			return content
+
+		last = parts[-1].rstrip(".")
+
+		if is_internal_hostname(last):
+			parts[-1] = hostname
+
+		return " ".join(parts)
 
 	def infer_category(record: dict) -> str:
 		"""Infers the category of the DNS record based on its type and name."""
@@ -719,28 +795,33 @@ def format_dns_records(dns_records: list[dict]) -> list[dict]:
 
 		if t == "MX":
 			return "Receiving"
+
 		if t == "TXT":
+			content = record.get("content", "")
 			if name.startswith("_dmarc"):
 				return "DMARC"
-			if "spf1" in record["content"]:
+			if "spf1" in content:
 				return "Sending"
 			if "domainkey" in name:
 				return "DKIM"
 			if name.startswith("_smtp._tls"):
 				return "TLS Reporting"
 			return "TXT"
+
 		if t == "CNAME":
 			if "autoconfig" in name:
 				return "Auto-config"
 			if "autodiscover" in name:
 				return "Auto-discover"
 			return "Alias"
+
 		if t == "SRV":
 			if "_imap" in name or "_pop3" in name:
 				return "Receiving"
 			if "_submission" in name or "_submissions" in name:
 				return "Sending"
 			return "Server"
+
 		return "Other"
 
 	def parse_priority(record: dict) -> str:
@@ -755,8 +836,9 @@ def format_dns_records(dns_records: list[dict]) -> list[dict]:
 		"""Define which DNS records are required for proper email authentication."""
 
 		category = infer_category(record)
+		content = record["content"]
 
-		if category == "Sending" and "spf1" in record["content"]:
+		if category == "Sending" and "spf1" in content:
 			return True
 		if category == "DMARC":
 			return True
@@ -767,20 +849,31 @@ def format_dns_records(dns_records: list[dict]) -> list[dict]:
 
 		return False
 
+	domain = domain.rstrip(".")
+	hostname = cluster.rstrip(".") + "."
+
+	replace_mx_records()
+	replace_spf_record()
+
 	formatted_records = []
 	for record in dns_records:
+		rewritten_content = record["content"]
+		if record["type"] in ("CNAME", "SRV"):
+			rewritten_content = rewrite_last_hostname(rewritten_content)
+
 		entry = {
 			"category": infer_category(record),
 			"type": record["type"],
 			"host": record["name"],
 			"priority": parse_priority(record),
-			"value": record["content"],
+			"value": rewritten_content,
 			"mandatory": cint(is_mandatory(record)),
-			"ttl": 3600,
+			"ttl": cint(frappe.conf.default_dns_ttl) or 3600,
 		}
+
 		formatted_records.append(entry)
 
-	return formatted_records
+	return sorted(formatted_records, key=lambda x: (not x["mandatory"], x["category"], x["type"], x["host"]))
 
 
 def format_principal(tenant: str, principal: dict) -> dict:
@@ -800,7 +893,8 @@ def format_principal(tenant: str, principal: dict) -> dict:
 	}
 
 	if type == "Domain":
-		formatted["dns_records"] = format_dns_records(principal["dnsRecords"])
+		cluster = get_cluster_for_tenant(tenant)
+		formatted["dns_records"] = format_dns_records(principal["name"], cluster, principal["dnsRecords"])
 
 	if type in ["API Key", "Group", "Individual"]:
 		permissions = [

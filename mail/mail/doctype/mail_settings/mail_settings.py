@@ -69,23 +69,25 @@ class MailSettings(Document):
 		if not self.personal_signup_domains:
 			return
 
-		for signup_domain in self.personal_signup_domains:
-			enabled, is_verified, tenant = frappe.db.get_value(
-				"Mail Domain", signup_domain.domain_name, ["enabled", "is_verified", "tenant"]
-			)
+		principals = frappe.db.get_all(
+			"Mail Principal Binding",
+			{"name": ["in", [d.principal for d in self.personal_signup_domains]]},
+			["principal_name", "is_verified", "tenant"],
+		)
 
-			if not frappe.db.get_value("Mail Tenant", tenant, "allow_personal_signup"):
+		if not principals:
+			self.personal_signup_domains = []
+			return
+
+		for principal in principals:
+			if not frappe.db.get_value("Mail Tenant", principal.tenant, "allow_personal_signup"):
 				frappe.throw(
-					_("Personal Signup is not allowed for the Mail Domain {0}.").format(
-						frappe.bold(signup_domain.domain_name)
+					_("Personal Signup is not allowed for the domain {0}.").format(
+						frappe.bold(principal.principal_name)
 					)
 				)
-			elif not enabled:
-				frappe.throw(_("Mail Domain {0} is disabled.").format(frappe.bold(signup_domain.domain_name)))
-			elif not is_verified:
-				frappe.throw(
-					_("Mail Domain {0} is not verified.").format(frappe.bold(signup_domain.domain_name))
-				)
+			elif not principal.is_verified:
+				frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(principal.principal_name)))
 
 	def handle_root_domain_change(self) -> None:
 		"""Resets DNS Record verification and notifies user after root domain change."""

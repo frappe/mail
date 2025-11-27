@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-11-25 12:55+0553\n"
-"PO-Revision-Date: 2025-11-25 12:55+0553\n"
+"POT-Creation-Date: 2025-11-27 13:06+0553\n"
+"PO-Revision-Date: 2025-11-27 13:06+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -104,8 +104,10 @@ msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Mail Domain DNS Record'
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "A"
 msgstr ""
 
@@ -113,7 +115,7 @@ msgstr ""
 msgid "A contact card must belong to at least one address book."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:388
+#: mail/client/doctype/mail_account/mail_account.py:384
 msgid "A job has been queued to set the quota."
 msgstr ""
 
@@ -124,8 +126,10 @@ msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Mail Domain DNS Record'
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "AAAA"
 msgstr ""
 
@@ -193,35 +197,25 @@ msgstr ""
 
 #. Label of the account (Data) field in DocType 'Mail Account Request'
 #. Group in Mail Domain's connections
-#. Group in Mail Tenant's connections
-#. Label of the account (Link) field in DocType 'Push Subscription'
-#. Label of the account (Link) field in DocType 'Push Verification Queue'
-#. Label of the account (Link) field in DocType 'Sync State'
-#. Label of the account (Link) field in DocType 'Mail Data Exchange'
 #: frontend/src/components/Modals/SettingsModal.vue:65
 #: mail/client/doctype/mail_account_request/mail_account_request.json
 #: mail/client/doctype/mail_domain/mail_domain.json
-#: mail/client/doctype/mail_tenant/mail_tenant.json
-#: mail/client/doctype/push_subscription/push_subscription.json
-#: mail/client/doctype/push_verification_queue/push_verification_queue.json
-#: mail/client/doctype/sync_state/sync_state.json
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Account"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:197
+#: mail/client/doctype/mail_account/mail_account.py:193
 msgid "Account Creation Failed"
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:130
+#: mail/client/doctype/mail_account_request/mail_account_request.py:129
 msgid "Account domain {0} does not match with domain {1}."
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:209
+#: mail/client/doctype/mail_account_request/mail_account_request.py:208
 msgid "Account is already verified and created."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:463
+#: mail/client/doctype/mail_account/mail_account.py:459
 msgid "Account password is required to generate app password."
 msgstr ""
 
@@ -233,6 +227,10 @@ msgstr ""
 #. Description of the 'Username' (Data) field in DocType 'Mail Settings'
 #: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Account username for the DNS provider."
+msgstr ""
+
+#: mail/client/doctype/mail_account_request/mail_account_request.py:224
+msgid "Account {0} is already created."
 msgstr ""
 
 #: frontend/src/components/MailActions.vue:251
@@ -248,20 +246,19 @@ msgstr ""
 #: mail/client/doctype/mail_account/mail_account.js:78
 #: mail/client/doctype/mail_account_request/mail_account_request.js:29
 #: mail/client/doctype/mail_account_request/mail_account_request.js:39
-#: mail/client/doctype/mail_domain/mail_domain.js:16
-#: mail/client/doctype/mail_domain/mail_domain.js:29
-#: mail/client/doctype/mail_domain/mail_domain.js:42
 #: mail/client/doctype/mail_message/mail_message.js:163
 #: mail/client/doctype/mail_message/mail_message.js:171
 #: mail/client/doctype/mail_queue/mail_queue.js:27
 #: mail/client/doctype/mail_queue/mail_queue.js:38
-#: mail/client/doctype/push_subscription/push_subscription.js:23
-#: mail/client/doctype/push_subscription/push_subscription.js:41
+#: mail/client/doctype/push_subscription/push_subscription.js:17
 #: mail/server/doctype/dns_record/dns_record.js:16
 #: mail/server/doctype/dns_record/dns_record.js:25
 #: mail/server/doctype/mail_cluster/mail_cluster.js:159
 #: mail/server/doctype/mail_cluster/mail_cluster.js:169
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.js:16
+#: mail/server/doctype/mail_principal/mail_principal.js:18
+#: mail/server/doctype/mail_principal/mail_principal.js:32
+#: mail/server/doctype/mail_principal/mail_principal.js:45
 #: mail/server/doctype/mail_server/mail_server.js:37
 #: mail/server/doctype/mail_server/mail_server.js:46
 #: mail/server/doctype/mail_server/mail_server.js:55
@@ -276,11 +273,6 @@ msgstr ""
 #: mail/server/doctype/server_deployment/server_deployment.js:42
 #: mail/server/doctype/server_job/server_job.js:16
 msgid "Actions"
-msgstr ""
-
-#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
-#: mail/client/doctype/push_subscription/push_subscription.json
-msgid "Active"
 msgstr ""
 
 #. Group in User's connections
@@ -404,7 +396,10 @@ msgstr ""
 msgid "Algorithm to use to compress large binary objects."
 msgstr ""
 
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
 #: frontend/src/pages/dashboard/MailAliasesView.vue:164
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "Alias"
 msgstr ""
 
@@ -551,15 +546,15 @@ msgstr ""
 msgid "App Password"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:448
+#: mail/client/doctype/mail_account/mail_account.py:444
 msgid "App Password has been regenerated."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:298
+#: mail/client/doctype/mail_account/mail_account.py:294
 msgid "App Password is mandatory."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:457
+#: mail/client/doctype/mail_account/mail_account.py:453
 msgid "App Password is not set for the account {0}."
 msgstr ""
 
@@ -585,7 +580,7 @@ msgstr ""
 msgid "Archive Type"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:86
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:106
 msgid "Archive Type is required."
 msgstr ""
 
@@ -619,7 +614,7 @@ msgstr ""
 msgid "Are you sure you want to proceed?"
 msgstr ""
 
-#: mail/client/doctype/mail_domain/mail_domain.js:23
+#: mail/server/doctype/mail_principal/mail_principal.js:26
 msgid "Are you sure you want to refresh the DNS records? If there are any changes, you'll need to update the DNS settings with your DNS provider accordingly."
 msgstr ""
 
@@ -627,8 +622,8 @@ msgstr ""
 msgid "Are you sure you want to remove the selected members from this list?"
 msgstr ""
 
-#: mail/client/doctype/mail_domain/mail_domain.js:36
-msgid "Are you sure you want to rotate the DKIM keys? This will generate new keys for email signing and may take up to 10 minutes to propagate across DNS servers. Emails sent during this period may fail DKIM verification."
+#: mail/server/doctype/mail_principal/mail_principal.js:39
+msgid "Are you sure you want to rotate the DKIM keys? This will generate new keys for email signing and you'll need to update the DNS settings with your DNS provider accordingly. This may take some time to propagate across DNS servers. Emails sent during this period may fail DKIM verification."
 msgstr ""
 
 #: frontend/src/components/Modals/EditInviteModal.vue:20
@@ -706,6 +701,18 @@ msgstr ""
 msgid "Authentication"
 msgstr ""
 
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+msgid "Auto-config"
+msgstr ""
+
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+msgid "Auto-discover"
+msgstr ""
+
 #: frontend/src/components/Settings/VacationResponseSettings.vue:7
 msgid "Auto-reply to incoming mails while you’re away."
 msgstr ""
@@ -756,7 +763,7 @@ msgstr ""
 msgid "Backup Email"
 msgstr ""
 
-#: mail/utils/validation.py:204
+#: mail/utils/validation.py:123
 msgid "Bad Cron Expression"
 msgstr ""
 
@@ -884,8 +891,10 @@ msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Mail Domain DNS Record'
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "CNAME"
 msgstr ""
 
@@ -918,34 +927,24 @@ msgstr ""
 msgid "Cannot remove the owner of the tenant."
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:217
-msgid "Cannot renew a non-verified subscription."
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.py:219
-msgid "Cannot renew a subscription that is not active or expired."
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.py:262
-msgid "Cannot resubscribe a subscription that is not expired or failed."
-msgstr ""
-
 #: mail/client/doctype/mail_queue/mail_queue.py:544
 msgid "Cannot retry a mail with status {0}"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:381
+#: mail/client/doctype/mail_account/mail_account.py:377
 msgid "Cannot set quota for a disabled account."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:405
+#: mail/client/doctype/mail_account/mail_account.py:401
 msgid "Cannot set vacation response for a disabled account."
 msgstr ""
 
 #. Label of the category (Select) field in DocType 'Mail Domain DNS Record'
 #. Label of the category (Select) field in DocType 'DNS Record'
+#. Label of the category (Select) field in DocType 'Mail Principal DNS Record'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "Category"
 msgstr ""
 
@@ -1030,16 +1029,16 @@ msgstr ""
 msgid "Clear Filters"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:285
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:307
 msgid "Click the button below to view and download the exported data."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:212
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:232
 msgid "Click the button below to view the imported data."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:221
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:294
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:243
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:318
 msgid "Click the button below to view the reason for failure."
 msgstr ""
 
@@ -1364,7 +1363,7 @@ msgstr ""
 msgid "Could not connect to {0}:{1}. Error: {2}"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:307
+#: mail/client/doctype/mail_account/mail_account.py:303
 msgid "Could not fetch password for user {0}."
 msgstr ""
 
@@ -1424,7 +1423,7 @@ msgstr ""
 msgid "Created at"
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.js:130
+#: mail/client/doctype/mail_account_request/mail_account_request.js:121
 msgid "Creating Account..."
 msgstr ""
 
@@ -1446,9 +1445,9 @@ msgstr ""
 msgid "Current Password"
 msgstr ""
 
-#. Label of the current_state (Data) field in DocType 'Sync State'
-#: mail/client/doctype/sync_state/sync_state.json
-msgid "Current State"
+#. Label of the jmap_email_current_state (Data) field in DocType 'User'
+#: mail/client/custom/user.json
+msgid "Current State (Email)"
 msgstr ""
 
 #. Option for the 'Method' (Select) field in DocType 'Mail Backend Request'
@@ -1457,7 +1456,10 @@ msgid "DELETE"
 msgstr ""
 
 #. Label of the dkim_pass (Check) field in DocType 'Mail Message'
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
 #: mail/api/mail.py:407 mail/client/doctype/mail_message/mail_message.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "DKIM"
 msgstr ""
 
@@ -1478,7 +1480,12 @@ msgstr ""
 msgid "DKIM Key"
 msgstr ""
 
+#: mail/server/doctype/mail_principal/mail_principal.py:219
+msgid "DKIM Keys can only be rotated for Domain principals."
+msgstr ""
+
 #: mail/client/doctype/mail_domain/mail_domain.py:157
+#: mail/server/doctype/mail_principal/mail_principal.py:235
 msgid "DKIM Keys rotated successfully."
 msgstr ""
 
@@ -1502,7 +1509,10 @@ msgid "DKIM Results"
 msgstr ""
 
 #. Label of the dmarc_pass (Check) field in DocType 'Mail Message'
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
 #: mail/api/mail.py:409 mail/client/doctype/mail_message/mail_message.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "DMARC"
 msgstr ""
 
@@ -1547,22 +1557,38 @@ msgid "DNS Record with the same host and type already exists."
 msgstr ""
 
 #. Label of the dns_records (Table) field in DocType 'Mail Domain'
+#. Label of the dns_records (Table) field in DocType 'Mail Principal'
 #: frontend/src/pages/dashboard/DomainView.vue:35
 #: mail/client/doctype/mail_domain/mail_domain.json
 #: mail/mail/doctype/mail_settings/mail_settings.js:38
+#: mail/server/doctype/mail_principal/mail_principal.json
 msgid "DNS Records"
 msgstr ""
 
+#: mail/server/doctype/mail_principal/mail_principal.py:207
+msgid "DNS Records can only be refreshed for Domain principals."
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:176
+msgid "DNS Records can only be verified for Domain principals."
+msgstr ""
+
 #: mail/client/doctype/mail_domain/mail_domain.py:119
+#: mail/server/doctype/mail_principal/mail_principal.py:212
 msgid "DNS Records refreshed successfully."
 msgstr ""
 
 #: mail/client/doctype/mail_domain/mail_domain.py:139
+#: mail/server/doctype/mail_principal/mail_principal.py:194
 msgid "DNS Records verified successfully."
 msgstr ""
 
 #: mail/mail/doctype/mail_settings/mail_settings.js:39
 msgid "DNS provider or token not configured. Please manually add the {0} to the DNS provider for the domain {1} to ensure proper email authentication."
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.js:54
+msgid "DNS records for the domain {0} are not verified. Please ensure that the DNS records are correctly configured with your DNS provider to enable proper email authentication."
 msgstr ""
 
 #. Option for the 'Rotate Frequency' (Select) field in DocType 'Mail Cluster
@@ -1581,9 +1607,7 @@ msgid "Data Center ID"
 msgstr ""
 
 #. Group in Mail Account's connections
-#. Group in Mail Tenant's connections
 #: mail/client/doctype/mail_account/mail_account.json
-#: mail/client/doctype/mail_tenant/mail_tenant.json
 msgid "Data Exchange"
 msgstr ""
 
@@ -1647,7 +1671,7 @@ msgstr ""
 msgid "Default Email"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:316
+#: mail/client/doctype/mail_account/mail_account.py:312
 msgid "Default Email must be one of the email addresses assigned to the user."
 msgstr ""
 
@@ -1866,6 +1890,11 @@ msgstr ""
 msgid "Determines the maximum size for an email message."
 msgstr ""
 
+#. Label of the device_client_id (Data) field in DocType 'Push Subscription'
+#: mail/client/doctype/push_subscription/push_subscription.json
+msgid "Device Client ID"
+msgstr ""
+
 #. Option for the 'DNS Provider' (Select) field in DocType 'Mail Settings'
 #: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "DigitalOcean"
@@ -1981,15 +2010,13 @@ msgstr ""
 msgid "Docker image with tag (e.g. stalwartlabs/stalwart:latest, redis:7-alpine)."
 msgstr ""
 
-#. Label of the domain_name (Link) field in DocType 'Mail Account Request'
-#. Group in Mail Tenant's connections
+#. Label of the domain_name (Data) field in DocType 'Mail Account Request'
 #. Option for the 'Type' (Select) field in DocType 'Mail Principal'
 #. Option for the 'Principal Type' (Select) field in DocType 'Mail Principal
 #. Binding'
 #: frontend/src/components/Modals/AddMemberModal.vue:30
 #: frontend/src/pages/dashboard/DomainsView.vue:107
 #: mail/client/doctype/mail_account_request/mail_account_request.json
-#: mail/client/doctype/mail_tenant/mail_tenant.json
 #: mail/server/doctype/mail_principal/mail_principal.json
 #: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
 #: mail/server/report/dmarc_report_viewer/dmarc_report_viewer.py:50
@@ -2044,7 +2071,7 @@ msgstr ""
 msgid "Domain is already verified and created."
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:115
+#: mail/client/doctype/mail_account_request/mail_account_request.py:114
 msgid "Domain is mandatory."
 msgstr ""
 
@@ -2056,11 +2083,7 @@ msgstr ""
 msgid "Domain {0} already registered."
 msgstr ""
 
-#: mail/utils/validation.py:154
-msgid "Domain {0} and User {1} do not belong to the same tenant."
-msgstr ""
-
-#: mail/client/doctype/mail_account/mail_account.py:260
+#: mail/client/doctype/mail_account/mail_account.py:256
 msgid "Domain {0} and User {1} must belong to the same tenant."
 msgstr ""
 
@@ -2068,32 +2091,24 @@ msgstr ""
 msgid "Domain {0} and {1} {2} must belong to the same tenant."
 msgstr ""
 
-#: mail/utils/validation.py:180
-msgid "Domain {0} does not exist or may be disabled in the Mail Domain."
-msgstr ""
-
 #: mail/api/admin.py:31
 msgid "Domain {0} has already been registered."
-msgstr ""
-
-#: mail/utils/validation.py:126
-msgid "Domain {0} is disabled."
 msgstr ""
 
 #: mail/api/account.py:47
 msgid "Domain {0} is not allowed for personal signup."
 msgstr ""
 
-#: mail/utils/validation.py:136
+#: mail/utils/validation.py:110
 msgid "Domain {0} is not owned by the tenant."
 msgstr ""
 
-#: mail/utils/validation.py:128
+#: mail/utils/validation.py:102
 msgid "Domain {0} is not verified."
 msgstr ""
 
-#: mail/utils/validation.py:187
-msgid "Domain {0} not found in Mail Domain."
+#: mail/server/doctype/mail_principal/mail_principal.py:330
+msgid "Domain {0} not found in backend."
 msgstr ""
 
 #. Label of the domains (JSON) field in DocType 'Message Queue'
@@ -2208,7 +2223,7 @@ msgstr ""
 msgid "Either blob_id or file_url is required for attachments."
 msgstr ""
 
-#: mail/utils/__init__.py:253
+#: mail/utils/__init__.py:314
 msgid "Either file path or file data is required."
 msgstr ""
 
@@ -2278,19 +2293,19 @@ msgstr ""
 msgid "Email does not have a blob ID."
 msgstr ""
 
-#: mail/utils/validation.py:102
+#: mail/utils/validation.py:80
 msgid "Email domain {0} does not match with domain {1}."
 msgstr ""
 
-#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:163
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:191
 msgid "Email domain {0} is not associated with tenant {1}."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:281
+#: mail/client/doctype/mail_account/mail_account.py:277
 msgid "Email is mandatory."
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:167
+#: mail/client/doctype/mail_account_request/mail_account_request.py:166
 msgid "Email is required to send invite"
 msgstr ""
 
@@ -2426,13 +2441,11 @@ msgstr ""
 msgid "Ended At - Started At"
 msgstr ""
 
-#. Label of the endpoint (Data) field in DocType 'Push Subscription'
 #. Label of the endpoint (Data) field in DocType 'Mail Backend Request'
 #. Label of the metrics_open_telemetry_endpoint (Data) field in DocType 'Mail
 #. Cluster'
 #. Label of the endpoint (Data) field in DocType 'Mail Cluster Store'
 #. Label of the endpoint (Data) field in DocType 'Mail Cluster Trace'
-#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
@@ -2543,26 +2556,22 @@ msgstr ""
 msgid "Expire After (Hours)"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
-#. Option for the 'Status' (Select) field in DocType 'Push Verification Queue'
 #: frontend/src/pages/dashboard/InvitesView.vue:212
-#: mail/client/doctype/push_subscription/push_subscription.json
-#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 msgid "Expired"
 msgstr ""
 
+#. Label of the expires (Datetime) field in DocType 'Push Subscription'
 #. Label of the expires (Datetime) field in DocType 'Message Queue Recipient'
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/server/doctype/message_queue/message_queue.js:90
 #: mail/server/doctype/message_queue_recipient/message_queue_recipient.json
 msgid "Expires"
 msgstr ""
 
 #. Label of the expires_at (Datetime) field in DocType 'Mail Account Request'
-#. Label of the expires_at (Datetime) field in DocType 'Push Subscription'
 #: frontend/src/components/Modals/AddMemberModal.vue:62
 #: frontend/src/components/Modals/EditInviteModal.vue:42
 #: mail/client/doctype/mail_account_request/mail_account_request.json
-#: mail/client/doctype/push_subscription/push_subscription.json
 msgid "Expires At"
 msgstr ""
 
@@ -2611,7 +2620,6 @@ msgid "FQDN of the proxy or load balancer forwarding requests to mail servers."
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
-#. Option for the 'Status' (Select) field in DocType 'Push Verification Queue'
 #. Option for the 'Status' (Select) field in DocType 'Mail Backend Request'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
@@ -2622,7 +2630,6 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'Server Job Command'
 #: frontend/src/pages/MailDataExchangesView.vue:92
 #: mail/client/doctype/mail_queue/mail_queue.json
-#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
@@ -2638,31 +2645,16 @@ msgstr ""
 msgid "Failed to Draft"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
-#: mail/client/doctype/push_subscription/push_subscription.json
-msgid "Failed to Renew"
-msgstr ""
-
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
 #: mail/client/doctype/mail_queue/mail_queue.json
 msgid "Failed to Submit"
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
-#: mail/client/doctype/push_subscription/push_subscription.json
-msgid "Failed to Subscribe"
-msgstr ""
-
-#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
-#: mail/client/doctype/push_subscription/push_subscription.json
-msgid "Failed to Verify"
-msgstr ""
-
-#: mail/server/doctype/mail_principal/mail_principal.py:359
+#: mail/server/doctype/mail_principal/mail_principal.py:499
 msgid "Failed to add principal {0}: {1}"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:201
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:221
 msgid "Failed to clean import output"
 msgstr ""
 
@@ -2670,7 +2662,11 @@ msgstr ""
 msgid "Failed to copy code"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:196
+#: mail/server/doctype/mail_principal/mail_principal.py:370
+msgid "Failed to create DKIM signature for domain {0}"
+msgstr ""
+
+#: mail/client/doctype/mail_account/mail_account.py:192
 msgid "Failed to create account {0} on the mail server."
 msgstr ""
 
@@ -2678,65 +2674,65 @@ msgstr ""
 msgid "Failed to create domain {0} on the mail server."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:747
+#: mail/server/doctype/mail_principal/mail_principal.py:396
+msgid "Failed to delete DKIM signature for domain {0}"
+msgstr ""
+
+#: mail/client/doctype/mail_message/mail_message.py:742
 msgid "Failed to delete mail(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:750
+#: mail/client/doctype/mail_message/mail_message.py:745
 msgid "Failed to delete mail(s)."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:500
+#: mail/server/doctype/mail_principal/mail_principal.py:667
 msgid "Failed to delete principal {0}: {1}"
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:80
-msgid "Failed to destroy push subscription(s)"
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.py:83
-msgid "Failed to destroy push subscription(s)."
-msgstr ""
-
-#: mail/client/doctype/mail_message/mail_message.py:777
+#: mail/client/doctype/mail_message/mail_message.py:772
 msgid "Failed to empty mailbox"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:780
+#: mail/client/doctype/mail_message/mail_message.py:775
 msgid "Failed to empty mailbox."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:60
-#: mail/client/doctype/mail_account/mail_account.py:63
+#: mail/client/doctype/mail_account/mail_account.py:59
+#: mail/client/doctype/mail_account/mail_account.py:62
 msgid "Failed to fetch Account Details"
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:325
+msgid "Failed to fetch DNS records for domain {0}: {1}"
 msgstr ""
 
 #: mail/client/doctype/mail_queue/mail_queue.py:535
 msgid "Failed to fetch In Reply To ID"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:81
+#: mail/client/doctype/mail_account/mail_account.py:80
 msgid "Failed to fetch Vacation Response"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:923
+#: mail/client/doctype/mail_message/mail_message.py:918
 msgid "Failed to fetch blob(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:926
+#: mail/client/doctype/mail_message/mail_message.py:921
 msgid "Failed to fetch blob(s)."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:1180
+#: mail/client/doctype/mail_message/mail_message.py:1172
 msgid "Failed to fetch changes"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:729
-#: mail/client/doctype/mail_message/mail_message.py:730
+#: mail/client/doctype/mail_message/mail_message.py:724
+#: mail/client/doctype/mail_message/mail_message.py:725
 msgid "Failed to fetch message IDs."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:237
+#: mail/server/doctype/mail_principal/mail_principal.py:309
 msgid "Failed to fetch principal {0}: {1}"
 msgstr ""
 
@@ -2744,20 +2740,12 @@ msgstr ""
 msgid "Failed to generate SSH keypair"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:489
+#: mail/client/doctype/mail_account/mail_account.py:485
 msgid "Failed to generate app password"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:492
+#: mail/client/doctype/mail_account/mail_account.py:488
 msgid "Failed to generate app password. Please check your account password."
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.py:58
-msgid "Failed to get push subscriptions"
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.py:61
-msgid "Failed to get push subscriptions."
 msgstr ""
 
 #: mail/api/jmap.py:51
@@ -2768,35 +2756,23 @@ msgstr ""
 msgid "Failed to handle JMAP Push Notification."
 msgstr ""
 
-#: mail/utils/__init__.py:273
+#: mail/utils/__init__.py:334
 msgid "Failed to load content from the compressed file."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:797
+#: mail/client/doctype/mail_message/mail_message.py:792
 msgid "Failed to move mail(s) to mailbox"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:800
+#: mail/client/doctype/mail_message/mail_message.py:795
 msgid "Failed to move mail(s) to mailbox."
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:241
-msgid "Failed to renew Push Subscription."
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.py:246
-msgid "Failed to renew push subscription"
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.py:249
-msgid "Failed to renew push subscription."
-msgstr ""
-
-#: mail/client/doctype/mail_message/mail_message.py:855
+#: mail/client/doctype/mail_message/mail_message.py:850
 msgid "Failed to set flagged status for mail(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:858
+#: mail/client/doctype/mail_message/mail_message.py:853
 msgid "Failed to set flagged status for mail(s)."
 msgstr ""
 
@@ -2804,43 +2780,35 @@ msgstr ""
 msgid "Failed to set password for account {0}"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:826
+#: mail/client/doctype/mail_message/mail_message.py:821
 msgid "Failed to set seen status for mail(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:829
+#: mail/client/doctype/mail_message/mail_message.py:824
 msgid "Failed to set seen status for mail(s)."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:878
+#: mail/client/doctype/mail_message/mail_message.py:873
 msgid "Failed to set spam status for mail(s)"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:881
+#: mail/client/doctype/mail_message/mail_message.py:876
 msgid "Failed to set spam status for mail(s)."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:436
+#: mail/client/doctype/mail_account/mail_account.py:432
 msgid "Failed to set vacation response"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:439
+#: mail/client/doctype/mail_account/mail_account.py:435
 msgid "Failed to set vacation response."
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.py:183
-msgid "Failed to subscribe to Push Subscription"
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.py:178
-msgid "Failed to subscribe to Push Subscription."
 msgstr ""
 
 #: mail/server/doctype/server_config/server_config.py:138
 msgid "Failed to update configuration"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:484
+#: mail/server/doctype/mail_principal/mail_principal.py:643
 msgid "Failed to update principal {0}: {1}"
 msgstr ""
 
@@ -2873,7 +2841,7 @@ msgstr ""
 msgid "File URL"
 msgstr ""
 
-#: mail/utils/__init__.py:280
+#: mail/utils/__init__.py:341
 msgid "File not found: {0}"
 msgstr ""
 
@@ -2914,7 +2882,7 @@ msgstr ""
 #: frontend/src/components/Settings/ProfileSettings.vue:17
 #: frontend/src/pages/BusinessSignupView.vue:24
 #: frontend/src/pages/SignupView.vue:64
-#: mail/client/doctype/mail_account_request/mail_account_request.js:100
+#: mail/client/doctype/mail_account_request/mail_account_request.js:91
 msgid "First Name"
 msgstr ""
 
@@ -3003,8 +2971,8 @@ msgstr ""
 #: frontend/src/components/Settings/VacationResponseSettings.vue:12
 #: mail/client/doctype/mail_account/mail_account.js:185
 #: mail/client/doctype/mail_account/mail_account.json
-#: mail/client/doctype/mail_account/mail_account.py:416
-#: mail/client/doctype/mail_account/mail_account.py:424
+#: mail/client/doctype/mail_account/mail_account.py:412
+#: mail/client/doctype/mail_account/mail_account.py:420
 msgid "From Date"
 msgstr ""
 
@@ -3151,7 +3119,7 @@ msgstr ""
 msgid "Group Messages By"
 msgstr ""
 
-#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:178
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:206
 msgid "Group {0} is not associated with tenant {1}."
 msgstr ""
 
@@ -3233,11 +3201,13 @@ msgstr ""
 #. Label of the host (Data) field in DocType 'Allowed IP'
 #. Label of the host (Data) field in DocType 'Blocked IP'
 #. Label of the host (Data) field in DocType 'DNS Record'
+#. Label of the host (Data) field in DocType 'Mail Principal DNS Record'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/server/doctype/allowed_ip/allowed_ip.json
 #: mail/server/doctype/blocked_ip/blocked_ip.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "Host"
 msgstr ""
 
@@ -3337,6 +3307,7 @@ msgstr ""
 #. Label of the id (Data) field in DocType 'Contact Card'
 #. Label of the id (Data) field in DocType 'Identity'
 #. Label of the id (Data) field in DocType 'Mailbox'
+#. Label of the id (Data) field in DocType 'Push Subscription'
 #. Label of the id (Data) field in DocType 'Quota'
 #. Label of the id (Data) field in DocType 'DMARC Report'
 #. Label of the id (Data) field in DocType 'Mail Principal'
@@ -3344,6 +3315,7 @@ msgstr ""
 #: mail/client/doctype/contact_card/contact_card.json
 #: mail/client/doctype/identity/identity.json
 #: mail/client/doctype/mailbox/mailbox.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/client/doctype/quota/quota.json
 #: mail/server/doctype/dmarc_report/dmarc_report.json
 #: mail/server/doctype/mail_principal/mail_principal.json
@@ -3483,11 +3455,16 @@ msgstr ""
 msgid "Import"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:72
+#. Group in Mail Tenant's connections
+#: mail/client/doctype/mail_tenant/mail_tenant.json
+msgid "Import & Export"
+msgstr ""
+
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:92
 msgid "Import File is required."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:66
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:86
 msgid "Import Format is required."
 msgstr ""
 
@@ -3624,20 +3601,20 @@ msgstr ""
 msgid "Internal"
 msgstr ""
 
-#: mail/utils/validation.py:237
+#: mail/utils/validation.py:156
 msgid "Invalid JMAP Structure"
 msgstr ""
 
-#: mail/utils/validation.py:254 mail/utils/validation.py:283
-#: mail/utils/validation.py:314
+#: mail/utils/validation.py:173 mail/utils/validation.py:202
+#: mail/utils/validation.py:233
 msgid "Invalid Maildir"
 msgstr ""
 
-#: mail/utils/validation.py:280 mail/utils/validation.py:311
+#: mail/utils/validation.py:199 mail/utils/validation.py:230
 msgid "Invalid Maildir format in the following directories: {0}"
 msgstr ""
 
-#: mail/utils/validation.py:251
+#: mail/utils/validation.py:170
 msgid "Invalid Maildir format: missing {0} directories."
 msgstr ""
 
@@ -3661,8 +3638,8 @@ msgstr ""
 msgid "Invalid domain name"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:299
-#: mail/server/doctype/mail_principal/mail_principal.py:419
+#: mail/server/doctype/mail_principal/mail_principal.py:439
+#: mail/server/doctype/mail_principal/mail_principal.py:571
 msgid "Invalid domain name provided for principal."
 msgstr ""
 
@@ -3678,11 +3655,7 @@ msgstr ""
 msgid "Invalid file type."
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:26
-msgid "Invalid parameters for push subscription verification."
-msgstr ""
-
-#: mail/client/doctype/mail_account/mail_account.py:336
+#: mail/client/doctype/mail_account/mail_account.py:332
 msgid "Invalid reply-to address: {0}"
 msgstr ""
 
@@ -3710,7 +3683,7 @@ msgstr ""
 msgid "Invited By"
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:97
+#: mail/client/doctype/mail_account_request/mail_account_request.py:96
 msgid "Invited By is required"
 msgstr ""
 
@@ -3762,6 +3735,11 @@ msgstr ""
 #. Label of the jmap_settings (Section Break) field in DocType 'User'
 #: mail/client/custom/user.json mail/fixtures/custom_field.json
 msgid "JMAP Settings"
+msgstr ""
+
+#. Label of the 'section_break_xpawr' field in DocType 'User'
+#: mail/client/custom/user.json
+msgid "JMAP State"
 msgstr ""
 
 #: mail/jmap.py:1882
@@ -3863,7 +3841,7 @@ msgstr ""
 #: frontend/src/components/Settings/ProfileSettings.vue:18
 #: frontend/src/pages/BusinessSignupView.vue:31
 #: frontend/src/pages/SignupView.vue:72
-#: mail/client/doctype/mail_account_request/mail_account_request.js:106
+#: mail/client/doctype/mail_account_request/mail_account_request.js:97
 msgid "Last Name"
 msgstr ""
 
@@ -3876,11 +3854,6 @@ msgstr ""
 #. Label of the last_received_mail (Data) field in DocType 'Mail Sync History'
 #: mail/client/doctype/mail_sync_history/mail_sync_history.json
 msgid "Last Received Mail"
-msgstr ""
-
-#. Label of the last_synced_at (Datetime) field in DocType 'Sync State'
-#: mail/client/doctype/sync_state/sync_state.json
-msgid "Last Synced At"
 msgstr ""
 
 #: frontend/src/components/Settings/AppearanceSettings.vue:41
@@ -3931,10 +3904,8 @@ msgstr ""
 
 #. Group in Mail Account's connections
 #. Group in Mail Domain's connections
-#. Group in Mail Tenant's connections
 #: mail/client/doctype/mail_account/mail_account.json
 #: mail/client/doctype/mail_domain/mail_domain.json
-#: mail/client/doctype/mail_tenant/mail_tenant.json
 msgid "List & Alias"
 msgstr ""
 
@@ -3950,7 +3921,7 @@ msgstr ""
 msgid "List of volume mappings, e.g. [\"/data:/opt/data\"]."
 msgstr ""
 
-#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:193
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:221
 msgid "List {0} is not associated with tenant {1}."
 msgstr ""
 
@@ -4077,8 +4048,10 @@ msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Mail Domain DNS Record'
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "MX"
 msgstr ""
 
@@ -4117,7 +4090,7 @@ msgstr ""
 msgid "Mail Account Request"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:595
+#: mail/client/doctype/mail_account/mail_account.py:591
 msgid "Mail Account {0} already exists."
 msgstr ""
 
@@ -4208,19 +4181,19 @@ msgstr ""
 msgid "Mail Data Exchanges"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:292
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:314
 msgid "Mail Data Export Failed"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:281
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:303
 msgid "Mail Data Export Ready"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:208
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:228
 msgid "Mail Data Import Completed"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:219
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:239
 msgid "Mail Data Import Failed"
 msgstr ""
 
@@ -4274,19 +4247,19 @@ msgstr ""
 msgid "Mail Message Recipient"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:425
+#: mail/client/doctype/mail_message/mail_message.py:420
 msgid "Mail Message does not have a blob ID."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:246
+#: mail/client/doctype/mail_message/mail_message.py:241
 msgid "Mail Message {0} is a draft. Please send it before performing this action."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:467
+#: mail/client/doctype/mail_message/mail_message.py:462
 msgid "Mail Message {0} is not a draft."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:563
+#: mail/client/doctype/mail_message/mail_message.py:558
 msgid "Mail Messages deleted successfully."
 msgstr ""
 
@@ -4298,6 +4271,11 @@ msgstr ""
 #. Name of a DocType
 #: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
 msgid "Mail Principal Binding"
+msgstr ""
+
+#. Name of a DocType
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+msgid "Mail Principal DNS Record"
 msgstr ""
 
 #. Name of a DocType
@@ -4372,13 +4350,13 @@ msgstr ""
 msgid "Mail Server {0} already exists."
 msgstr ""
 
-#: mail/backend.py:417
+#: mail/backend.py:411
 #: mail/server/doctype/mail_backend_request/mail_backend_request.py:105
 #: mail/server/doctype/mail_principal/principal.py:104
 msgid "Mail Server {0} does not have a base URL."
 msgstr ""
 
-#: mail/backend.py:408
+#: mail/backend.py:402
 #: mail/server/doctype/mail_backend_request/mail_backend_request.py:96
 #: mail/server/doctype/mail_principal/principal.py:95
 msgid "Mail Server {0} does not have a cluster."
@@ -4444,24 +4422,25 @@ msgstr ""
 #: mail/client/doctype/mail_tenant/mail_tenant.json
 #: mail/client/doctype/mailbox/mailbox.json
 #: mail/client/doctype/mailing_list_member/mailing_list_member.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/client/doctype/quota/quota.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Mail User"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:293
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:315
 msgid "Mail data export for account {0} has failed."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:282
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:304
 msgid "Mail data export for account {0} is ready for download."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:209
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:229
 msgid "Mail data import for account {0} has been completed successfully."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:220
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:240
 msgid "Mail data import for account {0} has failed."
 msgstr ""
 
@@ -4635,6 +4614,11 @@ msgstr ""
 #. Option for the 'Protocol' (Select) field in DocType 'Mail Server Listener'
 #: mail/server/doctype/mail_server_listener/mail_server_listener.json
 msgid "ManageSieve"
+msgstr ""
+
+#. Label of the mandatory (Check) field in DocType 'Mail Principal DNS Record'
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+msgid "Mandatory"
 msgstr ""
 
 #: frontend/src/components/MailActions.vue:157
@@ -4859,7 +4843,7 @@ msgstr ""
 msgid "Member removed successfully"
 msgstr ""
 
-#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:212
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:240
 msgid "Member {0} is not associated with tenant {1}."
 msgstr ""
 
@@ -4929,7 +4913,7 @@ msgstr ""
 msgid "Message deleted successfully."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:180
+#: mail/client/doctype/mail_message/mail_message.py:175
 msgid "Message not found or you do not have permission to view it."
 msgstr ""
 
@@ -5005,12 +4989,12 @@ msgstr ""
 msgid "Minutely"
 msgstr ""
 
-#: mail/api/jmap.py:21
-msgid "Missing account query parameter."
+#: mail/utils/validation.py:153
+msgid "Missing required files/directories for JMAP format: {0}"
 msgstr ""
 
-#: mail/utils/validation.py:234
-msgid "Missing required files/directories for JMAP format: {0}"
+#: mail/api/jmap.py:21
+msgid "Missing user query parameter."
 msgstr ""
 
 #: frontend/src/components/Settings/AppearanceSettings.vue:49
@@ -5066,7 +5050,7 @@ msgstr ""
 msgid "Multiline entries"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:179
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:199
 msgid "Multiple {0} files found. Please provide only one."
 msgstr ""
 
@@ -5213,8 +5197,9 @@ msgstr ""
 msgid "No DMARC reports found."
 msgstr ""
 
-#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:136
-msgid "No Mail Principal Binding found for tenant: {0} and principal name: {1}"
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:144
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:166
+msgid "No Mail Principal Binding found for principal name: {0}"
 msgstr ""
 
 #: mail/client/doctype/address_book/address_book.py:62
@@ -5237,7 +5222,6 @@ msgstr ""
 msgid "No blocked IPs found."
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:288
 #: mail/jmap.py:1848
 msgid "No cluster found for the account {0}."
 msgstr ""
@@ -5287,9 +5271,13 @@ msgstr ""
 msgid "No members found."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:223
+#: mail/client/doctype/mail_message/mail_message.py:218
 #: mail/server/doctype/message_queue/message_queue.py:39
 msgid "No messages found."
+msgstr ""
+
+#: mail/client/doctype/push_subscription/push_subscription.py:57
+msgid "No push subscriptions found."
 msgstr ""
 
 #: mail/client/doctype/quota/quota.py:43
@@ -5301,7 +5289,7 @@ msgstr ""
 msgid "No results found for the given query."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:176
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:196
 msgid "No {0} file found in the archive."
 msgstr ""
 
@@ -5342,18 +5330,12 @@ msgstr ""
 msgid "Not Verified"
 msgstr ""
 
-#: mail/utils/user.py:117
+#: mail/utils/user.py:132
 msgid "Not permitted"
 msgstr ""
 
 #: frontend/src/pages/dashboard/DomainView.vue:237
 msgid "Note: DNS changes may take up to 48 hours to propagate globally."
-msgstr ""
-
-#. Label of the notification_types (Small Text) field in DocType 'Push
-#. Subscription'
-#: mail/client/doctype/push_subscription/push_subscription.json
-msgid "Notification Types"
 msgstr ""
 
 #. Label of the number (Data) field in DocType 'Contact Card Phone'
@@ -5452,7 +5434,7 @@ msgstr ""
 msgid "Only Administrator can delete Mail Server."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:126
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:146
 msgid "Only data exchange with status 'Queued', 'In Progress', or 'Failed' can be retried."
 msgstr ""
 
@@ -5468,10 +5450,6 @@ msgstr ""
 msgid "Only failed jobs can be retried."
 msgstr ""
 
-#: mail/client/doctype/push_verification_queue/push_verification_queue.py:48
-msgid "Only failed verifications can be retried."
-msgstr ""
-
 #: mail/server/doctype/mail_server/mail_server.py:153
 msgid "Only one ACME Provider can be default."
 msgstr ""
@@ -5480,11 +5458,11 @@ msgstr ""
 msgid "Only one TLS Certificate can be default."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:123
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:143
 msgid "Only submitted data exchange can be retried."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:77
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:97
 msgid "Only {0} files are supported for import."
 msgstr ""
 
@@ -5535,7 +5513,10 @@ msgstr ""
 msgid "Original RCPT"
 msgstr ""
 
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
 #: frontend/src/components/Modals/ShortcutsModal.vue:100
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "Other"
 msgstr ""
 
@@ -5609,13 +5590,15 @@ msgstr ""
 #. Cluster'
 #. Label of the password (Password) field in DocType 'Mail Cluster Store'
 #. Label of the password (Password) field in DocType 'Mail Principal'
+#. Label of the password (Password) field in DocType 'Mail Principal Password'
 #: frontend/src/components/Modals/AddMemberModal.vue:79
 #: frontend/src/pages/BusinessSignupView.vue:37
 #: frontend/src/pages/LoginView.vue:12 frontend/src/pages/SignupView.vue:54
-#: mail/client/doctype/mail_account_request/mail_account_request.js:112
+#: mail/client/doctype/mail_account_request/mail_account_request.js:103
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 #: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_password/mail_principal_password.json
 msgid "Password"
 msgstr ""
 
@@ -5630,7 +5613,8 @@ msgstr ""
 msgid "Password for administrative access to the cluster."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:598
+#: mail/client/doctype/mail_account/mail_account.py:594
+#: mail/client/doctype/mail_account_request/mail_account_request.py:227
 msgid "Password is required to create account."
 msgstr ""
 
@@ -5674,7 +5658,6 @@ msgid "Pausing Queue..."
 msgstr ""
 
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
-#. Option for the 'Status' (Select) field in DocType 'Push Verification Queue'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Server Deployment'
@@ -5682,18 +5665,12 @@ msgstr ""
 #. Option for the 'Status' (Select) field in DocType 'Server Job Command'
 #: frontend/src/pages/dashboard/InvitesView.vue:210
 #: mail/client/doctype/mail_queue/mail_queue.json
-#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_deployment/server_deployment.json
 #: mail/server/doctype/server_job/server_job.json
 #: mail/server/doctype/server_job_command/server_job_command.json
 msgid "Pending"
-msgstr ""
-
-#. Option for the 'Status' (Select) field in DocType 'Push Subscription'
-#: mail/client/doctype/push_subscription/push_subscription.json
-msgid "Pending Verification"
 msgstr ""
 
 #: frontend/src/components/Modals/ShortcutsModal.vue:76
@@ -5771,7 +5748,7 @@ msgstr ""
 msgid "Please add at least one recipient."
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:181
+#: mail/client/doctype/mail_account_request/mail_account_request.py:180
 msgid "Please confirm your email address by clicking the button below."
 msgstr ""
 
@@ -5815,8 +5792,12 @@ msgstr ""
 msgid "Please select a user to view mailboxes."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:195
+#: mail/client/doctype/mail_message/mail_message.py:190
 msgid "Please select a user to view messages."
+msgstr ""
+
+#: mail/client/doctype/push_subscription/push_subscription.py:51
+msgid "Please select a user to view push subscriptions."
 msgstr ""
 
 #: mail/client/doctype/quota/quota.py:37
@@ -5847,7 +5828,7 @@ msgstr ""
 msgid "Please set the {0} in the Mail Settings."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:137
+#: mail/server/doctype/mail_principal/mail_principal.py:142
 msgid "Please specify tenant to fetch principals."
 msgstr ""
 
@@ -5869,7 +5850,7 @@ msgstr ""
 msgid "Please verify the SSH connection before installing Stalwart."
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:222
+#: mail/client/doctype/mail_account_request/mail_account_request.py:221
 msgid "Please verify the email address first."
 msgstr ""
 
@@ -5939,16 +5920,18 @@ msgstr ""
 msgid "Preview"
 msgstr ""
 
-#. Label of the previous_state (Data) field in DocType 'Sync State'
-#: mail/client/doctype/sync_state/sync_state.json
-msgid "Previous State"
+#. Label of the jmap_email_previous_state (Data) field in DocType 'User'
+#: mail/client/custom/user.json
+msgid "Previous State (Email)"
 msgstr ""
 
 #: frontend/src/components/MailThread.vue:46
 msgid "Previous Thread (↑/K)"
 msgstr ""
 
+#. Group in Mail Tenant's connections
 #. Label of the principal (Link) field in DocType 'Mail Principal Binding'
+#: mail/client/doctype/mail_tenant/mail_tenant.json
 #: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
 msgid "Principal"
 msgstr ""
@@ -5964,25 +5947,27 @@ msgstr ""
 msgid "Principal Type"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:399
-msgid "Principal type cannot be changed."
+#: mail/server/doctype/mail_principal/mail_principal.py:553
+msgid "Principal name or type cannot be changed directly. Please create a new principal."
 msgstr ""
 
-#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:147
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.py:175
 msgid "Principal {0} does not belong to tenant {1}."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:241
+#: mail/server/doctype/mail_principal/mail_principal.py:313
 msgid "Principal {0} not found in backend."
 msgstr ""
 
 #. Label of the priority (Int) field in DocType 'Mail Domain DNS Record'
 #. Label of the priority (Select) field in DocType 'Mail Queue'
 #. Label of the priority (Int) field in DocType 'DNS Record'
+#. Label of the priority (Data) field in DocType 'Mail Principal DNS Record'
 #. Label of the priority (Int) field in DocType 'Mail Server'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 #: mail/server/doctype/mail_server/mail_server.json
 msgid "Priority"
 msgstr ""
@@ -6023,17 +6008,9 @@ msgstr ""
 msgid "Private key in PEM format."
 msgstr ""
 
-#: mail/client/doctype/push_verification_queue/push_verification_queue.js:15
-msgid "Process Now"
-msgstr ""
-
 #. Label of the processed (Int) field in DocType 'Server Ansible Play'
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 msgid "Processed"
-msgstr ""
-
-#: mail/client/doctype/push_verification_queue/push_verification_queue.js:20
-msgid "Processing..."
 msgstr ""
 
 #. Group in User's connections
@@ -6178,15 +6155,26 @@ msgstr ""
 msgid "Push Subscription"
 msgstr ""
 
+#: mail/client/doctype/push_subscription/push_subscription.py:115
+msgid "Push Subscription Creation Error"
+msgstr ""
+
+#: mail/client/doctype/push_subscription/push_subscription.py:177
+msgid "Push Subscription Deletion Error"
+msgstr ""
+
+#: mail/client/doctype/push_subscription/push_subscription.py:162
+msgid "Push Subscription Renewal Error"
+msgstr ""
+
+#: mail/client/doctype/push_subscription/push_subscription.py:147
+msgid "Push Subscription Verification Error"
+msgstr ""
+
 #. Label of the push_timeouts_section (Section Break) field in DocType 'Mail
 #. Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "Push Timeouts"
-msgstr ""
-
-#. Name of a DocType
-#: mail/client/doctype/push_verification_queue/push_verification_queue.json
-msgid "Push Verification Queue"
 msgstr ""
 
 #: frontend/src/components/PWASettings.vue:69
@@ -6272,7 +6260,7 @@ msgid "Quota Usage"
 msgstr ""
 
 #: mail/client/doctype/mail_account/mail_account.js:143
-#: mail/client/doctype/mail_account/mail_account.py:383
+#: mail/client/doctype/mail_account/mail_account.py:379
 msgid "Quota cannot be negative."
 msgstr ""
 
@@ -6342,6 +6330,12 @@ msgstr ""
 #. Label of the received_from (Data) field in DocType 'DMARC Report'
 #: mail/server/doctype/dmarc_report/dmarc_report.json
 msgid "Received From"
+msgstr ""
+
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+msgid "Receiving"
 msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Mail Domain DNS Record'
@@ -6423,11 +6417,11 @@ msgstr ""
 
 #: frontend/src/pages/dashboard/DomainView.vue:160
 #: frontend/src/pages/dashboard/DomainView.vue:202
-#: mail/client/doctype/mail_domain/mail_domain.js:20
+#: mail/server/doctype/mail_principal/mail_principal.js:23
 msgid "Refresh DNS Records"
 msgstr ""
 
-#: mail/client/doctype/mail_domain/mail_domain.js:68
+#: mail/server/doctype/mail_principal/mail_principal.js:84
 msgid "Refreshing DNS Records..."
 msgstr ""
 
@@ -6493,7 +6487,7 @@ msgstr ""
 msgid "Remove Members"
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.js:19
+#: mail/client/doctype/push_subscription/push_subscription.js:13
 msgid "Renew"
 msgstr ""
 
@@ -6502,13 +6496,7 @@ msgstr ""
 msgid "Renew Before (Days)"
 msgstr ""
 
-#. Label of the renew_response (JSON) field in DocType 'Push Subscription'
-#. Label of the _renew_response (JSON) field in DocType 'Push Subscription'
-#: mail/client/doctype/push_subscription/push_subscription.json
-msgid "Renew Response"
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.js:61
+#: mail/client/doctype/push_subscription/push_subscription.js:26
 msgid "Renewing..."
 msgstr ""
 
@@ -6592,6 +6580,11 @@ msgstr ""
 #: mail/server/doctype/dmarc_report/dmarc_report.json
 #: mail/server/report/dmarc_report_viewer/dmarc_report_viewer.py:38
 msgid "Report ID"
+msgstr ""
+
+#. Group in Mail Tenant's connections
+#: mail/client/doctype/mail_tenant/mail_tenant.json
+msgid "Request"
 msgstr ""
 
 #. Label of the request_data (JSON) field in DocType 'Mail Backend Request'
@@ -6704,14 +6697,6 @@ msgstr ""
 msgid "Restricts the number of concurrent requests a user can make to the JMAP server."
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.js:37
-msgid "Resubscribe"
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.js:75
-msgid "Resubscribing..."
-msgstr ""
-
 #. Label of the result (JSON) field in DocType 'Server Ansible Play Task'
 #: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/report/dmarc_report_viewer/dmarc_report_viewer.py:51
@@ -6743,7 +6728,6 @@ msgstr ""
 
 #: mail/client/doctype/mail_queue/mail_queue.js:27
 #: mail/client/doctype/mail_queue/mail_queue_list.js:26
-#: mail/client/doctype/push_verification_queue/push_verification_queue.js:29
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.js:16
 #: mail/server/doctype/message_queue/message_queue_list.js:84
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:30
@@ -6775,7 +6759,6 @@ msgid "Retrying Delivery..."
 msgstr ""
 
 #: mail/client/doctype/mail_queue/mail_queue.js:48
-#: mail/client/doctype/push_verification_queue/push_verification_queue.js:34
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.js:25
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:39
 #: mail/server/doctype/server_deployment/server_deployment.js:106
@@ -6835,7 +6818,7 @@ msgstr ""
 
 #: frontend/src/pages/dashboard/DomainView.vue:167
 #: frontend/src/pages/dashboard/DomainView.vue:210
-#: mail/client/doctype/mail_domain/mail_domain.js:33
+#: mail/server/doctype/mail_principal/mail_principal.js:36
 msgid "Rotate DKIM Keys"
 msgstr ""
 
@@ -6844,7 +6827,7 @@ msgstr ""
 msgid "Rotate Frequency"
 msgstr ""
 
-#: mail/client/doctype/mail_domain/mail_domain.js:83
+#: mail/server/doctype/mail_principal/mail_principal.js:99
 msgid "Rotating DKIM Keys..."
 msgstr ""
 
@@ -6862,6 +6845,10 @@ msgstr ""
 
 #: mail/server/doctype/mail_server/mail_server.py:146
 msgid "Row #{0}: Directory ID {1} is duplicated."
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:184
+msgid "Row #{0}: Failed to verify {1} : {2}"
 msgstr ""
 
 #: mail/client/doctype/mail_domain/mail_domain.py:132
@@ -6955,6 +6942,11 @@ msgstr ""
 #. Option for the 'Type' (Select) field in DocType 'Mail Cluster Store'
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 msgid "SQLite"
+msgstr ""
+
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+msgid "SRV"
 msgstr ""
 
 #. Label of the ssh_tab (Tab Break) field in DocType 'Mail Cluster'
@@ -7154,6 +7146,12 @@ msgstr ""
 msgid "Sender Name"
 msgstr ""
 
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+msgid "Sending"
+msgstr ""
+
 #. Option for the 'Category' (Select) field in DocType 'Mail Domain DNS Record'
 #. Option for the 'Category' (Select) field in DocType 'DNS Record'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
@@ -7168,12 +7166,13 @@ msgstr ""
 msgid "Sent At"
 msgstr ""
 
-#. Label of the server (Link) field in DocType 'Push Subscription'
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
 #. Label of the server (Link) field in DocType 'Server Ansible Play'
 #. Label of the server (Link) field in DocType 'Server Config'
 #. Label of the server (Link) field in DocType 'Server Deployment'
 #. Label of the server (Link) field in DocType 'Server Job'
-#: mail/client/doctype/push_subscription/push_subscription.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_config/server_config.json
 #: mail/server/doctype/server_deployment/server_deployment.json
@@ -7499,7 +7498,7 @@ msgstr ""
 msgid "Specifies the maximum size for an email attachment."
 msgstr ""
 
-#: mail/utils/__init__.py:617
+#: mail/utils/__init__.py:678
 msgid "Stalwart CLI not found at {0}."
 msgstr ""
 
@@ -7577,6 +7576,11 @@ msgstr ""
 msgid "Started At - Queued At"
 msgstr ""
 
+#. Label of the 'jmap_email_state_last_update' field in DocType 'User'
+#: mail/client/custom/user.json
+msgid "State Last Update (Email)"
+msgstr ""
+
 #. Label of the statistics_section (Section Break) field in DocType 'Server
 #. Ansible Play'
 #. Label of the statistics_section (Section Break) field in DocType 'Server
@@ -7587,8 +7591,6 @@ msgid "Statistics"
 msgstr ""
 
 #. Label of the status (Select) field in DocType 'Mail Queue'
-#. Label of the status (Select) field in DocType 'Push Subscription'
-#. Label of the status (Select) field in DocType 'Push Verification Queue'
 #. Label of the status (Select) field in DocType 'Mail Backend Request'
 #. Label of the status (Select) field in DocType 'Mail Data Exchange'
 #. Label of the status (Data) field in DocType 'Message Queue Recipient'
@@ -7606,8 +7608,6 @@ msgstr ""
 #: frontend/src/pages/dashboard/MailingListsView.vue:15
 #: frontend/src/pages/dashboard/MailingListsView.vue:148
 #: mail/client/doctype/mail_queue/mail_queue.json
-#: mail/client/doctype/push_subscription/push_subscription.json
-#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/server/doctype/mail_backend_request/mail_backend_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/message_queue/message_queue.js:60
@@ -7753,26 +7753,6 @@ msgstr ""
 msgid "Subscribed"
 msgstr ""
 
-#. Label of the subscription_id (Data) field in DocType 'Push Subscription'
-#. Label of the subscription_id (Data) field in DocType 'Push Verification
-#. Queue'
-#: mail/client/doctype/push_subscription/push_subscription.json
-#: mail/client/doctype/push_verification_queue/push_verification_queue.json
-msgid "Subscription ID"
-msgstr ""
-
-#. Label of the subscription_response (JSON) field in DocType 'Push
-#. Subscription'
-#. Label of the _subscription_response (JSON) field in DocType 'Push
-#. Subscription'
-#: mail/client/doctype/push_subscription/push_subscription.json
-msgid "Subscription Response"
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.py:193
-msgid "Subscription already verified."
-msgstr ""
-
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play Task'
 #. Option for the 'Status' (Select) field in DocType 'Server Deployment'
@@ -7802,11 +7782,6 @@ msgstr ""
 
 #: mail/client/doctype/mail_account/mail_account.js:46
 msgid "Sync JMAP Identities"
-msgstr ""
-
-#. Name of a DocType
-#: mail/client/doctype/sync_state/sync_state.json
-msgid "Sync State"
 msgstr ""
 
 #: mail/server/doctype/dns_record/dns_record.js:64
@@ -7840,9 +7815,7 @@ msgstr ""
 #: mail/client/doctype/mailing_list_external_member/mailing_list_external_member.json
 #: mail/client/doctype/mailing_list_member/mailing_list_member.json
 #: mail/client/doctype/push_subscription/push_subscription.json
-#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/client/doctype/quota/quota.json
-#: mail/client/doctype/sync_state/sync_state.json
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/mail/doctype/rate_limit/rate_limit.json
 #: mail/server/doctype/allowed_ip/allowed_ip.json
@@ -7890,6 +7863,12 @@ msgstr ""
 msgid "TLS Options"
 msgstr ""
 
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+msgid "TLS Reporting"
+msgstr ""
+
 #. Description of the 'Certificate' (Text) field in DocType 'Mail Server TLS
 #. Certificate'
 #: mail/server/doctype/mail_server_tls_certificate/mail_server_tls_certificate.json
@@ -7910,14 +7889,20 @@ msgid "TTL"
 msgstr ""
 
 #. Label of the ttl (Int) field in DocType 'Mail Domain DNS Record'
+#. Label of the ttl (Int) field in DocType 'Mail Principal DNS Record'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "TTL (Recommended)"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Mail Domain DNS Record'
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
+#. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
+#. Record'
+#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 msgid "TXT"
 msgstr ""
 
@@ -7962,17 +7947,17 @@ msgstr ""
 msgid "Tenant Name"
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:99
+#: mail/client/doctype/mail_account_request/mail_account_request.py:98
 #: mail/client/doctype/mail_domain_request/mail_domain_request.py:39
 msgid "Tenant is required"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:256
+#: mail/server/doctype/mail_principal/mail_principal.py:413
 msgid "Tenant must be provided to fetch principals."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:283
-#: mail/server/doctype/mail_principal/mail_principal.py:390
+#: mail/server/doctype/mail_principal/mail_principal.py:423
+#: mail/server/doctype/mail_principal/mail_principal.py:542
 msgid "Tenant must be specified to add a principal."
 msgstr ""
 
@@ -8025,10 +8010,6 @@ msgstr ""
 msgid "The Linux user account to use for SSH connections."
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:143
-msgid "The Mail Server {0} does not belong to the same cluster as the account {1}."
-msgstr ""
-
 #: mail/client/doctype/mailing_list_member/mailing_list_member.py:39
 msgid "The Mailing List {0} and the member {1} {2} must belong to the same tenant."
 msgstr ""
@@ -8053,6 +8034,12 @@ msgstr ""
 msgid "The S3 bucket where blobs (e-mail messages, Sieve scripts, etc.) will be stored."
 msgstr ""
 
+#. Description of the 'URL' (Data) field in DocType 'Push Subscription'
+#: mail/client/doctype/push_subscription/push_subscription.json
+#: mail/client/doctype/push_subscription/push_subscription.py:82
+msgid "The URL must start with 'https://'."
+msgstr ""
+
 #. Description of the 'Directory URL' (Data) field in DocType 'Mail Server ACME
 #. Provider'
 #: mail/server/doctype/mail_server_acme_provider/mail_server_acme_provider.json
@@ -8065,11 +8052,11 @@ msgstr ""
 msgid "The access key for the Azure Storage Account."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:234
+#: mail/client/doctype/mail_account/mail_account.py:230
 msgid "The account is linked to Mail Alias {0}. Please disable it first."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:240
+#: mail/client/doctype/mail_account/mail_account.py:236
 msgid "The account is linked to a Mailing List as a member. Please remove it first."
 msgstr ""
 
@@ -8102,12 +8089,8 @@ msgstr ""
 msgid "The domain name used to create DNS records (SPF, DKIM keys, external DMARC, etc.)."
 msgstr ""
 
-#: mail/utils/validation.py:81
-msgid "The email address {0} cannot be used because it is too similar to an existing email in {1}. We ignore dots in the local part of the email (before '@'). For example, {2} and {3} are treated as the same address. Please use a different email."
-msgstr ""
-
-#: mail/utils/validation.py:75
-msgid "The email address {0} is already assigned as a {1}."
+#: mail/utils/validation.py:66
+msgid "The email address {0} is already assigned."
 msgstr ""
 
 #: mail/client/doctype/mailing_list_external_member/mailing_list_external_member.py:40
@@ -8119,10 +8102,6 @@ msgstr ""
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_cluster_trace/mail_cluster_trace.json
 msgid "The endpoint for Open Telemetry."
-msgstr ""
-
-#: mail/client/doctype/push_subscription/push_subscription.js:49
-msgid "The endpoint must start with 'https://'."
 msgstr ""
 
 #. Description of the 'Rotate Frequency' (Select) field in DocType 'Mail
@@ -8254,12 +8233,16 @@ msgstr ""
 msgid "The type of tracer."
 msgstr ""
 
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:75
+msgid "The user {0} is not linked to any tenant."
+msgstr ""
+
 #: mail/client/doctype/mail_alias/mail_alias.py:106
 #: mail/client/doctype/mailing_list_member/mailing_list_member.py:52
 msgid "The {0} {1} is disabled."
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:206
+#: mail/client/doctype/mail_account_request/mail_account_request.py:205
 msgid "This method can only be called for invited users."
 msgstr ""
 
@@ -8267,7 +8250,7 @@ msgstr ""
 msgid "This method is only meant for developer mode"
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:142
+#: mail/client/doctype/mail_account_request/mail_account_request.py:141
 msgid "This request has expired. Please create a new one."
 msgstr ""
 
@@ -8397,9 +8380,9 @@ msgstr ""
 #: frontend/src/components/Settings/VacationResponseSettings.vue:18
 #: mail/client/doctype/mail_account/mail_account.js:192
 #: mail/client/doctype/mail_account/mail_account.json
-#: mail/client/doctype/mail_account/mail_account.py:418
+#: mail/client/doctype/mail_account/mail_account.py:414
+#: mail/client/doctype/mail_account/mail_account.py:416
 #: mail/client/doctype/mail_account/mail_account.py:420
-#: mail/client/doctype/mail_account/mail_account.py:424
 msgid "To Date"
 msgstr ""
 
@@ -8530,6 +8513,7 @@ msgstr ""
 #. Label of the type (Select) field in DocType 'DNS Record'
 #. Label of the type (Select) field in DocType 'Mail Cluster Store'
 #. Label of the type (Select) field in DocType 'Mail Principal'
+#. Label of the type (Select) field in DocType 'Mail Principal DNS Record'
 #. Label of the type (Data) field in DocType 'Mail Principal Permission'
 #: frontend/src/pages/dashboard/MailAliasesView.vue:15
 #: frontend/src/pages/dashboard/MailingListView.vue:57
@@ -8543,6 +8527,7 @@ msgstr ""
 #: mail/server/doctype/dns_record/dns_record.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 #: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 #: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
 msgid "Type"
 msgstr ""
@@ -8553,12 +8538,16 @@ msgstr ""
 msgid "Type of Redis server."
 msgstr ""
 
+#. Label of the types (JSON) field in DocType 'Push Subscription'
 #. Label of the types (JSON) field in DocType 'Quota'
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/client/doctype/quota/quota.json
 msgid "Types"
 msgstr ""
 
+#. Label of the url (Data) field in DocType 'Push Subscription'
 #. Label of the url (Data) field in DocType 'Mail Cluster Store'
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 msgid "URL"
 msgstr ""
@@ -8685,15 +8674,15 @@ msgstr ""
 msgid "Unstar"
 msgstr ""
 
-#: mail/server/doctype/dkim_key/dkim_key.py:163
+#: mail/utils/__init__.py:157
 msgid "Unsupported algorithm. Use 'rsa-sha256' or 'ed25519-sha256'."
 msgstr ""
 
-#: mail/utils/__init__.py:291
+#: mail/utils/__init__.py:352
 msgid "Unsupported file format: {0}"
 msgstr ""
 
-#: mail/utils/__init__.py:322
+#: mail/utils/__init__.py:383
 msgid "Unsupported output file format. Supported formats are .zip, .tgz, and .tar.gz."
 msgstr ""
 
@@ -8784,7 +8773,9 @@ msgstr ""
 #. Label of the user (Link) field in DocType 'Mail Tenant'
 #. Label of the user (Link) field in DocType 'Mail Tenant Member'
 #. Label of the user (Link) field in DocType 'Mailbox'
+#. Label of the user (Link) field in DocType 'Push Subscription'
 #. Label of the user (Link) field in DocType 'Quota'
+#. Label of the user (Link) field in DocType 'Mail Data Exchange'
 #: frontend/src/components/Modals/AddAliasModal.vue:43
 #: frontend/src/components/Modals/EditAliasModal.vue:27
 #: frontend/src/pages/dashboard/MailAliasesView.vue:180
@@ -8801,7 +8792,9 @@ msgstr ""
 #: mail/client/doctype/mail_tenant/mail_tenant.json
 #: mail/client/doctype/mail_tenant_member/mail_tenant_member.json
 #: mail/client/doctype/mailbox/mailbox.json
+#: mail/client/doctype/push_subscription/push_subscription.json
 #: mail/client/doctype/quota/quota.json
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "User"
 msgstr ""
 
@@ -8811,30 +8804,34 @@ msgstr ""
 msgid "User Details"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:737
-#: mail/client/doctype/mail_message/mail_message.py:807
-#: mail/client/doctype/mail_message/mail_message.py:836
-#: mail/client/doctype/mail_message/mail_message.py:865
+#: mail/client/doctype/mail_message/mail_message.py:732
+#: mail/client/doctype/mail_message/mail_message.py:802
+#: mail/client/doctype/mail_message/mail_message.py:831
+#: mail/client/doctype/mail_message/mail_message.py:860
 msgid "User and Mail IDs are required."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:757
+#: mail/client/doctype/mail_message/mail_message.py:752
 msgid "User and Mailbox ID are required."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:710
+#: mail/client/doctype/mail_message/mail_message.py:705
 msgid "User and Thread IDs are required."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:656
+#: mail/client/doctype/mail_message/mail_message.py:651
 msgid "User and filter are required."
+msgstr ""
+
+#: mail/client/doctype/push_subscription/push_subscription.py:139
+msgid "User does not exist or is disabled."
 msgstr ""
 
 #: mail/client/doctype/mail_domain_request/mail_domain_request.py:37
 msgid "User is required"
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:894
+#: mail/client/doctype/mail_message/mail_message.py:889
 msgid "User is required."
 msgstr ""
 
@@ -8842,7 +8839,8 @@ msgstr ""
 msgid "User must be an admin of the tenant"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:542
+#: mail/client/doctype/mail_account/mail_account.py:538
+#: mail/client/doctype/mail_account_request/mail_account_request.py:230
 msgid "User with email {0} already exists."
 msgstr ""
 
@@ -8858,7 +8856,7 @@ msgstr ""
 msgid "User {0} does not have Mail Admin role."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:252
+#: mail/client/doctype/mail_account/mail_account.py:248
 msgid "User {0} does not have Mail User role."
 msgstr ""
 
@@ -8886,8 +8884,8 @@ msgstr ""
 msgid "User {0} is already a member."
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:83
-#: mail/client/doctype/mail_account_request/mail_account_request.py:136
+#: mail/client/doctype/mail_account_request/mail_account_request.py:82
+#: mail/client/doctype/mail_account_request/mail_account_request.py:135
 msgid "User {0} is already registered."
 msgstr ""
 
@@ -8907,11 +8905,11 @@ msgstr ""
 msgid "User {0} is not allowed to upload attachments."
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:106
+#: mail/client/doctype/mail_account_request/mail_account_request.py:105
 msgid "User {0} is not authorized to invite users to the tenant."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:787
+#: mail/client/doctype/mail_message/mail_message.py:782
 msgid "User, Mail IDs, and Mailbox ID are required."
 msgstr ""
 
@@ -8950,16 +8948,16 @@ msgstr ""
 msgid "Users"
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:423
+#: mail/client/doctype/mail_account/mail_account.py:419
 msgid "Vacation - {0} cannot be before Vacation - {1}."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:420
+#: mail/client/doctype/mail_account/mail_account.py:416
 msgid "Vacation - {0} cannot be in the past."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:416
-#: mail/client/doctype/mail_account/mail_account.py:418
+#: mail/client/doctype/mail_account/mail_account.py:412
+#: mail/client/doctype/mail_account/mail_account.py:414
 msgid "Vacation - {0} is required."
 msgstr ""
 
@@ -8977,6 +8975,7 @@ msgstr ""
 
 #. Label of the value (Text) field in DocType 'Mail Domain DNS Record'
 #. Label of the value (Text) field in DocType 'DNS Record'
+#. Label of the value (Text) field in DocType 'Mail Principal DNS Record'
 #. Label of the value (Data) field in DocType 'Mail Principal Email'
 #. Label of the value (Data) field in DocType 'Mail Principal List'
 #. Label of the value (Data) field in DocType 'Mail Principal Member'
@@ -8989,6 +8988,7 @@ msgstr ""
 #. Variable'
 #: mail/client/doctype/mail_domain_dns_record/mail_domain_dns_record.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
 #: mail/server/doctype/mail_principal_email/mail_principal_email.json
 #: mail/server/doctype/mail_principal_list/mail_principal_list.json
 #: mail/server/doctype/mail_principal_member/mail_principal_member.json
@@ -9010,10 +9010,7 @@ msgstr ""
 msgid "Variables"
 msgstr ""
 
-#. Label of the verification_code (Password) field in DocType 'Push
-#. Verification Queue'
 #: frontend/src/pages/BusinessSignupView.vue:15
-#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 msgid "Verification Code"
 msgstr ""
 
@@ -9029,41 +9026,28 @@ msgstr ""
 msgid "Verification Key"
 msgstr ""
 
-#. Label of the verification_response (JSON) field in DocType 'Push
-#. Subscription'
-#. Label of the _verification_response (JSON) field in DocType 'Push
-#. Subscription'
-#: mail/client/doctype/push_subscription/push_subscription.json
-msgid "Verification Response"
-msgstr ""
-
 #. Label of the jmap_push_timeout_verify (Int) field in DocType 'Mail Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "Verification Timeout (Milliseconds)"
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:197
+#: mail/client/doctype/mail_account_request/mail_account_request.py:196
 msgid "Verification email sent successfully."
 msgstr ""
 
 #. Label of the is_verified (Check) field in DocType 'Mail Domain'
-#. Label of the verified (Check) field in DocType 'Push Subscription'
-#. Option for the 'Status' (Select) field in DocType 'Push Verification Queue'
 #. Label of the is_verified (Check) field in DocType 'DNS Record'
+#. Label of the is_verified (Check) field in DocType 'Mail Principal'
+#. Label of the is_verified (Check) field in DocType 'Mail Principal Binding'
 #. Label of the ssh_verified (Check) field in DocType 'Mail Server'
 #: frontend/src/pages/dashboard/DomainView.vue:151
 #: frontend/src/pages/dashboard/DomainsView.vue:120
 #: mail/client/doctype/mail_domain/mail_domain.json
-#: mail/client/doctype/push_subscription/push_subscription.json
-#: mail/client/doctype/push_verification_queue/push_verification_queue.json
 #: mail/server/doctype/dns_record/dns_record.json
+#: mail/server/doctype/mail_principal/mail_principal.json
+#: mail/server/doctype/mail_principal_binding/mail_principal_binding.json
 #: mail/server/doctype/mail_server/mail_server.json
 msgid "Verified"
-msgstr ""
-
-#. Label of the verified_at (Datetime) field in DocType 'Push Subscription'
-#: mail/client/doctype/push_subscription/push_subscription.json
-msgid "Verified At"
 msgstr ""
 
 #: mail/server/doctype/dns_record/dns_record.py:105
@@ -9075,7 +9059,7 @@ msgstr ""
 msgid "Verifies that the server is reachable with the provided SSH details."
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:182
+#: mail/client/doctype/mail_account_request/mail_account_request.py:181
 msgid "Verify Account"
 msgstr ""
 
@@ -9083,7 +9067,7 @@ msgstr ""
 msgid "Verify DNS Record"
 msgstr ""
 
-#: mail/client/doctype/mail_domain/mail_domain.js:12
+#: mail/server/doctype/mail_principal/mail_principal.js:14
 msgid "Verify DNS Records"
 msgstr ""
 
@@ -9103,7 +9087,7 @@ msgstr ""
 msgid "Verifying DNS Record..."
 msgstr ""
 
-#: mail/client/doctype/mail_domain/mail_domain.js:53
+#: mail/server/doctype/mail_principal/mail_principal.js:69
 msgid "Verifying DNS Records..."
 msgstr ""
 
@@ -9115,11 +9099,11 @@ msgstr ""
 msgid "View All Operations"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:308
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:332
 msgid "View Export"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:236
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:258
 msgid "View Import"
 msgstr ""
 
@@ -9247,8 +9231,7 @@ msgstr ""
 msgid "Yesterday"
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:213
-#: mail/utils/validation.py:164
+#: mail/client/doctype/mail_account_request/mail_account_request.py:212
 msgid "You are not authorized to perform this action."
 msgstr ""
 
@@ -9256,11 +9239,11 @@ msgstr ""
 msgid "You cannot send email from {0} using user {1}. Please use the email address associated with the user."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:254
+#: mail/server/doctype/mail_principal/mail_principal.py:411
 msgid "You do not have permission to access principals for this tenant."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:139
+#: mail/server/doctype/mail_principal/mail_principal.py:144
 msgid "You do not have permission to access principals."
 msgstr ""
 
@@ -9268,7 +9251,7 @@ msgstr ""
 msgid "You do not have permission to access the JMAP client for user {0}."
 msgstr ""
 
-#: mail/utils/validation.py:327 mail/utils/validation.py:339
+#: mail/utils/validation.py:246
 msgid "You do not have permission to access this resource."
 msgstr ""
 
@@ -9280,7 +9263,7 @@ msgstr ""
 msgid "You do not have permission to rotate DKIM Keys."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:379
+#: mail/client/doctype/mail_account/mail_account.py:375
 msgid "You do not have permission to set quota for this account."
 msgstr ""
 
@@ -9288,15 +9271,15 @@ msgstr ""
 msgid "You do not have permission to verify DNS Records."
 msgstr ""
 
-#: mail/client/doctype/mail_message/mail_message.py:199
+#: mail/client/doctype/mail_message/mail_message.py:194
 msgid "You do not have permission to view messages for this user."
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:174
+#: mail/client/doctype/mail_account_request/mail_account_request.py:173
 msgid "You have been invited by {0} to join Frappe Mail"
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:178
+#: mail/client/doctype/mail_account_request/mail_account_request.py:177
 msgid "You have been invited by {0} to join tenant \"{1}\" on Frappe Mail."
 msgstr ""
 
@@ -9304,7 +9287,7 @@ msgstr ""
 msgid "You have no mails in this folder."
 msgstr ""
 
-#: mail/client/doctype/mail_account/mail_account.py:272
+#: mail/client/doctype/mail_account/mail_account.py:268
 msgid "You have reached the maximum limit of {0} accounts for the tenant."
 msgstr ""
 
@@ -9329,7 +9312,7 @@ msgstr ""
 #: frontend/src/components/MailThread.vue:19
 #: frontend/src/components/MailThread.vue:72
 #: frontend/src/components/Modals/SearchModal.vue:111
-#: mail/client/doctype/mail_message/mail_message.py:1159
+#: mail/client/doctype/mail_message/mail_message.py:1151
 msgid "[No subject]"
 msgstr ""
 
@@ -9364,6 +9347,7 @@ msgstr ""
 #: mail/client/doctype/identity/identity.py:241
 #: mail/client/doctype/mailbox/mailbox.py:101
 #: mail/client/doctype/mailbox/mailbox.py:145
+#: mail/client/doctype/push_subscription/push_subscription.py:121
 msgid "description"
 msgstr ""
 
@@ -9413,6 +9397,11 @@ msgstr ""
 msgid "jmap"
 msgstr ""
 
+#. Label of the jmap_email_state_last_update (Datetime) field in DocType 'User'
+#: mail/client/custom/user.json
+msgid "jmap_email_state_last_update"
+msgstr ""
+
 #. Option for the 'Role' (Select) field in DocType 'Mailbox'
 #: mail/client/doctype/mailbox/mailbox.json
 msgid "junk"
@@ -9454,13 +9443,16 @@ msgstr ""
 #: mail/client/doctype/contact_card/contact_card.py:233
 #: mail/client/doctype/identity/identity.py:169
 #: mail/client/doctype/identity/identity.py:198
-#: mail/client/doctype/mailbox/mailbox.py:99 mail/jmap.py:564
+#: mail/client/doctype/mailbox/mailbox.py:99
+#: mail/client/doctype/push_subscription/push_subscription.py:119
+#: mail/jmap.py:564
 msgid "notCreateddescription"
 msgstr ""
 
 #: mail/client/doctype/address_book/address_book.py:172
 #: mail/client/doctype/identity/identity.py:254
 #: mail/client/doctype/mailbox/mailbox.py:158
+#: mail/client/doctype/push_subscription/push_subscription.py:177
 msgid "notDestroyeddescription"
 msgstr ""
 
@@ -9468,6 +9460,8 @@ msgstr ""
 #: mail/client/doctype/contact_card/contact_card.py:321
 #: mail/client/doctype/identity/identity.py:239
 #: mail/client/doctype/mailbox/mailbox.py:143
+#: mail/client/doctype/push_subscription/push_subscription.py:146
+#: mail/client/doctype/push_subscription/push_subscription.py:162
 msgid "notUpdateddescription"
 msgstr ""
 
@@ -9543,7 +9537,7 @@ msgstr ""
 msgid "{0} (Delivered after {1} seconds)"
 msgstr ""
 
-#: mail/client/doctype/mail_account_request/mail_account_request.py:186
+#: mail/client/doctype/mail_account_request/mail_account_request.py:185
 msgid "{0} - OTP for Frappe Mail Account Verification"
 msgstr ""
 
@@ -9563,7 +9557,7 @@ msgstr ""
 msgid "{0} has an invalid store type '{1}'. Allowed types are: {2}."
 msgstr ""
 
-#: mail/utils/validation.py:203
+#: mail/utils/validation.py:122
 msgid "{0} is not a valid Cron expression."
 msgstr ""
 

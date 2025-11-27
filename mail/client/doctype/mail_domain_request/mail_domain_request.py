@@ -64,7 +64,7 @@ class MailDomainRequest(Document):
 
 	@frappe.whitelist()
 	def verify_and_create_domain(self, save: bool = False) -> bool:
-		"""Verifies the domain and creates the mail domain"""
+		"""Verifies the domain and creates the domain principal if verified."""
 
 		if self.is_verified:
 			frappe.throw(_("Domain is already verified and created."))

@@ -164,7 +164,6 @@ permission_query_conditions = {
 	"Mail Account": "mail.client.doctype.mail_account.mail_account.get_permission_query_condition",
 	"Mail Account Request": "mail.client.doctype.mail_account_request.mail_account_request.get_permission_query_condition",
 	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.get_permission_query_condition",
-	"Mail Domain": "mail.client.doctype.mail_domain.mail_domain.get_permission_query_condition",
 	"Mail Domain Request": "mail.client.doctype.mail_domain_request.mail_domain_request.get_permission_query_condition",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
 	"Mail Tenant": "mail.client.doctype.mail_tenant.mail_tenant.get_permission_query_condition",
@@ -185,7 +184,6 @@ has_permission = {
 	"Mail Account": "mail.client.doctype.mail_account.mail_account.has_permission",
 	"Mail Account Request": "mail.client.doctype.mail_account_request.mail_account_request.has_permission",
 	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.has_permission",
-	"Mail Domain": "mail.client.doctype.mail_domain.mail_domain.has_permission",
 	"Mail Domain Request": "mail.client.doctype.mail_domain_request.mail_domain_request.has_permission",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.has_permission",
 	"Mail Tenant": "mail.client.doctype.mail_tenant.mail_tenant.has_permission",
@@ -285,7 +283,7 @@ scheduler_events = {
 # Ignore links to specified DocTypes when deleting documents
 # -----------------------------------------------------------
 
-ignore_links_on_delete = ["Mail Domain", "Mail Message"]
+ignore_links_on_delete = ["Mail Message"]
 
 # Request Events
 # ----------------

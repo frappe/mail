@@ -70,20 +70,20 @@ def get_personal_signup_domains(
 	page_len: int = 20,
 	filters: dict | None = None,
 ) -> list:
-	"""Returns a list of Mail Domains that allow personal signup."""
+	"""Returns a list of Domains that allow personal signup."""
 
-	MAIL_DOMAIN = frappe.qb.DocType("Mail Domain")
-	MAIL_TENANT = frappe.qb.DocType("Mail Tenant")
+	TENANT = frappe.qb.DocType("Mail Tenant")
+	PRINCIPAL_BINDING = frappe.qb.DocType("Mail Principal Binding")
 	return (
-		frappe.qb.from_(MAIL_DOMAIN)
-		.left_join(MAIL_TENANT)
-		.on(MAIL_DOMAIN.tenant == MAIL_TENANT.name)
-		.select(MAIL_DOMAIN.name)
+		frappe.qb.from_(PRINCIPAL_BINDING)
+		.left_join(TENANT)
+		.on(PRINCIPAL_BINDING.tenant == TENANT.name)
+		.select(PRINCIPAL_BINDING.name, PRINCIPAL_BINDING.principal_name)
 		.where(
-			(MAIL_DOMAIN.enabled == 1)
-			& (MAIL_DOMAIN.is_verified == 1)
-			& (MAIL_DOMAIN.name.like(f"%{txt}%"))
-			& (MAIL_TENANT.allow_personal_signup == 1)
+			(PRINCIPAL_BINDING.is_verified == 1)
+			& (PRINCIPAL_BINDING.principal_type == "Domain")
+			& (PRINCIPAL_BINDING.principal_name.like(f"%{txt}%"))
+			& (TENANT.allow_personal_signup == 1)
 		)
 	).run(as_dict=False)
 

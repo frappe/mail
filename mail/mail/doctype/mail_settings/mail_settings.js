@@ -14,7 +14,6 @@ frappe.ui.form.on('Mail Settings', {
 		frm.set_query('personal_signup_domains', () => ({
 			query: 'mail.utils.query.get_personal_signup_domains',
 			filters: {
-				enabled: 1,
 				is_verified: 1,
 			},
 		}))

@@ -22,7 +22,6 @@ export default defineConfig({
 						'mail_message',
 						'mail_tenant',
 						'mail_tenant_member',
-						'mail_domain',
 						'mail_domain_request',
 						'mail_alias',
 						'mailing_list',

@@ -19,10 +19,6 @@
   "dns_provider_client_ip",
   "dns_provider_token",
   "dns_provider_private_zone",
-  "section_break_l9un",
-  "default_dkim_rsa_key_size",
-  "column_break_rwnw",
-  "default_ttl",
   "signup_tab",
   "allow_business_signup",
   "column_break_daqm",
@@ -70,20 +66,6 @@
   {
    "fieldname": "column_break_4ccc",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_l9un",
-   "fieldtype": "Section Break",
-   "label": "Defaults"
-  },
-  {
-   "default": "3600",
-   "description": "The default Time-to-Live (TTL) for DNS records.",
-   "fieldname": "default_ttl",
-   "fieldtype": "Int",
-   "label": "TTL",
-   "non_negative": 1,
-   "reqd": 1
   },
   {
    "fieldname": "spamassassin_tab",
@@ -148,19 +130,6 @@
    "fieldname": "enable_spamd",
    "fieldtype": "Check",
    "label": "Enable Spam Detection"
-  },
-  {
-   "fieldname": "column_break_rwnw",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "2048",
-   "description": "The default size of the RSA key used for DKIM signing.",
-   "fieldname": "default_dkim_rsa_key_size",
-   "fieldtype": "Select",
-   "label": "DKIM RSA Key Size",
-   "options": "\n2048\n4096",
-   "reqd": 1
   },
   {
    "default": "0",
@@ -271,7 +240,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-10-13 12:32:43.976269",
+ "modified": "2025-11-27 14:40:21.513257",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
