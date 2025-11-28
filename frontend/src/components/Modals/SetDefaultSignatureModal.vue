@@ -12,6 +12,7 @@
 							value: identity.name,
 						}))
 					"
+					:open-on-click="true"
 				/>
 			</div>
 			<div class="space-y-1.5">

@@ -26,7 +26,7 @@
 						class="text-ink-gray-3 mx-2.5 mb-1.5 mt-auto h-4 w-4"
 						name="at-sign"
 					/>
-					<LinkControl
+					<Link
 						v-model="alias.doc.domain_name"
 						:label="__('Domain Name')"
 						placeholder="yourdomain.com"
@@ -44,10 +44,12 @@
 						{ label: __('Mailing List'), value: 'Mailing List' },
 					]"
 				/>
-				<LinkControl
+				<Link
 					v-model="alias.doc.alias_for_name"
 					:label="
-						__(alias.doc.alias_for_type === 'Mail Account' ? 'User' : 'Mailing List')
+						alias.doc.alias_for_type === 'Mail Account'
+							? __('User')
+							: __('Mailing List')
 					"
 					:doctype="
 						alias.doc.alias_for_type === 'Mail Account'
@@ -63,10 +65,10 @@
 
 <script setup lang="ts">
 import { inject, watch } from 'vue'
+import { Link } from 'frappe-ui/frappe'
 import { Dialog, FeatherIcon, FormControl, useNewDoc } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import LinkControl from '@/components/Controls/LinkControl.vue'
 
 const show = defineModel<boolean>()
 

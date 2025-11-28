@@ -15,6 +15,7 @@
 								value: identity.name,
 							}))
 						"
+						:open-on-click="true"
 					/>
 				</div>
 				<template v-if="identity?.doc && !identity.loading">
@@ -67,6 +68,7 @@
 								}))
 							"
 							variant="outline"
+							:open-on-click="true"
 							@update:model-value="
 								(val: string) => (identity.doc.html_signature = val)
 							"

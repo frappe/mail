@@ -223,6 +223,7 @@ def get_mail_contacts(txt=None) -> list:
 @frappe.whitelist()
 def create_mail(
 	from_email: str,
+	from_name: str,
 	to: list[str],
 	cc: list[str],
 	bcc: list[str],
@@ -262,6 +263,7 @@ def create_mail(
 	doc = MailQueue._create(
 		account=account,
 		from_email=from_email,
+		from_name=from_name,
 		subject=subject,
 		html_body=html_body,
 		in_reply_to=in_reply_to,
@@ -279,6 +281,7 @@ def create_mail(
 def update_draft_mail(
 	id: str,
 	from_email: str,
+	from_name: str,
 	to: list[str],
 	cc: list[str],
 	bcc: list[str],
@@ -295,6 +298,7 @@ def update_draft_mail(
 	doc.check_permission(permtype="write")
 
 	doc.from_email = from_email
+	doc.from_name = from_name
 	doc.subject = subject
 
 	doc.attachments = []

@@ -1,18 +1,17 @@
 <template>
 	<template v-if="account.doc">
 		<h1>{{ __('Outgoing') }}</h1>
-		<AutocompleteControl
-			v-model="account.doc.default_outgoing_email"
-			variant="outline"
-			:label="__('Send Mails From')"
-			:show-search="false"
-			:options="user.data.email_addresses"
-		/>
-		<Switch
-			v-model="createMailContact"
-			:label="__('Create Mail Contacts')"
-			:description="__('Create contacts of people you send mails to.')"
-		/>
+		<div class="space-y-1.5">
+			<label class="text-ink-gray-5 block text-xs">
+				{{ __('Default Outgoing Email') }}
+			</label>
+			<Combobox
+				v-model="account.doc.default_outgoing_email"
+				variant="outline"
+				:options="user.data.email_addresses"
+				:open-on-click="true"
+			/>
+		</div>
 		<Switch
 			v-model="destroyEmailAfterSubmission"
 			:label="__('Delete Email After Sending')"
@@ -50,10 +49,16 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import { Button, ErrorMessage, FormControl, Switch, createDocumentResource } from 'frappe-ui'
+import {
+	Button,
+	Combobox,
+	ErrorMessage,
+	FormControl,
+	Switch,
+	createDocumentResource,
+} from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
 
 const user = inject('$user')
 
@@ -63,11 +68,6 @@ const account = createDocumentResource({
 	setValue: {
 		onSuccess: () => raiseToast(__('Account updated.')),
 	},
-})
-
-const createMailContact = computed({
-	get: () => !!account.doc.create_mail_contact,
-	set: (val: boolean) => (account.doc.create_mail_contact = val ? 1 : 0),
 })
 
 const destroyEmailAfterSubmission = computed({
