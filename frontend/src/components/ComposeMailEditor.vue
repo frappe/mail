@@ -19,7 +19,7 @@
 						<Combobox
 							v-model="mail.from_email"
 							:options="user.data?.email_addresses || []"
-							:open-on-focus="true"
+							:open-on-click="true"
 						/>
 					</div>
 					<Button

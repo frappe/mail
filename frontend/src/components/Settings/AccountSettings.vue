@@ -1,6 +1,17 @@
 <template>
 	<template v-if="account.doc">
 		<h1>{{ __('Outgoing') }}</h1>
+		<div class="space-y-1.5">
+			<label class="text-ink-gray-5 block text-xs">
+				{{ __('Default Outgoing Email') }}
+			</label>
+			<Combobox
+				v-model="account.doc.default_outgoing_email"
+				variant="outline"
+				:options="user.data.email_addresses"
+				:open-on-click="true"
+			/>
+		</div>
 		<Switch
 			v-model="destroyEmailAfterSubmission"
 			:label="__('Delete Email After Sending')"
@@ -38,7 +49,14 @@
 
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import { Button, ErrorMessage, FormControl, Switch, createDocumentResource } from 'frappe-ui'
+import {
+	Button,
+	Combobox,
+	ErrorMessage,
+	FormControl,
+	Switch,
+	createDocumentResource,
+} from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 

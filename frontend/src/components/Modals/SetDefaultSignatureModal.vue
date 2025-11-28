@@ -12,7 +12,7 @@
 							value: identity.name,
 						}))
 					"
-					:open-on-focus="true"
+					:open-on-click="true"
 				/>
 			</div>
 			<div class="space-y-1.5">

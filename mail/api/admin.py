@@ -5,9 +5,8 @@ from frappe import _
 from frappe.query_builder import Case, Order
 from frappe.utils import cint
 
-from mail.utils.cache import get_tenant_for_user
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import get_user_email_addresses, is_tenant_admin
+from mail.utils.user import is_tenant_admin
 
 if TYPE_CHECKING:
 	from mail.client.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
