@@ -1,6 +1,6 @@
 <template>
 	<div class="flex space-x-4">
-		<LinkControl
+		<Link
 			v-model="email"
 			:placeholder="__('Email')"
 			:doctype="type"
@@ -15,9 +15,8 @@
 
 <script lang="ts" setup>
 import { computed, inject, ref } from 'vue'
+import { Link } from 'frappe-ui/frappe'
 import { Button } from 'frappe-ui'
-
-import LinkControl from '@/components/Controls/LinkControl.vue'
 
 import type { UserResource } from '@/types'
 

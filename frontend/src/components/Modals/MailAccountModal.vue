@@ -21,20 +21,6 @@
 		<template #body-content>
 			<div class="space-y-4">
 				<Switch v-model="account.doc.enabled" :label="__('Enabled')" class="switch" />
-				<Switch
-					v-model="account.doc.create_mail_contact"
-					:label="__('Create Mail Contact')"
-					class="switch"
-				/>
-				<AutocompleteControl
-					v-model="account.doc.default_outgoing_email"
-					:label="__('Default Email')"
-					:show-search="false"
-					:options="userAddresses.data"
-				/>
-				<FormControl v-model="account.doc.display_name" :label="__('Display Name')" />
-				<FormControl v-model="account.doc.reply_to" :label="__('Reply To')" />
-				<hr />
 				<div class="flex flex-col space-y-2">
 					<FormControl
 						:value="`${account.doc.used_quota.toFixed(2)} GB`"
@@ -73,7 +59,6 @@ import { ref, watch } from 'vue'
 import { Dialog, FormControl, Switch, createDocumentResource, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
 
 import type { MailAccount } from '@/types'
 
@@ -128,17 +113,10 @@ const save = () => {
 		account.value.save.submit()
 }
 
-const userAddresses = createResource({
-	url: 'mail.api.admin.get_user_addresses',
-	makeParams: () => ({ user: accountID }),
-})
-
 watch(
 	show,
 	(val) => {
-		if (!val) return
-		account.value = getAccount()
-		userAddresses.reload()
+		if (val) account.value = getAccount()
 	},
 	{ immediate: true },
 )

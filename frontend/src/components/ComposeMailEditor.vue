@@ -16,7 +16,7 @@
 				<div v-if="!mailDetails?.type || isMobile" class="flex justify-between gap-2">
 					<div class="flex items-center gap-2">
 						<span class="text-ink-gray-4 text-sm">{{ __('From') }}</span>
-						<AutocompleteControl
+						<Combobox
 							v-model="mail.from_email"
 							:options="user.data?.email_addresses || []"
 						/>
@@ -180,6 +180,7 @@ import { watchDebounced } from '@vueuse/core'
 import { ChevronDown, ChevronUp, ExternalLink, Forward, Reply, ReplyAll } from 'lucide-vue-next'
 import {
 	Button,
+	Combobox,
 	Dropdown,
 	FeatherIcon,
 	ImageExtension,
@@ -193,7 +194,6 @@ import { useScreenSize, useVisualViewport } from '@/utils/composables'
 import { CustomParagraphExtension } from '@/utils/text-editor'
 import { userStore } from '@/stores/user'
 import ComposeMailToolbar from '@/components/ComposeMailToolbar.vue'
-import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
 import MultiselectInputControl from '@/components/Controls/MultiselectInputControl.vue'
 
 import type { Attachment, ComposeMailData, File as FileDoc, UserResource } from '@/types'

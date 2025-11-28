@@ -167,14 +167,3 @@ def delete_account_requests(names: list) -> None:
 
 	for d in names:
 		frappe.delete_doc("Mail Account Request", d)
-
-
-@frappe.whitelist()
-def get_user_addresses(user: str) -> list:
-	"""Fetches user email addresses."""
-
-	tenant = get_tenant_for_user(user)
-	if not is_tenant_admin(tenant, frappe.session.user):
-		frappe.throw(_("User {0} is not a Mail Admin of Tenant {1}.").format(frappe.session.user, tenant))
-
-	return get_user_email_addresses(user)
