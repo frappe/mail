@@ -61,7 +61,7 @@ const account = createDocumentResource({
 	doctype: 'Mail Account',
 	name: user.data?.name,
 	setValue: {
-		onSuccess: () => raiseToast(__('Account settings saved successfully')),
+		onSuccess: () => raiseToast(__('Account updated.')),
 	},
 })
 

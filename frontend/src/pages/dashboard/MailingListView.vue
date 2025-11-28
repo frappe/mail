@@ -171,7 +171,7 @@ const list = createDocumentResource({
 		data['enabled'] = !!data['enabled']
 	},
 	setValue: {
-		onSuccess: () => raiseToast(__('Mailing List settings saved successfully')),
+		onSuccess: () => raiseToast(__('Mailing list updated.')),
 		onError(error) {
 			raiseToast(error.messages[0], 'error')
 			list.reload()
@@ -226,7 +226,7 @@ const deleteMembers = createResource({
 		else internalMembers.reload()
 
 		showRemoveMembers.value = false
-		raiseToast(__('Members removed successfully.'))
+		raiseToast(__('Members removed.'))
 		listView.value?.toggleAllRows()
 	},
 	onError: (error) => {

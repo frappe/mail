@@ -88,7 +88,7 @@ const alias = useNewDoc(
 		beforeSubmit: () => (alias.doc.email = `${alias.doc.username}@${alias.doc.domain_name}`),
 		onSuccess: () => {
 			show.value = false
-			raiseToast(__('Alias created successfully'))
+			raiseToast(__('Alias created.'))
 			emit('reloadAliases')
 		},
 		onError: (error) => raiseToast(error.message, 'error'),

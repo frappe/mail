@@ -131,13 +131,7 @@ const addMember = createResource({
 	url: 'mail.api.admin.add_member',
 	makeParams: () => ({ tenant: user.data.tenant, ...accountRequest }),
 	onSuccess: () => {
-		raiseToast(
-			__(
-				accountRequest.send_invite
-					? 'Member invited successfully'
-					: 'Member added successfully',
-			),
-		)
+		raiseToast(accountRequest.send_invite ? __('Member invited.') : __('Member added.'))
 		emit('reload')
 		show.value = false
 	},

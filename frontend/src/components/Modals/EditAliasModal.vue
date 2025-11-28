@@ -74,7 +74,7 @@ const getAlias = () =>
 		setValue: {
 			onSuccess: () => {
 				show.value = false
-				raiseToast(__('Alias saved successfully'))
+				raiseToast(__('Alias updated.'))
 				emit('reloadAliases')
 			},
 			onError: (error) => {

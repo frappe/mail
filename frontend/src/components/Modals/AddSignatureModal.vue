@@ -52,7 +52,7 @@ const signature = useNewDoc(
 	{
 		onSuccess: () => {
 			show.value = false
-			raiseToast(__('Signature created successfully'))
+			raiseToast(__('Signature created.'))
 			emit('reloadSignatures')
 		},
 		onError: (error) => raiseToast(error.message, 'error'),

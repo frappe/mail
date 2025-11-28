@@ -66,7 +66,7 @@ const updatePassword = createResource({
 	makeParams: () => ({ old_password: currentPassword.value, new_password: newPassword.value }),
 	onSuccess: () => {
 		show.value = false
-		raiseToast(__('Password updated successfully'))
+		raiseToast(__('Password updated.'))
 	},
 })
 

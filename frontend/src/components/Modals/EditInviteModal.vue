@@ -67,7 +67,7 @@ const getMailAccountRequest = () =>
 		setValue: {
 			onSuccess: () => {
 				show.value = false
-				raiseToast(__('Invite updated successfully'))
+				raiseToast(__('Invite updated.'))
 				emit('reloadInvites')
 			},
 			onError: (error) => {

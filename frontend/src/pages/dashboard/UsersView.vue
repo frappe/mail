@@ -134,7 +134,7 @@ const editAdminRole = createResource({
 		value: is_admin,
 	}),
 	onSuccess: () => {
-		raiseToast(__('Role updated successfully'))
+		raiseToast(__('Role updated.'))
 		members.reload()
 	},
 	onError: (error) => raiseToast(error.messages[0], 'error'),
@@ -144,7 +144,7 @@ const removeMember = createResource({
 	url: 'frappe.client.delete',
 	makeParams: () => ({ doctype: 'Mail Tenant Member', name: memberToBeRemoved.value }),
 	onSuccess: () => {
-		raiseToast(__('Member removed successfully'))
+		raiseToast(__('Member removed.'))
 		showRemoveMember.value = false
 		members.reload()
 	},

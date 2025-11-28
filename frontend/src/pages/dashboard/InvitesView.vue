@@ -164,7 +164,7 @@ const deleteInvites = createResource({
 	onSuccess: () => {
 		invites.reload()
 		showDeleteInvites.value = false
-		raiseToast(__('Invites deleted successfully.'))
+		raiseToast(__('Invites deleted.'))
 		listView.value?.toggleAllRows()
 	},
 	onError: (error) => {

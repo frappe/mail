@@ -84,7 +84,7 @@ const addMembers = createResource({
 	url: 'mail.api.admin.add_list_members',
 	makeParams: () => ({ list, type, members: members.value }),
 	onSuccess: () => {
-		raiseToast(__('Members added successfully'))
+		raiseToast(__('Members added.'))
 		show.value = false
 		emit('reloadMembers')
 	},

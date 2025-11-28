@@ -121,7 +121,7 @@ const deleteLists = createResource({
 	onSuccess: () => {
 		lists.reload()
 		showDeleteLists.value = false
-		raiseToast(__('Mailing Lists deleted successfully.'))
+		raiseToast(__('Mailing lists deleted.'))
 		listView.value?.toggleAllRows()
 	},
 	onError: (error) => {

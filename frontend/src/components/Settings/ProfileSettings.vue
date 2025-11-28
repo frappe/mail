@@ -57,7 +57,7 @@ const setName = createResource({
 		fieldname: { first_name: firstName.value, last_name: lastName.value },
 	}),
 	onSuccess: () => {
-		raiseToast(__('Profile updated successfully.'))
+		raiseToast(__('Profile updated.'))
 		user.reload()
 	},
 })

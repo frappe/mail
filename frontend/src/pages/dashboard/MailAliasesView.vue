@@ -145,7 +145,7 @@ const deleteAliases = createResource({
 	onSuccess: () => {
 		aliases.reload()
 		showDeleteAliases.value = false
-		raiseToast(__('Aliases deleted successfully.'))
+		raiseToast(__('Aliases deleted.'))
 		listView.value?.toggleAllRows()
 	},
 	onError: (error) => {

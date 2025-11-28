@@ -43,7 +43,7 @@ const member = useNewDoc(
 		beforeSubmit: () => (member.doc.mailing_list = list),
 		onSuccess: () => {
 			show.value = false
-			raiseToast(__('Member added successfully'))
+			raiseToast(__('Member added.'))
 			emit('reloadMembers')
 		},
 		onError: (error) => raiseToast(error.message, 'error'),

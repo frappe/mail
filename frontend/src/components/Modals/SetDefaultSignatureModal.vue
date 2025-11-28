@@ -65,7 +65,7 @@ const setSignature = createResource({
 	url: 'mail.api.account.set_signature',
 	makeParams: () => ({ identity: identity.value, signature }),
 	onSuccess: () => {
-		raiseToast(__('Profile updated successfully.'))
+		raiseToast(__('Identity updated.'))
 		identities.reload()
 	},
 	onError: (error) => raiseToast(error.message, 'error'),

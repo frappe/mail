@@ -81,7 +81,7 @@ const account = createDocumentResource({
 			}),
 			onSuccess: () => {
 				account.reload()
-				raiseToast(__('Vacation response settings saved successfully'))
+				raiseToast(__('Vacation response updated.'))
 			},
 			onError: (error) => raiseToast(error.messages[0], 'error'),
 		},

@@ -179,7 +179,7 @@ const getIdentity = () =>
 		name: identityName.value,
 		setValue: {
 			onSuccess: () => {
-				raiseToast(__('Identity updated successfully'))
+				raiseToast(__('Identity updated.'))
 				identities.reload()
 			},
 			onError: (error) => raiseToast(error.messages[0], 'error'),

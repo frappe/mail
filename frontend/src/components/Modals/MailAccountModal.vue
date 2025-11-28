@@ -98,7 +98,7 @@ const getAccount = () =>
 		setValue: {
 			onSuccess: () => {
 				show.value = false
-				raiseToast(__('Account settings saved successfully'))
+				raiseToast(__('Account updated.'))
 			},
 			onError: (error) => {
 				raiseToast(error.messages[0], 'error')

@@ -101,7 +101,7 @@ const domain = createDocumentResource({
 			makeParams: () => ({ do_not_save: false }),
 			onSuccess: (data: boolean) => {
 				raiseToast(
-					data ? 'DNS records verified successfully.' : 'DNS verification failed.',
+					data ? __('DNS records verified.') : __('DNS verification failed.'),
 					data ? 'success' : 'error',
 				)
 				domain.reload()
@@ -116,7 +116,7 @@ const domain = createDocumentResource({
 			makeParams: () => ({ do_not_save: false }),
 			onSuccess: () => {
 				showConfirmDialog.value = false
-				raiseToast('DNS Records refreshed successfully.')
+				raiseToast('DNS Records refreshed.')
 				domain.reload()
 			},
 			onError: (error) => {
@@ -128,7 +128,7 @@ const domain = createDocumentResource({
 			method: 'rotate_dkim_keys',
 			onSuccess: () => {
 				showConfirmDialog.value = false
-				raiseToast('DKIM Keys rotated successfully.')
+				raiseToast('DKIM Keys rotated.')
 				domain.reload()
 			},
 			onError: (error) => {

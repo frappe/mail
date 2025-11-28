@@ -49,7 +49,7 @@ const getSignature = () =>
 		setValue: {
 			onSuccess: () => {
 				show.value = false
-				raiseToast(__('Signature updated successfully'))
+				raiseToast(__('Signature updated.'))
 				emit('reloadSignatures')
 			},
 			onError: (error) => {
