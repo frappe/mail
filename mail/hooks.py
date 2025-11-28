@@ -167,9 +167,6 @@ permission_query_conditions = {
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
 	"Mail Tenant": "mail.client.doctype.mail_tenant.mail_tenant.get_permission_query_condition",
 	"Mail Tenant Member": "mail.client.doctype.mail_tenant_member.mail_tenant_member.get_permission_query_condition",
-	"Mailing List": "mail.client.doctype.mailing_list.mailing_list.get_permission_query_condition",
-	"Mailing List External Member": "mail.client.doctype.mailing_list_external_member.mailing_list_external_member.get_permission_query_condition",
-	"Mailing List Member": "mail.client.doctype.mailing_list_member.mailing_list_member.get_permission_query_condition",
 }
 
 has_permission = {
@@ -187,9 +184,6 @@ has_permission = {
 	"Mail Tenant": "mail.client.doctype.mail_tenant.mail_tenant.has_permission",
 	"Mail Tenant Member": "mail.client.doctype.mail_tenant_member.mail_tenant_member.has_permission",
 	"Mailbox": "mail.client.doctype.mailbox.mailbox.has_permission",
-	"Mailing List": "mail.client.doctype.mailing_list.mailing_list.has_permission",
-	"Mailing List External Member": "mail.client.doctype.mailing_list_external_member.mailing_list_external_member.has_permission",
-	"Mailing List Member": "mail.client.doctype.mailing_list_member.mailing_list_member.has_permission",
 	"Push Subscription": "mail.client.doctype.push_subscription.push_subscription.has_permission",
 	"Quota": "mail.client.doctype.quota.quota.has_permission",
 	"Vacation Response": "mail.client.doctype.vacation_response.vacation_response.has_permission",
