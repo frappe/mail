@@ -9,6 +9,8 @@ from frappe import _, unscrub
 from frappe.model.document import Document
 from frappe.utils import cint, today, validate_email_address
 
+from mail.client.doctype.identity.identity import _add_identity as add_identity
+from mail.jmap import invalidate_jmap_cache
 from mail.server.doctype.mail_principal.principal import BackendAPI, get_backend_api
 from mail.server.doctype.mail_principal_binding.mail_principal_binding import (
 	create_principal_binding,
@@ -34,6 +36,7 @@ from mail.utils import (
 from mail.utils.cache import get_cluster_for_tenant, get_root_domain_name
 from mail.utils.dns import verify_dns_record
 from mail.utils.user import get_tenant_for_user, is_system_manager, is_tenant_admin
+from mail.utils.validation import is_subaddressed_email
 
 SETTINGS_ENDPOINT = "/api/settings"
 PRINCIPAL_ENDPOINT = "/api/principal"
@@ -235,6 +238,15 @@ class MailPrincipal(Document):
 
 		frappe.msgprint(_("DKIM Keys rotated successfully."), indicator="green", alert=True)
 
+	@frappe.whitelist()
+	def sync_jmap_identities(self) -> None:
+		"""Syncs JMAP identities for the principal."""
+
+		if self.type != "Individual":
+			frappe.throw(_("JMAP Identities can only be synced for Individual principals."))
+
+		sync_jmap_identities(self.tenant, self._name)
+
 
 def _get_local_type(principal_type: str) -> str:
 	"""Returns the local principal type for the given backend principal type."""
@@ -428,6 +440,91 @@ def validate_max_domains(tenant: str) -> None:
 		)
 
 
+def validate_max_groups(tenant: str) -> None:
+	"""Validates if the tenant has reached the maximum limit of groups."""
+
+	max_groups = frappe.db.get_value("Mail Tenant", tenant, "max_groups")
+	total_groups = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "type": "Group"})
+
+	if total_groups >= max_groups:
+		frappe.throw(
+			_("You have reached the maximum limit of {0} groups for the tenant.").format(
+				frappe.bold(max_groups)
+			)
+		)
+
+
+def validate_max_accounts(tenant: str) -> None:
+	"""Validates if the tenant has reached the maximum limit of mail accounts."""
+
+	max_accounts = frappe.db.get_value("Mail Tenant", tenant, "max_accounts")
+	total_accounts = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "type": "Individual"})
+
+	if total_accounts >= max_accounts:
+		frappe.throw(
+			_("You have reached the maximum limit of {0} accounts for the tenant.").format(
+				frappe.bold(max_accounts)
+			)
+		)
+
+
+def validate_max_lists(tenant: str) -> None:
+	"""Validates if the tenant has reached the maximum limit of lists."""
+
+	max_lists = frappe.db.get_value("Mail Tenant", tenant, "max_mailing_lists")
+	total_lists = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "type": "List"})
+
+	if total_lists >= max_lists:
+		frappe.throw(
+			_("You have reached the maximum limit of {0} lists for the tenant.").format(
+				frappe.bold(max_lists)
+			)
+		)
+
+
+def validate_max_limits(tenant: str, principal_type: str) -> None:
+	"""Validates if the tenant has reached the maximum limit for the given principal type."""
+
+	if principal_type == "Domain":
+		validate_max_domains(tenant)
+	elif principal_type == "Group":
+		validate_max_groups(tenant)
+	elif principal_type == "Individual":
+		validate_max_accounts(tenant)
+	elif principal_type == "List":
+		validate_max_lists(tenant)
+
+
+def sync_jmap_identities(tenant: str, pname: str) -> None:
+	"""Syncs JMAP identities for the given principal."""
+
+	ensure_access_to_tenant(tenant=tenant)
+
+	if not frappe.db.exists(
+		"Mail Principal Binding", {"tenant": tenant, "principal_name": pname, "principal_type": "Individual"}
+	):
+		return
+
+	identities = frappe.db.get_all("Identity", {"user": pname})
+	identities_emails_map = {identity["email"]: identity["name"] for identity in identities}
+	identities_emails = set(identities_emails_map.keys())
+
+	principal = frappe.get_doc("Mail Principal", f"{tenant}|{pname}")
+	principal_emails = set([principal._name] + principal._emails)
+
+	identities_to_remove = identities_emails - principal_emails
+	identities_to_add = principal_emails - identities_emails
+
+	for email in identities_to_remove:
+		identity_name = identities_emails_map[email]
+		frappe.delete_doc("Identity", identity_name)
+
+	for email in identities_to_add:
+		add_identity(pname, email, principal.description)
+
+	invalidate_jmap_cache(pname)
+
+
 @frappe.whitelist()
 def add_principal(principal: "MailPrincipal") -> str:
 	"""Adds a new principal."""
@@ -438,6 +535,7 @@ def add_principal(principal: "MailPrincipal") -> str:
 		frappe.throw(_("Tenant must be specified to add a principal."))
 
 	ensure_access_to_tenant(tenant=principal.tenant)
+	validate_max_limits(principal.tenant, principal.type)
 
 	_secrets = []
 	_emails = []
@@ -450,7 +548,6 @@ def add_principal(principal: "MailPrincipal") -> str:
 	_external_members = []
 
 	if principal.type == "Domain":
-		validate_max_domains(principal.tenant)
 		if "." not in principal._name:
 			frappe.throw(_("Invalid domain name provided for principal."))
 
@@ -465,6 +562,7 @@ def add_principal(principal: "MailPrincipal") -> str:
 		_emails = [principal._name] + principal._emails
 		for email in _emails:
 			validate_email_address(email, True)
+		is_subaddressed_email(principal._name, raise_exception=True)
 		ensure_emails_belong_to_tenant_domains(principal.tenant, _emails)
 
 	if principal.type in ["Group", "Individual"]:
@@ -516,6 +614,7 @@ def add_principal(principal: "MailPrincipal") -> str:
 		)
 
 	create_principal_binding(principal.tenant, principal._name, principal.type)
+	sync_jmap_identities(principal.tenant, principal._name)
 
 	if principal.type == "Domain":
 		_create_dkim_signature_for_domain(backend, principal._principal, "rsa-sha256", raise_exception=False)
@@ -606,6 +705,7 @@ def update_principal(
 		updates["emails"] = [principal._name] + principal._emails
 		for email in updates["emails"]:
 			validate_email_address(email, True)
+		is_subaddressed_email(principal._name, raise_exception=True)
 		ensure_emails_belong_to_tenant_domains(tenant, updates["emails"])
 
 	if principal.type in ["Group", "Individual"]:
@@ -659,6 +759,7 @@ def update_principal(
 		frappe.throw(_("Failed to update principal {0}: {1}").format(frappe.bold(pname), response.text))
 
 	_remove_principal_from_cache(tenant, pname)
+	sync_jmap_identities(tenant, pname)
 
 	if pname != principal._name or principal.type != TYPE_MAP[existing_principal.type]:
 		principal.name = f"{tenant}|{principal._name}"
@@ -894,7 +995,12 @@ def format_principal(tenant: str, principal: dict) -> dict:
 
 	if type == "Domain":
 		cluster = get_cluster_for_tenant(tenant)
-		formatted["dns_records"] = format_dns_records(principal["name"], cluster, principal["dnsRecords"])
+		formatted.update(
+			{
+				"dns_records": format_dns_records(principal["name"], cluster, principal["dnsRecords"]),
+				"total_members": cint(principal.get("members")),
+			}
+		)
 
 	if type in ["API Key", "Group", "Individual"]:
 		permissions = [
@@ -933,7 +1039,13 @@ def format_principal(tenant: str, principal: dict) -> dict:
 		formatted["emails"] = [{"value": e} for e in principal.get("emails", [])]
 
 	if type in ["Group", "List"]:
-		formatted["members"] = [{"value": m} for m in principal.get("members", [])]
+		members = [{"value": m} for m in principal.get("members", [])]
+		formatted.update(
+			{
+				"members": members,
+				"total_members": len(members),
+			}
+		)
 
 	if type == "Individual":
 		app_passwords = [

@@ -8,7 +8,7 @@ from frappe.query_builder import Table
 from frappe.utils.caching import request_cache
 
 from mail.utils import user_context
-from mail.utils.cache import get_account_for_user, get_tenant_for_user
+from mail.utils.cache import get_account_for_user, get_cluster_for_tenant, get_tenant_for_user
 
 
 def is_administrator(user: str) -> bool:
@@ -157,14 +157,14 @@ def get_caldav_settings(user: str) -> dict:
 
 	caldav_settings = {}
 
-	if account := get_account_for_user(user):
-		account = frappe.get_doc("Mail Account", account)
-		cluster = frappe.db.get_value("Mail Tenant", account.tenant, "cluster")
+	user_doc = frappe.get_doc("User", user)
+	if user_doc.jmap_server_url and user_doc.jmap_username and user_doc.jmap_app_password:
+		cluster = get_cluster_for_tenant(get_tenant_for_user(user))
 		base_url = frappe.db.get_value("Mail Cluster", cluster, "base_url")
 		caldav_url = urljoin(base_url, ".well-known/caldav")
 
 		caldav_settings.update(
-			{"url": caldav_url, "auth": (account.email, account.get_account_app_password())}
+			{"url": caldav_url, "auth": (user_doc.jmap_username, user_doc.get_password("jmap_app_password"))}
 		)
 
 	return caldav_settings

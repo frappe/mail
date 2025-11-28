@@ -181,14 +181,18 @@ def ensure_principal_belong_to_tenant(tenant: str, principal_name: str) -> None:
 def ensure_emails_belong_to_tenant_domains(tenant: str, emails: list[str]) -> None:
 	"""Ensure that the email domains belong to the given tenant."""
 
-	domains = get_tenant_domains(tenant)
+	domains = frappe.db.get_all(
+		"Mail Principal Binding",
+		filters={"tenant": tenant, "principal_type": "Domain", "is_verified": 1},
+		pluck="principal_name",
+	)
 	tenant_name = frappe.db.get_value("Mail Tenant", tenant, "tenant_name")
 
 	for email in emails:
 		_user, domain = email.split("@", 1)
 		if domain not in domains:
 			frappe.throw(
-				_("Email domain {0} is not associated with tenant {1}.").format(
+				_("Email domain {0} is not associated with tenant {1} or is not verified.").format(
 					frappe.bold(domain), frappe.bold(tenant_name)
 				)
 			)

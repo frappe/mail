@@ -12,6 +12,7 @@
   "quota",
   "used_quota",
   "used_percentage",
+  "total_members",
   "column_break_oglq",
   "_name",
   "description",
@@ -109,6 +110,7 @@
    "depends_on": "eval: [\"Group\", \"Individual\", \"List\"].includes(doc.type)",
    "fieldname": "emails",
    "fieldtype": "Table",
+   "label": "Emails",
    "options": "Mail Principal Email"
   },
   {
@@ -291,6 +293,14 @@
    "label": "Verified",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "depends_on": "eval: [\"Domain\", \"Group\", \"List\"].includes(doc.type)",
+   "fieldname": "total_members",
+   "fieldtype": "Int",
+   "label": "Members",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -303,7 +313,7 @@
    "link_fieldname": "principal"
   }
  ],
- "modified": "2025-11-26 12:25:36.278048",
+ "modified": "2025-11-28 10:38:19.576851",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Principal",
@@ -319,6 +329,13 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail Admin",
    "write": 1
   }
  ],
