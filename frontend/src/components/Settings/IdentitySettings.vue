@@ -56,20 +56,6 @@
 
 					<div class="space-y-1.5">
 						<label class="text-ink-gray-5 block text-xs">
-							{{ __('Default Signature') }}
-						</label>
-						<TextEditor
-							editor-class="prose-sm min-h-[8rem] border rounded-b-lg border-t-0 p-2 max-w-none border-outline-gray-2"
-							:extensions="[CustomParagraphExtension]"
-							:fixed-menu="buttons"
-							:placeholder="__('Write your signature here')"
-							:content="identity.doc.html_signature"
-							@change="(val: string) => (identity.doc.html_signature = val)"
-						/>
-					</div>
-
-					<div class="space-y-1.5">
-						<label class="text-ink-gray-5 block text-xs">
 							{{ __('Use Saved Signature') }}
 						</label>
 						<Combobox
@@ -86,6 +72,20 @@
 							"
 						/>
 					</div>
+
+					<div class="space-y-1.5">
+						<label class="text-ink-gray-5 block text-xs">
+							{{ __('Default Signature') }}
+						</label>
+						<TextEditor
+							editor-class="prose-sm min-h-[8rem] border rounded-b-lg border-t-0 p-2 max-w-none border-outline-gray-2"
+							:extensions="[CustomParagraphExtension]"
+							:fixed-menu="buttons"
+							:placeholder="__('Write your signature here')"
+							:content="identity.doc.html_signature"
+							@change="(val: string) => (identity.doc.html_signature = val)"
+						/>
+					</div>
 				</template>
 			</div>
 
@@ -99,14 +99,14 @@
 					"
 					:loading="identity.save.loading"
 					class="min-h-7 w-full"
-					@click="() => identity.save.submit()"
+					@click="save"
 				/>
 			</div>
 
 			<Dialog
 				v-model="showDialog"
 				:options="{
-					title: isAddReplyTo ? __('Add Reply To') : __('Add Bcc'),
+					title: isAddReplyTo ? __('New Reply To') : __('New Bcc'),
 					actions: [
 						{
 							label: __('Save'),
@@ -150,7 +150,7 @@ import {
 	useList,
 } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
+import { convertHtmlToText, raiseToast } from '@/utils'
 import { useTextEditorButtons } from '@/utils/composables'
 import { CustomParagraphExtension } from '@/utils/text-editor'
 import { userStore } from '@/stores/user'
@@ -185,6 +185,11 @@ const getIdentity = () =>
 			onError: (error) => raiseToast(error.messages[0], 'error'),
 		},
 	})
+
+const save = () => {
+	identity.value.doc.text_signature = convertHtmlToText(identity.value.doc.html_signature)
+	identity.value.save.submit()
+}
 
 const identity = ref(getIdentity())
 const savedSignature = ref('')

@@ -11,7 +11,7 @@ from uuid_utils import uuid7
 
 from mail.jmap import get_jmap_client
 from mail.server.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
-from mail.utils import convert_html_to_text, parse_filters
+from mail.utils import parse_filters
 from mail.utils.cache import get_account_for_user, get_cluster_for_tenant
 from mail.utils.user import has_role, is_administrator, is_tenant_admin
 from mail.utils.validation import has_permission_for_account
@@ -35,10 +35,6 @@ class Identity(Document):
 		for r in self.reply_to:
 			reply_to.append({"name": r.display_name, "email": r.email})
 		return reply_to
-
-	def validate(self) -> None:
-		if self.html_signature and not self.text_signature:
-			self.text_signature = convert_html_to_text(self.html_signature)
 
 	def db_insert(self, *args, **kwargs) -> None:
 		self.id = add_identity(

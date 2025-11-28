@@ -523,3 +523,13 @@ export interface Identity extends DocType {
 	/** Text: Code */
 	text_signature?: string
 }
+
+// Last updated: 2025-11-27 16:04:52.509091
+export interface MailSignature extends DocType {
+	/** Account: Link (User) */
+	account: string
+	/** Signature Name: Data */
+	signature_name: string
+	/** HTML: Code */
+	html_body?: string
+}

@@ -33,6 +33,7 @@ export default defineConfig(({ mode }) => ({
 						'mail_recipient',
 						'mail_settings',
 						'identity',
+						'mail_signature',
 					],
 				},
 			},

@@ -4,13 +4,14 @@
 		<Button icon-left="plus" :label="__('New')" @click="showAddSignature = true" />
 	</div>
 	<div v-if="signatures?.data?.length">
+		<div class="text-ink-gray-5 py-2 text-sm">{{ __('Signature Name') }}</div>
 		<div
 			v-for="signature in signatures?.data"
 			:key="signature.name"
-			class="flex items-center justify-between py-1"
+			class="flex items-center justify-between border-t py-1"
 		>
 			<span class="text-base">{{ signature.signature_name }}</span>
-			<Dropdown :options="signatureOptions(signature.name)">
+			<Dropdown :options="signatureOptions(signature)">
 				<Button variant="ghost" @click.stop>
 					<template #icon>
 						<Ellipsis class="text-ink-gray-5 h-4 w-4" />
@@ -23,6 +24,7 @@
 	<div v-else class="text-ink-gray-5 text-sm">{{ __('No signatures found.') }}</div>
 
 	<AddSignatureModal v-model="showAddSignature" @reload-signatures="signatures.reload()" />
+	<SetDefaultSignatureModal v-model="showSetSignature" :signature="selectedSignature" />
 	<EditSignatureModal
 		v-model="showEditSignature"
 		:signature-i-d="selectedSignature"
@@ -37,11 +39,15 @@ import { Button, Dropdown, useList } from 'frappe-ui'
 
 import AddSignatureModal from '@/components/Modals/AddSignatureModal.vue'
 import EditSignatureModal from '@/components/Modals/EditSignatureModal.vue'
+import SetDefaultSignatureModal from '@/components/Modals/SetDefaultSignatureModal.vue'
+
+import type { MailSignature } from '@/types'
 
 const user = inject('$user')
 
 const showAddSignature = ref(false)
 const selectedSignature = ref('')
+const showSetSignature = ref(false)
 const showEditSignature = ref(false)
 
 const signatures = useList({
@@ -52,17 +58,25 @@ const signatures = useList({
 	cacheKey: ['mailSignatures', user.data.name],
 })
 
-const signatureOptions = (name: string) => [
+const signatureOptions = (signature: MailSignature) => [
+	{
+		label: __('Set Default'),
+		onClick: () => {
+			selectedSignature.value = signature.html_body!
+			showSetSignature.value = true
+		},
+		condition: () => signature.html_body,
+	},
 	{
 		label: __('Edit'),
 		onClick: () => {
-			selectedSignature.value = name
+			selectedSignature.value = signature.name
 			showEditSignature.value = true
 		},
 	},
 	{
 		label: __('Delete'),
-		onClick: () => signatures.delete.submit({ name }),
+		onClick: () => signatures.delete.submit({ name: signature.name }),
 	},
 ]
 </script>
