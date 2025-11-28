@@ -26,8 +26,7 @@
 
 <script setup lang="ts">
 import { watch } from 'vue'
-import { Dialog, FormControl } from 'frappe-ui'
-import { useNewDoc } from 'frappe-ui/src/data-fetching'
+import { Dialog, FormControl, useNewDoc } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 

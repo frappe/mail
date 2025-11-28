@@ -137,8 +137,8 @@ import {
 	Tabs,
 	createDocumentResource,
 	createResource,
+	useList,
 } from 'frappe-ui'
-import { useList } from 'frappe-ui/src/data-fetching'
 
 import { raiseToast } from '@/utils'
 import HorizontalControl from '@/components/Controls/HorizontalControl.vue'

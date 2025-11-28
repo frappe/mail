@@ -38,7 +38,7 @@ export interface MailHeader extends ChildDocType {
 	value?: string
 }
 
-// Last updated: 2025-07-17 13:00:14.427328
+// Last updated: 2025-11-17 19:00:34.915206
 export interface MailAccountRequest extends DocType {
 	/** Request Key: Data */
 	request_key?: string
@@ -170,7 +170,7 @@ export interface MailDomainRequest extends DocType {
 	tenant: string
 }
 
-// Last updated: 2025-11-17 11:41:14.842468
+// Last updated: 2025-11-20 18:34:10.958010
 export interface MailAccount extends DocType {
 	/** Enabled: Check */
 	enabled: 0 | 1
@@ -306,7 +306,7 @@ export interface MailMessageRecipient extends ChildDocType {
 	email: string
 }
 
-// Last updated: 2025-08-14 19:12:08.055725
+// Last updated: 2025-11-20 15:22:07.630230
 export interface EmailAddress extends ChildDocType {
 	/** Display Name: Data */
 	display_name?: string
@@ -340,7 +340,7 @@ export interface MailMessagePart extends ChildDocType {
 	cid?: string
 }
 
-// Last updated: 2025-11-14 11:01:16.911587
+// Last updated: 2025-11-20 15:22:07.630230
 export interface MailMessage extends DocType {
 	/** Account: Link (Mail Account) */
 	account: string
@@ -500,4 +500,36 @@ export interface MailMessageMailbox extends ChildDocType {
 	mailbox_id: string
 	/** Mailbox Name: Data */
 	mailbox_name: string
+}
+
+// Last updated: 2025-11-20 17:22:50.335139
+export interface Identity extends DocType {
+	/** Account: Link (Mail Account) */
+	account: string
+	/** May Delete: Check */
+	may_delete: 0 | 1
+	/** ID: Data */
+	id?: string
+	/** Name: Data */
+	_name?: string
+	/** Email: Data */
+	email: string
+	/** Bcc: Table (Email Address) */
+	bcc: EmailAddress[]
+	/** Reply To: Table (Email Address) */
+	reply_to: EmailAddress[]
+	/** HTML: HTML Editor */
+	html_signature?: any
+	/** Text: Code */
+	text_signature?: string
+}
+
+// Last updated: 2025-11-27 16:04:52.509091
+export interface MailSignature extends DocType {
+	/** Account: Link (User) */
+	account: string
+	/** Signature Name: Data */
+	signature_name: string
+	/** HTML: Code */
+	html_body?: string
 }

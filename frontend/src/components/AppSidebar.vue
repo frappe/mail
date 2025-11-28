@@ -76,8 +76,7 @@
 import { computed, h, inject, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStorage } from '@vueuse/core'
-import { Button, Dropdown, Sidebar, createResource } from 'frappe-ui'
-import SidebarItem from 'frappe-ui/src/components/Sidebar/SidebarItem.vue'
+import { Button, Dropdown, Sidebar, SidebarItem, createResource } from 'frappe-ui'
 
 import { toTitleCase } from '@/utils'
 import { useScreenSize, useSidebar } from '@/utils/composables'
@@ -91,7 +90,9 @@ import SettingsModal from '@/components/Modals/SettingsModal.vue'
 import PWASettings from '@/components/PWASettings.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
 
+import Archive from '~icons/lucide/archive'
 import AtSign from '~icons/lucide/at-sign'
+import Bookmark from '~icons/lucide/bookmark'
 import Crown from '~icons/lucide/crown'
 import Edit3 from '~icons/lucide/edit-3'
 import Ellipsis from '~icons/lucide/ellipsis'
@@ -215,6 +216,8 @@ const MAILBOX_ICONS = {
 	trash: Trash2,
 	junk: MailWarning,
 	drafts: Edit3,
+	archive: Archive,
+	important: Bookmark,
 }
 
 const sidebarItems = computed(() => {

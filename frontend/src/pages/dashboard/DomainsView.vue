@@ -64,8 +64,8 @@ import {
 	ListRowItem,
 	ListRows,
 	ListView,
+	useList,
 } from 'frappe-ui'
-import { useList } from 'frappe-ui/src/data-fetching'
 
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddDomainModal from '@/components/Modals/AddDomainModal.vue'

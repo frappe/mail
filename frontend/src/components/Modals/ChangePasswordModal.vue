@@ -7,18 +7,21 @@
 					type="password"
 					:label="__('Current Password')"
 					placeholder="••••••••"
+					variant="outline"
 				/>
 				<FormControl
 					v-model="newPassword"
 					type="password"
 					:label="__('New Password')"
 					placeholder="••••••••"
+					variant="outline"
 				/>
 				<FormControl
 					v-model="confirmPassword"
 					type="password"
 					:label="__('Confirm New Password')"
 					placeholder="••••••••"
+					variant="outline"
 				/>
 				<ErrorMessage :message="errorMessage" />
 			</div>

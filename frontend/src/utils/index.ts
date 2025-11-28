@@ -223,3 +223,32 @@ export const shouldIgnoreKeypress = (
 		e.altKey
 	)
 }
+
+export const convertHtmlToText = (html: string) => {
+	if (!html) return ''
+
+	const parser = new DOMParser()
+	const doc = parser.parseFromString(html, 'text/html')
+	const body = doc.body || doc.documentElement
+
+	const anchors = body.querySelectorAll('a')
+	const buttons = body.querySelectorAll('button')
+	const inputs = body.querySelectorAll('input')
+
+	anchors.forEach((anchor) => {
+		const text = document.createTextNode(anchor.textContent)
+		anchor.parentNode?.replaceChild(text, anchor)
+	})
+
+	buttons.forEach((button) => button.remove())
+
+	inputs.forEach((input) => {
+		const type = input.getAttribute('type') || 'text'
+		if (['button', 'submit', 'reset'].includes(type)) {
+			input.remove()
+		}
+	})
+
+	const text = body.textContent || body.innerText || ''
+	return text.replace(/\s+/g, ' ').trim()
+}

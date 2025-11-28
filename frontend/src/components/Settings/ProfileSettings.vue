@@ -18,7 +18,7 @@
 	<FormControl v-model="lastName" :label="__('Last Name')" variant="outline" />
 	<ErrorMessage :message="setName.error" />
 	<Button
-		:label="__('Save Changes')"
+		:label="__('Save')"
 		class="min-h-7"
 		variant="solid"
 		:disabled="

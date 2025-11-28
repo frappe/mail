@@ -2,7 +2,6 @@
 	<TextEditor
 		ref="textEditor"
 		editor-class="prose-sm max-w-none"
-		:starterkit-options="{ paragraph: false }"
 		:extensions="[CustomImageExtension, CustomParagraphExtension]"
 		:content="mail.html_body.replaceAll('<div><br></div>', '<div></div>')"
 		class="flex flex-col max-sm:overflow-y-auto"
@@ -174,17 +173,25 @@ import {
 	reactive,
 	ref,
 	useTemplateRef,
+	watch,
 } from 'vue'
-import { Node } from '@tiptap/core'
 import { EditorContent } from '@tiptap/vue-3'
 import { watchDebounced } from '@vueuse/core'
 import { ChevronDown, ChevronUp, ExternalLink, Forward, Reply, ReplyAll } from 'lucide-vue-next'
-import { Button, Dropdown, FeatherIcon, TextEditor, createResource } from 'frappe-ui'
-import { ImageExtension } from 'frappe-ui/src/components/TextEditor/extensions/image'
-import { useFileUpload } from 'frappe-ui/src/utils/useFileUpload'
+import {
+	Button,
+	Dropdown,
+	FeatherIcon,
+	ImageExtension,
+	TextEditor,
+	createResource,
+	useFileUpload,
+} from 'frappe-ui'
 
 import { formatBytes, isOverlayPresent, raiseToast, validateEmail } from '@/utils'
 import { useScreenSize, useVisualViewport } from '@/utils/composables'
+import { CustomParagraphExtension } from '@/utils/text-editor'
+import { userStore } from '@/stores/user'
 import ComposeMailToolbar from '@/components/ComposeMailToolbar.vue'
 import AutocompleteControl from '@/components/Controls/AutocompleteControl.vue'
 import MultiselectInputControl from '@/components/Controls/MultiselectInputControl.vue'
@@ -204,6 +211,8 @@ const {
 }>()
 
 const emit = defineEmits(['discardMail', 'reply', 'replyAll', 'forward', 'popOut'])
+
+const { identities } = userStore()
 
 // Editor
 
@@ -385,26 +394,38 @@ const localDraftActions = computed(() => [
 
 const isRecipientsEmpty = computed(() => [mail.to, mail.cc, mail.bcc].every((d) => !d.length))
 
+const isOnlySignature = computed(() => {
+	if (!mail.html_body) return false
+
+	const trimmed = mail.html_body.trim()
+	const pattern = /^<div\s+class="frappe_mail_signature">[\s\S]*<\/div>$/
+	return pattern.test(trimmed)
+})
+
+const isBodyEmpty = computed(() => {
+	let isEmpty = true
+	if (mail.html_body) {
+		const element = document.createElement('div')
+		element.innerHTML = mail.html_body
+		isEmpty =
+			!element.textContent?.trim() &&
+			Array.from(element.children).every((d) => !d.textContent?.trim())
+	}
+
+	return isEmpty
+})
+
 const isMailEmpty = computed(() => {
 	const isSubjectEmpty = !mail.subject.length
 	const isQuotedContentEmpty = !mail.quoted_content?.length
 	const isAttachmentsEmpty = !mail.attachments.length
-
-	let isBodyEmpty = true
-	if (mail.html_body) {
-		const element = document.createElement('div')
-		element.innerHTML = mail.html_body
-		isBodyEmpty =
-			!element.textContent?.trim() &&
-			Array.from(element.children).every((d) => !d.textContent?.trim())
-	}
 
 	return (
 		isSubjectEmpty &&
 		isQuotedContentEmpty &&
 		isRecipientsEmpty.value &&
 		isAttachmentsEmpty &&
-		isBodyEmpty
+		(isBodyEmpty.value || isOnlySignature.value)
 	)
 })
 
@@ -412,6 +433,19 @@ const openQuotedContent = () => {
 	mail.html_body += `<br>${mail.quoted_content}`
 	mail.quoted_content = ''
 }
+
+watch(
+	() => mail.from_email,
+	(val) => {
+		if (isBodyEmpty.value || isOnlySignature.value) {
+			const identity = identities.data?.find((id) => id.email === val)
+			mail.html_body = identity?.html_signature
+				? `<div class="frappe_mail_signature"><br>${identity.html_signature}</div>`
+				: ''
+		}
+	},
+	{ immediate: true },
+)
 
 // Attachments
 
@@ -457,15 +491,6 @@ const CustomImageExtension = ImageExtension.extend({
 				attributes['data-cid'] ? { 'data-cid': attributes['data-cid'] } : {},
 		},
 	}),
-})
-
-const CustomParagraphExtension = Node.create({
-	name: 'paragraph',
-	priority: 1000,
-	group: 'block',
-	content: 'inline*',
-	parseHTML: () => [{ tag: 'div' }, { tag: 'p' }],
-	renderHTML: ({ HTMLAttributes }) => ['div', HTMLAttributes, 0],
 })
 
 const TYPE_ICON_MAP = {

@@ -46,8 +46,7 @@
 <script setup lang="ts">
 import { inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Dialog, FeatherIcon, FormControl } from 'frappe-ui'
-import { useNewDoc } from 'frappe-ui/src/data-fetching'
+import { Dialog, FeatherIcon, FormControl, useNewDoc } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import LinkControl from '@/components/Controls/LinkControl.vue'
