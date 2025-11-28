@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Dialog, FormControl, Switch, createDocumentResource, createResource } from 'frappe-ui'
+import { Dialog, FormControl, Switch, createDocumentResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 
@@ -74,7 +74,7 @@ const getAccount = () =>
 		doctype: 'Mail Account',
 		name: accountID,
 		transform: (data: MailAccount) => {
-			for (const d of ['enabled', 'create_mail_contact']) data[d] = !!data[d]
+			data['enabled'] = !!data['enabled']
 		},
 		onSuccess: (data: MailAccount) => {
 			setQuota.value = !!data.disk_quota

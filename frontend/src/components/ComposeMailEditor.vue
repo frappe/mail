@@ -19,6 +19,7 @@
 						<Combobox
 							v-model="mail.from_email"
 							:options="user.data?.email_addresses || []"
+							:open-on-focus="true"
 						/>
 					</div>
 					<Button
@@ -196,7 +197,7 @@ import { userStore } from '@/stores/user'
 import ComposeMailToolbar from '@/components/ComposeMailToolbar.vue'
 import MultiselectInputControl from '@/components/Controls/MultiselectInputControl.vue'
 
-import type { Attachment, ComposeMailData, File as FileDoc, UserResource } from '@/types'
+import type { Attachment, ComposeMailData, File as FileDoc, Identity, UserResource } from '@/types'
 
 const show = defineModel<boolean>()
 
@@ -213,6 +214,9 @@ const {
 const emit = defineEmits(['discardMail', 'reply', 'replyAll', 'forward', 'popOut'])
 
 const { identities } = userStore()
+
+const getIdentity = (email: string) =>
+	identities.data?.find((identity: Identity) => identity.email === email)
 
 // Editor
 
@@ -328,7 +332,8 @@ const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
 	makeParams: () => ({
 		...mail,
-		html_body: mail.html_body + mail.quoted_content,
+		from_name: getIdentity(mail.from_email!)._name,
+		html_body: mail.html_body! + mail.quoted_content,
 		save_as_draft: isSavingDraft.value,
 	}),
 	onSuccess: onMailUpdateSuccess,
@@ -339,7 +344,8 @@ const updateDraft = createResource({
 	url: 'mail.api.mail.update_draft_mail',
 	makeParams: () => ({
 		...mail,
-		html_body: mail.html_body + mail.quoted_content,
+		from_name: getIdentity(mail.from_email!)._name,
+		html_body: mail.html_body! + mail.quoted_content,
 		submit: !isSavingDraft.value,
 	}),
 	onSuccess: onMailUpdateSuccess,
@@ -438,7 +444,7 @@ watch(
 	() => mail.from_email,
 	(val) => {
 		if (isBodyEmpty.value || isOnlySignature.value) {
-			const identity = identities.data?.find((id) => id.email === val)
+			const identity = getIdentity(val!)
 			mail.html_body = identity?.html_signature
 				? `<div class="frappe_mail_signature"><br>${identity.html_signature}</div>`
 				: ''
