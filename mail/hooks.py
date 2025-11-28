@@ -162,7 +162,6 @@ permission_query_conditions = {
 	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.get_permission_query_condition",
 	# Client
 	"Mail Account Request": "mail.client.doctype.mail_account_request.mail_account_request.get_permission_query_condition",
-	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.get_permission_query_condition",
 	"Mail Domain Request": "mail.client.doctype.mail_domain_request.mail_domain_request.get_permission_query_condition",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
 	"Mail Tenant": "mail.client.doctype.mail_tenant.mail_tenant.get_permission_query_condition",
@@ -178,7 +177,6 @@ has_permission = {
 	"Contact Card": "mail.client.doctype.contact_card.contact_card.has_permission",
 	"Identity": "mail.client.doctype.identity.identity.has_permission",
 	"Mail Account Request": "mail.client.doctype.mail_account_request.mail_account_request.has_permission",
-	"Mail Alias": "mail.client.doctype.mail_alias.mail_alias.has_permission",
 	"Mail Domain Request": "mail.client.doctype.mail_domain_request.mail_domain_request.has_permission",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.has_permission",
 	"Mail Tenant": "mail.client.doctype.mail_tenant.mail_tenant.has_permission",
