@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "UUID",
+ "autoname": "hash",
  "creation": "2025-11-21 16:00:01.823042",
  "doctype": "DocType",
  "engine": "InnoDB",
@@ -44,11 +44,11 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-27 16:04:52.509091",
+ "modified": "2025-12-01 15:16:26.188319",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Signature",
- "naming_rule": "UUID",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
