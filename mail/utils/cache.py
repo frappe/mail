@@ -1,8 +1,6 @@
 import frappe
 from frappe import _
 
-from mail.server.doctype.mail_principal_binding.mail_principal_binding import get_principal_tenant
-
 
 def get_root_domain_name() -> str | None:
 	"""Returns the root domain name."""
@@ -35,15 +33,6 @@ def get_cluster_for_tenant(tenant: str) -> str | None:
 	return frappe.cache.hget(f"tenant|{tenant}", "cluster", generator)
 
 
-def get_tenant_for_domain(domain_name: str) -> str | None:
-	"""Returns the tenant for the domain."""
-
-	def generator() -> str | None:
-		return get_principal_tenant(domain_name, raise_exception=False)
-
-	return frappe.cache.hget(f"domain|{domain_name}", "tenant", generator)
-
-
 def get_tenant_for_user(user: str) -> str | None:
 	"""Returns the tenant of the user."""
 
@@ -51,15 +40,6 @@ def get_tenant_for_user(user: str) -> str | None:
 		return frappe.db.get_value("Mail Tenant Member", user, "tenant")
 
 	return frappe.cache.hget(f"user|{user}", "tenant", generator)
-
-
-def get_account_for_user(user: str) -> str | None:
-	"""Returns the account of the user."""
-
-	def generator() -> str | None:
-		return frappe.db.get_value("User", user, "jmap_username")
-
-	return frappe.cache.hget(f"user|{user}", "account", generator)
 
 
 def get_rate_limits(method_path: str) -> list:

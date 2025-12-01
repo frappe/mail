@@ -9,7 +9,7 @@ from frappe.model.document import Document
 from frappe.utils import today
 from uuid_utils import uuid7
 
-from mail.jmap import get_jmap_client_for_user
+from mail.jmap import get_jmap_client
 from mail.utils import generate_uuid_style_hash, parse_filters
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
@@ -109,7 +109,7 @@ def add_push_subscription(
 	types = types or None
 
 	creation_id = str(uuid7())
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.push_subscription_create(creation_id, device_client_id, url, types)
 
 	title = _("Push Subscription Creation Error")
@@ -127,7 +127,7 @@ def get_push_subscription(user: str, id: str) -> dict:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	if subscriptions := client.push_subscription_get([id]):
 		return format_push_subscription(user, subscriptions[0])
 
@@ -138,7 +138,7 @@ def verify_push_subscription(user: str, id: str, verification_code: str) -> None
 	if not frappe.db.exists("User", {"name": user, "enabled": 1}):
 		frappe.throw(_("User does not exist or is disabled."))
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.push_subscription_update(id, verification_code)
 
 	if response[0][1].get("notUpdated"):
@@ -154,7 +154,7 @@ def renew_push_subscription(user: str, id: str) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.push_subscription_update(id)
 
 	if response[0][1].get("notUpdated"):
@@ -169,7 +169,7 @@ def delete_push_subscription(user: str, id: str) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.push_subscription_delete([id])
 
 	if response.get("notDestroyed"):
@@ -184,7 +184,7 @@ def fetch_push_subscriptions(user: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	subscriptions = client.push_subscription_get()
 	formatted_subscriptions = [format_push_subscription(user, sub) for sub in subscriptions]
 	frappe.cache.set_value(_get_total_cache_key(user), len(subscriptions), expires_in_sec=600)

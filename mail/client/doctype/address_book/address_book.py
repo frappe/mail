@@ -9,7 +9,7 @@ from frappe.model.document import Document
 from frappe.utils import cint, today
 from uuid_utils import uuid7
 
-from mail.jmap import get_jmap_client_for_user
+from mail.jmap import get_jmap_client
 from mail.utils import parse_filters
 from mail.utils.validation import has_permission_for_user
 
@@ -106,7 +106,7 @@ def add_address_book(
 	has_permission_for_user(user)
 
 	creation_id = str(uuid7())
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.address_book_create(creation_id, name, description, sort_order, default, subscribed)
 
 	title = _("Address Book Creation Error")
@@ -124,7 +124,7 @@ def get_address_book(user: str, id: str) -> dict:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	if address_books := client.address_book_get([id]):
 		return format_address_book(user, address_books[0])
 
@@ -148,7 +148,7 @@ def update_address_book(
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.address_book_update(id, name, description, sort_order, default, subscribed)
 
 	title = _("Address Book Update Error")
@@ -165,7 +165,7 @@ def delete_address_book(user: str, id: str) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.address_book_delete([id], remove_contents=True)
 
 	if response.get("notDestroyed"):
@@ -178,7 +178,7 @@ def fetch_address_books(user: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	address_books = client.address_book_get()
 	formatted_address_books = [format_address_book(user, book) for book in address_books]
 	sorted_address_books = sorted(formatted_address_books, key=lambda x: x["sort_order"])

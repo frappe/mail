@@ -11,7 +11,7 @@ import paramiko
 from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import Order
-from frappe.utils import random_string
+from frappe.utils import cint, random_string
 
 from mail.backend import MailBackendAPI, Principal
 from mail.jmap import raise_for_status
@@ -387,7 +387,7 @@ def create_or_update_spf_dns_record_for_cluster(cluster: str) -> None:
 	"""Creates or updates the SPF DNS record for the cluster."""
 
 	spf_host = get_spf_host_for_cluster(cluster)
-	default_ttl = frappe.db.get_single_value("Mail Settings", "default_ttl")
+	default_ttl = cint(frappe.conf.default_dns_ttl) or 3600
 
 	SERVER = frappe.qb.DocType("Mail Server")
 	CLUSTER = frappe.qb.DocType("Mail Cluster")

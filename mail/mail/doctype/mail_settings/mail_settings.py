@@ -112,7 +112,7 @@ def validate_mail_settings() -> None:
 	"""Validates the mandatory fields in the Mail Settings."""
 
 	mail_settings = frappe.get_doc("Mail Settings")
-	mandatory_fields = ["root_domain_name", "default_ttl"]
+	mandatory_fields = ["root_domain_name"]
 
 	for field in mandatory_fields:
 		if not mail_settings.get(field):

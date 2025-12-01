@@ -274,11 +274,6 @@
    "link_fieldname": "server"
   },
   {
-   "group": "Reference",
-   "link_doctype": "Mail Backend Request",
-   "link_fieldname": "backend_name"
-  },
-  {
    "group": "Deployment",
    "link_doctype": "Server Job",
    "link_fieldname": "server"
@@ -294,7 +289,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-11-27 10:36:54.095926",
+ "modified": "2025-12-01 18:06:09.917376",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Server",

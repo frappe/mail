@@ -6,7 +6,7 @@ DOCTYPES = ["Mail Domain", "Mail Account", "Mail Group"]
 TYPE_MAPPING = {
 	"Mail Domain": "Domain",
 	"Mail Account": "Individual",
-	"Mail Group": "Group",
+	"Mailing List": "List",
 }
 
 

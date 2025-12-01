@@ -52,8 +52,7 @@ class DNSRecord(Document):
 	def validate_ttl(self) -> None:
 		"""Validates the TTL value"""
 
-		if not self.ttl:
-			self.ttl = frappe.db.get_single_value("Mail Settings", "default_ttl", cache=True)
+		self.ttl = self.ttl or cint(frappe.conf.default_dns_ttl) or 3600
 
 	@frappe.whitelist()
 	def sync_dns_record(self) -> None:

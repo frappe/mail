@@ -52,6 +52,40 @@ def reconnect_on_failure() -> callable:
 	return wrapper
 
 
+def is_probable_hash(s: str) -> bool:
+	"""Return True if string looks like a known password hash."""
+
+	s = s.strip()
+
+	modular_patterns = [
+		r"^\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}$",  # bcrypt
+		r"^\$argon2(id|i|d)\$v=\d+\$.*",  # Argon2
+		r"^\$pbkdf2-sha(1|256|512)\$\d+\$[A-Za-z0-9./]+\$[A-Za-z0-9./]+$",  # PBKDF2 (Passlib)
+		r"^\$scrypt\$.*",  # scrypt
+		r"^\$5\$.+\$.+",  # SHA-256 crypt
+		r"^\$6\$.+\$.+",  # SHA-512 crypt
+	]
+	for p in modular_patterns:
+		if re.match(p, s):
+			return True
+
+	hex_lengths = {
+		32,  # MD5
+		40,  # SHA-1
+		56,  # SHA-224
+		64,  # SHA-256
+		96,  # SHA-384
+		128,  # SHA-512
+	}
+	if len(s) in hex_lengths and re.fullmatch(r"[A-Fa-f0-9]+", s):
+		return True
+
+	if len(s) > 40 and re.fullmatch(r"[A-Za-z0-9+/=._-]+", s):
+		return True
+
+	return False
+
+
 def hash_password(password: str) -> str:
 	"""Generate a bcrypt hash for a given password."""
 

@@ -24,7 +24,6 @@ class MailTenantMember(Document):
 		if not is_system_manager(frappe.session.user) and is_tenant_owner(self.tenant, self.user):
 			frappe.throw(_("Cannot remove the owner of the tenant."))
 
-		self.validate_active_account()
 		self.clear_cache()
 
 	def validate_user(self) -> None:
@@ -82,16 +81,6 @@ class MailTenantMember(Document):
 						)
 					)
 					break
-
-	def validate_active_account(self) -> None:
-		"""Validates if the user has an active Mail Account."""
-
-		if active_account := frappe.db.exists("Mail Account", {"user": self.user, "enabled": 1}):
-			frappe.throw(
-				_("User {0} has an active Mail Account {1}. Please disable it first.").format(
-					frappe.bold(self.user), frappe.bold(active_account)
-				)
-			)
 
 	def clear_cache(self) -> None:
 		"""Clears the Cache."""

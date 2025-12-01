@@ -28,16 +28,17 @@ from mail.utils import (
 	reconnect_on_failure,
 	sanitize_cli_output,
 )
-from mail.utils.cache import get_account_for_user, get_cluster_for_tenant, get_tenant_for_user
+from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
 from mail.utils.user import (
 	clear_sync_state,
+	get_account_for_user,
 	get_user_email_address,
 	has_role,
 	is_system_manager,
 	is_tenant_admin,
-	user_linked_to_tenant,
 )
 from mail.utils.validation import (
+	ensure_tenant_bound_user,
 	validate_jmap_structure,
 	validate_maildir_or_maildirpp,
 	validate_nested_maildir_tree,
@@ -71,8 +72,7 @@ class MailDataExchange(Document):
 	def validate_user(self) -> None:
 		"""Validate the user."""
 
-		if not user_linked_to_tenant(self.user):
-			frappe.throw(_("The user {0} is not linked to any tenant.").format(frappe.bold(self.user)))
+		ensure_tenant_bound_user(self.user)
 
 	def validate_tenant(self) -> None:
 		"""Validate the tenant."""

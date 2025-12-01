@@ -9,7 +9,7 @@ from frappe.model.document import Document
 from frappe.utils import cint, today
 from uuid_utils import uuid7
 
-from mail.jmap import get_jmap_client_for_user
+from mail.jmap import get_jmap_client
 from mail.utils import parse_filters
 from mail.utils.validation import has_permission_for_user
 
@@ -89,7 +89,7 @@ def add_mailbox(
 	has_permission_for_user(user)
 
 	creation_id = str(uuid7())
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.mailbox_create(creation_id, name, role, parent, sort_order, subscribed)
 
 	title = _("Mailbox Creation Error")
@@ -107,7 +107,7 @@ def get_mailbox(user: str, id: str) -> dict:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	if mailboxes := client.mailbox_get([id]):
 		return format_mailbox(user, mailboxes[0])
 
@@ -135,7 +135,7 @@ def update_mailbox(
 	if parent and id == parent:
 		frappe.throw(_("Mailbox cannot be a parent of itself."), title=title)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.mailbox_update(id, name, role, parent, sort_order, subscribed)
 
 	if not response.get("updated"):
@@ -151,7 +151,7 @@ def delete_mailbox(user: str, id: str, remove_emails: bool = True) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.mailbox_delete([id], remove_emails=remove_emails)
 
 	if response.get("notDestroyed"):
@@ -164,7 +164,7 @@ def fetch_mailboxes(user: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	mailboxes = client.mailbox_get()
 	formatted_mailboxes = [format_mailbox(user, mailbox) for mailbox in mailboxes]
 	sorted_mailboxes = sorted(

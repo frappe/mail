@@ -206,6 +206,7 @@ website_route_rules = [
 doc_events = {
 	"User": {
 		"on_update": [
+			"mail.events.validate_jmap_settings",
 			"mail.events.update_account_password",
 		],
 	},

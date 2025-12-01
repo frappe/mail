@@ -9,17 +9,12 @@ from frappe import _, unscrub
 from frappe.model.document import Document
 from frappe.utils import cint, today, validate_email_address
 
+from mail.backend import MailBackendAPI, get_mail_backend_api
 from mail.client.doctype.identity.identity import _add_identity as add_identity
 from mail.jmap import invalidate_jmap_cache
-from mail.server.doctype.mail_principal.principal import BackendAPI, get_backend_api
 from mail.server.doctype.mail_principal_binding.mail_principal_binding import (
 	create_principal_binding,
 	delete_principal_binding,
-	ensure_emails_belong_to_tenant_domains,
-	ensure_groups_belong_to_tenant,
-	ensure_lists_belong_to_tenant,
-	ensure_members_belong_to_tenant,
-	ensure_principal_belong_to_tenant,
 	get_tenant_principals,
 	update_principal_binding,
 )
@@ -29,14 +24,24 @@ from mail.utils import (
 	get_dkim_selector,
 	get_spf_host_for_cluster,
 	hash_password,
+	is_probable_hash,
 	parse_filters,
 	parse_token,
 	snake_to_camel,
 )
 from mail.utils.cache import get_cluster_for_tenant, get_root_domain_name
 from mail.utils.dns import verify_dns_record
-from mail.utils.user import get_tenant_for_user, is_system_manager, is_tenant_admin
-from mail.utils.validation import is_subaddressed_email
+from mail.utils.user import get_principal_tenant, get_tenant_for_user, is_system_manager, is_tenant_admin
+from mail.utils.validation import (
+	ensure_access_to_tenant,
+	ensure_emails_belong_to_tenant_domains,
+	ensure_groups_belong_to_tenant,
+	ensure_lists_belong_to_tenant,
+	ensure_members_belong_to_tenant,
+	ensure_principal_belong_to_tenant,
+	ensure_tenant_has_cluster,
+	is_subaddressed_email,
+)
 
 SETTINGS_ENDPOINT = "/api/settings"
 PRINCIPAL_ENDPOINT = "/api/principal"
@@ -114,25 +119,22 @@ class MailPrincipal(Document):
 			return None
 
 		return bool(
-			frappe.db.get_value("Mail Principal Binding", {"principal_name": self._name}, "is_verified")
+			frappe.db.get_value("Mail Principal Binding", {"principal_name": self.name}, "is_verified")
 		)
 
 	def db_insert(self, *args, **kwargs) -> None:
 		self.name = add_principal(self)
 
 	def load_from_db(self) -> "MailPrincipal":
-		tenant, pname = self.name.split("|")
-		principal = get_principal(tenant, pname)
+		principal = get_principal(self.name)
 		return super(Document, self).__init__(principal)
 
 	def db_update(self) -> None:
-		tenant, pname = self.name.split("|")
-		update_principal(tenant, pname, self)
+		update_principal(self)
 		self.reload()
 
 	def delete(self) -> None:
-		tenant, pname = self.name.split("|")
-		delete_principal(tenant, pname)
+		delete_principal(self.name)
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -199,7 +201,7 @@ class MailPrincipal(Document):
 		else:
 			frappe.msgprint(errors, title="DNS Verification Failed", indicator="red", as_list=True)
 
-		update_principal_binding(self.tenant, self._name, is_verified=cint(is_verified))
+		update_principal_binding(self.name, is_verified=cint(is_verified))
 
 		return is_verified
 
@@ -207,10 +209,12 @@ class MailPrincipal(Document):
 	def refresh_dns_records(self) -> None:
 		"""Refreshes the DNS Records."""
 
+		ensure_access_to_tenant(self.tenant)
+
 		if self.type != "Domain":
 			frappe.throw(_("DNS Records can only be refreshed for Domain principals."))
 
-		_remove_principal_from_cache(self.tenant, self._name)
+		_remove_principal_from_cache(self.tenant, self.name)
 		self.reload()
 
 		frappe.msgprint(_("DNS Records refreshed successfully."), indicator="green", alert=True)
@@ -219,21 +223,23 @@ class MailPrincipal(Document):
 	def rotate_dkim_keys(self) -> None:
 		"""Rotates the DKIM Keys."""
 
+		ensure_access_to_tenant(self.tenant)
+
 		if self.type != "Domain":
 			frappe.throw(_("DKIM Keys can only be rotated for Domain principals."))
 
-		backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(self.tenant))
+		backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(self.tenant))
 
-		_delete_dkim_signature_for_domain(backend, self._name, "rsa-sha256", raise_exception=False)
-		_create_dkim_signature_for_domain(backend, self._name, "rsa-sha256", raise_exception=False)
+		_delete_dkim_signature_for_domain(backend, self.name, "rsa-sha256", raise_exception=False)
+		_create_dkim_signature_for_domain(backend, self.name, "rsa-sha256", raise_exception=False)
 
 		if bool(frappe.conf.enable_ed25519_dkim):
-			_delete_dkim_signature_for_domain(backend, self._name, "ed25519-sha256", raise_exception=False)
-			_create_dkim_signature_for_domain(backend, self._name, "ed25519-sha256", raise_exception=False)
+			_delete_dkim_signature_for_domain(backend, self.name, "ed25519-sha256", raise_exception=False)
+			_create_dkim_signature_for_domain(backend, self.name, "ed25519-sha256", raise_exception=False)
 
-		update_principal_binding(self.tenant, self._name, is_verified=0)
+		update_principal_binding(self.name, is_verified=0)
 
-		_remove_principal_from_cache(self.tenant, self._name)
+		_remove_principal_from_cache(self.tenant, self.name)
 		self.reload()
 
 		frappe.msgprint(_("DKIM Keys rotated successfully."), indicator="green", alert=True)
@@ -242,10 +248,12 @@ class MailPrincipal(Document):
 	def sync_jmap_identities(self) -> None:
 		"""Syncs JMAP identities for the principal."""
 
+		ensure_access_to_tenant(self.tenant)
+
 		if self.type != "Individual":
 			frappe.throw(_("JMAP Identities can only be synced for Individual principals."))
 
-		sync_jmap_identities(self.tenant, self._name)
+		sync_jmap_identities(self.name)
 
 
 def _get_local_type(principal_type: str) -> str:
@@ -312,7 +320,7 @@ def _remove_principal_from_cache(tenant: str, pname: str) -> None:
 
 
 def _get_principal(
-	backend: BackendAPI, pname: str, skip_dns_records: bool = False, ignore_not_found: bool = True
+	backend: MailBackendAPI, pname: str, skip_dns_records: bool = False, ignore_not_found: bool = True
 ) -> dict:
 	"""Fetches principal details from backend."""
 
@@ -350,7 +358,7 @@ def _get_principal(
 
 
 def _create_dkim_signature_for_domain(
-	backend: BackendAPI,
+	backend: MailBackendAPI,
 	domain: str,
 	algorithm: Literal["rsa-sha256", "ed25519-sha256"],
 	raise_exception: bool = True,
@@ -390,7 +398,7 @@ def _create_dkim_signature_for_domain(
 
 
 def _delete_dkim_signature_for_domain(
-	backend: BackendAPI,
+	backend: MailBackendAPI,
 	domain: str,
 	algorithm: Literal["rsa-sha256", "ed25519-sha256"],
 	raise_exception: bool = True,
@@ -415,22 +423,11 @@ def _delete_dkim_signature_for_domain(
 			frappe.msgprint(message, alert=True)
 
 
-def ensure_access_to_tenant(tenant: str) -> None:
-	"""Validates if the user has permission to access principals for the given tenant."""
-
-	user = frappe.session.user
-	if tenant:
-		if not is_tenant_admin(tenant, user) and not is_system_manager(user):
-			frappe.throw(_("You do not have permission to access principals for this tenant."))
-	else:
-		frappe.throw(_("Tenant must be provided to fetch principals."))
-
-
-def validate_max_domains(tenant: str) -> None:
+def _validate_max_domains(tenant: str) -> None:
 	"""Validates if the tenant has reached the maximum limit of domains."""
 
 	max_domains = frappe.db.get_value("Mail Tenant", tenant, "max_domains")
-	total_domains = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "type": "Domain"})
+	total_domains = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "principal_type": "Domain"})
 
 	if total_domains >= max_domains:
 		frappe.throw(
@@ -440,11 +437,11 @@ def validate_max_domains(tenant: str) -> None:
 		)
 
 
-def validate_max_groups(tenant: str) -> None:
+def _validate_max_groups(tenant: str) -> None:
 	"""Validates if the tenant has reached the maximum limit of groups."""
 
 	max_groups = frappe.db.get_value("Mail Tenant", tenant, "max_groups")
-	total_groups = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "type": "Group"})
+	total_groups = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "principal_type": "Group"})
 
 	if total_groups >= max_groups:
 		frappe.throw(
@@ -454,11 +451,13 @@ def validate_max_groups(tenant: str) -> None:
 		)
 
 
-def validate_max_accounts(tenant: str) -> None:
+def _validate_max_accounts(tenant: str) -> None:
 	"""Validates if the tenant has reached the maximum limit of mail accounts."""
 
 	max_accounts = frappe.db.get_value("Mail Tenant", tenant, "max_accounts")
-	total_accounts = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "type": "Individual"})
+	total_accounts = frappe.db.count(
+		"Mail Principal Binding", {"tenant": tenant, "principal_type": "Individual"}
+	)
 
 	if total_accounts >= max_accounts:
 		frappe.throw(
@@ -468,11 +467,11 @@ def validate_max_accounts(tenant: str) -> None:
 		)
 
 
-def validate_max_lists(tenant: str) -> None:
+def _validate_max_lists(tenant: str) -> None:
 	"""Validates if the tenant has reached the maximum limit of lists."""
 
 	max_lists = frappe.db.get_value("Mail Tenant", tenant, "max_mailing_lists")
-	total_lists = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "type": "List"})
+	total_lists = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "principal_type": "List"})
 
 	if total_lists >= max_lists:
 		frappe.throw(
@@ -482,23 +481,27 @@ def validate_max_lists(tenant: str) -> None:
 		)
 
 
-def validate_max_limits(tenant: str, principal_type: str) -> None:
+def validate_max_limits(
+	tenant: str, principal_type: Literal["Domain", "Group", "Individual", "List"]
+) -> None:
 	"""Validates if the tenant has reached the maximum limit for the given principal type."""
 
 	if principal_type == "Domain":
-		validate_max_domains(tenant)
+		_validate_max_domains(tenant)
 	elif principal_type == "Group":
-		validate_max_groups(tenant)
+		_validate_max_groups(tenant)
 	elif principal_type == "Individual":
-		validate_max_accounts(tenant)
+		_validate_max_accounts(tenant)
 	elif principal_type == "List":
-		validate_max_lists(tenant)
+		_validate_max_lists(tenant)
 
 
-def sync_jmap_identities(tenant: str, pname: str) -> None:
+def sync_jmap_identities(pname: str) -> None:
 	"""Syncs JMAP identities for the given principal."""
 
+	tenant = get_principal_tenant(pname)
 	ensure_access_to_tenant(tenant=tenant)
+	ensure_tenant_has_cluster(tenant)
 
 	if not frappe.db.exists(
 		"Mail Principal Binding", {"tenant": tenant, "principal_name": pname, "principal_type": "Individual"}
@@ -509,8 +512,8 @@ def sync_jmap_identities(tenant: str, pname: str) -> None:
 	identities_emails_map = {identity["email"]: identity["name"] for identity in identities}
 	identities_emails = set(identities_emails_map.keys())
 
-	principal = frappe.get_doc("Mail Principal", f"{tenant}|{pname}")
-	principal_emails = set([principal._name] + principal._emails)
+	principal = frappe.get_doc("Mail Principal", pname)
+	principal_emails = set([principal.name] + principal._emails)
 
 	identities_to_remove = identities_emails - principal_emails
 	identities_to_add = principal_emails - identities_emails
@@ -525,7 +528,6 @@ def sync_jmap_identities(tenant: str, pname: str) -> None:
 	invalidate_jmap_cache(pname)
 
 
-@frappe.whitelist()
 def add_principal(principal: "MailPrincipal") -> str:
 	"""Adds a new principal."""
 
@@ -535,7 +537,10 @@ def add_principal(principal: "MailPrincipal") -> str:
 		frappe.throw(_("Tenant must be specified to add a principal."))
 
 	ensure_access_to_tenant(tenant=principal.tenant)
+	ensure_tenant_has_cluster(principal.tenant)
 	validate_max_limits(principal.tenant, principal.type)
+
+	principal.name = principal._name
 
 	_secrets = []
 	_emails = []
@@ -548,21 +553,21 @@ def add_principal(principal: "MailPrincipal") -> str:
 	_external_members = []
 
 	if principal.type == "Domain":
-		if "." not in principal._name:
+		if "." not in principal.name:
 			frappe.throw(_("Invalid domain name provided for principal."))
 
 	if principal.type == "Individual":
 		_roles = ["user"]
-		_secrets.append(hash_password(principal.get_password("password")))
+		_secrets.append(hash_password(principal.password))
 		if principal.app_passwords:
 			for ap in principal.app_passwords:
-				_secrets.append(generate_app_password(ap.identifier, ap.get_password("password")))
+				_secrets.append(generate_app_password(ap.identifier, ap.password))
 
 	if principal.type in ["Group", "Individual", "List"]:
-		_emails = [principal._name] + principal._emails
+		_emails = [principal.name] + principal._emails
 		for email in _emails:
 			validate_email_address(email, True)
-		is_subaddressed_email(principal._name, raise_exception=True)
+		is_subaddressed_email(principal.name, raise_exception=True)
 		ensure_emails_belong_to_tenant_domains(principal.tenant, _emails)
 
 	if principal.type in ["Group", "Individual"]:
@@ -590,9 +595,9 @@ def add_principal(principal: "MailPrincipal") -> str:
 				validate_email_address(member, True)
 
 	payload = {
-		"name": principal._name,
+		"name": principal.name,
 		"type": _get_principal_type(principal.type),
-		"quota": principal.quota,
+		"quota": principal.quota or cint(frappe.conf.default_mail_quota) or 1024**3,
 		"description": principal.description or "",
 		"secrets": _secrets,
 		"emails": _emails,
@@ -605,39 +610,44 @@ def add_principal(principal: "MailPrincipal") -> str:
 		"externalMembers": _external_members,
 		"locale": principal.locale,
 	}
-	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(principal.tenant))
+	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(principal.tenant))
 	response = backend.request("POST", PRINCIPAL_ENDPOINT, data=json.dumps(payload))
 
 	if response.status_code != 200 or response.json().get("error"):
-		frappe.throw(
-			_("Failed to add principal {0}: {1}").format(frappe.bold(principal._name), response.text)
-		)
+		frappe.throw(_("Failed to add principal {0}: {1}").format(frappe.bold(principal.name), response.text))
 
-	create_principal_binding(principal.tenant, principal._name, principal.type)
-	sync_jmap_identities(principal.tenant, principal._name)
+	create_principal_binding(principal.tenant, principal.name, principal.type)
 
 	if principal.type == "Domain":
-		_create_dkim_signature_for_domain(backend, principal._principal, "rsa-sha256", raise_exception=False)
+		try:
+			_create_dkim_signature_for_domain(backend, principal.name, "rsa-sha256", raise_exception=False)
 
-		if bool(frappe.conf.enable_ed25519_dkim):
-			_create_dkim_signature_for_domain(
-				backend, principal._name, "ed25519-sha256", raise_exception=False
+			if bool(frappe.conf.enable_ed25519_dkim):
+				_create_dkim_signature_for_domain(
+					backend, principal.name, "ed25519-sha256", raise_exception=False
+				)
+		except Exception:
+			frappe.log_error(
+				title=f"Failed to create DKIM signature for domain {principal.name}",
+				message=frappe.get_traceback(with_context=True),
 			)
 
-	return f"{principal.tenant}|{principal._name}"
+	return principal.name
 
 
 @frappe.whitelist()
-def get_principal(tenant: str, pname: str) -> dict:
+def get_principal(pname: str) -> dict:
 	"""Returns principal details for the given principal name."""
 
+	tenant = get_principal_tenant(pname)
 	ensure_access_to_tenant(tenant)
+	ensure_tenant_has_cluster(tenant)
 	ensure_principal_belong_to_tenant(tenant, pname)
 
 	if cached := _get_principal_from_cache(tenant, pname):
 		return cached
 
-	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
 	principal = _get_principal(backend, pname, ignore_not_found=False)
 	formatted = format_principal(tenant, principal)
 	_store_principal_in_cache(tenant, pname, formatted)
@@ -645,26 +655,23 @@ def get_principal(tenant: str, pname: str) -> dict:
 	return formatted
 
 
-@frappe.whitelist()
-def update_principal(
-	tenant: str, pname: str, principal: "MailPrincipal", do_not_commit: bool = False
-) -> None:
+def update_principal(principal: "MailPrincipal") -> None:
 	"""Updates the principal with the given principal name."""
 
 	if principal.type in ["API Key", "Group", "OAuth Client", "Role"]:
 		raise NotImplementedError(f"Principal type {principal.type} is not supported yet.")
-	if not tenant:
-		frappe.throw(_("Tenant must be specified to add a principal."))
 
+	tenant = get_principal_tenant(principal.name)
 	ensure_access_to_tenant(tenant=tenant)
-	ensure_principal_belong_to_tenant(tenant, pname)
+	ensure_tenant_has_cluster(tenant)
+	ensure_principal_belong_to_tenant(tenant, principal.name)
 
-	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
 	existing_principal = frappe._dict(
-		_get_principal(backend, pname, skip_dns_records=True, ignore_not_found=False)
+		_get_principal(backend, principal.name, skip_dns_records=True, ignore_not_found=False)
 	)
 
-	if pname != principal._name or principal.type != TYPE_MAP[existing_principal.type]:
+	if principal.name != principal._name or principal.type != TYPE_MAP[existing_principal.type]:
 		frappe.throw(_("Principal name or type cannot be changed directly. Please create a new principal."))
 
 	updates = {
@@ -689,7 +696,9 @@ def update_principal(
 		updates["locale"] = principal.locale or ""
 		updates["roles"] = principal._roles
 		if principal.password:
-			updates["secrets"].append(hash_password(principal.get_password("password")))
+			password = principal.password
+			hashed_password = password if is_probable_hash(password) else hash_password(password)
+			updates["secrets"].append(hashed_password)
 		else:
 			for password in existing_principal.secrets or []:
 				if not password.startswith("$app$"):
@@ -697,9 +706,7 @@ def update_principal(
 
 		if principal.app_passwords:
 			for ap in principal.app_passwords:
-				updates["secrets"].append(
-					ap.value or generate_app_password(ap.identifier, ap.get_password("password"))
-				)
+				updates["secrets"].append(ap.value or generate_app_password(ap.identifier, ap.password))
 
 	if principal.type in ["Group", "Individual", "List"]:
 		updates["emails"] = [principal._name] + principal._emails
@@ -752,38 +759,73 @@ def update_principal(
 			for v in values_to_remove:
 				actions.append({"action": "removeItem", "field": server_field, "value": v})
 
-	endpoint = f"{PRINCIPAL_ENDPOINT}/{pname}"
-	response = backend.request("PATCH", endpoint, data=json.dumps(actions))
+	response = backend.request("PATCH", f"{PRINCIPAL_ENDPOINT}/{principal.name}", data=json.dumps(actions))
 
 	if response.status_code != 200 or response.json().get("error"):
-		frappe.throw(_("Failed to update principal {0}: {1}").format(frappe.bold(pname), response.text))
+		frappe.throw(
+			_("Failed to update principal {0}: {1}").format(frappe.bold(principal.name), response.text)
+		)
 
-	_remove_principal_from_cache(tenant, pname)
-	sync_jmap_identities(tenant, pname)
+	_remove_principal_from_cache(tenant, principal.name)
 
-	if pname != principal._name or principal.type != TYPE_MAP[existing_principal.type]:
-		principal.name = f"{tenant}|{principal._name}"
-		update_principal_binding(pname, principal_name=principal._name, principal_type=principal.type)
+	if principal.name != principal._name or principal.type != TYPE_MAP[existing_principal.type]:
+		update_principal_binding(
+			principal.name, principal_name=principal._name, principal_type=principal.type
+		)
 
-		if pname != principal._name and not do_not_commit:
-			frappe.db.commit()
+	try:
+		sync_jmap_identities(principal.name)
+	except Exception:
+		frappe.log_error(
+			title=f"Failed to sync JMAP identities for principal {principal.name}",
+			message=frappe.get_traceback(with_context=True),
+		)
+
+	principal.name = principal._name
+	principal.password = None
 
 
 @frappe.whitelist()
-def delete_principal(tenant: str, pname: str) -> None:
+def delete_principal(pname: str) -> None:
 	"""Deletes the principal with the given principal name."""
 
+	tenant = get_principal_tenant(pname)
 	ensure_access_to_tenant(tenant)
+	ensure_tenant_has_cluster(tenant)
 	ensure_principal_belong_to_tenant(tenant, pname)
 
-	endpoint = f"{PRINCIPAL_ENDPOINT}/{pname}"
-	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
-	response = backend.request("DELETE", endpoint)
+	principal_type = frappe.db.get_value(
+		"Mail Principal Binding", {"principal_name": pname}, "principal_type"
+	)
+	if principal_type == "Domain":
+		if frappe.db.exists(
+			"Mail Principal Binding",
+			{"principal_type": ["in", ["Group", "Individual"]], "principal_name": ["like", f"%@{pname}%"]},
+		):
+			frappe.throw(
+				_("Cannot delete domain {0} as there are principals associated with it.").format(
+					frappe.bold(pname)
+				)
+			)
+
+	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	response = backend.request("DELETE", f"{PRINCIPAL_ENDPOINT}/{pname}")
 
 	if response.status_code != 200:
 		frappe.throw(_("Failed to delete principal {0}: {1}").format(frappe.bold(pname), response.text))
 
 	_remove_principal_from_cache(tenant, pname)
+
+	# If the principal is an Individual, disable the user and remove from tenant members
+	if principal_type == "Individual":
+		if member := frappe.db.exists("Mail Tenant Member", {"tenant": tenant, "user": pname}):
+			frappe.delete_doc("Mail Tenant Member", member)
+
+		if frappe.db.exists("User", pname):
+			user = frappe.get_doc("User", pname)
+			user.enabled = 0
+			user.save(ignore_permissions=True)
+
 	delete_principal_binding(pname, raise_exception=False)
 
 
@@ -804,7 +846,14 @@ def fetch_principals(
 	if total == 0:
 		return [], total
 
-	backend = get_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	cluster = get_cluster_for_tenant(tenant)
+	if not cluster:
+		frappe.msgprint(
+			_("Tenant {0} is not assigned to any cluster.").format(frappe.bold(tenant)), alert=True
+		)
+		return [], 0
+
+	backend = get_mail_backend_api("Mail Cluster", cluster)
 
 	principals = []
 	for pname in tenant_principals:
@@ -985,8 +1034,8 @@ def format_principal(tenant: str, principal: dict) -> dict:
 		"type": type,
 		"tenant": tenant,
 		"id": principal["id"],
+		"name": principal["name"],
 		"_name": principal["name"],
-		"name": f"{tenant}|{principal['name']}",
 		"description": principal.get("description"),
 		"members": 0,
 		"creation": today(),
@@ -1073,11 +1122,10 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	user = user or frappe.session.user
 	if is_system_manager(user):
 		return True
-	elif (
-		doc.tenant
-		and is_tenant_admin(doc.tenant, user)
-		and ensure_principal_belong_to_tenant(doc.tenant, doc._name)
-	):
-		return True
+	elif doc.tenant and is_tenant_admin(doc.tenant, user):
+		if ptype == "create":
+			return doc.type in ["List"]
+
+		return ensure_principal_belong_to_tenant(doc.tenant, doc.name, raise_exception=False)
 
 	return False

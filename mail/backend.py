@@ -1,18 +1,10 @@
-import json
-from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 from urllib.parse import urljoin
 
 import frappe
 import requests
 from frappe import _
-
-from mail.server.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
-from mail.utils import get_dkim_selector, reformat_pbkdf2_hash
-
-if TYPE_CHECKING:
-	from mail.server.doctype.mail_backend_request.mail_backend_request import MailBackendRequest
 
 
 @dataclass
@@ -20,8 +12,7 @@ class Principal:
 	"""Dataclass to represent a principal."""
 
 	name: str
-	type: Literal["domain", "apiKey", "individual", "group", "list"]
-	id: int = 0
+	type: Literal["apiKey", "domain", "group", "individual", "list", "oauthClient", "role"]
 	quota: int = 0
 	description: str = ""
 	secrets: list[str] = field(default_factory=list)
@@ -37,8 +28,6 @@ class Principal:
 
 
 class MailBackendAPI:
-	"""Class to interact with the Mail Backend API."""
-
 	def __init__(
 		self,
 		base_url: str,
@@ -91,308 +80,10 @@ class MailBackendAPI:
 		)
 
 
-class MailBackendManagerBase:
-	"""Base class for Mail Backend Managers."""
-
-	def __init__(self, backend_type: Literal["Mail Cluster", "Mail Server"], backend_name: str) -> None:
-		self.backend_type = backend_type
-		self.backend_name = backend_name
-
-	def create_request(
-		self,
-		method: str,
-		endpoint: str,
-		request_headers: dict | None = None,
-		request_params: dict | None = None,
-		request_data: str | None = None,
-		request_json: dict | None = None,
-		on_start: Callable | str | None = None,
-		on_start_kwargs: dict | None = None,
-		on_end: Callable | str | None = None,
-		on_end_kwargs: dict | None = None,
-		do_not_enqueue: bool = False,
-	) -> "MailBackendRequest":
-		"""Creates a new Mail Backend Request."""
-
-		return create_mail_backend_request(
-			backend_type=self.backend_type,
-			backend_name=self.backend_name,
-			method=method,
-			endpoint=endpoint,
-			request_headers=request_headers,
-			request_params=request_params,
-			request_data=request_data,
-			request_json=request_json,
-			on_start=on_start,
-			on_start_kwargs=on_start_kwargs,
-			on_end=on_end,
-			on_end_kwargs=on_end_kwargs,
-			do_not_enqueue=do_not_enqueue,
-		)
-
-
-class MailBackendDKIMManager(MailBackendManagerBase):
-	"""Class to manage DKIM keys on the Mail Backend."""
-
-	def create(self, domain_name: str, rsa_private_key: str) -> "MailBackendRequest":
-		"""Creates a DKIM key on the backend."""
-
-		from mail.server.doctype.mail_cluster.mail_cluster import reload_clusters_config
-		from mail.server.doctype.mail_server.mail_server import reload_servers_config
-
-		request_data = json.dumps(
-			[
-				{
-					"type": "insert",
-					"prefix": f"signature.rsa-{domain_name}",
-					"values": [
-						["report", "true"],
-						["selector", get_dkim_selector("rsa")],
-						["canonicalization", "relaxed/relaxed"],
-						["private-key", rsa_private_key],
-						["algorithm", "rsa-sha256"],
-						["domain", domain_name],
-					],
-					"assert_empty": True,
-				}
-			]
-		)
-
-		on_end = reload_clusters_config
-		on_end_kwargs = {"clusters": [self.backend_name]}
-		if self.backend_type == "Mail Server":
-			on_end = reload_servers_config
-			on_end_kwargs = {"servers": [self.backend_name]}
-
-		return self.create_request(
-			method="POST",
-			endpoint="/api/settings",
-			request_data=request_data,
-			on_end=on_end,
-			on_end_kwargs=on_end_kwargs,
-		)
-
-	def delete(self, domain_name: str) -> "MailBackendRequest":
-		"""Deletes a DKIM key from the backend."""
-
-		request_data = json.dumps(
-			[
-				{
-					"type": "clear",
-					"prefix": f"signature.rsa-{domain_name}",
-				}
-			]
-		)
-		return self.create_request(
-			method="POST",
-			endpoint="/api/settings",
-			request_data=request_data,
-		)
-
-
-class MailBackendDomainManager(MailBackendManagerBase):
-	"""Class to manage domains on the Mail Backend."""
-
-	def create(self, domain_name: str) -> "MailBackendRequest":
-		"""Creates a domain on the backend."""
-
-		principal = Principal(name=domain_name, type="domain").__dict__
-		return self.create_request(
-			method="POST", endpoint="/api/principal", request_data=json.dumps(principal), do_not_enqueue=True
-		)
-
-	def delete(self, domain_name: str) -> "MailBackendRequest":
-		"""Deletes a domain from the backend."""
-
-		return self.create_request(method="DELETE", endpoint=f"/api/principal/{domain_name}")
-
-
-class MailBackendAccountManager(MailBackendManagerBase):
-	"""Class to manage accounts on the Mail Backend."""
-
-	def get(self, email: str, do_not_enqueue: bool = True) -> "MailBackendRequest":
-		"""Returns the account details from the backend."""
-
-		return self.create_request(
-			method="GET", endpoint=f"/api/principal/{email}", do_not_enqueue=do_not_enqueue
-		)
-
-	def create(self, email: str, display_name: str, quota: int, secret: str) -> "MailBackendRequest":
-		"""Creates an account on the backend."""
-
-		principal = Principal(
-			name=email,
-			type="individual",
-			description=display_name,
-			quota=quota,
-			secrets=[reformat_pbkdf2_hash(secret)],
-			emails=[email],
-			roles=["user"],
-		).__dict__
-		return self.create_request(
-			method="POST",
-			endpoint="/api/principal",
-			request_data=json.dumps(principal),
-			do_not_enqueue=True,
-		)
-
-	def update(self, email: str, display_name: str, new_secret: str, old_secret: str) -> "MailBackendRequest":
-		"""Updates an account on the backend."""
-
-		request_data = [
-			{
-				"action": "set",
-				"field": "description",
-				"value": display_name,
-			}
-		]
-
-		if old_secret != new_secret:
-			if account_details := self.get(email, do_not_enqueue=True):
-				secrets = json.loads(account_details.response_json or "{}").get("data", {}).get("secrets", [])
-
-				for secret in secrets:
-					if not secret.startswith("$app$"):
-						request_data.append({"action": "removeItem", "field": "secrets", "value": secret})
-
-				request_data.append(
-					{"action": "addItem", "field": "secrets", "value": reformat_pbkdf2_hash(new_secret)}
-				)
-
-		request_data = json.dumps(request_data)
-		return self.create_request(
-			method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data, do_not_enqueue=True
-		)
-
-	def set_quota(self, email: str, quota: int) -> "MailBackendRequest":
-		"""Sets the quota for an account on the backend."""
-
-		request_data = json.dumps(
-			[
-				{
-					"action": "set",
-					"field": "quota",
-					"value": quota,
-				}
-			]
-		)
-		return self.create_request(
-			method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data
-		)
-
-	def delete(self, email: str) -> "MailBackendRequest":
-		"""Deletes an account from the backend."""
-
-		return self.create_request(
-			method="DELETE",
-			endpoint=f"/api/principal/{email}",
-		)
-
-
-class MailBackendMailingListManager(MailBackendManagerBase):
-	"""Class to manage mailing lists on the Mail Backend."""
-
-	def create(
-		self,
-		email: str,
-		display_name: str,
-		members: list[str] | None = None,
-		external_members: list[str] | None = None,
-	) -> "MailBackendRequest":
-		"""Creates a mailing list on the backend."""
-
-		principal = Principal(
-			name=email,
-			type="list",
-			description=display_name,
-			emails=[email],
-			members=members or [],
-			externalMembers=external_members or [],
-		).__dict__
-		return self.create_request(
-			method="POST", endpoint="/api/principal", request_data=json.dumps(principal)
-		)
-
-	def update(self, email: str, display_name: str) -> "MailBackendRequest":
-		"""Updates a mailing list on the backend."""
-
-		request_data = json.dumps(
-			[
-				{
-					"action": "set",
-					"field": "description",
-					"value": display_name,
-				}
-			]
-		)
-		return self.create_request(
-			method="PATCH", endpoint=f"/api/principal/{email}", request_data=request_data
-		)
-
-	def delete(self, email: str) -> "MailBackendRequest":
-		"""Deletes a mailing list from the backend."""
-
-		return self.create_request(method="DELETE", endpoint=f"/api/principal/{email}")
-
-	def add_member(self, email: str, member: str, is_external: bool = False) -> "MailBackendRequest":
-		"""Adds a mailing list member on the backend."""
-
-		endpoint = f"/api/principal/{email}"
-		field = "externalMembers" if is_external else "members"
-		request_data = json.dumps([{"action": "addItem", "field": field, "value": member}])
-		return self.create_request(method="PATCH", endpoint=endpoint, request_data=request_data)
-
-	def remove_member(self, email: str, member: str, is_external: bool = False) -> "MailBackendRequest":
-		"""Removes a mailing list member from the backend."""
-
-		endpoint = f"/api/principal/{email}"
-		field = "externalMembers" if is_external else "members"
-		request_data = json.dumps([{"action": "removeItem", "field": field, "value": member}])
-		return self.create_request(method="PATCH", endpoint=endpoint, request_data=request_data)
-
-
-class MailBackendAliasManager(MailBackendManagerBase):
-	"""Class to manage aliases on the Mail Backend."""
-
-	def create(self, email: str, alias: str) -> "MailBackendRequest":
-		"""Creates an alias on the backend."""
-
-		from mail.client.doctype.mail_account.mail_account import sync_jmap_identities
-
-		request_data = json.dumps([{"action": "addItem", "field": "emails", "value": alias}])
-		return self.create_request(
-			method="PATCH",
-			endpoint=f"/api/principal/{email}",
-			request_data=request_data,
-			on_end=sync_jmap_identities,
-			on_end_kwargs={"account": email},
-		)
-
-	def update(self, new_email: str, old_email: str, alias: str) -> None:
-		"""Updates an alias on the backend."""
-
-		self.delete(old_email, alias)
-		self.create(new_email, alias)
-
-	def delete(self, email: str, alias: str) -> "MailBackendRequest":
-		"""Deletes an alias from the backend."""
-
-		from mail.client.doctype.mail_account.mail_account import sync_jmap_identities
-
-		request_data = json.dumps([{"action": "removeItem", "field": "emails", "value": alias}])
-		return self.create_request(
-			method="PATCH",
-			endpoint=f"/api/principal/{email}",
-			request_data=request_data,
-			on_end=sync_jmap_identities,
-			on_end_kwargs={"account": email},
-		)
-
-
 def get_mail_backend_api(
 	backend_type: Literal["Mail Cluster", "Mail Server"], backend_name: str
 ) -> MailBackendAPI:
-	"""Returns an authenticated MailBackendAPI instance."""
+	"""Returns an authenticated BackendAPI instance."""
 
 	cluster_name = backend_name
 	if backend_type == "Mail Server":

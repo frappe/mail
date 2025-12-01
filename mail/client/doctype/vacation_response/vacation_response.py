@@ -9,7 +9,7 @@ from frappe.model.document import Document
 from frappe.utils import cint, now, today
 from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 
-from mail.jmap import get_jmap_client_for_user
+from mail.jmap import get_jmap_client
 from mail.utils import convert_html_to_text
 from mail.utils.dt import convert_to_utc
 from mail.utils.validation import has_permission_for_user
@@ -65,7 +65,7 @@ def get_vacation_response(user: str) -> dict:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	vc = client.vacation_response_get()
 	return format_vacation_response(user, vc)
 
@@ -104,7 +104,7 @@ def update_vacation_response(
 	if not convert_html_to_text(html_body):
 		html_body = None
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	client.vacation_response_update(enabled, from_date, to_date, subject, text_body, html_body)
 
 

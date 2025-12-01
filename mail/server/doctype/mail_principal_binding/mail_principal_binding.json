@@ -4,15 +4,12 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_chsm",
-  "is_verified",
-  "column_break_fglr",
   "section_break_cbim",
   "tenant",
   "column_break_yzik",
   "principal_name",
   "principal_type",
-  "principal"
+  "is_verified"
  ],
  "fields": [
   {
@@ -34,16 +31,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "principal",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Principal",
-   "no_copy": 1,
-   "options": "Mail Principal",
-   "read_only": 1,
-   "unique": 1
-  },
-  {
    "fieldname": "principal_type",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -55,21 +42,14 @@
   },
   {
    "fieldname": "principal_name",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Principal Name",
    "no_copy": 1,
+   "options": "Mail Principal",
    "reqd": 1,
    "unique": 1
-  },
-  {
-   "fieldname": "section_break_chsm",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_fglr",
-   "fieldtype": "Column Break"
   },
   {
    "default": "0",
@@ -83,7 +63,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-26 19:08:15.668346",
+ "modified": "2025-12-01 13:06:58.164221",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Principal Binding",

@@ -12,12 +12,13 @@ import frappe
 import paramiko
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint
 
+from mail.backend import get_mail_backend_api
 from mail.mail.doctype.mail_settings.mail_settings import (
 	validate_mail_settings,
 )
 from mail.server.doctype.dns_record.dns_record import create_or_update_dns_record
-from mail.server.doctype.mail_backend_request.mail_backend_request import create_mail_backend_request
 from mail.server.doctype.mail_cluster.mail_cluster import create_or_update_spf_dns_record_for_cluster
 from mail.server.doctype.server_config.server_config import create_server_config
 from mail.utils import get_spf_host_for_cluster
@@ -214,7 +215,7 @@ class MailServer(Document):
 
 		host = self.hostname[: -len(root_domain_name) - 1]
 		spf_host = get_spf_host_for_cluster(self.cluster)
-		default_ttl = frappe.db.get_single_value("Mail Settings", "default_ttl")
+		default_ttl = cint(frappe.conf.default_dns_ttl) or 3600
 		if self.enabled:
 			create_or_update_dns_record(
 				host=host,
@@ -236,9 +237,8 @@ class MailServer(Document):
 		if not self.enabled:
 			frappe.throw(_("Mail Server {0} is disabled.").format(frappe.bold(self.name)))
 
-		create_mail_backend_request(
-			self.doctype, self.name, method="GET", endpoint="/api/reload", do_not_enqueue=True
-		)
+		backend = get_mail_backend_api(self.doctype, self.name)
+		backend.request("GET", "/api/reload")
 
 	@frappe.whitelist()
 	def verify_ssh_connection(self) -> None:

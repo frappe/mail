@@ -6,7 +6,7 @@ from mail.client.doctype.mailbox.mailbox import fetch_mailboxes
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
-def get_users_with_mail_admin_role(
+def get_tenant_users(
 	doctype: str | None = None,
 	txt: str | None = None,
 	searchfield: str | None = None,
@@ -14,49 +14,18 @@ def get_users_with_mail_admin_role(
 	page_len: int = 20,
 	filters: dict | None = None,
 ) -> list:
-	"""Returns a list of User(s) who have Mail Admin role."""
+	"""Returns a list of users for the tenant."""
 
-	USER = frappe.qb.DocType("User")
-	HAS_ROLE = frappe.qb.DocType("Has Role")
+	filters = filters or {}
+	tenant = filters.get("tenant")
+	if not tenant:
+		return []
+
+	TENANT_MEMBER = frappe.qb.DocType("Mail Tenant Member")
 	return (
-		frappe.qb.from_(USER)
-		.left_join(HAS_ROLE)
-		.on(USER.name == HAS_ROLE.parent)
-		.select(USER.name)
-		.where(
-			(USER.enabled == 1)
-			& (USER.name.like(f"%{txt}%"))
-			& (HAS_ROLE.role == "Mail Admin")
-			& (HAS_ROLE.parenttype == "User")
-		)
-	).run(as_dict=False)
-
-
-@frappe.whitelist()
-@frappe.validate_and_sanitize_search_inputs
-def get_users_with_mail_user_role(
-	doctype: str | None = None,
-	txt: str | None = None,
-	searchfield: str | None = None,
-	start: int = 0,
-	page_len: int = 20,
-	filters: dict | None = None,
-) -> list:
-	"""Returns a list of users with Mail User role."""
-
-	USER = frappe.qb.DocType("User")
-	HAS_ROLE = frappe.qb.DocType("Has Role")
-	return (
-		frappe.qb.from_(USER)
-		.left_join(HAS_ROLE)
-		.on(USER.name == HAS_ROLE.parent)
-		.select(USER.name)
-		.where(
-			(USER.enabled == 1)
-			& (USER.name.like(f"%{txt}%"))
-			& (HAS_ROLE.role == "Mail User")
-			& (HAS_ROLE.parenttype == "User")
-		)
+		frappe.qb.from_(TENANT_MEMBER)
+		.select(TENANT_MEMBER.name, TENANT_MEMBER.user)
+		.where((TENANT_MEMBER.tenant == tenant) & (TENANT_MEMBER.user.like(f"%{txt}%")))
 	).run(as_dict=False)
 
 

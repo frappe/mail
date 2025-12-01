@@ -29,7 +29,7 @@ from frappe.utils import (
 from uuid_utils import uuid7
 
 from mail import __version__
-from mail.jmap import get_identities, get_jmap_client_for_user
+from mail.jmap import get_identities, get_jmap_client
 from mail.utils.dt import parsedate_to_datetime
 from mail.utils.user import is_administrator
 from mail.utils.validation import has_permission_for_user, has_role, validate_email_address
@@ -526,7 +526,7 @@ class MailQueue(Document):
 
 		if self.in_reply_to and not self.in_reply_to_id:
 			try:
-				client = get_jmap_client_for_user(self.user)
+				client = get_jmap_client(self.user)
 				result = client.email_query({"header": ["Message-ID", self.in_reply_to]})
 				if ids := result["ids"]:
 					self.in_reply_to_id = ids[0]
@@ -562,7 +562,7 @@ class MailQueue(Document):
 		kwargs = {}
 
 		try:
-			client = get_jmap_client_for_user(self.user)
+			client = get_jmap_client(self.user)
 			draft_mailbox_id = client.get_mailbox_id_by_role(
 				"drafts", create_if_not_exists=True, raise_exception=True
 			)

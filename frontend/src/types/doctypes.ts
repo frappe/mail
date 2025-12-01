@@ -248,8 +248,6 @@ export interface MailSettings extends DocType {
 		| 'GoDaddy'
 	/** Token: Password */
 	dns_provider_token?: string
-	/** TTL: Int */
-	default_ttl: number
 	/** Host: Data */
 	spamd_host?: string
 	/** Port: Int */

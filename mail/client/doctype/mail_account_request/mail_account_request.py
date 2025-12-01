@@ -16,6 +16,7 @@ from frappe.utils import (
 	validate_email_address,
 )
 
+from mail.server.doctype.mail_principal.mail_principal import _validate_max_accounts
 from mail.utils import generate_otp, generate_random_phrase
 from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin
@@ -46,6 +47,7 @@ class MailAccountRequest(Document):
 			self.set_ip_address()
 
 			if self.is_invite:
+				_validate_max_accounts(self.tenant)
 				self.validate_invited_by_and_tenant()
 				self.validate_domain()
 				self.validate_account()
@@ -233,6 +235,7 @@ class MailAccountRequest(Document):
 		if self.is_admin:
 			roles.append("Mail Admin")
 
+		# Create User
 		user = create_user(self.account, first_name, last_name, password, roles)
 		_add_user_to_tenant(self.tenant, user, self.is_admin)
 
@@ -246,6 +249,7 @@ class MailAccountRequest(Document):
 		principal._name = self.account
 		principal.description = f"{first_name} {last_name}"
 		principal.password = password
+		principal.user = user
 		principal.append("app_passwords", {"identifier": frappe.local.site, "password": app_password})
 		principal.insert(ignore_permissions=True)
 

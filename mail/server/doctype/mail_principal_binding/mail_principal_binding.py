@@ -14,13 +14,7 @@ class MailPrincipalBinding(Document):
 		self.name = str(uuid7())
 
 	def validate(self) -> None:
-		self.validate_principal()
 		self.validate_is_verified()
-
-	def validate_principal(self) -> None:
-		"""Validates that the principal is unique within the tenant."""
-
-		self.principal = f"{self.tenant}|{self.principal_name}"
 
 	def validate_is_verified(self) -> None:
 		"""Sets is_verified to 0 for non-domain principals."""
@@ -69,82 +63,6 @@ def get_tenant_principals(
 	return [], 0
 
 
-def _get_tenant_principals(tenant: str, principal_type: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of principals of the given type for the given tenant."""
-
-	return frappe.db.get_all(
-		"Mail Principal Binding",
-		filters={"tenant": tenant, "principal_type": principal_type},
-		order_by=order_by,
-		pluck="principal_name",
-	)
-
-
-def get_tenant_api_keys(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of API Key principals for the given tenant."""
-
-	return _get_tenant_principals(tenant, "API Key", order_by)
-
-
-def get_tenant_domains(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of domain principals for the given tenant."""
-
-	return _get_tenant_principals(tenant, "Domain", order_by)
-
-
-def get_tenant_groups(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of group principals for the given tenant."""
-
-	return _get_tenant_principals(tenant, "Group", order_by)
-
-
-def get_tenant_individuals(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of individual principals for the given tenant."""
-
-	return _get_tenant_principals(tenant, "Individual", order_by)
-
-
-def get_tenant_mailing_lists(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of list principals for the given tenant."""
-
-	return _get_tenant_principals(tenant, "List", order_by)
-
-
-def get_tenant_oauth_clients(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of OAuth Client principals for the given tenant."""
-
-	return _get_tenant_principals(tenant, "OAuth Client", order_by)
-
-
-def get_tenant_roles(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of Role principals for the given tenant."""
-
-	return _get_tenant_principals(tenant, "Role", order_by)
-
-
-def get_tenant_emails(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of email addresses associated with the given tenant."""
-
-	return frappe.db.get_all(
-		"Mail Principal Binding",
-		filters={"tenant": tenant, "principal_type": ["in", ["Group", "Individual", "List"]]},
-		order_by=order_by,
-		pluck="principal_name",
-	)
-
-
-def get_principal_tenant(principal_name: str, raise_exception: bool = True) -> str | None:
-	"""Returns the tenant associated with the given principal name."""
-
-	if tenant := frappe.db.get_value("Mail Principal Binding", {"principal_name": principal_name}, "tenant"):
-		return tenant
-
-	if raise_exception:
-		frappe.throw(
-			_("No Mail Principal Binding found for principal name: {0}").format(frappe.bold(principal_name))
-		)
-
-
 def update_principal_binding(pname: str, **kwargs) -> None:
 	"""Update a Mail Principal Binding document."""
 
@@ -165,83 +83,3 @@ def delete_principal_binding(principal_name: str, raise_exception: bool = True) 
 		frappe.throw(
 			_("No Mail Principal Binding found for principal name: {0}").format(frappe.bold(principal_name))
 		)
-
-
-def ensure_principal_belong_to_tenant(tenant: str, principal_name: str) -> None:
-	"""Ensure that the principal belongs to the given tenant."""
-
-	if not frappe.db.exists("Mail Principal Binding", {"tenant": tenant, "principal_name": principal_name}):
-		frappe.throw(
-			_("Principal {0} does not belong to tenant {1}.").format(
-				frappe.bold(principal_name), frappe.bold(tenant)
-			)
-		)
-
-
-def ensure_emails_belong_to_tenant_domains(tenant: str, emails: list[str]) -> None:
-	"""Ensure that the email domains belong to the given tenant."""
-
-	domains = frappe.db.get_all(
-		"Mail Principal Binding",
-		filters={"tenant": tenant, "principal_type": "Domain", "is_verified": 1},
-		pluck="principal_name",
-	)
-	tenant_name = frappe.db.get_value("Mail Tenant", tenant, "tenant_name")
-
-	for email in emails:
-		_user, domain = email.split("@", 1)
-		if domain not in domains:
-			frappe.throw(
-				_("Email domain {0} is not associated with tenant {1} or is not verified.").format(
-					frappe.bold(domain), frappe.bold(tenant_name)
-				)
-			)
-
-
-def ensure_groups_belong_to_tenant(tenant: str, groups: list[str]) -> None:
-	"""Ensure that the groups belong to the given tenant."""
-
-	tenant_groups = get_tenant_groups(tenant)
-	tenant_name = frappe.db.get_value("Mail Tenant", tenant, "tenant_name")
-
-	for group in groups:
-		if group not in tenant_groups:
-			frappe.throw(
-				_("Group {0} is not associated with tenant {1}.").format(
-					frappe.bold(group), frappe.bold(tenant_name)
-				)
-			)
-
-
-def ensure_lists_belong_to_tenant(tenant: str, lists: list[str]) -> None:
-	"""Ensure that the lists belong to the given tenant."""
-
-	tenant_lists = get_tenant_mailing_lists(tenant)
-	tenant_name = frappe.db.get_value("Mail Tenant", tenant, "tenant_name")
-
-	for lst in lists:
-		if lst not in tenant_lists:
-			frappe.throw(
-				_("List {0} is not associated with tenant {1}.").format(
-					frappe.bold(lst), frappe.bold(tenant_name)
-				)
-			)
-
-
-def ensure_members_belong_to_tenant(tenant: str, members: list[str]) -> None:
-	"""Ensure that the members belong to the given tenant."""
-
-	tenant_emails = frappe.db.get_all(
-		"Mail Principal Binding",
-		filters={"tenant": tenant, "principal_type": ["in", ["Group", "Individual"]]},
-		pluck="principal_name",
-	)
-	tenant_name = frappe.db.get_value("Mail Tenant", tenant, "tenant_name")
-
-	for member in members:
-		if member not in tenant_emails:
-			frappe.throw(
-				_("Member {0} is not associated with tenant {1}.").format(
-					frappe.bold(member), frappe.bold(tenant_name)
-				)
-			)

@@ -1837,41 +1837,7 @@ class JMAPClient:
 		return results
 
 
-def get_jmap_client(account: str, server: str | None = None, cache: bool = True) -> "JMAPClient":
-	"""Returns a JMAP client for the given account."""
-
-	def generator() -> "JMAPClient":
-		account_doc = frappe.get_doc("Mail Account", account)
-		account_cluster = get_cluster_for_tenant(account_doc.tenant)
-
-		if not account_cluster:
-			frappe.throw(_("No cluster found for the account {0}.").format(frappe.bold(account)))
-
-		host = frappe.db.get_value("Mail Cluster", account_cluster, "base_url")
-
-		if server:
-			server_cluster, server_base_url = frappe.db.get_value(
-				"Mail Server", server, ["cluster", "base_url"]
-			)
-
-			if server_cluster != account_cluster:
-				frappe.throw(
-					_("The server {0} does not belong to the same cluster as the account {1}.").format(
-						frappe.bold(server), frappe.bold(account)
-					)
-				)
-
-			host = server_base_url
-
-		return JMAPClient(host, account_doc.email, account_doc._get_account_app_password())
-
-	if cache and not server:
-		return frappe.cache.hget("jmap:client", account, generator)
-	else:
-		return generator()
-
-
-def get_jmap_client_for_user(user: str, ignore_permissions: bool = False, cache: bool = True) -> "JMAPClient":
+def get_jmap_client(user: str, ignore_permissions: bool = False, cache: bool = True) -> "JMAPClient":
 	"""Returns a JMAP client for the given user."""
 
 	def generator() -> "JMAPClient":
@@ -1882,6 +1848,15 @@ def get_jmap_client_for_user(user: str, ignore_permissions: bool = False, cache:
 				_("JMAP settings are not configured for user {0}.").format(frappe.bold(user)),
 				frappe.ValidationError,
 			)
+
+		if frappe.db.get_value("Mail Tenant Member", {"user": user}, "tenant"):
+			if user_doc.name != user_doc.jmap_username:
+				frappe.throw(
+					_(
+						"JMAP username for tenant-bound user {0} must be the same as the system username."
+					).format(frappe.bold(user)),
+					frappe.ValidationError,
+				)
 
 		return JMAPClient(
 			user_doc.jmap_server_url, user_doc.jmap_username, user_doc.get_password("jmap_app_password")
@@ -1937,21 +1912,21 @@ def invalidate_jmap_identities_cache(user: str) -> None:
 def get_identities(user: str) -> list[dict]:
 	"""Returns the identities for the given user."""
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	return client.identities
 
 
 def get_identity_id_by_email(user: str, email: str, raise_exception: bool = False) -> str | None:
 	"""Returns the identity ID for the given email."""
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	return client.get_identity_id_by_email(email, raise_exception=raise_exception)
 
 
 def get_mailboxes(user: str) -> list[dict]:
 	"""Returns the mailboxes for the given user."""
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	return client.mailboxes
 
 
@@ -1960,7 +1935,7 @@ def get_mailbox_id_by_role(
 ) -> str | None:
 	"""Returns the mailbox ID for the given role."""
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	return client.get_mailbox_id_by_role(
 		role, create_if_not_exists=create_if_not_exists, raise_exception=raise_exception
 	)
@@ -1969,14 +1944,14 @@ def get_mailbox_id_by_role(
 def get_mailbox_role_by_id(user: str, id: str, raise_exception: bool = False) -> str | None:
 	"""Returns the mailbox role for the given ID."""
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	return client.get_mailbox_role_by_id(id, raise_exception=raise_exception)
 
 
 def get_mailbox_name_by_id(user: str, id: str, raise_exception: bool = False) -> str | None:
 	"""Returns the mailbox name for the given ID."""
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	return client.get_mailbox_name_by_id(id, raise_exception=raise_exception)
 
 
@@ -2013,7 +1988,7 @@ def make_jmap_request(user: str, using: list[str], method_calls: list[list]) -> 
 	"""Makes a JMAP request for the given user."""
 
 	has_permission_for_user(user)
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	return client._make_request(using, method_calls)
 
 

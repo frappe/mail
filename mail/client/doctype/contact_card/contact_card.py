@@ -10,7 +10,7 @@ from frappe.utils import cint, today
 from uuid_utils import uuid7
 
 from mail.client.doctype.address_book.address_book import validate_address_book_name_format
-from mail.jmap import get_jmap_client_for_user
+from mail.jmap import get_jmap_client
 from mail.utils import parse_filters
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
@@ -221,7 +221,7 @@ def add_contact_card(
 	has_permission_for_user(user)
 
 	creation_id = str(uuid7())
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.contact_card_create(
 		creation_id, address_book_ids, full_name, emails, phones, addresses, kind
 	)
@@ -247,7 +247,7 @@ def fetch_contact_cards(
 	has_permission_for_user(user)
 
 	contact_cards = []
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 
 	while len(contact_cards) < limit:
 		result = client.contact_card_query(filter, position, limit, sort)
@@ -285,7 +285,7 @@ def get_contact_cards(user: str, ids: list[str]) -> list[dict]:
 			ids_to_fetch.append(id)
 
 	if ids_to_fetch:
-		client = get_jmap_client_for_user(user)
+		client = get_jmap_client(user)
 		cards = client.contact_card_get(ids_to_fetch)
 
 		address_book_map = {ab["id"]: ab["_name"] for ab in client.address_books}
@@ -312,7 +312,7 @@ def update_contact_card(
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	response = client.contact_card_update(id, address_book_ids, full_name, emails, phones, addresses, kind)
 
 	title = _("Contact Card Update Error")
@@ -330,7 +330,7 @@ def delete_contact_cards(user: str, ids: list[str]) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client_for_user(user)
+	client = get_jmap_client(user)
 	client.contact_card_delete(ids)
 	_remove_contact_cards_from_cache(user, ids)
 
