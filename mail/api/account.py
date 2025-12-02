@@ -7,14 +7,9 @@ from frappe.utils.data import sha256_hash
 
 from mail.api.admin import add_member
 from mail.client.doctype.identity.identity import fetch_identities
-from mail.client.doctype.mail_account.mail_account import create_user
+from mail.client.doctype.mail_account_request.mail_account_request import create_user
 from mail.utils import convert_html_to_text, user_context
-from mail.utils.cache import (
-	get_account_for_user,
-	get_default_outgoing_email_for_user,
-	get_personal_signup_domains,
-	get_tenant_for_domain,
-)
+from mail.utils.cache import get_personal_signup_domains
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import get_tenant_for_domain, get_user_email_addresses, get_user_tenant
 from mail.utils.validation import is_email_assigned
@@ -150,6 +145,7 @@ def get_user_info() -> dict | None:
 			"user_type",
 			"username",
 			"api_key",
+			"jmap_default_outgoing_email",
 		],
 		as_dict=1,
 	)
@@ -166,7 +162,7 @@ def get_user_info() -> dict | None:
 		user_dict.is_tenant_owner = tenant_owner == user
 
 	user_dict.email_addresses = get_user_email_addresses(user)
-	user_dict.default_outgoing = None
+	user_dict.default_outgoing = user_dict.jmap_default_outgoing_email
 
 	return user_dict
 
@@ -285,9 +281,7 @@ def get_quota() -> dict:
 def get_identities() -> list[dict]:
 	"""Return the email identities for the user"""
 
-	account = get_account_for_user(frappe.session.user)
-
-	return fetch_identities(account, page=1, limit=100)
+	return fetch_identities(frappe.session.user, page=1, limit=100)
 
 
 @frappe.whitelist()

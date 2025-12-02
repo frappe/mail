@@ -31,8 +31,8 @@ from uuid_utils import uuid7
 from mail import __version__
 from mail.jmap import get_identities, get_jmap_client
 from mail.utils.dt import parsedate_to_datetime
-from mail.utils.user import is_administrator
-from mail.utils.validation import has_permission_for_user, has_role, validate_email_address
+from mail.utils.user import has_role, is_administrator
+from mail.utils.validation import has_permission_for_user, validate_email_address
 
 
 class MailQueue(Document):
