@@ -5,6 +5,7 @@ from frappe import _
 from frappe.model.document import Document
 
 from mail.backend import get_mail_backend_api
+from mail.jmap import JMAPClient
 from mail.server.doctype.mail_principal.mail_principal import PRINCIPAL_ENDPOINT, _get_principal
 from mail.utils.user import (
 	get_cluster_for_tenant,
@@ -30,6 +31,16 @@ def validate_jmap_settings(doc: Document, method: str | None = None) -> None:
 
 		if not doc.jmap_app_password:
 			frappe.throw(_("JMAP App Password is required if JMAP settings are provided."))
+
+	if doc.jmap_default_outgoing_email:
+		client = JMAPClient(doc.jmap_server_url, doc.jmap_username, doc.get_password("jmap_app_password"))
+		identities = client.identity_get()
+		if not any(identity.get("email") == doc.jmap_default_outgoing_email for identity in identities):
+			frappe.throw(
+				_("Default Outgoing Email {0} is not found in the identities of the JMAP account.").format(
+					frappe.bold(doc.jmap_default_outgoing_email)
+				)
+			)
 
 	if not is_tenant_bound_user(doc.name):
 		return
