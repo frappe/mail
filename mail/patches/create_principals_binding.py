@@ -2,7 +2,7 @@ import frappe
 
 from mail.server.doctype.mail_principal_binding.mail_principal_binding import create_principal_binding
 
-DOCTYPES = ["Mail Domain", "Mail Account", "Mail Group"]
+DOCTYPES = ["Mail Domain", "Mail Account", "Mailing List"]
 TYPE_MAPPING = {
 	"Mail Domain": "Domain",
 	"Mail Account": "Individual",
