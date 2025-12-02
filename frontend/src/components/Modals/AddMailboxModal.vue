@@ -49,7 +49,7 @@ const createFolder = createResource({
 	url: 'mail.client.doctype.mailbox.mailbox.add_mailbox',
 	makeParams: () => folder,
 	onSuccess: () => {
-		raiseToast(__('Folder created successfully'))
+		raiseToast(__('Folder created.'))
 		show.value = false
 		mailboxes.reload()
 	},

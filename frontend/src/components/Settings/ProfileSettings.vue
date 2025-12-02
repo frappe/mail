@@ -18,7 +18,7 @@
 	<FormControl v-model="lastName" :label="__('Last Name')" variant="outline" />
 	<ErrorMessage :message="setName.error" />
 	<Button
-		:label="__('Save Changes')"
+		:label="__('Save')"
 		class="min-h-7"
 		variant="solid"
 		:disabled="
@@ -57,7 +57,7 @@ const setName = createResource({
 		fieldname: { first_name: firstName.value, last_name: lastName.value },
 	}),
 	onSuccess: () => {
-		raiseToast(__('Profile updated successfully.'))
+		raiseToast(__('Profile updated.'))
 		user.reload()
 	},
 })

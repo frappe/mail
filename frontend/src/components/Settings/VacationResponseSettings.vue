@@ -28,17 +28,20 @@
 			<label class="text-ink-gray-5 block text-xs">{{ __('Message') }}</label>
 			<TextEditor
 				editor-class="prose-sm min-h-[8rem] border rounded-b-lg border-t-0 p-2 max-w-none border-outline-gray-2"
-				placeholder="Type something..."
+				:placeholder="__('Type something...')"
 				:fixed-menu="buttons"
 				:content="account.doc.vacation_response_html_body"
 				@change="(val: string) => (account.doc.vacation_response_html_body = val)"
 			/>
 		</div>
 		<Button
-			:label="__('Save Changes')"
+			:label="__('Save')"
 			variant="solid"
-			:disabled="JSON.stringify(account.doc) === JSON.stringify(account.originalDoc)"
-			:loading="account.setVacationResponse?.loading || account.get?.loading"
+			:disabled="
+				account.get.loading ||
+				JSON.stringify(account.doc) === JSON.stringify(account.originalDoc)
+			"
+			:loading="account.setVacationResponse?.loading"
 			class="min-h-7"
 			@click="() => account.setVacationResponse.submit()"
 		/>
@@ -78,7 +81,7 @@ const account = createDocumentResource({
 			}),
 			onSuccess: () => {
 				account.reload()
-				raiseToast(__('Vacation response settings saved successfully'))
+				raiseToast(__('Vacation response updated.'))
 			},
 			onError: (error) => raiseToast(error.messages[0], 'error'),
 		},

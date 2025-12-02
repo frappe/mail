@@ -3,7 +3,7 @@
 		<template #body>
 			<div class="flex" :style="{ height: 'calc(100vh - 9rem)' }">
 				<div class="bg-surface-menu-bar flex w-52 shrink-0 flex-col border-r p-4 py-3">
-					<h1 class="px-2 text-xl leading-6">{{ __('Settings') }}</h1>
+					<h1 class="px-2 text-xl font-semibold leading-6">{{ __('Settings') }}</h1>
 					<div class="mt-3 space-y-1">
 						<button
 							v-for="tab in tabs"
@@ -39,14 +39,25 @@
 </template>
 <script setup lang="ts">
 import { computed, inject, markRaw, ref } from 'vue'
-import { Code, DatabaseBackup, Mailbox, Palette, TreePalm, User } from 'lucide-vue-next'
+import {
+	Code,
+	DatabaseBackup,
+	Feather,
+	Fingerprint,
+	Mailbox,
+	Palette,
+	TreePalm,
+	User,
+} from 'lucide-vue-next'
 import { Button, Dialog } from 'frappe-ui'
 
 import AccountSettings from '@/components/Settings/AccountSettings.vue'
 import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
 import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
+import IdentitySettings from '@/components/Settings/IdentitySettings.vue'
 import MailDataExchangeSettings from '@/components/Settings/MailDataExchangeSettings.vue'
 import ProfileSettings from '@/components/Settings/ProfileSettings.vue'
+import SignatureSettings from '@/components/Settings/SignatureSettings.vue'
 import VacationResponseSettings from '@/components/Settings/VacationResponseSettings.vue'
 
 const show = defineModel<boolean>()
@@ -67,10 +78,20 @@ const tabs = computed(() => {
 			component: markRaw(AccountSettings),
 		},
 		{
+			label: __('Identity'),
+			icon: Fingerprint,
+			component: markRaw(IdentitySettings),
+		},
+		{
 			label: __('Appearance'),
 			icon: Palette,
 			component: markRaw(AppearanceSettings),
 			showNonMailUser: true,
+		},
+		{
+			label: __('Signature'),
+			icon: Feather,
+			component: markRaw(SignatureSettings),
 		},
 		{
 			label: __('Vacation Response'),

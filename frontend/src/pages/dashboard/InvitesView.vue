@@ -94,8 +94,8 @@ import {
 	ListSelectBanner,
 	ListView,
 	createResource,
+	useList,
 } from 'frappe-ui'
-import { useList } from 'frappe-ui/src/data-fetching'
 
 import { raiseToast } from '@/utils'
 import EditInviteModal from '@/components/Modals/EditInviteModal.vue'
@@ -164,7 +164,7 @@ const deleteInvites = createResource({
 	onSuccess: () => {
 		invites.reload()
 		showDeleteInvites.value = false
-		raiseToast(__('Invites deleted successfully.'))
+		raiseToast(__('Invites deleted.'))
 		listView.value?.toggleAllRows()
 	},
 	onError: (error) => {

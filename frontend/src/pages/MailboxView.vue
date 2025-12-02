@@ -910,7 +910,7 @@ const emptyMailbox = createResource({
 	makeParams: () => ({ mailbox }),
 	onSuccess: () => {
 		threadsResource.value.data = []
-		raiseToast(__('{0} emptied successfully', [mailboxName.value]))
+		raiseToast(__('{0} emptied.', [mailboxName.value]))
 		reloadThreads()
 	},
 	onError: (error) => raiseToast(error.message, 'error'),

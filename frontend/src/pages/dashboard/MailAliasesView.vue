@@ -94,8 +94,8 @@ import {
 	ListSelectBanner,
 	ListView,
 	createResource,
+	useList,
 } from 'frappe-ui'
-import { useList } from 'frappe-ui/src/data-fetching'
 
 import { raiseToast } from '@/utils'
 import DashboardLayout from '@/components/DashboardLayout.vue'
@@ -145,7 +145,7 @@ const deleteAliases = createResource({
 	onSuccess: () => {
 		aliases.reload()
 		showDeleteAliases.value = false
-		raiseToast(__('Aliases deleted successfully.'))
+		raiseToast(__('Aliases deleted.'))
 		listView.value?.toggleAllRows()
 	},
 	onError: (error) => {

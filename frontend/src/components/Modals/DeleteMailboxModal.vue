@@ -33,7 +33,7 @@ const deleteFolder = createResource({
 	url: 'mail.client.doctype.mailbox.mailbox.delete_mailbox',
 	makeParams: () => ({ account: user.data.name, id: mailbox.id }),
 	onSuccess: () => {
-		raiseToast(__('Folder deleted successfully'))
+		raiseToast(__('Folder deleted.'))
 		show.value = false
 		mailboxes.reload()
 	},

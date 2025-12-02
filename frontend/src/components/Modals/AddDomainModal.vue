@@ -88,7 +88,7 @@ const verifyDNS = createResource({
 		if (data) {
 			show.value = false
 			emit('reloadDomains')
-			raiseToast('Domain added successfully!')
+			raiseToast('Domain added.')
 		} else verificationError.value = __('Failed to verify DNS record.')
 	},
 })

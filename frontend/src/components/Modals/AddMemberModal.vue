@@ -25,7 +25,7 @@
 						class="text-ink-gray-3 mx-2.5 mb-1.5 mt-auto h-4 w-4"
 						name="at-sign"
 					/>
-					<LinkControl
+					<Link
 						v-model="accountRequest.domain"
 						:label="__('Domain')"
 						placeholder="yourdomain.com"
@@ -88,10 +88,10 @@
 
 <script setup lang="ts">
 import { inject, reactive, watch } from 'vue'
+import { Link } from 'frappe-ui/frappe'
 import { Dialog, ErrorMessage, FeatherIcon, FormControl, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import LinkControl from '@/components/Controls/LinkControl.vue'
 
 import type { UserResource } from '@/types'
 
@@ -131,13 +131,7 @@ const addMember = createResource({
 	url: 'mail.api.admin.add_member',
 	makeParams: () => ({ tenant: user.data.tenant, ...accountRequest }),
 	onSuccess: () => {
-		raiseToast(
-			__(
-				accountRequest.send_invite
-					? 'Member invited successfully'
-					: 'Member added successfully',
-			),
-		)
+		raiseToast(accountRequest.send_invite ? __('Member invited.') : __('Member added.'))
 		emit('reload')
 		show.value = false
 	},

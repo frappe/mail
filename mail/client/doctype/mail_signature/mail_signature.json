@@ -1,0 +1,84 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2025-11-21 16:00:01.823042",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "account",
+  "column_break_yaxd",
+  "signature_name",
+  "section_break_tvbn",
+  "html_body"
+ ],
+ "fields": [
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Account",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_yaxd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "signature_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Signature Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_tvbn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "html_body",
+   "fieldtype": "Code",
+   "label": "HTML"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-12-01 15:16:26.188319",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Mail Signature",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Mail User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

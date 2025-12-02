@@ -44,7 +44,7 @@ import { type MailboxRole, userStore } from '@/stores/user'
 
 const { mailboxes } = userStore()
 
-const mailboxName = (role: MailboxRole) => mailboxes.data?.find((m) => m.role === role)._name
+const mailboxName = (role: MailboxRole) => mailboxes.data?.find((m) => m.role === role)?._name
 
 const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 
@@ -86,14 +86,14 @@ const shortcutGroups = computed(() => [
 				[['↑', __('or'), 'K'], __('Go to Previous Mail')],
 				[['G', __('then'), 'G'], __('Go to First Mail')],
 				[['Shift', 'G'], __('Go to Last Mail')],
+				[['Enter'], __('Open Mail')],
+				[[modifier.value, 'K'], __('Search Mail')],
 				[['G', __('then'), 'I'], __('Go to {0}', [mailboxName('inbox')])],
 				[['G', __('then'), 'F'], __('Go to Starred')],
 				[['G', __('then'), 'S'], __('Go to {0}', [mailboxName('sent')])],
 				[['G', __('then'), 'D'], __('Go to {0}', [mailboxName('drafts')])],
 				[['G', __('then'), 'J'], __('Go to {0}', [mailboxName('junk')])],
 				[['G', __('then'), 'T'], __('Go to {0}', [mailboxName('trash')])],
-				[[modifier.value, 'K'], __('Search Mail')],
-				[['Enter'], __('Open Mail')],
 			],
 		},
 		{

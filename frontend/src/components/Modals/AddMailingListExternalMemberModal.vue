@@ -26,8 +26,7 @@
 
 <script setup lang="ts">
 import { watch } from 'vue'
-import { Dialog, FormControl } from 'frappe-ui'
-import { useNewDoc } from 'frappe-ui/src/data-fetching'
+import { Dialog, FormControl, useNewDoc } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 
@@ -44,7 +43,7 @@ const member = useNewDoc(
 		beforeSubmit: () => (member.doc.mailing_list = list),
 		onSuccess: () => {
 			show.value = false
-			raiseToast(__('Member added successfully'))
+			raiseToast(__('Member added.'))
 			emit('reloadMembers')
 		},
 		onError: (error) => raiseToast(error.message, 'error'),

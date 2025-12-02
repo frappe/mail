@@ -53,7 +53,7 @@ const updateFolder = createResource({
 	url: 'mail.client.doctype.mailbox.mailbox.update_mailbox',
 	makeParams: () => folder,
 	onSuccess: () => {
-		raiseToast(__('Folder updated successfully'))
+		raiseToast(__('Folder updated.'))
 		show.value = false
 		mailboxes.reload()
 	},

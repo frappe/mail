@@ -6,7 +6,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
 	define: {
 		__VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
 	},
@@ -31,6 +31,8 @@ export default defineConfig({
 						'mail_contact',
 						'mail_recipient',
 						'mail_settings',
+						'identity',
+						'mail_signature',
 					],
 				},
 			},
@@ -106,7 +108,6 @@ export default defineConfig({
 	},
 	optimizeDeps: {
 		include: [
-			'tailwind.config.js',
 			'frappe-ui > feather-icons',
 			'interactjs',
 			'engine.io-client',
@@ -114,5 +115,6 @@ export default defineConfig({
 			'prosemirror-view',
 			'highlight.js/lib/core',
 		],
+		exclude: mode === 'production' ? [] : ['frappe-ui'],
 	},
-})
+}))

@@ -81,8 +81,8 @@ import {
 	ListSelectBanner,
 	ListView,
 	createResource,
+	useList,
 } from 'frappe-ui'
-import { useList } from 'frappe-ui/src/data-fetching'
 
 import { raiseToast } from '@/utils'
 import DashboardLayout from '@/components/DashboardLayout.vue'
@@ -121,7 +121,7 @@ const deleteLists = createResource({
 	onSuccess: () => {
 		lists.reload()
 		showDeleteLists.value = false
-		raiseToast(__('Mailing Lists deleted successfully.'))
+		raiseToast(__('Mailing lists deleted.'))
 		listView.value?.toggleAllRows()
 	},
 	onError: (error) => {

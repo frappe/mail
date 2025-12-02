@@ -60,7 +60,7 @@ const setProfilePhoto = createResource({
 		value: image,
 	}),
 	onSuccess: () => {
-		raiseToast(__('Profile photo updated successfully.'))
+		raiseToast(__('Profile photo updated.'))
 		user.reload()
 	},
 })

@@ -32,8 +32,7 @@
 
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { Dialog, createResource } from 'frappe-ui'
-import { useList } from 'frappe-ui/src/data-fetching'
+import { Dialog, createResource, useList } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import AddMailingListMemberInput from '@/components/AddMailingListMemberInput.vue'
@@ -85,7 +84,7 @@ const addMembers = createResource({
 	url: 'mail.api.admin.add_list_members',
 	makeParams: () => ({ list, type, members: members.value }),
 	onSuccess: () => {
-		raiseToast(__('Members added successfully'))
+		raiseToast(__('Members added.'))
 		show.value = false
 		emit('reloadMembers')
 	},

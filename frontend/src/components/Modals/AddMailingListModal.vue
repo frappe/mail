@@ -25,7 +25,7 @@
 					class="text-ink-gray-3 mx-2.5 mb-1.5 mt-auto h-4 w-4"
 					name="at-sign"
 				/>
-				<LinkControl
+				<Link
 					v-model="list.doc.domain_name"
 					:label="__('Domain Name')"
 					placeholder="yourdomain.com"
@@ -46,11 +46,10 @@
 <script setup lang="ts">
 import { inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Dialog, FeatherIcon, FormControl } from 'frappe-ui'
-import { useNewDoc } from 'frappe-ui/src/data-fetching'
+import { Link } from 'frappe-ui/frappe'
+import { Dialog, FeatherIcon, FormControl, useNewDoc } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import LinkControl from '@/components/Controls/LinkControl.vue'
 
 const show = defineModel<boolean>()
 
@@ -72,7 +71,7 @@ const list = useNewDoc(
 		},
 		onSuccess: () => {
 			show.value = false
-			raiseToast(__('Mailing List created successfully'))
+			raiseToast(__('Mailing List created.'))
 			router.push({ name: 'MailingList', params: { listName: list.doc.email } })
 		},
 		onError: (error) => raiseToast(error.message, 'error'),

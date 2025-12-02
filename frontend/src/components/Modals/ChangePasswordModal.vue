@@ -7,18 +7,21 @@
 					type="password"
 					:label="__('Current Password')"
 					placeholder="••••••••"
+					variant="outline"
 				/>
 				<FormControl
 					v-model="newPassword"
 					type="password"
 					:label="__('New Password')"
 					placeholder="••••••••"
+					variant="outline"
 				/>
 				<FormControl
 					v-model="confirmPassword"
 					type="password"
 					:label="__('Confirm New Password')"
 					placeholder="••••••••"
+					variant="outline"
 				/>
 				<ErrorMessage :message="errorMessage" />
 			</div>
@@ -63,7 +66,7 @@ const updatePassword = createResource({
 	makeParams: () => ({ old_password: currentPassword.value, new_password: newPassword.value }),
 	onSuccess: () => {
 		show.value = false
-		raiseToast(__('Password updated successfully'))
+		raiseToast(__('Password updated.'))
 	},
 })
 

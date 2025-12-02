@@ -28,10 +28,12 @@
 						{ label: __('Mailing List'), value: 'Mailing List' },
 					]"
 				/>
-				<LinkControl
+				<Link
 					v-model="alias.doc.alias_for_name"
 					:label="
-						__(alias.doc.alias_for_type === 'Mail Account' ? 'User' : 'Mailing List')
+						alias.doc.alias_for_type === 'Mail Account'
+							? __('User')
+							: __('Mailing List')
 					"
 					:doctype="
 						alias.doc.alias_for_type === 'Mail Account'
@@ -47,10 +49,10 @@
 
 <script setup lang="ts">
 import { inject, ref, watch } from 'vue'
+import { Link } from 'frappe-ui/frappe'
 import { Dialog, FormControl, Switch, createDocumentResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import LinkControl from '@/components/Controls/LinkControl.vue'
 
 import type { MailAlias } from '@/types'
 
@@ -74,7 +76,7 @@ const getAlias = () =>
 		setValue: {
 			onSuccess: () => {
 				show.value = false
-				raiseToast(__('Alias saved successfully'))
+				raiseToast(__('Alias updated.'))
 				emit('reloadAliases')
 			},
 			onError: (error) => {

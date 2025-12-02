@@ -72,8 +72,14 @@
 <script setup lang="ts">
 import { computed, inject, reactive } from 'vue'
 import { LoaderCircle } from 'lucide-vue-next'
-import { Button, ErrorMessage, FileUploader, FormControl, createResource } from 'frappe-ui'
-import { useList } from 'frappe-ui/src/data-fetching'
+import {
+	Button,
+	ErrorMessage,
+	FileUploader,
+	FormControl,
+	createResource,
+	useList,
+} from 'frappe-ui'
 
 const user = inject('$user')
 
