@@ -55,7 +55,7 @@ import { Dialog, ErrorMessage, FormControl, createResource } from 'frappe-ui'
 import { raiseToast } from '@/utils'
 import CopyControl from '@/components/Controls/CopyControl.vue'
 
-const show = defineModel()
+const show = defineModel<boolean>()
 const user = inject('$user')
 
 const domainName = ref('')
@@ -74,17 +74,13 @@ watch(show, () => {
 
 const domainRequest = createResource({
 	url: 'mail.api.admin.get_domain_request',
-	makeParams() {
-		return { domain_name: domainName.value, mail_tenant: user.data.tenant }
-	},
+	makeParams: () => ({ domain_name: domainName.value, mail_tenant: user.data.tenant }),
 })
 
 const verifyDNS = createResource({
 	url: 'mail.api.admin.verify_dns_record',
-	makeParams() {
-		return { domain_request: domainRequest?.data.name }
-	},
-	onSuccess(data) {
+	makeParams: () => ({ domain_request: domainRequest?.data.name }),
+	onSuccess: (data) => {
 		if (data) {
 			show.value = false
 			emit('reloadDomains')

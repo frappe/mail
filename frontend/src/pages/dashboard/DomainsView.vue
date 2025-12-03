@@ -16,6 +16,7 @@
 				class="w-40"
 				type="select"
 				:options="STATUS_OPTIONS"
+				@update:model-value="domains.reload()"
 			/>
 		</div>
 		<ListView
@@ -36,11 +37,11 @@
 						:row="row"
 						class="hover:!bg-surface-gray-1"
 					>
-						<ListRowItem :item="item">
+						<ListRowItem :item="String(item)">
 							<Badge
-								v-if="column.key == 'status'"
-								:theme="getTheme(item)"
-								:label="item"
+								v-if="column.key === 'is_verified'"
+								:theme="item ? 'green' : 'red'"
+								:label="item ? __('Verified') : __('Not Verified')"
 							/>
 						</ListRowItem>
 					</ListRow>
@@ -53,7 +54,7 @@
 </template>
 <script setup lang="ts">
 import { inject, ref } from 'vue'
-import { useDebounce } from '@vueuse/core'
+import { watchDebounced } from '@vueuse/core'
 import {
 	Badge,
 	FeatherIcon,
@@ -64,7 +65,7 @@ import {
 	ListRowItem,
 	ListRows,
 	ListView,
-	useList,
+	createResource,
 } from 'frappe-ui'
 
 import DashboardLayout from '@/components/DashboardLayout.vue'
@@ -74,38 +75,25 @@ const user = inject('$user')
 
 const showAddDomain = ref(false)
 const search = ref('')
-const debouncedSearch = useDebounce(search, 500)
-const status = ref<'Verified' | 'Not Verified' | 'Disabled' | ''>('')
+const status = ref<'Verified' | 'Not Verified' | ''>('')
 
-const domains = useList({
-	doctype: 'Mail Domain',
-	fields: ['name', 'enabled', 'is_verified'],
-	filters: () => {
-		const filters: Record<string, string | string[] | number> = {
-			tenant: user.data?.tenant,
-			name: ['like', debouncedSearch.value],
-		}
-		if (status.value) {
-			filters.is_verified = status.value === 'Verified' ? 1 : 0
-			filters.enabled = status.value === 'Disabled' ? 0 : 1
-		}
-		return filters
-	},
-	transform: (data) =>
-		data.map((row) => ({
-			...row,
-			status: row.is_verified ? 'Verified' : row.enabled ? 'Not Verified' : 'Disabled',
-		})),
-	limit: 100,
-	cacheKey: ['mailTenantDomains', user.data?.tenant, debouncedSearch.value, status.value],
+const domains = createResource({
+	url: 'mail.api.admin.get_domains',
+	auto: true,
+	makeParams: () => ({
+		tenant: user.data.tenant,
+		txt: search.value,
+		is_verified: status.value === 'Verified' ? 1 : status.value === 'Not Verified' ? 0 : null,
+	}),
+	cache: ['mailTenantDomains', user.data.tenant, search.value, status.value],
 })
 
-const getTheme = (status: 'Verified' | 'Not Verified' | 'Disabled') =>
-	status === 'Verified' ? 'green' : status === 'Not Verified' ? 'orange' : 'gray'
+watchDebounced(() => search.value, domains.reload, { debounce: 500 })
 
 const LIST_COLUMNS = [
 	{ label: __('Domain'), key: 'name' },
-	{ label: __('Status'), key: 'status' },
+	{ label: __('Status'), key: 'is_verified' },
+	{ label: __('Members'), key: 'total_members' },
 ]
 
 const LIST_OPTIONS = {
@@ -119,6 +107,5 @@ const STATUS_OPTIONS = [
 	{ label: '', value: '' },
 	{ label: __('Verified'), value: 'Verified' },
 	{ label: __('Not Verified'), value: 'Not Verified' },
-	{ label: __('Disabled'), value: 'Disabled' },
 ]
 </script>

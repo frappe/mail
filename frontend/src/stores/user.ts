@@ -15,9 +15,10 @@ export const userStore = defineStore('mail-users', () => {
 	const userResource: UserResource = createResource({
 		url: 'mail.api.account.get_user_info',
 		onSuccess: (data) => {
-			if (!data) return
+			if (!data?.is_mail_user) return
 
-			mailboxes.reload()
+			mailboxes.fetch()
+			identities.fetch()
 			setShowReadingPane(
 				data.name,
 				localStorage.getItem(`user:${data.name}:showReadingPane`) === 'true',
@@ -52,7 +53,7 @@ export const userStore = defineStore('mail-users', () => {
 		return ids
 	})
 
-	const identities = createResource({ url: 'mail.api.account.get_identities', auto: true })
+	const identities = createResource({ url: 'mail.api.account.get_identities' })
 
 	return { userResource, mailboxes, mailboxIds, identities }
 })

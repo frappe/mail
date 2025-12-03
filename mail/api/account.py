@@ -161,8 +161,9 @@ def get_user_info() -> dict | None:
 		)
 		user_dict.is_tenant_owner = tenant_owner == user
 
-	user_dict.email_addresses = get_user_email_addresses(user)
-	user_dict.default_outgoing = user_dict.jmap_default_outgoing_email
+	if user_dict.is_mail_user:
+		user_dict.email_addresses = get_user_email_addresses(user)
+		user_dict.default_outgoing = user_dict.jmap_default_outgoing_email
 
 	return user_dict
 

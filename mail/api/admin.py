@@ -5,6 +5,7 @@ from frappe import _
 from frappe.query_builder import Case, Order
 from frappe.utils import cint
 
+from mail.server.doctype.mail_principal.mail_principal import fetch_principals
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import is_tenant_admin
 
@@ -166,3 +167,28 @@ def delete_account_requests(names: list) -> None:
 
 	for d in names:
 		frappe.delete_doc("Mail Account Request", d)
+
+
+@frappe.whitelist()
+def get_domains(tenant: str, txt: str | None = None, is_verified: int | None = None) -> list[dict]:
+	"""Get domains for a tenant"""
+
+	if not (domains := fetch_principals(tenant, "Domain", txt, 1, 100)[0]):
+		return []
+
+	domain_names = [d["name"] for d in domains]
+	is_verified_mapping = frappe.get_all(
+		"Mail Principal Binding",
+		{"tenant": tenant, "principal_type": "Domain", "principal_name": ["in", domain_names]},
+		["principal_name", "is_verified"],
+	)
+	is_verified_dict = {d["principal_name"]: d["is_verified"] for d in is_verified_mapping}
+
+	for domain in domains:
+		domain["is_verified"] = is_verified_dict.get(domain["name"], 0)
+
+	if is_verified is not None:
+		domains = [d for d in domains if d["is_verified"] == is_verified]
+
+	fields = ["name", "is_verified", "total_members"]
+	return [{f: d[f] for f in fields} for d in domains]
