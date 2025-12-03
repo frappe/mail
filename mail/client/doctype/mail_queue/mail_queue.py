@@ -30,8 +30,9 @@ from uuid_utils import uuid7
 
 from mail import __version__
 from mail.jmap import get_identities, get_jmap_client
+from mail.utils.cache import get_tenant_for_user
 from mail.utils.dt import parsedate_to_datetime
-from mail.utils.user import has_role, is_administrator
+from mail.utils.user import has_role, is_administrator, is_tenant_bound_user
 from mail.utils.validation import has_permission_for_user, validate_email_address
 
 
@@ -248,6 +249,7 @@ class MailQueue(Document):
 			self.validate_raw_message()
 			self.validate_from_email()
 			self.validate_from_name()
+			self.validate_from_domain()
 			self.validate_destroy_after_submit()
 			self.validate_delivery_mode()
 			self.validate_reply_to()
@@ -329,7 +331,7 @@ class MailQueue(Document):
 		"""Validates the from email."""
 
 		if self.from_email:
-			if not any(self.from_email.lower() == i["email"].lower() for i in get_identities(self.user)):
+			if not self.identity:
 				frappe.throw(
 					_(
 						"You cannot send email from {0} using user {1}. Please use the email address associated with the user."
@@ -342,6 +344,24 @@ class MailQueue(Document):
 		"""Validates the from name."""
 
 		self.from_name = self.from_name or self.identity["_name"]
+
+	def validate_from_domain(self) -> None:
+		"""Validates the from domain."""
+
+		if not is_tenant_bound_user(self.user):
+			return
+
+		tenant = get_tenant_for_user(self.user)
+		from_domain = self.from_email.split("@")[-1]
+
+		if not frappe.db.exists(
+			"Mail Principal Binding", {"tenant": tenant, "principal_name": from_domain, "is_verified": 1}
+		):
+			frappe.throw(
+				_(
+					"The From email domain {0} is not available for tenant {1}. Please ensure that the domain is associated with the tenant and has been verified."
+				).format(frappe.bold(from_domain), frappe.bold(tenant))
+			)
 
 	def validate_destroy_after_submit(self) -> None:
 		"""Validates the destroy after submit setting."""
@@ -499,8 +519,7 @@ class MailQueue(Document):
 	def validate_sent_at(self) -> None:
 		"""Validates the sent at date."""
 
-		if not self.raw_message:
-			self.sent_at = now()
+		self.sent_at = self.sent_at or now()
 
 	def validate_priority(self) -> None:
 		"""Validates the priority."""
