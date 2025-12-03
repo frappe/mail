@@ -11,9 +11,19 @@ frappe.ui.form.on('Mail Domain Request', {
 	add_actions(frm) {
 		if (frm.doc.__islocal || frm.doc.is_verified) return
 
-		frm.add_custom_button(__('Verify and Create Domain'), () => {
-			frm.trigger('verify_and_create_domain')
-		})
+		frm.add_custom_button(
+			__('Verify and Create Domain'),
+			() => frm.trigger('verify_and_create_domain'),
+			__('Actions'),
+		)
+
+		if (frappe.user.has_role('System Manager')) {
+			frm.add_custom_button(
+				__('Force Verify and Create Domain'),
+				() => frm.trigger('force_verify_and_create_domain'),
+				__('Actions'),
+			)
+		}
 	},
 
 	set_user(frm) {
@@ -41,6 +51,24 @@ frappe.ui.form.on('Mail Domain Request', {
 			method: 'verify_and_create_domain',
 			args: {
 				save: true,
+			},
+			freeze: true,
+			freeze_message: __('Creating Domain...'),
+			callback: (r) => {
+				if (!r.exc) {
+					frm.refresh()
+				}
+			},
+		})
+	},
+
+	force_verify_and_create_domain(frm) {
+		frm.call({
+			doc: frm.doc,
+			method: 'verify_and_create_domain',
+			args: {
+				save: true,
+				force_verify: true,
 			},
 			freeze: true,
 			freeze_message: __('Creating Domain...'),

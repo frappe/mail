@@ -65,14 +65,17 @@ class MailDomainRequest(Document):
 		self.verification_key = "frappe-mail-verification=" + random_string(48)
 
 	@frappe.whitelist()
-	def verify_and_create_domain(self, save: bool = False) -> bool:
+	def verify_and_create_domain(self, save: bool = False, force_verify: bool = False) -> bool:
 		"""Verifies the domain and creates the domain principal if verified."""
+
+		if force_verify:
+			frappe.only_for("System Manager")
 
 		if self.is_verified:
 			frappe.throw(_("Domain is already verified and created."))
 
 		self.is_verified = 0
-		if verify_dns_record(self.domain_name, "TXT", self.verification_key):
+		if force_verify or verify_dns_record(self.domain_name, "TXT", self.verification_key):
 			self.is_verified = 1
 			self.create_domain()
 			frappe.msgprint(_("Domain Verification Successful"), indicator="green", alert=True)
