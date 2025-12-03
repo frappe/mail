@@ -551,6 +551,7 @@ def add_principal(principal: "MailPrincipal") -> str:
 	_enabled_permissions = []
 	_disabled_permissions = []
 	_external_members = []
+	principals_to_invalidate = set()
 
 	if principal.type == "Domain":
 		if "." not in principal.name:
@@ -569,17 +570,20 @@ def add_principal(principal: "MailPrincipal") -> str:
 			validate_email_address(email, True)
 		is_subaddressed_email(principal.name, raise_exception=True)
 		ensure_emails_belong_to_tenant_domains(principal.tenant, _emails)
+		principals_to_invalidate.update([email.split("@")[1] for email in _emails])
 
 	if principal.type in ["Group", "Individual"]:
 		if _member_of := principal._member_of:
 			for group in _member_of:
 				validate_email_address(group, True)
 			ensure_groups_belong_to_tenant(principal.tenant, _member_of)
+			principals_to_invalidate.update(_member_of)
 
 		if _lists := principal._lists:
 			for lst in _lists:
 				validate_email_address(lst, True)
 			ensure_lists_belong_to_tenant(principal.tenant, _lists)
+			principals_to_invalidate.update(_lists)
 
 		_disabled_permissions = principal._disabled_permissions
 
@@ -588,6 +592,7 @@ def add_principal(principal: "MailPrincipal") -> str:
 			for member in _members:
 				validate_email_address(member, True)
 			ensure_members_belong_to_tenant(principal.tenant, _members)
+			principals_to_invalidate.update(_members)
 
 	if principal.type == "List":
 		if _external_members := principal._external_members:
@@ -632,11 +637,14 @@ def add_principal(principal: "MailPrincipal") -> str:
 				message=frappe.get_traceback(with_context=True),
 			)
 
+	for pname in principals_to_invalidate:
+		_remove_principal_from_cache(principal.tenant, pname)
+
 	return principal.name
 
 
 @frappe.whitelist()
-def get_principal(pname: str) -> dict:
+def get_principal(pname: str, skip_dns_records: bool = False, ignore_cache: bool = False) -> dict:
 	"""Returns principal details for the given principal name."""
 
 	tenant = get_principal_tenant(pname)
@@ -644,11 +652,12 @@ def get_principal(pname: str) -> dict:
 	ensure_tenant_has_cluster(tenant)
 	ensure_principal_belong_to_tenant(tenant, pname)
 
-	if cached := _get_principal_from_cache(tenant, pname):
-		return cached
+	if not ignore_cache:
+		if cached := _get_principal_from_cache(tenant, pname):
+			return cached
 
 	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
-	principal = _get_principal(backend, pname, ignore_not_found=False)
+	principal = _get_principal(backend, pname, skip_dns_records=skip_dns_records, ignore_not_found=False)
 	formatted = format_principal(tenant, principal)
 	_store_principal_in_cache(tenant, pname, formatted)
 
@@ -741,6 +750,7 @@ def update_principal(principal: "MailPrincipal") -> None:
 			validate_email_address(member, True)
 
 	actions = []
+	principals_to_invalidate = set()
 	for field, value in updates.items():
 		if field in ["name", "quota", "description", "locale"]:
 			if existing_principal.get(field) != value:
@@ -755,9 +765,26 @@ def update_principal(principal: "MailPrincipal") -> None:
 		if values_to_add := set(value) - set(existing_values):
 			for v in values_to_add:
 				actions.append({"action": "addItem", "field": server_field, "value": v})
+
+			if field == "emails" and principal.type in ["Group", "Individual", "List"]:
+				principals_to_invalidate.update([email.split("@")[1] for email in values_to_add])
+
+			if (field in ["member_of", "lists"] and principal.type in ["Group", "Individual"]) or (
+				field == "members" and principal.type in ["Group", "List"]
+			):
+				principals_to_invalidate.update(values_to_add)
+
 		if values_to_remove := set(existing_values) - set(value):
 			for v in values_to_remove:
 				actions.append({"action": "removeItem", "field": server_field, "value": v})
+
+			if field == "emails" and principal.type in ["Group", "Individual", "List"]:
+				principals_to_invalidate.update([email.split("@")[1] for email in values_to_remove])
+
+			if (field in ["member_of", "lists"] and principal.type in ["Group", "Individual"]) or (
+				field == "members" and principal.type in ["Group", "List"]
+			):
+				principals_to_invalidate.update(values_to_remove)
 
 	response = backend.request("PATCH", f"{PRINCIPAL_ENDPOINT}/{principal.name}", data=json.dumps(actions))
 
@@ -772,6 +799,9 @@ def update_principal(principal: "MailPrincipal") -> None:
 		update_principal_binding(
 			principal.name, principal_name=principal._name, principal_type=principal.type
 		)
+
+	for pname in principals_to_invalidate:
+		_remove_principal_from_cache(tenant, pname)
 
 	try:
 		sync_jmap_identities(principal.name)
@@ -790,20 +820,13 @@ def delete_principal(pname: str) -> None:
 	"""Deletes the principal with the given principal name."""
 
 	tenant = get_principal_tenant(pname)
-	ensure_access_to_tenant(tenant)
-	ensure_tenant_has_cluster(tenant)
-	ensure_principal_belong_to_tenant(tenant, pname)
+	_remove_principal_from_cache(tenant, pname)
+	principal = frappe.get_doc("Mail Principal", pname)
 
-	principal_type = frappe.db.get_value(
-		"Mail Principal Binding", {"principal_name": pname}, "principal_type"
-	)
-	if principal_type == "Domain":
-		if frappe.db.exists(
-			"Mail Principal Binding",
-			{"principal_type": ["in", ["Group", "Individual"]], "principal_name": ["like", f"%@{pname}%"]},
-		):
+	if principal.type == "Domain":
+		if principal.total_members > 0:
 			frappe.throw(
-				_("Cannot delete domain {0} as there are principals associated with it.").format(
+				_("Cannot delete domain {0} as there are addresses associated with it.").format(
 					frappe.bold(pname)
 				)
 			)
@@ -814,10 +837,8 @@ def delete_principal(pname: str) -> None:
 	if response.status_code != 200:
 		frappe.throw(_("Failed to delete principal {0}: {1}").format(frappe.bold(pname), response.text))
 
-	_remove_principal_from_cache(tenant, pname)
-
 	# If the principal is an Individual, disable the user and remove from tenant members
-	if principal_type == "Individual":
+	if principal.type == "Individual":
 		if member := frappe.db.exists("Mail Tenant Member", {"tenant": tenant, "user": pname}):
 			frappe.delete_doc("Mail Tenant Member", member)
 
@@ -827,6 +848,18 @@ def delete_principal(pname: str) -> None:
 			user.save(ignore_permissions=True)
 
 	delete_principal_binding(pname, raise_exception=False)
+
+	principals_to_invalidate = set()
+	if principal.type in ["Group", "Individual", "List"]:
+		principals_to_invalidate.update([email.split("@")[1] for email in principal._emails])
+	if principal.type in ["Group", "Individual"]:
+		principals_to_invalidate.update(principal._member_of)
+		principals_to_invalidate.update(principal._lists)
+	if principal.type in ["Group", "List"]:
+		principals_to_invalidate.update(principal._members)
+
+	for pname in principals_to_invalidate:
+		_remove_principal_from_cache(tenant, pname)
 
 
 @frappe.whitelist()

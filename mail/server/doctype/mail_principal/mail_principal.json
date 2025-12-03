@@ -113,6 +113,7 @@
    "fieldname": "emails",
    "fieldtype": "Table",
    "label": "Emails",
+   "no_copy": 1,
    "options": "Mail Principal Email"
   },
   {
@@ -202,6 +203,7 @@
    "in_standard_filter": 1,
    "label": "Tenant",
    "options": "Mail Tenant",
+   "search_index": 1,
    "set_only_once": 1
   },
   {
@@ -243,7 +245,8 @@
    "fieldname": "password",
    "fieldtype": "Data",
    "label": "Password",
-   "mandatory_depends_on": "eval: doc.__islocal && doc.type == \"Individual\""
+   "mandatory_depends_on": "eval: doc.__islocal && doc.type == \"Individual\"",
+   "no_copy": 1
   },
   {
    "fieldname": "column_break_mwqh",
@@ -253,6 +256,7 @@
    "fieldname": "app_passwords",
    "fieldtype": "Table",
    "label": "App Passwords",
+   "no_copy": 1,
    "options": "Mail Principal Password"
   },
   {
@@ -283,6 +287,7 @@
    "fieldname": "dns_records",
    "fieldtype": "Table",
    "label": "DNS Records",
+   "no_copy": 1,
    "options": "Mail Principal DNS Record",
    "read_only": 1
   },
@@ -315,7 +320,7 @@
    "link_fieldname": "principal_name"
   }
  ],
- "modified": "2025-12-02 10:32:37.435404",
+ "modified": "2025-12-03 08:18:46.367506",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Principal",
