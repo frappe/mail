@@ -5,9 +5,9 @@ html {
 }
 
 h1 {
-	@apply font-semibold;
+	@apply !font-semibold;
 }
 
 h2 {
-	@apply text-xl font-medium sm:text-lg;
+	@apply text-xl !font-medium sm:text-lg;
 }

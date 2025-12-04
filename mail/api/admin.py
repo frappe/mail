@@ -30,7 +30,9 @@ def get_domain_request(domain_name: str, mail_tenant: str) -> "MailDomainRequest
 	if frappe.db.exists("Mail Principal Binding", {"principal_name": domain_name}):
 		frappe.throw(_("Domain {0} has already been registered.").format(frappe.bold(domain_name)))
 
-	if name := frappe.db.exists("Mail Domain Request", {"domain_name": domain_name, "tenant": mail_tenant}):
+	if name := frappe.db.exists(
+		"Mail Domain Request", {"domain_name": domain_name, "tenant": mail_tenant, "is_verified": 0}
+	):
 		return frappe.get_doc("Mail Domain Request", name)
 
 	domain_request = frappe.new_doc("Mail Domain Request")

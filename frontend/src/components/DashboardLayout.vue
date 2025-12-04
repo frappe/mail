@@ -11,7 +11,7 @@
 		</header>
 		<div
 			class="flex flex-1 flex-col overflow-y-auto"
-			:class="{ 'm-5 space-y-5': !removeSpacing }"
+			:class="{ 'space-y-5 p-5': !removeSpacing }"
 		>
 			<slot />
 		</div>

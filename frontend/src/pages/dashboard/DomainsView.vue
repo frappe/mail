@@ -40,7 +40,7 @@
 						<ListRowItem :item="String(item)">
 							<Badge
 								v-if="column.key === 'is_verified'"
-								:theme="item ? 'green' : 'red'"
+								:theme="item ? 'green' : 'gray'"
 								:label="item ? __('Verified') : __('Not Verified')"
 							/>
 						</ListRowItem>
@@ -104,7 +104,7 @@ const LIST_OPTIONS = {
 }
 
 const STATUS_OPTIONS = [
-	{ label: '', value: '' },
+	{ label: '', value: 'Both' },
 	{ label: __('Verified'), value: 'Verified' },
 	{ label: __('Not Verified'), value: 'Not Verified' },
 ]

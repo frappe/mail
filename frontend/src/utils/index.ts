@@ -107,9 +107,9 @@ export const kebabToTitleCase = (str: string) =>
 export const copyToClipBoard = async (text: string) => {
 	try {
 		await navigator.clipboard.writeText(text)
-		raiseToast(__('Message copied.'))
+		raiseToast(__('Copied to clipboard.'))
 	} catch {
-		raiseToast(__('Failed to copy text.'), 'error')
+		raiseToast(__('Failed to copy.'), 'error')
 	}
 }
 

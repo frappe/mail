@@ -30,6 +30,7 @@ declare module 'vue' {
     DashboardLayout: typeof import('./src/components/DashboardLayout.vue')['default']
     DefaultLayout: typeof import('./src/components/DefaultLayout.vue')['default']
     DeleteMailboxModal: typeof import('./src/components/Modals/DeleteMailboxModal.vue')['default']
+    DNSRecords: typeof import('./src/components/DNSRecords.vue')['default']
     EditAliasModal: typeof import('./src/components/Modals/EditAliasModal.vue')['default']
     EditInviteModal: typeof import('./src/components/Modals/EditInviteModal.vue')['default']
     EditMailboxModal: typeof import('./src/components/Modals/EditMailboxModal.vue')['default']
