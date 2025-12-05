@@ -92,12 +92,16 @@ import { inject, reactive, watch } from 'vue'
 import { Dialog, ErrorMessage, FeatherIcon, FormControl, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 
 import type { UserResource } from '@/types'
 
 const show = defineModel<boolean>()
+
 const user = inject('$user') as UserResource
 const dayjs = inject('$dayjs')
+
+const { domains } = userStore()
 
 const defaultAccountRequest = {
 	username: '',
@@ -134,13 +138,5 @@ const addMember = createResource({
 		emit('reload')
 		show.value = false
 	},
-})
-
-const domains = createResource({
-	url: 'mail.api.admin.get_domains',
-	auto: true,
-	makeParams: () => ({ tenant: user.data.tenant, is_verified: 1 }),
-	transform: (data) => data.map((domain) => domain.name),
-	cache: ['mailTenantDomains', user.data.tenant, '', 'Verified'],
 })
 </script>

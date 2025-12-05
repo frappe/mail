@@ -7,7 +7,7 @@ from frappe.utils import cint
 
 from mail.server.doctype.mail_principal.mail_principal import fetch_principals
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import is_tenant_admin
+from mail.utils.user import get_tenant_for_user, is_tenant_admin
 
 if TYPE_CHECKING:
 	from mail.client.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
@@ -137,9 +137,7 @@ def delete_mailing_lists(names: list) -> None:
 	"""Delete Mailing Lists"""
 
 	for d in names:
-		doc = frappe.get_doc("Mailing List", d)
-		doc.enabled = 0
-		frappe.db.delete("Mailing List Member", {"mailing_list": d})
+		doc = frappe.get_doc("Mail Principal", d)
 		doc.delete()
 
 
@@ -172,10 +170,11 @@ def delete_account_requests(names: list) -> None:
 
 
 @frappe.whitelist()
-def get_domains(tenant: str, txt: str | None = None, is_verified: int | None = None) -> list[dict]:
+def get_domains(txt: str | None = None, is_verified: int | None = None) -> list[dict]:
 	"""Get domains for a tenant"""
 
-	if not (domains := fetch_principals(tenant, "Domain", txt, 1, 100)[0]):
+	tenant = get_tenant_for_user(frappe.session.user)
+	if not (domains := fetch_principals(tenant, "Domain", txt, 1, 50)[0]):
 		return []
 
 	domain_names = [d["name"] for d in domains]
@@ -194,3 +193,14 @@ def get_domains(tenant: str, txt: str | None = None, is_verified: int | None = N
 
 	fields = ["name", "is_verified", "total_members"]
 	return [{f: d[f] for f in fields} for d in domains]
+
+
+@frappe.whitelist()
+def get_mailing_lists(txt: str | None = None) -> list[dict]:
+	"""Get domains for a tenant"""
+
+	tenant = get_tenant_for_user(frappe.session.user)
+	if not (lists := fetch_principals(tenant, "List", txt, 1, 50)[0]):
+		return []
+
+	return [{"name": d["name"]} for d in lists]

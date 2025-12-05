@@ -1,5 +1,5 @@
 <template>
-	<div class="space-y-4">
+	<div class="space-y-4 border-t p-4">
 		<div class="space-y-2">
 			<h3 class="flex items-center font-medium">
 				{{ title }}

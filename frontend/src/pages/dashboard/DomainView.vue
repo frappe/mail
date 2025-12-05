@@ -23,11 +23,8 @@
 					</div>
 				</div>
 			</transition>
-			<div class="space-y-8 rounded-md border p-4">
-				<div class="space-y-2">
-					<h2>{{ __('DNS Records') }}</h2>
-					<p class="text-ink-gray-5 text-sm">{{ BANNER.subtitle }}</p>
-				</div>
+			<div class="rounded-md border">
+				<h2 class="p-4">{{ __('DNS Records') }}</h2>
 				<DNSRecords
 					:title="__('Email Deliverability')"
 					:description="

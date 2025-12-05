@@ -20,6 +20,7 @@
 			<div class="flex items-center justify-between">
 				<FormControl
 					v-model="email"
+					:label="__('Name')"
 					:placeholder="isList ? 'list' : 'johndoe'"
 					class="w-full"
 				/>
@@ -30,6 +31,7 @@
 				<FormControl
 					v-model="domain"
 					type="combobox"
+					:label="__('Domain')"
 					placeholder="yourdomain.com"
 					class="w-full"
 					:options="domains.data"
@@ -41,8 +43,10 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, watch } from 'vue'
-import { Dialog, FeatherIcon, FormControl, createResource } from 'frappe-ui'
+import { ref, watch } from 'vue'
+import { Dialog, FeatherIcon, FormControl } from 'frappe-ui'
+
+import { userStore } from '@/stores/user'
 
 const show = defineModel<boolean>()
 
@@ -50,18 +54,10 @@ const { isList } = defineProps<{ isList: boolean }>()
 
 const emit = defineEmits(['addEmail'])
 
-const user = inject('$user')
+const { domains } = userStore()
 
 const email = ref('')
 const domain = ref('')
-
-const domains = createResource({
-	url: 'mail.api.admin.get_domains',
-	auto: true,
-	makeParams: () => ({ tenant: user.data.tenant, is_verified: 1 }),
-	transform: (data) => data.map((domain) => domain.name),
-	cache: ['mailTenantDomains', user.data.tenant, '', 'Verified'],
-})
 
 watch(show, (val) => {
 	if (val) email.value = ''

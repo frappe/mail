@@ -81,7 +81,6 @@ const domains = createResource({
 	url: 'mail.api.admin.get_domains',
 	auto: true,
 	makeParams: () => ({
-		tenant: user.data.tenant,
 		txt: search.value,
 		is_verified: status.value === 'Verified' ? 1 : status.value === 'Not Verified' ? 0 : null,
 	}),

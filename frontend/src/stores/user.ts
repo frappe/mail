@@ -15,6 +15,8 @@ export const userStore = defineStore('mail-users', () => {
 	const userResource: UserResource = createResource({
 		url: 'mail.api.account.get_user_info',
 		onSuccess: (data) => {
+			if (data?.is_mail_admin) domains.fetch()
+
 			if (!data?.is_mail_user) return
 
 			mailboxes.fetch()
@@ -55,5 +57,11 @@ export const userStore = defineStore('mail-users', () => {
 
 	const identities = createResource({ url: 'mail.api.account.get_identities' })
 
-	return { userResource, mailboxes, mailboxIds, identities }
+	const domains = createResource({
+		url: 'mail.api.admin.get_domains',
+		makeParams: () => ({ is_verified: 1 }),
+		transform: (data) => data.map((domain) => domain.name),
+	})
+
+	return { userResource, mailboxes, mailboxIds, identities, domains }
 })
