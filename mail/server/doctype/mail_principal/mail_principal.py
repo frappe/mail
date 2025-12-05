@@ -325,10 +325,6 @@ def _get_principal(
 	"""Fetches principal details from backend."""
 
 	response = backend.request("GET", f"{PRINCIPAL_ENDPOINT}/{pname}")
-
-	if response.status_code != 200:
-		frappe.throw(_("Failed to fetch principal {0}: {1}").format(frappe.bold(pname), response.text))
-
 	if response.json().get("error") == "notFound":
 		if not ignore_not_found:
 			frappe.throw(_("Principal {0} not found in backend.").format(frappe.bold(pname)))
@@ -340,15 +336,11 @@ def _get_principal(
 	dns_records = []
 	if principal["type"] == "domain" and not skip_dns_records:
 		response = backend.request("GET", f"{DNS_RECORDS_ENDPOINT}/{pname}")
-
-		if response.status_code != 200:
-			frappe.throw(
-				_("Failed to fetch DNS records for domain {0}: {1}").format(frappe.bold(pname), response.text)
-			)
-
 		if response.json().get("error") == "notFound":
 			if not ignore_not_found:
-				frappe.throw(_("Domain {0} not found in backend.").format(frappe.bold(pname)))
+				frappe.throw(
+					_("DNS Records for principal {0} not found in backend.").format(frappe.bold(pname))
+				)
 		else:
 			dns_records = response.json()["data"]
 
@@ -387,7 +379,7 @@ def _create_dkim_signature_for_domain(
 	]
 	response = backend.request("POST", SETTINGS_ENDPOINT, data=json.dumps(payload))
 
-	if response.status_code != 200 or response.json().get("error"):
+	if response.json().get("error"):
 		message = _("Failed to create DKIM signature for domain {0}").format(frappe.bold(domain))
 		frappe.log_error(title=message, message=frappe.get_traceback(with_context=True))
 
@@ -413,7 +405,7 @@ def _delete_dkim_signature_for_domain(
 		}
 	]
 	response = backend.request("POST", SETTINGS_ENDPOINT, data=json.dumps(payload))
-	if response.status_code != 200 or response.json().get("error"):
+	if response.json().get("error"):
 		message = _("Failed to delete DKIM signature for domain {0}").format(frappe.bold(domain))
 		frappe.log_error(title=message, message=frappe.get_traceback(with_context=True))
 
@@ -618,7 +610,7 @@ def add_principal(principal: "MailPrincipal") -> str:
 	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(principal.tenant))
 	response = backend.request("POST", PRINCIPAL_ENDPOINT, data=json.dumps(payload))
 
-	if response.status_code != 200 or response.json().get("error"):
+	if response.json().get("error"):
 		frappe.throw(_("Failed to add principal {0}: {1}").format(frappe.bold(principal.name), response.text))
 
 	create_principal_binding(principal.tenant, principal.name, principal.type)
@@ -788,7 +780,7 @@ def update_principal(principal: "MailPrincipal") -> None:
 
 	response = backend.request("PATCH", f"{PRINCIPAL_ENDPOINT}/{principal.name}", data=json.dumps(actions))
 
-	if response.status_code != 200 or response.json().get("error"):
+	if response.json().get("error"):
 		frappe.throw(
 			_("Failed to update principal {0}: {1}").format(frappe.bold(principal.name), response.text)
 		)
@@ -832,10 +824,7 @@ def delete_principal(pname: str) -> None:
 			)
 
 	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
-	response = backend.request("DELETE", f"{PRINCIPAL_ENDPOINT}/{pname}")
-
-	if response.status_code != 200:
-		frappe.throw(_("Failed to delete principal {0}: {1}").format(frappe.bold(pname), response.text))
+	backend.request("DELETE", f"{PRINCIPAL_ENDPOINT}/{pname}")
 
 	# If the principal is an Individual, disable the user and remove from tenant members
 	if principal.type == "Individual":
