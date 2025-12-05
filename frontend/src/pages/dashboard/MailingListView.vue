@@ -1,17 +1,8 @@
 <template>
-	<DashboardLayout
-		v-if="list.originalDoc"
-		:breadcrumbs="BREADCRUMBS"
-		:badge-label="list.originalDoc.enabled ? 'Enabled' : 'Disabled'"
-		:badge-theme="list.originalDoc.enabled ? 'green' : 'red'"
-	>
+	<DashboardLayout v-if="list.originalDoc" :breadcrumbs="BREADCRUMBS">
 		<template #actions>
 			<Dropdown :options="ADD_OPTIONS">
-				<Button
-					icon-left="plus"
-					:label="__('Add Members')"
-					:disabled="!list.originalDoc.enabled"
-				/>
+				<Button icon-left="plus" :label="__('Add Members')" />
 			</Dropdown>
 			<Button
 				variant="solid"
@@ -24,13 +15,13 @@
 		<template #default>
 			<div v-if="list.doc" class="grid grid-cols-1 rounded-md border sm:grid-cols-2">
 				<div class="border-r p-4">
-					<Switch v-model="list.doc.enabled" :label="__('Enabled')" />
+					<FormControl
+						v-model="list.doc.description"
+						type="textarea"
+						:label="__('Description')"
+					/>
 				</div>
-				<div class="my-1.5 p-4">
-					<HorizontalControl :label="__('Display Name')">
-						<FormControl v-model="list.doc.display_name" />
-					</HorizontalControl>
-				</div>
+				<div class="my-1.5 p-4">hi</div>
 			</div>
 			<div class="flex flex-1 flex-col rounded-md border">
 				<Tabs
@@ -133,7 +124,6 @@ import {
 	ListRows,
 	ListSelectBanner,
 	ListView,
-	Switch,
 	Tabs,
 	createDocumentResource,
 	createResource,
@@ -141,12 +131,9 @@ import {
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import HorizontalControl from '@/components/Controls/HorizontalControl.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddMailingListExternalMemberModal from '@/components/Modals/AddMailingListExternalMemberModal.vue'
 import AddMailingListInternalMembersModal from '@/components/Modals/AddMailingListInternalMembersModal.vue'
-
-import type { MailingList } from '@/types'
 
 const { listName } = defineProps<{ listName: string }>()
 
@@ -165,11 +152,8 @@ const showAddExternalMember = ref(false)
 const showRemoveMembers = ref(false)
 
 const list = createDocumentResource({
-	doctype: 'Mailing List',
+	doctype: 'Mail Principal',
 	name: listName,
-	transform: (data: MailingList) => {
-		data['enabled'] = !!data['enabled']
-	},
 	setValue: {
 		onSuccess: () => raiseToast(__('Mailing list updated.')),
 		onError(error) {

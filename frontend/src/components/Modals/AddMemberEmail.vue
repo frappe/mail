@@ -7,9 +7,9 @@
 				{
 					label: __('Add'),
 					variant: 'solid',
-					disabled: !(email && domain),
+					disabled: isList ? !list : !(email && domain),
 					onClick: () => {
-						emit('addEmail', `${email}@${domain}`)
+						emit('addEmail', isList ? list : `${email}@${domain}`)
 						show = false
 					},
 				},
@@ -17,7 +17,18 @@
 		}"
 	>
 		<template #body-content>
-			<div class="flex items-center justify-between">
+			<FormControl
+				v-if="isList"
+				v-model="list"
+				type="combobox"
+				:label="__('Mailing List')"
+				placeholder="team@yourdomain.com"
+				class="w-full"
+				:options="lists.data"
+				:open-on-click="true"
+			/>
+
+			<div v-else class="flex items-center justify-between">
 				<FormControl
 					v-model="email"
 					:label="__('Name')"
@@ -43,8 +54,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { Dialog, FeatherIcon, FormControl } from 'frappe-ui'
+import { inject, ref, watch } from 'vue'
+import { Dialog, FeatherIcon, FormControl, createResource } from 'frappe-ui'
 
 import { userStore } from '@/stores/user'
 
@@ -54,12 +65,24 @@ const { isList } = defineProps<{ isList: boolean }>()
 
 const emit = defineEmits(['addEmail'])
 
+const user = inject('$user')
 const { domains } = userStore()
 
 const email = ref('')
 const domain = ref('')
+const list = ref('')
+
+const lists = createResource({
+	url: 'mail.api.admin.get_mailing_lists',
+	auto: true,
+	transform: (data) => data.map((l) => l.name),
+	cache: ['mailTenantMailingLists', user.data?.tenant, ''],
+})
 
 watch(show, (val) => {
-	if (val) email.value = ''
+	if (!val) return
+	email.value = ''
+	domain.value = ''
+	list.value = ''
 })
 </script>

@@ -77,7 +77,7 @@ const list = useNewDoc(
 		onSuccess: () => {
 			show.value = false
 			raiseToast(__('Mailing List created.'))
-			router.push({ name: 'MailingList', params: { listName: list.doc.email } })
+			router.push({ name: 'MailingList', params: { listName: list.doc._name } })
 		},
 		onError: (error) => raiseToast(error.message, 'error'),
 	},

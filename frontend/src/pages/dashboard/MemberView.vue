@@ -54,86 +54,30 @@
 						</div>
 					</div>
 				</div>
-				<div class="flex h-80 shrink-0 flex-col rounded-md border">
-					<div class="flex items-center justify-between border-b px-4 py-2.5">
-						<h2>{{ __('Email Addresses') }}</h2>
-						<Button
-							variant="ghost"
-							:label="__('Add')"
-							icon-left="plus"
-							@click="addEmail(false)"
-						/>
-					</div>
-					<ListView
-						:columns="[{ label: __('Email Address'), key: 'value' }]"
-						:rows="account.doc.emails"
-						row-key="value"
-						:options="{
-							emptyState: { title: '', description: 'No email addresses.' },
-						}"
-						class="flex-1 overflow-auto p-4"
-					>
-						<ListHeader />
-						<ListRows v-if="account.doc.emails.length" />
-						<ListEmptyState v-else />
-						<ListSelectBanner>
-							<template #actions="{ selections, unselectAll }">
-								<Button
-									variant="ghost"
-									:label="__('Remove')"
-									theme="red"
-									@click="
-										() => {
-											account.doc.emails = account.doc.emails.filter(
-												(e) => !selections.has(e.value),
-											)
-											unselectAll()
-										}
-									"
-								/>
-							</template>
-						</ListSelectBanner>
-					</ListView>
-				</div>
-				<div class="flex h-80 shrink-0 flex-col rounded-md border">
-					<div class="flex items-center justify-between border-b px-4 py-2.5">
-						<h2>{{ __('Mailing Lists') }}</h2>
-						<Button
-							variant="ghost"
-							:label="__('Add')"
-							icon-left="plus"
-							@click="addEmail(true)"
-						/>
-					</div>
-					<ListView
-						:columns="[{ label: __('Mailing List'), key: 'value' }]"
-						:rows="account.doc.lists"
-						row-key="value"
-						:options="{ emptyState: { title: '', description: 'No mailing lists.' } }"
-						class="flex-1 overflow-auto p-4"
-					>
-						<ListHeader />
-						<ListRows v-if="account.doc.lists.length" />
-						<ListEmptyState v-else />
-						<ListSelectBanner>
-							<template #actions="{ selections, unselectAll }">
-								<Button
-									variant="ghost"
-									:label="__('Remove')"
-									theme="red"
-									@click="
-										() => {
-											account.doc.lists = account.doc.lists.filter(
-												(l) => !selections.has(l.value),
-											)
-											unselectAll()
-										}
-									"
-								/>
-							</template>
-						</ListSelectBanner>
-					</ListView>
-				</div>
+				<EmailListCard
+					:rows="account.doc.emails"
+					:title="__('Email Addresses')"
+					:column-label="__('Email Address')"
+					@add="addEmail(false)"
+					@remove="
+						(selections) =>
+							(account.doc.emails = account.doc.emails.filter(
+								(e) => !selections.has(e.value),
+							))
+					"
+				/>
+				<EmailListCard
+					:rows="account.doc.lists"
+					:title="__('Mailing Lists')"
+					:column-label="__('Mailing List')"
+					@add="addEmail(true)"
+					@remove="
+						(selections) =>
+							(account.doc.lists = account.doc.lists.filter(
+								(l) => !selections.has(l.value),
+							))
+					"
+				/>
 			</div>
 		</template>
 	</DashboardLayout>
@@ -150,20 +94,11 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import {
-	Button,
-	FormControl,
-	ListEmptyState,
-	ListHeader,
-	ListRows,
-	ListSelectBanner,
-	ListView,
-	createDocumentResource,
-	createResource,
-} from 'frappe-ui'
+import { Button, FormControl, createDocumentResource, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import DashboardLayout from '@/components/DashboardLayout.vue'
+import EmailListCard from '@/components/EmailListCard.vue'
 import AddMemberEmail from '@/components/Modals/AddMemberEmail.vue'
 
 const { memberName } = defineProps<{ memberName: string }>()
