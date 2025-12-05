@@ -14,12 +14,16 @@ TYPE_MAPPING = {
 def execute() -> None:
 	for doctype in DOCTYPES:
 		if frappe.db.has_table(doctype):
-			for row in frappe.db.get_all(doctype, {"enabled": 1}, ["name", "tenant"]):
-				if not frappe.db.exists("Mail Principal Binding", {"principal_name": row.name}):
-					create_principal_binding(row.tenant, row.name, TYPE_MAPPING[doctype])
+			fields = ["name", "tenant"]
+			if doctype == "Mail Account":
+				fields.append("is_verified")
 
-				if doctype == "Mail Domain":
-					frappe.db.set_value("Mail Principal Binding", row.name, "is_verified", 1)
+			for row in frappe.db.get_all(doctype, {"enabled": 1}, fields=fields):
+				if not frappe.db.exists("Mail Principal Binding", {"principal_name": row.name}):
+					create_principal_binding(
+						row.tenant, row.name, TYPE_MAPPING[doctype], bool(row.get("is_verified", 0))
+					)
+
 				if doctype == "Mail Account":
 					account = frappe.get_doc("Mail Account", row.name)
 					jmap_server_url = frappe.db.get_value(

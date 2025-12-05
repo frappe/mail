@@ -6,6 +6,7 @@ from typing import Literal
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint
 from uuid_utils import uuid7
 
 
@@ -27,6 +28,7 @@ def create_principal_binding(
 	tenant: str,
 	principal_name: str,
 	principal_type: Literal["API Key", "Domain", "Group", "Individual", "List", "OAuth Client", "Role"],
+	is_verified: bool = False,
 ) -> "MailPrincipalBinding":
 	"""Create a Mail Principal Binding document."""
 
@@ -34,6 +36,7 @@ def create_principal_binding(
 	binding.tenant = tenant
 	binding.principal_name = principal_name
 	binding.principal_type = principal_type
+	binding.is_verified = cint(is_verified)
 	binding.flags.ignore_links = True
 	binding.insert(ignore_permissions=True)
 
