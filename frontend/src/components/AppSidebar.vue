@@ -192,7 +192,7 @@ const dashboardItems = [
 				label: __('Members'),
 				icon: Users,
 				to: { name: 'Members' },
-				activeFor: ['Members', 'Invites'],
+				activeFor: ['Members', 'Invites', 'Member'],
 			},
 			{
 				label: __('Mailing Lists'),

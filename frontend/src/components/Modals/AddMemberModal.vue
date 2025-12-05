@@ -25,13 +25,14 @@
 						class="text-ink-gray-3 mx-2.5 mb-1.5 mt-auto h-4 w-4"
 						name="at-sign"
 					/>
-					<Link
+					<FormControl
 						v-model="accountRequest.domain"
+						type="combobox"
 						:label="__('Domain')"
 						placeholder="yourdomain.com"
-						doctype="Mail Domain"
-						:filters="{ tenant: user.data.tenant, is_verified: 1 }"
 						class="w-full"
+						:options="domains.data"
+						:open-on-click="true"
 					/>
 				</div>
 				<FormControl
@@ -88,7 +89,6 @@
 
 <script setup lang="ts">
 import { inject, reactive, watch } from 'vue'
-import { Link } from 'frappe-ui/frappe'
 import { Dialog, ErrorMessage, FeatherIcon, FormControl, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
@@ -119,7 +119,6 @@ watch(
 	() => accountRequest.send_invite,
 	() => addMember.reset(),
 )
-
 watch(show, () => {
 	if (show.value) {
 		Object.assign(accountRequest, defaultAccountRequest)
@@ -135,5 +134,13 @@ const addMember = createResource({
 		emit('reload')
 		show.value = false
 	},
+})
+
+const domains = createResource({
+	url: 'mail.api.admin.get_domains',
+	auto: true,
+	makeParams: () => ({ tenant: user.data.tenant, is_verified: 1 }),
+	transform: (data) => data.map((domain) => domain.name),
+	cache: ['mailTenantDomains', user.data.tenant, '', 'Verified'],
 })
 </script>

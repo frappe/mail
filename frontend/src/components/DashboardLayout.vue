@@ -26,7 +26,7 @@ const { removeSpacing = false } = defineProps<{
 	buttonLabel?: string
 	buttonAction?: () => void
 	badgeLabel?: string
-	badgeTheme?: 'green' | 'red' | 'gray' | 'orange'
+	badgeTheme?: 'green' | 'red' | 'gray' | 'orange' | 'blue'
 	removeSpacing?: boolean
 }>()
 </script>
