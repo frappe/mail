@@ -6,6 +6,8 @@ import frappe
 import requests
 from frappe import _
 
+from mail.jmap import raise_for_status
+
 
 @dataclass
 class Principal:
@@ -67,17 +69,31 @@ class MailBackendAPI:
 		if files:
 			headers.pop("content-type", None)
 
-		return self.__session.request(
-			method=method,
-			url=url,
-			params=params,
-			data=data,
-			json=json,
-			files=files,
-			headers=headers,
-			auth=self.__auth,
-			timeout=timeout,
-		)
+		try:
+			response = self.__session.request(
+				method=method,
+				url=url,
+				params=params,
+				data=data,
+				json=json,
+				files=files,
+				headers=headers,
+				auth=self.__auth,
+				timeout=timeout,
+			)
+			raise_for_status(response)
+
+			return response
+		except Exception:
+			frappe.log_error(
+				title=_("Mail Backend Request Failed"), message=frappe.get_traceback(with_context=True)
+			)
+			frappe.throw(
+				title=_("Backend Request Failed"),
+				msg=_("Backend request failed with status code {0}. Check Error Log for details.").format(
+					response.status_code
+				),
+			)
 
 
 def get_mail_backend_api(
