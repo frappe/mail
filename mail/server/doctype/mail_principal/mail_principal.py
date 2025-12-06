@@ -825,18 +825,15 @@ def delete_principal(pname: str) -> None:
 
 	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
 	backend.request("DELETE", f"{PRINCIPAL_ENDPOINT}/{pname}")
+	delete_principal_binding(pname, raise_exception=False)
 
-	# If the principal is an Individual, disable the user and remove from tenant members
+	# If the principal is an Individual, remove member from tenant and delete User
 	if principal.type == "Individual":
 		if member := frappe.db.exists("Mail Tenant Member", {"tenant": tenant, "user": pname}):
-			frappe.delete_doc("Mail Tenant Member", member)
+			frappe.delete_doc("Mail Tenant Member", member, ignore_permissions=True)
 
-		if frappe.db.exists("User", pname):
-			user = frappe.get_doc("User", pname)
-			user.enabled = 0
-			user.save(ignore_permissions=True)
-
-	delete_principal_binding(pname, raise_exception=False)
+			if frappe.db.exists("User", pname):
+				frappe.delete_doc("User", pname, ignore_permissions=True)
 
 	principals_to_invalidate = set()
 	if principal.type in ["Group", "Individual", "List"]:
