@@ -5,6 +5,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from mail.server.doctype.mail_principal.mail_principal import delete_principal
 from mail.utils.cache import get_tenant_for_user
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin, is_tenant_owner
 
@@ -25,6 +26,12 @@ class MailTenantMember(Document):
 			frappe.throw(_("Cannot remove the owner of the tenant."))
 
 		self.clear_cache()
+
+	def after_delete(self) -> None:
+		"""Deletes the principal binding associated with the user."""
+
+		if frappe.db.exists("Mail Principal Binding", {"principal_name": self.user}):
+			delete_principal(self.user)
 
 	def validate_user(self) -> None:
 		"""Validates if the user is a valid user and has the required roles."""

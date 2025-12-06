@@ -834,8 +834,8 @@ def delete_principal(pname: str) -> None:
 		if member := frappe.db.exists("Mail Tenant Member", {"tenant": tenant, "user": pname}):
 			frappe.delete_doc("Mail Tenant Member", member, ignore_permissions=True)
 
-			if frappe.db.exists("User", pname):
-				frappe.delete_doc("User", pname, ignore_permissions=True)
+		if frappe.db.exists("User", pname):
+			frappe.delete_doc("User", pname, ignore_permissions=True)
 
 	principals_to_invalidate = set()
 	if principal.type in ["Group", "Individual", "List"]:
