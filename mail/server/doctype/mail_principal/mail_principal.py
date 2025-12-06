@@ -829,6 +829,8 @@ def delete_principal(pname: str) -> None:
 
 	# If the principal is an Individual, remove member from tenant and delete User
 	if principal.type == "Individual":
+		invalidate_jmap_cache(pname)
+
 		if member := frappe.db.exists("Mail Tenant Member", {"tenant": tenant, "user": pname}):
 			frappe.delete_doc("Mail Tenant Member", member, ignore_permissions=True)
 
