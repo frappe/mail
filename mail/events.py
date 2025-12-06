@@ -7,6 +7,7 @@ from frappe.model.document import Document
 from mail.backend import get_mail_backend_api
 from mail.jmap import JMAPClient
 from mail.server.doctype.mail_principal.mail_principal import PRINCIPAL_ENDPOINT, _get_principal
+from mail.utils import reformat_pbkdf2_hash
 from mail.utils.user import (
 	get_cluster_for_tenant,
 	get_tenant_for_user,
@@ -82,7 +83,9 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 			actions.append({"action": "removeItem", "field": "secrets", "value": secret})
 
 	if hashed_password := get_user_hashed_password(doc.name):
-		actions.append({"action": "addItem", "field": "secrets", "value": hashed_password})
+		actions.append(
+			{"action": "addItem", "field": "secrets", "value": reformat_pbkdf2_hash(hashed_password)}
+		)
 
 	if actions:
 		response = backend.request(
