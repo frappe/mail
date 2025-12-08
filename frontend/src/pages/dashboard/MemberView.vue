@@ -18,7 +18,7 @@
 		<template #default>
 			<div v-if="account.doc" class="grid grid-cols-2 gap-5">
 				<div class="rounded-md border">
-					<h2 class="border-b p-4">{{ __('Member Information') }}</h2>
+					<h2 class="border-b p-4">{{ __('General Information') }}</h2>
 					<div class="space-y-4 p-4">
 						<FormControl
 							v-model="role"

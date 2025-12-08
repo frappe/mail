@@ -11,26 +11,23 @@
 		</template>
 		<template #default>
 			<div v-if="list.doc" class="grid grid-cols-2 gap-5">
-				<div class="rounded-md border">
-					<h2 class="border-b p-4">{{ __('Mailing List Information') }}</h2>
-					<div class="space-y-4 p-4">
-						<FormControl
-							v-model="list.doc.description"
-							type="textarea"
-							:label="__('Description')"
-						/>
-						<FormControl
-							v-model="list.doc.total_members"
-							:label="__('Member Count')"
-							:readonly="true"
-						/>
-					</div>
-				</div>
+				<DashboardCard :title="__('General Information')" :button-label="__('Edit')">
+					<InformationField :label="__('Description')" :value="list.doc.description" />
+					<InformationField
+						:label="__('Member Count')"
+						:value="list.doc.total_members"
+					/>
+					<InformationField
+						:label="__('Created On')"
+						:value="dayjs(list.doc.creation).format('MMM D, YYYY, h:mm A')"
+					/>
+					<InformationField :label="__('Organization')" :value="user.data.tenant_name" />
+				</DashboardCard>
 				<EmailListCard
 					:rows="list.doc.emails"
 					:title="__('Email Addresses')"
 					:column-label="__('Email Address')"
-					class="h-58"
+					class="h-60"
 					@add="showAddEmail = true"
 					@remove="
 						(selections) =>
@@ -40,13 +37,12 @@
 					"
 				/>
 			</div>
-			<div class="flex flex-1 flex-col rounded-md border">
-				<div class="h-13 my-auto flex shrink-0 items-center justify-between border-b px-4">
-					<h2>{{ __('Members') }}</h2>
+			<DashboardCard :title="__('Members')" class="flex-1">
+				<template #actions>
 					<Dropdown :options="ADD_OPTIONS">
-						<Button icon-left="plus" :label="__('Add')" variant="ghost" />
+						<Button :label="__('Add')" variant="ghost" />
 					</Dropdown>
-				</div>
+				</template>
 				<Tabs
 					v-model="tabIndex"
 					:tabs="[
@@ -70,7 +66,7 @@
 								:rows="memberList"
 								:options="LIST_OPTIONS"
 								row-key="value"
-								class="flex-1"
+								class="flex-1 overflow-auto"
 							>
 								<ListHeader />
 								<ListRows v-if="memberList.length" />
@@ -98,7 +94,7 @@
 						</div>
 					</template>
 				</Tabs>
-			</div>
+			</DashboardCard>
 		</template>
 	</DashboardLayout>
 
@@ -120,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Globe, Home } from 'lucide-vue-next'
 import {
@@ -138,8 +134,10 @@ import {
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import DashboardCard from '@/components/DashboardCard.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import EmailListCard from '@/components/EmailListCard.vue'
+import InformationField from '@/components/InformationField.vue'
 import AddEmailModal from '@/components/Modals/AddEmailModal.vue'
 import AddMailingListExternalMemberModal from '@/components/Modals/AddMailingListExternalMemberModal.vue'
 import AddMailingListInternalMembersModal from '@/components/Modals/AddMailingListInternalMembersModal.vue'
@@ -147,6 +145,8 @@ import AddMailingListInternalMembersModal from '@/components/Modals/AddMailingLi
 const { listName } = defineProps<{ listName: string }>()
 
 const router = useRouter()
+const user = inject('$user')
+const dayjs = inject('$dayjs')
 
 const tabIndex = ref(0)
 const listView = ref(null)

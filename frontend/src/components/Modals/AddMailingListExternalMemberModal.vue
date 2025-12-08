@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { Dialog, FormControl } from 'frappe-ui'
 
 const show = defineModel<boolean>()
@@ -33,4 +33,8 @@ const show = defineModel<boolean>()
 const emit = defineEmits(['add'])
 
 const email = ref('')
+
+watch(show, (val) => {
+	if (val) email.value = ''
+})
 </script>

@@ -1,9 +1,5 @@
 <template>
-	<div class="flex shrink-0 flex-col rounded-md border">
-		<div class="h-13 my-auto flex shrink-0 items-center justify-between border-b px-4">
-			<h2>{{ title }}</h2>
-			<Button variant="ghost" :label="__('Add')" icon-left="plus" @click="emit('add')" />
-		</div>
+	<DashboardCard :title @action="emit('add')">
 		<ListView
 			:columns="[{ label: columnLabel, key: 'value' }]"
 			:rows="rows"
@@ -30,7 +26,7 @@
 				</template>
 			</ListSelectBanner>
 		</ListView>
-	</div>
+	</DashboardCard>
 </template>
 
 <script setup lang="ts">
@@ -43,11 +39,9 @@ import {
 	ListView,
 } from 'frappe-ui'
 
-defineProps<{
-	rows: { value: string }[]
-	title: string
-	columnLabel: string
-}>()
+import DashboardCard from '@/components/DashboardCard.vue'
+
+defineProps<{ rows: { value: string }[]; title: string; columnLabel: string }>()
 
 const emit = defineEmits(['add', 'remove'])
 </script>
