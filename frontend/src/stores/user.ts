@@ -15,7 +15,10 @@ export const userStore = defineStore('mail-users', () => {
 	const userResource: UserResource = createResource({
 		url: 'mail.api.account.get_user_info',
 		onSuccess: (data) => {
-			if (data?.is_mail_admin) domains.fetch()
+			if (data?.is_mail_admin) {
+				domains.fetch()
+				tenantOwner.fetch(data.tenant)
+			}
 
 			if (!data?.is_mail_user) return
 
@@ -57,11 +60,21 @@ export const userStore = defineStore('mail-users', () => {
 
 	const identities = createResource({ url: 'mail.api.account.get_identities' })
 
+	const tenantOwner = createResource({
+		url: 'frappe.client.get_value',
+		makeParams: (tenant: string) => ({
+			doctype: 'Mail Tenant',
+			fieldname: 'user',
+			filters: tenant,
+			as_dict: false,
+		}),
+	})
+
 	const domains = createResource({
 		url: 'mail.api.admin.get_domains',
 		makeParams: () => ({ is_verified: 1 }),
 		transform: (data) => data.map((domain) => domain.name),
 	})
 
-	return { userResource, mailboxes, mailboxIds, identities, domains }
+	return { userResource, mailboxes, mailboxIds, identities, tenantOwner, domains }
 })

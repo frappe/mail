@@ -2,13 +2,13 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			title: type === 'Mail Account' ? __('Add Internal Members') : __('Add Groups'),
+			title: __('New Internal Members'),
 			actions: [
 				{
-					label: __('Confirm'),
+					label: __('Add'),
 					variant: 'solid',
 					disabled: members.length === 0,
-					onClick: addMembers.submit,
+					onClick: () => emit('add', members),
 				},
 			],
 		}"
@@ -18,8 +18,7 @@
 				<AddMailingListMemberInput
 					v-for="(inputId, index) in inputFields"
 					:key="inputId"
-					:type="type"
-					:current-members="currentMembers.data"
+					:current-members
 					:selected-members="members"
 					:is-last-input="index === inputFields.length - 1"
 					@email-selected="(email) => handleEmailSelected(email, index)"
@@ -32,16 +31,15 @@
 
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
-import { Dialog, createResource, useList } from 'frappe-ui'
+import { Dialog } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
 import AddMailingListMemberInput from '@/components/AddMailingListMemberInput.vue'
 
-const { list, type } = defineProps<{ list: string; type: 'Mail Account' | 'Mail Group' }>()
-
-const emit = defineEmits(['reloadMembers'])
-
 const show = defineModel<boolean>()
+
+const { currentMembers } = defineProps<{ currentMembers: string[] }>()
+
+const emit = defineEmits(['add'])
 
 const dialogBody = ref<HTMLElement | null>(null)
 
@@ -66,38 +64,12 @@ const removeInput = (email: string, index: number) => {
 	inputFields.value.splice(index, 1)
 }
 
-const currentMembers = useList({
-	doctype: 'Mailing List Member',
-	immediate: false,
-	fields: ['member_name as name'],
-	filters: { mailing_list: list },
-	limit: 1000,
-	cacheKey: ['mailingListMembers', list],
-	transform: (data) => {
-		data = data.map((member) => member.name)
-		data.push(list)
-		return data
-	},
-})
-
-const addMembers = createResource({
-	url: 'mail.api.admin.add_list_members',
-	makeParams: () => ({ list, type, members: members.value }),
-	onSuccess: () => {
-		raiseToast(__('Members added.'))
-		show.value = false
-		emit('reloadMembers')
-	},
-	onError: (error) => raiseToast(error.message, 'error'),
-})
-
 watch(
 	() => show.value,
 	(val) => {
 		if (!val) return
 		members.value = []
 		inputFields.value = [0]
-		currentMembers.fetch()
 	},
 )
 </script>

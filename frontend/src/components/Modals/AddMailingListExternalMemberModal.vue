@@ -2,20 +2,20 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			title: __('Add External Member'),
+			title: __('New External Member'),
 			actions: [
 				{
-					label: __('Confirm'),
+					label: __('Add'),
 					variant: 'solid',
-					disabled: !member.doc.member_email,
-					onClick: member.submit,
+					disabled: !email,
+					onClick: () => emit('add', email),
 				},
 			],
 		}"
 	>
 		<template #body-content>
 			<FormControl
-				v-model="member.doc.member_email"
+				v-model="email"
 				type="email"
 				:label="__('Email')"
 				placeholder="johndoe@example.com"
@@ -25,32 +25,12 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from 'vue'
-import { Dialog, FormControl, useNewDoc } from 'frappe-ui'
-
-import { raiseToast } from '@/utils'
+import { ref } from 'vue'
+import { Dialog, FormControl } from 'frappe-ui'
 
 const show = defineModel<boolean>()
 
-const { list } = defineProps<{ list: string }>()
+const emit = defineEmits(['add'])
 
-const emit = defineEmits(['reloadMembers'])
-
-const member = useNewDoc(
-	'Mailing List External Member',
-	{ member_email: '' },
-	{
-		beforeSubmit: () => (member.doc.mailing_list = list),
-		onSuccess: () => {
-			show.value = false
-			raiseToast(__('Member added.'))
-			emit('reloadMembers')
-		},
-		onError: (error) => raiseToast(error.message, 'error'),
-	},
-)
-
-watch(show, (val) => {
-	if (val) member.doc.member_email = ''
-})
+const email = ref('')
 </script>

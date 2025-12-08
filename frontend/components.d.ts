@@ -11,6 +11,7 @@ declare module 'vue' {
     AccountSettings: typeof import('./src/components/Settings/AccountSettings.vue')['default']
     AddAliasModal: typeof import('./src/components/Modals/AddAliasModal.vue')['default']
     AddDomainModal: typeof import('./src/components/Modals/AddDomainModal.vue')['default']
+    AddEmailModal: typeof import('./src/components/Modals/AddEmailModal.vue')['default']
     AddMailboxModal: typeof import('./src/components/Modals/AddMailboxModal.vue')['default']
     AddMailingListExternalMemberModal: typeof import('./src/components/Modals/AddMailingListExternalMemberModal.vue')['default']
     AddMailingListInternalMembersModal: typeof import('./src/components/Modals/AddMailingListInternalMembersModal.vue')['default']

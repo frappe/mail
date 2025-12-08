@@ -58,6 +58,7 @@
 					:rows="account.doc.emails"
 					:title="__('Email Addresses')"
 					:column-label="__('Email Address')"
+					class="h-80"
 					@add="addEmail(false)"
 					@remove="
 						(selections) =>
@@ -70,6 +71,7 @@
 					:rows="account.doc.lists"
 					:title="__('Mailing Lists')"
 					:column-label="__('Mailing List')"
+					class="h-80"
 					@add="addEmail(true)"
 					@remove="
 						(selections) =>
@@ -82,8 +84,8 @@
 		</template>
 	</DashboardLayout>
 
-	<AddMemberEmail
-		v-model="showAddMemberEmail"
+	<AddEmailModal
+		v-model="showAddEmail"
 		:is-list="isAddList"
 		@add-email="
 			(value) =>
@@ -99,16 +101,16 @@ import { Button, FormControl, createDocumentResource, createResource } from 'fra
 import { raiseToast } from '@/utils'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import EmailListCard from '@/components/EmailListCard.vue'
-import AddMemberEmail from '@/components/Modals/AddMemberEmail.vue'
+import AddEmailModal from '@/components/Modals/AddEmailModal.vue'
 
 const { memberName } = defineProps<{ memberName: string }>()
 
-const showAddMemberEmail = ref(false)
+const showAddEmail = ref(false)
 const isAddList = ref(false)
 
 const addEmail = (isList: boolean) => {
 	isAddList.value = isList
-	showAddMemberEmail.value = true
+	showAddEmail.value = true
 }
 
 const isAdmin = createResource({

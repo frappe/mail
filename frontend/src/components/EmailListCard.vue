@@ -1,6 +1,6 @@
 <template>
-	<div class="flex h-80 shrink-0 flex-col rounded-md border">
-		<div class="flex items-center justify-between border-b px-4 py-2.5">
+	<div class="flex shrink-0 flex-col rounded-md border">
+		<div class="h-13 my-auto flex shrink-0 items-center justify-between border-b px-4">
 			<h2>{{ title }}</h2>
 			<Button variant="ghost" :label="__('Add')" icon-left="plus" @click="emit('add')" />
 		</div>

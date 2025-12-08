@@ -1,9 +1,6 @@
 <template>
 	<DashboardLayout v-if="list.originalDoc" :breadcrumbs="BREADCRUMBS">
 		<template #actions>
-			<Dropdown :options="ADD_OPTIONS">
-				<Button icon-left="plus" :label="__('Add Members')" />
-			</Dropdown>
 			<Button
 				variant="solid"
 				:label="__('Save')"
@@ -13,74 +10,87 @@
 			/>
 		</template>
 		<template #default>
-			<div v-if="list.doc" class="grid grid-cols-1 rounded-md border sm:grid-cols-2">
-				<div class="border-r p-4">
-					<FormControl
-						v-model="list.doc.description"
-						type="textarea"
-						:label="__('Description')"
-					/>
+			<div v-if="list.doc" class="grid grid-cols-2 gap-5">
+				<div class="rounded-md border">
+					<h2 class="border-b p-4">{{ __('Mailing List Information') }}</h2>
+					<div class="space-y-4 p-4">
+						<FormControl
+							v-model="list.doc.description"
+							type="textarea"
+							:label="__('Description')"
+						/>
+						<FormControl
+							v-model="list.doc.total_members"
+							:label="__('Member Count')"
+							:readonly="true"
+						/>
+					</div>
 				</div>
-				<div class="my-1.5 p-4">hi</div>
+				<EmailListCard
+					:rows="list.doc.emails"
+					:title="__('Email Addresses')"
+					:column-label="__('Email Address')"
+					class="h-58"
+					@add="showAddEmail = true"
+					@remove="
+						(selections) =>
+							(list.doc.emails = list.doc.emails.filter(
+								(e) => !selections.has(e.value),
+							))
+					"
+				/>
 			</div>
 			<div class="flex flex-1 flex-col rounded-md border">
+				<div class="h-13 my-auto flex shrink-0 items-center justify-between border-b px-4">
+					<h2>{{ __('Members') }}</h2>
+					<Dropdown :options="ADD_OPTIONS">
+						<Button icon-left="plus" :label="__('Add')" variant="ghost" />
+					</Dropdown>
+				</div>
 				<Tabs
 					v-model="tabIndex"
 					:tabs="[
 						{ label: __('Internal'), icon: Home, index: 0 },
 						{ label: __('External'), icon: Globe, index: 1 },
 					]"
+					class="flex h-full flex-col"
 				>
 					<template #tab-panel>
 						<div class="flex flex-1 flex-col space-y-4 p-4">
-							<div class="flex items-center space-x-3">
-								<FormControl
-									v-model="search"
-									:placeholder="__('Search')"
-									class="w-80"
-								>
-									<template #prefix>
-										<FeatherIcon name="search" class="text-ink-gray-5 w-4" />
-									</template>
-								</FormControl>
-								<!-- <FormControl
-									v-model="type"
-									:placeholder="__('Type')"
-									class="w-40"
-									type="select"
-									:options="TYPE_OPTIONS"
-								/> -->
-							</div>
+							<FormControl v-model="search" :placeholder="__('Search')" class="w-80">
+								<template #prefix>
+									<FeatherIcon name="search" class="text-ink-gray-5 w-4" />
+								</template>
+							</FormControl>
+
 							<ListView
 								v-if="memberList"
 								ref="listView"
-								:columns="listColumns"
+								:columns="LIST_COLUMNS"
 								:rows="memberList"
 								:options="LIST_OPTIONS"
-								row-key="name"
+								row-key="value"
 								class="flex-1"
 							>
 								<ListHeader />
-								<ListRows>
-									<template v-if="memberList.length">
-										<ListRow
-											v-for="row in memberList"
-											:key="row.name"
-											v-slot="{ item }"
-											:row="row"
-										>
-											<ListRowItem :item="item" />
-										</ListRow>
-									</template>
-									<ListEmptyState v-else />
-								</ListRows>
+								<ListRows v-if="memberList.length" />
+								<ListEmptyState v-else />
 								<ListSelectBanner>
-									<template #actions>
+									<template #actions="{ selections, unselectAll }">
 										<Button
 											variant="ghost"
 											theme="red"
 											:label="__('Remove')"
-											@click="showRemoveMembers = true"
+											@click="
+												() => {
+													list.doc[
+														tabIndex ? 'external_members' : 'members'
+													] = memberList.filter(
+														(m) => !selections.has(m.value),
+													)
+													unselectAll()
+												}
+											"
 										/>
 									</template>
 								</ListSelectBanner>
@@ -92,46 +102,45 @@
 		</template>
 	</DashboardLayout>
 
+	<AddEmailModal
+		v-model="showAddEmail"
+		:is-list="false"
+		@add-email="(value) => list.doc.emails.push({ value })"
+	/>
 	<AddMailingListInternalMembersModal
+		v-if="list?.doc"
 		v-model="showAddInternalMembers"
-		:list="listName"
-		:type="addType"
-		@reload-members="internalMembers.reload()"
+		:current-members="list.doc.members.map((m) => m.value)"
+		@add="(members) => addMembers(members)"
 	/>
 	<AddMailingListExternalMemberModal
 		v-model="showAddExternalMember"
-		:list="listName"
-		@reload-members="externalMembers.reload()"
+		@add="(members) => addMembers([members], true)"
 	/>
-	<Dialog v-model="showRemoveMembers" :options="removeMembersOptions" />
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useDebounce } from '@vueuse/core'
 import { Globe, Home } from 'lucide-vue-next'
 import {
 	Button,
-	Dialog,
 	Dropdown,
 	FeatherIcon,
 	FormControl,
 	ListEmptyState,
 	ListHeader,
-	ListRow,
-	ListRowItem,
 	ListRows,
 	ListSelectBanner,
 	ListView,
 	Tabs,
 	createDocumentResource,
-	createResource,
-	useList,
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import DashboardLayout from '@/components/DashboardLayout.vue'
+import EmailListCard from '@/components/EmailListCard.vue'
+import AddEmailModal from '@/components/Modals/AddEmailModal.vue'
 import AddMailingListExternalMemberModal from '@/components/Modals/AddMailingListExternalMemberModal.vue'
 import AddMailingListInternalMembersModal from '@/components/Modals/AddMailingListInternalMembersModal.vue'
 
@@ -143,13 +152,10 @@ const tabIndex = ref(0)
 const listView = ref(null)
 
 const search = ref('')
-const debouncedSearch = useDebounce(search, 500)
-const type = ref<'Mail Account' | 'Mail Group' | ''>('')
 
-const addType = ref<'Mail Account' | 'Mail Group'>('Mail Account')
+const showAddEmail = ref(false)
 const showAddInternalMembers = ref(false)
 const showAddExternalMember = ref(false)
-const showRemoveMembers = ref(false)
 
 const list = createDocumentResource({
 	doctype: 'Mail Principal',
@@ -164,71 +170,37 @@ const list = createDocumentResource({
 	onError: () => router.replace({ name: 'MailingLists' }),
 })
 
-const internalMembers = useList({
-	doctype: 'Mailing List Member',
-	fields: ['name', 'member_name'],
-	filters: () => {
-		const filters: Record<string, string | string[]> = {
-			mailing_list: listName,
-			member_name: ['like', `%${debouncedSearch.value}%`],
-		}
-		if (type.value) filters.member_type = type.value
-		return filters
-	},
-	orderBy: 'member_name asc',
-	limit: 100,
-	// transform: (data) =>
-	// 	data.map((row) => ({
-	// 		...row,
-	// 		member_type: row.member_type === 'Mail Account' ? 'User' : 'Group',
-	// 	})),
-	cacheKey: ['mailingListMembers', listName, debouncedSearch.value, type.value],
-})
+const memberList = computed(() =>
+	(tabIndex.value ? list.doc.external_members : list.doc.members).filter((m) =>
+		m.value.toLowerCase().includes(search.value.toLowerCase()),
+	),
+)
 
-const externalMembers = useList({
-	doctype: 'Mailing List External Member',
-	fields: ['name', 'member_email'],
-	filters: () => ({
-		mailing_list: listName,
-		member_email: ['like', `%${debouncedSearch.value}%`],
-	}),
-	orderBy: 'member_email asc',
-	limit: 100,
-	cacheKey: ['externalMailingListMembers', listName, debouncedSearch.value],
-})
-
-const memberList = computed(() => (tabIndex.value ? externalMembers?.data : internalMembers?.data))
-
-const deleteMembers = createResource({
-	url: 'mail.api.admin.delete_list_members',
-	makeParams: () => ({
-		names: Array.from(listView.value?.selections),
-		is_external: !!tabIndex.value,
-	}),
-	onSuccess: () => {
-		if (tabIndex.value) externalMembers.reload()
-		else internalMembers.reload()
-
-		showRemoveMembers.value = false
-		raiseToast(__('Members removed.'))
-		listView.value?.toggleAllRows()
-	},
-	onError: (error) => {
-		showRemoveMembers.value = false
-		raiseToast(error.messages[0], 'error')
-	},
-})
-
-const listColumns = computed(() => [
-	{ label: __('Name'), key: tabIndex.value ? 'member_email' : 'member_name' },
-	// { label: __('Type'), key: 'member_type' },
-])
-
-const removeMembersOptions = {
-	title: __('Remove Members'),
-	message: __('Are you sure you want to remove the selected members from this list?'),
-	actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteMembers.submit }],
+const addMembers = (members: string[], external = false) => {
+	const membersObj = members.map((m) => ({ value: m }))
+	if (external) {
+		list.doc.external_members.push(...membersObj)
+		showAddExternalMember.value = false
+	} else {
+		list.doc.members.push(...membersObj)
+		showAddInternalMembers.value = false
+	}
 }
+
+const LIST_COLUMNS = [{ label: __('Name'), key: 'value' }]
+
+const ADD_OPTIONS = [
+	{
+		label: __('Internal'),
+		icon: Home,
+		onClick: () => (showAddInternalMembers.value = true),
+	},
+	{
+		label: __('External'),
+		icon: Globe,
+		onClick: () => (showAddExternalMember.value = true),
+	},
+]
 
 const BREADCRUMBS = [
 	{ label: __('Mailing Lists'), route: '/dashboard/mailing-lists' },
@@ -236,34 +208,4 @@ const BREADCRUMBS = [
 ]
 
 const LIST_OPTIONS = { showTooltip: false, emptyState: { description: __('No members found.') } }
-
-const ADD_OPTIONS = [
-	{
-		label: __('Internal'),
-		icon: Home,
-		onClick: () => {
-			addType.value = 'Mail Account'
-			showAddInternalMembers.value = true
-		},
-	},
-	{
-		label: __('External'),
-		icon: Globe,
-		onClick: () => (showAddExternalMember.value = true),
-	},
-	// {
-	// 	label: __('Add Groups'),
-	// 	icon: Users,
-	// 	onClick: () => {
-	// 		addType.value = 'Mail Group'
-	// 		showAddMembers.value = true
-	// 	},
-	// },
-]
-
-// const TYPE_OPTIONS = [
-// 	{ label: '', value: '' },
-// 	{ label: __('User'), value: 'Mail Account' },
-// 	{ label: __('Group'), value: 'Mail Group' },
-// ]
 </script>

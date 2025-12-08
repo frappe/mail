@@ -90,26 +90,16 @@ import {
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 
 const router = useRouter()
 const user = inject('$user')
+const { tenantOwner } = userStore()
 
 const search = ref('')
 const role = ref<'Mail User' | 'Mail Admin' | 'Both' | ''>('')
 const showRemoveMember = ref(false)
 const memberToBeRemoved = ref('')
-
-const tenantOwner = createResource({
-	url: 'frappe.client.get_value',
-	makeParams: () => ({
-		doctype: 'Mail Tenant',
-		fieldname: 'user',
-		filters: user.data?.tenant,
-		as_dict: false,
-	}),
-	auto: true,
-	cache: ['mailTenantOwner', user.data?.tenant],
-})
 
 const members = createResource({
 	url: 'mail.api.admin.get_tenant_members',

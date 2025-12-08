@@ -17,7 +17,11 @@
 			class="flex-1"
 			:columns="LIST_COLUMNS"
 			:rows="lists.data"
-			:options="LIST_OPTIONS"
+			:options="{
+				showTooltip: false,
+				emptyState: { description: __('No mailing lists found.') },
+				getRowRoute: (row) => ({ name: 'MailingList', params: { listName: row.name } }),
+			}"
 			row-key="name"
 		>
 			<ListHeader />
@@ -105,10 +109,4 @@ const deleteListsOptions = {
 }
 
 const LIST_COLUMNS = [{ label: __('Mailing List'), key: 'name' }]
-
-const LIST_OPTIONS = {
-	showTooltip: false,
-	emptyState: { description: __('No mailing lists found.') },
-	getRowRoute: (row) => ({ name: 'MailingList', params: { listName: row.name } }),
-}
 </script>
