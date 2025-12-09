@@ -151,9 +151,6 @@ def _add_identity(
 	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
 	response = backend.request("POST", "/jmap", json=payload)
 
-	if response.status_code != 200:
-		frappe.throw_("Failed to create identity: " + response.text)
-
 	title = _("Identity Creation Error")
 	response = response.json()["methodResponses"][0][1]
 	if response.get("created"):

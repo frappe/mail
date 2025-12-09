@@ -126,14 +126,11 @@ def fetch_messages(cluster_name: str, page: int = 1, limit: int = 10, text: str 
 		params={"page": page, "limit": limit, "values": 1, "text": text},
 	)
 
-	if response.status_code == 200:
-		data = response.json()["data"]
-		frappe.cache.set_value(get_status_cache_key(cluster_name), data["status"], expires_in_sec=600)
-		frappe.cache.set_value(get_total_cache_key(cluster_name, text), data["total"], expires_in_sec=600)
+	data = response.json()["data"]
+	frappe.cache.set_value(get_status_cache_key(cluster_name), data["status"], expires_in_sec=600)
+	frappe.cache.set_value(get_total_cache_key(cluster_name, text), data["total"], expires_in_sec=600)
 
-		return [format_message(item, cluster_name) for item in data["items"]]
-
-	frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
+	return [format_message(item, cluster_name) for item in data["items"]]
 
 
 def fetch_message_details(name: str) -> dict:
@@ -143,15 +140,12 @@ def fetch_message_details(name: str) -> dict:
 	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
 	response = backend_api.request(method="GET", endpoint=f"/api/queue/messages/{queue_id}")
 
-	if response.status_code == 200:
-		message = response.json()["data"]
-		message["recipients"] = extract_recipients(message)
-		message = format_message(message, cluster_name)
-		message["message"] = fetch_blob(cluster_name, message["blob_hash"])
+	message = response.json()["data"]
+	message["recipients"] = extract_recipients(message)
+	message = format_message(message, cluster_name)
+	message["message"] = fetch_blob(cluster_name, message["blob_hash"])
 
-		return message
-
-	frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
+	return message
 
 
 def fetch_blob(cluster_name: str, blob_id: str) -> str:
@@ -159,11 +153,7 @@ def fetch_blob(cluster_name: str, blob_id: str) -> str:
 
 	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
 	response = backend_api.request(method="GET", endpoint=f"/api/store/blobs/{blob_id}")
-
-	if response.status_code == 200:
-		return response.text
-
-	frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
+	return response.text
 
 
 def retry_message(name: str) -> None:
@@ -171,9 +161,7 @@ def retry_message(name: str) -> None:
 
 	cluster_name, queue_id = name.split("|")
 	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	response = backend_api.request(method="PATCH", endpoint=f"/api/queue/messages/{queue_id}")
-	if response.status_code != 200:
-		frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
+	backend_api.request(method="PATCH", endpoint=f"/api/queue/messages/{queue_id}")
 
 
 def cancel_message(name: str, recipient: str | None = None) -> None:
@@ -181,37 +169,29 @@ def cancel_message(name: str, recipient: str | None = None) -> None:
 
 	cluster_name, queue_id = name.split("|")
 	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	response = backend_api.request(
+	backend_api.request(
 		method="DELETE", endpoint=f"/api/queue/messages/{queue_id}", params={"filter": recipient}
 	)
-	if response.status_code != 200:
-		frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
 
 
 def stop_queue_processing(cluster_name: str) -> None:
 	"""Stops queue processing on the mail server."""
 
 	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	response = backend_api.request(
+	backend_api.request(
 		method="PATCH",
 		endpoint="/api/queue/status/stop",
 	)
-
-	if response.status_code != 200:
-		frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
 
 
 def start_queue_processing(cluster_name: str) -> None:
 	"""Starts queue processing on the mail server."""
 
 	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	response = backend_api.request(
+	backend_api.request(
 		method="PATCH",
 		endpoint="/api/queue/status/start",
 	)
-
-	if response.status_code != 200:
-		frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
 
 
 def get_status_cache_key(cluster_name: str) -> str:

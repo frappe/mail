@@ -69,6 +69,8 @@ class MailBackendAPI:
 		if files:
 			headers.pop("content-type", None)
 
+		response = None
+
 		try:
 			response = self.__session.request(
 				method=method,
@@ -86,14 +88,18 @@ class MailBackendAPI:
 			return response
 		except Exception:
 			frappe.log_error(
-				title=_("Mail Backend Request Failed"), message=frappe.get_traceback(with_context=True)
+				title=_("Mail Backend Request Failed"), message=frappe.get_traceback(with_context=False)
 			)
-			frappe.throw(
-				title=_("Backend Request Failed"),
-				msg=_("Backend request failed with status code {0}. Check Error Log for details.").format(
-					response.status_code
-				),
-			)
+
+			if response:
+				frappe.throw(
+					title=_("Backend Request Failed"),
+					msg=_("Backend request failed with status code {0}. Check Error Log for details.").format(
+						response.status_code
+					),
+				)
+			else:
+				frappe.throw(_("Backend request failed. Check Error Log for details."))
 
 
 def get_mail_backend_api(
