@@ -128,6 +128,8 @@ The Stalwart Mail Server acts as the backbone of Frappe Mail’s infrastructure.
 
 **Supported DNS Providers:** Route53, DigitalOcean, Cloudflare, Hetzner, Linode, Namecheap, GoDaddy.
 
+![Mail Settings](docs/screenshots/settings-details.png)
+
 ##### Step 2: Deploying the Stalwart Mail Server
 
 **2.1 Create a Mail Cluster**
@@ -144,6 +146,8 @@ The Stalwart Mail Server acts as the backbone of Frappe Mail’s infrastructure.
     - In‑Memory: Redis
 - **Logs & Metrics:** Enable and configure **Prometheus** or **OpenTelemetry** if needed.
 
+![Mail Cluster](docs/screenshots/cluster-details.png)
+
 **2.2 Create a Mail Server**
 
 - Go to **Mail Server → New**.
@@ -158,12 +162,15 @@ After saving:
 2. Add the auto‑generated **public SSH key** to your server's `~/.ssh/authorized_keys`.
 3. Click **Actions → Verify SSH Connection**.
 4. When verified, extra actions become available:
+   - **Install Ansible** (track progress via `Server Job` document)
+   - **Install Docker** (track progress via `Server Ansible Play` document)
+   - **Install Stalwart** (track progress via `Server Deployment` document)
 
-- **Install Ansible** (track progress via `Server Job` document)
-- **Install Docker** (track progress via `Server Ansible Play` document)
-- **Install Stalwart** (track progress via `Server Deployment` document)
+![Mail Server](docs/screenshots/server-details.png)
 
 After installation, you can access the Stalwart Admin Panel by using the credentials set in the Mail Server document.
+
+![Stalwart Login Page](docs/screenshots/stalwart-login.png)
 
 ##### Step 3: Assign Cluster to Default Tenant
 
@@ -171,31 +178,59 @@ After installation, you can access the Stalwart Admin Panel by using the credent
 - Each tenant must be assigned a Mail Cluster.
 - Open the tenant → set the Mail Cluster created earlier.
 
+![Mail Tenant](docs/screenshots/tenant.png)
+
 ##### Step 4: Adding Domains (Desk)
 
-- Create a **Mail Domain Request**.
-- A **Verification Key** (TXT record) is generated.
-- Add it to your domain’s DNS settings.
-- If the domain matches the Root Domain and you have a supported DNS provider configured, you may create the record via a **DNS Record** document.
-- Once DNS is updated, click **Actions → Verify and Create Domain**.
-- On success:
-  - Domain is created on the Stalwart Mail Server.
-  - A domain‑tenant binding is created.
+**4.1 Create a Mail Domain Request**
 
-Repeat for additional domains.
+- Go to **Mail Domain Request → New**.
+- After saving, a **Verification Key (TXT record)** is generated.
+- Add this TXT record to your domain’s DNS settings.
+- If the domain matches the **Root Domain** and your DNS provider is integrated, you can auto‑create this record via a **DNS Record** document.
+
+![Mail Domain Request](docs/screenshots/domain-request.png)
+
+**4.2 Verify and Create Domain**
+
+- Once the DNS TXT record is applied, click **Actions → Verify and Create Domain**.
+- Upon successful verification:
+
+  **1. The domain is created on the Stalwart Mail Server.**
+  You will now see the required DNS records (SPF, DKIM, DMARC, MX, etc.) that must be added to your DNS provider to ensure proper email deliverability and prevent spoofing.
+
+  ![Domain Principal](docs/screenshots/domain.png)
+
+  **2. A domain–tenant binding is created.**
+  This links the domain to the tenant for management and provisioning.
+
+  ![Domain Binding](docs/screenshots/domain-binding.png)
+
+**4.3 Development Mode (Optional)**
+
+If you're working in a **development environment** and cannot verify DNS records, you may manually check the **Verified** checkbox and save the document to bypass verification.
+
+Repeat the above process to add additional domains.
 
 ##### Step 5: Adding Accounts (Desk)
 
 - Create a **Mail Account Request**.
+
+  ![Mail Account Request](docs/screenshots/account-request.png)
+
 - **Email**: Used for invitations and password resets.
 - **Account**: The mailbox address; used to create the User document and login to the Mail UI.
 - Enable **Send Invite** if you want to send an onboarding email.
   Ensure you have a **default Email Account** configured for outbound mail.
 
+  ![Email Account](docs/screenshots/email-account.png)
+
 After saving:
 
 - The user receives a verification link, **or**
 - You may use **Force Verify** to immediately create the account.
+
+![Account Principal](docs/screenshots/account.png)
 
 ## APIs
 
