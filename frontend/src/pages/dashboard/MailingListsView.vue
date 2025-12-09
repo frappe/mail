@@ -107,7 +107,7 @@ const LIST_OPTIONS = {
 	selectable: false,
 	showTooltip: false,
 	emptyState: { description: __('No mailing lists found.') },
-	// getRowRoute: (row) => ({ name: 'MailingList', params: { listName: row.name } }),
+	getRowRoute: (row) => ({ name: 'MailingList', params: { listName: row.name } }),
 }
 
 const LIST_COLUMNS = [{ label: __('Mailing List'), key: 'name' }]

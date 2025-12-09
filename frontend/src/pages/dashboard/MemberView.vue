@@ -29,8 +29,9 @@
 						:value="account.doc.description"
 					/>
 					<InformationField
+						v-if="accountCreation?.data"
 						:label="__('Joined On')"
-						:value="dayjs(account.doc.creation).format('MMM D YYYY, h:mm A')"
+						:value="dayjs(accountCreation.data).format('MMM D YYYY, h:mm A')"
 					/>
 					<InformationField :label="__('Organization')" :value="user.data.tenant_name" />
 				</DashboardCard>
@@ -81,7 +82,9 @@
 				{
 					label: __('Save'),
 					variant: 'solid',
-					disabled: !(isAccountDirty || isRoleDirty),
+					disabled:
+						account.doc.description === account.originalDoc.description &&
+						!isRoleDirty,
 					onClick: () => {
 						save()
 						showEditGeneral = false
@@ -117,7 +120,8 @@
 					label: __('Save'),
 					variant: 'solid',
 					disabled:
-						quota < 0 || account.doc.quota === (viewQuotaInBytes ? quota : quota * GB),
+						quota < 0 ||
+						Number(account.doc.quota) === (viewQuotaInBytes ? quota : quota * GB),
 					onClick: () => {
 						showEditQuota = false
 						account.doc.quota = viewQuotaInBytes ? quota : quota * GB
@@ -213,7 +217,9 @@ watch(viewQuotaInBytes, (val: boolean) => {
 })
 
 watch(showEditQuota, (val: boolean) => {
-	if (val) return
+	if (!val) return
+
+	setQuotaRestriction.value = !!account.doc.quota
 	viewQuotaInBytes.value = false
 	quota.value = account.doc.quota / GB
 })
@@ -241,10 +247,6 @@ const role = ref(isAdmin?.data ? 'Mail Admin' : 'Mail User')
 const account = createDocumentResource({
 	doctype: 'Mail Principal',
 	name: memberName,
-	onSuccess: (doc) => {
-		setQuotaRestriction.value = !!doc.quota
-		quota.value = viewQuotaInBytes.value ? doc.quota : doc.quota / GB
-	},
 	setValue: {
 		onSuccess: () => raiseToast(__('Account updated.')),
 		onError: (error) => {
@@ -252,6 +254,22 @@ const account = createDocumentResource({
 			account.reload()
 		},
 	},
+})
+
+const accountCreation = createResource({
+	url: 'frappe.client.get_value',
+	makeParams: () => ({
+		doctype: 'Mail Principal Binding',
+		fieldname: 'creation',
+		filters: {
+			tenant: user.data.tenant,
+			principal_name: memberName,
+			principal_type: 'Individual',
+		},
+		as_dict: false,
+	}),
+	auto: true,
+	cache: ['accountCreation', memberName],
 })
 
 const editIsAdmin = createResource({

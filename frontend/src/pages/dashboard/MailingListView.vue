@@ -23,8 +23,9 @@
 					/>
 					<InformationField :label="__('Description')" :value="list.doc.description" />
 					<InformationField
+						v-if="listCreation?.data"
 						:label="__('Created On')"
-						:value="dayjs(list.doc.creation).format('MMM D YYYY, h:mm A')"
+						:value="dayjs(listCreation.data).format('MMM D YYYY, h:mm A')"
 					/>
 					<InformationField :label="__('Organization')" :value="user.data.tenant_name" />
 				</DashboardCard>
@@ -211,7 +212,6 @@ const listCreation = createResource({
 		filters: { tenant: user.data.tenant, principal_name: listName, principal_type: 'List' },
 		as_dict: false,
 	}),
-	onSuccess: (data) => console.log(data),
 	auto: true,
 	cache: ['listCreation', listName],
 })
