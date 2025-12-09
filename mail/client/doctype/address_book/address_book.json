@@ -18,6 +18,7 @@
   "rights_section",
   "may_read",
   "may_write",
+  "column_break_lisd",
   "may_admin",
   "may_delete"
  ],
@@ -135,6 +136,10 @@
    "fieldname": "rights_section",
    "fieldtype": "Section Break",
    "label": "Rights"
+  },
+  {
+   "fieldname": "column_break_lisd",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -146,7 +151,7 @@
    "link_fieldname": "address_book"
   }
  ],
- "modified": "2025-12-09 12:15:43.365488",
+ "modified": "2025-12-09 12:40:20.930893",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Address Book",

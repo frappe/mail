@@ -185,8 +185,7 @@ def format_mailbox(user: str, mailbox: dict) -> dict:
 	sort_order = cint(mailbox["sortOrder"])
 	if _parent := mailbox["parentId"]:
 		_parent = f"{user}|{_parent}"
-	if rights := mailbox.get("myRights"):
-		rights = json.dumps(rights, indent=4, sort_keys=True)
+	rights = mailbox.get("myRights") or {}
 
 	return {
 		"name": f"{user}|{mailbox['id']}",
@@ -203,7 +202,15 @@ def format_mailbox(user: str, mailbox: dict) -> dict:
 		"unread_emails": cint(mailbox["unreadEmails"]),
 		"total_threads": cint(mailbox["totalThreads"]),
 		"unread_threads": cint(mailbox["unreadThreads"]),
-		"rights": rights,
+		"may_read_items": cint(rights.get("mayReadItems", False)),
+		"may_add_items": cint(rights.get("mayAddItems", False)),
+		"may_remove_items": cint(rights.get("mayRemoveItems", False)),
+		"may_set_seen": cint(rights.get("maySetSeen", False)),
+		"may_set_keywords": cint(rights.get("maySetKeywords", False)),
+		"may_create_child": cint(rights.get("mayCreateChild", False)),
+		"may_rename": cint(rights.get("mayRename", False)),
+		"may_delete": cint(rights.get("mayDelete", False)),
+		"may_submit": cint(rights.get("maySubmit", False)),
 		"creation": today(),
 		"modified": today(),
 	}

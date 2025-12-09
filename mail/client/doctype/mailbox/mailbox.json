@@ -23,8 +23,17 @@
   "column_break_cg5h",
   "total_threads",
   "unread_threads",
-  "section_break_uvft",
-  "rights"
+  "rights_section",
+  "may_read_items",
+  "may_add_items",
+  "may_remove_items",
+  "may_set_seen",
+  "may_set_keywords",
+  "column_break_waws",
+  "may_create_child",
+  "may_rename",
+  "may_delete",
+  "may_submit"
  ],
  "fields": [
   {
@@ -108,10 +117,6 @@
    "set_only_once": 1
   },
   {
-   "fieldname": "section_break_uvft",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "section_break_9nkx",
    "fieldtype": "Section Break"
   },
@@ -130,14 +135,6 @@
   {
    "fieldname": "column_break_0da9",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "rights",
-   "fieldtype": "JSON",
-   "label": "Rights",
-   "no_copy": 1,
-   "read_only": 1,
-   "set_only_once": 1
   },
   {
    "fieldname": "_parent",
@@ -171,13 +168,105 @@
    "options": "User",
    "reqd": 1,
    "set_only_once": 1
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "rights_section",
+   "fieldtype": "Section Break",
+   "label": "Rights"
+  },
+  {
+   "default": "0",
+   "description": "The user may use this Mailbox as part of a filter in an `Email/query` call, and the Mailbox may be included in the mailboxIds property of Email objects.",
+   "fieldname": "may_read_items",
+   "fieldtype": "Check",
+   "label": "May Read Items",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may add mail to this Mailbox (by either creating a new Email or moving an existing one).",
+   "fieldname": "may_add_items",
+   "fieldtype": "Check",
+   "label": "May Add Items",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may remove mail from this Mailbox (by either changing the Mailboxes of an Email or destroying the Email).",
+   "fieldname": "may_remove_items",
+   "fieldtype": "Check",
+   "label": "May Remove Items",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may add or remove the `$seen` keyword to/from an Email.",
+   "fieldname": "may_set_seen",
+   "fieldtype": "Check",
+   "label": "May Set Seen",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may add or remove any keyword other than `$seen` to/from an Email.",
+   "fieldname": "may_set_keywords",
+   "fieldtype": "Check",
+   "label": "May Set Keywords",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may create a Mailbox with this Mailbox as its parent.",
+   "fieldname": "may_create_child",
+   "fieldtype": "Check",
+   "label": "May Create Child",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may rename the Mailbox or make it a child of another Mailbox.",
+   "fieldname": "may_rename",
+   "fieldtype": "Check",
+   "label": "May Rename",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may delete the Mailbox itself.",
+   "fieldname": "may_delete",
+   "fieldtype": "Check",
+   "label": "May Delete",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Messages may be submitted directly to this Mailbox.",
+   "fieldname": "may_submit",
+   "fieldtype": "Check",
+   "label": "May Submit",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_waws",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-22 11:56:13.917339",
+ "modified": "2025-12-09 12:39:39.838409",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox",
