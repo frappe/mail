@@ -5,7 +5,7 @@
 			title: __('Add Domain'),
 			actions: [
 				{
-					label: __(domainRequest?.data ? 'Verify DNS' : 'Add Domain'),
+					label: domainRequest?.data ? __('Verify DNS') : __('Add Domain'),
 					variant: 'solid',
 					onClick: domainRequest?.data ? verifyDNS.submit : domainRequest.submit,
 				},

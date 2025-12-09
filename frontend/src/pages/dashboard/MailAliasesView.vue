@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject, ref, useTemplateRef } from 'vue'
 import { useDebounce } from '@vueuse/core'
 import {
 	Badge,
@@ -104,7 +104,7 @@ import EditAliasModal from '@/components/Modals/EditAliasModal.vue'
 
 const user = inject('$user')
 
-const listView = ref(null)
+const listView = useTemplateRef('listView')
 
 const search = ref('')
 const debouncedSearch = useDebounce(search, 500)

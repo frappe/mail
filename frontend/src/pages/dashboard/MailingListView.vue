@@ -11,7 +11,12 @@
 		</template>
 		<template #default>
 			<div v-if="list.doc" class="grid grid-cols-2 gap-5">
-				<DashboardCard :title="__('General Information')" :button-label="__('Edit')">
+				<DashboardCard
+					:title="__('General Information')"
+					:button-label="__('Edit')"
+					class="h-[14.5rem]"
+					@action="showEditGeneral = true"
+				>
 					<InformationField :label="__('Description')" :value="list.doc.description" />
 					<InformationField
 						:label="__('Member Count')"
@@ -19,7 +24,7 @@
 					/>
 					<InformationField
 						:label="__('Created On')"
-						:value="dayjs(list.doc.creation).format('MMM D, YYYY, h:mm A')"
+						:value="dayjs(list.doc.creation).format('MMM D YYYY, h:mm A')"
 					/>
 					<InformationField :label="__('Organization')" :value="user.data.tenant_name" />
 				</DashboardCard>
@@ -27,7 +32,7 @@
 					:rows="list.doc.emails"
 					:title="__('Email Addresses')"
 					:column-label="__('Email Address')"
-					class="h-60"
+					class="h-[14.5rem]"
 					@add="showAddEmail = true"
 					@remove="
 						(selections) =>
@@ -66,7 +71,7 @@
 								:rows="memberList"
 								:options="LIST_OPTIONS"
 								row-key="value"
-								class="flex-1 overflow-auto"
+								class="max-h-[50rem] min-h-72 flex-1 overflow-auto"
 							>
 								<ListHeader />
 								<ListRows v-if="memberList.length" />
@@ -98,6 +103,32 @@
 		</template>
 	</DashboardLayout>
 
+	<Dialog
+		v-if="list?.originalDoc"
+		v-model="showEditGeneral"
+		:options="{
+			title: __('Edit General Information'),
+			actions: [
+				{
+					label: __('Save'),
+					variant: 'solid',
+					disabled: list.doc.description === list.originalDoc.description,
+					onClick: () => {
+						list.save.submit()
+						showEditGeneral = false
+					},
+				},
+			],
+		}"
+	>
+		<template #body-content>
+			<FormControl
+				v-model="list.doc.description"
+				:label="__('Description')"
+				type="textarea"
+			/>
+		</template>
+	</Dialog>
 	<AddEmailModal
 		v-model="showAddEmail"
 		:is-list="false"
@@ -121,6 +152,7 @@ import { useRouter } from 'vue-router'
 import { Globe, Home } from 'lucide-vue-next'
 import {
 	Button,
+	Dialog,
 	Dropdown,
 	FeatherIcon,
 	FormControl,
@@ -149,10 +181,10 @@ const user = inject('$user')
 const dayjs = inject('$dayjs')
 
 const tabIndex = ref(0)
-const listView = ref(null)
 
 const search = ref('')
 
+const showEditGeneral = ref(false)
 const showAddEmail = ref(false)
 const showAddInternalMembers = ref(false)
 const showAddExternalMember = ref(false)

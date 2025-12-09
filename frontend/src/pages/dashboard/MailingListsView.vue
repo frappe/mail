@@ -13,15 +13,10 @@
 		</div>
 		<ListView
 			v-if="lists?.data"
-			ref="listView"
 			class="flex-1"
 			:columns="LIST_COLUMNS"
 			:rows="lists.data"
-			:options="{
-				showTooltip: false,
-				emptyState: { description: __('No mailing lists found.') },
-				getRowRoute: (row) => ({ name: 'MailingList', params: { listName: row.name } }),
-			}"
+			:options="LIST_OPTIONS"
 			row-key="name"
 		>
 			<ListHeader />
@@ -44,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject, ref, useTemplateRef } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import {
 	Button,
@@ -65,7 +60,7 @@ import AddMailingListModal from '@/components/Modals/AddMailingListModal.vue'
 
 const user = inject('$user')
 
-const listView = ref(null)
+const listView = useTemplateRef('listView')
 
 const search = ref('')
 
@@ -106,6 +101,13 @@ const deleteListsOptions = {
 			onClick: deleteLists.submit,
 		},
 	],
+}
+
+const LIST_OPTIONS = {
+	selectable: false,
+	showTooltip: false,
+	emptyState: { description: __('No mailing lists found.') },
+	getRowRoute: (row) => ({ name: 'MailingList', params: { listName: row.name } }),
 }
 
 const LIST_COLUMNS = [{ label: __('Mailing List'), key: 'name' }]
