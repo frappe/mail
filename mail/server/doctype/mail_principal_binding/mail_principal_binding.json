@@ -63,7 +63,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-01 13:06:58.164221",
+ "modified": "2025-12-09 13:43:45.661692",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Principal Binding",
@@ -80,6 +80,10 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Mail Admin"
   }
  ],
  "row_format": "Dynamic",

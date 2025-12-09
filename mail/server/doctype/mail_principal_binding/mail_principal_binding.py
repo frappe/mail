@@ -9,6 +9,8 @@ from frappe.model.document import Document
 from frappe.utils import cint
 from uuid_utils import uuid7
 
+from mail.utils.user import has_role, is_system_manager, is_tenant_admin
+
 
 class MailPrincipalBinding(Document):
 	def autoname(self) -> None:
@@ -86,3 +88,29 @@ def delete_principal_binding(principal_name: str, raise_exception: bool = True) 
 		frappe.throw(
 			_("No Mail Principal Binding found for principal name: {0}").format(frappe.bold(principal_name))
 		)
+
+
+def get_permission_query_condition(user: str | None = None) -> str:
+	user = user or frappe.session.user
+
+	if is_system_manager(user):
+		return ""
+	elif has_role(user, "Mail Admin"):
+		tenant = frappe.db.get_value("Mail Tenant Member", {"user": user}, "tenant")
+		return f"(`tabMail Principal Binding`.tenant = '{tenant}')"
+	else:
+		return "1=0"
+
+
+def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
+	if doc.doctype != "Mail Principal Binding":
+		return False
+
+	user = user or frappe.session.user
+	if is_system_manager(user):
+		return True
+	elif doc.tenant and is_tenant_admin(doc.tenant, user):
+		if ptype == "read":
+			return True
+
+	return False
