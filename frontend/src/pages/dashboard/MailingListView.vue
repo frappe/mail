@@ -17,11 +17,11 @@
 					class="h-[14.5rem]"
 					@action="showEditGeneral = true"
 				>
-					<InformationField :label="__('Description')" :value="list.doc.description" />
 					<InformationField
 						:label="__('Member Count')"
 						:value="list.doc.total_members"
 					/>
+					<InformationField :label="__('Description')" :value="list.doc.description" />
 					<InformationField
 						:label="__('Created On')"
 						:value="dayjs(list.doc.creation).format('MMM D YYYY, h:mm A')"
@@ -163,6 +163,7 @@ import {
 	ListView,
 	Tabs,
 	createDocumentResource,
+	createResource,
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
@@ -200,6 +201,19 @@ const list = createDocumentResource({
 		},
 	},
 	onError: () => router.replace({ name: 'MailingLists' }),
+})
+
+const listCreation = createResource({
+	url: 'frappe.client.get_value',
+	makeParams: () => ({
+		doctype: 'Mail Principal Binding',
+		fieldname: 'creation',
+		filters: { tenant: user.data.tenant, principal_name: listName, principal_type: 'List' },
+		as_dict: false,
+	}),
+	onSuccess: (data) => console.log(data),
+	auto: true,
+	cache: ['listCreation', listName],
 })
 
 const memberList = computed(() =>

@@ -17,43 +17,31 @@
 		</template>
 		<template #default>
 			<div v-if="account.doc" class="grid grid-cols-2 gap-5">
-				<div class="rounded-md border">
-					<h2 class="border-b p-4">{{ __('General Information') }}</h2>
-					<div class="space-y-4 p-4">
-						<FormControl
-							v-model="role"
-							type="combobox"
-							:label="__('Role')"
-							:options="['Mail User', 'Mail Admin']"
-							:open-on-click="true"
-						/>
-						<FormControl
-							v-model="account.doc.description"
-							type="textarea"
-							:label="__('Description')"
-						/>
-					</div>
-				</div>
-				<div class="rounded-md border">
-					<div class="flex items-center justify-between border-b p-4">
-						<h2>{{ __('Quota Usage') }}</h2>
-						<!-- <Button variant="ghost" :label="__('Set Restriction')" /> -->
-					</div>
-					<div class="h-36 space-y-4 px-4 py-12">
-						<div class="w-full space-y-2">
-							<span class="text-ink-gray-5 line-clamp-1 text-center text-lg">
-								{{ '18% of 10GB used' }}
-							</span>
-							<div class="bg-surface-gray-4 h-1.5 w-auto rounded-full">
-								<div
-									class="h-1.5 rounded-full"
-									:class="18 > 80 ? 'bg-surface-red-6' : 'bg-surface-gray-7'"
-									:style="{ width: `${18}%`, maxWidth: '100%' }"
-								/>
-							</div>
-						</div>
-					</div>
-				</div>
+				<DashboardCard
+					:title="__('General Information')"
+					:button-label="__('Edit')"
+					class="h-[14.5rem]"
+					@action="showEditGeneral = true"
+				>
+					<InformationField :label="__('Role')" :value="role" />
+					<InformationField
+						:label="__('Description')"
+						:value="account.doc.description"
+					/>
+					<InformationField
+						:label="__('Joined On')"
+						:value="dayjs(account.doc.creation).format('MMM D YYYY, h:mm A')"
+					/>
+					<InformationField :label="__('Organization')" :value="user.data.tenant_name" />
+				</DashboardCard>
+				<DashboardCard
+					:title="__('Quota Usage')"
+					:button-label="__('Edit')"
+					class="h-[14.5rem]"
+					@action="showEditQuota = true"
+				>
+					<div class="p-4">hi</div>
+				</DashboardCard>
 				<EmailListCard
 					:rows="account.doc.emails"
 					:title="__('Email Addresses')"
@@ -84,6 +72,98 @@
 		</template>
 	</DashboardLayout>
 
+	<Dialog
+		v-if="account?.originalDoc && isAdmin?.data !== undefined"
+		v-model="showEditGeneral"
+		:options="{
+			title: __('Edit General Information'),
+			actions: [
+				{
+					label: __('Save'),
+					variant: 'solid',
+					disabled: !(isAccountDirty || isRoleDirty),
+					onClick: () => {
+						save()
+						showEditGeneral = false
+					},
+				},
+			],
+		}"
+	>
+		<template #body-content>
+			<div class="space-y-4">
+				<FormControl
+					v-model="role"
+					type="combobox"
+					:label="__('Role')"
+					:options="['Mail User', 'Mail Admin']"
+					:open-on-click="true"
+				/>
+				<FormControl
+					v-model="account.doc.description"
+					:label="__('Description')"
+					type="textarea"
+				/>
+			</div>
+		</template>
+	</Dialog>
+	<Dialog
+		v-if="account?.doc"
+		v-model="showEditQuota"
+		:options="{
+			title: __('Edit Quota Usage'),
+			actions: [
+				{
+					label: __('Save'),
+					variant: 'solid',
+					disabled:
+						quota < 0 || account.doc.quota === (viewQuotaInBytes ? quota : quota * GB),
+					onClick: () => {
+						showEditQuota = false
+						account.doc.quota = viewQuotaInBytes ? quota : quota * GB
+						account.save.submit()
+					},
+				},
+			],
+		}"
+	>
+		<template #body-content>
+			<div class="space-y-4">
+				<Switch
+					v-model="viewQuotaInBytes"
+					:label="__('View in Bytes')"
+					class="hover:!bg-surface-white !cursor-default !p-0"
+				/>
+				<FormControl
+					type="number"
+					:value="
+						viewQuotaInBytes ? account.doc.used_quota : account.doc.used_quota / GB
+					"
+					:label="
+						viewQuotaInBytes
+							? __('Storage Used (in Bytes)')
+							: __('Storage Used (in GB)')
+					"
+					:readonly="true"
+				/>
+				<hr />
+				<Switch
+					v-model="setQuotaRestriction"
+					:label="__('Set Restriction')"
+					class="hover:!bg-surface-white !cursor-default !p-0"
+					@update:model-value="
+						(val: boolean) => (quota = val ? (viewQuotaInBytes ? GB : 1) : 0)
+					"
+				/>
+				<FormControl
+					v-if="setQuotaRestriction"
+					v-model="quota"
+					type="number"
+					:label="viewQuotaInBytes ? __('Quota (in Bytes)') : __('Quota (in GB)')"
+				/>
+			</div>
+		</template>
+	</Dialog>
 	<AddEmailModal
 		v-model="showAddEmail"
 		:is-list="isAddList"
@@ -95,18 +175,48 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Button, FormControl, createDocumentResource, createResource } from 'frappe-ui'
+import { computed, inject, ref, watch } from 'vue'
+import {
+	Button,
+	Dialog,
+	FormControl,
+	Switch,
+	createDocumentResource,
+	createResource,
+} from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import DashboardCard from '@/components/DashboardCard.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import EmailListCard from '@/components/EmailListCard.vue'
+import InformationField from '@/components/InformationField.vue'
 import AddEmailModal from '@/components/Modals/AddEmailModal.vue'
 
 const { memberName } = defineProps<{ memberName: string }>()
 
+const user = inject('$user')
+const dayjs = inject('$dayjs')
+
+const showEditGeneral = ref(false)
+
+const showEditQuota = ref(false)
+const setQuotaRestriction = ref(false)
+const viewQuotaInBytes = ref(false)
+const quota = ref(0)
+
 const showAddEmail = ref(false)
 const isAddList = ref(false)
+
+watch(viewQuotaInBytes, (val: boolean) => {
+	if (val) quota.value *= GB
+	else quota.value /= GB
+})
+
+watch(showEditQuota, (val: boolean) => {
+	if (val) return
+	viewQuotaInBytes.value = false
+	quota.value = account.doc.quota / GB
+})
 
 const addEmail = (isList: boolean) => {
 	isAddList.value = isList
@@ -131,6 +241,10 @@ const role = ref(isAdmin?.data ? 'Mail Admin' : 'Mail User')
 const account = createDocumentResource({
 	doctype: 'Mail Principal',
 	name: memberName,
+	onSuccess: (doc) => {
+		setQuotaRestriction.value = !!doc.quota
+		quota.value = viewQuotaInBytes.value ? doc.quota : doc.quota / GB
+	},
 	setValue: {
 		onSuccess: () => raiseToast(__('Account updated.')),
 		onError: (error) => {
@@ -170,4 +284,6 @@ const save = async () => {
 }
 
 const BREADCRUMBS = [{ label: __('Members'), route: '/dashboard/members' }, { label: memberName }]
+
+const GB = 1024 * 1024 * 1024
 </script>
