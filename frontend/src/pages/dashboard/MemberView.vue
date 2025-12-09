@@ -41,7 +41,12 @@
 					class="h-[14.5rem]"
 					@action="showEditQuota = true"
 				>
-					<div class="p-4">hi</div>
+					<div class="flex flex-1 items-center justify-center">
+						<QuotaProgressBar
+							:quota="Number(account.doc.quota) / GB"
+							:used-quota="account.doc.used_quota / GB"
+						/>
+					</div>
 				</DashboardCard>
 				<EmailListCard
 					:rows="account.doc.emails"
@@ -195,6 +200,7 @@ import DashboardLayout from '@/components/DashboardLayout.vue'
 import EmailListCard from '@/components/EmailListCard.vue'
 import InformationField from '@/components/InformationField.vue'
 import AddEmailModal from '@/components/Modals/AddEmailModal.vue'
+import QuotaProgressBar from '@/components/QuotaProgressBar.vue'
 
 const { memberName } = defineProps<{ memberName: string }>()
 
