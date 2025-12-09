@@ -31,6 +31,7 @@
   },
   {
    "default": "0",
+   "description": "Is the user allowed to delete this Identity?",
    "fieldname": "may_delete",
    "fieldtype": "Check",
    "label": "May Delete",
@@ -41,6 +42,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "The id of the Identity.",
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -49,6 +51,7 @@
    "set_only_once": 1
   },
   {
+   "description": "The \"From\" name the client should use when creating a new Email from this Identity.",
    "fieldname": "_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -59,6 +62,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "The \"From\" email address the client must use when creating a new Email from this Identity.",
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -72,23 +76,27 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "The Bcc value the client should set when creating a new Email from this Identity.",
    "fieldname": "bcc",
    "fieldtype": "Table",
    "label": "Bcc",
    "options": "Email Address"
   },
   {
+   "description": "The Reply-To value the client should set when creating a new Email from this Identity.",
    "fieldname": "reply_to",
    "fieldtype": "Table",
    "label": "Reply To",
    "options": "Email Address"
   },
   {
+   "description": "A signature the client should insert into new HTML messages that will be sent from this Identity.",
    "fieldname": "html_signature",
    "fieldtype": "HTML Editor",
    "label": "HTML"
   },
   {
+   "description": "A signature the client should insert into new plaintext messages that will be sent from this Identity.",
    "fieldname": "text_signature",
    "fieldtype": "Code",
    "label": "Text"
@@ -100,6 +108,7 @@
    "label": "Signature"
   },
   {
+   "description": "The user this identity belongs to.",
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -115,7 +124,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-22 11:18:49.665323",
+ "modified": "2025-12-09 13:11:05.006924",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Identity",

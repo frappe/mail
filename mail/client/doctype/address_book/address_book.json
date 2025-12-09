@@ -33,6 +33,7 @@
   },
   {
    "default": "1",
+   "description": "Checked if the user has indicated they wish to see this Address Book in their client.",
    "fieldname": "subscribed",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -43,6 +44,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "The ID of the Address Book.",
    "fieldname": "id",
    "fieldtype": "Data",
    "label": "ID",
@@ -51,6 +53,7 @@
    "set_only_once": 1
   },
   {
+   "description": "The user-visible name of the Address Book.",
    "fieldname": "_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -58,12 +61,14 @@
    "reqd": 1
   },
   {
+   "description": "An optional longer-form description of the Address Book.",
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
   },
   {
    "default": "0",
+   "description": "Defines the sort order of Address Books when presented in the client's UI.",
    "fieldname": "sort_order",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -73,6 +78,7 @@
   },
   {
    "default": "0",
+   "description": "This should be true for exactly one Address Book in any account, and must not be true for more than one Address Book within an account.",
    "fieldname": "default",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -84,6 +90,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "The user this address book belongs to.",
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -151,7 +158,7 @@
    "link_fieldname": "address_book"
   }
  ],
- "modified": "2025-12-09 12:40:20.930893",
+ "modified": "2025-12-09 13:17:55.001285",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Address Book",

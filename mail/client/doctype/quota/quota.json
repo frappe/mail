@@ -31,6 +31,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "The resource type of the quota as defined in `#resourcetype`.",
    "fieldname": "resource_type",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -42,6 +43,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "The unique identifier for this quota.",
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -49,6 +51,7 @@
    "read_only": 1
   },
   {
+   "description": "The \"Scope\" of this quota as defined in `#scope`.",
    "fieldname": "scope",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -56,6 +59,7 @@
    "read_only": 1
   },
   {
+   "description": "The name of the quota object.",
    "fieldname": "_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -63,6 +67,7 @@
    "read_only": 1
   },
   {
+   "description": "Description of this quota.",
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description",
@@ -73,6 +78,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "The hard limit set by this quota.",
    "fieldname": "hard_limit",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -81,6 +87,7 @@
    "read_only": 1
   },
   {
+   "description": "The soft limit set by this quota object.",
    "fieldname": "soft_limit",
    "fieldtype": "Int",
    "label": "Soft Limit",
@@ -88,6 +95,7 @@
    "read_only": 1
   },
   {
+   "description": "The warn limit set by this quota object.",
    "fieldname": "warn_limit",
    "fieldtype": "Int",
    "label": "Warn Limit",
@@ -95,6 +103,7 @@
    "read_only": 1
   },
   {
+   "description": "The current usage of the defined quota.",
    "fieldname": "used",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -107,12 +116,14 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "A list of all the type names as defined in the \"JMAP Types Names\" registry (e.g., Email, Calendar, etc.) to which this quota applies.",
    "fieldname": "types",
    "fieldtype": "JSON",
    "label": "Types",
    "read_only": 1
   },
   {
+   "description": "The user this quota belongs to.",
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -129,7 +140,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-22 12:09:08.424190",
+ "modified": "2025-12-09 13:04:44.230058",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Quota",

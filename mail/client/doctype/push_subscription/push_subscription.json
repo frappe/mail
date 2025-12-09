@@ -20,6 +20,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "The user this push subscription belongs to.",
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -34,7 +35,7 @@
    "fieldtype": "Section Break"
   },
   {
-   "description": "The URL must start with 'https://'.",
+   "description": "An absolute URL where the JMAP server will POST the data for the push message. This MUST begin with `https://`.",
    "fieldname": "url",
    "fieldtype": "Data",
    "label": "URL",
@@ -42,6 +43,7 @@
    "set_only_once": 1
   },
   {
+   "description": "The time this push subscription expires.",
    "fieldname": "expires",
    "fieldtype": "Datetime",
    "in_list_view": 1,
@@ -54,6 +56,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "An ID that uniquely identifies the client + device it is running on.",
    "fieldname": "device_client_id",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -63,12 +66,14 @@
   },
   {
    "default": "[\n    \"Email\",\n    \"Mailbox\",\n    \"Identity\",\n    \"VacationResponse\"\n]",
+   "description": "A list of types the client is interested in. A `StateChange` notification will only be sent if the data for one of these types changes.",
    "fieldname": "types",
    "fieldtype": "JSON",
    "label": "Types",
    "set_only_once": 1
   },
   {
+   "description": "The ID of the push subscription.",
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -81,7 +86,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-27 11:36:52.146395",
+ "modified": "2025-12-09 12:59:48.784935",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Push Subscription",
