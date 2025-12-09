@@ -594,7 +594,7 @@ def add_principal(principal: "MailPrincipal") -> str:
 	payload = {
 		"name": principal.name,
 		"type": _get_principal_type(principal.type),
-		"quota": principal.quota or cint(frappe.conf.default_mail_quota) or 1024**3,
+		"quota": cint(principal.quota) or cint(frappe.conf.default_mail_quota) or 1024**3,
 		"description": principal.description or "",
 		"secrets": _secrets,
 		"emails": _emails,
@@ -1093,13 +1093,13 @@ def format_principal(tenant: str, principal: dict) -> dict:
 		formatted["secrets"] = json.dumps(principal.get("secrets", []), indent=4)
 
 	if type in ["Group", "Individual"]:
-		quota = cint(principal.get("quota"))
-		used_quota = cint(principal.get("usedQuota"))
+		quota = str(principal.get("quota") or 0)
+		used_quota = str(principal.get("usedQuota") or 0)
 		formatted.update(
 			{
 				"quota": quota,
 				"used_quota": used_quota,
-				"used_percentage": (cint(used_quota / quota * 100) if quota > 0 else 0),
+				"used_percentage": (cint(cint(used_quota) / cint(quota) * 100) if cint(quota) > 0 else 0),
 				"member_of": [{"value": m} for m in principal.get("memberOf", [])],
 				"lists": [{"value": l} for l in principal.get("lists", [])],
 			}
