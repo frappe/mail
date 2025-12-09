@@ -1839,6 +1839,147 @@ class JMAPClient:
 		return response["methodResponses"][0][1]
 
 	# -------------------------------
+	# Calendar & Event
+	# -------------------------------
+
+	def calendar_create(
+		self,
+		creation_id: str,
+		name: str,
+		color: str | None = None,
+		description: str | None = None,
+		sort_order: int = 0,
+		include_in_availability: Literal["all", "attending", "none"] = "all",
+		time_zone: str | None = None,
+		subscribed: bool = True,
+		visible: bool = True,
+		default: bool = False,
+	) -> dict:
+		"""Creates a calendar book with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:calendars"],
+			method_calls=[
+				[
+					"Calendar/set",
+					{
+						"accountId": self.primary_account_id,
+						"create": {
+							creation_id: {
+								"name": name,
+								"color": color or None,
+								"description": description or None,
+								"sortOrder": sort_order or 0,
+								"includeInAvailability": include_in_availability,
+								"timeZone": time_zone or None,
+								"isSubscribed": subscribed or False,
+								"isVisible": visible or True,
+							}
+						},
+						"onSuccessSetIsDefault": f"#{creation_id}" if default else None,
+					},
+					"0",
+				]
+			],
+		)
+		return response["methodResponses"][0][1]
+
+	def calendar_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the calendars for the provided calendar IDs."""
+
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"Calendar/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			calendars = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				calendars.extend(fetch(ids_batch))
+			return calendars
+
+		return fetch(ids)
+
+	def calendar_update(
+		self,
+		id: str,
+		name: str,
+		color: str | None = None,
+		description: str | None = None,
+		sort_order: int = 0,
+		include_in_availability: Literal["all", "attending", "none"] = "all",
+		time_zone: str | None = None,
+		subscribed: bool = True,
+		visible: bool = True,
+		default: bool = False,
+	):
+		"""Updates the calendar with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:calendars"],
+			method_calls=[
+				[
+					"Calendar/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							id: {
+								"name": name,
+								"color": color or None,
+								"description": description or None,
+								"sortOrder": sort_order or 0,
+								"includeInAvailability": include_in_availability,
+								"timeZone": time_zone or None,
+								"isSubscribed": subscribed or False,
+								"isVisible": visible or False,
+							}
+						},
+						"onSuccessSetIsDefault": id if default else None,
+					},
+					"0",
+				]
+			],
+		)
+		return response["methodResponses"][0][1]
+
+	def calendar_delete(self, ids: list[str], remove_events: bool = False) -> dict:
+		"""Destroys the calendars with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"Calendar/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
+							"onDestroyRemoveEvents": remove_events,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
+	# -------------------------------
 	# Blob
 	# -------------------------------
 
