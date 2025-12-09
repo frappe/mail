@@ -194,8 +194,7 @@ def format_address_book(user: str, address_book: dict) -> dict:
 	"""Formats address book data for display."""
 
 	sort_order = cint(address_book["sortOrder"])
-	if rights := address_book.get("myRights"):
-		rights = json.dumps(rights, indent=4, sort_keys=True)
+	rights = address_book.get("myRights") or {}
 
 	return {
 		"name": f"{user}|{address_book['id']}",
@@ -204,9 +203,12 @@ def format_address_book(user: str, address_book: dict) -> dict:
 		"_name": address_book["name"],
 		"sort_order": sort_order,
 		"description": address_book["description"],
-		"default": bool(address_book["isDefault"]),
-		"subscribed": bool(address_book["isSubscribed"]),
-		"rights": rights,
+		"default": cint(bool(address_book["isDefault"])),
+		"subscribed": cint(bool(address_book["isSubscribed"])),
+		"may_read": cint(rights.get("mayRead", False)),
+		"may_write": cint(rights.get("mayWrite", False)),
+		"may_admin": cint(rights.get("mayAdmin", False)),
+		"may_delete": cint(rights.get("mayDelete", False)),
 		"creation": today(),
 		"modified": today(),
 	}

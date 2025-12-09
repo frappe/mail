@@ -15,8 +15,11 @@
   "sort_order",
   "column_break_pccw",
   "description",
-  "section_break_kjvw",
-  "rights"
+  "rights_section",
+  "may_read",
+  "may_write",
+  "may_admin",
+  "may_delete"
  ],
  "fields": [
   {
@@ -80,18 +83,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "section_break_kjvw",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "rights",
-   "fieldtype": "JSON",
-   "label": "Rights",
-   "no_copy": 1,
-   "read_only": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -101,6 +92,49 @@
    "options": "User",
    "reqd": 1,
    "set_only_once": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may fetch the Contact Cards in this Address Book.",
+   "fieldname": "may_read",
+   "fieldtype": "Check",
+   "label": "May Read",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may create, modify or destroy all Contact Cards in this Address Book, or move them to or from this Address Book.",
+   "fieldname": "may_write",
+   "fieldtype": "Check",
+   "label": "May Write",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may modify the \"shareWith\" property for this Address Book.",
+   "fieldname": "may_admin",
+   "fieldtype": "Check",
+   "label": "May Admin",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may delete the Address Book itself.",
+   "fieldname": "may_delete",
+   "fieldtype": "Check",
+   "label": "May Delete",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "rights_section",
+   "fieldtype": "Section Break",
+   "label": "Rights"
   }
  ],
  "grid_page_length": 50,
@@ -112,7 +146,7 @@
    "link_fieldname": "address_book"
   }
  ],
- "modified": "2025-11-22 09:34:24.986165",
+ "modified": "2025-12-09 12:15:43.365488",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Address Book",
