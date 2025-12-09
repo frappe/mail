@@ -54,7 +54,7 @@
  "links": [],
  "modified": "2025-01-31 15:53:10.550269",
  "modified_by": "Administrator",
- "module": "Client",
+ "module": "Server",
  "name": "Mail Tenant Member",
  "naming_rule": "By fieldname",
  "owner": "Administrator",

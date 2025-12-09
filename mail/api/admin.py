@@ -10,7 +10,7 @@ from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import get_tenant_for_user, is_tenant_admin
 
 if TYPE_CHECKING:
-	from mail.client.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
+	from mail.server.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
 
 
 @frappe.whitelist()

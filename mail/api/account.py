@@ -7,7 +7,7 @@ from frappe.utils.data import sha256_hash
 
 from mail.api.admin import add_member
 from mail.client.doctype.identity.identity import fetch_identities
-from mail.client.doctype.mail_account_request.mail_account_request import create_user
+from mail.server.doctype.mail_account_request.mail_account_request import create_user
 from mail.utils import convert_html_to_text, user_context
 from mail.utils.cache import get_personal_signup_domains
 from mail.utils.rate_limiter import dynamic_rate_limit
