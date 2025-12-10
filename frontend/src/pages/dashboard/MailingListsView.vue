@@ -110,5 +110,8 @@ const LIST_OPTIONS = {
 	getRowRoute: (row) => ({ name: 'MailingList', params: { listName: row.name } }),
 }
 
-const LIST_COLUMNS = [{ label: __('Mailing List'), key: 'name' }]
+const LIST_COLUMNS = [
+	{ label: __('Mailing List'), key: 'name' },
+	{ label: __('Total Members'), key: 'total_members' },
+]
 </script>

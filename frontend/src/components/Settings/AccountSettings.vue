@@ -6,7 +6,7 @@
 			type="combobox"
 			:label="__('Default Outgoing Email')"
 			variant="outline"
-			:options="user.data.email_addresses"
+			:options="identities.data.map((i: Identity) => i.email)"
 			:open-on-click="true"
 		/>
 		<Switch
@@ -51,8 +51,12 @@ import { computed, inject } from 'vue'
 import { Button, ErrorMessage, FormControl, Switch, createDocumentResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
+
+import type { Identity } from '@/types'
 
 const user = inject('$user')
+const { identities } = userStore()
 
 const account = createDocumentResource({
 	doctype: 'User',

@@ -18,7 +18,7 @@
 					@action="showEditGeneral = true"
 				>
 					<InformationField
-						:label="__('Member Count')"
+						:label="__('Total Members')"
 						:value="list.doc.total_members.toString()"
 					/>
 					<InformationField :label="__('Description')" :value="list.doc.description" />

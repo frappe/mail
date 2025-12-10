@@ -11,7 +11,7 @@ from mail.server.doctype.mail_account_request.mail_account_request import create
 from mail.utils import convert_html_to_text, user_context
 from mail.utils.cache import get_personal_signup_domains
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import get_tenant_for_domain, get_user_email_addresses, get_user_tenant
+from mail.utils.user import get_tenant_for_domain, get_user_tenant
 from mail.utils.validation import is_email_assigned
 
 
@@ -160,9 +160,6 @@ def get_user_info() -> dict | None:
 			"Mail Tenant", user_dict.tenant, ["tenant_name", "user"]
 		)
 		user_dict.is_tenant_owner = tenant_owner == user
-
-	if user_dict.is_mail_user:
-		user_dict.email_addresses = get_user_email_addresses(user)
 
 	return user_dict
 
