@@ -236,7 +236,7 @@ class MailAccountRequest(Document):
 			roles.append("Mail Admin")
 
 		# Create User
-		user = create_user(self.account, first_name, last_name, password, roles)
+		user = create_user(self.account, first_name, last_name, password, self.email, roles)
 		_add_user_to_tenant(self.tenant, user, self.is_admin)
 
 		# Generate App Password
@@ -273,6 +273,7 @@ def create_user(
 	first_name: str,
 	last_name: str | None = None,
 	password: str | None = None,
+	backup_email: str | None = None,
 	roles: list[str] | None = None,
 ) -> str:
 	"""Creates a User document"""
@@ -283,6 +284,7 @@ def create_user(
 	user.username = email
 	user.email = email
 	user.owner = email
+	user.backup_email = backup_email
 	user.send_welcome_email = 0
 	if roles:
 		user.append_roles(*roles)
