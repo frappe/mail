@@ -138,7 +138,7 @@ def verify_push_subscription(user: str, id: str, verification_code: str) -> None
 	if not frappe.db.exists("User", {"name": user, "enabled": 1}):
 		frappe.throw(_("User does not exist or is disabled."))
 
-	client = get_jmap_client(user)
+	client = get_jmap_client(user, ignore_permissions=True)
 	response = client.push_subscription_update(id, verification_code)
 
 	if response[0][1].get("notUpdated"):
