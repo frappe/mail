@@ -66,10 +66,7 @@ def validate_jmap_settings(doc: Document, method: str | None = None) -> None:
 def update_account_password(doc: Document, method: str | None = None) -> None:
 	"""Update the password in the Mail Principal when the User's password is changed."""
 
-	if not doc.enabled:
-		return
-
-	if not is_tenant_bound_user(doc.name):
+	if not doc.enabled or not is_tenant_bound_user(doc.name) or not doc.jmap_username:
 		return
 
 	tenant = get_tenant_for_user(doc.name)
