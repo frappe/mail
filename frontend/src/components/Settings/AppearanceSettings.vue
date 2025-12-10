@@ -13,6 +13,7 @@
 			:model-value="showReadingPane"
 			:label="__('Show Reading Pane')"
 			:description="__('Display message preview beside your mail list')"
+			class="!p-0"
 			@update:model-value="setShowReadingPane(user.data.name, $event)"
 		/>
 		<FormControl

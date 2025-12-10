@@ -154,7 +154,7 @@ const menuItems = computed(() => [
 		label: __('Mailbox'),
 		onClick: () => router.push('/mailbox'),
 		condition: () =>
-			user.data.is_mail_admin && user.data.default_outgoing && route.meta.isDashboard,
+			user.data.is_mail_admin && user.data.is_mail_user && route.meta.isDashboard,
 	},
 	{
 		icon: Crown,
@@ -162,7 +162,7 @@ const menuItems = computed(() => [
 		onClick: () => router.push('/dashboard'),
 		condition: () =>
 			user.data.is_mail_admin &&
-			user.data.default_outgoing &&
+			user.data.is_mail_user &&
 			!route.meta.isDashboard &&
 			!isMobile.value,
 	},

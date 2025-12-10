@@ -6,7 +6,7 @@
 				{{ __('Default Outgoing Email') }}
 			</label>
 			<Combobox
-				v-model="account.doc.default_outgoing_email"
+				v-model="account.doc.jmap_default_outgoing_email"
 				variant="outline"
 				:options="user.data.email_addresses"
 				:open-on-click="true"
@@ -18,11 +18,13 @@
 			:description="
 				__('Automatically deletes the email from your mailbox after it is sent.')
 			"
+			class="!p-0"
 		/>
 		<Switch
 			v-model="destroyNewsletterAfterSubmission"
 			:label="__('Delete Newsletter After Sending')"
 			:description="__('Automatically deletes the newsletter after it is sent.')"
+			class="!p-0"
 		/>
 
 		<h1>{{ __('Recovery') }}</h1>
@@ -63,7 +65,7 @@ import { raiseToast } from '@/utils'
 const user = inject('$user')
 
 const account = createDocumentResource({
-	doctype: 'Mail Account',
+	doctype: 'User',
 	name: user.data?.name,
 	setValue: {
 		onSuccess: () => raiseToast(__('Account updated.')),
@@ -71,12 +73,12 @@ const account = createDocumentResource({
 })
 
 const destroyEmailAfterSubmission = computed({
-	get: () => !!account.doc.destroy_email_after_submission,
-	set: (val: boolean) => (account.doc.destroy_email_after_submission = val ? 1 : 0),
+	get: () => !!account.doc.jmap_destroy_email_after_submission,
+	set: (val: boolean) => (account.doc.jmap_destroy_email_after_submission = val ? 1 : 0),
 })
 
 const destroyNewsletterAfterSubmission = computed({
-	get: () => !!account.doc.destroy_newsletter_after_submission,
-	set: (val: boolean) => (account.doc.destroy_newsletter_after_submission = val ? 1 : 0),
+	get: () => !!account.doc.jmap_destroy_newsletter_after_submission,
+	set: (val: boolean) => (account.doc.jmap_destroy_newsletter_after_submission = val ? 1 : 0),
 })
 </script>

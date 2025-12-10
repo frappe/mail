@@ -70,46 +70,50 @@ const tabs = computed(() => {
 			label: __('Profile'),
 			icon: User,
 			component: markRaw(ProfileSettings),
-			showNonMailUser: true,
 		},
 		{
 			label: __('Account'),
 			icon: Mailbox,
 			component: markRaw(AccountSettings),
+			condition: user.data.is_mail_user,
 		},
 		{
 			label: __('Identity'),
 			icon: Fingerprint,
 			component: markRaw(IdentitySettings),
+			condition: user.data.is_mail_user,
 		},
 		{
 			label: __('Appearance'),
 			icon: Palette,
 			component: markRaw(AppearanceSettings),
-			showNonMailUser: true,
 		},
 		{
 			label: __('Signature'),
 			icon: Feather,
 			component: markRaw(SignatureSettings),
+			condition: user.data.is_mail_user,
 		},
 		{
 			label: __('Vacation Response'),
 			icon: TreePalm,
 			component: markRaw(VacationResponseSettings),
+			condition: user.data.is_mail_user,
 		},
 		{
 			label: __('Mail Data Exchange'),
 			icon: DatabaseBackup,
 			component: markRaw(MailDataExchangeSettings),
+			condition: user.data.is_mail_user && user.data.tenant,
 		},
 		{
 			label: __('Advanced'),
 			icon: Code,
 			component: markRaw(AdvancedSettings),
+			condition: user.data.is_mail_user,
 		},
 	]
-	return user.data.is_mail_user ? allTabs : allTabs.filter((tab) => tab.showNonMailUser)
+	return allTabs.filter((tab) => tab.condition !== false)
 })
 const activeTab = ref(tabs.value[0])
 </script>
