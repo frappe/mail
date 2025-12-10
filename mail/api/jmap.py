@@ -16,7 +16,7 @@ def push_notification() -> dict:
 	"""Handle JMAP Push Notification."""
 
 	try:
-		user = frappe.request.args.get("user")
+		user = frappe.request.args.get("user") or frappe.request.args.get("account")
 		if not user:
 			frappe.throw(_("Missing user query parameter."))
 
