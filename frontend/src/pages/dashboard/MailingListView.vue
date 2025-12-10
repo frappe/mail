@@ -19,7 +19,7 @@
 				>
 					<InformationField
 						:label="__('Member Count')"
-						:value="list.doc.total_members"
+						:value="list.doc.total_members.toString()"
 					/>
 					<InformationField :label="__('Description')" :value="list.doc.description" />
 					<InformationField

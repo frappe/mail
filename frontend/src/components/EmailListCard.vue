@@ -1,7 +1,7 @@
 <template>
 	<DashboardCard :title @action="emit('add')">
 		<ListView
-			:columns="[{ label: columnLabel, key: 'value' }]"
+			:columns="[{ label: columnLabel, key: 'value', showTooltip: false }]"
 			:rows="rows"
 			row-key="value"
 			:options="{ emptyState: { title: '', description: __('No rows.') } }"

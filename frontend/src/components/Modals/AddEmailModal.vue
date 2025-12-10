@@ -76,7 +76,7 @@ const lists = createResource({
 	url: 'mail.api.admin.get_mailing_lists',
 	auto: true,
 	transform: (data) => data.map((l) => l.name),
-	cache: ['mailTenantMailingLists', user.data?.tenant, ''],
+	cache: ['mailTenantMailingLists', user.data?.tenant],
 })
 
 watch(show, (val) => {

@@ -7,7 +7,7 @@ from frappe.utils import cint
 
 from mail.server.doctype.mail_principal.mail_principal import fetch_principals
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import get_tenant_for_user, is_tenant_admin
+from mail.utils.user import get_tenant_domains, get_tenant_for_user, is_tenant_admin
 
 if TYPE_CHECKING:
 	from mail.server.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
@@ -204,3 +204,16 @@ def get_mailing_lists(txt: str | None = None) -> list[dict]:
 		return []
 
 	return [{"name": d["name"]} for d in lists]
+
+
+@frappe.whitelist()
+def get_verified_domains() -> list[str]:
+	tenant = get_tenant_for_user(frappe.session.user)
+	if not (domains := get_tenant_domains(tenant)):
+		return []
+
+	return frappe.get_all(
+		"Mail Principal Binding",
+		{"tenant": tenant, "principal_type": "Domain", "principal_name": ["in", domains], "is_verified": 1},
+		pluck="principal_name",
+	)

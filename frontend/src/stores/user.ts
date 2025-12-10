@@ -70,11 +70,7 @@ export const userStore = defineStore('mail-users', () => {
 		}),
 	})
 
-	const domains = createResource({
-		url: 'mail.api.admin.get_domains',
-		makeParams: () => ({ is_verified: 1 }),
-		transform: (data) => data.map((domain) => domain.name),
-	})
+	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
 
 	return { userResource, mailboxes, mailboxIds, identities, tenantOwner, domains }
 })

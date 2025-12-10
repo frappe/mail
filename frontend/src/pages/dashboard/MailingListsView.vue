@@ -13,6 +13,7 @@
 		</div>
 		<ListView
 			v-if="lists?.data"
+			ref="listView"
 			class="flex-1"
 			:columns="LIST_COLUMNS"
 			:rows="lists.data"
@@ -104,7 +105,6 @@ const deleteListsOptions = {
 }
 
 const LIST_OPTIONS = {
-	selectable: false,
 	showTooltip: false,
 	emptyState: { description: __('No mailing lists found.') },
 	getRowRoute: (row) => ({ name: 'MailingList', params: { listName: row.name } }),
