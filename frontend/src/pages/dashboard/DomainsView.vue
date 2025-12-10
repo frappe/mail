@@ -92,7 +92,7 @@ watchDebounced(() => search.value, domains.reload, { debounce: 500 })
 const LIST_COLUMNS = [
 	{ label: __('Domain'), key: 'name' },
 	{ label: __('Status'), key: 'is_verified' },
-	{ label: __('Members'), key: 'total_members' },
+	{ label: __('Addresses'), key: 'total_members' },
 ]
 
 const LIST_OPTIONS = {

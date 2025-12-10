@@ -32,7 +32,13 @@
 							'Email authentication records that verify your domain and protect outgoing mail from spoofing.',
 						)
 					"
-					:records="domain.doc.dns_records.slice(0, 3)"
+					:records="
+						domain.doc.dns_records.filter(
+							(d) =>
+								d.type === 'TXT' &&
+								!(d.host.startsWith('_smtp') || d.host.startsWith('_mta')),
+						)
+					"
 					:badge-label="__('Required')"
 					badge-theme="red"
 				/>
@@ -43,7 +49,7 @@
 							'Mail routing records that ensure messages sent to your domain are delivered to the correct mail server.',
 						)
 					"
-					:records="[domain.doc.dns_records[7]]"
+					:records="domain.doc.dns_records.filter((d) => d.type === 'MX')"
 					:badge-label="__('Recommended')"
 					badge-theme="orange"
 				/>
@@ -54,7 +60,7 @@
 							'Service records that enable automatic mail setup and enforce secure transport for your domain.',
 						)
 					"
-					:records="domain.doc.dns_records.slice(3, 7)"
+					:records="domain.doc.dns_records.filter((d) => d.type === 'CNAME')"
 				/>
 				<DNSRecords
 					:title="__('Service Discovery Records')"
@@ -63,7 +69,7 @@
 							'Records that allow mail and sync apps to automatically locate and connect to your domain’s email, calendar, and contacts services.',
 						)
 					"
-					:records="domain.doc.dns_records.slice(8, 17)"
+					:records="domain.doc.dns_records.filter((d) => d.type === 'SRV')"
 				/>
 				<DNSRecords
 					:title="__('Email Transport Security Records')"
@@ -72,7 +78,13 @@
 							'TXT records that enforce encrypted mail delivery and provide reporting on failed or insecure SMTP connections.',
 						)
 					"
-					:records="domain.doc.dns_records.slice(17)"
+					:records="
+						domain.doc.dns_records.filter(
+							(d) =>
+								d.type === 'TXT' &&
+								(d.host.startsWith('_smtp') || d.host.startsWith('_mta')),
+						)
+					"
 				/>
 			</div>
 		</template>
