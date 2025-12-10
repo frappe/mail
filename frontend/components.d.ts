@@ -9,7 +9,6 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AccountSettings: typeof import('./src/components/Settings/AccountSettings.vue')['default']
-    AddAliasModal: typeof import('./src/components/Modals/AddAliasModal.vue')['default']
     AddDomainModal: typeof import('./src/components/Modals/AddDomainModal.vue')['default']
     AddEmailModal: typeof import('./src/components/Modals/AddEmailModal.vue')['default']
     AddMailboxModal: typeof import('./src/components/Modals/AddMailboxModal.vue')['default']
@@ -33,7 +32,6 @@ declare module 'vue' {
     DefaultLayout: typeof import('./src/components/DefaultLayout.vue')['default']
     DeleteMailboxModal: typeof import('./src/components/Modals/DeleteMailboxModal.vue')['default']
     DNSRecords: typeof import('./src/components/DNSRecords.vue')['default']
-    EditAliasModal: typeof import('./src/components/Modals/EditAliasModal.vue')['default']
     EditInviteModal: typeof import('./src/components/Modals/EditInviteModal.vue')['default']
     EditMailboxModal: typeof import('./src/components/Modals/EditMailboxModal.vue')['default']
     EditPhotoModal: typeof import('./src/components/Modals/EditPhotoModal.vue')['default']

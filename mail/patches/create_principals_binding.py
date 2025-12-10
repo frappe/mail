@@ -1,4 +1,6 @@
 import frappe
+from frappe.modules.utils import sync_customizations
+from frappe.utils.password import get_decrypted_password
 
 from mail.server.doctype.mail_principal_binding.mail_principal_binding import create_principal_binding
 from mail.utils.cache import get_cluster_for_tenant
@@ -12,26 +14,39 @@ TYPE_MAPPING = {
 
 
 def execute() -> None:
+	sync_customizations(app="mail")
 	for doctype in DOCTYPES:
-		if frappe.db.has_table(doctype):
-			fields = ["name", "tenant"]
+		if not frappe.db.has_table(doctype):
+			continue
+
+		fields = ["name", "tenant"]
+		if doctype == "Mail Domain":
+			fields.append("is_verified")
+		elif doctype == "Mail Account":
+			fields.extend(["default_outgoing_email", "backup_email"])
+
+		rows = frappe.db.get_all(doctype, filters={"enabled": 1}, fields=fields)
+
+		for row in rows:
+			if not frappe.db.exists("Mail Principal Binding", {"principal_name": row.name}):
+				create_principal_binding(
+					row.tenant, row.name, TYPE_MAPPING[doctype], bool(row.get("is_verified", 0))
+				)
+
 			if doctype == "Mail Account":
-				fields.append("is_verified")
+				app_password = get_decrypted_password(doctype, row.name, "app_password")
+				jmap_server_url = frappe.db.get_value(
+					"Mail Cluster", get_cluster_for_tenant(row.tenant), "base_url"
+				)
 
-			for row in frappe.db.get_all(doctype, {"enabled": 1}, fields=fields):
-				if not frappe.db.exists("Mail Principal Binding", {"principal_name": row.name}):
-					create_principal_binding(
-						row.tenant, row.name, TYPE_MAPPING[doctype], bool(row.get("is_verified", 0))
-					)
-
-				if doctype == "Mail Account":
-					account = frappe.get_doc("Mail Account", row.name)
-					jmap_server_url = frappe.db.get_value(
-						"Mail Cluster", get_cluster_for_tenant(row.tenant), "base_url"
-					)
-
-					user = frappe.get_doc("User", row.name)
-					user.jmap_server_url = jmap_server_url
-					user.jmap_username = row.name
-					user.jmap_app_password = account.get_password("app_password")
-					user.save(ignore_permissions=True)
+				frappe.db.set_value(
+					"User",
+					row.name,
+					{
+						"jmap_server_url": jmap_server_url,
+						"jmap_username": row.name,
+						"jmap_app_password": app_password,
+						"jmap_default_outgoing_email": row.default_outgoing_email,
+						"backup_email": row.backup_email,
+					},
+				)
