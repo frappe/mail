@@ -13,11 +13,15 @@
 		@touchend="clearTouchTimer"
 		@touchcancel="clearTouchTimer"
 	>
-		<div class="flex h-10 min-h-10 w-10 min-w-10 items-center justify-center">
+		<div
+			class="flex w-10 shrink-0 items-center justify-center"
+			:class="isFullWidth ? 'h-8' : 'h-10'"
+		>
 			<Checkbox
 				v-if="(isHovered || isSelected) && !isMobile"
 				:model-value="isSelected"
 				size="md"
+				class="-ml-[1px]"
 				@update:model-value="emit('setSelected', $event)"
 				@click.stop
 			/>
@@ -31,7 +35,7 @@
 			<Avatar
 				v-else
 				:label="getFirstAlphabet(mail.from_name) || getFirstAlphabet(mail.from_email)"
-				:size="isFullWidth ? 'xl' : '2xl'"
+				:size="isFullWidth ? 'lg' : '2xl'"
 				class="border"
 				@click.stop.prevent="emit('setSelected', true)"
 			/>

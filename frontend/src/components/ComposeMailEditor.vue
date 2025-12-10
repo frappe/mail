@@ -18,8 +18,14 @@
 						<span class="text-ink-gray-4 text-sm">{{ __('From') }}</span>
 						<Combobox
 							v-model="mail.from_email"
-							:options="user.data?.email_addresses || []"
+							:options="
+								identities.data.map((i: Identity) => ({
+									label: `${i._name} <${i.email}>`,
+									value: i.email,
+								})) || []
+							"
 							:open-on-click="true"
+							class="min-w-64"
 						/>
 					</div>
 					<Button
