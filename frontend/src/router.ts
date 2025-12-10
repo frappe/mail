@@ -124,12 +124,6 @@ const routes = [
 		meta: { isDashboard: true },
 	},
 	{
-		path: '/dashboard/aliases',
-		name: 'Aliases',
-		component: () => import('@/pages/dashboard/MailAliasesView.vue'),
-		meta: { isDashboard: true },
-	},
-	{
 		path: '/dashboard/mailing-lists',
 		name: 'MailingLists',
 		component: () => import('@/pages/dashboard/MailingListsView.vue'),

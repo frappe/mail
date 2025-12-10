@@ -91,7 +91,6 @@ import PWASettings from '@/components/PWASettings.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
 
 import Archive from '~icons/lucide/archive'
-import AtSign from '~icons/lucide/at-sign'
 import Bookmark from '~icons/lucide/bookmark'
 import Crown from '~icons/lucide/crown'
 import Edit3 from '~icons/lucide/edit-3'
@@ -199,12 +198,6 @@ const dashboardItems = [
 				icon: Mails,
 				to: { name: 'MailingLists' },
 				activeFor: ['MailingLists', 'MailingList'],
-			},
-			{
-				label: __('Aliases'),
-				icon: AtSign,
-				to: { name: 'Aliases' },
-				activeFor: ['Aliases'],
 			},
 		],
 	},
