@@ -113,7 +113,7 @@ const tabs = computed(() => {
 			condition: user.data.is_mail_user,
 		},
 	]
-	return allTabs.filter((tab) => tab.condition !== false)
+	return allTabs.filter((tab) => tab.condition === undefined || tab.condition)
 })
 const activeTab = ref(tabs.value[0])
 </script>
