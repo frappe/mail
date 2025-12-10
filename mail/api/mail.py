@@ -107,7 +107,7 @@ def serialize_thread(thread: dict) -> dict:
 
 	thread_fields = [
 		"name",
-		"account",
+		"user",
 		"thread_id",
 		"mailboxes",
 		"from_name",
