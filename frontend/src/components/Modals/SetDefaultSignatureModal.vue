@@ -1,21 +1,21 @@
 <template>
 	<Dialog v-model="show" :options="addSignatureOptions">
 		<template #body-content>
-			<div class="mb-4 space-y-1.5">
-				<label class="text-ink-gray-5 block text-xs"> {{ __('Identity') }} </label>
-				<Combobox
-					v-model="identity"
-					variant="outline"
-					:options="
-						identities.data.map((identity: Identity) => ({
-							label: identity.email,
-							value: identity.name,
-						}))
-					"
-					:open-on-click="true"
-				/>
-			</div>
-			<div class="space-y-1.5">
+			<FormControl
+				v-model="identity"
+				type="combobox"
+				:label="__('Identity')"
+				variant="outline"
+				:options="
+					identities.data.map((identity: Identity) => ({
+						label: identity.email,
+						value: identity.name,
+					}))
+				"
+				:open-on-click="true"
+			/>
+
+			<div class="mt-4 space-y-1.5">
 				<label class="text-ink-gray-5 block text-xs"> {{ __('Signature') }} </label>
 				<TextEditor
 					editor-class="prose-sm min-h-[8rem] border rounded p-2 max-w-none border-outline-gray-2"
@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Combobox, Dialog, TextEditor, createResource } from 'frappe-ui'
+import { Dialog, FormControl, TextEditor, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import { CustomParagraphExtension } from '@/utils/text-editor'
