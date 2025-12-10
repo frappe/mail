@@ -30,7 +30,7 @@
 			<!-- Center text -->
 			<div class="absolute inset-0 flex flex-col items-center justify-center space-y-1">
 				<div class="text-xl font-semibold">
-					{{ quota ? `${quota} GB` : __('Unlimited') }}
+					{{ quota ? `${quota.toFixed(2)} GB` : __('Unlimited') }}
 				</div>
 				<div class="text-ink-gray-4 text-xs">{{ __('Total Quota') }}</div>
 			</div>
@@ -43,7 +43,7 @@
 				<span class="bg-surface-gray-6 mt-1 h-3 w-3 flex-shrink-0 rounded-sm" />
 				<div class="space-y-1">
 					<div class="text-sm font-medium">
-						{{ usedQuota }} GB
+						{{ usedQuota.toFixed(2) }} GB
 						<span v-if="quota">({{ Math.round(usedPercentage) }}%)</span>
 					</div>
 					<div class="text-ink-gray-4 text-xs">{{ __('Used') }}</div>
@@ -55,7 +55,7 @@
 				<span class="bg-surface-gray-2 mt-1 h-3 w-3 flex-shrink-0 rounded-sm" />
 				<div class="space-y-1">
 					<div class="text-sm font-medium">
-						{{ availableQuota }} GB ({{ Math.round(availablePercentage) }}%)
+						{{ availableQuota.toFixed(2) }} GB ({{ Math.round(availablePercentage) }}%)
 					</div>
 					<div class="text-ink-gray-4 text-xs">{{ __('Available') }}</div>
 				</div>
@@ -82,6 +82,6 @@ const usedOffset = computed(() => CIRCUMFERENCE - (usedPercentage.value / 100) *
 
 onMounted(() => setTimeout(() => (animate.value = true), 100))
 
-const RADIUS = 60
+const RADIUS = 65
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 </script>

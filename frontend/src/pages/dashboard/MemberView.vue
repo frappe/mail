@@ -20,7 +20,6 @@
 				<DashboardCard
 					:title="__('General Information')"
 					:button-label="__('Edit')"
-					class="h-[14.5rem]"
 					@action="showEditGeneral = true"
 				>
 					<InformationField :label="__('Role')" :value="role" />
@@ -29,16 +28,20 @@
 						:value="account.doc.description"
 					/>
 					<InformationField
-						v-if="accountCreation?.data"
+						v-if="userDates?.data?.last_active"
+						:label="__('Last Active')"
+						:value="dayjs(userDates.data.last_active).format('MMM D YYYY, h:mm A')"
+					/>
+					<InformationField
+						v-if="userDates?.data?.creation"
 						:label="__('Joined On')"
-						:value="dayjs(accountCreation.data).format('MMM D YYYY, h:mm A')"
+						:value="dayjs(userDates.data.creation).format('MMM D YYYY, h:mm A')"
 					/>
 					<InformationField :label="__('Organization')" :value="user.data.tenant_name" />
 				</DashboardCard>
 				<DashboardCard
 					:title="__('Quota Usage')"
 					:button-label="__('Edit')"
-					class="h-[14.5rem]"
 					@action="showEditQuota = true"
 				>
 					<div class="flex flex-1 items-center justify-center">
@@ -248,6 +251,17 @@ const isAdmin = createResource({
 	cache: ['isAdmin', memberName],
 })
 
+const userDates = createResource({
+	url: 'frappe.client.get_value',
+	makeParams: () => ({
+		doctype: 'User',
+		fieldname: ['creation', 'last_active'],
+		filters: memberName,
+	}),
+	auto: true,
+	cache: ['userDates', memberName],
+})
+
 const role = ref(isAdmin?.data ? 'Mail Admin' : 'Mail User')
 
 const account = createDocumentResource({
@@ -260,22 +274,6 @@ const account = createDocumentResource({
 			account.reload()
 		},
 	},
-})
-
-const accountCreation = createResource({
-	url: 'frappe.client.get_value',
-	makeParams: () => ({
-		doctype: 'Mail Principal Binding',
-		fieldname: 'creation',
-		filters: {
-			tenant: user.data.tenant,
-			principal_name: memberName,
-			principal_type: 'Individual',
-		},
-		as_dict: false,
-	}),
-	auto: true,
-	cache: ['accountCreation', memberName],
 })
 
 const editIsAdmin = createResource({
