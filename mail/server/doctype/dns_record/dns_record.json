@@ -10,10 +10,6 @@
   "is_verified",
   "column_break_ihb5",
   "last_checked_at",
-  "section_break_bazr",
-  "attached_to_doctype",
-  "column_break_topm",
-  "attached_to_docname",
   "section_break_gd3y",
   "category",
   "host",
@@ -50,26 +46,6 @@
    "label": "Last Checked At",
    "no_copy": 1,
    "read_only": 1
-  },
-  {
-   "fieldname": "section_break_bazr",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "attached_to_doctype",
-   "fieldtype": "Select",
-   "label": "Attached To DocType",
-   "options": "\nDKIM Key"
-  },
-  {
-   "fieldname": "column_break_topm",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "attached_to_docname",
-   "fieldtype": "Dynamic Link",
-   "label": "Attached To DocName",
-   "options": "attached_to_doctype"
   },
   {
    "fieldname": "section_break_gd3y",
@@ -136,7 +112,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-04 23:06:39.128271",
+ "modified": "2025-11-27 17:03:22.707375",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "DNS Record",
@@ -156,6 +132,7 @@
    "write": 1
   }
  ],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],

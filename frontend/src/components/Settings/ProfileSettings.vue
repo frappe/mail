@@ -3,14 +3,14 @@
 
 	<div class="flex w-full items-center">
 		<Avatar
-			:image="user.data?.user_image"
-			:label="user.data?.full_name"
+			:image="user.data.user_image"
+			:label="user.data.full_name"
 			size="3xl"
 			class="h-16 w-16"
 		/>
 		<div class="mx-4 flex flex-col">
-			<span class="text-xl font-semibold">{{ user.data?.full_name }}</span>
-			<span class="text-ink-gray-6 text-base">{{ user.data?.email }}</span>
+			<span class="text-xl font-semibold">{{ user.data.full_name }}</span>
+			<span class="text-ink-gray-6 text-base">{{ user.data.email }}</span>
 		</div>
 		<Button :label="__('Edit Photo')" class="ml-auto" @click="showEditPhoto = true" />
 	</div>
@@ -22,10 +22,9 @@
 		class="min-h-7"
 		variant="solid"
 		:disabled="
-			!firstName ||
-			(firstName === user.data?.first_name && lastName === user.data?.last_name)
+			!firstName || (firstName === user.data.first_name && lastName === user.data.last_name)
 		"
-		:loading="setName.isLoading"
+		:loading="setName.loading"
 		@click="setName.submit"
 	/>
 	<Button class="min-h-7" :label="__('Change Password')" @click="showChangePassword = true" />

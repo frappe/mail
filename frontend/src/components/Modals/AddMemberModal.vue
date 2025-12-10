@@ -25,13 +25,14 @@
 						class="text-ink-gray-3 mx-2.5 mb-1.5 mt-auto h-4 w-4"
 						name="at-sign"
 					/>
-					<Link
+					<FormControl
 						v-model="accountRequest.domain"
+						type="combobox"
 						:label="__('Domain')"
 						placeholder="yourdomain.com"
-						doctype="Mail Domain"
-						:filters="{ tenant: user.data.tenant, is_verified: 1 }"
 						class="w-full"
+						:options="domains.data"
+						:open-on-click="true"
 					/>
 				</div>
 				<FormControl
@@ -51,10 +52,10 @@
 				/>
 				<hr />
 
-				<FormControl
+				<Switch
 					v-model="accountRequest.send_invite"
-					type="checkbox"
 					:label="__('Send Invite')"
+					class="hover:!bg-surface-white !cursor-default !p-0"
 				/>
 				<FormControl
 					v-if="accountRequest.send_invite"
@@ -88,16 +89,19 @@
 
 <script setup lang="ts">
 import { inject, reactive, watch } from 'vue'
-import { Link } from 'frappe-ui/frappe'
-import { Dialog, ErrorMessage, FeatherIcon, FormControl, createResource } from 'frappe-ui'
+import { Dialog, ErrorMessage, FeatherIcon, FormControl, Switch, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 
 import type { UserResource } from '@/types'
 
 const show = defineModel<boolean>()
+
 const user = inject('$user') as UserResource
 const dayjs = inject('$dayjs')
+
+const { domains } = userStore()
 
 const defaultAccountRequest = {
 	username: '',
@@ -119,7 +123,6 @@ watch(
 	() => accountRequest.send_invite,
 	() => addMember.reset(),
 )
-
 watch(show, () => {
 	if (show.value) {
 		Object.assign(accountRequest, defaultAccountRequest)

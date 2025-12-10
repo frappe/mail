@@ -869,14 +869,9 @@
    "group": "Reference",
    "link_doctype": "Mail Server",
    "link_fieldname": "cluster"
-  },
-  {
-   "group": "Reference",
-   "link_doctype": "Mail Backend Request",
-   "link_fieldname": "backend_name"
   }
  ],
- "modified": "2025-11-15 10:39:17.675250",
+ "modified": "2025-12-01 18:05:56.390670",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster",

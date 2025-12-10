@@ -1,0 +1,131 @@
+# Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
+# For license information, please see license.txt
+
+import re
+
+import frappe
+from frappe import _
+from frappe.model.document import Document
+from frappe.utils import random_string
+
+from mail.server.doctype.mail_principal.mail_principal import _validate_max_domains
+from mail.utils.cache import get_tenant_for_user
+from mail.utils.dns import verify_dns_record
+from mail.utils.user import has_role, is_system_manager, is_tenant_admin
+
+
+class MailDomainRequest(Document):
+	def before_validate(self) -> None:
+		if self.is_new():
+			self.set_user_and_tenant()
+
+	def before_insert(self) -> None:
+		self.set_verification_key()
+
+	def validate(self) -> None:
+		if self.is_new():
+			_validate_max_domains(self.tenant)
+			self.validate_domain_name()
+
+		self.validate_user_and_tenant()
+
+	def set_user_and_tenant(self) -> None:
+		"""Set the user and tenant"""
+
+		user = frappe.session.user
+
+		if is_system_manager(user):
+			if not self.user:
+				frappe.throw(_("User is required"))
+			elif not self.tenant:
+				frappe.throw(_("Tenant is required"))
+		else:
+			self.user = user
+			self.tenant = get_tenant_for_user(user)
+
+	def validate_domain_name(self) -> None:
+		"""Validates the domain name"""
+
+		domain_regex = r"^(?!:\/\/)([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$"
+		if re.fullmatch(domain_regex, self.domain_name) is None:
+			frappe.throw(_("Invalid domain name"))
+
+		if frappe.db.exists("Mail Principal Binding", {"principal_name": self.domain_name}):
+			frappe.throw(_("Domain {0} already registered.").format(frappe.bold(self.domain_name)))
+
+	def validate_user_and_tenant(self) -> None:
+		"""Validates the user and tenant"""
+
+		if not is_tenant_admin(self.tenant, self.user):
+			frappe.throw(_("User must be an admin of the tenant"))
+
+	def set_verification_key(self) -> None:
+		"""Set the verification key"""
+
+		self.verification_key = "frappe-mail-verification=" + random_string(48)
+
+	@frappe.whitelist()
+	def verify_and_create_domain(self, save: bool = False, force_verify: bool = False) -> bool:
+		"""Verifies the domain and creates the domain principal if verified."""
+
+		if force_verify:
+			frappe.only_for("System Manager")
+
+		if self.is_verified:
+			frappe.throw(_("Domain is already verified and created."))
+
+		self.is_verified = 0
+		if force_verify or verify_dns_record(self.domain_name, "TXT", self.verification_key):
+			self.is_verified = 1
+			self.create_domain()
+			frappe.msgprint(_("Domain Verification Successful"), indicator="green", alert=True)
+		else:
+			frappe.msgprint(_("Domain Verification Failed"), indicator="red", alert=True)
+
+		if save:
+			self.save()
+
+		return bool(self.is_verified)
+
+	def create_domain(self) -> str:
+		"""Create the principal domain."""
+
+		if frappe.db.exists("Mail Principal Binding", {"principal_name": self.domain_name}):
+			frappe.throw(_("Domain {0} already registered.").format(frappe.bold(self.domain_name)))
+
+		principal = frappe.new_doc("Mail Principal")
+		principal.tenant = self.tenant
+		principal.type = "Domain"
+		principal._name = self.domain_name
+		principal.insert(ignore_permissions=True)
+
+		return principal.name
+
+
+def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
+	if doc.doctype != "Mail Domain Request":
+		return False
+
+	user = user or frappe.session.user
+
+	if is_system_manager(user):
+		return True
+
+	if is_tenant_admin(doc.tenant, user):
+		if ptype in ("create", "read", "write"):
+			return True
+
+	return False
+
+
+def get_permission_query_condition(user: str | None = None) -> str:
+	user = user or frappe.session.user
+
+	if is_system_manager(user):
+		return ""
+
+	if has_role(user, "Mail Admin"):
+		if tenant := get_tenant_for_user(user):
+			return f"(`tabMail Domain Request`.`tenant` = {frappe.db.escape(tenant)})"
+
+	return "1=0"

@@ -42,7 +42,7 @@ const { mailboxes } = userStore()
 // )
 
 const folder = reactive({
-	account: user.data.name,
+	user: user.data.name,
 	id: '',
 	name: '',
 	role: null,

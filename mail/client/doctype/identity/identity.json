@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_qwpt",
-  "account",
+  "user",
   "column_break_owjz",
   "may_delete",
   "section_break_mtnr",
@@ -26,22 +26,12 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "options": "Mail Account",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "column_break_owjz",
    "fieldtype": "Column Break"
   },
   {
    "default": "0",
+   "description": "Is the user allowed to delete this Identity?",
    "fieldname": "may_delete",
    "fieldtype": "Check",
    "label": "May Delete",
@@ -52,6 +42,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "The id of the Identity.",
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -60,6 +51,7 @@
    "set_only_once": 1
   },
   {
+   "description": "The \"From\" name the client should use when creating a new Email from this Identity.",
    "fieldname": "_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -70,6 +62,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "The \"From\" email address the client must use when creating a new Email from this Identity.",
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -83,23 +76,27 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "The Bcc value the client should set when creating a new Email from this Identity.",
    "fieldname": "bcc",
    "fieldtype": "Table",
    "label": "Bcc",
    "options": "Email Address"
   },
   {
+   "description": "The Reply-To value the client should set when creating a new Email from this Identity.",
    "fieldname": "reply_to",
    "fieldtype": "Table",
    "label": "Reply To",
    "options": "Email Address"
   },
   {
+   "description": "A signature the client should insert into new HTML messages that will be sent from this Identity.",
    "fieldname": "html_signature",
    "fieldtype": "HTML Editor",
    "label": "HTML"
   },
   {
+   "description": "A signature the client should insert into new plaintext messages that will be sent from this Identity.",
    "fieldname": "text_signature",
    "fieldtype": "Code",
    "label": "Text"
@@ -109,13 +106,25 @@
    "fieldname": "signature_section",
    "fieldtype": "Section Break",
    "label": "Signature"
+  },
+  {
+   "description": "The user this identity belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-20 17:22:50.335139",
+ "modified": "2025-12-09 13:11:05.006924",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Identity",
@@ -134,6 +143,7 @@
    "write": 1
   },
   {
+   "create": 1,
    "delete": 1,
    "read": 1,
    "role": "Mail User",

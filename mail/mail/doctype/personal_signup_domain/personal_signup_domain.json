@@ -6,15 +6,15 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "domain_name"
+  "principal"
  ],
  "fields": [
   {
-   "fieldname": "domain_name",
+   "fieldname": "principal",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Domain Name",
-   "options": "Mail Domain",
+   "label": "Domain",
+   "options": "Mail Principal Binding",
    "reqd": 1
   }
  ],
@@ -22,7 +22,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-26 11:43:10.481605",
+ "modified": "2025-11-27 13:25:44.326974",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Personal Signup Domain",

@@ -5,8 +5,8 @@ from frappe import _
 
 from mail.client.doctype.mail_message.mail_message import enqueue_fetch_changes
 from mail.client.doctype.push_subscription.push_subscription import (
-	PushSubscription,
 	is_jmap_push_notifications_frozen,
+	verify_push_subscription,
 )
 from mail.jmap import invalidate_jmap_identities_cache, invalidate_jmap_mailboxes_cache
 
@@ -16,16 +16,16 @@ def push_notification() -> dict:
 	"""Handle JMAP Push Notification."""
 
 	try:
-		account = frappe.request.args.get("account")
-		if not account:
-			frappe.throw(_("Missing account query parameter."))
+		user = frappe.request.args.get("user")
+		if not user:
+			frappe.throw(_("Missing user query parameter."))
 
-		account = unquote(account)
+		user = unquote(user)
 		request_data = frappe.request.get_json()
 
 		if request_data["@type"] == "PushVerification":
-			PushSubscription.verify_push_subscription(
-				account, request_data["pushSubscriptionId"], request_data["verificationCode"]
+			verify_push_subscription(
+				user, request_data["pushSubscriptionId"], request_data["verificationCode"]
 			)
 			return {}
 		elif request_data["@type"] == "StateChange":
@@ -36,12 +36,12 @@ def push_notification() -> dict:
 			for change in changes:
 				for key, state in change.items():
 					if key == "Email":
-						if not is_jmap_push_notifications_frozen(account):
-							enqueue_fetch_changes(account, state)
+						if not is_jmap_push_notifications_frozen(user):
+							enqueue_fetch_changes(user, state)
 					elif key == "Mailbox":
-						invalidate_jmap_mailboxes_cache(account)
+						invalidate_jmap_mailboxes_cache(user)
 					elif key == "Identity":
-						invalidate_jmap_identities_cache(account)
+						invalidate_jmap_identities_cache(user)
 
 			return {}
 		else:

@@ -4,20 +4,20 @@
 			<div class="flex-1 space-y-4 overflow-y-auto">
 				<h1>{{ __('Identity') }}</h1>
 
-				<div class="space-y-1.5">
-					<label class="text-ink-gray-5 block text-xs"> {{ __('Email') }} </label>
-					<Combobox
-						v-model="identityName"
-						variant="outline"
-						:options="
-							identities.data.map((identity: Identity) => ({
-								label: identity.email,
-								value: identity.name,
-							}))
-						"
-						:open-on-click="true"
-					/>
-				</div>
+				<FormControl
+					v-model="identityName"
+					type="combobox"
+					:label="__('Email')"
+					variant="outline"
+					:options="
+						identities.data.map((identity: Identity) => ({
+							label: identity.email,
+							value: identity.name,
+						}))
+					"
+					:open-on-click="true"
+				/>
+
 				<template v-if="identity?.doc && !identity.loading">
 					<FormControl
 						v-model="identity.doc._name"
@@ -55,25 +55,21 @@
 						@click="() => showAddEmailAddress(false)"
 					/>
 
-					<div class="space-y-1.5">
-						<label class="text-ink-gray-5 block text-xs">
-							{{ __('Use Saved Signature') }}
-						</label>
-						<Combobox
-							v-model="savedSignature"
-							:options="
-								signatures.data?.map((sig) => ({
-									label: sig.signature_name,
-									value: sig.html_body,
-								}))
-							"
-							variant="outline"
-							:open-on-click="true"
-							@update:model-value="
-								(val: string) => (identity.doc.html_signature = val)
-							"
-						/>
-					</div>
+					<FormControl
+						v-if="signatures.data?.length"
+						v-model="savedSignature"
+						type="combobox"
+						:label="__('Use Saved Signature')"
+						:options="
+							signatures.data?.map((sig) => ({
+								label: sig.signature_name,
+								value: sig.html_body,
+							}))
+						"
+						variant="outline"
+						:open-on-click="true"
+						@update:model-value="(val: string) => (identity.doc.html_signature = val)"
+					/>
 
 					<div class="space-y-1.5">
 						<label class="text-ink-gray-5 block text-xs">
@@ -144,7 +140,6 @@
 import { inject, ref, watch } from 'vue'
 import {
 	Button,
-	Combobox,
 	Dialog,
 	FormControl,
 	TextEditor,

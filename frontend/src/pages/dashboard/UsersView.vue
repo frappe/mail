@@ -68,11 +68,11 @@
 		</ListRows>
 	</ListView>
 	<Dialog v-model="showRemoveMember" :options="removeMemberOptions" />
-	<MailAccountModal v-model="showMailAccount" :account-i-d="selectedMailAccount" />
 </template>
 
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { watchDebounced } from '@vueuse/core'
 import {
 	Avatar,
@@ -90,32 +90,24 @@ import {
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import MailAccountModal from '@/components/Modals/MailAccountModal.vue'
+import { userStore } from '@/stores/user'
 
+const router = useRouter()
 const user = inject('$user')
+const { tenantOwner } = userStore()
 
 const search = ref('')
-const role = ref<'Mail User' | 'Mail Admin' | ''>('')
+const role = ref<'Mail User' | 'Mail Admin' | 'Both' | ''>('')
 const showRemoveMember = ref(false)
 const memberToBeRemoved = ref('')
-const showMailAccount = ref(false)
-const selectedMailAccount = ref('')
-
-const tenantOwner = createResource({
-	url: 'frappe.client.get_value',
-	makeParams: () => ({
-		doctype: 'Mail Tenant',
-		fieldname: 'user',
-		filters: user.data?.tenant,
-		as_dict: false,
-	}),
-	auto: true,
-	cache: ['mailTenantOwner', user.data?.tenant],
-})
 
 const members = createResource({
 	url: 'mail.api.admin.get_tenant_members',
-	makeParams: () => ({ tenant: user.data?.tenant, search: search.value, role: role.value }),
+	makeParams: () => ({
+		tenant: user.data?.tenant,
+		search: search.value,
+		role: role.value === 'Both' ? '' : role.value,
+	}),
 	auto: true,
 	cache: ['mailTenantMembers', user.data?.tenant, search.value, role.value],
 })
@@ -152,10 +144,8 @@ const removeMember = createResource({
 })
 
 const openAccount = (account: string) => {
-	if (account !== tenantOwner.data) {
-		selectedMailAccount.value = account
-		showMailAccount.value = true
-	}
+	if (account !== tenantOwner.data)
+		router.push({ name: 'Member', params: { memberName: account } })
 }
 
 const dropdownOptions = (name: string, isAdmin: 0 | 1) => [
@@ -189,7 +179,7 @@ const LIST_OPTIONS = {
 }
 
 const ROLE_OPTIONS = [
-	{ label: '', value: '' },
+	{ label: '', value: 'Both' },
 	{ label: __('Mail User'), value: 'Mail User' },
 	{ label: __('Mail Admin'), value: 'Mail Admin' },
 ]

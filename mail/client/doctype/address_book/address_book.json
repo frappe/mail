@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_rxvr",
-  "account",
+  "user",
   "column_break_lzqg",
   "default",
   "subscribed",
@@ -15,8 +15,12 @@
   "sort_order",
   "column_break_pccw",
   "description",
-  "section_break_kjvw",
-  "rights"
+  "rights_section",
+  "may_read",
+  "may_write",
+  "column_break_lisd",
+  "may_admin",
+  "may_delete"
  ],
  "fields": [
   {
@@ -24,22 +28,12 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "options": "Mail Account",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "column_break_lzqg",
    "fieldtype": "Column Break"
   },
   {
    "default": "1",
+   "description": "Checked if the user has indicated they wish to see this Address Book in their client.",
    "fieldname": "subscribed",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -50,6 +44,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "The ID of the Address Book.",
    "fieldname": "id",
    "fieldtype": "Data",
    "label": "ID",
@@ -58,6 +53,7 @@
    "set_only_once": 1
   },
   {
+   "description": "The user-visible name of the Address Book.",
    "fieldname": "_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -65,12 +61,14 @@
    "reqd": 1
   },
   {
+   "description": "An optional longer-form description of the Address Book.",
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
   },
   {
    "default": "0",
+   "description": "Defines the sort order of Address Books when presented in the client's UI.",
    "fieldname": "sort_order",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -80,6 +78,7 @@
   },
   {
    "default": "0",
+   "description": "This should be true for exactly one Address Book in any account, and must not be true for more than one Address Book within an account.",
    "fieldname": "default",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -91,16 +90,63 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "section_break_kjvw",
-   "fieldtype": "Section Break"
+   "description": "The user this address book belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
-   "fieldname": "rights",
-   "fieldtype": "JSON",
-   "label": "Rights",
+   "default": "0",
+   "description": "The user may fetch the Contact Cards in this Address Book.",
+   "fieldname": "may_read",
+   "fieldtype": "Check",
+   "label": "May Read",
    "no_copy": 1,
-   "read_only": 1,
-   "set_only_once": 1
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may create, modify or destroy all Contact Cards in this Address Book, or move them to or from this Address Book.",
+   "fieldname": "may_write",
+   "fieldtype": "Check",
+   "label": "May Write",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may modify the \"shareWith\" property for this Address Book.",
+   "fieldname": "may_admin",
+   "fieldtype": "Check",
+   "label": "May Admin",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may delete the Address Book itself.",
+   "fieldname": "may_delete",
+   "fieldtype": "Check",
+   "label": "May Delete",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "rights_section",
+   "fieldtype": "Section Break",
+   "label": "Rights"
+  },
+  {
+   "fieldname": "column_break_lisd",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -112,7 +158,7 @@
    "link_fieldname": "address_book"
   }
  ],
- "modified": "2025-11-11 12:24:27.126495",
+ "modified": "2025-12-09 13:17:55.001285",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Address Book",

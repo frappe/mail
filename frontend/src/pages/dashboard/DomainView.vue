@@ -10,49 +10,82 @@
 			<Button
 				v-if="!domain.doc.is_verified"
 				variant="solid"
-				:label="__(domain.doc.enabled ? 'Verify' : 'Enable')"
-				@click="
-					domain.doc.enabled
-						? domain.verifyDnsRecords.submit()
-						: domain.setValue.submit({ enabled: 1 })
-				"
+				:label="__('Verify')"
+				@click="domain.verifyDnsRecords.submit()"
 			/>
 		</template>
 		<template #default>
 			<transition name="expand">
-				<div
-					v-if="domain.doc.enabled && !domain.doc.is_verified"
-					class="bg-surface-blue-1 overflow-hidden rounded-md border"
-				>
+				<div v-if="!domain.doc.is_verified" class="bg-surface-blue-1 rounded-md border">
 					<div class="space-y-2 p-4">
 						<h3 class="font-medium">{{ BANNER.title }}</h3>
-						<p>{{ BANNER.message }}</p>
-						<p class="text-ink-gray-4 text-sm">{{ BANNER.subtitle }}</p>
+						<p class="text-ink-gray-5 text-sm">{{ BANNER.message }}</p>
 					</div>
 				</div>
 			</transition>
-			<div class="space-y-4 rounded-md border p-4">
-				<h2>{{ __('DNS Records') }}</h2>
-				<ListView
-					class="flex-1"
-					:columns="LIST_COLUMNS"
-					:rows="domain.doc.dns_records"
-					:options="{ selectable: false }"
-					row-key="name"
-				>
-					<ListHeader />
-					<ListRows>
-						<ListRow v-for="row in domain.doc.dns_records" :key="row.name" :row="row">
-							<template #default="{ item }">
-								<ListRowItem>
-									<div class="cursor-copy" @click="copyToClipBoard(item)">
-										{{ item }}
-									</div>
-								</ListRowItem>
-							</template>
-						</ListRow>
-					</ListRows>
-				</ListView>
+			<div class="rounded-md border">
+				<h2 class="p-4">{{ __('DNS Records') }}</h2>
+				<DNSRecords
+					:title="__('Email Deliverability')"
+					:description="
+						__(
+							'Email authentication records that verify your domain and protect outgoing mail from spoofing.',
+						)
+					"
+					:records="
+						domain.doc.dns_records.filter(
+							(d) =>
+								d.type === 'TXT' &&
+								!(d.host.startsWith('_smtp') || d.host.startsWith('_mta')),
+						)
+					"
+					:badge-label="__('Required')"
+					badge-theme="red"
+				/>
+				<DNSRecords
+					:title="__('Inbound Mail Routing')"
+					:description="
+						__(
+							'Mail routing records that ensure messages sent to your domain are delivered to the correct mail server.',
+						)
+					"
+					:records="domain.doc.dns_records.filter((d) => d.type === 'MX')"
+					:badge-label="__('Recommended')"
+					badge-theme="orange"
+				/>
+				<DNSRecords
+					:title="__('Service Configuration Records')"
+					:description="
+						__(
+							'Service records that enable automatic mail setup and enforce secure transport for your domain.',
+						)
+					"
+					:records="domain.doc.dns_records.filter((d) => d.type === 'CNAME')"
+				/>
+				<DNSRecords
+					:title="__('Service Discovery Records')"
+					:description="
+						__(
+							'Records that allow mail and sync apps to automatically locate and connect to your domain’s email, calendar, and contacts services.',
+						)
+					"
+					:records="domain.doc.dns_records.filter((d) => d.type === 'SRV')"
+				/>
+				<DNSRecords
+					:title="__('Email Transport Security Records')"
+					:description="
+						__(
+							'TXT records that enforce encrypted mail delivery and provide reporting on failed or insecure SMTP connections.',
+						)
+					"
+					:records="
+						domain.doc.dns_records.filter(
+							(d) =>
+								d.type === 'TXT' &&
+								(d.host.startsWith('_smtp') || d.host.startsWith('_mta')),
+						)
+					"
+				/>
 			</div>
 		</template>
 	</DashboardLayout>
@@ -61,19 +94,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-	Button,
-	Dialog,
-	Dropdown,
-	ListHeader,
-	ListRow,
-	ListRowItem,
-	ListRows,
-	ListView,
-	createDocumentResource,
-} from 'frappe-ui'
+import { Button, Dialog, Dropdown, createDocumentResource } from 'frappe-ui'
 
-import { copyToClipBoard, raiseToast } from '@/utils'
+import { raiseToast } from '@/utils'
+import DNSRecords from '@/components/DNSRecords.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 
 const { domainName } = defineProps<{ domainName: string }>()
@@ -83,7 +107,7 @@ const router = useRouter()
 const showConfirmDialog = ref(false)
 
 const domain = createDocumentResource({
-	doctype: 'Mail Domain',
+	doctype: 'Mail Principal',
 	name: domainName,
 	setValue: {
 		onSuccess: () => {
@@ -94,6 +118,14 @@ const domain = createDocumentResource({
 			raiseToast(error.messages[0], 'error')
 			domain.reload()
 		},
+	},
+	delete: {
+		onSuccess: () => {
+			router.push({ name: 'Domains' })
+			showConfirmDialog.value = false
+			raiseToast('Domain deleted.')
+		},
+		onError: (error) => raiseToast(error.messages[0], 'error'),
 	},
 	whitelistedMethods: {
 		verifyDnsRecords: {
@@ -142,16 +174,14 @@ const domain = createDocumentResource({
 
 const BREADCRUMBS = [{ label: __('Domains'), route: '/dashboard/domains' }, { label: domainName }]
 
-const confirmDialogAction = ref<'refreshDnsRecords' | 'rotateDkimKeys' | 'disableDomain'>(
+const confirmDialogAction = ref<'refreshDnsRecords' | 'rotateDkimKeys' | 'deleteDomain'>(
 	'refreshDnsRecords',
 )
 
 const badge = computed(() =>
 	domain.doc.is_verified
 		? { label: __('Verified'), theme: 'green' }
-		: domain.doc.enabled
-			? { label: __('Not Verified'), theme: 'orange' }
-			: { label: __('Disabled'), theme: 'gray' },
+		: { label: __('Not Verified'), theme: 'gray' },
 )
 
 const confirmDialogOptions = computed(() => {
@@ -170,12 +200,12 @@ const confirmDialogOptions = computed(() => {
 			),
 			action: domain.rotateDkimKeys.submit,
 		},
-		disableDomain: {
-			title: __('Disable Domain'),
+		deleteDomain: {
+			title: __('Delete Domain'),
 			message: __(
-				`Are you sure you want to disable this domain? Email services for this domain will stop working immediately.`,
+				'Are you sure you want to delete this domain? This action cannot be undone.',
 			),
-			action: () => domain.setValue.submit({ enabled: 0 }),
+			action: () => domain.delete.submit(),
 		},
 	}[confirmDialogAction.value]
 
@@ -190,51 +220,52 @@ const confirmDialogOptions = computed(() => {
 
 const dropdownOptions = computed(() => [
 	{
-		label: __('Disable Domain'),
-		icon: 'eye-off',
-		onClick: () => {
-			confirmDialogAction.value = 'disableDomain'
-			showConfirmDialog.value = true
-		},
-		condition: () => domain.doc.enabled,
+		group: '',
+		items: [
+			{
+				label: __('Refresh DNS Records'),
+				icon: 'refresh-cw',
+				onClick: () => {
+					confirmDialogAction.value = 'refreshDnsRecords'
+					showConfirmDialog.value = true
+				},
+			},
+			{
+				label: __('Rotate DKIM Keys'),
+				icon: 'rotate-cw',
+				onClick: () => {
+					confirmDialogAction.value = 'rotateDkimKeys'
+					showConfirmDialog.value = true
+				},
+			},
+			{
+				label: __('View in Desk'),
+				icon: 'external-link',
+				onClick: () => window.open(`/desk/mail-domain/${domainName}`, '_blank')?.focus(),
+			},
+		],
 	},
 	{
-		label: __('Refresh DNS Records'),
-		icon: 'refresh-cw',
-		onClick: () => {
-			confirmDialogAction.value = 'refreshDnsRecords'
-			showConfirmDialog.value = true
-		},
-	},
-	{
-		label: __('Rotate DKIM Keys'),
-		icon: 'rotate-cw',
-		onClick: () => {
-			confirmDialogAction.value = 'rotateDkimKeys'
-			showConfirmDialog.value = true
-		},
-	},
-	{
-		label: __('View in Desk'),
-		icon: 'external-link',
-		onClick: () => window.open(`/app/mail-domain/${domainName}`, '_blank')?.focus(),
+		group: '',
+		items: [
+			{
+				label: __('Delete Domain'),
+				icon: 'trash-2',
+				onClick: () => {
+					confirmDialogAction.value = 'deleteDomain'
+					showConfirmDialog.value = true
+				},
+			},
+		],
 	},
 ])
-
-const LIST_COLUMNS = [
-	{ label: 'Type', key: 'type', width: '10%' },
-	{ label: 'Host', key: 'host', width: '20%' },
-	{ label: 'Priority', key: 'priority', width: '10%' },
-	{ label: 'Value', key: 'value', width: '50%' },
-	{ label: 'TTL (Recommended)', key: 'ttl', width: '10%' },
-]
 
 const BANNER = {
 	title: __('Verify your DNS Records'),
 	message: __(
 		"Add the following records to your domain's DNS settings. Then click on 'Verify' to complete your domain setup.",
 	),
-	subtitle: __('Note: DNS changes may take up to 48 hours to propagate globally.'),
+	subtitle: __('DNS changes may take up to 48 hours to propagate globally.'),
 }
 </script>
 

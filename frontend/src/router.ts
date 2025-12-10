@@ -111,15 +111,16 @@ const routes = [
 		meta: { isDashboard: true },
 	},
 	{
-		path: '/dashboard/invites',
-		name: 'Invites',
-		component: () => import('@/pages/dashboard/MembersView.vue'),
+		path: '/dashboard/members/:memberName',
+		name: 'Member',
+		component: () => import('@/pages/dashboard/MemberView.vue'),
+		props: true,
 		meta: { isDashboard: true },
 	},
 	{
-		path: '/dashboard/aliases',
-		name: 'Aliases',
-		component: () => import('@/pages/dashboard/MailAliasesView.vue'),
+		path: '/dashboard/invites',
+		name: 'Invites',
+		component: () => import('@/pages/dashboard/MembersView.vue'),
 		meta: { isDashboard: true },
 	},
 	{

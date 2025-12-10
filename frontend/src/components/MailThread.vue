@@ -85,8 +85,9 @@
 					:key="mail.name"
 					:class="{
 						'px-3 py-5': isMobile,
-						'border-b sm:rounded-xl sm:border sm:p-5':
+						'max-sm:border-b sm:rounded-xl sm:p-5':
 							thread.data.length > 1 || mail.draft,
+						'sm:border': thread.data.length > 1 && !mail.draft,
 						'cursor-pointer': isCollapsed(mail),
 						'shadow-elevation-light-md': mail.draft && !isMobile,
 					}"
@@ -325,7 +326,7 @@ import MailDetailsPopover from '@/components/MailDetailsPopover.vue'
 import MailThreadPlaceholder from '@/components/MailThreadPlaceholder.vue'
 import SendMail from '@/components/SendMail.vue'
 
-import type { Attachment, ComposeMailData, Mail } from '@/types'
+import type { Attachment, ComposeMailData, Identity, Mail } from '@/types'
 
 const { mailbox, threadID, threads } = defineProps<{
 	mailbox: string
@@ -345,7 +346,7 @@ const emit = defineEmits([
 
 const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
-const { mailboxes, mailboxIds } = userStore()
+const { mailboxes, mailboxIds, identities } = userStore()
 
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
 
@@ -639,7 +640,8 @@ const getReplyAllRecipients = (mail: Mail) => {
 		}
 }
 
-const isUserEmail = (email: string) => user.data.email_addresses.includes(email)
+const isUserEmail = (email: string) =>
+	identities.data.map((i: Identity) => i.email).includes(email)
 
 const getQuotedContent = (mail: Mail) =>
 	`

@@ -10,7 +10,6 @@ from werkzeug.utils import secure_filename
 
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.utils import get_messages_directory
-from mail.utils.cache import get_account_for_user
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import has_role
 
@@ -73,7 +72,7 @@ def send(
 
 	from_name, from_email = parseaddr(from_)
 	doc = MailQueue._create(
-		account=get_account(),
+		user=frappe.session.user,
 		from_name=from_name,
 		from_email=from_email,
 		subject=subject,
@@ -87,7 +86,7 @@ def send(
 		newsletter=is_newsletter,
 		in_reply_to=in_reply_to,
 		save_as_draft=save_as_draft,
-		destroy_after_submission=False,
+		destroy_after_submit=False,
 		delivery_mode="Batch" if is_newsletter else "Enqueue",
 	)
 
@@ -126,17 +125,6 @@ def send_raw(
 		)
 
 	return _enqueue_mail(from_, to, raw_message, is_newsletter)
-
-
-def get_account() -> str:
-	"""Returns the mail account for the current user."""
-
-	user = frappe.session.user
-
-	if account := get_account_for_user(user):
-		return account
-
-	frappe.throw(_("No Mail Account found for the user {0}.").format(frappe.bold(user)))
 
 
 def get_message_from_files() -> str | None:
@@ -245,7 +233,7 @@ def _enqueue_mail(from_: str, to: str | list[str], raw_message: str, is_newslett
 		frappe.throw(_("The raw message is required."), frappe.MandatoryError)
 
 	doc = MailQueue._create(
-		account=get_account(),
+		user=frappe.session.user,
 		from_name=from_name,
 		from_email=from_email,
 		recipients=format_recipients(to),

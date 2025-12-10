@@ -30,8 +30,7 @@ def get_columns() -> list[dict]:
 		{
 			"label": _("Domain Name"),
 			"fieldname": "domain_name",
-			"fieldtype": "Link",
-			"options": "Mail Domain",
+			"fieldtype": "Data",
 			"width": 150,
 		},
 		{"label": _("Organization"), "fieldname": "organization_name", "fieldtype": "Data", "width": 150},

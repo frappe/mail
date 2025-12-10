@@ -2,367 +2,236 @@
 # For license information, please see license.txt
 
 import json
-from contextlib import suppress
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.query_builder.functions import IfNull
-from frappe.utils import add_to_date, get_datetime, now
+from frappe.utils import today
 from uuid_utils import uuid7
 
 from mail.jmap import get_jmap_client
-from mail.utils import generate_uuid_style_hash
-from mail.utils.cache import get_cluster_for_tenant
+from mail.utils import generate_uuid_style_hash, parse_filters
 from mail.utils.dt import parse_iso_datetime
+from mail.utils.validation import has_permission_for_user
 
 
 class PushSubscription(Document):
-	@staticmethod
-	def verify_push_subscription(account: str, subscription_id: str, verification_code: str) -> None:
-		"""Verifies a push subscription using the provided verification code."""
-
-		if not account or not subscription_id or not verification_code:
-			frappe.throw(_("Invalid parameters for push subscription verification."))
-
-		subscription_name = frappe.db.get_value(
-			"Push Subscription", {"account": account, "subscription_id": subscription_id}, "name"
-		)
-
-		if not subscription_name:
-			if verification_name := frappe.db.exists(
-				"Push Verification Queue", {"account": account, "subscription_id": subscription_id}
-			):
-				frappe.db.set_value("Push Verification Queue", verification_name, "status", "Expired")
-
-			doc = frappe.new_doc("Push Verification Queue")
-			doc.status = "Pending"
-			doc.account = account
-			doc.subscription_id = subscription_id
-			doc.verification_code = verification_code
-			doc.insert(ignore_permissions=True)
-			return
-
-		subscription = frappe.get_doc("Push Subscription", subscription_name)
-		subscription._verify(verification_code)
-
-	@staticmethod
-	def get_push_subscriptions(account: str) -> list[dict]:
-		"""Returns a list of push subscriptions for the given account."""
-
-		try:
-			client = get_jmap_client(account)
-			return client.push_subscription_get()
-		except Exception:
-			frappe.log_error(
-				title=_("Failed to get push subscriptions"),
-				message=frappe.get_traceback(with_context=True),
-			)
-			frappe.throw(_("Failed to get push subscriptions."))
-
-	@staticmethod
-	def destroy_push_subscriptions(
-		account: str, server: str | None, subscription_ids: list[str] | None = None
-	) -> None:
-		"""Destroys the push subscriptions for the given account."""
-
-		try:
-			client = get_jmap_client(account, server, cache=False)
-
-			if not subscription_ids:
-				subscription_ids = []
-				for subscription in client.push_subscription_get():
-					subscription_ids.append(subscription["id"])
-
-			client.push_subscription_delete(subscription_ids)
-		except Exception:
-			frappe.log_error(
-				title=_("Failed to destroy push subscription(s)"),
-				message=frappe.get_traceback(with_context=True),
-			)
-			frappe.throw(_("Failed to destroy push subscription(s)."))
-
 	@property
-	def verification_response(self) -> str | None:
-		"""Returns the indented JSON verification response."""
+	def _types(self) -> list[str]:
+		"""Returns the types of push subscriptions as a list."""
 
+		types = []
+		if self.types:
+			types = json.loads(self.types)
+
+		return types
+
+	def db_insert(self, *args, **kwargs) -> None:
+		self.id = add_push_subscription(self.user, self.device_client_id, self.url, self._types)
+		self.name = f"{self.user}|{self.id}"
+
+	def load_from_db(self) -> "PushSubscription":
+		user, id = self.name.split("|")
+		subscription = get_push_subscription(user, id)
+		return super(Document, self).__init__(subscription)
+
+	def db_update(self) -> None:
+		raise NotImplementedError
+
+	def delete(self) -> None:
+		user, id = self.name.split("|")
+		delete_push_subscription(user, id)
+
+	@staticmethod
+	def get_list(filters=None, page_length=20, **kwargs) -> list:
+		filters = parse_filters(filters)
+		user = filters.get("user") or frappe.session.user
+
+		if not user or user in ("Guest", "Administrator"):
+			frappe.msgprint(_("Please select a user to view push subscriptions."), alert=True)
+			return []
+
+		subscriptions = fetch_push_subscriptions(user, limit=page_length)
+
+		if not subscriptions:
+			frappe.msgprint(_("No push subscriptions found."), alert=True)
+
+		return subscriptions
+
+	@staticmethod
+	def get_count(filters=None, **kwargs) -> int:
+		filters = parse_filters(filters)
+		user = filters.get("user") or frappe.session.user
 		return (
-			json.dumps(json.loads(self._verification_response), indent=4)
-			if self._verification_response
-			else None
+			frappe.cache.get_value(_get_total_cache_key(user))
+			if user and has_permission_for_user(user, raise_exception=False)
+			else 0
 		)
 
-	@property
-	def renew_response(self) -> str | None:
-		"""Returns the indented JSON renew response."""
-
-		return json.dumps(json.loads(self._renew_response), indent=4) if self._renew_response else None
-
-	@property
-	def subscription_response(self) -> str | None:
-		"""Returns the indented JSON subscription response."""
-
-		return (
-			json.dumps(json.loads(self._subscription_response), indent=4)
-			if self._subscription_response
-			else None
-		)
-
-	def autoname(self) -> None:
-		self.name = str(uuid7())
-
-	def before_insert(self) -> None:
-		self.set_endpoint()
+	@staticmethod
+	def get_stats(**kwargs) -> dict:
+		return {}
 
 	def validate(self) -> None:
-		self.validate_server()
+		self.validate_url()
 
-	def after_insert(self) -> None:
-		self._subscribe()
+	def validate_url(self) -> None:
+		"""Validates the URL to ensure it starts with 'https://'."""
 
-	def on_trash(self) -> None:
-		if self.subscription_id:
-			PushSubscription.destroy_push_subscriptions(self.account, self.server, [self.subscription_id])
-
-	def set_endpoint(self) -> None:
-		"""Sets the endpoint URL for the push subscription."""
-
-		if not self.endpoint:
-			self.endpoint = (
-				f"{frappe.utils.get_url()}/api/method/mail.api.jmap.push_notification?account={self.account}"
-			)
-
-	def validate_server(self) -> None:
-		"""Validates that the server and account belong to the same cluster."""
-
-		account_tenant = frappe.db.get_value("Mail Account", self.account, "tenant")
-		server_cluster = frappe.db.get_value("Mail Server", self.server, "cluster")
-
-		if server_cluster != get_cluster_for_tenant(account_tenant):
-			frappe.throw(
-				_("The Mail Server {0} does not belong to the same cluster as the account {1}.").format(
-					frappe.bold(self.server), frappe.bold(self.account)
-				)
-			)
-
-	def _subscribe(self) -> None:
-		"""Subscribes to the push subscription."""
-
-		kwargs = {
-			"verified": 0,
-			"verified_at": None,
-			"expires_at": None,
-			"subscription_id": None,
-			"_verification_response": None,
-			"_renew_response": None,
-		}
-		device_client_id = generate_uuid_style_hash(
-			f"frappe-{frappe.local.site.replace('.', '-')}-{self.account}"
-		)
-		types = self.notification_types.split("\n") if self.notification_types else None
-
-		try:
-			client = get_jmap_client(self.account, self.server, cache=False)
-			response = client.push_subscription_create(self.name, device_client_id, self.endpoint, types)
-
-			kwargs["_subscription_response"] = json.dumps(response)
-			if response.get("created"):
-				kwargs.update(
-					{
-						"status": "Pending Verification",
-						"expires_at": parse_iso_datetime(response["created"][self.name]["expires"]),
-						"subscription_id": response["created"][self.name]["id"],
-					}
-				)
-			else:
-				frappe.throw(_("Failed to subscribe to Push Subscription."))
-
-			self._db_set(**kwargs)
-		except Exception:
-			frappe.log_error(
-				title=_("Failed to subscribe to Push Subscription"),
-				message=frappe.get_traceback(with_context=True),
-			)
-			kwargs["status"] = "Failed to Subscribe"
-			self._db_set(**kwargs)
-
-	def _verify(self, verification_code: str) -> None:
-		"""Verifies the push subscription using the provided verification code."""
-
-		if self.verified:
-			frappe.throw(_("Subscription already verified."))
-
-		client = get_jmap_client(self.account, self.server, cache=False)
-		response = client.push_subscription_update(self.subscription_id, verification_code)
-
-		kwargs = {"_verification_response": json.dumps(response)}
-		if response[0][1].get("updated"):
-			kwargs.update(
-				{
-					"status": "Active",
-					"verified": 1,
-					"verified_at": frappe.utils.now(),
-				}
-			)
-		elif response[0][1].get("notUpdated"):
-			kwargs["status"] = "Failed to Verify"
-
-		self._db_set(notify=True, **kwargs)
+		if self.url and not self.url.startswith("https"):
+			frappe.throw(_("The URL must start with 'https://'."))
 
 	@frappe.whitelist()
 	def renew(self) -> None:
-		"""Renews the push subscription."""
+		"""Renews the push subscription subscription."""
 
-		if not self.verified or not self.subscription_id:
-			frappe.throw(_("Cannot renew a non-verified subscription."))
-		elif self.status not in ["Active", "Expired", "Failed to Renew"]:
-			frappe.throw(_("Cannot renew a subscription that is not active or expired."))
-
-		try:
-			client = get_jmap_client(self.account, self.server, cache=False)
-			response = client.push_subscription_update(self.subscription_id)
-
-			kwargs = {"_renew_response": json.dumps(response)}
-			if response[0][1].get("updated"):
-				new_expires = parse_iso_datetime(response[1][1]["list"][0]["expires"])
-
-				if new_expires == self.expires_at:
-					kwargs["status"] = "Failed to Renew"
-				else:
-					kwargs.update(
-						{
-							"status": "Active",
-							"expires_at": new_expires,
-						}
-					)
-			elif response[0][1].get("notUpdated"):
-				kwargs["status"] = "Failed to Renew"
-			else:
-				frappe.throw(_("Failed to renew Push Subscription."))
-
-			self._db_set(**kwargs)
-		except Exception:
-			frappe.log_error(
-				title=_("Failed to renew push subscription"),
-				message=frappe.get_traceback(with_context=True),
-			)
-			frappe.throw(_("Failed to renew push subscription."))
-
-	@frappe.whitelist()
-	def resubscribe(self) -> None:
-		"""Resubscribes to the push subscription."""
-
-		if self.status not in [
-			"Expired",
-			"Failed to Verify",
-			"Failed to Renew",
-			"Failed to Subscribe",
-			"Pending Verification",
-		]:
-			frappe.throw(_("Cannot resubscribe a subscription that is not expired or failed."))
-
-		if self.subscription_id:
-			PushSubscription.destroy_push_subscriptions(self.account, self.server, [self.subscription_id])
-
-		self._subscribe()
-
-	def _db_set(
-		self,
-		update_modified: bool = True,
-		commit: bool = False,
-		notify: bool = False,
-		**kwargs,
-	) -> None:
-		"""Updates the document with the given key-value pairs."""
-
-		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
+		renew_push_subscription(self.user, self.id)
 
 
-def create_push_subscriptions(account: str) -> list["PushSubscription"]:
-	"""Creates Push Subscriptions for the given account if they do not already exist."""
+def _get_total_cache_key(user: str) -> str:
+	"""Returns a cache key for total push subscriptions count for the given user."""
 
-	account_tenant = frappe.db.get_value("Mail Account", account, "tenant")
-	account_cluster = get_cluster_for_tenant(account_tenant)
-
-	if not account_cluster:
-		frappe.throw(_("No cluster found for the account {0}.").format(frappe.bold(account)))
-
-	servers = frappe.db.get_all("Mail Server", {"enabled": 1, "cluster": account_cluster}, pluck="name")
-
-	subscriptions = []
-	for server in servers:
-		subscription = create_push_subscription(account, server)
-		subscriptions.append(subscription)
-
-	return subscriptions
+	return f"{user}:push_subscriptions:total"
 
 
-def create_push_subscription(account: str, server: str) -> "PushSubscription":
-	"""Creates a Push Subscription for the given account and server."""
+@frappe.whitelist()
+def add_push_subscription(
+	user: str, device_client_id: str | None = None, url: str | None = None, types: list[str] | None = None
+) -> str:
+	"""Adds a push subscription subscription for the given user and returns the subscription ID."""
 
-	if subscription := frappe.db.get_value(
-		"Push Subscription", {"account": account, "server": server}, "name"
-	):
-		return frappe.get_doc("Push Subscription", subscription)
+	has_permission_for_user(user)
 
-	push_subscription = frappe.new_doc("Push Subscription")
-	push_subscription.account = account
-	push_subscription.server = server
-	push_subscription.insert(ignore_permissions=True)
-
-	return push_subscription
-
-
-def delete_push_subscriptions(account: str) -> None:
-	"""Deletes all Push Subscriptions for the given account."""
-
-	for subscription in frappe.db.get_all("Push Subscription", {"account": account}, pluck="name"):
-		frappe.delete_doc("Push Subscription", subscription, ignore_permissions=True)
-
-
-def renew_push_subscriptions() -> None:
-	"""Renews push subscriptions that are about to expire within the next 2 days."""
-
-	PS = frappe.qb.DocType("Push Subscription")
-	subscriptions = (
-		frappe.qb.from_(PS)
-		.select(PS.name)
-		.where(
-			(PS.verified == 1)
-			& (IfNull(PS.subscription_id, "") != "")
-			& (PS.expires_at < get_datetime(add_to_date(now(), days=2)))
-			& (PS.status.isin(["Active", "Expired", "Failed to Renew"]))
-		)
-	).run(pluck="name")
-
-	if not subscriptions:
-		return
-
-	for subscription in subscriptions:
-		with suppress(Exception):
-			push_subscription = frappe.get_doc("Push Subscription", subscription)
-			push_subscription.renew()
-
-
-def freeze_jmap_push_notifications(account: str) -> None:
-	"""Freezes JMAP push notifications for the given account."""
-
-	frappe.cache.hset("frozen_jmap_push_notifications", account, True)
-
-
-def unfreeze_jmap_push_notifications(account: str) -> None:
-	"""Unfreezes JMAP push notifications for the given account."""
-
-	frappe.cache.hdel("frozen_jmap_push_notifications", account)
-
-
-def is_jmap_push_notifications_frozen(account: str) -> bool:
-	"""Returns True if JMAP push notifications are frozen for the given account."""
-
-	return frappe.cache.hget("frozen_jmap_push_notifications", account) is True
-
-
-def on_doctype_update() -> None:
-	frappe.db.add_unique(
-		"Push Subscription", ["account", "server"], constraint_name="unique_push_subscription"
+	device_client_id = device_client_id or generate_uuid_style_hash(
+		f"frappe-{frappe.local.site.replace('.', '-')}-{user}"
 	)
+	url = url or f"{frappe.utils.get_url()}/api/method/mail.api.jmap.push_notification?user={user}"
+	types = types or None
+
+	creation_id = str(uuid7())
+	client = get_jmap_client(user)
+	response = client.push_subscription_create(creation_id, device_client_id, url, types)
+
+	title = _("Push Subscription Creation Error")
+	if response.get("created"):
+		return response["created"][creation_id]["id"]
+	elif response.get("notCreated"):
+		frappe.throw(_(response["notCreated"][creation_id]["description"]), title=title)
+	else:
+		frappe.throw(_(response["description"]), title=title)
+
+
+@frappe.whitelist()
+def get_push_subscription(user: str, id: str) -> dict:
+	"""Returns push subscription details for the given name in the format 'user|id'."""
+
+	has_permission_for_user(user)
+
+	client = get_jmap_client(user)
+	if subscriptions := client.push_subscription_get([id]):
+		return format_push_subscription(user, subscriptions[0])
+
+
+def verify_push_subscription(user: str, id: str, verification_code: str) -> None:
+	"""Verifies a push subscription for the given user, subscription ID, and verification code."""
+
+	if not frappe.db.exists("User", {"name": user, "enabled": 1}):
+		frappe.throw(_("User does not exist or is disabled."))
+
+	client = get_jmap_client(user)
+	response = client.push_subscription_update(id, verification_code)
+
+	if response[0][1].get("notUpdated"):
+		frappe.throw(
+			_(response[0][1]["notUpdated"][id]["description"]),
+			title=_("Push Subscription Verification Error"),
+		)
+
+
+@frappe.whitelist()
+def renew_push_subscription(user: str, id: str) -> None:
+	"""Renews a push subscription subscription for the given user and subscription ID."""
+
+	has_permission_for_user(user)
+
+	client = get_jmap_client(user)
+	response = client.push_subscription_update(id)
+
+	if response[0][1].get("notUpdated"):
+		frappe.throw(
+			_(response[0][1]["notUpdated"][id]["description"]), title=_("Push Subscription Renewal Error")
+		)
+
+
+@frappe.whitelist()
+def delete_push_subscription(user: str, id: str) -> None:
+	"""Deletes a push subscription subscription for the given user and subscription ID."""
+
+	has_permission_for_user(user)
+
+	client = get_jmap_client(user)
+	response = client.push_subscription_delete([id])
+
+	if response.get("notDestroyed"):
+		frappe.throw(
+			_(response["notDestroyed"][id]["description"]), title=_("Push Subscription Deletion Error")
+		)
+
+
+@frappe.whitelist()
+def fetch_push_subscriptions(user: str, page: int = 1, limit: int = 10) -> list:
+	"""Fetches push subscriptions for the given user with pagination."""
+
+	has_permission_for_user(user)
+
+	client = get_jmap_client(user)
+	subscriptions = client.push_subscription_get()
+	formatted_subscriptions = [format_push_subscription(user, sub) for sub in subscriptions]
+	frappe.cache.set_value(_get_total_cache_key(user), len(subscriptions), expires_in_sec=600)
+
+	start = (page - 1) * limit
+	end = start + limit
+
+	return formatted_subscriptions[start:end]
+
+
+def format_push_subscription(user: str, push_subscription: dict) -> dict:
+	"""Formats push subscription data for display."""
+
+	expires = parse_iso_datetime(push_subscription["expires"]) if push_subscription.get("expires") else None
+	types = push_subscription.get("types") or []
+	return {
+		"user": user,
+		"id": push_subscription["id"],
+		"name": f"{user}|{push_subscription['id']}",
+		"device_client_id": push_subscription["deviceClientId"],
+		"expires": expires,
+		"types": json.dumps(types, indent=4),
+		"creation": today(),
+		"modified": today(),
+	}
+
+
+def freeze_jmap_push_notifications(user: str) -> None:
+	"""Freezes JMAP push notifications for the given user."""
+
+	frappe.cache.hset("frozen_jmap_push_notifications", user, True)
+
+
+def unfreeze_jmap_push_notifications(user: str) -> None:
+	"""Unfreezes JMAP push notifications for the given user."""
+
+	frappe.cache.hdel("frozen_jmap_push_notifications", user)
+
+
+def is_jmap_push_notifications_frozen(user: str) -> bool:
+	"""Returns True if JMAP push notifications are frozen for the given user."""
+
+	return frappe.cache.hget("frozen_jmap_push_notifications", user) is True
+
+
+def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
+	if doc.doctype != "Push Subscription":
+		return False
+
+	return has_permission_for_user(doc.user, raise_exception=False)

@@ -91,7 +91,6 @@ import PWASettings from '@/components/PWASettings.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
 
 import Archive from '~icons/lucide/archive'
-import AtSign from '~icons/lucide/at-sign'
 import Bookmark from '~icons/lucide/bookmark'
 import Crown from '~icons/lucide/crown'
 import Edit3 from '~icons/lucide/edit-3'
@@ -155,7 +154,7 @@ const menuItems = computed(() => [
 		label: __('Mailbox'),
 		onClick: () => router.push('/mailbox'),
 		condition: () =>
-			user.data.is_mail_admin && user.data.default_outgoing && route.meta.isDashboard,
+			user.data.is_mail_admin && user.data.is_mail_user && route.meta.isDashboard,
 	},
 	{
 		icon: Crown,
@@ -163,7 +162,7 @@ const menuItems = computed(() => [
 		onClick: () => router.push('/dashboard'),
 		condition: () =>
 			user.data.is_mail_admin &&
-			user.data.default_outgoing &&
+			user.data.is_mail_user &&
 			!route.meta.isDashboard &&
 			!isMobile.value,
 	},
@@ -192,19 +191,13 @@ const dashboardItems = [
 				label: __('Members'),
 				icon: Users,
 				to: { name: 'Members' },
-				activeFor: ['Members', 'Invites'],
+				activeFor: ['Members', 'Invites', 'Member'],
 			},
 			{
 				label: __('Mailing Lists'),
 				icon: Mails,
 				to: { name: 'MailingLists' },
 				activeFor: ['MailingLists', 'MailingList'],
-			},
-			{
-				label: __('Aliases'),
-				icon: AtSign,
-				to: { name: 'Aliases' },
-				activeFor: ['Aliases'],
 			},
 		],
 	},

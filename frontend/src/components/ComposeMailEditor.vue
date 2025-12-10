@@ -254,7 +254,7 @@ const user = inject('$user') as UserResource
 const mail = reactive<ComposeMailData>({
 	name: mailDetails?.name || '',
 	id: mailDetails?.id || '',
-	from_email: mailDetails?.from_email || user.data.default_outgoing,
+	from_email: mailDetails?.from_email || user.data.jmap_default_outgoing_email || user.data.name,
 	to: mailDetails?.to || [],
 	cc: mailDetails?.cc || [],
 	bcc: mailDetails?.bcc || [],

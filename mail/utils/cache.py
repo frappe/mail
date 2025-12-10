@@ -16,7 +16,10 @@ def get_personal_signup_domains() -> list:
 
 	def generator() -> list:
 		mail_settings = frappe.get_doc("Mail Settings")
-		return [signup_domain.domain_name for signup_domain in mail_settings.personal_signup_domains]
+		principals = [d.principal for d in mail_settings.personal_signup_domains]
+		return frappe.db.get_all(
+			"Mail Principal Binding", {"name": ["in", principals]}, pluck="principal_name"
+		)
 
 	return frappe.cache.hget("mail-settings", "personal_signup_domains", generator)
 
@@ -30,102 +33,13 @@ def get_cluster_for_tenant(tenant: str) -> str | None:
 	return frappe.cache.hget(f"tenant|{tenant}", "cluster", generator)
 
 
-def get_domains_owned_by_tenant(tenant: str) -> list:
-	"""Returns the domains owned by the tenant."""
-
-	def generator() -> list:
-		return frappe.db.get_all("Mail Domain", filters={"tenant": tenant}, pluck="name")
-
-	return frappe.cache.hget(f"tenant|{tenant}", "domains", generator)
-
-
-def get_mailing_lists_owned_by_tenant(tenant: str) -> list:
-	"""Returns the mailing lists owned by the tenant."""
-
-	def generator() -> list:
-		return frappe.db.get_all("Mailing List", filters={"tenant": tenant}, pluck="name")
-
-	return frappe.cache.hget(f"tenant|{tenant}", "mailing_lists", generator)
-
-
-def get_tenant_for_domain(domain_name: str) -> str | None:
-	"""Returns the tenant for the domain."""
-
-	def generator() -> str | None:
-		return frappe.db.get_value("Mail Domain", domain_name, "tenant")
-
-	return frappe.cache.hget(f"domain|{domain_name}", "tenant", generator)
-
-
-def get_tenant_for_mailing_list(mailing_list: str) -> str | None:
-	"""Returns the tenant for the mailing list."""
-
-	def generator() -> str | None:
-		return frappe.db.get_value("Mailing List", mailing_list, "tenant")
-
-	return frappe.cache.hget(f"mailing_list|{mailing_list}", "tenant", generator)
-
-
 def get_tenant_for_user(user: str) -> str | None:
 	"""Returns the tenant of the user."""
 
 	def generator() -> str | None:
-		return frappe.db.get_value("Mail Tenant Member", {"user": user}, "tenant")
+		return frappe.db.get_value("Mail Tenant Member", user, "tenant")
 
 	return frappe.cache.hget(f"user|{user}", "tenant", generator)
-
-
-def get_account_for_user(user: str) -> str | None:
-	"""Returns the account of the user."""
-
-	def generator() -> str | None:
-		return frappe.db.get_value("Mail Account", {"user": user, "enabled": 1}, "name")
-
-	return frappe.cache.hget(f"user|{user}", "account", generator)
-
-
-def get_account_for_email(email: str) -> str | None:
-	"""Returns the account for the email."""
-
-	def generator() -> str | None:
-		if account := frappe.db.exists("Mail Account", {"email": email}):
-			return account
-		elif alias := frappe.db.exists("Mail Alias", {"email": email, "alias_for_type": "Mail Account"}):
-			return frappe.db.get_value("Mail Alias", alias, "alias_for_name")
-
-	return frappe.cache.hget(f"email|{email}", "account", generator)
-
-
-def get_aliases_for_user(user: str) -> list:
-	"""Returns the aliases of the user."""
-
-	def generator() -> list:
-		account = get_account_for_user(user)
-
-		if not account:
-			return []
-
-		MAIL_ALIAS = frappe.qb.DocType("Mail Alias")
-		return (
-			frappe.qb.from_(MAIL_ALIAS)
-			.select("name")
-			.where(
-				(MAIL_ALIAS.enabled == 1)
-				& (MAIL_ALIAS.alias_for_type == "Mail Account")
-				& (MAIL_ALIAS.alias_for_name == account)
-			)
-		).run(pluck="name")
-
-	return frappe.cache.hget(f"user|{user}", "aliases", generator)
-
-
-def get_default_outgoing_email_for_user(user: str) -> str | None:
-	"""Returns the default outgoing email of the user."""
-
-	def generator() -> str | None:
-		return frappe.db.get_value("Mail Account", {"user": user, "enabled": 1}, "default_outgoing_email")
-
-	return frappe.cache.hget(f"user|{user}", "default_outgoing_email", generator)
 
 
 def get_rate_limits(method_path: str) -> list:

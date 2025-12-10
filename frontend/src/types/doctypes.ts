@@ -38,7 +38,7 @@ export interface MailHeader extends ChildDocType {
 	value?: string
 }
 
-// Last updated: 2025-11-17 19:00:34.915206
+// Last updated: 2025-11-26 15:04:37.459073
 export interface MailAccountRequest extends DocType {
 	/** Request Key: Data */
 	request_key?: string
@@ -58,7 +58,7 @@ export interface MailAccountRequest extends DocType {
 	is_invite: 0 | 1
 	/** Account: Data */
 	account?: string
-	/** Domain: Link (Mail Domain) */
+	/** Domain: Data */
 	domain_name?: string
 	/** Is Admin: Check */
 	is_admin: 0 | 1
@@ -126,7 +126,7 @@ export interface MailAlias extends DocType {
 	normalized_email?: string
 }
 
-// Last updated: 2025-08-21 18:54:47.654063
+// Last updated: 2025-11-25 18:35:06.533431
 export interface MailTenant extends DocType {
 	/** Tenant Name: Data */
 	tenant_name: string
@@ -226,13 +226,13 @@ export interface MailAccount extends DocType {
 	secret_hash?: string
 }
 
-// Last updated: 2025-03-26 11:43:10.481605
+// Last updated: 2025-11-27 13:25:44.326974
 export interface PersonalSignupDomain extends ChildDocType {
-	/** Domain Name: Link (Mail Domain) */
-	domain_name: string
+	/** Domain: Link (Mail Principal Binding) */
+	principal: string
 }
 
-// Last updated: 2025-10-13 12:32:43.976269
+// Last updated: 2025-11-27 14:40:21.513257
 export interface MailSettings extends DocType {
 	/** Root Domain Name: Data */
 	root_domain_name: string
@@ -248,8 +248,6 @@ export interface MailSettings extends DocType {
 		| 'GoDaddy'
 	/** Token: Password */
 	dns_provider_token?: string
-	/** TTL: Int */
-	default_ttl: number
 	/** Host: Data */
 	spamd_host?: string
 	/** Port: Int */
@@ -260,8 +258,6 @@ export interface MailSettings extends DocType {
 	spamd_hybrid_scanning_threshold?: number
 	/** Enable Spam Detection: Check */
 	enable_spamd: 0 | 1
-	/** DKIM RSA Key Size: Select */
-	default_dkim_rsa_key_size: '' | '2048' | '4096'
 	/** Allow Business Signup: Check */
 	allow_business_signup: 0 | 1
 	/** Allow Personal Signup: Check */
@@ -340,10 +336,8 @@ export interface MailMessagePart extends ChildDocType {
 	cid?: string
 }
 
-// Last updated: 2025-11-20 15:22:07.630230
+// Last updated: 2025-11-22 12:24:35.903745
 export interface MailMessage extends DocType {
-	/** Account: Link (Mail Account) */
-	account: string
 	/** From Name: Data */
 	from_name?: string
 	/** From Email: Data */
@@ -426,6 +420,8 @@ export interface MailMessage extends DocType {
 	junk: 0 | 1
 	/** Mail ID: Data */
 	id?: string
+	/** User: Link (User) */
+	user: string
 }
 
 // Last updated: 2025-01-15 11:46:42.917146
@@ -502,10 +498,8 @@ export interface MailMessageMailbox extends ChildDocType {
 	mailbox_name: string
 }
 
-// Last updated: 2025-11-20 17:22:50.335139
+// Last updated: 2025-11-22 11:18:49.665323
 export interface Identity extends DocType {
-	/** Account: Link (Mail Account) */
-	account: string
 	/** May Delete: Check */
 	may_delete: 0 | 1
 	/** ID: Data */
@@ -522,9 +516,11 @@ export interface Identity extends DocType {
 	html_signature?: any
 	/** Text: Code */
 	text_signature?: string
+	/** User: Link (User) */
+	user: string
 }
 
-// Last updated: 2025-11-27 16:04:52.509091
+// Last updated: 2025-12-01 15:16:26.188319
 export interface MailSignature extends DocType {
 	/** Account: Link (User) */
 	account: string

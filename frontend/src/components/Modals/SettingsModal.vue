@@ -3,7 +3,7 @@
 		<template #body>
 			<div class="flex" :style="{ height: 'calc(100vh - 9rem)' }">
 				<div class="bg-surface-menu-bar flex w-52 shrink-0 flex-col border-r p-4 py-3">
-					<h1 class="px-2 text-xl font-semibold leading-6">{{ __('Settings') }}</h1>
+					<h1 class="px-2 text-xl leading-6">{{ __('Settings') }}</h1>
 					<div class="mt-3 space-y-1">
 						<button
 							v-for="tab in tabs"
@@ -70,46 +70,50 @@ const tabs = computed(() => {
 			label: __('Profile'),
 			icon: User,
 			component: markRaw(ProfileSettings),
-			showNonMailUser: true,
 		},
 		{
 			label: __('Account'),
 			icon: Mailbox,
 			component: markRaw(AccountSettings),
+			condition: user.data.is_mail_user,
 		},
 		{
 			label: __('Identity'),
 			icon: Fingerprint,
 			component: markRaw(IdentitySettings),
+			condition: user.data.is_mail_user,
 		},
 		{
 			label: __('Appearance'),
 			icon: Palette,
 			component: markRaw(AppearanceSettings),
-			showNonMailUser: true,
 		},
 		{
 			label: __('Signature'),
 			icon: Feather,
 			component: markRaw(SignatureSettings),
+			condition: user.data.is_mail_user,
 		},
 		{
 			label: __('Vacation Response'),
 			icon: TreePalm,
 			component: markRaw(VacationResponseSettings),
+			condition: user.data.is_mail_user,
 		},
 		{
 			label: __('Mail Data Exchange'),
 			icon: DatabaseBackup,
 			component: markRaw(MailDataExchangeSettings),
+			condition: user.data.is_mail_user && user.data.tenant,
 		},
 		{
 			label: __('Advanced'),
 			icon: Code,
 			component: markRaw(AdvancedSettings),
+			condition: user.data.is_mail_user,
 		},
 	]
-	return user.data.is_mail_user ? allTabs : allTabs.filter((tab) => tab.showNonMailUser)
+	return allTabs.filter((tab) => tab.condition === undefined || tab.condition)
 })
 const activeTab = ref(tabs.value[0])
 </script>

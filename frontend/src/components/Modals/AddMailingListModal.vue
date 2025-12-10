@@ -17,7 +17,7 @@
 			<div class="mb-4 flex items-center justify-between">
 				<FormControl
 					v-model="list.doc.username"
-					:label="__('Username')"
+					:label="__('Name')"
 					placeholder="team"
 					class="w-full"
 				/>
@@ -25,19 +25,21 @@
 					class="text-ink-gray-3 mx-2.5 mb-1.5 mt-auto h-4 w-4"
 					name="at-sign"
 				/>
-				<Link
+				<FormControl
 					v-model="list.doc.domain_name"
-					:label="__('Domain Name')"
+					type="combobox"
+					:label="__('Domain')"
 					placeholder="yourdomain.com"
-					doctype="Mail Domain"
-					:filters="{ tenant: user.data.tenant, is_verified: 1 }"
 					class="w-full"
+					:options="domains.data"
+					:open-on-click="true"
 				/>
 			</div>
 			<FormControl
-				v-model="list.doc.display_name"
-				:label="__('Display Name')"
-				placeholder="Team Example"
+				v-model="list.doc.description"
+				type="textarea"
+				:label="__('Description')"
+				:placeholder="__('Team Updates')"
 			/>
 		</template>
 	</Dialog>
@@ -46,33 +48,36 @@
 <script setup lang="ts">
 import { inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Link } from 'frappe-ui/frappe'
 import { Dialog, FeatherIcon, FormControl, useNewDoc } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 
 const show = defineModel<boolean>()
 
+const { domains } = userStore()
 const user = inject('$user')
 const router = useRouter()
 
 const defaultList = {
+	tenant: user.data.tenant,
+	type: 'List',
 	username: '',
 	domain_name: '',
-	display_name: '',
+	description: '',
 }
 
 const list = useNewDoc(
-	'Mailing List',
+	'Mail Principal',
 	{ ...defaultList },
 	{
 		beforeSubmit: () => {
-			list.doc.email = `${list.doc.username}@${list.doc.domain_name}`
+			list.doc._name = `${list.doc.username}@${list.doc.domain_name}`
 		},
 		onSuccess: () => {
 			show.value = false
 			raiseToast(__('Mailing List created.'))
-			router.push({ name: 'MailingList', params: { listName: list.doc.email } })
+			router.push({ name: 'MailingList', params: { listName: list.doc._name } })
 		},
 		onError: (error) => raiseToast(error.message, 'error'),
 	},

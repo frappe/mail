@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_8xbl",
-  "account",
+  "user",
   "from_name",
   "from_email",
   "column_break_nwlx",
@@ -69,17 +69,6 @@
   {
    "fieldname": "section_break_8xbl",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "options": "Mail Account",
-   "read_only": 1,
-   "reqd": 1,
-   "set_only_once": 1
   },
   {
    "fieldname": "from_name",
@@ -459,6 +448,17 @@
    "in_list_view": 1,
    "label": "Mail ID",
    "read_only": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
@@ -466,7 +466,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-20 15:22:07.630230",
+ "modified": "2025-12-09 13:24:37.593079",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message",

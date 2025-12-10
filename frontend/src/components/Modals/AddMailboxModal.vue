@@ -38,7 +38,7 @@ const { mailboxes } = userStore()
 // )
 
 const defaultFolder = {
-	account: user.data.name,
+	user: user.data.name,
 	name: '',
 	parent: null,
 }

@@ -18,7 +18,6 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
-from mail.client.doctype.sync_state.sync_state import clear_sync_state
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,
@@ -29,9 +28,17 @@ from mail.utils import (
 	reconnect_on_failure,
 	sanitize_cli_output,
 )
-from mail.utils.cache import get_account_for_user, get_tenant_for_user
-from mail.utils.user import has_role, is_account_owner, is_system_manager, is_tenant_admin
+from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
+from mail.utils.user import (
+	clear_sync_state,
+	get_account_for_user,
+	get_user_email_address,
+	has_role,
+	is_system_manager,
+	is_tenant_admin,
+)
 from mail.utils.validation import (
+	ensure_tenant_bound_user,
 	validate_jmap_structure,
 	validate_maildir_or_maildirpp,
 	validate_nested_maildir_tree,
@@ -43,6 +50,9 @@ class MailDataExchange(Document):
 		self.name = str(uuid7())
 
 	def validate(self) -> None:
+		if self.is_new():
+			self.validate_user()
+			self.validate_tenant()
 		if self.operation == "Import":
 			self.validate_import_format()
 			self.validate_import_file()
@@ -58,6 +68,16 @@ class MailDataExchange(Document):
 
 	def before_cancel(self) -> None:
 		self.status = "Cancelled"
+
+	def validate_user(self) -> None:
+		"""Validate the user."""
+
+		ensure_tenant_bound_user(self.user)
+
+	def validate_tenant(self) -> None:
+		"""Validate the tenant."""
+
+		self.tenant = get_tenant_for_user(self.user)
 
 	def validate_import_format(self) -> None:
 		"""Validate the import format."""
@@ -149,7 +169,7 @@ class MailDataExchange(Document):
 		if self.operation != "Import":
 			return
 
-		freeze_jmap_push_notifications(self.account)
+		freeze_jmap_push_notifications(self.user)
 		self._mark_started()
 
 		import_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{self.import_file}")
@@ -167,7 +187,7 @@ class MailDataExchange(Document):
 				command.append("account")
 			else:
 				command.extend(["messages", "-f", self.import_format])
-			command.append(self.account)
+			command.append(get_account_for_user(self.user))
 
 			if self.import_format == "mbox":
 				mbox_files = get_mbox_files(import_base)
@@ -181,7 +201,7 @@ class MailDataExchange(Document):
 
 				command.append(mbox_files[0])
 			elif self.import_format == "jmap":
-				_import_base = os.path.join(import_base, self.account)
+				_import_base = os.path.join(import_base, get_account_for_user(self.user))
 				validate_jmap_structure(_import_base, raise_exception=True)
 				command.append(_import_base)
 			else:
@@ -201,13 +221,13 @@ class MailDataExchange(Document):
 					title=_("Failed to clean import output"), message=frappe.get_traceback(with_context=True)
 				)
 
-			clear_sync_state(self.account)
+			clear_sync_state(self.user, type="email")
 			kwargs.update({"status": "Completed", "output": output})
 
 			mail_details = {
 				"subject": _("Mail Data Import Completed"),
 				"title": _("Mail data import for account {0} has been completed successfully.").format(
-					frappe.bold(self.account)
+					frappe.bold(get_account_for_user(self.user))
 				),
 				"description": _("Click the button below to view the imported data."),
 			}
@@ -217,17 +237,19 @@ class MailDataExchange(Document):
 
 			mail_details = {
 				"subject": _("Mail Data Import Failed"),
-				"title": _("Mail data import for account {0} has failed.").format(frappe.bold(self.account)),
+				"title": _("Mail data import for account {0} has failed.").format(
+					frappe.bold(get_account_for_user(self.user))
+				),
 				"description": _("Click the button below to view the reason for failure."),
 			}
 
 		shutil.rmtree(import_base, ignore_errors=True)
 		self._mark_completed(**kwargs)
-		unfreeze_jmap_push_notifications(self.account)
+		unfreeze_jmap_push_notifications(self.user)
 
-		if account := get_account_for_user(self.owner):
+		if email := get_user_email_address(self.owner):
 			frappe.sendmail(
-				recipients=account,
+				recipients=email,
 				subject=mail_details["subject"],
 				template="generic",
 				args={
@@ -257,7 +279,7 @@ class MailDataExchange(Document):
 		try:
 			cli_path = get_stalwart_cli_path()
 			host, _credentials = self._get_host_and_credentials()
-			command = f"{cli_path} -u {host} export account {self.account} {export_base}"
+			command = f"{cli_path} -u {host} export account {get_account_for_user(self.user)} {export_base}"
 			output = _run_stalwart_cli_command(command, _credentials)
 
 			compress_directory(export_base, export_file)
@@ -280,7 +302,7 @@ class MailDataExchange(Document):
 			mail_details = {
 				"subject": _("Mail Data Export Ready"),
 				"title": _("Mail data export for account {0} is ready for download.").format(
-					frappe.bold(self.account)
+					frappe.bold(get_account_for_user(self.user))
 				),
 				"description": _("Click the button below to view and download the exported data."),
 			}
@@ -290,16 +312,18 @@ class MailDataExchange(Document):
 
 			mail_details = {
 				"subject": _("Mail Data Export Failed"),
-				"title": _("Mail data export for account {0} has failed.").format(frappe.bold(self.account)),
+				"title": _("Mail data export for account {0} has failed.").format(
+					frappe.bold(get_account_for_user(self.user))
+				),
 				"description": _("Click the button below to view the reason for failure."),
 			}
 
 		shutil.rmtree(export_base, ignore_errors=True)
 		self._mark_completed(**kwargs)
 
-		if account := get_account_for_user(self.owner):
+		if email := get_user_email_address(self.owner):
 			frappe.sendmail(
-				recipients=account,
+				recipients=email,
 				subject=mail_details["subject"],
 				template="generic",
 				args={
@@ -321,10 +345,10 @@ class MailDataExchange(Document):
 		)
 
 	def _get_host_and_credentials(self) -> tuple[str, str]:
-		"""Returns the host and credentials for the account's cluster."""
+		"""Returns the host and credentials for the user's cluster."""
 
-		tenant = frappe.db.get_value("Mail Account", self.account, "tenant")
-		cluster = frappe.get_doc("Mail Cluster", frappe.db.get_value("Mail Tenant", tenant, "cluster"))
+		tenant = get_tenant_for_user(self.user)
+		cluster = frappe.get_doc("Mail Cluster", get_cluster_for_tenant(tenant))
 
 		return (
 			cluster.base_url,
@@ -365,8 +389,7 @@ def get_permission_query_condition(user: str | None = None) -> str:
 			return f"(`tabMail Data Exchange`.tenant = '{tenant}')"
 
 	if has_role(user, "Mail User"):
-		if account := get_account_for_user(user):
-			return f"(`tabMail Data Exchange`.account = '{account}')"
+		return f"(`tabMail Data Exchange`.user = '{user}')"
 
 	return "1=0"
 
@@ -382,7 +405,7 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	elif has_role(user, "Mail Admin"):
 		return is_tenant_admin(doc.tenant, user)
 	elif has_role(user, "Mail User"):
-		return is_account_owner(doc.account, user)
+		return doc.user == user
 
 	return False
 

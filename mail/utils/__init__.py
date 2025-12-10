@@ -11,6 +11,7 @@ import unicodedata
 import zipfile
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from io import BytesIO
 from typing import Any, Literal
 
@@ -23,6 +24,7 @@ from frappe.types.filter import FilterTuple
 from frappe.utils import get_bench_path
 from frappe.utils.caching import redis_cache
 from markdown_it import MarkdownIt
+from passlib.hash import pbkdf2_sha512, sha512_crypt
 
 INVISIBLE_CHARS = (
 	r"[\u0000-\u001F\u007F-\u009F"  # ASCII control chars
@@ -50,6 +52,40 @@ def reconnect_on_failure() -> callable:
 	return wrapper
 
 
+def is_probable_hash(s: str) -> bool:
+	"""Return True if string looks like a known password hash."""
+
+	s = s.strip()
+
+	modular_patterns = [
+		r"^\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}$",  # bcrypt
+		r"^\$argon2(id|i|d)\$v=\d+\$.*",  # Argon2
+		r"^\$pbkdf2-sha(1|256|512)\$\d+\$[A-Za-z0-9./]+\$[A-Za-z0-9./]+$",  # PBKDF2 (Passlib)
+		r"^\$scrypt\$.*",  # scrypt
+		r"^\$5\$.+\$.+",  # SHA-256 crypt
+		r"^\$6\$.+\$.+",  # SHA-512 crypt
+	]
+	for p in modular_patterns:
+		if re.match(p, s):
+			return True
+
+	hex_lengths = {
+		32,  # MD5
+		40,  # SHA-1
+		56,  # SHA-224
+		64,  # SHA-256
+		96,  # SHA-384
+		128,  # SHA-512
+	}
+	if len(s) in hex_lengths and re.fullmatch(r"[A-Fa-f0-9]+", s):
+		return True
+
+	if len(s) > 40 and re.fullmatch(r"[A-Za-z0-9+/=._-]+", s):
+		return True
+
+	return False
+
+
 def hash_password(password: str) -> str:
 	"""Generate a bcrypt hash for a given password."""
 
@@ -68,6 +104,91 @@ def generate_random_phrase() -> str:
 	"""Generate a random passphrase consisting of 5 words."""
 
 	return " ".join(["".join(random.choices(string.ascii_lowercase, k=l)) for l in (5, 4, 4, 4, 3)])
+
+
+def generate_app_password(app_name: str | None = None, password: str | None = None) -> str:
+	"""Generates an app password hash with metadata."""
+
+	app_name = app_name or "app_pass"
+	password = password or os.urandom(32)
+
+	timestamp = datetime.now(timezone.utc).isoformat()
+	b64_part = base64.b64encode(f"{app_name}${timestamp}".encode()).decode()
+	hash_value = sha512_crypt.hash(password)
+	parts = hash_value.split("$", 3)
+	method = parts[1]
+	salt = parts[2]
+	hashed_password = parts[3]
+
+	return f"$app${b64_part}$${method}${salt}${hashed_password}"
+
+
+def generate_dkim_keys(
+	algorithm: Literal["rsa-sha256", "ed25519-sha256"], rsa_key_size: int = 2048
+) -> tuple[str, str]:
+	"""Generates the DKIM Keys for the specified algorithm."""
+
+	def get_filtered_dkim_key(key_pem: str) -> str:
+		"""Returns the filtered DKIM Key."""
+
+		key_pem = "".join(key_pem.split())
+		key_pem = (
+			key_pem.replace("-----BEGINPUBLICKEY-----", "")
+			.replace("-----ENDPUBLICKEY-----", "")
+			.replace("-----BEGINRSAPRIVATEKEY-----", "")
+			.replace("-----ENDRSAPRIVATEKEY-----", "")
+			.replace("-----BEGINPRIVATEKEY-----", "")
+			.replace("-----ENDPRIVATEKEY-----", "")
+		)
+
+		return key_pem
+
+	from cryptography.hazmat.primitives import serialization
+
+	if algorithm == "rsa-sha256":
+		from cryptography.hazmat.backends import default_backend
+		from cryptography.hazmat.primitives.asymmetric import rsa
+
+		private_key = rsa.generate_private_key(
+			public_exponent=65537, key_size=rsa_key_size, backend=default_backend()
+		)
+		public_key = private_key.public_key()
+
+		private_key_pem = private_key.private_bytes(
+			encoding=serialization.Encoding.PEM,
+			format=serialization.PrivateFormat.TraditionalOpenSSL,
+			encryption_algorithm=serialization.NoEncryption(),
+		).decode()
+		public_key_pem = public_key.public_bytes(
+			encoding=serialization.Encoding.PEM,
+			format=serialization.PublicFormat.SubjectPublicKeyInfo,
+		).decode()
+
+		return private_key_pem, get_filtered_dkim_key(public_key_pem)
+
+	elif algorithm == "ed25519-sha256":
+		import base64
+
+		from cryptography.hazmat.primitives.asymmetric import ed25519
+
+		private_key = ed25519.Ed25519PrivateKey.generate()
+		public_key = private_key.public_key()
+
+		private_key_pem = private_key.private_bytes(
+			encoding=serialization.Encoding.PEM,
+			format=serialization.PrivateFormat.PKCS8,
+			encryption_algorithm=serialization.NoEncryption(),
+		).decode()
+		public_key_raw = public_key.public_bytes(
+			encoding=serialization.Encoding.Raw,
+			format=serialization.PublicFormat.Raw,
+		)
+		public_key_encoded = base64.b64encode(public_key_raw).decode()
+
+		return private_key_pem, public_key_encoded
+
+	else:
+		frappe.throw(_("Unsupported algorithm. Use 'rsa-sha256' or 'ed25519-sha256'."))
 
 
 def reformat_pbkdf2_hash(passlib_hash: str, dklen: int | None = None) -> str:
@@ -115,6 +236,13 @@ def user_context(user: str) -> Generator[None, None, None]:
 		frappe.session.data = session_data
 
 
+def snake_to_camel(input) -> str:
+	"""Convert snake_case string to camelCase."""
+
+	parts = input.split("_")
+	return parts[0] + "".join(word.capitalize() for word in parts[1:])
+
+
 def encode_image_to_base64(image_path: str) -> str:
 	"""Encodes an image to a base64 string with line breaks every 76 characters."""
 
@@ -148,6 +276,59 @@ def generate_secret(length: int = 32) -> str:
 
 	characters = string.ascii_letters + string.digits
 	return "".join(secrets.choice(characters) for _ in range(length))
+
+
+def parse_token(token: str) -> dict:
+	"""
+	Parses token formats like:
+	$app$<base64>$<hash...>
+	$app$<base64>$$<hash...>
+
+	Extracts:
+	- raw_base64
+	- decoded_metadata
+	- bcrypt details if recognizable
+	"""
+
+	if not token.startswith("$app$"):
+		raise ValueError("Invalid token format: must start with $app$")
+
+	parts = token.split("$")
+
+	if len(parts) < 4:
+		raise ValueError("Invalid token format structure")
+
+	raw_base64 = parts[2]
+	bcrypt_raw = "$".join(parts[3:]).lstrip("$")
+
+	try:
+		decoded_str = base64.b64decode(raw_base64).decode("utf-8")
+	except Exception:
+		raise ValueError("Invalid Base64 metadata")
+
+	bcrypt_parts = bcrypt_raw.split("$")
+	bcrypt_info = {
+		"version": None,
+		"cost": None,
+		"salt_hash": bcrypt_raw,
+		"raw": bcrypt_raw,
+	}
+
+	if len(bcrypt_parts) >= 3 and bcrypt_parts[0] in ("2a", "2b", "2y"):
+		bcrypt_info["version"] = bcrypt_parts[0]
+		bcrypt_info["cost"] = int(bcrypt_parts[1])
+		bcrypt_info["salt_hash"] = "$".join(bcrypt_parts[2:])
+
+	elif len(bcrypt_parts) >= 3:
+		bcrypt_info["version"] = bcrypt_parts[0]
+		bcrypt_info["cost"] = bcrypt_parts[1]
+		bcrypt_info["salt_hash"] = "$".join(bcrypt_parts[2:])
+
+	return {
+		"raw_base64": raw_base64,
+		"decoded_metadata": decoded_str,
+		"bcrypt": bcrypt_info,
+	}
 
 
 def load_compressed_file(file_path: str | None = None, file_data: bytes | None = None) -> str:

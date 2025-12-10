@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_04au",
-  "account",
+  "user",
   "column_break_lrhc",
   "id",
   "section_break_ngen",
@@ -29,21 +29,11 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "options": "Mail Account",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "section_break_wo60",
    "fieldtype": "Section Break"
   },
   {
+   "description": "The set of Address Book IDs this Contact Card belongs to. A card must belong to at least one Address Book at all times (until it is destroyed).",
    "fieldname": "address_books",
    "fieldtype": "Table",
    "label": "Address Books",
@@ -78,6 +68,7 @@
    "label": "Kind"
   },
   {
+   "description": "The ID of the Contact Card.",
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -130,13 +121,25 @@
    "fieldtype": "Table",
    "label": "Addresses",
    "options": "Contact Card Address"
+  },
+  {
+   "description": "The user this contact card belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-11 16:38:41.717727",
+ "modified": "2025-12-09 13:15:08.049121",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Contact Card",

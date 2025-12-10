@@ -8,7 +8,6 @@
   "user",
   "source",
   "column_break_6jsu",
-  "account",
   "last_received_at",
   "last_received_mail"
  ],
@@ -37,16 +36,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "options": "Mail Account",
-   "reqd": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "last_received_at",
    "fieldtype": "Datetime",
    "in_list_view": 1,
@@ -61,7 +50,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-08-20 10:42:33.681461",
+ "modified": "2025-11-23 07:05:53.424301",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Sync History",

@@ -84,13 +84,10 @@ def fetch_dmarc_reports(cluster_name: str, page: int = 1, limit: int = 10, text:
 		params={"page": page, "limit": limit, "filter": text},
 	)
 
-	if response.status_code == 200:
-		data = response.json()["data"]
-		frappe.cache.set_value(get_total_cache_key(cluster_name, text), data["total"], expires_in_sec=600)
+	data = response.json()["data"]
+	frappe.cache.set_value(get_total_cache_key(cluster_name, text), data["total"], expires_in_sec=600)
 
-		return [fetch_dmarc_report_details(f"{cluster_name}|{id}") for id in data["items"]]
-
-	frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
+	return [fetch_dmarc_report_details(f"{cluster_name}|{id}") for id in data["items"]]
 
 
 def fetch_dmarc_report_details(name: str) -> dict:
@@ -103,15 +100,12 @@ def fetch_dmarc_report_details(name: str) -> dict:
 	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
 	response = backend_api.request(method="GET", endpoint=f"/api/reports/dmarc/{id}")
 
-	if response.status_code == 200:
-		report = response.json()["data"]
-		report["id"] = id
-		report = format_report(report, cluster_name)
-		frappe.cache.hset("dmarc_reports", name, report)
+	report = response.json()["data"]
+	report["id"] = id
+	report = format_report(report, cluster_name)
+	frappe.cache.hset("dmarc_reports", name, report)
 
-		return report
-
-	frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
+	return report
 
 
 def remove_dmarc_report(name: str) -> None:
@@ -119,9 +113,7 @@ def remove_dmarc_report(name: str) -> None:
 
 	cluster_name, id = name.split("|")
 	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	response = backend_api.request(method="DELETE", endpoint=f"/api/reports/dmarc/{id}")
-	if response.status_code != 200:
-		frappe.throw(title=_("Request failed for {0}").format(backend_api.base_url), msg=response.text)
+	backend_api.request(method="DELETE", endpoint=f"/api/reports/dmarc/{id}")
 
 
 def format_report(report: dict, cluster_name: str) -> dict:

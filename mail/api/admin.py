@@ -5,11 +5,12 @@ from frappe import _
 from frappe.query_builder import Case, Order
 from frappe.utils import cint
 
+from mail.server.doctype.mail_principal.mail_principal import fetch_principals
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import is_tenant_admin
+from mail.utils.user import get_tenant_domains, get_tenant_for_user, is_tenant_admin
 
 if TYPE_CHECKING:
-	from mail.client.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
+	from mail.server.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
 
 
 @frappe.whitelist()
@@ -26,10 +27,12 @@ def create_tenant(tenant_name: str) -> None:
 def get_domain_request(domain_name: str, mail_tenant: str) -> "MailDomainRequest":
 	"""Fetches Mail Domain Request for a given domain name if it exists, and creates a new one if not"""
 
-	if frappe.db.exists("Mail Domain", domain_name):
+	if frappe.db.exists("Mail Principal Binding", {"principal_name": domain_name}):
 		frappe.throw(_("Domain {0} has already been registered.").format(frappe.bold(domain_name)))
 
-	if name := frappe.db.exists("Mail Domain Request", {"domain_name": domain_name, "tenant": mail_tenant}):
+	if name := frappe.db.exists(
+		"Mail Domain Request", {"domain_name": domain_name, "tenant": mail_tenant, "is_verified": 0}
+	):
 		return frappe.get_doc("Mail Domain Request", name)
 
 	domain_request = frappe.new_doc("Mail Domain Request")
@@ -134,9 +137,7 @@ def delete_mailing_lists(names: list) -> None:
 	"""Delete Mailing Lists"""
 
 	for d in names:
-		doc = frappe.get_doc("Mailing List", d)
-		doc.enabled = 0
-		frappe.db.delete("Mailing List Member", {"mailing_list": d})
+		doc = frappe.get_doc("Mail Principal", d)
 		doc.delete()
 
 
@@ -166,3 +167,54 @@ def delete_account_requests(names: list) -> None:
 
 	for d in names:
 		frappe.delete_doc("Mail Account Request", d)
+
+
+@frappe.whitelist()
+def get_domains(txt: str | None = None, is_verified: int | None = None) -> list[dict]:
+	"""Get domains for user's tenant"""
+
+	tenant = get_tenant_for_user(frappe.session.user)
+	if not (domains := fetch_principals(tenant, "Domain", txt, 1, 50)[0]):
+		return []
+
+	domain_names = [d["name"] for d in domains]
+	is_verified_mapping = frappe.get_all(
+		"Mail Principal Binding",
+		{"tenant": tenant, "principal_type": "Domain", "principal_name": ["in", domain_names]},
+		["principal_name", "is_verified"],
+	)
+	is_verified_dict = {d["principal_name"]: d["is_verified"] for d in is_verified_mapping}
+
+	for domain in domains:
+		domain["is_verified"] = is_verified_dict.get(domain["name"], 0)
+
+	if is_verified is not None:
+		domains = [d for d in domains if d["is_verified"] == is_verified]
+
+	fields = ["name", "is_verified", "total_members"]
+	return [{f: d[f] for f in fields} for d in domains]
+
+
+@frappe.whitelist()
+def get_mailing_lists(txt: str | None = None) -> list[dict]:
+	"""Get mailing lists for user's tenant"""
+
+	tenant = get_tenant_for_user(frappe.session.user)
+	if not (lists := fetch_principals(tenant, "List", txt, 1, 50)[0]):
+		return []
+
+	fields = ["name", "total_members"]
+	return [{f: d[f] for f in fields} for d in lists]
+
+
+@frappe.whitelist()
+def get_verified_domains() -> list[str]:
+	"""Get verified domains for user's tenant"""
+
+	tenant = get_tenant_for_user(frappe.session.user)
+
+	return frappe.get_all(
+		"Mail Principal Binding",
+		{"tenant": tenant, "principal_type": "Domain", "is_verified": 1},
+		pluck="principal_name",
+	)
