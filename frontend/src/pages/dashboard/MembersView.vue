@@ -13,7 +13,7 @@
 			]"
 		>
 			<template #tab-panel="{ tab }">
-				<div class="m-5 flex flex-1 flex-col space-y-5 overflow-y-auto">
+				<div class="flex flex-1 flex-col space-y-5 overflow-y-auto p-5">
 					<UsersView v-if="tab.index === 0" ref="usersView" />
 					<InvitesView v-else ref="invitesView" />
 				</div>

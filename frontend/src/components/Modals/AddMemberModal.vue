@@ -52,10 +52,10 @@
 				/>
 				<hr />
 
-				<FormControl
+				<Switch
 					v-model="accountRequest.send_invite"
-					type="checkbox"
 					:label="__('Send Invite')"
+					class="hover:!bg-surface-white !cursor-default !p-0"
 				/>
 				<FormControl
 					v-if="accountRequest.send_invite"
@@ -89,7 +89,7 @@
 
 <script setup lang="ts">
 import { inject, reactive, watch } from 'vue'
-import { Dialog, ErrorMessage, FeatherIcon, FormControl, createResource } from 'frappe-ui'
+import { Dialog, ErrorMessage, FeatherIcon, FormControl, Switch, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'

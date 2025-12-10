@@ -2,7 +2,7 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			title: isList ? __('New Mailing List') : __('New Email Address'),
+			title: isList ? __('Add Mailing List') : __('Add Email Address'),
 			actions: [
 				{
 					label: __('Add'),
