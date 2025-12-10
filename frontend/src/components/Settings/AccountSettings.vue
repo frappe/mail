@@ -10,7 +10,7 @@
 			:open-on-click="true"
 		/>
 		<Switch
-			v-model="destroyEmailAfterSubmission"
+			v-model="destroyEmailAfterSubmit"
 			:label="__('Delete Email After Sending')"
 			:description="
 				__('Automatically deletes the email from your mailbox after it is sent.')
@@ -18,7 +18,7 @@
 			class="!p-0"
 		/>
 		<Switch
-			v-model="destroyNewsletterAfterSubmission"
+			v-model="destroyNewsletterAfterSubmit"
 			:label="__('Delete Newsletter After Sending')"
 			:description="__('Automatically deletes the newsletter after it is sent.')"
 			class="!p-0"
@@ -66,13 +66,13 @@ const account = createDocumentResource({
 	},
 })
 
-const destroyEmailAfterSubmission = computed({
-	get: () => !!account.doc.jmap_destroy_email_after_submission,
-	set: (val: boolean) => (account.doc.jmap_destroy_email_after_submission = val ? 1 : 0),
+const destroyEmailAfterSubmit = computed({
+	get: () => !!account.doc.jmap_destroy_email_after_submit,
+	set: (val: boolean) => (account.doc.jmap_destroy_email_after_submit = val ? 1 : 0),
 })
 
-const destroyNewsletterAfterSubmission = computed({
-	get: () => !!account.doc.jmap_destroy_newsletter_after_submission,
-	set: (val: boolean) => (account.doc.jmap_destroy_newsletter_after_submission = val ? 1 : 0),
+const destroyNewsletterAfterSubmit = computed({
+	get: () => !!account.doc.jmap_destroy_newsletter_after_submit,
+	set: (val: boolean) => (account.doc.jmap_destroy_newsletter_after_submit = val ? 1 : 0),
 })
 </script>
