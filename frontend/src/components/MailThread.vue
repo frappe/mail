@@ -85,8 +85,9 @@
 					:key="mail.name"
 					:class="{
 						'px-3 py-5': isMobile,
-						'border-b sm:rounded-xl sm:border sm:p-5':
+						'max-sm:border-b sm:rounded-xl sm:p-5':
 							thread.data.length > 1 || mail.draft,
+						'sm:border': thread.data.length > 1 && !mail.draft,
 						'cursor-pointer': isCollapsed(mail),
 						'shadow-elevation-light-md': mail.draft && !isMobile,
 					}"
