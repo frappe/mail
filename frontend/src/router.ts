@@ -67,6 +67,22 @@ const routes = [
 		props: true,
 	},
 	{
+		path: '/address-books/',
+		name: 'AddressBooks',
+		component: () => import('@/pages/AddressBooksView.vue'),
+	},
+	{
+		path: '/address-book/:addressBookName',
+		name: 'AddressBook',
+		component: () => import('@/pages/AddressBookView.vue'),
+		props: true,
+	},
+	{
+		path: '/contacts/',
+		name: 'Contacts',
+		component: () => import('@/pages/ContactsView.vue'),
+	},
+	{
 		path: '/mail-data-exchanges',
 		name: 'MailDataExchanges',
 		component: () => import('@/pages/MailDataExchangesView.vue'),

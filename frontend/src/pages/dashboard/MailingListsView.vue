@@ -96,13 +96,7 @@ const deleteLists = createResource({
 const deleteListsOptions = {
 	title: __('Delete Mailing Lists'),
 	message: __('Are you sure you want to delete the selected mailing lists?'),
-	actions: [
-		{
-			label: __('Confirm'),
-			variant: 'solid',
-			onClick: deleteLists.submit,
-		},
-	],
+	actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteLists.submit }],
 }
 
 const LIST_OPTIONS = {
