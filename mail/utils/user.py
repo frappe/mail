@@ -100,31 +100,10 @@ def get_user_email_address(user: str) -> str | None:
 	return frappe.db.get_value("User", user, "email")
 
 
-def get_user_email_addresses(user: str) -> list:
-	"""Returns the list of email addresses associated with the user."""
-
-	if is_tenant_bound_user(user):
-		principal = frappe.get_doc("Mail Principal", user)
-		return principal._emails
-
-	return []
-
-
 def get_tenant_for_domain(domain_name: str) -> str | None:
 	"""Returns the tenant for the domain."""
 
 	return get_principal_tenant(domain_name, raise_exception=False)
-
-
-def get_user_linked_domains(user: str) -> list:
-	"""Returns the list of linked domains associated with the user."""
-
-	linked_domains = set()
-	if email_addresses := get_user_email_addresses(user):
-		for email_address in email_addresses:
-			linked_domains.add(email_address.split("@")[1])
-
-	return list(linked_domains)
 
 
 @frappe.whitelist()

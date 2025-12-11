@@ -11,7 +11,6 @@ from frappe.utils import create_batch
 from uuid_utils import uuid7
 
 from mail import __version__
-from mail.utils.cache import get_cluster_for_tenant
 from mail.utils.dt import convert_to_utc, utcnow
 from mail.utils.user import has_role
 from mail.utils.validation import has_permission_for_user
