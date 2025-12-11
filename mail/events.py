@@ -36,7 +36,10 @@ def validate_jmap_settings(doc: Document, method: str | None = None) -> None:
 	if doc.jmap_default_outgoing_email:
 		client = JMAPClient(doc.jmap_server_url, doc.jmap_username, doc.get_password("jmap_app_password"))
 		identities = client.identity_get()
-		if not any(identity.get("email") == doc.jmap_default_outgoing_email for identity in identities):
+		if not any(
+			identity.get("email").lower() == doc.jmap_default_outgoing_email.lower()
+			for identity in identities
+		):
 			frappe.throw(
 				_("Default Outgoing Email {0} is not found in the identities of the JMAP account.").format(
 					frappe.bold(doc.jmap_default_outgoing_email)

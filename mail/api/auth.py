@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 
-from mail.jmap import get_identities
+from mail.utils.cache import get_user_emails
 from mail.utils.user import has_role, is_system_manager
 
 
@@ -33,12 +33,9 @@ def validate_email_ownership(email: str) -> None:
 	"""Validates if the email address is associated with the user."""
 
 	user = frappe.session.user
-	for identity in get_identities(user):
-		if email.lower() == identity.get("email").lower():
-			return
-
-	frappe.throw(
-		_("Email address {0} is not associated with the user {1}.").format(
-			frappe.bold(email), frappe.bold(user)
+	if email.lower() not in get_user_emails(user):
+		frappe.throw(
+			_("Email address {0} is not associated with the user {1}.").format(
+				frappe.bold(email), frappe.bold(user)
+			)
 		)
-	)

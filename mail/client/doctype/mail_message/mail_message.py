@@ -16,7 +16,7 @@ from frappe.utils import add_to_date, cint, escape_html, get_datetime, now, time
 from uuid_utils import uuid7
 
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
-from mail.jmap import get_identities, get_jmap_client
+from mail.jmap import get_jmap_client
 from mail.utils import (
 	convert_html_to_text,
 	enqueue_job,
@@ -26,6 +26,7 @@ from mail.utils import (
 	parse_filters,
 	user_context,
 )
+from mail.utils.cache import get_user_emails
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.email_parser import EmailParser
 from mail.utils.lock import acquire_lock, release_lock
@@ -152,7 +153,7 @@ class MailMessage(Document):
 		"""Returns the type of email (Sent or Received)."""
 
 		email_type = "Received"
-		user_addresses = [i.get("email").lower() for i in get_identities(self.user)]
+		user_addresses = get_user_emails(self.user)
 
 		if self.from_email in user_addresses or (
 			hasattr(self, "sender_email") and self.sender_email in user_addresses
@@ -327,7 +328,7 @@ class MailMessage(Document):
 				recipients.append({"type": "To", "display_name": self.from_name, "email": self.from_email})
 
 			# Cc = (original To + original Cc) minus user addresses
-			user_addresses = [i.get("email").lower() for i in get_identities(self.user)]
+			user_addresses = get_user_emails(self.user)
 			for rcpt in self.recipients:
 				if rcpt.type in ["To", "Cc"] and rcpt.email not in user_addresses:
 					recipients.append({"type": "Cc", "display_name": rcpt.display_name, "email": rcpt.email})

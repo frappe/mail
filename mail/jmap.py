@@ -1906,6 +1906,7 @@ def invalidate_jmap_identities_cache(user: str) -> None:
 	"""Invalidates the JMAP identities cache for the given user."""
 
 	frappe.cache.hdel("jmap:identities", user)
+	frappe.cache.hdel(f"user|{user}", "emails")
 
 
 def get_identities(user: str) -> list[dict]:

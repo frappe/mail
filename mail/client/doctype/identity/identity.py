@@ -286,18 +286,18 @@ def format_identity(user: str, identity: dict) -> dict:
 
 	bcc = []
 	for b in identity["bcc"] or []:
-		bcc.append({"display_name": b["name"], "email": b["email"]})
+		bcc.append({"display_name": b["name"], "email": b["email"].lower()})
 
 	reply_to = []
 	for r in identity["replyTo"] or []:
-		reply_to.append({"display_name": r["name"], "email": r["email"]})
+		reply_to.append({"display_name": r["name"], "email": r["email"].lower()})
 
 	return {
 		"name": f"{user}|{identity['id']}",
 		"user": user,
 		"id": identity["id"],
 		"_name": identity["name"],
-		"email": identity["email"],
+		"email": identity["email"].lower(),
 		"bcc": bcc,
 		"reply_to": reply_to,
 		"html_signature": identity["htmlSignature"],
