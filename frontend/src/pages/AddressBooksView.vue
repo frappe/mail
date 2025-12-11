@@ -40,6 +40,8 @@
 			</ListRows>
 		</ListView>
 	</DashboardLayout>
+
+	<AddAddressBookModal v-model="showAddAddressBook" />
 </template>
 
 <script setup lang="ts">
@@ -57,6 +59,7 @@ import {
 } from 'frappe-ui'
 
 import DashboardLayout from '@/components/DashboardLayout.vue'
+import AddAddressBookModal from '@/components/Modals/AddAddressBookModal.vue'
 
 const user = inject('$user')
 

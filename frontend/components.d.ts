@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AccountSettings: typeof import('./src/components/Settings/AccountSettings.vue')['default']
+    AddAddressBookModal: typeof import('./src/components/Modals/AddAddressBookModal.vue')['default']
     AddDomainModal: typeof import('./src/components/Modals/AddDomainModal.vue')['default']
     AddEmailModal: typeof import('./src/components/Modals/AddEmailModal.vue')['default']
     AddMailboxModal: typeof import('./src/components/Modals/AddMailboxModal.vue')['default']
