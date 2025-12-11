@@ -142,18 +142,6 @@ def delete_mailing_lists(names: list) -> None:
 
 
 @frappe.whitelist()
-def add_list_members(list: str, type: Literal["Mail Account", "Mail Group"], members: list) -> None:
-	"""Adds members to a Mailing List"""
-
-	for d in members:
-		MGM = frappe.new_doc("Mailing List Member")
-		MGM.mailing_list = list
-		MGM.member_type = type
-		MGM.member_name = d
-		MGM.insert()
-
-
-@frappe.whitelist()
 def delete_list_members(names: list, is_external: bool) -> None:
 	"""Delete Mailing List Members"""
 

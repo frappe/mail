@@ -34,16 +34,16 @@ def get_mailboxes() -> list[dict]:
 		return []
 
 	fields = ["id", "_name", "role", "total_threads", "unread_threads"]
-	mailboxes = get_account_mailboxes(user)
+	mailboxes = get_user_mailboxes(user)
 	return [
 		{field: mailbox[field] for field in fields} for mailbox in mailboxes if mailbox["subscribed"] == 1
 	]
 
 
-def get_account_mailboxes(account) -> list[dict]:
-	"""Returns the account's mailboxes."""
+def get_user_mailboxes(user) -> list[dict]:
+	"""Returns the user's mailboxes."""
 
-	return frappe.get_all("Mailbox", filters={"account": account})
+	return frappe.get_all("Mailbox", filters={"user": user})
 
 
 @frappe.whitelist()
@@ -160,7 +160,7 @@ def serialize_mail(mail: dict) -> dict:
 				mail["html_body"] = convert_img_src_from_cid_to_url(mail["html_body"], attachment["cid"], url)
 
 		if blobs:
-			fetch_blobs(mail["account"], blobs)
+			fetch_blobs(mail["user"], blobs)
 
 	return {
 		**{field: mail[field] for field in mail_fields},
@@ -415,14 +415,14 @@ def get_mime_message(name: str) -> dict:
 	return result
 
 
-def get_account_and_filtered_message_ids(
+def get_user_and_filtered_message_ids(
 	thread_ids: list[str], mailbox: str | None = None
 ) -> tuple[str, list[str]]:
-	"""Gets account and filtered message IDs for the given mailbox."""
+	"""Gets user and filtered message IDs for the given mailbox."""
 
 	user = frappe.session.user
 	if mailbox == "starred":
-		mailbox = [d["id"] for d in get_account_mailboxes(user) if d["role"] != "trash"]
+		mailbox = [d["id"] for d in get_user_mailboxes(user) if d["role"] != "trash"]
 	elif mailbox == "search":
 		mailbox = None
 	messages = get_message_ids(user, thread_ids, mailbox)
@@ -435,8 +435,8 @@ def set_seen(thread_ids: dict[bool, list[str]], mailbox: str) -> dict:
 	"""Sets seen for threads."""
 
 	for is_seen, ids in thread_ids.items():
-		account, messages = get_account_and_filtered_message_ids(ids, mailbox)
-		set_seen_status(account, messages, is_seen)
+		user, messages = get_user_and_filtered_message_ids(ids, mailbox)
+		set_seen_status(user, messages, is_seen)
 
 	return thread_ids
 
@@ -462,8 +462,8 @@ def set_threads_mailbox(thread_ids: dict[str, list[str]]) -> dict:
 	"""Sets mailbox for threads."""
 
 	for move_to_mailbox, ids in thread_ids.items():
-		account, messages = get_account_and_filtered_message_ids(ids)
-		move_messages(account, messages, move_to_mailbox)
+		user, messages = get_user_and_filtered_message_ids(ids)
+		move_messages(user, messages, move_to_mailbox)
 
 	return thread_ids
 
@@ -482,8 +482,8 @@ def set_threads_spam_status(thread_ids: dict[bool, list[str]]) -> dict:
 	"""Sets spam status for the mails belonging to the given threads."""
 
 	for is_spam, ids in thread_ids.items():
-		account, messages = get_account_and_filtered_message_ids(ids)
-		set_spam_status(account, messages, is_spam)
+		user, messages = get_user_and_filtered_message_ids(ids)
+		set_spam_status(user, messages, is_spam)
 
 	return thread_ids
 
@@ -492,8 +492,8 @@ def set_threads_spam_status(thread_ids: dict[bool, list[str]]) -> dict:
 def delete_threads(thread_ids: list[str], mailbox: str) -> list[str]:
 	"""Deletes mails belonging to the given threads."""
 
-	account, messages = get_account_and_filtered_message_ids(thread_ids, mailbox)
-	delete_messages(account, messages)
+	user, messages = get_user_and_filtered_message_ids(thread_ids, mailbox)
+	delete_messages(user, messages)
 
 	return thread_ids
 
