@@ -64,7 +64,7 @@ import {
 import { convertHtmlToText, raiseToast } from '@/utils'
 import { useTextEditorButtons } from '@/utils/composables'
 
-import type { MailAccount } from '@/types/doctypes'
+import type { VacationResponse } from '@/types/doctypes'
 
 const user = inject('$user')
 const dayjs = inject('$dayjs')
@@ -74,7 +74,7 @@ const { buttons } = useTextEditorButtons()
 const vacationResponse = createDocumentResource({
 	doctype: 'Vacation Response',
 	name: user.data.name,
-	transform: (doc: MailAccount) => {
+	transform: (doc: VacationResponse) => {
 		doc['enabled'] = !!doc['enabled']
 		doc['from_date'] = dayjs(doc['from_date']).format('YYYY-MM-DDTHH:mm')
 		doc['to_date'] = dayjs(doc['to_date']).format('YYYY-MM-DDTHH:mm')

@@ -44,7 +44,7 @@
 				<div class="space-y-1">
 					<div class="text-sm font-medium">
 						{{ usedQuota.toFixed(2) }} GB
-						<span v-if="quota">({{ Math.round(usedPercentage) }}%)</span>
+						<span v-if="quota">({{ usedPercentage.toFixed(1) }}%)</span>
 					</div>
 					<div class="text-ink-gray-4 text-xs">{{ __('Used') }}</div>
 				</div>
@@ -55,7 +55,7 @@
 				<span class="bg-surface-gray-2 mt-1 h-3 w-3 flex-shrink-0 rounded-sm" />
 				<div class="space-y-1">
 					<div class="text-sm font-medium">
-						{{ availableQuota.toFixed(2) }} GB ({{ Math.round(availablePercentage) }}%)
+						{{ availableQuota.toFixed(2) }} GB ({{ availablePercentage.toFixed(1) }}%)
 					</div>
 					<div class="text-ink-gray-4 text-xs">{{ __('Available') }}</div>
 				</div>

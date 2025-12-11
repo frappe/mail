@@ -108,24 +108,6 @@ export interface MailDomain extends DocType {
 	default_disk_quota?: number
 }
 
-// Last updated: 2025-07-17 13:00:45.874699
-export interface MailAlias extends DocType {
-	/** Enabled: Check */
-	enabled: 0 | 1
-	/** Domain Name: Link (Mail Domain) */
-	domain_name: string
-	/** Email: Data */
-	email: string
-	/** Alias For (Type): Select */
-	alias_for_type: '' | 'Mail Account' | 'Mailing List'
-	/** Alias For (Name): Dynamic Link (alias_for_type) */
-	alias_for_name: string
-	/** Tenant: Link (Mail Tenant) */
-	tenant?: string
-	/** Normalized Email: Data */
-	normalized_email?: string
-}
-
 // Last updated: 2025-11-25 18:35:06.533431
 export interface MailTenant extends DocType {
 	/** Tenant Name: Data */
@@ -168,62 +150,6 @@ export interface MailDomainRequest extends DocType {
 	is_verified: 0 | 1
 	/** Tenant: Link (Mail Tenant) */
 	tenant: string
-}
-
-// Last updated: 2025-11-20 18:34:10.958010
-export interface MailAccount extends DocType {
-	/** Enabled: Check */
-	enabled: 0 | 1
-	/** Create Mail Contact: Check */
-	create_mail_contact: 0 | 1
-	/** Domain Name: Link (Mail Domain) */
-	domain_name: string
-	/** User: Link (User) */
-	user: string
-	/** Email: Data */
-	email?: string
-	/** Display Name: Data */
-	display_name?: string
-	/** Reply To: Small Text */
-	reply_to?: string
-	/** Default Email: Data */
-	default_outgoing_email?: string
-	/** Tenant: Link (Mail Tenant) */
-	tenant?: string
-	/** Normalized Email: Data */
-	normalized_email?: string
-	/** Backup Email: Data */
-	backup_email: string
-	/** Enabled: Check */
-	vacation_response_enabled: 0 | 1
-	/** From Date: Datetime */
-	vacation_from_date?: string
-	/** To Date: Datetime */
-	vacation_to_date?: string
-	/** Subject: Small Text */
-	vacation_response_subject?: string
-	/** Text: Code */
-	vacation_response_text_body?: string
-	/** HTML: Text Editor */
-	vacation_response_html_body?: string
-	/** Destroy Email After Submission: Check */
-	destroy_email_after_submission: 0 | 1
-	/** Destroy Newsletter After Submission: Check */
-	destroy_newsletter_after_submission: 0 | 1
-	/** Disk Quota (in GB): Float */
-	disk_quota?: number
-	/** Used Quota (in GB): Float */
-	used_quota?: number
-	/** Quota Usage: Percent */
-	quota_usage?: number
-	/** Disk Quota: Int */
-	_disk_quota?: number
-	/** Used Quota: Int */
-	_used_quota?: number
-	/** App Password: Password */
-	app_password?: string
-	/** Secret Hash: Small Text */
-	secret_hash?: string
 }
 
 // Last updated: 2025-11-27 13:25:44.326974
@@ -282,16 +208,6 @@ export interface MailSettings extends DocType {
 	dns_provider_access_secret?: string
 }
 
-// Last updated: 2025-07-17 13:01:50.810837
-export interface MailContact extends DocType {
-	/** User: Link (User) */
-	user: string
-	/** Email: Data */
-	email: string
-	/** Display Name: Data */
-	display_name?: string
-}
-
 // Last updated: 2025-08-14 19:12:30.003138
 export interface MailMessageRecipient extends ChildDocType {
 	/** Type: Select */
@@ -336,7 +252,7 @@ export interface MailMessagePart extends ChildDocType {
 	cid?: string
 }
 
-// Last updated: 2025-11-22 12:24:35.903745
+// Last updated: 2025-12-09 13:24:37.593079
 export interface MailMessage extends DocType {
 	/** From Name: Data */
 	from_name?: string
@@ -462,32 +378,6 @@ export interface File extends DocType {
 	file_type?: string
 }
 
-// Last updated: 2025-07-17 13:00:30.774415
-export interface MailingList extends DocType {
-	/** Enabled: Check */
-	enabled: 0 | 1
-	/** Domain Name: Link (Mail Domain) */
-	domain_name: string
-	/** Email: Data */
-	email: string
-	/** Display Name: Data */
-	display_name?: string
-	/** Tenant: Link (Mail Tenant) */
-	tenant?: string
-	/** Normalized Email: Data */
-	normalized_email?: string
-}
-
-// Last updated: 2025-06-02 13:39:11.904000
-export interface MailingListMember extends DocType {
-	/** Member (Type): Select */
-	member_type: 'Mail Account'
-	/** Member (Name): Dynamic Link (member_type) */
-	member_name: string
-	/** Mailing List: Link (Mailing List) */
-	mailing_list: string
-}
-
 // Last updated: 2025-08-14 22:57:14.397697
 export interface MailMessageMailbox extends ChildDocType {
 	/** Mailbox: Link (Mailbox) */
@@ -498,7 +388,7 @@ export interface MailMessageMailbox extends ChildDocType {
 	mailbox_name: string
 }
 
-// Last updated: 2025-11-22 11:18:49.665323
+// Last updated: 2025-12-09 13:11:05.006924
 export interface Identity extends DocType {
 	/** May Delete: Check */
 	may_delete: 0 | 1
@@ -527,5 +417,23 @@ export interface MailSignature extends DocType {
 	/** Signature Name: Data */
 	signature_name: string
 	/** HTML: Code */
+	html_body?: string
+}
+
+// Last updated: 2025-12-09 12:55:32.269456
+export interface VacationResponse extends DocType {
+	/** User: Link (User) */
+	user: string
+	/** Enabled: Check */
+	enabled: 0 | 1
+	/** From Date: Datetime */
+	from_date?: string
+	/** To Date: Datetime */
+	to_date?: string
+	/** Subject: Data */
+	subject?: string
+	/** Text: Code */
+	text_body?: string
+	/** HTML: Text Editor */
 	html_body?: string
 }
