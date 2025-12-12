@@ -5,7 +5,12 @@
 			<Badge v-if="badgeLabel" :label="badgeLabel" :theme="badgeTheme" />
 			<div class="ml-auto flex space-x-2">
 				<slot name="actions">
-					<Button :label="buttonLabel" icon-left="plus" @click="buttonAction" />
+					<Button
+						v-if="buttonLabel"
+						:label="buttonLabel"
+						icon-left="plus"
+						@click="buttonAction"
+					/>
 				</slot>
 			</div>
 		</header>

@@ -60,12 +60,12 @@ const addressBook = reactive({ ...defaultAddressBook })
 const createAddressBook = createResource({
 	url: 'mail.client.doctype.address_book.address_book.add_address_book',
 	makeParams: () => addressBook,
-	onSuccess: (data) => {
+	onSuccess: (data: string) => {
 		raiseToast(__('Address book created.'))
 		show.value = false
 		router.push({
 			name: 'AddressBook',
-			params: { addressBookName: `${user.data.name}|${data}` },
+			params: { addressBookName: data },
 		})
 	},
 	onError: (error) => raiseToast(error.message, 'error'),

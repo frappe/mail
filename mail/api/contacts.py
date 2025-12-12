@@ -10,5 +10,15 @@ def get_address_books() -> list[str]:
 	if not (address_books := fetch_address_books(frappe.session.user, 1, 50)):
 		return []
 
-	fields = ["name", "_name", "default"]
+	fields = ["id", "_name", "default"]
 	return [{f: d[f] for f in fields} for d in address_books]
+
+
+@frappe.whitelist()
+def get_contact_cards() -> list[str]:
+	"""Returns the contact cards for the current user."""
+
+	contact_cards = frappe.get_list("Contact Card", filters={"user": frappe.session.user})
+
+	fields = ["name", "full_name", "kind"]
+	return [{f: d[f] for f in fields} for d in contact_cards]

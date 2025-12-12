@@ -18,14 +18,14 @@
 			:columns="LIST_COLUMNS"
 			:rows="addressBooks.data"
 			:options="LIST_OPTIONS"
-			row-key="name"
+			row-key="id"
 		>
 			<ListHeader />
 			<ListRows>
 				<template v-if="searchedAddressBooks.length">
 					<ListRow
 						v-for="row in searchedAddressBooks"
-						:key="row.name"
+						:key="row.id"
 						v-slot="{ column, item }"
 						:row="row"
 					>
@@ -86,6 +86,6 @@ const LIST_OPTIONS = {
 	selectable: false,
 	showTooltip: false,
 	emptyState: { description: __('No address books found.') },
-	getRowRoute: (row) => ({ name: 'AddressBook', params: { addressBookName: row.name } }),
+	getRowRoute: (row) => ({ name: 'AddressBook', params: { addressBookName: row.id } }),
 }
 </script>
