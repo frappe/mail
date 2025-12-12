@@ -207,6 +207,7 @@ def bulk_delete(names: str | list[str]) -> None:
 	frappe.msgprint(_("Contact Cards deleted successfully."), alert=True)
 
 
+@frappe.whitelist()
 def add_contact_card(
 	user: str,
 	address_book_ids: list[str],
@@ -235,6 +236,7 @@ def add_contact_card(
 		frappe.throw(_(response["description"]), title=title)
 
 
+@frappe.whitelist()
 def fetch_contact_cards(
 	user: str,
 	filter: dict | None = None,
@@ -270,6 +272,7 @@ def fetch_contact_cards(
 	return contact_cards[:limit], total
 
 
+@frappe.whitelist()
 def get_contact_cards(user: str, ids: list[str]) -> list[dict]:
 	"""Returns a list of contact cards for the provided IDs in the same order as ids."""
 
@@ -298,6 +301,7 @@ def get_contact_cards(user: str, ids: list[str]) -> list[dict]:
 	return [contact_cards[id] for id in ids if id in contact_cards]
 
 
+@frappe.whitelist()
 def update_contact_card(
 	user: str,
 	id: str,
@@ -325,6 +329,7 @@ def update_contact_card(
 	_remove_contact_cards_from_cache(user, [id])
 
 
+@frappe.whitelist()
 def delete_contact_cards(user: str, ids: list[str]) -> None:
 	"""Deletes contact cards for the given user by its IDs."""
 
