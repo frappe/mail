@@ -41,6 +41,7 @@ from mail.utils.validation import (
 	ensure_principal_belong_to_tenant,
 	ensure_tenant_has_cluster,
 	is_subaddressed_email,
+	validate_wildcard_email,
 )
 
 SETTINGS_ENDPOINT = "/api/settings"
@@ -560,6 +561,7 @@ def add_principal(principal: "MailPrincipal") -> str:
 		_emails = [principal.name] + principal._emails
 		for email in _emails:
 			validate_email_address(email, True)
+			validate_wildcard_email(email)
 		is_subaddressed_email(principal.name, raise_exception=True)
 		ensure_emails_belong_to_tenant_domains(principal.tenant, _emails)
 		principals_to_invalidate.update([email.split("@")[1] for email in _emails])
@@ -568,12 +570,14 @@ def add_principal(principal: "MailPrincipal") -> str:
 		if _member_of := principal._member_of:
 			for group in _member_of:
 				validate_email_address(group, True)
+				validate_wildcard_email(group)
 			ensure_groups_belong_to_tenant(principal.tenant, _member_of)
 			principals_to_invalidate.update(_member_of)
 
 		if _lists := principal._lists:
 			for lst in _lists:
 				validate_email_address(lst, True)
+				validate_wildcard_email(lst)
 			ensure_lists_belong_to_tenant(principal.tenant, _lists)
 			principals_to_invalidate.update(_lists)
 
@@ -583,6 +587,7 @@ def add_principal(principal: "MailPrincipal") -> str:
 		if _members := principal._members:
 			for member in _members:
 				validate_email_address(member, True)
+				validate_wildcard_email(member)
 			ensure_members_belong_to_tenant(principal.tenant, _members)
 			principals_to_invalidate.update(_members)
 
@@ -713,6 +718,7 @@ def update_principal(principal: "MailPrincipal") -> None:
 		updates["emails"] = [principal._name] + principal._emails
 		for email in updates["emails"]:
 			validate_email_address(email, True)
+			validate_wildcard_email(email)
 		is_subaddressed_email(principal._name, raise_exception=True)
 		ensure_emails_belong_to_tenant_domains(tenant, updates["emails"])
 
@@ -721,11 +727,13 @@ def update_principal(principal: "MailPrincipal") -> None:
 		updates["member_of"] = principal._member_of
 		for group in updates["member_of"]:
 			validate_email_address(group, True)
+			validate_wildcard_email(group)
 		ensure_groups_belong_to_tenant(tenant, updates["member_of"])
 
 		updates["lists"] = principal._lists
 		for lst in updates["lists"]:
 			validate_email_address(lst, True)
+			validate_wildcard_email(lst)
 		ensure_lists_belong_to_tenant(tenant, updates["lists"])
 
 		updates["disabled_permissions"] = principal._disabled_permissions
@@ -734,6 +742,7 @@ def update_principal(principal: "MailPrincipal") -> None:
 		updates["members"] = principal._members
 		for member in updates["members"]:
 			validate_email_address(member, True)
+			validate_wildcard_email(member)
 		ensure_members_belong_to_tenant(tenant, updates["members"])
 
 	if principal.type == "List":

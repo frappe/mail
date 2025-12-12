@@ -26,10 +26,11 @@ from mail.utils import (
 	parse_filters,
 	user_context,
 )
+from mail.utils.cache import get_user_emails
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.email_parser import EmailParser
 from mail.utils.lock import acquire_lock, release_lock
-from mail.utils.user import get_sync_state, get_user_email_addresses, update_sync_state
+from mail.utils.user import get_sync_state, update_sync_state
 from mail.utils.validation import has_permission_for_user
 
 
@@ -152,7 +153,7 @@ class MailMessage(Document):
 		"""Returns the type of email (Sent or Received)."""
 
 		email_type = "Received"
-		user_addresses = get_user_email_addresses(self.user)
+		user_addresses = get_user_emails(self.user)
 
 		if self.from_email in user_addresses or (
 			hasattr(self, "sender_email") and self.sender_email in user_addresses
@@ -327,7 +328,7 @@ class MailMessage(Document):
 				recipients.append({"type": "To", "display_name": self.from_name, "email": self.from_email})
 
 			# Cc = (original To + original Cc) minus user addresses
-			user_addresses = get_user_email_addresses(self.user)
+			user_addresses = get_user_emails(self.user)
 			for rcpt in self.recipients:
 				if rcpt.type in ["To", "Cc"] and rcpt.email not in user_addresses:
 					recipients.append({"type": "Cc", "display_name": rcpt.display_name, "email": rcpt.email})

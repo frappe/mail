@@ -23,75 +23,120 @@ def validate_jmap_settings(doc: Document, method: str | None = None) -> None:
 	if not doc.enabled:
 		return
 
-	if doc.jmap_server_url or doc.jmap_username or doc.jmap_app_password:
-		if not doc.jmap_server_url:
-			frappe.throw(_("JMAP Server URL is required if JMAP settings are provided."))
-
-		if not doc.jmap_username:
-			frappe.throw(_("JMAP Username is required if JMAP settings are provided."))
-
-		if not doc.jmap_app_password:
-			frappe.throw(_("JMAP App Password is required if JMAP settings are provided."))
-
-	if doc.jmap_default_outgoing_email:
-		client = JMAPClient(doc.jmap_server_url, doc.jmap_username, doc.get_password("jmap_app_password"))
-		identities = client.identity_get()
-		if not any(identity.get("email") == doc.jmap_default_outgoing_email for identity in identities):
-			frappe.throw(
-				_("Default Outgoing Email {0} is not found in the identities of the JMAP account.").format(
-					frappe.bold(doc.jmap_default_outgoing_email)
-				)
-			)
+	_require_fields_if_any_present(doc, ["jmap_server_url", "jmap_username", "jmap_app_password"])
+	_validate_default_outgoing_email(doc)
 
 	if not is_tenant_bound_user(doc.name):
 		return
 
-	if doc.jmap_username:
-		if doc.jmap_username != doc.name:
-			frappe.throw(_("JMAP Username must be the same as the User name."))
-
-		tenant = get_tenant_for_user(doc.name)
-		if not frappe.db.exists(
-			"Mail Principal Binding",
-			{"tenant": tenant, "principal_name": doc.jmap_username},
-			"principal_name",
-		):
-			frappe.throw(
-				_("Account {0} is not bound to Tenant {1}").format(
-					frappe.bold(doc.jmap_username), frappe.bold(tenant)
-				)
-			)
+	_validate_tenant_bound_user(doc)
 
 
 def update_account_password(doc: Document, method: str | None = None) -> None:
-	"""Update the password in the Mail Principal when the User's password is changed."""
+	"""Update the password in the Principal when the User's password is changed, but ONLY if the hash is different from the backend stored hash."""
 
-	if not doc.enabled or not is_tenant_bound_user(doc.name) or not doc.jmap_username:
+	if not (doc.enabled and is_tenant_bound_user(doc.name) and doc.jmap_username):
 		return
 
 	tenant = get_tenant_for_user(doc.name)
 	ensure_tenant_has_cluster(tenant)
+
 	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
 	principal = _get_principal(backend, doc.jmap_username, ignore_not_found=False)
 
-	actions = []
-	for secret in principal.get("secrets", []):
-		if not secret.startswith("$app$"):
-			actions.append({"action": "removeItem", "field": "secrets", "value": secret})
+	backend_secrets = principal.get("secrets", [])
+	backend_hash = next((s for s in backend_secrets if not s.startswith("$app$")), None)
 
-	if hashed_password := get_user_hashed_password(doc.name):
-		actions.append(
-			{"action": "addItem", "field": "secrets", "value": reformat_pbkdf2_hash(hashed_password)}
-		)
+	user_hash = get_user_hashed_password(doc.name)
+	reformatted_user_hash = reformat_pbkdf2_hash(user_hash) if user_hash else None
 
-	if actions:
-		response = backend.request(
-			"PATCH", f"{PRINCIPAL_ENDPOINT}/{doc.jmap_username}", data=json.dumps(actions)
-		)
+	if not reformatted_user_hash or reformatted_user_hash == backend_hash:
+		return
 
-		if response.json().get("error"):
-			frappe.throw(
-				_("Failed to update password for Mail Principal {0}. Response: {1}").format(
-					frappe.bold(doc.jmap_username), frappe.bold(response.text)
-				)
+	# Remove all non-app secrets
+	actions = [
+		{"action": "removeItem", "field": "secrets", "value": secret}
+		for secret in backend_secrets
+		if not secret.startswith("$app$")
+	]
+
+	# Add new password hash
+	actions.append(
+		{
+			"action": "addItem",
+			"field": "secrets",
+			"value": reformatted_user_hash,
+		}
+	)
+
+	response = backend.request(
+		"PATCH",
+		f"{PRINCIPAL_ENDPOINT}/{doc.jmap_username}",
+		data=json.dumps(actions),
+	)
+
+	if response.json().get("error"):
+		frappe.throw(
+			_("Failed to update password for Mail Principal {0}. Response: {1}").format(
+				frappe.bold(doc.jmap_username), frappe.bold(response.text)
 			)
+		)
+
+
+def _require_fields_if_any_present(doc: Document, fields: list[str]) -> None:
+	"""If any field is provided, ensure all fields are provided."""
+
+	if any(getattr(doc, f) for f in fields):
+		for f in fields:
+			if not getattr(doc, f):
+				frappe.throw(
+					_("{0} is required if JMAP settings are provided.").format(f.replace("_", " ").title())
+				)
+
+
+def _validate_default_outgoing_email(doc: Document) -> None:
+	"""Ensure default outgoing email exists in JMAP identities."""
+
+	if not doc.jmap_default_outgoing_email:
+		return
+
+	client = JMAPClient(
+		doc.jmap_server_url,
+		doc.jmap_username,
+		doc.get_password("jmap_app_password"),
+	)
+
+	identities = client.identity_get()
+	target = doc.jmap_default_outgoing_email.lower()
+
+	if not any(identity.get("email", "").lower() == target for identity in identities):
+		frappe.throw(
+			_("Default Outgoing Email {0} is not found in the identities of the JMAP account.").format(
+				frappe.bold(doc.jmap_default_outgoing_email)
+			)
+		)
+
+
+def _validate_tenant_bound_user(doc: Document) -> None:
+	"""Validates JMAP settings for a tenant-bound user."""
+
+	if not doc.jmap_username:
+		return
+
+	if doc.jmap_username != doc.name:
+		frappe.throw(_("JMAP Username must be the same as the User name."))
+
+	tenant = get_tenant_for_user(doc.name)
+
+	exists = frappe.db.exists(
+		"Mail Principal Binding",
+		{"tenant": tenant, "principal_name": doc.jmap_username},
+		"principal_name",
+	)
+
+	if not exists:
+		frappe.throw(
+			_("Account {0} is not bound to Tenant {1}").format(
+				frappe.bold(doc.jmap_username), frappe.bold(tenant)
+			)
+		)
