@@ -98,7 +98,7 @@ class ContactCard(Document):
 
 	def load_from_db(self) -> "ContactCard":
 		user, id = self.name.split("|")
-		if contact_cards := get_contact_cards(user, id):
+		if contact_cards := get_contact_cards(user, [id]):
 			return super(Document, self).__init__(contact_cards[0])
 
 		frappe.throw(
