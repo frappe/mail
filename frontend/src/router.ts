@@ -72,7 +72,7 @@ const routes = [
 		component: () => import('@/pages/AddressBooksView.vue'),
 	},
 	{
-		path: '/address-book/:addressBookName',
+		path: '/address-books/:addressBookName',
 		name: 'AddressBook',
 		component: () => import('@/pages/AddressBookView.vue'),
 		props: true,
@@ -81,6 +81,12 @@ const routes = [
 		path: '/contacts/',
 		name: 'Contacts',
 		component: () => import('@/pages/ContactsView.vue'),
+	},
+	{
+		path: '/contacts/:contactName',
+		name: 'Contact',
+		component: () => import('@/pages/ContactView.vue'),
+		props: true,
 	},
 	{
 		path: '/mail-data-exchanges',

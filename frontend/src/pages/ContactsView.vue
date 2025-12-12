@@ -18,7 +18,7 @@
 			:columns="LIST_COLUMNS"
 			:rows="contacts.data"
 			:options="LIST_OPTIONS"
-			row-key="name"
+			row-key="id"
 		>
 			<ListHeader />
 			<ListRows v-if="searchedContacts.length" />
@@ -36,6 +36,7 @@
 		</ListView>
 	</DashboardLayout>
 
+	<AddContactModal v-model="showAddContact" />
 	<Dialog v-model="showDeleteContacts" :options="DELETE_CONTACTS_OPTIONS" />
 </template>
 
@@ -56,6 +57,7 @@ import {
 
 import { raiseToast } from '@/utils'
 import DashboardLayout from '@/components/DashboardLayout.vue'
+import AddContactModal from '@/components/Modals/AddContactModal.vue'
 
 const user = inject('$user')
 
@@ -72,8 +74,8 @@ const contacts = createResource({
 })
 
 const deleteContacts = createResource({
-	url: 'mail.client.doctype.contact_card.contact_card.bulk_delete',
-	makeParams: () => ({ names: Array.from(listView.value?.selections) }),
+	url: 'mail.client.doctype.contact_card.contact_card.delete_contact_cards',
+	makeParams: () => ({ user: user.data.name, ids: Array.from(listView.value?.selections) }),
 	onSuccess: () => {
 		contacts.reload()
 		showDeleteContacts.value = false
@@ -98,7 +100,7 @@ const LIST_COLUMNS = [
 const LIST_OPTIONS = {
 	showTooltip: false,
 	emptyState: { description: __('No contacts found.') },
-	// getRowRoute: (row) => ({ name: 'AddressBook', params: { addressBookName: row.id } }),
+	getRowRoute: (row) => ({ name: 'Contact', params: { contactName: row.id } }),
 }
 
 const DELETE_CONTACTS_OPTIONS = {
