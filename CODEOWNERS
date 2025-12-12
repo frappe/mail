@@ -1,0 +1,29 @@
+# CI, config, GitHub workflows
+.github/                @s-aga-r @krantheman
+.github/workflows/      @s-aga-r
+
+# Docker and deployment
+/docker/                @s-aga-r
+
+# Docs
+/docs/                  @s-aga-r @krantheman
+
+# Backend / Python
+/mail/                  @s-aga-r
+*.py                    @s-aga-r
+
+# Frontend (Vue.js)
+# Vue components + JS/TS used in the UI
+/frappe-ui/             @krantheman
+/frontend/              @krantheman
+*.vue                   @krantheman
+*.js                    @krantheman
+*.ts                    @krantheman
+
+# Explicit top-level files
+README.md               @s-aga-r @krantheman
+pyproject.toml          @s-aga-r
+package.json            @krantheman
+
+# Default owners for everything else
+*                       @s-aga-r @krantheman
