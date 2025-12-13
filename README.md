@@ -168,7 +168,7 @@ After saving:
 
 ![Mail Server](docs/screenshots/server-details.png)
 
-After installation, you can access the Stalwart Admin Panel by using the credentials set in the Mail Server document.
+After installation, you can access the Stalwart Admin Panel by using the credentials set in the Mail Cluster document.
 
 ![Stalwart Login Page](docs/screenshots/stalwart-login.png)
 
