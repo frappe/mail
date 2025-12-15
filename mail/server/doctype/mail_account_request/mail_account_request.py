@@ -265,6 +265,7 @@ class MailAccountRequest(Document):
 		if frappe.utils.get_url().startswith("https"):
 			ps = frappe.new_doc("Push Subscription")
 			ps.user = user
+			frappe.flags.ignore_permissions = True
 			ps.insert(ignore_permissions=True)
 
 

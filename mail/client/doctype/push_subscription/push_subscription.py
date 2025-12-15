@@ -100,7 +100,8 @@ def add_push_subscription(
 ) -> str:
 	"""Adds a push subscription subscription for the given user and returns the subscription ID."""
 
-	has_permission_for_user(user)
+	if not frappe.flags.ignore_permissions:
+		has_permission_for_user(user)
 
 	device_client_id = device_client_id or generate_uuid_style_hash(
 		f"frappe-{frappe.local.site.replace('.', '-')}-{user}"
@@ -109,7 +110,7 @@ def add_push_subscription(
 	types = types or None
 
 	creation_id = str(uuid7())
-	client = get_jmap_client(user)
+	client = get_jmap_client(user, ignore_permissions=bool(frappe.flags.ignore_permissions))
 	response = client.push_subscription_create(creation_id, device_client_id, url, types)
 
 	title = _("Push Subscription Creation Error")
