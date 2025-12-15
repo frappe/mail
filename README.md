@@ -132,6 +132,8 @@ The Stalwart Mail Server acts as the backbone of Frappe Mail’s infrastructure.
 
 ##### Step 2: Deploying the Stalwart Mail Server
 
+This step walks you through creating a Mail Cluster and deploying one or more Mail Servers.
+
 **2.1 Create a Mail Cluster**
 
 - Go to **Mail Cluster → New**.
@@ -154,21 +156,73 @@ The Stalwart Mail Server acts as the backbone of Frappe Mail’s infrastructure.
 - Select the previously created Mail Cluster.
 - **Hostname:** FQDN of this specific server (or same as cluster for single‑server deployments).
 - **Node ID:** Sequential numbers (1, 2, 3...) for each server in the cluster.
-- For production setups, configure an **ACME Provider** for automatic TLS.
-
-After saving:
-
-1. Open the **SSH** tab.
-2. Add the auto‑generated **public SSH key** to your server's `~/.ssh/authorized_keys`.
-3. Click **Actions → Verify SSH Connection**.
-4. When verified, extra actions become available:
-   - **Install Ansible** (track progress via `Server Job` document)
-   - **Install Docker** (track progress via `Server Ansible Play` document)
-   - **Install Stalwart** (track progress via `Server Deployment` document)
+- Save the Mail Server.
 
 ![Mail Server](docs/screenshots/server-details.png)
 
-After installation, you can access the Stalwart Admin Panel by using the credentials set in the Mail Cluster document.
+**2.3 Verify SSH Access**
+
+After saving the Mail Server:
+
+1. Open the **SSH** tab in the Mail Server document.
+2. Copy the auto-generated **public SSH key**.
+3. Add the key to your server’s `~/.ssh/authorized_keys` file.
+4. Click **Actions → Verify SSH Connection**.
+
+When verified, extra actions become available:
+
+- **Install Ansible** (track progress via `Server Job` document)
+- **Install Docker** (track progress via `Server Ansible Play` document)
+- **Install Stalwart** (track progress via `Server Deployment` document)
+
+![Mail Server SSH Tab](docs/screenshots/server-ssh.png)
+
+**2.4 Configure HTTPS / TLS (Production)**
+
+For production environments, **HTTPS/TLS** is strongly recommended.
+
+**Option A: Use ACME (Recommended)**
+
+- Configure an **ACME Provider** in the Mail Server.
+- Ensure your domain’s DNS records point to the server before proceeding.
+- Example: mail.example.com → A record → Server IP.
+
+![Mail Server ACME Provider](docs/screenshots/server-tls-acme.png)
+
+**Option B: Use Existing TLS Certificates**
+
+1. Copy your TLS certificate and private key to the server.
+2. Add a new entry in the **TLS Certificates** table with:
+
+   - Certificate Path
+   - Private Key Path
+   - Subject Alternative Names
+
+3. Ensure the Stalwart process has read permissions for both files.
+
+![Mail Server TLS Certificate](docs/screenshots/server-tls-cert.png)
+
+**2.5 Generate and Deploy Server Configuration**
+
+Whenever you make changes to a **Mail Cluster** or **Mail Server**, you must regenerate and deploy the server configuration.
+
+1. In the Mail Server document, click **Actions → Generate Config**.
+2. Deploy the updated configuration using one of the following options:
+
+   - **Actions → Install Stalwart**
+
+     - Installs Stalwart and always uses the latest generated configuration.
+       ![Actions > Install Stalwart](docs/screenshots/server-install-stalwart.png)
+
+   - **Server Config → Actions → Deploy**
+     - Deploys Stalwart using a specific configuration version.
+       ![Actions > Deploy](docs/screenshots/server-config-deploy.png)
+
+**2.6 Access the Stalwart Admin Panel**
+After installation completes:
+
+- Open the Stalwart Admin Panel in your browser.
+- Log in using the admin credentials defined in the **Mail Cluster** document.
 
 ![Stalwart Login Page](docs/screenshots/stalwart-login.png)
 
