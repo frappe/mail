@@ -24,7 +24,7 @@ from frappe.types.filter import FilterTuple
 from frappe.utils import get_bench_path
 from frappe.utils.caching import redis_cache
 from markdown_it import MarkdownIt
-from passlib.hash import pbkdf2_sha512, sha512_crypt
+from passlib.hash import sha512_crypt
 
 INVISIBLE_CHARS = (
 	r"[\u0000-\u001F\u007F-\u009F"  # ASCII control chars
