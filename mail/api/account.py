@@ -167,7 +167,7 @@ def get_user_info() -> dict | None:
 def get_backup_email(email: str) -> str:
 	"""Return backup email for a user or the user's email if backup doesn't exist"""
 
-	if backup_email := frappe.db.get_value("Mail Account", email, "backup_email"):
+	if backup_email := frappe.db.get_value("User", email, "backup_email"):
 		return backup_email
 
 	if frappe.db.exists("User", email):
