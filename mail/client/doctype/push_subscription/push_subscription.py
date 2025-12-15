@@ -27,7 +27,13 @@ class PushSubscription(Document):
 		return types
 
 	def db_insert(self, *args, **kwargs) -> None:
-		self.id = add_push_subscription(self.user, self.device_client_id, self.url, self._types)
+		self.id = add_push_subscription(
+			self.user,
+			self.device_client_id,
+			self.url,
+			self._types,
+			ignore_permissions=bool(self.flags.ignore_permissions),
+		)
 		self.name = f"{self.user}|{self.id}"
 
 	def load_from_db(self) -> "PushSubscription":
@@ -96,11 +102,15 @@ def _get_total_cache_key(user: str) -> str:
 
 @frappe.whitelist()
 def add_push_subscription(
-	user: str, device_client_id: str | None = None, url: str | None = None, types: list[str] | None = None
+	user: str,
+	device_client_id: str | None = None,
+	url: str | None = None,
+	types: list[str] | None = None,
+	ignore_permissions: bool = False,
 ) -> str:
 	"""Adds a push subscription subscription for the given user and returns the subscription ID."""
 
-	if not frappe.flags.ignore_permissions:
+	if not ignore_permissions:
 		has_permission_for_user(user)
 
 	device_client_id = device_client_id or generate_uuid_style_hash(
@@ -110,7 +120,7 @@ def add_push_subscription(
 	types = types or None
 
 	creation_id = str(uuid7())
-	client = get_jmap_client(user, ignore_permissions=bool(frappe.flags.ignore_permissions))
+	client = get_jmap_client(user, ignore_permissions=ignore_permissions)
 	response = client.push_subscription_create(creation_id, device_client_id, url, types)
 
 	title = _("Push Subscription Creation Error")
