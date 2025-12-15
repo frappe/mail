@@ -6,7 +6,7 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import now
+from frappe.utils import today
 
 from mail.backend import get_mail_backend_api
 from mail.utils import extract_filter_values, rename_keys
@@ -152,15 +152,10 @@ def remove_blocked_ip(name: str | list) -> None:
 def format_blocked_ip(blocked_ip: dict, cluster_name: str) -> dict:
 	"""Formats a blocked ip dictionary to match expected output."""
 
-	creation = now()
-	blocked_ip = rename_keys(blocked_ip, {"id": "ip_address"})
-	blocked_ip.update(
-		{
-			"creation": creation,
-			"modified": creation,
-			"cluster": cluster_name,
-			"name": f"{cluster_name}|{blocked_ip['ip_address']}",
-		}
-	)
-
-	return blocked_ip
+	return {
+		"cluster": cluster_name,
+		"ip_address": blocked_ip["_id"],
+		"name": f"{cluster_name}|{blocked_ip['_id']}",
+		"creation": today(),
+		"modified": today(),
+	}

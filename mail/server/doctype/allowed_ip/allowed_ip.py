@@ -6,7 +6,7 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import now
+from frappe.utils import today
 
 from mail.backend import get_mail_backend_api
 from mail.utils import extract_filter_values, rename_keys
@@ -152,15 +152,10 @@ def remove_allowed_ip(name: str | list) -> None:
 def format_allowed_ip(allowed_ip: dict, cluster_name: str) -> dict:
 	"""Formats a allowed ip dictionary to match expected output."""
 
-	creation = now()
-	allowed_ip = rename_keys(allowed_ip, {"id": "ip_address"})
-	allowed_ip.update(
-		{
-			"creation": creation,
-			"modified": creation,
-			"cluster": cluster_name,
-			"name": f"{cluster_name}|{allowed_ip['ip_address']}",
-		}
-	)
-
-	return allowed_ip
+	return {
+		"cluster": cluster_name,
+		"ip_address": allowed_ip["_id"],
+		"name": f"{cluster_name}|{allowed_ip['_id']}",
+		"creation": today(),
+		"modified": today(),
+	}
