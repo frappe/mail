@@ -124,7 +124,7 @@ class MailPrincipal(Document):
 		)
 
 	def db_insert(self, *args, **kwargs) -> None:
-		self.name = add_principal(self)
+		self.name = add_principal(self, ignore_permissions=bool(self.flags.ignore_permissions))
 
 	def load_from_db(self) -> "MailPrincipal":
 		principal = get_principal(self.name)
@@ -521,7 +521,7 @@ def sync_jmap_identities(pname: str) -> None:
 	invalidate_jmap_cache(pname)
 
 
-def add_principal(principal: "MailPrincipal") -> str:
+def add_principal(principal: "MailPrincipal", ignore_permissions: bool = False) -> str:
 	"""Adds a new principal."""
 
 	if principal.type in ["API Key", "Group", "OAuth Client", "Role"]:
@@ -529,7 +529,9 @@ def add_principal(principal: "MailPrincipal") -> str:
 	if not principal.tenant:
 		frappe.throw(_("Tenant must be specified to add a principal."))
 
-	ensure_access_to_tenant(tenant=principal.tenant)
+	if not ignore_permissions:
+		ensure_access_to_tenant(tenant=principal.tenant)
+
 	ensure_tenant_has_cluster(principal.tenant)
 	validate_max_limits(principal.tenant, principal.type)
 
