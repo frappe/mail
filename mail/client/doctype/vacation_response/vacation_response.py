@@ -32,6 +32,9 @@ class VacationResponse(Document):
 		return super(Document, self).__init__(vc)
 
 	def on_update(self) -> None:
+		if not self.user or self.user in ("Guest", "Administrator"):
+			return
+
 		update_vacation_response(
 			self.user,
 			self.enabled,
