@@ -1,9 +1,9 @@
 <template>
 	<DashboardCard :title @action="emit('add')">
 		<ListView
-			:columns="[{ label: columnLabel, key: 'value', showTooltip: false }]"
+			:columns="[{ label: columnLabel, key: row, showTooltip: false }]"
 			:rows="rows"
-			row-key="value"
+			row-key="idx"
 			:options="{ emptyState: { title: '', description: __('No rows.') } }"
 			class="flex-1 overflow-auto p-4"
 		>
@@ -41,7 +41,12 @@ import {
 
 import DashboardCard from '@/components/DashboardCard.vue'
 
-defineProps<{ rows: { value: string }[]; title: string; columnLabel: string }>()
+const { row = 'value' } = defineProps<{
+	rows: { value: string }[]
+	title: string
+	columnLabel: string
+	row: string
+}>()
 
 const emit = defineEmits(['add', 'remove'])
 </script>

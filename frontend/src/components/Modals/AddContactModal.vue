@@ -76,6 +76,10 @@ const addressBooks = createResource({
 	auto: true,
 	makeParams: () => ({ user: user.data.name }),
 	transform: (data) => data.map((ab) => ({ label: ab._name, value: ab.id })),
+	onSuccess: (data) => {
+		const defaultAB = data.find((ab) => ab.default)?.id
+		if (defaultAB && !contact.address_book_ids.length) contact.address_book_ids.push(defaultAB)
+	},
 	cache: ['addressBooks', user.data.name],
 })
 

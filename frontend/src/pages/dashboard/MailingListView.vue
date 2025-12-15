@@ -29,7 +29,7 @@
 					/>
 					<InformationField :label="__('Organization')" :value="user.data.tenant_name" />
 				</DashboardCard>
-				<EmailListCard
+				<ListCard
 					:rows="list.doc.emails"
 					:title="__('Email Addresses')"
 					:column-label="__('Email Address')"
@@ -38,7 +38,7 @@
 					@remove="
 						(selections) =>
 							(list.doc.emails = list.doc.emails.filter(
-								(e) => !selections.has(e.value),
+								(e) => !selections.has(e.idx),
 							))
 					"
 				/>
@@ -170,8 +170,8 @@ import {
 import { raiseToast } from '@/utils'
 import DashboardCard from '@/components/DashboardCard.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
-import EmailListCard from '@/components/EmailListCard.vue'
 import InformationField from '@/components/InformationField.vue'
+import ListCard from '@/components/ListCard.vue'
 import AddEmailModal from '@/components/Modals/AddEmailModal.vue'
 import AddMailingListExternalMemberModal from '@/components/Modals/AddMailingListExternalMemberModal.vue'
 import AddMailingListInternalMembersModal from '@/components/Modals/AddMailingListInternalMembersModal.vue'
