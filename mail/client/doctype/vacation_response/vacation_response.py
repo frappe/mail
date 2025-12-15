@@ -31,7 +31,7 @@ class VacationResponse(Document):
 		vc = get_vacation_response(self.user)
 		return super(Document, self).__init__(vc)
 
-	def db_update(self) -> None:
+	def on_update(self) -> None:
 		update_vacation_response(
 			self.user,
 			self.enabled,
