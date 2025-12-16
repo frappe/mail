@@ -29,7 +29,7 @@ class BlockedIP(Document):
 
 	def load_from_db(self) -> "BlockedIP":
 		cluster, ip_address = self.name.split("|")
-		blocked_ip = BlockedIP._read(cluster, ip_address)
+		blocked_ip = BlockedIP._get(cluster, ip_address)
 		return super(Document, self).__init__(blocked_ip)
 
 	def db_update(self) -> None:
@@ -48,7 +48,7 @@ class BlockedIP(Document):
 		cluster, ip_address = extract_filter_values(filters, [{"cluster": "="}, {"ip_address": "like"}])
 
 		if cluster:
-			blocked_ips = BlockedIP._read_all(cluster, limit=page_length, text=ip_address)
+			blocked_ips = BlockedIP._get_all(cluster, limit=page_length, text=ip_address)
 			if not blocked_ips:
 				frappe.msgprint(_("No blocked IPs found."), alert=True)
 
@@ -90,7 +90,7 @@ class BlockedIP(Document):
 		)
 
 	@staticmethod
-	def _read(cluster: str, ip_address: str) -> None:
+	def _get(cluster: str, ip_address: str) -> None:
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		response = backend_api.request(
 			method="GET",
@@ -102,7 +102,7 @@ class BlockedIP(Document):
 		return BlockedIP._format(blocked_ip, cluster)
 
 	@staticmethod
-	def _read_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
+	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		response = backend_api.request(
 			method="GET",
@@ -144,8 +144,8 @@ class BlockedIP(Document):
 		}
 
 
-def get_total_cache_key(cluster_name: str, text: str | None = None) -> str:
+def get_total_cache_key(cluster: str, text: str | None = None) -> str:
 	"""Returns a cache key for total blocked IP count."""
 
 	text = text or ""
-	return f"{cluster_name}:blocked-ip:{text}:total"
+	return f"{cluster}:blocked-ip:{text}:total"

@@ -29,7 +29,7 @@ class AllowedIP(Document):
 
 	def load_from_db(self) -> "AllowedIP":
 		cluster, ip_address = self.name.split("|")
-		allowed_ip = AllowedIP._read(cluster, ip_address)
+		allowed_ip = AllowedIP._get(cluster, ip_address)
 		return super(Document, self).__init__(allowed_ip)
 
 	def db_update(self) -> None:
@@ -48,7 +48,7 @@ class AllowedIP(Document):
 		cluster, ip_address = extract_filter_values(filters, [{"cluster": "="}, {"ip_address": "like"}])
 
 		if cluster:
-			allowed_ips = AllowedIP._read_all(cluster, limit=page_length, text=ip_address)
+			allowed_ips = AllowedIP._get_all(cluster, limit=page_length, text=ip_address)
 			if not allowed_ips:
 				frappe.msgprint(_("No allowed IPs found."), alert=True)
 
@@ -90,7 +90,7 @@ class AllowedIP(Document):
 		)
 
 	@staticmethod
-	def _read(cluster: str, ip_address: str) -> None:
+	def _get(cluster: str, ip_address: str) -> None:
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		response = backend_api.request(
 			method="GET",
@@ -102,7 +102,7 @@ class AllowedIP(Document):
 		return AllowedIP._format(allowed_ip, cluster)
 
 	@staticmethod
-	def _read_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
+	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		response = backend_api.request(
 			method="GET",
@@ -144,8 +144,8 @@ class AllowedIP(Document):
 		}
 
 
-def get_total_cache_key(cluster_name: str, text: str | None = None) -> str:
+def get_total_cache_key(cluster: str, text: str | None = None) -> str:
 	"""Returns a cache key for total allowed IP count."""
 
 	text = text or ""
-	return f"{cluster_name}:allowed-ip:{text}:total"
+	return f"{cluster}:allowed-ip:{text}:total"
