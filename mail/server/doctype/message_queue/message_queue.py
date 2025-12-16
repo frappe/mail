@@ -13,20 +13,18 @@ from mail.utils import extract_filter_values, rename_keys
 
 class MessageQueue(Document):
 	def db_insert(self, *args, **kwargs) -> None:
-		raise NotImplementedError
+		raise self._create()
 
 	def load_from_db(self) -> "MessageQueue":
-		cluster, id = self.name.split("|")
-		message = MessageQueue._get(cluster, id)
+		message = self._get()
 		return super(Document, self).__init__(message)
 
 	def db_update(self) -> None:
-		raise NotImplementedError
+		cluster, id = self.name.split("|")
+		MessageQueue._update(cluster, id)
 
 	def delete(self) -> None:
-		cluster, id = self.name.split("|")
-		MessageQueue._delete(cluster, id)
-
+		self._delete()
 		if not frappe.flags.in_bulk_delete:
 			frappe.msgprint(_("Message deleted successfully."), alert=True)
 
@@ -71,19 +69,19 @@ class MessageQueue(Document):
 
 		frappe.only_for("System Manager")
 
-		cluster, id = self.name.split("|")
 		recipients = list(set(recipients))
 		for recipient in recipients:
-			MessageQueue._delete(cluster, id, recipient)
+			self._delete(recipient)
 
 		frappe.msgprint(_("Delivery cancelled successfully."), alert=True)
 
-	@staticmethod
-	def _create() -> None:
+	def _create(self) -> None:
 		raise NotImplementedError
 
-	@staticmethod
-	def _get(cluster: str, id: str) -> None:
+	def _get(self) -> None:
+		"""Returns the message details from the server."""
+
+		cluster, id = self.name.split("|")
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		response = backend_api.request(method="GET", endpoint=f"/api/queue/messages/{id}")
 
@@ -95,12 +93,16 @@ class MessageQueue(Document):
 
 	@staticmethod
 	def _get_blob(cluster: str, blob_id: str) -> str:
+		"""Returns the raw message blob from the server."""
+
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		response = backend_api.request(method="GET", endpoint=f"/api/store/blobs/{blob_id}")
 		return response.text.strip()
 
 	@staticmethod
 	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
+		"""Returns all messages from the server."""
+
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		response = backend_api.request(
 			method="GET",
@@ -116,11 +118,15 @@ class MessageQueue(Document):
 
 	@staticmethod
 	def _update(cluster: str, id: str) -> None:
+		"""Retries delivery of a message to all recipients."""
+
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		backend_api.request(method="PATCH", endpoint=f"/api/queue/messages/{id}")
 
-	@staticmethod
-	def _delete(cluster: str, id: str, recipient: str | None = None) -> None:
+	def _delete(self, recipient: str | None = None) -> None:
+		"""Deletes a message or cancels delivery to a specific recipient."""
+
+		cluster, id = self.name.split("|")
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		backend_api.request(
 			method="DELETE", endpoint=f"/api/queue/messages/{id}", params={"filter": recipient}
@@ -128,6 +134,8 @@ class MessageQueue(Document):
 
 	@staticmethod
 	def _pause(cluster: str) -> None:
+		"""Pauses queue processing on the server."""
+
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		backend_api.request(
 			method="PATCH",
@@ -136,6 +144,8 @@ class MessageQueue(Document):
 
 	@staticmethod
 	def _resume(cluster: str) -> None:
+		"""Resumes queue processing on the server."""
+
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		backend_api.request(
 			method="PATCH",
@@ -144,6 +154,8 @@ class MessageQueue(Document):
 
 	@staticmethod
 	def _format(message: dict, cluster: str, extract_recipients: bool = False) -> dict:
+		"""Formats the message details."""
+
 		if extract_recipients:
 			recipients = []
 			for recipient in message["recipients"]:

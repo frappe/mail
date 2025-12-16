@@ -19,20 +19,17 @@ class DMARCReport(Document):
 		self.name = f"{self.cluster}|{self.id}"
 
 	def db_insert(self, *args, **kwargs) -> None:
-		raise NotImplementedError
+		self._create()
 
 	def load_from_db(self) -> "DMARCReport":
-		cluster, id = self.name.split("|")
-		report = DMARCReport._get(cluster, id)
+		report = self._get()
 		return super(Document, self).__init__(report)
 
 	def db_update(self) -> None:
-		raise NotImplementedError
+		self._update()
 
 	def delete(self) -> None:
-		cluster, id = self.name.split("|")
-		DMARCReport._delete(cluster, id)
-
+		self._delete(self)
 		if not frappe.flags.in_bulk_delete:
 			frappe.msgprint(_("DMARC report removed successfully."), alert=True)
 
@@ -68,12 +65,13 @@ class DMARCReport(Document):
 	def get_stats(**kwargs) -> dict:
 		return {}
 
-	@staticmethod
-	def _create() -> None:
+	def _create(self) -> None:
 		raise NotImplementedError
 
-	@staticmethod
-	def _get(cluster: str, id: str) -> None:
+	def _get(self) -> None:
+		"""Returns DMARC report details from cache or backend."""
+
+		cluster, id = self.name.split("|")
 		if report := frappe.cache.hget("dmarc_reports", f"{cluster}|{id}"):
 			return report
 
@@ -89,6 +87,8 @@ class DMARCReport(Document):
 
 	@staticmethod
 	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
+		"""Returns list of DMARC reports from backend."""
+
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		response = backend_api.request(
 			method="GET",
@@ -101,17 +101,20 @@ class DMARCReport(Document):
 
 		return [DMARCReport._format(f"{cluster}|{id}") for id in data["items"]]
 
-	@staticmethod
-	def _update() -> None:
+	def _update(self) -> None:
 		raise NotImplementedError
 
-	@staticmethod
-	def _delete(cluster: str, id: str | list[str]) -> None:
+	def _delete(self) -> None:
+		"""Deletes DMARC report from backend and cache."""
+
+		cluster, id = self.name.split("|")
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		backend_api.request(method="DELETE", endpoint=f"/api/reports/dmarc/{id}")
 
 	@staticmethod
 	def _format(report: dict, cluster: str) -> dict:
+		"""Formats DMARC report data."""
+
 		report_begin = get_datetime_str(
 			convert_utc_to_system_timezone(
 				datetime.fromtimestamp(

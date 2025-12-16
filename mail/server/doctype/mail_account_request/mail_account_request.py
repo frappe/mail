@@ -61,6 +61,9 @@ class MailAccountRequest(Document):
 	def validate_email(self) -> None:
 		"""Validates email if needed."""
 
+		if not self.email:
+			frappe.throw(_("Backup Email is required."))
+
 		self.email = self.email.strip().lower()
 		validate_email_address(self.email, True)
 

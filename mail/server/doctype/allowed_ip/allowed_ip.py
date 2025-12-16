@@ -25,20 +25,17 @@ class AllowedIP(Document):
 		self.name = f"{self.cluster}|{self.ip_address}"
 
 	def db_insert(self, *args, **kwargs) -> None:
-		AllowedIP._create(self.cluster, self.ip_address)
+		self._create()
 
 	def load_from_db(self) -> "AllowedIP":
-		cluster, ip_address = self.name.split("|")
-		allowed_ip = AllowedIP._get(cluster, ip_address)
+		allowed_ip = self._get()
 		return super(Document, self).__init__(allowed_ip)
 
 	def db_update(self) -> None:
-		raise NotImplementedError
+		self._update()
 
 	def delete(self) -> None:
-		cluster, ip_address = self.name.split("|")
-		AllowedIP._delete(cluster, ip_address)
-
+		self._delete()
 		if not frappe.flags.in_bulk_delete:
 			frappe.msgprint(_("Allowed IP removed successfully."), alert=True)
 
@@ -68,9 +65,10 @@ class AllowedIP(Document):
 	def get_stats(**kwargs) -> dict:
 		return {}
 
-	@staticmethod
-	def _create(cluster: str, ip_address: str | list[str]) -> None:
-		ip_addresses = [ip_address] if isinstance(ip_address, str) else ip_address
+	def _create(self) -> None:
+		"""Creates the allowed IP in the backend."""
+
+		ip_addresses = [self.ip_address]
 		request_data = []
 		for ip in ip_addresses:
 			request_data.append(
@@ -82,15 +80,17 @@ class AllowedIP(Document):
 				}
 			)
 
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api("Mail Cluster", self.cluster)
 		backend_api.request(
 			method="POST",
 			endpoint="/api/settings",
 			data=json.dumps(request_data),
 		)
 
-	@staticmethod
-	def _get(cluster: str, ip_address: str) -> None:
+	def _get(self) -> None:
+		"""Returns the allowed IP from the backend."""
+
+		cluster, ip_address = self.name.split("|")
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		response = backend_api.request(
 			method="GET",
@@ -103,6 +103,8 @@ class AllowedIP(Document):
 
 	@staticmethod
 	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
+		"""Returns all allowed IPs for the given cluster."""
+
 		backend_api = get_mail_backend_api("Mail Cluster", cluster)
 		response = backend_api.request(
 			method="GET",
@@ -115,18 +117,18 @@ class AllowedIP(Document):
 
 		return [AllowedIP._format(item, cluster) for item in data["items"]]
 
-	@staticmethod
-	def _update() -> None:
+	def _update(self) -> None:
 		raise NotImplementedError
 
-	@staticmethod
-	def _delete(cluster: str, ip_address: str | list[str]) -> None:
-		ip_addresses = [ip_address] if isinstance(ip_address, str) else ip_address
+	def _delete(self) -> None:
+		"""Deletes the allowed IP from the backend."""
+
+		ip_addresses = [self.ip_address]
 		request_data = []
 		for ip in ip_addresses:
 			request_data.append({"type": "delete", "keys": [f"server.allowed-ip.{ip}"]})
 
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api("Mail Cluster", self.cluster)
 		backend_api.request(
 			method="POST",
 			endpoint="/api/settings",
@@ -135,6 +137,8 @@ class AllowedIP(Document):
 
 	@staticmethod
 	def _format(allowed_ip: dict, cluster: str) -> dict:
+		"""Formats the allowed IP data from the backend."""
+
 		return {
 			"cluster": cluster,
 			"ip_address": allowed_ip["_id"],
