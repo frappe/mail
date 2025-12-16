@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
 	Badge,
 	FeatherIcon,
@@ -55,23 +55,16 @@ import {
 	ListRow,
 	ListRows,
 	ListView,
-	createResource,
 } from 'frappe-ui'
 
+import { userStore } from '@/stores/user'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddAddressBookModal from '@/components/Modals/AddAddressBookModal.vue'
 
-const user = inject('$user')
+const { addressBooks } = userStore()
 
 const showAddAddressBook = ref(false)
 const search = ref('')
-
-const addressBooks = createResource({
-	url: 'mail.api.contacts.get_address_books',
-	auto: true,
-	makeParams: () => ({ user: user.data.name }),
-	cache: ['addressBooks', user.data.name],
-})
 
 const searchedAddressBooks = computed(() =>
 	addressBooks.data?.filter((ab) => ab._name.toLowerCase().includes(search.value.toLowerCase())),

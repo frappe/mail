@@ -263,13 +263,13 @@ const sidebarItems = computed(() => {
 			label: __('Contacts'),
 			icon: ContactRound,
 			to: { name: 'Contacts' },
-			activeFor: ['Contacts'],
+			activeFor: ['Contacts', 'Contact'],
 		},
 		{
 			label: __('Address Books'),
 			icon: BookUser,
 			to: { name: 'AddressBooks' },
-			activeFor: ['AddressBooks'],
+			activeFor: ['AddressBooks', 'AddressBook'],
 		},
 	]
 

@@ -32,7 +32,12 @@
 				/>
 				<div class="space-y-1.5">
 					<label class="text-ink-gray-5 block text-xs">{{ __('Address Books') }}</label>
-					<MultiSelect v-model="contact.address_book_ids" :options="addressBooks.data" />
+					<MultiSelect
+						v-model="contact.address_book_ids"
+						:options="
+							addressBooks.data.map((ab) => ({ label: ab._name, value: ab.id }))
+						"
+					/>
 				</div>
 			</div>
 		</template>
@@ -45,15 +50,19 @@ import { useRouter } from 'vue-router'
 import { Dialog, FormControl, MultiSelect, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 
 const show = defineModel<boolean>()
 
 const user = inject('$user')
+const { addressBooks } = userStore()
 const router = useRouter()
+
+const defaultAddressBook = addressBooks.data.find((ab) => ab.default)?.id
 
 const defaultContact = {
 	user: user.data.name,
-	address_book_ids: [],
+	address_book_ids: defaultAddressBook ? [defaultAddressBook] : [],
 	full_name: '',
 	kind: 'Personal',
 }
@@ -69,18 +78,6 @@ const createContact = createResource({
 		router.push({ name: 'Contact', params: { contactName: data } })
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
-})
-
-const addressBooks = createResource({
-	url: 'mail.api.contacts.get_address_books',
-	auto: true,
-	makeParams: () => ({ user: user.data.name }),
-	transform: (data) => data.map((ab) => ({ label: ab._name, value: ab.id })),
-	onSuccess: (data) => {
-		const defaultAB = data.find((ab) => ab.default)?.id
-		if (defaultAB && !contact.address_book_ids.length) contact.address_book_ids.push(defaultAB)
-	},
-	cache: ['addressBooks', user.data.name],
 })
 
 watch(show, (val) => {

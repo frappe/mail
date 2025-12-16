@@ -38,7 +38,7 @@
 					:column-label="__('Name')"
 					row="address_book_name"
 					class="h-[14.5rem]"
-					@add="() => {}"
+					@add="showAddAddressBook = true"
 					@remove="
 						(selections) =>
 							(contact.doc.address_books = contact.doc.address_books.filter(
@@ -51,7 +51,7 @@
 					:title="__('Emails')"
 					:button-label="__('Add')"
 					class="col-span-2 h-[14.5rem]"
-					@action="showEditGeneral = true"
+					@action="showAddEmail = true"
 				>
 					<ListView
 						:columns="EMAIL_COLUMNS"
@@ -87,7 +87,7 @@
 					:title="__('Phones')"
 					:button-label="__('Add')"
 					class="col-span-2 h-[14.5rem]"
-					@action="showEditGeneral = true"
+					@action="showAddPhone = true"
 				>
 					<ListView
 						:columns="PHONE_COLUMNS"
@@ -123,7 +123,7 @@
 					:title="__('Addresses')"
 					:button-label="__('Add')"
 					class="col-span-2 h-[14.5rem]"
-					@action="showEditGeneral = true"
+					@action="showAddAddress = true"
 				>
 					<ListView
 						:columns="ADDRESS_COLUMNS"
@@ -158,38 +158,39 @@
 		</template>
 	</DashboardLayout>
 
-	<Dialog
+	<EditContactModal
 		v-if="contact?.originalDoc"
 		v-model="showEditGeneral"
-		:options="{
-			title: __('Edit General Information'),
-			actions: [
-				{
-					label: __('Save'),
-					variant: 'solid',
-					disabled:
-						contact.doc.full_name === contact.originalDoc.full_name &&
-						contact.doc.kind === contact.originalDoc.kind,
-					onClick: () => {
-						contact.save.submit()
-						showEditGeneral = false
-					},
-				},
-			],
-		}"
-	>
-		<template #body-content>
-			<div class="space-y-4">
-				<FormControl v-model="contact.doc.full_name" :label="__('Name')" />
-				<FormControl
-					v-model="contact.doc.kind"
-					type="select"
-					:label="__('Kind')"
-					:options="KIND_OPTIONS"
-				/>
-			</div>
-		</template>
-	</Dialog>
+		:full-name="contact.doc.full_name"
+		:kind="contact.doc.kind"
+		@save="
+			(val) => {
+				contact.doc.full_name = val.fullName
+				contact.doc.kind = val.kind
+				contact.save.submit()
+			}
+		"
+	/>
+	<AddContactAddressBookModal
+		v-if="contact?.originalDoc"
+		v-model="showAddAddressBook"
+		@add="(val) => contact.doc.address_books.push(val)"
+	/>
+	<AddContactEmailModal
+		v-if="contact?.originalDoc"
+		v-model="showAddEmail"
+		@add="(val) => contact.doc.emails.push(val)"
+	/>
+	<AddContactPhoneModal
+		v-if="contact?.originalDoc"
+		v-model="showAddPhone"
+		@add="(val) => contact.doc.phones.push(val)"
+	/>
+	<AddContactAddressModal
+		v-if="contact?.originalDoc"
+		v-model="showAddAddress"
+		@add="(val) => contact.doc.addresses.push(val)"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -197,8 +198,6 @@ import { computed, inject, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
 	Button,
-	Dialog,
-	FormControl,
 	ListEmptyState,
 	ListHeader,
 	ListRows,
@@ -212,6 +211,11 @@ import DashboardCard from '@/components/DashboardCard.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import InformationField from '@/components/InformationField.vue'
 import ListCard from '@/components/ListCard.vue'
+import AddContactAddressBookModal from '@/components/Modals/AddContactAddressBookModal.vue'
+import AddContactAddressModal from '@/components/Modals/AddContactAddressModal.vue'
+import AddContactEmailModal from '@/components/Modals/AddContactEmailModal.vue'
+import AddContactPhoneModal from '@/components/Modals/AddContactPhoneModal.vue'
+import EditContactModal from '@/components/Modals/EditContactModal.vue'
 
 const { contactName } = defineProps<{ contactName: string }>()
 
@@ -221,6 +225,10 @@ const dayjs = inject('$dayjs')
 const router = useRouter()
 
 const showEditGeneral = ref(false)
+const showAddAddressBook = ref(false)
+const showAddEmail = ref(false)
+const showAddPhone = ref(false)
+const showAddAddress = ref(false)
 
 const contact = createDocumentResource({
 	doctype: 'Contact Card',
@@ -228,7 +236,10 @@ const contact = createDocumentResource({
 	onError: () => router.replace({ name: 'Contacts' }),
 	setValue: {
 		onSuccess: () => raiseToast(__('Contact updated.')),
-		onError: (error) => raiseToast(error.messages[0], 'error'),
+		onError: (error) => {
+			contact.reload()
+			raiseToast(error.messages[0], 'error')
+		},
 	},
 })
 
@@ -236,12 +247,6 @@ const breadcrumbs = computed(() => [
 	{ label: __('Contacts'), route: '/contacts' },
 	{ label: contact.doc?.full_name || contactName },
 ])
-
-const KIND_OPTIONS = [
-	{ label: __('Personal'), value: 'Personal' },
-	{ label: __('Work'), value: 'Work' },
-	{ label: __('Other'), value: 'Other' },
-]
 
 const EMAIL_COLUMNS = [
 	{ label: __('Address'), key: 'address' },

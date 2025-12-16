@@ -11,7 +11,7 @@ def get_address_books() -> list[str]:
 	if not (address_books := fetch_address_books(frappe.session.user, 1, 50)):
 		return []
 
-	fields = ["id", "_name", "default"]
+	fields = ["name", "id", "_name", "default"]
 	return [{f: d[f] for f in fields} for d in address_books]
 
 

@@ -42,10 +42,12 @@ import { useRouter } from 'vue-router'
 import { Dialog, FormControl, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 
 const show = defineModel<boolean>()
 
 const user = inject('$user')
+const { addressBooks } = userStore()
 const router = useRouter()
 
 const defaultAddressBook = {
@@ -63,10 +65,8 @@ const createAddressBook = createResource({
 	onSuccess: (data: string) => {
 		raiseToast(__('Address book created.'))
 		show.value = false
-		router.push({
-			name: 'AddressBook',
-			params: { addressBookName: data },
-		})
+		addressBooks.reload()
+		router.push({ name: 'AddressBook', params: { addressBookName: data } })
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })
