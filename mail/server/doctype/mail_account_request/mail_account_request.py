@@ -16,7 +16,6 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.server.doctype.mail_principal.mail_principal import _validate_max_accounts
 from mail.utils import generate_otp, generate_random_phrase
 from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin
@@ -26,6 +25,7 @@ from mail.utils.validation import (
 	is_valid_email_for_domain,
 	validate_domain_is_verified,
 	validate_domain_owned_by_tenant,
+	validate_max_accounts,
 )
 
 
@@ -47,7 +47,7 @@ class MailAccountRequest(Document):
 			self.set_ip_address()
 
 			if self.is_invite:
-				_validate_max_accounts(self.tenant)
+				validate_max_accounts(self.tenant)
 				self.validate_invited_by_and_tenant()
 				self.validate_domain()
 				self.validate_account()

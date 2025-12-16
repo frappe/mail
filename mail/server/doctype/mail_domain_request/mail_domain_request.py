@@ -8,10 +8,10 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import random_string
 
-from mail.server.doctype.mail_principal.mail_principal import _validate_max_domains
 from mail.utils.cache import get_tenant_for_user
 from mail.utils.dns import verify_dns_record
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin
+from mail.utils.validation import validate_max_domains
 
 
 class MailDomainRequest(Document):
@@ -24,7 +24,7 @@ class MailDomainRequest(Document):
 
 	def validate(self) -> None:
 		if self.is_new():
-			_validate_max_domains(self.tenant)
+			validate_max_domains(self.tenant)
 			self.validate_domain_name()
 
 		self.validate_user_and_tenant()

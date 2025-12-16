@@ -118,6 +118,64 @@ def validate_domain_owned_by_tenant(domain_name: str, tenant: str) -> None:
 		frappe.throw(_("Domain {0} is not owned by the tenant.").format(frappe.bold(domain_name)))
 
 
+def validate_max_domains(tenant: str) -> None:
+	"""Validates if the tenant has reached the maximum limit of domains."""
+
+	max_domains = frappe.db.get_value("Mail Tenant", tenant, "max_domains")
+	total_domains = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "principal_type": "Domain"})
+
+	if total_domains >= max_domains:
+		frappe.throw(
+			_("You have reached the maximum limit of {0} domains for the tenant.").format(
+				frappe.bold(max_domains)
+			)
+		)
+
+
+def validate_max_groups(tenant: str) -> None:
+	"""Validates if the tenant has reached the maximum limit of groups."""
+
+	max_groups = frappe.db.get_value("Mail Tenant", tenant, "max_groups")
+	total_groups = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "principal_type": "Group"})
+
+	if total_groups >= max_groups:
+		frappe.throw(
+			_("You have reached the maximum limit of {0} groups for the tenant.").format(
+				frappe.bold(max_groups)
+			)
+		)
+
+
+def validate_max_accounts(tenant: str) -> None:
+	"""Validates if the tenant has reached the maximum limit of mail accounts."""
+
+	max_accounts = frappe.db.get_value("Mail Tenant", tenant, "max_accounts")
+	total_accounts = frappe.db.count(
+		"Mail Principal Binding", {"tenant": tenant, "principal_type": "Individual"}
+	)
+
+	if total_accounts >= max_accounts:
+		frappe.throw(
+			_("You have reached the maximum limit of {0} accounts for the tenant.").format(
+				frappe.bold(max_accounts)
+			)
+		)
+
+
+def validate_max_lists(tenant: str) -> None:
+	"""Validates if the tenant has reached the maximum limit of lists."""
+
+	max_lists = frappe.db.get_value("Mail Tenant", tenant, "max_mailing_lists")
+	total_lists = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "principal_type": "List"})
+
+	if total_lists >= max_lists:
+		frappe.throw(
+			_("You have reached the maximum limit of {0} lists for the tenant.").format(
+				frappe.bold(max_lists)
+			)
+		)
+
+
 def is_valid_cron_expression(expression: str, raise_exception: bool = False) -> bool:
 	"""Returns True if the expression is a valid Cron expression else False."""
 
