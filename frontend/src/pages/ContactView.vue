@@ -266,12 +266,12 @@ const deleteContact = createResource({
 	},
 })
 
-const deleteContactOptions = {
+const deleteContactOptions = computed(() => ({
 	title: __('Delete Contact'),
-	message: __('Are you sure you want to delete this contact?'),
+	message: __('Are you sure you want to delete the contact for {0}?', [contact.doc?.full_name]),
 	icon: { name: 'alert-triangle', appearance: 'warning' },
 	actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteContact.submit }],
-}
+}))
 
 const breadcrumbs = computed(() => [
 	{ label: __('Contacts'), route: '/contacts' },
