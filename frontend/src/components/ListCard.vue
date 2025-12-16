@@ -8,7 +8,7 @@
 			class="flex-1 overflow-auto p-4"
 		>
 			<ListHeader />
-			<ListRows v-if="rows" />
+			<ListRows v-if="rows.length" />
 			<ListEmptyState v-else />
 			<ListSelectBanner>
 				<template #actions="{ selections, unselectAll }">

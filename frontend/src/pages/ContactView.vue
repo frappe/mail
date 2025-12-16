@@ -1,6 +1,9 @@
 <template>
 	<DashboardLayout v-if="contact?.doc" :breadcrumbs="breadcrumbs">
 		<template #actions>
+			<Dropdown :options="DROPDOWN_OPTIONS">
+				<Button icon="more-horizontal" class="text-ink-gray-5" />
+			</Dropdown>
 			<Button
 				variant="solid"
 				:label="__('Save')"
@@ -191,19 +194,24 @@
 		v-model="showAddAddress"
 		@add="(val) => contact.doc.addresses.push(val)"
 	/>
+	<Dialog v-model="showDeleteContact" :options="deleteContactOptions" />
 </template>
 
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { Trash2 } from 'lucide-vue-next'
 import {
 	Button,
+	Dialog,
+	Dropdown,
 	ListEmptyState,
 	ListHeader,
 	ListRows,
 	ListSelectBanner,
 	ListView,
 	createDocumentResource,
+	createResource,
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
@@ -229,6 +237,7 @@ const showAddAddressBook = ref(false)
 const showAddEmail = ref(false)
 const showAddPhone = ref(false)
 const showAddAddress = ref(false)
+const showDeleteContact = ref(false)
 
 const contact = createDocumentResource({
 	doctype: 'Contact Card',
@@ -242,6 +251,27 @@ const contact = createDocumentResource({
 		},
 	},
 })
+
+const deleteContact = createResource({
+	url: 'mail.client.doctype.contact_card.contact_card.delete_contact_cards',
+	makeParams: () => ({ user: user.data.name, ids: [contact.doc.id] }),
+	onSuccess: () => {
+		showDeleteContact.value = false
+		raiseToast(__('Contact deleted.'))
+		router.push({ name: 'Contacts' })
+	},
+	onError: (error) => {
+		showDeleteContact.value = false
+		raiseToast(error.messages[0], 'error')
+	},
+})
+
+const deleteContactOptions = {
+	title: __('Delete Contact'),
+	message: __('Are you sure you want to delete this contact?'),
+	icon: { name: 'alert-triangle', appearance: 'warning' },
+	actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteContact.submit }],
+}
 
 const breadcrumbs = computed(() => [
 	{ label: __('Contacts'), route: '/contacts' },
@@ -267,5 +297,13 @@ const ADDRESS_COLUMNS = [
 	{ label: __('Region'), key: 'region', width: '15%' },
 	{ label: __('Postcode'), key: 'postcode', width: '15%' },
 	{ label: __('Country'), key: 'country', width: '15%' },
+]
+
+const DROPDOWN_OPTIONS = [
+	{
+		label: __('Delete'),
+		onClick: () => (showDeleteContact.value = true),
+		icon: Trash2,
+	},
 ]
 </script>

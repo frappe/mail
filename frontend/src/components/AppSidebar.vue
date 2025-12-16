@@ -260,22 +260,23 @@ const sidebarItems = computed(() => {
 
 	const contactsItems = [
 		{
-			label: __('Contacts'),
-			icon: ContactRound,
-			to: { name: 'Contacts' },
-			activeFor: ['Contacts', 'Contact'],
-		},
-		{
 			label: __('Address Books'),
 			icon: BookUser,
 			to: { name: 'AddressBooks' },
 			activeFor: ['AddressBooks', 'AddressBook'],
+		},
+		{
+			label: __('Contacts'),
+			icon: ContactRound,
+			to: { name: 'Contacts' },
+			activeFor: ['Contacts', 'Contact'],
 		},
 	]
 
 	return mailboxes.data?.length
 		? [
 				{
+					label: __('Folders'),
 					items: [
 						mailboxItems[0],
 						starredItem,
@@ -283,7 +284,10 @@ const sidebarItems = computed(() => {
 						addMailboxItem,
 					],
 				},
-				{ items: contactsItems },
+				{
+					label: __('People'),
+					items: contactsItems,
+				},
 			]
 		: []
 })
