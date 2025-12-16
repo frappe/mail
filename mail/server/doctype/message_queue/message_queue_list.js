@@ -22,7 +22,7 @@ function add_pause_resume_buttons(listview) {
 	frappe.call({
 		method: 'mail.server.doctype.message_queue.message_queue.get_queue_status',
 		args: {
-			cluster_name: cluster,
+			cluster: cluster,
 		},
 		freeze: true,
 		freeze_message: __('Getting Queue Status...'),
@@ -52,7 +52,7 @@ function pause_queue(listview, cluster) {
 	frappe.call({
 		method: 'mail.server.doctype.message_queue.message_queue.pause_queue',
 		args: {
-			cluster_name: cluster,
+			cluster: cluster,
 		},
 		freeze: true,
 		freeze_message: __('Pausing Queue...'),
@@ -68,7 +68,7 @@ function resume_queue(listview, cluster) {
 	frappe.call({
 		method: 'mail.server.doctype.message_queue.message_queue.resume_queue',
 		args: {
-			cluster_name: cluster,
+			cluster: cluster,
 		},
 		freeze: true,
 		freeze_message: __('Resuming Queue...'),
