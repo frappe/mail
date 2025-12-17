@@ -1564,12 +1564,14 @@ class JMAPClient:
 						"accountId": self.primary_account_id,
 						"create": {
 							creation_id: {
-								"addressBookIds": {id: True for id in address_book_ids},
+								"@type": "Card",
+								"version": "1.0",
 								"kind": kind,
 								"name": _get_name_map(full_name),
 								"emails": _get_emails_map(emails),
 								"phones": _get_phones_map(phones),
 								"addresses": _get_addresses_map(addresses),
+								"addressBookIds": {id: True for id in address_book_ids},
 								"created": utcnow(),
 								"updated": utcnow(),
 							}
@@ -1731,6 +1733,66 @@ class JMAPClient:
 		)
 
 		return response["methodResponses"][0][1]
+
+	def contact_card_update_address_books(
+		self,
+		ids: list[str],
+		add_address_book_id: str | None = None,
+		remove_address_book_id: str | None = None,
+		move_to_address_book_id: str | None = None,
+	) -> dict:
+		"""
+		Updates addressBookIds for the provided contact cards.
+
+		Behavior:
+		- add_address_book_id: adds the contact to an address book
+		- remove_address_book_id: removes the contact from an address book
+		- add + remove: moves contact between address books (patch-based)
+		- move_to_address_book_id: replaces addressBookIds entirely
+		"""
+
+		if move_to_address_book_id and (add_address_book_id or remove_address_book_id):
+			frappe.throw(
+				_("{0} cannot be combined with add/remove operations.").format("move_to_address_book_id")
+			)
+
+		if not any([add_address_book_id, remove_address_book_id, move_to_address_book_id]):
+			frappe.throw(_("At least one address book operation must be provided."))
+
+		result = {"updated": [], "notUpdated": {}}
+
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			if move_to_address_book_id:
+				# Full replacement of addressBookIds
+				update_payload = {"addressBookIds": {move_to_address_book_id: True}, "updated": utcnow()}
+			else:
+				# Patch-based update of addressBookIds
+				update_payload = {"updated": utcnow()}
+
+				if add_address_book_id:
+					update_payload[f"addressBookIds/{add_address_book_id}"] = True
+				if remove_address_book_id:
+					update_payload[f"addressBookIds/{remove_address_book_id}"] = None
+
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:contacts"],
+				method_calls=[
+					[
+						"ContactCard/set",
+						{
+							"accountId": self.primary_account_id,
+							"update": {id: update_payload for id in ids_batch},
+						},
+						"0",
+					]
+				],
+			)
+
+			result["updated"].extend(response["methodResponses"][0][1].get("updated", []))
+			if not_updated := response["methodResponses"][0][1].get("notUpdated", {}):
+				result["notUpdated"].update(not_updated)
+
+		return result
 
 	def contact_card_delete(self, ids: list[str]) -> dict:
 		"""Destroys the contact cards with the given IDs."""
@@ -2011,6 +2073,7 @@ def _get_name_map(full_name: str | None = None) -> dict:
 	if full_name:
 		given, surname = full_name.split(" ", 1) if " " in full_name else (full_name, None)
 		return {
+			"@type": "Name",
 			"full": full_name,
 			"components": [{"kind": "given", "value": given}, {"kind": "surname", "value": surname}],
 			"isOrdered": True,

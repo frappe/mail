@@ -329,6 +329,83 @@ def update_contact_card(
 	_remove_contact_cards_from_cache(user, [id])
 
 
+def contact_card_update_address_books(
+	user: str,
+	ids: list[str],
+	add_address_book_id: str | None = None,
+	remove_address_book_id: str | None = None,
+	move_to_address_book_id: str | None = None,
+) -> None:
+	"""
+	Updates addressBookIds for the provided contact cards.
+
+	Behavior:
+	- add_address_book_id: adds the contact to an address book
+	- remove_address_book_id: removes the contact from an address book
+	- add + remove: moves contact between address books (patch-based)
+	- move_to_address_book_id: replaces addressBookIds entirely
+	"""
+
+	has_permission_for_user(user)
+
+	client = get_jmap_client(user)
+	response = client.contact_card_update_address_books(
+		ids, add_address_book_id, remove_address_book_id, move_to_address_book_id
+	)
+
+	title = _("Contact Card Update Error")
+	if not response.get("updated"):
+		if response.get("notUpdated"):
+			frappe.throw(_(response["notUpdated"][ids[0]]["description"]), title=title)
+		else:
+			frappe.throw(_(response["description"]), title=title)
+
+	_remove_contact_cards_from_cache(user, ids)
+
+
+@frappe.whitelist()
+def contact_card_add_to_address_book(user: str, ids: list[str], address_book_id: str) -> None:
+	"""Adds the provided contact cards to an address book."""
+
+	return contact_card_update_address_books(user, ids, add_address_book_id=address_book_id)
+
+
+@frappe.whitelist()
+def contact_card_remove_from_address_book(
+	user: str,
+	ids: list[str],
+	address_book_id: str,
+) -> None:
+	"""Removes the provided contact cards from an address book."""
+
+	return contact_card_update_address_books(user, ids, remove_address_book_id=address_book_id)
+
+
+@frappe.whitelist()
+def contact_card_move_between_address_books(
+	user: str, ids: list[str], from_address_book_id: str, to_address_book_id: str
+) -> None:
+	"""Moves contact cards from one address book to another."""
+
+	return contact_card_update_address_books(
+		user,
+		ids,
+		add_address_book_id=to_address_book_id,
+		remove_address_book_id=from_address_book_id,
+	)
+
+
+@frappe.whitelist()
+def contact_card_move_to_address_book(
+	user: str,
+	ids: list[str],
+	address_book_id: str,
+) -> None:
+	"""Moves contact cards to the given address book, replacing all others."""
+
+	return contact_card_update_address_books(user, ids, move_to_address_book_id=address_book_id)
+
+
 @frappe.whitelist()
 def delete_contact_cards(user: str, ids: list[str]) -> None:
 	"""Deletes contact cards for the given user by its IDs."""

@@ -6,10 +6,10 @@ import json
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import now
+from frappe.utils import today
 
 from mail.backend import get_mail_backend_api
-from mail.utils import extract_filter_values, rename_keys
+from mail.utils import extract_filter_values
 from mail.utils.dns import get_host_by_ip
 
 
@@ -25,18 +25,17 @@ class AllowedIP(Document):
 		self.name = f"{self.cluster}|{self.ip_address}"
 
 	def db_insert(self, *args, **kwargs) -> None:
-		add_allowed_ip(self.cluster, self.ip_address)
+		self._create()
 
 	def load_from_db(self) -> "AllowedIP":
-		allowed_ip = fetch_allowed_ip_details(self.name)
+		allowed_ip = self._get()
 		return super(Document, self).__init__(allowed_ip)
 
 	def db_update(self) -> None:
-		raise NotImplementedError
+		self._update()
 
 	def delete(self) -> None:
-		remove_allowed_ip(self.name)
-
+		self._delete()
 		if not frappe.flags.in_bulk_delete:
 			frappe.msgprint(_("Allowed IP removed successfully."), alert=True)
 
@@ -46,7 +45,7 @@ class AllowedIP(Document):
 		cluster, ip_address = extract_filter_values(filters, [{"cluster": "="}, {"ip_address": "like"}])
 
 		if cluster:
-			allowed_ips = fetch_allowed_ips(cluster, limit=page_length, text=ip_address)
+			allowed_ips = AllowedIP._get_all(cluster, limit=page_length, text=ip_address)
 			if not allowed_ips:
 				frappe.msgprint(_("No allowed IPs found."), alert=True)
 
@@ -66,101 +65,91 @@ class AllowedIP(Document):
 	def get_stats(**kwargs) -> dict:
 		return {}
 
+	def _create(self) -> None:
+		"""Creates the allowed IP in the backend."""
 
-def get_total_cache_key(cluster_name: str, text: str | None = None) -> str:
+		ip_addresses = [self.ip_address]
+		request_data = []
+		for ip in ip_addresses:
+			request_data.append(
+				{
+					"type": "insert",
+					"prefix": None,
+					"values": [[f"server.allowed-ip.{ip}", ""]],
+					"assert_empty": True,
+				}
+			)
+
+		backend_api = get_mail_backend_api("Mail Cluster", self.cluster)
+		backend_api.request(
+			method="POST",
+			endpoint="/api/settings",
+			data=json.dumps(request_data),
+		)
+
+	def _get(self) -> None:
+		"""Returns the allowed IP from the backend."""
+
+		cluster, ip_address = self.name.split("|")
+		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		response = backend_api.request(
+			method="GET",
+			endpoint="api/settings/group",
+			params={"prefix": "server.allowed-ip", "limit": 1, "filter": ip_address},
+		)
+
+		allowed_ip = response.json()["data"]["items"][0]
+		return AllowedIP._format(allowed_ip, cluster)
+
+	@staticmethod
+	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
+		"""Returns all allowed IPs for the given cluster."""
+
+		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		response = backend_api.request(
+			method="GET",
+			endpoint="api/settings/group",
+			params={"page": page, "prefix": "server.allowed-ip", "limit": limit, "filter": text},
+		)
+
+		data = response.json()["data"]
+		frappe.cache.set_value(get_total_cache_key(cluster, text), data["total"], expires_in_sec=600)
+
+		return [AllowedIP._format(item, cluster) for item in data["items"]]
+
+	def _update(self) -> None:
+		raise NotImplementedError
+
+	def _delete(self) -> None:
+		"""Deletes the allowed IP from the backend."""
+
+		ip_addresses = [self.ip_address]
+		request_data = []
+		for ip in ip_addresses:
+			request_data.append({"type": "delete", "keys": [f"server.allowed-ip.{ip}"]})
+
+		backend_api = get_mail_backend_api("Mail Cluster", self.cluster)
+		backend_api.request(
+			method="POST",
+			endpoint="/api/settings",
+			data=json.dumps(request_data),
+		)
+
+	@staticmethod
+	def _format(allowed_ip: dict, cluster: str) -> dict:
+		"""Formats the allowed IP data from the backend."""
+
+		return {
+			"cluster": cluster,
+			"ip_address": allowed_ip["_id"],
+			"name": f"{cluster}|{allowed_ip['_id']}",
+			"creation": today(),
+			"modified": today(),
+		}
+
+
+def get_total_cache_key(cluster: str, text: str | None = None) -> str:
 	"""Returns a cache key for total allowed IP count."""
 
 	text = text or ""
-	return f"{cluster_name}:allowed-ip:{text}:total"
-
-
-def add_allowed_ip(cluster_name: str, ip_address: str | list) -> None:
-	"""Adds a allowed ip to the mail server."""
-
-	if isinstance(ip_address, str):
-		ip_address = [ip_address]
-
-	request_data = []
-	for ip in ip_address:
-		request_data.append(
-			{
-				"type": "insert",
-				"prefix": None,
-				"values": [[f"server.allowed-ip.{ip}", ""]],
-				"assert_empty": True,
-			}
-		)
-
-	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	backend_api.request(
-		method="POST",
-		endpoint="/api/settings",
-		data=json.dumps(request_data),
-	)
-
-
-def fetch_allowed_ips(cluster_name: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
-	"""Fetches a list of allowed ips from the mail server."""
-
-	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	response = backend_api.request(
-		method="GET",
-		endpoint="api/settings/group",
-		params={"page": page, "prefix": "server.allowed-ip", "limit": limit, "filter": text},
-	)
-
-	data = response.json()["data"]
-	frappe.cache.set_value(get_total_cache_key(cluster_name, text), data["total"], expires_in_sec=600)
-
-	return [format_allowed_ip(item, cluster_name) for item in data["items"]]
-
-
-def fetch_allowed_ip_details(name: str) -> dict:
-	"""Fetches details of a specific allowed ip from the mail server."""
-
-	cluster_name, ip_address = name.split("|")
-	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	response = backend_api.request(
-		method="GET",
-		endpoint="api/settings/group",
-		params={"prefix": "server.allowed-ip", "limit": 1, "filter": ip_address},
-	)
-
-	allowed_ip = response.json()["data"]["items"][0]
-	return format_allowed_ip(allowed_ip, cluster_name)
-
-
-def remove_allowed_ip(name: str | list) -> None:
-	"""Removes a allowed ip from the mail server."""
-
-	if isinstance(name, str):
-		name = [name]
-
-	request_data = []
-	for n in name:
-		cluster_name, ip_address = n.split("|")
-		request_data.append({"type": "delete", "keys": [f"server.allowed-ip.{ip_address}"]})
-
-	backend_api = get_mail_backend_api("Mail Cluster", cluster_name)
-	backend_api.request(
-		method="POST",
-		endpoint="/api/settings",
-		data=json.dumps(request_data),
-	)
-
-
-def format_allowed_ip(allowed_ip: dict, cluster_name: str) -> dict:
-	"""Formats a allowed ip dictionary to match expected output."""
-
-	creation = now()
-	allowed_ip = rename_keys(allowed_ip, {"id": "ip_address"})
-	allowed_ip.update(
-		{
-			"creation": creation,
-			"modified": creation,
-			"cluster": cluster_name,
-			"name": f"{cluster_name}|{allowed_ip['ip_address']}",
-		}
-	)
-
-	return allowed_ip
+	return f"{cluster}:allowed-ip:{text}:total"

@@ -52,16 +52,14 @@
    "description": "Messages that arrive on or after this date-time (but before the To Date if defined) should receive the user's vacation response.",
    "fieldname": "from_date",
    "fieldtype": "Datetime",
-   "label": "From Date",
-   "mandatory_depends_on": "eval: doc.enabled"
+   "label": "From Date"
   },
   {
    "depends_on": "eval: doc.user",
    "description": "Messages that arrive before this date-time (but on or after the From Date if defined) should receive the user's vacation response.",
    "fieldname": "to_date",
    "fieldtype": "Datetime",
-   "label": "To Date",
-   "mandatory_depends_on": "eval: doc.enabled"
+   "label": "To Date"
   },
   {
    "fieldname": "column_break_nwzs",
@@ -98,7 +96,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-12-09 12:55:32.269456",
+ "modified": "2025-12-15 11:47:17.806197",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Vacation Response",

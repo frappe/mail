@@ -31,7 +31,10 @@ class VacationResponse(Document):
 		vc = get_vacation_response(self.user)
 		return super(Document, self).__init__(vc)
 
-	def db_update(self) -> None:
+	def on_update(self) -> None:
+		if not self.user or self.user in ("Guest", "Administrator"):
+			return
+
 		update_vacation_response(
 			self.user,
 			self.enabled,
@@ -85,21 +88,11 @@ def update_vacation_response(
 	has_permission_for_user(user)
 
 	enabled = bool(enabled)
+	from_date = convert_to_utc(from_date).isoformat() if from_date else None
+	to_date = convert_to_utc(to_date).isoformat() if to_date else None
 
-	if from_date:
-		from_date = convert_to_utc(from_date).isoformat()
-	if to_date:
-		to_date = convert_to_utc(to_date).isoformat()
-
-	if enabled:
-		if not from_date:
-			frappe.throw(_("From Date is required."))
-		elif not to_date:
-			frappe.throw(_("To Date is required."))
-		elif to_date < now():
-			frappe.throw(_("To Date cannot be in the past."))
-		elif from_date >= to_date:
-			frappe.throw(_("To Date must be after From Date."))
+	if enabled and (from_date and to_date) and (from_date >= to_date):
+		frappe.throw(_("To Date must be after From Date."))
 
 	if not convert_html_to_text(html_body):
 		html_body = None

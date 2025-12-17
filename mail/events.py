@@ -6,7 +6,7 @@ from frappe.model.document import Document
 
 from mail.backend import get_mail_backend_api
 from mail.jmap import JMAPClient
-from mail.server.doctype.mail_principal.mail_principal import PRINCIPAL_ENDPOINT, _get_principal
+from mail.server.doctype.mail_principal.mail_principal import PRINCIPAL_ENDPOINT, MailPrincipal
 from mail.utils import reformat_pbkdf2_hash
 from mail.utils.user import (
 	get_cluster_for_tenant,
@@ -42,7 +42,7 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 	ensure_tenant_has_cluster(tenant)
 
 	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
-	principal = _get_principal(backend, doc.jmap_username, ignore_not_found=False)
+	principal = MailPrincipal._fetch(backend, doc.jmap_username, ignore_not_found=False)
 
 	backend_secrets = principal.get("secrets", [])
 	backend_hash = next((s for s in backend_secrets if not s.startswith("$app$")), None)
