@@ -24,6 +24,7 @@ from mail.utils import (
 	get_dkim_selector,
 	get_spf_host_for_cluster,
 	hash_password,
+	is_catch_all_address,
 	is_probable_hash,
 	parse_filters,
 	parse_token,
@@ -206,12 +207,16 @@ class MailPrincipal(Document):
 				frappe.throw(_("Invalid domain name provided for principal."))
 
 		if self.type in ["Group", "Individual", "List"]:
+			if is_catch_all_address(self._name):
+				frappe.throw(_("Catch-all email addresses are not allowed for principals."))
+
 			emails = [self._name] + self._emails
 			for email in emails:
-				validate_email_address(email, True)
+				if not is_catch_all_address(email):
+					validate_email_address(email, True)
 				validate_wildcard_email(email)
+				is_subaddressed_email(email, raise_exception=True)
 
-			is_subaddressed_email(self._name, raise_exception=True)
 			ensure_emails_belong_to_tenant_domains(self.tenant, emails)
 
 		if self.type in ["Group", "Individual"]:
@@ -457,13 +462,13 @@ class MailPrincipal(Document):
 
 		principal = frappe.get_doc("Mail Principal", self.name)
 		principal_emails = set([principal.name] + principal._emails)
+		explicit_emails = {email for email in principal_emails if not is_catch_all_address(email)}
 
-		identities_to_remove = identities_emails - principal_emails
-		identities_to_add = principal_emails - identities_emails
+		identities_to_remove = identities_emails - explicit_emails
+		identities_to_add = explicit_emails - identities_emails
 
 		for email in identities_to_remove:
-			identity_name = identities_emails_map[email]
-			frappe.delete_doc("Identity", identity_name)
+			frappe.delete_doc("Identity", identities_emails_map[email])
 
 		for email in identities_to_add:
 			add_identity(self.name, email, principal.description)

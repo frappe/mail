@@ -737,3 +737,9 @@ def get_dkim_selector(key_type: Literal["rsa", "ed25519"]) -> str:
 	"""
 
 	return f"frappemail-{key_type[0]}"
+
+
+def is_catch_all_address(address: str) -> bool:
+	"""Check if the email address is a catch-all address (starts with '@')."""
+
+	return address.startswith("@")

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-12-15 12:02+0553\n"
-"PO-Revision-Date: 2025-12-15 12:02+0553\n"
+"POT-Creation-Date: 2025-12-17 11:14+0553\n"
+"PO-Revision-Date: 2025-12-17 11:14+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -200,11 +200,11 @@ msgstr ""
 msgid "Account"
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:131
+#: mail/server/doctype/mail_account_request/mail_account_request.py:134
 msgid "Account domain {0} does not match with domain {1}."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:210
+#: mail/server/doctype/mail_account_request/mail_account_request.py:213
 msgid "Account is already verified and created."
 msgstr ""
 
@@ -218,7 +218,7 @@ msgstr ""
 msgid "Account username for the DNS provider."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:226
+#: mail/server/doctype/mail_account_request/mail_account_request.py:229
 msgid "Account {0} is already created."
 msgstr ""
 
@@ -451,7 +451,7 @@ msgstr ""
 msgid "Allowed IP"
 msgstr ""
 
-#: mail/server/doctype/allowed_ip/allowed_ip.py:41
+#: mail/server/doctype/allowed_ip/allowed_ip.py:40
 msgid "Allowed IP removed successfully."
 msgstr ""
 
@@ -711,7 +711,11 @@ msgstr ""
 msgid "Backup Email"
 msgstr ""
 
-#: mail/utils/validation.py:131
+#: mail/server/doctype/mail_account_request/mail_account_request.py:65
+msgid "Backup Email is required."
+msgstr ""
+
+#: mail/utils/validation.py:189
 msgid "Bad Cron Expression"
 msgstr ""
 
@@ -780,7 +784,7 @@ msgstr ""
 msgid "Blocked IP"
 msgstr ""
 
-#: mail/server/doctype/blocked_ip/blocked_ip.py:41
+#: mail/server/doctype/blocked_ip/blocked_ip.py:40
 msgid "Blocked IP removed successfully."
 msgstr ""
 
@@ -863,7 +867,7 @@ msgstr ""
 msgid "Cancelling Delivery..."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:830
+#: mail/server/doctype/mail_principal/mail_principal.py:704
 msgid "Cannot delete domain {0} as there are addresses associated with it."
 msgstr ""
 
@@ -871,12 +875,16 @@ msgstr ""
 msgid "Cannot fetch more than {0} emails at a time."
 msgstr ""
 
-#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:26
+#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:25
 msgid "Cannot remove the owner of the tenant."
 msgstr ""
 
 #: mail/client/doctype/mail_queue/mail_queue.py:563
 msgid "Cannot retry a mail with status {0}"
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:211
+msgid "Catch-all email addresses are not allowed for principals."
 msgstr ""
 
 #. Label of the category (Select) field in DocType 'DNS Record'
@@ -1392,11 +1400,11 @@ msgstr ""
 msgid "DKIM Description"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:230
+#: mail/server/doctype/mail_principal/mail_principal.py:298
 msgid "DKIM Keys can only be rotated for Domain principals."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:246
+#: mail/server/doctype/mail_principal/mail_principal.py:314
 msgid "DKIM Keys rotated successfully."
 msgstr ""
 
@@ -1409,6 +1417,14 @@ msgstr ""
 #. Label of the dkim_results (JSON) field in DocType 'DMARC Report Detail'
 #: mail/server/doctype/dmarc_report_detail/dmarc_report_detail.json
 msgid "DKIM Results"
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:411
+msgid "DKIM signature can only be created for Domain principals."
+msgstr ""
+
+#: mail/server/doctype/mail_principal/mail_principal.py:744
+msgid "DKIM signature can only be deleted for Domain principals."
 msgstr ""
 
 #. Label of the dmarc_pass (Check) field in DocType 'Mail Message'
@@ -1439,7 +1455,7 @@ msgstr ""
 msgid "DMARC Report Viewer"
 msgstr ""
 
-#: mail/server/doctype/dmarc_report/dmarc_report.py:35
+#: mail/server/doctype/dmarc_report/dmarc_report.py:34
 msgid "DMARC report removed successfully."
 msgstr ""
 
@@ -1467,23 +1483,23 @@ msgstr ""
 msgid "DNS Records"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:216
+#: mail/server/doctype/mail_principal/mail_principal.py:284
 msgid "DNS Records can only be refreshed for Domain principals."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:183
+#: mail/server/doctype/mail_principal/mail_principal.py:251
 msgid "DNS Records can only be verified for Domain principals."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:343
+#: mail/server/doctype/mail_principal/mail_principal.py:499
 msgid "DNS Records for principal {0} not found in backend."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:221
+#: mail/server/doctype/mail_principal/mail_principal.py:289
 msgid "DNS Records refreshed successfully."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:201
+#: mail/server/doctype/mail_principal/mail_principal.py:269
 msgid "DNS Records verified successfully."
 msgstr ""
 
@@ -1704,12 +1720,12 @@ msgstr ""
 msgid "Delivery Mode"
 msgstr ""
 
-#: mail/server/doctype/message_queue/message_queue.py:75
+#: mail/server/doctype/message_queue/message_queue.py:76
 msgid "Delivery cancelled successfully."
 msgstr ""
 
-#: mail/server/doctype/message_queue/message_queue.py:63
-#: mail/server/doctype/message_queue/message_queue.py:116
+#: mail/server/doctype/message_queue/message_queue.py:64
+#: mail/server/doctype/message_queue/message_queue.py:252
 msgid "Delivery retried successfully."
 msgstr ""
 
@@ -1945,7 +1961,7 @@ msgstr ""
 msgid "Domain is already verified and created."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:116
+#: mail/server/doctype/mail_account_request/mail_account_request.py:119
 msgid "Domain is mandatory."
 msgstr ""
 
@@ -1958,7 +1974,7 @@ msgstr ""
 msgid "Domain {0} already registered."
 msgstr ""
 
-#: mail/api/admin.py:31
+#: mail/api/admin.py:30
 msgid "Domain {0} has already been registered."
 msgstr ""
 
@@ -2191,20 +2207,16 @@ msgstr ""
 msgid "Email domain {0} does not match with domain {1}."
 msgstr ""
 
-#: mail/utils/validation.py:316
+#: mail/utils/validation.py:374
 msgid "Email domain {0} is not associated with tenant {1} or is not verified."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:168
+#: mail/server/doctype/mail_account_request/mail_account_request.py:171
 msgid "Email is required to send invite"
 msgstr ""
 
 #: mail/client/doctype/mail_queue/mail_queue.py:773
 msgid "Email processing aborted: {retries} out of {total_count} emails failed ({failure_rate:.2%} failure rate). Please investigate the issue before retrying."
-msgstr ""
-
-#: mail/utils/validation.py:425
-msgid "Email {0} does not match any of the allowed patterns."
 msgstr ""
 
 #. Label of the emails (Table) field in DocType 'Contact Card'
@@ -2513,7 +2525,7 @@ msgstr ""
 msgid "Failed to Submit"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:619
+#: mail/server/doctype/mail_principal/mail_principal.py:383
 msgid "Failed to add principal {0}: {1}"
 msgstr ""
 
@@ -2525,11 +2537,11 @@ msgstr ""
 msgid "Failed to copy code"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:384
+#: mail/server/doctype/mail_principal/mail_principal.py:436
 msgid "Failed to create DKIM signature for domain {0}"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:410
+#: mail/server/doctype/mail_principal/mail_principal.py:755
 msgid "Failed to delete DKIM signature for domain {0}"
 msgstr ""
 
@@ -2626,7 +2638,7 @@ msgstr ""
 msgid "Failed to update password for Mail Principal {0}. Response: {1}"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:794
+#: mail/server/doctype/mail_principal/mail_principal.py:673
 msgid "Failed to update principal {0}: {1}"
 msgstr ""
 
@@ -2933,7 +2945,7 @@ msgstr ""
 msgid "Group Messages By"
 msgstr ""
 
-#: mail/utils/validation.py:331
+#: mail/utils/validation.py:389
 msgid "Group {0} is not associated with tenant {1}."
 msgstr ""
 
@@ -3431,20 +3443,20 @@ msgstr ""
 msgid "Internal"
 msgstr ""
 
-#: mail/utils/validation.py:164
+#: mail/utils/validation.py:222
 msgid "Invalid JMAP Structure"
 msgstr ""
 
-#: mail/utils/validation.py:181 mail/utils/validation.py:210
-#: mail/utils/validation.py:241
+#: mail/utils/validation.py:239 mail/utils/validation.py:268
+#: mail/utils/validation.py:299
 msgid "Invalid Maildir"
 msgstr ""
 
-#: mail/utils/validation.py:207 mail/utils/validation.py:238
+#: mail/utils/validation.py:265 mail/utils/validation.py:296
 msgid "Invalid Maildir format in the following directories: {0}"
 msgstr ""
 
-#: mail/utils/validation.py:178
+#: mail/utils/validation.py:236
 msgid "Invalid Maildir format: missing {0} directories."
 msgstr ""
 
@@ -3468,17 +3480,12 @@ msgstr ""
 msgid "Invalid domain name"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:551
-#: mail/server/doctype/mail_principal/mail_principal.py:699
+#: mail/server/doctype/mail_principal/mail_principal.py:207
 msgid "Invalid domain name provided for principal."
 msgstr ""
 
 #: mail/client/doctype/mail_queue/mail_queue.py:445
 msgid "Invalid email address: {0}"
-msgstr ""
-
-#: mail/utils/validation.py:420
-msgid "Invalid email pattern: {0}"
 msgstr ""
 
 #: mail/client/doctype/mail_queue/mail_queue.py:488
@@ -3505,7 +3512,7 @@ msgstr ""
 msgid "Invited By"
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:98
+#: mail/server/doctype/mail_account_request/mail_account_request.py:101
 msgid "Invited By is required"
 msgstr ""
 
@@ -3559,7 +3566,7 @@ msgstr ""
 msgid "JMAP"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:255
+#: mail/server/doctype/mail_principal/mail_principal.py:448
 msgid "JMAP Identities can only be synced for Individual principals."
 msgstr ""
 
@@ -3756,7 +3763,7 @@ msgstr ""
 msgid "List of volume mappings, e.g. [\"/data:/opt/data\"]."
 msgstr ""
 
-#: mail/utils/validation.py:346
+#: mail/utils/validation.py:404
 msgid "List {0} is not associated with tenant {1}."
 msgstr ""
 
@@ -3929,11 +3936,11 @@ msgstr ""
 msgid "Mail Admin"
 msgstr ""
 
-#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:76
+#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:75
 msgid "Mail Admin role has been assigned to the user {0}."
 msgstr ""
 
-#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:86
+#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:85
 msgid "Mail Admin role has been removed from the user {0}."
 msgstr ""
 
@@ -4652,7 +4659,7 @@ msgstr ""
 msgid "Member removed."
 msgstr ""
 
-#: mail/utils/validation.py:365
+#: mail/utils/validation.py:423
 msgid "Member {0} is not associated with tenant {1}."
 msgstr ""
 
@@ -4802,7 +4809,7 @@ msgstr ""
 msgid "Minutely"
 msgstr ""
 
-#: mail/utils/validation.py:161
+#: mail/utils/validation.py:219
 msgid "Missing required files/directories for JMAP format: {0}"
 msgstr ""
 
@@ -5032,7 +5039,7 @@ msgstr ""
 msgid "No Bcc addresses added."
 msgstr ""
 
-#: mail/server/doctype/dmarc_report/dmarc_report.py:51
+#: mail/server/doctype/dmarc_report/dmarc_report.py:50
 msgid "No DMARC reports found."
 msgstr ""
 
@@ -5049,7 +5056,7 @@ msgstr ""
 msgid "No address book found."
 msgstr ""
 
-#: mail/server/doctype/allowed_ip/allowed_ip.py:51
+#: mail/server/doctype/allowed_ip/allowed_ip.py:50
 msgid "No allowed IPs found."
 msgstr ""
 
@@ -5057,7 +5064,7 @@ msgstr ""
 msgid "No answer for {0}."
 msgstr ""
 
-#: mail/server/doctype/blocked_ip/blocked_ip.py:51
+#: mail/server/doctype/blocked_ip/blocked_ip.py:50
 msgid "No blocked IPs found."
 msgstr ""
 
@@ -5111,7 +5118,7 @@ msgstr ""
 msgid "No messages found."
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:57
+#: mail/client/doctype/push_subscription/push_subscription.py:63
 msgid "No push subscriptions found."
 msgstr ""
 
@@ -5418,7 +5425,7 @@ msgstr ""
 msgid "Password for administrative access to the cluster."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:229
+#: mail/server/doctype/mail_account_request/mail_account_request.py:232
 msgid "Password is required to create account."
 msgstr ""
 
@@ -5552,7 +5559,7 @@ msgstr ""
 msgid "Please add at least one recipient."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:182
+#: mail/server/doctype/mail_account_request/mail_account_request.py:185
 msgid "Please confirm your email address by clicking the button below."
 msgstr ""
 
@@ -5564,15 +5571,15 @@ msgstr ""
 msgid "Please generate the Server Config before installing Stalwart."
 msgstr ""
 
-#: mail/server/doctype/dmarc_report/dmarc_report.py:55
+#: mail/server/doctype/dmarc_report/dmarc_report.py:54
 msgid "Please select a cluster to view DMARC reports."
 msgstr ""
 
-#: mail/server/doctype/allowed_ip/allowed_ip.py:55
+#: mail/server/doctype/allowed_ip/allowed_ip.py:54
 msgid "Please select a cluster to view allowed IPs."
 msgstr ""
 
-#: mail/server/doctype/blocked_ip/blocked_ip.py:55
+#: mail/server/doctype/blocked_ip/blocked_ip.py:54
 msgid "Please select a cluster to view blocked IPs."
 msgstr ""
 
@@ -5600,7 +5607,7 @@ msgstr ""
 msgid "Please select a user to view messages."
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:51
+#: mail/client/doctype/push_subscription/push_subscription.py:57
 msgid "Please select a user to view push subscriptions."
 msgstr ""
 
@@ -5636,7 +5643,7 @@ msgstr ""
 msgid "Please set the {0} in the Mail Settings."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:149
+#: mail/server/doctype/mail_principal/mail_principal.py:154
 msgid "Please specify tenant to fetch principals."
 msgstr ""
 
@@ -5658,7 +5665,7 @@ msgstr ""
 msgid "Please verify the SSH connection before installing Stalwart."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:223
+#: mail/server/doctype/mail_account_request/mail_account_request.py:226
 msgid "Please verify the email address first."
 msgstr ""
 
@@ -5753,15 +5760,19 @@ msgstr ""
 msgid "Principal Type"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:681
+#: mail/server/doctype/mail_principal/mail_principal.py:584
 msgid "Principal name or type cannot be changed directly. Please create a new principal."
 msgstr ""
 
-#: mail/utils/validation.py:293
+#: mail/server/doctype/mail_principal/mail_principal.py:198
+msgid "Principal type {0} is not supported yet."
+msgstr ""
+
+#: mail/utils/validation.py:351
 msgid "Principal {0} does not belong to tenant {1}."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:331
+#: mail/server/doctype/mail_principal/mail_principal.py:487
 msgid "Principal {0} not found in backend."
 msgstr ""
 
@@ -5955,19 +5966,19 @@ msgstr ""
 msgid "Push Subscription"
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:115
+#: mail/client/doctype/push_subscription/push_subscription.py:126
 msgid "Push Subscription Creation Error"
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:177
+#: mail/client/doctype/push_subscription/push_subscription.py:188
 msgid "Push Subscription Deletion Error"
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:162
+#: mail/client/doctype/push_subscription/push_subscription.py:173
 msgid "Push Subscription Renewal Error"
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:147
+#: mail/client/doctype/push_subscription/push_subscription.py:158
 msgid "Push Subscription Verification Error"
 msgstr ""
 
@@ -6001,11 +6012,11 @@ msgstr ""
 msgid "Queue ID"
 msgstr ""
 
-#: mail/server/doctype/message_queue/message_queue.py:92
+#: mail/server/doctype/message_queue/message_queue.py:227
 msgid "Queue paused successfully."
 msgstr ""
 
-#: mail/server/doctype/message_queue/message_queue.py:101
+#: mail/server/doctype/message_queue/message_queue.py:236
 msgid "Queue resumed successfully."
 msgstr ""
 
@@ -6565,7 +6576,7 @@ msgstr ""
 msgid "Row #{0}: Directory ID {1} is duplicated."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:191
+#: mail/server/doctype/mail_principal/mail_principal.py:259
 msgid "Row #{0}: Failed to verify {1} : {2}"
 msgstr ""
 
@@ -7648,21 +7659,21 @@ msgstr ""
 msgid "Tenant Name"
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:100
+#: mail/server/doctype/mail_account_request/mail_account_request.py:103
 #: mail/server/doctype/mail_domain_request/mail_domain_request.py:41
 msgid "Tenant is required"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:530
-msgid "Tenant must be specified to add a principal."
+#: mail/server/doctype/mail_principal/mail_principal.py:185
+msgid "Tenant is required."
 msgstr ""
 
-#: mail/utils/validation.py:277
+#: mail/utils/validation.py:335
 msgid "Tenant not specified."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:882
-#: mail/utils/validation.py:284
+#: mail/server/doctype/mail_principal/mail_principal.py:549
+#: mail/utils/validation.py:342
 msgid "Tenant {0} is not assigned to any cluster."
 msgstr ""
 
@@ -7787,7 +7798,7 @@ msgstr ""
 msgid "The S3 bucket where blobs (e-mail messages, Sieve scripts, etc.) will be stored."
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:82
+#: mail/client/doctype/push_subscription/push_subscription.py:88
 msgid "The URL must start with 'https://'."
 msgstr ""
 
@@ -8137,7 +8148,7 @@ msgstr ""
 msgid "The warn limit set by this quota object."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:207
+#: mail/server/doctype/mail_account_request/mail_account_request.py:210
 msgid "This method can only be called for invited users."
 msgstr ""
 
@@ -8145,7 +8156,7 @@ msgstr ""
 msgid "This method is only meant for developer mode"
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:143
+#: mail/server/doctype/mail_account_request/mail_account_request.py:146
 msgid "This request has expired. Please create a new one."
 msgstr ""
 
@@ -8282,7 +8293,7 @@ msgstr ""
 msgid "To Date"
 msgstr ""
 
-#: mail/client/doctype/vacation_response/vacation_response.py:92
+#: mail/client/doctype/vacation_response/vacation_response.py:95
 msgid "To Date must be after From Date."
 msgstr ""
 
@@ -8722,7 +8733,7 @@ msgstr ""
 msgid "User and filter are required."
 msgstr ""
 
-#: mail/client/doctype/push_subscription/push_subscription.py:139
+#: mail/client/doctype/push_subscription/push_subscription.py:150
 msgid "User does not exist or is disabled."
 msgstr ""
 
@@ -8738,7 +8749,7 @@ msgstr ""
 msgid "User must be an admin of the tenant"
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:232
+#: mail/server/doctype/mail_account_request/mail_account_request.py:235
 msgid "User with email {0} already exists."
 msgstr ""
 
@@ -8767,20 +8778,20 @@ msgstr ""
 msgid "User {0} does not have the Mail User role."
 msgstr ""
 
-#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:57
+#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:56
 msgid "User {0} does not have {1} role."
 msgstr ""
 
-#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:44
+#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:43
 msgid "User {0} is already a member of another tenant."
 msgstr ""
 
-#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:41
+#: mail/server/doctype/mail_tenant_member/mail_tenant_member.py:40
 msgid "User {0} is already a member."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:84
-#: mail/server/doctype/mail_account_request/mail_account_request.py:137
+#: mail/server/doctype/mail_account_request/mail_account_request.py:87
+#: mail/server/doctype/mail_account_request/mail_account_request.py:140
 msgid "User {0} is already registered."
 msgstr ""
 
@@ -8788,11 +8799,11 @@ msgstr ""
 msgid "User {0} is disabled."
 msgstr ""
 
-#: mail/api/admin.py:62
+#: mail/api/admin.py:61
 msgid "User {0} is not a Mail Admin of Tenant {1}."
 msgstr ""
 
-#: mail/utils/validation.py:264
+#: mail/utils/validation.py:322
 msgid "User {0} is not a tenant bound user"
 msgstr ""
 
@@ -8804,7 +8815,7 @@ msgstr ""
 msgid "User {0} is not allowed to upload attachments."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:107
+#: mail/server/doctype/mail_account_request/mail_account_request.py:110
 msgid "User {0} is not authorized to invite users to the tenant."
 msgstr ""
 
@@ -8917,7 +8928,7 @@ msgstr ""
 msgid "Verification Timeout (Milliseconds)"
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:198
+#: mail/server/doctype/mail_account_request/mail_account_request.py:201
 msgid "Verification email sent successfully."
 msgstr ""
 
@@ -8948,7 +8959,7 @@ msgstr ""
 msgid "Verify"
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:183
+#: mail/server/doctype/mail_account_request/mail_account_request.py:186
 msgid "Verify Account"
 msgstr ""
 
@@ -9111,7 +9122,7 @@ msgstr ""
 msgid "Whether to write log entries as a single line or multiline."
 msgstr ""
 
-#: mail/utils/validation.py:378
+#: mail/utils/validation.py:436
 msgid "Wildcard characters ({0}) are not allowed in email addresses."
 msgstr ""
 
@@ -9144,7 +9155,7 @@ msgstr ""
 msgid "Yesterday"
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:214
+#: mail/server/doctype/mail_account_request/mail_account_request.py:217
 msgid "You are not authorized to perform this action."
 msgstr ""
 
@@ -9152,7 +9163,7 @@ msgstr ""
 msgid "You cannot send email from {0} using user {1}. Please use the email address associated with the user."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:151
+#: mail/server/doctype/mail_principal/mail_principal.py:156
 msgid "You do not have permission to access principals."
 msgstr ""
 
@@ -9160,7 +9171,7 @@ msgstr ""
 msgid "You do not have permission to access the JMAP client for user {0}."
 msgstr ""
 
-#: mail/utils/validation.py:254
+#: mail/utils/validation.py:312
 msgid "You do not have permission to access this resource."
 msgstr ""
 
@@ -9168,15 +9179,15 @@ msgstr ""
 msgid "You do not have permission to view messages for this user."
 msgstr ""
 
-#: mail/utils/validation.py:275
+#: mail/utils/validation.py:333
 msgid "You do not permission to access Tenant {0}."
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:175
+#: mail/server/doctype/mail_account_request/mail_account_request.py:178
 msgid "You have been invited by {0} to join Frappe Mail"
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:179
+#: mail/server/doctype/mail_account_request/mail_account_request.py:182
 msgid "You have been invited by {0} to join tenant \"{1}\" on Frappe Mail."
 msgstr ""
 
@@ -9184,19 +9195,19 @@ msgstr ""
 msgid "You have no mails in this folder."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:457
+#: mail/utils/validation.py:159
 msgid "You have reached the maximum limit of {0} accounts for the tenant."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:427
+#: mail/utils/validation.py:129
 msgid "You have reached the maximum limit of {0} domains for the tenant."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:441
+#: mail/utils/validation.py:143
 msgid "You have reached the maximum limit of {0} groups for the tenant."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:471
+#: mail/utils/validation.py:173
 msgid "You have reached the maximum limit of {0} lists for the tenant."
 msgstr ""
 
@@ -9244,7 +9255,7 @@ msgstr ""
 #: mail/client/doctype/identity/identity.py:245
 #: mail/client/doctype/mailbox/mailbox.py:101
 #: mail/client/doctype/mailbox/mailbox.py:145
-#: mail/client/doctype/push_subscription/push_subscription.py:121
+#: mail/client/doctype/push_subscription/push_subscription.py:132
 msgid "description"
 msgstr ""
 
@@ -9341,7 +9352,7 @@ msgstr ""
 #: mail/client/doctype/identity/identity.py:159
 #: mail/client/doctype/identity/identity.py:202
 #: mail/client/doctype/mailbox/mailbox.py:99
-#: mail/client/doctype/push_subscription/push_subscription.py:119
+#: mail/client/doctype/push_subscription/push_subscription.py:130
 #: mail/jmap.py:563
 msgid "notCreateddescription"
 msgstr ""
@@ -9349,7 +9360,7 @@ msgstr ""
 #: mail/client/doctype/address_book/address_book.py:172
 #: mail/client/doctype/identity/identity.py:258
 #: mail/client/doctype/mailbox/mailbox.py:158
-#: mail/client/doctype/push_subscription/push_subscription.py:177
+#: mail/client/doctype/push_subscription/push_subscription.py:188
 msgid "notDestroyeddescription"
 msgstr ""
 
@@ -9357,8 +9368,8 @@ msgstr ""
 #: mail/client/doctype/contact_card/contact_card.py:325
 #: mail/client/doctype/identity/identity.py:243
 #: mail/client/doctype/mailbox/mailbox.py:143
-#: mail/client/doctype/push_subscription/push_subscription.py:146
-#: mail/client/doctype/push_subscription/push_subscription.py:162
+#: mail/client/doctype/push_subscription/push_subscription.py:157
+#: mail/client/doctype/push_subscription/push_subscription.py:173
 msgid "notUpdateddescription"
 msgstr ""
 
@@ -9434,7 +9445,7 @@ msgstr ""
 msgid "{0} (Delivered after {1} seconds)"
 msgstr ""
 
-#: mail/server/doctype/mail_account_request/mail_account_request.py:187
+#: mail/server/doctype/mail_account_request/mail_account_request.py:190
 msgid "{0} - OTP for Frappe Mail Account Verification"
 msgstr ""
 
@@ -9454,7 +9465,7 @@ msgstr ""
 msgid "{0} has an invalid store type '{1}'. Allowed types are: {2}."
 msgstr ""
 
-#: mail/utils/validation.py:130
+#: mail/utils/validation.py:188
 msgid "{0} is not a valid Cron expression."
 msgstr ""
 
