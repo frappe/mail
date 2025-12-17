@@ -6,26 +6,50 @@
 		badge-theme="blue"
 	>
 		<template #actions>
-			<Dropdown :options="DROPDOWN_OPTIONS">
+			<Dropdown :options="dropdownOptions">
 				<Button icon="more-horizontal" class="text-ink-gray-5" />
 			</Dropdown>
 		</template>
 		<template #default>
-			<div class="grid sm:grid-cols-2">
-				<DashboardCard
-					:title="__('General Information')"
-					:button-label="__('Edit')"
-					class="col-span-2"
-					@action="showEditGeneral = true"
-				>
-					<InformationField :label="__('Name')" :value="addressBook.doc._name" />
-					<InformationField
-						:label="__('Description')"
-						:value="addressBook.doc.description"
-					/>
-					<InformationField :label="__('Total Contacts')" :value="'1'" />
-				</DashboardCard>
-			</div>
+			<DashboardCard
+				:title="__('General Information')"
+				:button-label="__('Edit')"
+				@action="showEditGeneral = true"
+			>
+				<InformationField :label="__('Name')" :value="addressBook.doc._name" />
+				<InformationField
+					:label="__('Description')"
+					:value="addressBook.doc.description"
+				/>
+				<InformationField :label="__('Total Contacts')" :value="'1'" />
+			</DashboardCard>
+
+			<DashboardCard :title="__('Contacts')" class="flex-1" @action="showEditGeneral = true">
+				<div class="space-y-4 p-4">
+					<FormControl v-model="search" :placeholder="__('Search')" class="w-80">
+						<template #prefix>
+							<FeatherIcon name="search" class="text-ink-gray-5 w-4" />
+						</template>
+					</FormControl>
+
+					<ListView
+						ref="listView"
+						:columns="LIST_COLUMNS"
+						:rows="[]"
+						:options="LIST_OPTIONS"
+						row-key="id"
+					>
+						<ListHeader />
+						<ListRows v-if="false" />
+						<ListEmptyState v-else />
+						<ListSelectBanner>
+							<template #actions>
+								<Button variant="ghost" theme="red" :label="__('Delete')" />
+							</template>
+						</ListSelectBanner>
+					</ListView>
+				</div>
+			</DashboardCard>
 		</template>
 	</DashboardLayout>
 
@@ -34,10 +58,12 @@
 		v-model="showEditGeneral"
 		:name="addressBook.doc._name"
 		:description="addressBook.doc.description"
+		:is-default="!!addressBook.doc.default"
 		@save="
 			(val) => {
 				addressBook.doc._name = val.name
 				addressBook.doc.description = val.description
+				addressBook.doc.default = Number(val.isDefault)
 				addressBook.save.submit()
 			}
 		"
@@ -48,8 +74,21 @@
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Trash2 } from 'lucide-vue-next'
-import { Button, Dialog, Dropdown, createDocumentResource, createResource } from 'frappe-ui'
+import { Pin, Trash2 } from 'lucide-vue-next'
+import {
+	Button,
+	Dialog,
+	Dropdown,
+	FeatherIcon,
+	FormControl,
+	ListEmptyState,
+	ListHeader,
+	ListRows,
+	ListSelectBanner,
+	ListView,
+	createDocumentResource,
+	createResource,
+} from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
@@ -66,6 +105,7 @@ const { addressBooks } = userStore()
 
 const showEditGeneral = ref(false)
 const showDeleteAddressBook = ref(false)
+const search = ref('')
 
 const addressBook = createDocumentResource({
 	doctype: 'Address Book',
@@ -74,6 +114,7 @@ const addressBook = createDocumentResource({
 	setValue: {
 		onSuccess: () => {
 			raiseToast(__('Address book updated.'))
+			addressBooks.reload()
 		},
 		onError: (error) => {
 			raiseToast(error.messages[0], 'error')
@@ -109,11 +150,31 @@ const deleteAddressBookOptions = computed(() => ({
 	actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteAddressBook.submit }],
 }))
 
-const DROPDOWN_OPTIONS = [
+const dropdownOptions = computed(() => [
+	{
+		label: __('Set as Default'),
+		onClick: () => {
+			addressBook.doc.default = 1
+			addressBook.save.submit()
+		},
+		icon: Pin,
+		condition: () => !addressBook.doc?.default,
+	},
 	{
 		label: __('Delete'),
 		onClick: () => (showDeleteAddressBook.value = true),
 		icon: Trash2,
 	},
+])
+
+const LIST_COLUMNS = [
+	{ label: __('Name'), key: 'full_name' },
+	{ label: __('Kind'), key: 'kind' },
 ]
+
+const LIST_OPTIONS = {
+	showTooltip: false,
+	emptyState: { description: __('No contacts found.') },
+	getRowRoute: (row) => ({ name: 'Contact', params: { contactName: row.id } }),
+}
 </script>
