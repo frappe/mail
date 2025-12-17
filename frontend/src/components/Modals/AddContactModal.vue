@@ -85,8 +85,8 @@ watch(show, (val) => {
 })
 
 const KIND_OPTIONS = [
-	{ label: __('Personal'), value: 'Personal' },
-	{ label: __('Work'), value: 'Work' },
+	{ label: __('Individual'), value: 'Individual' },
+	{ label: __('Group'), value: 'Group' },
 	{ label: __('Other'), value: 'Other' },
 ]
 </script>

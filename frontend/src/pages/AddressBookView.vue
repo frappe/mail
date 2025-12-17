@@ -21,10 +21,13 @@
 					:label="__('Description')"
 					:value="addressBook.doc.description"
 				/>
-				<InformationField :label="__('Total Contacts')" :value="'1'" />
+				<InformationField
+					:label="__('Total Contacts')"
+					:value="contacts.data?.length.toString() || '0'"
+				/>
 			</DashboardCard>
 
-			<DashboardCard :title="__('Contacts')" class="flex-1" @action="showEditGeneral = true">
+			<DashboardCard :title="__('Contacts')" class="flex-1" @action="showAddContacts = true">
 				<div class="space-y-4 p-4">
 					<FormControl v-model="search" :placeholder="__('Search')" class="w-80">
 						<template #prefix>
@@ -33,18 +36,26 @@
 					</FormControl>
 
 					<ListView
+						v-if="contacts?.data"
 						ref="listView"
 						:columns="LIST_COLUMNS"
-						:rows="[]"
+						:rows="contacts?.data"
 						:options="LIST_OPTIONS"
 						row-key="id"
+						class="max-h-[50rem] min-h-72 flex-1 overflow-auto"
+						@scroll="loadMoreContacts"
 					>
 						<ListHeader />
-						<ListRows v-if="false" />
+						<ListRows v-if="contacts.data.length" />
 						<ListEmptyState v-else />
 						<ListSelectBanner>
 							<template #actions>
-								<Button variant="ghost" theme="red" :label="__('Delete')" />
+								<Button
+									variant="ghost"
+									theme="red"
+									:label="__('Remove')"
+									@click="showRemoveContacts = true"
+								/>
 							</template>
 						</ListSelectBanner>
 					</ListView>
@@ -69,11 +80,29 @@
 		"
 	/>
 	<Dialog v-model="showDeleteAddressBook" :options="deleteAddressBookOptions" />
+
+	<AddAddressBookContactsModal
+		v-if="addressBook?.originalDoc"
+		v-model="showAddContacts"
+		:name="addressBook.doc._name"
+		:description="addressBook.doc.description"
+		:is-default="!!addressBook.doc.default"
+		@save="
+			(val) => {
+				addressBook.doc._name = val.name
+				addressBook.doc.description = val.description
+				addressBook.doc.default = Number(val.isDefault)
+				addressBook.save.submit()
+			}
+		"
+	/>
+	<Dialog v-model="showRemoveContacts" :options="removeContactsOptions" />
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue'
+import { computed, inject, ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
+import { useDebounceFn, watchDebounced } from '@vueuse/core'
 import { Pin, Trash2 } from 'lucide-vue-next'
 import {
 	Button,
@@ -95,6 +124,7 @@ import { userStore } from '@/stores/user'
 import DashboardCard from '@/components/DashboardCard.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import InformationField from '@/components/InformationField.vue'
+import AddAddressBookContactsModal from '@/components/Modals/AddAddressBookContactsModal.vue'
 import EditAddressBookModal from '@/components/Modals/EditAddressBookModal.vue'
 
 const { addressBookName } = defineProps<{ addressBookName: string }>()
@@ -105,7 +135,8 @@ const { addressBooks } = userStore()
 
 const showEditGeneral = ref(false)
 const showDeleteAddressBook = ref(false)
-const search = ref('')
+const showAddContacts = ref(false)
+const showRemoveContacts = ref(false)
 
 const addressBook = createDocumentResource({
 	doctype: 'Address Book',
@@ -122,6 +153,33 @@ const addressBook = createDocumentResource({
 		},
 	},
 })
+
+const search = ref('')
+const limit = ref(50)
+
+const contacts = createResource({
+	url: 'mail.api.contacts.get_contact_cards',
+	auto: true,
+	makeParams: () => ({
+		filter: { inAddressBook: addressBookName, text: search.value },
+		limit: limit.value,
+	}),
+	cache: ['contacts', addressBookName, search.value],
+})
+
+watchDebounced(() => search.value, contacts.reload, { debounce: 500 })
+
+const loadMoreContacts = useDebounceFn((e) => {
+	const { scrollTop, scrollHeight, clientHeight } = e.target
+	if (scrollTop + clientHeight >= scrollHeight - 10 && contacts.data?.length === limit.value) {
+		limit.value += 50
+		contacts.reload()
+		setTimeout(
+			() => e.target.scrollTo({ top: e.target.scrollHeight, behavior: 'smooth' }),
+			100,
+		)
+	}
+}, 500)
 
 const breadcrumbs = computed(() => [
 	{ label: __('Address Books'), route: '/address-books' },
@@ -143,6 +201,27 @@ const deleteAddressBook = createResource({
 	},
 })
 
+const listView = useTemplateRef('listView')
+
+const removeContacts = createResource({
+	url: 'mail.client.doctype.contact_card.contact_card.contact_card_remove_from_address_book',
+	makeParams: () => ({
+		user: user.data.name,
+		ids: Array.from(listView.value?.selections),
+		address_book_id: addressBookName,
+	}),
+	onSuccess: () => {
+		contacts.reload()
+		showRemoveContacts.value = false
+		raiseToast(__('Contacts removed.'))
+		listView.value?.toggleAllRows()
+	},
+	onError: (error) => {
+		showRemoveContacts.value = false
+		raiseToast(error.messages[0], 'error')
+	},
+})
+
 const deleteAddressBookOptions = computed(() => ({
 	title: __('Delete Address Book'),
 	message: __('Are you sure you want to delete {0}?', [addressBook.doc?._name]),
@@ -150,20 +229,27 @@ const deleteAddressBookOptions = computed(() => ({
 	actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteAddressBook.submit }],
 }))
 
+const removeContactsOptions = computed(() => ({
+	title: __('Remove Contacts'),
+	message: __('Are you sure you want to remove the selected contacts?'),
+	icon: { name: 'alert-triangle', appearance: 'warning' },
+	actions: [{ label: __('Confirm'), variant: 'solid', onClick: removeContacts.submit }],
+}))
+
 const dropdownOptions = computed(() => [
 	{
 		label: __('Set as Default'),
+		icon: Pin,
 		onClick: () => {
 			addressBook.doc.default = 1
 			addressBook.save.submit()
 		},
-		icon: Pin,
 		condition: () => !addressBook.doc?.default,
 	},
 	{
 		label: __('Delete'),
-		onClick: () => (showDeleteAddressBook.value = true),
 		icon: Trash2,
+		onClick: () => (showDeleteAddressBook.value = true),
 	},
 ])
 

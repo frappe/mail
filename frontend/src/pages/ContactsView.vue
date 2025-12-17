@@ -18,9 +18,10 @@
 			:rows="contacts.data"
 			:options="LIST_OPTIONS"
 			row-key="id"
+			@scroll="loadMoreContacts"
 		>
 			<ListHeader />
-			<ListRows v-if="searchedContacts.length" />
+			<ListRows v-if="contacts.data.length" />
 			<ListEmptyState v-else />
 			<ListSelectBanner>
 				<template #actions>
@@ -40,7 +41,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, useTemplateRef } from 'vue'
+import { inject, ref, useTemplateRef } from 'vue'
+import { useDebounceFn, watchDebounced } from '@vueuse/core'
 import {
 	Button,
 	Dialog,
@@ -65,12 +67,28 @@ const listView = useTemplateRef('listView')
 const showAddContact = ref(false)
 const showDeleteContacts = ref(false)
 const search = ref('')
+const limit = ref(50)
 
 const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
-	cache: ['contacts', user.data.name],
+	makeParams: () => ({ filter: { text: search.value }, limit: limit.value }),
+	cache: ['contacts', user.data.name, search.value],
 })
+
+watchDebounced(() => search.value, contacts.reload, { debounce: 500 })
+
+const loadMoreContacts = useDebounceFn((e) => {
+	const { scrollTop, scrollHeight, clientHeight } = e.target
+	if (scrollTop + clientHeight >= scrollHeight - 10 && contacts.data?.length === limit.value) {
+		limit.value += 50
+		contacts.reload()
+		setTimeout(
+			() => e.target.scrollTo({ top: e.target.scrollHeight, behavior: 'smooth' }),
+			100,
+		)
+	}
+}, 500)
 
 const deleteContacts = createResource({
 	url: 'mail.client.doctype.contact_card.contact_card.delete_contact_cards',
@@ -86,10 +104,6 @@ const deleteContacts = createResource({
 		raiseToast(error.messages[0], 'error')
 	},
 })
-
-const searchedContacts = computed(() =>
-	contacts.data?.filter((c) => c.full_name.toLowerCase().includes(search.value.toLowerCase())),
-)
 
 const LIST_COLUMNS = [
 	{ label: __('Name'), key: 'full_name' },

@@ -57,7 +57,7 @@ watch(show, (val) => {
 })
 
 const TYPE_OPTIONS = [
-	{ label: __('Home'), value: 'Home' },
+	{ label: __('Personal'), value: 'Personal' },
 	{ label: __('Work'), value: 'Work' },
 	{ label: __('Other'), value: 'Other' },
 ]

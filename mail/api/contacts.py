@@ -5,7 +5,7 @@ from mail.client.doctype.contact_card.contact_card import fetch_contact_cards
 
 
 @frappe.whitelist()
-def get_address_books() -> list[str]:
+def get_address_books() -> list[dict]:
 	"""Returns the address books for the current user."""
 
 	if not (address_books := fetch_address_books(frappe.session.user, 1, 50)):
@@ -16,10 +16,10 @@ def get_address_books() -> list[str]:
 
 
 @frappe.whitelist()
-def get_contact_cards() -> list[str]:
+def get_contact_cards(filter=None, limit=50) -> list[dict]:
 	"""Returns the contact cards for the current user."""
 
-	if not (contact_cards := fetch_contact_cards(frappe.session.user, None, 0, 500)[0]):
+	if not (contact_cards := fetch_contact_cards(frappe.session.user, filter, 0, limit)[0]):
 		return []
 
 	fields = ["id", "full_name", "kind"]

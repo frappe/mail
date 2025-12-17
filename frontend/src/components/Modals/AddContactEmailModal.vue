@@ -52,9 +52,8 @@ watch(show, (val) => {
 })
 
 const TYPE_OPTIONS = [
-	{ label: __('Primary'), value: 'Primary' },
 	{ label: __('Personal'), value: 'Personal' },
 	{ label: __('Work'), value: 'Work' },
-	{ label: __('Public'), value: 'Public' },
+	{ label: __('Other'), value: 'Other' },
 ]
 </script>

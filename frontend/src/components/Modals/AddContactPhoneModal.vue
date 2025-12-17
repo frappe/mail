@@ -47,9 +47,8 @@ watch(show, (val) => {
 })
 
 const TYPE_OPTIONS = [
-	{ label: __('Mobile'), value: 'Mobile' },
+	{ label: __('Personal'), value: 'Personal' },
 	{ label: __('Work'), value: 'Work' },
-	{ label: __('Home'), value: 'Home' },
 	{ label: __('Other'), value: 'Other' },
 ]
 </script>
