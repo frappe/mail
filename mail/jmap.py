@@ -1564,12 +1564,14 @@ class JMAPClient:
 						"accountId": self.primary_account_id,
 						"create": {
 							creation_id: {
-								"addressBookIds": {id: True for id in address_book_ids},
+								"@type": "Card",
+								"version": "1.0",
 								"kind": kind,
 								"name": _get_name_map(full_name),
 								"emails": _get_emails_map(emails),
 								"phones": _get_phones_map(phones),
 								"addresses": _get_addresses_map(addresses),
+								"addressBookIds": {id: True for id in address_book_ids},
 								"created": utcnow(),
 								"updated": utcnow(),
 							}
@@ -2011,6 +2013,7 @@ def _get_name_map(full_name: str | None = None) -> dict:
 	if full_name:
 		given, surname = full_name.split(" ", 1) if " " in full_name else (full_name, None)
 		return {
+			"@type": "Name",
 			"full": full_name,
 			"components": [{"kind": "given", "value": given}, {"kind": "surname", "value": surname}],
 			"isOrdered": True,
