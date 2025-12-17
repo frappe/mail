@@ -76,7 +76,7 @@ const lists = createResource({
 	cache: ['mailTenantMailingLists', user.data?.tenant, search.value],
 })
 
-watchDebounced(() => search.value, lists.reload, { debounce: 500 })
+watchDebounced(() => search.value, lists.reload, { debounce: 300 })
 
 const deleteLists = createResource({
 	url: 'mail.api.admin.delete_mailing_lists',

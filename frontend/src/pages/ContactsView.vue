@@ -73,10 +73,10 @@ const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
 	makeParams: () => ({ filter: { text: search.value }, limit: limit.value }),
-	cache: ['contacts', user.data.name, search.value],
+	cache: ['contacts', user.data.name, search.value, limit.value],
 })
 
-watchDebounced(() => search.value, contacts.reload, { debounce: 500 })
+watchDebounced(() => search.value, contacts.reload, { debounce: 300 })
 
 const loadMoreContacts = useDebounceFn((e) => {
 	const { scrollTop, scrollHeight, clientHeight } = e.target

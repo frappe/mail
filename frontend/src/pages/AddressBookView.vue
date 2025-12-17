@@ -84,17 +84,7 @@
 	<AddAddressBookContactsModal
 		v-if="addressBook?.originalDoc"
 		v-model="showAddContacts"
-		:name="addressBook.doc._name"
-		:description="addressBook.doc.description"
-		:is-default="!!addressBook.doc.default"
-		@save="
-			(val) => {
-				addressBook.doc._name = val.name
-				addressBook.doc.description = val.description
-				addressBook.doc.default = Number(val.isDefault)
-				addressBook.save.submit()
-			}
-		"
+		@add="(val) => addContacts.submit(val.map((c) => c.id))"
 	/>
 	<Dialog v-model="showRemoveContacts" :options="removeContactsOptions" />
 </template>
@@ -164,10 +154,10 @@ const contacts = createResource({
 		filter: { inAddressBook: addressBookName, text: search.value },
 		limit: limit.value,
 	}),
-	cache: ['contacts', addressBookName, search.value],
+	cache: ['contacts', addressBookName, search.value, limit.value],
 })
 
-watchDebounced(() => search.value, contacts.reload, { debounce: 500 })
+watchDebounced(() => search.value, contacts.reload, { debounce: 300 })
 
 const loadMoreContacts = useDebounceFn((e) => {
 	const { scrollTop, scrollHeight, clientHeight } = e.target
@@ -202,6 +192,16 @@ const deleteAddressBook = createResource({
 })
 
 const listView = useTemplateRef('listView')
+
+const addContacts = createResource({
+	url: 'mail.client.doctype.contact_card.contact_card.contact_card_add_to_address_book',
+	makeParams: (ids) => ({ user: user.data.name, ids, address_book_id: addressBookName }),
+	onSuccess: () => {
+		raiseToast(__('Contacts added.'))
+		contacts.reload()
+	},
+	onError: (error) => raiseToast(error.messages[0], 'error'),
+})
 
 const removeContacts = createResource({
 	url: 'mail.client.doctype.contact_card.contact_card.contact_card_remove_from_address_book',
