@@ -681,13 +681,14 @@ class MailPrincipal(Document):
 		for pname in principals_to_invalidate:
 			_remove_principal_from_cache(self.tenant, pname)
 
-		try:
-			self._sync_jmap_identities()
-		except Exception:
-			frappe.log_error(
-				title=f"Failed to sync JMAP identities for principal {self.name}",
-				message=frappe.get_traceback(with_context=True),
-			)
+		if self.type == "Individual":
+			try:
+				self._sync_jmap_identities()
+			except Exception:
+				frappe.log_error(
+					title=f"Failed to sync JMAP identities for principal {self.name}",
+					message=frappe.get_traceback(with_context=True),
+				)
 
 		self.name = self._name
 		self.password = None
