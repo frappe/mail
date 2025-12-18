@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-18 10:02:01.484617",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_yala",
+  "calendar",
+  "column_break_kutf",
+  "calendar_id",
+  "calendar_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_yala",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "calendar",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Calendar",
+   "options": "Calendar",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_kutf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "calendar_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Calendar ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "calendar_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Calendar Name",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-12-18 10:04:42.854069",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Event Calendar",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

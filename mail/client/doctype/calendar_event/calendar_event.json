@@ -1,0 +1,151 @@
+{
+ "actions": [],
+ "creation": "2025-12-18 09:53:53.514893",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_nfos",
+  "user",
+  "column_break_guhl",
+  "draft",
+  "origin",
+  "section_break_nzql",
+  "id",
+  "schedule_id",
+  "base_event_id",
+  "column_break_dcpf",
+  "utc_start",
+  "utc_end",
+  "section_break_bnnv",
+  "calendars",
+  "section_break_mohl",
+  "may_invite_self",
+  "may_invite_others",
+  "hide_attendees"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_nfos",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The user this event belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_guhl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "draft",
+   "fieldtype": "Check",
+   "label": "Draft"
+  },
+  {
+   "fieldname": "section_break_nzql",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "label": "ID"
+  },
+  {
+   "fieldname": "base_event_id",
+   "fieldtype": "Data",
+   "label": "Base Event ID"
+  },
+  {
+   "fieldname": "column_break_dcpf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_bnnv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "calendars",
+   "fieldtype": "Table",
+   "label": "Calendars",
+   "options": "Event Calendar",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "origin",
+   "fieldtype": "Check",
+   "label": "Origin"
+  },
+  {
+   "fieldname": "utc_start",
+   "fieldtype": "Data",
+   "label": "UTC Start"
+  },
+  {
+   "fieldname": "utc_end",
+   "fieldtype": "Data",
+   "label": "UTC End"
+  },
+  {
+   "fieldname": "section_break_mohl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "may_invite_self",
+   "fieldtype": "Check",
+   "label": "May Invite Self"
+  },
+  {
+   "default": "0",
+   "fieldname": "may_invite_others",
+   "fieldtype": "Check",
+   "label": "May Invite Others"
+  },
+  {
+   "default": "0",
+   "fieldname": "hide_attendees",
+   "fieldtype": "Check",
+   "label": "Hide Attendees"
+  },
+  {
+   "fieldname": "schedule_id",
+   "fieldtype": "Data",
+   "label": "Schedule ID"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2026-01-07 11:52:24.466958",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Calendar Event",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
