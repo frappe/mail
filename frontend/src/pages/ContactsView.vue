@@ -18,10 +18,9 @@
 			:rows="contacts.data"
 			:options="LIST_OPTIONS"
 			row-key="id"
-			@scroll="loadMoreContacts"
 		>
 			<ListHeader />
-			<ListRows v-if="contacts.data.length" />
+			<ListRows v-if="contacts.data.length" @scroll="loadMoreContacts" />
 			<ListEmptyState v-else />
 			<ListSelectBanner>
 				<template #actions>

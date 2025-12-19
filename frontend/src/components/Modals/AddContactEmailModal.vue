@@ -28,7 +28,7 @@ const show = defineModel<boolean>()
 
 const emit = defineEmits(['add'])
 
-const DEFAULT_EMAIL = { address: '', type: 'Primary', label: '' }
+const DEFAULT_EMAIL = { address: '', type: 'Personal', label: '' }
 
 const email = reactive({ ...DEFAULT_EMAIL })
 

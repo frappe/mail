@@ -64,7 +64,7 @@ const defaultContact = {
 	user: user.data.name,
 	address_book_ids: defaultAddressBook ? [defaultAddressBook] : [],
 	full_name: '',
-	kind: 'Personal',
+	kind: 'Individual',
 }
 
 const contact = reactive({ ...defaultContact })

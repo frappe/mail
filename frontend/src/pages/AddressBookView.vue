@@ -43,10 +43,9 @@
 						:options="LIST_OPTIONS"
 						row-key="id"
 						class="max-h-[50rem] min-h-72 flex-1 overflow-auto"
-						@scroll="loadMoreContacts"
 					>
 						<ListHeader />
-						<ListRows v-if="contacts.data.length" />
+						<ListRows v-if="contacts.data.length" @scroll="loadMoreContacts" />
 						<ListEmptyState v-else />
 						<ListSelectBanner>
 							<template #actions>

@@ -27,7 +27,7 @@ const show = defineModel<boolean>()
 const emit = defineEmits(['add'])
 
 const DEFAULT_ADDRESS = {
-	type: 'Home',
+	type: 'Personal',
 	street: '',
 	locality: '',
 	region: '',
