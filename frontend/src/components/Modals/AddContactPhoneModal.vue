@@ -31,7 +31,7 @@ const options = computed(() => ({
 	title: __('Add Phone'),
 	actions: [
 		{
-			label: __('Add'),
+			label: __('Save'),
 			variant: 'solid',
 			disabled: !(email.number && email.type),
 			onClick: () => {

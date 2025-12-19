@@ -153,6 +153,15 @@ const contacts = createResource({
 		filter: { inAddressBook: addressBookName, text: search.value },
 		limit: limit.value,
 	}),
+	transform: (data) =>
+		data.map((c) => {
+			let email = ''
+			if (c.emails.length === 1) email = c.emails[0].address
+			else if (c.emails.length > 1)
+				email = __('{0} + {1} more', [c.emails[0].address, c.emails.length - 1])
+
+			return { ...c, email }
+		}),
 	cache: ['contacts', addressBookName, search.value, limit.value],
 })
 
@@ -255,6 +264,7 @@ const dropdownOptions = computed(() => [
 const LIST_COLUMNS = [
 	{ label: __('Name'), key: 'full_name' },
 	{ label: __('Kind'), key: 'kind' },
+	{ label: __('Email'), key: 'email' },
 ]
 
 const LIST_OPTIONS = {

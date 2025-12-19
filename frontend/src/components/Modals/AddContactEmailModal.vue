@@ -36,7 +36,7 @@ const options = computed(() => ({
 	title: __('Add Email'),
 	actions: [
 		{
-			label: __('Add'),
+			label: __('Save'),
 			variant: 'solid',
 			disabled: !(email.address && email.type),
 			onClick: () => {

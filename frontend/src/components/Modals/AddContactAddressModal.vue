@@ -41,7 +41,7 @@ const options = computed(() => ({
 	title: __('Add Address'),
 	actions: [
 		{
-			label: __('Add'),
+			label: __('Save'),
 			variant: 'solid',
 			disabled: !(address.type && address.street),
 			onClick: () => {

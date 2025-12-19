@@ -28,10 +28,10 @@ const { addressBooks } = userStore()
 const addressBook = ref('')
 
 const options = computed(() => ({
-	title: __('Add Email'),
+	title: __('Add to Address Book'),
 	actions: [
 		{
-			label: __('Add'),
+			label: __('Save'),
 			variant: 'solid',
 			disabled: !addressBook.value,
 			onClick: () => {

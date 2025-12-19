@@ -72,6 +72,15 @@ const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
 	makeParams: () => ({ filter: { text: search.value }, limit: limit.value }),
+	transform: (data) =>
+		data.map((c) => {
+			let email = ''
+			if (c.emails.length === 1) email = c.emails[0].address
+			else if (c.emails.length > 1)
+				email = __('{0} + {1} more', [c.emails[0].address, c.emails.length - 1])
+
+			return { ...c, email }
+		}),
 	cache: ['contacts', user.data.name, search.value, limit.value],
 })
 
@@ -107,6 +116,7 @@ const deleteContacts = createResource({
 const LIST_COLUMNS = [
 	{ label: __('Name'), key: 'full_name' },
 	{ label: __('Kind'), key: 'kind' },
+	{ label: __('Email'), key: 'email' },
 ]
 
 const LIST_OPTIONS = {
@@ -118,6 +128,7 @@ const LIST_OPTIONS = {
 const DELETE_CONTACTS_OPTIONS = {
 	title: __('Delete Contacts'),
 	message: __('Are you sure you want to delete the selected contacts?'),
+	icon: { name: 'alert-triangle', appearance: 'warning' },
 	actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteContacts.submit }],
 }
 </script>
