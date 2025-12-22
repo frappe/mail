@@ -5,13 +5,12 @@
 		:button-label="__('Add Address Book')"
 		:button-action="() => (showAddAddressBook = true)"
 	>
-		<div class="flex items-center space-x-3">
-			<FormControl v-model="search" :placeholder="__('Search')" class="w-80">
-				<template #prefix>
-					<FeatherIcon name="search" class="text-ink-gray-5 w-4" />
-				</template>
-			</FormControl>
-		</div>
+		<FormControl v-model="search" :placeholder="__('Search')" class="sm:w-80">
+			<template #prefix>
+				<FeatherIcon name="search" class="text-ink-gray-5 w-4" />
+			</template>
+		</FormControl>
+
 		<ListView
 			v-if="addressBooks?.data"
 			ref="listView"

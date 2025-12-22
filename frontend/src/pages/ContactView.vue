@@ -10,7 +10,7 @@
 				<DashboardCard
 					:title="__('General Information')"
 					:button-label="__('Edit')"
-					class="h-[14.5rem]"
+					class="h-[14.5rem] max-sm:col-span-2"
 					@action="showEditGeneral = true"
 				>
 					<InformationField :label="__('Name')" :value="contact.doc.full_name" />
@@ -27,7 +27,7 @@
 
 				<DashboardCard
 					:title="__('Address Books')"
-					class="h-[14.5rem]"
+					class="h-[14.5rem] max-sm:col-span-2"
 					@action="showAddAddressBook = true"
 				>
 					<ListView

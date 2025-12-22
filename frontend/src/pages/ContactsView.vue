@@ -4,7 +4,7 @@
 		:button-label="__('Add Contact')"
 		:button-action="() => (showAddContact = true)"
 	>
-		<FormControl v-model="search" :placeholder="__('Search')" class="w-80">
+		<FormControl v-model="search" :placeholder="__('Search')" class="sm:w-80">
 			<template #prefix>
 				<FeatherIcon name="search" class="text-ink-gray-5 w-4" />
 			</template>
