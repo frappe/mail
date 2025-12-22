@@ -45,7 +45,14 @@
 					</Dropdown>
 					<div class="flex flex-1 flex-col gap-2.5">
 						<div class="flex gap-2">
-							<span class="text-ink-gray-4 text-sm leading-7"> {{ __('To') }} </span>
+							<Tooltip :text="__('Select from contacts')">
+								<span
+									class="text-ink-gray-4 cursor-pointer text-sm leading-7 hover:underline"
+									@click="insertContacts('to')"
+								>
+									{{ __('To') }}
+								</span>
+							</Tooltip>
 							<MultiselectInputControl
 								ref="toInput"
 								v-model="mail.to"
@@ -73,9 +80,14 @@
 						</div>
 						<template v-if="showCcBcc">
 							<div class="flex gap-2">
-								<span class="text-ink-gray-4 text-sm leading-7">
-									{{ __('Cc') }}
-								</span>
+								<Tooltip :text="__('Select from contacts')">
+									<span
+										class="text-ink-gray-4 cursor-pointer text-sm leading-7 hover:underline"
+										@click="insertContacts('cc')"
+									>
+										{{ __('Cc') }}
+									</span>
+								</Tooltip>
 								<MultiselectInputControl
 									ref="ccInput"
 									v-model="mail.cc"
@@ -88,9 +100,14 @@
 								/>
 							</div>
 							<div class="flex gap-2">
-								<span class="text-ink-gray-4 text-sm leading-7">
-									{{ __('Bcc') }}
-								</span>
+								<Tooltip :text="__('Select from contacts')">
+									<span
+										class="text-ink-gray-4 cursor-pointer text-sm leading-7 hover:underline"
+										@click="insertContacts('bcc')"
+									>
+										{{ __('Bcc') }}
+									</span>
+								</Tooltip>
 								<MultiselectInputControl
 									v-model="mail.bcc"
 									class="flex-1 text-sm"
@@ -168,6 +185,11 @@
 			/>
 		</template>
 	</TextEditor>
+
+	<ContactsModal
+		v-model="showContactsModal"
+		@insert="(selections) => mail[insertContactsInto].push(...selections)"
+	/>
 </template>
 
 <script setup lang="ts">
@@ -192,6 +214,7 @@ import {
 	FeatherIcon,
 	ImageExtension,
 	TextEditor,
+	Tooltip,
 	createResource,
 	useFileUpload,
 } from 'frappe-ui'
@@ -204,6 +227,8 @@ import ComposeMailToolbar from '@/components/ComposeMailToolbar.vue'
 import MultiselectInputControl from '@/components/Controls/MultiselectInputControl.vue'
 
 import type { Attachment, ComposeMailData, File as FileDoc, Identity, UserResource } from '@/types'
+
+import ContactsModal from './Modals/ContactsModal.vue'
 
 const show = defineModel<boolean>()
 
@@ -231,6 +256,14 @@ const { isMobile } = useScreenSize()
 const textEditor = useTemplateRef('textEditor')
 const toInput = useTemplateRef('toInput')
 const ccInput = useTemplateRef('ccInput')
+
+const showContactsModal = ref(false)
+const insertContactsInto = ref('')
+
+const insertContacts = (insertInto: string) => {
+	insertContactsInto.value = insertInto
+	showContactsModal.value = true
+}
 
 const showCcBcc = ref(!!mailDetails?.cc?.length || !!mailDetails?.bcc?.length)
 const toggleCcBcc = () => {

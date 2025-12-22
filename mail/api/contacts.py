@@ -16,7 +16,7 @@ def get_address_books() -> list[dict]:
 
 
 @frappe.whitelist()
-def get_contact_cards(filter=None, limit=50) -> list[dict]:
+def get_contact_cards(filter: dict | None = None, limit: int = 50) -> list[dict]:
 	"""Returns the contact cards for the current user."""
 
 	if not (contact_cards := fetch_contact_cards(frappe.session.user, filter, 0, limit)[0]):
@@ -24,3 +24,18 @@ def get_contact_cards(filter=None, limit=50) -> list[dict]:
 
 	fields = ["id", "full_name", "kind", "emails"]
 	return [{f: d[f] for f in fields} for d in contact_cards]
+
+
+@frappe.whitelist()
+def get_contacts(filter: dict | None = None, limit: int = 50) -> list[dict]:
+	"""Returns the emails contacts for the current user."""
+
+	contacts = []
+	contact_cards = get_contact_cards(filter, limit)
+
+	for card in contact_cards:
+		if emails := card.get("emails"):
+			for email in emails:
+				contacts.append({"full_name": card.get("full_name"), "email": email.get("address")})
+
+	return contacts

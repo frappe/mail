@@ -148,6 +148,7 @@ const menuItems = computed(() => [
 		})),
 		condition: () => user.data.is_system_manager && !isMobile.value,
 	},
+	// todo: go to last open page
 	{
 		icon: Mailbox,
 		label: __('Mailbox'),

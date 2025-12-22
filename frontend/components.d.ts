@@ -33,6 +33,7 @@ declare module 'vue' {
     ChangePasswordModal: typeof import('./src/components/Modals/ChangePasswordModal.vue')['default']
     ComposeMailEditor: typeof import('./src/components/ComposeMailEditor.vue')['default']
     ComposeMailToolbar: typeof import('./src/components/ComposeMailToolbar.vue')['default']
+    ContactsModal: typeof import('./src/components/Modals/ContactsModal.vue')['default']
     CopyCode: typeof import('./src/components/CopyCode.vue')['default']
     CopyControl: typeof import('./src/components/Controls/CopyControl.vue')['default']
     DashboardCard: typeof import('./src/components/DashboardCard.vue')['default']

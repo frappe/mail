@@ -1,4 +1,5 @@
 <template>
+	<!-- todo: mobile responsive -->
 	<DashboardLayout
 		:breadcrumbs="[{ label: __('Address Books') }]"
 		:button-label="__('Add Address Book')"
