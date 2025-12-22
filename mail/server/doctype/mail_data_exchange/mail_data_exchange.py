@@ -21,8 +21,8 @@ from mail.client.doctype.push_subscription.push_subscription import (
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,
-	get_export_directory,
-	get_import_directory,
+	get_data_export_directory,
+	get_data_import_directory,
 	get_mbox_files,
 	get_stalwart_cli_path,
 	reconnect_on_failure,
@@ -34,6 +34,7 @@ from mail.utils.user import (
 	get_account_for_user,
 	get_user_email_address,
 	has_role,
+	is_administrator,
 	is_system_manager,
 	is_tenant_admin,
 )
@@ -109,7 +110,7 @@ class MailDataExchange(Document):
 		"""Enqueue the import or export based on the operation type."""
 
 		if self.operation == "Import":
-			job_id = f"{self.name}:import"
+			job_id = f"{self.name}:data:import"
 			frappe.enqueue_doc(
 				self.doctype,
 				self.name,
@@ -121,7 +122,7 @@ class MailDataExchange(Document):
 				enqueue_after_commit=True,
 			)
 		elif self.operation == "Export":
-			job_id = f"{self.name}:export"
+			job_id = f"{self.name}:data:export"
 			frappe.enqueue_doc(
 				self.doctype,
 				self.name,
@@ -173,7 +174,7 @@ class MailDataExchange(Document):
 		self._mark_started()
 
 		import_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{self.import_file}")
-		import_base = os.path.join(get_import_directory(), self.name)
+		import_base = os.path.join(get_data_import_directory(), self.name)
 		os.makedirs(import_base, exist_ok=True)
 
 		kwargs = {}
@@ -189,7 +190,11 @@ class MailDataExchange(Document):
 				command.extend(["messages", "-f", self.import_format])
 			command.append(get_account_for_user(self.user))
 
-			if self.import_format == "mbox":
+			if self.import_format == "jmap":
+				_import_base = os.path.join(import_base, get_account_for_user(self.user))
+				validate_jmap_structure(_import_base, raise_exception=True)
+				command.append(_import_base)
+			elif self.import_format == "mbox":
 				mbox_files = get_mbox_files(import_base)
 
 				if len(mbox_files) == 0:
@@ -200,10 +205,6 @@ class MailDataExchange(Document):
 					)
 
 				command.append(mbox_files[0])
-			elif self.import_format == "jmap":
-				_import_base = os.path.join(import_base, get_account_for_user(self.user))
-				validate_jmap_structure(_import_base, raise_exception=True)
-				command.append(_import_base)
 			else:
 				if self.import_format == "maildir":
 					validate_maildir_or_maildirpp(import_base, raise_exception=True)
@@ -247,19 +248,20 @@ class MailDataExchange(Document):
 		self._mark_completed(**kwargs)
 		unfreeze_jmap_push_notifications(self.user)
 
-		if email := get_user_email_address(self.owner):
-			frappe.sendmail(
-				recipients=email,
-				subject=mail_details["subject"],
-				template="generic",
-				args={
-					"title": mail_details["title"],
-					"description": mail_details["description"],
-					"button": _("View Import"),
-					"link": get_url(f"/mail/mail-data-exchanges/{self.name}"),
-				},
-				now=True,
-			)
+		if not is_administrator(self.owner):
+			if email := get_user_email_address(self.owner):
+				frappe.sendmail(
+					recipients=email,
+					subject=mail_details["subject"],
+					template="generic",
+					args={
+						"title": mail_details["title"],
+						"description": mail_details["description"],
+						"button": _("View Import"),
+						"link": get_url(f"/mail/mail-data-exchanges/{self.name}"),
+					},
+					now=True,
+				)
 
 	@reconnect_on_failure()
 	def _export(self) -> None:
@@ -269,7 +271,7 @@ class MailDataExchange(Document):
 			return
 
 		self._mark_started()
-		export_base = os.path.join(get_export_directory(), self.name)
+		export_base = os.path.join(get_data_export_directory(), self.name)
 		export_file_name = f"{self.name}{self.export_archive_type}"
 		export_file_url = f"/private/files/{export_file_name}"
 		export_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{export_file_url}")
@@ -321,19 +323,20 @@ class MailDataExchange(Document):
 		shutil.rmtree(export_base, ignore_errors=True)
 		self._mark_completed(**kwargs)
 
-		if email := get_user_email_address(self.owner):
-			frappe.sendmail(
-				recipients=email,
-				subject=mail_details["subject"],
-				template="generic",
-				args={
-					"title": mail_details["title"],
-					"description": mail_details["description"],
-					"button": _("View Export"),
-					"link": get_url(f"/mail/mail-data-exchanges/{self.name}"),
-				},
-				now=True,
-			)
+		if not is_administrator(self.owner):
+			if email := get_user_email_address(self.owner):
+				frappe.sendmail(
+					recipients=email,
+					subject=mail_details["subject"],
+					template="generic",
+					args={
+						"title": mail_details["title"],
+						"description": mail_details["description"],
+						"button": _("View Export"),
+						"link": get_url(f"/mail/mail-data-exchanges/{self.name}"),
+					},
+					now=True,
+				)
 
 	def _mark_started(self) -> None:
 		"""Marks the data exchange as started and updates the started_at and started_after fields."""
@@ -476,7 +479,7 @@ def retry_stuck_data_exchanges() -> None:
 def clean_import_export_directories() -> None:
 	"""Called by the scheduler to clean up import and export directories."""
 
-	for directory in (get_import_directory(), get_export_directory()):
+	for directory in (get_data_import_directory(), get_data_export_directory()):
 		if os.path.exists(directory):
 			for item in os.listdir(directory):
 				item_path = os.path.join(directory, item)

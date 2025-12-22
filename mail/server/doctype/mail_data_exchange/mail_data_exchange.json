@@ -133,6 +133,7 @@
    "label": "Duration (Seconds)",
    "no_copy": 1,
    "non_negative": 1,
+   "precision": "3",
    "read_only": 1
   },
   {
@@ -210,7 +211,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-25 16:46:10.097181",
+ "modified": "2025-12-22 10:51:08.158980",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Data Exchange",
@@ -234,7 +235,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "Mail Admin",
    "submit": 1,
    "write": 1
   },
@@ -242,7 +243,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail Admin",
+   "role": "Mail User",
    "submit": 1,
    "write": 1
   }

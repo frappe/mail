@@ -191,10 +191,12 @@ def is_valid_cron_expression(expression: str, raise_exception: bool = False) -> 
 		return False
 
 
-def validate_jmap_structure(base_dir: str, raise_exception: bool = False) -> list[str]:
+def validate_jmap_structure(
+	base_dir: str, required_files: list[str], raise_exception: bool = False
+) -> list[str]:
 	"""Validates a JMAP import directory. Returns a list of missing files or folders."""
 
-	required_files = {
+	required_files = required_files or {
 		"emails.json",
 		"identities.json",
 		"mailboxes.json",
