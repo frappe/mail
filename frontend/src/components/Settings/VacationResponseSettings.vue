@@ -76,8 +76,8 @@ const vacationResponse = createDocumentResource({
 	name: user.data.name,
 	transform: (doc: VacationResponse) => {
 		doc['enabled'] = !!doc['enabled']
-		doc['from_date'] = dayjs(doc['from_date']).format('YYYY-MM-DDTHH:mm')
-		doc['to_date'] = dayjs(doc['to_date']).format('YYYY-MM-DDTHH:mm')
+		if (doc['from_date']) doc['from_date'] = dayjs(doc['from_date']).format('YYYY-MM-DDTHH:mm')
+		if (doc['to_date']) doc['to_date'] = dayjs(doc['to_date']).format('YYYY-MM-DDTHH:mm')
 	},
 })
 
