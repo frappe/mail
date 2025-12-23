@@ -743,3 +743,9 @@ def is_catch_all_address(address: str) -> bool:
 	"""Check if the email address is a catch-all address (starts with '@')."""
 
 	return address.startswith("@")
+
+
+def get_stalwart_version() -> str:
+	"""Returns the Stalwart version from configuration or default."""
+
+	return frappe.conf.stalwart_version or "v0.13.4"
