@@ -520,7 +520,7 @@ Some of its features include:
 
 ![Vacation response](docs/screenshots/ui/vacation-response.png)
 
-#### 8. Importing or exporing pre-existing mail data
+#### 8. Importing or exporting pre-existing mail data
 
 ![Data exchange](docs/screenshots/ui/data-exchange.png)
 
@@ -570,19 +570,19 @@ Note: This has to be enabled in Mail Settings
 
 3. A verification email will be sent to this account
 
-![Business](docs/screenshots/ui/signup/business-3.png)
+![Business - Verification Code](docs/screenshots/ui/signup/business-3.png)
 
 4. Copy the code and paste it into the Mail app, or click on 'Verify Account'
 
-![Business](docs/screenshots/ui/signup/business-4.png)
+![Business - Verification Email](docs/screenshots/ui/signup/business-4.png)
 
 5. Enter your details
 
-![Business](docs/screenshots/ui/signup/business-5.png)
+![Business - Details](docs/screenshots/ui/signup/business-5.png)
 
-6. Enter the name of your orangization and click on 'Create Organization'
+6. Enter the name of your orangization, and click on 'Create Organization'
 
-![Business](docs/screenshots/ui/signup/business-6.png)
+![Business - Organization](docs/screenshots/ui/signup/business-6.png)
 
 A new tenant will be created with you as the tenant owner. Click on 'Add Domain' and follow the instructions on screen to set up your first domain and its corresponding members.
 
@@ -608,7 +608,7 @@ Note: This has to be enabled in Mail Settings
 
 ![Personal - Backup](docs/screenshots/ui/signup/personal-4.png)
 
-4. Enter a password and click on 'Sign Up'
+4. Enter a password, and click on 'Sign Up'
 
 ![Personal - Password](docs/screenshots/ui/signup/personal-5.png)
 
@@ -618,15 +618,15 @@ The user will now have a mail account with the selected domain and user details 
 
 For inviting external individuals to be members of your tenant.
 
-1. Invite the member through the Admin Dashboard by assigning them an email address
+1. Invite the member through the Admin Dashboard by assigning them an email address, and clicking on 'Invite Member'
 
 ![Invite member](docs/screenshots/ui/signup/invite-based-1.png)
 
-2. This will result in them receiving an email at their backup email. Click on 'Verify Account'.
+2. The user will receive an email at the backup email address. Click on 'Verify Account'.
 
 ![Invite email](docs/screenshots/ui/signup/invite-based-2.png)
 
-3. Fill out the details and click on 'Create Account'
+3. Fill out the details, and click on 'Create Account'
 
 ![Invite email](docs/screenshots/ui/signup/invite-based-3.png)
 
