@@ -291,12 +291,13 @@ class MailExchange(Document):
 			output = ""
 
 			if self.import_format in ["jmap", "mbox", "maildir", "maildir-nested"]:
-				output += _("Extracting import file...\n")
+				output += _("Extracting import file...{0}").format("\n")
 				extract_compressed_file(import_file, import_base)
 
 				if self.import_format == "jmap":
-					output += _("Validating JMAP structure...\n")
+					output += _("Validating JMAP structure...{0}").format("\n")
 					validate_jmap_structure(import_base, ["emails.json"], raise_exception=True)
+
 				elif self.import_format == "mbox":
 					mbox_files = get_mbox_files(import_base)
 					if len(mbox_files) == 0:
@@ -307,11 +308,15 @@ class MailExchange(Document):
 								"<code>.mbox</code>"
 							)
 						)
+
 				else:
 					if self.import_format == "maildir":
 						validate_maildir_or_maildirpp(import_base, raise_exception=True)
 					elif self.import_format == "maildir-nested":
 						validate_nested_maildir_tree(import_base, raise_exception=True)
+
+			elif self.import_format == "eml":
+				output += _("Preparing EML file for import...{0}").format("\n")
 
 			clear_sync_state(self.user, type="email")
 			kwargs.update({"status": "Completed", "output": output})
@@ -374,19 +379,19 @@ class MailExchange(Document):
 		try:
 			output = ""
 
-			output += _("Connecting to JMAP server...\n")
+			output += _("Connecting to JMAP server...{0}").format("\n")
 			self._publish_progress(0, 100, _("Connecting to JMAP server"))
 			client = get_jmap_client(self.user)
 			limit = cint(self.export_limit) or cint(self.email_count)
 
-			output += _("Fetching email IDs...\n")
+			output += _("Fetching email IDs...").format("\n")
 			self._publish_progress(10, 100, _("Fetching email IDs"))
 			ids = client.email_query(self._export_filter, sort=self._export_sort, limit=limit)["ids"]
 
 			if not ids:
 				raise Exception(_("No emails found for the given filter."))
 
-			output += _("Fetching email metadata...\n")
+			output += _("Fetching email metadata...{0}").format("\n")
 			self._publish_progress(30, 100, _("Fetching email metadata"))
 			properties = ["id", "blobId", "mailboxIds", "keywords", "receivedAt", "messageId"]
 			emails, _state = client.email_get(ids, properties=properties)
@@ -395,7 +400,7 @@ class MailExchange(Document):
 				raise Exception(_("Failed to fetch email metadata."))
 
 			if self.deduplicate_export:
-				output += _("Deduplicating emails based on Message-ID...\n")
+				output += _("Deduplicating emails based on Message-ID...{0}").format("\n")
 				self._publish_progress(50, 100, _("Deduplicating emails"))
 				unique_emails = {}
 				for email in emails:
@@ -404,15 +409,15 @@ class MailExchange(Document):
 						unique_emails[key] = email
 				emails = list(unique_emails.values())
 
-			output += _("Saving email metadata...\n")
+			output += _("Saving email metadata...{0}").format("\n")
 			self._publish_progress(70, 100, _("Saving email metadata"))
 			with open(os.path.join(export_base, "emails.json"), "w") as f:
 				json.dump(emails, f, indent=4)
 
 			batch_size = cint(frappe.conf.mail_exchange_export_batch_size) or 500
-			output += _("Downloading email blobs in batches of {0}...\n").format(batch_size)
+			output += _("Downloading email blobs in batches of {0}...{1}").format(batch_size, "\n")
 			for idx, emails_batch in enumerate(create_batch(emails, batch_size)):
-				output += _("\tProcessing batch {0}...\n").format(idx + 1)
+				output += _("{0}Processing batch {1}...{2}").format("\t", idx + 1, "\n")
 				self._publish_progress(
 					70 + ((idx + 1) / (len(ids) / batch_size)) * 30,
 					100,
@@ -422,7 +427,9 @@ class MailExchange(Document):
 				blobs = []
 				for email in emails_batch:
 					if not email["blobId"]:
-						output += _("\t\tSkipping email {0} as it has no blobId.\n").format(email["id"])
+						output += _("{0}Skipping email {1} as it has no blobId.{3}").format(
+							"\t\t", email["id"], "\n"
+						)
 						continue
 					blobs.append((email["blobId"], None))
 
@@ -431,18 +438,18 @@ class MailExchange(Document):
 
 				downloaded_blobs = client.download_blobs_concurrently(blobs)
 				if not downloaded_blobs:
-					output += _("\t\tFailed to download blobs for batch {0}.\n").format(idx + 1)
+					output += _("{0}Failed to download blobs for batch {1}.{2}").format("\t\t", idx + 1, "\n")
 					continue
 
 				for blob_id, content in downloaded_blobs.items():
 					with open(os.path.join(blobs_dir, blob_id), "wb") as f:
 						f.write(content)
 
-			output += _("Creating archive...\n")
+			output += _("Creating archive...{0}").format("\n")
 			self._publish_progress(95, 100, _("Creating archive"))
 			compress_directory(export_base, export_file)
 
-			output += _("Attaching export file to Mail Exchange document...\n")
+			output += _("Attaching export file to Mail Exchange document...{0}").format("\n")
 			file = frappe.new_doc("File")
 			file.is_private = 1
 			file.file_url = export_file_url
