@@ -460,20 +460,84 @@ APIs for retrieving emails.
 
 ## Frontend UI
 
-Frappe Mail ships with its own frontend UI that can be used for managing emails.
+Frappe Mail ships with its own frontend UI that can be broadly classified into two parts:
 
-![Send Mail](docs/screenshots/send-mail.png)
+- Mailbox
+- Admin Dashboard
 
-<details>
-<summary>More screenshots</summary>
+### Mailbox
 
-![Inbox](docs/screenshots/inbox-page.png)
+The Mailbox is the primary user-facing area of Frappe Mail. This is where users spend most of their time reading, composing, and managing emails.
 
-![Sent](docs/screenshots/sent-page.png)
+![Mailbox](docs/screenshots/ui/reading-pane-dark.png)
 
-![Drafts](docs/screenshots/drafts-page.png)
+Some of its features include:
 
-</details>
+#### Viewing emails across folders like Inbox, Sent, Drafts, Junk, and Trash (depending on the user's JMAP-based mailboxes)
+
+![Mail list](docs/screenshots/ui/no-reading-pane.png)
+
+#### Reading individual email threads and conversations
+
+![Mail thread](docs/screenshots/ui/no-reading-pane-mail.png)
+
+#### Composing new emails and replying or forwarding existing ones
+
+![Compose mail](docs/screenshots/ui/compose-mail.png)
+
+#### Searching and filtering emails
+
+![Search mail](docs/screenshots/ui/search.png)
+
+#### Keyboard shortcuts and quick actions for faster workflows
+
+![Shortcuts](docs/screenshots/ui/shortcuts.png)
+
+#### Managing JMAP-based user settings
+
+##### Account
+
+![Account](docs/screenshots/ui/account.png)
+
+##### Identity
+
+![Identity](docs/screenshots/ui/identity.png)
+
+##### Vacation Response
+
+![Vacation response](docs/screenshots/ui/vacation-response.png)
+
+#### Importing or exporing pre-existing mail data
+
+![Data exchange](docs/screenshots/ui/data-exchange.png)
+
+### Admin Dashboard
+
+The Admin Dashboard is the administrative and configuration interface of Frappe Mail. It is designed for tenant administrators to manage accounts, domains, and tenant-wide settings.
+
+Some of its features include:
+
+#### Adding and configuring domains
+
+![Domains](docs/screenshots/ui/domains.png)
+
+![Domain](docs/screenshots/ui/domain.png)
+
+#### Managing email accounts, users, and access permissions
+
+![Members](docs/screenshots/ui/members.png)
+
+![Member](docs/screenshots/ui/member.png)
+
+#### Inviting new users to the tenant
+
+![Invites](docs/screenshots/ui/invites.png)
+
+![Invite member](docs/screenshots/ui/invite-member.png)
+
+#### Creating and managing mailing lists
+
+![Mailing list](docs/screenshots/ui/mailing-list.png)
 
 ## Contributing
 
