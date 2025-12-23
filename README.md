@@ -493,6 +493,16 @@ Some of its features include:
 
 ![Shortcuts](docs/screenshots/ui/shortcuts.png)
 
+#### Viewing and managing JMAP-based address books and contact cards
+
+##### Address book
+
+![Address book](docs/screenshots/ui/address-book.png)
+
+##### Contact
+
+![Contact](docs/screenshots/ui/contact.png)
+
 #### Managing JMAP-based user settings
 
 ##### Account
@@ -503,7 +513,7 @@ Some of its features include:
 
 ![Identity](docs/screenshots/ui/identity.png)
 
-##### Vacation Response
+##### Vacation response
 
 ![Vacation response](docs/screenshots/ui/vacation-response.png)
 
