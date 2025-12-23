@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-12-23 19:35+0553\n"
-"PO-Revision-Date: 2025-12-23 19:35+0553\n"
+"POT-Creation-Date: 2025-12-23 22:00+0553\n"
+"PO-Revision-Date: 2025-12-23 22:00+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -1575,8 +1575,8 @@ msgstr ""
 msgid "Debug"
 msgstr ""
 
-#. Description of the 'Full Text Index Storage' (Section Break) field in
-#. DocType 'Mail Cluster'
+#. Description of the 'Search Store' (Section Break) field in DocType 'Mail
+#. Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "Dedicated to indexing for full-text search, enhancing the speed and efficiency of text-based queries."
 msgstr ""
@@ -1592,7 +1592,7 @@ msgstr ""
 msgid "Default"
 msgstr ""
 
-#. Label of the storage_full_text_default_language (Data) field in DocType
+#. Label of the storage_search_index_default_language (Data) field in DocType
 #. 'Mail Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "Default Language"
@@ -2244,6 +2244,24 @@ msgstr ""
 msgid "Enable"
 msgstr ""
 
+#. Label of the storage_search_index_contacts_enable (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable Calendar Searching"
+msgstr ""
+
+#. Label of the storage_search_index_calendar_enable (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable Contacts Searching"
+msgstr ""
+
+#. Label of the storage_search_index_email_enable (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable Email Searching"
+msgstr ""
+
 #: frontend/src/components/PWASettings.vue:16
 msgid "Enable Push Notifications"
 msgstr ""
@@ -2258,9 +2276,39 @@ msgstr ""
 msgid "Enable TLS"
 msgstr ""
 
+#. Label of the storage_search_index_tracing_enable (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable Tracing Searching"
+msgstr ""
+
 #. Label of the email_encryption_enable (Check) field in DocType 'Mail Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "Enable encryption at rest"
+msgstr ""
+
+#. Description of the 'Enable Calendar Searching' (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable full-text search indexing for calendar data."
+msgstr ""
+
+#. Description of the 'Enable Contacts Searching' (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable full-text search indexing for contacts data."
+msgstr ""
+
+#. Description of the 'Enable Email Searching' (Check) field in DocType 'Mail
+#. Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable full-text search indexing for email content and metadata."
+msgstr ""
+
+#. Description of the 'Enable Tracing Searching' (Check) field in DocType 'Mail
+#. Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable full-text search indexing for tracing data."
 msgstr ""
 
 #. Description of the 'Trusted Networks' (Small Text) field in DocType 'Mail
@@ -2851,9 +2899,6 @@ msgstr ""
 msgid "Full Name"
 msgstr ""
 
-#. Label of the full_text_index_storage_section (Section Break) field in
-#. DocType 'Mail Cluster'
-#: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_cluster/mail_cluster.py:381
 msgid "Full Text Index Storage"
 msgstr ""
@@ -3363,6 +3408,12 @@ msgstr ""
 #. Store'
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 msgid "Index"
+msgstr ""
+
+#. Label of the storage_search_index_batch_size (Int) field in DocType 'Mail
+#. Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Indexing Batch Size"
 msgstr ""
 
 #. Description of the 'Private Zone' (Check) field in DocType 'Mail Settings'
@@ -5196,6 +5247,12 @@ msgstr ""
 msgid "Number of Shards"
 msgstr ""
 
+#. Description of the 'Indexing Batch Size' (Int) field in DocType 'Mail
+#. Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Number of items to process in each batch during indexing operations."
+msgstr ""
+
 #: mail/jmap.py:52
 msgid "Number of method calls exceeds the maximum allowed: {0}."
 msgstr ""
@@ -6766,6 +6823,12 @@ msgstr ""
 
 #: frontend/src/components/Modals/ShortcutsModal.vue:90
 msgid "Search Mail"
+msgstr ""
+
+#. Label of the search_store_section (Section Break) field in DocType 'Mail
+#. Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Search Store"
 msgstr ""
 
 #: frontend/src/components/EmojiPicker.vue:33
