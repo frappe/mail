@@ -105,7 +105,7 @@ const mailDataExchanges = useList({
 	],
 	filters: () => {
 		const filters: Record<string, string> = {
-			account: user.data.name,
+			user: user.data.name,
 			operation: operation.value,
 		}
 		if (status.value) filters.status = status.value

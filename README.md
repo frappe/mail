@@ -24,6 +24,9 @@ Frappe Mail is a **generic JMAP client** and an **orchestration layer** designed
   - [Outbound](#2-outbound-api)
   - [Inbound](#3-inbound-api)
 - [Frontend UI](#frontend-ui)
+  - [Mailbox](#mailbox)
+  - [Admin Dashboard](#admin-dashboard)
+  - [Sign-up Flow](#sign-up-flow)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -473,27 +476,27 @@ The Mailbox is the primary user-facing area of Frappe Mail. This is where users 
 
 Some of its features include:
 
-#### Viewing emails across folders like Inbox, Sent, Drafts, Junk, and Trash (depending on the user's JMAP-based mailboxes)
+#### 1. Viewing emails across folders like Inbox, Sent, Drafts, Junk, and Trash (depending on the user's JMAP-based mailboxes)
 
 ![Mail list](docs/screenshots/ui/no-reading-pane.png)
 
-#### Reading individual email threads and conversations
+#### 2. Reading individual email threads and conversations
 
 ![Mail thread](docs/screenshots/ui/no-reading-pane-mail.png)
 
-#### Composing new emails and replying or forwarding existing ones
+#### 3. Composing new emails and replying or forwarding existing ones
 
 ![Compose mail](docs/screenshots/ui/compose-mail.png)
 
-#### Searching and filtering emails
+#### 4. Searching and filtering emails
 
 ![Search mail](docs/screenshots/ui/search.png)
 
-#### Keyboard shortcuts and quick actions for faster workflows
+#### 5. Keyboard shortcuts and quick actions for faster workflows
 
 ![Shortcuts](docs/screenshots/ui/shortcuts.png)
 
-#### Viewing and managing JMAP-based address books and contact cards
+#### 6. Viewing and managing JMAP-based address books and contact cards
 
 ##### Address book
 
@@ -503,7 +506,7 @@ Some of its features include:
 
 ![Contact](docs/screenshots/ui/contact.png)
 
-#### Managing JMAP-based user settings
+#### 7. Managing JMAP-based user settings
 
 ##### Account
 
@@ -517,7 +520,7 @@ Some of its features include:
 
 ![Vacation response](docs/screenshots/ui/vacation-response.png)
 
-#### Importing or exporing pre-existing mail data
+#### 8. Importing or exporing pre-existing mail data
 
 ![Data exchange](docs/screenshots/ui/data-exchange.png)
 
@@ -527,27 +530,107 @@ The Admin Dashboard is the administrative and configuration interface of Frappe 
 
 Some of its features include:
 
-#### Adding and configuring domains
-
-![Domains](docs/screenshots/ui/domains.png)
+#### 1. Adding and configuring domains
 
 ![Domain](docs/screenshots/ui/domain.png)
 
-#### Managing email accounts, users, and access permissions
-
-![Members](docs/screenshots/ui/members.png)
+#### 2. Managing email accounts, users, and access permissions
 
 ![Member](docs/screenshots/ui/member.png)
 
-#### Inviting new users to the tenant
+#### 3. Inviting new users to the tenant
 
 ![Invites](docs/screenshots/ui/invites.png)
 
-![Invite member](docs/screenshots/ui/invite-member.png)
-
-#### Creating and managing mailing lists
+#### 4. Creating and managing mailing lists
 
 ![Mailing list](docs/screenshots/ui/mailing-list.png)
+
+### Sign-up Flow
+
+Before accessing the Mailbox or Admin Dashboard, users complete a one-time sign-up and setup flow. Depending on the user and their requirements, Frappe Mail offers three types of sign-ups:
+
+- Business Sign-up
+- Personal Sign-up
+- Invite-based Sign-up
+
+#### Business Sign-up
+
+For organizations setting up their own tenant, including custom domains, accounts, and organization-level configurations.
+
+Note: This has to be enabled in Mail Settings
+
+1. Go to `/mail/signup` and select 'Business (For work or company use)'
+
+![Business](docs/screenshots/ui/signup/business-1.png)
+
+2. Enter your current email address
+
+![Business - Email](docs/screenshots/ui/signup/business-2.png)
+
+3. A verification email will be sent to this account
+
+![Business](docs/screenshots/ui/signup/business-3.png)
+
+4. Copy the code and paste it into the Mail app, or click on 'Verify Account'
+
+![Business](docs/screenshots/ui/signup/business-4.png)
+
+5. Enter your details
+
+![Business](docs/screenshots/ui/signup/business-5.png)
+
+6. Enter the name of your orangization and click on 'Create Organization'
+
+![Business](docs/screenshots/ui/signup/business-6.png)
+
+A new tenant will be created with you as the tenant owner. Click on 'Add Domain' and follow the instructions on screen to set up your first domain and its corresponding members.
+
+#### Personal Sign-up
+
+For allowing users to create an account with one of the domains whitelisted by a system administrator.
+
+Note: This has to be enabled in Mail Settings
+
+1. Go to `/mail/signup` and select 'Personal (For individual user)'
+
+![Personal](docs/screenshots/ui/signup/personal-1.png)
+
+2. Enter your name
+
+![Personal - Name](docs/screenshots/ui/signup/personal-2.png)
+
+3. Enter a username and select one of the whitelisted domains
+
+![Personal - Email](docs/screenshots/ui/signup/personal-3.png)
+
+4. Enter a backup email address for recovery
+
+![Personal - Backup](docs/screenshots/ui/signup/personal-4.png)
+
+4. Enter a password and click on 'Sign Up'
+
+![Personal - Password](docs/screenshots/ui/signup/personal-5.png)
+
+The user will now have a mail account with the selected domain and user details on Frappe Mail.
+
+#### Invite-based Sign-up
+
+For inviting external individuals to be members of your tenant.
+
+1. Invite the member through the Admin Dashboard by assigning them an email address
+
+![Invite member](docs/screenshots/ui/signup/invite-based-1.png)
+
+2. This will result in them receiving an email at their backup email. Click on 'Verify Account'.
+
+![Invite email](docs/screenshots/ui/signup/invite-based-2.png)
+
+3. Fill out the details and click on 'Create Account'
+
+![Invite email](docs/screenshots/ui/signup/invite-based-3.png)
+
+This will result in the creation of a new tenant account with the given details.
 
 ## Contributing
 
