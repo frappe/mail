@@ -72,6 +72,15 @@ class MailExchange(Document):
 		return []
 
 	@property
+	def _metadata(self) -> dict:
+		"""Returns the import metadata as a dictionary."""
+
+		if self.operation != "Import" or self.import_format != "eml":
+			return {}
+
+		return json.loads(self.import_metadata or "{}")
+
+	@property
 	def max_import(self) -> int:
 		return cint(frappe.conf.mail_exchange_max_import) or 1_000
 
@@ -89,6 +98,7 @@ class MailExchange(Document):
 		if self.operation == "Import":
 			self.validate_import_format()
 			self.validate_import_file()
+			self.validate_import_metadata()
 		elif self.operation == "Export":
 			self.validate_export_filter()
 			self.validate_export_sort()
@@ -136,6 +146,16 @@ class MailExchange(Document):
 					", ".join(f"<code>{ext}</code>" for ext in allowed_extensions)
 				)
 			)
+
+	def validate_import_metadata(self) -> None:
+		"""Validate the import metadata."""
+
+		if self.import_format == "eml":
+			metadata = self._metadata
+			if not metadata.get("mailboxIds"):
+				frappe.throw(_("mailboxIds are required in Metadata for EML format."))
+		else:
+			self.import_metadata = json.dumps({})
 
 	def validate_export_filter(self) -> None:
 		"""Validate the export filter."""
@@ -290,33 +310,26 @@ class MailExchange(Document):
 		try:
 			output = ""
 
-			if self.import_format in ["jmap", "mbox", "maildir", "maildir-nested"]:
+			if self.import_format == "eml":
+				eml_output = self._import_eml(import_file)
+				output += eml_output
+			elif self.import_format in ["jmap", "mbox", "maildir", "maildir-nested"]:
 				output += _("Extracting import file...{0}").format("\n")
 				extract_compressed_file(import_file, import_base)
 
 				if self.import_format == "jmap":
-					output += _("Validating JMAP structure...{0}").format("\n")
-					validate_jmap_structure(import_base, ["emails.json"], raise_exception=True)
-
+					jmap_output = self._import_jmap(import_base)
+					output += jmap_output
 				elif self.import_format == "mbox":
-					mbox_files = get_mbox_files(import_base)
-					if len(mbox_files) == 0:
-						frappe.throw(_("No {0} file found in the archive.").format("<code>.mbox</code>"))
-					elif len(mbox_files) > 1:
-						frappe.throw(
-							_("Multiple {0} files found. Please provide only one.").format(
-								"<code>.mbox</code>"
-							)
-						)
-
+					mbox_output = self._import_mbox(import_base)
+					output += mbox_output
 				else:
 					if self.import_format == "maildir":
-						validate_maildir_or_maildirpp(import_base, raise_exception=True)
+						maildir_output = self._import_maildir(import_base)
+						output += maildir_output
 					elif self.import_format == "maildir-nested":
-						validate_nested_maildir_tree(import_base, raise_exception=True)
-
-			elif self.import_format == "eml":
-				output += _("Preparing EML file for import...{0}").format("\n")
+						maildir_nested_output = self._import_maildir_nested(import_base)
+						output += maildir_nested_output
 
 			clear_sync_state(self.user, type="email")
 			kwargs.update({"status": "Completed", "output": output})
@@ -539,6 +552,176 @@ class MailExchange(Document):
 			docname=self.name,
 			user=frappe.session.user,
 		)
+
+	def _import_eml(self, import_file: str) -> str:
+		"""Imports a single EML file located at import_file."""
+
+		output = _("Preparing EML file for import...{0}").format("\n")
+		with open(import_file, "rb") as f:
+			content = f.read()
+
+		if not content:
+			frappe.throw(_("EML file is empty."))
+
+		output += _("Connecting to JMAP server...{0}").format("\n")
+		client = get_jmap_client(self.user)
+		response = client.upload_blob(content, "message/rfc822")
+
+		if not response or "blobId" not in response:
+			frappe.throw(_("Failed to upload EML file blob."))
+
+		meta = self._metadata
+		email = {
+			"blobId": response["blobId"],
+			"mailboxIds": meta["mailboxIds"],
+		}
+		if keywords := meta.get("keywords"):
+			email["keywords"] = keywords
+		if received_at := meta.get("receivedAt"):
+			email["receivedAt"] = received_at
+
+		response = client._make_request(
+			using=["urn:ietf:params:jmap:mail"],
+			method_calls=[
+				[
+					"Email/import",
+					{
+						"accountId": client.primary_account_id,
+						"emails": {"e1": email},
+					},
+					"0",
+				]
+			],
+		)
+		result = response["methodResponses"][0][1]
+
+		if result.get("created", {}):
+			output += _("Email created.{0}").format("\n")
+		if result.get("notCreated", {}):
+			frappe.throw(_("Failed to create email."))
+
+		return output
+
+	def _import_jmap(self, import_base: str) -> str:
+		"""Imports emails from a JMAP export located at import_base."""
+
+		output = _("Validating JMAP structure...{0}").format("\n")
+		validate_jmap_structure(import_base, ["emails.json"], raise_exception=True)
+
+		output += _("Loading emails metadata...{0}").format("\n")
+		meta_path = os.path.join(import_base, "emails.json")
+		with open(meta_path) as f:
+			metadata = {email["blobId"]: email for email in json.load(f)}
+
+		if not metadata:
+			frappe.throw(_("No email metadata found in emails.json."))
+
+		output += _("Collecting blob IDs...{0}").format("\n")
+		blobs_dir = os.path.join(import_base, "blobs")
+		blob_ids = os.listdir(blobs_dir)
+
+		if not blob_ids:
+			frappe.throw(_("No blobs found to import."))
+
+		if diff := set(metadata).difference(set(blob_ids)):
+			if len(diff) <= 5:
+				missing = ", ".join(f"<code>{blob}</code>" for blob in diff)
+				frappe.throw(_("Missing blobs: {0}").format(missing))
+			else:
+				frappe.throw(
+					_("{0} blobs referenced in emails.json are missing in the blobs directory.").format(
+						len(diff)
+					)
+				)
+		elif diff := set(blob_ids).difference(set(metadata)):
+			if len(diff) <= 5:
+				extra = ", ".join(f"<code>{blob}</code>" for blob in diff)
+				frappe.throw(_("Extra blobs not referenced in emails.json: {0}").format(extra))
+			else:
+				frappe.throw(
+					_("{0} blobs found in the blobs directory are not referenced in emails.json.").format(
+						len(diff)
+					)
+				)
+
+		output += _("Connecting to JMAP server...{0}").format("\n")
+		client = get_jmap_client(self.user)
+		batch_size = client.max_objects_in_set
+
+		output += _("Uploading email blobs in batches of {0}...{1}").format(batch_size, "\n")
+		for idx, blob_ids_batch in enumerate(create_batch(blob_ids, batch_size)):
+			output += _("{0}Processing batch {1}...{2}").format("\t", idx + 1, "\n")
+
+			base_path = os.path.join(blobs_dir)
+			blobs: list[tuple[bytes, str]] = []
+			for blob_id in blob_ids_batch:
+				with open(os.path.join(base_path, blob_id), "rb") as f:
+					blobs.append((f.read(), "message/rfc822"))
+
+			responses = client.upload_blobs_concurrently(blobs)
+
+			if not responses:
+				frappe.throw(_("No blobs uploaded in batch {0}.").format(idx + 1))
+
+			emails = {}
+			for i, resp in enumerate(responses):
+				new_blob_id = resp["blobId"]
+				meta = metadata[blob_ids_batch[i]]
+				email = {
+					"blobId": new_blob_id,
+					"mailboxIds": meta["mailboxIds"],
+					"keywords": meta["keywords"],
+					"receivedAt": meta["receivedAt"],
+				}
+				emails[f"e{i+1}"] = email
+
+			response = client._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Email/import",
+						{
+							"accountId": client.primary_account_id,
+							"emails": emails,
+						},
+						"0",
+					]
+				],
+			)
+			result = response["methodResponses"][0][1]
+
+			if created := result.get("created", {}):
+				output += _("{0}Created {1} emails.{2}").format("\t\t", len(created), "\n")
+			if failed := result.get("notCreated", {}):
+				output += _("{0}Failed to create {1} emails.{2}").format("\t\t", len(failed), "\n")
+
+		return output
+
+	def _import_mbox(self, import_base: str) -> str:
+		"""Imports emails from an MBOX file located at import_base."""
+
+		output = _("Validating MBOX files...{0}").format("\n")
+		mbox_files = get_mbox_files(import_base)
+		if len(mbox_files) == 0:
+			frappe.throw(_("No {0} file found in the archive.").format("<code>.mbox</code>"))
+		elif len(mbox_files) > 1:
+			frappe.throw(_("Multiple {0} files found. Please provide only one.").format("<code>.mbox</code>"))
+
+		return output
+
+	def _import_maildir(self, import_base: str) -> str:
+		"""Imports emails from a Maildir structure located at import_base."""
+
+		output = _("Validating Maildir structure...{0}").format("\n")
+		validate_maildir_or_maildirpp(import_base, raise_exception=True)
+		return output
+
+	def _import_maildir_nested(self, import_base: str) -> str:
+		"""Imports emails from a nested Maildir structure located at import_base."""
+
+		output = _("Validating Nested Maildir structure...{0}").format("\n")
+		validate_nested_maildir_tree(import_base, raise_exception=True)
+		return output
 
 	def _db_set(
 		self,
