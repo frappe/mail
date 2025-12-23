@@ -191,9 +191,8 @@ class MailDataExchange(Document):
 			command.append(get_account_for_user(self.user))
 
 			if self.import_format == "jmap":
-				_import_base = os.path.join(import_base, get_account_for_user(self.user))
-				validate_jmap_structure(_import_base, raise_exception=True)
-				command.append(_import_base)
+				validate_jmap_structure(import_base, raise_exception=True)
+				command.append(import_base)
 			elif self.import_format == "mbox":
 				mbox_files = get_mbox_files(import_base)
 
@@ -284,7 +283,7 @@ class MailDataExchange(Document):
 			command = f"{cli_path} -u {host} export account {get_account_for_user(self.user)} {export_base}"
 			output = _run_stalwart_cli_command(command, _credentials)
 
-			compress_directory(export_base, export_file)
+			compress_directory(os.path.join(export_base, get_account_for_user(self.user)), export_file)
 			file = frappe.new_doc("File")
 			file.is_private = 1
 			file.file_url = export_file_url

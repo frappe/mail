@@ -296,8 +296,7 @@ class MailExchange(Document):
 
 				if self.import_format == "jmap":
 					output += _("Validating JMAP structure...\n")
-					_import_base = os.path.join(import_base, get_account_for_user(self.user))
-					validate_jmap_structure(_import_base, ["emails.json"], raise_exception=True)
+					validate_jmap_structure(import_base, ["emails.json"], raise_exception=True)
 				elif self.import_format == "mbox":
 					mbox_files = get_mbox_files(import_base)
 					if len(mbox_files) == 0:
