@@ -721,6 +721,11 @@ class MailPrincipal(Document):
 			if frappe.db.exists("User", self.name):
 				frappe.delete_doc("User", self.name, ignore_permissions=True)
 
+		elif principal.type == "Domain":
+			self._delete_dkim_signature(backend, "rsa-sha256", raise_exception=False)
+			if bool(frappe.conf.enable_ed25519_dkim):
+				self._delete_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
+
 		principals_to_invalidate = set()
 		if principal.type in ["Group", "Individual", "List"]:
 			principals_to_invalidate.update([email.split("@")[1] for email in principal._emails])
