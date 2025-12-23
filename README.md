@@ -476,7 +476,7 @@ The Mailbox is the primary user-facing area of Frappe Mail. This is where users 
 
 Some of its features include:
 
-#### 1. Viewing emails across folders like Inbox, Sent, Drafts, Junk, and Trash (depending on the user's JMAP-based mailboxes)
+#### 1. Viewing emails across folders
 
 ![Mail list](docs/screenshots/ui/no-reading-pane.png)
 
@@ -523,6 +523,10 @@ Some of its features include:
 #### 8. Importing or exporting pre-existing mail data
 
 ![Data exchange](docs/screenshots/ui/data-exchange.png)
+
+#### 8. Progressive Web App (PWA) support for a fast, app-like experience
+
+![PWA](docs/screenshots/ui/pwa.png)
 
 ### Admin Dashboard
 
