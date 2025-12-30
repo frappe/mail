@@ -216,12 +216,12 @@ def get_mail_contacts(txt=None) -> list:
 @frappe.whitelist()
 def create_mail(
 	from_email: str,
-	from_name: str,
 	to: list[str],
 	cc: list[str],
 	bcc: list[str],
 	subject: str | None,
 	html_body: str | None,
+	from_name: str = "",
 	attachments: list[dict] | None = None,
 	in_reply_to: str | None = None,
 	in_reply_to_id: str | None = None,
@@ -272,12 +272,12 @@ def create_mail(
 def update_draft_mail(
 	id: str,
 	from_email: str,
-	from_name: str,
 	to: list[str],
 	cc: list[str],
 	bcc: list[str],
 	subject: str | None,
 	html_body: str | None,
+	from_name: str = "",
 	attachments: list[dict] | None = None,
 	submit: bool = False,
 ) -> dict:
