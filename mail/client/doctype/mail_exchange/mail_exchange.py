@@ -4,6 +4,9 @@
 import json
 import os
 import shutil
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Literal
 
 import frappe
 from frappe import _
@@ -48,6 +51,102 @@ from mail.utils.validation import (
 	validate_maildir_or_maildirpp,
 	validate_nested_maildir_tree,
 )
+
+
+@dataclass
+class ExportEmail:
+	id: str
+	sender: dict[str, str]
+	blob_id: str
+	keywords: set[str]
+	mailbox_ids: set[str]
+	message_id: str
+	received_at: datetime
+	raw: bytes
+
+
+class MailboxWriter:
+	@staticmethod
+	def write(
+		format: Literal["jmap", "mbox", "maildir", "maildir-nested"],
+		export_emails: list[ExportEmail],
+		output_directory: str,
+		mailbox_map: dict[str, str],
+	) -> None:
+		"""Writes the exported emails to the specified format in the output directory."""
+
+		if format == "jmap":
+			MailboxWriter._write_jmap(export_emails, output_directory)
+		elif format == "mbox":
+			MailboxWriter._write_mbox(export_emails, output_directory, mailbox_map)
+		elif format == "maildir":
+			MailboxWriter._write_maildir(export_emails, output_directory)
+		elif format == "maildir-nested":
+			MailboxWriter._write_maildir_nested(export_emails, output_directory)
+		else:
+			frappe.throw(_("Unsupported format: {0}").format(format))
+
+	@staticmethod
+	def write_metadata(metadata: list[dict], output_directory: str) -> None:
+		"""Writes the email metadata to a JSON file in the output directory."""
+
+		_metadata: list[dict] = []
+		for meta in metadata:
+			_metadata.append(
+				{
+					"id": meta["id"],
+					"blobId": meta["blobId"],
+					"keywords": meta["keywords"],
+					"mailboxIds": meta["mailboxIds"],
+					"messageId": meta["messageId"],
+					"receivedAt": meta["receivedAt"],
+				}
+			)
+
+		with open(os.path.join(output_directory, "emails.json"), "w") as f:
+			json.dump(_metadata, f, indent=4)
+
+	@staticmethod
+	def _write_jmap(export_emails: list[ExportEmail], output_directory: str) -> None:
+		"""Writes the exported emails in JMAP format."""
+
+		blobs_dir = os.path.join(output_directory, "blobs")
+		os.makedirs(blobs_dir, exist_ok=True)
+
+		for export_email in export_emails:
+			with open(os.path.join(blobs_dir, export_email.blob_id), "wb") as f:
+				f.write(export_email.raw)
+
+	@staticmethod
+	def _write_mbox(
+		export_emails: list[ExportEmail], output_directory: str, mailbox_map: dict[str, str]
+	) -> None:
+		"""Writes the exported emails in MBOX format."""
+
+		def mbox_from_line(sender: dict[str, str], received_at: datetime) -> bytes:
+			"""
+			Builds an mbox 'From ' separator line.
+			Example:
+			From user@example.com Sat Jan  1 00:00:00 2026
+			"""
+
+			email = sender.get("email", "unknown")
+			timestamp = received_at.timestamp()
+			ctime_date = datetime.fromtimestamp(timestamp).ctime()
+
+			return f"From {email} {ctime_date}\n".encode()
+
+		for export_email in export_emails:
+			from_line = mbox_from_line(export_email.sender, export_email.received_at)
+			for mailbox_id in export_email.mailbox_ids:
+				mbox_path = os.path.join(output_directory, f"{mailbox_map[mailbox_id]}.mbox")
+
+				with open(mbox_path, "ab") as f:
+					f.write(from_line)
+					f.write(export_email.raw)
+
+					if not export_email.raw.endswith(b"\n"):
+						f.write(b"\n")
 
 
 class MailExchange(Document):
@@ -380,9 +479,7 @@ class MailExchange(Document):
 
 		self._mark_started()
 		export_base = os.path.join(get_mail_export_directory(), self.name)
-		blobs_dir = os.path.join(export_base, "blobs")
 		os.makedirs(export_base, exist_ok=True)
-		os.makedirs(blobs_dir, exist_ok=True)
 
 		export_file_name = f"{self.name}{self.export_archive_type}"
 		export_file_url = f"/private/files/{export_file_name}"
@@ -397,7 +494,7 @@ class MailExchange(Document):
 			client = get_jmap_client(self.user)
 			limit = cint(self.export_limit) or cint(self.email_count)
 
-			output += _("Fetching email IDs...").format("\n")
+			output += _("Fetching email IDs...{0}").format("\n")
 			self._publish_progress(10, 100, _("Fetching email IDs"))
 			ids = client.email_query(self._export_filter, sort=self._export_sort, limit=limit)["ids"]
 
@@ -406,7 +503,7 @@ class MailExchange(Document):
 
 			output += _("Fetching email metadata...{0}").format("\n")
 			self._publish_progress(30, 100, _("Fetching email metadata"))
-			properties = ["id", "blobId", "mailboxIds", "keywords", "receivedAt", "messageId"]
+			properties = ["id", "from", "blobId", "keywords", "mailboxIds", "messageId", "receivedAt"]
 			emails, _state = client.email_get(ids, properties=properties)
 
 			if not emails:
@@ -422,10 +519,13 @@ class MailExchange(Document):
 						unique_emails[key] = email
 				emails = list(unique_emails.values())
 
-			output += _("Saving email metadata...{0}").format("\n")
-			self._publish_progress(70, 100, _("Saving email metadata"))
-			with open(os.path.join(export_base, "emails.json"), "w") as f:
-				json.dump(emails, f, indent=4)
+			if self.export_format == "jmap":
+				output += _("Saving email metadata...{0}").format("\n")
+				self._publish_progress(70, 100, _("Saving email metadata"))
+				MailboxWriter.write_metadata(emails, export_base)
+
+			output += _("Fetching mailboxes...{0}").format("\n")
+			mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
 
 			batch_size = cint(frappe.conf.mail_exchange_export_batch_size) or 500
 			output += _("Downloading email blobs in batches of {0}...{1}").format(batch_size, "\n")
@@ -454,9 +554,27 @@ class MailExchange(Document):
 					output += _("{0}Failed to download blobs for batch {1}.{2}").format("\t\t", idx + 1, "\n")
 					continue
 
-				for blob_id, content in downloaded_blobs.items():
-					with open(os.path.join(blobs_dir, blob_id), "wb") as f:
-						f.write(content)
+				output += _("{0}Saving exported emails...{1}").format("\t\t", "\n")
+				export_emails: list[ExportEmail] = []
+				for email in emails_batch:
+					blob_id = email["blobId"]
+					if blob_id not in downloaded_blobs:
+						continue
+
+					sender = email["from"][0] if email.get("from") else {}
+					export_email = ExportEmail(
+						id=email["id"],
+						sender=sender,
+						blob_id=blob_id,
+						mailbox_ids=set(email["mailboxIds"].keys()),
+						keywords=set(email["keywords"].keys()),
+						received_at=datetime.fromisoformat(email["receivedAt"]),
+						message_id=email["messageId"][0],
+						raw=downloaded_blobs[blob_id],
+					)
+					export_emails.append(export_email)
+
+				MailboxWriter.write(self.export_format, export_emails, export_base, mailbox_map)
 
 			output += _("Creating archive...{0}").format("\n")
 			self._publish_progress(95, 100, _("Creating archive"))
