@@ -6,7 +6,7 @@ import os
 import shutil
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal
+from typing import ClassVar, Literal
 
 import frappe
 from frappe import _
@@ -66,6 +66,13 @@ class ExportEmail:
 
 
 class MailboxWriter:
+	FLAG_MAP: ClassVar[dict] = {
+		"$seen": "S",
+		"$flagged": "F",
+		"$answered": "R",
+		"$draft": "D",
+	}
+
 	@staticmethod
 	def write(
 		format: Literal["jmap", "mbox", "maildir", "maildir-nested"],
@@ -82,7 +89,7 @@ class MailboxWriter:
 		elif format == "maildir":
 			MailboxWriter._write_maildir(export_emails, output_directory)
 		elif format == "maildir-nested":
-			MailboxWriter._write_maildir_nested(export_emails, output_directory)
+			MailboxWriter._write_maildir_nested(export_emails, output_directory, mailbox_map)
 		else:
 			frappe.throw(_("Unsupported format: {0}").format(format))
 
@@ -152,30 +159,51 @@ class MailboxWriter:
 	def _write_maildir(export_emails: list[ExportEmail], output_directory: str) -> None:
 		"""Writes the exported emails in Maildir format."""
 
-		FLAG_MAP = {
-			"$seen": "S",
-			"$flagged": "F",
-			"$answered": "R",
-			"$draft": "D",
-		}
-
 		for subdir in ("tmp", "new", "cur"):
 			os.makedirs(os.path.join(output_directory, subdir), exist_ok=True)
 
 		for email in export_emails:
-			flags = "".join(sorted(FLAG_MAP[k] for k in email.keywords if k in FLAG_MAP))
-
-			is_seen = "$seen" in email.keywords
-			target_dir = "cur" if is_seen else "new"
+			flags = "".join(
+				sorted(MailboxWriter.FLAG_MAP[k] for k in email.keywords if k in MailboxWriter.FLAG_MAP)
+			)
+			target_dir = "cur" if "$seen" in email.keywords else "new"
 
 			if target_dir == "cur":
-				filename = f"{str(uuid7())}:2,{flags}"
+				filename = f"{uuid7()!s}:2,{flags}"
 			else:
 				filename = str(uuid7())
 
 			path = os.path.join(output_directory, target_dir, filename)
 			with open(path, "wb") as f:
 				f.write(email.raw)
+
+	@staticmethod
+	def _write_maildir_nested(
+		export_emails: list[ExportEmail], output_directory: str, mailbox_map: dict[str, str]
+	) -> None:
+		"""Writes the exported emails in Nested Maildir format."""
+
+		for email in export_emails:
+			flags = "".join(
+				sorted(MailboxWriter.FLAG_MAP[k] for k in email.keywords if k in MailboxWriter.FLAG_MAP)
+			)
+			target_subdir = "cur" if "$seen" in email.keywords else "new"
+
+			for mailbox_id in email.mailbox_ids:
+				folder_safe = mailbox_map[mailbox_id].replace(" ", "_").replace("/", ".")
+				maildir_path = os.path.join(output_directory, f".{folder_safe}")
+
+				for sub in ("tmp", "new", "cur"):
+					os.makedirs(os.path.join(maildir_path, sub), exist_ok=True)
+
+				if target_subdir == "cur":
+					filename = f"{uuid7()!s}:2,{flags}"
+				else:
+					filename = str(uuid7())
+
+				path = os.path.join(maildir_path, target_subdir, filename)
+				with open(path, "wb") as f:
+					f.write(email.raw)
 
 
 class MailExchange(Document):
