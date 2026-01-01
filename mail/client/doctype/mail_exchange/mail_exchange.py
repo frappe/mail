@@ -276,7 +276,8 @@ class MailExchange(Document):
 	def validate_user(self) -> None:
 		"""Validate the user."""
 
-		has_role(self.user, "Mail User")
+		if not has_role(self.user, "Mail User"):
+			frappe.throw(_("User must have the 'Mail User' role."))
 
 	def validate_tenant(self) -> None:
 		"""Validate the tenant."""
@@ -316,31 +317,24 @@ class MailExchange(Document):
 	def validate_export_filter(self) -> None:
 		"""Validate the export filter."""
 
-		if self.operation == "Export":
-			if self.export_filter:
-				try:
-					export_filter = json.loads(self.export_filter)
-					self.export_filter = json.dumps(export_filter, indent=4)
-				except json.JSONDecodeError:
-					frappe.throw(_("Filter must be a valid JSON."))
-		else:
-			self.export_filter = json.dumps({})
+		if self.export_filter:
+			try:
+				export_filter = json.loads(self.export_filter)
+				self.export_filter = json.dumps(export_filter, indent=4)
+			except json.JSONDecodeError:
+				frappe.throw(_("Filter must be a valid JSON."))
 
 	def validate_export_sort(self) -> None:
 		"""Validate the export sort."""
 
-		if self.operation == "Export":
-			if not self.export_limit or not self.export_sort:
-				self.export_sort = "Received At (ASC)"
-		else:
-			self.export_sort = ""
+		if not self.export_limit or not self.export_sort:
+			self.export_sort = "Received At (ASC)"
 
 	def validate_export_limit(self) -> None:
-		if self.operation == "Export":
-			if cint(self.export_limit) > self.max_export:
-				frappe.throw(_("Export Limit cannot exceed {0}.").format(self.max_export))
-		else:
-			self.export_limit = 0
+		"""Validate the export limit."""
+
+		if cint(self.export_limit) > self.max_export:
+			frappe.throw(_("Export Limit cannot exceed {0}.").format(self.max_export))
 
 	def validate_export_archive_type(self) -> None:
 		"""Validate the export archive type."""
@@ -535,12 +529,12 @@ class MailExchange(Document):
 			return
 
 		self._mark_started()
-		export_base = os.path.join(get_mail_export_directory(), self.name)
-		os.makedirs(export_base, exist_ok=True)
+		output_dir = os.path.join(get_mail_export_directory(), self.name)
+		os.makedirs(output_dir, exist_ok=True)
 
-		export_file_name = f"{self.name}{self.export_archive_type}"
-		export_file_url = f"/private/files/{export_file_name}"
-		export_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{export_file_url}")
+		output_file_name = f"{self.name}{self.export_archive_type}"
+		output_file_url = f"/private/files/{output_file_name}"
+		output_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{output_file_url}")
 
 		kwargs = {}
 		try:
@@ -579,10 +573,12 @@ class MailExchange(Document):
 			if self.export_format == "jmap":
 				output += _("Saving email metadata...{0}").format("\n")
 				self._publish_progress(70, 100, _("Saving email metadata"))
-				MailboxWriter.write_metadata(emails, export_base)
-
-			output += _("Fetching mailboxes...{0}").format("\n")
-			mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
+				MailboxWriter.write_metadata(emails, output_dir)
+			elif self.export_format in ["mbox", "maildir-nested"]:
+				output += _("Fetching mailboxes...{0}").format("\n")
+				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
+			else:
+				mailbox_map = {}
 
 			batch_size = cint(frappe.conf.mail_exchange_export_batch_size) or 500
 			output += _("Downloading email blobs in batches of {0}...{1}").format(batch_size, "\n")
@@ -631,17 +627,17 @@ class MailExchange(Document):
 					)
 					export_emails.append(export_email)
 
-				MailboxWriter.write(self.export_format, export_emails, export_base, mailbox_map)
+				MailboxWriter.write(self.export_format, export_emails, output_dir, mailbox_map)
 
 			output += _("Creating archive...{0}").format("\n")
 			self._publish_progress(95, 100, _("Creating archive"))
-			compress_directory(export_base, export_file)
+			compress_directory(output_dir, output_file)
 
 			output += _("Attaching export file to Mail Exchange document...{0}").format("\n")
 			file = frappe.new_doc("File")
 			file.is_private = 1
-			file.file_url = export_file_url
-			file.file_name = export_file_name
+			file.file_url = output_file_url
+			file.file_name = output_file_name
 			file.attached_to_doctype = self.doctype
 			file.attached_to_name = self.name
 			file.attached_to_field = "file"
@@ -649,7 +645,7 @@ class MailExchange(Document):
 
 			# https://github.com/frappe/frappe/issues/26615
 			frappe.db.set_value(
-				"File", file.name, {"file_url": export_file_url, "file_name": export_file_name}
+				"File", file.name, {"file_url": output_file_url, "file_name": output_file_name}
 			)
 
 			kwargs.update({"status": "Completed", "output": output.strip()})
@@ -673,7 +669,7 @@ class MailExchange(Document):
 				"description": _("Click the button below to view the reason for failure."),
 			}
 
-		shutil.rmtree(export_base, ignore_errors=True)
+		shutil.rmtree(output_dir, ignore_errors=True)
 		self._mark_completed(**kwargs)
 
 		if not is_administrator(self.owner):

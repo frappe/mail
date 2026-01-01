@@ -270,24 +270,24 @@ class MailDataExchange(Document):
 			return
 
 		self._mark_started()
-		export_base = os.path.join(get_data_export_directory(), self.name)
-		export_file_name = f"{self.name}{self.export_archive_type}"
-		export_file_url = f"/private/files/{export_file_name}"
-		export_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{export_file_url}")
-		os.makedirs(export_base, exist_ok=True)
+		output_dir = os.path.join(get_data_export_directory(), self.name)
+		output_file_name = f"{self.name}{self.export_archive_type}"
+		output_file_url = f"/private/files/{output_file_name}"
+		output_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{output_file_url}")
+		os.makedirs(output_dir, exist_ok=True)
 
 		kwargs = {}
 		try:
 			cli_path = get_stalwart_cli_path()
 			host, _credentials = self._get_host_and_credentials()
-			command = f"{cli_path} -u {host} export account {get_account_for_user(self.user)} {export_base}"
+			command = f"{cli_path} -u {host} export account {get_account_for_user(self.user)} {output_dir}"
 			output = _run_stalwart_cli_command(command, _credentials)
 
-			compress_directory(os.path.join(export_base, get_account_for_user(self.user)), export_file)
+			compress_directory(os.path.join(output_dir, get_account_for_user(self.user)), output_file)
 			file = frappe.new_doc("File")
 			file.is_private = 1
-			file.file_url = export_file_url
-			file.file_name = export_file_name
+			file.file_url = output_file_url
+			file.file_name = output_file_name
 			file.attached_to_doctype = self.doctype
 			file.attached_to_name = self.name
 			file.attached_to_field = "file"
@@ -295,7 +295,7 @@ class MailDataExchange(Document):
 
 			# https://github.com/frappe/frappe/issues/26615
 			frappe.db.set_value(
-				"File", file.name, {"file_url": export_file_url, "file_name": export_file_name}
+				"File", file.name, {"file_url": output_file_url, "file_name": output_file_name}
 			)
 
 			kwargs.update({"status": "Completed", "output": output})
@@ -319,7 +319,7 @@ class MailDataExchange(Document):
 				"description": _("Click the button below to view the reason for failure."),
 			}
 
-		shutil.rmtree(export_base, ignore_errors=True)
+		shutil.rmtree(output_dir, ignore_errors=True)
 		self._mark_completed(**kwargs)
 
 		if not is_administrator(self.owner):

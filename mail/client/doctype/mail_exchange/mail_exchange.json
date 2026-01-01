@@ -267,12 +267,12 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval: doc.operation == \"Import\"",
+   "depends_on": "eval: doc.operation == \"Import\" && doc.import_format == \"eml\"",
    "description": "Example: <code>{\"mailboxIds\": { \"a\": true }, \"keywords\": {\"$seen\": true}, \"receivedAt\": \"2025-12-31T00:00:00Z\"}</code>",
    "fieldname": "import_metadata",
    "fieldtype": "JSON",
    "label": "Metadata",
-   "mandatory_depends_on": "eval: doc.operation == \"Import\""
+   "mandatory_depends_on": "eval: doc.operation == \"Import\" && doc.import_format == \"eml\""
   },
   {
    "fieldname": "column_break_julx",
@@ -283,7 +283,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-01 14:03:10.408370",
+ "modified": "2026-01-01 14:40:32.554855",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Exchange",
