@@ -148,6 +148,35 @@ class MailboxWriter:
 					if not export_email.raw.endswith(b"\n"):
 						f.write(b"\n")
 
+	@staticmethod
+	def _write_maildir(export_emails: list[ExportEmail], output_directory: str) -> None:
+		"""Writes the exported emails in Maildir format."""
+
+		FLAG_MAP = {
+			"$seen": "S",
+			"$flagged": "F",
+			"$answered": "R",
+			"$draft": "D",
+		}
+
+		for subdir in ("tmp", "new", "cur"):
+			os.makedirs(os.path.join(output_directory, subdir), exist_ok=True)
+
+		for email in export_emails:
+			flags = "".join(sorted(FLAG_MAP[k] for k in email.keywords if k in FLAG_MAP))
+
+			is_seen = "$seen" in email.keywords
+			target_dir = "cur" if is_seen else "new"
+
+			if target_dir == "cur":
+				filename = f"{str(uuid7())}:2,{flags}"
+			else:
+				filename = str(uuid7())
+
+			path = os.path.join(output_directory, target_dir, filename)
+			with open(path, "wb") as f:
+				f.write(email.raw)
+
 
 class MailExchange(Document):
 	@property

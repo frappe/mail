@@ -112,7 +112,7 @@
    "fieldtype": "Select",
    "label": "Format",
    "mandatory_depends_on": "eval: doc.operation == \"Export\"",
-   "options": "jmap\nmbox"
+   "options": "jmap\nmbox\nmaildir"
   },
   {
    "depends_on": "eval: doc.operation == \"Export\"",
@@ -283,7 +283,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-01 12:32:01.660209",
+ "modified": "2026-01-01 13:22:40.224997",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Exchange",
