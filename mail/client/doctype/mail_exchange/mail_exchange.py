@@ -54,6 +54,14 @@ from mail.utils.validation import (
 
 
 @dataclass
+class ImportMeta:
+	blob_path: str
+	mailbox_ids: set[str]
+	keywords: set[str] | None
+	received_at: datetime | None
+
+
+@dataclass
 class ExportEmail:
 	id: str
 	sender: dict[str, str]
@@ -65,7 +73,110 @@ class ExportEmail:
 	raw: bytes
 
 
-class MailboxWriter:
+class MetadataLoader:
+	@staticmethod
+	def load(
+		format: Literal["eml", "jmap", "mbox", "maildir", "maildir-nested"],
+		input_directory: str,
+		metadata: dict | None = None,
+	) -> list[ImportMeta]:
+		"""Loads the email metadata based on the specified format."""
+
+		if format == "eml":
+			return MetadataLoader._get_eml_metadata(input_directory, metadata)
+		elif format == "jmap":
+			return MetadataLoader._get_jmap_metadata(input_directory)
+		elif format == "mbox":
+			return MetadataLoader._get_mbox_metadata(input_directory)
+		elif format == "maildir":
+			return MetadataLoader._get_maildir_metadata(input_directory)
+		elif format == "maildir-nested":
+			return MetadataLoader._get_maildir_nested_metadata(input_directory)
+		else:
+			frappe.throw(_("Unsupported format: {0}").format(format))
+
+	@staticmethod
+	def load_metadata(input_directory: str) -> list[dict]:
+		"""Loads email metadata from emails.json in the input directory."""
+
+		meta_path = os.path.join(input_directory, "emails.json")
+		if not os.path.exists(meta_path):
+			frappe.throw(_("emails.json not found in the import directory."))
+
+		with open(meta_path) as f:
+			metadata = json.load(f)
+
+		return metadata
+
+	@staticmethod
+	def _get_eml_metadata(input_directory: str, metadata: dict) -> list[ImportMeta]:
+		"""Loads emails metadata for EML format located at input_directory."""
+
+		if not metadata or not metadata.get("mailboxIds"):
+			frappe.throw(_("mailboxIds are required in Metadata for EML format."))
+
+		eml_files = [f for f in os.listdir(input_directory) if f.endswith(".eml")]
+		if not eml_files:
+			frappe.throw(_("mailboxIds are required in Metadata for EML format."))
+
+		import_metadata: list[ImportMeta] = []
+		mailbox_ids = set(metadata["mailboxIds"].keys())
+		keywords = set(metadata.get("keywords", {}).keys()) if metadata.get("keywords") else None
+		received_at = datetime.fromisoformat(metadata["receivedAt"]) if metadata.get("receivedAt") else None
+		for eml_file in eml_files:
+			import_meta = ImportMeta(
+				blob_path=eml_file,
+				mailbox_ids=mailbox_ids,
+				keywords=keywords,
+				received_at=received_at,
+			)
+			import_metadata.append(import_meta)
+
+		return import_metadata
+
+	@staticmethod
+	def _get_jmap_metadata(input_directory: str) -> list[ImportMeta]:
+		"""Loads emails metadata for JMAP format located at input_directory."""
+
+		validate_jmap_structure(input_directory, ["emails.json"], raise_exception=True)
+
+		import_metadata: list[ImportMeta] = []
+		metadata = MetadataLoader.load_metadata(input_directory)
+		for meta in metadata:
+			import_meta = ImportMeta(
+				blob_path=os.path.join("blobs", meta["blobId"]),
+				mailbox_ids=set(meta["mailboxIds"].keys()),
+				keywords=set(meta.get("keywords", {}).keys()) if meta.get("keywords") else None,
+				received_at=datetime.fromisoformat(meta["receivedAt"]) if meta.get("receivedAt") else None,
+			)
+			import_metadata.append(import_meta)
+
+		return import_metadata
+
+	@staticmethod
+	def _get_mbox_metadata(input_directory: str) -> list[ImportMeta]:
+		"""Loads emails metadata for MBOX format located at input_directory."""
+
+		mbox_files = get_mbox_files(input_directory)
+		if len(mbox_files) == 0:
+			frappe.throw(_("No {0} file found in the archive.").format("<code>.mbox</code>"))
+		elif len(mbox_files) > 1:
+			frappe.throw(_("Multiple {0} files found. Please provide only one.").format("<code>.mbox</code>"))
+
+	@staticmethod
+	def _get_maildir_metadata(input_directory: str) -> list[ImportMeta]:
+		"""Loads emails metadata for Maildir or Maildir++ format located at input_directory."""
+
+		validate_maildir_or_maildirpp(input_directory, raise_exception=True)
+
+	@staticmethod
+	def _get_maildir_nested_metadata(input_directory: str) -> list[ImportMeta]:
+		"""Loads emails metadata for Nested Maildir format located at input_directory."""
+
+		validate_nested_maildir_tree(input_directory, raise_exception=True)
+
+
+class MailWriter:
 	FLAG_MAP: ClassVar[dict] = {
 		"$seen": "S",
 		"$flagged": "F",
@@ -83,13 +194,13 @@ class MailboxWriter:
 		"""Writes the exported emails to the specified format in the output directory."""
 
 		if format == "jmap":
-			MailboxWriter._write_jmap(export_emails, output_directory)
+			MailWriter._write_jmap(export_emails, output_directory)
 		elif format == "mbox":
-			MailboxWriter._write_mbox(export_emails, output_directory, mailbox_map)
+			MailWriter._write_mbox(export_emails, output_directory, mailbox_map)
 		elif format == "maildir":
-			MailboxWriter._write_maildir(export_emails, output_directory)
+			MailWriter._write_maildir(export_emails, output_directory)
 		elif format == "maildir-nested":
-			MailboxWriter._write_maildir_nested(export_emails, output_directory, mailbox_map)
+			MailWriter._write_maildir_nested(export_emails, output_directory, mailbox_map)
 		else:
 			frappe.throw(_("Unsupported format: {0}").format(format))
 
@@ -164,7 +275,7 @@ class MailboxWriter:
 
 		for email in export_emails:
 			flags = "".join(
-				sorted(MailboxWriter.FLAG_MAP[k] for k in email.keywords if k in MailboxWriter.FLAG_MAP)
+				sorted(MailWriter.FLAG_MAP[k] for k in email.keywords if k in MailWriter.FLAG_MAP)
 			)
 			target_dir = "cur" if "$seen" in email.keywords else "new"
 
@@ -185,7 +296,7 @@ class MailboxWriter:
 
 		for email in export_emails:
 			flags = "".join(
-				sorted(MailboxWriter.FLAG_MAP[k] for k in email.keywords if k in MailboxWriter.FLAG_MAP)
+				sorted(MailWriter.FLAG_MAP[k] for k in email.keywords if k in MailWriter.FLAG_MAP)
 			)
 			target_subdir = "cur" if "$seen" in email.keywords else "new"
 
@@ -430,6 +541,9 @@ class MailExchange(Document):
 		if self.operation != "Import":
 			return 0
 
+		if self.import_format == "eml":
+			return 1
+
 		return 0
 
 	def _get_export_count(self) -> int:
@@ -460,26 +574,66 @@ class MailExchange(Document):
 		try:
 			output = ""
 
-			if self.import_format == "eml":
-				eml_output = self._import_eml(import_file)
-				output += eml_output
-			elif self.import_format in ["jmap", "mbox", "maildir", "maildir-nested"]:
+			if self.import_format == "eml" and self.import_file.endswith(".eml"):
+				output += _("Copying EML file to import directory...{0}").format("\n")
+				shutil.copy(import_file, os.path.join(import_base, "import.eml"))
+			else:
 				output += _("Extracting import file...{0}").format("\n")
 				extract_compressed_file(import_file, import_base)
 
-				if self.import_format == "jmap":
-					jmap_output = self._import_jmap(import_base)
-					output += jmap_output
-				elif self.import_format == "mbox":
-					mbox_output = self._import_mbox(import_base)
-					output += mbox_output
-				else:
-					if self.import_format == "maildir":
-						maildir_output = self._import_maildir(import_base)
-						output += maildir_output
-					elif self.import_format == "maildir-nested":
-						maildir_nested_output = self._import_maildir_nested(import_base)
-						output += maildir_nested_output
+			metadata = MetadataLoader.load(self.import_format, import_base, self._metadata)
+			if not metadata:
+				frappe.throw(_("No emails found in the import file."))
+
+			output += _("Connecting to JMAP server...{0}").format("\n")
+			client = get_jmap_client(self.user)
+			batch_size = client.max_objects_in_set
+
+			output += _("Uploading email blobs in batches of {0}...{1}").format(batch_size, "\n")
+			for idx, meta_batch in enumerate(create_batch(metadata, batch_size)):
+				output += _("{0}Processing batch {1}...{2}").format("\t", idx + 1, "\n")
+
+				output += _("{0}Loading blobs...{1}").format("\t\t", "\n")
+				blobs: list[tuple[bytes, str]] = []
+				for meta in meta_batch:
+					with open(os.path.join(import_base, meta.blob_path), "rb") as f:
+						blobs.append((f.read(), "message/rfc822"))
+
+				responses = client.upload_blobs_concurrently(blobs)
+				if not responses:
+					frappe.throw(_("No blobs uploaded in batch {0}.").format(idx + 1))
+
+				emails = {}
+				for i, resp in enumerate(responses):
+					new_blob_id = resp["blobId"]
+					meta = meta_batch[i]
+					email = {
+						"blobId": new_blob_id,
+						"mailboxIds": {mb_id: True for mb_id in meta.mailbox_ids},
+						"keywords": {kw: True for kw in meta.keywords} if meta.keywords else {},
+						"receivedAt": meta.received_at.isoformat() if meta.received_at else None,
+					}
+					emails[f"e{i+1}"] = email
+
+				response = client._make_request(
+					using=["urn:ietf:params:jmap:mail"],
+					method_calls=[
+						[
+							"Email/import",
+							{
+								"accountId": client.primary_account_id,
+								"emails": emails,
+							},
+							"0",
+						]
+					],
+				)
+				result = response["methodResponses"][0][1]
+
+				if created := result.get("created", {}):
+					output += _("{0}Created {1} emails.{2}").format("\t\t", len(created), "\n")
+				if failed := result.get("notCreated", {}):
+					output += _("{0}Failed to create {1} emails.{2}").format("\t\t", len(failed), "\n")
 
 			clear_sync_state(self.user, type="email")
 			kwargs.update({"status": "Completed", "output": output})
@@ -570,15 +724,14 @@ class MailExchange(Document):
 						unique_emails[key] = email
 				emails = list(unique_emails.values())
 
+			mailbox_map = {}
 			if self.export_format == "jmap":
 				output += _("Saving email metadata...{0}").format("\n")
 				self._publish_progress(70, 100, _("Saving email metadata"))
-				MailboxWriter.write_metadata(emails, output_dir)
+				MailWriter.write_metadata(emails, output_dir)
 			elif self.export_format in ["mbox", "maildir-nested"]:
 				output += _("Fetching mailboxes...{0}").format("\n")
 				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
-			else:
-				mailbox_map = {}
 
 			batch_size = cint(frappe.conf.mail_exchange_export_batch_size) or 500
 			output += _("Downloading email blobs in batches of {0}...{1}").format(batch_size, "\n")
@@ -627,7 +780,7 @@ class MailExchange(Document):
 					)
 					export_emails.append(export_email)
 
-				MailboxWriter.write(self.export_format, export_emails, output_dir, mailbox_map)
+				MailWriter.write(self.export_format, export_emails, output_dir, mailbox_map)
 
 			output += _("Creating archive...{0}").format("\n")
 			self._publish_progress(95, 100, _("Creating archive"))
@@ -723,176 +876,6 @@ class MailExchange(Document):
 			docname=self.name,
 			user=frappe.session.user,
 		)
-
-	def _import_eml(self, import_file: str) -> str:
-		"""Imports a single EML file located at import_file."""
-
-		output = _("Preparing EML file for import...{0}").format("\n")
-		with open(import_file, "rb") as f:
-			content = f.read()
-
-		if not content:
-			frappe.throw(_("EML file is empty."))
-
-		output += _("Connecting to JMAP server...{0}").format("\n")
-		client = get_jmap_client(self.user)
-		response = client.upload_blob(content, "message/rfc822")
-
-		if not response or "blobId" not in response:
-			frappe.throw(_("Failed to upload EML file blob."))
-
-		meta = self._metadata
-		email = {
-			"blobId": response["blobId"],
-			"mailboxIds": meta["mailboxIds"],
-		}
-		if keywords := meta.get("keywords"):
-			email["keywords"] = keywords
-		if received_at := meta.get("receivedAt"):
-			email["receivedAt"] = received_at
-
-		response = client._make_request(
-			using=["urn:ietf:params:jmap:mail"],
-			method_calls=[
-				[
-					"Email/import",
-					{
-						"accountId": client.primary_account_id,
-						"emails": {"e1": email},
-					},
-					"0",
-				]
-			],
-		)
-		result = response["methodResponses"][0][1]
-
-		if result.get("created", {}):
-			output += _("Email created.{0}").format("\n")
-		if result.get("notCreated", {}):
-			frappe.throw(_("Failed to create email."))
-
-		return output
-
-	def _import_jmap(self, import_base: str) -> str:
-		"""Imports emails from a JMAP export located at import_base."""
-
-		output = _("Validating JMAP structure...{0}").format("\n")
-		validate_jmap_structure(import_base, ["emails.json"], raise_exception=True)
-
-		output += _("Loading emails metadata...{0}").format("\n")
-		meta_path = os.path.join(import_base, "emails.json")
-		with open(meta_path) as f:
-			metadata = {email["blobId"]: email for email in json.load(f)}
-
-		if not metadata:
-			frappe.throw(_("No email metadata found in emails.json."))
-
-		output += _("Collecting blob IDs...{0}").format("\n")
-		blobs_dir = os.path.join(import_base, "blobs")
-		blob_ids = os.listdir(blobs_dir)
-
-		if not blob_ids:
-			frappe.throw(_("No blobs found to import."))
-
-		if diff := set(metadata).difference(set(blob_ids)):
-			if len(diff) <= 5:
-				missing = ", ".join(f"<code>{blob}</code>" for blob in diff)
-				frappe.throw(_("Missing blobs: {0}").format(missing))
-			else:
-				frappe.throw(
-					_("{0} blobs referenced in emails.json are missing in the blobs directory.").format(
-						len(diff)
-					)
-				)
-		elif diff := set(blob_ids).difference(set(metadata)):
-			if len(diff) <= 5:
-				extra = ", ".join(f"<code>{blob}</code>" for blob in diff)
-				frappe.throw(_("Extra blobs not referenced in emails.json: {0}").format(extra))
-			else:
-				frappe.throw(
-					_("{0} blobs found in the blobs directory are not referenced in emails.json.").format(
-						len(diff)
-					)
-				)
-
-		output += _("Connecting to JMAP server...{0}").format("\n")
-		client = get_jmap_client(self.user)
-		batch_size = client.max_objects_in_set
-
-		output += _("Uploading email blobs in batches of {0}...{1}").format(batch_size, "\n")
-		for idx, blob_ids_batch in enumerate(create_batch(blob_ids, batch_size)):
-			output += _("{0}Processing batch {1}...{2}").format("\t", idx + 1, "\n")
-
-			base_path = os.path.join(blobs_dir)
-			blobs: list[tuple[bytes, str]] = []
-			for blob_id in blob_ids_batch:
-				with open(os.path.join(base_path, blob_id), "rb") as f:
-					blobs.append((f.read(), "message/rfc822"))
-
-			responses = client.upload_blobs_concurrently(blobs)
-
-			if not responses:
-				frappe.throw(_("No blobs uploaded in batch {0}.").format(idx + 1))
-
-			emails = {}
-			for i, resp in enumerate(responses):
-				new_blob_id = resp["blobId"]
-				meta = metadata[blob_ids_batch[i]]
-				email = {
-					"blobId": new_blob_id,
-					"mailboxIds": meta["mailboxIds"],
-					"keywords": meta["keywords"],
-					"receivedAt": meta["receivedAt"],
-				}
-				emails[f"e{i+1}"] = email
-
-			response = client._make_request(
-				using=["urn:ietf:params:jmap:mail"],
-				method_calls=[
-					[
-						"Email/import",
-						{
-							"accountId": client.primary_account_id,
-							"emails": emails,
-						},
-						"0",
-					]
-				],
-			)
-			result = response["methodResponses"][0][1]
-
-			if created := result.get("created", {}):
-				output += _("{0}Created {1} emails.{2}").format("\t\t", len(created), "\n")
-			if failed := result.get("notCreated", {}):
-				output += _("{0}Failed to create {1} emails.{2}").format("\t\t", len(failed), "\n")
-
-		return output
-
-	def _import_mbox(self, import_base: str) -> str:
-		"""Imports emails from an MBOX file located at import_base."""
-
-		output = _("Validating MBOX files...{0}").format("\n")
-		mbox_files = get_mbox_files(import_base)
-		if len(mbox_files) == 0:
-			frappe.throw(_("No {0} file found in the archive.").format("<code>.mbox</code>"))
-		elif len(mbox_files) > 1:
-			frappe.throw(_("Multiple {0} files found. Please provide only one.").format("<code>.mbox</code>"))
-
-		return output
-
-	def _import_maildir(self, import_base: str) -> str:
-		"""Imports emails from a Maildir structure located at import_base."""
-
-		output = _("Validating Maildir structure...{0}").format("\n")
-		validate_maildir_or_maildirpp(import_base, raise_exception=True)
-		return output
-
-	def _import_maildir_nested(self, import_base: str) -> str:
-		"""Imports emails from a nested Maildir structure located at import_base."""
-
-		output = _("Validating Nested Maildir structure...{0}").format("\n")
-		validate_nested_maildir_tree(import_base, raise_exception=True)
-		return output
 
 	def _db_set(
 		self,
