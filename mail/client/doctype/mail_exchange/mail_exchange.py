@@ -2,8 +2,10 @@
 # For license information, please see license.txt
 
 import json
+import mailbox
 import os
 import shutil
+from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime
 from typing import ClassVar, Literal
@@ -78,7 +80,8 @@ class MetadataLoader:
 	def load(
 		format: Literal["eml", "jmap", "mbox", "maildir", "maildir-nested"],
 		input_directory: str,
-		metadata: dict | None = None,
+		mailbox_map: dict[str, str],
+		metadata: dict,
 	) -> list[ImportMeta]:
 		"""Loads the email metadata based on the specified format."""
 
@@ -87,7 +90,7 @@ class MetadataLoader:
 		elif format == "jmap":
 			return MetadataLoader._get_jmap_metadata(input_directory)
 		elif format == "mbox":
-			return MetadataLoader._get_mbox_metadata(input_directory)
+			return MetadataLoader._get_mbox_metadata(input_directory, mailbox_map)
 		elif format == "maildir":
 			return MetadataLoader._get_maildir_metadata(input_directory)
 		elif format == "maildir-nested":
@@ -154,14 +157,44 @@ class MetadataLoader:
 		return import_metadata
 
 	@staticmethod
-	def _get_mbox_metadata(input_directory: str) -> list[ImportMeta]:
+	def _get_mbox_metadata(
+		input_directory: str,
+		mailbox_map: dict[str, str],
+	) -> list[ImportMeta]:
 		"""Loads emails metadata for MBOX format located at input_directory."""
 
 		mbox_files = get_mbox_files(input_directory)
-		if len(mbox_files) == 0:
+		if not mbox_files:
 			frappe.throw(_("No {0} file found in the archive.").format("<code>.mbox</code>"))
-		elif len(mbox_files) > 1:
-			frappe.throw(_("Multiple {0} files found. Please provide only one.").format("<code>.mbox</code>"))
+
+		import_metadata_map: dict[str, ImportMeta] = {}
+		for mbox_path in mbox_files:
+			mailbox_id = next(
+				(k for k, v in mailbox_map.items() if v + ".mbox" == os.path.basename(mbox_path)), None
+			)
+
+			if not mailbox_id:
+				frappe.throw(_("Mailbox ID not found for MBOX file: {0}").format(os.path.basename(mbox_path)))
+
+			with closing(mailbox.mbox(mbox_path, factory=None)) as mbox:
+				for key, message in mbox.items():
+					message_id = message.get("Message-ID") or key
+					if message_id in import_metadata_map:
+						import_metadata_map[message_id].mailbox_ids.add(mailbox_id)
+						continue
+
+					blob_filename = f"{uuid7()}.eml"
+					with open(os.path.join(input_directory, blob_filename), "wb") as f:
+						f.write(message.as_bytes(unixfrom=True))
+
+					import_metadata_map[message_id] = ImportMeta(
+						blob_path=blob_filename,
+						mailbox_ids={mailbox_id},
+						keywords=None,
+						received_at=None,
+					)
+
+		return list(import_metadata_map.values())
 
 	@staticmethod
 	def _get_maildir_metadata(input_directory: str) -> list[ImportMeta]:
@@ -532,16 +565,30 @@ class MailExchange(Document):
 				output += _("Extracting import file...{0}").format("\n")
 				extract_compressed_file(import_file, import_base)
 
-			metadata = MetadataLoader.load(self.import_format, import_base, self._metadata)
+			output += _("Connecting to JMAP server...{0}").format("\n")
+			client = get_jmap_client(self.user)
+			batch_size = client.max_objects_in_set
+
+			mailbox_map = {}
+			if self.import_format == "mbox":
+				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
+				mailbox_names = set(mailbox_map.values())
+				for mbox_path in get_mbox_files(import_base):
+					mailbox_name = os.path.basename(mbox_path).rsplit(".", 1)[0]
+					if mailbox_name not in mailbox_names:
+						output += _("Creating mailbox '{0}'...{1}").format(mailbox_name, "\n")
+						mailbox = frappe.new_doc("Mailbox")
+						mailbox.user = self.user
+						mailbox._name = mailbox_name
+						mailbox.insert()
+						mailbox_map[mailbox.id] = mailbox._name
+
+			metadata = MetadataLoader.load(self.import_format, import_base, mailbox_map, self._metadata)
 			if not metadata:
 				frappe.throw(_("No emails found in the import file."))
 
 			if len(metadata) > self.max_import:
 				frappe.throw(_("Email count for import cannot exceed {0}.").format(self.max_import))
-
-			output += _("Connecting to JMAP server...{0}").format("\n")
-			client = get_jmap_client(self.user)
-			batch_size = client.max_objects_in_set
 
 			output += _("Uploading email blobs in batches of {0}...{1}").format(batch_size, "\n")
 			for idx, meta_batch in enumerate(create_batch(metadata, batch_size)):
