@@ -372,8 +372,6 @@ class MailExchange(Document):
 			self.validate_export_limit()
 			self.validate_export_archive_type()
 
-		self.validate_email_count()
-
 	def before_submit(self) -> None:
 		self.status = "Queued"
 		self.queued_at = now()
@@ -453,31 +451,6 @@ class MailExchange(Document):
 		if not self.export_archive_type:
 			frappe.throw(_("Archive Type is required."))
 
-	def validate_email_count(self) -> None:
-		"""Validate and set the email count."""
-
-		if self.operation == "Import":
-			self.email_count = self._get_import_count()
-
-			max_import = self.max_import
-			if self.email_count > max_import:
-				frappe.throw(_("Email count for import cannot exceed {0}.").format(max_import))
-
-		elif self.operation == "Export":
-			count = self._get_export_count()
-			self.email_count = min(count, self.export_limit) if self.export_limit else count
-
-			max_export = self.max_export
-			if self.email_count > max_export:
-				if not self.export_limit:
-					frappe.throw(
-						_("Email count for export cannot exceed {0}. Please set an Export Limit.").format(
-							max_export
-						)
-					)
-
-				frappe.throw(_("Email count for export cannot exceed {0}.").format(max_export))
-
 	def process(self) -> None:
 		"""Enqueue the import or export based on the operation type."""
 
@@ -535,28 +508,6 @@ class MailExchange(Document):
 		self._db_set(status="Queued", queued_at=now(), notify=True)
 		self.process()
 
-	def _get_import_count(self) -> int:
-		"""Returns the import count based on the import file."""
-
-		if self.operation != "Import":
-			return 0
-
-		if self.import_format == "eml":
-			return 1
-
-		return 0
-
-	def _get_export_count(self) -> int:
-		"""Returns the export count based on the export filter."""
-
-		if self.operation != "Export":
-			return 0
-
-		client = get_jmap_client(self.user)
-		result = client.email_query(self._export_filter, limit=1)
-
-		return result["total"]
-
 	def _import(self) -> None:
 		"""Imports the mail data."""
 
@@ -576,7 +527,7 @@ class MailExchange(Document):
 
 			if self.import_format == "eml" and self.import_file.endswith(".eml"):
 				output += _("Copying EML file to import directory...{0}").format("\n")
-				shutil.copy(import_file, os.path.join(import_base, "import.eml"))
+				shutil.copy(import_file, os.path.join(import_base, os.path.basename(import_file)))
 			else:
 				output += _("Extracting import file...{0}").format("\n")
 				extract_compressed_file(import_file, import_base)
@@ -584,6 +535,9 @@ class MailExchange(Document):
 			metadata = MetadataLoader.load(self.import_format, import_base, self._metadata)
 			if not metadata:
 				frappe.throw(_("No emails found in the import file."))
+
+			if len(metadata) > self.max_import:
+				frappe.throw(_("Email count for import cannot exceed {0}.").format(self.max_import))
 
 			output += _("Connecting to JMAP server...{0}").format("\n")
 			client = get_jmap_client(self.user)
@@ -697,7 +651,21 @@ class MailExchange(Document):
 			output += _("Connecting to JMAP server...{0}").format("\n")
 			self._publish_progress(0, 100, _("Connecting to JMAP server"))
 			client = get_jmap_client(self.user)
-			limit = cint(self.export_limit) or cint(self.email_count)
+
+			output += _("Counting emails to export...{0}").format("\n")
+			total = client.email_query(self._export_filter, limit=1)["total"]
+			limit = min(total, cint(self.export_limit)) if self.export_limit else total
+
+			max_export = self.max_export
+			if limit > max_export:
+				if not self.export_limit:
+					frappe.throw(
+						_("Email count for export cannot exceed {0}. Please set an Export Limit.").format(
+							max_export
+						)
+					)
+
+				frappe.throw(_("Email count for export cannot exceed {0}.").format(max_export))
 
 			output += _("Fetching email IDs...{0}").format("\n")
 			self._publish_progress(10, 100, _("Fetching email IDs"))
