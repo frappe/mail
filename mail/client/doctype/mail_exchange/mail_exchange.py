@@ -8,7 +8,7 @@ import shutil
 from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime
-from typing import ClassVar, Literal
+from typing import Literal
 
 import frappe
 from frappe import _
@@ -53,6 +53,13 @@ from mail.utils.validation import (
 	validate_maildir_or_maildirpp,
 	validate_nested_maildir_tree,
 )
+
+MAILDIR_FLAG_MAP = {
+	"$seen": "S",
+	"$flagged": "F",
+	"$answered": "R",
+	"$draft": "D",
+}
 
 
 @dataclass
@@ -202,6 +209,40 @@ class MetadataLoader:
 
 		validate_maildir_or_maildirpp(input_directory, raise_exception=True)
 
+		import_metadata: list[ImportMeta] = []
+		maildir_flag_map = {v: k for k, v in MAILDIR_FLAG_MAP.items()}
+		for subdir in ("cur", "new"):
+			dir_path = os.path.join(input_directory, subdir)
+			if not os.path.exists(dir_path):
+				continue
+
+			for filename in os.listdir(dir_path):
+				keywords: set[str] = set()
+
+				if subdir == "cur":
+					keywords.add("$seen")
+
+				if ":2," in filename:
+					flags = filename.split(":2,", 1)[1]
+					for flag in flags:
+						if keyword := maildir_flag_map.get(flag):
+							keywords.add(keyword)
+
+					if "S" in flags:
+						keywords.add("$seen")
+					else:
+						keywords.discard("$seen")
+
+				import_meta = ImportMeta(
+					blob_path=os.path.join(subdir, filename),
+					mailbox_ids=set(),
+					keywords=keywords,
+					received_at=None,
+				)
+				import_metadata.append(import_meta)
+
+		return import_metadata
+
 	@staticmethod
 	def _get_maildir_nested_metadata(input_directory: str) -> list[ImportMeta]:
 		"""Loads emails metadata for Nested Maildir format located at input_directory."""
@@ -210,13 +251,6 @@ class MetadataLoader:
 
 
 class MailWriter:
-	FLAG_MAP: ClassVar[dict] = {
-		"$seen": "S",
-		"$flagged": "F",
-		"$answered": "R",
-		"$draft": "D",
-	}
-
 	@staticmethod
 	def write(
 		format: Literal["jmap", "mbox", "maildir", "maildir-nested"],
@@ -307,9 +341,7 @@ class MailWriter:
 			os.makedirs(os.path.join(output_directory, subdir), exist_ok=True)
 
 		for email in export_emails:
-			flags = "".join(
-				sorted(MailWriter.FLAG_MAP[k] for k in email.keywords if k in MailWriter.FLAG_MAP)
-			)
+			flags = "".join(sorted(MAILDIR_FLAG_MAP[k] for k in email.keywords if k in MAILDIR_FLAG_MAP))
 			target_dir = "cur" if "$seen" in email.keywords else "new"
 
 			if target_dir == "cur":
@@ -328,9 +360,7 @@ class MailWriter:
 		"""Writes the exported emails in Nested Maildir format."""
 
 		for email in export_emails:
-			flags = "".join(
-				sorted(MailWriter.FLAG_MAP[k] for k in email.keywords if k in MailWriter.FLAG_MAP)
-			)
+			flags = "".join(sorted(MAILDIR_FLAG_MAP[k] for k in email.keywords if k in MAILDIR_FLAG_MAP))
 			target_subdir = "cur" if "$seen" in email.keywords else "new"
 
 			for mailbox_id in email.mailbox_ids:
