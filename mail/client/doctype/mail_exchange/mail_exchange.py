@@ -30,7 +30,7 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
-from mail.jmap import get_jmap_client
+from mail.jmap import JMAPClient, get_jmap_client
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,
@@ -101,7 +101,7 @@ class MetadataLoader:
 		elif format == "maildir":
 			return MetadataLoader._get_maildir_metadata(input_directory, metadata)
 		elif format == "maildir-nested":
-			return MetadataLoader._get_maildir_nested_metadata(input_directory)
+			return MetadataLoader._get_maildir_nested_metadata(input_directory, mailbox_map)
 		else:
 			frappe.throw(_("Unsupported format: {0}").format(format))
 
@@ -134,13 +134,14 @@ class MetadataLoader:
 		keywords = set(metadata.get("keywords", {}).keys()) if metadata.get("keywords") else None
 		received_at = datetime.fromisoformat(metadata["receivedAt"]) if metadata.get("receivedAt") else None
 		for eml_file in eml_files:
-			import_meta = ImportMeta(
-				blob_path=eml_file,
-				mailbox_ids=mailbox_ids,
-				keywords=keywords,
-				received_at=received_at,
+			import_metadata.append(
+				ImportMeta(
+					blob_path=eml_file,
+					mailbox_ids=mailbox_ids,
+					keywords=keywords,
+					received_at=received_at,
+				)
 			)
-			import_metadata.append(import_meta)
 
 		return import_metadata
 
@@ -153,13 +154,16 @@ class MetadataLoader:
 		import_metadata: list[ImportMeta] = []
 		metadata = MetadataLoader.load_metadata(input_directory)
 		for meta in metadata:
-			import_meta = ImportMeta(
-				blob_path=os.path.join("blobs", meta["blobId"]),
-				mailbox_ids=set(meta["mailboxIds"].keys()),
-				keywords=set(meta.get("keywords", {}).keys()) if meta.get("keywords") else None,
-				received_at=datetime.fromisoformat(meta["receivedAt"]) if meta.get("receivedAt") else None,
+			import_metadata.append(
+				ImportMeta(
+					blob_path=os.path.join("blobs", meta["blobId"]),
+					mailbox_ids=set(meta["mailboxIds"].keys()),
+					keywords=set(meta.get("keywords", {}).keys()) if meta.get("keywords") else None,
+					received_at=datetime.fromisoformat(meta["receivedAt"])
+					if meta.get("receivedAt")
+					else None,
+				)
 			)
-			import_metadata.append(import_meta)
 
 		return import_metadata
 
@@ -235,21 +239,80 @@ class MetadataLoader:
 					else:
 						keywords.discard("$seen")
 
-				import_meta = ImportMeta(
-					blob_path=os.path.join(subdir, filename),
-					mailbox_ids=mailbox_ids,
-					keywords=keywords,
-					received_at=received_at,
+				import_metadata.append(
+					ImportMeta(
+						blob_path=os.path.join(subdir, filename),
+						mailbox_ids=mailbox_ids,
+						keywords=keywords,
+						received_at=received_at,
+					)
 				)
-				import_metadata.append(import_meta)
 
 		return import_metadata
 
 	@staticmethod
-	def _get_maildir_nested_metadata(input_directory: str) -> list[ImportMeta]:
+	def _get_maildir_nested_metadata(input_directory: str, mailbox_map: dict[str, str]) -> list[ImportMeta]:
 		"""Loads emails metadata for Nested Maildir format located at input_directory."""
 
 		validate_nested_maildir_tree(input_directory, raise_exception=True)
+
+		import_metadata: list[ImportMeta] = []
+		maildir_flag_map = {v: k for k, v in MAILDIR_FLAG_MAP.items()}
+
+		for root, dirs, _files in os.walk(input_directory):
+			if not ("cur" in dirs or "new" in dirs):
+				continue
+
+			mailbox_rel_path = os.path.relpath(root, input_directory)
+			mailbox_rel_path = "" if mailbox_rel_path == "." else mailbox_rel_path
+			mailbox_name = mailbox_rel_path.replace(".", "").replace("_", " ")
+
+			mailbox_id = next(
+				(k for k, v in mailbox_map.items() if v == os.path.basename(mailbox_name)), None
+			)
+
+			if not mailbox_id:
+				frappe.throw(_("Mailbox ID not found for Maildir folder: {0}").format(mailbox_name))
+
+			mailbox_ids = {mailbox_id}
+
+			for subdir in ("cur", "new"):
+				dir_path = os.path.join(root, subdir)
+				if not os.path.isdir(dir_path):
+					continue
+
+				for filename in os.listdir(dir_path):
+					keywords: set[str] = set()
+
+					if subdir == "cur":
+						keywords.add("$seen")
+
+					if ":2," in filename:
+						flags = filename.split(":2,", 1)[1]
+						for flag in flags:
+							if keyword := maildir_flag_map.get(flag):
+								keywords.add(keyword)
+
+						if "S" in flags:
+							keywords.add("$seen")
+						else:
+							keywords.discard("$seen")
+
+					blob_path = (
+						os.path.join(mailbox_rel_path, subdir, filename)
+						if mailbox_rel_path
+						else os.path.join(subdir, filename)
+					)
+					import_metadata.append(
+						ImportMeta(
+							blob_path=blob_path,
+							mailbox_ids=mailbox_ids,
+							keywords=keywords,
+							received_at=None,
+						)
+					)
+
+		return import_metadata
 
 
 class MailWriter:
@@ -600,20 +663,7 @@ class MailExchange(Document):
 			output += _("Connecting to JMAP server...{0}").format("\n")
 			client = get_jmap_client(self.user)
 			batch_size = client.max_objects_in_set
-
-			mailbox_map = {}
-			if self.import_format == "mbox":
-				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
-				mailbox_names = set(mailbox_map.values())
-				for mbox_path in get_mbox_files(import_base):
-					mailbox_name = os.path.basename(mbox_path).rsplit(".", 1)[0]
-					if mailbox_name not in mailbox_names:
-						output += _("Creating mailbox '{0}'...{1}").format(mailbox_name, "\n")
-						mailbox = frappe.new_doc("Mailbox")
-						mailbox.user = self.user
-						mailbox._name = mailbox_name
-						mailbox.insert()
-						mailbox_map[mailbox.id] = mailbox._name
+			mailbox_map = self._get_mailbox_map(client, import_base)
 
 			metadata = MetadataLoader.load(self.import_format, import_base, mailbox_map, self._metadata)
 			if not metadata:
@@ -679,8 +729,8 @@ class MailExchange(Document):
 				"description": _("Click the button below to view the imported data."),
 			}
 
-		except Exception as e:
-			kwargs.update({"status": "Failed", "output": str(e)})
+		except Exception:
+			kwargs.update({"status": "Failed", "output": frappe.get_traceback(with_context=False)})
 
 			mail_details = {
 				"subject": _("Mail Data Import Failed"),
@@ -815,17 +865,18 @@ class MailExchange(Document):
 						continue
 
 					sender = email["from"][0] if email.get("from") else {}
-					export_email = ExportEmail(
-						id=email["id"],
-						sender=sender,
-						blob_id=blob_id,
-						mailbox_ids=set(email["mailboxIds"].keys()),
-						keywords=set(email["keywords"].keys()),
-						received_at=datetime.fromisoformat(email["receivedAt"]),
-						message_id=email["messageId"][0],
-						raw=downloaded_blobs[blob_id],
+					export_emails.append(
+						ExportEmail(
+							id=email["id"],
+							sender=sender,
+							blob_id=blob_id,
+							mailbox_ids=set(email["mailboxIds"].keys()),
+							keywords=set(email["keywords"].keys()),
+							received_at=datetime.fromisoformat(email["receivedAt"]),
+							message_id=email["messageId"][0],
+							raw=downloaded_blobs[blob_id],
+						)
 					)
-					export_emails.append(export_email)
 
 				MailWriter.write(self.export_format, export_emails, output_dir, mailbox_map)
 
@@ -858,8 +909,8 @@ class MailExchange(Document):
 				"description": _("Click the button below to view and download the exported data."),
 			}
 
-		except Exception as e:
-			kwargs.update({"status": "Failed", "output": str(e)})
+		except Exception:
+			kwargs.update({"status": "Failed", "output": frappe.get_traceback(with_context=False)})
 
 			mail_details = {
 				"subject": _("Mail Data Export Failed"),
@@ -923,6 +974,80 @@ class MailExchange(Document):
 			docname=self.name,
 			user=frappe.session.user,
 		)
+
+	def _get_mailbox_map(self, client: JMAPClient, import_base: str) -> dict[str, str]:
+		"""Returns a map of mailbox IDs to mailbox names. Creates missing mailboxes if specified."""
+
+		def iter_maildir_mailboxes(base_dir: str):
+			"""Yield mailbox paths relative to base_dir that contain cur/ or new/."""
+
+			for root, dirs, _files in os.walk(base_dir):
+				if "cur" in dirs or "new" in dirs:
+					rel = os.path.relpath(root, base_dir)
+					if rel != ".":
+						yield rel
+
+		def normalize_mailbox_parts(path: str) -> list[str]:
+			"""Normalize mailbox path into parts suitable for JMAP mailbox creation."""
+
+			parts = []
+			for part in path.split(os.sep):
+				if part.startswith("."):
+					part = part[1:]
+				part = part.replace(".", "/").replace("_", " ")
+				parts.extend(part.split("/"))
+			return parts
+
+		if self.import_format not in ["mbox", "maildir-nested"]:
+			return {}
+
+		mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
+		if not self.create_missing_mailboxes:
+			return mailbox_map
+
+		existing_mailboxes = set(mailbox_map.values())
+
+		if self.import_format == "mbox":
+			for mbox_path in get_mbox_files(import_base):
+				mailbox_name = os.path.basename(mbox_path).rsplit(".", 1)[0]
+				if mailbox_name not in existing_mailboxes:
+					mailbox = frappe.new_doc("Mailbox")
+					mailbox.user = self.user
+					mailbox._name = mailbox_name
+					mailbox.insert()
+					mailbox_map[mailbox.id] = mailbox._name
+
+		elif self.import_format == "maildir-nested":
+			mailbox_paths = set(iter_maildir_mailboxes(import_base))
+			hierarchies: list[list[str]] = sorted(
+				[normalize_mailbox_parts(path) for path in mailbox_paths], key=len
+			)
+
+			for parts in hierarchies:
+				parent_name = None
+				current_path = []
+
+				for part in parts:
+					current_path.append(part)
+					mailbox_name = "/".join(current_path)
+
+					if mailbox_name in existing_mailboxes:
+						parent_name = mailbox_name
+						continue
+
+					mailbox = frappe.new_doc("Mailbox")
+					mailbox.user = self.user
+					mailbox._name = mailbox_name
+					if parent_name:
+						mailbox._parent = parent_name
+					mailbox.insert()
+
+					mailbox_map[mailbox.id] = mailbox_name
+					existing_mailboxes.add(mailbox_name)
+
+					parent_name = mailbox_name
+
+		return mailbox_map
 
 	def _db_set(
 		self,

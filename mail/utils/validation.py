@@ -290,22 +290,34 @@ def validate_maildir_or_maildirpp(base_dir: str, raise_exception: bool = False) 
 def validate_nested_maildir_tree(base_dir: str, raise_exception: bool = False) -> list[str]:
 	"""Recursively validates a nested Maildir++ tree. Returns list of invalid directories (relative paths)."""
 
-	invalid_dirs = []
+	invalid_dirs: list[str] = []
+	base_dir = os.path.abspath(base_dir)
 
-	def to_rel(path) -> str:
+	def to_rel(path: str) -> str:
 		rel = os.path.relpath(path, base_dir)
 		return "/" if rel == "." else f"/{rel}"
 
-	def check_dir(path: str) -> None:
-		if not is_valid_maildir(path, raise_exception=False):
-			invalid_dirs.append(to_rel(path))
+	def is_valid_nested_mailbox(path: str) -> bool:
+		entries = set(os.listdir(path))
+		has_cur = "cur" in entries and os.path.isdir(os.path.join(path, "cur"))
+		has_new = "new" in entries and os.path.isdir(os.path.join(path, "new"))
+		return has_cur or has_new
 
+	def walk(path: str) -> None:
 		for entry in os.listdir(path):
-			full_path = os.path.join(path, entry)
-			if entry.startswith(".") and os.path.isdir(full_path):
-				check_dir(full_path)
+			if not entry.startswith("."):
+				continue
 
-	check_dir(base_dir)
+			full_path = os.path.join(path, entry)
+			if not os.path.isdir(full_path):
+				continue
+
+			if not is_valid_nested_mailbox(full_path):
+				invalid_dirs.append(to_rel(full_path))
+
+			walk(full_path)
+
+	walk(base_dir)
 
 	if invalid_dirs and raise_exception:
 		frappe.throw(
