@@ -257,12 +257,12 @@
    "label": "Deduplicate by Message-ID"
   },
   {
-   "depends_on": "eval: doc.operation == \"Import\" && doc.import_format == \"eml\"",
+   "depends_on": "eval: doc.operation == \"Import\" && [\"eml\", \"maildir\"].includes(doc.import_format)",
    "description": "Example: <code>{\"mailboxIds\": { \"a\": true }, \"keywords\": {\"$seen\": true}, \"receivedAt\": \"2025-12-31T00:00:00Z\"}</code>",
    "fieldname": "import_metadata",
    "fieldtype": "JSON",
    "label": "Metadata",
-   "mandatory_depends_on": "eval: doc.operation == \"Import\" && doc.import_format == \"eml\""
+   "mandatory_depends_on": "eval: doc.operation == \"Import\" && [\"eml\", \"maildir\"].includes(doc.import_format)"
   },
   {
    "fieldname": "column_break_julx",
@@ -273,7 +273,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-02 15:13:45.418263",
+ "modified": "2026-01-03 11:47:58.017621",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Exchange",

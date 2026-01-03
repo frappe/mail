@@ -99,7 +99,7 @@ class MetadataLoader:
 		elif format == "mbox":
 			return MetadataLoader._get_mbox_metadata(input_directory, mailbox_map)
 		elif format == "maildir":
-			return MetadataLoader._get_maildir_metadata(input_directory)
+			return MetadataLoader._get_maildir_metadata(input_directory, metadata)
 		elif format == "maildir-nested":
 			return MetadataLoader._get_maildir_nested_metadata(input_directory)
 		else:
@@ -204,13 +204,15 @@ class MetadataLoader:
 		return list(import_metadata_map.values())
 
 	@staticmethod
-	def _get_maildir_metadata(input_directory: str) -> list[ImportMeta]:
+	def _get_maildir_metadata(input_directory: str, metadata: dict) -> list[ImportMeta]:
 		"""Loads emails metadata for Maildir or Maildir++ format located at input_directory."""
 
 		validate_maildir_or_maildirpp(input_directory, raise_exception=True)
 
 		import_metadata: list[ImportMeta] = []
 		maildir_flag_map = {v: k for k, v in MAILDIR_FLAG_MAP.items()}
+		mailbox_ids = set(metadata["mailboxIds"].keys())
+		received_at = datetime.fromisoformat(metadata["receivedAt"]) if metadata.get("receivedAt") else None
 		for subdir in ("cur", "new"):
 			dir_path = os.path.join(input_directory, subdir)
 			if not os.path.exists(dir_path):
@@ -235,9 +237,9 @@ class MetadataLoader:
 
 				import_meta = ImportMeta(
 					blob_path=os.path.join(subdir, filename),
-					mailbox_ids=set(),
+					mailbox_ids=mailbox_ids,
 					keywords=keywords,
-					received_at=None,
+					received_at=received_at,
 				)
 				import_metadata.append(import_meta)
 
@@ -405,7 +407,7 @@ class MailExchange(Document):
 	def _metadata(self) -> dict:
 		"""Returns the import metadata as a dictionary."""
 
-		if self.operation != "Import" or self.import_format != "eml":
+		if self.operation != "Import" or self.import_format not in ["eml", "maildir"]:
 			return {}
 
 		return json.loads(self.import_metadata or "{}")
@@ -479,10 +481,10 @@ class MailExchange(Document):
 	def validate_import_metadata(self) -> None:
 		"""Validate the import metadata."""
 
-		if self.import_format == "eml":
+		if self.import_format in ["eml", "maildir"]:
 			metadata = self._metadata
 			if not metadata.get("mailboxIds"):
-				frappe.throw(_("mailboxIds are required in Metadata for EML format."))
+				frappe.throw(_("mailboxIds are required in Metadata for EML and Maildir formats."))
 		else:
 			self.import_metadata = json.dumps({})
 
