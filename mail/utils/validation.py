@@ -228,20 +228,34 @@ def validate_jmap_structure(
 
 
 def is_valid_maildir(base_dir: str, raise_exception: bool = False) -> bool:
-	"""Checks if the given base directory is a valid Maildir."""
+	"""
+	Checks if the given base directory is a valid Maildir.
 
-	required_dirs = ["cur", "new", "tmp"]
-	result = all(os.path.isdir(os.path.join(base_dir, d)) for d in required_dirs)
+	Valid if at least one of `cur`, `new`, or `tmp` exists
+	and contains at least one file (recursively).
+	"""
 
-	if not result and raise_exception:
+	def has_file(dir_path: str) -> bool:
+		for _root, _dirs, files in os.walk(dir_path):
+			if files:
+				return True
+		return False
+
+	maildir_dirs = ("cur", "new", "tmp")
+	for d in maildir_dirs:
+		dir_path = os.path.join(base_dir, d)
+		if os.path.isdir(dir_path) and has_file(dir_path):
+			return True
+
+	if raise_exception:
 		frappe.throw(
-			_("Invalid Maildir format: missing {0} directories.").format(
-				", ".join(f"<code>{d}</code>" for d in required_dirs)
+			_("Invalid Maildir format: at least one of {0} must exist and contain files.").format(
+				", ".join(f"<code>{d}</code>" for d in maildir_dirs)
 			),
 			title=_("Invalid Maildir"),
 		)
 
-	return result
+	return False
 
 
 def validate_maildir_or_maildirpp(base_dir: str, raise_exception: bool = False) -> list[str]:
