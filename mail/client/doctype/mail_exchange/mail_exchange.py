@@ -37,6 +37,7 @@ from mail.utils import (
 	get_mail_export_directory,
 	get_mail_import_directory,
 	get_mbox_files,
+	reconnect_on_failure,
 )
 from mail.utils.cache import get_tenant_for_user
 from mail.utils.user import (
@@ -547,6 +548,7 @@ class MailExchange(Document):
 		self._db_set(status="Queued", queued_at=now())
 		self.process()
 
+	@reconnect_on_failure()
 	def _import(self) -> None:
 		"""Imports the mail data."""
 
@@ -592,6 +594,7 @@ class MailExchange(Document):
 		self._mark_completed(**kwargs)
 		self._notify_user(success=kwargs.get("status") == "Completed", action="Import")
 
+	@reconnect_on_failure()
 	def _export(self) -> None:
 		"""Exports the mail data."""
 
