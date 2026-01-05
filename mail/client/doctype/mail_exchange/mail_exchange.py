@@ -41,7 +41,6 @@ from mail.utils import (
 from mail.utils.cache import get_tenant_for_user
 from mail.utils.user import (
 	clear_sync_state,
-	get_account_for_user,
 	get_user_email_address,
 	has_role,
 	is_administrator,
@@ -54,7 +53,7 @@ from mail.utils.validation import (
 	validate_nested_maildir_tree,
 )
 
-MAILDIR_FLAG_MAP = {
+MAILDIR_FLAG_MAP: dict[str, str] = {
 	"$seen": "S",
 	"$flagged": "F",
 	"$answered": "R",
@@ -62,15 +61,14 @@ MAILDIR_FLAG_MAP = {
 }
 
 
-@dataclass
-class ImportMeta:
+@dataclass(slots=True)
+class ImportEmailMeta:
 	blob_path: str
 	mailbox_ids: set[str]
-	keywords: set[str] | None
-	received_at: datetime | None
+	keywords: set[str]
 
 
-@dataclass
+@dataclass(slots=True)
 class ExportEmail:
 	id: str
 	sender: dict[str, str]
@@ -82,263 +80,222 @@ class ExportEmail:
 	raw: bytes
 
 
-class MetadataLoader:
-	@staticmethod
+class ImportMetadataLoader:
+	@classmethod
 	def load(
+		cls,
 		format: Literal["eml", "jmap", "mbox", "maildir", "maildir-nested"],
-		input_directory: str,
+		base_dir: str,
 		mailbox_map: dict[str, str],
 		metadata: dict,
-	) -> list[ImportMeta]:
-		"""Loads the email metadata based on the specified format."""
+	) -> list[ImportEmailMeta]:
+		"""Loads import metadata based on the specified format."""
 
-		if format == "eml":
-			return MetadataLoader._get_eml_metadata(input_directory, metadata)
-		elif format == "jmap":
-			return MetadataLoader._get_jmap_metadata(input_directory)
-		elif format == "mbox":
-			return MetadataLoader._get_mbox_metadata(input_directory, mailbox_map)
-		elif format == "maildir":
-			return MetadataLoader._get_maildir_metadata(input_directory, metadata)
-		elif format == "maildir-nested":
-			return MetadataLoader._get_maildir_nested_metadata(input_directory, mailbox_map)
-		else:
-			frappe.throw(_("Unsupported format: {0}").format(format))
+		loaders = {
+			"eml": cls._from_eml,
+			"jmap": cls._from_jmap,
+			"mbox": cls._from_mbox,
+			"maildir": cls._from_maildir,
+			"maildir-nested": cls._from_nested_maildir,
+		}
+
+		if format not in loaders:
+			frappe.throw(_("Unsupported import format: {0}").format(format))
+
+		return loaders[format](base_dir, mailbox_map, metadata)
 
 	@staticmethod
-	def load_metadata(input_directory: str) -> list[dict]:
-		"""Loads email metadata from emails.json in the input directory."""
+	def _load_json_metadata(base_dir: str) -> list[str]:
+		"""Loads email metadata from emails.json file."""
 
-		meta_path = os.path.join(input_directory, "emails.json")
-		if not os.path.exists(meta_path):
+		path = os.path.join(base_dir, "emails.json")
+		if not os.path.exists(path):
 			frappe.throw(_("emails.json not found in the import directory."))
 
-		with open(meta_path) as f:
-			metadata = json.load(f)
-
-		return metadata
+		with open(path) as f:
+			return json.load(f)
 
 	@staticmethod
-	def _get_eml_metadata(input_directory: str, metadata: dict) -> list[ImportMeta]:
-		"""Loads emails metadata for EML format located at input_directory."""
+	def _from_eml(base_dir: str, mailbox_map: dict[str, str], metadata: dict) -> list[ImportEmailMeta]:
+		"""Loads import metadata for EML format."""
 
-		if not metadata or not metadata.get("mailboxIds"):
+		mailbox_ids = set(metadata.get("mailboxIds", {}).keys())
+		if not mailbox_ids:
 			frappe.throw(_("mailboxIds are required in Metadata for EML format."))
 
-		eml_files = [f for f in os.listdir(input_directory) if f.endswith(".eml")]
-		if not eml_files:
-			frappe.throw(_("mailboxIds are required in Metadata for EML format."))
+		keywords = set(metadata.get("keywords", {}).keys() or [])
 
-		import_metadata: list[ImportMeta] = []
-		mailbox_ids = set(metadata["mailboxIds"].keys())
-		keywords = set(metadata.get("keywords", {}).keys()) if metadata.get("keywords") else None
-		received_at = datetime.fromisoformat(metadata["receivedAt"]) if metadata.get("receivedAt") else None
-		for eml_file in eml_files:
-			import_metadata.append(
-				ImportMeta(
-					blob_path=eml_file,
-					mailbox_ids=mailbox_ids,
-					keywords=keywords,
-					received_at=received_at,
-				)
-			)
+		files = [f for f in os.listdir(base_dir) if f.lower().endswith(".eml")]
+		if not files:
+			frappe.throw(_("No .eml files found"))
 
-		return import_metadata
+		return [ImportEmailMeta(f, mailbox_ids, keywords) for f in files]
 
-	@staticmethod
-	def _get_jmap_metadata(input_directory: str) -> list[ImportMeta]:
-		"""Loads emails metadata for JMAP format located at input_directory."""
+	@classmethod
+	def _from_jmap(cls, base_dir: str, *args, **kwargs) -> list[ImportEmailMeta]:
+		"""Loads import metadata for JMAP format."""
 
-		validate_jmap_structure(input_directory, ["emails.json"], raise_exception=True)
+		validate_jmap_structure(base_dir, ["emails.json"], raise_exception=True)
 
-		import_metadata: list[ImportMeta] = []
-		metadata = MetadataLoader.load_metadata(input_directory)
-		for meta in metadata:
-			import_metadata.append(
-				ImportMeta(
+		result: list[ImportEmailMeta] = []
+		for meta in cls._load_json_metadata(base_dir):
+			result.append(
+				ImportEmailMeta(
 					blob_path=os.path.join("blobs", meta["blobId"]),
 					mailbox_ids=set(meta["mailboxIds"].keys()),
-					keywords=set(meta.get("keywords", {}).keys()) if meta.get("keywords") else None,
-					received_at=datetime.fromisoformat(meta["receivedAt"])
-					if meta.get("receivedAt")
-					else None,
+					keywords=set(meta.get("keywords", {}).keys() or []),
 				)
 			)
 
-		return import_metadata
+		return result
 
 	@staticmethod
-	def _get_mbox_metadata(
-		input_directory: str,
-		mailbox_map: dict[str, str],
-	) -> list[ImportMeta]:
-		"""Loads emails metadata for MBOX format located at input_directory."""
+	def _from_mbox(base_dir: str, mailbox_map: dict[str, str], *args, **kwargs) -> list[ImportEmailMeta]:
+		"""Loads import metadata for MBOX format."""
 
-		mbox_files = get_mbox_files(input_directory)
+		mbox_files = get_mbox_files(base_dir)
 		if not mbox_files:
-			frappe.throw(_("No {0} file found in the archive.").format("<code>.mbox</code>"))
+			frappe.throw(_("No .mbox files found"))
 
-		import_metadata_map: dict[str, ImportMeta] = {}
+		by_message_id: dict[str, ImportEmailMeta] = {}
 		for mbox_path in mbox_files:
 			mailbox_id = next(
-				(k for k, v in mailbox_map.items() if v + ".mbox" == os.path.basename(mbox_path)), None
+				(k for k, v in mailbox_map.items() if f"{v}.mbox" == os.path.basename(mbox_path)),
+				None,
 			)
-
 			if not mailbox_id:
-				frappe.throw(_("Mailbox ID not found for MBOX file: {0}").format(os.path.basename(mbox_path)))
+				frappe.throw(_("Mailbox not found for {0}").format(mbox_path))
 
 			with closing(mailbox.mbox(mbox_path, factory=None)) as mbox:
-				for key, message in mbox.items():
-					message_id = message.get("Message-ID") or key
-					if message_id in import_metadata_map:
-						import_metadata_map[message_id].mailbox_ids.add(mailbox_id)
+				for key, msg in mbox.items():
+					msg_id = msg.get("Message-ID") or key
+
+					if msg_id in by_message_id:
+						by_message_id[msg_id].mailbox_ids.add(mailbox_id)
 						continue
 
-					blob_filename = f"{uuid7()}.eml"
-					with open(os.path.join(input_directory, blob_filename), "wb") as f:
-						f.write(message.as_bytes(unixfrom=True))
+				blob = f"{uuid7()}.eml"
+				with open(os.path.join(base_dir, blob), "wb") as f:
+					f.write(msg.as_bytes(unixfrom=True))
 
-					import_metadata_map[message_id] = ImportMeta(
-						blob_path=blob_filename,
-						mailbox_ids={mailbox_id},
-						keywords=None,
-						received_at=None,
-					)
+				by_message_id[msg_id] = ImportEmailMeta(
+					blob_path=blob,
+					mailbox_ids={mailbox_id},
+					keywords=set(),
+				)
 
-		return list(import_metadata_map.values())
+		return list(by_message_id.values())
 
 	@staticmethod
-	def _get_maildir_metadata(input_directory: str, metadata: dict) -> list[ImportMeta]:
-		"""Loads emails metadata for Maildir or Maildir++ format located at input_directory."""
+	def _parse_maildir_flags(filename: str, seen_by_default: bool) -> set[str]:
+		"""Parses Maildir flags from the filename and returns the corresponding keywords."""
 
-		validate_maildir_or_maildirpp(input_directory, raise_exception=True)
+		reverse_map = {v: k for k, v in MAILDIR_FLAG_MAP.items()}
+		keywords: set[str] = set()
 
-		import_metadata: list[ImportMeta] = []
-		maildir_flag_map = {v: k for k, v in MAILDIR_FLAG_MAP.items()}
-		mailbox_ids = set(metadata["mailboxIds"].keys())
-		received_at = datetime.fromisoformat(metadata["receivedAt"]) if metadata.get("receivedAt") else None
+		if seen_by_default:
+			keywords.add("$seen")
+
+		if ":2," not in filename:
+			return keywords
+
+		flags = filename.split(":2,", 1)[1]
+		for f in flags:
+			if kw := reverse_map.get(f):
+				keywords.add(kw)
+
+		if "S" not in flags:
+			keywords.discard("$seen")
+
+		return keywords
+
+	@classmethod
+	def _from_maildir(
+		cls, base_dir: str, mailbox_map: dict[str, str], metadata: dict
+	) -> list[ImportEmailMeta]:
+		"""Loads import metadata for Maildir format."""
+
+		validate_maildir_or_maildirpp(base_dir, raise_exception=True)
+		mailbox_ids = set(metadata.get("mailboxIds", {}).keys())
+		if not mailbox_ids:
+			frappe.throw(_("mailboxIds are required in Metadata for Maildir format."))
+
+		result: list[ImportEmailMeta] = []
 		for subdir in ("cur", "new"):
-			dir_path = os.path.join(input_directory, subdir)
-			if not os.path.exists(dir_path):
+			path = os.path.join(base_dir, subdir)
+			if not os.path.isdir(path):
 				continue
 
-			for filename in os.listdir(dir_path):
-				keywords: set[str] = set()
-
-				if subdir == "cur":
-					keywords.add("$seen")
-
-				if ":2," in filename:
-					flags = filename.split(":2,", 1)[1]
-					for flag in flags:
-						if keyword := maildir_flag_map.get(flag):
-							keywords.add(keyword)
-
-					if "S" in flags:
-						keywords.add("$seen")
-					else:
-						keywords.discard("$seen")
-
-				import_metadata.append(
-					ImportMeta(
-						blob_path=os.path.join(subdir, filename),
+			for fname in os.listdir(path):
+				keywords = cls._parse_maildir_flags(fname, subdir == "cur")
+				result.append(
+					ImportEmailMeta(
+						blob_path=os.path.join(subdir, fname),
 						mailbox_ids=mailbox_ids,
 						keywords=keywords,
-						received_at=received_at,
 					)
 				)
 
-		return import_metadata
+		return result
 
-	@staticmethod
-	def _get_maildir_nested_metadata(input_directory: str, mailbox_map: dict[str, str]) -> list[ImportMeta]:
-		"""Loads emails metadata for Nested Maildir format located at input_directory."""
+	@classmethod
+	def _from_nested_maildir(
+		cls, base_dir: str, mailbox_map: dict[str, str], metadata: dict
+	) -> list[ImportEmailMeta]:
+		"""Loads import metadata for Nested Maildir format."""
 
-		validate_nested_maildir_tree(input_directory, raise_exception=True)
+		validate_nested_maildir_tree(base_dir, raise_exception=True)
+		result: list[ImportEmailMeta] = []
 
-		import_metadata: list[ImportMeta] = []
-		maildir_flag_map = {v: k for k, v in MAILDIR_FLAG_MAP.items()}
-
-		for root, dirs, _files in os.walk(input_directory):
-			if not ("cur" in dirs or "new" in dirs):
+		for root, dirs, _files in os.walk(base_dir):
+			if not {"cur", "new"} & set(dirs):
 				continue
 
-			mailbox_rel_path = os.path.relpath(root, input_directory)
-			mailbox_rel_path = "" if mailbox_rel_path == "." else mailbox_rel_path
-			mailbox_name = mailbox_rel_path.replace(".", "").replace("_", " ")
-
-			mailbox_id = next(
-				(k for k, v in mailbox_map.items() if v == os.path.basename(mailbox_name)), None
-			)
-
+			rel = os.path.relpath(root, base_dir)
+			folder = rel.replace(".", "").replace("_", " ")
+			mailbox_id = next((k for k, v in mailbox_map.items() if v == os.path.basename(folder)), None)
 			if not mailbox_id:
-				frappe.throw(_("Mailbox ID not found for Maildir folder: {0}").format(mailbox_name))
-
-			mailbox_ids = {mailbox_id}
+				frappe.throw(_("Mailbox not found for folder {0}").format(folder))
 
 			for subdir in ("cur", "new"):
-				dir_path = os.path.join(root, subdir)
-				if not os.path.isdir(dir_path):
+				path = os.path.join(root, subdir)
+				if not os.path.isdir(path):
 					continue
 
-				for filename in os.listdir(dir_path):
-					keywords: set[str] = set()
+				for fname in os.listdir(path):
+					keywords = cls._parse_maildir_flags(fname, subdir == "cur")
+					blob = os.path.join(rel, subdir, fname) if rel != "." else os.path.join(subdir, fname)
+					result.append(ImportEmailMeta(blob, {mailbox_id}, keywords))
 
-					if subdir == "cur":
-						keywords.add("$seen")
-
-					if ":2," in filename:
-						flags = filename.split(":2,", 1)[1]
-						for flag in flags:
-							if keyword := maildir_flag_map.get(flag):
-								keywords.add(keyword)
-
-						if "S" in flags:
-							keywords.add("$seen")
-						else:
-							keywords.discard("$seen")
-
-					blob_path = (
-						os.path.join(mailbox_rel_path, subdir, filename)
-						if mailbox_rel_path
-						else os.path.join(subdir, filename)
-					)
-					import_metadata.append(
-						ImportMeta(
-							blob_path=blob_path,
-							mailbox_ids=mailbox_ids,
-							keywords=keywords,
-							received_at=None,
-						)
-					)
-
-		return import_metadata
+		return result
 
 
-class MailWriter:
-	@staticmethod
+class ExportWriter:
+	@classmethod
 	def write(
+		cls,
 		format: Literal["jmap", "mbox", "maildir", "maildir-nested"],
-		export_emails: list[ExportEmail],
-		output_directory: str,
+		emails: list[ExportEmail],
+		out_dir: str,
 		mailbox_map: dict[str, str],
 	) -> None:
-		"""Writes the exported emails to the specified format in the output directory."""
+		"""Writes the exported emails in the specified format."""
 
-		if format == "jmap":
-			MailWriter._write_jmap(export_emails, output_directory)
-		elif format == "mbox":
-			MailWriter._write_mbox(export_emails, output_directory, mailbox_map)
-		elif format == "maildir":
-			MailWriter._write_maildir(export_emails, output_directory)
-		elif format == "maildir-nested":
-			MailWriter._write_maildir_nested(export_emails, output_directory, mailbox_map)
-		else:
-			frappe.throw(_("Unsupported format: {0}").format(format))
+		writers = {
+			"jmap": cls._jmap,
+			"mbox": cls._mbox,
+			"maildir": cls._maildir,
+			"maildir-nested": cls._maildir_nested,
+		}
+
+		if format not in writers:
+			frappe.throw(_("Unsupported export format: {0}").format(format))
+
+		writers[format](emails, out_dir, mailbox_map)
 
 	@staticmethod
-	def write_metadata(metadata: list[dict], output_directory: str) -> None:
-		"""Writes the email metadata to a JSON file in the output directory."""
+	def write_meta(metadata: list[dict], out_dir: str) -> None:
+		"""Writes the exported email metadata in emails.json file."""
 
 		_metadata: list[dict] = []
 		for meta in metadata:
@@ -353,101 +310,86 @@ class MailWriter:
 				}
 			)
 
-		with open(os.path.join(output_directory, "emails.json"), "w") as f:
+		with open(os.path.join(out_dir, "emails.json"), "w") as f:
 			json.dump(_metadata, f, indent=4)
 
 	@staticmethod
-	def _write_jmap(export_emails: list[ExportEmail], output_directory: str) -> None:
+	def _jmap(emails: list[ExportEmail], out_dir: str, *args, **kwargs) -> None:
 		"""Writes the exported emails in JMAP format."""
 
-		blobs_dir = os.path.join(output_directory, "blobs")
-		os.makedirs(blobs_dir, exist_ok=True)
-
-		for export_email in export_emails:
-			with open(os.path.join(blobs_dir, export_email.blob_id), "wb") as f:
-				f.write(export_email.raw)
+		blobs = os.path.join(out_dir, "blobs")
+		os.makedirs(blobs, exist_ok=True)
+		for e in emails:
+			with open(os.path.join(blobs, e.blob_id), "wb") as f:
+				f.write(e.raw)
 
 	@staticmethod
-	def _write_mbox(
-		export_emails: list[ExportEmail], output_directory: str, mailbox_map: dict[str, str]
-	) -> None:
+	def _mbox(emails: list[ExportEmail], out_dir: str, mailbox_map: dict[str, str]) -> None:
 		"""Writes the exported emails in MBOX format."""
 
-		def mbox_from_line(sender: dict[str, str], received_at: datetime) -> bytes:
-			"""
-			Builds an mbox 'From ' separator line.
-			Example:
-			From user@example.com Sat Jan  1 00:00:00 2026
-			"""
+		def from_line(sender: dict[str, str], received_at: datetime) -> bytes:
+			"""Generates the From line for MBOX format."""
 
-			email = sender.get("email", "unknown")
-			timestamp = received_at.timestamp()
-			ctime_date = datetime.fromtimestamp(timestamp).ctime()
+			addr = sender.get("email", "unknown")
+			return f"From {addr} {received_at.ctime()}\n".encode()
 
-			return f"From {email} {ctime_date}\n".encode()
-
-		for export_email in export_emails:
-			from_line = mbox_from_line(export_email.sender, export_email.received_at)
-			for mailbox_id in export_email.mailbox_ids:
-				mbox_path = os.path.join(output_directory, f"{mailbox_map[mailbox_id]}.mbox")
-
-				with open(mbox_path, "ab") as f:
-					f.write(from_line)
-					f.write(export_email.raw)
-
-					if not export_email.raw.endswith(b"\n"):
+		for e in emails:
+			line = from_line(e.sender, e.received_at)
+			for m_id in e.mailbox_ids:
+				path = os.path.join(out_dir, f"{mailbox_map[m_id]}.mbox")
+				with open(path, "ab") as f:
+					f.write(line)
+					f.write(e.raw)
+					if not e.raw.endswith(b"\n"):
 						f.write(b"\n")
 
 	@staticmethod
-	def _write_maildir(export_emails: list[ExportEmail], output_directory: str) -> None:
+	def _maildir(emails: list[ExportEmail], out_dir: str, *args, **kwargs) -> None:
 		"""Writes the exported emails in Maildir format."""
 
-		for subdir in ("tmp", "new", "cur"):
-			os.makedirs(os.path.join(output_directory, subdir), exist_ok=True)
+		for dir in ("tmp", "new", "cur"):
+			os.makedirs(os.path.join(out_dir, dir), exist_ok=True)
 
-		for email in export_emails:
-			flags = "".join(sorted(MAILDIR_FLAG_MAP[k] for k in email.keywords if k in MAILDIR_FLAG_MAP))
-			target_dir = "cur" if "$seen" in email.keywords else "new"
-
-			if target_dir == "cur":
-				filename = f"{uuid7()!s}:2,{flags}"
-			else:
-				filename = str(uuid7())
-
-			path = os.path.join(output_directory, target_dir, filename)
-			with open(path, "wb") as f:
-				f.write(email.raw)
+		for e in emails:
+			flags = "".join(sorted(MAILDIR_FLAG_MAP[k] for k in e.keywords if k in MAILDIR_FLAG_MAP))
+			target = "cur" if "$seen" in e.keywords else "new"
+			name = f"{uuid7()}:2,{flags}" if target == "cur" else str(uuid7())
+			with open(os.path.join(out_dir, target, name), "wb") as f:
+				f.write(e.raw)
 
 	@staticmethod
-	def _write_maildir_nested(
-		export_emails: list[ExportEmail], output_directory: str, mailbox_map: dict[str, str]
-	) -> None:
+	def _maildir_nested(emails: list[ExportEmail], out_dir: str, mailbox_map: dict[str, str]) -> None:
 		"""Writes the exported emails in Nested Maildir format."""
 
-		for email in export_emails:
-			flags = "".join(sorted(MAILDIR_FLAG_MAP[k] for k in email.keywords if k in MAILDIR_FLAG_MAP))
-			target_subdir = "cur" if "$seen" in email.keywords else "new"
+		for e in emails:
+			flags = "".join(sorted(MAILDIR_FLAG_MAP[k] for k in e.keywords if k in MAILDIR_FLAG_MAP))
+			target = "cur" if "$seen" in e.keywords else "new"
 
-			for mailbox_id in email.mailbox_ids:
-				folder_safe = mailbox_map[mailbox_id].replace(" ", "_").replace("/", ".")
-				maildir_path = os.path.join(output_directory, f".{folder_safe}")
-
-				for sub in ("tmp", "new", "cur"):
-					os.makedirs(os.path.join(maildir_path, sub), exist_ok=True)
-
-				if target_subdir == "cur":
-					filename = f"{uuid7()!s}:2,{flags}"
-				else:
-					filename = str(uuid7())
-
-				path = os.path.join(maildir_path, target_subdir, filename)
-				with open(path, "wb") as f:
-					f.write(email.raw)
+			for m_id in e.mailbox_ids:
+				folder = mailbox_map[m_id].replace(" ", "_").replace("/", ".")
+				root = os.path.join(out_dir, f".{folder}")
+				for d in ("tmp", "new", "cur"):
+					os.makedirs(os.path.join(root, d), exist_ok=True)
+				name = f"{uuid7()}:2,{flags}" if target == "cur" else str(uuid7())
+				with open(os.path.join(root, target, name), "wb") as f:
+					f.write(e.raw)
 
 
 class MailExchange(Document):
 	@property
-	def _export_filter(self) -> dict:
+	def max_import(self) -> int:
+		"""Returns the maximum number of emails allowed for import."""
+
+		return cint(frappe.conf.mail_exchange_max_import) or 1_000
+
+	@property
+	def max_export(self) -> int:
+		"""Returns the maximum number of emails allowed for export."""
+
+		return cint(frappe.conf.mail_exchange_max_export) or 1_000
+
+	@property
+	def export_filter_dict(self) -> dict:
 		"""Returns the export filter as a dictionary."""
 
 		if self.operation == "Export" and self.export_filter:
@@ -455,33 +397,23 @@ class MailExchange(Document):
 		return {}
 
 	@property
-	def _export_sort(self) -> list[dict]:
+	def export_sort_clause(self) -> list[dict]:
 		"""Returns the export sort as a list of dictionaries."""
 
-		if self.operation == "Export":
-			if self.export_sort == "Received At (ASC)":
-				return [{"property": "receivedAt", "isAscending": True}]
-			elif self.export_sort == "Received At (DESC)":
-				return [{"property": "receivedAt", "isAscending": False}]
-
-		return []
+		if self.operation != "Export":
+			return []
+		if self.export_sort == "Received At (DESC)":
+			return [{"property": "receivedAt", "isAscending": False}]
+		return [{"property": "receivedAt", "isAscending": True}]
 
 	@property
-	def _metadata(self) -> dict:
+	def import_metadata_dict(self) -> dict:
 		"""Returns the import metadata as a dictionary."""
 
-		if self.operation != "Import" or self.import_format not in ["eml", "maildir"]:
+		if self.operation != "Import":
 			return {}
 
 		return json.loads(self.import_metadata or "{}")
-
-	@property
-	def max_import(self) -> int:
-		return cint(frappe.conf.mail_exchange_max_import) or 1_000
-
-	@property
-	def max_export(self) -> int:
-		return cint(frappe.conf.mail_exchange_max_export) or 1_000
 
 	def autoname(self) -> None:
 		self.name = str(uuid7())
@@ -490,15 +422,11 @@ class MailExchange(Document):
 		if self.is_new():
 			self.validate_user()
 			self.validate_tenant()
+
 		if self.operation == "Import":
-			self.validate_import_format()
-			self.validate_import_file()
-			self.validate_import_metadata()
+			self.validate_import()
 		elif self.operation == "Export":
-			self.validate_export_filter()
-			self.validate_export_sort()
-			self.validate_export_limit()
-			self.validate_export_archive_type()
+			self.validate_export()
 
 	def before_submit(self) -> None:
 		self.status = "Queued"
@@ -521,63 +449,46 @@ class MailExchange(Document):
 
 		self.tenant = get_tenant_for_user(self.user)
 
-	def validate_import_format(self) -> None:
-		"""Validate the import format."""
+	def validate_import(self) -> None:
+		"""Validate the import parameters."""
 
 		if not self.import_format:
 			frappe.throw(_("Import Format is required."))
-
-	def validate_import_file(self) -> None:
-		"""Validate the import file."""
-
 		if not self.import_file:
 			frappe.throw(_("Import File is required."))
 
-		allowed_extensions = [".eml", ".zip", ".tgz", ".tar.gz"]
-		if not self.import_file.endswith(tuple(allowed_extensions)):
+		allowed_extensions = (".eml", ".zip", ".tgz", ".tar.gz")
+		if not self.import_file.endswith(allowed_extensions):
 			frappe.throw(
 				_("Only {0} files are supported for import.").format(
 					", ".join(f"<code>{ext}</code>" for ext in allowed_extensions)
 				)
 			)
 
-	def validate_import_metadata(self) -> None:
-		"""Validate the import metadata."""
-
-		if self.import_format in ["eml", "maildir"]:
-			metadata = self._metadata
-			if not metadata.get("mailboxIds"):
+		if self.import_format in ("eml", "maildir"):
+			meta = self.import_metadata_dict
+			if not meta.get("mailboxIds"):
 				frappe.throw(_("mailboxIds are required in Metadata for EML and Maildir formats."))
 		else:
 			self.import_metadata = json.dumps({})
 
-	def validate_export_filter(self) -> None:
-		"""Validate the export filter."""
+	def validate_export(self) -> None:
+		"""Validate the export parameters."""
 
 		if self.export_filter:
 			try:
-				export_filter = json.loads(self.export_filter)
-				self.export_filter = json.dumps(export_filter, indent=4)
+				self.export_filter = json.dumps(json.loads(self.export_filter), indent=4)
 			except json.JSONDecodeError:
-				frappe.throw(_("Filter must be a valid JSON."))
+				frappe.throw(_("Export filter must be valid JSON."))
 
-	def validate_export_sort(self) -> None:
-		"""Validate the export sort."""
+		if not self.export_archive_type:
+			frappe.throw(_("Archive Type is required."))
 
 		if not self.export_limit or not self.export_sort:
 			self.export_sort = "Received At (ASC)"
 
-	def validate_export_limit(self) -> None:
-		"""Validate the export limit."""
-
 		if cint(self.export_limit) > self.max_export:
 			frappe.throw(_("Export Limit cannot exceed {0}.").format(self.max_export))
-
-	def validate_export_archive_type(self) -> None:
-		"""Validate the export archive type."""
-
-		if not self.export_archive_type:
-			frappe.throw(_("Archive Type is required."))
 
 	def process(self) -> None:
 		"""Enqueue the import or export based on the operation type."""
@@ -633,7 +544,7 @@ class MailExchange(Document):
 				for file in files:
 					frappe.delete_doc("File", file)
 
-		self._db_set(status="Queued", queued_at=now(), notify=True)
+		self._db_set(status="Queued", queued_at=now())
 		self.process()
 
 	def _import(self) -> None:
@@ -646,118 +557,40 @@ class MailExchange(Document):
 		self._mark_started()
 
 		import_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{self.import_file}")
-		import_base = os.path.join(get_mail_import_directory(), self.name)
-		os.makedirs(import_base, exist_ok=True)
+		base_dir = os.path.join(get_mail_import_directory(), self.name)
+		os.makedirs(base_dir, exist_ok=True)
 
 		kwargs = {}
 		try:
-			output = ""
-
 			if self.import_format == "eml" and self.import_file.endswith(".eml"):
-				output += _("Copying EML file to import directory...{0}").format("\n")
-				shutil.copy(import_file, os.path.join(import_base, os.path.basename(import_file)))
+				shutil.copy(import_file, os.path.join(base_dir, os.path.basename(import_file)))
 			else:
-				output += _("Extracting import file...{0}").format("\n")
-				extract_compressed_file(import_file, import_base)
+				extract_compressed_file(import_file, base_dir)
 
-			output += _("Connecting to JMAP server...{0}").format("\n")
 			client = get_jmap_client(self.user)
-			batch_size = client.max_objects_in_set
-			mailbox_map = self._get_mailbox_map(client, import_base)
+			mailbox_map = self._resolve_mailboxes(client, base_dir)
 
-			metadata = MetadataLoader.load(self.import_format, import_base, mailbox_map, self._metadata)
-			if not metadata:
-				frappe.throw(_("No emails found in the import file."))
+			meta = ImportMetadataLoader.load(
+				self.import_format, base_dir, mailbox_map, self.import_metadata_dict
+			)
 
-			if len(metadata) > self.max_import:
-				frappe.throw(_("Email count for import cannot exceed {0}.").format(self.max_import))
+			if not meta:
+				frappe.throw(_("No emails found for import."))
+			if len(meta) > self.max_import:
+				frappe.throw(_("Import limit exceeded."))
 
-			output += _("Uploading email blobs in batches of {0}...{1}").format(batch_size, "\n")
-			for idx, meta_batch in enumerate(create_batch(metadata, batch_size)):
-				output += _("{0}Processing batch {1}...{2}").format("\t", idx + 1, "\n")
-
-				output += _("{0}Loading blobs...{1}").format("\t\t", "\n")
-				blobs: list[tuple[bytes, str]] = []
-				for meta in meta_batch:
-					with open(os.path.join(import_base, meta.blob_path), "rb") as f:
-						blobs.append((f.read(), "message/rfc822"))
-
-				responses = client.upload_blobs_concurrently(blobs)
-				if not responses:
-					frappe.throw(_("No blobs uploaded in batch {0}.").format(idx + 1))
-
-				emails = {}
-				for i, resp in enumerate(responses):
-					new_blob_id = resp["blobId"]
-					meta = meta_batch[i]
-					email = {
-						"blobId": new_blob_id,
-						"mailboxIds": {mb_id: True for mb_id in meta.mailbox_ids},
-						"keywords": {kw: True for kw in meta.keywords} if meta.keywords else {},
-						"receivedAt": meta.received_at.isoformat() if meta.received_at else None,
-					}
-					emails[f"e{i+1}"] = email
-
-				response = client._make_request(
-					using=["urn:ietf:params:jmap:mail"],
-					method_calls=[
-						[
-							"Email/import",
-							{
-								"accountId": client.primary_account_id,
-								"emails": emails,
-							},
-							"0",
-						]
-					],
-				)
-				result = response["methodResponses"][0][1]
-
-				if created := result.get("created", {}):
-					output += _("{0}Created {1} emails.{2}").format("\t\t", len(created), "\n")
-				if failed := result.get("notCreated", {}):
-					output += _("{0}Failed to create {1} emails.{2}").format("\t\t", len(failed), "\n")
-
+			self._import_batches(client, base_dir, meta)
 			clear_sync_state(self.user, type="email")
-			kwargs.update({"status": "Completed", "output": output})
 
-			mail_details = {
-				"subject": _("Mail Data Import Completed"),
-				"title": _("Mail data import for account {0} has been completed successfully.").format(
-					frappe.bold(get_account_for_user(self.user))
-				),
-				"description": _("Click the button below to view the imported data."),
-			}
-
+			kwargs.update({"status": "Completed", "output": _("Import completed")})
 		except Exception:
 			kwargs.update({"status": "Failed", "output": frappe.get_traceback(with_context=False)})
+		finally:
+			shutil.rmtree(base_dir, ignore_errors=True)
+			unfreeze_jmap_push_notifications(self.user)
 
-			mail_details = {
-				"subject": _("Mail Data Import Failed"),
-				"title": _("Mail data import for account {0} has failed.").format(
-					frappe.bold(get_account_for_user(self.user))
-				),
-				"description": _("Click the button below to view the reason for failure."),
-			}
-
-		shutil.rmtree(import_base, ignore_errors=True)
 		self._mark_completed(**kwargs)
-		unfreeze_jmap_push_notifications(self.user)
-
-		if not is_administrator(self.owner):
-			if email := get_user_email_address(self.owner):
-				frappe.sendmail(
-					recipients=email,
-					subject=mail_details["subject"],
-					template="generic",
-					args={
-						"title": mail_details["title"],
-						"description": mail_details["description"],
-						"button": _("View Import"),
-						"link": get_url(f"/mail/mail-exchanges/{self.name}"),
-					},
-					now=True,
-				)
+		self._notify_user(success=kwargs.get("status") == "Completed", action="Import")
 
 	def _export(self) -> None:
 		"""Exports the mail data."""
@@ -766,185 +599,61 @@ class MailExchange(Document):
 			return
 
 		self._mark_started()
-		output_dir = os.path.join(get_mail_export_directory(), self.name)
-		os.makedirs(output_dir, exist_ok=True)
-
-		output_file_name = f"{self.name}{self.export_archive_type}"
-		output_file_url = f"/private/files/{output_file_name}"
-		output_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{output_file_url}")
+		out_dir = os.path.join(get_mail_export_directory(), self.name)
+		os.makedirs(out_dir, exist_ok=True)
 
 		kwargs = {}
 		try:
-			output = ""
-
-			output += _("Connecting to JMAP server...{0}").format("\n")
-			self._publish_progress(0, 100, _("Connecting to JMAP server"))
 			client = get_jmap_client(self.user)
+			total = client.email_query(self.export_filter_dict, limit=1)["total"]
+			limit = min(total, cint(self.export_limit or total))
 
-			output += _("Counting emails to export...{0}").format("\n")
-			total = client.email_query(self._export_filter, limit=1)["total"]
-			limit = min(total, cint(self.export_limit)) if self.export_limit else total
+			if limit > self.max_export:
+				frappe.throw(_("Export limit exceeded."))
 
-			max_export = self.max_export
-			if limit > max_export:
-				if not self.export_limit:
-					frappe.throw(
-						_("Email count for export cannot exceed {0}. Please set an Export Limit.").format(
-							max_export
-						)
-					)
-
-				frappe.throw(_("Email count for export cannot exceed {0}.").format(max_export))
-
-			output += _("Fetching email IDs...{0}").format("\n")
-			self._publish_progress(10, 100, _("Fetching email IDs"))
-			ids = client.email_query(self._export_filter, sort=self._export_sort, limit=limit)["ids"]
-
+			ids = client.email_query(self.export_filter_dict, sort=self.export_sort_clause, limit=limit)[
+				"ids"
+			]
 			if not ids:
-				raise Exception(_("No emails found for the given filter."))
+				frappe.throw(_("No emails found for export."))
 
-			output += _("Fetching email metadata...{0}").format("\n")
-			self._publish_progress(30, 100, _("Fetching email metadata"))
 			properties = ["id", "from", "blobId", "keywords", "mailboxIds", "messageId", "receivedAt"]
 			emails, _state = client.email_get(ids, properties=properties)
 
-			if not emails:
-				raise Exception(_("Failed to fetch email metadata."))
-
 			if self.deduplicate_export:
-				output += _("Deduplicating emails based on Message-ID...{0}").format("\n")
-				self._publish_progress(50, 100, _("Deduplicating emails"))
 				unique_emails = {}
-				for email in emails:
-					key = email["messageId"][0]
+				for e in emails:
+					key = e["messageId"][0]
 					if key not in unique_emails:
-						unique_emails[key] = email
+						unique_emails[key] = e
 				emails = list(unique_emails.values())
 
-			mailbox_map = {}
-			if self.export_format == "jmap":
-				output += _("Saving email metadata...{0}").format("\n")
-				self._publish_progress(70, 100, _("Saving email metadata"))
-				MailWriter.write_metadata(emails, output_dir)
-			elif self.export_format in ["mbox", "maildir-nested"]:
-				output += _("Fetching mailboxes...{0}").format("\n")
-				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
-
-			batch_size = cint(frappe.conf.mail_exchange_export_batch_size) or 500
-			output += _("Downloading email blobs in batches of {0}...{1}").format(batch_size, "\n")
-			for idx, emails_batch in enumerate(create_batch(emails, batch_size)):
-				output += _("{0}Processing batch {1}...{2}").format("\t", idx + 1, "\n")
-				self._publish_progress(
-					70 + ((idx + 1) / (len(ids) / batch_size)) * 30,
-					100,
-					_("Downloading email blobs {0}/{1}").format((idx + 1) * batch_size, len(ids)),
-				)
-
-				blobs = []
-				for email in emails_batch:
-					if not email["blobId"]:
-						output += _("{0}Skipping email {1} as it has no blobId.{3}").format(
-							"\t\t", email["id"], "\n"
-						)
-						continue
-					blobs.append((email["blobId"], None))
-
-				if not blobs:
-					continue
-
-				downloaded_blobs = client.download_blobs_concurrently(blobs)
-				if not downloaded_blobs:
-					output += _("{0}Failed to download blobs for batch {1}.{2}").format("\t\t", idx + 1, "\n")
-					continue
-
-				output += _("{0}Saving exported emails...{1}").format("\t\t", "\n")
-				export_emails: list[ExportEmail] = []
-				for email in emails_batch:
-					blob_id = email["blobId"]
-					if blob_id not in downloaded_blobs:
-						continue
-
-					sender = email["from"][0] if email.get("from") else {}
-					export_emails.append(
-						ExportEmail(
-							id=email["id"],
-							sender=sender,
-							blob_id=blob_id,
-							mailbox_ids=set(email["mailboxIds"].keys()),
-							keywords=set(email["keywords"].keys()),
-							received_at=datetime.fromisoformat(email["receivedAt"]),
-							message_id=email["messageId"][0],
-							raw=downloaded_blobs[blob_id],
-						)
-					)
-
-				MailWriter.write(self.export_format, export_emails, output_dir, mailbox_map)
-
-			output += _("Creating archive...{0}").format("\n")
-			self._publish_progress(95, 100, _("Creating archive"))
-			compress_directory(output_dir, output_file)
-
-			output += _("Attaching export file to Mail Exchange document...{0}").format("\n")
-			file = frappe.new_doc("File")
-			file.is_private = 1
-			file.file_url = output_file_url
-			file.file_name = output_file_name
-			file.attached_to_doctype = self.doctype
-			file.attached_to_name = self.name
-			file.attached_to_field = "file"
-			file.insert()
-
-			# https://github.com/frappe/frappe/issues/26615
-			frappe.db.set_value(
-				"File", file.name, {"file_url": output_file_url, "file_name": output_file_name}
+			mailbox_map = (
+				{m["id"]: m["_name"] for m in client.mailboxes}
+				if self.export_format in ["mbox", "maildir-nested"]
+				else {}
 			)
 
-			kwargs.update({"status": "Completed", "output": output.strip()})
+			self._export_batches(client, emails, out_dir, mailbox_map)
+			self._attach_export(out_dir)
 
-			mail_details = {
-				"subject": _("Mail Data Export Ready"),
-				"title": _("Mail data export for account {0} is ready for download.").format(
-					frappe.bold(get_account_for_user(self.user))
-				),
-				"description": _("Click the button below to view and download the exported data."),
-			}
-
+			kwargs.update({"status": "Completed", "output": _("Export completed")})
 		except Exception:
 			kwargs.update({"status": "Failed", "output": frappe.get_traceback(with_context=False)})
+		finally:
+			shutil.rmtree(out_dir, ignore_errors=True)
 
-			mail_details = {
-				"subject": _("Mail Data Export Failed"),
-				"title": _("Mail data export for account {0} has failed.").format(
-					frappe.bold(get_account_for_user(self.user))
-				),
-				"description": _("Click the button below to view the reason for failure."),
-			}
-
-		shutil.rmtree(output_dir, ignore_errors=True)
 		self._mark_completed(**kwargs)
-
-		if not is_administrator(self.owner):
-			if email := get_user_email_address(self.owner):
-				frappe.sendmail(
-					recipients=email,
-					subject=mail_details["subject"],
-					template="generic",
-					args={
-						"title": mail_details["title"],
-						"description": mail_details["description"],
-						"button": _("View Export"),
-						"link": get_url(f"/mail/mail-exchanges/{self.name}"),
-					},
-					now=True,
-				)
+		self._notify_user(success=kwargs.get("status") == "Completed", action="Export")
 
 	def _mark_started(self) -> None:
 		"""Marks the mail exchange as started and updates the started_at and started_after fields."""
 
 		started_at = now()
-		started_after = time_diff_in_seconds(started_at, self.queued_at)
 		self._db_set(
-			status="In Progress", started_at=started_at, started_after=started_after, notify=True, commit=True
+			status="In Progress",
+			started_at=started_at,
+			started_after=time_diff_in_seconds(started_at, self.queued_at),
 		)
 
 	def _mark_completed(self, **kwargs) -> None:
@@ -956,26 +665,9 @@ class MailExchange(Document):
 		if kwargs["status"] == "Failed":
 			kwargs["retries"] = cint(self.retries) + 1
 
-		self._db_set(notify=True, **kwargs)
+		self._db_set(**kwargs)
 
-	def _publish_progress(self, progress: int, total: int, msg: str = "") -> None:
-		"""Publish the exchange progress to the user via real-time updates."""
-
-		title = _("Mail Exchange Progress")
-		frappe.publish_realtime(
-			"mail_exchange_progress",
-			{
-				"exchange": self.name,
-				"progress": (progress / total) * 100,
-				"title": title,
-				"msg": msg or title,
-			},
-			doctype=self.doctype,
-			docname=self.name,
-			user=frappe.session.user,
-		)
-
-	def _get_mailbox_map(self, client: JMAPClient, import_base: str) -> dict[str, str]:
+	def _resolve_mailboxes(self, client: JMAPClient, base_dir: str) -> dict[str, str]:
 		"""Returns a map of mailbox IDs to mailbox names. Creates missing mailboxes if specified."""
 
 		def iter_maildir_mailboxes(base_dir: str):
@@ -1008,7 +700,7 @@ class MailExchange(Document):
 		existing_mailboxes = set(mailbox_map.values())
 
 		if self.import_format == "mbox":
-			for mbox_path in get_mbox_files(import_base):
+			for mbox_path in get_mbox_files(base_dir):
 				mailbox_name = os.path.basename(mbox_path).rsplit(".", 1)[0]
 				if mailbox_name not in existing_mailboxes:
 					mailbox = frappe.new_doc("Mailbox")
@@ -1018,7 +710,7 @@ class MailExchange(Document):
 					mailbox_map[mailbox.id] = mailbox._name
 
 		elif self.import_format == "maildir-nested":
-			mailbox_paths = set(iter_maildir_mailboxes(import_base))
+			mailbox_paths = set(iter_maildir_mailboxes(base_dir))
 			hierarchies: list[list[str]] = sorted(
 				[normalize_mailbox_parts(path) for path in mailbox_paths], key=len
 			)
@@ -1049,16 +741,112 @@ class MailExchange(Document):
 
 		return mailbox_map
 
-	def _db_set(
-		self,
-		update_modified: bool = True,
-		commit: bool = False,
-		notify: bool = False,
-		**kwargs,
+	def _import_batches(self, client: JMAPClient, base_dir: str, metadata: list[ImportEmailMeta]) -> None:
+		"""Imports emails in batches using the JMAP client."""
+
+		batch_size = client.max_objects_in_set
+		for batch in create_batch(metadata, batch_size):
+			blobs: list[tuple[bytes, str]] = []
+			for meta in batch:
+				with open(os.path.join(base_dir, meta.blob_path), "rb") as f:
+					blobs.append((f.read(), "message/rfc822"))
+
+			responses = client.upload_blobs_concurrently(blobs)
+			emails = {}
+			for i, resp in enumerate(responses):
+				meta = batch[i]
+				emails[f"e{i}"] = {
+					"blobId": resp["blobId"],
+					"mailboxIds": {mid: True for mid in meta.mailbox_ids},
+					"keywords": {k: True for k in meta.keywords or []},
+				}
+
+			client._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					["Email/import", {"accountId": client.primary_account_id, "emails": emails}, "0"]
+				],
+			)
+
+	def _export_batches(
+		self, client: JMAPClient, emails: list[dict], out_dir: str, mailbox_map: dict[str, str]
 	) -> None:
+		"""Exports emails in batches using the JMAP client."""
+
+		if self.export_format == "jmap":
+			ExportWriter.write_meta(emails, out_dir)
+
+		batch_size = cint(frappe.conf.mail_exchange_export_batch_size) or 500
+		for batch in create_batch(emails, batch_size):
+			blobs = [(e["blobId"], None) for e in batch if e.get("blobId")]
+			data = client.download_blobs_concurrently(blobs)
+
+			export_emails = []
+			for e in batch:
+				if e.get("blobId") not in data:
+					continue
+
+				export_emails.append(
+					ExportEmail(
+						id=e["id"],
+						sender=(e.get("from") or [{}])[0],
+						blob_id=e["blobId"],
+						keywords=set(e["keywords"].keys()),
+						mailbox_ids=set(e["mailboxIds"].keys()),
+						message_id=e.get("messageId", [""])[0],
+						received_at=datetime.fromisoformat(e["receivedAt"]),
+						raw=data[e["blobId"]],
+					)
+				)
+
+			ExportWriter.write(self.export_format, export_emails, out_dir, mailbox_map)
+
+	def _attach_export(self, out_dir: str) -> None:
+		"""Attaches the exported file to the mail exchange."""
+
+		archive = f"{self.name}{self.export_archive_type}"
+		url = f"/private/files/{archive}"
+		path = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{url}")
+		compress_directory(out_dir, path)
+
+		file = frappe.new_doc("File")
+		file.is_private = 1
+		file.file_url = url
+		file.file_name = archive
+		file.attached_to_doctype = self.doctype
+		file.attached_to_name = self.name
+		file.attached_to_field = "file"
+		file.insert()
+
+		# https://github.com/frappe/frappe/issues/26615
+		frappe.db.set_value("File", file.name, {"file_url": url, "file_name": archive})
+
+	def _notify_user(self, success: bool, action: Literal["Import", "Export"]) -> None:
+		"""Sends notification email to the owner of the mail exchange."""
+
+		if is_administrator(self.owner):
+			return
+		if not (email := get_user_email_address(self.owner)):
+			return
+
+		subject = _("Mail Data {0} {1}").format(action, "Completed" if success else "Failed")
+		frappe.sendmail(
+			recipients=email,
+			subject=subject,
+			template="generic",
+			args={
+				"title": subject,
+				"description": _("View details for this exchange."),
+				"button": _(f"View {action}"),
+				"link": get_url(f"/mail/mail-exchanges/{self.name}"),
+			},
+			now=True,
+		)
+
+	def _db_set(self, **kwargs) -> None:
 		"""Updates the document with the given key-value pairs."""
 
-		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
+		self.db_set(kwargs, notify=True, commit=True)
 
 
 def get_permission_query_condition(user: str | None = None) -> str:
@@ -1107,25 +895,22 @@ def retry_stuck_mail_exchanges() -> None:
 		.orderby(ME.queued_at, order=Order.asc)
 	).run(pluck="name")
 
-	if not exchanges:
-		return
-
 	for exchange in exchanges:
-		doc = frappe.get_doc("Mail Exchange", exchange)
-		doc.retry()
+		frappe.get_doc("Mail Exchange", exchange).retry()
 
 
 def clean_import_export_directories() -> None:
 	"""Called by the scheduler to clean up import and export directories."""
 
-	for directory in (get_mail_import_directory(), get_mail_export_directory()):
-		if os.path.exists(directory):
-			for item in os.listdir(directory):
-				item_path = os.path.join(directory, item)
-				if os.path.isdir(item_path):
-					if frappe.db.exists("Mail Exchange", {"name": item, "status": "In Progress"}):
-						continue
+	for base in (get_mail_import_directory(), get_mail_export_directory()):
+		if not os.path.exists(base):
+			continue
 
-					shutil.rmtree(item_path, ignore_errors=True)
-				else:
-					os.remove(item_path)
+		for item in os.listdir(base):
+			path = os.path.join(base, item)
+			if os.path.isdir(path):
+				if frappe.db.exists("Mail Exchange", {"name": item, "status": "In Progress"}):
+					continue
+				shutil.rmtree(path, ignore_errors=True)
+			else:
+				os.remove(path)

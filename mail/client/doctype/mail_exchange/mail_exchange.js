@@ -6,15 +6,6 @@ frappe.ui.form.on('Mail Exchange', {
 		if (!frm.doc.__islocal) {
 			frm.trigger('add_actions')
 		}
-
-		frappe.realtime.on('mail_exchange_progress', (data) => {
-			if (data.exchange === frm.doc.name && data.progress) {
-				frm.dashboard.show_progress(data.title, data.progress, data.msg)
-				if (data.progress >= 100) {
-					frm.dashboard.hide_progress(data.title)
-				}
-			}
-		})
 	},
 
 	add_actions(frm) {
