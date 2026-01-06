@@ -570,7 +570,7 @@ class MailExchange(Document):
 				extract_compressed_file(import_file, base_dir)
 
 			client = get_jmap_client(self.user)
-			mailbox_map = self._resolve_mailboxes(client, base_dir)
+			mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
 
 			meta = ImportMetadataLoader.load(
 				self.import_format, base_dir, mailbox_map, self.import_metadata_dict
@@ -669,80 +669,6 @@ class MailExchange(Document):
 			kwargs["retries"] = cint(self.retries) + 1
 
 		self._db_set(**kwargs)
-
-	def _resolve_mailboxes(self, client: JMAPClient, base_dir: str) -> dict[str, str]:
-		"""Returns a map of mailbox IDs to mailbox names. Creates missing mailboxes if specified."""
-
-		def iter_maildir_mailboxes(base_dir: str):
-			"""Yield mailbox paths relative to base_dir that contain cur/ or new/."""
-
-			for root, dirs, _files in os.walk(base_dir):
-				if "cur" in dirs or "new" in dirs:
-					rel = os.path.relpath(root, base_dir)
-					if rel != ".":
-						yield rel
-
-		def normalize_mailbox_parts(path: str) -> list[str]:
-			"""Normalize mailbox path into parts suitable for JMAP mailbox creation."""
-
-			parts = []
-			for part in path.split(os.sep):
-				if part.startswith("."):
-					part = part[1:]
-				part = part.replace(".", "/").replace("_", " ")
-				parts.extend(part.split("/"))
-			return parts
-
-		if self.import_format not in ["mbox", "maildir-nested"]:
-			return {}
-
-		mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
-		if not self.create_missing_mailboxes:
-			return mailbox_map
-
-		existing_mailboxes = set(mailbox_map.values())
-
-		if self.import_format == "mbox":
-			for mbox_path in get_mbox_files(base_dir):
-				mailbox_name = os.path.basename(mbox_path).rsplit(".", 1)[0]
-				if mailbox_name not in existing_mailboxes:
-					mailbox = frappe.new_doc("Mailbox")
-					mailbox.user = self.user
-					mailbox._name = mailbox_name
-					mailbox.insert()
-					mailbox_map[mailbox.id] = mailbox._name
-
-		elif self.import_format == "maildir-nested":
-			mailbox_paths = set(iter_maildir_mailboxes(base_dir))
-			hierarchies: list[list[str]] = sorted(
-				[normalize_mailbox_parts(path) for path in mailbox_paths], key=len
-			)
-
-			for parts in hierarchies:
-				parent_name = None
-				current_path = []
-
-				for part in parts:
-					current_path.append(part)
-					mailbox_name = "/".join(current_path)
-
-					if mailbox_name in existing_mailboxes:
-						parent_name = mailbox_name
-						continue
-
-					mailbox = frappe.new_doc("Mailbox")
-					mailbox.user = self.user
-					mailbox._name = mailbox_name
-					if parent_name:
-						mailbox._parent = parent_name
-					mailbox.insert()
-
-					mailbox_map[mailbox.id] = mailbox_name
-					existing_mailboxes.add(mailbox_name)
-
-					parent_name = mailbox_name
-
-		return mailbox_map
 
 	def _import_batches(self, client: JMAPClient, base_dir: str, metadata: list[ImportEmailMeta]) -> None:
 		"""Imports emails in batches using the JMAP client."""

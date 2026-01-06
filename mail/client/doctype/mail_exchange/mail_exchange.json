@@ -13,7 +13,6 @@
   "operation",
   "import_format",
   "import_metadata",
-  "create_missing_mailboxes",
   "import_file",
   "export_format",
   "export_archive_type",
@@ -268,20 +267,13 @@
   {
    "fieldname": "column_break_julx",
    "fieldtype": "Column Break"
-  },
-  {
-   "default": "1",
-   "depends_on": "eval: doc.operation == \"Import\" && [\"mbox\", \"maildir-nested\"].includes(doc.import_format)",
-   "fieldname": "create_missing_mailboxes",
-   "fieldtype": "Check",
-   "label": "Create Missing Mailboxes"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-01-05 15:26:09.306069",
+ "modified": "2026-01-06 11:12:32.337722",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Exchange",
