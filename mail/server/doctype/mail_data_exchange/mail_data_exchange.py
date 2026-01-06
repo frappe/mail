@@ -324,7 +324,7 @@ class MailDataExchange(Document):
 			args={
 				"title": subject,
 				"description": _("View details for this exchange."),
-				"button": _(f"View {action}"),
+				"button": _("View {0}").format(action),
 				"link": get_url(f"/mail/mail-data-exchanges/{self.name}"),
 			},
 			now=True,

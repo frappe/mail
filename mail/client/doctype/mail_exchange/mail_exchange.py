@@ -175,15 +175,15 @@ class ImportMetadataLoader:
 						by_message_id[msg_id].mailbox_ids.add(mailbox_id)
 						continue
 
-				blob = f"{uuid7()}.eml"
-				with open(os.path.join(base_dir, blob), "wb") as f:
-					f.write(msg.as_bytes(unixfrom=True))
+					blob = f"{uuid7()}.eml"
+					with open(os.path.join(base_dir, blob), "wb") as f:
+						f.write(msg.as_bytes(unixfrom=True))
 
-				by_message_id[msg_id] = ImportEmailMeta(
-					blob_path=blob,
-					mailbox_ids={mailbox_id},
-					keywords=set(),
-				)
+					by_message_id[msg_id] = ImportEmailMeta(
+						blob_path=blob,
+						mailbox_ids={mailbox_id},
+						keywords=set(),
+					)
 
 		return list(by_message_id.values())
 
@@ -521,11 +521,18 @@ class MailExchange(Document):
 		if not self.export_archive_type:
 			frappe.throw(_("Archive Type is required."))
 
-		if not self.export_limit or not self.export_sort:
+		if not self.export_sort:
 			self.export_sort = "Received At (ASC)"
 
-		if cint(self.export_limit) > self.max_export:
-			frappe.throw(_("Export Limit cannot exceed {0}.").format(self.max_export))
+		if self.export_limit:
+			export_limit = cint(self.export_limit)
+			if export_limit <= 0:
+				frappe.throw(_("Export Limit must be greater than zero."))
+			if export_limit > self.max_export:
+				frappe.throw(_("Export Limit cannot exceed {0}.").format(self.max_export))
+			self.export_limit = export_limit
+		else:
+			self.export_limit = self.max_export
 
 	def process(self) -> None:
 		"""Enqueue the import or export based on the operation type."""
@@ -835,7 +842,7 @@ class MailExchange(Document):
 			args={
 				"title": subject,
 				"description": _("View details for this exchange."),
-				"button": _(f"View {action}"),
+				"button": _("View {0}").format(action),
 				"link": get_url(f"/mail/mail-exchanges/{self.name}"),
 			},
 			now=True,
