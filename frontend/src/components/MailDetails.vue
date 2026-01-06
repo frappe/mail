@@ -4,16 +4,12 @@
 	>
 		<span class="text-ink-gray-5 col-span-1">{{ __('From:') }}</span>
 		<span class="col-span-4">
-			<span class="font-semibold">
-				{{ mail.from_name || mail.from_email }}
-			</span>
-			<span v-if="mail.from_name">
-				{{ ` <${mail.from_email}>` }}
-			</span>
+			<span class="font-semibold"> {{ mail.from_name || mail.from_email }} </span>
+			<span v-if="mail.from_name"> {{ ` <${mail.from_email}>` }} </span>
 		</span>
 		<template v-for="field in FIELDS" :key="field.label">
 			<span class="text-ink-gray-4 col-span-1">{{ field.label }}</span>
-			<span class="col-span-4">{{ field.value() }} </span>
+			<span class="col-span-4 leading-4">{{ field.value() }} </span>
 		</template>
 	</div>
 </template>

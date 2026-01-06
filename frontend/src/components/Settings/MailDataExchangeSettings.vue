@@ -100,7 +100,7 @@ const mailDataExchanges = useList({
 	doctype: 'Mail Data Exchange',
 	immediate: true,
 	fields: ['name', 'operation', 'status'],
-	filters: { account: user.data.name },
+	filters: { user: user.data.name },
 	limit: 1000,
 })
 

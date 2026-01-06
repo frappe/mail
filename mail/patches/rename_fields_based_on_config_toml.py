@@ -14,7 +14,7 @@ FIELD_RENAMES = {
 		"encrypt_on_append": "email_encryption_append",
 		"blob_storage": "storage_blob",
 		"fts_storage": "storage_fts",
-		"default_language": "storage_full_text_default_language",
+		"default_language": "storage_search_index_default_language",
 		"in_memory_storage": "storage_lookup",
 		"jmap_frequency_cron": "account_purge_frequency",
 		"jmap_changes_history_days": "changes_max_history",

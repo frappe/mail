@@ -210,7 +210,7 @@ class MailPrincipal(Document):
 			if is_catch_all_address(self._name):
 				frappe.throw(_("Catch-all email addresses are not allowed for principals."))
 
-			emails = [self._name] + self._emails
+			emails = [self._name, *self._emails]
 			for email in emails:
 				if not is_catch_all_address(email):
 					validate_email_address(email, True)
@@ -343,7 +343,7 @@ class MailPrincipal(Document):
 					_secrets.append(generate_app_password(ap.identifier, ap.password))
 
 		if self.type in ["Group", "Individual", "List"]:
-			_emails = [self.name] + self._emails
+			_emails = [self.name, *self._emails]
 			principals_to_invalidate.update([email.split("@")[1] for email in _emails])
 
 		if self.type in ["Group", "Individual"]:
@@ -461,7 +461,7 @@ class MailPrincipal(Document):
 		identities_emails = set(identities_emails_map.keys())
 
 		principal = frappe.get_doc("Mail Principal", self.name)
-		principal_emails = set([principal.name] + principal._emails)
+		principal_emails = set([principal.name, *principal._emails])
 		explicit_emails = {email for email in principal_emails if not is_catch_all_address(email)}
 
 		identities_to_remove = identities_emails - explicit_emails
@@ -615,7 +615,7 @@ class MailPrincipal(Document):
 					updates["secrets"].append(ap.value or generate_app_password(ap.identifier, ap.password))
 
 		if self.type in ["Group", "Individual", "List"]:
-			updates["emails"] = [self._name] + self._emails
+			updates["emails"] = [self._name, *self._emails]
 
 		if self.type in ["Group", "Individual"]:
 			updates["quota"] = cint(self.quota)
@@ -720,6 +720,11 @@ class MailPrincipal(Document):
 
 			if frappe.db.exists("User", self.name):
 				frappe.delete_doc("User", self.name, ignore_permissions=True)
+
+		elif principal.type == "Domain":
+			self._delete_dkim_signature(backend, "rsa-sha256", raise_exception=False)
+			if bool(frappe.conf.enable_ed25519_dkim):
+				self._delete_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
 
 		principals_to_invalidate = set()
 		if principal.type in ["Group", "Individual", "List"]:

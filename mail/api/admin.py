@@ -100,10 +100,10 @@ def add_member(
 	role: Literal["Mail User", "Mail Admin"],
 	send_invite: bool,
 	email: str,
-	expires_at: str | None = None,
 	first_name: str | None = None,
 	last_name: str | None = None,
 	password: str | None = None,
+	expires_at: str | None = None,
 ) -> None:
 	"""Create a new Mail Account Request for adding a member"""
 

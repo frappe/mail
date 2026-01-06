@@ -11,7 +11,7 @@ import unicodedata
 import zipfile
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from io import BytesIO
 from typing import Any, Literal
 
@@ -112,7 +112,7 @@ def generate_app_password(app_name: str | None = None, password: str | None = No
 	app_name = app_name or "app_pass"
 	password = password or os.urandom(32)
 
-	timestamp = datetime.now(timezone.utc).isoformat()
+	timestamp = datetime.now(UTC).isoformat()
 	b64_part = base64.b64encode(f"{app_name}${timestamp}".encode()).decode()
 	hash_value = sha512_crypt.hash(password)
 	parts = hash_value.split("$", 3)
@@ -538,7 +538,7 @@ def extract_latest_email_body(html: str) -> str:
 	# 3. Remove common plain-text reply markers (e.g. “On Mon, John Doe wrote:”)
 	text = str(soup)
 	reply_markers = [
-		r"(?im)^\s*on\s.+?wrote[:：-]\s*$",
+		r"(?im)^\s*on\s.+?wrote[:\-]\s*$",
 		r"(?im)^from:\s.+$",
 		r"(?im)^sent:\s.+$",
 		r"(?im)^subject:\s.+$",
@@ -560,8 +560,8 @@ def extract_latest_email_body(html: str) -> str:
 def extract_filter_values(filters: list, conditions: list[dict]) -> tuple:
 	"""Extracts specific filter values from a filter list based on given conditions."""
 
-	values = {list(condition.keys())[0]: None for condition in conditions}
-	condition_map = {list(condition.keys())[0]: list(condition.values())[0] for condition in conditions}
+	values = {next(iter(condition)): None for condition in conditions}
+	condition_map = {next(iter(condition)): next(iter(condition.values())) for condition in conditions}
 
 	for f in filters:
 		key, operator, value = f[1], f[2], f[3]
@@ -759,3 +759,9 @@ def is_catch_all_address(address: str) -> bool:
 	"""Check if the email address is a catch-all address (starts with '@')."""
 
 	return address.startswith("@")
+
+
+def get_stalwart_version() -> str:
+	"""Returns the Stalwart version from configuration or default."""
+
+	return frappe.conf.stalwart_version or "v0.13.4"

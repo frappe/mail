@@ -29,7 +29,7 @@ LOCAL_KEYS = [
 	"storage.lookup",
 	"storage.fts",
 	"storage.directory",
-	"storage.full-text.*",
+	"storage.search-index.*",
 	"storage.undelete.retention",
 	"certificate.*",
 	"account.purge.frequency",
@@ -486,7 +486,14 @@ def get_config_toml(server: str) -> str | None:
 			"data": cluster.storage_data,
 			"blob": cluster.storage_blob,
 			"fts": cluster.storage_fts,
-			"full-text": {"default-language": cluster.storage_full_text_default_language},
+			"search-index": {
+				"batch-size": cluster.storage_search_index_batch_size,
+				"default-language": cluster.storage_search_index_default_language,
+				"email": {"enable": bool(cluster.storage_search_index_email_enable)},
+				"contacts": {"enable": bool(cluster.storage_search_index_contacts_enable)},
+				"calendar": {"enable": bool(cluster.storage_search_index_calendar_enable)},
+				"tracing": {"enable": bool(cluster.storage_search_index_tracing_enable)},
+			},
 			"lookup": cluster.storage_lookup,
 			"undelete": {
 				"retention": _format_value_or_zero(cluster.storage_undelete_retention, "d")

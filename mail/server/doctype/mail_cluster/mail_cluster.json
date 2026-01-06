@@ -43,10 +43,15 @@
   "storage_blob",
   "column_break_xupm",
   "storage_undelete_retention",
-  "full_text_index_storage_section",
+  "search_store_section",
   "storage_fts",
+  "storage_search_index_default_language",
+  "storage_search_index_batch_size",
   "column_break_a9m0",
-  "storage_full_text_default_language",
+  "storage_search_index_email_enable",
+  "storage_search_index_contacts_enable",
+  "storage_search_index_calendar_enable",
+  "storage_search_index_tracing_enable",
   "in_memory_storage_section",
   "storage_lookup",
   "cleanup_section",
@@ -252,12 +257,6 @@
    "label": "Blob Storage"
   },
   {
-   "description": "Dedicated to indexing for full-text search, enhancing the speed and efficiency of text-based queries.",
-   "fieldname": "full_text_index_storage_section",
-   "fieldtype": "Section Break",
-   "label": "Full Text Index Storage"
-  },
-  {
    "description": "Key-value storage used primarily by the SMTP server and anti-spam components.",
    "fieldname": "in_memory_storage_section",
    "fieldtype": "Section Break",
@@ -391,14 +390,6 @@
    "fieldname": "storage_lookup",
    "fieldtype": "Data",
    "label": "Storage",
-   "reqd": 1
-  },
-  {
-   "default": "en",
-   "description": "Default language to use when language detection is not possible.",
-   "fieldname": "storage_full_text_default_language",
-   "fieldtype": "Data",
-   "label": "Default Language",
    "reqd": 1
   },
   {
@@ -855,6 +846,57 @@
    "label": "Un-delete Period (Days)",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "description": "Dedicated to indexing for full-text search, enhancing the speed and efficiency of text-based queries.",
+   "fieldname": "search_store_section",
+   "fieldtype": "Section Break",
+   "label": "Search Store"
+  },
+  {
+   "default": "en",
+   "description": "Default language to use when language detection is not possible.",
+   "fieldname": "storage_search_index_default_language",
+   "fieldtype": "Data",
+   "label": "Default Language",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "description": "Enable full-text search indexing for email content and metadata.",
+   "fieldname": "storage_search_index_email_enable",
+   "fieldtype": "Check",
+   "label": "Enable Email Searching"
+  },
+  {
+   "default": "1",
+   "description": "Enable full-text search indexing for calendar data.",
+   "fieldname": "storage_search_index_contacts_enable",
+   "fieldtype": "Check",
+   "label": "Enable Calendar Searching"
+  },
+  {
+   "default": "1",
+   "description": "Enable full-text search indexing for contacts data.",
+   "fieldname": "storage_search_index_calendar_enable",
+   "fieldtype": "Check",
+   "label": "Enable Contacts Searching"
+  },
+  {
+   "default": "1",
+   "description": "Enable full-text search indexing for tracing data.",
+   "fieldname": "storage_search_index_tracing_enable",
+   "fieldtype": "Check",
+   "label": "Enable Tracing Searching"
+  },
+  {
+   "default": "100",
+   "description": "Number of items to process in each batch during indexing operations.",
+   "fieldname": "storage_search_index_batch_size",
+   "fieldtype": "Int",
+   "label": "Indexing Batch Size",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
@@ -871,7 +913,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-12-01 18:05:56.390670",
+ "modified": "2025-12-23 21:58:16.231800",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster",

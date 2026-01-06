@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-12-17 11:14+0553\n"
-"PO-Revision-Date: 2025-12-17 11:14+0553\n"
+"POT-Creation-Date: 2025-12-23 22:00+0553\n"
+"PO-Revision-Date: 2025-12-23 22:00+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -598,6 +598,10 @@ msgstr ""
 msgid "Assigned Role"
 msgstr ""
 
+#: mail/jmap.py:1760
+msgid "At least one address book operation must be provided."
+msgstr ""
+
 #: mail/server/doctype/mail_cluster/mail_cluster.py:142
 msgid "At least one public cluster must be enabled. This cluster has been made public."
 msgstr ""
@@ -745,7 +749,7 @@ msgstr ""
 msgid "Bcc"
 msgstr ""
 
-#: frontend/src/components/MailDetails.vue:52
+#: frontend/src/components/MailDetails.vue:48
 msgid "Bcc: "
 msgstr ""
 
@@ -867,7 +871,7 @@ msgstr ""
 msgid "Cancelling Delivery..."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:704
+#: mail/server/doctype/mail_principal/mail_principal.py:705
 msgid "Cannot delete domain {0} as there are addresses associated with it."
 msgstr ""
 
@@ -901,7 +905,7 @@ msgstr ""
 msgid "Cc"
 msgstr ""
 
-#: frontend/src/components/MailDetails.vue:47
+#: frontend/src/components/MailDetails.vue:43
 msgid "Cc: "
 msgstr ""
 
@@ -1142,11 +1146,11 @@ msgstr ""
 msgid "Config Checksum"
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:102
+#: mail/server/doctype/server_deployment/server_deployment.py:104
 msgid "Config does not belong to the selected server."
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:98
+#: mail/server/doctype/server_deployment/server_deployment.py:100
 msgid "Config is required."
 msgstr ""
 
@@ -1232,6 +1236,7 @@ msgid "Contact Card Phone"
 msgstr ""
 
 #: mail/client/doctype/contact_card/contact_card.py:322
+#: mail/client/doctype/contact_card/contact_card.py:356
 msgid "Contact Card Update Error"
 msgstr ""
 
@@ -1423,7 +1428,7 @@ msgstr ""
 msgid "DKIM signature can only be created for Domain principals."
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:744
+#: mail/server/doctype/mail_principal/mail_principal.py:750
 msgid "DKIM signature can only be deleted for Domain principals."
 msgstr ""
 
@@ -1556,7 +1561,7 @@ msgstr ""
 msgid "Database"
 msgstr ""
 
-#: frontend/src/components/MailDetails.vue:56
+#: frontend/src/components/MailDetails.vue:52
 msgid "Date: "
 msgstr ""
 
@@ -1570,8 +1575,8 @@ msgstr ""
 msgid "Debug"
 msgstr ""
 
-#. Description of the 'Full Text Index Storage' (Section Break) field in
-#. DocType 'Mail Cluster'
+#. Description of the 'Search Store' (Section Break) field in DocType 'Mail
+#. Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "Dedicated to indexing for full-text search, enhancing the speed and efficiency of text-based queries."
 msgstr ""
@@ -1587,7 +1592,7 @@ msgstr ""
 msgid "Default"
 msgstr ""
 
-#. Label of the storage_full_text_default_language (Data) field in DocType
+#. Label of the storage_search_index_default_language (Data) field in DocType
 #. 'Mail Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "Default Language"
@@ -2239,6 +2244,24 @@ msgstr ""
 msgid "Enable"
 msgstr ""
 
+#. Label of the storage_search_index_contacts_enable (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable Calendar Searching"
+msgstr ""
+
+#. Label of the storage_search_index_calendar_enable (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable Contacts Searching"
+msgstr ""
+
+#. Label of the storage_search_index_email_enable (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable Email Searching"
+msgstr ""
+
 #: frontend/src/components/PWASettings.vue:16
 msgid "Enable Push Notifications"
 msgstr ""
@@ -2253,9 +2276,39 @@ msgstr ""
 msgid "Enable TLS"
 msgstr ""
 
+#. Label of the storage_search_index_tracing_enable (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable Tracing Searching"
+msgstr ""
+
 #. Label of the email_encryption_enable (Check) field in DocType 'Mail Cluster'
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 msgid "Enable encryption at rest"
+msgstr ""
+
+#. Description of the 'Enable Calendar Searching' (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable full-text search indexing for calendar data."
+msgstr ""
+
+#. Description of the 'Enable Contacts Searching' (Check) field in DocType
+#. 'Mail Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable full-text search indexing for contacts data."
+msgstr ""
+
+#. Description of the 'Enable Email Searching' (Check) field in DocType 'Mail
+#. Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable full-text search indexing for email content and metadata."
+msgstr ""
+
+#. Description of the 'Enable Tracing Searching' (Check) field in DocType 'Mail
+#. Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Enable full-text search indexing for tracing data."
 msgstr ""
 
 #. Description of the 'Trusted Networks' (Small Text) field in DocType 'Mail
@@ -2399,7 +2452,7 @@ msgstr ""
 msgid "Error uploading attachment"
 msgstr ""
 
-#: mail/jmap.py:2004
+#: mail/jmap.py:2074
 msgid "Error {0}: {1}"
 msgstr ""
 
@@ -2541,7 +2594,7 @@ msgstr ""
 msgid "Failed to create DKIM signature for domain {0}"
 msgstr ""
 
-#: mail/server/doctype/mail_principal/mail_principal.py:755
+#: mail/server/doctype/mail_principal/mail_principal.py:761
 msgid "Failed to delete DKIM signature for domain {0}"
 msgstr ""
 
@@ -2695,7 +2748,7 @@ msgstr ""
 msgid "Filebeat Stream Setup (FC)"
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:241
+#: mail/server/doctype/server_deployment/server_deployment.py:243
 msgid "Filebeat stream setup job has been created."
 msgstr ""
 
@@ -2846,9 +2899,6 @@ msgstr ""
 msgid "Full Name"
 msgstr ""
 
-#. Label of the full_text_index_storage_section (Section Break) field in
-#. DocType 'Mail Cluster'
-#: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_cluster/mail_cluster.py:381
 msgid "Full Text Index Storage"
 msgstr ""
@@ -3360,6 +3410,12 @@ msgstr ""
 msgid "Index"
 msgstr ""
 
+#. Label of the storage_search_index_batch_size (Int) field in DocType 'Mail
+#. Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Indexing Batch Size"
+msgstr ""
+
 #. Description of the 'Private Zone' (Check) field in DocType 'Mail Settings'
 #: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Indicates whether the DNS zone is private."
@@ -3584,11 +3640,11 @@ msgstr ""
 msgid "JMAP Username must be the same as the User name."
 msgstr ""
 
-#: mail/jmap.py:1847
+#: mail/jmap.py:1917
 msgid "JMAP settings are not configured for user {0}."
 msgstr ""
 
-#: mail/jmap.py:1854
+#: mail/jmap.py:1924
 msgid "JMAP username for tenant-bound user {0} must be the same as the system username."
 msgstr ""
 
@@ -4143,7 +4199,7 @@ msgid "Mail Server {0} does not have a cluster."
 msgstr ""
 
 #: mail/server/doctype/server_ansible_play/server_ansible_play.py:48
-#: mail/server/doctype/server_deployment/server_deployment.py:90
+#: mail/server/doctype/server_deployment/server_deployment.py:92
 #: mail/server/doctype/server_job/server_job.py:47
 msgid "Mail Server {0} is disabled"
 msgstr ""
@@ -5191,6 +5247,12 @@ msgstr ""
 msgid "Number of Shards"
 msgstr ""
 
+#. Description of the 'Indexing Batch Size' (Int) field in DocType 'Mail
+#. Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Number of items to process in each batch during indexing operations."
+msgstr ""
+
 #: mail/jmap.py:52
 msgid "Number of method calls exceeds the maximum allowed: {0}."
 msgstr ""
@@ -5262,7 +5324,7 @@ msgstr ""
 msgid "Only failed ansible plays can be retried."
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:284
+#: mail/server/doctype/server_deployment/server_deployment.py:286
 msgid "Only failed deployments can be retried."
 msgstr ""
 
@@ -5648,7 +5710,7 @@ msgid "Please specify tenant to fetch principals."
 msgstr ""
 
 #: mail/server/doctype/server_ansible_play/server_ansible_play.py:50
-#: mail/server/doctype/server_deployment/server_deployment.py:92
+#: mail/server/doctype/server_deployment/server_deployment.py:94
 #: mail/server/doctype/server_job/server_job.py:49
 msgid "Please verify SSH connection for Mail Server {0}"
 msgstr ""
@@ -6325,7 +6387,7 @@ msgstr ""
 msgid "Reply To"
 msgstr ""
 
-#: frontend/src/components/MailDetails.vue:37
+#: frontend/src/components/MailDetails.vue:33
 msgid "Reply To: "
 msgstr ""
 
@@ -6390,7 +6452,7 @@ msgstr ""
 msgid "Resend OTP"
 msgstr ""
 
-#: frontend/src/components/LoginLayout.vue:48 mail/api/account.py:210
+#: frontend/src/components/LoginLayout.vue:48 mail/api/account.py:212
 msgid "Reset Password"
 msgstr ""
 
@@ -6704,7 +6766,7 @@ msgstr ""
 msgid "SSH connection successful."
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:275
+#: mail/server/doctype/server_deployment/server_deployment.py:277
 msgid "SSL setup job has been created."
 msgstr ""
 
@@ -6761,6 +6823,12 @@ msgstr ""
 
 #: frontend/src/components/Modals/ShortcutsModal.vue:90
 msgid "Search Mail"
+msgstr ""
+
+#. Label of the search_store_section (Section Break) field in DocType 'Mail
+#. Cluster'
+#: mail/server/doctype/mail_cluster/mail_cluster.json
+msgid "Search Store"
 msgstr ""
 
 #: frontend/src/components/EmojiPicker.vue:33
@@ -7238,7 +7306,7 @@ msgstr ""
 msgid "Stalwart CLI not found at {0}."
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:256
+#: mail/server/doctype/server_deployment/server_deployment.py:258
 msgid "Stalwart service not found in deployment {0}"
 msgstr ""
 
@@ -7445,7 +7513,7 @@ msgstr ""
 msgid "Subject Names"
 msgstr ""
 
-#: frontend/src/components/MailDetails.vue:61
+#: frontend/src/components/MailDetails.vue:57
 msgid "Subject: "
 msgstr ""
 
@@ -8301,7 +8369,7 @@ msgstr ""
 msgid "To:"
 msgstr ""
 
-#: frontend/src/components/MailDetails.vue:41
+#: frontend/src/components/MailDetails.vue:37
 msgid "To: "
 msgstr ""
 
@@ -8757,7 +8825,7 @@ msgstr ""
 msgid "User {0} do not have permission to access the file <code>{1}</code>."
 msgstr ""
 
-#: mail/api/account.py:176
+#: mail/api/account.py:178
 msgid "User {0} does not exist."
 msgstr ""
 
@@ -8774,7 +8842,7 @@ msgstr ""
 msgid "User {0} does not have permission to view identities for user {1}."
 msgstr ""
 
-#: mail/jmap.py:1877
+#: mail/jmap.py:1947
 msgid "User {0} does not have the Mail User role."
 msgstr ""
 
@@ -8795,7 +8863,7 @@ msgstr ""
 msgid "User {0} is already registered."
 msgstr ""
 
-#: mail/jmap.py:1874
+#: mail/jmap.py:1944
 msgid "User {0} is disabled."
 msgstr ""
 
@@ -9167,7 +9235,7 @@ msgstr ""
 msgid "You do not have permission to access principals."
 msgstr ""
 
-#: mail/jmap.py:1867
+#: mail/jmap.py:1937
 msgid "You do not have permission to access the JMAP client for user {0}."
 msgstr ""
 
@@ -9250,6 +9318,7 @@ msgstr ""
 #: mail/client/doctype/address_book/address_book.py:159
 #: mail/client/doctype/contact_card/contact_card.py:236
 #: mail/client/doctype/contact_card/contact_card.py:327
+#: mail/client/doctype/contact_card/contact_card.py:361
 #: mail/client/doctype/identity/identity.py:161
 #: mail/client/doctype/identity/identity.py:204
 #: mail/client/doctype/identity/identity.py:245
@@ -9366,6 +9435,7 @@ msgstr ""
 
 #: mail/client/doctype/address_book/address_book.py:157
 #: mail/client/doctype/contact_card/contact_card.py:325
+#: mail/client/doctype/contact_card/contact_card.py:359
 #: mail/client/doctype/identity/identity.py:243
 #: mail/client/doctype/mailbox/mailbox.py:143
 #: mail/client/doctype/push_subscription/push_subscription.py:157
@@ -9451,6 +9521,10 @@ msgstr ""
 
 #: mail/mail/doctype/rate_limit/rate_limit.py:63
 msgid "{0} cannot be both allowed and blocked."
+msgstr ""
+
+#: mail/jmap.py:1756
+msgid "{0} cannot be combined with add/remove operations."
 msgstr ""
 
 #: mail/utils/dns.py:25

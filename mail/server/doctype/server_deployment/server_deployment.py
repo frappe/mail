@@ -12,6 +12,8 @@ from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 from uuid_utils import uuid7
 
+from mail.utils import get_stalwart_version
+
 
 class ServerDeployment(Document):
 	@property
@@ -113,7 +115,7 @@ class ServerDeployment(Document):
 		server_hostname = frappe.db.get_value("Mail Server", self.server, "hostname")
 		services = {
 			"stalwart": {
-				"image": "stalwartlabs/stalwart:latest",
+				"image": f"stalwartlabs/stalwart:{get_stalwart_version()}",
 				"container": f"stalwart_{server_hostname}",
 				"restart": "unless-stopped",
 				"network_mode": "host",
