@@ -248,15 +248,34 @@ class ImportMetadataLoader:
 		validate_nested_maildir_tree(base_dir, raise_exception=True)
 		result: list[ImportEmailMeta] = []
 
+		path_to_id = {v: k for k, v in mailbox_map.items()}
+
+		def resolve_mailbox_path(dir_path: str) -> str:
+			"""Resolves the mailbox path from the directory path."""
+
+			rel = os.path.relpath(dir_path, base_dir)
+			if rel == ".":
+				return ""
+
+			parts = []
+			for part in rel.split(os.sep):
+				if not part.startswith("."):
+					continue
+				parts.append(part[1:].replace("_", " "))
+
+			return "/".join(parts)
+
 		for root, dirs, _files in os.walk(base_dir):
 			if not {"cur", "new"} & set(dirs):
 				continue
 
-			rel = os.path.relpath(root, base_dir)
-			folder = rel.replace(".", "").replace("_", " ")
-			mailbox_id = next((k for k, v in mailbox_map.items() if v == os.path.basename(folder)), None)
+			mailbox_path = resolve_mailbox_path(root)
+			if not mailbox_path:
+				continue
+
+			mailbox_id = path_to_id.get(mailbox_path)
 			if not mailbox_id:
-				frappe.throw(_("Mailbox not found for folder {0}").format(folder))
+				frappe.throw(_("Mailbox not found for folder {0}").format(mailbox_path))
 
 			for subdir in ("cur", "new"):
 				path = os.path.join(root, subdir)
@@ -264,9 +283,12 @@ class ImportMetadataLoader:
 					continue
 
 				for fname in os.listdir(path):
+					if fname.startswith("."):
+						continue
+
 					keywords = cls._parse_maildir_flags(fname, subdir == "cur")
-					blob = os.path.join(rel, subdir, fname) if rel != "." else os.path.join(subdir, fname)
-					result.append(ImportEmailMeta(blob, {mailbox_id}, keywords))
+					rel_blob = os.path.relpath(os.path.join(path, fname), base_dir)
+					result.append(ImportEmailMeta(rel_blob, {mailbox_id}, keywords))
 
 		return result
 
@@ -584,7 +606,12 @@ class MailExchange(Document):
 				extract_compressed_file(import_file, base_dir)
 
 			client = get_jmap_client(self.user)
-			mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
+
+			mailbox_map = {}
+			if self.import_format == "mbox":
+				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
+			elif self.import_format == "maildir-nested":
+				mailbox_map = self._build_mailbox_map(client.mailboxes)
 
 			meta = ImportMetadataLoader.load(
 				self.import_format, base_dir, mailbox_map, self.import_metadata_dict

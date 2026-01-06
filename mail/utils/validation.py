@@ -288,7 +288,13 @@ def validate_maildir_or_maildirpp(base_dir: str, raise_exception: bool = False) 
 
 
 def validate_nested_maildir_tree(base_dir: str, raise_exception: bool = False) -> list[str]:
-	"""Recursively validates a nested Maildir++ tree. Returns list of invalid directories (relative paths)."""
+	"""
+	Recursively validates a nested Maildir++ tree.
+
+	A mailbox is valid if it:
+	- contains cur/ or new/
+	- OR contains child mailboxes (.Child)
+	"""
 
 	invalid_dirs: list[str] = []
 	base_dir = os.path.abspath(base_dir)
@@ -298,10 +304,19 @@ def validate_nested_maildir_tree(base_dir: str, raise_exception: bool = False) -
 		return "/" if rel == "." else f"/{rel}"
 
 	def is_valid_nested_mailbox(path: str) -> bool:
-		entries = set(os.listdir(path))
-		has_cur = "cur" in entries and os.path.isdir(os.path.join(path, "cur"))
-		has_new = "new" in entries and os.path.isdir(os.path.join(path, "new"))
-		return has_cur or has_new
+		try:
+			entries = os.listdir(path)
+		except OSError:
+			return False
+
+		has_maildir = any(
+			name in ("cur", "new") and os.path.isdir(os.path.join(path, name)) for name in entries
+		)
+		has_children = any(
+			name.startswith(".") and os.path.isdir(os.path.join(path, name)) for name in entries
+		)
+
+		return has_maildir or has_children
 
 	def walk(path: str) -> None:
 		for entry in os.listdir(path):
