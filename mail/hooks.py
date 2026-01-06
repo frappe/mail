@@ -166,6 +166,7 @@ permission_query_conditions = {
 	"Mail Tenant": "mail.server.doctype.mail_tenant.mail_tenant.get_permission_query_condition",
 	"Mail Tenant Member": "mail.server.doctype.mail_tenant_member.mail_tenant_member.get_permission_query_condition",
 	# Client
+	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.get_permission_query_condition",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
 }
 
@@ -182,6 +183,7 @@ has_permission = {
 	"Address Book": "mail.client.doctype.address_book.address_book.has_permission",
 	"Contact Card": "mail.client.doctype.contact_card.contact_card.has_permission",
 	"Identity": "mail.client.doctype.identity.identity.has_permission",
+	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.has_permission",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.has_permission",
 	"Mailbox": "mail.client.doctype.mailbox.mailbox.has_permission",
 	"Push Subscription": "mail.client.doctype.push_subscription.push_subscription.has_permission",
@@ -222,12 +224,14 @@ scheduler_events = {
 	#     "mail.tasks.all"
 	# ],
 	"daily": [
+		"mail.client.doctype.mail_exchange.mail_exchange.clean_import_export_directories",
 		"mail.server.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
 	],
 	# "daily_long": [
 	#     "mail.tasks.daily_long"
 	# ],
 	"hourly": [
+		"mail.client.doctype.mail_exchange.mail_exchange.retry_stuck_mail_exchanges",
 		"mail.server.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",
 	],
 	"hourly_long": [

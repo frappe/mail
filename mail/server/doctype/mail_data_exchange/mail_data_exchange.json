@@ -7,8 +7,6 @@
   "section_break_gdkn",
   "amended_from",
   "section_break_hiuo",
-  "status",
-  "retries",
   "column_break_3krp",
   "user",
   "tenant",
@@ -17,6 +15,9 @@
   "import_file",
   "export_format",
   "export_archive_type",
+  "column_break_xyjz",
+  "status",
+  "retries",
   "section_break_4a28",
   "queued_at",
   "started_at",
@@ -133,6 +134,7 @@
    "label": "Duration (Seconds)",
    "no_copy": 1,
    "non_negative": 1,
+   "precision": "3",
    "read_only": 1
   },
   {
@@ -204,13 +206,17 @@
    "options": "User",
    "reqd": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "column_break_xyjz",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-11-25 16:46:10.097181",
+ "modified": "2025-12-23 17:41:27.699001",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Data Exchange",
@@ -234,7 +240,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "Mail Admin",
    "submit": 1,
    "write": 1
   },
@@ -242,7 +248,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail Admin",
+   "role": "Mail User",
    "submit": 1,
    "write": 1
   }

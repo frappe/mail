@@ -687,18 +687,34 @@ def get_messages_directory() -> str:
 	return directory
 
 
-def get_import_directory() -> str:
-	"""Returns the path to the import directory for the current site."""
+def get_data_import_directory() -> str:
+	"""Returns the path to the data import directory for the current site."""
 
-	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "imports")
+	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "data-exchange", "import")
 	os.makedirs(directory, exist_ok=True)
 	return directory
 
 
-def get_export_directory() -> str:
-	"""Returns the path to the export directory for the current site."""
+def get_data_export_directory() -> str:
+	"""Returns the path to the data export directory for the current site."""
 
-	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "exports")
+	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "data-exchange", "export")
+	os.makedirs(directory, exist_ok=True)
+	return directory
+
+
+def get_mail_import_directory() -> str:
+	"""Returns the path to the mail import directory for the current site."""
+
+	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "mail-exchange", "import")
+	os.makedirs(directory, exist_ok=True)
+	return directory
+
+
+def get_mail_export_directory() -> str:
+	"""Returns the path to the mail export directory for the current site."""
+
+	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "mail-exchange", "export")
 	os.makedirs(directory, exist_ok=True)
 	return directory
 

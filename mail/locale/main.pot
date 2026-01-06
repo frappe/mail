@@ -1,14 +1,14 @@
 # Translations template for Mail.
-# Copyright (C) 2025 Frappe Technologies Pvt. Ltd.
+# Copyright (C) 2026 Frappe Technologies Pvt. Ltd.
 # This file is distributed under the same license as the Mail project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2025-12-23 22:00+0553\n"
-"PO-Revision-Date: 2025-12-23 22:00+0553\n"
+"POT-Creation-Date: 2026-01-06 12:47+0553\n"
+"PO-Revision-Date: 2026-01-06 12:47+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -33,17 +33,23 @@ msgstr ""
 msgid "'Pass'"
 msgstr ""
 
+#. Option for the 'Archive Type' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Archive Type' (Select) field in DocType 'Mail Data Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid ".tar.gz"
 msgstr ""
 
+#. Option for the 'Archive Type' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Archive Type' (Select) field in DocType 'Mail Data Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid ".tgz"
 msgstr ""
 
+#. Option for the 'Archive Type' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Archive Type' (Select) field in DocType 'Mail Data Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid ".zip"
 msgstr ""
@@ -232,6 +238,7 @@ msgid "Action failed. Please try again in some time."
 msgstr ""
 
 #: frontend/src/components/Modals/ShortcutsModal.vue:66
+#: mail/client/doctype/mail_exchange/mail_exchange.js:16
 #: mail/client/doctype/mail_message/mail_message.js:163
 #: mail/client/doctype/mail_message/mail_message.js:171
 #: mail/client/doctype/mail_queue/mail_queue.js:27
@@ -482,7 +489,9 @@ msgstr ""
 msgid "AmazonRoute53"
 msgstr ""
 
+#. Label of the amended_from (Link) field in DocType 'Mail Exchange'
 #. Label of the amended_from (Link) field in DocType 'Mail Data Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Amended From"
 msgstr ""
@@ -541,15 +550,18 @@ msgstr ""
 msgid "Apps"
 msgstr ""
 
+#. Label of the export_archive_type (Select) field in DocType 'Mail Exchange'
 #. Label of the export_archive_type (Select) field in DocType 'Mail Data
 #. Exchange'
 #: frontend/src/components/Settings/MailDataExchangeSettings.vue:40
 #: frontend/src/pages/MailDataExchangesView.vue:132
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Archive Type"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:106
+#: mail/client/doctype/mail_exchange/mail_exchange.py:522
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:104
 msgid "Archive Type is required."
 msgstr ""
 
@@ -861,8 +873,10 @@ msgstr ""
 msgid "Cancel Delivery"
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
 #: frontend/src/pages/MailDataExchangesView.vue:93
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Cancelled"
 msgstr ""
@@ -984,19 +998,6 @@ msgstr ""
 msgid "Clear Filters"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:307
-msgid "Click the button below to view and download the exported data."
-msgstr ""
-
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:232
-msgid "Click the button below to view the imported data."
-msgstr ""
-
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:243
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:318
-msgid "Click the button below to view the reason for failure."
-msgstr ""
-
 #: frontend/src/components/DNSRecords.vue:22
 msgid "Click to copy"
 msgstr ""
@@ -1083,15 +1084,19 @@ msgstr ""
 msgid "Commands"
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
 #: frontend/src/pages/MailDataExchangesView.vue:91
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Completed"
 msgstr ""
 
+#. Label of the completed_at (Datetime) field in DocType 'Mail Exchange'
 #. Label of the completed_at (Datetime) field in DocType 'Mail Data Exchange'
 #. Label of the completed_at (Datetime) field in DocType 'Spam Check Log'
 #: frontend/src/pages/MailDataExchangesView.vue:128
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/spam_check_log/spam_check_log.json
 msgid "Completed At"
@@ -1581,6 +1586,11 @@ msgstr ""
 msgid "Dedicated to indexing for full-text search, enhancing the speed and efficiency of text-based queries."
 msgstr ""
 
+#. Label of the deduplicate_export (Check) field in DocType 'Mail Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
+msgid "Deduplicate by Message-ID"
+msgstr ""
+
 #. Label of the default (Check) field in DocType 'Address Book'
 #. Option for the 'Value' (Select) field in DocType 'Mail Principal Permission'
 #. Label of the default (Check) field in DocType 'Mail Server ACME Provider'
@@ -1694,7 +1704,7 @@ msgstr ""
 msgid "Delete Now"
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:220
+#: frontend/src/components/MailListItem.vue:227
 msgid "Delete Thread"
 msgstr ""
 
@@ -2014,11 +2024,13 @@ msgstr ""
 msgid "Download"
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Mail Exchange'
 #. Label of the draft (Check) field in DocType 'Mail Message'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
-#: frontend/src/components/MailListItem.vue:107
+#: frontend/src/components/MailListItem.vue:114
 #: frontend/src/components/MailThread.vue:118
 #: frontend/src/pages/MailDataExchangesView.vue:88
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/client/doctype/mail_message/mail_message.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Draft"
@@ -2057,6 +2069,7 @@ msgstr ""
 msgid "Duplicate Record"
 msgstr ""
 
+#. Label of the duration (Float) field in DocType 'Mail Exchange'
 #. Label of the duration (Float) field in DocType 'Mail Data Exchange'
 #. Label of the duration (Float) field in DocType 'Server Ansible Play'
 #. Label of the duration (Float) field in DocType 'Server Ansible Play Task'
@@ -2064,6 +2077,7 @@ msgstr ""
 #. Label of the duration (Float) field in DocType 'Server Job'
 #. Label of the duration (Float) field in DocType 'Server Job Command'
 #. Label of the duration (Float) field in DocType 'Spam Check Log'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
@@ -2212,7 +2226,7 @@ msgstr ""
 msgid "Email domain {0} does not match with domain {1}."
 msgstr ""
 
-#: mail/utils/validation.py:374
+#: mail/utils/validation.py:417
 msgid "Email domain {0} is not associated with tenant {1} or is not verified."
 msgstr ""
 
@@ -2466,6 +2480,11 @@ msgstr ""
 msgid "Establishes the maximum number of objects that can be modified in a single method call."
 msgstr ""
 
+#. Description of the 'Metadata' (JSON) field in DocType 'Mail Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
+msgid "Example: <code>{\"mailboxIds\": { \"a\": true }, \"keywords\": {\"$seen\": true}}</code>"
+msgstr ""
+
 #. Label of the exception (Code) field in DocType 'Server Ansible Play Task'
 #: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 msgid "Exception"
@@ -2505,10 +2524,32 @@ msgstr ""
 msgid "Expires At"
 msgstr ""
 
+#. Option for the 'Operation' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Operation' (Select) field in DocType 'Mail Data Exchange'
 #: frontend/src/pages/MailDataExchangesView.vue:83
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Export"
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:532
+msgid "Export Limit cannot exceed {0}."
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:530
+msgid "Export Limit must be greater than zero."
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:691
+msgid "Export completed"
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:519
+msgid "Export filter must be valid JSON."
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:663
+msgid "Export limit exceeded."
 msgstr ""
 
 #. Label of the enable_log_exporter (Check) field in DocType 'Mail Cluster
@@ -2549,6 +2590,7 @@ msgstr ""
 msgid "FQDN of the proxy or load balancer forwarding requests to mail servers."
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
 #. Option for the 'Status' (Select) field in DocType 'Server Ansible Play'
@@ -2558,6 +2600,7 @@ msgstr ""
 #. Label of the failed (Int) field in DocType 'Server Job'
 #. Option for the 'Status' (Select) field in DocType 'Server Job Command'
 #: frontend/src/pages/MailDataExchangesView.vue:92
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
@@ -2582,7 +2625,7 @@ msgstr ""
 msgid "Failed to add principal {0}: {1}"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:221
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:218
 msgid "Failed to clean import output"
 msgstr ""
 
@@ -2704,8 +2747,10 @@ msgstr ""
 msgid "Failures"
 msgstr ""
 
+#. Label of the import_file (Attach) field in DocType 'Mail Exchange'
 #. Label of the import_file (Attach) field in DocType 'Mail Data Exchange'
 #: frontend/src/pages/MailDataExchangeView.vue:22
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "File"
 msgstr ""
@@ -2757,8 +2802,16 @@ msgstr ""
 msgid "Filesystem"
 msgstr ""
 
+#. Label of the export_filter (JSON) field in DocType 'Mail Exchange'
 #: frontend/src/pages/MailboxView.vue:84
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 msgid "Filter"
+msgstr ""
+
+#. Label of the section_break_ovtu (Section Break) field in DocType 'Mail
+#. Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
+msgid "Filters"
 msgstr ""
 
 #: frontend/src/components/Modals/AddMemberModal.vue:69
@@ -2803,10 +2856,13 @@ msgstr ""
 msgid "Forgot password?"
 msgstr ""
 
+#. Label of the export_format (Select) field in DocType 'Mail Exchange'
+#. Label of the import_format (Select) field in DocType 'Mail Exchange'
 #. Label of the import_format (Select) field in DocType 'Mail Data Exchange'
 #. Label of the export_format (Select) field in DocType 'Mail Data Exchange'
 #: frontend/src/components/Settings/MailDataExchangeSettings.vue:14
 #: frontend/src/pages/MailDataExchangesView.vue:131
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Format"
 msgstr ""
@@ -2995,7 +3051,7 @@ msgstr ""
 msgid "Group Messages By"
 msgstr ""
 
-#: mail/utils/validation.py:389
+#: mail/utils/validation.py:432
 msgid "Group {0} is not associated with tenant {1}."
 msgstr ""
 
@@ -3341,8 +3397,10 @@ msgstr ""
 msgid "Implicit TLS"
 msgstr ""
 
+#. Option for the 'Operation' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Operation' (Select) field in DocType 'Mail Data Exchange'
 #: frontend/src/pages/MailDataExchangesView.vue:82
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Import"
 msgstr ""
@@ -3352,16 +3410,28 @@ msgstr ""
 msgid "Import & Export"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:92
+#: mail/client/doctype/mail_exchange/mail_exchange.py:495
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:90
 msgid "Import File is required."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:86
+#: mail/client/doctype/mail_exchange/mail_exchange.py:493
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:88
 msgid "Import Format is required."
 msgstr ""
 
+#: mail/client/doctype/mail_exchange/mail_exchange.py:635
+msgid "Import completed"
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:630
+msgid "Import limit exceeded."
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
 #: frontend/src/pages/MailDataExchangesView.vue:90
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "In Progress"
 msgstr ""
@@ -3499,21 +3569,21 @@ msgstr ""
 msgid "Internal"
 msgstr ""
 
-#: mail/utils/validation.py:222
+#: mail/utils/validation.py:224
 msgid "Invalid JMAP Structure"
 msgstr ""
 
-#: mail/utils/validation.py:239 mail/utils/validation.py:268
-#: mail/utils/validation.py:299
+#: mail/utils/validation.py:255 mail/utils/validation.py:284
+#: mail/utils/validation.py:342
 msgid "Invalid Maildir"
 msgstr ""
 
-#: mail/utils/validation.py:265 mail/utils/validation.py:296
+#: mail/utils/validation.py:281 mail/utils/validation.py:339
 msgid "Invalid Maildir format in the following directories: {0}"
 msgstr ""
 
-#: mail/utils/validation.py:236
-msgid "Invalid Maildir format: missing {0} directories."
+#: mail/utils/validation.py:252
+msgid "Invalid Maildir format: at least one of {0} must exist and contain files."
 msgstr ""
 
 #: mail/api/account.py:85
@@ -3765,7 +3835,9 @@ msgstr ""
 msgid "Light Mode"
 msgstr ""
 
+#. Label of the export_limit (Int) field in DocType 'Mail Exchange'
 #. Label of the limit (Int) field in DocType 'Rate Limit'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/mail/doctype/rate_limit/rate_limit.json
 msgid "Limit"
 msgstr ""
@@ -3819,7 +3891,7 @@ msgstr ""
 msgid "List of volume mappings, e.g. [\"/data:/opt/data\"]."
 msgstr ""
 
-#: mail/utils/validation.py:404
+#: mail/utils/validation.py:447
 msgid "List {0} is not associated with tenant {1}."
 msgstr ""
 
@@ -3981,6 +4053,7 @@ msgstr ""
 #: frontend/src/components/Modals/EditInviteModal.vue:26
 #: frontend/src/pages/dashboard/InvitesView.vue:205
 #: frontend/src/pages/dashboard/UsersView.vue:184
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/client/doctype/mail_message/mail_message.json
 #: mail/server/doctype/mail_account_request/mail_account_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
@@ -4042,25 +4115,19 @@ msgstr ""
 msgid "Mail Data Exchanges"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:314
-msgid "Mail Data Export Failed"
-msgstr ""
-
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:303
-msgid "Mail Data Export Ready"
-msgstr ""
-
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:228
-msgid "Mail Data Import Completed"
-msgstr ""
-
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:239
-msgid "Mail Data Import Failed"
+#: mail/client/doctype/mail_exchange/mail_exchange.py:837
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:319
+msgid "Mail Data {0} {1}"
 msgstr ""
 
 #. Name of a DocType
 #: mail/server/doctype/mail_domain_request/mail_domain_request.json
 msgid "Mail Domain Request"
+msgstr ""
+
+#. Name of a DocType
+#: mail/client/doctype/mail_exchange/mail_exchange.json
+msgid "Mail Exchange"
 msgstr ""
 
 #. Label of the id (Data) field in DocType 'Mail Message'
@@ -4255,6 +4322,7 @@ msgstr ""
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/contact_card/contact_card.json
 #: mail/client/doctype/identity/identity.json
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/client/doctype/mail_message/mail_message.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/client/doctype/mail_signature/mail_signature.json
@@ -4265,22 +4333,6 @@ msgstr ""
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/mail_tenant/mail_tenant.json
 msgid "Mail User"
-msgstr ""
-
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:315
-msgid "Mail data export for account {0} has failed."
-msgstr ""
-
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:304
-msgid "Mail data export for account {0} is ready for download."
-msgstr ""
-
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:229
-msgid "Mail data import for account {0} has been completed successfully."
-msgstr ""
-
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:240
-msgid "Mail data import for account {0} has failed."
 msgstr ""
 
 #: frontend/src/components/MailActions.vue:250
@@ -4351,6 +4403,14 @@ msgstr ""
 
 #: mail/client/doctype/mailbox/mailbox.py:136
 msgid "Mailbox cannot be a parent of itself."
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:278
+msgid "Mailbox not found for folder {0}"
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:168
+msgid "Mailbox not found for {0}"
 msgstr ""
 
 #: mail/jmap.py:579 mail/jmap.py:593
@@ -4462,7 +4522,7 @@ msgstr ""
 msgid "Mark as Not Junk"
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:208
+#: frontend/src/components/MailListItem.vue:215
 #: frontend/src/components/Modals/ShortcutsModal.vue:74
 msgid "Mark as Read"
 msgstr ""
@@ -4471,7 +4531,7 @@ msgstr ""
 msgid "Mark as Read (Shift+U)"
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:202
+#: frontend/src/components/MailListItem.vue:209
 #: frontend/src/components/Modals/ShortcutsModal.vue:73
 msgid "Mark as Unread"
 msgstr ""
@@ -4715,7 +4775,7 @@ msgstr ""
 msgid "Member removed."
 msgstr ""
 
-#: mail/utils/validation.py:423
+#: mail/utils/validation.py:466
 msgid "Member {0} is not associated with tenant {1}."
 msgstr ""
 
@@ -4804,6 +4864,11 @@ msgstr ""
 msgid "Messages that arrive on or after this date-time (but before the To Date if defined) should receive the user's vacation response."
 msgstr ""
 
+#. Label of the import_metadata (JSON) field in DocType 'Mail Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
+msgid "Metadata"
+msgstr ""
+
 #. Label of the type (Select) field in DocType 'Mail Cluster Trace'
 #: mail/server/doctype/mail_cluster_trace/mail_cluster_trace.json
 msgid "Method"
@@ -4865,7 +4930,7 @@ msgstr ""
 msgid "Minutely"
 msgstr ""
 
-#: mail/utils/validation.py:219
+#: mail/utils/validation.py:221
 msgid "Missing required files/directories for JMAP format: {0}"
 msgstr ""
 
@@ -4902,7 +4967,7 @@ msgid "Move to "
 msgstr ""
 
 #: frontend/src/components/MailActions.vue:169
-#: frontend/src/components/MailListItem.vue:214
+#: frontend/src/components/MailListItem.vue:221
 #: frontend/src/components/Modals/ShortcutsModal.vue:75
 msgid "Move to Trash"
 msgstr ""
@@ -4926,7 +4991,7 @@ msgstr ""
 msgid "Multiline entries"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:199
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:200
 msgid "Multiple {0} files found. Please provide only one."
 msgstr ""
 
@@ -5091,6 +5156,14 @@ msgstr ""
 msgid "Next Thread (↓/J)"
 msgstr ""
 
+#: mail/client/doctype/mail_exchange/mail_exchange.py:131
+msgid "No .eml files found"
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:159
+msgid "No .mbox files found"
+msgstr ""
+
 #: frontend/src/components/Settings/IdentitySettings.vue:47
 msgid "No Bcc addresses added."
 msgstr ""
@@ -5130,6 +5203,14 @@ msgstr ""
 
 #: frontend/src/pages/dashboard/DomainsView.vue:101
 msgid "No domains found."
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:669
+msgid "No emails found for export."
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:628
+msgid "No emails found for import."
 msgstr ""
 
 #: mail/api/outbound.py:51
@@ -5195,7 +5276,7 @@ msgstr ""
 msgid "No signatures found."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:196
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:197
 msgid "No {0} file found in the archive."
 msgstr ""
 
@@ -5316,7 +5397,7 @@ msgstr ""
 msgid "Only Administrator can delete Mail Server."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:146
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:144
 msgid "Only data exchange with status 'Queued', 'In Progress', or 'Failed' can be retried."
 msgstr ""
 
@@ -5332,6 +5413,10 @@ msgstr ""
 msgid "Only failed jobs can be retried."
 msgstr ""
 
+#: mail/client/doctype/mail_exchange/mail_exchange.py:575
+msgid "Only mail exchange with status 'Queued', 'In Progress', or 'Failed' can be retried."
+msgstr ""
+
 #: mail/server/doctype/mail_server/mail_server.py:154
 msgid "Only one ACME Provider can be default."
 msgstr ""
@@ -5340,11 +5425,16 @@ msgstr ""
 msgid "Only one TLS Certificate can be default."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:143
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:141
 msgid "Only submitted data exchange can be retried."
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:97
+#: mail/client/doctype/mail_exchange/mail_exchange.py:572
+msgid "Only submitted mail exchange can be retried."
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:500
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:95
 msgid "Only {0} files are supported for import."
 msgstr ""
 
@@ -5367,9 +5457,11 @@ msgstr ""
 msgid "OpenTelemetry Push Metrics"
 msgstr ""
 
+#. Label of the operation (Select) field in DocType 'Mail Exchange'
 #. Label of the operation (Select) field in DocType 'Mail Data Exchange'
 #: frontend/src/components/Settings/MailDataExchangeSettings.vue:5
 #: frontend/src/pages/MailDataExchangesView.vue:10
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Operation"
 msgstr ""
@@ -5424,10 +5516,12 @@ msgstr ""
 msgid "Outgoing"
 msgstr ""
 
+#. Label of the output (Code) field in DocType 'Mail Exchange'
 #. Label of the output (Code) field in DocType 'Mail Data Exchange'
 #. Label of the stdout (Code) field in DocType 'Server Ansible Play Task'
 #. Label of the stdout (Code) field in DocType 'Server Job Command'
 #: frontend/src/pages/MailDataExchangeView.vue:17
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
 #: mail/server/doctype/server_job_command/server_job_command.json
@@ -5830,7 +5924,7 @@ msgstr ""
 msgid "Principal type {0} is not supported yet."
 msgstr ""
 
-#: mail/utils/validation.py:351
+#: mail/utils/validation.py:394
 msgid "Principal {0} does not belong to tenant {1}."
 msgstr ""
 
@@ -6082,9 +6176,11 @@ msgstr ""
 msgid "Queue resumed successfully."
 msgstr ""
 
+#. Option for the 'Status' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Status' (Select) field in DocType 'Mail Queue'
 #. Option for the 'Status' (Select) field in DocType 'Mail Data Exchange'
 #: frontend/src/pages/MailDataExchangesView.vue:89
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Queued"
@@ -6095,8 +6191,10 @@ msgstr ""
 msgid "Queued After (Seconds)"
 msgstr ""
 
+#. Label of the queued_at (Datetime) field in DocType 'Mail Exchange'
 #. Label of the queued_at (Datetime) field in DocType 'Mail Queue'
 #. Label of the queued_at (Datetime) field in DocType 'Mail Data Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Queued At"
@@ -6178,6 +6276,16 @@ msgstr ""
 #. Label of the received_at (Datetime) field in DocType 'Mail Message'
 #: mail/client/doctype/mail_message/mail_message.json
 msgid "Received At"
+msgstr ""
+
+#. Option for the 'Sort' (Select) field in DocType 'Mail Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
+msgid "Received At (ASC)"
+msgstr ""
+
+#. Option for the 'Sort' (Select) field in DocType 'Mail Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
+msgid "Received At (DESC)"
 msgstr ""
 
 #. Description of the 'Received After (Seconds)' (Float) field in DocType 'Mail
@@ -6504,12 +6612,14 @@ msgstr ""
 msgid "Resuming Queue..."
 msgstr ""
 
+#. Label of the retries (Int) field in DocType 'Mail Exchange'
 #. Label of the retries (Int) field in DocType 'Mail Queue'
 #. Label of the retry_total (Int) field in DocType 'Mail Cluster Store'
 #. Label of the retries (Int) field in DocType 'Mail Data Exchange'
 #. Label of the retries (Int) field in DocType 'Server Ansible Play'
 #. Label of the retries (Int) field in DocType 'Server Deployment'
 #. Label of the retries (Int) field in DocType 'Server Job'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
@@ -6519,6 +6629,7 @@ msgstr ""
 msgid "Retries"
 msgstr ""
 
+#: mail/client/doctype/mail_exchange/mail_exchange.js:16
 #: mail/client/doctype/mail_queue/mail_queue.js:27
 #: mail/client/doctype/mail_queue/mail_queue_list.js:26
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.js:16
@@ -6551,6 +6662,7 @@ msgstr ""
 msgid "Retrying Delivery..."
 msgstr ""
 
+#: mail/client/doctype/mail_exchange/mail_exchange.js:25
 #: mail/client/doctype/mail_queue/mail_queue.js:48
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.js:25
 #: mail/server/doctype/server_ansible_play/server_ansible_play.js:39
@@ -7196,6 +7308,11 @@ msgstr ""
 msgid "Soft Limit"
 msgstr ""
 
+#. Label of the export_sort (Select) field in DocType 'Mail Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
+msgid "Sort"
+msgstr ""
+
 #. Label of the sort_order (Int) field in DocType 'Address Book'
 #. Label of the sort_order (Int) field in DocType 'Mailbox'
 #. Label of the _sort_order (Int) field in DocType 'Mailbox'
@@ -7302,7 +7419,7 @@ msgstr ""
 msgid "Specifies the maximum size for an email attachment."
 msgstr ""
 
-#: mail/utils/__init__.py:712
+#: mail/utils/__init__.py:728
 msgid "Stalwart CLI not found at {0}."
 msgstr ""
 
@@ -7325,10 +7442,12 @@ msgstr ""
 msgid "Starred Mails"
 msgstr ""
 
+#. Label of the started_after (Float) field in DocType 'Mail Exchange'
 #. Label of the started_after (Float) field in DocType 'Mail Data Exchange'
 #. Label of the started_after (Float) field in DocType 'Server Ansible Play'
 #. Label of the started_after (Float) field in DocType 'Server Deployment'
 #. Label of the started_after (Float) field in DocType 'Server Job'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_deployment/server_deployment.json
@@ -7336,6 +7455,7 @@ msgstr ""
 msgid "Started After (Seconds)"
 msgstr ""
 
+#. Label of the started_at (Datetime) field in DocType 'Mail Exchange'
 #. Label of the started_at (Datetime) field in DocType 'Mail Data Exchange'
 #. Label of the started_at (Datetime) field in DocType 'Server Ansible Play'
 #. Label of the started_at (Datetime) field in DocType 'Server Ansible Play
@@ -7345,6 +7465,7 @@ msgstr ""
 #. Label of the started_at (Datetime) field in DocType 'Server Job Command'
 #. Label of the started_at (Datetime) field in DocType 'Spam Check Log'
 #: frontend/src/pages/MailDataExchangesView.vue:127
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_ansible_play_task/server_ansible_play_task.json
@@ -7368,7 +7489,10 @@ msgid "Started At - Creation"
 msgstr ""
 
 #. Description of the 'Started After (Seconds)' (Float) field in DocType 'Mail
+#. Exchange'
+#. Description of the 'Started After (Seconds)' (Float) field in DocType 'Mail
 #. Data Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Started At - Queued At"
 msgstr ""
@@ -7387,6 +7511,7 @@ msgstr ""
 msgid "Statistics"
 msgstr ""
 
+#. Label of the status (Select) field in DocType 'Mail Exchange'
 #. Label of the status (Select) field in DocType 'Mail Queue'
 #. Label of the status (Select) field in DocType 'Mail Data Exchange'
 #. Label of the status (Data) field in DocType 'Message Queue Recipient'
@@ -7399,6 +7524,7 @@ msgstr ""
 #: frontend/src/pages/MailDataExchangesView.vue:129
 #: frontend/src/pages/dashboard/DomainsView.vue:15
 #: frontend/src/pages/dashboard/DomainsView.vue:94
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/message_queue/message_queue.js:60
@@ -7563,6 +7689,11 @@ msgstr ""
 msgid "Successfully retried {0} emails."
 msgstr ""
 
+#. Description of the 'File' (Attach) field in DocType 'Mail Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
+msgid "Supported: <code>.eml</code>, <code>.zip</code>, <code>.tgz</code>, <code>.tar.gz</code>"
+msgstr ""
+
 #. Description of the 'File' (Attach) field in DocType 'Mail Data Exchange'
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "Supported: <code>.zip</code>, <code>.tgz</code>, <code>.tar.gz</code>"
@@ -7592,6 +7723,7 @@ msgstr ""
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/contact_card/contact_card.json
 #: mail/client/doctype/identity/identity.json
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/client/doctype/mail_message/mail_message.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/client/doctype/mail_signature/mail_signature.json
@@ -7707,12 +7839,14 @@ msgstr ""
 msgid "Team Updates"
 msgstr ""
 
+#. Label of the tenant (Link) field in DocType 'Mail Exchange'
 #. Label of the tenant (Link) field in DocType 'Mail Account Request'
 #. Label of the tenant (Link) field in DocType 'Mail Data Exchange'
 #. Label of the tenant (Link) field in DocType 'Mail Domain Request'
 #. Label of the tenant (Link) field in DocType 'Mail Principal'
 #. Label of the tenant (Link) field in DocType 'Mail Principal Binding'
 #. Label of the tenant (Link) field in DocType 'Mail Tenant Member'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_account_request/mail_account_request.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 #: mail/server/doctype/mail_domain_request/mail_domain_request.json
@@ -7736,12 +7870,12 @@ msgstr ""
 msgid "Tenant is required."
 msgstr ""
 
-#: mail/utils/validation.py:335
+#: mail/utils/validation.py:378
 msgid "Tenant not specified."
 msgstr ""
 
 #: mail/server/doctype/mail_principal/mail_principal.py:549
-#: mail/utils/validation.py:342
+#: mail/utils/validation.py:385
 msgid "Tenant {0} is not assigned to any cluster."
 msgstr ""
 
@@ -8365,7 +8499,7 @@ msgstr ""
 msgid "To Date must be after From Date."
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:191
+#: frontend/src/components/MailListItem.vue:198
 msgid "To:"
 msgstr ""
 
@@ -8667,8 +8801,16 @@ msgstr ""
 msgid "Unsupported algorithm. Use 'rsa-sha256' or 'ed25519-sha256'."
 msgstr ""
 
+#: mail/client/doctype/mail_exchange/mail_exchange.py:315
+msgid "Unsupported export format: {0}"
+msgstr ""
+
 #: mail/utils/__init__.py:386
 msgid "Unsupported file format: {0}"
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:104
+msgid "Unsupported import format: {0}"
 msgstr ""
 
 #: mail/utils/__init__.py:417
@@ -8747,6 +8889,7 @@ msgstr ""
 #. Label of the user (Link) field in DocType 'Address Book'
 #. Label of the user (Link) field in DocType 'Contact Card'
 #. Label of the user (Link) field in DocType 'Identity'
+#. Label of the user (Link) field in DocType 'Mail Exchange'
 #. Label of the user (Link) field in DocType 'Mail Message'
 #. Label of the user (Link) field in DocType 'Mail Queue'
 #. Label of the user (Link) field in DocType 'Mail Sync History'
@@ -8762,6 +8905,7 @@ msgstr ""
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/contact_card/contact_card.json
 #: mail/client/doctype/identity/identity.json
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/client/doctype/mail_message/mail_message.json
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/client/doctype/mail_sync_history/mail_sync_history.json
@@ -8815,6 +8959,10 @@ msgstr ""
 
 #: mail/server/doctype/mail_domain_request/mail_domain_request.py:60
 msgid "User must be an admin of the tenant"
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:482
+msgid "User must have the 'Mail User' role."
 msgstr ""
 
 #: mail/server/doctype/mail_account_request/mail_account_request.py:235
@@ -8871,7 +9019,7 @@ msgstr ""
 msgid "User {0} is not a Mail Admin of Tenant {1}."
 msgstr ""
 
-#: mail/utils/validation.py:322
+#: mail/utils/validation.py:365
 msgid "User {0} is not a tenant bound user"
 msgstr ""
 
@@ -9071,16 +9219,13 @@ msgstr ""
 msgid "View All Operations"
 msgstr ""
 
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:332
-msgid "View Export"
-msgstr ""
-
-#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:258
-msgid "View Import"
-msgstr ""
-
 #: frontend/src/components/Modals/ShortcutsModal.vue:104
 msgid "View Shortcuts"
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:844
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:326
+msgid "View details for this exchange."
 msgstr ""
 
 #: frontend/src/pages/dashboard/MemberView.vue:146
@@ -9094,6 +9239,11 @@ msgstr ""
 
 #: frontend/src/components/Modals/SearchModal.vue:141
 msgid "View more."
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:845
+#: mail/server/doctype/mail_data_exchange/mail_data_exchange.py:327
+msgid "View {0}"
 msgstr ""
 
 #. Label of the volumes (JSON) field in DocType 'Server Deployment Service'
@@ -9190,7 +9340,7 @@ msgstr ""
 msgid "Whether to write log entries as a single line or multiline."
 msgstr ""
 
-#: mail/utils/validation.py:436
+#: mail/utils/validation.py:479
 msgid "Wildcard characters ({0}) are not allowed in email addresses."
 msgstr ""
 
@@ -9239,7 +9389,7 @@ msgstr ""
 msgid "You do not have permission to access the JMAP client for user {0}."
 msgstr ""
 
-#: mail/utils/validation.py:312
+#: mail/utils/validation.py:355
 msgid "You do not have permission to access this resource."
 msgstr ""
 
@@ -9247,7 +9397,7 @@ msgstr ""
 msgid "You do not have permission to view messages for this user."
 msgstr ""
 
-#: mail/utils/validation.py:333
+#: mail/utils/validation.py:376
 msgid "You do not permission to access Tenant {0}."
 msgstr ""
 
@@ -9284,7 +9434,7 @@ msgstr ""
 msgid "Zone ID"
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:71
+#: frontend/src/components/MailListItem.vue:78
 #: frontend/src/components/MailThread.vue:19
 #: frontend/src/components/MailThread.vue:72
 #: frontend/src/components/Modals/SearchModal.vue:111
@@ -9333,6 +9483,15 @@ msgstr ""
 msgid "drafts"
 msgstr ""
 
+#: mail/client/doctype/mail_exchange/mail_exchange.py:114
+msgid "emails.json not found in the import directory."
+msgstr ""
+
+#. Option for the 'Format' (Select) field in DocType 'Mail Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
+msgid "eml"
+msgstr ""
+
 #: frontend/src/components/Settings/MailDataExchangeSettings.vue:118
 msgid "export"
 msgstr ""
@@ -9369,7 +9528,9 @@ msgstr ""
 msgid "inline"
 msgstr ""
 
+#. Option for the 'Format' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Format' (Select) field in DocType 'Mail Data Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "jmap"
 msgstr ""
@@ -9384,17 +9545,35 @@ msgstr ""
 msgid "junk"
 msgstr ""
 
+#: mail/client/doctype/mail_exchange/mail_exchange.py:508
+msgid "mailboxIds are required in Metadata for EML and Maildir formats."
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:125
+msgid "mailboxIds are required in Metadata for EML format."
+msgstr ""
+
+#: mail/client/doctype/mail_exchange/mail_exchange.py:222
+msgid "mailboxIds are required in Metadata for Maildir format."
+msgstr ""
+
+#. Option for the 'Format' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Format' (Select) field in DocType 'Mail Data Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "maildir"
 msgstr ""
 
+#. Option for the 'Format' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Format' (Select) field in DocType 'Mail Data Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "maildir-nested"
 msgstr ""
 
+#. Option for the 'Format' (Select) field in DocType 'Mail Exchange'
 #. Option for the 'Format' (Select) field in DocType 'Mail Data Exchange'
+#: mail/client/doctype/mail_exchange/mail_exchange.json
 #: mail/server/doctype/mail_data_exchange/mail_data_exchange.json
 msgid "mbox"
 msgstr ""
@@ -9559,7 +9738,7 @@ msgstr ""
 msgid "{0} with IP {1}"
 msgstr ""
 
-#: frontend/src/components/MailListItem.vue:77
+#: frontend/src/components/MailListItem.vue:84
 msgid "— No message body —"
 msgstr ""
 
