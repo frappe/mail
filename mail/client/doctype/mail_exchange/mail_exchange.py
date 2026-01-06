@@ -362,17 +362,31 @@ class ExportWriter:
 	def _maildir_nested(emails: list[ExportEmail], out_dir: str, mailbox_map: dict[str, str]) -> None:
 		"""Writes the exported emails in Nested Maildir format."""
 
+		def mailbox_to_root(mailbox_name: str) -> str:
+			"""Converts mailbox name to nested Maildir root path."""
+
+			parts = mailbox_name.split("/")
+			path = out_dir
+
+			for part in parts:
+				safe = part.replace(" ", "_")
+				path = os.path.join(path, f".{safe}")
+
+			return path
+
 		for e in emails:
 			flags = "".join(sorted(MAILDIR_FLAG_MAP[k] for k in e.keywords if k in MAILDIR_FLAG_MAP))
 			target = "cur" if "$seen" in e.keywords else "new"
 
 			for m_id in e.mailbox_ids:
-				folder = mailbox_map[m_id].replace(" ", "_").replace("/", ".")
-				root = os.path.join(out_dir, f".{folder}")
-				for d in ("tmp", "new", "cur"):
-					os.makedirs(os.path.join(root, d), exist_ok=True)
-				name = f"{uuid7()}:2,{flags}" if target == "cur" else str(uuid7())
-				with open(os.path.join(root, target, name), "wb") as f:
+				mailbox_name = mailbox_map[m_id]
+				maildir_root = mailbox_to_root(mailbox_name)
+
+				for d in ("new", "cur"):
+					os.makedirs(os.path.join(maildir_root, d), exist_ok=True)
+
+				filename = f"{uuid7()}:2,{flags}" if target == "cur" else str(uuid7())
+				with open(os.path.join(maildir_root, target, filename), "wb") as f:
 					f.write(e.raw)
 
 
@@ -631,11 +645,11 @@ class MailExchange(Document):
 						unique_emails[key] = e
 				emails = list(unique_emails.values())
 
-			mailbox_map = (
-				{m["id"]: m["_name"] for m in client.mailboxes}
-				if self.export_format in ["mbox", "maildir-nested"]
-				else {}
-			)
+			mailbox_map = {}
+			if self.export_format == "mbox":
+				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
+			elif self.export_format == "maildir-nested":
+				mailbox_map = self._build_mailbox_map(client.mailboxes)
 
 			self._export_batches(client, emails, out_dir, mailbox_map)
 			self._attach_export(out_dir)
@@ -729,6 +743,34 @@ class MailExchange(Document):
 				)
 
 			ExportWriter.write(self.export_format, export_emails, out_dir, mailbox_map)
+
+	def _build_mailbox_map(self, mailboxes: list[dict]) -> dict[str, str]:
+		"""Builds a mapping of mailbox IDs to their full paths."""
+
+		by_id = {m["id"]: m for m in mailboxes}
+		result: dict[str, str] = {}
+
+		def resolve_path(mailbox_id: str) -> str:
+			if mailbox_id in result:
+				return result[mailbox_id]
+
+			mailbox = by_id[mailbox_id]
+			name = mailbox["_name"]
+			parent_id = mailbox.get("parent_id")
+
+			if parent_id:
+				parent_path = resolve_path(parent_id)
+				path = f"{parent_path}/{name}"
+			else:
+				path = name
+
+			result[mailbox_id] = path
+			return path
+
+		for mailbox_id in by_id:
+			resolve_path(mailbox_id)
+
+		return result
 
 	def _attach_export(self, out_dir: str) -> None:
 		"""Attaches the exported file to the mail exchange."""
