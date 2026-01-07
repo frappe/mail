@@ -1,0 +1,203 @@
+{
+ "actions": [],
+ "creation": "2026-01-16 14:47:18.680322",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "column_break_oamr",
+  "draft",
+  "section_break_iay5",
+  "id",
+  "type",
+  "created_utc",
+  "column_break_tsdj",
+  "calendar_event_id",
+  "calendar_event",
+  "comment",
+  "changed_by_section",
+  "changed_by_name",
+  "changed_by_email",
+  "column_break_opfb",
+  "changed_by_principal_id",
+  "changed_by_schedule_id",
+  "section_break_cafk",
+  "event",
+  "event_patch"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_iay5",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The user this notification belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The id of the Event Notification.",
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "created_utc",
+   "fieldtype": "Data",
+   "label": "Created (UTC)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "changed_by_section",
+   "fieldtype": "Section Break",
+   "label": "Changed By"
+  },
+  {
+   "fieldname": "changed_by_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "changed_by_email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_opfb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "changed_by_principal_id",
+   "fieldtype": "Data",
+   "label": "Principal ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "changed_by_schedule_id",
+   "fieldtype": "Data",
+   "label": "Schedule ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_tsdj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "no_copy": 1,
+   "options": "\nCreated\nUpdated\nDestroyed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Small Text",
+   "label": "Comment",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "calendar_event",
+   "fieldtype": "Link",
+   "label": "Calendar Event",
+   "no_copy": 1,
+   "options": "Calendar Event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calendar_event_id",
+   "fieldtype": "Data",
+   "label": "Calendar Event ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_cafk",
+   "fieldtype": "Section Break",
+   "label": "Event"
+  },
+  {
+   "depends_on": "eval: doc.event && doc.event != \"{}\"",
+   "fieldname": "event",
+   "fieldtype": "JSON",
+   "label": "Event",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_oamr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.draft",
+   "fieldname": "draft",
+   "fieldtype": "Check",
+   "label": "Draft",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.event_patch && doc.event_patch != \"{}\"",
+   "fieldname": "event_patch",
+   "fieldtype": "JSON",
+   "label": "Event Patch",
+   "no_copy": 1,
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2026-01-16 16:30:28.909109",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Event Notification",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1
+  },
+  {
+   "delete": 1,
+   "read": 1,
+   "role": "Mail User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,8 +1,22 @@
 // Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-// frappe.ui.form.on("Calendar", {
-// 	refresh(frm) {
+frappe.ui.form.on('Calendar', {
+	before_load: (frm) => {
+		const update_tz_options = () => {
+			frm.fields_dict.time_zone.set_data(frappe.all_timezones)
+		}
 
-// 	},
-// });
+		if (!frappe.all_timezones) {
+			frappe.call({
+				method: 'frappe.core.doctype.user.user.get_timezones',
+				callback: function (r) {
+					frappe.all_timezones = r.message.timezones
+					update_tz_options()
+				},
+			})
+		} else {
+			update_tz_options()
+		}
+	},
+})

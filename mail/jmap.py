@@ -260,6 +260,20 @@ class JMAPClient:
 		address_books = frappe.db.get_all("Address Book", {"user": self.__session.auth[0]})
 		return address_books
 
+	@cached_property
+	def calendars(self) -> list[dict]:
+		"""Returns the calendars for the logged-in user."""
+
+		calendars = frappe.db.get_all("Calendar", {"user": self.__session.auth[0]})
+		return calendars
+
+	@cached_property
+	def participant_identities(self) -> list[dict]:
+		"""Returns the participant identities for the logged-in user."""
+
+		identities = frappe.db.get_all("Participant Identity", {"user": self.__session.auth[0]})
+		return identities
+
 	# -------------------------------
 	# Identity
 	# -------------------------------
@@ -1419,7 +1433,7 @@ class JMAPClient:
 		return result
 
 	# -------------------------------
-	# Address Book & Contact Card
+	# Address Book
 	# -------------------------------
 
 	def address_book_create(
@@ -1543,6 +1557,10 @@ class JMAPClient:
 
 		return result
 
+	# -------------------------------
+	# Contact Card
+	# -------------------------------
+
 	def contact_card_create(
 		self,
 		creation_id: str,
@@ -1555,6 +1573,7 @@ class JMAPClient:
 	) -> dict:
 		"""Creates a contact card with the given parameters."""
 
+		timestamp = utcnow()
 		response = self._make_request(
 			using=["urn:ietf:params:jmap:contacts"],
 			method_calls=[
@@ -1572,8 +1591,8 @@ class JMAPClient:
 								"phones": _get_phones_map(phones),
 								"addresses": _get_addresses_map(addresses),
 								"addressBookIds": {id: True for id in address_book_ids},
-								"created": utcnow(),
-								"updated": utcnow(),
+								"created": timestamp,
+								"updated": timestamp,
 							}
 						},
 					},
@@ -1839,7 +1858,7 @@ class JMAPClient:
 		return response["methodResponses"][0][1]
 
 	# -------------------------------
-	# Calendar & Event
+	# Calendar
 	# -------------------------------
 
 	def calendar_create(
@@ -1923,7 +1942,7 @@ class JMAPClient:
 		subscribed: bool = True,
 		visible: bool = True,
 		default: bool = False,
-	):
+	) -> dict:
 		"""Updates the calendar with the given parameters."""
 
 		response = self._make_request(
@@ -1967,6 +1986,487 @@ class JMAPClient:
 							"accountId": self.primary_account_id,
 							"destroy": ids_batch,
 							"onDestroyRemoveEvents": remove_events,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
+	# -------------------------------
+	# Event
+	# -------------------------------
+
+	def calendar_event_create(
+		self,
+		creation_id: str,
+		uid: str,
+		calendar_ids: list[str],
+		status: Literal["tentative", "confirmed", "cancelled"],
+		title: str,
+		start: str,
+		duration: str,
+		time_zone: str,
+		organizer: str | None = None,
+		description: str | None = None,
+		recurrence_rule: dict | None = None,
+		locations: list[dict] | None = None,
+		alerts: list[dict] | None = None,
+		participants: list[dict] | None = None,
+		show_without_time: bool = False,
+		use_default_alerts: bool = False,
+		send_scheduling_messages: bool = False,
+	) -> dict:
+		"""Creates a calendar event with the given parameters."""
+
+		if organizer:
+			self.has_participant_identity_for_email(organizer, raise_exception=True)
+		else:
+			organizer = self.get_default_participant_identity(raise_exception=True)
+
+		timestamp = utcnow()
+		organizer = organizer.lower()
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:calendars"],
+			method_calls=[
+				[
+					"CalendarEvent/set",
+					{
+						"accountId": self.primary_account_id,
+						"create": {
+							creation_id: {
+								"@type": "Event",
+								"uid": uid,
+								"calendarIds": {id: True for id in calendar_ids},
+								"status": status,
+								"title": title,
+								"start": start,
+								"duration": duration,
+								"timeZone": time_zone,
+								"organizerCalendarAddress": organizer,
+								"description": description,
+								"recurrenceRule": recurrence_rule or None,
+								"locations": _get_locations_map(locations),
+								"alerts": _get_alerts_map(alerts),
+								"participants": _get_participants_map(organizer, participants),
+								"showWithoutTime": show_without_time,
+								"useDefaultAlerts": use_default_alerts,
+								"created": timestamp,
+								"updated": timestamp,
+							}
+						},
+						"sendSchedulingMessages": send_scheduling_messages,
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	def calendar_event_query(
+		self,
+		filter: dict | None = None,
+		position: int = 0,
+		limit: int = 50,
+		sort: list[dict] | None = None,
+		time_zone: str | None = None,
+		expand_recurrences: bool = False,
+	) -> dict:
+		"""Query calendar events in batches until reaching the limit."""
+
+		ids = []
+		total = None
+		batch_size = min(limit, self.max_objects_in_get)
+		sort = sort or [{"property": "start", "isAscending": True}]
+
+		while len(ids) < limit:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"CalendarEvent/query",
+						{
+							"accountId": self.primary_account_id,
+							"filter": filter or {},
+							"position": position,
+							"limit": batch_size,
+							"sort": sort or [],
+							"timeZone": time_zone or None,
+							"expandRecurrences": expand_recurrences,
+							"calculateTotal": True if total is None else False,
+						},
+						"0",
+					]
+				],
+			)
+			result = response["methodResponses"][0][1]
+
+			if total is None:
+				total = result["total"]
+
+			_ids = result["ids"]
+			if not _ids:
+				break
+
+			ids.extend(_ids)
+			position += len(_ids)
+
+			if len(_ids) < batch_size:
+				break
+
+		return {"ids": ids[:limit], "total": total}
+
+	def calendar_event_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the calendar events for the provided calendar event IDs."""
+
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"CalendarEvent/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			calendar_events = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				calendar_events.extend(fetch(ids_batch))
+			return calendar_events
+
+		return fetch(ids)
+
+	def calendar_event_update(self) -> dict:
+		pass
+
+	def calendar_event_delete(self, ids: list[str]) -> dict:
+		"""Destroys the calendar events with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"CalendarEvent/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
+	def calendar_event_parse(self, blob_ids: list[str]) -> dict:
+		"""Parses calendar events from the provided blob IDs."""
+
+		result = {"parsed": {}, "notFound": {}, "notParsable": {}}
+		for blob_ids_batch in create_batch(blob_ids, self.max_objects_in_get):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"CalendarEvent/parse",
+						{
+							"accountId": self.primary_account_id,
+							"blobIds": blob_ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["parsed"].update(response["methodResponses"][0][1].get("parsed", {}))
+			if not_found := response["methodResponses"][0][1].get("notFound", {}):
+				result["notFound"].update(not_found)
+			if not_parsable := response["methodResponses"][0][1].get("notParsable", {}):
+				result["notParsable"].update(not_parsable)
+
+		return result
+
+	# -------------------------------
+	# Participant Identity
+	# -------------------------------
+
+	def participant_identity_create(
+		self,
+		creation_id: str,
+		name: str,
+		email: str,
+		default: bool = False,
+	) -> dict:
+		"""Creates a participant identity with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:calendars"],
+			method_calls=[
+				[
+					"ParticipantIdentity/set",
+					{
+						"accountId": self.primary_account_id,
+						"create": {
+							creation_id: {
+								"name": name,
+								"calendarAddress": f"mailto:{email}",
+							}
+						},
+						"onSuccessSetIsDefault": f"#{creation_id}" if default else None,
+					},
+					"0",
+				]
+			],
+		)
+		return response["methodResponses"][0][1]
+
+	def participant_identity_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the participant identities for the provided participant identity IDs."""
+
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"ParticipantIdentity/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			participant_identities = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				participant_identities.extend(fetch(ids_batch))
+			return participant_identities
+
+		return fetch(ids)
+
+	def participant_identity_update(
+		self,
+		id: str,
+		name: str,
+		email: str,
+		default: bool = False,
+	) -> dict:
+		"""Updates the participant identity with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:calendars"],
+			method_calls=[
+				[
+					"ParticipantIdentity/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							id: {
+								"name": name,
+								"calendarAddress": f"mailto:{email}",
+							}
+						},
+						"onSuccessSetIsDefault": id if default else None,
+					},
+					"0",
+				]
+			],
+		)
+		return response["methodResponses"][0][1]
+
+	def participant_identity_delete(self, ids: list[str]) -> dict:
+		"""Destroys the participant identities with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"ParticipantIdentity/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
+	def has_participant_identity_for_email(self, email: str, raise_exception: bool = False) -> bool:
+		"""Checks if a participant identity exists for the given email."""
+
+		for identity in self.identities:
+			if identity["email"].lower() == email.lower():
+				return True
+
+		if raise_exception:
+			frappe.throw(_("No participant identity found for email: {0}").format(email))
+
+		return False
+
+	def get_default_participant_identity(self, raise_exception: bool = False) -> str | None:
+		"""Returns the email of the default participant identity."""
+
+		for identity in self.participant_identities:
+			if identity.get("default", False):
+				return identity["email"].lower()
+
+		if raise_exception:
+			frappe.throw(_("No default participant identity found."))
+
+		return None
+
+	# -------------------------------
+	# Principal
+	# -------------------------------
+
+	def principal_get_availability(
+		self,
+		utc_start: str,
+		utc_end: str,
+		show_details: bool = False,
+		event_properties: list[str] | None = None,
+		id: str | None = None,
+	) -> dict:
+		"""Returns the availability information for the provided principal ID."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:calendars"],
+			method_calls=[
+				[
+					"Principal/getAvailability",
+					{
+						"accountId": self.primary_account_id,
+						"id": id or self.primary_account_id,
+						"start": utc_start,
+						"end": utc_end,
+						"showDetails": show_details,
+						"eventProperties": event_properties or None,
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	# -------------------------------
+	# Calendar Event Notification
+	# -------------------------------
+
+	def calendar_event_notification_query(
+		self, filter: dict | None = None, position: int = 0, limit: int = 50, sort: list[dict] | None = None
+	) -> dict:
+		"""Query calendar event notifications in batches until reaching the limit."""
+
+		ids = []
+		total = None
+		batch_size = min(limit, self.max_objects_in_get)
+		sort = sort or [{"property": "created", "isAscending": True}]
+
+		while len(ids) < limit:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"CalendarEventNotification/query",
+						{
+							"accountId": self.primary_account_id,
+							"filter": filter or {},
+							"position": position,
+							"limit": batch_size,
+							"sort": sort or [],
+							"calculateTotal": True if total is None else False,
+						},
+						"0",
+					]
+				],
+			)
+			result = response["methodResponses"][0][1]
+
+			if total is None:
+				total = result["total"]
+
+			_ids = result["ids"]
+			if not _ids:
+				break
+
+			ids.extend(_ids)
+			position += len(_ids)
+
+			if len(_ids) < batch_size:
+				break
+
+		return {"ids": ids[:limit], "total": total}
+
+	def calendar_event_notification_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the calendar event notifications for the provided notification IDs."""
+
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"CalendarEventNotification/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			notifications = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				notifications.extend(fetch(ids_batch))
+			return notifications
+
+		return fetch(ids)
+
+	def calendar_event_notification_delete(self, ids: list[str]) -> dict:
+		"""Destroys the calendar event notifications with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:calendars"],
+				method_calls=[
+					[
+						"CalendarEventNotification/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
 						},
 						"0",
 					]
@@ -2235,15 +2735,13 @@ def _get_emails_map(emails: list[dict] | None = None) -> dict[str, dict] | None:
 	"""Returns the emails map for the given emails dictionary."""
 
 	if emails:
-		counter = 0
 		emails_map = {}
 		for email in emails:
-			emails_map[f"{counter}"] = {
+			emails_map[str(uuid7())] = {
 				"address": email["address"],
 				"label": email.get("label"),
 				"contexts": {email["type"]: True},
 			}
-			counter += 1
 
 		return emails_map
 
@@ -2252,15 +2750,13 @@ def _get_phones_map(phones: list[dict] | None = None) -> dict[str, dict] | None:
 	"""Returns the phones map for the given phones dictionary."""
 
 	if phones:
-		counter = 0
 		phones_map = {}
 		for phone in phones:
-			phones_map[f"{counter}"] = {
+			phones_map[str(uuid7())] = {
 				"number": phone["number"],
 				"label": phone.get("label"),
 				"contexts": {phone["type"]: True},
 			}
-			counter += 1
 
 		return phones_map
 
@@ -2269,10 +2765,9 @@ def _get_addresses_map(addresses: list[dict] | None = None) -> dict[str, dict] |
 	"""Returns the addresses map for the given addresses dictionary."""
 
 	if addresses:
-		counter = 0
 		addresses_map = {}
 		for address in addresses:
-			addresses_map[f"{counter}"] = {
+			addresses_map[str(uuid7())] = {
 				"street": {"components": [{"kind": "name", "value": address.get("street")}]},
 				"locality": address.get("locality"),
 				"region": address.get("region"),
@@ -2280,6 +2775,91 @@ def _get_addresses_map(addresses: list[dict] | None = None) -> dict[str, dict] |
 				"country": address.get("country"),
 				"contexts": {address["type"]: True},
 			}
-			counter += 1
 
 		return addresses_map
+
+
+def _get_locations_map(locations: list[dict] | None = None) -> dict[str, dict] | None:
+	"""Returns the locations map for the given locations dictionary."""
+
+	if locations:
+		locations_map = {}
+		for location in locations:
+			uid = location.get("uid") or str(uuid7())
+			locations_map[uid] = {
+				"@type": "Location",
+				"name": location.get("name"),
+			}
+
+		return locations_map
+
+
+def _get_alerts_map(alerts: list[dict] | None = None) -> dict[str, dict] | None:
+	"""Returns the alerts map for the given alerts dictionary."""
+
+	if alerts:
+		alerts_map = {}
+		for alert in alerts:
+			if alert["type"] == "OffsetTrigger":
+				trigger = {
+					"@type": "OffsetTrigger",
+					"relativeTo": alert["relative_to"].lower(),
+					"offset": alert["offset"].upper(),
+				}
+			elif alert["type"] == "AbsoluteTrigger":
+				trigger = {
+					"@type": "AbsoluteTrigger",
+					"when": alert["when"].upper(),
+				}
+			else:
+				continue
+
+			uid = alert.get("uid") or str(uuid7())
+			alerts_map[uid] = {
+				"@type": "Alert",
+				"action": alert["action"].lower(),
+				"trigger": trigger,
+			}
+
+		return alerts_map
+
+
+def _get_participants_map(organizer: str, participants: list[dict] | None = None) -> dict[str, dict] | None:
+	"""Returns the participants map for the given participants dictionary."""
+
+	if participants:
+		participants_map = {}
+		participants_emails = []
+		for participant in participants:
+			email = participant["email"].lower()
+			if email == organizer or email in participants_emails:
+				continue
+
+			uid = participant.get("uid") or str(uuid7())
+			expect_reply = participant.get("expect_reply", False)
+			calendar_address = f"mailto:{email}" if email else None
+
+			if expect_reply:
+				send_to = (
+					participant.get("send_to") or {"imip": calendar_address} if calendar_address else None
+				)
+				schedule_id = participant.get("schedule_id") or calendar_address
+			else:
+				send_to = None
+				schedule_id = None
+
+			participants_map[uid] = {
+				"@type": "Participant",
+				"name": participant.get("name") or None,
+				"sendTo": send_to,
+				"scheduleId": schedule_id,
+				"calendarAddress": calendar_address,
+				"kind": participant.get("kind", "").lower() or None,
+				"description": participant.get("description") or None,
+				"roles": participant.get("roles") or None,
+				"participationStatus": participant.get("participation_status", "").lower() or None,
+				"expectReply": expect_reply,
+			}
+			participants_emails.append(email)
+
+		return participants_map

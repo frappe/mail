@@ -20,6 +20,8 @@
   "time_zone",
   "column_break_tamj",
   "description",
+  "section_break_weht",
+  "share_with",
   "rights_section",
   "may_read_free_busy",
   "may_read_items",
@@ -140,7 +142,7 @@
   {
    "description": "The time zone to use for events without a time zone.",
    "fieldname": "time_zone",
-   "fieldtype": "Data",
+   "fieldtype": "Autocomplete",
    "label": "Time Zone"
   },
   {
@@ -225,13 +227,29 @@
    "label": "May Delete",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_weht",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "share_with",
+   "fieldtype": "Table",
+   "label": "Share With",
+   "options": "Calendar Rights",
+   "read_only_depends_on": "eval: !doc.may_admin"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
- "links": [],
- "modified": "2025-12-15 15:53:50.259741",
+ "links": [
+  {
+   "link_doctype": "Calendar Event",
+   "link_fieldname": "calendar"
+  }
+ ],
+ "modified": "2026-01-15 21:24:17.872890",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar",

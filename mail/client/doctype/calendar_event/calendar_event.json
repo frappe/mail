@@ -6,22 +6,44 @@
  "field_order": [
   "section_break_nfos",
   "user",
-  "column_break_guhl",
+  "created_utc",
+  "updated_utc",
+  "column_break_kdxa",
   "draft",
   "origin",
-  "section_break_nzql",
-  "id",
-  "schedule_id",
-  "base_event_id",
-  "column_break_dcpf",
-  "utc_start",
-  "utc_end",
-  "section_break_bnnv",
-  "calendars",
-  "section_break_mohl",
   "may_invite_self",
   "may_invite_others",
-  "hide_attendees"
+  "hide_attendees",
+  "use_default_alerts",
+  "show_without_time",
+  "send_scheduling_messages",
+  "section_break_fsjr",
+  "id",
+  "uid",
+  "title",
+  "column_break_dqmn",
+  "status",
+  "description",
+  "section_break_yxak",
+  "start",
+  "duration",
+  "column_break_qhry",
+  "time_zone",
+  "recurrence_section",
+  "recurrence_rule",
+  "section_break_nzql",
+  "organizer",
+  "column_break_dcpf",
+  "free_busy_status",
+  "sequence",
+  "section_break_bnnv",
+  "calendars",
+  "section_break_sznu",
+  "locations",
+  "section_break_lpbz",
+  "alerts",
+  "section_break_mduw",
+  "participants"
  ],
  "fields": [
   {
@@ -33,19 +55,20 @@
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "User",
    "options": "User",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_guhl",
-   "fieldtype": "Column Break"
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.draft",
    "fieldname": "draft",
    "fieldtype": "Check",
-   "label": "Draft"
+   "label": "Draft",
+   "no_copy": 1,
+   "read_only": 1
   },
   {
    "fieldname": "section_break_nzql",
@@ -54,12 +77,9 @@
   {
    "fieldname": "id",
    "fieldtype": "Data",
-   "label": "ID"
-  },
-  {
-   "fieldname": "base_event_id",
-   "fieldtype": "Data",
-   "label": "Base Event ID"
+   "label": "ID",
+   "no_copy": 1,
+   "read_only": 1
   },
   {
    "fieldname": "column_break_dcpf",
@@ -78,53 +98,224 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.origin",
    "fieldname": "origin",
    "fieldtype": "Check",
-   "label": "Origin"
+   "label": "Origin",
+   "no_copy": 1,
+   "read_only": 1
   },
   {
-   "fieldname": "utc_start",
+   "default": "0",
+   "depends_on": "eval: doc.may_invite_self",
+   "fieldname": "may_invite_self",
+   "fieldtype": "Check",
+   "label": "May Invite Self",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.may_invite_others",
+   "fieldname": "may_invite_others",
+   "fieldtype": "Check",
+   "label": "May Invite Others",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.hide_attendees",
+   "fieldname": "hide_attendees",
+   "fieldtype": "Check",
+   "label": "Hide Attendees",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "title",
    "fieldtype": "Data",
-   "label": "UTC Start"
+   "in_list_view": 1,
+   "label": "Title",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
   },
   {
-   "fieldname": "utc_end",
+   "fieldname": "time_zone",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "label": "Time Zone",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+  },
+  {
+   "fieldname": "organizer",
    "fieldtype": "Data",
-   "label": "UTC End"
+   "in_list_view": 1,
+   "label": "Organizer",
+   "no_copy": 1,
+   "set_only_once": 1
   },
   {
-   "fieldname": "section_break_mohl",
+   "default": "Confirmed",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Tentative\nConfirmed\nCancelled",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+  },
+  {
+   "fieldname": "duration",
+   "fieldtype": "Data",
+   "label": "Duration",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+  },
+  {
+   "fieldname": "free_busy_status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Free Busy Status",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "Sequence",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "start",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Start",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+  },
+  {
+   "fieldname": "uid",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "UID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_yxak",
    "fieldtype": "Section Break"
   },
   {
-   "default": "0",
-   "fieldname": "may_invite_self",
-   "fieldtype": "Check",
-   "label": "May Invite Self"
+   "fieldname": "column_break_qhry",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_sznu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "locations",
+   "fieldtype": "Table",
+   "label": "Locations",
+   "options": "Event Location",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+  },
+  {
+   "fieldname": "section_break_mduw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "participants",
+   "fieldtype": "Table",
+   "label": "Participants",
+   "options": "Event Participant",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
   },
   {
    "default": "0",
-   "fieldname": "may_invite_others",
+   "fieldname": "show_without_time",
    "fieldtype": "Check",
-   "label": "May Invite Others"
+   "label": "Show Without Time",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+  },
+  {
+   "depends_on": "eval: doc.__islocal || doc.origin || doc.recurrence_rule != \"{}\"",
+   "description": "Example: \n<pre>{\n  \"frequency\": \"yearly\", \n  /*\n    REQUIRED.\n    Allowed values:\n      \"yearly\", \"monthly\", \"weekly\", \"daily\",\n      \"hourly\", \"minutely\", \"secondly\"\n  */\n\n  \"interval\": 1,\n  /*\n    OPTIONAL.\n    Integer \u2265 1.\n    Repeats every N units of `frequency`.\n  */\n\n  \"count\": 10,\n  /*\n    OPTIONAL.\n    Integer \u2265 1.\n    Number of total occurrences.\n    MUTUALLY EXCLUSIVE with `until`.\n  */\n\n  \"until\": \"2026-12-31T23:59:59Z\",\n  /*\n    OPTIONAL.\n    UTC date-time only (RFC 3339).\n    MUTUALLY EXCLUSIVE with `count`.\n  */\n\n  \"firstDayOfWeek\": \"mo\",\n  /*\n    OPTIONAL.\n    Allowed values:\n      \"mo\", \"tu\", \"we\", \"th\", \"fr\", \"sa\", \"su\"\n  */\n\n  \"bySecond\": [0, 30],\n  /*\n    OPTIONAL.\n    Each value: 0\u201360\n  */\n\n  \"byMinute\": [0, 15, 30, 45],\n  /*\n    OPTIONAL.\n    Each value: 0\u201359\n  */\n\n  \"byHour\": [9, 12, 18],\n  /*\n    OPTIONAL.\n    Each value: 0\u201323\n  */\n\n  \"byDay\": [\n    \"mo\",\n    \"we\",\n    \"fr\",\n    \"1mo\",\n    \"-1fr\"\n  ],\n  /*\n    OPTIONAL.\n    Allowed values:\n      \"mo\"  \u2013 Monday\n      \"tu\"  \u2013 Tuesday\n      \"we\"  \u2013 Wednesday\n      \"th\"  \u2013 Thursday\n      \"fr\"  \u2013 Friday\n      \"sa\"  \u2013 Saturday\n      \"su\"  \u2013 Sunday\n\n    Positional weekdays (monthly/yearly only):\n      \"1mo\"   \u2192 first Monday\n      \"2tu\"   \u2192 second Tuesday\n      \"-1fr\"  \u2192 last Friday\n  */\n\n  \"byMonthDay\": [1, 15, -1],\n  /*\n    OPTIONAL.\n    Values:\n      1\u201331   \u2192 day of month\n      -1     \u2192 last day of month\n      -2     \u2192 second-to-last day\n  */\n\n  \"byYearDay\": [1, 100, -1],\n  /*\n    OPTIONAL.\n    Values:\n      1\u2013366  \u2192 day of year\n      -1     \u2192 last day of year\n  */\n\n  \"byWeekNo\": [1, 26, 52, -1],\n  /*\n    OPTIONAL.\n    ISO week numbers.\n    Values:\n      1\u201353\n      -1 \u2192 last week of year\n    VALID ONLY when frequency = \"yearly\"\n  */\n\n  \"byMonth\": [1, 6, 12],\n  /*\n    OPTIONAL.\n    Values:\n      1  \u2192 January\n      6  \u2192 June\n      12 \u2192 December\n  */\n\n  \"bySetPosition\": [1, -1]\n  /*\n    OPTIONAL.\n    Selects specific occurrences AFTER all other rules are applied.\n    Values:\n      Positive \u2192 nth occurrence\n      Negative \u2192 nth-from-last occurrence\n  */\n}\n</pre>",
+   "fieldname": "recurrence_rule",
+   "fieldtype": "JSON",
+   "label": "Recurrence Rule",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+  },
+  {
+   "fieldname": "section_break_lpbz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: !doc.use_default_alerts",
+   "fieldname": "alerts",
+   "fieldtype": "Table",
+   "label": "Alerts",
+   "options": "Event Alert",
+   "read_only_depends_on": "eval: doc.use_default_alerts"
+  },
+  {
+   "fieldname": "section_break_fsjr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dqmn",
+   "fieldtype": "Column Break"
   },
   {
    "default": "0",
-   "fieldname": "hide_attendees",
+   "fieldname": "send_scheduling_messages",
    "fieldtype": "Check",
-   "label": "Hide Attendees"
+   "label": "Send Scheduling Messages",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
   },
   {
-   "fieldname": "schedule_id",
+   "fieldname": "created_utc",
    "fieldtype": "Data",
-   "label": "Schedule ID"
+   "label": "Created (UTC)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "updated_utc",
+   "fieldtype": "Data",
+   "label": "Updated (UTC)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "use_default_alerts",
+   "fieldtype": "Check",
+   "label": "Use Default Alerts",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_kdxa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "recurrence_section",
+   "fieldtype": "Section Break",
+   "label": "Recurrence"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-07 11:52:24.466958",
+ "modified": "2026-01-20 19:15:03.151728",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",
@@ -141,11 +332,19 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail User",
+   "write": 1
   }
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "title"
 }

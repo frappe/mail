@@ -1,0 +1,105 @@
+{
+ "actions": [],
+ "creation": "2026-01-16 10:44:03.622892",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_xhno",
+  "user",
+  "id",
+  "column_break_zfsx",
+  "default",
+  "_name",
+  "email"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_xhno",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The user this identity belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The id of the Participant Identity.",
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "ID",
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_zfsx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The display name of the participant to use when adding this participant to an event.",
+   "fieldname": "_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name"
+  },
+  {
+   "description": "User associated email address to use when adding this participant to an event.",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email",
+   "options": "Email",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Set as default Participant Identity.",
+   "fieldname": "default",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Default"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2026-01-16 12:40:52.372207",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Participant Identity",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
