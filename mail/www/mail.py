@@ -1,6 +1,7 @@
 import frappe
 from frappe import _
 
+# Disable caching to ensure fresh session-specific CSRF tokens from get_boot()
 no_cache = 1
 
 
