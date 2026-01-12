@@ -16,7 +16,6 @@
   "profile",
   "cluster_file",
   "url",
-  "cloud_id",
   "configuration_section",
   "host",
   "port",
@@ -235,13 +234,6 @@
    "fieldtype": "Data",
    "label": "URL",
    "mandatory_depends_on": "eval: doc.type == \"ElasticSearch\""
-  },
-  {
-   "depends_on": "eval: doc.type == \"ElasticSearch\"",
-   "description": "Cloud ID for the ElasticSearch cluster.",
-   "fieldname": "cloud_id",
-   "fieldtype": "Data",
-   "label": "Cloud ID"
   },
   {
    "fieldname": "index_section",
@@ -565,7 +557,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-12 18:57:32.503939",
+ "modified": "2026-01-12 14:37:41.129244",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster Store",

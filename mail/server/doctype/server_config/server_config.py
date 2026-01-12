@@ -251,7 +251,7 @@ def get_config_toml(server: str) -> str | None:
 		if store.type in ["S3-compatible", "Azure Blob Storage"]:
 			config.update({"key-prefix": store.key_prefix, "max-retries": store.max_retries})
 
-		if store.type in ["PostgreSQL", "mySQL", "Redis/Memcached", "ElasticSearch"]:
+		if store.type in ["PostgreSQL", "mySQL", "Redis/Memcached"]:
 			if not (store.type == "Redis/Memcached" and store.redis_type == "Redis Single Node"):
 				config.update({"user": store.user, "password": password_or_none(store, "password")})
 
@@ -363,7 +363,10 @@ def get_config_toml(server: str) -> str | None:
 				config.update(
 					{
 						"url": store.url,
-						"cloud-id": store.cloud_id,
+						"auth": {
+							"username": store.user,
+							"secret": password_or_none(store, "password"),
+						},
 						"tls": {"allow-invalid-certs": bool(store.tls_allow_invalid_certs)},
 						"index": {
 							"shards": store.index_shards,
