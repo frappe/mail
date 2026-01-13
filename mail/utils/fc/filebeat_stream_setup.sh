@@ -2,7 +2,7 @@
 set -e
 
 SERVER="{{ server }}"
-FILEBEAT_INPUT_PATH="/etc/filebeat/inputs.d/mail.yml"
+FILEBEAT_INPUT_PATH="/etc/filebeat/inputs.d/${SERVER}.yml"
 FILEBEAT_RESTART_CMD="systemctl restart filebeat"
 
 echo "Setting up Filebeat filestream for Stalwart logs..."
