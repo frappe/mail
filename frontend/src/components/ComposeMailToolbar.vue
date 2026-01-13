@@ -49,23 +49,20 @@
 					<span v-if="isSavingDraft" class="text-ink-gray-5 text-base italic">
 						{{ __('Saving Draft...') }}
 					</span>
-					<template v-else>
-						<Button
-							:label="__('Discard')"
-							:tooltip="__('Discard ({0}+D)', [modifier])"
-							:icon-left="Trash2"
-							:disabled="isLoading"
-							@click="emit('discardMail')"
-						/>
-						<Button
-							variant="solid"
-							:label="__('Send')"
-							:tooltip="__('Send ({0}+Enter)', [modifier])"
-							:icon-left="SendHorizontal"
-							:disabled="isRecipientsEmpty || isLoading"
-							@click="emit('sendMail')"
-						/>
-					</template>
+					<Button
+						:label="__('Discard')"
+						:tooltip="__('Discard ({0}+D)', [modifier])"
+						:icon-left="Trash2"
+						@click="emit('discardMail')"
+					/>
+					<Button
+						variant="solid"
+						:label="__('Send')"
+						:tooltip="__('Send ({0}+Enter)', [modifier])"
+						:icon-left="SendHorizontal"
+						:disabled="isRecipientsEmpty"
+						@click="emit('sendMail')"
+					/>
 				</div>
 			</div>
 		</template>
@@ -80,9 +77,8 @@ import { formatBytes, isMac } from '@/utils'
 import { useScreenSize, useTextEditorButtons, useVisualViewport } from '@/utils/composables'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 
-const { isSavingDraft, isLoading, isRecipientsEmpty } = defineProps<{
+const { isSavingDraft, isRecipientsEmpty } = defineProps<{
 	isSavingDraft: boolean
-	isLoading: boolean
 	isRecipientsEmpty: boolean
 }>()
 

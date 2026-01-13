@@ -158,9 +158,8 @@
 		</template>
 		<template #bottom>
 			<ComposeMailToolbar
-				:is-saving-draft="isSavingDraft"
-				:is-loading="isLoading"
-				:is-recipients-empty="isRecipientsEmpty"
+				:is-saving-draft
+				:is-recipients-empty
 				@add-attachment="(file) => mail.attachments.push(file)"
 				@append-emoji="(emoji: string) => appendEmoji(emoji)"
 				@discard-mail="discardMail"
@@ -286,30 +285,47 @@ watchDebounced(mail, () => saveDraft(), { debounce: 2000 })
 const isSavingDraft = ref(false)
 
 const saveDraft = async () => {
-	if (!isDraftUpdated.value || isLoading.value) return
+	if (!isDraftUpdated.value || isLoading.value || isDiscarding.value) return
 
 	isSavingDraft.value = true
-	if (mail.id) await updateDraft.submit()
-	else if (!isMailEmpty.value) await createMail.submit()
+	if (mail.id) await updateDraft.submit({ submit: false })
+	else if (!isMailEmpty.value) await createMail.submit({ save_as_draft: true })
 	isSavingDraft.value = false
 }
 
-const sendMail = () => {
-	if (isLoading.value) return
+const sendMail = async () => {
+	if (deleteMail.loading) return
 
-	if (isRecipientsEmpty.value) return raiseToast(__('Please add at least one recipient.'))
+	if (isRecipientsEmpty.value)
+		return raiseToast(__('Please add at least one recipient.'), 'error')
+
+	isSavingDraft.value = false
 	show.value = false
-	if (mail.id) updateDraft.submit()
-	else createMail.submit()
+	if (createMail.loading) await createMail.promise
+	if (updateDraft.loading) await updateDraft.promise
+
+	if (mail.id) updateDraft.submit({ submit: true })
+	else createMail.submit({ save_as_draft: false })
 }
 
-const discardMail = () => {
-	if (isLoading.value) return
+const isDiscarding = ref(false)
 
+const discardMail = async () => {
+	if (deleteMail.loading) return
+
+	isDiscarding.value = true
 	show.value = false
+	if (createMail.loading) await createMail.promise
+	if (updateDraft.loading) await updateDraft.promise
 	if (mail.id) deleteMail.submit()
 	else emit('discardMail')
 }
+
+watch(show, (val) => {
+	if (val) return
+	isDiscarding.value = false
+	isSavingDraft.value = false
+})
 
 defineExpose({ sendMail, discardMail })
 
@@ -325,10 +341,12 @@ const onMailUpdateSuccess = ({
 	if (id) mail.id = id
 	updateOriginalMail()
 	if (error) return raiseToast(error, 'error')
-	if (!isInThread || status === 'Submitted') reloadMails()
+	if (isDiscarding.value) return
 
+	if (!isInThread || status === 'Submitted') reloadMails()
 	if (show.value) return
-	if (status === 'Drafted') raiseToast(__('Draft saved.'))
+
+	if (status === 'Drafted' && isSavingDraft.value) raiseToast(__('Draft saved.'))
 	else if (status === 'Submitted') raiseToast(__('Message sent.'))
 }
 
@@ -336,11 +354,11 @@ const onMailUpdateSuccess = ({
 
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
-	makeParams: () => ({
+	makeParams: ({ save_as_draft }: { save_as_draft: boolean }) => ({
 		...mail,
 		from_name: getIdentity(mail.from_email!)._name,
 		html_body: mail.html_body! + mail.quoted_content,
-		save_as_draft: isSavingDraft.value,
+		save_as_draft,
 	}),
 	onSuccess: onMailUpdateSuccess,
 	onError: (error) => raiseToast(error.message, 'error'),
@@ -348,11 +366,11 @@ const createMail = createResource({
 
 const updateDraft = createResource({
 	url: 'mail.api.mail.update_draft_mail',
-	makeParams: () => ({
+	makeParams: ({ submit }: { submit: boolean }) => ({
 		...mail,
 		from_name: getIdentity(mail.from_email!)._name,
 		html_body: mail.html_body! + mail.quoted_content,
-		submit: !isSavingDraft.value,
+		submit,
 	}),
 	onSuccess: onMailUpdateSuccess,
 	onError: (error) => raiseToast(error.message, 'error'),
