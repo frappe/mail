@@ -69,3 +69,6 @@ docstring-code-format = true
 packages = [
     "ansible",
 ]
+
+[tool.bench.frappe-dependencies]
+frappe = ">=16.0.0"
