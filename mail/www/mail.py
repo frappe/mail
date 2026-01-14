@@ -1,6 +1,8 @@
 import frappe
 from frappe import _
 
+no_cache = 1
+
 
 def get_context():
 	frappe.db.commit()
