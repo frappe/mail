@@ -20,7 +20,7 @@
 			<ErrorMessage :message="error" class="mb-2.5" />
 
 			<div
-				class="flex flex-wrap justify-between gap-2 overflow-hidden border-t pt-2.5"
+				class="flex flex-wrap justify-between gap-2 overflow-hidden pt-2.5"
 				:class="{ 'pb-2.5': isMobile }"
 			>
 				<!-- Text editor buttons -->

@@ -9,7 +9,7 @@
     "strict": true,
     "noImplicitAny": true,
     "skipLibCheck": true,
-    "lib": ["es2016", "dom", "webworker", "ES2021.String"],
+    "lib": ["es2020", "dom", "webworker", "ES2021.String"],
     "paths": {
       "@/*": ["./src/*"]
     },
