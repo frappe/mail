@@ -131,7 +131,7 @@
 			>
 				<div
 					v-if="isDragging"
-					class="bg-surface-gray-1/90 text-ink-gray-3 absolute inset-0 z-50 flex flex-col items-center justify-center space-y-1 rounded backdrop-blur-sm"
+					class="bg-surface-gray-1/90 text-ink-gray-3 absolute inset-0 z-50 flex flex-col items-center justify-center space-y-1 rounded"
 				>
 					<UploadCloud class="stroke-1.5 h-12 w-12" />
 					<p class="text-lg font-semibold">{{ __('Drop files to upload') }}</p>
@@ -175,6 +175,20 @@
 							@click.stop.prevent="mail.attachments.splice(index, 1)"
 						/>
 					</a>
+
+					<div
+						v-for="(fileUpload, id) in fileUploads.filter((fu) => fu.isUploading)"
+						:key="id"
+						class="bg-surface-gray-2 text-ink-gray-6 mb-2 rounded p-2.5 text-sm"
+					>
+						<div class="mb-1.5 flex items-center">
+							<span class="mr-1 font-medium"> {{ fileUpload.name }} </span>
+							<span class="font-extralight">
+								({{ formatBytes(fileUpload.size) }})
+							</span>
+						</div>
+						<Progress :value="fileUpload.progress" />
+					</div>
 				</div>
 			</div>
 		</template>
@@ -184,7 +198,7 @@
 				:is-recipients-empty
 				class="border-t"
 				:class="{ 'border-transparent': isDragging }"
-				@add-attachment="(file) => mail.attachments.push(file)"
+				@select-files="(files: File[]) => uploadFiles(files)"
 				@append-emoji="(emoji: string) => appendEmoji(emoji)"
 				@discard-mail="discardMail"
 				@send-mail="sendMail"
@@ -222,6 +236,7 @@ import {
 	Dropdown,
 	FeatherIcon,
 	ImageExtension,
+	Progress,
 	TextEditor,
 	createResource,
 	useFileUpload,
@@ -528,9 +543,8 @@ const openAttachment = async (blob_id?: string, type?: string) => {
 
 // Custom Extensions
 
-const fileUpload = useFileUpload()
-
 const uploadFunction = async (file: File) => {
+	const fileUpload = useFileUpload()
 	const fileDoc = (await fileUpload.upload(file, {
 		private: true,
 		folder: 'Home/Frappe Mail',
@@ -610,34 +624,44 @@ const handleDragLeave = (e: DragEvent) => {
 	if (dragCounter === 0) isDragging.value = false
 }
 
-const handleDrop = async (e: DragEvent) => {
+const handleDrop = (e: DragEvent) => {
 	e.preventDefault()
 	isDragging.value = false
 	dragCounter = 0
 
-	const files = e.dataTransfer?.files
-	if (!files || files.length === 0) return
-
-	const uploads = Array.from(files).map(async (file) => {
-		const doc = (await fileUpload.upload(file, {
-			private: true,
-			folder: 'Home/Frappe Mail',
-		})) as FileDoc
-
-		mail.attachments.push({
-			file_name: doc.file_name,
-			file_url: doc.file_url,
-			file_size: doc.file_size,
-			disposition: 'attachment',
-		})
-	})
-
-	const results = await Promise.allSettled(uploads)
-
-	for (let i = 0; i < results.length; i++) {
-		if (results[i].status === 'rejected') {
-			raiseToast(__('Failed to upload {0}', [Array.from(files)[i].name]), 'error')
-		}
-	}
+	const files = Array.from(e.dataTransfer?.files ?? [])
+	uploadFiles(files)
 }
+
+const fileUploads = ref<ReturnType<typeof useFileUpload>[]>([])
+
+const uploadFiles = async (files: File[]) => {
+	if (!files.length) return
+
+	const results = await Promise.allSettled(files.map(uploadFile))
+	results.forEach((res, i) => {
+		if (res.status === 'rejected')
+			raiseToast(__('Failed to upload {0}', [files[i].name]), 'error')
+	})
+}
+
+const uploadFile = async (file: File) => {
+	const fileUpload = useFileUpload()
+	fileUploads.value.push({ name: file.name, size: file.size, ...fileUpload })
+
+	const doc = (await fileUpload.upload(file, {
+		private: true,
+		folder: 'Home/Frappe Mail',
+	})) as FileDoc
+
+	attachDoc(doc)
+}
+
+const attachDoc = (doc: FileDoc) =>
+	mail.attachments.push({
+		file_name: doc.file_name,
+		file_url: doc.file_url,
+		file_size: doc.file_size,
+		disposition: 'attachment',
+	})
 </script>
