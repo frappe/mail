@@ -10,9 +10,16 @@
 		@change="
 			(val: string) => (mail.html_body = val.replaceAll('<div></div>', '<div><br></div>'))
 		"
+		@dragenter.prevent="handleDragEnter"
+		@dragover.prevent="handleDragOver"
+		@dragleave.prevent="handleDragLeave"
+		@drop.prevent="handleDrop"
 	>
 		<template #top>
-			<div class="flex flex-col gap-2.5 border-b pb-2.5 max-sm:px-3 max-sm:pt-2.5">
+			<div
+				class="flex flex-col gap-2.5 border-b pb-2.5 max-sm:px-3 max-sm:pt-2.5"
+				:class="{ 'border-transparent': isDragging }"
+			>
 				<div v-if="!mailDetails?.type || isMobile" class="flex justify-between gap-2">
 					<div class="flex items-center gap-2">
 						<span class="text-ink-gray-4 text-sm">{{ __('From') }}</span>
@@ -115,13 +122,28 @@
 		</template>
 		<template #editor="{ editor }">
 			<div
-				class="flex flex-1 cursor-text flex-col py-2.5 text-sm max-sm:px-3 sm:overflow-y-auto"
-				:class="{ 'max-h-96 min-h-32': isInThread }"
+				class="relative flex flex-1 cursor-text flex-col border-2 border-transparent py-2.5 text-sm max-sm:px-3 sm:overflow-y-auto"
+				:class="{
+					'max-h-96 min-h-32': isInThread,
+					'!border-outline-gray-3 rounded border-dashed': isDragging,
+				}"
 				@click="editor.commands.focus('end')"
 			>
-				<EditorContent :editor @click.stop />
+				<div
+					v-if="isDragging"
+					class="bg-surface-gray-1/90 text-ink-gray-3 absolute inset-0 z-50 flex flex-col items-center justify-center space-y-1 rounded"
+				>
+					<UploadCloud class="stroke-1.5 h-12 w-12" />
+					<p class="text-lg font-semibold">{{ __('Drop files to upload') }}</p>
+				</div>
 
-				<div class="mt-auto cursor-default space-y-2.5 pt-2.5" @click.stop>
+				<EditorContent :editor :class="{ 'opacity-30': isDragging }" @click.stop />
+
+				<div
+					class="mt-auto cursor-default space-y-2.5 pt-2.5"
+					:class="{ 'opacity-30': isDragging }"
+					@click.stop
+				>
 					<!-- Show quoted content -->
 					<Button
 						v-if="mail?.quoted_content"
@@ -153,6 +175,20 @@
 							@click.stop.prevent="mail.attachments.splice(index, 1)"
 						/>
 					</a>
+
+					<div
+						v-for="(fileUpload, id) in fileUploads.filter((fu) => fu.isUploading)"
+						:key="id"
+						class="bg-surface-gray-2 text-ink-gray-6 mb-2 rounded p-2.5 text-sm"
+					>
+						<div class="mb-1.5 flex items-center">
+							<span class="mr-1 font-medium"> {{ fileUpload.name }} </span>
+							<span class="font-extralight">
+								({{ formatBytes(fileUpload.size) }})
+							</span>
+						</div>
+						<Progress :value="fileUpload.progress" />
+					</div>
 				</div>
 			</div>
 		</template>
@@ -160,7 +196,9 @@
 			<ComposeMailToolbar
 				:is-saving-draft
 				:is-recipients-empty
-				@add-attachment="(file) => mail.attachments.push(file)"
+				class="border-t"
+				:class="{ 'border-transparent': isDragging }"
+				@select-files="(files: File[]) => uploadFiles(files)"
 				@append-emoji="(emoji: string) => appendEmoji(emoji)"
 				@discard-mail="discardMail"
 				@send-mail="sendMail"
@@ -183,13 +221,22 @@ import {
 } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
 import { watchDebounced } from '@vueuse/core'
-import { ChevronDown, ChevronUp, ExternalLink, Forward, Reply, ReplyAll } from 'lucide-vue-next'
+import {
+	ChevronDown,
+	ChevronUp,
+	ExternalLink,
+	Forward,
+	Reply,
+	ReplyAll,
+	UploadCloud,
+} from 'lucide-vue-next'
 import {
 	Button,
 	Combobox,
 	Dropdown,
 	FeatherIcon,
 	ImageExtension,
+	Progress,
 	TextEditor,
 	createResource,
 	useFileUpload,
@@ -554,4 +601,67 @@ const handleDiscardShortcut = (e: KeyboardEvent) => {
 
 onMounted(() => window.addEventListener('keydown', handleKeydown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
+
+// Drag and drop file upload
+
+const isDragging = ref(false)
+let dragCounter = 0
+
+const handleDragEnter = (e: DragEvent) => {
+	e.preventDefault()
+	dragCounter++
+	if (e.dataTransfer?.types.includes('Files')) isDragging.value = true
+}
+
+const handleDragOver = (e: DragEvent) => {
+	e.preventDefault()
+	if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+}
+
+const handleDragLeave = (e: DragEvent) => {
+	e.preventDefault()
+	dragCounter--
+	if (dragCounter === 0) isDragging.value = false
+}
+
+const handleDrop = (e: DragEvent) => {
+	e.preventDefault()
+	isDragging.value = false
+	dragCounter = 0
+
+	const files = Array.from(e.dataTransfer?.files ?? [])
+	uploadFiles(files)
+}
+
+const fileUploads = ref<ReturnType<typeof useFileUpload>[]>([])
+
+const uploadFiles = async (files: File[]) => {
+	if (!files.length) return
+
+	const results = await Promise.allSettled(files.map(uploadFile))
+	results.forEach((res, i) => {
+		if (res.status === 'rejected')
+			raiseToast(__('Failed to upload {0}', [files[i].name]), 'error')
+	})
+}
+
+const uploadFile = async (file: File) => {
+	const fileUpload = useFileUpload()
+	fileUploads.value.push({ name: file.name, size: file.size, ...fileUpload })
+
+	const doc = (await fileUpload.upload(file, {
+		private: true,
+		folder: 'Home/Frappe Mail',
+	})) as FileDoc
+
+	attachDoc(doc)
+}
+
+const attachDoc = (doc: FileDoc) =>
+	mail.attachments.push({
+		file_name: doc.file_name,
+		file_url: doc.file_url,
+		file_size: doc.file_size,
+		disposition: 'attachment',
+	})
 </script>
