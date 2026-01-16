@@ -30,37 +30,50 @@
 				/>
 			</template>
 			<template #sidebar-item="{ item }">
-				<SidebarItem
-					:label="item.label"
-					:icon="item.icon"
-					:to="item.to"
-					:is-active="
-						item.activeFor?.includes(
-							['Mailbox', 'Mail'].includes(route.name as string)
-								? route.params.mailbox
-								: route.name,
-						)
-					"
-					:on-click="item.onClick"
-					class="group"
-				>
-					<template #suffix>
-						<div class="flex items-center">
-							<Dropdown v-if="item.menuOptions" :options="item.menuOptions">
-								<Button variant="ghost" class="!bg-transparent" @click.stop>
-									<template #icon>
-										<Ellipsis
-											class="text-ink-gray-6 invisible h-4 w-4 group-hover:visible"
-										/>
-									</template>
-								</Button>
-							</Dropdown>
-							<span class="text-ink-gray-4 text-sm group-hover:hidden">
-								{{ item.suffix }}
-							</span>
-						</div>
-					</template>
-				</SidebarItem>
+				<div class="flex flex-col">
+					<span
+						class="mx-2 -mt-0.5 h-px"
+						:class="{ 'bg-surface-gray-5': item.isDropTarget }"
+					/>
+					<SidebarItem
+						:label="item.label"
+						:icon="item.icon"
+						:to="item.to"
+						:is-active="
+							item.activeFor?.includes(
+								['Mailbox', 'Mail'].includes(route.name as string)
+									? route.params.mailbox
+									: route.name,
+							)
+						"
+						:on-click="item.onClick"
+						class="group"
+						:class="{ 'opacity-50': item.isDragging }"
+						:draggable="item.draggable"
+						@dragstart="(e: DragEvent) => item.onDragStart?.(e)"
+						@dragend="(e: DragEvent) => item.onDragEnd?.(e)"
+						@dragover="(e: DragEvent) => item.onDragOver?.(e)"
+						@dragleave="(e: DragEvent) => item.onDragLeave?.(e)"
+						@drop="(e: DragEvent) => item.onDrop?.(e)"
+					>
+						<template #suffix>
+							<div class="flex items-center">
+								<Dropdown v-if="item.menuOptions" :options="item.menuOptions">
+									<Button variant="ghost" class="!bg-transparent" @click.stop>
+										<template #icon>
+											<Ellipsis
+												class="text-ink-gray-6 invisible h-4 w-4 group-hover:visible"
+											/>
+										</template>
+									</Button>
+								</Dropdown>
+								<span class="text-ink-gray-4 text-sm group-hover:hidden">
+									{{ item.suffix }}
+								</span>
+							</div>
+						</template>
+					</SidebarItem>
+				</div>
 			</template>
 		</Sidebar>
 	</Transition>
@@ -213,12 +226,67 @@ const MAILBOX_ICONS = {
 	important: Bookmark,
 }
 
+// Drag and drop
+const draggedItem = ref<string | null>(null)
+const dropTargetId = ref<string | null>(null)
+
+const handleDragStart = (mailboxId: string) => (e: DragEvent) => {
+	draggedItem.value = mailboxId
+	if (e.dataTransfer) {
+		e.dataTransfer.effectAllowed = 'move'
+		e.dataTransfer.setData('text/plain', mailboxId)
+	}
+}
+
+const handleDragEnd = () => {
+	draggedItem.value = null
+	dropTargetId.value = null
+}
+
+const handleDragOver = (mailboxId: string) => (e: DragEvent) => {
+	if (draggedItem.value && draggedItem.value !== mailboxId) {
+		e.preventDefault()
+		if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+
+		dropTargetId.value = mailboxId
+	}
+}
+
+const handleDragLeave = () => (dropTargetId.value = null)
+
+const handleDrop = (targetMailboxId: string) => (e: DragEvent) => {
+	e.preventDefault()
+	if (draggedItem.value && draggedItem.value !== targetMailboxId) {
+		const targetMailboxSortOrder =
+			targetMailboxId === 'starred'
+				? sortedMailboxes.value.at(-1)._sort_order + 1
+				: mailboxes.data.find((m: { id: string }) => m.id === targetMailboxId)._sort_order
+		mailboxes.data
+			.filter((m) => m._sort_order >= targetMailboxSortOrder)
+			.forEach((m) => m._sort_order++)
+		mailboxes.data.find((m: { id: string }) => m.id === draggedItem.value)._sort_order =
+			targetMailboxSortOrder
+	}
+	dropTargetId.value = null
+	draggedItem.value = null
+}
+
+const sortedMailboxes = computed(() =>
+	mailboxes.data?.slice().sort((a, b) => a._sort_order - b._sort_order),
+)
+
 const sidebarItems = computed(() => {
 	if (route.meta.isDashboard) return dashboardItems
 
 	const mailboxItems =
-		mailboxes.data?.map(
-			(mailbox: { id: string; _name: string; role?: string; unread_threads: number }) => ({
+		sortedMailboxes.value?.map(
+			(mailbox: {
+				id: string
+				_name: string
+				role?: string
+				unread_threads: number
+				_sort_order: number
+			}) => ({
 				label: mailbox._name,
 				icon:
 					mailbox.role && mailbox.role in MAILBOX_ICONS
@@ -227,6 +295,14 @@ const sidebarItems = computed(() => {
 				to: { name: 'Mailbox', params: { mailbox: mailbox.id } },
 				suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
 				activeFor: [mailbox.id],
+				draggable: true,
+				isDragging: draggedItem.value === mailbox.id,
+				isDropTarget: dropTargetId.value === mailbox.id,
+				onDragStart: handleDragStart(mailbox.id),
+				onDragEnd: handleDragEnd,
+				onDragOver: handleDragOver(mailbox.id),
+				onDragLeave: handleDragLeave,
+				onDrop: handleDrop(mailbox.id),
 				menuOptions: [
 					{
 						label: __('Edit Folder'),
@@ -251,6 +327,10 @@ const sidebarItems = computed(() => {
 		icon: Star,
 		to: { name: 'Mailbox', params: { mailbox: 'starred' } },
 		activeFor: ['starred'],
+		isDropTarget: dropTargetId.value === 'starred',
+		onDragOver: handleDragOver('starred'),
+		onDragLeave: handleDragLeave,
+		onDrop: handleDrop('starred'),
 	}
 
 	const addMailboxItem = {
@@ -260,7 +340,7 @@ const sidebarItems = computed(() => {
 	}
 
 	return mailboxes.data?.length
-		? [{ items: [mailboxItems[0], starredItem, ...mailboxItems.slice(1), addMailboxItem] }]
+		? [{ items: [...mailboxItems, starredItem, addMailboxItem] }]
 		: []
 })
 

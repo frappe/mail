@@ -33,11 +33,9 @@ def get_mailboxes() -> list[dict]:
 	if not has_role(user, "Mail User") or user == "Administrator":
 		return []
 
-	fields = ["id", "_name", "role", "total_threads", "unread_threads"]
+	fields = ["id", "_name", "role", "total_threads", "unread_threads", "sort_order", "_sort_order"]
 	mailboxes = get_user_mailboxes(user)
-	return [
-		{field: mailbox[field] for field in fields} for mailbox in mailboxes if mailbox["subscribed"] == 1
-	]
+	return [{field: mailbox[field] for field in fields} for mailbox in mailboxes]
 
 
 def get_user_mailboxes(user) -> list[dict]:
