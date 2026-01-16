@@ -257,10 +257,23 @@ const handleDragLeave = () => (dropTargetId.value = null)
 const handleDrop = (targetMailboxId: string) => (e: DragEvent) => {
 	e.preventDefault()
 	if (draggedItem.value && draggedItem.value !== targetMailboxId) {
+		const draggedIndex = sortedMailboxes.value.findIndex((m) => m.id === draggedItem.value)
+		const targetIndex =
+			targetMailboxId === 'starred'
+				? mailboxes.data.length
+				: sortedMailboxes.value.findIndex((m) => m.id === targetMailboxId)
+
+		if (draggedIndex + 1 === targetIndex) {
+			dropTargetId.value = null
+			draggedItem.value = null
+			return
+		}
+
 		const targetMailboxSortOrder =
 			targetMailboxId === 'starred'
 				? sortedMailboxes.value.at(-1)._sort_order + 1
 				: mailboxes.data.find((m: { id: string }) => m.id === targetMailboxId)._sort_order
+
 		mailboxes.data
 			.filter((m) => m._sort_order >= targetMailboxSortOrder)
 			.forEach((m) => m._sort_order++)
