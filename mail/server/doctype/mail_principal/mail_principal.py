@@ -1065,92 +1065,11 @@ class MailPrincipal(Document):
 				"content": f"0 0 110 {hostname}",
 			})
 
-		def add_autodiscovery_records() -> None:
-			"""Add autodiscovery DNS records for email client auto-configuration.
-			
-			This adds CNAME records for autoconfig (Mozilla/Thunderbird) and
-			autodiscover (Microsoft Outlook), plus SRV records for IMAP, SMTP,
-			and POP3 services as per RFC 6186.
-			"""
-			nonlocal dns_records
-			
-			# Remove any existing autodiscovery records to avoid duplicates
-			dns_records = [
-				record for record in dns_records
-				if not (
-					record["type"] == "CNAME" and ("autoconfig" in record["name"] or "autodiscover" in record["name"])
-				) and not (
-					record["type"] == "SRV" and (
-						"_autodiscover" in record["name"] or
-						"_imap" in record["name"] or
-						"_submission" in record["name"] or
-						"_pop3" in record["name"]
-					)
-				)
-			]
-			
-			# Autoconfig (Mozilla/Thunderbird)
-			dns_records.append({
-				"type": "CNAME",
-				"name": f"autoconfig.{domain}",
-				"content": hostname,
-			})
-			
-			# Autodiscover (Microsoft Outlook)
-			dns_records.append({
-				"type": "CNAME",
-				"name": f"autodiscover.{domain}",
-				"content": hostname,
-			})
-			
-			# SRV record for autodiscovery
-			dns_records.append({
-				"type": "SRV",
-				"name": f"_autodiscover._tcp.{domain}",
-				"content": f"0 0 443 {hostname}",
-			})
-			
-			# IMAP SRV records
-			dns_records.append({
-				"type": "SRV",
-				"name": f"_imaps._tcp.{domain}",
-				"content": f"0 0 993 {hostname}",
-			})
-			dns_records.append({
-				"type": "SRV",
-				"name": f"_imap._tcp.{domain}",
-				"content": f"0 0 143 {hostname}",
-			})
-			
-			# SMTP Submission SRV records
-			dns_records.append({
-				"type": "SRV",
-				"name": f"_submissions._tcp.{domain}",
-				"content": f"0 0 465 {hostname}",
-			})
-			dns_records.append({
-				"type": "SRV",
-				"name": f"_submission._tcp.{domain}",
-				"content": f"0 0 587 {hostname}",
-			})
-			
-			# POP3 SRV records (optional but good for compatibility)
-			dns_records.append({
-				"type": "SRV",
-				"name": f"_pop3s._tcp.{domain}",
-				"content": f"0 0 995 {hostname}",
-			})
-			dns_records.append({
-				"type": "SRV",
-				"name": f"_pop3._tcp.{domain}",
-				"content": f"0 0 110 {hostname}",
-			})
 		domain = domain.rstrip(".")
 		hostname = cluster.rstrip(".") + "."
 
 		replace_mx_records()
 		replace_spf_record()
-		add_autodiscovery_records()
 		add_autodiscovery_records()
 
 		formatted_records = []
