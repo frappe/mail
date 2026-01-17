@@ -986,13 +986,13 @@ class MailPrincipal(Document):
 
 		def add_autodiscovery_records() -> None:
 			"""Add autodiscovery DNS records for email client auto-configuration.
-			
+
 			This adds CNAME records for autoconfig (Mozilla/Thunderbird) and
 			autodiscover (Microsoft Outlook), plus SRV records for IMAP, SMTP,
 			and POP3 services as per RFC 6186.
 			"""
 			nonlocal dns_records
-			
+
 			# Remove any existing autodiscovery records to avoid duplicates
 			dns_records = [
 				record for record in dns_records
@@ -1007,28 +1007,28 @@ class MailPrincipal(Document):
 					)
 				)
 			]
-			
+
 			# Autoconfig (Mozilla/Thunderbird)
 			dns_records.append({
 				"type": "CNAME",
 				"name": f"autoconfig.{domain}",
 				"content": hostname,
 			})
-			
+
 			# Autodiscover (Microsoft Outlook)
 			dns_records.append({
 				"type": "CNAME",
 				"name": f"autodiscover.{domain}",
 				"content": hostname,
 			})
-			
+
 			# SRV record for autodiscovery
 			dns_records.append({
 				"type": "SRV",
 				"name": f"_autodiscover._tcp.{domain}",
 				"content": f"0 0 443 {hostname}",
 			})
-			
+
 			# IMAP SRV records
 			dns_records.append({
 				"type": "SRV",
@@ -1040,7 +1040,7 @@ class MailPrincipal(Document):
 				"name": f"_imap._tcp.{domain}",
 				"content": f"0 0 143 {hostname}",
 			})
-			
+
 			# SMTP Submission SRV records
 			dns_records.append({
 				"type": "SRV",
@@ -1052,7 +1052,7 @@ class MailPrincipal(Document):
 				"name": f"_submission._tcp.{domain}",
 				"content": f"0 0 587 {hostname}",
 			})
-			
+
 			# POP3 SRV records (optional but good for compatibility)
 			dns_records.append({
 				"type": "SRV",
