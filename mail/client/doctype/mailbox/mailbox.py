@@ -1,7 +1,6 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import json
 
 import frappe
 from frappe import _
@@ -12,6 +11,10 @@ from uuid_utils import uuid7
 from mail.jmap import get_jmap_client
 from mail.utils import parse_filters
 from mail.utils.validation import has_permission_for_user
+
+DEFAULT_MAILBOX_GAP = 100
+MINIMUM_MAILBOX_GAP = 1
+REBALANCE_MAILBOX_WINDOW = 10
 
 
 class Mailbox(Document):
@@ -168,8 +171,7 @@ def fetch_mailboxes(user: str, page: int = 1, limit: int = 10) -> list:
 	mailboxes = client.mailbox_get()
 	formatted_mailboxes = [format_mailbox(user, mailbox) for mailbox in mailboxes]
 	sorted_mailboxes = sorted(
-		formatted_mailboxes,
-		key=lambda m: (m.get("_sort_order") == 0, m.get("_sort_order", float("inf")), m.get("_name")),
+		formatted_mailboxes, key=lambda m: (m["sort_order"], get_sort_order(m["role"]), m["_name"], m["id"])
 	)
 	frappe.cache.set_value(_get_total_cache_key(user), len(mailboxes), expires_in_sec=600)
 
@@ -177,6 +179,112 @@ def fetch_mailboxes(user: str, page: int = 1, limit: int = 10) -> list:
 	end = start + limit
 
 	return sorted_mailboxes[start:end]
+
+
+@frappe.whitelist()
+def update_mailbox_position(user: str, target_mailbox_id: str, prior_mailbox_id: str | None = None) -> None:
+	"""Updates the position of the target mailbox to be after the prior mailbox."""
+
+	def get_updates(
+		mailboxes: list[dict], target_mailbox_id: str, prior_mailbox_id: str | None
+	) -> dict[str, int]:
+		"""Returns the sort order updates required to move the target mailbox after the prior mailbox."""
+
+		index = {m["id"]: i for i, m in enumerate(mailboxes)}
+
+		if target_mailbox_id not in index:
+			frappe.throw(_("Target mailbox ID {0} not found.").format(frappe.bold(target_mailbox_id)))
+
+		mailboxes.pop(index[target_mailbox_id])
+		index = {m["id"]: i for i, m in enumerate(mailboxes)}
+
+		# Prior mailbox is None, place at start
+		if prior_mailbox_id is None:
+			lower = None
+			upper = mailboxes[0]["sortOrder"] if mailboxes else None
+			insert_index = 0
+
+		# Prior mailbox is specified, place after it
+		else:
+			if prior_mailbox_id not in index:
+				frappe.throw(_("Prior mailbox ID {0} not found.").format(frappe.bold(prior_mailbox_id)))
+
+			prior_index = index[prior_mailbox_id]
+			lower = mailboxes[prior_index]["sortOrder"]
+			insert_index = prior_index + 1
+			upper = mailboxes[insert_index]["sortOrder"] if insert_index < len(mailboxes) else None
+
+		# Case - 1: Both lower and upper bounds exist and have enough gap, create in between
+		if lower is not None and upper is not None and upper - lower > MINIMUM_MAILBOX_GAP:
+			new_sort = (lower + upper) // 2
+			return {target_mailbox_id: new_sort}
+
+		# Case - 2: Only lower bound exists, place after it
+		if lower is not None and upper is None:
+			return {target_mailbox_id: lower + DEFAULT_MAILBOX_GAP}
+
+		# Case - 3: Only upper bound exists, place before it
+		if lower is None and upper is not None:
+			return {target_mailbox_id: upper - DEFAULT_MAILBOX_GAP}
+
+		# Case - 4: Neither bound exists, place at start
+		if lower is None and upper is None:
+			return {target_mailbox_id: 0}
+
+		# If there is no gap, rebalance
+		start = max(0, insert_index - REBALANCE_MAILBOX_WINDOW)
+		end = min(len(mailboxes), insert_index + REBALANCE_MAILBOX_WINDOW)
+
+		window = mailboxes[start:end]
+
+		base = window[0]["sortOrder"]
+		base = (base // DEFAULT_MAILBOX_GAP) * DEFAULT_MAILBOX_GAP
+
+		updates: dict[str, int] = {}
+		current = base
+
+		target_slot = insert_index - start
+
+		for i, m in enumerate(window):
+			if i == target_slot:
+				current += DEFAULT_MAILBOX_GAP
+
+			current += DEFAULT_MAILBOX_GAP
+			if m["sortOrder"] != current:
+				updates[m["id"]] = current
+
+		target_sort_order = base + DEFAULT_MAILBOX_GAP * (target_slot + 1)
+		updates[target_mailbox_id] = target_sort_order
+
+		return updates
+
+	has_permission_for_user(user)
+
+	client = get_jmap_client(user)
+	mailboxes = sorted(
+		client.mailbox_get(), key=lambda m: (m["sortOrder"], get_sort_order(m["role"]), m["name"], m["id"])
+	)
+	updates = get_updates(mailboxes, target_mailbox_id, prior_mailbox_id)
+	response = client._make_request(
+		using=["urn:ietf:params:jmap:mail"],
+		method_calls=[
+			[
+				"Mailbox/set",
+				{
+					"accountId": client.primary_account_id,
+					"update": {k: {"sortOrder": v} for k, v in updates.items()},
+				},
+				"0",
+			]
+		],
+	)["methodResponses"][0][1]
+
+	title = _("Mailbox Position Update Error")
+	if not response.get("updated"):
+		if response.get("notUpdated"):
+			frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
+		else:
+			frappe.throw(_(response["description"]), title=title)
 
 
 def format_mailbox(user: str, mailbox: dict) -> dict:
@@ -196,7 +304,6 @@ def format_mailbox(user: str, mailbox: dict) -> dict:
 		"parent_id": mailbox["parentId"],
 		"role": mailbox["role"],
 		"sort_order": sort_order,
-		"_sort_order": sort_order or get_sort_order(mailbox["role"]),
 		"subscribed": bool(mailbox["isSubscribed"]),
 		"total_emails": cint(mailbox["totalEmails"]),
 		"unread_emails": cint(mailbox["unreadEmails"]),
@@ -222,9 +329,9 @@ def get_sort_order(role: str | None = None) -> int:
 	role_order = ["inbox", "important", "sent", "drafts", "junk", "archive", "trash"]
 
 	if not role or role not in role_order:
-		return 0
+		return len(role_order) + 1
 
-	return role_order.index(role) + 1
+	return role_order.index(role)
 
 
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
