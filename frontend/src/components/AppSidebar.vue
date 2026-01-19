@@ -260,7 +260,7 @@ const handleDrop = (targetMailboxId: string) => (e: DragEvent) => {
 		const draggedIndex = sortedMailboxes.value.findIndex((m) => m.id === draggedItem.value)
 		const targetIndex =
 			targetMailboxId === 'starred'
-				? mailboxes.data.length
+				? mailboxes.data.length - 1
 				: sortedMailboxes.value.findIndex((m) => m.id === targetMailboxId)
 
 		if (draggedIndex + 1 === targetIndex) {
@@ -269,6 +269,12 @@ const handleDrop = (targetMailboxId: string) => (e: DragEvent) => {
 			return
 		}
 
+		const draggedMailbox = sortedMailboxes.value[draggedIndex]
+		draggedMailbox.sort_order = sortedMailboxes.value[targetIndex].sort_order + 1
+
+		const updatedMailboxes: Record<string, number> = {}
+		updatedMailboxes[draggedMailbox.id] = draggedMailbox.sort_order
+
 		const targetMailboxSortOrder =
 			targetMailboxId === 'starred'
 				? sortedMailboxes.value.at(-1)._sort_order + 1
@@ -276,13 +282,25 @@ const handleDrop = (targetMailboxId: string) => (e: DragEvent) => {
 
 		mailboxes.data
 			.filter((m) => m._sort_order >= targetMailboxSortOrder)
-			.forEach((m) => m._sort_order++)
-		mailboxes.data.find((m: { id: string }) => m.id === draggedItem.value)._sort_order =
-			targetMailboxSortOrder
+			.forEach((m) => {
+				m._sort_order++
+				if (m.id !== draggedMailbox.id) {
+					m.sort_order += 2
+					updatedMailboxes[m.id] = m.sort_order
+				}
+			})
+		draggedMailbox._sort_order = targetMailboxSortOrder
+		updateMailboxSortOrder.submit({ mailboxes: updatedMailboxes })
 	}
 	dropTargetId.value = null
 	draggedItem.value = null
 }
+
+const updateMailboxSortOrder = createResource({
+	url: 'mail.api.mail.update_mailbox_sort_order',
+	makeParams: ({ mailboxes }: { mailboxes: Record<string, number> }) => ({ mailboxes }),
+	onSuccess: () => mailboxes.reload(),
+})
 
 const sortedMailboxes = computed(() =>
 	mailboxes.data?.slice().sort((a, b) => a._sort_order - b._sort_order),

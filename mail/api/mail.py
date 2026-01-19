@@ -20,6 +20,7 @@ from mail.client.doctype.mail_message.mail_message import (
 	set_spam_status,
 )
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
+from mail.client.doctype.mailbox.mailbox import update_mailbox
 from mail.jmap import get_mailbox_id_by_role
 from mail.utils import convert_html_to_text
 from mail.utils.user import has_role
@@ -537,3 +538,10 @@ def normalize_search_filter(filter: dict) -> dict:
 def parse_date_to_utc_iso(date_str: str) -> str:
 	"""Parse date string and convert to ISO format with UTC timezone."""
 	return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=UTC).isoformat()
+
+
+@frappe.whitelist()
+def update_mailbox_sort_order(mailboxes: dict) -> None:
+	"""Updates mailbox sort order of the given mailboxes."""
+
+	print(mailboxes)
