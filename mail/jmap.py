@@ -236,7 +236,6 @@ class JMAPClient:
 					"_parent": mailbox["_parent"],
 					"parent_id": mailbox["parent_id"],
 					"subscribed": mailbox["subscribed"],
-					"_sort_order": mailbox["_sort_order"],
 				}
 				for mailbox in mailboxes
 			]
