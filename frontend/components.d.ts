@@ -22,6 +22,7 @@ declare module 'vue' {
     AppearanceSettings: typeof import('./src/components/Settings/AppearanceSettings.vue')['default']
     AppSidebar: typeof import('./src/components/AppSidebar.vue')['default']
     AttachmentCapsule: typeof import('./src/components/AttachmentCapsule.vue')['default']
+    AttachmentViewer: typeof import('./src/components/AttachmentViewer.vue')['default']
     ChangePasswordModal: typeof import('./src/components/Modals/ChangePasswordModal.vue')['default']
     ComposeMailEditor: typeof import('./src/components/ComposeMailEditor.vue')['default']
     ComposeMailToolbar: typeof import('./src/components/ComposeMailToolbar.vue')['default']
