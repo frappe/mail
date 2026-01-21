@@ -29,8 +29,6 @@
   "duration",
   "column_break_qhry",
   "time_zone",
-  "recurrence_section",
-  "recurrence_rule",
   "section_break_nzql",
   "organizer",
   "column_break_dcpf",
@@ -38,10 +36,19 @@
   "sequence",
   "section_break_bnnv",
   "calendars",
+  "recurrence_tab",
+  "recurrence_section",
+  "recurrence_rule",
+  "locations_tab",
   "section_break_sznu",
   "locations",
+  "links_tab",
+  "section_break_jhsu",
+  "links",
+  "alerts_tab",
   "section_break_lpbz",
   "alerts",
+  "participants_tab",
   "section_break_mduw",
   "participants"
  ],
@@ -305,17 +312,51 @@
    "fieldtype": "Column Break"
   },
   {
-   "collapsible": 1,
    "fieldname": "recurrence_section",
-   "fieldtype": "Section Break",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_jhsu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "links",
+   "fieldtype": "Table",
+   "label": "Links",
+   "options": "Event Link",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+  },
+  {
+   "fieldname": "recurrence_tab",
+   "fieldtype": "Tab Break",
    "label": "Recurrence"
+  },
+  {
+   "fieldname": "locations_tab",
+   "fieldtype": "Tab Break",
+   "label": "Locations"
+  },
+  {
+   "fieldname": "links_tab",
+   "fieldtype": "Tab Break",
+   "label": "Links"
+  },
+  {
+   "fieldname": "alerts_tab",
+   "fieldtype": "Tab Break",
+   "label": "Alerts"
+  },
+  {
+   "fieldname": "participants_tab",
+   "fieldtype": "Tab Break",
+   "label": "Participants"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-20 19:15:03.151728",
+ "modified": "2026-01-21 14:44:16.001654",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",

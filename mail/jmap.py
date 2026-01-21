@@ -2016,6 +2016,7 @@ class JMAPClient:
 		description: str | None = None,
 		recurrence_rule: dict | None = None,
 		locations: list[dict] | None = None,
+		links: list[dict] | None = None,
 		alerts: list[dict] | None = None,
 		participants: list[dict] | None = None,
 		show_without_time: bool = False,
@@ -2052,6 +2053,7 @@ class JMAPClient:
 								"description": description,
 								"recurrenceRule": recurrence_rule or None,
 								"locations": _get_locations_map(locations),
+								"links": _get_links_map(links),
 								"alerts": _get_alerts_map(alerts),
 								"participants": _get_participants_map(organizer, participants),
 								"showWithoutTime": show_without_time,
@@ -2792,6 +2794,22 @@ def _get_locations_map(locations: list[dict] | None = None) -> dict[str, dict] |
 			}
 
 		return locations_map
+
+
+def _get_links_map(links: list[dict] | None = None) -> dict[str, dict] | None:
+	"""Returns the links map for the given links dictionary."""
+
+	if links:
+		links_map = {}
+		for link in links:
+			uid = link.get("uid") or str(uuid7())
+			links_map[uid] = {
+				"@type": "Link",
+				"href": link.get("href"),
+				"contentType": link.get("content_type"),
+			}
+
+		return links_map
 
 
 def _get_alerts_map(alerts: list[dict] | None = None) -> dict[str, dict] | None:

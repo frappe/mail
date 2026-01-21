@@ -47,6 +47,13 @@ class CalendarEvent(Document):
 			return [{"uid": l.uid, "name": l._name} for l in self.locations]
 
 	@property
+	def formatted_links(self) -> list[dict] | None:
+		"""Returns the formatted links for the event."""
+
+		if self.links:
+			return [{"uid": l.uid, "href": l.href, "content_type": l.content_type} for l in self.links]
+
+	@property
 	def formatted_alerts(self) -> list[dict] | None:
 		"""Returns the formatted alerts for the event."""
 
@@ -97,6 +104,7 @@ class CalendarEvent(Document):
 			description=self.description,
 			recurrence_rule=self.formatted_recurrence_rule,
 			locations=self.formatted_locations,
+			links=self.formatted_links,
 			alerts=self.formatted_alerts,
 			participants=self.formatted_participants,
 			show_without_time=bool(self.show_without_time),
@@ -182,6 +190,7 @@ def add_calendar_event(
 	description: str | None = None,
 	recurrence_rule: dict | None = None,
 	locations: list[dict] | None = None,
+	links: list[dict] | None = None,
 	alerts: list[dict] | None = None,
 	participants: list[dict] | None = None,
 	show_without_time: bool = False,
@@ -208,6 +217,7 @@ def add_calendar_event(
 		description=description,
 		recurrence_rule=recurrence_rule,
 		locations=locations,
+		links=links,
 		alerts=alerts,
 		participants=participants,
 		show_without_time=show_without_time,
@@ -319,6 +329,10 @@ def format_calendar_event(user: str, calendar_map: dict, event: dict) -> dict:
 		)
 
 	locations = [{"uid": uid, "_name": l.get("name")} for uid, l in event.get("locations", {}).items()]
+	links = [
+		{"uid": uid, "href": l.get("href"), "content_type": l.get("contentType")}
+		for uid, l in event.get("links", {}).items()
+	]
 	alerts = [
 		{
 			"uid": uid,
@@ -375,6 +389,7 @@ def format_calendar_event(user: str, calendar_map: dict, event: dict) -> dict:
 		"organizer": event.get("organizerCalendarAddress", "").replace("mailto:", ""),
 		"calendars": calendars,
 		"locations": locations,
+		"links": links,
 		"alerts": alerts,
 		"participants": participants,
 		"created_utc": event["created"],
