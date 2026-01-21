@@ -204,7 +204,7 @@ export const isMac = navigator.platform.toUpperCase().includes('MAC')
 
 export const isOverlayPresent = () =>
 	!!document.querySelector(
-		'[role="dialog"]:not([role="alert"]), [role="alertdialog"], .modal-open, [data-state="open"]:not([data-reka-collection-item])',
+		'[role="dialog"]:not([role="alert"]), [role="alertdialog"], .modal-open, [data-state="open"]:not([data-reka-collection-item]), [data-attachment-viewer]',
 	)
 
 export const shouldIgnoreKeypress = (

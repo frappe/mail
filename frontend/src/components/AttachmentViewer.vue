@@ -10,40 +10,37 @@
 		>
 			<div
 				v-if="isOpen"
-				class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 text-gray-50"
+				data-attachment-viewer
+				class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-2 text-gray-300 sm:p-4"
 				@click.self="closeViewer"
 			>
-				<button
-					class="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 hover:bg-white/20"
-					@click="closeViewer"
-				>
-					<X class="h-4 w-4" />
-				</button>
-
-				<button
-					:disabled="isDownloading"
-					class="absolute right-16 top-4 z-10 rounded-full bg-white/10 p-2 hover:bg-white/20 disabled:opacity-50"
-					@click="downloadAttachment"
-				>
-					<Loader v-if="isDownloading" class="h-4 w-4 animate-spin" />
-					<Download v-else class="h-4 w-4" />
-				</button>
-
-				<div
-					class="absolute left-1/2 top-4 z-10 flex max-w-2xl -translate-x-1/2 items-center space-x-2 rounded-full bg-white/10 px-4 py-2"
-				>
-					<Paperclip class="h-4 w-4" />
-					<span class="truncate text-sm font-medium">
-						{{ currentAttachment?.fileName }}
-					</span>
+				<div class="flex w-full justify-between">
+					<div class="flex max-w-2xl items-center space-x-2 truncate rounded py-1.5">
+						<Paperclip class="h-4 w-4" />
+						<span class="truncate text-sm font-medium">
+							{{ currentAttachment?.fileName }}
+						</span>
+					</div>
+					<div class="shrink-0 space-x-2 sm:space-x-4">
+						<button
+							:disabled="isDownloading"
+							class="rounded p-1.5 hover:bg-white/20 disabled:opacity-50"
+							@click="downloadAttachment"
+						>
+							<Download class="h-4 w-4" />
+						</button>
+						<button class="rounded p-1.5 hover:bg-white/20" @click="closeViewer">
+							<X class="h-4 w-4" />
+						</button>
+					</div>
 				</div>
 
 				<!-- Content area -->
 				<div
-					class="flex h-full w-full items-center justify-center p-4"
+					class="flex h-full w-full items-center justify-center"
 					@click.self="closeViewer"
 				>
-					<Loader v-if="isLoading" class="h-12 w-12 animate-spin" />
+					<LoaderCircle v-if="isLoading" class="h-8 w-8 animate-spin" />
 					<div
 						v-else-if="previewUrl"
 						class="flex h-full w-full items-center justify-center"
@@ -54,55 +51,54 @@
 							v-if="isImage"
 							:src="previewUrl"
 							:alt="currentAttachment?.fileName"
-							class="max-h-full max-w-full object-contain"
+							class="max-h-[85vh] max-w-full object-contain"
 						/>
 						<!-- PDF Preview -->
 						<iframe
 							v-else-if="isPDF"
 							:src="previewUrl"
-							class="h-[90vh] w-full max-w-6xl rounded-lg bg-white"
-							title="PDF Preview"
+							:title="__('PDF Preview')"
+							class="h-[85vh] w-full max-w-6xl"
 						/>
 						<!-- Video Preview -->
 						<video
 							v-else-if="isVideo"
 							:src="previewUrl"
+							:title="__('Video Preview')"
 							controls
-							class="max-h-full max-w-full rounded-lg"
+							class="max-h-[85vh] max-w-full"
 						/>
 						<!-- Audio Preview -->
 						<audio
 							v-else-if="isAudio"
 							:src="previewUrl"
+							:title="__('Audio Preview')"
 							controls
 							class="w-full max-w-2xl"
 						/>
 						<!-- Unsupported Preview -->
 						<div v-else class="flex flex-col items-center justify-center space-y-4">
-							<FileIcon class="h-16 w-16 text-white/60" />
-							<p class="text-sm text-white/80">
+							<FileIcon class="h-16 w-16" />
+							<p class="text-sm">
 								{{ __('Preview not available for this file type') }}
 							</p>
-							<button
+							<Button
+								:label="__('Download')"
+								:icon-left="Download"
 								:disabled="isDownloading"
-								class="flex items-center space-x-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-50"
 								@click="downloadAttachment"
-							>
-								<Loader v-if="isDownloading" class="h-4 w-4 animate-spin" />
-								<Download v-else class="h-4 w-4" />
-								<span>{{ __('Download to view') }}</span>
-							</button>
+							/>
 						</div>
 					</div>
 					<div v-else class="flex flex-col items-center justify-center space-y-4">
-						<FileIcon class="h-16 w-16 text-white/60" />
-						<p class="text-sm text-white/80">{{ __('Failed to load attachment') }}</p>
+						<FileIcon class="h-16 w-16" />
+						<p class="text-sm">{{ __('Failed to load attachment') }}</p>
 					</div>
 				</div>
 
 				<div
 					v-if="attachments && attachments.length > 1"
-					class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center space-x-4 rounded-full bg-white/10 px-4 py-2 backdrop-blur-sm"
+					class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center space-x-4 rounded bg-white/10 px-4 py-2 backdrop-blur-sm"
 				>
 					<button
 						:disabled="currentIndex === 0"
@@ -141,11 +137,13 @@ import {
 	ChevronRight,
 	Download,
 	FileIcon,
-	Loader,
+	LoaderCircle,
 	Paperclip,
 	X,
 } from 'lucide-vue-next'
-import { createResource } from 'frappe-ui'
+import { Button, createResource } from 'frappe-ui'
+
+import { raiseToast } from '@/utils'
 
 interface Attachment {
 	fileName: string
@@ -165,26 +163,10 @@ const isDownloading = ref(false)
 const previewUrl = ref<string | null>(null)
 
 const currentAttachment = computed(() => attachments?.[currentIndex.value])
-
-const isImage = computed(() => {
-	const type = currentAttachment.value?.type || ''
-	return type.startsWith('image/')
-})
-
-const isPDF = computed(() => {
-	const type = currentAttachment.value?.type || ''
-	return type === 'application/pdf'
-})
-
-const isVideo = computed(() => {
-	const type = currentAttachment.value?.type || ''
-	return type.startsWith('video/')
-})
-
-const isAudio = computed(() => {
-	const type = currentAttachment.value?.type || ''
-	return type.startsWith('audio/')
-})
+const isImage = computed(() => currentAttachment.value?.type?.startsWith('image/'))
+const isPDF = computed(() => currentAttachment.value?.type === 'application/pdf')
+const isVideo = computed(() => currentAttachment.value?.type?.startsWith('video/'))
+const isAudio = computed(() => currentAttachment.value?.type?.startsWith('audio/'))
 
 const closeViewer = () => {
 	isOpen.value = false
@@ -225,7 +207,10 @@ const fetchAttachment = createResource({
 		previewUrl.value = URL.createObjectURL(blob)
 		isLoading.value = false
 	},
-	onError: () => (isLoading.value = false),
+	onError: (error) => {
+		isLoading.value = false
+		raiseToast(error.message, 'error')
+	},
 })
 
 const downloadAttachment = async () => {
@@ -253,8 +238,9 @@ const downloadResource = createResource({
 		URL.revokeObjectURL(url)
 		isDownloading.value = false
 	},
-	onError: () => {
+	onError: (error) => {
 		isDownloading.value = false
+		raiseToast(error.message, 'error')
 	},
 })
 
