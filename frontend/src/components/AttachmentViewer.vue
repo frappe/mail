@@ -15,9 +15,9 @@
 				@click.self="closeViewer"
 			>
 				<div class="flex w-full justify-between">
-					<div class="flex max-w-2xl items-center space-x-2 truncate rounded py-1.5">
+					<div class="flex max-w-2xl items-center space-x-2 truncate rounded">
 						<Paperclip class="h-4 w-4" />
-						<span class="truncate text-sm font-medium">
+						<span class="truncate text-base font-medium">
 							{{ currentAttachment?.fileName }}
 						</span>
 					</div>
@@ -184,7 +184,7 @@ const nextAttachment = () => {
 	if (attachments && currentIndex.value < attachments.length - 1) currentIndex.value++
 }
 
-const loadAttachment = async () => {
+const loadAttachment = () => {
 	if (!currentAttachment.value?.blobID) return
 
 	isLoading.value = true
@@ -193,7 +193,7 @@ const loadAttachment = async () => {
 		previewUrl.value = null
 	}
 
-	await fetchAttachment.submit()
+	fetchAttachment.submit()
 }
 
 const fetchAttachment = createResource({
@@ -201,9 +201,7 @@ const fetchAttachment = createResource({
 	makeParams: () => ({ blob_id: currentAttachment.value?.blobID }),
 	onSuccess: (data: number[]) => {
 		const byteArray = new Uint8Array(data)
-		const blob = new Blob([byteArray], {
-			type: currentAttachment.value?.type,
-		})
+		const blob = new Blob([byteArray], { type: currentAttachment.value?.type })
 		previewUrl.value = URL.createObjectURL(blob)
 		isLoading.value = false
 	},
@@ -213,36 +211,18 @@ const fetchAttachment = createResource({
 	},
 })
 
-const downloadAttachment = async () => {
-	if (!currentAttachment.value?.blobID) return
+const downloadAttachment = () => {
+	if (!currentAttachment.value?.blobID || !previewUrl.value) return
 
 	isDownloading.value = true
-	await downloadResource.submit()
+	const link = document.createElement('a')
+	link.href = previewUrl.value
+	link.download = currentAttachment.value?.fileName || 'attachment'
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+	isDownloading.value = false
 }
-
-const downloadResource = createResource({
-	url: 'mail.api.mail.fetch_attachment',
-	makeParams: () => ({ blob_id: currentAttachment.value?.blobID }),
-	onSuccess: (data: number[]) => {
-		const byteArray = new Uint8Array(data)
-		const blob = new Blob([byteArray], {
-			type: currentAttachment.value?.type,
-		})
-		const url = URL.createObjectURL(blob)
-		const link = document.createElement('a')
-		link.href = url
-		link.download = currentAttachment.value?.fileName || 'attachment'
-		document.body.appendChild(link)
-		link.click()
-		document.body.removeChild(link)
-		URL.revokeObjectURL(url)
-		isDownloading.value = false
-	},
-	onError: (error) => {
-		isDownloading.value = false
-		raiseToast(error.message, 'error')
-	},
-})
 
 watch(isOpen, (newVal) => {
 	if (newVal && currentAttachment.value) loadAttachment()
@@ -257,11 +237,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
 	if (event.key === 'Escape' && isOpen.value) closeViewer()
 }
 
-onMounted(() => {
-	window.addEventListener('keydown', handleKeyDown)
-})
-
-onUnmounted(() => {
-	window.removeEventListener('keydown', handleKeyDown)
-})
+onMounted(() => window.addEventListener('keydown', handleKeyDown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeyDown))
 </script>
