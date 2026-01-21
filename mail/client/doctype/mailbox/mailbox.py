@@ -9,10 +9,10 @@ from frappe.utils import cint, today
 from uuid_utils import uuid7
 
 from mail.jmap import get_jmap_client
-from mail.utils import parse_filters
+from mail.utils import batch_dict, parse_filters
 from mail.utils.validation import has_permission_for_user
 
-DEFAULT_MAILBOX_GAP = 100
+DEFAULT_MAILBOX_GAP = 1000
 MINIMUM_MAILBOX_GAP = 1
 REBALANCE_MAILBOX_WINDOW = 10
 
@@ -265,26 +265,30 @@ def update_mailbox_position(user: str, target_mailbox_id: str, prior_mailbox_id:
 		client.mailbox_get(), key=lambda m: (m["sortOrder"], get_sort_order(m["role"]), m["name"], m["id"])
 	)
 	updates = get_updates(mailboxes, target_mailbox_id, prior_mailbox_id)
-	response = client._make_request(
-		using=["urn:ietf:params:jmap:mail"],
-		method_calls=[
-			[
-				"Mailbox/set",
-				{
-					"accountId": client.primary_account_id,
-					"update": {k: {"sortOrder": v} for k, v in updates.items()},
-				},
-				"0",
-			]
-		],
-	)["methodResponses"][0][1]
+
+	result = {"updated": {}, "notUpdated": {}}
+	for updates_batch in batch_dict(updates, client.max_objects_in_set):
+		response = client._make_request(
+			using=["urn:ietf:params:jmap:mail"],
+			method_calls=[
+				[
+					"Mailbox/set",
+					{
+						"accountId": client.primary_account_id,
+						"update": {k: {"sortOrder": v} for k, v in updates_batch.items()},
+					},
+					"0",
+				]
+			],
+		)
+
+		result["updated"].update(response["methodResponses"][0][1].get("updated", {}))
+		if not_updated := response["methodResponses"][0][1].get("notUpdated", {}):
+			result["notUpdated"].update(not_updated)
 
 	title = _("Mailbox Position Update Error")
-	if not response.get("updated"):
-		if response.get("notUpdated"):
-			frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
-		else:
-			frappe.throw(_(response["description"]), title=title)
+	if not result.get("updated"):
+		frappe.throw(_(result["description"]), title=title)
 
 
 def format_mailbox(user: str, mailbox: dict) -> dict:
