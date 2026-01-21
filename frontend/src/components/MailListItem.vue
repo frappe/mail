@@ -96,10 +96,9 @@
 					<AttachmentCapsule
 						:file-name="attachment.filename"
 						:blob-i-d="attachment.blob_id"
-						:type="attachment.type"
 						class="mr-2"
 						:class="isFullWidth ? 'max-w-32' : 'max-w-20'"
-						@click.stop.prevent
+						@click.stop.prevent="openAttachment(idx)"
 					/>
 				</Tooltip>
 				<AttachmentCapsule
@@ -154,6 +153,11 @@
 				</template>
 			</Button>
 		</div>
+		<AttachmentViewer
+			v-model="showAttachmentViewer"
+			:attachments="mail.attachments"
+			:initial-index="attachmentIndex"
+		/>
 	</router-link>
 </template>
 
@@ -166,6 +170,7 @@ import { getFirstAlphabet, getFormattedRecipients } from '@/utils'
 import { useLayout, useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
+import AttachmentViewer from '@/components/AttachmentViewer.vue'
 import MailDate from '@/components/MailDate.vue'
 
 import type { Thread } from '@/types'
@@ -200,6 +205,14 @@ const header = computed(() => {
 })
 
 const isHovered = ref(false)
+
+const showAttachmentViewer = ref(false)
+const attachmentIndex = ref(0)
+
+const openAttachment = (idx: number) => {
+	attachmentIndex.value = idx
+	showAttachmentViewer.value = true
+}
 
 defineExpose({ id: mail.thread_id })
 

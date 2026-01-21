@@ -228,14 +228,12 @@
 
 							<div v-if="mail.attachments?.length" class="mt-8 flex flex-wrap">
 								<AttachmentCapsule
-									v-for="attachment in mail.attachments.filter(
-										(a: Attachment) => a.disposition === 'attachment',
-									)"
-									:key="attachment.name"
+									v-for="(attachment, idx) in filteredAttachments(mail)"
+									:key="idx"
 									:file-name="attachment.filename"
 									:blob-i-d="attachment.blob_id"
-									:type="attachment.type"
 									class="mb-2 mr-2"
+									@click="openAttachment(filteredAttachments(mail), Number(idx))"
 								/>
 							</div>
 						</div>
@@ -270,6 +268,11 @@
 			:mail-details="draftMails[focusedDraft]"
 			@reload-mails="reload"
 			@discard-mail="discardLocalDraft(focusedDraft)"
+		/>
+		<AttachmentViewer
+			v-model="showAttachmentViewer"
+			:attachments="attachments"
+			:initial-index="attachmentIndex"
 		/>
 	</div>
 
@@ -316,6 +319,7 @@ import {
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
+import AttachmentViewer from '@/components/AttachmentViewer.vue'
 import ComposeMailEditor from '@/components/ComposeMailEditor.vue'
 import EmailContent from '@/components/EmailContent.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
@@ -505,6 +509,19 @@ const replyForwardActions = computed(() =>
 )
 
 const showMailDetails = ref<string>()
+
+const filteredAttachments = (mail: Mail) =>
+	mail.attachments.filter((a: Attachment) => a.disposition === 'attachment')
+
+const showAttachmentViewer = ref(false)
+const attachments = ref<Attachment[]>([])
+const attachmentIndex = ref(0)
+
+const openAttachment = (mailAttachments: Attachment[], idx: number) => {
+	attachments.value = mailAttachments
+	attachmentIndex.value = idx
+	showAttachmentViewer.value = true
+}
 
 const isCollapsed = (mail: Mail) =>
 	!!(mail.collapsed && mail !== thread.data[thread.data.length - 1])

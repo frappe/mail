@@ -18,7 +18,7 @@
 					<div class="flex max-w-2xl items-center space-x-2 truncate rounded">
 						<Paperclip class="h-4 w-4" />
 						<span class="truncate text-base font-medium">
-							{{ currentAttachment?.fileName }}
+							{{ currentAttachment?.filename }}
 						</span>
 					</div>
 					<div class="shrink-0 space-x-2 sm:space-x-4">
@@ -50,7 +50,7 @@
 						<img
 							v-if="isImage"
 							:src="previewUrl"
-							:alt="currentAttachment?.fileName"
+							:alt="currentAttachment?.filename"
 							class="max-h-[85vh] max-w-full object-contain"
 						/>
 						<!-- PDF Preview -->
@@ -98,17 +98,17 @@
 
 				<div
 					v-if="attachments && attachments.length > 1"
-					class="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center space-x-4 rounded bg-white/10 px-4 py-2 backdrop-blur-sm"
+					class="flex items-center max-sm:w-full max-sm:justify-between sm:space-x-4"
 				>
 					<button
 						:disabled="currentIndex === 0"
-						class="flex items-center space-x-1 rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-white/10 disabled:opacity-50"
+						class="rounded p-1.5 disabled:opacity-50"
+						:class="{ 'hover:bg-white/20': currentIndex !== 0 }"
 						@click="previousAttachment"
 					>
 						<ChevronLeft class="h-4 w-4" />
-						<span>{{ __('Previous') }}</span>
 					</button>
-					<span class="text-sm text-white/80">
+					<span class="text-sm">
 						{{
 							__('{0} of {1}', [
 								(currentIndex + 1).toString(),
@@ -118,10 +118,10 @@
 					</span>
 					<button
 						:disabled="currentIndex === attachments.length - 1"
-						class="flex items-center space-x-1 rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-white/10 disabled:opacity-50"
+						class="rounded p-1.5 disabled:opacity-50"
+						:class="{ 'hover:bg-white/20': currentIndex !== attachments.length - 1 }"
 						@click="nextAttachment"
 					>
-						<span>{{ __('Next') }}</span>
 						<ChevronRight class="h-4 w-4" />
 					</button>
 				</div>
@@ -145,11 +145,7 @@ import { Button, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 
-interface Attachment {
-	fileName: string
-	blobID: string
-	type?: string
-}
+import type { Attachment } from '@/types'
 
 const { attachments, initialIndex } = defineProps<{
 	attachments?: Attachment[]
@@ -185,7 +181,7 @@ const nextAttachment = () => {
 }
 
 const loadAttachment = () => {
-	if (!currentAttachment.value?.blobID) return
+	if (!currentAttachment.value?.blob_id) return
 
 	isLoading.value = true
 	if (previewUrl.value) {
@@ -198,7 +194,7 @@ const loadAttachment = () => {
 
 const fetchAttachment = createResource({
 	url: 'mail.api.mail.fetch_attachment',
-	makeParams: () => ({ blob_id: currentAttachment.value?.blobID }),
+	makeParams: () => ({ blob_id: currentAttachment.value?.blob_id }),
 	onSuccess: (data: number[]) => {
 		const byteArray = new Uint8Array(data)
 		const blob = new Blob([byteArray], { type: currentAttachment.value?.type })
@@ -209,15 +205,16 @@ const fetchAttachment = createResource({
 		isLoading.value = false
 		raiseToast(error.message, 'error')
 	},
+	cache: ['attachment', currentAttachment.value?.blob_id],
 })
 
 const downloadAttachment = () => {
-	if (!currentAttachment.value?.blobID || !previewUrl.value) return
+	if (!currentAttachment.value?.blob_id || !previewUrl.value) return
 
 	isDownloading.value = true
 	const link = document.createElement('a')
 	link.href = previewUrl.value
-	link.download = currentAttachment.value?.fileName || 'attachment'
+	link.download = currentAttachment.value?.filename || 'attachment'
 	document.body.appendChild(link)
 	link.click()
 	document.body.removeChild(link)
@@ -225,6 +222,7 @@ const downloadAttachment = () => {
 }
 
 watch(isOpen, (newVal) => {
+	currentIndex.value = initialIndex || 0
 	if (newVal && currentAttachment.value) loadAttachment()
 	else if (!newVal) closeViewer()
 })
