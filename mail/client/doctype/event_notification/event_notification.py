@@ -122,8 +122,12 @@ def delete_event_notifications(user: str, ids: list[str]) -> None:
 	response = client.calendar_event_notification_delete(ids)
 
 	if response.get("notDestroyed"):
+		error_messages = []
+		for id, error in response["notDestroyed"].items():
+			error_messages.append(f"{id}: {error['description']}")
 		frappe.throw(
-			_(response["notDestroyed"][id]["description"]), title=_("Event Notification Deletion Error")
+			_("Event Notification Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
+			title=_("Event Notification Deletion Error"),
 		)
 
 

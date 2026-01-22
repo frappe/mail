@@ -168,8 +168,12 @@ def delete_participant_identities(user: str, ids: list[str]) -> None:
 	response = client.participant_identity_delete(ids)
 
 	if response.get("notDestroyed"):
+		error_messages = []
+		for id, error in response["notDestroyed"].items():
+			error_messages.append(f"{id}: {error['description']}")
 		frappe.throw(
-			_(response["notDestroyed"][ids]["description"]), title=_("Participant Identity Deletion Error")
+			_("Participant Identity Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
+			title=_("Participant Identity Deletion Error"),
 		)
 
 

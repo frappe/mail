@@ -1,6 +1,7 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import json
 from typing import Literal
 
 import frappe
@@ -53,7 +54,7 @@ class Calendar(Document):
 
 	def delete(self) -> None:
 		user, id = self.name.split("|")
-		delete_calendar(user, id)
+		delete_calendars(user, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -98,6 +99,24 @@ def validate_calendar_name_format(name: str) -> None:
 	parts = name.split("|")
 	if len(parts) != 2:
 		frappe.throw(_("Calendar name must be in the format 'user|id'."))
+
+
+@frappe.whitelist()
+def bulk_delete(names: str | list[str]) -> None:
+	"""Deletes multiple calendars given their names."""
+
+	if isinstance(names, str):
+		names = json.loads(names)
+
+	user_ids_map = {}
+	for name in names:
+		user, id = name.split("|")
+		user_ids_map.setdefault(user, []).append(id)
+
+	for user, ids in user_ids_map.items():
+		delete_calendars(user, ids)
+
+	frappe.msgprint(_("Calendars deleted successfully."), alert=True)
 
 
 @frappe.whitelist()
@@ -198,16 +217,22 @@ def update_calendar(
 
 
 @frappe.whitelist()
-def delete_calendar(user: str, id: str, remove_events: bool = True) -> None:
-	"""Deletes a calendar for the given user by its ID."""
+def delete_calendars(user: str, ids: list[str], remove_events: bool = True) -> None:
+	"""Deletes calendars for the specified user and ID(s)."""
 
 	has_permission_for_user(user)
 
 	client = get_jmap_client(user)
-	response = client.calendar_delete([id], remove_events=remove_events)
+	response = client.calendar_delete(ids, remove_events=remove_events)
 
 	if response.get("notDestroyed"):
-		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Calendar Deletion Error"))
+		error_messages = []
+		for id, error in response["notDestroyed"].items():
+			error_messages.append(f"{id}: {error['description']}")
+		frappe.throw(
+			_("Calendar Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
+			title=_("Calendar Deletion Error"),
+		)
 
 
 @frappe.whitelist()
