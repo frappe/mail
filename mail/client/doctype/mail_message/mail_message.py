@@ -6,6 +6,7 @@ import re
 from email.utils import formataddr
 from functools import cached_property
 from typing import Literal
+from uuid import uuid7
 
 import frappe
 from bs4 import BeautifulSoup
@@ -13,7 +14,6 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.push_notification import PushNotification
 from frappe.utils import add_to_date, cint, escape_html, get_datetime, now, time_diff_in_seconds
-from uuid_utils import uuid7
 
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_jmap_client

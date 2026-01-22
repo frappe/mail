@@ -5,12 +5,12 @@ import re
 import socket
 from email import message_from_string
 from email.mime.multipart import MIMEMultipart
+from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_to_date, get_datetime, now, time_diff_in_seconds
-from uuid_utils import uuid7
 
 from mail.utils.dns import get_host_by_ip
 

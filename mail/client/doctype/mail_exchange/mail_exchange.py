@@ -9,6 +9,7 @@ from contextlib import closing
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
+from uuid import uuid7
 
 import frappe
 from frappe import _
@@ -24,7 +25,6 @@ from frappe.utils import (
 	now,
 	time_diff_in_seconds,
 )
-from uuid_utils import uuid7
 
 from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
