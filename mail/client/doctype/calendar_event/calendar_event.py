@@ -5,12 +5,12 @@
 import json
 from datetime import timedelta
 from typing import Literal
+from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
-from uuid_utils import uuid7
 
 from mail.client.doctype.calendar.calendar import validate_calendar_name_format
 from mail.jmap import get_jmap_client

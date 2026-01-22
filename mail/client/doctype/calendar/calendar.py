@@ -3,12 +3,12 @@
 
 import json
 from typing import Literal
+from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, today
-from uuid_utils import uuid7
 
 from mail.jmap import get_jmap_client
 from mail.utils import parse_filters
