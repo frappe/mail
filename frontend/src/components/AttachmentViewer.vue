@@ -26,14 +26,14 @@
 					</div>
 					<div class="shrink-0 space-x-2 sm:space-x-4">
 						<button
-							v-if="!isLoading && canPrint"
+							v-if="previewUrl && !fetchAttachment.loading && canPrint"
 							class="rounded p-1.5 hover:bg-white/20"
 							@click="printAttachment"
 						>
 							<Printer class="h-4 w-4" />
 						</button>
 						<button
-							v-if="!isLoading"
+							v-if="previewUrl && !fetchAttachment.loading"
 							:disabled="isDownloading"
 							class="rounded p-1.5 hover:bg-white/20 disabled:opacity-50"
 							@click="downloadAttachment"
@@ -51,7 +51,7 @@
 					class="flex h-full w-full items-center justify-center"
 					@click.self="closeViewer"
 				>
-					<LoaderCircle v-if="isLoading" class="h-8 w-8 animate-spin" />
+					<LoaderCircle v-if="fetchAttachment.loading" class="h-8 w-8 animate-spin" />
 					<div
 						v-else-if="previewUrl"
 						class="flex h-full w-full items-center justify-center"
@@ -165,7 +165,6 @@ const { attachments, initialIndex } = defineProps<{
 
 const isOpen = defineModel<boolean>()
 const currentIndex = ref(initialIndex || 0)
-const isLoading = ref(false)
 const isDownloading = ref(false)
 const previewUrl = ref<string | null>(null)
 
@@ -195,7 +194,6 @@ const nextAttachment = () => {
 const loadAttachment = () => {
 	if (!currentAttachment.value?.blob_id) return
 
-	isLoading.value = true
 	if (previewUrl.value) {
 		URL.revokeObjectURL(previewUrl.value)
 		previewUrl.value = null
@@ -211,10 +209,8 @@ const fetchAttachment = createResource({
 		const byteArray = new Uint8Array(data)
 		const blob = new Blob([byteArray], { type: currentAttachment.value?.type })
 		previewUrl.value = URL.createObjectURL(blob)
-		isLoading.value = false
 	},
 	onError: (error) => {
-		isLoading.value = false
 		raiseToast(error.message, 'error')
 	},
 	cache: ['attachment', currentAttachment.value?.blob_id],

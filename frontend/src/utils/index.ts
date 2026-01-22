@@ -1,4 +1,4 @@
-import { File } from 'lucide-vue-next'
+import { File, Paperclip } from 'lucide-vue-next'
 import { toast } from 'frappe-ui'
 
 import dayjs from '@/utils/dayjs'
@@ -261,6 +261,7 @@ export const convertHtmlToText = (html: string) => {
 export const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
 
 export const getFileIcon = (type?: string) => {
+	if (!type) return Paperclip
 	if (type?.startsWith('image/')) return ImageIcon
 	if (type === 'application/pdf') return PDFIcon
 	if (type?.startsWith('video/')) return VideoIcon

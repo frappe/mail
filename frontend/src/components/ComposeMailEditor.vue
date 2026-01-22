@@ -529,6 +529,7 @@ watch(
 const fetchAttachment = createResource({
 	url: 'mail.api.mail.fetch_attachment',
 	makeParams: (blob_id: string) => ({ blob_id }),
+	onError: (error) => raiseToast(error.message, 'error'),
 })
 
 const openAttachment = async (blob_id?: string, type?: string) => {

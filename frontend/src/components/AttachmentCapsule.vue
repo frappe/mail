@@ -1,14 +1,13 @@
 <template>
 	<div
-		class="group/capsule flex items-center space-x-2 rounded-full border px-2 py-1.5"
-		:class="{ 'hover:border-outline-gray-3 cursor-pointer': blobID }"
+		class="group/capsule hover:border-outline-gray-3 flex cursor-pointer items-center space-x-2 rounded-full border px-2 py-1.5"
 	>
 		<div class="text-ink-gray-4">
-			<Loader v-if="isDownloading" class="h-3.5 w-3.5 shrink-0 animate-spin" />
+			<Loader v-if="isDownloading" class="h-4 w-4 shrink-0 animate-spin" />
 			<template v-else>
 				<component
 					:is="getFileIcon(type)"
-					class="h-3.5 w-3.5 shrink-0"
+					class="h-4 w-4 shrink-0"
 					:class="{ 'group-hover/capsule:hidden': blobID }"
 				/>
 				<button
@@ -16,7 +15,7 @@
 					:class="{ 'group-hover/capsule:block': blobID }"
 					@click.stop.prevent="downloadAttachment"
 				>
-					<Download class="hover:text-ink-gray-8 h-3.5 w-3.5 shrink-0" />
+					<Download class="hover:text-ink-gray-8 h-4 w-4 shrink-0" />
 				</button>
 			</template>
 		</div>
