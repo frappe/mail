@@ -1,7 +1,9 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+
 import json
+from datetime import timedelta
 from typing import Literal
 
 import frappe
@@ -14,7 +16,7 @@ from mail.client.doctype.calendar.calendar import validate_calendar_name_format
 from mail.jmap import get_jmap_client
 from mail.utils import parse_filters
 from mail.utils.cache import get_root_domain_name
-from mail.utils.dt import parse_iso_datetime
+from mail.utils.dt import convert_to_utc, get_utc_now, parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
 
 
@@ -116,8 +118,13 @@ class CalendarEvent(Document):
 
 	def load_from_db(self) -> "CalendarEvent":
 		user, id = self.name.split("|")
-		event = get_calendar_event(user, id)
-		return super(Document, self).__init__(event)
+		if events := get_calendar_events(user, [id]):
+			return super(Document, self).__init__(events[0])
+
+		frappe.throw(
+			_("Calendar Event with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
+			title=_("Calendar Event Not Found"),
+		)
 
 	def db_update(self) -> None:
 		raise NotImplementedError
@@ -129,13 +136,40 @@ class CalendarEvent(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
+
+		title = filters.get("title")
 		user = filters.get("user") or frappe.session.user
+		after = filters.get("after") and convert_to_utc(filters.get("after"), naive=True).strftime(
+			"%Y-%m-%dT%H:%M:%SZ"
+		)
+		before = filters.get("before") and convert_to_utc(filters.get("before"), naive=True).strftime(
+			"%Y-%m-%dT%H:%M:%SZ"
+		)
+
+		if not after and not before:
+			now = get_utc_now(naive=True)
+
+			first_day = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+			after = first_day.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+			first_next_month = (now.replace(day=1) + timedelta(days=32)).replace(day=1)
+			last_day = first_next_month - timedelta(days=1)
+			before = last_day.strftime("%Y-%m-%dT00:00:00Z")
 
 		if not user or user in ("Guest", "Administrator"):
 			frappe.msgprint(_("Please select a user to view calendar events."), alert=True)
 			return []
 
-		events = fetch_calendar_events(user, limit=page_length)
+		filter = {}
+		if title:
+			filter["title"] = title
+		if after:
+			filter["after"] = after
+		if before:
+			filter["before"] = before
+		limit = cint(kwargs.get("start")) + page_length
+		events, total = fetch_calendar_events(user, filter, limit=limit)
+		frappe.cache.set_value(_get_total_cache_key(user), total, expires_in_sec=600)
 
 		if not events:
 			frappe.msgprint(_("No calendar events found."), alert=True)
@@ -253,20 +287,58 @@ def add_calendar_event(
 
 
 @frappe.whitelist()
-def get_calendar_event(user: str, id: str) -> dict:
-	"""Returns calendar event details for the given name in the format 'user|id'."""
+def fetch_calendar_events(
+	user: str,
+	filter: dict | None = None,
+	position: int = 0,
+	limit: int = 50,
+	sort: list[dict] | None = None,
+	time_zone: str | None = None,
+	expand_recurrences: bool = False,
+) -> list:
+	"""Returns a list of calendar events for the given user based on the provided filters."""
+
+	has_permission_for_user(user)
+
+	calendar_events = []
+	client = get_jmap_client(user)
+
+	while len(calendar_events) < limit:
+		result = client.calendar_event_query(filter, position, limit, sort, time_zone, expand_recurrences)
+		ids = result["ids"]
+		total = result["total"]
+
+		if not ids:
+			break
+
+		calendar_events.extend(get_calendar_events(user, ids))
+
+		if len(calendar_events) >= limit:
+			break
+
+		position += len(ids)
+
+		if position >= total:
+			break
+
+	return calendar_events[:limit], total
+
+
+@frappe.whitelist()
+def get_calendar_events(user: str, ids: list[str]) -> list[dict]:
+	"""Returns a list of calendar events for the specified user and IDs."""
 
 	has_permission_for_user(user)
 
 	client = get_jmap_client(user)
-	if events := client.calendar_event_get([id]):
-		calendar_map = {c["id"]: c["_name"] for c in client.calendars}
-		return format_calendar_event(user, calendar_map, events[0])
+	calendar_map = {c["id"]: c["_name"] for c in client.calendars}
 
-	frappe.throw(
-		_("Calendar Event with ID {0} not found for user {1}").format(frappe.bold(id), frappe.bold(user)),
-		title=_("Calendar Event Not Found"),
-	)
+	events = {}
+	for event in client.calendar_event_get(ids):
+		event = format_calendar_event(user, calendar_map, event)
+		events[event["id"]] = event
+
+	return [events[id] for id in ids if id in events]
 
 
 @frappe.whitelist()
@@ -294,24 +366,6 @@ def delete_calendar_events(user: str, ids: list[str]) -> None:
 
 	if response.get("notDestroyed"):
 		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Calendar Event Deletion Error"))
-
-
-@frappe.whitelist()
-def fetch_calendar_events(user: str, page: int = 1, limit: int = 10) -> list:
-	"""Returns a list of calendar events for the given user."""
-
-	has_permission_for_user(user)
-
-	client = get_jmap_client(user)
-	events = client.calendar_event_get()
-	calendar_map = {c["id"]: c["_name"] for c in client.calendars}
-	formatted_events = [format_calendar_event(user, calendar_map, event) for event in events]
-	frappe.cache.set_value(_get_total_cache_key(user), len(events), expires_in_sec=600)
-
-	start = (page - 1) * limit
-	end = start + limit
-
-	return formatted_events[start:end]
 
 
 @frappe.whitelist()

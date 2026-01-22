@@ -97,41 +97,6 @@ def bulk_delete(names: str | list[str]) -> None:
 
 
 @frappe.whitelist()
-def get_event_notifications(user: str, ids: list[str]) -> list[dict]:
-	"""Returns a list of event notifications for the specified user and IDs."""
-
-	has_permission_for_user(user)
-
-	client = get_jmap_client(user)
-
-	notifications = {}
-	for notification in client.calendar_event_notification_get(ids):
-		notification = format_event_notification(user, notification)
-		notifications[notification["id"]] = notification
-
-	return [notifications[id] for id in ids if id in notifications]
-
-
-@frappe.whitelist()
-def delete_event_notifications(user: str, ids: list[str]) -> None:
-	"""Deletes event notifications for the specified user and ID(s)."""
-
-	has_permission_for_user(user)
-
-	client = get_jmap_client(user)
-	response = client.calendar_event_notification_delete(ids)
-
-	if response.get("notDestroyed"):
-		error_messages = []
-		for id, error in response["notDestroyed"].items():
-			error_messages.append(f"{id}: {error['description']}")
-		frappe.throw(
-			_("Event Notification Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
-			title=_("Event Notification Deletion Error"),
-		)
-
-
-@frappe.whitelist()
 def fetch_event_notifications(
 	user: str,
 	filter: dict | None = None,
@@ -165,6 +130,41 @@ def fetch_event_notifications(
 			break
 
 	return notifications[:limit], total
+
+
+@frappe.whitelist()
+def get_event_notifications(user: str, ids: list[str]) -> list[dict]:
+	"""Returns a list of event notifications for the specified user and IDs."""
+
+	has_permission_for_user(user)
+
+	client = get_jmap_client(user)
+
+	notifications = {}
+	for notification in client.calendar_event_notification_get(ids):
+		notification = format_event_notification(user, notification)
+		notifications[notification["id"]] = notification
+
+	return [notifications[id] for id in ids if id in notifications]
+
+
+@frappe.whitelist()
+def delete_event_notifications(user: str, ids: list[str]) -> None:
+	"""Deletes event notifications for the specified user and ID(s)."""
+
+	has_permission_for_user(user)
+
+	client = get_jmap_client(user)
+	response = client.calendar_event_notification_delete(ids)
+
+	if response.get("notDestroyed"):
+		error_messages = []
+		for id, error in response["notDestroyed"].items():
+			error_messages.append(f"{id}: {error['description']}")
+		frappe.throw(
+			_("Event Notification Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
+			title=_("Event Notification Deletion Error"),
+		)
 
 
 def format_event_notification(user: str, notification: dict) -> dict:
