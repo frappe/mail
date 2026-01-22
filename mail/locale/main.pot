@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Mail VERSION\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
-"POT-Creation-Date: 2026-01-06 12:47+0553\n"
-"PO-Revision-Date: 2026-01-06 12:47+0553\n"
+"POT-Creation-Date: 2026-01-19 13:46+0553\n"
+"PO-Revision-Date: 2026-01-19 13:46+0553\n"
 "Last-Translator: developers@frappe.io\n"
 "Language-Team: developers@frappe.io\n"
 "MIME-Version: 1.0\n"
@@ -192,6 +192,10 @@ msgstr ""
 
 #: mail/utils/rate_limiter.py:28
 msgid "Access denied: Your IP address ({0}) is blocked due to explicit IP restrictions."
+msgstr ""
+
+#: mail/auth.py:64 mail/auth.py:74
+msgid "Access not allowed for this URL"
 msgstr ""
 
 #: mail/mail/doctype/mail_settings/mail_settings.js:27
@@ -610,7 +614,7 @@ msgstr ""
 msgid "Assigned Role"
 msgstr ""
 
-#: mail/jmap.py:1760
+#: mail/jmap.py:1759
 msgid "At least one address book operation must be provided."
 msgstr ""
 
@@ -753,7 +757,7 @@ msgstr ""
 
 #. Label of the bcc (Table) field in DocType 'Identity'
 #. Option for the 'Type' (Select) field in DocType 'Mail Message Recipient'
-#: frontend/src/components/ComposeMailEditor.vue:92
+#: frontend/src/components/ComposeMailEditor.vue:99
 #: frontend/src/components/Modals/SearchModal.vue:56
 #: frontend/src/components/Settings/IdentitySettings.vue:44
 #: mail/client/doctype/identity/identity.json
@@ -913,7 +917,7 @@ msgid "Category"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Mail Message Recipient'
-#: frontend/src/components/ComposeMailEditor.vue:77
+#: frontend/src/components/ComposeMailEditor.vue:84
 #: frontend/src/components/Modals/SearchModal.vue:55
 #: mail/client/doctype/mail_message_recipient/mail_message_recipient.json
 msgid "Cc"
@@ -1005,16 +1009,6 @@ msgstr ""
 #. Label of the dns_provider_client_ip (Data) field in DocType 'Mail Settings'
 #: mail/mail/doctype/mail_settings/mail_settings.json
 msgid "Client IP"
-msgstr ""
-
-#. Label of the cloud_id (Data) field in DocType 'Mail Cluster Store'
-#: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
-msgid "Cloud ID"
-msgstr ""
-
-#. Description of the 'Cloud ID' (Data) field in DocType 'Mail Cluster Store'
-#: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
-msgid "Cloud ID for the ElasticSearch cluster."
 msgstr ""
 
 #. Option for the 'DNS Provider' (Select) field in DocType 'Mail Settings'
@@ -1151,11 +1145,11 @@ msgstr ""
 msgid "Config Checksum"
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:104
+#: mail/server/doctype/server_deployment/server_deployment.py:133
 msgid "Config does not belong to the selected server."
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:100
+#: mail/server/doctype/server_deployment/server_deployment.py:129
 msgid "Config is required."
 msgstr ""
 
@@ -1888,12 +1882,12 @@ msgstr ""
 msgid "Disabling Push Notifications..."
 msgstr ""
 
-#: frontend/src/components/ComposeMailToolbar.vue:54
+#: frontend/src/components/ComposeMailToolbar.vue:41
 #: frontend/src/components/SendMailMobileLayout.vue:52
 msgid "Discard"
 msgstr ""
 
-#: frontend/src/components/ComposeMailToolbar.vue:55
+#: frontend/src/components/ComposeMailToolbar.vue:42
 msgid "Discard ({0}+D)"
 msgstr ""
 
@@ -2036,11 +2030,11 @@ msgstr ""
 msgid "Draft"
 msgstr ""
 
-#: frontend/src/components/ComposeMailEditor.vue:366
+#: frontend/src/components/ComposeMailEditor.vue:431
 msgid "Draft discarded."
 msgstr ""
 
-#: frontend/src/components/ComposeMailEditor.vue:331
+#: frontend/src/components/ComposeMailEditor.vue:396
 msgid "Draft saved."
 msgstr ""
 
@@ -2063,6 +2057,10 @@ msgstr ""
 #. Queue'
 #: mail/client/doctype/mail_queue/mail_queue.json
 msgid "Drafted At - Creation"
+msgstr ""
+
+#: frontend/src/components/ComposeMailEditor.vue:137
+msgid "Drop files to upload"
 msgstr ""
 
 #: mail/server/doctype/dns_record/dns_record.py:49
@@ -2148,7 +2146,7 @@ msgstr ""
 msgid "Either key or IP flag is required."
 msgstr ""
 
-#: mail/jmap.py:1173
+#: mail/jmap.py:1172
 msgid "Either mailbox_id or keywords must be provided."
 msgstr ""
 
@@ -2466,7 +2464,7 @@ msgstr ""
 msgid "Error uploading attachment"
 msgstr ""
 
-#: mail/jmap.py:2074
+#: mail/jmap.py:2073
 msgid "Error {0}: {1}"
 msgstr ""
 
@@ -2738,6 +2736,10 @@ msgstr ""
 msgid "Failed to update principal {0}: {1}"
 msgstr ""
 
+#: frontend/src/components/ComposeMailEditor.vue:644
+msgid "Failed to upload {0}"
+msgstr ""
+
 #: frontend/src/components/Modals/AddDomainModal.vue:88
 msgid "Failed to verify DNS record."
 msgstr ""
@@ -2793,7 +2795,7 @@ msgstr ""
 msgid "Filebeat Stream Setup (FC)"
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:243
+#: mail/server/doctype/server_deployment/server_deployment.py:273
 msgid "Filebeat stream setup job has been created."
 msgstr ""
 
@@ -2867,7 +2869,7 @@ msgstr ""
 msgid "Format"
 msgstr ""
 
-#: frontend/src/components/ComposeMailEditor.vue:386
+#: frontend/src/components/ComposeMailEditor.vue:451
 #: frontend/src/components/MailActions.vue:133
 #: frontend/src/components/MailThread.vue:499
 #: mail/client/doctype/mail_message/mail_message.js:91
@@ -2903,7 +2905,7 @@ msgid "Frequency (Cron)"
 msgstr ""
 
 #. Label of the envelope_from (Data) field in DocType 'DMARC Report Detail'
-#: frontend/src/components/ComposeMailEditor.vue:18
+#: frontend/src/components/ComposeMailEditor.vue:25
 #: frontend/src/components/Modals/SearchModal.vue:52 mail/api/mail.py:399
 #: mail/server/doctype/dmarc_report_detail/dmarc_report_detail.json
 msgid "From"
@@ -3345,7 +3347,7 @@ msgstr ""
 msgid "Identity with ID {0} not found in user {1}."
 msgstr ""
 
-#: mail/jmap.py:400
+#: mail/jmap.py:399
 msgid "Identity with email {0} not found for user {1}."
 msgstr ""
 
@@ -3710,11 +3712,11 @@ msgstr ""
 msgid "JMAP Username must be the same as the User name."
 msgstr ""
 
-#: mail/jmap.py:1917
+#: mail/jmap.py:1916
 msgid "JMAP settings are not configured for user {0}."
 msgstr ""
 
-#: mail/jmap.py:1924
+#: mail/jmap.py:1923
 msgid "JMAP username for tenant-bound user {0} must be the same as the system username."
 msgstr ""
 
@@ -4266,7 +4268,7 @@ msgid "Mail Server {0} does not have a cluster."
 msgstr ""
 
 #: mail/server/doctype/server_ansible_play/server_ansible_play.py:48
-#: mail/server/doctype/server_deployment/server_deployment.py:92
+#: mail/server/doctype/server_deployment/server_deployment.py:121
 #: mail/server/doctype/server_job/server_job.py:47
 msgid "Mail Server {0} is disabled"
 msgstr ""
@@ -4367,11 +4369,11 @@ msgstr ""
 msgid "Mailbox"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:95 mail/jmap.py:563
+#: mail/client/doctype/mailbox/mailbox.py:98 mail/jmap.py:562
 msgid "Mailbox Creation Error"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:158
+#: mail/client/doctype/mailbox/mailbox.py:161
 msgid "Mailbox Deletion Error"
 msgstr ""
 
@@ -4393,15 +4395,19 @@ msgstr ""
 msgid "Mailbox Name"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:116
+#: mail/client/doctype/mailbox/mailbox.py:119
 msgid "Mailbox Not Found"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:134
+#: mail/client/doctype/mailbox/mailbox.py:283
+msgid "Mailbox Position Update Error"
+msgstr ""
+
+#: mail/client/doctype/mailbox/mailbox.py:137
 msgid "Mailbox Update Error"
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:136
+#: mail/client/doctype/mailbox/mailbox.py:139
 msgid "Mailbox cannot be a parent of itself."
 msgstr ""
 
@@ -4413,15 +4419,15 @@ msgstr ""
 msgid "Mailbox not found for {0}"
 msgstr ""
 
-#: mail/jmap.py:579 mail/jmap.py:593
+#: mail/jmap.py:578 mail/jmap.py:592
 msgid "Mailbox with ID {0} not found for user {1}."
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:115
+#: mail/client/doctype/mailbox/mailbox.py:118
 msgid "Mailbox with ID {0} not found in user {1}."
 msgstr ""
 
-#: mail/jmap.py:551
+#: mail/jmap.py:550
 msgid "Mailbox with role {0} not found for user {1}."
 msgstr ""
 
@@ -4844,7 +4850,7 @@ msgstr ""
 msgid "Message not found or you do not have permission to view it."
 msgstr ""
 
-#: frontend/src/components/ComposeMailEditor.vue:332
+#: frontend/src/components/ComposeMailEditor.vue:397
 msgid "Message sent."
 msgstr ""
 
@@ -5233,7 +5239,7 @@ msgstr ""
 msgid "No mail data exchanges found."
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:53
+#: mail/client/doctype/mailbox/mailbox.py:56
 msgid "No mailboxes found."
 msgstr ""
 
@@ -5405,7 +5411,7 @@ msgstr ""
 msgid "Only failed ansible plays can be retried."
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:286
+#: mail/server/doctype/server_deployment/server_deployment.py:317
 msgid "Only failed deployments can be retried."
 msgstr ""
 
@@ -5710,7 +5716,7 @@ msgstr ""
 msgid "Please add at least one command to execute."
 msgstr ""
 
-#: frontend/src/components/ComposeMailEditor.vue:300
+#: frontend/src/components/ComposeMailEditor.vue:347
 #: mail/client/doctype/mail_queue/mail_queue.py:456
 msgid "Please add at least one recipient."
 msgstr ""
@@ -5755,7 +5761,7 @@ msgstr ""
 msgid "Please select a user to view identities."
 msgstr ""
 
-#: mail/client/doctype/mailbox/mailbox.py:47
+#: mail/client/doctype/mailbox/mailbox.py:50
 msgid "Please select a user to view mailboxes."
 msgstr ""
 
@@ -5804,7 +5810,7 @@ msgid "Please specify tenant to fetch principals."
 msgstr ""
 
 #: mail/server/doctype/server_ansible_play/server_ansible_play.py:50
-#: mail/server/doctype/server_deployment/server_deployment.py:94
+#: mail/server/doctype/server_deployment/server_deployment.py:123
 #: mail/server/doctype/server_job/server_job.py:49
 msgid "Please verify SSH connection for Mail Server {0}"
 msgstr ""
@@ -5835,7 +5841,7 @@ msgstr ""
 msgid "Pools"
 msgstr ""
 
-#: frontend/src/components/ComposeMailEditor.vue:396
+#: frontend/src/components/ComposeMailEditor.vue:461
 msgid "Pop Out"
 msgstr ""
 
@@ -5930,6 +5936,10 @@ msgstr ""
 
 #: mail/server/doctype/mail_principal/mail_principal.py:487
 msgid "Principal {0} not found in backend."
+msgstr ""
+
+#: mail/client/doctype/mailbox/mailbox.py:211
+msgid "Prior mailbox ID {0} not found."
 msgstr ""
 
 #. Label of the priority (Select) field in DocType 'Mail Queue'
@@ -6450,7 +6460,7 @@ msgstr ""
 msgid "Renewing..."
 msgstr ""
 
-#: frontend/src/components/ComposeMailEditor.vue:379
+#: frontend/src/components/ComposeMailEditor.vue:444
 #: frontend/src/components/MailActions.vue:97
 #: frontend/src/components/MailActions.vue:121
 #: frontend/src/components/MailThread.vue:486
@@ -6468,7 +6478,7 @@ msgstr ""
 msgid "Reply / Forward"
 msgstr ""
 
-#: frontend/src/components/ComposeMailEditor.vue:381
+#: frontend/src/components/ComposeMailEditor.vue:446
 #: frontend/src/components/MailActions.vue:127
 #: frontend/src/components/MailThread.vue:492
 #: mail/client/doctype/mail_message/mail_message.js:78
@@ -6878,7 +6888,7 @@ msgstr ""
 msgid "SSH connection successful."
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:277
+#: mail/server/doctype/server_deployment/server_deployment.py:308
 msgid "SSL setup job has been created."
 msgstr ""
 
@@ -6902,7 +6912,7 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-#: frontend/src/components/ComposeMailToolbar.vue:50
+#: frontend/src/components/ComposeMailToolbar.vue:38
 msgid "Saving Draft..."
 msgstr ""
 
@@ -7006,11 +7016,11 @@ msgstr ""
 msgid "Selector"
 msgstr ""
 
-#: frontend/src/components/ComposeMailToolbar.vue:62
+#: frontend/src/components/ComposeMailToolbar.vue:48
 msgid "Send"
 msgstr ""
 
-#: frontend/src/components/ComposeMailToolbar.vue:63
+#: frontend/src/components/ComposeMailToolbar.vue:49
 msgid "Send ({0}+Enter)"
 msgstr ""
 
@@ -7315,7 +7325,6 @@ msgstr ""
 
 #. Label of the sort_order (Int) field in DocType 'Address Book'
 #. Label of the sort_order (Int) field in DocType 'Mailbox'
-#. Label of the _sort_order (Int) field in DocType 'Mailbox'
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/mailbox/mailbox.json
 msgid "Sort Order"
@@ -7423,7 +7432,7 @@ msgstr ""
 msgid "Stalwart CLI not found at {0}."
 msgstr ""
 
-#: mail/server/doctype/server_deployment/server_deployment.py:258
+#: mail/server/doctype/server_deployment/server_deployment.py:288
 msgid "Stalwart service not found in deployment {0}"
 msgstr ""
 
@@ -7611,7 +7620,7 @@ msgstr ""
 #. Label of the subject (Small Text) field in DocType 'Mail Queue'
 #. Label of the subject (Data) field in DocType 'Vacation Response'
 #. Label of the subject (Small Text) field in DocType 'DMARC Report'
-#: frontend/src/components/ComposeMailEditor.vue:108
+#: frontend/src/components/ComposeMailEditor.vue:115
 #: frontend/src/components/Modals/SearchModal.vue:51
 #: frontend/src/components/Settings/VacationResponseSettings.vue:24
 #: mail/api/mail.py:398 mail/client/doctype/mail_message/mail_message.json
@@ -7820,6 +7829,10 @@ msgstr ""
 
 #: frontend/src/pages/dashboard/DomainView.vue:77
 msgid "TXT records that enforce encrypted mail delivery and provide reporting on failed or insecure SMTP connections."
+msgstr ""
+
+#: mail/client/doctype/mailbox/mailbox.py:197
+msgid "Target mailbox ID {0} not found."
 msgstr ""
 
 #. Label of the task (Data) field in DocType 'Server Ansible Play Task'
@@ -8354,7 +8367,7 @@ msgstr ""
 msgid "This method can only be called for invited users."
 msgstr ""
 
-#: mail/www/mail.py:15
+#: mail/www/mail.py:17
 msgid "This method is only meant for developer mode"
 msgstr ""
 
@@ -8481,7 +8494,7 @@ msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'Mail Message Recipient'
 #. Label of the envelope_to (Data) field in DocType 'DMARC Report Detail'
-#: frontend/src/components/ComposeMailEditor.vue:48
+#: frontend/src/components/ComposeMailEditor.vue:55
 #: frontend/src/components/Modals/SearchModal.vue:53 mail/api/mail.py:400
 #: mail/client/doctype/mail_message_recipient/mail_message_recipient.json
 #: mail/server/doctype/dmarc_report_detail/dmarc_report_detail.json
@@ -8990,7 +9003,7 @@ msgstr ""
 msgid "User {0} does not have permission to view identities for user {1}."
 msgstr ""
 
-#: mail/jmap.py:1947
+#: mail/jmap.py:1946
 msgid "User {0} does not have the Mail User role."
 msgstr ""
 
@@ -9011,7 +9024,7 @@ msgstr ""
 msgid "User {0} is already registered."
 msgstr ""
 
-#: mail/jmap.py:1944
+#: mail/jmap.py:1943
 msgid "User {0} is disabled."
 msgstr ""
 
@@ -9385,7 +9398,7 @@ msgstr ""
 msgid "You do not have permission to access principals."
 msgstr ""
 
-#: mail/jmap.py:1937
+#: mail/jmap.py:1936
 msgid "You do not have permission to access the JMAP client for user {0}."
 msgstr ""
 
@@ -9472,8 +9485,9 @@ msgstr ""
 #: mail/client/doctype/identity/identity.py:161
 #: mail/client/doctype/identity/identity.py:204
 #: mail/client/doctype/identity/identity.py:245
-#: mail/client/doctype/mailbox/mailbox.py:101
-#: mail/client/doctype/mailbox/mailbox.py:145
+#: mail/client/doctype/mailbox/mailbox.py:104
+#: mail/client/doctype/mailbox/mailbox.py:148
+#: mail/client/doctype/mailbox/mailbox.py:288
 #: mail/client/doctype/push_subscription/push_subscription.py:132
 msgid "description"
 msgstr ""
@@ -9599,15 +9613,15 @@ msgstr ""
 #: mail/client/doctype/contact_card/contact_card.py:234
 #: mail/client/doctype/identity/identity.py:159
 #: mail/client/doctype/identity/identity.py:202
-#: mail/client/doctype/mailbox/mailbox.py:99
+#: mail/client/doctype/mailbox/mailbox.py:102
 #: mail/client/doctype/push_subscription/push_subscription.py:130
-#: mail/jmap.py:563
+#: mail/jmap.py:562
 msgid "notCreateddescription"
 msgstr ""
 
 #: mail/client/doctype/address_book/address_book.py:172
 #: mail/client/doctype/identity/identity.py:258
-#: mail/client/doctype/mailbox/mailbox.py:158
+#: mail/client/doctype/mailbox/mailbox.py:161
 #: mail/client/doctype/push_subscription/push_subscription.py:188
 msgid "notDestroyeddescription"
 msgstr ""
@@ -9616,7 +9630,8 @@ msgstr ""
 #: mail/client/doctype/contact_card/contact_card.py:325
 #: mail/client/doctype/contact_card/contact_card.py:359
 #: mail/client/doctype/identity/identity.py:243
-#: mail/client/doctype/mailbox/mailbox.py:143
+#: mail/client/doctype/mailbox/mailbox.py:146
+#: mail/client/doctype/mailbox/mailbox.py:286
 #: mail/client/doctype/push_subscription/push_subscription.py:157
 #: mail/client/doctype/push_subscription/push_subscription.py:173
 msgid "notUpdateddescription"
@@ -9702,7 +9717,7 @@ msgstr ""
 msgid "{0} cannot be both allowed and blocked."
 msgstr ""
 
-#: mail/jmap.py:1756
+#: mail/jmap.py:1755
 msgid "{0} cannot be combined with add/remove operations."
 msgstr ""
 

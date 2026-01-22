@@ -252,3 +252,5 @@ export const convertHtmlToText = (html: string) => {
 	const text = body.textContent || body.innerText || ''
 	return text.replace(/\s+/g, ' ').trim()
 }
+
+export const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)

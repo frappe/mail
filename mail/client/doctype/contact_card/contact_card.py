@@ -2,12 +2,12 @@
 # For license information, please see license.txt
 
 import json
+from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, today
-from uuid_utils import uuid7
 
 from mail.client.doctype.address_book.address_book import validate_address_book_name_format
 from mail.jmap import get_jmap_client

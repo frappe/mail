@@ -2,12 +2,12 @@
 # For license information, please see license.txt
 
 from typing import Literal
+from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
-from uuid_utils import uuid7
 
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin
 
