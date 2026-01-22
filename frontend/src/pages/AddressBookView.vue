@@ -185,8 +185,8 @@ const breadcrumbs = computed(() => [
 ])
 
 const deleteAddressBook = createResource({
-	url: 'mail.client.doctype.address_book.address_book.delete_address_book',
-	makeParams: () => ({ user: user.data.name, id: addressBookName }),
+	url: 'mail.client.doctype.address_book.address_book.delete_address_books',
+	makeParams: () => ({ user: user.data.name, ids: [addressBookName] }),
 	onSuccess: () => {
 		showDeleteAddressBook.value = false
 		raiseToast(__('Address book deleted.'))
