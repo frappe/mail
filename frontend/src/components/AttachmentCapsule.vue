@@ -6,7 +6,8 @@
 		<div class="text-ink-gray-4">
 			<Loader v-if="isDownloading" class="h-3.5 w-3.5 shrink-0 animate-spin" />
 			<template v-else>
-				<Paperclip
+				<component
+					:is="getFileIcon(type)"
 					class="h-3.5 w-3.5 shrink-0"
 					:class="{ 'group-hover/capsule:hidden': blobID }"
 				/>
@@ -25,10 +26,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Download, Loader, Paperclip } from 'lucide-vue-next'
+import { Download, Loader } from 'lucide-vue-next'
 import { createResource } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
+import { getFileIcon, raiseToast } from '@/utils'
 
 const { fileName, blobID, type } = defineProps<{
 	fileName: string

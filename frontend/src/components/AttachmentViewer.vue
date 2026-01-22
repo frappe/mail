@@ -16,7 +16,10 @@
 			>
 				<div class="flex w-full justify-between">
 					<div class="flex max-w-2xl items-center space-x-2 truncate rounded">
-						<Paperclip class="h-4 w-4" />
+						<component
+							:is="getFileIcon(currentAttachment?.type)"
+							class="h-4 w-4 shrink-0"
+						/>
 						<span class="truncate text-base font-medium">
 							{{ currentAttachment?.filename }}
 						</span>
@@ -146,13 +149,12 @@ import {
 	Download,
 	FileIcon,
 	LoaderCircle,
-	Paperclip,
 	Printer,
 	X,
 } from 'lucide-vue-next'
 import { Button, createResource } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
+import { getFileIcon, raiseToast } from '@/utils'
 
 import type { Attachment } from '@/types'
 

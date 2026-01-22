@@ -1,6 +1,11 @@
+import { File } from 'lucide-vue-next'
 import { toast } from 'frappe-ui'
 
 import dayjs from '@/utils/dayjs'
+import AudioIcon from '@/components/Icons/AudioIcon.vue'
+import ImageIcon from '@/components/Icons/ImageIcon.vue'
+import PDFIcon from '@/components/Icons/PDFIcon.vue'
+import VideoIcon from '@/components/Icons/VideoIcon.vue'
 
 import type { Recipient } from '@/types'
 
@@ -254,3 +259,12 @@ export const convertHtmlToText = (html: string) => {
 }
 
 export const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+
+export const getFileIcon = (type?: string) => {
+	if (type?.startsWith('image/')) return ImageIcon
+	if (type === 'application/pdf') return PDFIcon
+	if (type?.startsWith('video/')) return VideoIcon
+	if (type?.startsWith('audio/')) return AudioIcon
+
+	return File
+}

@@ -23,6 +23,7 @@ declare module 'vue' {
     AppSidebar: typeof import('./src/components/AppSidebar.vue')['default']
     AttachmentCapsule: typeof import('./src/components/AttachmentCapsule.vue')['default']
     AttachmentViewer: typeof import('./src/components/AttachmentViewer.vue')['default']
+    AudioIcon: typeof import('./src/components/Icons/AudioIcon.vue')['default']
     ChangePasswordModal: typeof import('./src/components/Modals/ChangePasswordModal.vue')['default']
     ComposeMailEditor: typeof import('./src/components/ComposeMailEditor.vue')['default']
     ComposeMailToolbar: typeof import('./src/components/ComposeMailToolbar.vue')['default']
@@ -44,6 +45,7 @@ declare module 'vue' {
     HeaderActions: typeof import('./src/components/HeaderActions.vue')['default']
     IdentitySettings: typeof import('./src/components/Settings/IdentitySettings.vue')['default']
     IdentitySettingsListView: typeof import('./src/components/IdentitySettingsListView.vue')['default']
+    ImageIcon: typeof import('./src/components/Icons/ImageIcon.vue')['default']
     InformationField: typeof import('./src/components/InformationField.vue')['default']
     InstallPrompt: typeof import('./src/components/InstallPrompt.vue')['default']
     LoginLayout: typeof import('./src/components/LoginLayout.vue')['default']
@@ -58,6 +60,7 @@ declare module 'vue' {
     MailThreadPlaceholder: typeof import('./src/components/MailThreadPlaceholder.vue')['default']
     MultiselectInputControl: typeof import('./src/components/Controls/MultiselectInputControl.vue')['default']
     NoMails: typeof import('./src/components/Icons/NoMails.vue')['default']
+    PDFIcon: typeof import('./src/components/Icons/PDFIcon.vue')['default']
     ProfileSettings: typeof import('./src/components/Settings/ProfileSettings.vue')['default']
     PWASettings: typeof import('./src/components/PWASettings.vue')['default']
     QuotaBar: typeof import('./src/components/QuotaBar.vue')['default']
@@ -73,5 +76,6 @@ declare module 'vue' {
     ShortcutsModal: typeof import('./src/components/Modals/ShortcutsModal.vue')['default']
     SignatureSettings: typeof import('./src/components/Settings/SignatureSettings.vue')['default']
     VacationResponseSettings: typeof import('./src/components/Settings/VacationResponseSettings.vue')['default']
+    VideoIcon: typeof import('./src/components/Icons/VideoIcon.vue')['default']
   }
 }
