@@ -124,7 +124,7 @@ class CalendarEvent(Document):
 
 	def delete(self) -> None:
 		user, id = self.name.split("|")
-		delete_calendar_event(user, id)
+		delete_calendar_events(user, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -175,6 +175,24 @@ def _get_total_cache_key(user: str) -> str:
 	"""Returns a cache key for total calendar events count for the given user."""
 
 	return f"{user}:calendar_events:total"
+
+
+@frappe.whitelist()
+def bulk_delete(names: str | list[str]) -> None:
+	"""Deletes calendar events for the given list of names."""
+
+	if isinstance(names, str):
+		names = json.loads(names)
+
+	user_ids_map = {}
+	for name in names:
+		user, id = name.split("|")
+		user_ids_map.setdefault(user, []).append(id)
+
+	for user, ids in user_ids_map.items():
+		delete_calendar_events(user, ids)
+
+	frappe.msgprint(_("Calendar Events deleted successfully."), alert=True)
 
 
 @frappe.whitelist()
@@ -257,13 +275,22 @@ def update_calendar_event() -> None:
 
 
 @frappe.whitelist()
-def delete_calendar_event(user: str, id: str) -> None:
+def delete_calendar_events(user: str, ids: list[str]) -> None:
 	"""Deletes a calendar event for the given user by its ID."""
 
 	has_permission_for_user(user)
 
 	client = get_jmap_client(user)
-	response = client.calendar_event_delete([id])
+	response = client.calendar_event_delete(ids)
+
+	if response.get("notDestroyed"):
+		error_messages = []
+		for id, error in response["notDestroyed"].items():
+			error_messages.append(f"{id}: {error['description']}")
+		frappe.throw(
+			_("Calendar Event Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
+			title=_("Calendar Event Deletion Error"),
+		)
 
 	if response.get("notDestroyed"):
 		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Calendar Event Deletion Error"))
