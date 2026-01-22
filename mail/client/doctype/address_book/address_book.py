@@ -45,7 +45,7 @@ class AddressBook(Document):
 
 	def delete(self) -> None:
 		user, id = self.name.split("|")
-		delete_address_book(user, id)
+		delete_address_books(user, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -90,6 +90,24 @@ def _get_total_cache_key(user: str) -> str:
 	"""Returns a cache key for total address books count for the given user."""
 
 	return f"{user}:address_books:total"
+
+
+@frappe.whitelist()
+def bulk_delete(names: str | list[str]) -> None:
+	"""Deletes multiple address books given their names."""
+
+	if isinstance(names, str):
+		names = json.loads(names)
+
+	user_ids_map = {}
+	for name in names:
+		user, id = name.split("|")
+		user_ids_map.setdefault(user, []).append(id)
+
+	for user, ids in user_ids_map.items():
+		delete_address_books(user, ids)
+
+	frappe.msgprint(_("Address Books deleted successfully."), alert=True)
 
 
 @frappe.whitelist()
@@ -160,16 +178,22 @@ def update_address_book(
 
 
 @frappe.whitelist()
-def delete_address_book(user: str, id: str) -> None:
-	"""Deletes a address book for the given user by its ID."""
+def delete_address_books(user: str, ids: list[str]) -> None:
+	"""Deletes address books for the given user and list of address book IDs."""
 
 	has_permission_for_user(user)
 
 	client = get_jmap_client(user)
-	response = client.address_book_delete([id], remove_contents=True)
+	response = client.address_book_delete(ids, remove_contents=True)
 
 	if response.get("notDestroyed"):
-		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Address Book Deletion Error"))
+		error_messages = []
+		for id, error in response["notDestroyed"].items():
+			error_messages.append(f"{id}: {error['description']}")
+		frappe.throw(
+			_("Address Book Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
+			title=_("Address Book Deletion Error"),
+		)
 
 
 @frappe.whitelist()

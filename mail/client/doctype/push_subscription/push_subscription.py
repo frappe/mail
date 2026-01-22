@@ -46,7 +46,7 @@ class PushSubscription(Document):
 
 	def delete(self) -> None:
 		user, id = self.name.split("|")
-		delete_push_subscription(user, id)
+		delete_push_subscriptions(user, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -98,6 +98,24 @@ def _get_total_cache_key(user: str) -> str:
 	"""Returns a cache key for total push subscriptions count for the given user."""
 
 	return f"{user}:push_subscriptions:total"
+
+
+@frappe.whitelist()
+def bulk_delete(names: str | list[str]) -> None:
+	"""Deletes multiple push subscriptions given their names."""
+
+	if isinstance(names, str):
+		names = json.loads(names)
+
+	user_ids_map = {}
+	for name in names:
+		user, id = name.split("|")
+		user_ids_map.setdefault(user, []).append(id)
+
+	for user, ids in user_ids_map.items():
+		delete_push_subscriptions(user, ids)
+
+	frappe.msgprint(_("Push Subscriptions deleted successfully."), alert=True)
 
 
 @frappe.whitelist()
@@ -175,17 +193,21 @@ def renew_push_subscription(user: str, id: str) -> None:
 
 
 @frappe.whitelist()
-def delete_push_subscription(user: str, id: str) -> None:
-	"""Deletes a push subscription subscription for the given user and subscription ID."""
+def delete_push_subscriptions(user: str, ids: list[str]) -> None:
+	"""Deletes push subscriptions for the given user and list of subscription IDs."""
 
 	has_permission_for_user(user)
 
 	client = get_jmap_client(user)
-	response = client.push_subscription_delete([id])
+	response = client.push_subscription_delete(ids)
 
 	if response.get("notDestroyed"):
+		error_messages = []
+		for id, error in response["notDestroyed"].items():
+			error_messages.append(f"{id}: {error['description']}")
 		frappe.throw(
-			_(response["notDestroyed"][id]["description"]), title=_("Push Subscription Deletion Error")
+			_("Push Subscription Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
+			title=_("Push Subscription Deletion Error"),
 		)
 
 

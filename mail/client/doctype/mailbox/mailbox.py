@@ -1,6 +1,7 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import json
 
 import frappe
 from frappe import _
@@ -39,7 +40,7 @@ class Mailbox(Document):
 
 	def delete(self) -> None:
 		user, id = self.name.split("|")
-		delete_mailbox(user, id)
+		delete_mailboxes(user, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -76,6 +77,24 @@ def _get_total_cache_key(user: str) -> str:
 	"""Returns a cache key for total mailbox count for the given user."""
 
 	return f"{user}:mailboxes:total"
+
+
+@frappe.whitelist()
+def bulk_delete(names: str | list[str]) -> None:
+	"""Deletes multiple mailboxes given their names."""
+
+	if isinstance(names, str):
+		names = json.loads(names)
+
+	user_ids_map = {}
+	for name in names:
+		user, id = name.split("|")
+		user_ids_map.setdefault(user, []).append(id)
+
+	for user, ids in user_ids_map.items():
+		delete_mailboxes(user, ids)
+
+	frappe.msgprint(_("Mailboxes deleted successfully."), alert=True)
 
 
 @frappe.whitelist()
@@ -149,16 +168,22 @@ def update_mailbox(
 
 
 @frappe.whitelist()
-def delete_mailbox(user: str, id: str, remove_emails: bool = True) -> None:
+def delete_mailboxes(user: str, ids: list[str], remove_emails: bool = True) -> None:
 	"""Deletes a mailbox for the given user by its ID."""
 
 	has_permission_for_user(user)
 
 	client = get_jmap_client(user)
-	response = client.mailbox_delete([id], remove_emails=remove_emails)
+	response = client.mailbox_delete(ids, remove_emails=remove_emails)
 
 	if response.get("notDestroyed"):
-		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Mailbox Deletion Error"))
+		error_messages = []
+		for id, error in response["notDestroyed"].items():
+			error_messages.append(f"{id}: {error['description']}")
+		frappe.throw(
+			_("Mailbox Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
+			title=_("Mailbox Deletion Error"),
+		)
 
 
 @frappe.whitelist()

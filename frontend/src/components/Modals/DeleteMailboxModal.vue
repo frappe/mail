@@ -30,8 +30,8 @@ const user = inject('$user')
 const { mailboxes } = userStore()
 
 const deleteFolder = createResource({
-	url: 'mail.client.doctype.mailbox.mailbox.delete_mailbox',
-	makeParams: () => ({ user: user.data.name, id: mailbox.id }),
+	url: 'mail.client.doctype.mailbox.mailbox.delete_mailboxes',
+	makeParams: () => ({ user: user.data.name, ids: [mailbox.id] }),
 	onSuccess: () => {
 		raiseToast(__('Folder deleted.'))
 		show.value = false

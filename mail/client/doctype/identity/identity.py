@@ -1,6 +1,7 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import json
 
 import frappe
 from frappe import _
@@ -66,7 +67,7 @@ class Identity(Document):
 
 	def delete(self) -> None:
 		user, id = self.name.split("|")
-		delete_identity(user, id)
+		delete_identities(user, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -178,6 +179,24 @@ def has_permission_for_identity(user: str) -> bool:
 
 
 @frappe.whitelist()
+def bulk_delete(names: str | list[str]) -> None:
+	"""Deletes multiple identities given their names."""
+
+	if isinstance(names, str):
+		names = json.loads(names)
+
+	user_ids_map = {}
+	for name in names:
+		user, id = name.split("|")
+		user_ids_map.setdefault(user, []).append(id)
+
+	for user, ids in user_ids_map.items():
+		delete_identities(user, ids)
+
+	frappe.msgprint(_("Identities deleted successfully."), alert=True)
+
+
+@frappe.whitelist()
 def add_identity(
 	user: str,
 	email: str,
@@ -246,16 +265,22 @@ def update_identity(
 
 
 @frappe.whitelist()
-def delete_identity(user: str, id: str) -> None:
-	"""Deletes a identity for the given user by its ID."""
+def delete_identities(user: str, ids: list[str]) -> None:
+	"""Deletes identities for the given user and list of identity IDs."""
 
 	has_permission_for_identity(user)
 
 	client = get_jmap_client(user, ignore_permissions=True)
-	response = client.identity_delete([id])
+	response = client.identity_delete(ids)
 
 	if response.get("notDestroyed"):
-		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Identity Deletion Error"))
+		error_messages = []
+		for id, error in response["notDestroyed"].items():
+			error_messages.append(f"{id}: {error['description']}")
+		frappe.throw(
+			_("Identity Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
+			title=_("Identity Deletion Error"),
+		)
 
 
 @frappe.whitelist()
