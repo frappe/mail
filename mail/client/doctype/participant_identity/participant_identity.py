@@ -1,6 +1,8 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import json
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -45,7 +47,7 @@ class ParticipantIdentity(Document):
 
 	def delete(self) -> None:
 		user, id = self.name.split("|")
-		delete_participant_identity(user, id)
+		delete_participant_identities(user, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -82,6 +84,24 @@ def _get_total_cache_key(user: str) -> str:
 	"""Returns a cache key for total participant identities count for the given user."""
 
 	return f"{user}:participant_identities:total"
+
+
+@frappe.whitelist()
+def bulk_delete(names: str | list[str]) -> None:
+	"""Deletes participant identities for the given list of names."""
+
+	if isinstance(names, str):
+		names = json.loads(names)
+
+	user_ids_map = {}
+	for name in names:
+		user, id = name.split("|")
+		user_ids_map.setdefault(user, []).append(id)
+
+	for user, ids in user_ids_map.items():
+		delete_participant_identities(user, ids)
+
+	frappe.msgprint(_("Participant Identities deleted successfully."), alert=True)
 
 
 @frappe.whitelist()
@@ -139,17 +159,17 @@ def update_participant_identity(user: str, id: str, name: str, email: str, defau
 
 
 @frappe.whitelist()
-def delete_participant_identity(user: str, id: str) -> None:
-	"""Deletes the participant identity with the given ID for the specified user."""
+def delete_participant_identities(user: str, ids: list[str]) -> None:
+	"""Deletes participant identities for the specified user and ID(s)."""
 
 	has_permission_for_user(user)
 
 	client = get_jmap_client(user)
-	response = client.participant_identity_delete([id])
+	response = client.participant_identity_delete(ids)
 
 	if response.get("notDestroyed"):
 		frappe.throw(
-			_(response["notDestroyed"][id]["description"]), title=_("Participant Identity Deletion Error")
+			_(response["notDestroyed"][ids]["description"]), title=_("Participant Identity Deletion Error")
 		)
 
 
