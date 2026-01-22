@@ -23,6 +23,14 @@
 					</div>
 					<div class="shrink-0 space-x-2 sm:space-x-4">
 						<button
+							v-if="!isLoading && canPrint"
+							class="rounded p-1.5 hover:bg-white/20"
+							@click="printAttachment"
+						>
+							<Printer class="h-4 w-4" />
+						</button>
+						<button
+							v-if="!isLoading"
 							:disabled="isDownloading"
 							class="rounded p-1.5 hover:bg-white/20 disabled:opacity-50"
 							@click="downloadAttachment"
@@ -139,6 +147,7 @@ import {
 	FileIcon,
 	LoaderCircle,
 	Paperclip,
+	Printer,
 	X,
 } from 'lucide-vue-next'
 import { Button, createResource } from 'frappe-ui'
@@ -163,6 +172,7 @@ const isImage = computed(() => currentAttachment.value?.type?.startsWith('image/
 const isPDF = computed(() => currentAttachment.value?.type === 'application/pdf')
 const isVideo = computed(() => currentAttachment.value?.type?.startsWith('video/'))
 const isAudio = computed(() => currentAttachment.value?.type?.startsWith('audio/'))
+const canPrint = computed(() => isImage.value || isPDF.value)
 
 const closeViewer = () => {
 	isOpen.value = false
@@ -219,6 +229,54 @@ const downloadAttachment = () => {
 	link.click()
 	document.body.removeChild(link)
 	isDownloading.value = false
+}
+
+const printAttachment = () => {
+	if (!previewUrl.value || !canPrint.value) return
+
+	const iframe = document.createElement('iframe')
+	iframe.style.position = 'fixed'
+	iframe.style.right = '0'
+	iframe.style.bottom = '0'
+	iframe.style.width = '0'
+	iframe.style.height = '0'
+	iframe.style.border = 'none'
+	document.body.appendChild(iframe)
+
+	const iframeDoc = iframe.contentWindow?.document
+	if (!iframeDoc) return document.body.removeChild(iframe)
+
+	if (isPDF.value) {
+		iframe.style.width = '100%'
+		iframe.style.height = '100%'
+		iframe.src = previewUrl.value
+		iframe.onload = () => {
+			iframe.contentWindow?.print()
+			setTimeout(() => document.body.removeChild(iframe), 1000)
+		}
+		return
+	}
+
+	iframe.srcdoc = `
+			<html>
+				<head>
+					<title>${currentAttachment.value?.filename || 'Print'}</title>
+					<style>
+						body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+						img { max-width: 100%; height: auto; }
+						@media print { body { margin: 0; } img { max-width: 100%; height: auto; } }
+					</style>
+				</head>
+				<body>
+					<img src="${previewUrl.value}" />
+				</body>
+			</html>
+		`
+
+	iframe.onload = () => {
+		iframe.contentWindow?.print()
+		setTimeout(() => document.body.removeChild(iframe), 1000)
+	}
 }
 
 watch(isOpen, (newVal) => {
