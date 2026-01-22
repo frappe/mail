@@ -36,7 +36,7 @@ class EventNotification(Document):
 
 	def delete(self) -> None:
 		user, id = self.name.split("|")
-		delete_event_notification(user, id)
+		delete_event_notifications(user, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -79,6 +79,24 @@ def _get_total_cache_key(user: str) -> str:
 
 
 @frappe.whitelist()
+def bulk_delete(names: str | list[str]) -> None:
+	"""Deletes multiple event notifications given their names."""
+
+	if isinstance(names, str):
+		names = json.loads(names)
+
+	user_ids_map = {}
+	for name in names:
+		user, id = name.split("|")
+		user_ids_map.setdefault(user, []).append(id)
+
+	for user, ids in user_ids_map.items():
+		delete_event_notifications(user, ids)
+
+	frappe.msgprint(_("Event Notifications deleted successfully."), alert=True)
+
+
+@frappe.whitelist()
 def get_event_notifications(user: str, ids: list[str]) -> list[dict]:
 	"""Returns a list of event notifications for the specified user and IDs."""
 
@@ -95,13 +113,13 @@ def get_event_notifications(user: str, ids: list[str]) -> list[dict]:
 
 
 @frappe.whitelist()
-def delete_event_notification(user: str, id: str) -> None:
-	"""Deletes an event notification for the given user by its ID."""
+def delete_event_notifications(user: str, ids: list[str]) -> None:
+	"""Deletes event notifications for the specified user and ID(s)."""
 
 	has_permission_for_user(user)
 
 	client = get_jmap_client(user)
-	response = client.calendar_event_notification_delete([id])
+	response = client.calendar_event_notification_delete(ids)
 
 	if response.get("notDestroyed"):
 		frappe.throw(
