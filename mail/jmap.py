@@ -2198,6 +2198,25 @@ class JMAPClient:
 
 		return result
 
+	def calendar_event_changes(self, since_state: str) -> dict:
+		"""Returns the changes in calendar events since the provided state."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:calendars"],
+			method_calls=[
+				[
+					"CalendarEvent/changes",
+					{
+						"accountId": self.primary_account_id,
+						"sinceState": since_state,
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
 	def calendar_event_parse(self, blob_ids: list[str]) -> dict:
 		"""Parses calendar events from the provided blob IDs."""
 
