@@ -2322,6 +2322,25 @@ class JMAPClient:
 
 		return result
 
+	def participant_identity_changes(self, since_state: str) -> dict:
+		"""Returns the changes in participant identities since the provided state."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:calendars"],
+			method_calls=[
+				[
+					"ParticipantIdentity/changes",
+					{
+						"accountId": self.primary_account_id,
+						"sinceState": since_state,
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
 	def has_participant_identity_for_email(self, email: str, raise_exception: bool = False) -> bool:
 		"""Checks if a participant identity exists for the given email."""
 
