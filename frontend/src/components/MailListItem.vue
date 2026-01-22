@@ -96,6 +96,7 @@
 					<AttachmentCapsule
 						:file-name="attachment.filename"
 						:blob-i-d="attachment.blob_id"
+						:type="attachment.type"
 						class="mr-2"
 						:class="isFullWidth ? 'max-w-32' : 'max-w-20'"
 						@click.stop.prevent="openAttachment(idx)"

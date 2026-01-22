@@ -87,9 +87,11 @@
 						'px-3 py-5': isMobile,
 						'max-sm:border-b sm:rounded-xl sm:p-5':
 							thread.data.length > 1 || mail.draft,
-						'sm:border': thread.data.length > 1 && !mail.draft,
+						'sm:border':
+							(thread.data.length > 1 && !mail.draft) ||
+							(mail.draft && activeTheme === 'dark'),
 						'cursor-pointer': isCollapsed(mail),
-						'shadow-elevation-light-md': mail.draft && !isMobile,
+						'sm:shadow-elevation-light-md': mail.draft && activeTheme === 'light',
 					}"
 					@click="mail.collapsed = false"
 				>
@@ -232,8 +234,11 @@
 									:key="idx"
 									:file-name="attachment.filename"
 									:blob-i-d="attachment.blob_id"
+									:type="attachment.type"
 									class="mb-2 mr-2"
-									@click="openAttachment(filteredAttachments(mail), Number(idx))"
+									@click.stop.prevent="
+										openAttachment(filteredAttachments(mail), Number(idx))
+									"
 								/>
 							</div>
 						</div>
@@ -316,7 +321,7 @@ import {
 	getGroupedRecipients,
 	shouldIgnoreKeypress,
 } from '@/utils'
-import { useScreenSize } from '@/utils/composables'
+import { useScreenSize, useTheme } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
 import AttachmentViewer from '@/components/AttachmentViewer.vue'
@@ -352,10 +357,12 @@ const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const { mailboxes, mailboxIds, identities } = userStore()
 
-const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
-
 const route = useRoute()
 const router = useRouter()
+const { activeTheme } = useTheme()
+
+const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
+
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
 const thread = createResource({
