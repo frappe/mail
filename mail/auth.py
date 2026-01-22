@@ -28,6 +28,8 @@ ALLOWED_PATHS = [
 	"/api/method/login",
 	"/api/method/logout",
 	"/api/method/upload_file",
+	"/api/method/mail.utils.user.get_user_tenant",
+	"/api/method/mail.utils.user.generate_user_keys",
 ]
 
 ALLOWED_WILDCARD_PATHS = [
