@@ -27,16 +27,15 @@
   "column_break_dqmn",
   "status",
   "description",
-  "section_break_yxak",
+  "section_break_nzql",
+  "column_break_gypo",
+  "organizer",
+  "sequence",
+  "free_busy_status",
+  "column_break_dcpf",
   "start",
   "duration",
-  "column_break_qhry",
   "time_zone",
-  "section_break_nzql",
-  "organizer",
-  "column_break_dcpf",
-  "free_busy_status",
-  "sequence",
   "section_break_bnnv",
   "calendars",
   "recurrence_tab",
@@ -187,12 +186,13 @@
    "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
   },
   {
+   "default": "BUSY",
    "fieldname": "free_busy_status",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Free Busy Status",
-   "no_copy": 1,
-   "read_only": 1
+   "options": "\nBUSY\nFREE",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
   },
   {
    "fieldname": "sequence",
@@ -216,14 +216,6 @@
    "label": "UID",
    "no_copy": 1,
    "read_only": 1
-  },
-  {
-   "fieldname": "section_break_yxak",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_qhry",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "section_break_sznu",
@@ -376,14 +368,19 @@
    "fieldname": "privacy",
    "fieldtype": "Select",
    "label": "Privacy",
-   "options": "\nPublic\nPrivate"
+   "options": "\nPublic\nPrivate",
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+  },
+  {
+   "fieldname": "column_break_gypo",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-23 10:56:22.294307",
+ "modified": "2026-01-23 11:56:21.155794",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",
