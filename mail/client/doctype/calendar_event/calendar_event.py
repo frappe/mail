@@ -3,7 +3,6 @@
 
 
 import json
-from datetime import timedelta
 from typing import Literal
 from uuid import uuid7
 
@@ -16,7 +15,7 @@ from mail.client.doctype.calendar.calendar import validate_calendar_name_format
 from mail.jmap import get_jmap_client
 from mail.utils import parse_filters
 from mail.utils.cache import get_root_domain_name
-from mail.utils.dt import convert_to_utc, get_utc_now, parse_iso_datetime
+from mail.utils.dt import convert_to_utc, parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
 
 
@@ -148,16 +147,6 @@ class CalendarEvent(Document):
 		before = filters.get("before") and convert_to_utc(filters.get("before"), naive=True).strftime(
 			"%Y-%m-%dT%H:%M:%SZ"
 		)
-
-		if not after and not before:
-			now = get_utc_now(naive=True)
-
-			first_day = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-			after = first_day.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-			first_next_month = (now.replace(day=1) + timedelta(days=32)).replace(day=1)
-			last_day = first_next_month - timedelta(days=1)
-			before = last_day.strftime("%Y-%m-%dT00:00:00Z")
 
 		if not user or user in ("Guest", "Administrator"):
 			frappe.msgprint(_("Please select a user to view calendar events."), alert=True)
