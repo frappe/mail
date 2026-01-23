@@ -53,6 +53,7 @@
    "set_only_once": 1
   },
   {
+   "description": "The time this notification was created.",
    "fieldname": "created_utc",
    "fieldtype": "Data",
    "label": "Created (UTC)",
@@ -65,6 +66,7 @@
    "label": "Changed By"
   },
   {
+   "description": "The name of the person who made the change.",
    "fieldname": "changed_by_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -73,6 +75,7 @@
    "read_only": 1
   },
   {
+   "description": "The email of the person who made the change.",
    "fieldname": "changed_by_email",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -85,6 +88,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "The ID of the Principal corresponding to the person who made the change, if any.",
    "fieldname": "changed_by_principal_id",
    "fieldtype": "Data",
    "label": "Principal ID",
@@ -92,6 +96,7 @@
    "read_only": 1
   },
   {
+   "description": "The scheduleId URI of the person who made the change, if any.",
    "fieldname": "changed_by_schedule_id",
    "fieldtype": "Data",
    "label": "Schedule ID",
@@ -103,6 +108,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Describes the nature of the event change.",
    "fieldname": "type",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -112,6 +118,7 @@
    "read_only": 1
   },
   {
+   "description": "Comment sent along with the change by the user that made it.",
    "fieldname": "comment",
    "fieldtype": "Small Text",
    "label": "Comment",
@@ -119,6 +126,7 @@
    "read_only": 1
   },
   {
+   "description": "The link to the CalendarEvent that this notification is about.",
    "fieldname": "calendar_event",
    "fieldtype": "Link",
    "label": "Calendar Event",
@@ -127,6 +135,7 @@
    "read_only": 1
   },
   {
+   "description": "The ID of the CalendarEvent that this notification is about.",
    "fieldname": "calendar_event_id",
    "fieldtype": "Data",
    "label": "Calendar Event ID",
@@ -141,6 +150,7 @@
   },
   {
    "depends_on": "eval: doc.event && doc.event != \"{}\"",
+   "description": "The data before the change (if updated or destroyed), or the data after creation (if created).",
    "fieldname": "event",
    "fieldtype": "JSON",
    "label": "Event",
@@ -154,6 +164,7 @@
   {
    "default": "0",
    "depends_on": "eval: doc.draft",
+   "description": "Notification is not yet finalized or delivered to the user.",
    "fieldname": "draft",
    "fieldtype": "Check",
    "label": "Draft",
@@ -162,6 +173,7 @@
   },
   {
    "depends_on": "eval: doc.event_patch && doc.event_patch != \"{}\"",
+   "description": "A patch encoding the change between the data in the event property, and the data after the update.",
    "fieldname": "event_patch",
    "fieldtype": "JSON",
    "label": "Event Patch",
@@ -173,7 +185,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-16 16:30:28.909109",
+ "modified": "2026-01-23 14:53:35.614204",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Event Notification",

@@ -24,6 +24,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "A unique identifier for this participant.",
    "fieldname": "uid",
    "fieldtype": "Data",
    "label": "UID",
@@ -35,6 +36,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "The email address associated with the participant.",
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -43,6 +45,7 @@
   },
   {
    "default": "Individual",
+   "description": "The type of participant.",
    "fieldname": "kind",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -50,6 +53,7 @@
    "options": "\nIndividual\nGroup\nResource\nLocation"
   },
   {
+   "description": "The display name of the participant.",
    "fieldname": "_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -57,6 +61,7 @@
   },
   {
    "default": "0",
+   "description": "Indicates whether a response is expected from this participant.",
    "fieldname": "expect_reply",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -64,6 +69,7 @@
   },
   {
    "default": "NEEDS-ACTION",
+   "description": "The participant\u2019s current participation status.",
    "fieldname": "participation_status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -72,7 +78,7 @@
   },
   {
    "default": "{\"required\":true}",
-   "description": "Example: <code>{\n  \"organizer\": false,\n  \"owner\": false,\n  \"chair\": true,\n  \"optional\": false,\n  \"required\": true,\n  \"informational\": false\n}</code>",
+   "description": "Defines the participant\u2019s role(s) in the event.\n<br>\nExample: <code>{\n  \"organizer\": false,\n  \"owner\": false,\n  \"chair\": true,\n  \"optional\": false,\n  \"required\": true,\n  \"informational\": false\n}</code>",
    "fieldname": "roles",
    "fieldtype": "JSON",
    "label": "Roles"
@@ -82,11 +88,13 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "Optional additional information about the participant.",
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
   },
   {
+   "description": "The scheduling identifier used to uniquely identify this participant in scheduling messages.",
    "fieldname": "schedule_id",
    "fieldtype": "Data",
    "label": "Schedule ID",
@@ -96,6 +104,7 @@
   {
    "default": "{}",
    "depends_on": "eval: doc.send_to != \"{}\"",
+   "description": "The delivery address used for scheduling messages related to this participant.",
    "fieldname": "send_to",
    "fieldtype": "JSON",
    "label": "Send To",
@@ -108,7 +117,7 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-23 11:03:52.131896",
+ "modified": "2026-01-23 15:06:34.165595",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Event Participant",

@@ -16,6 +16,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "A unique identifier for this event link.",
    "fieldname": "uid",
    "fieldtype": "Data",
    "label": "UID",
@@ -27,6 +28,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "The URI pointing to the linked resource.",
    "fieldname": "href",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -35,6 +37,7 @@
    "reqd": 1
   },
   {
+   "description": "The media type describing the linked resource.",
    "fieldname": "content_type",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -47,7 +50,7 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-21 14:24:49.280500",
+ "modified": "2026-01-23 14:56:53.652926",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Event Link",

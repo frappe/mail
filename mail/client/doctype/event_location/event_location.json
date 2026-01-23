@@ -16,6 +16,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "A unique identifier for this event location.",
    "fieldname": "uid",
    "fieldtype": "Data",
    "label": "UID",
@@ -23,6 +24,7 @@
    "read_only": 1
   },
   {
+   "description": "A human-readable description of the event location.",
    "fieldname": "_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -39,7 +41,7 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-10 11:48:11.324422",
+ "modified": "2026-01-23 15:01:21.498580",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Event Location",

@@ -233,6 +233,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "The principals this calendar is shared with, and the access rights granted to each.",
    "fieldname": "share_with",
    "fieldtype": "Table",
    "label": "Share With",
@@ -249,7 +250,7 @@
    "link_fieldname": "calendar"
   }
  ],
- "modified": "2026-01-15 21:24:17.872890",
+ "modified": "2026-01-23 14:42:44.306278",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar",
