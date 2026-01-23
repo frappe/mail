@@ -96,23 +96,23 @@ class CalendarEvent(Document):
 	def db_insert(self, *args, **kwargs) -> None:
 		self.id = add_calendar_event(
 			user=self.user,
+			organizer=self.organizer,
 			calendar_ids=self.calendar_ids,
 			status=self.status,
+			draft=bool(self.draft),
 			title=self.title,
 			start=self.start,
 			duration=self.duration,
 			time_zone=self.time_zone,
-			privacy=self.privacy,
-			organizer=self.organizer,
-			description=self.description,
-			free_busy_status=self.free_busy_status,
 			recurrence_rule=self.formatted_recurrence_rule,
+			show_without_time=bool(self.show_without_time),
+			privacy=self.privacy,
+			free_busy_status=self.free_busy_status,
+			description=self.description,
 			locations=self.formatted_locations,
 			links=self.formatted_links,
-			alerts=self.formatted_alerts,
 			participants=self.formatted_participants,
-			draft=bool(self.draft),
-			show_without_time=bool(self.show_without_time),
+			alerts=self.formatted_alerts,
 			use_default_alerts=bool(self.use_default_alerts),
 			send_scheduling_messages=bool(self.send_scheduling_messages),
 		)
@@ -208,10 +208,7 @@ class CalendarEvent(Document):
 	def validate_calendars(self) -> None:
 		"""Validates that at least one calendar is associated with the event."""
 
-		if not self.calendars:
-			frappe.throw(_("A event must belong to at least one calendar."))
-
-		for c in self.calendars:
+		for c in self.calendars or []:
 			validate_calendar_name_format(c.calendar)
 			_user, calendar_id = c.calendar.split("|")
 			c.calendar_id = calendar_id
@@ -250,23 +247,23 @@ def bulk_delete(names: str | list[str]) -> None:
 @frappe.whitelist()
 def add_calendar_event(
 	user: str,
-	calendar_ids: list[str],
-	status: Literal["Tentative", "Confirmed", "Cancelled"],
-	title: str,
-	start: str,
-	duration: str,
-	time_zone: str,
-	privacy: str | None = None,
 	organizer: str | None = None,
-	description: str | None = None,
-	free_busy_status: str | None = None,
+	calendar_ids: list[str] | None = None,
+	status: Literal["Tentative", "Confirmed", "Cancelled"] = "Confirmed",
+	draft: bool = False,
+	title: str | None = None,
+	start: str | None = None,
+	duration: str | None = None,
+	time_zone: str | None = None,
 	recurrence_rule: dict | None = None,
+	show_without_time: bool = False,
+	privacy: str | None = None,
+	free_busy_status: str | None = None,
+	description: str | None = None,
 	locations: list[dict] | None = None,
 	links: list[dict] | None = None,
-	alerts: list[dict] | None = None,
 	participants: list[dict] | None = None,
-	draft: bool = False,
-	show_without_time: bool = False,
+	alerts: list[dict] | None = None,
 	use_default_alerts: bool = False,
 	send_scheduling_messages: bool = False,
 ) -> str:
@@ -280,23 +277,23 @@ def add_calendar_event(
 	response = client.calendar_event_create(
 		creation_id=creation_id,
 		uid=uid,
+		organizer=organizer,
 		calendar_ids=calendar_ids,
 		status=status.lower(),
+		draft=draft,
 		title=title,
 		start=start,
 		duration=duration,
 		time_zone=time_zone,
-		privacy=privacy.lower() if privacy else None,
-		organizer=organizer,
-		description=description,
-		free_busy_status=free_busy_status.upper() if free_busy_status else None,
 		recurrence_rule=recurrence_rule,
+		show_without_time=show_without_time,
+		privacy=privacy.lower() if privacy else None,
+		free_busy_status=free_busy_status.upper() if free_busy_status else None,
+		description=description,
 		locations=locations,
 		links=links,
-		alerts=alerts,
 		participants=participants,
-		draft=draft,
-		show_without_time=show_without_time,
+		alerts=alerts,
 		use_default_alerts=use_default_alerts,
 		send_scheduling_messages=send_scheduling_messages,
 	)
@@ -473,37 +470,44 @@ def format_calendar_event(user: str, calendar_map: dict, event: dict) -> dict:
 			}
 		)
 
+	organizer = (
+		event.get("organizerCalendarAddress")
+		and event["organizerCalendarAddress"].replace("mailto:", "")
+		or ""
+	)
+
 	return {
-		"name": f"{user}|{event['id']}",
 		"user": user,
+		"name": f"{user}|{event['id']}",
 		"id": event["id"],
 		"uid": event["uid"],
-		"title": event["title"],
-		"draft": event["isDraft"],
-		"origin": event["isOrigin"],
-		"may_invite_self": cint(event.get("mayInviteSelf", False)),
-		"may_invite_others": cint(event.get("mayInviteOthers", False)),
-		"hide_attendees": cint(event.get("hideAttendees", False)),
-		"show_without_time": cint(event.get("showWithoutTime", False)),
-		"status": event.get("status", "confirmed").title(),
-		"start": event["start"],
-		"duration": event["duration"],
-		"time_zone": event["timeZone"],
-		"privacy": event.get("privacy", "").title(),
-		"recurrence_rule": json.dumps(event.get("recurrenceRule", {}), indent=2),
-		"description": event.get("description", ""),
-		"organizer": event.get("organizerCalendarAddress", "").replace("mailto:", ""),
+		"organizer": organizer,
 		"calendars": calendars,
+		"status": event.get("status") and event["status"].title() or "Confirmed",
+		"draft": event.get("draft") or False,
+		"title": event.get("title") or "",
+		"start": event.get("start") or "",
+		"duration": event.get("duration") or "",
+		"time_zone": event.get("timeZone") or "",
+		"recurrence_rule": json.dumps(event.get("recurrenceRule", {}), indent=2),
+		"show_without_time": cint(event.get("showWithoutTime") or False),
+		"privacy": event.get("privacy") and event["privacy"].title() or "",
+		"free_busy_status": event.get("freeBusyStatus") and event["freeBusyStatus"].upper() or "",
+		"description": event.get("description") or "",
 		"locations": locations,
 		"links": links,
-		"alerts": alerts,
 		"participants": participants,
+		"alerts": alerts,
+		"use_default_alerts": cint(event.get("useDefaultAlerts") or False),
 		"created_utc": event["created"],
 		"updated_utc": event["updated"],
-		"free_busy_status": event.get("freeBusyStatus", "").upper(),
-		"sequence": cint(event.get("sequence", 0)),
+		"origin": event.get("isOrigin") or False,
+		"may_invite_self": cint(event.get("mayInviteSelf") or False),
+		"may_invite_others": cint(event.get("mayInviteOthers") or False),
+		"hide_attendees": cint(event.get("hideAttendees") or False),
 		"creation": parse_iso_datetime(event["created"]),
 		"modified": parse_iso_datetime(event["updated"]),
+		"sequence": cint(event.get("sequence") or False),
 	}
 
 

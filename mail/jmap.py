@@ -2016,6 +2016,16 @@ class JMAPClient:
 
 		return response["methodResponses"][0][1]
 
+	def get_default_calendar_id(self, raise_exception: bool = False) -> str | None:
+		"""Returns the default calendar ID for the primary account."""
+
+		for calendar in self.calendars:
+			if calendar.get("default"):
+				return calendar["id"]
+
+		if raise_exception:
+			frappe.throw(_("No default calendar found for the account."))
+
 	# -------------------------------
 	# Event
 	# -------------------------------
@@ -2024,23 +2034,23 @@ class JMAPClient:
 		self,
 		creation_id: str,
 		uid: str,
-		calendar_ids: list[str],
-		status: Literal["tentative", "confirmed", "cancelled"],
-		title: str,
-		start: str,
-		duration: str,
-		time_zone: str,
-		privacy: str | None = None,
 		organizer: str | None = None,
-		description: str | None = None,
-		free_busy_status: str | None = None,
+		calendar_ids: list[str] | None = None,
+		status: Literal["tentative", "confirmed", "cancelled"] = "confirmed",
+		draft: bool = False,
+		title: str | None = None,
+		start: str | None = None,
+		duration: str | None = None,
+		time_zone: str | None = None,
 		recurrence_rule: dict | None = None,
+		show_without_time: bool = False,
+		privacy: str | None = None,
+		free_busy_status: str | None = None,
+		description: str | None = None,
 		locations: list[dict] | None = None,
 		links: list[dict] | None = None,
-		alerts: list[dict] | None = None,
 		participants: list[dict] | None = None,
-		draft: bool = False,
-		show_without_time: bool = False,
+		alerts: list[dict] | None = None,
 		use_default_alerts: bool = False,
 		send_scheduling_messages: bool = False,
 	) -> dict:
@@ -2050,6 +2060,9 @@ class JMAPClient:
 			self.has_participant_identity_for_email(organizer, raise_exception=True)
 		else:
 			organizer = self.get_default_participant_identity(raise_exception=True)
+
+		if not calendar_ids:
+			calendar_ids = [self.get_default_calendar_id(raise_exception=True)]
 
 		timestamp = utcnow()
 		organizer = organizer.lower()
@@ -2064,29 +2077,29 @@ class JMAPClient:
 							creation_id: {
 								"@type": "Event",
 								"uid": uid,
+								"organizerCalendarAddress": organizer or None,
 								"calendarIds": {id: True for id in calendar_ids},
-								"status": status,
-								"title": title,
-								"start": start,
-								"duration": duration,
-								"timeZone": time_zone,
-								"privacy": privacy or None,
-								"organizerCalendarAddress": organizer,
-								"description": description,
-								"freeBusyStatus": free_busy_status or None,
+								"status": status or None,
+								"isDraft": draft or False,
+								"title": title or None,
+								"start": start or None,
+								"duration": duration or None,
+								"timeZone": time_zone or None,
 								"recurrenceRule": recurrence_rule or None,
+								"showWithoutTime": show_without_time or False,
+								"privacy": privacy or None,
+								"freeBusyStatus": free_busy_status or None,
+								"description": description or None,
 								"locations": _get_locations_map(locations),
 								"links": _get_links_map(links),
-								"alerts": _get_alerts_map(alerts),
 								"participants": _get_participants_map(organizer, participants),
-								"isDraft": draft,
-								"showWithoutTime": show_without_time,
-								"useDefaultAlerts": use_default_alerts,
+								"alerts": _get_alerts_map(alerts),
+								"useDefaultAlerts": use_default_alerts or False,
 								"created": timestamp,
 								"updated": timestamp,
 							}
 						},
-						"sendSchedulingMessages": send_scheduling_messages,
+						"sendSchedulingMessages": send_scheduling_messages or False,
 					},
 					"0",
 				]
@@ -2405,8 +2418,6 @@ class JMAPClient:
 
 		if raise_exception:
 			frappe.throw(_("No default participant identity found."))
-
-		return None
 
 	# -------------------------------
 	# Principal

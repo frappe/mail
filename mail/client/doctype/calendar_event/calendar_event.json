@@ -101,8 +101,7 @@
    "fieldname": "calendars",
    "fieldtype": "Table",
    "label": "Calendars",
-   "options": "Event Calendar",
-   "reqd": 1
+   "options": "Event Calendar"
   },
   {
    "default": "0",
@@ -380,7 +379,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-23 12:21:18.457321",
+ "modified": "2026-01-23 12:58:02.565343",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",
