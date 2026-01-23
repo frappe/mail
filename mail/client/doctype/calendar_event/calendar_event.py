@@ -194,6 +194,12 @@ class CalendarEvent(Document):
 			if self.has_value_changed("draft"):
 				frappe.throw(_("Cannot mark an existing event as draft."))
 
+		if not self.draft:
+			if not self.start:
+				frappe.throw(_("Start time is required for non-draft events."))
+			if not self.duration:
+				frappe.throw(_("Duration is required for non-draft events."))
+
 	def validate_calendars(self) -> None:
 		"""Validates that at least one calendar is associated with the event."""
 
@@ -277,7 +283,7 @@ def add_calendar_event(
 		recurrence_rule=recurrence_rule,
 		show_without_time=show_without_time,
 		privacy=privacy.lower() if privacy else None,
-		free_busy_status=free_busy_status.upper() if free_busy_status else None,
+		free_busy_status=free_busy_status.lower() if free_busy_status else None,
 		description=description,
 		locations=locations,
 		links=links,
@@ -473,7 +479,7 @@ def format_calendar_event(user: str, calendar_map: dict, event: dict) -> dict:
 		"organizer": organizer,
 		"calendars": calendars,
 		"status": event.get("status") and event["status"].title() or "Confirmed",
-		"draft": event.get("draft") or False,
+		"draft": cint(event.get("isDraft") or False),
 		"title": event.get("title") or "",
 		"start": event.get("start") or "",
 		"duration": event.get("duration") or "",
@@ -481,7 +487,7 @@ def format_calendar_event(user: str, calendar_map: dict, event: dict) -> dict:
 		"recurrence_rule": json.dumps(event.get("recurrenceRule", {}), indent=2),
 		"show_without_time": cint(event.get("showWithoutTime") or False),
 		"privacy": event.get("privacy") and event["privacy"].title() or "",
-		"free_busy_status": event.get("freeBusyStatus") and event["freeBusyStatus"].upper() or "",
+		"free_busy_status": event.get("freeBusyStatus") and event["freeBusyStatus"].title() or "",
 		"description": event.get("description") or "",
 		"locations": locations,
 		"links": links,
