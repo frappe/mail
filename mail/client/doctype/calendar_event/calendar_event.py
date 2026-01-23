@@ -111,6 +111,7 @@ class CalendarEvent(Document):
 			links=self.formatted_links,
 			alerts=self.formatted_alerts,
 			participants=self.formatted_participants,
+			draft=bool(self.draft),
 			show_without_time=bool(self.show_without_time),
 			use_default_alerts=bool(self.use_default_alerts),
 			send_scheduling_messages=bool(self.send_scheduling_messages),
@@ -193,7 +194,16 @@ class CalendarEvent(Document):
 		return {}
 
 	def validate(self) -> None:
+		self.validate_draft()
 		self.validate_calendars()
+		self.validate_send_scheduling_messages()
+
+	def validate_draft(self) -> None:
+		"""Validates that an existing event cannot be marked as draft."""
+
+		if not self.is_new() and self.draft:
+			if self.has_value_changed("draft"):
+				frappe.throw(_("Cannot mark an existing event as draft."))
 
 	def validate_calendars(self) -> None:
 		"""Validates that at least one calendar is associated with the event."""
@@ -205,6 +215,12 @@ class CalendarEvent(Document):
 			validate_calendar_name_format(c.calendar)
 			_user, calendar_id = c.calendar.split("|")
 			c.calendar_id = calendar_id
+
+	def validate_send_scheduling_messages(self) -> None:
+		"""Disables sending scheduling messages for draft events."""
+
+		if self.draft:
+			self.send_scheduling_messages = 0
 
 
 def _get_total_cache_key(user: str) -> str:
@@ -249,6 +265,7 @@ def add_calendar_event(
 	links: list[dict] | None = None,
 	alerts: list[dict] | None = None,
 	participants: list[dict] | None = None,
+	draft: bool = False,
 	show_without_time: bool = False,
 	use_default_alerts: bool = False,
 	send_scheduling_messages: bool = False,
@@ -278,6 +295,7 @@ def add_calendar_event(
 		links=links,
 		alerts=alerts,
 		participants=participants,
+		draft=draft,
 		show_without_time=show_without_time,
 		use_default_alerts=use_default_alerts,
 		send_scheduling_messages=send_scheduling_messages,

@@ -72,12 +72,11 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.draft",
    "fieldname": "draft",
    "fieldtype": "Check",
    "label": "Draft",
    "no_copy": 1,
-   "read_only": 1
+   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
   },
   {
    "fieldname": "section_break_nzql",
@@ -276,6 +275,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: !doc.draft",
    "fieldname": "send_scheduling_messages",
    "fieldtype": "Check",
    "label": "Send Scheduling Messages",
@@ -380,7 +380,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-23 11:56:21.155794",
+ "modified": "2026-01-23 12:21:18.457321",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",
