@@ -8,11 +8,11 @@
 				<component
 					:is="getFileIcon(type)"
 					class="h-4 w-4 shrink-0"
-					:class="{ 'group-hover/capsule:hidden': blobID }"
+					:class="{ 'sm:group-hover/capsule:hidden': blobID }"
 				/>
 				<button
 					class="hidden"
-					:class="{ 'group-hover/capsule:block': blobID }"
+					:class="{ 'sm:group-hover/capsule:block': blobID }"
 					@click.stop.prevent="downloadAttachment"
 				>
 					<Download class="hover:text-ink-gray-8 h-4 w-4 shrink-0" />
@@ -26,9 +26,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Download, Loader } from 'lucide-vue-next'
-import { createResource } from 'frappe-ui'
 
-import { getFileIcon, raiseToast } from '@/utils'
+import { getAttachmentUrl } from '@/resources'
+import { getFileIcon } from '@/utils'
 
 const { fileName, blobID, type } = defineProps<{
 	fileName: string
@@ -40,28 +40,16 @@ const isDownloading = ref(false)
 
 const downloadAttachment = async () => {
 	if (!blobID) return
+
 	isDownloading.value = true
-	await fetchAttachment.submit()
+	const url = await getAttachmentUrl(blobID, type)
+	const link = document.createElement('a')
+	link.href = url
+	link.download = fileName || 'attachment'
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+	URL.revokeObjectURL(url)
 	isDownloading.value = false
 }
-
-const fetchAttachment = createResource({
-	url: 'mail.api.mail.fetch_attachment',
-	makeParams: () => ({ blob_id: blobID }),
-	onSuccess: (data: number[]) => {
-		const byteArray = new Uint8Array(data)
-		const blob = new Blob([byteArray], { type })
-		const url = URL.createObjectURL(blob)
-
-		const link = document.createElement('a')
-		link.href = url
-		link.download = fileName || 'attachment'
-		document.body.appendChild(link)
-		link.click()
-		document.body.removeChild(link)
-		URL.revokeObjectURL(url)
-	},
-	onError: (error) => raiseToast(error.message, 'error'),
-	cache: ['attachment-download', blobID],
-})
 </script>

@@ -113,7 +113,7 @@
 						</Tooltip>
 					</template>
 					<template #body-main>
-						<div class="p-1">
+						<div class="max-h-80 overflow-y-auto p-1">
 							<Tooltip
 								v-for="(attachment, idx) in attachments.slice(2)"
 								:key="idx"
@@ -133,10 +133,10 @@
 										<template v-else>
 											<component
 												:is="getFileIcon(attachment.type)"
-												class="h-4 w-4 shrink-0 group-hover/capsule:hidden"
+												class="h-4 w-4 shrink-0 sm:group-hover/capsule:hidden"
 											/>
 											<button
-												class="hidden group-hover/capsule:block"
+												class="hidden sm:group-hover/capsule:block"
 												@click.stop.prevent="
 													downloadAttachment(attachment)
 												"
@@ -211,9 +211,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Check, Download, Loader, Mail, MailOpen, Trash2 } from 'lucide-vue-next'
-import { Avatar, Badge, Button, Checkbox, Popover, Tooltip, createResource } from 'frappe-ui'
+import { Avatar, Badge, Button, Checkbox, Popover, Tooltip } from 'frappe-ui'
 
-import { getFileIcon, getFirstAlphabet, getFormattedRecipients, raiseToast } from '@/utils'
+import { getAttachmentUrl } from '@/resources'
+import { getFileIcon, getFirstAlphabet, getFormattedRecipients } from '@/utils'
 import { useLayout, useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
@@ -298,17 +299,13 @@ const currentlyDownloading = ref<string[]>([])
 
 const downloadAttachment = async (attachment: Attachment) => {
 	currentlyDownloading.value.push(attachment.blob_id)
-	const data = await fetchAttachment.submit(attachment.blob_id)
-	if (!data) {
+	const url = await getAttachmentUrl(attachment.blob_id, attachment.type)
+	if (!url) {
 		currentlyDownloading.value = currentlyDownloading.value.filter(
 			(id) => id !== attachment.blob_id,
 		)
 		return
 	}
-
-	const byteArray = new Uint8Array(data)
-	const blob = new Blob([byteArray], { type: attachment.type })
-	const url = URL.createObjectURL(blob)
 
 	const link = document.createElement('a')
 	link.href = url
@@ -321,12 +318,6 @@ const downloadAttachment = async (attachment: Attachment) => {
 		(id) => id !== attachment.blob_id,
 	)
 }
-
-const fetchAttachment = createResource({
-	url: 'mail.api.mail.fetch_attachment',
-	makeParams: (blobID) => ({ blob_id: blobID }),
-	onError: (error) => raiseToast(error.message, 'error'),
-})
 
 // touch
 

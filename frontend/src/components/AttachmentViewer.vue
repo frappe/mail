@@ -9,7 +9,7 @@
 			leave-to-class="opacity-0"
 		>
 			<div
-				v-if="isOpen"
+				v-if="show"
 				data-attachment-viewer
 				class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-2 text-gray-300 sm:p-4"
 				@click.self="closeViewer"
@@ -152,9 +152,10 @@ import {
 	Printer,
 	X,
 } from 'lucide-vue-next'
-import { Button, createResource } from 'frappe-ui'
+import { Button } from 'frappe-ui'
 
-import { getFileIcon, raiseToast } from '@/utils'
+import { fetchAttachment, getAttachmentUrl } from '@/resources'
+import { getFileIcon } from '@/utils'
 
 import type { Attachment } from '@/types'
 
@@ -163,7 +164,7 @@ const { attachments, initialIndex } = defineProps<{
 	initialIndex?: number
 }>()
 
-const isOpen = defineModel<boolean>()
+const show = defineModel<boolean>()
 const currentIndex = ref(initialIndex || 0)
 const isDownloading = ref(false)
 const previewUrl = ref<string | null>(null)
@@ -176,7 +177,7 @@ const isAudio = computed(() => currentAttachment.value?.type?.startsWith('audio/
 const canPrint = computed(() => isImage.value || isPDF.value)
 
 const closeViewer = () => {
-	isOpen.value = false
+	show.value = false
 	if (previewUrl.value) {
 		URL.revokeObjectURL(previewUrl.value)
 		previewUrl.value = null
@@ -191,7 +192,7 @@ const nextAttachment = () => {
 	if (attachments && currentIndex.value < attachments.length - 1) currentIndex.value++
 }
 
-const loadAttachment = () => {
+const loadAttachment = async () => {
 	if (!currentAttachment.value?.blob_id) return
 
 	if (previewUrl.value) {
@@ -199,22 +200,11 @@ const loadAttachment = () => {
 		previewUrl.value = null
 	}
 
-	fetchAttachment.submit()
+	previewUrl.value = await getAttachmentUrl(
+		currentAttachment.value.blob_id,
+		currentAttachment.value.type,
+	)
 }
-
-const fetchAttachment = createResource({
-	url: 'mail.api.mail.fetch_attachment',
-	makeParams: () => ({ blob_id: currentAttachment.value?.blob_id }),
-	onSuccess: (data: number[]) => {
-		const byteArray = new Uint8Array(data)
-		const blob = new Blob([byteArray], { type: currentAttachment.value?.type })
-		previewUrl.value = URL.createObjectURL(blob)
-	},
-	onError: (error) => {
-		raiseToast(error.message, 'error')
-	},
-	cache: ['attachment', currentAttachment.value?.blob_id],
-})
 
 const downloadAttachment = () => {
 	if (!currentAttachment.value?.blob_id || !previewUrl.value) return
@@ -277,18 +267,23 @@ const printAttachment = () => {
 	}
 }
 
-watch(isOpen, (newVal) => {
-	currentIndex.value = initialIndex || 0
-	if (newVal && currentAttachment.value) loadAttachment()
-	else if (!newVal) closeViewer()
+watch(show, (val) => {
+	if (!val) return
+
+	if (currentIndex.value === initialIndex) loadAttachment()
+	else currentIndex.value = initialIndex || 0
 })
 
 watch(currentIndex, () => {
-	if (isOpen.value) loadAttachment()
+	if (show.value) loadAttachment()
 })
 
 const handleKeyDown = (event: KeyboardEvent) => {
-	if (event.key === 'Escape' && isOpen.value) closeViewer()
+	if (!show.value) return
+
+	if (event.key === 'ArrowLeft') return previousAttachment()
+	if (event.key === 'ArrowRight') return nextAttachment()
+	if (event.key === 'Escape') return closeViewer()
 }
 
 onMounted(() => window.addEventListener('keydown', handleKeyDown))

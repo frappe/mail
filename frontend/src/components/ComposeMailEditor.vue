@@ -242,6 +242,7 @@ import {
 	useFileUpload,
 } from 'frappe-ui'
 
+import { getAttachmentUrl } from '@/resources'
 import { formatBytes, isOverlayPresent, raiseToast, validateEmail } from '@/utils'
 import { useScreenSize, useVisualViewport } from '@/utils/composables'
 import { CustomParagraphExtension } from '@/utils/text-editor'
@@ -526,19 +527,10 @@ watch(
 
 // Attachments
 
-const fetchAttachment = createResource({
-	url: 'mail.api.mail.fetch_attachment',
-	makeParams: (blob_id: string) => ({ blob_id }),
-	onError: (error) => raiseToast(error.message, 'error'),
-})
-
 const openAttachment = async (blob_id?: string, type?: string) => {
 	if (!blob_id) return
 
-	const data = await fetchAttachment.submit(blob_id)
-	const byteArray = new Uint8Array(data)
-	const blob = new Blob([byteArray], { type })
-	const url = URL.createObjectURL(blob)
+	const url = await getAttachmentUrl(blob_id, type)
 	window.open(url, '_blank')
 }
 
