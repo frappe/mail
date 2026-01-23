@@ -71,7 +71,7 @@
    "options": "\nNEEDS-ACTION\nACCEPTED\nDECLINED\nTENTATIVE"
   },
   {
-   "default": "{\"required\":false}",
+   "default": "{\"required\":true}",
    "description": "Example: <code>{\n  \"organizer\": false,\n  \"owner\": false,\n  \"chair\": true,\n  \"optional\": false,\n  \"required\": true,\n  \"informational\": false\n}</code>",
    "fieldname": "roles",
    "fieldtype": "JSON",
@@ -108,7 +108,7 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-20 18:00:09.220192",
+ "modified": "2026-01-23 11:03:52.131896",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Event Participant",

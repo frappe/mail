@@ -23,6 +23,7 @@
   "id",
   "uid",
   "title",
+  "privacy",
   "column_break_dqmn",
   "status",
   "description",
@@ -370,13 +371,19 @@
    "label": "Before",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "privacy",
+   "fieldtype": "Select",
+   "label": "Privacy",
+   "options": "\nPublic\nPrivate"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-22 14:03:29.845256",
+ "modified": "2026-01-23 10:56:22.294307",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",
