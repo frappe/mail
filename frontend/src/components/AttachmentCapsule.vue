@@ -1,22 +1,34 @@
 <template>
-	<button
-		class="flex items-center space-x-2 rounded-full border px-2 py-1.5"
-		:class="{ 'hover:border-outline-gray-3 cursor-pointer': blobID }"
-		@click="openAttachment"
+	<div
+		class="group/capsule hover:border-outline-gray-3 flex cursor-pointer items-center space-x-2 rounded-full border px-2 py-1.5"
 	>
-		<Loader
-			v-if="isLoading"
-			class="text-ink-gray-4 h-3.5 min-h-3.5 w-3.5 min-w-3.5 animate-spin"
-		/>
-		<Paperclip v-else class="text-ink-gray-4 h-3.5 min-h-3.5 w-3.5 min-w-3.5" />
+		<div class="text-ink-gray-4">
+			<Loader v-if="isDownloading" class="h-4 w-4 shrink-0 animate-spin" />
+			<template v-else>
+				<component
+					:is="getFileIcon(type)"
+					class="h-4 w-4 shrink-0"
+					:class="{ 'sm:group-hover/capsule:hidden': blobID }"
+				/>
+				<button
+					class="hidden"
+					:class="{ 'sm:group-hover/capsule:block': blobID }"
+					@click.stop.prevent="downloadAttachment"
+				>
+					<Download class="hover:text-ink-gray-8 h-4 w-4 shrink-0" />
+				</button>
+			</template>
+		</div>
 		<span class="truncate text-sm">{{ fileName }}</span>
-	</button>
+	</div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Loader, Paperclip } from 'lucide-vue-next'
-import { createResource } from 'frappe-ui'
+import { Download, Loader } from 'lucide-vue-next'
+
+import { getAttachmentUrl } from '@/resources'
+import { getFileIcon } from '@/utils'
 
 const { fileName, blobID, type } = defineProps<{
 	fileName: string
@@ -24,25 +36,20 @@ const { fileName, blobID, type } = defineProps<{
 	type?: string
 }>()
 
-const isLoading = ref(false)
+const isDownloading = ref(false)
 
-const openAttachment = async () => {
+const downloadAttachment = async () => {
 	if (!blobID) return
-	isLoading.value = true
-	await fetchAttachment.submit()
-	isLoading.value = false
-}
 
-const fetchAttachment = createResource({
-	url: 'mail.api.mail.fetch_attachment',
-	makeParams: () => ({ blob_id: blobID }),
-	cache: ['attachment', blobID],
-	onSuccess: (data: number[]) => {
-		const byteArray = new Uint8Array(data)
-		const blob = new Blob([byteArray], { type })
-		const url = URL.createObjectURL(blob)
-		window.open(url, '_blank')
-	},
-	onError: () => (isLoading.value = false),
-})
+	isDownloading.value = true
+	const url = await getAttachmentUrl(blobID, type)
+	const link = document.createElement('a')
+	link.href = url
+	link.download = fileName || 'attachment'
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+	URL.revokeObjectURL(url)
+	isDownloading.value = false
+}
 </script>
