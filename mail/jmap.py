@@ -2061,6 +2061,9 @@ class JMAPClient:
 		else:
 			organizer = self.get_default_participant_identity(raise_exception=True)
 
+		if not organizer.startswith("mailto:"):
+			organizer = f"mailto:{organizer}"
+
 		if not calendar_ids:
 			calendar_ids = [self.get_default_calendar_id(raise_exception=True)]
 
@@ -2077,7 +2080,7 @@ class JMAPClient:
 							creation_id: {
 								"@type": "Event",
 								"uid": uid,
-								"organizerCalendarAddress": organizer or None,
+								"organizerCalendarAddress": organizer,
 								"calendarIds": {id: True for id in calendar_ids},
 								"status": status or None,
 								"isDraft": draft or False,
