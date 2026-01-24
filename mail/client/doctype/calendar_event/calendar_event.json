@@ -6,6 +6,7 @@
  "field_order": [
   "section_break_nfos",
   "user",
+  "role",
   "created_utc",
   "updated_utc",
   "after",
@@ -72,13 +73,14 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.__islocal || doc.role == \"Organizer\"",
    "description": "Indicates whether the event is a draft and not yet finalized or sent.",
    "fieldname": "draft",
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Draft",
    "no_copy": 1,
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "fieldname": "section_break_nzql",
@@ -154,7 +156,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Title",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "description": "The time zone in which the event start time is defined.",
@@ -162,14 +164,14 @@
    "fieldtype": "Autocomplete",
    "in_list_view": 1,
    "label": "Time Zone",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "description": "Additional free-text details about the event.",
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "description": "Identifies the principal responsible for the event.",
@@ -178,7 +180,7 @@
    "in_list_view": 1,
    "label": "Organizer",
    "no_copy": 1,
-   "set_only_once": 1
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "default": "Confirmed",
@@ -189,7 +191,7 @@
    "label": "Status",
    "no_copy": 1,
    "options": "Tentative\nConfirmed\nCancelled",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "description": "The length of the event expressed as a duration (e.g., PT30M, P1D).",
@@ -198,7 +200,7 @@
    "in_list_view": 1,
    "label": "Duration",
    "mandatory_depends_on": "eval: !doc.draft",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "default": "Busy",
@@ -208,7 +210,7 @@
    "in_list_view": 1,
    "label": "Free Busy Status",
    "options": "\nBusy\nFree",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "description": "A monotonically increasing number representing the version of the event.",
@@ -226,7 +228,7 @@
    "in_list_view": 1,
    "label": "Start",
    "mandatory_depends_on": "eval: !doc.draft",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "description": "A globally unique identifier for the event.",
@@ -247,7 +249,7 @@
    "fieldtype": "Table",
    "label": "Locations",
    "options": "Event Location",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "fieldname": "section_break_mduw",
@@ -259,7 +261,7 @@
    "fieldtype": "Table",
    "label": "Participants",
    "options": "Event Participant",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "default": "0",
@@ -267,15 +269,15 @@
    "fieldname": "show_without_time",
    "fieldtype": "Check",
    "label": "Show Without Time",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
-   "depends_on": "eval: doc.__islocal || doc.origin || doc.recurrence_rule != \"{}\"",
+   "depends_on": "eval: doc.role == \"Organizer\" || doc.recurrence_rule != \"{}\"",
    "description": "Defines how the event repeats over time.\n<br><br>\nExample: \n<pre>{\n  \"frequency\": \"yearly\", \n  /*\n    REQUIRED.\n    Allowed values:\n      \"yearly\", \"monthly\", \"weekly\", \"daily\",\n      \"hourly\", \"minutely\", \"secondly\"\n  */\n\n  \"interval\": 1,\n  /*\n    OPTIONAL.\n    Integer \u2265 1.\n    Repeats every N units of `frequency`.\n  */\n\n  \"count\": 10,\n  /*\n    OPTIONAL.\n    Integer \u2265 1.\n    Number of total occurrences.\n    MUTUALLY EXCLUSIVE with `until`.\n  */\n\n  \"until\": \"2026-12-31T23:59:59Z\",\n  /*\n    OPTIONAL.\n    UTC date-time only (RFC 3339).\n    MUTUALLY EXCLUSIVE with `count`.\n  */\n\n  \"firstDayOfWeek\": \"mo\",\n  /*\n    OPTIONAL.\n    Allowed values:\n      \"mo\", \"tu\", \"we\", \"th\", \"fr\", \"sa\", \"su\"\n  */\n\n  \"bySecond\": [0, 30],\n  /*\n    OPTIONAL.\n    Each value: 0\u201360\n  */\n\n  \"byMinute\": [0, 15, 30, 45],\n  /*\n    OPTIONAL.\n    Each value: 0\u201359\n  */\n\n  \"byHour\": [9, 12, 18],\n  /*\n    OPTIONAL.\n    Each value: 0\u201323\n  */\n\n  \"byDay\": [\n    \"mo\",\n    \"we\",\n    \"fr\",\n    \"1mo\",\n    \"-1fr\"\n  ],\n  /*\n    OPTIONAL.\n    Allowed values:\n      \"mo\"  \u2013 Monday\n      \"tu\"  \u2013 Tuesday\n      \"we\"  \u2013 Wednesday\n      \"th\"  \u2013 Thursday\n      \"fr\"  \u2013 Friday\n      \"sa\"  \u2013 Saturday\n      \"su\"  \u2013 Sunday\n\n    Positional weekdays (monthly/yearly only):\n      \"1mo\"   \u2192 first Monday\n      \"2tu\"   \u2192 second Tuesday\n      \"-1fr\"  \u2192 last Friday\n  */\n\n  \"byMonthDay\": [1, 15, -1],\n  /*\n    OPTIONAL.\n    Values:\n      1\u201331   \u2192 day of month\n      -1     \u2192 last day of month\n      -2     \u2192 second-to-last day\n  */\n\n  \"byYearDay\": [1, 100, -1],\n  /*\n    OPTIONAL.\n    Values:\n      1\u2013366  \u2192 day of year\n      -1     \u2192 last day of year\n  */\n\n  \"byWeekNo\": [1, 26, 52, -1],\n  /*\n    OPTIONAL.\n    ISO week numbers.\n    Values:\n      1\u201353\n      -1 \u2192 last week of year\n    VALID ONLY when frequency = \"yearly\"\n  */\n\n  \"byMonth\": [1, 6, 12],\n  /*\n    OPTIONAL.\n    Values:\n      1  \u2192 January\n      6  \u2192 June\n      12 \u2192 December\n  */\n\n  \"bySetPosition\": [1, -1]\n  /*\n    OPTIONAL.\n    Selects specific occurrences AFTER all other rules are applied.\n    Values:\n      Positive \u2192 nth occurrence\n      Negative \u2192 nth-from-last occurrence\n  */\n}\n</pre>",
    "fieldname": "recurrence_rule",
    "fieldtype": "JSON",
    "label": "Recurrence Rule",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "fieldname": "section_break_lpbz",
@@ -305,7 +307,7 @@
    "fieldname": "send_scheduling_messages",
    "fieldtype": "Check",
    "label": "Send Scheduling Messages",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role == \"Viewer\""
   },
   {
    "description": "The UTC timestamp when the event was created.",
@@ -351,7 +353,7 @@
    "fieldtype": "Table",
    "label": "Links",
    "options": "Event Link",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "fieldname": "recurrence_tab",
@@ -404,18 +406,29 @@
    "in_list_view": 1,
    "label": "Privacy",
    "options": "\nPublic\nPrivate",
-   "read_only_depends_on": "eval: !doc.__islocal && !doc.origin"
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
   },
   {
    "fieldname": "column_break_gypo",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "Organizer",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "role",
+   "fieldtype": "Select",
+   "is_virtual": 1,
+   "label": "Role",
+   "no_copy": 1,
+   "options": "Organizer\nAttendee\nViewer",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-24 08:56:18.148706",
+ "modified": "2026-01-24 10:57:41.348320",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",

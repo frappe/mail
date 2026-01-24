@@ -3,6 +3,7 @@
 
 
 import json
+from functools import cached_property
 from typing import Literal
 from uuid import uuid7
 
@@ -20,6 +21,27 @@ from mail.utils.validation import has_permission_for_user
 
 
 class CalendarEvent(Document):
+	@cached_property
+	def role(self) -> Literal["Organizer", "Attendee", "Viewer"]:
+		"""Returns the role of the current user in relation to the event."""
+
+		role = "Viewer"
+
+		if self.is_new():
+			role = "Organizer"
+		elif self.user and (self.organizer or self.participants):
+			client = get_jmap_client(self.user)
+			if self.organizer and client.get_identity_id_by_email(self.organizer.replace("mailto:", "")):
+				role = "Organizer"
+			elif any(
+				p
+				for p in self.participants
+				if p.email and client.get_identity_id_by_email(p.email.replace("mailto:", ""))
+			):
+				role = "Attendee"
+
+		return role
+
 	@property
 	def calendar_ids(self) -> list[str]:
 		"""Returns a list of calendar IDs associated with the event."""
