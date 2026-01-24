@@ -2056,11 +2056,9 @@ class JMAPClient:
 	) -> dict:
 		"""Creates a calendar event with the given parameters."""
 
-		if organizer:
-			self.has_participant_identity_for_email(organizer, raise_exception=True)
-		else:
-			organizer = self.get_default_participant_identity(raise_exception=True)
-
+		organizer = (
+			organizer.lower() if organizer else self.get_default_participant_identity(raise_exception=True)
+		)
 		if not organizer.startswith("mailto:"):
 			organizer = f"mailto:{organizer}"
 
