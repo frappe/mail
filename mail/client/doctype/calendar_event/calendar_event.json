@@ -25,6 +25,7 @@
   "uid",
   "title",
   "privacy",
+  "free_busy_status",
   "column_break_dqmn",
   "status",
   "description",
@@ -32,7 +33,6 @@
   "column_break_gypo",
   "organizer",
   "sequence",
-  "free_busy_status",
   "column_break_dcpf",
   "start",
   "duration",
@@ -204,13 +204,12 @@
   },
   {
    "default": "Busy",
-   "description": "Indicates how the event affects the organizer\u2019s availability.",
+   "description": "Indicates how the event affects the availability.",
    "fieldname": "free_busy_status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Free Busy Status",
-   "options": "\nBusy\nFree",
-   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+   "options": "\nBusy\nFree"
   },
   {
    "description": "A monotonically increasing number representing the version of the event.",
@@ -261,7 +260,7 @@
    "fieldtype": "Table",
    "label": "Participants",
    "options": "Event Participant",
-   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+   "read_only_depends_on": "eval: doc.role == \"Viewer\""
   },
   {
    "default": "0",
@@ -405,8 +404,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Privacy",
-   "options": "\nPublic\nPrivate",
-   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+   "options": "\nPublic\nPrivate"
   },
   {
    "fieldname": "column_break_gypo",
@@ -428,7 +426,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-24 10:57:41.348320",
+ "modified": "2026-01-24 13:18:53.536601",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",

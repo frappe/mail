@@ -110,6 +110,7 @@ class CalendarEvent(Document):
 					"participation_status": p.participation_status,
 					"expect_reply": bool(p.expect_reply),
 					"description": p.description,
+					"comment": p.comment,
 				}
 				for p in self.participants
 			]
@@ -151,7 +152,32 @@ class CalendarEvent(Document):
 		)
 
 	def db_update(self) -> None:
-		raise NotImplementedError
+		update_calendar_event(
+			user=self.user,
+			role=self.role,
+			id=self.id,
+			uid=self.uid,
+			organizer=self.organizer,
+			calendar_ids=self.calendar_ids,
+			status=self.status,
+			draft=bool(self.draft),
+			title=self.title,
+			start=self.start,
+			duration=self.duration,
+			time_zone=self.time_zone,
+			recurrence_rule=self.formatted_recurrence_rule,
+			show_without_time=bool(self.show_without_time),
+			privacy=self.privacy,
+			free_busy_status=self.free_busy_status,
+			description=self.description,
+			locations=self.formatted_locations,
+			links=self.formatted_links,
+			participants=self.formatted_participants,
+			alerts=self.formatted_alerts,
+			use_default_alerts=bool(self.use_default_alerts),
+			send_scheduling_messages=bool(self.send_scheduling_messages),
+		)
+		self.reload()
 
 	def delete(self) -> None:
 		user, id = self.name.split("|")
@@ -380,8 +406,67 @@ def get_calendar_events(user: str, ids: list[str]) -> list[dict]:
 
 
 @frappe.whitelist()
-def update_calendar_event() -> None:
-	pass
+def update_calendar_event(
+	user: str,
+	role: Literal["Organizer", "Attendee", "Viewer"],
+	id: str,
+	uid: str | None = None,
+	organizer: str | None = None,
+	calendar_ids: list[str] | None = None,
+	status: Literal["Tentative", "Confirmed", "Cancelled"] = "Confirmed",
+	draft: bool = False,
+	title: str | None = None,
+	start: str | None = None,
+	duration: str | None = None,
+	time_zone: str | None = None,
+	recurrence_rule: dict | None = None,
+	show_without_time: bool = False,
+	privacy: str | None = None,
+	free_busy_status: str | None = None,
+	description: str | None = None,
+	locations: list[dict] | None = None,
+	links: list[dict] | None = None,
+	participants: list[dict] | None = None,
+	alerts: list[dict] | None = None,
+	use_default_alerts: bool = False,
+	send_scheduling_messages: bool = False,
+) -> None:
+	"""Updates a calendar event for the given user and event ID."""
+
+	has_permission_for_user(user)
+
+	client = get_jmap_client(user)
+	response = client.calendar_event_update(
+		id=id,
+		role=role.lower(),
+		uid=uid,
+		organizer=organizer,
+		calendar_ids=calendar_ids,
+		status=status.lower(),
+		draft=draft,
+		title=title,
+		start=start,
+		duration=duration,
+		time_zone=time_zone,
+		recurrence_rule=recurrence_rule,
+		show_without_time=show_without_time,
+		privacy=privacy.lower() if privacy else None,
+		free_busy_status=free_busy_status.lower() if free_busy_status else None,
+		description=description,
+		locations=locations,
+		links=links,
+		participants=participants,
+		alerts=alerts,
+		use_default_alerts=use_default_alerts,
+		send_scheduling_messages=send_scheduling_messages,
+	)
+
+	title = _("Calendar Event Update Error")
+	if not response.get("updated"):
+		if response.get("notUpdated"):
+			frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
+		else:
+			frappe.throw(_(response["description"]), title=title)
 
 
 @frappe.whitelist()
@@ -466,10 +551,8 @@ def format_calendar_event(user: str, calendar_map: dict, event: dict) -> dict:
 
 	participants = []
 	for uid, p in event.get("participants", {}).items():
-		roles = {}
-		for r, v in p.get("roles", {}).items():
-			roles[r.lower()] = v
-
+		p["roles"] = p.get("roles") or {}
+		roles = {r.lower(): v for r, v in p.get("roles").items()}
 		participants.append(
 			{
 				"uid": uid,
@@ -484,6 +567,7 @@ def format_calendar_event(user: str, calendar_map: dict, event: dict) -> dict:
 				else "",
 				"expect_reply": cint(p.get("expectReply", False)),
 				"description": p.get("description", ""),
+				"comment": p.get("comment", ""),
 			}
 		)
 

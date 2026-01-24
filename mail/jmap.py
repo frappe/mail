@@ -2027,7 +2027,7 @@ class JMAPClient:
 			frappe.throw(_("No default calendar found for the account."))
 
 	# -------------------------------
-	# Event
+	# Calendar Event
 	# -------------------------------
 
 	def calendar_event_create(
@@ -2189,8 +2189,102 @@ class JMAPClient:
 
 		return fetch(ids)
 
-	def calendar_event_update(self) -> dict:
-		pass
+	def calendar_event_update(
+		self,
+		id: str,
+		role: Literal["organizer", "attendee", "viewer"],
+		uid: str | None = None,
+		organizer: str | None = None,
+		calendar_ids: list[str] | None = None,
+		status: Literal["tentative", "confirmed", "cancelled"] | None = None,
+		draft: bool = False,
+		title: str | None = None,
+		start: str | None = None,
+		duration: str | None = None,
+		time_zone: str | None = None,
+		recurrence_rule: dict | None = None,
+		show_without_time: bool = False,
+		privacy: str | None = None,
+		free_busy_status: str | None = None,
+		description: str | None = None,
+		locations: list[dict] | None = None,
+		links: list[dict] | None = None,
+		participants: list[dict] | None = None,
+		alerts: list[dict] | None = None,
+		use_default_alerts: bool = False,
+		send_scheduling_messages: bool = False,
+	) -> dict:
+		"""Updates the calendar event with the given parameters based on the user's role."""
+
+		if role not in ["organizer", "attendee", "viewer"]:
+			frappe.throw(_("Invalid role specified for calendar event update."))
+
+		if not calendar_ids:
+			calendar_ids = [self.get_default_calendar_id(raise_exception=True)]
+
+		payload = {
+			"@type": "Event",
+			"calendarIds": {id: True for id in calendar_ids},
+			"privacy": privacy or None,
+			"freeBusyStatus": free_busy_status or None,
+			"alerts": _get_alerts_map(alerts),
+		}
+		if role == "organizer":
+			organizer = (
+				organizer.lower()
+				if organizer
+				else self.get_default_participant_identity(raise_exception=True)
+			)
+			if not organizer.startswith("mailto:"):
+				organizer = f"mailto:{organizer}"
+
+			payload.update(
+				{
+					"uid": uid or None,
+					"organizerCalendarAddress": organizer,
+					"status": status or None,
+					"isDraft": draft or False,
+					"title": title or None,
+					"start": start or None,
+					"duration": duration or None,
+					"timeZone": time_zone or None,
+					"recurrenceRule": recurrence_rule or None,
+					"showWithoutTime": show_without_time or False,
+					"description": description or None,
+					"locations": _get_locations_map(locations),
+					"links": _get_links_map(links),
+					"participants": _get_participants_map(organizer, participants),
+					"useDefaultAlerts": use_default_alerts or False,
+					"updated": utcnow(),
+				}
+			)
+		elif role == "attendee":
+			if participants := _get_participants_map(organizer, participants):
+				for pid, participant in participants.items():
+					if calendar_address := participant.get("calendarAddress") and participant[
+						"calendarAddress"
+					].lower().replace("mailto:", ""):
+						if self.get_identity_id_by_email(calendar_address):
+							key = f"participants/{pid}"
+							payload[f"{key}/expectReply"] = participant["expectReply"]
+							payload[f"{key}/participationStatus"] = participant["participationStatus"]
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:calendars"],
+			method_calls=[
+				[
+					"CalendarEvent/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {id: payload},
+						"sendSchedulingMessages": role != "viewer" and (send_scheduling_messages or False),
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
 
 	def calendar_event_delete(self, ids: list[str]) -> dict:
 		"""Destroys the calendar events with the given IDs."""
@@ -2943,6 +3037,8 @@ def _get_participants_map(organizer: str, participants: list[dict] | None = None
 	"""Returns the participants map for the given participants dictionary."""
 
 	if participants:
+		organizer = organizer.replace("mailto:", "").lower()
+
 		participants_map = {}
 		participants_emails = []
 		for participant in participants:
@@ -2965,7 +3061,7 @@ def _get_participants_map(organizer: str, participants: list[dict] | None = None
 
 			participants_map[uid] = {
 				"@type": "Participant",
-				"name": participant.get("name") or None,
+				"name": participant.get("name") or email,
 				"sendTo": send_to,
 				"scheduleId": schedule_id,
 				"calendarAddress": calendar_address,
@@ -2974,6 +3070,7 @@ def _get_participants_map(organizer: str, participants: list[dict] | None = None
 				"roles": participant.get("roles") or None,
 				"participationStatus": participant.get("participation_status", "").lower() or None,
 				"expectReply": expect_reply,
+				"comment": participant.get("comment") or None,
 			}
 			participants_emails.append(email)
 

@@ -16,7 +16,8 @@
   "participation_status",
   "expect_reply",
   "section_break_gwzl",
-  "description"
+  "description",
+  "comment"
  ],
  "fields": [
   {
@@ -41,7 +42,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Email",
-   "options": "Email"
+   "options": "Email",
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
   },
   {
    "default": "Individual",
@@ -50,17 +52,19 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Kind",
-   "options": "\nIndividual\nGroup\nResource\nLocation"
+   "options": "\nIndividual\nGroup\nResource\nLocation",
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
   },
   {
    "description": "The display name of the participant.",
    "fieldname": "_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Name"
+   "label": "Name",
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
   },
   {
-   "default": "0",
+   "default": "1",
    "description": "Indicates whether a response is expected from this participant.",
    "fieldname": "expect_reply",
    "fieldtype": "Check",
@@ -81,7 +85,8 @@
    "description": "Defines the participant\u2019s role(s) in the event.\n<br>\nExample: <code>{\n  \"organizer\": false,\n  \"owner\": false,\n  \"chair\": true,\n  \"optional\": false,\n  \"required\": true,\n  \"informational\": false\n}</code>",
    "fieldname": "roles",
    "fieldtype": "JSON",
-   "label": "Roles"
+   "label": "Roles",
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
   },
   {
    "fieldname": "section_break_gwzl",
@@ -91,7 +96,8 @@
    "description": "Optional additional information about the participant.",
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "label": "Description"
+   "label": "Description",
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
   },
   {
    "description": "The scheduling identifier used to uniquely identify this participant in scheduling messages.",
@@ -110,6 +116,13 @@
    "label": "Send To",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Small Text",
+   "label": "Comment",
+   "no_copy": 1,
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
   }
  ],
  "grid_page_length": 50,
@@ -117,7 +130,7 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-23 15:06:34.165595",
+ "modified": "2026-01-24 16:42:53.770697",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Event Participant",
