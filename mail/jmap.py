@@ -2425,27 +2425,31 @@ class JMAPClient:
 
 	def principal_get_availability(
 		self,
+		principal_id: str,
 		utc_start: str,
 		utc_end: str,
 		show_details: bool = False,
 		event_properties: list[str] | None = None,
-		id: str | None = None,
 	) -> dict:
-		"""Returns the availability information for the provided principal ID."""
+		"""Returns the availability information for the provided principal."""
+
+		payload = {
+			"accountId": self.primary_account_id,
+			"id": principal_id,
+			"start": utc_start,
+			"end": utc_end,
+			"showDetails": show_details,
+		}
+
+		if show_details and event_properties:
+			payload["eventProperties"] = event_properties
 
 		response = self._make_request(
 			using=["urn:ietf:params:jmap:calendars"],
 			method_calls=[
 				[
 					"Principal/getAvailability",
-					{
-						"accountId": self.primary_account_id,
-						"id": id or self.primary_account_id,
-						"start": utc_start,
-						"end": utc_end,
-						"showDetails": show_details,
-						"eventProperties": event_properties or None,
-					},
+					payload,
 					"0",
 				]
 			],
