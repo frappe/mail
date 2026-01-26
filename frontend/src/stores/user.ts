@@ -9,7 +9,7 @@ const { setShowReadingPane, setGroupMessagesBy } = useLayout()
 
 import type { UserResource } from '@/types'
 
-export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
+export type MailboxRole = 'inbox' | 'sent' | 'scheduled' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
 
 export const userStore = defineStore('mail-users', () => {
 	const userResource: UserResource = createResource({
@@ -46,6 +46,7 @@ export const userStore = defineStore('mail-users', () => {
 		const ids: Record<MailboxRole, string> = {
 			inbox: '',
 			sent: '',
+			scheduled: '',
 			drafts: '',
 			trash: '',
 			junk: '',

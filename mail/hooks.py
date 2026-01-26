@@ -56,6 +56,17 @@ website_redirects = [
 		"target": "/api/method/mail.api.spamd.get_spam_score",
 		"redirect_http_status": 307,
 	},
+	# Stalwart Webhooks
+	{
+		"source": "/webhook/delivery",
+		"target": "/api/method/mail.api.webhook.delivery_status",
+		"redirect_http_status": 307,
+	},
+	{
+		"source": "/webhook/message-ingest",
+		"target": "/api/method/mail.api.webhook.message_ingest",
+		"redirect_http_status": 307,
+	},
 ]
 
 email_css = ["/assets/mail/css/email.css"]
@@ -251,6 +262,8 @@ scheduler_events = {
 			"mail.server.doctype.server_ansible_play.server_ansible_play.retry_failed_ansible_plays",
 			# Client
 			"mail.client.doctype.mail_queue.mail_queue.enqueue_process_pending_emails",
+			# Fallback check for scheduled emails (primary: webhook from Stalwart)
+			"mail.client.doctype.mail_queue.mail_queue.process_delivered_scheduled_emails",
 		],
 	},
 }

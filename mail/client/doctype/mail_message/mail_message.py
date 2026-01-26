@@ -257,6 +257,12 @@ class MailMessage(Document):
 		return self._update_or_submit_draft(save_as_draft=False)
 
 	@frappe.whitelist()
+	def schedule(self, scheduled_at: str) -> "MailQueue":
+		"""Schedule the draft Mail Message for later delivery."""
+
+		return self._update_or_submit_draft(save_as_draft=False, scheduled_at=scheduled_at)
+
+	@frappe.whitelist()
 	def move_to_mailbox(self, mailbox_id: str) -> None:
 		"""Move the Mail Message to a specified mailbox."""
 
@@ -456,7 +462,7 @@ class MailMessage(Document):
 		]:
 			self.__dict__.pop(property, None)
 
-	def _update_or_submit_draft(self, save_as_draft: bool = True) -> "MailQueue":
+	def _update_or_submit_draft(self, save_as_draft: bool = True, scheduled_at: str | None = None) -> "MailQueue":
 		"""Update or submit the draft Mail Message."""
 
 		if not self.draft:
@@ -507,7 +513,7 @@ class MailMessage(Document):
 			id=self.id,
 			in_reply_to=self.in_reply_to,
 			save_as_draft=save_as_draft,
-			delivery_mode="Immediate",
+			scheduled_at=scheduled_at,
 		)
 
 	def _reply(self, recipients: list[dict]) -> "MailQueue":

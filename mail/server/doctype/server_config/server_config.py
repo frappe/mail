@@ -168,6 +168,23 @@ def get_server_config(server: str) -> ServerConfig | None:
 		return frappe.get_doc("Server Config", config)
 
 
+def _get_webhook_url(cluster) -> str | None:
+	"""
+	Returns the webhook URL for Frappe Mail.
+	
+	Uses explicit config if available, otherwise falls back to site URL.
+	The webhook URL should point to the Frappe Mail instance, not the Stalwart server.
+	"""
+	
+	# First try explicit webhook URL from site config
+	if webhook_url := frappe.conf.get("stalwart_webhook_url"):
+		return webhook_url.rstrip("/")
+	
+	# Fall back to site URL (Frappe Mail instance)
+	site_url = frappe.utils.get_url()
+	return site_url.rstrip("/") if site_url else None
+
+
 def get_config_toml(server: str) -> str | None:
 	"""Returns the TOML configuration for the Mail Server."""
 
@@ -584,6 +601,29 @@ def get_config_toml(server: str) -> str | None:
 		},
 		"tracer": _get_traces(cluster.traces),
 	}
+
+	# Add webhook configuration for delivery notifications
+	webhook_url = _get_webhook_url(cluster)
+	if webhook_url:
+		config["webhook"] = {
+			"delivery-notify": {
+				"url": f"{webhook_url}/webhook/delivery",
+				"events": [
+					"delivery.completed",
+					"delivery.delivered", 
+					"delivery.dsn-success",
+					"queue.quota-exceeded",
+				],
+				"timeout": "30s",
+				"throttle": "1s",
+				"lossy": True,  # Don't block if webhook fails
+				"allow-invalid-certs": False,
+			}
+		}
+		# Add signature key if configured
+		webhook_secret = frappe.conf.get("stalwart_webhook_secret")
+		if webhook_secret:
+			config["webhook"]["delivery-notify"]["signature-key"] = webhook_secret
 
 	if server.outbound_only:
 		config.setdefault("session", {}).setdefault("rcpt", {})["directory"] = False

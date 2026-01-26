@@ -369,7 +369,8 @@ const scheduleMail = async (scheduledAt: string) => {
 	if (updateDraft.loading) await updateDraft.promise
 
 	// Schedule the email with the specified datetime
-	createMail.submit({ save_as_draft: false, scheduled_at: scheduledAt })
+	if (mail.id) updateDraft.submit({ submit: false, scheduled_at: scheduledAt })
+	else createMail.submit({ save_as_draft: false, scheduled_at: scheduledAt })
 }
 
 const isDiscarding = ref(false)
@@ -418,7 +419,13 @@ const onMailUpdateSuccess = ({
 
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
-	makeParams: ({ save_as_draft, scheduled_at }: { save_as_draft: boolean; scheduled_at?: string }) => ({
+	makeParams: ({
+		save_as_draft,
+		scheduled_at,
+	}: {
+		save_as_draft: boolean
+		scheduled_at?: string
+	}) => ({
 		...mail,
 		from_name: getIdentity(mail.from_email!)._name,
 		html_body: mail.html_body! + mail.quoted_content,
@@ -431,11 +438,12 @@ const createMail = createResource({
 
 const updateDraft = createResource({
 	url: 'mail.api.mail.update_draft_mail',
-	makeParams: ({ submit }: { submit: boolean }) => ({
+	makeParams: ({ submit, scheduled_at }: { submit: boolean; scheduled_at?: string }) => ({
 		...mail,
 		from_name: getIdentity(mail.from_email!)._name,
 		html_body: mail.html_body! + mail.quoted_content,
 		submit,
+		scheduled_at,
 	}),
 	onSuccess: onMailUpdateSuccess,
 	onError: (error) => raiseToast(error.message, 'error'),

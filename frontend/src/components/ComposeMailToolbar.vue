@@ -43,7 +43,7 @@
 					:icon-left="Trash2"
 					@click="emit('discardMail')"
 				/>
-				<Popover @open="initScheduleDateTime" placement="top-end">
+				<Popover placement="top-end" @open="initScheduleDateTime">
 					<template #target="{ togglePopover, isOpen }">
 						<Button
 							:label="__('Schedule')"
@@ -54,25 +54,114 @@
 						/>
 					</template>
 					<template #body="{ close }">
-						<div class="rounded-lg bg-surface-white shadow-xl border border-outline-gray-1 p-4 w-72 mb-2">
-							<div class="mb-3 text-sm font-medium text-ink-gray-7">{{ __('Schedule Send') }}</div>
-							<div class="flex justify-end space-x-2 mb-3">
-								<Button :label="__('Cancel')" @click="close()" />
-								<Button
-									variant="solid"
-									:label="__('Schedule')"
-									:disabled="!isValidScheduleTime"
-									@click="onScheduleSend(close)"
-								/>
+						<div
+							class="bg-surface-white border-outline-gray-1 mb-2 rounded-lg border p-4 shadow-xl"
+						>
+							<!-- Header -->
+							<div class="text-ink-gray-7 mb-3 text-sm font-medium">
+								{{ __('Schedule Send') }}
 							</div>
-							<FormControl
-								v-model="scheduledDateTime"
-								type="datetime-local"
-								:min="minDateTime"
-								variant="outline"
-							/>
-							<!-- Space for native calendar dropdown -->
-							<div class="h-52"></div>
+
+							<!-- Inline Calendar UI -->
+							<div class="border-outline-gray-2 mb-3 rounded-lg border p-2">
+								<!-- Month/Year Header -->
+								<div class="mb-2 flex items-center justify-between">
+									<span class="text-ink-gray-8 text-base font-semibold">
+										{{ monthNames[currentMonth] }} {{ currentYear }}
+									</span>
+									<div class="flex items-center gap-1">
+										<Button
+											variant="ghost"
+											size="sm"
+											class="!p-1"
+											@click="prevMonth"
+										>
+											<template #icon>
+												<ChevronLeft class="h-4 w-4" />
+											</template>
+										</Button>
+										<div class="flex gap-0.5">
+											<span
+												class="bg-ink-gray-4 h-1.5 w-1.5 rounded-full"
+											></span>
+											<span
+												class="bg-ink-gray-4 h-1.5 w-1.5 rounded-full"
+											></span>
+										</div>
+										<Button
+											variant="ghost"
+											size="sm"
+											class="!p-1"
+											@click="nextMonth"
+										>
+											<template #icon>
+												<ChevronRight class="h-4 w-4" />
+											</template>
+										</Button>
+									</div>
+								</div>
+
+								<!-- Day Names -->
+								<div
+									class="border-outline-gray-2 mb-1 grid grid-cols-7 border-b pb-1"
+								>
+									<div
+										v-for="day in ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']"
+										:key="day"
+										class="text-ink-gray-5 py-1 text-center text-xs font-medium"
+									>
+										{{ day }}
+									</div>
+								</div>
+
+								<!-- Calendar Grid -->
+								<div class="grid grid-cols-7 gap-y-0.5">
+									<button
+										v-for="dateObj in calendarDates"
+										:key="dateObj.key"
+										type="button"
+										class="flex h-7 w-full items-center justify-center rounded text-sm transition-colors"
+										:class="[
+											dateObj.inMonth
+												? 'text-ink-gray-7'
+												: 'text-ink-gray-3',
+											dateObj.isToday && !dateObj.isSelected
+												? 'bg-blue-50 font-bold text-blue-600'
+												: '',
+											dateObj.isSelected
+												? 'bg-blue-100 font-semibold text-blue-700'
+												: 'hover:bg-surface-gray-2',
+											dateObj.isPast && !dateObj.isToday
+												? 'text-ink-gray-3 cursor-not-allowed'
+												: 'cursor-pointer',
+										]"
+										:disabled="dateObj.isPast && !dateObj.isToday"
+										@click="selectDate(dateObj)"
+									>
+										{{ dateObj.day }}
+									</button>
+								</div>
+							</div>
+
+							<!-- Time Picker and Buttons -->
+							<div class="flex items-center justify-between gap-4">
+								<TimePicker
+									v-model="scheduledTime"
+									:use12-hour="true"
+									:interval="15"
+									placeholder="Select time"
+									class="w-32"
+								/>
+								<div class="flex gap-2">
+									<Button :label="__('Cancel')" @click="close()" />
+									<Button
+										variant="solid"
+										:label="__('Schedule')"
+										:disabled="!isValidScheduleTime"
+										@click="onScheduleSend(close)"
+									/>
+								</div>
+							</div>
 						</div>
 					</template>
 				</Popover>
@@ -90,8 +179,16 @@
 </template>
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
-import { CalendarClock, Laugh, Paperclip, SendHorizontal, Trash2 } from 'lucide-vue-next'
-import { Button, FormControl, Popover, TextEditorFixedMenu } from 'frappe-ui'
+import {
+	CalendarClock,
+	ChevronLeft,
+	ChevronRight,
+	Laugh,
+	Paperclip,
+	SendHorizontal,
+	Trash2,
+} from 'lucide-vue-next'
+import { Button, Popover, TextEditorFixedMenu, TimePicker } from 'frappe-ui'
 
 import { isMac } from '@/utils'
 import { useScreenSize, useTextEditorButtons, useVisualViewport } from '@/utils/composables'
@@ -107,20 +204,127 @@ const emit = defineEmits(['appendEmoji', 'selectFiles', 'discardMail', 'sendMail
 const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 
 // Schedule send state
-const scheduledDateTime = ref('')
+const scheduledDate = ref('')
+const scheduledTime = ref('')
+const currentYear = ref(new Date().getFullYear())
+const currentMonth = ref(new Date().getMonth())
 
-// Format datetime to local datetime-local input format (YYYY-MM-DDTHH:mm)
-const formatToLocalDatetime = (date: Date): string => {
-	const year = date.getFullYear()
-	const month = String(date.getMonth() + 1).padStart(2, '0')
-	const day = String(date.getDate()).padStart(2, '0')
-	const hours = String(date.getHours()).padStart(2, '0')
-	const minutes = String(date.getMinutes()).padStart(2, '0')
-	return `${year}-${month}-${day}T${hours}:${minutes}`
+const monthNames = [
+	'Jan',
+	'Feb',
+	'Mar',
+	'Apr',
+	'May',
+	'Jun',
+	'Jul',
+	'Aug',
+	'Sep',
+	'Oct',
+	'Nov',
+	'Dec',
+]
+
+// Calendar logic
+interface DateObj {
+	key: string
+	day: number
+	date: Date
+	inMonth: boolean
+	isToday: boolean
+	isSelected: boolean
+	isPast: boolean
 }
 
-// Minimum datetime is current local time (prevents scheduling in the past)
-const minDateTime = computed(() => formatToLocalDatetime(new Date()))
+const calendarDates = computed((): DateObj[] => {
+	const dates: DateObj[] = []
+	const year = currentYear.value
+	const month = currentMonth.value
+
+	// First day of month (0 = Sunday, we want Monday = 0)
+	const firstDay = new Date(year, month, 1)
+	let startDay = firstDay.getDay() - 1
+	if (startDay < 0) startDay = 6 // Sunday becomes 6
+
+	// Last day of month
+	const lastDay = new Date(year, month + 1, 0).getDate()
+
+	// Previous month days
+	const prevMonthLastDay = new Date(year, month, 0).getDate()
+	for (let i = startDay - 1; i >= 0; i--) {
+		const day = prevMonthLastDay - i
+		const date = new Date(year, month - 1, day)
+		dates.push(createDateObj(date, day, false))
+	}
+
+	// Current month days
+	for (let day = 1; day <= lastDay; day++) {
+		const date = new Date(year, month, day)
+		dates.push(createDateObj(date, day, true))
+	}
+
+	// Next month days (fill to 42 cells = 6 weeks)
+	const remaining = 42 - dates.length
+	for (let day = 1; day <= remaining; day++) {
+		const date = new Date(year, month + 1, day)
+		dates.push(createDateObj(date, day, false))
+	}
+
+	return dates
+})
+
+const createDateObj = (date: Date, day: number, inMonth: boolean): DateObj => {
+	const today = new Date()
+	today.setHours(0, 0, 0, 0)
+	const dateOnly = new Date(date)
+	dateOnly.setHours(0, 0, 0, 0)
+
+	const selectedDateObj = scheduledDate.value ? new Date(scheduledDate.value) : null
+	if (selectedDateObj) selectedDateObj.setHours(0, 0, 0, 0)
+
+	return {
+		key: date.toISOString(),
+		day,
+		date,
+		inMonth,
+		isToday: dateOnly.getTime() === today.getTime(),
+		isSelected: selectedDateObj ? dateOnly.getTime() === selectedDateObj.getTime() : false,
+		isPast: dateOnly < today,
+	}
+}
+
+const prevMonth = () => {
+	if (currentMonth.value === 0) {
+		currentMonth.value = 11
+		currentYear.value--
+	} else {
+		currentMonth.value--
+	}
+}
+
+const nextMonth = () => {
+	if (currentMonth.value === 11) {
+		currentMonth.value = 0
+		currentYear.value++
+	} else {
+		currentMonth.value++
+	}
+}
+
+const selectDate = (dateObj: DateObj) => {
+	if (dateObj.isPast && !dateObj.isToday) return
+
+	// Format as YYYY-MM-DD
+	const year = dateObj.date.getFullYear()
+	const month = String(dateObj.date.getMonth() + 1).padStart(2, '0')
+	const day = String(dateObj.date.getDate()).padStart(2, '0')
+	scheduledDate.value = `${year}-${month}-${day}`
+
+	// Navigate to the selected month if in different month
+	if (!dateObj.inMonth) {
+		currentYear.value = dateObj.date.getFullYear()
+		currentMonth.value = dateObj.date.getMonth()
+	}
+}
 
 // Initialize with default time (1 hour from now, rounded to next 30 min)
 const initScheduleDateTime = () => {
@@ -131,28 +335,55 @@ const initScheduleDateTime = () => {
 	now.setMinutes(minutes < 30 ? 30 : 60)
 	now.setSeconds(0)
 	now.setMilliseconds(0)
-	scheduledDateTime.value = formatToLocalDatetime(now)
+
+	// Set date
+	currentYear.value = now.getFullYear()
+	currentMonth.value = now.getMonth()
+
+	const year = now.getFullYear()
+	const month = String(now.getMonth() + 1).padStart(2, '0')
+	const day = String(now.getDate()).padStart(2, '0')
+	scheduledDate.value = `${year}-${month}-${day}`
+
+	// Set time in HH:mm format
+	const hours = String(now.getHours()).padStart(2, '0')
+	const mins = String(now.getMinutes()).padStart(2, '0')
+	scheduledTime.value = `${hours}:${mins}`
 }
 
 // Validate that scheduled time is in the future
 const isValidScheduleTime = computed(() => {
-	if (!scheduledDateTime.value || isRecipientsEmpty) return false
-	const scheduled = new Date(scheduledDateTime.value)
+	if (!scheduledDate.value || !scheduledTime.value || isRecipientsEmpty) return false
+
+	const [hours, minutes] = scheduledTime.value.split(':').map(Number)
+	const scheduled = new Date(scheduledDate.value)
+	scheduled.setHours(hours, minutes, 0, 0)
+
 	return scheduled > new Date()
 })
 
 const onScheduleSend = (close: () => void) => {
-	if (scheduledDateTime.value && isValidScheduleTime.value) {
-		// Convert local datetime to ISO string for API
-		const localDate = new Date(scheduledDateTime.value)
-		emit('scheduleMail', localDate.toISOString())
-		scheduledDateTime.value = ''
+	if (scheduledDate.value && scheduledTime.value && isValidScheduleTime.value) {
+		const [hours, minutes] = scheduledTime.value.split(':').map(Number)
+		const scheduled = new Date(scheduledDate.value)
+		scheduled.setHours(hours, minutes, 0, 0)
+
+		// Format as local datetime string (YYYY-MM-DD HH:MM:SS) instead of UTC ISO string
+		const year = scheduled.getFullYear()
+		const month = String(scheduled.getMonth() + 1).padStart(2, '0')
+		const day = String(scheduled.getDate()).padStart(2, '0')
+		const hrs = String(scheduled.getHours()).padStart(2, '0')
+		const mins = String(scheduled.getMinutes()).padStart(2, '0')
+		const scheduledAtLocal = `${year}-${month}-${day} ${hrs}:${mins}:00`
+
+		emit('scheduleMail', scheduledAtLocal)
+		scheduledDate.value = ''
+		scheduledTime.value = ''
 		close()
 	}
 }
 
 // Make toolbar hover over keyboard on mobile
-
 const { isMobile } = useScreenSize()
 const { buttons } = useTextEditorButtons()
 
@@ -171,5 +402,3 @@ const onFilesSelected = async (e: Event) => {
 	input.value = ''
 }
 </script>
-
-<!-- todo: file upload -> discard race condition (draft saved) -->

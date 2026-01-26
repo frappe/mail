@@ -583,9 +583,15 @@ class MailQueue(Document):
 			# The JMAP response shows updated: {submission_id: null} on success
 			updated = response["methodResponses"][0][1].get("updated", {})
 			if self.submission_id in updated:
+				# Move email back to Drafts folder in Stalwart
+				if self.id:
+					draft_mailbox_id = client.get_mailbox_id_by_role("drafts", create_if_not_exists=True)
+					client.email_update([self.id], mailbox_id=draft_mailbox_id)
+
 				self._db_set(
 					status="Cancelled",
 					scheduled_at=None,
+					mailbox_id=draft_mailbox_id if self.id else self.mailbox_id,
 					notify=True,
 				)
 			else:
@@ -594,6 +600,167 @@ class MailQueue(Document):
 		except Exception as e:
 			frappe.log_error(_("Failed to cancel scheduled email"), frappe.get_traceback(with_context=True))
 			frappe.throw(_("Failed to cancel scheduled email: {0}").format(str(e)))
+
+	@frappe.whitelist()
+	def update_scheduled_time(self, new_scheduled_at: str) -> None:
+		"""Updates the scheduled send time for a pending scheduled email.
+
+		Args:
+			new_scheduled_at: New scheduled datetime string (local time)
+		"""
+
+		if self.status != "Scheduled":
+			frappe.throw(_("Cannot update schedule time for email with status {0}. Only scheduled emails can be updated.").format(self.status))
+
+		if not self.submission_id:
+			frappe.throw(_("Cannot update: No submission ID found. The email may not have been submitted."))
+
+		try:
+			client = get_jmap_client(self.user)
+
+			# First check if the submission is still pending
+			status_response = client.email_submission_get([self.submission_id])
+			submissions = status_response["methodResponses"][0][1].get("list", [])
+
+			if not submissions:
+				frappe.throw(_("Scheduled email submission not found. It may have already been sent."))
+
+			submission = submissions[0]
+			if submission.get("undoStatus") != "pending":
+				frappe.throw(_("Cannot update: Email has already been {0}.").format(submission.get("undoStatus", "processed")))
+
+			# Try to update the HOLDUNTIL parameter directly
+			response = client.email_submission_update_schedule(self.submission_id, new_scheduled_at)
+
+			updated = response["methodResponses"][0][1].get("updated", {})
+			if self.submission_id in updated:
+				self._db_set(
+					scheduled_at=new_scheduled_at,
+					notify=True,
+				)
+			else:
+				# If direct update fails, fall back to cancel and resubmit
+				error = response["methodResponses"][0][1].get("notUpdated", {}).get(self.submission_id, {})
+				error_desc = str(error.get("description", "")).lower()
+				error_type = error.get("type", "")
+
+				# Common errors that indicate we should fallback to cancel+resubmit:
+				# - "immutable" - Field cannot be modified
+				# - "invalidPatch" - Patch operation not supported
+				# - "field could not be set" - Stalwart's specific error message
+				# - "cannot modify" - Generic modification error
+				should_fallback = (
+					"immutable" in error_desc or
+					"could not be set" in error_desc or
+					"cannot modify" in error_desc or
+					"not supported" in error_desc or
+					error_type == "invalidPatch" or
+					error_type == "invalidProperties"
+				)
+
+				if should_fallback:
+					self._reschedule_email(new_scheduled_at)
+				else:
+					frappe.throw(_("Failed to update scheduled email: {0}").format(error.get("description", "Unknown error")))
+
+		except frappe.ValidationError:
+			raise
+		except Exception as e:
+			frappe.log_error(_("Failed to update scheduled email"), frappe.get_traceback(with_context=True))
+			frappe.throw(_("Failed to update scheduled email: {0}").format(str(e)))
+
+	def _reschedule_email(self, new_scheduled_at: str) -> None:
+		"""Reschedule email by cancelling and resubmitting.
+
+		This is a fallback when direct HOLDUNTIL update is not supported.
+		"""
+
+		client = get_jmap_client(self.user)
+
+		# Cancel existing submission
+		cancel_response = client.email_submission_cancel(self.submission_id)
+		updated = cancel_response["methodResponses"][0][1].get("updated", {})
+
+		if self.submission_id not in updated:
+			error = cancel_response["methodResponses"][0][1].get("notUpdated", {}).get(self.submission_id, {})
+			frappe.throw(_("Failed to cancel existing schedule: {0}").format(error.get("description", "Unknown error")))
+
+		# Resubmit with new schedule
+		self.scheduled_at = new_scheduled_at
+		self.status = "Pending"
+		self.submission_id = None
+		self.save()
+		self._process()
+
+	@staticmethod
+	def process_delivered_scheduled_emails() -> None:
+		"""Check and update scheduled emails that have been delivered by Stalwart."""
+
+		# Get all scheduled emails
+		scheduled_emails = frappe.get_all(
+			"Mail Queue",
+			filters={"status": "Scheduled", "submission_id": ["is", "set"]},
+			fields=["name", "user", "submission_id", "id"],
+		)
+
+		if not scheduled_emails:
+			return
+
+		# Group by user for efficient JMAP calls
+		user_submissions = {}
+		for email in scheduled_emails:
+			user_submissions.setdefault(email.user, []).append(email)
+
+		for user, emails in user_submissions.items():
+			try:
+				client = get_jmap_client(user)
+				submission_ids = [e.submission_id for e in emails]
+				response = client.email_submission_get(submission_ids)
+
+				submissions = response["methodResponses"][0][1].get("list", [])
+				submission_map = {s["id"]: s for s in submissions}
+
+				# Get mailbox IDs for this user
+				sent_mailbox_id = client.get_mailbox_id_by_role("sent", create_if_not_exists=True)
+
+				emails_to_move = []
+				for email in emails:
+					submission = submission_map.get(email.submission_id)
+					should_mark_sent = False
+
+					if not submission:
+						# Submission not found - might have been delivered and cleaned up
+						should_mark_sent = True
+					elif submission.get("undoStatus") == "final":
+						# undoStatus "final" means the email has been delivered
+						should_mark_sent = True
+
+					if should_mark_sent:
+						# Update our database
+						frappe.db.set_value(
+							"Mail Queue",
+							email.name,
+							{
+								"status": "Sent",
+								"mailbox_id": sent_mailbox_id,
+							},
+							update_modified=False,
+						)
+						# Collect email ID for batch move in Stalwart
+						if email.id:
+							emails_to_move.append(email.id)
+
+				# Move emails from Scheduled to Sent folder in Stalwart
+				if emails_to_move:
+					client.email_update(emails_to_move, mailbox_id=sent_mailbox_id)
+
+			except Exception:
+				frappe.log_error(
+					f"Failed to process scheduled emails for user {user}",
+					frappe.get_traceback(with_context=True),
+				)
+
+		frappe.db.commit()
 
 	@frappe.whitelist()
 	def get_mime_message(self) -> str:
@@ -618,6 +785,9 @@ class MailQueue(Document):
 			)
 			sent_mailbox_id = client.get_mailbox_id_by_role(
 				"sent", create_if_not_exists=True, raise_exception=True
+			)
+			scheduled_mailbox_id = client.get_mailbox_id_by_role(
+				"scheduled", create_if_not_exists=True, raise_exception=True
 			)
 
 			headers = {}
@@ -692,12 +862,17 @@ class MailQueue(Document):
 				if submit_data := response["methodResponses"][idx][1].get("created", {}).get(f"submit-{self.name}"):
 					# If scheduled_at is set, the email is scheduled (FUTURERELEASE)
 					# Otherwise, it's submitted immediately
-					status = "Scheduled" if self.scheduled_at else "Submitted"
+					if self.scheduled_at:
+						status = "Scheduled"
+						mailbox_id = scheduled_mailbox_id
+					else:
+						status = "Submitted"
+						mailbox_id = sent_mailbox_id
 					kwargs.update(
 						{
 							"status": status,
 							"submitted_at": now(),
-							"mailbox_id": sent_mailbox_id,
+							"mailbox_id": mailbox_id,
 							"submission_id": submit_data.get("id"),
 						}
 					)
@@ -795,7 +970,7 @@ def process_pending_emails(mails: list[str]) -> None:
 	total_count = len(mails)
 
 	for mail in mails:
-		doc: "MailQueue" = frappe.get_doc("Mail Queue", mail)
+		doc: MailQueue = frappe.get_doc("Mail Queue", mail)
 		doc._process()
 
 		if doc.status in ["Failed", "Failed to Draft", "Failed to Submit"]:
@@ -875,6 +1050,18 @@ def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size
 	except Exception:
 		frappe.log_error(
 			title="Failed - Enqueue Process Pending Emails", message=frappe.get_traceback(with_context=True)
+		)
+
+
+def process_delivered_scheduled_emails() -> None:
+	"""Scheduled task to check and update scheduled emails that have been delivered."""
+
+	try:
+		MailQueue.process_delivered_scheduled_emails()
+	except Exception:
+		frappe.log_error(
+			title="Failed - Process Delivered Scheduled Emails",
+			message=frappe.get_traceback(with_context=True),
 		)
 
 

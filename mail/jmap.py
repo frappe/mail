@@ -805,6 +805,12 @@ class JMAPClient:
 		sent_mailbox_id = self.get_mailbox_id_by_role(
 			"sent", create_if_not_exists=not save_as_draft, raise_exception=not save_as_draft
 		)
+		# Get scheduled mailbox for scheduled emails
+		scheduled_mailbox_id = None
+		if scheduled_at and not save_as_draft:
+			scheduled_mailbox_id = self.get_mailbox_id_by_role(
+				"scheduled", create_if_not_exists=True, raise_exception=True
+			)
 
 		using = ["urn:ietf:params:jmap:mail"]
 		method_calls = []
@@ -925,9 +931,11 @@ class JMAPClient:
 		if destroy_after_submit:
 			submit_call[1]["onSuccessDestroyEmail"] = [f"#{submit_ref}"]
 		else:
+			# Use scheduled mailbox for scheduled emails, otherwise sent mailbox
+			target_mailbox_id = scheduled_mailbox_id if scheduled_mailbox_id else sent_mailbox_id
 			updates[f"#{submit_ref}"] = {
 				f"mailboxIds/{draft_mailbox_id}": None,
-				f"mailboxIds/{sent_mailbox_id}": True,
+				f"mailboxIds/{target_mailbox_id}": True,
 				"keywords/$draft": None,
 				"keywords/$seen": True,
 			}
@@ -962,6 +970,64 @@ class JMAPClient:
 								"undoStatus": "canceled",
 							}
 						},
+					},
+					"0",
+				]
+			],
+		)
+
+	def email_submission_update_schedule(self, submission_id: str, scheduled_at: str) -> dict:
+		"""
+		Update the scheduled send time for a pending email submission.
+
+		Uses JMAP FUTURERELEASE extension to update the HOLDUNTIL parameter.
+		Note: This only works if undoStatus is still 'pending'.
+
+		Args:
+			submission_id: The email submission ID
+			scheduled_at: New scheduled datetime string
+
+		Returns:
+			JMAP response dict
+		"""
+		from frappe.utils import get_datetime
+
+		scheduled_datetime = get_datetime(scheduled_at)
+		hold_until = str(int(scheduled_datetime.timestamp()))
+
+		return self._make_request(
+			using=["urn:ietf:params:jmap:submission"],
+			method_calls=[
+				[
+					"EmailSubmission/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							submission_id: {
+								"envelope/mailFrom/parameters/HOLDUNTIL": hold_until,
+							}
+						},
+					},
+					"0",
+				]
+			],
+		)
+
+	def email_submission_get(self, submission_ids: list[str]) -> dict:
+		"""
+		Get the status of email submissions.
+		Returns submission details including undoStatus.
+		"""
+
+		return self._make_request(
+			using=["urn:ietf:params:jmap:submission"],
+			method_calls=[
+				[
+					"EmailSubmission/get",
+					{
+						"accountId": self.primary_account_id,
+						"ids": submission_ids,
+						"properties": ["id", "emailId", "undoStatus", "sendAt", "deliveryStatus"],
 					},
 					"0",
 				]

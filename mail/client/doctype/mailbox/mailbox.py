@@ -355,7 +355,7 @@ def format_mailbox(user: str, mailbox: dict) -> dict:
 def get_sort_order(role: str | None = None) -> int:
 	"""Returns the sort order for the mailbox based on its role."""
 
-	role_order = ["inbox", "important", "sent", "drafts", "junk", "archive", "trash"]
+	role_order = ["inbox", "important", "sent", "scheduled", "drafts", "junk", "archive", "trash"]
 
 	if not role or role not in role_order:
 		return len(role_order) + 1

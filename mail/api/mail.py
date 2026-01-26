@@ -282,6 +282,7 @@ def update_draft_mail(
 	from_name: str = "",
 	attachments: list[dict] | None = None,
 	submit: bool = False,
+	scheduled_at: str | None = None,
 ) -> dict:
 	"""Creates new mail queue from existing draft message."""
 
@@ -321,7 +322,12 @@ def update_draft_mail(
 	for email in bcc:
 		doc.append("recipients", {"type": "Bcc", "email": email})
 
-	new_doc = doc.submit() if submit else doc.save_draft()
+	if scheduled_at:
+		new_doc = doc.schedule(get_datetime_str(scheduled_at))
+	elif submit:
+		new_doc = doc.submit()
+	else:
+		new_doc = doc.save_draft()
 
 	return {"id": new_doc.id, "status": new_doc.status, "error": new_doc.error_message}
 
@@ -403,15 +409,15 @@ def update_scheduled_mail(
 ) -> dict:
 	"""Updates the scheduled time for a scheduled email.
 
-	Since Stalwart doesn't support updating HOLDUNTIL directly, this cancels the
-	existing submission and creates a new one with the updated schedule time.
+	Uses JMAP FUTURERELEASE to update the HOLDUNTIL parameter directly if supported,
+	otherwise falls back to cancel and resubmit.
 
 	Args:
 		name: The Mail Queue document name
-		scheduled_at: New scheduled datetime (ISO format)
+		scheduled_at: New scheduled datetime (local time format)
 
 	Returns:
-		dict with status, new_name, and message
+		dict with status, name, and message
 	"""
 	doc = frappe.get_doc("Mail Queue", name)
 
@@ -419,20 +425,8 @@ def update_scheduled_mail(
 	if doc.user != frappe.session.user:
 		frappe.throw(_("You do not have permission to update this email."))
 
-	if doc.status != "Scheduled":
-		frappe.throw(_("Cannot update schedule time for email with status {0}. Only scheduled emails can be updated.").format(doc.status))
-
-	# Cancel the existing scheduled submission
-	doc.cancel_scheduled()
-
-	# Re-submit with the new schedule time
-	doc.scheduled_at = get_datetime_str(scheduled_at)
-	doc.status = "Pending"
-	doc.submission_id = None
-	doc.save()
-
-	# Trigger reprocessing
-	doc._process()
+	# Use the new update_scheduled_time method
+	doc.update_scheduled_time(scheduled_at)
 
 	return {
 		"status": "success",
