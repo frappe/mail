@@ -54,7 +54,7 @@
 						/>
 					</template>
 					<template #body="{ close }">
-						<div class="p-4 w-72">
+						<div class="p-4 w-72 pb-56">
 							<div class="mb-3 text-sm font-medium text-ink-gray-7">{{ __('Schedule Send') }}</div>
 							<FormControl
 								v-model="scheduledDateTime"
