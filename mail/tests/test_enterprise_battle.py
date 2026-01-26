@@ -41,7 +41,7 @@ from frappe.utils import add_to_date, get_datetime, now_datetime, random_string
 
 class TestEnterpriseBattle(FrappeTestCase):
 	"""Base class for enterprise battle tests."""
-	
+
 	test_user: str | None = None
 	test_email: str | None = None
 
@@ -420,7 +420,7 @@ class TestMailboxManagement(TestEnterpriseBattle):
 
 		for role in standard_roles:
 			try:
-				mailbox_id = get_mailbox_id_by_role(
+				get_mailbox_id_by_role(
 					self.test_user, role, create_if_not_exists=False, raise_exception=False
 				)
 				# May be None if not created yet
@@ -586,7 +586,7 @@ class TestSearchFiltering(TestEnterpriseBattle):
 
 		# Test isRead normalization
 		result = normalize_search_filter({"isRead": "true"})
-		conditions = {list(c.keys())[0]: list(c.values())[0] for c in result["conditions"]}
+		conditions = {next(iter(c.keys())): next(iter(c.values())) for c in result["conditions"]}
 		self.assertEqual(conditions.get("hasKeyword"), "$seen")
 
 
@@ -722,10 +722,10 @@ class TestAPIEndpoints(TestEnterpriseBattle):
 
 	def test_02_create_mail_api(self):
 		"""Test create_mail API structure."""
-		from mail.api.mail import create_mail
-
 		# Should have required signature
 		import inspect
+
+		from mail.api.mail import create_mail
 		sig = inspect.signature(create_mail)
 		params = list(sig.parameters.keys())
 
@@ -735,9 +735,9 @@ class TestAPIEndpoints(TestEnterpriseBattle):
 
 	def test_03_cancel_scheduled_api(self):
 		"""Test cancel_scheduled_mail API structure."""
-		from mail.api.mail import cancel_scheduled_mail
-
 		import inspect
+
+		from mail.api.mail import cancel_scheduled_mail
 		sig = inspect.signature(cancel_scheduled_mail)
 		params = list(sig.parameters.keys())
 
@@ -745,9 +745,9 @@ class TestAPIEndpoints(TestEnterpriseBattle):
 
 	def test_04_update_scheduled_api(self):
 		"""Test update_scheduled_mail API structure."""
-		from mail.api.mail import update_scheduled_mail
-
 		import inspect
+
+		from mail.api.mail import update_scheduled_mail
 		sig = inspect.signature(update_scheduled_mail)
 		params = list(sig.parameters.keys())
 
@@ -934,7 +934,7 @@ class TestCronJobs(TestEnterpriseBattle):
 
 		# Check for scheduled email processing job
 		all_jobs = []
-		for interval, jobs in scheduler_events.items():
+		for _interval, jobs in scheduler_events.items():
 			if isinstance(jobs, list):
 				all_jobs.extend(jobs)
 			elif isinstance(jobs, dict):
@@ -1152,7 +1152,7 @@ class TestPerformance(TestEnterpriseBattle):
 
 		try:
 			start_time = time.time()
-			results, count = search_mails({"text": "test"}, limit=50)
+			_results, _count = search_mails({"text": "test"}, limit=50)
 			elapsed_time = time.time() - start_time
 
 			# Search should be fast

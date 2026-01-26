@@ -16,11 +16,12 @@ Test Categories:
 7. Search Functionality
 """
 
-import frappe
-from frappe.utils import now_datetime, add_to_date, random_string, get_datetime
-from datetime import datetime, timedelta
-import time
 import json
+import time
+from datetime import datetime, timedelta
+
+import frappe
+from frappe.utils import add_to_date, get_datetime, now_datetime, random_string
 
 
 class BattleTestRunner:
@@ -40,7 +41,7 @@ class BattleTestRunner:
 	def log(self, msg, level="info"):
 		if self.verbose:
 			prefix = {
-				"info": "ℹ️ ",
+				"info": "[i] ",
 				"success": "✅",
 				"error": "❌",
 				"warning": "⚠️ ",
@@ -94,8 +95,8 @@ class BattleTestRunner:
 		# Check Mail Settings
 		try:
 			if frappe.db.exists("Mail Settings"):
-				settings = frappe.get_single("Mail Settings")
-				self.log(f"Mail Settings found", "success")
+				frappe.get_single("Mail Settings")
+				self.log("Mail Settings found", "success")
 				self.record_result("Mail Settings exists", True)
 			else:
 				self.log("Mail Settings not configured", "warning")
@@ -145,7 +146,7 @@ class BattleTestRunner:
 			from mail.jmap import JMAPClient, get_jmap_client
 
 			client = get_jmap_client(self.user)
-			self.log(f"JMAP Client initialized", "success")
+			self.log("JMAP Client initialized", "success")
 			self.log(f"  API URL: {client.api_url}", "info")
 			self.log(f"  Account ID: {client.primary_account_id[:20]}...", "info")
 			self.record_result("JMAP Client initialization", True)
@@ -225,7 +226,7 @@ class BattleTestRunner:
 			return
 
 		from mail.client.doctype.mail_queue.mail_queue import MailQueue
-		
+
 		# Get email from identity dict
 		from_email = self.identity.get("email") if isinstance(self.identity, dict) else self.identity.email
 
@@ -269,7 +270,7 @@ class BattleTestRunner:
 			return
 
 		from mail.client.doctype.mail_queue.mail_queue import MailQueue
-		
+
 		# Get email from identity dict
 		from_email = self.identity.get("email") if isinstance(self.identity, dict) else self.identity.email
 

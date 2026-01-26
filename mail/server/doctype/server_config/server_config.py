@@ -171,15 +171,15 @@ def get_server_config(server: str) -> ServerConfig | None:
 def _get_webhook_url(cluster) -> str | None:
 	"""
 	Returns the webhook URL for Frappe Mail.
-	
+
 	Uses explicit config if available, otherwise falls back to site URL.
 	The webhook URL should point to the Frappe Mail instance, not the Stalwart server.
 	"""
-	
+
 	# First try explicit webhook URL from site config
 	if webhook_url := frappe.conf.get("stalwart_webhook_url"):
 		return webhook_url.rstrip("/")
-	
+
 	# Fall back to site URL (Frappe Mail instance)
 	site_url = frappe.utils.get_url()
 	return site_url.rstrip("/") if site_url else None
@@ -610,7 +610,7 @@ def get_config_toml(server: str) -> str | None:
 				"url": f"{webhook_url}/webhook/delivery",
 				"events": [
 					"delivery.completed",
-					"delivery.delivered", 
+					"delivery.delivered",
 					"delivery.dsn-success",
 					"queue.quota-exceeded",
 				],
