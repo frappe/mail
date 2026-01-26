@@ -273,7 +273,7 @@ def process_queue_events(events: list[dict]) -> None:
 				if new_time:
 					# Convert timestamp to datetime if needed
 					from datetime import datetime
-					if isinstance(new_time, (int, float)):
+					if isinstance(new_time, int | float):
 						new_time = datetime.fromtimestamp(new_time)
 
 					frappe.db.set_value(
