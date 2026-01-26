@@ -43,7 +43,7 @@
 					:icon-left="Trash2"
 					@click="emit('discardMail')"
 				/>
-				<Popover>
+				<Popover @open="initScheduleDateTime">
 					<template #target="{ togglePopover, isOpen }">
 						<Button
 							:label="__('Schedule')"
@@ -56,18 +56,18 @@
 					<template #body="{ close }">
 						<div class="p-4 w-72">
 							<div class="mb-3 text-sm font-medium text-ink-gray-7">{{ __('Schedule Send') }}</div>
-							<input
+							<FormControl
 								v-model="scheduledDateTime"
 								type="datetime-local"
-								class="w-full rounded border border-outline-gray-2 p-2 text-sm focus:border-blue-500 focus:outline-none"
 								:min="minDateTime"
+								variant="outline"
 							/>
 							<div class="mt-3 flex justify-end space-x-2">
 								<Button :label="__('Cancel')" @click="close()" />
 								<Button
 									variant="solid"
 									:label="__('Schedule')"
-									:disabled="!scheduledDateTime || isRecipientsEmpty"
+									:disabled="!isValidScheduleTime"
 									@click="onScheduleSend(close)"
 								/>
 							</div>
@@ -89,7 +89,7 @@
 <script setup lang="ts">
 import { computed, ref, useTemplateRef } from 'vue'
 import { CalendarClock, Laugh, Paperclip, SendHorizontal, Trash2 } from 'lucide-vue-next'
-import { Button, Popover, TextEditorFixedMenu } from 'frappe-ui'
+import { Button, FormControl, Popover, TextEditorFixedMenu } from 'frappe-ui'
 
 import { isMac } from '@/utils'
 import { useScreenSize, useTextEditorButtons, useVisualViewport } from '@/utils/composables'
@@ -107,16 +107,43 @@ const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 // Schedule send state
 const scheduledDateTime = ref('')
 
-// Minimum datetime is now (prevents scheduling in the past)
-const minDateTime = computed(() => {
+// Format datetime to local datetime-local input format (YYYY-MM-DDTHH:mm)
+const formatToLocalDatetime = (date: Date): string => {
+	const year = date.getFullYear()
+	const month = String(date.getMonth() + 1).padStart(2, '0')
+	const day = String(date.getDate()).padStart(2, '0')
+	const hours = String(date.getHours()).padStart(2, '0')
+	const minutes = String(date.getMinutes()).padStart(2, '0')
+	return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+// Minimum datetime is current local time (prevents scheduling in the past)
+const minDateTime = computed(() => formatToLocalDatetime(new Date()))
+
+// Initialize with default time (1 hour from now, rounded to next 30 min)
+const initScheduleDateTime = () => {
 	const now = new Date()
-	now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-	return now.toISOString().slice(0, 16)
+	now.setHours(now.getHours() + 1)
+	// Round to next 30 minutes
+	const minutes = now.getMinutes()
+	now.setMinutes(minutes < 30 ? 30 : 60)
+	now.setSeconds(0)
+	now.setMilliseconds(0)
+	scheduledDateTime.value = formatToLocalDatetime(now)
+}
+
+// Validate that scheduled time is in the future
+const isValidScheduleTime = computed(() => {
+	if (!scheduledDateTime.value || isRecipientsEmpty) return false
+	const scheduled = new Date(scheduledDateTime.value)
+	return scheduled > new Date()
 })
 
 const onScheduleSend = (close: () => void) => {
-	if (scheduledDateTime.value) {
-		emit('scheduleMail', scheduledDateTime.value)
+	if (scheduledDateTime.value && isValidScheduleTime.value) {
+		// Convert local datetime to ISO string for API
+		const localDate = new Date(scheduledDateTime.value)
+		emit('scheduleMail', localDate.toISOString())
 		scheduledDateTime.value = ''
 		close()
 	}
