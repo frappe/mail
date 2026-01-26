@@ -110,6 +110,7 @@ class MailQueue(Document):
 		doc.destroy_after_submit = cint(kwargs.destroy_after_submit)
 		doc.delivery_mode = kwargs.delivery_mode or "Immediate"
 		doc.raw_message = kwargs.raw_message
+		doc.scheduled_at = kwargs.scheduled_at
 
 		if not do_not_save:
 			if frappe.flags.read_only:
@@ -565,6 +566,36 @@ class MailQueue(Document):
 		self._process()
 
 	@frappe.whitelist()
+	def cancel_scheduled(self) -> None:
+		"""Cancels a scheduled email submission using JMAP FUTURERELEASE."""
+
+		if self.status != "Scheduled":
+			frappe.throw(_("Cannot cancel a mail with status {0}. Only scheduled emails can be cancelled.").format(self.status))
+
+		if not self.submission_id:
+			frappe.throw(_("Cannot cancel: No submission ID found. The email may not have been submitted."))
+
+		try:
+			client = get_jmap_client(self.user)
+			response = client.email_submission_cancel(self.submission_id)
+
+			# Check if cancellation was successful
+			# The JMAP response shows updated: {submission_id: null} on success
+			updated = response["methodResponses"][0][1].get("updated", {})
+			if self.submission_id in updated:
+				self._db_set(
+					status="Cancelled",
+					scheduled_at=None,
+					notify=True,
+				)
+			else:
+				error = response["methodResponses"][0][1].get("notUpdated", {}).get(self.submission_id, {})
+				frappe.throw(_("Failed to cancel scheduled email: {0}").format(error.get("description", "Unknown error")))
+		except Exception as e:
+			frappe.log_error(_("Failed to cancel scheduled email"), frappe.get_traceback(with_context=True))
+			frappe.throw(_("Failed to cancel scheduled email: {0}").format(str(e)))
+
+	@frappe.whitelist()
 	def get_mime_message(self) -> str:
 		"""Returns the MIME message content."""
 
@@ -630,6 +661,7 @@ class MailQueue(Document):
 				bool(self.destroy_after_submit),
 				self.forwarded_from_id,
 				self.in_reply_to_id,
+				self.scheduled_at,
 			)
 
 			kwargs.update({"status": "Failed", "_response": json.dumps(response)})
@@ -657,12 +689,16 @@ class MailQueue(Document):
 
 			if not self.save_as_draft:
 				idx = 2 if self.raw_message and self.id else 1
-				if response["methodResponses"][idx][1].get("created", {}).get(f"submit-{self.name}"):
+				if submit_data := response["methodResponses"][idx][1].get("created", {}).get(f"submit-{self.name}"):
+					# If scheduled_at is set, the email is scheduled (FUTURERELEASE)
+					# Otherwise, it's submitted immediately
+					status = "Scheduled" if self.scheduled_at else "Submitted"
 					kwargs.update(
 						{
-							"status": "Submitted",
+							"status": status,
 							"submitted_at": now(),
 							"mailbox_id": sent_mailbox_id,
+							"submission_id": submit_data.get("id"),
 						}
 					)
 				elif response["methodResponses"][idx][1].get("notCreated", {}).get(f"submit-{self.name}"):

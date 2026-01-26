@@ -716,6 +716,7 @@ class JMAPClient:
 		destroy_after_submit: bool = False,
 		forwarded_id: str | None = None,
 		reply_to_id: str | None = None,
+		scheduled_at: str | None = None,
 	) -> dict:
 		"""
 		Creates and submits an email.
@@ -872,17 +873,26 @@ class JMAPClient:
 
 		using.append("urn:ietf:params:jmap:submission")
 
+		mail_from_params = {
+			"RET": "FULL",
+			"ENVID": creation_id,
+			"MT-PRIORITY": str(priority),
+		}
+
+		# Add HOLDUNTIL for scheduled sending (JMAP FUTURERELEASE extension)
+		# Stalwart expects Unix timestamp (seconds since epoch) as a string
+		if scheduled_at:
+			from frappe.utils import get_datetime
+			scheduled_datetime = get_datetime(scheduled_at)
+			mail_from_params["HOLDUNTIL"] = str(int(scheduled_datetime.timestamp()))
+
 		submission = {
 			"identityId": identity_id,
 			"emailId": f"#{draft_ref}",
 			"envelope": {
 				"mailFrom": {
 					"email": from_email,
-					"parameters": {
-						"RET": "FULL",
-						"ENVID": creation_id,
-						"MT-PRIORITY": str(priority),
-					},
+					"parameters": mail_from_params,
 				},
 				"rcptTo": [
 					{
@@ -933,6 +943,30 @@ class JMAPClient:
 		method_calls.append(submit_call)
 
 		return self._make_request(using=using, method_calls=method_calls)
+
+	def email_submission_cancel(self, submission_id: str) -> dict:
+		"""
+		Cancel a scheduled email submission using JMAP FUTURERELEASE extension.
+		Sets undoStatus to 'canceled' to prevent the email from being sent.
+		"""
+
+		return self._make_request(
+			using=["urn:ietf:params:jmap:submission"],
+			method_calls=[
+				[
+					"EmailSubmission/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							submission_id: {
+								"undoStatus": "canceled",
+							}
+						},
+					},
+					"0",
+				]
+			],
+		)
 
 	def email_query(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, sort: list[dict] | None = None

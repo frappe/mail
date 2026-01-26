@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import frappe
 from bs4 import BeautifulSoup
 from frappe import _
-from frappe.utils import format_datetime, get_url, random_string
+from frappe.utils import format_datetime, get_datetime_str, get_url, random_string
 
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
@@ -227,6 +227,7 @@ def create_mail(
 	in_reply_to_id: str | None = None,
 	forwarded_from_id: str | None = None,
 	save_as_draft: bool = False,
+	scheduled_at: str | None = None,
 ) -> dict:
 	"""Creates new mail queue."""
 
@@ -263,6 +264,7 @@ def create_mail(
 		attachments=doc_attachments,
 		recipients=recipients,
 		save_as_draft=save_as_draft,
+		scheduled_at=get_datetime_str(scheduled_at) if scheduled_at else None,
 	)
 
 	return {"id": doc.id, "status": doc.status, "error": doc.error_message}
@@ -371,6 +373,74 @@ def delete_mail(id: str) -> None:
 	"""Deletes the given mail."""
 
 	delete_messages(frappe.session.user, [id])
+
+
+@frappe.whitelist()
+def cancel_scheduled_mail(name: str) -> dict:
+	"""Cancels a scheduled email.
+
+	Args:
+		name: The Mail Queue document name
+
+	Returns:
+		dict with status and message
+	"""
+	doc = frappe.get_doc("Mail Queue", name)
+
+	# Check if user has permission to cancel this mail
+	if doc.user != frappe.session.user:
+		frappe.throw(_("You do not have permission to cancel this email."))
+
+	doc.cancel_scheduled()
+
+	return {"status": "success", "message": _("Scheduled email has been cancelled.")}
+
+
+@frappe.whitelist()
+def update_scheduled_mail(
+	name: str,
+	scheduled_at: str,
+) -> dict:
+	"""Updates the scheduled time for a scheduled email.
+
+	Since Stalwart doesn't support updating HOLDUNTIL directly, this cancels the
+	existing submission and creates a new one with the updated schedule time.
+
+	Args:
+		name: The Mail Queue document name
+		scheduled_at: New scheduled datetime (ISO format)
+
+	Returns:
+		dict with status, new_name, and message
+	"""
+	doc = frappe.get_doc("Mail Queue", name)
+
+	# Check if user has permission to update this mail
+	if doc.user != frappe.session.user:
+		frappe.throw(_("You do not have permission to update this email."))
+
+	if doc.status != "Scheduled":
+		frappe.throw(_("Cannot update schedule time for email with status {0}. Only scheduled emails can be updated.").format(doc.status))
+
+	# Cancel the existing scheduled submission
+	doc.cancel_scheduled()
+
+	# Re-submit with the new schedule time
+	doc.scheduled_at = get_datetime_str(scheduled_at)
+	doc.status = "Pending"
+	doc.submission_id = None
+	doc.save()
+
+	# Trigger reprocessing
+	doc._process()
+
+	return {
+		"status": "success",
+		"name": doc.name,
+		"new_status": doc.status,
+		"scheduled_at": doc.scheduled_at,
+		"message": _("Scheduled email has been updated."),
+	}
 
 
 @frappe.whitelist()

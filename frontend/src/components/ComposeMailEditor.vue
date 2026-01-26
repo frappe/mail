@@ -202,6 +202,7 @@
 				@append-emoji="(emoji: string) => appendEmoji(emoji)"
 				@discard-mail="discardMail"
 				@send-mail="sendMail"
+				@schedule-mail="(scheduledAt: string) => scheduleMail(scheduledAt)"
 			/>
 		</template>
 	</TextEditor>
@@ -356,6 +357,21 @@ const sendMail = async () => {
 	else createMail.submit({ save_as_draft: false })
 }
 
+const scheduleMail = async (scheduledAt: string) => {
+	if (deleteMail.loading) return
+
+	if (isRecipientsEmpty.value)
+		return raiseToast(__('Please add at least one recipient.'), 'error')
+
+	isSavingDraft.value = false
+	show.value = false
+	if (createMail.loading) await createMail.promise
+	if (updateDraft.loading) await updateDraft.promise
+
+	// Schedule the email with the specified datetime
+	createMail.submit({ save_as_draft: false, scheduled_at: scheduledAt })
+}
+
 const isDiscarding = ref(false)
 
 const discardMail = async () => {
@@ -402,11 +418,12 @@ const onMailUpdateSuccess = ({
 
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
-	makeParams: ({ save_as_draft }: { save_as_draft: boolean }) => ({
+	makeParams: ({ save_as_draft, scheduled_at }: { save_as_draft: boolean; scheduled_at?: string }) => ({
 		...mail,
 		from_name: getIdentity(mail.from_email!)._name,
 		html_body: mail.html_body! + mail.quoted_content,
 		save_as_draft,
+		scheduled_at,
 	}),
 	onSuccess: onMailUpdateSuccess,
 	onError: (error) => raiseToast(error.message, 'error'),

@@ -14,6 +14,7 @@
   "section_break_agmx",
   "save_as_draft",
   "destroy_after_submit",
+  "scheduled_at",
   "column_break_lnat",
   "priority",
   "delivery_mode",
@@ -56,6 +57,7 @@
   "in_reply_to_id",
   "mailbox_id",
   "thread_id",
+  "submission_id",
   "message_section",
   "raw_message",
   "message",
@@ -78,7 +80,7 @@
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
-   "options": "\nPending\nQueued\nFailed\nDrafted\nFailed to Draft\nSubmitted\nFailed to Submit",
+   "options": "\nPending\nQueued\nFailed\nDrafted\nFailed to Draft\nScheduled\nSubmitted\nFailed to Submit\nCancelled",
    "read_only": 1,
    "search_index": 1
   },
@@ -236,6 +238,14 @@
    "fieldtype": "Data",
    "in_standard_filter": 1,
    "label": "Thread ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "submission_id",
+   "fieldtype": "Data",
+   "label": "Submission ID",
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
@@ -551,6 +561,15 @@
    "fieldtype": "Check",
    "label": "Destroy After Submit",
    "set_only_once": 1
+  },
+  {
+   "depends_on": "eval: !doc.save_as_draft",
+   "description": "Schedule the email to be sent at a specific time. Uses JMAP FUTURERELEASE extension.",
+   "fieldname": "scheduled_at",
+   "fieldtype": "Datetime",
+   "label": "Scheduled At",
+   "no_copy": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,

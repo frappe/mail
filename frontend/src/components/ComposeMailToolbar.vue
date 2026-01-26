@@ -43,6 +43,37 @@
 					:icon-left="Trash2"
 					@click="emit('discardMail')"
 				/>
+				<Popover>
+					<template #target="{ togglePopover, isOpen }">
+						<Button
+							:label="__('Schedule')"
+							:tooltip="__('Schedule send')"
+							:icon-left="CalendarClock"
+							:class="{ 'ring-2 ring-blue-300': isOpen }"
+							@click="togglePopover()"
+						/>
+					</template>
+					<template #body="{ close }">
+						<div class="p-4 w-72">
+							<div class="mb-3 text-sm font-medium text-ink-gray-7">{{ __('Schedule Send') }}</div>
+							<input
+								v-model="scheduledDateTime"
+								type="datetime-local"
+								class="w-full rounded border border-outline-gray-2 p-2 text-sm focus:border-blue-500 focus:outline-none"
+								:min="minDateTime"
+							/>
+							<div class="mt-3 flex justify-end space-x-2">
+								<Button :label="__('Cancel')" @click="close()" />
+								<Button
+									variant="solid"
+									:label="__('Schedule')"
+									:disabled="!scheduledDateTime || isRecipientsEmpty"
+									@click="onScheduleSend(close)"
+								/>
+							</div>
+						</div>
+					</template>
+				</Popover>
 				<Button
 					variant="solid"
 					:label="__('Send')"
@@ -56,9 +87,9 @@
 	</div>
 </template>
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue'
-import { Laugh, Paperclip, SendHorizontal, Trash2 } from 'lucide-vue-next'
-import { Button, TextEditorFixedMenu } from 'frappe-ui'
+import { computed, ref, useTemplateRef } from 'vue'
+import { CalendarClock, Laugh, Paperclip, SendHorizontal, Trash2 } from 'lucide-vue-next'
+import { Button, Popover, TextEditorFixedMenu } from 'frappe-ui'
 
 import { isMac } from '@/utils'
 import { useScreenSize, useTextEditorButtons, useVisualViewport } from '@/utils/composables'
@@ -69,9 +100,27 @@ const { isSavingDraft, isRecipientsEmpty } = defineProps<{
 	isRecipientsEmpty: boolean
 }>()
 
-const emit = defineEmits(['appendEmoji', 'selectFiles', 'discardMail', 'sendMail'])
+const emit = defineEmits(['appendEmoji', 'selectFiles', 'discardMail', 'sendMail', 'scheduleMail'])
 
 const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
+
+// Schedule send state
+const scheduledDateTime = ref('')
+
+// Minimum datetime is now (prevents scheduling in the past)
+const minDateTime = computed(() => {
+	const now = new Date()
+	now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+	return now.toISOString().slice(0, 16)
+})
+
+const onScheduleSend = (close: () => void) => {
+	if (scheduledDateTime.value) {
+		emit('scheduleMail', scheduledDateTime.value)
+		scheduledDateTime.value = ''
+		close()
+	}
+}
 
 // Make toolbar hover over keyboard on mobile
 
