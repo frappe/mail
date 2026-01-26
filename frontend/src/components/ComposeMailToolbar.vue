@@ -71,6 +71,8 @@
 								:min="minDateTime"
 								variant="outline"
 							/>
+							<!-- Space for native calendar dropdown -->
+							<div class="h-52"></div>
 						</div>
 					</template>
 				</Popover>
