@@ -43,7 +43,7 @@
 					:icon-left="Trash2"
 					@click="emit('discardMail')"
 				/>
-				<Popover @open="initScheduleDateTime">
+				<Popover @open="initScheduleDateTime" placement="top-end">
 					<template #target="{ togglePopover, isOpen }">
 						<Button
 							:label="__('Schedule')"
@@ -54,15 +54,9 @@
 						/>
 					</template>
 					<template #body="{ close }">
-						<div class="p-4 w-72 pb-56">
+						<div class="rounded-lg bg-surface-white shadow-xl border border-outline-gray-1 p-4 w-72 mb-2">
 							<div class="mb-3 text-sm font-medium text-ink-gray-7">{{ __('Schedule Send') }}</div>
-							<FormControl
-								v-model="scheduledDateTime"
-								type="datetime-local"
-								:min="minDateTime"
-								variant="outline"
-							/>
-							<div class="mt-3 flex justify-end space-x-2">
+							<div class="flex justify-end space-x-2 mb-3">
 								<Button :label="__('Cancel')" @click="close()" />
 								<Button
 									variant="solid"
@@ -71,6 +65,12 @@
 									@click="onScheduleSend(close)"
 								/>
 							</div>
+							<FormControl
+								v-model="scheduledDateTime"
+								type="datetime-local"
+								:min="minDateTime"
+								variant="outline"
+							/>
 						</div>
 					</template>
 				</Popover>
