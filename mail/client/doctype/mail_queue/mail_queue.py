@@ -10,6 +10,7 @@ from typing import Any, Literal
 from uuid import uuid7
 
 import frappe
+from bs4 import BeautifulSoup
 from frappe import _
 from frappe.core.doctype.file.file import File
 from frappe.core.doctype.file.file import has_permission as has_file_permission
@@ -458,28 +459,64 @@ class MailQueue(Document):
 		self.recipients = json.dumps(recipients)
 
 	def validate_attachments(self) -> None:
-		"""Validates the attachments."""
+		"""Validate attachments and normalize inline images in HTML."""
 
+		attachments = json_loads(self.attachments, default=[])
 		user = self.user if frappe.session.user == "Administrator" else frappe.session.user
 
-		blob_ids = []
-		attachments = []
-		for a in json_loads(self.attachments, default=[]):
-			if blob_id := a.get("blob_id"):
-				if blob_id not in blob_ids:
+		if self.html_body:
+			soup = BeautifulSoup(self.html_body, "html.parser")
+
+			for img in soup.find_all("img"):
+				src = img.get("src")
+				if not src:
+					continue
+
+				# Skip already-valid or external images
+				if src.startswith(("cid:", "data:", "http://", "https://")):
+					continue
+
+				# Convert local file URLs to inline CID attachments
+				if src.startswith(("/files", "/private/files")):
+					cid = img.get("data-cid") or random_string(length=10)
+
 					attachments.append(
 						{
-							"blob_id": blob_id,
-							"type": a["type"],
-							"size": a["size"],
-							"filename": a["filename"],
-							"disposition": a["disposition"],
-							"cid": a["cid"]
-							if a["disposition"] == "inline"
-							else a.get("cid", random_string(length=10)),
+							"file_url": src,
+							"filename": Path(src).name,
+							"disposition": "inline",
+							"cid": cid,
 						}
 					)
-					blob_ids.append(blob_id)
+
+					img["data-cid"] = cid
+					img["src"] = f"cid:{cid}"
+
+			self.html_body = str(soup)
+
+		normalized = []
+		seen_blob_ids = set()
+
+		for a in attachments:
+			disposition = a["disposition"]
+			cid = a["cid"] if disposition == "inline" else a.get("cid", random_string(length=10))
+
+			if blob_id := a.get("blob_id"):
+				if blob_id in seen_blob_ids:
+					continue
+
+				normalized.append(
+					{
+						"blob_id": blob_id,
+						"type": a["type"],
+						"size": a["size"],
+						"filename": a["filename"],
+						"disposition": disposition,
+						"cid": cid,
+					}
+				)
+				seen_blob_ids.add(blob_id)
+
 			elif file_url := a.get("file_url"):
 				if file_url.startswith("/private/files"):
 					MailQueue._get_file(file_url=file_url, user=user, check_permission=True)
@@ -490,20 +527,19 @@ class MailQueue(Document):
 						).format(file_url)
 					)
 
-				attachments.append(
+				normalized.append(
 					{
 						"file_url": file_url,
 						"filename": a.get("filename") or Path(file_url).name,
-						"disposition": a["disposition"],
-						"cid": a["cid"]
-						if a["disposition"] == "inline"
-						else a.get("cid", random_string(length=10)),
+						"disposition": disposition,
+						"cid": cid,
 					}
 				)
+
 			else:
 				frappe.throw(_("Either blob_id or file_url is required for attachments."))
 
-		self.attachments = json.dumps(attachments)
+		self.attachments = json.dumps(normalized)
 
 	def validate_message_id(self) -> None:
 		"""Validates the message ID."""
