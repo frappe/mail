@@ -2,11 +2,11 @@
 # For license information, please see license.txt
 
 import json
+from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from uuid_utils import uuid7
 
 from mail.backend import get_mail_backend_api
 from mail.jmap import raise_for_status

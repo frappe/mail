@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import io
+from uuid import uuid7
 
 import frappe
 import paramiko
@@ -9,7 +10,6 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
-from uuid_utils import uuid7
 
 
 class ServerJob(Document):

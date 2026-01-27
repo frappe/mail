@@ -3,12 +3,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import cached_property
 from typing import Any, Literal
 from urllib.parse import urljoin
+from uuid import uuid7
 
 import frappe
 import requests
 from frappe import _
 from frappe.utils import create_batch
-from uuid_utils import uuid7
 
 from mail import __version__
 from mail.utils.dt import convert_to_utc, utcnow

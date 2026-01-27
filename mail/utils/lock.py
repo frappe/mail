@@ -1,10 +1,10 @@
 import time
+from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.utils import cint
 from redis.exceptions import WatchError
-from uuid_utils import uuid7
 
 
 def acquire_lock(

@@ -5,13 +5,13 @@ import hashlib
 import json
 import os
 import urllib.parse
+from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
-from uuid_utils import uuid7
 
 from mail.utils import get_stalwart_version
 
