@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from frappe import _
 from frappe.model.document import Document
 from frappe.push_notification import PushNotification
-from frappe.utils import add_to_date, cint, escape_html, get_datetime, now, time_diff_in_seconds
+from frappe.utils import add_to_date, cint, escape_html, get_datetime, get_url, now, time_diff_in_seconds
 
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_jmap_client
@@ -1021,6 +1021,11 @@ def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 					"cid": p["cid"],
 					"language": str(p["language"]),
 					"location": p["location"],
+					"url": get_url(
+						f"/api/method/mail.api.mail.get_attachment?blob_id={p['blobId']}&filename={p['name'] or ''}"
+					)
+					if p["blobId"]
+					else None,
 				}
 			)
 

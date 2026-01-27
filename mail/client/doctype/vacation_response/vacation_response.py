@@ -6,7 +6,7 @@ from datetime import datetime
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, now, today
+from frappe.utils import cint, today
 from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 
 from mail.jmap import get_jmap_client
