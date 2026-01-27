@@ -925,6 +925,16 @@ def fetch_blobs(user: str, blobs: list[str] | list[tuple[str, str | None]]) -> d
 def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 	"""Returns a formatted message dictionary for the provided message data."""
 
+	def convert_img_src_from_cid_to_url(html_body: str, cid: str, url: str) -> str:
+		"""Convert img src from cid to URL in the HTML body."""
+
+		soup = BeautifulSoup(html_body, "html.parser")
+		for img in soup.find_all("img", src=f"cid:{cid}"):
+			img["data-cid"] = cid
+			img["src"] = url
+
+		return str(soup)
+
 	if not message["sentAt"]:
 		message["sentAt"] = message["receivedAt"]
 
@@ -1021,12 +1031,21 @@ def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 					"cid": p["cid"],
 					"language": str(p["language"]),
 					"location": p["location"],
-					"url": get_url(
-						f"/api/method/mail.api.mail.get_attachment?blob_id={p['blobId']}&filename={p['name'] or ''}"
-					)
-					if p["blobId"]
-					else None,
 				}
+			)
+
+	for attachment in formatted_message["attachments"]:
+		if blob_id := attachment["blob_id"]:
+			params = f"blob_id={blob_id}"
+			if filename := attachment["filename"]:
+				params += f"&filename={filename}"
+			attachment["url"] = get_url(f"/api/method/mail.api.mail.get_attachment?{params}")
+
+		if attachment["disposition"] == "inline" and attachment["cid"]:
+			formatted_message["html_body"] = convert_img_src_from_cid_to_url(
+				formatted_message["html_body"],
+				attachment["cid"],
+				attachment["url"],
 			)
 
 	return formatted_message

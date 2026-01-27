@@ -150,22 +150,9 @@ def serialize_mail(mail: dict) -> dict:
 		"reply_to",
 	]
 
-	attachments = serialize_attachments(mail.get("attachments", []))
-	if attachments:
-		blobs = []
-		for attachment in attachments:
-			if attachment["disposition"] == "inline" and attachment["cid"] and attachment["blob_id"]:
-				blobs.append((attachment["blob_id"], attachment["filename"]))
-				mail["html_body"] = convert_img_src_from_cid_to_url(
-					mail["html_body"], attachment["cid"], attachment["url"]
-				)
-
-		if blobs:
-			fetch_blobs(mail["user"], blobs)
-
 	return {
 		**{field: mail[field] for field in mail_fields},
-		"attachments": attachments,
+		"attachments": serialize_attachments(mail.get("attachments", [])),
 	}
 
 
@@ -335,17 +322,6 @@ def convert_img_src_from_base64_to_cid(html_body: str) -> str:
 	soup = BeautifulSoup(html_body, "html.parser")
 	for img in soup.find_all("img", attrs={"data-cid": True}):
 		img["src"] = f"cid:{img['data-cid']}"
-
-	return str(soup)
-
-
-def convert_img_src_from_cid_to_url(html_body: str, cid: str, url: str) -> str:
-	"""Converts CID-based images in HTML body to URL."""
-
-	soup = BeautifulSoup(html_body, "html.parser")
-	for img in soup.find_all("img", src=f"cid:{cid}"):
-		img["data-cid"] = cid
-		img["src"] = url
 
 	return str(soup)
 
