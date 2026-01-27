@@ -6,6 +6,7 @@ import re
 from email.utils import formataddr
 from functools import cached_property
 from typing import Literal
+from urllib.parse import quote
 from uuid import uuid7
 
 import frappe
@@ -1038,15 +1039,15 @@ def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 		if blob_id := attachment["blob_id"]:
 			params = f"blob_id={blob_id}"
 			if filename := attachment["filename"]:
-				params += f"&filename={filename}"
+				params += f"&filename={quote(filename)}"
 			attachment["url"] = get_url(f"/api/method/mail.api.mail.get_attachment?{params}")
 
-		if attachment["disposition"] == "inline" and attachment["cid"]:
-			formatted_message["html_body"] = convert_img_src_from_cid_to_url(
-				formatted_message["html_body"],
-				attachment["cid"],
-				attachment["url"],
-			)
+			if attachment["disposition"] == "inline" and attachment["cid"] and formatted_message["html_body"]:
+				formatted_message["html_body"] = convert_img_src_from_cid_to_url(
+					formatted_message["html_body"],
+					attachment["cid"],
+					attachment["url"],
+				)
 
 	return formatted_message
 

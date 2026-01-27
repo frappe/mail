@@ -499,7 +499,7 @@ class MailQueue(Document):
 
 		for a in attachments:
 			disposition = a["disposition"]
-			cid = a["cid"] if disposition == "inline" else a.get("cid", random_string(length=10))
+			cid = a.get("cid", random_string(length=10))
 
 			if blob_id := a.get("blob_id"):
 				if blob_id in seen_blob_ids:
