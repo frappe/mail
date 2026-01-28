@@ -1,6 +1,6 @@
 <template>
 	<div class="sm:bg-surface-gray-1 min-h-screen">
-		<div class="relative z-10 mx-auto py-8 sm:w-max sm:py-32">
+		<div class="relative z-[1] mx-auto py-8 sm:w-max sm:py-32">
 			<div class="flex">
 				<slot name="logo">
 					<div class="mx-auto flex items-center space-x-2">
@@ -22,7 +22,7 @@
 				<slot />
 			</div>
 		</div>
-		<div class="absolute bottom-4 z-[1] flex w-full justify-center">
+		<div class="absolute bottom-4 flex w-full justify-center">
 			<FrappeLogo class="h-4" />
 		</div>
 	</div>
