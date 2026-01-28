@@ -50,6 +50,9 @@ const handleMessage = (event: MessageEvent) => {
 onMounted(() => window.addEventListener('message', handleMessage))
 onUnmounted(() => window.removeEventListener('message', handleMessage))
 
+const decodeQuotedPrintable = (text: string): string =>
+	text.replace(/=([0-9A-F]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+
 const srcdoc = computed(() => {
 	const collapseButton = `
 		<button
@@ -70,7 +73,9 @@ const srcdoc = computed(() => {
 		</button>
 	`
 
-	const transformedContent = DOMPurify.sanitize(content, DOMPURIFY_CONFIG)
+	const decodedContent = decodeQuotedPrintable(content)
+
+	const transformedContent = DOMPurify.sanitize(decodedContent, DOMPURIFY_CONFIG)
 		.replace(
 			/<div\s+([^>]*)\bclass="([^"]*)"\s*([^>]*)>([\s\S]*?)<\/div>/gi,
 			(match, beforeAttrs, classValue, afterAttrs, innerHtml) => {
@@ -92,6 +97,7 @@ const srcdoc = computed(() => {
 		<head>
 			<meta name="viewport" content="width=device-width, initial-scale=1">
 			<meta name="color-scheme" content="${activeTheme.value}">
+			<meta charset="UTF-8">
 			<style>
 				body {
 					font-family: InterVar, ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -128,6 +134,12 @@ const srcdoc = computed(() => {
 					width: 0 !important;
 					height: 0 !important;
 					overflow: hidden !important;
+				}
+
+				pre, code {
+					font-family: 'Courier New', Courier, monospace;
+					white-space: pre;
+					overflow-x: auto;
 				}
 
 				@media (max-width: 640px) {
@@ -214,6 +226,8 @@ const DOMPURIFY_CONFIG = {
 		'ul',
 		'ol',
 		'li',
+		'pre',
+		'code',
 	],
 	ALLOWED_ATTR: [
 		'style',
@@ -247,8 +261,8 @@ const DOMPURIFY_CONFIG = {
 	KEEP_CONTENT: true,
 	ALLOW_UNKNOWN_PROTOCOLS: false,
 	WHOLE_DOCUMENT: true,
-	ADD_TAGS: ['meta', 'style'],
-	ADD_ATTR: ['cellpadding', 'cellspacing', 'border', 'bgcolor', 'xmlns'],
+	ADD_TAGS: ['meta', 'style', 'pre', 'code'],
+	ADD_ATTR: ['cellpadding', 'cellspacing', 'border', 'bgcolor', 'xmlns', 'charset'],
 	REMOVE_EMPTY: false,
 }
 
@@ -284,7 +298,9 @@ const THEME_CONFIG = {
 						if (
 							trimmed.length > 0 &&
 							!hasBackground(child.parentElement) &&
-							child.parentElement.tagName !== 'A'
+							child.parentElement.tagName !== 'A' &&
+							child.parentElement.tagName !== 'PRE' &&
+							child.parentElement.tagName !== 'CODE'
 						) {
 							child.parentElement.style.setProperty('color', '#D4D4D4');
 						}
