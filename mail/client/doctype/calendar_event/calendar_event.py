@@ -16,7 +16,7 @@ from mail.client.doctype.calendar.calendar import validate_calendar_name_format
 from mail.jmap import get_jmap_client
 from mail.utils import parse_filters
 from mail.utils.cache import get_root_domain_name
-from mail.utils.dt import convert_to_utc, parse_iso_datetime
+from mail.utils.dt import convert_to_utc, parse_iso_datetime, utcnow
 from mail.utils.validation import has_permission_for_user
 
 
@@ -573,9 +573,14 @@ def format_calendar_event(user: str, calendar_map: dict, event: dict) -> dict:
 
 	organizer = (
 		event.get("organizerCalendarAddress")
-		and event["organizerCalendarAddress"].replace("mailto:", "")
+		and event["organizerCalendarAddress"].lower().replace("mailto:", "")
 		or ""
 	)
+
+	created = event.get("created")
+	updated = event.get("updated")
+	created_utc = created or updated or utcnow()
+	updated_utc = updated or created or utcnow()
 
 	return {
 		"user": user,
@@ -600,14 +605,14 @@ def format_calendar_event(user: str, calendar_map: dict, event: dict) -> dict:
 		"participants": participants,
 		"alerts": alerts,
 		"use_default_alerts": cint(event.get("useDefaultAlerts") or False),
-		"created_utc": event["created"],
-		"updated_utc": event["updated"],
+		"created_utc": created_utc,
+		"updated_utc": updated_utc,
 		"origin": event.get("isOrigin") or False,
 		"may_invite_self": cint(event.get("mayInviteSelf") or False),
 		"may_invite_others": cint(event.get("mayInviteOthers") or False),
 		"hide_attendees": cint(event.get("hideAttendees") or False),
-		"creation": parse_iso_datetime(event["created"]),
-		"modified": parse_iso_datetime(event["updated"]),
+		"creation": parse_iso_datetime(created_utc),
+		"modified": parse_iso_datetime(updated_utc),
 		"sequence": cint(event.get("sequence") or False),
 	}
 
