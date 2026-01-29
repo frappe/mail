@@ -10,7 +10,6 @@ from typing import Any, Literal
 from uuid import uuid7
 
 import frappe
-from bs4 import BeautifulSoup
 from frappe import _
 from frappe.core.doctype.file.file import File
 from frappe.core.doctype.file.file import has_permission as has_file_permission
@@ -459,45 +458,14 @@ class MailQueue(Document):
 		self.recipients = json.dumps(recipients)
 
 	def validate_attachments(self) -> None:
-		"""Validate attachments and normalize inline images in HTML."""
+		"""Validates the attachments."""
 
-		attachments = json_loads(self.attachments, default=[])
 		user = self.user if frappe.session.user == "Administrator" else frappe.session.user
-
-		if self.html_body:
-			soup = BeautifulSoup(self.html_body, "html.parser")
-
-			for img in soup.find_all("img"):
-				src = img.get("src")
-				if not src:
-					continue
-
-				# Skip already-valid or external images
-				if src.startswith(("cid:", "data:", "http://", "https://")):
-					continue
-
-				# Convert local file URLs to inline CID attachments
-				if src.startswith(("/files", "/private/files")):
-					cid = img.get("data-cid") or random_string(length=10)
-
-					attachments.append(
-						{
-							"file_url": src,
-							"filename": Path(src).name,
-							"disposition": "inline",
-							"cid": cid,
-						}
-					)
-
-					img["data-cid"] = cid
-					img["src"] = f"cid:{cid}"
-
-			self.html_body = str(soup)
 
 		normalized = []
 		seen_blob_ids = set()
 
-		for a in attachments:
+		for a in json_loads(self.attachments, default=[]):
 			disposition = a["disposition"]
 			cid = a.get("cid", random_string(length=10))
 
