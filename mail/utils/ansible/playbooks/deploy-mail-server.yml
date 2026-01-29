@@ -7,7 +7,6 @@
     stalwart_config_dir: "{{ stalwart_root }}/etc"
     stalwart_config_content: "{{ config_toml }}"
     docker_compose_content: "{{ docker_compose }}"
-    install_redis: "{{ install_redis }}"
 
   tasks:
     # -------------------------------------------------------------------------
@@ -68,10 +67,10 @@
     # -------------------------------------------------------------------------
     # Health Checks
     # -------------------------------------------------------------------------
-    - name: Wait for Stalwart JMAP port (8080) to be ready
+    - name: Wait for HTTP port to be ready
       wait_for:
         host: 127.0.0.1
-        port: 8080
+        port: "{{ http_port | int }}"
         timeout: 90
       register: wait_result
       ignore_errors: yes

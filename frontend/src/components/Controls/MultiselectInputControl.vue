@@ -38,6 +38,7 @@
 							@focus="handleFocus(togglePopover)"
 							@blur="isSearchFocused = false"
 							@keydown.delete.capture.stop="removeLastValue"
+							@paste="handlePaste"
 						/>
 					</template>
 					<template #body="{ isOpen }">
@@ -96,6 +97,7 @@ import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import { X } from 'lucide-vue-next'
 import { Avatar, ErrorMessage, Popover, createResource } from 'frappe-ui'
 
+import { isEmail } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 
 interface Option {
@@ -186,6 +188,13 @@ const handleQueryChange = (e: Event) => {
 	if (newValue) debouncedSearch(newValue)
 }
 
+const handlePaste = (e: ClipboardEvent) => {
+	e.preventDefault()
+	const pastedText = e.clipboardData?.getData('text') || ''
+	if (pastedText) addValue(pastedText)
+	query.value = ''
+}
+
 const handleFocus = (togglePopover: () => void) => {
 	togglePopover()
 	isSearchFocused.value = true
@@ -196,19 +205,19 @@ const addValue = (input: string) => {
 	if (!input) return
 
 	const newValues = input
-		.split(',')
+		.split(/[\n,]+/)
 		.map((v) => v.trim())
 		.filter(Boolean)
 
 	for (const val of newValues) {
-		if (values.value?.includes(val)) continue
+		if (values.value?.includes(val) || !isEmail(val)) continue
 
 		if (props.validate && !props.validate(val)) {
 			error.value = props.errorMessage(val)
 			return
 		}
 
-		values.value = values.value ? [...values.value, val] : [val]
+		values.value.push(val)
 	}
 }
 

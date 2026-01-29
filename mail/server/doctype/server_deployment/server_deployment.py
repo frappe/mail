@@ -4,13 +4,16 @@
 import hashlib
 import json
 import os
+import urllib.parse
+from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
-from uuid_utils import uuid7
+
+from mail.utils import get_stalwart_version
 
 
 class ServerDeployment(Document):
@@ -53,6 +56,34 @@ class ServerDeployment(Document):
 						docker_compose += f"      - {volume}\n"
 
 			return docker_compose
+
+	@property
+	def http_port(self) -> int:
+		"""Returns the HTTP port from the server or cluster listeners."""
+
+		server = frappe.get_doc("Mail Server", self.server)
+		cluster = frappe.get_doc("Mail Cluster", server.cluster)
+		for listener in server.listeners or cluster.listeners:
+			if listener.protocol == "HTTP" and not listener.tls_implicit:
+				parsed = urllib.parse.urlparse(f"//{listener.bind}")
+				if port := parsed.port:
+					return port
+
+		return 8080
+
+	@property
+	def https_port(self) -> int:
+		"""Returns the HTTPS port from the server or cluster listeners."""
+
+		server = frappe.get_doc("Mail Server", self.server)
+		cluster = frappe.get_doc("Mail Cluster", server.cluster)
+		for listener in server.listeners or cluster.listeners:
+			if listener.protocol == "HTTP" and listener.tls_implicit:
+				parsed = urllib.parse.urlparse(f"//{listener.bind}")
+				if port := parsed.port:
+					return port
+
+		return 443
 
 	def autoname(self) -> None:
 		self.name = str(uuid7())
@@ -113,7 +144,7 @@ class ServerDeployment(Document):
 		server_hostname = frappe.db.get_value("Mail Server", self.server, "hostname")
 		services = {
 			"stalwart": {
-				"image": "stalwartlabs/stalwart:latest",
+				"image": f"stalwartlabs/stalwart:{get_stalwart_version()}",
 				"container": f"stalwart_{server_hostname}",
 				"restart": "unless-stopped",
 				"network_mode": "host",
@@ -174,6 +205,7 @@ class ServerDeployment(Document):
 				"config_toml": self.config_toml,
 				"docker_compose": self.docker_compose,
 				"install_redis": cint(self.install_redis),
+				"http_port": self.http_port,
 			}
 			play = frappe.new_doc("Server Ansible Play")
 			play.status = "Pending"
@@ -261,6 +293,7 @@ class ServerDeployment(Document):
 
 		script_content = (
 			script_content.replace("{{ server }}", self.server)
+			.replace("{{ https_port }}", str(self.https_port))
 			.replace("{{ contact_email }}", contact_email)
 			.replace("{{ container_name }}", container_name)
 		)

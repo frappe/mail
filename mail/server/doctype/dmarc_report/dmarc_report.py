@@ -3,7 +3,7 @@
 
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 import frappe
 from frappe import _
@@ -118,15 +118,13 @@ class DMARCReport(Document):
 		report_begin = get_datetime_str(
 			convert_utc_to_system_timezone(
 				datetime.fromtimestamp(
-					int(report["report"]["report_metadata"]["date_range"]["begin"]), tz=timezone.utc
+					int(report["report"]["report_metadata"]["date_range"]["begin"]), tz=UTC
 				)
 			)
 		)
 		report_end = get_datetime_str(
 			convert_utc_to_system_timezone(
-				datetime.fromtimestamp(
-					int(report["report"]["report_metadata"]["date_range"]["end"]), tz=timezone.utc
-				)
+				datetime.fromtimestamp(int(report["report"]["report_metadata"]["date_range"]["end"]), tz=UTC)
 			)
 		)
 

@@ -4,7 +4,7 @@ authors = [
     { name = "Frappe Technologies Pvt. Ltd.", email = "developers@frappe.io"}
 ]
 description = "Frappe Mail"
-requires-python = ">=3.10"
+requires-python = ">=3.14,<3.15"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
@@ -31,7 +31,7 @@ build-backend = "flit_core.buildapi"
 
 [tool.ruff]
 line-length = 110
-target-version = "py310"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = [
@@ -41,6 +41,7 @@ select = [
     "I",
     "UP",
     "B",
+    "RUF",
 ]
 ignore = [
     "B017", # assertRaises(Exception) - should be more specific
@@ -68,3 +69,6 @@ docstring-code-format = true
 packages = [
     "ansible",
 ]
+
+[tool.bench.frappe-dependencies]
+frappe = ">=16.0.0"

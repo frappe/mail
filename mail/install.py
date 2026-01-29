@@ -7,7 +7,7 @@ import frappe
 from frappe.core.api.file import create_new_folder
 
 from mail.mail.doctype.rate_limit.rate_limit import create_rate_limit
-from mail.utils import get_mail_app_path, get_stalwart_cli_path
+from mail.utils import get_mail_app_path, get_stalwart_cli_path, get_stalwart_version
 
 
 def after_install() -> None:
@@ -63,12 +63,12 @@ def create_default_tenant() -> None:
 	tenant.insert(ignore_permissions=True)
 
 
-def install_stalwart_cli(version: str | None = None) -> str:
+def install_stalwart_cli() -> str:
 	"""Download and install the Stalwart CLI tool."""
 
 	print("Installing Stalwart CLI...")
 
-	url, filename = _get_stalwart_cli_download_url(version)
+	url, filename = _get_stalwart_cli_download_url()
 	install_dir = get_mail_app_path()
 	tar_path = os.path.join(install_dir, filename)
 
@@ -96,12 +96,15 @@ def install_stalwart_cli(version: str | None = None) -> str:
 	return cli_path
 
 
-def _get_stalwart_cli_download_url(version: str | None = None) -> str:
+def _get_stalwart_cli_download_url() -> str:
 	"""Returns the download URL and filename for the Stalwart CLI tool."""
 
-	github_release_base = "https://github.com/stalwartlabs/stalwart/releases/latest/download"
-	if version:
-		github_release_base = f"https://github.com/stalwartlabs/stalwart/releases/download/{version}"
+	version = get_stalwart_version()
+	github_release_base = (
+		"https://github.com/stalwartlabs/stalwart/releases/latest/download"
+		if version == "latest"
+		else f"https://github.com/stalwartlabs/stalwart/releases/download/{version}"
+	)
 
 	system = platform.system().lower()
 	arch = platform.machine().lower()

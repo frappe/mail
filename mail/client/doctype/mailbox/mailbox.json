@@ -13,7 +13,6 @@
   "_name",
   "role",
   "sort_order",
-  "_sort_order",
   "column_break_0da9",
   "_parent",
   "parent_id",
@@ -162,15 +161,6 @@
    "label": "Subscribed"
   },
   {
-   "fieldname": "_sort_order",
-   "fieldtype": "Int",
-   "label": "Sort Order",
-   "no_copy": 1,
-   "non_negative": 1,
-   "read_only": 1,
-   "set_only_once": 1
-  },
-  {
    "description": "The user this mailbox belongs to.",
    "fieldname": "user",
    "fieldtype": "Link",
@@ -278,7 +268,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-12-09 13:22:37.862953",
+ "modified": "2026-01-19 13:46:32.451051",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox",

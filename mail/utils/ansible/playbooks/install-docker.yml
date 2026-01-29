@@ -4,6 +4,11 @@
   become: true
   gather_facts: yes
 
+  vars:
+    docker_arch_map:
+      x86_64: amd64
+      aarch64: arm64
+
   tasks:
     # -------------------------
     # Debian / Ubuntu
@@ -13,24 +18,23 @@
         name:
           - curl
           - gnupg
-          - lsb-release
           - ca-certificates
-          - software-properties-common
+          - lsb-release
         state: present
         update_cache: true
       when: ansible_os_family == "Debian"
 
     - name: Add Docker GPG key (Debian/Ubuntu)
       ansible.builtin.apt_key:
-        url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+        url: https://download.docker.com/linux/{{ 'ubuntu' if ansible_distribution == 'Ubuntu' else 'debian' }}/gpg
         state: present
       when: ansible_os_family == "Debian"
 
     - name: Add Docker repository (Debian/Ubuntu)
       ansible.builtin.apt_repository:
         repo: >
-          deb [arch={{ ansible_architecture }}]
-          https://download.docker.com/linux/{{ ansible_distribution | lower }}
+          deb [arch={{ docker_arch_map[ansible_architecture] }}]
+          https://download.docker.com/linux/{{ 'ubuntu' if ansible_distribution == 'Ubuntu' else 'debian' }}
           {{ ansible_distribution_release }} stable
         state: present
       when: ansible_os_family == "Debian"

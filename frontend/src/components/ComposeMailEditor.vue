@@ -10,9 +10,16 @@
 		@change="
 			(val: string) => (mail.html_body = val.replaceAll('<div></div>', '<div><br></div>'))
 		"
+		@dragenter.prevent="handleDragEnter"
+		@dragover.prevent="handleDragOver"
+		@dragleave.prevent="handleDragLeave"
+		@drop.prevent="handleDrop"
 	>
 		<template #top>
-			<div class="flex flex-col gap-2.5 border-b pb-2.5 max-sm:px-3 max-sm:pt-2.5">
+			<div
+				class="flex flex-col gap-2.5 border-b pb-2.5 max-sm:px-3 max-sm:pt-2.5"
+				:class="{ 'border-transparent': isDragging }"
+			>
 				<div v-if="!mailDetails?.type || isMobile" class="flex justify-between gap-2">
 					<div class="flex items-center gap-2">
 						<span class="text-ink-gray-4 text-sm">{{ __('From') }}</span>
@@ -132,13 +139,28 @@
 		</template>
 		<template #editor="{ editor }">
 			<div
-				class="flex flex-1 cursor-text flex-col py-2.5 text-sm max-sm:px-3 sm:overflow-y-auto"
-				:class="{ 'max-h-96 min-h-32': isInThread }"
+				class="relative flex flex-1 cursor-text flex-col border-2 border-transparent py-2.5 text-sm max-sm:px-3 sm:overflow-y-auto"
+				:class="{
+					'max-h-96 min-h-32': isInThread,
+					'!border-outline-gray-3 rounded border-dashed': isDragging,
+				}"
 				@click="editor.commands.focus('end')"
 			>
-				<EditorContent :editor @click.stop />
+				<div
+					v-if="isDragging"
+					class="bg-surface-gray-1/90 text-ink-gray-3 absolute inset-0 z-50 flex flex-col items-center justify-center space-y-1 rounded"
+				>
+					<UploadCloud class="stroke-1.5 h-12 w-12" />
+					<p class="text-lg font-semibold">{{ __('Drop files to upload') }}</p>
+				</div>
 
-				<div class="mt-auto cursor-default space-y-2.5 pt-2.5" @click.stop>
+				<EditorContent :editor :class="{ 'opacity-30': isDragging }" @click.stop />
+
+				<div
+					class="mt-auto cursor-default space-y-2.5 pt-2.5"
+					:class="{ 'opacity-30': isDragging }"
+					@click.stop
+				>
 					<!-- Show quoted content -->
 					<Button
 						v-if="mail?.quoted_content"
@@ -170,15 +192,30 @@
 							@click.stop.prevent="mail.attachments.splice(index, 1)"
 						/>
 					</a>
+
+					<div
+						v-for="(fileUpload, id) in fileUploads.filter((fu) => fu.isUploading)"
+						:key="id"
+						class="bg-surface-gray-2 text-ink-gray-6 mb-2 rounded p-2.5 text-sm"
+					>
+						<div class="mb-1.5 flex items-center">
+							<span class="mr-1 font-medium"> {{ fileUpload.name }} </span>
+							<span class="font-extralight">
+								({{ formatBytes(fileUpload.size) }})
+							</span>
+						</div>
+						<Progress :value="fileUpload.progress" />
+					</div>
 				</div>
 			</div>
 		</template>
 		<template #bottom>
 			<ComposeMailToolbar
-				:is-saving-draft="isSavingDraft"
-				:is-loading="isLoading"
-				:is-recipients-empty="isRecipientsEmpty"
-				@add-attachment="(file) => mail.attachments.push(file)"
+				:is-saving-draft
+				:is-recipients-empty
+				class="border-t"
+				:class="{ 'border-transparent': isDragging }"
+				@select-files="(files: File[]) => uploadFiles(files)"
 				@append-emoji="(emoji: string) => appendEmoji(emoji)"
 				@discard-mail="discardMail"
 				@send-mail="sendMail"
@@ -206,19 +243,29 @@ import {
 } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
 import { watchDebounced } from '@vueuse/core'
-import { ChevronDown, ChevronUp, ExternalLink, Forward, Reply, ReplyAll } from 'lucide-vue-next'
+import {
+	ChevronDown,
+	ChevronUp,
+	ExternalLink,
+	Forward,
+	Reply,
+	ReplyAll,
+	UploadCloud,
+} from 'lucide-vue-next'
 import {
 	Button,
 	Combobox,
 	Dropdown,
 	FeatherIcon,
 	ImageExtension,
+	Progress,
 	TextEditor,
 	Tooltip,
 	createResource,
 	useFileUpload,
 } from 'frappe-ui'
 
+import { getAttachmentUrl } from '@/resources'
 import { formatBytes, isOverlayPresent, raiseToast, validateEmail } from '@/utils'
 import { useScreenSize, useVisualViewport } from '@/utils/composables'
 import { CustomParagraphExtension } from '@/utils/text-editor'
@@ -319,30 +366,47 @@ watchDebounced(mail, () => saveDraft(), { debounce: 2000 })
 const isSavingDraft = ref(false)
 
 const saveDraft = async () => {
-	if (!isDraftUpdated.value || isLoading.value) return
+	if (!isDraftUpdated.value || isLoading.value || isDiscarding.value) return
 
 	isSavingDraft.value = true
-	if (mail.id) await updateDraft.submit()
-	else if (!isMailEmpty.value) await createMail.submit()
+	if (mail.id) await updateDraft.submit({ submit: false })
+	else if (!isMailEmpty.value) await createMail.submit({ save_as_draft: true })
 	isSavingDraft.value = false
 }
 
-const sendMail = () => {
-	if (isLoading.value) return
+const sendMail = async () => {
+	if (deleteMail.loading) return
 
-	if (isRecipientsEmpty.value) return raiseToast(__('Please add at least one recipient.'))
+	if (isRecipientsEmpty.value)
+		return raiseToast(__('Please add at least one recipient.'), 'error')
+
+	isSavingDraft.value = false
 	show.value = false
-	if (mail.id) updateDraft.submit()
-	else createMail.submit()
+	if (createMail.loading) await createMail.promise
+	if (updateDraft.loading) await updateDraft.promise
+
+	if (mail.id) updateDraft.submit({ submit: true })
+	else createMail.submit({ save_as_draft: false })
 }
 
-const discardMail = () => {
-	if (isLoading.value) return
+const isDiscarding = ref(false)
 
+const discardMail = async () => {
+	if (deleteMail.loading) return
+
+	isDiscarding.value = true
 	show.value = false
+	if (createMail.loading) await createMail.promise
+	if (updateDraft.loading) await updateDraft.promise
 	if (mail.id) deleteMail.submit()
 	else emit('discardMail')
 }
+
+watch(show, (val) => {
+	if (val) return
+	isDiscarding.value = false
+	isSavingDraft.value = false
+})
 
 defineExpose({ sendMail, discardMail })
 
@@ -358,10 +422,12 @@ const onMailUpdateSuccess = ({
 	if (id) mail.id = id
 	updateOriginalMail()
 	if (error) return raiseToast(error, 'error')
-	if (!isInThread || status === 'Submitted') reloadMails()
+	if (isDiscarding.value) return
 
+	if (!isInThread || status === 'Submitted') reloadMails()
 	if (show.value) return
-	if (status === 'Drafted') raiseToast(__('Draft saved.'))
+
+	if (status === 'Drafted' && isSavingDraft.value) raiseToast(__('Draft saved.'))
 	else if (status === 'Submitted') raiseToast(__('Message sent.'))
 }
 
@@ -369,11 +435,11 @@ const onMailUpdateSuccess = ({
 
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
-	makeParams: () => ({
+	makeParams: ({ save_as_draft }: { save_as_draft: boolean }) => ({
 		...mail,
 		from_name: getIdentity(mail.from_email!)._name,
 		html_body: mail.html_body! + mail.quoted_content,
-		save_as_draft: isSavingDraft.value,
+		save_as_draft,
 	}),
 	onSuccess: onMailUpdateSuccess,
 	onError: (error) => raiseToast(error.message, 'error'),
@@ -381,11 +447,11 @@ const createMail = createResource({
 
 const updateDraft = createResource({
 	url: 'mail.api.mail.update_draft_mail',
-	makeParams: () => ({
+	makeParams: ({ submit }: { submit: boolean }) => ({
 		...mail,
 		from_name: getIdentity(mail.from_email!)._name,
 		html_body: mail.html_body! + mail.quoted_content,
-		submit: !isSavingDraft.value,
+		submit,
 	}),
 	onSuccess: onMailUpdateSuccess,
 	onError: (error) => raiseToast(error.message, 'error'),
@@ -494,18 +560,10 @@ watch(
 
 // Attachments
 
-const fetchAttachment = createResource({
-	url: 'mail.api.mail.fetch_attachment',
-	makeParams: (blob_id: string) => ({ blob_id }),
-})
-
 const openAttachment = async (blob_id?: string, type?: string) => {
 	if (!blob_id) return
 
-	const data = await fetchAttachment.submit(blob_id)
-	const byteArray = new Uint8Array(data)
-	const blob = new Blob([byteArray], { type })
-	const url = URL.createObjectURL(blob)
+	const url = await getAttachmentUrl(blob_id, type)
 	window.open(url, '_blank')
 }
 
@@ -569,4 +627,67 @@ const handleDiscardShortcut = (e: KeyboardEvent) => {
 
 onMounted(() => window.addEventListener('keydown', handleKeydown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
+
+// Drag and drop file upload
+
+const isDragging = ref(false)
+let dragCounter = 0
+
+const handleDragEnter = (e: DragEvent) => {
+	e.preventDefault()
+	dragCounter++
+	if (e.dataTransfer?.types.includes('Files')) isDragging.value = true
+}
+
+const handleDragOver = (e: DragEvent) => {
+	e.preventDefault()
+	if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+}
+
+const handleDragLeave = (e: DragEvent) => {
+	e.preventDefault()
+	dragCounter--
+	if (dragCounter === 0) isDragging.value = false
+}
+
+const handleDrop = (e: DragEvent) => {
+	e.preventDefault()
+	isDragging.value = false
+	dragCounter = 0
+
+	const files = Array.from(e.dataTransfer?.files ?? [])
+	uploadFiles(files)
+}
+
+const fileUploads = ref<ReturnType<typeof useFileUpload>[]>([])
+
+const uploadFiles = async (files: File[]) => {
+	if (!files.length) return
+
+	const results = await Promise.allSettled(files.map(uploadFile))
+	results.forEach((res, i) => {
+		if (res.status === 'rejected')
+			raiseToast(__('Failed to upload {0}', [files[i].name]), 'error')
+	})
+}
+
+const uploadFile = async (file: File) => {
+	const fileUpload = useFileUpload()
+	fileUploads.value.push({ name: file.name, size: file.size, ...fileUpload })
+
+	const doc = (await fileUpload.upload(file, {
+		private: true,
+		folder: 'Home/Frappe Mail',
+	})) as FileDoc
+
+	attachDoc(doc)
+}
+
+const attachDoc = (doc: FileDoc) =>
+	mail.attachments.push({
+		file_name: doc.file_name,
+		file_url: doc.file_url,
+		file_size: doc.file_size,
+		disposition: 'attachment',
+	})
 </script>

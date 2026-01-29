@@ -7,6 +7,7 @@ from email.utils import make_msgid, parseaddr
 from mimetypes import guess_type
 from pathlib import Path
 from typing import Any, Literal
+from uuid import uuid7
 
 import frappe
 from frappe import _
@@ -26,7 +27,6 @@ from frappe.utils import (
 	random_string,
 	time_diff_in_seconds,
 )
-from uuid_utils import uuid7
 
 from mail import __version__
 from mail.jmap import get_identities, get_jmap_client

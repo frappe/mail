@@ -1,10 +1,11 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+from uuid import uuid7
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from uuid_utils import uuid7
 
 
 class ServerAnsiblePlayTask(Document):

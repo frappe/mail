@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import frappe
 from bs4 import BeautifulSoup
@@ -196,13 +196,13 @@ def fetch_attachment(blob_id: str) -> bytes:
 @frappe.whitelist()
 def create_mail(
 	from_email: str,
-	from_name: str,
 	to: list[str],
 	cc: list[str],
 	bcc: list[str],
 	subject: str | None,
 	html_body: str | None,
-	attachments: list[dict] = None,
+	from_name: str = "",
+	attachments: list[dict] | None = None,
 	in_reply_to: str | None = None,
 	in_reply_to_id: str | None = None,
 	forwarded_from_id: str | None = None,
@@ -252,13 +252,13 @@ def create_mail(
 def update_draft_mail(
 	id: str,
 	from_email: str,
-	from_name: str,
 	to: list[str],
 	cc: list[str],
 	bcc: list[str],
 	subject: str | None,
 	html_body: str | None,
-	attachments: list[dict] = None,
+	from_name: str = "",
+	attachments: list[dict] | None = None,
 	submit: bool = False,
 ) -> dict:
 	"""Creates new mail queue from existing draft message."""
@@ -518,4 +518,4 @@ def normalize_search_filter(filter: dict) -> dict:
 
 def parse_date_to_utc_iso(date_str: str) -> str:
 	"""Parse date string and convert to ISO format with UTC timezone."""
-	return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc).isoformat()
+	return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=UTC).isoformat()

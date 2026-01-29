@@ -3,12 +3,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import cached_property
 from typing import Any, Literal
 from urllib.parse import urljoin
+from uuid import uuid7
 
 import frappe
 import requests
 from frappe import _
 from frappe.utils import create_batch
-from uuid_utils import uuid7
 
 from mail import __version__
 from mail.utils.dt import convert_to_utc, utcnow
@@ -236,7 +236,6 @@ class JMAPClient:
 					"_parent": mailbox["_parent"],
 					"parent_id": mailbox["parent_id"],
 					"subscribed": mailbox["subscribed"],
-					"_sort_order": mailbox["_sort_order"],
 				}
 				for mailbox in mailboxes
 			]
@@ -1852,20 +1851,28 @@ class JMAPClient:
 		return response.json()
 
 	def upload_blobs_concurrently(self, blobs: list[tuple[bytes | str, str]]) -> list[dict]:
-		"""Uploads multiple blobs concurrently and returns a list of dictionaries containing the responses."""
+		"""Uploads multiple blobs concurrently and returns responses in input order."""
 
-		if len(blobs) == 1:
+		count = len(blobs)
+		if count == 0:
+			return []
+
+		results = [None] * count
+
+		if count == 1:
 			blob, content_type = blobs[0]
 			return [self.upload_blob(blob, content_type)]
 
-		results = []
 		with ThreadPoolExecutor(max_workers=self.max_concurrent_upload) as executor:
-			futures = {
-				executor.submit(self.upload_blob, blob, content_type): (blob, content_type)
-				for blob, content_type in blobs
-			}
-			for future in as_completed(futures):
-				results.append(future.result())
+			future_to_index = {}
+
+			for index, (blob, content_type) in enumerate(blobs):
+				future = executor.submit(self.upload_blob, blob, content_type)
+				future_to_index[future] = index
+
+			for future in as_completed(future_to_index):
+				index = future_to_index[future]
+				results[index] = future.result()
 
 		return results
 

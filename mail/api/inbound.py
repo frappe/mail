@@ -1,5 +1,5 @@
 import base64
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import TYPE_CHECKING
 
 import frappe
@@ -94,7 +94,7 @@ def convert_to_system_timezone(last_received_at: str) -> datetime | None:
 
 	if last_received_at:
 		dt = datetime.fromisoformat(last_received_at)
-		dt_utc = dt.astimezone(timezone.utc)
+		dt_utc = dt.astimezone(UTC)
 		return convert_utc_to_system_timezone(dt_utc)
 
 
@@ -113,7 +113,7 @@ def get_mails(
 			if isinstance(last_received_at, datetime)
 			else datetime.fromisoformat(last_received_at)
 		)
-		dt_utc = dt.astimezone(timezone.utc)
+		dt_utc = dt.astimezone(UTC)
 		filter["after"] = dt_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 	sort = [{"property": "receivedAt", "isAscending": True}]
