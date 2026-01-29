@@ -4,6 +4,7 @@
 		editor-class="prose-sm max-w-none"
 		:extensions="[CustomImageExtension, CustomParagraphExtension]"
 		:content="mail.html_body.replaceAll('<div><br></div>', '<div></div>')"
+		:upload-function
 		class="flex flex-col max-sm:overflow-y-auto"
 		:class="{ 'pointer-events-none opacity-50': !show, 'sm:h-[75vh]': !isInThread }"
 		:style="isMobile && { height: editorHeight }"
@@ -481,22 +482,21 @@ const isOnlySignature = computed(() => {
 })
 
 const isBodyEmpty = computed(() => {
-	let isEmpty = true
-	if (mail.html_body) {
-		const element = document.createElement('div')
-		element.innerHTML = mail.html_body
-		isEmpty =
-			!element.textContent?.trim() &&
-			Array.from(element.children).every((d) => !d.textContent?.trim())
-	}
+	if (!mail.html_body) return true
 
-	return isEmpty
+	const element = document.createElement('div')
+	element.innerHTML = mail.html_body
+
+	const hasText = element.textContent?.trim()
+	const hasMedia = element.querySelector('img, video, svg') !== null
+
+	return !hasText && !hasMedia
 })
 
 const isMailEmpty = computed(() => {
-	const isSubjectEmpty = !mail.subject.length
-	const isQuotedContentEmpty = !mail.quoted_content?.length
-	const isAttachmentsEmpty = !mail.attachments.length
+	const isSubjectEmpty = !mail.subject
+	const isQuotedContentEmpty = !mail.quoted_content
+	const isAttachmentsEmpty = !mail.attachments?.length
 
 	return (
 		isSubjectEmpty &&
@@ -538,16 +538,7 @@ const openAttachment = async (blob_id?: string, type?: string) => {
 
 const uploadFunction = async (file: File) => {
 	const fileUpload = useFileUpload()
-	const fileDoc = (await fileUpload.upload(file, {
-		private: true,
-		folder: 'Home/Frappe Mail',
-	})) as FileDoc
-	mail.attachments.push({
-		file_name: fileDoc.file_name,
-		file_url: fileDoc.file_url,
-		disposition: 'inline',
-	})
-	return { src: fileDoc.file_url }
+	return fileUpload.upload(file, { private: true, folder: 'Home/Frappe Mail' })
 }
 
 const CustomImageExtension = ImageExtension.extend({
