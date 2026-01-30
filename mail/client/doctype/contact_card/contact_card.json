@@ -12,6 +12,7 @@
   "kind",
   "full_name",
   "email",
+  "phone",
   "column_break_dcka",
   "created_at",
   "updated_at",
@@ -146,13 +147,23 @@
    "no_copy": 1,
    "options": "Email",
    "read_only": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Phone",
+   "no_copy": 1,
+   "options": "Phone",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-30 11:51:27.343781",
+ "modified": "2026-01-30 11:55:42.607555",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Contact Card",
