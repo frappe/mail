@@ -26,6 +26,7 @@ from frappe.utils import (
 	now_datetime,
 	random_string,
 	time_diff_in_seconds,
+	validate_email_address,
 )
 
 from mail import __version__
@@ -33,7 +34,7 @@ from mail.jmap import get_identities, get_jmap_client
 from mail.utils.cache import get_tenant_for_user
 from mail.utils.dt import parsedate_to_datetime
 from mail.utils.user import has_role, is_administrator, is_tenant_bound_user
-from mail.utils.validation import has_permission_for_user, validate_email_address
+from mail.utils.validation import has_permission_for_user
 
 
 class MailQueue(Document):
@@ -441,8 +442,7 @@ class MailQueue(Document):
 			if not rcpt["type"] or not rcpt["email"]:
 				continue
 
-			if not validate_email_address(rcpt["email"], check_mx=False, verify=False):
-				frappe.throw(_("Invalid email address: {0}").format(frappe.bold(rcpt["email"])))
+			validate_email_address(rcpt["email"], throw=True)
 
 			recipients.append(
 				{
