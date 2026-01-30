@@ -269,3 +269,9 @@ export const getFileIcon = (type?: string) => {
 
 	return File
 }
+
+export const extractNameFromEmail = (email: string) =>
+	email
+		.split('@')[0]
+		.replace(/[._-]/g, ' ')
+		.replace(/\b\w/g, (c) => c.toUpperCase())

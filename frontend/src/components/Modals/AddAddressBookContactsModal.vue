@@ -49,6 +49,8 @@ import { computed, inject, ref, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import { Button, Dialog, FormControl, createResource } from 'frappe-ui'
 
+import { extractNameFromEmail } from '@/utils'
+
 const show = defineModel<boolean>()
 
 const emit = defineEmits(['add'])
@@ -63,6 +65,11 @@ const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
 	makeParams: () => ({ filter: { text: search.value } }),
+	transform: (data) =>
+		data.map((c) => ({
+			...c,
+			full_name: c.full_name || extractNameFromEmail(c.emails[0]?.address || ''),
+		})),
 	cache: ['contacts', user.data.name, search.value, 50],
 })
 

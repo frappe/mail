@@ -55,7 +55,7 @@ import {
 	createResource,
 } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
+import { extractNameFromEmail, raiseToast } from '@/utils'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddContactModal from '@/components/Modals/AddContactModal.vue'
 
@@ -74,12 +74,14 @@ const contacts = createResource({
 	makeParams: () => ({ filter: { text: search.value }, limit: limit.value }),
 	transform: (data) =>
 		data.map((c) => {
+			const full_name = c.full_name || extractNameFromEmail(c.emails[0]?.address || '')
+
 			let email = ''
 			if (c.emails.length === 1) email = c.emails[0].address
 			else if (c.emails.length > 1)
 				email = __('{0} + {1} more', [c.emails[0].address, c.emails.length - 1])
 
-			return { ...c, email }
+			return { ...c, full_name, email }
 		}),
 	cache: ['contacts', user.data.name, search.value, limit.value],
 })

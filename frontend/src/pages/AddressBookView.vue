@@ -42,7 +42,7 @@
 						:rows="contacts?.data"
 						:options="LIST_OPTIONS"
 						row-key="id"
-						class="max-h-[50rem] min-h-72 flex-1 overflow-auto"
+						class="max-h-[73vh] min-h-72 flex-1 overflow-auto"
 					>
 						<ListHeader />
 						<ListRows v-if="contacts.data.length" @scroll="loadMoreContacts" />
@@ -108,7 +108,7 @@ import {
 	createResource,
 } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
+import { extractNameFromEmail, raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 import DashboardCard from '@/components/DashboardCard.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
@@ -155,12 +155,14 @@ const contacts = createResource({
 	}),
 	transform: (data) =>
 		data.map((c) => {
+			const full_name = c.full_name || extractNameFromEmail(c.emails[0]?.address || '')
+
 			let email = ''
 			if (c.emails.length === 1) email = c.emails[0].address
 			else if (c.emails.length > 1)
 				email = __('{0} + {1} more', [c.emails[0].address, c.emails.length - 1])
 
-			return { ...c, email }
+			return { ...c, full_name, email }
 		}),
 	cache: ['contacts', addressBookName, search.value, limit.value],
 })

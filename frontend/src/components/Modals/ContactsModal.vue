@@ -43,6 +43,7 @@ import {
 	createResource,
 } from 'frappe-ui'
 
+import { extractNameFromEmail } from '@/utils'
 import { userStore } from '@/stores/user'
 
 const show = defineModel<boolean>()
@@ -103,6 +104,8 @@ const contacts = createResource({
 
 		return { filter, limit: limit.value }
 	},
+	transform: (data) =>
+		data.map((c) => ({ ...c, full_name: c.full_name || extractNameFromEmail(c.email) })),
 })
 
 watchDebounced(() => search.value, contacts.reload, { debounce: 300 })
