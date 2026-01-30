@@ -23,7 +23,7 @@
 				/>
 				<InformationField
 					:label="__('Total Contacts')"
-					:value="contacts.data?.length.toString() || '0'"
+					:value="totalContacts.data?.toString() || '0'"
 				/>
 			</DashboardCard>
 
@@ -165,6 +165,13 @@ const contacts = createResource({
 			return { ...c, full_name, email }
 		}),
 	cache: ['contacts', addressBookName, search.value, limit.value],
+})
+
+const totalContacts = createResource({
+	url: 'mail.api.contacts.get_address_book_contact_count',
+	auto: true,
+	makeParams: () => ({ address_book: addressBookName }),
+	cache: ['addressBookContactCount', addressBookName],
 })
 
 watchDebounced(() => search.value, contacts.reload, { debounce: 300 })

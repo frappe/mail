@@ -14,7 +14,7 @@
 					@action="showEditGeneral = true"
 				>
 					<InformationField :label="__('Name')" :value="contact.doc.full_name" />
-					<InformationField :label="__('Kind')" :value="contact.doc.kind" />
+					<InformationField :label="__('Kind')" :value="capitalize(contact.doc.kind)" />
 					<InformationField
 						:label="__('Created On')"
 						:value="dayjs(contact.doc.created_at).format('MMM D YYYY, h:mm A')"
@@ -64,7 +64,7 @@
 					<ListView
 						ref="emailsList"
 						:columns="EMAIL_COLUMNS"
-						:rows="contact.doc.emails"
+						:rows="contact.doc.emails.map((c) => ({ ...c, type: capitalize(c.type) }))"
 						row-key="address"
 						:options="{ emptyState: { title: '', description: __('No emails.') } }"
 						class="flex-1 overflow-auto p-4"
@@ -93,7 +93,7 @@
 					<ListView
 						ref="phonesList"
 						:columns="PHONE_COLUMNS"
-						:rows="contact.doc.phones"
+						:rows="contact.doc.phones.map((p) => ({ ...p, type: capitalize(p.type) }))"
 						row-key="number"
 						:options="{ emptyState: { title: '', description: __('No phones.') } }"
 						class="flex-1 overflow-auto p-4"
@@ -122,7 +122,9 @@
 					<ListView
 						ref="addressesList"
 						:columns="ADDRESS_COLUMNS"
-						:rows="contact.doc.addresses"
+						:rows="
+							contact.doc.addresses.map((a) => ({ ...a, type: capitalize(a.type) }))
+						"
 						row-key="idx"
 						:options="{ emptyState: { title: '', description: __('No addresses.') } }"
 						class="flex-1 overflow-auto p-4"
@@ -207,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, useTemplateRef } from 'vue'
+import { capitalize, computed, inject, ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { Trash2 } from 'lucide-vue-next'
 import {
@@ -371,7 +373,7 @@ const removeAddressesOptions = computed(() => ({
 
 const breadcrumbs = computed(() => [
 	{ label: __('Contacts'), route: '/contacts' },
-	{ label: contact.doc?.full_name || contactName },
+	{ label: contact.doc?.full_name || contact.doc?.emails[0]?.address || contactName },
 ])
 
 const ADDRESS_BOOK_COLUMNS = [{ label: __('Name'), key: 'address_book_name' }]

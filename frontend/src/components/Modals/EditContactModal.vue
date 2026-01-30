@@ -20,7 +20,7 @@ import { Dialog, FormControl } from 'frappe-ui'
 
 const show = defineModel<boolean>()
 
-const { fullName, kind } = defineProps<{ fullName: string; kind: string }>()
+const { fullName, kind } = defineProps<{ fullName?: string; kind: string }>()
 
 const emit = defineEmits(['save'])
 

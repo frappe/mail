@@ -32,7 +32,7 @@ const show = defineModel<boolean>()
 
 const { name, description, isDefault } = defineProps<{
 	name: string
-	description: string
+	description?: string
 	isDefault: boolean
 }>()
 

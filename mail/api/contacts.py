@@ -42,3 +42,10 @@ def get_contacts(filter: dict | None = None, limit: int = 50) -> list[dict]:
 				contacts.append({"full_name": card.get("full_name"), "email": email.get("address")})
 
 	return contacts
+
+
+@frappe.whitelist()
+def get_address_book_contact_count(address_book) -> int:
+	"""Returns the total no. of contacts for the fiven address book."""
+
+	return fetch_contact_cards(frappe.session.user, {"inAddressBook": address_book}, 0, 1)[1]
