@@ -1,97 +1,104 @@
 <template>
-	<Dialog v-model="show" :options>
+	<Dialog v-model="show" :options="options">
 		<template #body-content>
-			<div class="flex items-center space-x-4">
-				<FormControl
-					v-model="contact"
-					type="combobox"
-					:options="
-						contacts?.data
-							.filter((c) => !selectedContacts.map((sc) => sc.id).includes(c.id))
-							.map((c) => ({ label: c.full_name, value: c.id }))
-					"
-					:open-on-click="true"
-					class="w-full"
-					@input="search = $event"
-				/>
-				<Button
-					:label="__('Add')"
-					:disabled="!contact"
-					@click="
-						() => {
-							selectedContacts.push(contacts.data.find((c) => c.id === contact))
-							contact = ''
-						}
-					"
-				/>
-			</div>
-			<div class="max-h-96 overflow-auto">
-				<div
-					v-for="c in selectedContacts"
-					:key="c.id"
-					class="flex items-center justify-between pt-4"
+			<div class="space-y-4">
+				<FormControl v-model="search" :placeholder="__('Search...')" />
+				<ListView
+					v-if="contacts?.data"
+					ref="listView"
+					class="h-60 shrink-0"
+					:columns="LIST_COLUMNS"
+					:rows="contacts.data"
+					:options="LIST_OPTIONS"
+					row-key="id"
 				>
-					<div class="space-y-1">
-						<div class="text-base font-medium">{{ c.full_name }}</div>
-						<div class="text-ink-gray-5 text-sm">{{ c.kind }}</div>
-					</div>
-					<Button
-						icon="x"
-						@click="selectedContacts = selectedContacts.filter((sc) => sc.id !== c.id)"
-					/>
-				</div>
+					<ListHeader />
+					<ListRows v-if="contacts.data.length" @scroll="loadMoreContacts" />
+					<ListEmptyState v-else />
+				</ListView>
 			</div>
 		</template>
 	</Dialog>
 </template>
+
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue'
-import { watchDebounced } from '@vueuse/core'
-import { Button, Dialog, FormControl, createResource } from 'frappe-ui'
+import { computed, ref, useTemplateRef } from 'vue'
+import { useDebounceFn, watchDebounced } from '@vueuse/core'
+import {
+	Dialog,
+	FormControl,
+	ListEmptyState,
+	ListHeader,
+	ListRows,
+	ListView,
+	createResource,
+} from 'frappe-ui'
 
 import { extractNameFromEmail } from '@/utils'
 
 const show = defineModel<boolean>()
 
+const { currentContacts } = defineProps<{ currentContacts?: string[] }>()
+
 const emit = defineEmits(['add'])
 
-const search = ref('')
-const contact = ref('')
-const selectedContacts = ref([])
-
-const contacts = createResource({
-	url: 'mail.api.contacts.get_contact_cards',
-	auto: true,
-	makeParams: () => ({ filter: { text: search.value } }),
-	transform: (data) =>
-		data.map((c) => ({
-			...c,
-			full_name: c.full_name || extractNameFromEmail(c.emails[0]?.address || ''),
-		})),
-})
-
-watchDebounced(() => search.value, contacts.reload, { debounce: 300 })
+const listView = useTemplateRef('listView')
 
 const options = computed(() => ({
-	title: __('Add Contacts'),
+	title: __('Select Contacts'),
 	actions: [
 		{
-			label: __('Save'),
+			label: __('Add'),
 			variant: 'solid',
-			disabled: selectedContacts.value.length === 0,
+			disabled: listView.value?.selections.size === 0,
 			onClick: () => {
-				emit('add', selectedContacts.value)
+				emit('add', Array.from(listView.value?.selections))
 				show.value = false
 			},
 		},
 	],
 }))
 
-watch(show, (val) => {
-	if (!val) return
+const search = ref('')
+const limit = ref(50)
 
-	search.value = ''
-	contact.value = ''
-	selectedContacts.value = []
+const contacts = createResource({
+	url: 'mail.api.contacts.get_contact_cards',
+	auto: true,
+	makeParams: () => ({ filter: { text: search.value }, limit: limit.value }),
+	transform: (data) =>
+		data
+			.filter((c) => !currentContacts?.includes(c.id))
+			.map((c) => {
+				const full_name = c.full_name || extractNameFromEmail(c.emails[0]?.address || '')
+
+				let email = ''
+				if (c.emails.length === 1) email = c.emails[0].address
+				else if (c.emails.length > 1)
+					email = __('{0} + {1} more', [c.emails[0].address, c.emails.length - 1])
+
+				return { ...c, full_name, email }
+			}),
 })
+
+watchDebounced(() => search.value, contacts.reload, { debounce: 300 })
+
+const loadMoreContacts = useDebounceFn((e) => {
+	const { scrollTop, scrollHeight, clientHeight } = e.target
+	if (scrollTop + clientHeight >= scrollHeight - 10 && contacts.data?.length === limit.value) {
+		limit.value += 50
+		contacts.reload()
+		setTimeout(
+			() => e.target.scrollTo({ top: e.target.scrollHeight, behavior: 'smooth' }),
+			100,
+		)
+	}
+}, 500)
+
+const LIST_COLUMNS = [
+	{ label: __('Name'), key: 'full_name' },
+	{ label: __('Email'), key: 'email' },
+]
+
+const LIST_OPTIONS = { showTooltip: false, emptyState: { description: __('No contacts to add.') } }
 </script>

@@ -83,7 +83,8 @@
 	<AddAddressBookContactsModal
 		v-if="addressBook?.originalDoc"
 		v-model="showAddContacts"
-		@add="(val) => addContacts.submit(val.map((c) => c.id))"
+		:current-contacts="contacts.data?.map((c) => c.id) || []"
+		@add="(selections) => addContacts.submit(selections)"
 	/>
 	<Dialog v-model="showRemoveContacts" :options="removeContactsOptions" />
 </template>
@@ -216,6 +217,7 @@ const addContacts = createResource({
 	onSuccess: () => {
 		raiseToast(__('Contacts added.'))
 		contacts.reload()
+		totalContacts.reload()
 	},
 	onError: (error) => raiseToast(error.messages[0], 'error'),
 })
@@ -229,6 +231,7 @@ const removeContacts = createResource({
 	}),
 	onSuccess: () => {
 		contacts.reload()
+		totalContacts.reload()
 		showRemoveContacts.value = false
 		raiseToast(__('Contacts removed.'))
 		listView.value?.toggleAllRows()

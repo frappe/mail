@@ -11,16 +11,15 @@
 		</FormControl>
 
 		<ListView
-			v-if="contacts?.data"
 			ref="listView"
 			class="flex-1"
 			:columns="LIST_COLUMNS"
-			:rows="contacts.data"
-			:options="LIST_OPTIONS"
+			:rows="contacts?.data || []"
+			:options="listOptions"
 			row-key="id"
 		>
 			<ListHeader />
-			<ListRows v-if="contacts.data.length" @scroll="loadMoreContacts" />
+			<ListRows v-if="contacts?.data?.length" @scroll="loadMoreContacts" />
 			<ListEmptyState v-else />
 			<ListSelectBanner>
 				<template #actions>
@@ -40,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, useTemplateRef } from 'vue'
+import { computed, inject, ref, useTemplateRef } from 'vue'
 import { useDebounceFn, watchDebounced } from '@vueuse/core'
 import {
 	Button,
@@ -114,17 +113,17 @@ const deleteContacts = createResource({
 	},
 })
 
+const listOptions = computed(() => ({
+	showTooltip: false,
+	emptyState: { description: contacts.loading ? __('Loading...') : __('No contacts found.') },
+	getRowRoute: (row) => ({ name: 'Contact', params: { contactName: row.id } }),
+}))
+
 const LIST_COLUMNS = [
 	{ label: __('Name'), key: 'full_name' },
 	{ label: __('Kind'), key: 'kind' },
 	{ label: __('Email'), key: 'email' },
 ]
-
-const LIST_OPTIONS = {
-	showTooltip: false,
-	emptyState: { description: __('No contacts found.') },
-	getRowRoute: (row) => ({ name: 'Contact', params: { contactName: row.id } }),
-}
 
 const DELETE_CONTACTS_OPTIONS = {
 	title: __('Delete Contacts'),
