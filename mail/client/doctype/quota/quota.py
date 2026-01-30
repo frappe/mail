@@ -31,13 +31,19 @@ class Quota(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
+		id = filters.get("id")
 		user = filters.get("user") or frappe.session.user
 
 		if not user or user in ("Guest", "Administrator"):
 			frappe.msgprint(_("Please select a user to view quotas."), alert=True)
 			return []
 
-		quotas = fetch_quotas(user, limit=page_length)
+		quotas = []
+		if id:
+			if quota := get_quota(user, id, raise_exception=False):
+				quotas.append(quota)
+		else:
+			quotas = fetch_quotas(user, limit=page_length)
 
 		if not quotas:
 			frappe.msgprint(_("No quotas found."), alert=True)
@@ -66,7 +72,7 @@ def _get_total_cache_key(user: str) -> str:
 
 
 @frappe.whitelist()
-def get_quota(user: str, id: str) -> dict:
+def get_quota(user: str, id: str, raise_exception: bool = True) -> dict | None:
 	"""Returns quota details for the given name in the format 'user|id'."""
 
 	has_permission_for_user(user)
@@ -75,10 +81,11 @@ def get_quota(user: str, id: str) -> dict:
 	if quotas := client.quota_get([id]):
 		return format_quota(user, quotas[0])
 
-	frappe.throw(
-		_("Quota with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
-		title=_("Quota Not Found"),
-	)
+	if raise_exception:
+		frappe.throw(
+			_("Quota with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
+			title=_("Quota Not Found"),
+		)
 
 
 @frappe.whitelist()

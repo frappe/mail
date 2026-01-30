@@ -60,7 +60,7 @@ class PushSubscription(Document):
 
 		subscriptions = []
 		if id:
-			if subscription := get_push_subscription(user, id):
+			if subscription := get_push_subscription(user, id, raise_exception=False):
 				subscriptions.append(subscription)
 		else:
 			subscriptions = fetch_push_subscriptions(user, limit=page_length)
@@ -157,7 +157,7 @@ def add_push_subscription(
 
 
 @frappe.whitelist()
-def get_push_subscription(user: str, id: str) -> dict:
+def get_push_subscription(user: str, id: str, raise_exception: bool = True) -> dict | None:
 	"""Returns push subscription details for the given name in the format 'user|id'."""
 
 	has_permission_for_user(user)
@@ -165,6 +165,14 @@ def get_push_subscription(user: str, id: str) -> dict:
 	client = get_jmap_client(user)
 	if subscriptions := client.push_subscription_get([id]):
 		return format_push_subscription(user, subscriptions[0])
+
+	if raise_exception:
+		frappe.throw(
+			_("Push Subscription with ID {0} not found in user {1}.").format(
+				frappe.bold(id), frappe.bold(user)
+			),
+			title=_("Push Subscription Not Found"),
+		)
 
 
 def verify_push_subscription(user: str, id: str, verification_code: str) -> None:
