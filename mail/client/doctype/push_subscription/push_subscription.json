@@ -77,6 +77,7 @@
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "ID",
    "no_copy": 1,
    "read_only": 1
@@ -86,7 +87,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-12-09 12:59:48.784935",
+ "modified": "2026-01-30 10:48:06.317747",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Push Subscription",

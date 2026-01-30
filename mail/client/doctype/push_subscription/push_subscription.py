@@ -51,13 +51,19 @@ class PushSubscription(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
+		id = filters.get("id")
 		user = filters.get("user") or frappe.session.user
 
 		if not user or user in ("Guest", "Administrator"):
 			frappe.msgprint(_("Please select a user to view push subscriptions."), alert=True)
 			return []
 
-		subscriptions = fetch_push_subscriptions(user, limit=page_length)
+		subscriptions = []
+		if id:
+			if subscription := get_push_subscription(user, id):
+				subscriptions.append(subscription)
+		else:
+			subscriptions = fetch_push_subscriptions(user, limit=page_length)
 
 		if not subscriptions:
 			frappe.msgprint(_("No push subscriptions found."), alert=True)
