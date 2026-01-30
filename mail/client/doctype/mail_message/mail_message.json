@@ -6,6 +6,9 @@
  "field_order": [
   "before",
   "after",
+  "column_break_avyr",
+  "min_size",
+  "max_size",
   "section_break_8xbl",
   "user",
   "from_name",
@@ -480,6 +483,30 @@
    "label": "After",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_avyr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "min_size",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Min Size (Bytes)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "max_size",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Max Size (Bytes)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -487,7 +514,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-30 12:23:07.082456",
+ "modified": "2026-01-30 12:33:12.486967",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message",

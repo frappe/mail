@@ -201,7 +201,11 @@ class MailMessage(Document):
 			messages = get_messages(user, ids=[id])
 			total = len(messages)
 		else:
-			filter = {}
+			filter = {
+				prop: value
+				for field, prop in {"min_size": "minSize", "max_size": "maxSize"}.items()
+				if (value := filters.get(field))
+			}
 
 			for field in ("before", "after"):
 				if value := filters.get(field):

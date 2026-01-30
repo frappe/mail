@@ -4,6 +4,9 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "section_break_rgkz",
+  "email",
+  "phone",
   "section_break_04au",
   "user",
   "column_break_lrhc",
@@ -11,8 +14,6 @@
   "section_break_ngen",
   "kind",
   "full_name",
-  "email",
-  "phone",
   "column_break_dcka",
   "created_at",
   "updated_at",
@@ -157,13 +158,17 @@
    "no_copy": 1,
    "options": "Phone",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_rgkz",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-30 11:55:42.607555",
+ "modified": "2026-01-30 12:30:27.704255",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Contact Card",
