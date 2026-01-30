@@ -203,7 +203,20 @@ class MailMessage(Document):
 		else:
 			filter = {
 				prop: value
-				for field, prop in {"min_size": "minSize", "max_size": "maxSize"}.items()
+				for field, prop in {
+					"in_mailbox": "inMailbox",
+					"_from": "from",
+					"_to": "to",
+					"_cc": "cc",
+					"_bcc": "bcc",
+					"text": "text",
+					"body": "body",
+					"subject": "subject",
+					"min_size": "minSize",
+					"max_size": "maxSize",
+					"has_keyword": "hasKeyword",
+					"not_keyword": "notKeyword",
+				}.items()
 				if (value := filters.get(field))
 			}
 
