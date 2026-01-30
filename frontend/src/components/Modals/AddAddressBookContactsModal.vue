@@ -55,8 +55,6 @@ const show = defineModel<boolean>()
 
 const emit = defineEmits(['add'])
 
-const user = inject('$user')
-
 const search = ref('')
 const contact = ref('')
 const selectedContacts = ref([])
@@ -70,7 +68,6 @@ const contacts = createResource({
 			...c,
 			full_name: c.full_name || extractNameFromEmail(c.emails[0]?.address || ''),
 		})),
-	cache: ['contacts', user.data.name, search.value, 50],
 })
 
 watchDebounced(() => search.value, contacts.reload, { debounce: 300 })

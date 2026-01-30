@@ -83,7 +83,6 @@ const contacts = createResource({
 
 			return { ...c, full_name, email }
 		}),
-	cache: ['contacts', user.data.name, search.value, limit.value],
 })
 
 watchDebounced(() => search.value, contacts.reload, { debounce: 300 })

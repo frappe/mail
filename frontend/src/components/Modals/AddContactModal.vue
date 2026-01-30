@@ -64,7 +64,7 @@ const defaultContact = {
 	user: user.data.name,
 	address_book_ids: defaultAddressBook ? [defaultAddressBook] : [],
 	full_name: '',
-	kind: 'Individual',
+	kind: 'Personal',
 }
 
 const contact = reactive({ ...defaultContact })
@@ -85,8 +85,8 @@ watch(show, (val) => {
 })
 
 const KIND_OPTIONS = [
-	{ label: __('Individual'), value: 'Individual' },
-	{ label: __('Group'), value: 'Group' },
+	{ label: __('Personal'), value: 'Personal' },
+	{ label: __('Work'), value: 'Work' },
 	{ label: __('Other'), value: 'Other' },
 ]
 </script>

@@ -164,7 +164,7 @@ const contacts = createResource({
 
 			return { ...c, full_name, email }
 		}),
-	cache: ['contacts', addressBookName, search.value, limit.value],
+	cache: ['addressBookContacts', addressBookName, search.value, limit.value],
 })
 
 const totalContacts = createResource({
