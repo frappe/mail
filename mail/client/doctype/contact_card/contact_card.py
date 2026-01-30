@@ -138,13 +138,11 @@ class ContactCard(Document):
 			contact_cards = get_contact_cards(user, [id])
 			total = len(contact_cards)
 		else:
-			filter = {}
-			if full_name := filters.get("full_name"):
-				filter["name"] = full_name
-			if email := filters.get("email"):
-				filter["email"] = email
-			if phone := filters.get("phone"):
-				filter["phone"] = phone
+			filter = {
+				prop: value
+				for field, prop in {"full_name": "name", "email": "email", "phone": "phone"}.items()
+				if (value := filters.get(field))
+			}
 			limit = cint(kwargs.get("start")) + page_length
 			contact_cards, total = fetch_contact_cards(user, filter, limit=limit)
 
