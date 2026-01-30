@@ -139,6 +139,8 @@ class ContactCard(Document):
 			total = len(contact_cards)
 		else:
 			filter = {}
+			if full_name := filters.get("full_name"):
+				filter["name"] = full_name
 			limit = cint(kwargs.get("start")) + page_length
 			contact_cards, total = fetch_contact_cards(user, filter, limit=limit)
 
