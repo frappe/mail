@@ -27,7 +27,7 @@ from mail.utils import (
 	user_context,
 )
 from mail.utils.cache import get_user_emails
-from mail.utils.dt import parse_iso_datetime
+from mail.utils.dt import convert_to_utc, parse_iso_datetime, to_iso8601_z
 from mail.utils.email_parser import EmailParser
 from mail.utils.lock import acquire_lock, release_lock
 from mail.utils.user import get_sync_state, update_sync_state
@@ -201,8 +201,14 @@ class MailMessage(Document):
 			messages = get_messages(user, ids=[id])
 			total = len(messages)
 		else:
+			filter = {}
+
+			for field in ("before", "after"):
+				if value := filters.get(field):
+					filter[field] = to_iso8601_z(convert_to_utc(value))
+
 			limit = cint(kwargs.get("start")) + page_length
-			messages, total = fetch_messages(user, limit=limit)
+			messages, total = fetch_messages(user, filter, limit=limit)
 
 		frappe.cache.set_value(_get_total_cache_key(user), total, expires_in_sec=600)
 

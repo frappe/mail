@@ -4,6 +4,8 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "before",
+  "after",
   "section_break_8xbl",
   "user",
   "from_name",
@@ -460,6 +462,24 @@
    "read_only": 1,
    "reqd": 1,
    "set_only_once": 1
+  },
+  {
+   "fieldname": "before",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Before",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "after",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "After",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -467,7 +487,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-30 12:20:15.217259",
+ "modified": "2026-01-30 12:23:07.082456",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message",
