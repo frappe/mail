@@ -192,6 +192,8 @@
    "depends_on": "eval: !doc.__islocal",
    "fieldname": "has_attachment",
    "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Has Attachment",
    "read_only": 1
   },
@@ -514,7 +516,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-30 12:33:12.486967",
+ "modified": "2026-01-30 12:38:48.577158",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message",

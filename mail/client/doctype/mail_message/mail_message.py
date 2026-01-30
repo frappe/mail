@@ -207,6 +207,9 @@ class MailMessage(Document):
 				if (value := filters.get(field))
 			}
 
+			if filters.get("has_attachment"):
+				filter["hasAttachment"] = True
+
 			for field in ("before", "after"):
 				if value := filters.get(field):
 					filter[field] = to_iso8601_z(convert_to_utc(value))
