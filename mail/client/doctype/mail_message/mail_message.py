@@ -185,6 +185,8 @@ class MailMessage(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
+
+		id = filters.get("id")
 		user = filters.get("user") or frappe.session.user
 
 		if not user or user in ("Guest", "Administrator"):
@@ -195,8 +197,13 @@ class MailMessage(Document):
 			frappe.msgprint(_("You do not have permission to view messages for this user."), alert=True)
 			return []
 
-		limit = cint(kwargs.get("start")) + page_length
-		messages, total = fetch_messages(user, limit=limit)
+		if id:
+			messages = get_messages(user, ids=[id])
+			total = len(messages)
+		else:
+			limit = cint(kwargs.get("start")) + page_length
+			messages, total = fetch_messages(user, limit=limit)
+
 		frappe.cache.set_value(_get_total_cache_key(user), total, expires_in_sec=600)
 
 		fields_to_remove = [

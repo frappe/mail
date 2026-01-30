@@ -446,6 +446,7 @@
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Mail ID",
    "read_only": 1
   },
@@ -466,7 +467,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-12-09 13:24:37.593079",
+ "modified": "2026-01-30 12:20:15.217259",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message",
