@@ -24,10 +24,7 @@
 			:disable-collapse="isMobile"
 		>
 			<template #footer-items="{ isCollapsed }">
-				<QuotaBar
-					v-if="['Mailbox', 'Mail'].includes(route.name as string)"
-					:is-collapsed
-				/>
+				<QuotaBar v-if="user.data.is_mail_user" :is-collapsed />
 			</template>
 			<template #sidebar-item="{ item }">
 				<SidebarItem
@@ -91,7 +88,9 @@ import PWASettings from '@/components/PWASettings.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
 
 import Archive from '~icons/lucide/archive'
+import BookUser from '~icons/lucide/book-user'
 import Bookmark from '~icons/lucide/bookmark'
+import ContactRound from '~icons/lucide/contact-round'
 import Crown from '~icons/lucide/crown'
 import Edit3 from '~icons/lucide/edit-3'
 import Ellipsis from '~icons/lucide/ellipsis'
@@ -149,6 +148,7 @@ const menuItems = computed(() => [
 		})),
 		condition: () => user.data.is_system_manager && !isMobile.value,
 	},
+	// todo: go to last open page
 	{
 		icon: Mailbox,
 		label: __('Mailbox'),
@@ -259,8 +259,37 @@ const sidebarItems = computed(() => {
 		onClick: () => (showAddMailbox.value = true),
 	}
 
+	const contactsItems = [
+		{
+			label: __('Address Books'),
+			icon: BookUser,
+			to: { name: 'AddressBooks' },
+			activeFor: ['AddressBooks', 'AddressBook'],
+		},
+		{
+			label: __('Contacts'),
+			icon: ContactRound,
+			to: { name: 'Contacts' },
+			activeFor: ['Contacts', 'Contact'],
+		},
+	]
+
 	return mailboxes.data?.length
-		? [{ items: [mailboxItems[0], starredItem, ...mailboxItems.slice(1), addMailboxItem] }]
+		? [
+				{
+					label: __('Folders'),
+					items: [
+						mailboxItems[0],
+						starredItem,
+						...mailboxItems.slice(1),
+						addMailboxItem,
+					],
+				},
+				{
+					label: __('People'),
+					items: contactsItems,
+				},
+			]
 		: []
 })
 

@@ -23,6 +23,7 @@ export const userStore = defineStore('mail-users', () => {
 			if (!data?.is_mail_user) return
 
 			mailboxes.fetch()
+			addressBooks.fetch()
 			identities.fetch()
 			setShowReadingPane(
 				data.name,
@@ -58,6 +59,8 @@ export const userStore = defineStore('mail-users', () => {
 		return ids
 	})
 
+	const addressBooks = createResource({ url: 'mail.api.contacts.get_address_books' })
+
 	const identities = createResource({ url: 'mail.api.account.get_identities' })
 
 	const tenantOwner = createResource({
@@ -72,5 +75,5 @@ export const userStore = defineStore('mail-users', () => {
 
 	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
 
-	return { userResource, mailboxes, mailboxIds, identities, tenantOwner, domains }
+	return { userResource, mailboxes, mailboxIds, addressBooks, identities, tenantOwner, domains }
 })
