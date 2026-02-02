@@ -1,5 +1,5 @@
 <template>
-	<Dialog v-model="show" :options="options">
+	<Dialog v-model="show" :options>
 		<template #body-content>
 			<div class="space-y-4">
 				<FormControl v-model="search" :placeholder="__('Search...')" />
@@ -38,8 +38,6 @@ import { extractNameFromEmail } from '@/utils'
 
 const show = defineModel<boolean>()
 
-const { currentContacts } = defineProps<{ currentContacts?: string[] }>()
-
 const emit = defineEmits(['add'])
 
 const listView = useTemplateRef('listView')
@@ -67,18 +65,16 @@ const contacts = createResource({
 	auto: true,
 	makeParams: () => ({ filter: { text: search.value }, limit: limit.value }),
 	transform: (data) =>
-		data
-			.filter((c) => !currentContacts?.includes(c.id))
-			.map((c) => {
-				const full_name = c.full_name || extractNameFromEmail(c.emails[0]?.address || '')
+		data.map((c) => {
+			const full_name = c.full_name || extractNameFromEmail(c.emails[0]?.address || '')
 
-				let email = ''
-				if (c.emails.length === 1) email = c.emails[0].address
-				else if (c.emails.length > 1)
-					email = __('{0} + {1} more', [c.emails[0].address, c.emails.length - 1])
+			let email = ''
+			if (c.emails.length === 1) email = c.emails[0].address
+			else if (c.emails.length > 1)
+				email = __('{0} + {1} more', [c.emails[0].address, c.emails.length - 1])
 
-				return { ...c, full_name, email }
-			}),
+			return { ...c, full_name, email }
+		}),
 })
 
 watchDebounced(() => search.value, contacts.reload, { debounce: 300 })
