@@ -754,4 +754,4 @@ def is_catch_all_address(address: str) -> bool:
 def get_stalwart_version() -> str:
 	"""Returns the Stalwart version from configuration or default."""
 
-	return frappe.conf.stalwart_version or "v0.13.4"
+	return frappe.conf.stalwart_version or "v0.15.4"
