@@ -1,3 +1,4 @@
+import * as cheerio from 'cheerio'
 import { File, Paperclip } from 'lucide-vue-next'
 import { toast } from 'frappe-ui'
 
@@ -7,7 +8,7 @@ import ImageIcon from '@/components/Icons/ImageIcon.vue'
 import PDFIcon from '@/components/Icons/PDFIcon.vue'
 import VideoIcon from '@/components/Icons/VideoIcon.vue'
 
-import type { Recipient } from '@/types'
+import type { ComposeMailData, Recipient } from '@/types'
 
 export const toTitleCase = (str: string) =>
 	str
@@ -268,4 +269,38 @@ export const getFileIcon = (type?: string) => {
 	if (type?.startsWith('audio/')) return AudioIcon
 
 	return File
+}
+export const randomString = (length: number) => {
+	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+	let result = ''
+	for (let i = 0; i < length; i++) {
+		result += chars.charAt(Math.floor(Math.random() * chars.length))
+	}
+	return result
+}
+
+export const processInlineImages = (mail: ComposeMailData) => {
+	const htmlBody = mail.html_body! + mail.quoted_content
+
+	const $ = cheerio.load(htmlBody)
+
+	$('img').each((_, img) => {
+		const $img = $(img)
+		const src = $img.attr('src')
+
+		if (!(src?.startsWith('/files') || src?.startsWith('/private/files'))) return
+
+		const cid = $img.attr('data-cid')
+		$img.attr('src', `cid:${cid}`)
+
+		if (!mail.attachments?.some((a) => a.cid === cid))
+			mail.attachments?.push({
+				file_name: src.split('/').pop() || 'image',
+				file_url: src,
+				disposition: 'inline',
+				cid,
+			})
+	})
+
+	return { html_body: $.html(), attachments: mail.attachments }
 }

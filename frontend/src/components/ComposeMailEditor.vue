@@ -244,7 +244,14 @@ import {
 } from 'frappe-ui'
 
 import { getAttachmentUrl } from '@/resources'
-import { formatBytes, isOverlayPresent, raiseToast, validateEmail } from '@/utils'
+import {
+	formatBytes,
+	isOverlayPresent,
+	processInlineImages,
+	raiseToast,
+	randomString,
+	validateEmail,
+} from '@/utils'
 import { useScreenSize, useVisualViewport } from '@/utils/composables'
 import { CustomParagraphExtension } from '@/utils/text-editor'
 import { userStore } from '@/stores/user'
@@ -405,8 +412,8 @@ const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
 	makeParams: ({ save_as_draft }: { save_as_draft: boolean }) => ({
 		...mail,
+		...processInlineImages(mail),
 		from_name: getIdentity(mail.from_email!)._name,
-		html_body: mail.html_body! + mail.quoted_content,
 		save_as_draft,
 	}),
 	onSuccess: onMailUpdateSuccess,
@@ -417,8 +424,8 @@ const updateDraft = createResource({
 	url: 'mail.api.mail.update_draft_mail',
 	makeParams: ({ submit }: { submit: boolean }) => ({
 		...mail,
+		...processInlineImages(mail),
 		from_name: getIdentity(mail.from_email!)._name,
-		html_body: mail.html_body! + mail.quoted_content,
 		submit,
 	}),
 	onSuccess: onMailUpdateSuccess,
@@ -541,17 +548,8 @@ const uploadFunction = async (file: File) => {
 	return fileUpload.upload(file, { private: true, folder: 'Home/Frappe Mail' })
 }
 
-const CustomImageExtension = ImageExtension.extend({
-	name: 'customImage',
-	addOptions: () => ({ uploadFunction }),
-	addAttributes: () => ({
-		'data-cid': {
-			default: null,
-			parseHTML: (element) => element.getAttribute('data-cid'),
-			renderHTML: (attributes) =>
-				attributes['data-cid'] ? { 'data-cid': attributes['data-cid'] } : {},
-		},
-	}),
+const CustomImageExtension = ImageExtension.configure({
+	HTMLAttributes: { 'data-cid': randomString(10) },
 })
 
 const TYPE_ICON_MAP = {

@@ -214,7 +214,7 @@ def create_mail(
 
 	doc_attachments = []
 	for d in attachments:
-		cid = random_string(10)
+		cid = d.get("cid", random_string(10))
 		doc_attachments.append(
 			{
 				"file_url": d.get("file_url", ""),
