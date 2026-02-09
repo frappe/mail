@@ -548,9 +548,21 @@ const uploadFunction = async (file: File) => {
 	return fileUpload.upload(file, { private: true, folder: 'Home/Frappe Mail' })
 }
 
-const CustomImageExtension = ImageExtension.configure({
-	HTMLAttributes: { 'data-cid': randomString(10) },
-})
+const CustomImageExtension = ImageExtension.extend({
+	addAttributes() {
+		return {
+			...this.parent?.(),
+			'data-cid': {
+				default: null,
+				parseHTML: (element) => element.getAttribute('data-cid'),
+				renderHTML: (attributes) => {
+					if (!attributes['data-cid']) attributes['data-cid'] = randomString(10)
+					return { 'data-cid': attributes['data-cid'] }
+				},
+			},
+		}
+	},
+}).configure({ uploadFunction })
 
 const TYPE_ICON_MAP = {
 	reply: Reply,

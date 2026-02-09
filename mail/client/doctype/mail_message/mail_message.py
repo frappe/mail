@@ -481,8 +481,10 @@ class MailMessage(Document):
 			for a in self.attachments
 		]
 
+		cids = [a["cid"] for a in attachments if a["disposition"] == "inline"]
+
 		for body_part in self._html_body + self._text_body:
-			if body_part.disposition == "inline":
+			if body_part.disposition == "inline" and body_part.cid not in cids:
 				attachments.append(
 					{
 						"blob_id": body_part.blob_id,
