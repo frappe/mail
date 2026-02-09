@@ -562,7 +562,10 @@ const CustomImageExtension = ImageExtension.extend({
 			},
 		}
 	},
-}).configure({ uploadFunction })
+}).configure({
+	HTMLAttributes: { width: '600', style: 'max-width:100%; height:auto' },
+	uploadFunction,
+})
 
 const TYPE_ICON_MAP = {
 	reply: Reply,

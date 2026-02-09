@@ -284,6 +284,8 @@ export const processInlineImages = (mail: ComposeMailData) => {
 
 	const $ = cheerio.load(htmlBody)
 
+	const attachments = mail.attachments?.filter((a) => a.disposition !== 'inline') || []
+
 	$('img').each((_, img) => {
 		const $img = $(img)
 		const src = $img.attr('src')
@@ -293,14 +295,13 @@ export const processInlineImages = (mail: ComposeMailData) => {
 		const cid = $img.attr('data-cid')
 		$img.attr('src', `cid:${cid}`)
 
-		if (!mail.attachments?.some((a) => a.cid === cid))
-			mail.attachments?.push({
-				file_name: src.split('/').pop() || 'image',
-				file_url: src,
-				disposition: 'inline',
-				cid,
-			})
+		attachments.push({
+			file_name: src.split('/').pop() || 'image',
+			file_url: src,
+			disposition: 'inline',
+			cid,
+		})
 	})
 
-	return { html_body: $.html(), attachments: mail.attachments }
+	return { html_body: $.html(), attachments }
 }
