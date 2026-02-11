@@ -1,12 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 interface DocType {
 	name: string
 	creation: string
 	modified: string
 	owner: string
 	modified_by: string
-	docstatus: 0 | 1 | 2
 }
 
 interface ChildDocType extends DocType {
@@ -388,7 +385,7 @@ export interface MailMessageMailbox extends ChildDocType {
 	mailbox_name: string
 }
 
-// Last updated: 2025-12-09 13:11:05.006924
+// Last updated: 2025-12-17 10:54:02.407375
 export interface Identity extends DocType {
 	/** May Delete: Check */
 	may_delete: 0 | 1
@@ -420,7 +417,7 @@ export interface MailSignature extends DocType {
 	html_body?: string
 }
 
-// Last updated: 2025-12-09 12:55:32.269456
+// Last updated: 2025-12-15 11:47:17.806197
 export interface VacationResponse extends DocType {
 	/** User: Link (User) */
 	user: string

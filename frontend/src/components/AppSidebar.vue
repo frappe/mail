@@ -257,67 +257,48 @@ const handleDragLeave = () => (dropTargetId.value = null)
 const handleDrop = (targetMailboxId: string) => (e: DragEvent) => {
 	e.preventDefault()
 	if (draggedItem.value && draggedItem.value !== targetMailboxId) {
-		const draggedIndex = sortedMailboxes.value.findIndex((m) => m.id === draggedItem.value)
+		const draggedIndex = mailboxes.data.findIndex((m) => m.id === draggedItem.value)
 		const targetIndex =
 			targetMailboxId === 'starred'
 				? mailboxes.data.length - 1
-				: sortedMailboxes.value.findIndex((m) => m.id === targetMailboxId)
-
+				: mailboxes.data.findIndex((m) => m.id === targetMailboxId)
 		if (draggedIndex + 1 === targetIndex) {
 			dropTargetId.value = null
 			draggedItem.value = null
 			return
 		}
-
-		const draggedMailbox = sortedMailboxes.value[draggedIndex]
-		draggedMailbox.sort_order = sortedMailboxes.value[targetIndex].sort_order + 1
-
-		const updatedMailboxes: Record<string, number> = {}
-		updatedMailboxes[draggedMailbox.id] = draggedMailbox.sort_order
-
-		const targetMailboxSortOrder =
-			targetMailboxId === 'starred'
-				? sortedMailboxes.value.at(-1)._sort_order + 1
-				: mailboxes.data.find((m: { id: string }) => m.id === targetMailboxId)._sort_order
-
-		mailboxes.data
-			.filter((m) => m._sort_order >= targetMailboxSortOrder)
-			.forEach((m) => {
-				m._sort_order++
-				if (m.id !== draggedMailbox.id) {
-					m.sort_order += 2
-					updatedMailboxes[m.id] = m.sort_order
-				}
-			})
-		draggedMailbox._sort_order = targetMailboxSortOrder
-		updateMailboxSortOrder.submit({ mailboxes: updatedMailboxes })
+		updateMailboxPosition.submit({
+			target_mailbox_id: draggedItem.value,
+			prior_mailbox_id:
+				targetIndex === 0
+					? null
+					: targetMailboxId === 'starred'
+						? mailboxes.data.at(-1).id
+						: mailboxes.data[targetIndex - 1].id,
+		})
 	}
 	dropTargetId.value = null
 	draggedItem.value = null
 }
 
-const updateMailboxSortOrder = createResource({
-	url: 'mail.api.mail.update_mailbox_sort_order',
-	makeParams: ({ mailboxes }: { mailboxes: Record<string, number> }) => ({ mailboxes }),
+const updateMailboxPosition = createResource({
+	url: 'mail.client.doctype.mailbox.mailbox.update_mailbox_position',
+	makeParams: ({
+		target_mailbox_id,
+		prior_mailbox_id,
+	}: {
+		target_mailbox_id: string
+		prior_mailbox_id: string | null
+	}) => ({ user: user.data.name, target_mailbox_id, prior_mailbox_id }),
 	onSuccess: () => mailboxes.reload(),
 })
-
-const sortedMailboxes = computed(() =>
-	mailboxes.data?.slice().sort((a, b) => a._sort_order - b._sort_order),
-)
 
 const sidebarItems = computed(() => {
 	if (route.meta.isDashboard) return dashboardItems
 
 	const mailboxItems =
-		sortedMailboxes.value?.map(
-			(mailbox: {
-				id: string
-				_name: string
-				role?: string
-				unread_threads: number
-				_sort_order: number
-			}) => ({
+		mailboxes.data?.map(
+			(mailbox: { id: string; _name: string; role?: string; unread_threads: number }) => ({
 				label: mailbox._name,
 				icon:
 					mailbox.role && mailbox.role in MAILBOX_ICONS
