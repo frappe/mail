@@ -289,21 +289,23 @@ export const processInlineImages = (mail: ComposeMailData) => {
 
 	$('img').each((_, img) => {
 		const $img = $(img)
-		const src = $img.attr('src')
-
-		if (!(src?.startsWith('/files') || src?.startsWith('/private/files'))) return
+		const src = $img.attr('src')!
 
 		const cid = $img.attr('data-cid')
 		$img.attr('src', `cid:${cid}`)
 
-		attachments.push({
-			file_name: src.split('/').pop() || 'image',
-			file_url: src,
-			disposition: 'inline',
-			cid,
-		})
+		if (src.startsWith('/files') || src.startsWith('/private/files'))
+			attachments.push({ file_url: src, disposition: 'inline', cid })
+		else {
+			const url = new URL(src)
+			const filename = url.searchParams.get('filename')
+			const blob_id = url.searchParams.get('blob_id')
+
+			attachments.push({ filename, blob_id, disposition: 'inline', cid })
+		}
 	})
 
+	// todo: set mail.attachments without saving
 	return { html_body: $.html(), attachments }
 }
 
