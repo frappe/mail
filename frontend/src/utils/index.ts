@@ -282,31 +282,37 @@ export const randomString = (length: number) => {
 
 export const processInlineImages = (mail: ComposeMailData) => {
 	const htmlBody = mail.html_body! + mail.quoted_content
-
 	const $ = cheerio.load(htmlBody)
 
-	const attachments = mail.attachments?.filter((a) => a.disposition !== 'inline') || []
+	const regularAttachments = mail.attachments?.filter((a) => a.disposition !== 'inline') || []
+	const inlineAttachments = mail.attachments?.filter((a) => a.disposition === 'inline') || []
+	const processedAttachments = [...regularAttachments]
 
 	$('img').each((_, img) => {
 		const $img = $(img)
-		const src = $img.attr('src')!
+		const src = $img.attr('src')
+		if (!src) return
 
 		const cid = $img.attr('data-cid')
+		if (!cid) return
+
 		$img.attr('src', `cid:${cid}`)
 
-		if (src.startsWith('/files') || src.startsWith('/private/files'))
-			attachments.push({ file_url: src, disposition: 'inline', cid })
-		else {
-			const url = new URL(src)
-			const filename = url.searchParams.get('filename')
-			const blob_id = url.searchParams.get('blob_id')
-
-			attachments.push({ filename, blob_id, disposition: 'inline', cid })
+		if (src.startsWith('/files') || src.startsWith('/private/files')) {
+			processedAttachments.push({ file_url: src, disposition: 'inline', cid })
+			return
 		}
+
+		const url = new URL(src)
+		const blob_id = url.searchParams.get('blob_id')
+		if (!blob_id) return
+
+		const attachment = inlineAttachments.find((a) => a.blob_id === blob_id)
+		if (attachment) processedAttachments.push({ ...attachment, cid })
 	})
 
 	// todo: set mail.attachments without saving
-	return { html_body: $.html(), attachments }
+	return { html_body: $.html(), attachments: processedAttachments }
 }
 
 export const extractNameFromEmail = (email: string) =>
