@@ -76,7 +76,7 @@ const lists = createResource({
 	cache: ['mailTenantMailingLists', user.data?.tenant, search.value],
 })
 
-watchDebounced(() => search.value, lists.reload, { debounce: 500 })
+watchDebounced(() => search.value, lists.reload, { debounce: 300 })
 
 const deleteLists = createResource({
 	url: 'mail.api.admin.delete_mailing_lists',
@@ -96,13 +96,7 @@ const deleteLists = createResource({
 const deleteListsOptions = {
 	title: __('Delete Mailing Lists'),
 	message: __('Are you sure you want to delete the selected mailing lists?'),
-	actions: [
-		{
-			label: __('Confirm'),
-			variant: 'solid',
-			onClick: deleteLists.submit,
-		},
-	],
+	actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteLists.submit }],
 }
 
 const LIST_OPTIONS = {

@@ -47,6 +47,7 @@
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "ID",
    "read_only": 1
   },
@@ -140,7 +141,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-22 12:05:54.269852",
+ "modified": "2026-01-30 10:59:44.162399",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Quota",

@@ -270,6 +270,7 @@ export const getFileIcon = (type?: string) => {
 
 	return File
 }
+
 export const randomString = (length: number) => {
 	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 	let result = ''
@@ -305,3 +306,9 @@ export const processInlineImages = (mail: ComposeMailData) => {
 
 	return { html_body: $.html(), attachments }
 }
+
+export const extractNameFromEmail = (email: string) =>
+	email
+		.split('@')[0]
+		.replace(/[._-]/g, ' ')
+		.replace(/\b\w/g, (c) => c.toUpperCase())

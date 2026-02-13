@@ -127,32 +127,25 @@ class ContactCard(Document):
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
 
-		user = filters.get("user")
-		address_book = filters.get("address_book")
-		if address_book:
-			validate_address_book_name_format(address_book)
-
-			if user and user != address_book.split("|")[0]:
-				frappe.throw(
-					_("Address Book {0} does not belong to User {1}.").format(
-						frappe.bold(address_book), frappe.bold(user)
-					)
-				)
-
-			user, address_book_id = address_book.split("|")
-		else:
-			user = user or frappe.session.user
-			address_book_id = None
+		id = filters.get("id")
+		user = filters.get("user") or frappe.session.user
 
 		if not user or user in ("Guest", "Administrator"):
 			frappe.msgprint(_("Please select a user to view contact cards."), alert=True)
 			return []
 
-		filter = {}
-		if address_book_id:
-			filter["inAddressBook"] = address_book_id
-		limit = cint(kwargs.get("start")) + page_length
-		contact_cards, total = fetch_contact_cards(user, filter, limit=limit)
+		if id:
+			contact_cards = get_contact_cards(user, [id])
+			total = len(contact_cards)
+		else:
+			filter = {
+				prop: value
+				for field, prop in {"full_name": "name", "email": "email", "phone": "phone"}.items()
+				if (value := filters.get(field))
+			}
+			limit = cint(kwargs.get("start")) + page_length
+			contact_cards, total = fetch_contact_cards(user, filter, limit=limit)
+
 		frappe.cache.set_value(_get_total_cache_key(user), total, expires_in_sec=600)
 
 		if not contact_cards:

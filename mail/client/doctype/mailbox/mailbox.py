@@ -45,13 +45,19 @@ class Mailbox(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
+		id = filters.get("id")
 		user = filters.get("user") or frappe.session.user
 
 		if not user or user in ("Guest", "Administrator"):
 			frappe.msgprint(_("Please select a user to view mailboxes."), alert=True)
 			return []
 
-		mailboxes = fetch_mailboxes(user, limit=page_length)
+		mailboxes = []
+		if id:
+			if mailbox := get_mailbox(user, id, raise_exception=False):
+				mailboxes.append(mailbox)
+		else:
+			mailboxes = fetch_mailboxes(user, limit=page_length)
 
 		if not mailboxes:
 			frappe.msgprint(_("No mailboxes found."), alert=True)
@@ -124,7 +130,7 @@ def add_mailbox(
 
 
 @frappe.whitelist()
-def get_mailbox(user: str, id: str) -> dict:
+def get_mailbox(user: str, id: str, raise_exception=False) -> dict | None:
 	"""Returns mailbox details for the given name in the format 'user|id'."""
 
 	has_permission_for_user(user)
@@ -133,10 +139,11 @@ def get_mailbox(user: str, id: str) -> dict:
 	if mailboxes := client.mailbox_get([id]):
 		return format_mailbox(user, mailboxes[0])
 
-	frappe.throw(
-		_("Mailbox with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
-		title=_("Mailbox Not Found"),
-	)
+	if raise_exception:
+		frappe.throw(
+			_("Mailbox with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
+			title=_("Mailbox Not Found"),
+		)
 
 
 @frappe.whitelist()

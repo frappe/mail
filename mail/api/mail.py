@@ -176,26 +176,6 @@ def fetch_attachment(blob_id: str) -> bytes:
 
 
 @frappe.whitelist()
-def get_mail_contacts(txt=None) -> list:
-	"""Returns the mail contacts for the current user."""
-
-	filters = {"user": frappe.session.user}
-	if txt:
-		filters["email"] = ["like", f"%{txt}%"]
-
-	contacts = frappe.get_all("Mail Contact", filters=filters, fields=["email"], page_length=10)
-
-	for contact in contacts:
-		details = frappe.db.get_value(
-			"User", {"email": contact.email}, ["user_image", "full_name", "email"], as_dict=1
-		)
-		if details:
-			contact.update(details)
-
-	return contacts
-
-
-@frappe.whitelist()
 def create_mail(
 	from_email: str,
 	to: list[str],

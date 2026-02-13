@@ -112,7 +112,7 @@ const members = createResource({
 	cache: ['mailTenantMembers', user.data?.tenant, search.value, role.value],
 })
 
-watchDebounced(() => search.value, members.reload, { debounce: 500 })
+watchDebounced(() => search.value, members.reload, { debounce: 300 })
 
 const reloadMembers = () => members.reload()
 defineExpose({ reloadMembers })

@@ -50,13 +50,19 @@ class AddressBook(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
+		id = filters.get("id")
 		user = filters.get("user") or frappe.session.user
 
 		if not user or user in ("Guest", "Administrator"):
 			frappe.msgprint(_("Please select a user to view address books."), alert=True)
 			return []
 
-		address_books = fetch_address_books(user, limit=page_length)
+		address_books = []
+		if id:
+			if address_book := get_address_book(user, id, raise_exception=False):
+				address_books.append(address_book)
+		else:
+			address_books = fetch_address_books(user, limit=page_length)
 
 		if not address_books:
 			frappe.msgprint(_("No address book found."), alert=True)
@@ -137,7 +143,7 @@ def add_address_book(
 
 
 @frappe.whitelist()
-def get_address_book(user: str, id: str) -> dict:
+def get_address_book(user: str, id: str, raise_exception: bool = True) -> dict | None:
 	"""Returns address book details for the given name in the format 'user|id'."""
 
 	has_permission_for_user(user)
@@ -146,10 +152,11 @@ def get_address_book(user: str, id: str) -> dict:
 	if address_books := client.address_book_get([id]):
 		return format_address_book(user, address_books[0])
 
-	frappe.throw(
-		_("Address Book with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
-		title=_("Address Book Not Found"),
-	)
+	if raise_exception:
+		frappe.throw(
+			_("Address Book with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
+			title=_("Address Book Not Found"),
+		)
 
 
 @frappe.whitelist()

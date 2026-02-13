@@ -65,12 +65,22 @@
 							class="max-h-[85vh] max-w-full object-contain"
 						/>
 						<!-- PDF Preview -->
-						<iframe
-							v-else-if="isPDF"
-							:src="previewUrl"
-							:title="__('PDF Preview')"
-							class="h-[85vh] w-full max-w-6xl"
-						/>
+						<template v-else-if="isPDF">
+							<VuePdfEmbed
+								v-if="isMobile"
+								annotation-layer
+								text-layer
+								:source="previewUrl"
+								class="h-[85vh] w-full max-w-6xl space-y-2 overflow-auto"
+							/>
+							<embed
+								v-else
+								:src="previewUrl"
+								type="application/pdf"
+								class="h-[85vh] w-full max-w-6xl"
+							/>
+						</template>
+
 						<!-- Video Preview -->
 						<video
 							v-else-if="isVideo"
@@ -142,7 +152,11 @@
 </template>
 
 <script setup lang="ts">
+import 'vue-pdf-embed/dist/styles/annotationLayer.css'
+import 'vue-pdf-embed/dist/styles/textLayer.css'
+
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import VuePdfEmbed from 'vue-pdf-embed'
 import {
 	ChevronLeft,
 	ChevronRight,
@@ -156,6 +170,7 @@ import { Button } from 'frappe-ui'
 
 import { fetchAttachment, getAttachmentUrl } from '@/resources'
 import { getFileIcon } from '@/utils'
+import { useScreenSize } from '@/utils/composables'
 
 import type { Attachment } from '@/types'
 
@@ -163,6 +178,8 @@ const { attachments, initialIndex } = defineProps<{
 	attachments?: Attachment[]
 	initialIndex?: number
 }>()
+
+const { isMobile } = useScreenSize()
 
 const show = defineModel<boolean>()
 const currentIndex = ref(initialIndex || 0)

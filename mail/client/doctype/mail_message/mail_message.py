@@ -28,7 +28,7 @@ from mail.utils import (
 	user_context,
 )
 from mail.utils.cache import get_user_emails
-from mail.utils.dt import parse_iso_datetime
+from mail.utils.dt import convert_to_utc, parse_iso_datetime, to_iso8601_z
 from mail.utils.email_parser import EmailParser
 from mail.utils.lock import acquire_lock, release_lock
 from mail.utils.user import get_sync_state, update_sync_state
@@ -186,6 +186,8 @@ class MailMessage(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
+
+		id = filters.get("id")
 		user = filters.get("user") or frappe.session.user
 
 		if not user or user in ("Guest", "Administrator"):
@@ -196,8 +198,39 @@ class MailMessage(Document):
 			frappe.msgprint(_("You do not have permission to view messages for this user."), alert=True)
 			return []
 
-		limit = cint(kwargs.get("start")) + page_length
-		messages, total = fetch_messages(user, limit=limit)
+		if id:
+			messages = get_messages(user, ids=[id])
+			total = len(messages)
+		else:
+			filter = {
+				prop: value
+				for field, prop in {
+					"in_mailbox": "inMailbox",
+					"_from": "from",
+					"_to": "to",
+					"_cc": "cc",
+					"_bcc": "bcc",
+					"text": "text",
+					"body": "body",
+					"subject": "subject",
+					"min_size": "minSize",
+					"max_size": "maxSize",
+					"has_keyword": "hasKeyword",
+					"not_keyword": "notKeyword",
+				}.items()
+				if (value := filters.get(field))
+			}
+
+			if filters.get("has_attachment"):
+				filter["hasAttachment"] = True
+
+			for field in ("before", "after"):
+				if value := filters.get(field):
+					filter[field] = to_iso8601_z(convert_to_utc(value))
+
+			limit = cint(kwargs.get("start")) + page_length
+			messages, total = fetch_messages(user, filter, limit=limit)
+
 		frappe.cache.set_value(_get_total_cache_key(user), total, expires_in_sec=600)
 
 		fields_to_remove = [

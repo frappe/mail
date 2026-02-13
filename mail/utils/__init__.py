@@ -605,16 +605,6 @@ def sanitize_cli_output(text: str) -> str:
 	return text
 
 
-@frappe.whitelist()
-@redis_cache(ttl=3600)
-def check_deliverability(email: str) -> bool:
-	"""Wrapper function of `utils.validation.validate_email_address` for caching."""
-
-	from mail.utils.validation import validate_email_address
-
-	return validate_email_address(email, check_mx=True, verify=True, smtp_timeout=10)
-
-
 def remove_subaddressing(email: str) -> str:
 	"""Removes subaddressing from an email address.
 
@@ -764,4 +754,4 @@ def is_catch_all_address(address: str) -> bool:
 def get_stalwart_version() -> str:
 	"""Returns the Stalwart version from configuration or default."""
 
-	return frappe.conf.stalwart_version or "v0.13.4"
+	return frappe.conf.stalwart_version or "v0.15.4"

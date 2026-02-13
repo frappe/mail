@@ -72,13 +72,19 @@ class Identity(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
+		id = filters.get("id")
 		user = filters.get("user") or frappe.session.user
 
 		if not user or user in ("Guest", "Administrator"):
 			frappe.msgprint(_("Please select a user to view identities."), alert=True)
 			return []
 
-		identities = fetch_identities(user, limit=page_length)
+		identities = []
+		if id:
+			if identity := get_identity(user, id, raise_exception=False):
+				identities.append(identity)
+		else:
+			identities = fetch_identities(user, limit=page_length)
 
 		if not identities:
 			frappe.msgprint(_("No identities found."), alert=True)
@@ -224,7 +230,7 @@ def add_identity(
 
 
 @frappe.whitelist()
-def get_identity(user: str, id: str) -> dict:
+def get_identity(user: str, id: str, raise_exception: bool = True) -> dict | None:
 	"""Returns identity details for the given name in the format 'user|id'."""
 
 	has_permission_for_identity(user)
@@ -233,10 +239,11 @@ def get_identity(user: str, id: str) -> dict:
 	if identities := client.identity_get([id]):
 		return format_identity(user, identities[0])
 
-	frappe.throw(
-		_("Identity with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
-		title=_("Identity Not Found"),
-	)
+	if raise_exception:
+		frappe.throw(
+			_("Identity with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
+			title=_("Identity Not Found"),
+		)
 
 
 @frappe.whitelist()

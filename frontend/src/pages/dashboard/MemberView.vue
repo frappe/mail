@@ -51,7 +51,7 @@
 						/>
 					</div>
 				</DashboardCard>
-				<EmailListCard
+				<ListCard
 					:rows="account.doc.emails"
 					:title="__('Email Addresses')"
 					:column-label="__('Email Address')"
@@ -60,11 +60,11 @@
 					@remove="
 						(selections) =>
 							(account.doc.emails = account.doc.emails.filter(
-								(e) => !selections.has(e.value),
+								(e) => !selections.has(e.idx),
 							))
 					"
 				/>
-				<EmailListCard
+				<ListCard
 					:rows="account.doc.lists"
 					:title="__('Mailing Lists')"
 					:column-label="__('Mailing List')"
@@ -73,7 +73,7 @@
 					@remove="
 						(selections) =>
 							(account.doc.lists = account.doc.lists.filter(
-								(l) => !selections.has(l.value),
+								(l) => !selections.has(l.idx),
 							))
 					"
 				/>
@@ -200,8 +200,8 @@ import {
 import { raiseToast } from '@/utils'
 import DashboardCard from '@/components/DashboardCard.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
-import EmailListCard from '@/components/EmailListCard.vue'
 import InformationField from '@/components/InformationField.vue'
+import ListCard from '@/components/ListCard.vue'
 import AddEmailModal from '@/components/Modals/AddEmailModal.vue'
 import QuotaProgressBar from '@/components/QuotaProgressBar.vue'
 
