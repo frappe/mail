@@ -473,6 +473,9 @@ class MailQueue(Document):
 				if blob_id in seen_blob_ids:
 					continue
 
+				if not a.get("type"):
+					frappe.throw(_("type is required for blob attachments."))
+
 				normalized.append(
 					{
 						"blob_id": blob_id,
