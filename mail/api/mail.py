@@ -280,6 +280,7 @@ def update_draft_mail(
 				},
 			)
 
+	doc.html_body = html_body
 	doc.text_body = convert_html_to_text(doc.html_body)
 
 	doc.recipients = []

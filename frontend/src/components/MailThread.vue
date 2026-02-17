@@ -640,6 +640,7 @@ const getSourceMail = (mail: string) =>
 const getReplyDetails = (mail: Mail) => ({
 	subject: mail.subject?.startsWith('Re: ') ? mail.subject : `Re: ${mail.subject}`,
 	quoted_content: getQuotedContent(mail),
+	attachments: mail.attachments?.filter((a: Attachment) => a.disposition === 'inline') || [],
 	in_reply_to: mail.message_id,
 	in_reply_to_id: mail.id,
 })
@@ -679,7 +680,7 @@ const getQuotedContent = (mail: Mail) =>
 
 const getForwardedContent = (mail: Mail) =>
 	`
-		<div class="frappe_mail_quote">
+		<div class="frappe_mail_fwd">
 			<br><br>
 			---------- Forwarded message ---------<br>
 			From: ${mail.from_name} < ${mail.from_email} ><br>

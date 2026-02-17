@@ -226,7 +226,7 @@ export interface EmailAddress extends ChildDocType {
 	email: string
 }
 
-// Last updated: 2025-09-30 19:33:57.028536
+// Last updated: 2026-01-27 12:58:50.231044
 export interface MailMessagePart extends ChildDocType {
 	/** Part ID: Data */
 	part_id?: string
@@ -250,9 +250,11 @@ export interface MailMessagePart extends ChildDocType {
 	size?: number
 	/** Content ID: Data */
 	cid?: string
+	/** URL: Data */
+	url?: string
 }
 
-// Last updated: 2025-12-09 13:24:37.593079
+// Last updated: 2026-01-30 13:02:54.335255
 export interface MailMessage extends DocType {
 	/** From Name: Data */
 	from_name?: string
@@ -338,6 +340,32 @@ export interface MailMessage extends DocType {
 	id?: string
 	/** User: Link (User) */
 	user: string
+	/** Before: Datetime */
+	before?: string
+	/** After: Datetime */
+	after?: string
+	/** Min Size (Bytes): Int */
+	min_size?: number
+	/** Max Size (Bytes): Int */
+	max_size?: number
+	/** In Mailbox: Data */
+	in_mailbox?: string
+	/** Has Keyword: Data */
+	has_keyword?: string
+	/** Not Keyword: Data */
+	not_keyword?: string
+	/** Text: Data */
+	text?: string
+	/** From: Data */
+	_from?: string
+	/** To: Data */
+	_to?: string
+	/** Cc: Data */
+	_cc?: string
+	/** Bcc: Data */
+	_bcc?: string
+	/** Body: Data */
+	body?: string
 }
 
 // Last updated: 2025-01-15 11:46:42.917146
@@ -388,7 +416,7 @@ export interface MailMessageMailbox extends ChildDocType {
 	mailbox_name: string
 }
 
-// Last updated: 2025-12-09 13:11:05.006924
+// Last updated: 2026-01-30 11:07:10.753429
 export interface Identity extends DocType {
 	/** May Delete: Check */
 	may_delete: 0 | 1
@@ -420,7 +448,7 @@ export interface MailSignature extends DocType {
 	html_body?: string
 }
 
-// Last updated: 2025-12-09 12:55:32.269456
+// Last updated: 2025-12-15 11:47:17.806197
 export interface VacationResponse extends DocType {
 	/** User: Link (User) */
 	user: string
