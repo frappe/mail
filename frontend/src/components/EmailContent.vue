@@ -50,9 +50,6 @@ const handleMessage = (event: MessageEvent) => {
 onMounted(() => window.addEventListener('message', handleMessage))
 onUnmounted(() => window.removeEventListener('message', handleMessage))
 
-const decodeQuotedPrintable = (text: string): string =>
-	text.replace(/=([0-9A-F]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
-
 const srcdoc = computed(() => {
 	const collapseButton = `
 		<button
@@ -72,10 +69,7 @@ const srcdoc = computed(() => {
 			&middot;&middot;&middot;
 		</button>
 	`
-
-	const decodedContent = decodeQuotedPrintable(content)
-
-	const transformedContent = DOMPurify.sanitize(decodedContent, DOMPURIFY_CONFIG)
+	const transformedContent = DOMPurify.sanitize(content, DOMPURIFY_CONFIG)
 		.replace(
 			/<div\s+([^>]*)\bclass="([^"]*)"\s*([^>]*)>([\s\S]*?)<\/div>/gi,
 			(match, beforeAttrs, classValue, afterAttrs, innerHtml) => {
