@@ -311,7 +311,6 @@ export const processInlineImages = (mail: ComposeMailData) => {
 		if (attachment) processedAttachments.push({ ...attachment, cid })
 	})
 
-	// todo: set mail.attachments without saving
 	return { html_body: $.html(), attachments: processedAttachments }
 }
 
