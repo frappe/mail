@@ -6,6 +6,7 @@ import re
 from email.utils import formataddr
 from functools import cached_property
 from typing import Literal
+from urllib.parse import quote
 from uuid import uuid7
 
 import frappe
@@ -13,7 +14,7 @@ from bs4 import BeautifulSoup
 from frappe import _
 from frappe.model.document import Document
 from frappe.push_notification import PushNotification
-from frappe.utils import add_to_date, cint, escape_html, get_datetime, now, time_diff_in_seconds
+from frappe.utils import add_to_date, cint, escape_html, get_datetime, get_url, now, time_diff_in_seconds
 
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_jmap_client
@@ -513,19 +514,6 @@ class MailMessage(Document):
 			for a in self.attachments
 		]
 
-		for body_part in self._html_body + self._text_body:
-			if body_part.disposition == "inline":
-				attachments.append(
-					{
-						"blob_id": body_part.blob_id,
-						"type": body_part.type,
-						"size": body_part.size,
-						"filename": body_part.filename,
-						"disposition": body_part.disposition,
-						"cid": body_part.cid,
-					}
-				)
-
 		return MailQueue._create(
 			user=self.user,
 			from_name=self.from_name,
@@ -958,6 +946,16 @@ def fetch_blobs(user: str, blobs: list[str] | list[tuple[str, str | None]]) -> d
 def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 	"""Returns a formatted message dictionary for the provided message data."""
 
+	def convert_img_src_from_cid_to_url(html_body: str, cid: str, url: str) -> str:
+		"""Convert img src from cid to URL in the HTML body."""
+
+		soup = BeautifulSoup(html_body, "html.parser")
+		for img in soup.find_all("img", src=f"cid:{cid}"):
+			img["data-cid"] = cid
+			img["src"] = url
+
+		return str(soup)
+
 	if not message["sentAt"]:
 		message["sentAt"] = message["receivedAt"]
 
@@ -1056,6 +1054,20 @@ def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 					"location": p["location"],
 				}
 			)
+
+	for attachment in formatted_message["attachments"]:
+		if blob_id := attachment["blob_id"]:
+			params = f"blob_id={blob_id}"
+			if filename := attachment["filename"]:
+				params += f"&filename={quote(filename)}"
+			attachment["url"] = get_url(f"/api/method/mail.api.mail.get_attachment?{params}")
+
+			if attachment["disposition"] == "inline" and attachment["cid"] and formatted_message["html_body"]:
+				formatted_message["html_body"] = convert_img_src_from_cid_to_url(
+					formatted_message["html_body"],
+					attachment["cid"],
+					attachment["url"],
+				)
 
 	return formatted_message
 
