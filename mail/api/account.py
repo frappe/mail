@@ -267,7 +267,9 @@ def create_mail_export(
 	doc.export_sort = sort
 	doc.export_limit = limit
 	if filter:
-		doc.export_filter = normalize_filter(filter)
+		filter = {k: v for k, v in filter.items() if v}
+		if filter:
+			doc.export_filter = normalize_filter(filter)
 	doc.insert()
 	doc.submit()
 

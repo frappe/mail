@@ -55,11 +55,13 @@
 		<span class="text-sm"> {{ ACTIVE_IMPORT_MESSAGE }} </span>
 	</div>
 	<ErrorMessage v-if="createMailImport.error" :message="createMailImport.error" class="mb-2.5" />
-	<span v-if="mailImports.data?.length">
-		<a class="text-ink-gray-5 cursor-pointer text-sm hover:underline" @click="openImports">
-			{{ __('View All Imports') }}
-		</a>
-	</span>
+	<a
+		v-if="mailImports.data?.length"
+		class="text-ink-gray-5 cursor-pointer text-sm hover:underline"
+		@click="openImports"
+	>
+		{{ __('View All Imports') }}
+	</a>
 </template>
 
 <script setup lang="ts">

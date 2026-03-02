@@ -84,11 +84,13 @@
 		<span class="text-sm"> {{ ACTIVE_EXPORT_MESSAGE }} </span>
 	</div>
 	<ErrorMessage v-if="createMailExport.error" :message="createMailExport.error" class="mb-2.5" />
-	<span v-if="mailExports.data?.length">
-		<a class="text-ink-gray-5 cursor-pointer text-sm hover:underline" @click="openExports">
-			{{ __('View All Exports') }}
-		</a>
-	</span>
+	<a
+		v-if="mailExports.data?.length"
+		class="text-ink-gray-5 cursor-pointer text-sm hover:underline"
+		@click="openExports"
+	>
+		{{ __('View All Exports') }}
+	</a>
 </template>
 
 <script setup lang="ts">

@@ -513,10 +513,13 @@ class MailExchange(Document):
 		"""Validate the export parameters."""
 
 		if self.export_filter:
-			try:
-				self.export_filter = json.dumps(json.loads(self.export_filter), indent=4)
-			except json.JSONDecodeError:
-				frappe.throw(_("Export filter must be valid JSON."))
+			if isinstance(self.export_filter, dict):
+				self.export_filter = json.dumps(self.export_filter, indent=4)
+			else:
+				try:
+					self.export_filter = json.dumps(json.loads(self.export_filter), indent=4)
+				except json.JSONDecodeError:
+					frappe.throw(_("Export filter must be valid JSON."))
 
 		if not self.export_archive_type:
 			frappe.throw(_("Archive Type is required."))
