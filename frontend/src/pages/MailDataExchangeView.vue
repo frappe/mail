@@ -1,5 +1,5 @@
 <template>
-	<div v-if="mailDataExchange.data" class="flex h-screen flex-col">
+	<div v-if="mailExchange.data" class="flex h-screen flex-col">
 		<header class="flex items-center border-b px-5 py-2.5">
 			<Breadcrumbs :items="BREADCRUMBS" />
 		</header>
@@ -7,15 +7,15 @@
 			<div class="mb-4 flex items-center space-x-2">
 				<h1 class="text-xl !font-semibold">{{ __('Mail Data Exchange') }}</h1>
 				<Badge
-					:theme="getTheme(mailDataExchange.data?.status)"
-					:label="mailDataExchange.data?.status"
+					:theme="getTheme(mailExchange.data?.status)"
+					:label="mailExchange.data?.status"
 				/>
 			</div>
 			<p class="text-base">{{ operationDetails }}</p>
-			<template v-if="mailDataExchange.data?.output">
+			<template v-if="mailExchange.data?.output">
 				<hr class="my-8" />
 				<h2 class="mb-4">{{ __('Output') }}</h2>
-				<CopyCode :code="mailDataExchange.data?.output" class="max-h-80 overflow-y-auto" />
+				<CopyCode :code="mailExchange.data?.output" class="max-h-80 overflow-y-auto" />
 			</template>
 			<template v-if="attachment.data?.file_url">
 				<hr class="my-8" />
@@ -54,11 +54,11 @@ const dayjs = inject('$dayjs')
 
 const router = useRouter()
 
-const mailDataExchange = createResource({
+const mailExchange = createResource({
 	url: 'frappe.client.get_value',
 	auto: true,
 	makeParams: () => ({
-		doctype: 'Mail Data Exchange',
+		doctype: 'Mail Exchange',
 		filters: { name: id },
 		fieldname: ['status', 'operation', 'started_at', 'completed_at', 'output'],
 	}),
@@ -69,14 +69,14 @@ const mailDataExchange = createResource({
 })
 
 const operationDetails = computed(() => {
-	let details = mailDataExchange.data?.operation
-	if (mailDataExchange.data?.started_at)
+	let details = mailExchange.data?.operation
+	if (mailExchange.data?.started_at)
 		details += __(` · Started at {0}`, [
-			dayjs(mailDataExchange.data?.started_at).format('MMM D, YYYY h:mm A'),
+			dayjs(mailExchange.data?.started_at).format('MMM D, YYYY h:mm A'),
 		])
-	if (mailDataExchange.data?.completed_at)
+	if (mailExchange.data?.completed_at)
 		details += __(` · Completed at {0}`, [
-			dayjs(mailDataExchange.data?.completed_at).format('MMM D, YYYY h:mm A'),
+			dayjs(mailExchange.data?.completed_at).format('MMM D, YYYY h:mm A'),
 		])
 	return details
 })

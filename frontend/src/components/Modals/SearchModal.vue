@@ -73,13 +73,13 @@
 							v-model="filter.hasAttachment"
 							type="select"
 							:label="__('Attachments')"
-							:options="ATTACHMENT_OPTIONS"
+							:options="getAttachmentOptions()"
 						/>
 						<FormControl
 							v-model="filter.isRead"
 							type="select"
 							:label="__('Read Status')"
-							:options="READ_STATUS_OPTIONS"
+							:options="getReadStatusOptions()"
 						/>
 					</div>
 					<div
@@ -160,6 +160,7 @@ import { watchDebounced } from '@vueuse/core'
 import { ChevronLeft, Paperclip, Search, SlidersHorizontal } from 'lucide-vue-next'
 import { Button, Dialog, FormControl, createResource } from 'frappe-ui'
 
+import { getAttachmentOptions, getReadStatusOptions } from '@/constants'
 import { getFormattedDate } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
@@ -259,16 +260,4 @@ const getInterlocutors = (result: {
 
 	return `${sender}, ${recipients}`
 }
-
-const ATTACHMENT_OPTIONS = [
-	{ label: __('All'), value: '' },
-	{ label: __('With Attachments'), value: 'true' },
-	{ label: __('Without Attachments'), value: 'false' },
-]
-
-const READ_STATUS_OPTIONS = [
-	{ label: __('All'), value: '' },
-	{ label: __('Read'), value: 'true' },
-	{ label: __('Unread'), value: 'false' },
-]
 </script>
