@@ -230,6 +230,26 @@ def get_user_for_reset_password_key(key: str) -> str:
 
 
 @frappe.whitelist()
+def create_mail_import(
+	format: Literal["eml", "jmap", "mbox", "maildir", "maildir-nested"],
+	file: str,
+	mailbox: str | None = None,
+	seen: True | False = False,
+) -> None:
+	"""Creates mail data exchange"""
+
+	doc = frappe.new_doc("Mail Exchange")
+	doc.user = frappe.session.user
+	doc.operation = "Import"
+	doc.import_format = format
+	doc.import_file = file
+	if format in ["eml", "maildir"] and mailbox:
+		doc.import_metadata = {"mailboxIds": {mailbox: True}, "keywords": {"$seen": seen}}
+	doc.insert()
+	doc.submit()
+
+
+@frappe.whitelist()
 def create_mail_export(
 	format: Literal["jmap", "mbox", "maildir", "maildir-nested"],
 	archive_type: Literal[".zip", ".tgz", ".tar.gz"],
@@ -240,33 +260,14 @@ def create_mail_export(
 	"""Creates mail data exchange"""
 
 	doc = frappe.new_doc("Mail Exchange")
-	doc.operation = "Export"
 	doc.user = frappe.session.user
+	doc.operation = "Export"
 	doc.export_format = format
 	doc.export_archive_type = archive_type
 	doc.export_sort = sort
 	doc.export_limit = limit
 	if filter:
 		doc.export_filter = normalize_filter(filter)
-	doc.insert()
-	doc.submit()
-
-
-@frappe.whitelist()
-def create_mail_data_exchange(
-	operation: Literal["Import", "Export"],
-	import_format: Literal["jmap", "mbox", "maildir", "maildir-nested"],
-	import_file: str,
-	export_archive_type: Literal[".zip", ".tgz", ".tar.gz"],
-) -> None:
-	"""Creates mail data exchange"""
-
-	doc = frappe.new_doc("Mail Data Exchange")
-	doc.user = frappe.session.user
-	doc.operation = operation
-	doc.import_format = import_format
-	doc.import_file = import_file
-	doc.export_archive_type = export_archive_type
 	doc.insert()
 	doc.submit()
 

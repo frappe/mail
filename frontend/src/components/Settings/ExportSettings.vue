@@ -38,7 +38,6 @@
 			variant="outline"
 			:options="mailboxOptions"
 		/>
-
 		<FormControl
 			v-model="filter.after"
 			type="date"
@@ -77,12 +76,12 @@
 	<Button
 		class="min-h-7"
 		:label="__('Create Export')"
-		:disabled="!!noOfActiveExports"
+		:disabled="!!mailExports.data?.length || createMailExport.loading"
 		@click="createMailExport.submit()"
 	/>
-	<div v-if="noOfActiveExports" class="text-ink-gray-5 flex items-center space-x-1.5">
+	<div v-if="mailExports.data?.length" class="text-ink-gray-5 flex items-center space-x-1.5">
 		<LoaderCircle class="h-4 w-4 animate-spin" />
-		<span class="text-sm"> {{ activeExportMessage }} </span>
+		<span class="text-sm"> {{ ACTIVE_EXPORT_MESSAGE }} </span>
 	</div>
 	<ErrorMessage v-if="createMailExport.error" :message="createMailExport.error" class="mb-2.5" />
 	<span v-if="mailExports.data?.length">
@@ -139,19 +138,18 @@ const createMailExport = createResource({
 const mailExports = useList({
 	doctype: 'Mail Exchange',
 	immediate: true,
-	fields: ['name', 'operation', 'status'],
-	filters: { user: user.data.name, operation: 'Export' },
-	limit: 1000,
+	fields: ['name'],
+	filters: {
+		user: user.data.name,
+		operation: 'Export',
+		status: ['in', ['Queued', 'In Progress']],
+	},
+	limit: 1,
 })
 
-const noOfActiveExports = computed(
-	() =>
-		mailExports.data?.filter((d) => ['Queued', 'In Progress'].includes(d.status))?.length || 0,
-)
-
-const activeExportMessage = computed(() =>
-	__("Your mail data export is in progress. You'll receive an email once it's complete."),
-)
-
 const openExports = () => window.open('/mail/mail-data-exchanges', '_blank')
+
+const ACTIVE_EXPORT_MESSAGE = __(
+	"Your mail data export is in progress. You'll receive an email once it's complete.",
+)
 </script>
