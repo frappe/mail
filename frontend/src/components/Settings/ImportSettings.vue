@@ -58,7 +58,8 @@
 	<a
 		v-if="mailImports.data?.length"
 		class="text-ink-gray-5 cursor-pointer text-sm hover:underline"
-		@click="openImports"
+		href="/mail/mail-exchanges"
+		target="_blank"
 	>
 		{{ __('View All Imports') }}
 	</a>
@@ -124,9 +125,7 @@ const mailImports = useList({
 	limit: 1,
 })
 
-const openImports = () => window.open('/mail/mail-data-exchanges', '_blank')
-
 const ACTIVE_IMPORT_MESSAGE = __(
-	"Your mail data import is in progress. You'll receive an email once it's complete.",
+	"Your mail import is in progress. You'll receive an email once it's complete.",
 )
 </script>

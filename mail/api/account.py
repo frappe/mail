@@ -236,7 +236,7 @@ def create_mail_import(
 	mailbox: str | None = None,
 	seen: True | False = False,
 ) -> None:
-	"""Creates mail data exchange"""
+	"""Creates mail exchange of operation import"""
 
 	doc = frappe.new_doc("Mail Exchange")
 	doc.user = frappe.session.user
@@ -257,7 +257,7 @@ def create_mail_export(
 	limit: int | None = None,
 	filter: dict | None = None,
 ) -> None:
-	"""Creates mail data exchange"""
+	"""Creates mail exchange of operation export"""
 
 	doc = frappe.new_doc("Mail Exchange")
 	doc.user = frappe.session.user

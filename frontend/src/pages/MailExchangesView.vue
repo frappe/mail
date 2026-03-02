@@ -1,7 +1,7 @@
 <template>
 	<div class="flex h-screen flex-col">
 		<header class="flex items-center border-b px-5 py-2.5">
-			<Breadcrumbs :items="[{ label: __('Mail Data Exchanges') }]" />
+			<Breadcrumbs :items="[{ label: __('Mail Exchanges') }]" />
 		</header>
 		<div class="m-5 flex flex-1 flex-col space-y-5 overflow-y-auto">
 			<div class="flex items-center space-x-3">
@@ -84,7 +84,7 @@ const OPERATION_OPTIONS = [
 ]
 
 const STATUS_OPTIONS = [
-	{ label: '', value: '' },
+	{ label: '', value: ' ' },
 	{ label: __('Draft'), value: 'Draft' },
 	{ label: __('Queued'), value: 'Queued' },
 	{ label: __('In Progress'), value: 'In Progress' },
@@ -94,7 +94,7 @@ const STATUS_OPTIONS = [
 ]
 
 const mailDataExchanges = useList({
-	doctype: 'Mail Data Exchange',
+	doctype: 'Mail Exchange',
 	fields: [
 		'name',
 		'status',
@@ -108,7 +108,7 @@ const mailDataExchanges = useList({
 			user: user.data.name,
 			operation: operation.value,
 		}
-		if (status.value) filters.status = status.value
+		if (status.value !== ' ') filters.status = status.value
 		return filters
 	},
 	orderBy: 'creation desc',
@@ -135,8 +135,8 @@ const listColumns = computed(() => {
 
 const LIST_OPTIONS = {
 	selectable: false,
-	getRowRoute: (row) => ({ name: 'MailDataExchange', params: { id: row.name } }),
-	emptyState: { description: __('No mail data exchanges found.') },
+	getRowRoute: (row) => ({ name: 'MailExchange', params: { id: row.name } }),
+	emptyState: { description: __('No mail exchanges found.') },
 }
 
 watch(operation, (val) => localStorage.setItem('mailDataExchangeOperation', val))

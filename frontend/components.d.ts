@@ -63,7 +63,6 @@ declare module 'vue' {
     LoginLayout: typeof import('./src/components/LoginLayout.vue')['default']
     LucideX: typeof import('~icons/lucide/x')['default']
     MailActions: typeof import('./src/components/MailActions.vue')['default']
-    MailDataExchangeSettings: typeof import('./src/components/Settings/MailDataExchangeSettings.vue')['default']
     MailDate: typeof import('./src/components/MailDate.vue')['default']
     MailDetails: typeof import('./src/components/MailDetails.vue')['default']
     MailDetailsPopover: typeof import('./src/components/MailDetailsPopover.vue')['default']

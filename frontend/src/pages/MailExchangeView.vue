@@ -5,7 +5,9 @@
 		</header>
 		<div class="mx-auto my-5 rounded border p-12 sm:w-[60rem]">
 			<div class="mb-4 flex items-center space-x-2">
-				<h1 class="text-xl !font-semibold">{{ __('Mail Data Exchange') }}</h1>
+				<h1 class="text-xl !font-semibold">
+					{{ __('Mail {0}', [__(mailExchange.data?.operation)]) }}
+				</h1>
 				<Badge
 					:theme="getTheme(mailExchange.data?.status)"
 					:label="mailExchange.data?.status"
@@ -63,20 +65,20 @@ const mailExchange = createResource({
 		fieldname: ['status', 'operation', 'started_at', 'completed_at', 'output'],
 	}),
 	onSuccess: (data) => {
-		if (!data?.operation) router.replace('/mail-data-exchanges')
+		if (!data?.operation) router.replace('/mail-exchanges')
 	},
-	onError: () => router.replace('/mail-data-exchanges'),
+	onError: () => router.replace('/mail-exchanges'),
 })
 
 const operationDetails = computed(() => {
-	let details = mailExchange.data?.operation
+	let details = ''
 	if (mailExchange.data?.started_at)
-		details += __(` · Started at {0}`, [
-			dayjs(mailExchange.data?.started_at).format('MMM D, YYYY h:mm A'),
+		details += __('Started on {0}', [
+			dayjs(mailExchange.data?.started_at).format('MMM D, YYYY [at] h:mm A'),
 		])
 	if (mailExchange.data?.completed_at)
-		details += __(` · Completed at {0}`, [
-			dayjs(mailExchange.data?.completed_at).format('MMM D, YYYY h:mm A'),
+		details += __(' · Completed at {0}', [
+			dayjs(mailExchange.data?.completed_at).format('MMM D, YYYY [at] h:mm A'),
 		])
 	return details
 })
@@ -104,8 +106,5 @@ const triggerDownload = () => {
 	document.body.removeChild(link)
 }
 
-const BREADCRUMBS = [
-	{ label: __('Mail Data Exchanges'), route: '/mail-data-exchanges' },
-	{ label: id },
-]
+const BREADCRUMBS = [{ label: __('Mail Exchanges'), route: '/mail-exchanges' }, { label: id }]
 </script>

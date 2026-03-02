@@ -87,7 +87,8 @@
 	<a
 		v-if="mailExports.data?.length"
 		class="text-ink-gray-5 cursor-pointer text-sm hover:underline"
-		@click="openExports"
+		href="/mail/mail-exchanges"
+		target="_blank"
 	>
 		{{ __('View All Exports') }}
 	</a>
@@ -149,9 +150,7 @@ const mailExports = useList({
 	limit: 1,
 })
 
-const openExports = () => window.open('/mail/mail-data-exchanges', '_blank')
-
 const ACTIVE_EXPORT_MESSAGE = __(
-	"Your mail data export is in progress. You'll receive an email once it's complete.",
+	"Your mail export is in progress. You'll receive an email once it's complete.",
 )
 </script>
