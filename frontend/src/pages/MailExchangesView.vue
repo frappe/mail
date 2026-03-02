@@ -11,6 +11,7 @@
 					type="select"
 					:options="OPERATION_OPTIONS"
 					class="w-40"
+					@update:model-value="$router.replace({ query: { operation } })"
 				/>
 				<FormControl
 					v-model="status"
@@ -55,7 +56,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue'
+import { computed, inject, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import {
 	Badge,
 	Breadcrumbs,
@@ -74,9 +76,10 @@ import { getTheme } from '@/utils'
 
 const user = inject('$user')
 const dayjs = inject('$dayjs')
+const route = useRoute()
 
-const operation = ref(localStorage.getItem('mailDataExchangeOperation') || 'Import')
-const status = ref(localStorage.getItem('mailDataExchangeStatus') || '')
+const operation = ref((route.query.operation as string) || 'Import')
+const status = ref(' ')
 
 const OPERATION_OPTIONS = [
 	{ label: __('Import'), value: 'Import' },
@@ -99,9 +102,9 @@ const mailDataExchanges = useList({
 		'name',
 		'status',
 		'import_format',
+		'export_format',
 		'export_archive_type',
 		'started_at',
-		'completed_at',
 	],
 	filters: () => {
 		const filters: Record<string, string> = {
@@ -116,20 +119,20 @@ const mailDataExchanges = useList({
 		data.map((row) => ({
 			...row,
 			started_at: row.started_at ? dayjs(row.started_at).format('MMM D, YYYY h:mm A') : '-',
-			completed_at: row.completed_at
-				? dayjs(row.completed_at).format('MMM D, YYYY h:mm A')
-				: '-',
 		})),
 })
 
 const listColumns = computed(() => {
 	const columns = [
-		{ label: __('Started At'), key: 'started_at' },
-		{ label: __('Completed At'), key: 'completed_at' },
+		{ label: __('Started'), key: 'started_at' },
 		{ label: __('Status'), key: 'status' },
+		{
+			label: __('Format'),
+			key: operation.value === 'Import' ? 'import_format' : 'export_format',
+		},
 	]
-	if (operation.value === 'Import') columns.push({ label: __('Format'), key: 'import_format' })
-	else columns.push({ label: __('Archive Type'), key: 'export_archive_type' })
+	if (operation.value === 'Export')
+		columns.push({ label: __('Archive Type'), key: 'export_archive_type' })
 	return columns
 })
 
@@ -138,7 +141,4 @@ const LIST_OPTIONS = {
 	getRowRoute: (row) => ({ name: 'MailExchange', params: { id: row.name } }),
 	emptyState: { description: __('No mail exchanges found.') },
 }
-
-watch(operation, (val) => localStorage.setItem('mailDataExchangeOperation', val))
-watch(status, (val) => localStorage.setItem('mailDataExchangeStatus', val))
 </script>

@@ -124,7 +124,7 @@ const importSubtitle = computed(() => {
 
 const importHref = computed(() => {
 	if (ongoingImport.data?.name) return `/mail/mail-exchanges/${ongoingImport.data.name}`
-	return '/mail/mail-exchanges'
+	return '/mail/mail-exchanges?operation=Import'
 })
 
 const importLinkText = computed(() => {

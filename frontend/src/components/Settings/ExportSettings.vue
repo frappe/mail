@@ -155,7 +155,7 @@ const exportSubtitle = computed(() => {
 
 const exportHref = computed(() => {
 	if (ongoingExport.data?.name) return `/mail/mail-exchanges/${ongoingExport.data.name}`
-	return '/mail/mail-exchanges'
+	return '/mail/mail-exchanges?operation=Export'
 })
 
 const exportLinkText = computed(() => {

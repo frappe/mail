@@ -19,14 +19,13 @@
 				/>
 			</div>
 			<p class="my-4 text-base">{{ operationDetails }}</p>
-			<template v-if="showOutput">
+			<template v-if="mailExchange.data?.output">
 				<hr class="my-8" />
 				<h2 class="mb-4">{{ __('Output') }}</h2>
 				<CopyCode :code="mailExchange.data?.output" class="max-h-80 overflow-y-auto" />
 			</template>
 			<template v-if="attachment.data?.file_url">
-				<hr class="my-8" />
-				<h2 class="mb-4">{{ __('File') }}</h2>
+				<h2 class="mb-4 mt-8">{{ __('File') }}</h2>
 				<div class="flex items-center justify-between">
 					<p class="text-base">
 						{{
@@ -68,7 +67,15 @@ const mailExchange = createResource({
 	makeParams: () => ({
 		doctype: 'Mail Exchange',
 		filters: { name: id },
-		fieldname: ['status', 'operation', 'started_at', 'completed_at', 'output'],
+		fieldname: [
+			'status',
+			'operation',
+			'started_at',
+			'completed_at',
+			'output',
+			'import_format',
+			'export_format',
+		],
 	}),
 	onSuccess: (data) => {
 		if (!data?.operation) router.replace('/mail-exchanges')
@@ -77,29 +84,8 @@ const mailExchange = createResource({
 })
 
 const operationDetails = computed(() => {
-	let details = ''
-	if (mailExchange.data?.started_at)
-		details += __('Started on {0}', [
-			dayjs(mailExchange.data?.started_at).format('MMM D, YYYY [at] h:mm A'),
-		])
-	if (mailExchange.data?.completed_at)
-		details += __(' · Completed on {0}', [
-			dayjs(mailExchange.data?.completed_at).format('MMM D, YYYY [at] h:mm A'),
-		])
-	return details
-})
-
-const showOutput = computed(() => {
-	if (!mailExchange.data?.output) return false
-
-	if (
-		mailExchange.data?.operation === 'Export' &&
-		mailExchange.data?.status === 'Completed' &&
-		attachment.data?.file_url
-	)
-		return false
-
-	return true
+	const format = mailExchange.data?.import_format || mailExchange.data?.export_format
+	return `${format.toUpperCase()} · ${dayjs(mailExchange.data?.started_at).format('MMM D, YYYY [at] h:mm A')}`
 })
 
 const attachment = createResource({
