@@ -28,25 +28,20 @@
 		/>
 	</template>
 	<FileUploader
-		:file-types="['.zip', '.tgz', '.tar.gz']"
+		:file-types="mailImport.format === 'eml' ? '.eml' : ['.zip', '.tgz', '.tar.gz']"
 		:upload-args="{ private: true }"
 		@success="(file) => (mailImport.file = file.file_url)"
 	>
 		<template #default="{ openFileSelector }">
 			<Button class="w-full" :label="__('Upload File')" @click="openFileSelector" />
-			<p class="text-ink-gray-5 mt-2 flex text-sm">
-				{{
-					mailImport.file
-						? __('File uploaded: {0}', [mailImport.file])
-						: __(' Supported file formats: .zip, .tar, .tgz')
-				}}
-			</p>
+			<p class="text-ink-gray-5 mt-2 flex text-sm">{{ fileUploadSubtitle }}</p>
 		</template>
 	</FileUploader>
 
 	<Button
 		class="min-h-7"
 		:label="__('Create Import')"
+		variant="solid"
 		:disabled="!!mailImports.data?.length || !mailImport.file"
 		@click="createMailImport.submit()"
 	/>
@@ -96,6 +91,12 @@ const mailboxOptions = computed(() =>
 		value: m.id,
 	})),
 )
+
+const fileUploadSubtitle = computed(() => {
+	if (mailImport.file) return __('File uploaded: {0}', [mailImport.file])
+	if (mailImport.format === 'eml') return __('Supported file format: .eml')
+	return __('Supported file formats: .zip, .tar, .tgz')
+})
 
 watch(
 	mailboxOptions,

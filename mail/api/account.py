@@ -1,3 +1,4 @@
+import json
 from typing import Literal
 
 import frappe
@@ -234,7 +235,7 @@ def create_mail_import(
 	format: Literal["eml", "jmap", "mbox", "maildir", "maildir-nested"],
 	file: str,
 	mailbox: str | None = None,
-	seen: True | False = False,
+	seen: bool = False,
 ) -> None:
 	"""Creates mail exchange of operation import"""
 
@@ -244,7 +245,7 @@ def create_mail_import(
 	doc.import_format = format
 	doc.import_file = file
 	if format in ["eml", "maildir"] and mailbox:
-		doc.import_metadata = {"mailboxIds": {mailbox: True}, "keywords": {"$seen": seen}}
+		doc.import_metadata = json.dumps({"mailboxIds": {mailbox: True}, "keywords": {"$seen": seen}})
 	doc.insert()
 	doc.submit()
 
@@ -269,7 +270,7 @@ def create_mail_export(
 	if filter:
 		filter = {k: v for k, v in filter.items() if v}
 		if filter:
-			doc.export_filter = normalize_filter(filter)
+			doc.export_filter = json.dumps(normalize_filter(filter))
 	doc.insert()
 	doc.submit()
 
