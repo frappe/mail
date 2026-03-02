@@ -5,24 +5,21 @@
 		:label="__('Format')"
 		type="select"
 		variant="outline"
-		:options="['jmap', 'mbox', 'maildir', 'maildir-nested']"
+		:options="FORMAT_OPTIONS"
 	/>
 	<FormControl
 		v-model="mailExport.archive_type"
 		:label="__('Archive Type')"
 		type="select"
 		variant="outline"
-		:options="['.zip', '.tgz', '.tar.gz']"
+		:options="ARCHIVE_TYPE_OPTIONS"
 	/>
 	<FormControl
 		v-model="mailExport.sort"
 		:label="__('Sort By')"
 		type="select"
 		variant="outline"
-		:options="[
-			{ label: __('Received At (ASC)'), value: 'Received At (ASC)' },
-			{ label: __('Received At (DESC)'), value: 'Received At (DESC)' },
-		]"
+		:options="sortOptions"
 	/>
 	<Switch
 		v-model="customSelection"
@@ -76,28 +73,22 @@
 	<Button
 		class="min-h-7"
 		:label="__('Create Export')"
-		:disabled="!!mailExports.data?.length || createMailExport.loading"
+		:loading="ongoingExport.data?.name"
+		:disabled="ongoingExport.loading || ongoingExport.error || createMailExport.loading"
 		@click="createMailExport.submit()"
 	/>
-	<div v-if="mailExports.data?.length" class="text-ink-gray-5 flex items-center space-x-1.5">
-		<LoaderCircle class="h-4 w-4 animate-spin" />
-		<span class="text-sm"> {{ ACTIVE_EXPORT_MESSAGE }} </span>
+	<div class="!mt-3 space-x-1 text-base">
+		<span class="text-ink-gray-5">{{ exportSubtitle }}</span>
+		<a class="hover:underline" :href="exportHref" target="_blank">
+			{{ exportLinkText }}
+		</a>
 	</div>
 	<ErrorMessage v-if="createMailExport.error" :message="createMailExport.error" class="mb-2.5" />
-	<a
-		v-if="mailExports.data?.length"
-		class="text-ink-gray-5 cursor-pointer text-sm hover:underline"
-		href="/mail/mail-exchanges"
-		target="_blank"
-	>
-		{{ __('View All Exports') }}
-	</a>
 </template>
 
 <script setup lang="ts">
 import { computed, inject, reactive, ref } from 'vue'
-import { LoaderCircle } from 'lucide-vue-next'
-import { Button, ErrorMessage, FormControl, Switch, createResource, useList } from 'frappe-ui'
+import { Button, ErrorMessage, FormControl, Switch, createResource } from 'frappe-ui'
 
 import { getAttachmentOptions, getReadStatusOptions } from '@/constants'
 import { userStore } from '@/stores/user'
@@ -132,25 +123,46 @@ const mailboxOptions = computed(() =>
 	),
 )
 
+const sortOptions = computed(() => [
+	{ label: __('Received At (ASC)'), value: 'Received At (ASC)' },
+	{ label: __('Received At (DESC)'), value: 'Received At (DESC)' },
+])
+
 const createMailExport = createResource({
 	url: 'mail.api.account.create_mail_export',
 	makeParams: () => ({ ...mailExport, filter }),
-	onSuccess: () => mailExports.reload(),
+	onSuccess: () => ongoingExport.reload(),
 })
 
-const mailExports = useList({
-	doctype: 'Mail Exchange',
-	immediate: true,
-	fields: ['name'],
-	filters: {
-		user: user.data.name,
-		operation: 'Export',
-		status: ['in', ['Queued', 'In Progress']],
-	},
-	limit: 1,
+const ongoingExport = createResource({
+	url: 'frappe.client.get_value',
+	auto: true,
+	makeParams: () => ({
+		doctype: 'Mail Exchange',
+		fieldname: 'name',
+		filters: {
+			user: user.data.name,
+			operation: 'Export',
+			status: ['in', ['Queued', 'In Progress']],
+		},
+	}),
 })
 
-const ACTIVE_EXPORT_MESSAGE = __(
-	"Your mail export is in progress. You'll receive an email once it's complete.",
-)
+const exportSubtitle = computed(() => {
+	if (ongoingExport.data?.name) return __("Export in progress. We'll email you when it's ready.")
+	return __('No exports in progress.')
+})
+
+const exportHref = computed(() => {
+	if (ongoingExport.data?.name) return `/mail/mail-exchanges/${ongoingExport.data.name}`
+	return '/mail/mail-exchanges'
+})
+
+const exportLinkText = computed(() => {
+	if (ongoingExport.data?.name) return __('Track status')
+	return __('View history')
+})
+
+const FORMAT_OPTIONS = ['jmap', 'mbox', 'maildir', 'maildir-nested']
+const ARCHIVE_TYPE_OPTIONS = ['.zip', '.tgz', '.tar.gz']
 </script>

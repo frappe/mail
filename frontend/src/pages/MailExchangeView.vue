@@ -1,10 +1,15 @@
 <template>
 	<div v-if="mailExchange.data" class="flex h-screen flex-col">
-		<header class="flex items-center border-b px-5 py-2.5">
+		<header class="flex items-center justify-between border-b px-5 py-2.5">
 			<Breadcrumbs :items="BREADCRUMBS" />
+			<Dropdown
+				v-if="user.data.is_system_manager"
+				:options="dropdownOptions"
+				:button="{ icon: 'more-horizontal' }"
+			/>
 		</header>
 		<div class="mx-auto my-5 rounded border p-12 sm:w-[60rem]">
-			<div class="mb-4 flex items-center space-x-2">
+			<div class="flex items-center space-x-2">
 				<h1 class="text-xl !font-semibold">
 					{{ __('Mail {0}', [__(mailExchange.data?.operation)]) }}
 				</h1>
@@ -13,8 +18,8 @@
 					:label="mailExchange.data?.status"
 				/>
 			</div>
-			<p class="text-base">{{ operationDetails }}</p>
-			<template v-if="mailExchange.data?.output">
+			<p class="my-4 text-base">{{ operationDetails }}</p>
+			<template v-if="showOutput">
 				<hr class="my-8" />
 				<h2 class="mb-4">{{ __('Output') }}</h2>
 				<CopyCode :code="mailExchange.data?.output" class="max-h-80 overflow-y-auto" />
@@ -45,13 +50,14 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import { useRouter } from 'vue-router'
-import { Badge, Breadcrumbs, Button, createResource } from 'frappe-ui'
+import { Badge, Breadcrumbs, Button, Dropdown, createResource } from 'frappe-ui'
 
 import { formatBytes, getTheme } from '@/utils'
 import CopyCode from '@/components/CopyCode.vue'
 
 const { id } = defineProps<{ id: string }>()
 
+const user = inject('$user')
 const dayjs = inject('$dayjs')
 
 const router = useRouter()
@@ -77,10 +83,23 @@ const operationDetails = computed(() => {
 			dayjs(mailExchange.data?.started_at).format('MMM D, YYYY [at] h:mm A'),
 		])
 	if (mailExchange.data?.completed_at)
-		details += __(' · Completed at {0}', [
+		details += __(' · Completed on {0}', [
 			dayjs(mailExchange.data?.completed_at).format('MMM D, YYYY [at] h:mm A'),
 		])
 	return details
+})
+
+const showOutput = computed(() => {
+	if (!mailExchange.data?.output) return false
+
+	if (
+		mailExchange.data?.operation === 'Export' &&
+		mailExchange.data?.status === 'Completed' &&
+		attachment.data?.file_url
+	)
+		return false
+
+	return true
 })
 
 const attachment = createResource({
@@ -90,7 +109,7 @@ const attachment = createResource({
 		doctype: 'File',
 		fieldname: ['file_size', 'file_url', 'file_type', 'file_name'],
 		filters: {
-			attached_to_doctype: 'Mail Data Exchange',
+			attached_to_doctype: 'Mail Exchange',
 			attached_to_name: id,
 			attached_to_field: 'file',
 		},
@@ -105,6 +124,14 @@ const triggerDownload = () => {
 	link.click()
 	document.body.removeChild(link)
 }
+
+const dropdownOptions = computed(() => [
+	{
+		label: __('View in Desk'),
+		icon: 'external-link',
+		onClick: () => window.open(`/app/mail-exchange/${id}`, '_blank')?.focus(),
+	},
+])
 
 const BREADCRUMBS = [{ label: __('Mail Exchanges'), route: '/mail-exchanges' }, { label: id }]
 </script>

@@ -5,7 +5,7 @@
 		:label="__('Format')"
 		type="select"
 		variant="outline"
-		:options="['eml', 'jmap', 'mbox', 'maildir', 'maildir-nested']"
+		:options="FORMAT_OPTIONS"
 		required
 	/>
 	<template v-if="['eml', 'maildir'].includes(mailImport.format)">
@@ -21,10 +21,7 @@
 			:label="__('Mark as Read')"
 			type="select"
 			variant="outline"
-			:options="[
-				{ label: __('Yes'), value: true },
-				{ label: __('No'), value: false },
-			]"
+			:options="markAsReadOptions"
 		/>
 	</template>
 	<FileUploader
@@ -42,35 +39,22 @@
 		class="min-h-7"
 		:label="__('Create Import')"
 		variant="solid"
-		:disabled="!!mailImports.data?.length || !mailImport.file"
+		:loading="ongoingImport.data?.name"
+		:disabled="ongoingImport.loading || ongoingImport.error || !mailImport.file"
 		@click="createMailImport.submit()"
 	/>
-	<div v-if="mailImports.data?.length" class="text-ink-gray-5 flex items-center space-x-1.5">
-		<LoaderCircle class="h-4 w-4 animate-spin" />
-		<span class="text-sm"> {{ ACTIVE_IMPORT_MESSAGE }} </span>
+	<div class="!mt-3 space-x-1 text-base">
+		<span class="text-ink-gray-5">{{ importSubtitle }}</span>
+		<a class="hover:underline" :href="importHref" target="_blank">
+			{{ importLinkText }}
+		</a>
 	</div>
 	<ErrorMessage v-if="createMailImport.error" :message="createMailImport.error" class="mb-2.5" />
-	<a
-		v-if="mailImports.data?.length"
-		class="text-ink-gray-5 cursor-pointer text-sm hover:underline"
-		href="/mail/mail-exchanges"
-		target="_blank"
-	>
-		{{ __('View All Imports') }}
-	</a>
 </template>
 
 <script setup lang="ts">
 import { computed, inject, reactive, watch } from 'vue'
-import { LoaderCircle } from 'lucide-vue-next'
-import {
-	Button,
-	ErrorMessage,
-	FileUploader,
-	FormControl,
-	createResource,
-	useList,
-} from 'frappe-ui'
+import { Button, ErrorMessage, FileUploader, FormControl, createResource } from 'frappe-ui'
 
 import { userStore } from '@/stores/user'
 
@@ -92,6 +76,11 @@ const mailboxOptions = computed(() =>
 	})),
 )
 
+const markAsReadOptions = computed(() => [
+	{ label: __('Yes'), value: true },
+	{ label: __('No'), value: false },
+])
+
 const fileUploadSubtitle = computed(() => {
 	if (mailImport.file) return __('File uploaded: {0}', [mailImport.file])
 	if (mailImport.format === 'eml') return __('Supported file format: .eml')
@@ -111,22 +100,37 @@ watch(
 const createMailImport = createResource({
 	url: 'mail.api.account.create_mail_import',
 	makeParams: () => mailImport,
-	onSuccess: () => mailImports.reload(),
+	onSuccess: () => ongoingImport.reload(),
 })
 
-const mailImports = useList({
-	doctype: 'Mail Exchange',
-	immediate: true,
-	fields: ['name'],
-	filters: {
-		user: user.data.name,
-		operation: 'Import',
-		status: ['in', ['Queued', 'In Progress']],
-	},
-	limit: 1,
+const ongoingImport = createResource({
+	url: 'frappe.client.get_value',
+	auto: true,
+	makeParams: () => ({
+		doctype: 'Mail Exchange',
+		fieldname: 'name',
+		filters: {
+			user: user.data.name,
+			operation: 'Import',
+			status: ['in', ['Queued', 'In Progress']],
+		},
+	}),
 })
 
-const ACTIVE_IMPORT_MESSAGE = __(
-	"Your mail import is in progress. You'll receive an email once it's complete.",
-)
+const importSubtitle = computed(() => {
+	if (ongoingImport.data?.name) return __("Import in progress. We'll email you when it's ready.")
+	return __('No imports in progress.')
+})
+
+const importHref = computed(() => {
+	if (ongoingImport.data?.name) return `/mail/mail-exchanges/${ongoingImport.data.name}`
+	return '/mail/mail-exchanges'
+})
+
+const importLinkText = computed(() => {
+	if (ongoingImport.data?.name) return __('Track status')
+	return __('View history')
+})
+
+const FORMAT_OPTIONS = ['eml', 'jmap', 'mbox', 'maildir', 'maildir-nested']
 </script>
