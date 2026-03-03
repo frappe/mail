@@ -558,6 +558,7 @@ def format_contact_card(user: str, address_book_map: dict, contact_card: dict) -
 		"name": f"{user}|{contact_card['id']}",
 		"user": user,
 		"id": contact_card["id"],
+		"uid": contact_card.get("uid"),
 		"kind": contact_card.get("kind"),
 		"name_breakup": json.dumps(contact_card.get("name", {}), indent=4),
 		"full_name": full_name,

@@ -1565,6 +1565,7 @@ class JMAPClient:
 							creation_id: {
 								"@type": "Card",
 								"version": "1.0",
+								"uid": creation_id,
 								"kind": kind,
 								"name": _get_name_map(full_name),
 								"emails": _get_emails_map(emails),
