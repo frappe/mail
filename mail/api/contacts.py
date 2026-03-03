@@ -26,7 +26,7 @@ def get_contact_cards(filter: dict | None = None, limit: int = 50) -> list[dict]
 		return []
 
 	fields = ["id", "full_name", "kind", "emails"]
-	return [{f: d[f].capitalize() if f == "kind" else d[f] for f in fields} for d in contact_cards]
+	return [{f: d[f].capitalize() if f == "kind" and d[f] else d[f] for f in fields} for d in contact_cards]
 
 
 @frappe.whitelist()
