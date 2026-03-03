@@ -2131,12 +2131,19 @@ def _get_addresses_map(addresses: list[dict] | None = None) -> dict[str, dict] |
 		counter = 0
 		addresses_map = {}
 		for address in addresses:
+			components = []
+			for field, key in {
+				"street": "name",
+				"locality": "locality",
+				"region": "region",
+				"postcode": "postcode",
+				"country": "country",
+			}.items():
+				components.append({"kind": key, "value": address.get(field)})
+
 			addresses_map[f"{counter}"] = {
-				"street": {"components": [{"kind": "name", "value": address.get("street")}]},
-				"locality": address.get("locality"),
-				"region": address.get("region"),
-				"postcode": address.get("postcode"),
-				"country": address.get("country"),
+				"components": components,
+				"timeZone": address.get("time_zone"),
 				"contexts": {address["type"]: True},
 			}
 			counter += 1

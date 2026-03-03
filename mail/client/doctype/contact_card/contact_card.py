@@ -79,6 +79,7 @@ class ContactCard(Document):
 						"region": address.region,
 						"country": address.country,
 						"postcode": address.postcode,
+						"time_zone": address.time_zone,
 					}
 				)
 
@@ -208,7 +209,7 @@ def add_contact_card(
 	emails: list[dict] | None = None,
 	phones: list[dict] | None = None,
 	addresses: list[dict] | None = None,
-	kind: str = "individual",
+	kind: str | None = None,
 ) -> str:
 	"""Adds a contact card for the given user with the specified parameters."""
 
@@ -217,7 +218,7 @@ def add_contact_card(
 	creation_id = str(uuid7())
 	client = get_jmap_client(user)
 	response = client.contact_card_create(
-		creation_id, address_book_ids, full_name, emails, phones, addresses, kind
+		creation_id, address_book_ids, full_name, emails, phones, addresses, kind or "individual"
 	)
 
 	title = _("Contact Card Creation Error")
@@ -303,14 +304,16 @@ def update_contact_card(
 	emails: list[dict] | None = None,
 	phones: list[dict] | None = None,
 	addresses: list[dict] | None = None,
-	kind: str = "individual",
+	kind: str | None = None,
 ) -> None:
 	"""Updates an existing contact card with the given parameters."""
 
 	has_permission_for_user(user)
 
 	client = get_jmap_client(user)
-	response = client.contact_card_update(id, address_book_ids, full_name, emails, phones, addresses, kind)
+	response = client.contact_card_update(
+		id, address_book_ids, full_name, emails, phones, addresses, kind or "individual"
+	)
 
 	title = _("Contact Card Update Error")
 	if not response.get("updated"):
@@ -523,27 +526,19 @@ def format_contact_card(user: str, address_book_map: dict, contact_card: dict) -
 
 	addresses = []
 	for address in contact_card.get("addresses", {}).values():
+		time_zone = address.get("timeZone")
 		contexts = address.get("contexts", {})
-		type = next(context for context in contexts.keys()) if contexts else None
-
-		street = None
-		if _street := address.get("street"):
-			if isinstance(_street, dict):
-				components = _street.get("components", [])
-				street = next(
-					(component["value"] for component in components if component["kind"] == "name"), None
-				)
-			elif isinstance(_street, str):
-				street = _street
+		component_map = {c["kind"]: c["value"] for c in address.get("components", [])}
 
 		addresses.append(
 			{
-				"type": type,
-				"street": street,
-				"locality": address.get("locality"),
-				"region": address.get("region"),
-				"country": address.get("country"),
-				"postcode": address.get("postcode"),
+				"type": next(iter(contexts), None),
+				"street": component_map.get("name"),
+				"locality": component_map.get("locality"),
+				"region": component_map.get("region"),
+				"postcode": component_map.get("postcode"),
+				"country": component_map.get("country"),
+				"time_zone": time_zone,
 				"contexts": json.dumps(contexts, indent=4),
 			}
 		)
