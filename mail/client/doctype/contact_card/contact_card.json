@@ -11,6 +11,7 @@
   "user",
   "column_break_lrhc",
   "id",
+  "uid",
   "section_break_ngen",
   "kind",
   "full_name",
@@ -162,13 +163,21 @@
   {
    "fieldname": "section_break_rgkz",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "uid",
+   "fieldtype": "Data",
+   "label": "UID",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-30 12:30:27.704255",
+ "modified": "2026-03-03 14:37:59.531734",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Contact Card",
