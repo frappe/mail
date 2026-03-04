@@ -445,12 +445,19 @@ class MailExchange(Document):
 
 	@property
 	def import_metadata_dict(self) -> dict:
-		"""Returns the import metadata as a dictionary."""
+		"""Return the import metadata as a filtered dictionary."""
 
-		if self.operation != "Import":
+		if self.operation != "Import" or not self.import_metadata:
 			return {}
 
-		return json.loads(self.import_metadata or "{}")
+		def filter_truthy_items(key: str) -> dict:
+			return {k: True for k, v in metadata.get(key, {}).items() if v}
+
+		metadata = json.loads(self.import_metadata)
+		return {
+			"mailboxIds": filter_truthy_items("mailboxIds"),
+			"keywords": filter_truthy_items("keywords"),
+		}
 
 	def autoname(self) -> None:
 		self.name = str(uuid7())
