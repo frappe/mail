@@ -110,8 +110,8 @@ const filter = reactive({
 	inMailbox: '',
 	after: '',
 	before: '',
-	hasAttachment: '',
-	isRead: '',
+	hasAttachment: ' ',
+	isRead: ' ',
 })
 
 const mailboxOptions = computed(() =>
@@ -130,7 +130,14 @@ const sortOptions = computed(() => [
 
 const createMailExport = createResource({
 	url: 'mail.api.account.create_mail_export',
-	makeParams: () => ({ ...mailExport, filter }),
+	makeParams: () => {
+		const cleanedFilter = Object.fromEntries(
+			Object.entries(filter)
+				.map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
+				.filter(([, v]) => Boolean(v)),
+		)
+		return { ...mailExport, filter: cleanedFilter }
+	},
 	onSuccess: () => ongoingExport.reload(),
 })
 

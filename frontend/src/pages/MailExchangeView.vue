@@ -86,7 +86,10 @@ const mailExchange = createResource({
 })
 
 const operationDetails = computed(() => {
-	const format = mailExchange.data?.import_format || mailExchange.data?.export_format
+	const format =
+		mailExchange.data?.operation === 'Import'
+			? mailExchange.data?.import_format
+			: mailExchange.data?.export_format
 	return `${format.toUpperCase()} · ${dayjs(mailExchange.data?.started_at).format('MMM D, YYYY [at] h:mm A')}`
 })
 

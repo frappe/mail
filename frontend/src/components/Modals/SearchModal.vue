@@ -199,7 +199,11 @@ const getDefaultFilter = (reset = false) =>
 
 const filter = reactive({ ...getDefaultFilter() })
 const filteredFilter = computed(() =>
-	Object.fromEntries(Object.entries(filter).filter(([, v]) => Boolean(v))),
+	Object.fromEntries(
+		Object.entries(filter)
+			.map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
+			.filter(([, v]) => Boolean(v)),
+	),
 )
 const advancedFiltersLength = computed(
 	() => Object.keys(filteredFilter.value).filter((k) => k !== 'text').length,
