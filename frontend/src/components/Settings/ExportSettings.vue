@@ -14,13 +14,6 @@
 		variant="outline"
 		:options="ARCHIVE_TYPE_OPTIONS"
 	/>
-	<FormControl
-		v-model="mailExport.sort"
-		:label="__('Sort By')"
-		type="select"
-		variant="outline"
-		:options="sortOptions"
-	/>
 	<Switch
 		v-model="customSelection"
 		:label="__('Custom Selection')"
@@ -68,6 +61,14 @@
 			variant="outline"
 			placeholder="1000"
 		/>
+		<FormControl
+			v-if="mailExport.limit && mailExport.limit > 0"
+			v-model="mailExport.sort"
+			:label="__('Sort By')"
+			type="select"
+			variant="outline"
+			:options="sortOptions"
+		/>
 	</template>
 
 	<Button
@@ -87,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, reactive, ref } from 'vue'
+import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { Button, ErrorMessage, FormControl, Switch, createResource } from 'frappe-ui'
 
 import { getAttachmentOptions, getReadStatusOptions } from '@/constants'
@@ -96,6 +97,7 @@ import { userStore } from '@/stores/user'
 const { mailboxes } = userStore()
 
 const user = inject('$user')
+const socket = inject('$socket')
 
 const mailExport = reactive({
 	format: 'jmap',
@@ -154,6 +156,12 @@ const ongoingExport = createResource({
 		},
 	}),
 })
+
+onMounted(() =>
+	socket.on('mail_exchange_completed', (payload: { action: 'Import' | 'Export' }) => {
+		if (payload.action === 'Export') ongoingExport.reload()
+	}),
+)
 
 const exportSubtitle = computed(() => {
 	if (ongoingExport.data?.name) return __("Export in progress. We'll email you when it's ready.")

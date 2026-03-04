@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, reactive, watch } from 'vue'
+import { computed, inject, onMounted, reactive, watch } from 'vue'
 import { Button, ErrorMessage, FileUploader, FormControl, createResource } from 'frappe-ui'
 
 import { userStore } from '@/stores/user'
@@ -66,6 +66,7 @@ import { userStore } from '@/stores/user'
 const { mailboxes } = userStore()
 
 const user = inject('$user')
+const socket = inject('$socket')
 
 const mailImport = reactive({
 	format: 'eml',
@@ -121,6 +122,12 @@ const ongoingImport = createResource({
 		},
 	}),
 })
+
+onMounted(() =>
+	socket.on('mail_exchange_completed', (payload: { action: 'Import' | 'Export' }) => {
+		if (payload.action === 'Import') ongoingImport.reload()
+	}),
+)
 
 const importSubtitle = computed(() => {
 	if (ongoingImport.data?.name) return __("Import in progress. We'll email you when it's ready.")
