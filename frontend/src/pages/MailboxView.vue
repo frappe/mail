@@ -197,7 +197,9 @@
 						</div>
 					</TransitionGroup>
 					<div
-						v-if="threadsResource.loading && threadsResource.data.length === limit"
+						v-if="
+							threadsResource.loading && threadsResource.data.length === limit - 50
+						"
 						class="flex items-center justify-center py-4"
 					>
 						<div class="text-ink-gray-5 flex items-center space-x-2">
