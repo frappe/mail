@@ -29,8 +29,13 @@
 		:upload-args="{ private: true }"
 		@success="(file) => (mailImport.file = file.file_url)"
 	>
-		<template #default="{ openFileSelector }">
-			<Button class="w-full" :label="__('Upload File')" @click="openFileSelector" />
+		<template #default="{ openFileSelector, uploading, progress }">
+			<Button
+				class="w-full"
+				:label="uploading ? __('Uploading ({0}%)', [progress]) : __('Upload File')"
+				:loading="uploading"
+				@click="openFileSelector"
+			/>
 			<p class="text-ink-gray-5 mt-2 flex text-sm">{{ fileUploadSubtitle }}</p>
 		</template>
 	</FileUploader>
