@@ -89,7 +89,7 @@
 
 			<div
 				v-if="identity?.doc && !identity.loading"
-				class="bg-surface-gray-1 sticky bottom-0 py-4"
+				class="bg-surface-modal sticky bottom-0 py-4"
 			>
 				<Button
 					:label="__('Save')"
