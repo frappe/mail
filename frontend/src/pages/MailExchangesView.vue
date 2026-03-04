@@ -3,61 +3,67 @@
 		<header class="flex items-center border-b px-5 py-2.5">
 			<Breadcrumbs :items="[{ label: __('Mail Exchanges') }]" />
 		</header>
-		<div class="m-5 flex flex-1 flex-col space-y-5 overflow-y-auto">
-			<div class="flex items-center space-x-3">
-				<FormControl
-					v-model="operation"
-					:label="__('Operation')"
-					type="select"
-					:options="OPERATION_OPTIONS"
-					class="w-40"
-					@update:model-value="$router.replace({ query: { operation } })"
-				/>
-				<FormControl
-					v-model="status"
-					:label="__('Status')"
-					type="select"
-					:options="STATUS_OPTIONS"
-					class="w-40"
-				/>
-			</div>
-			<ListView
-				v-if="mailDataExchanges.data"
-				:columns="listColumns"
-				:rows="mailDataExchanges.data"
-				:options="LIST_OPTIONS"
-				row-key="name"
-				class="flex-1"
-			>
-				<ListHeader />
-				<ListRows>
-					<template v-if="mailDataExchanges.data.length">
-						<ListRow
-							v-for="row in mailDataExchanges.data"
-							:key="row.name"
-							v-slot="{ item, column }"
-							:row="row"
-						>
-							<ListRowItem :item="item">
-								<Badge
-									v-if="column.key == 'status'"
-									:theme="getTheme(item)"
-									:label="item"
-								/>
-							</ListRowItem>
-						</ListRow>
-					</template>
-					<ListEmptyState v-else />
-				</ListRows>
-			</ListView>
-			<ErrorMessage v-if="mailDataExchanges.error" :message="mailDataExchanges.error" />
-		</div>
+		<Tabs
+			v-model="tabIndex"
+			:tabs="TABS"
+			@update:model-value="
+				$router.replace({ query: { operation: tabIndex ? 'Export' : 'Import' } })
+			"
+		>
+			<template #tab-panel>
+				<div class="m-5 flex flex-1 flex-col space-y-5 overflow-y-auto">
+					<div class="flex items-center space-x-3">
+						<FormControl
+							v-model="status"
+							:label="__('Status')"
+							type="select"
+							:options="STATUS_OPTIONS"
+							class="w-40"
+						/>
+					</div>
+					<ListView
+						v-if="mailDataExchanges.data"
+						:columns="listColumns"
+						:rows="mailDataExchanges.data"
+						:options="LIST_OPTIONS"
+						row-key="name"
+						class="flex-1"
+					>
+						<ListHeader />
+						<ListRows>
+							<template v-if="mailDataExchanges.data.length">
+								<ListRow
+									v-for="row in mailDataExchanges.data"
+									:key="row.name"
+									v-slot="{ item, column }"
+									:row="row"
+								>
+									<ListRowItem :item="item">
+										<Badge
+											v-if="column.key == 'status'"
+											:theme="getTheme(item)"
+											:label="item"
+										/>
+									</ListRowItem>
+								</ListRow>
+							</template>
+							<ListEmptyState v-else />
+						</ListRows>
+					</ListView>
+					<ErrorMessage
+						v-if="mailDataExchanges.error"
+						:message="mailDataExchanges.error"
+					/>
+				</div>
+			</template>
+		</Tabs>
 	</div>
 </template>
 
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { HardDriveDownload, HardDriveUpload } from 'lucide-vue-next'
 import {
 	Badge,
 	Breadcrumbs,
@@ -69,6 +75,7 @@ import {
 	ListRowItem,
 	ListRows,
 	ListView,
+	Tabs,
 	useList,
 } from 'frappe-ui'
 
@@ -78,13 +85,8 @@ const user = inject('$user')
 const dayjs = inject('$dayjs')
 const route = useRoute()
 
-const operation = ref((route.query.operation as string) || 'Import')
+const tabIndex = ref(route.query.operation === 'Export' ? 1 : 0)
 const status = ref(' ')
-
-const OPERATION_OPTIONS = [
-	{ label: __('Import'), value: 'Import' },
-	{ label: __('Export'), value: 'Export' },
-]
 
 const STATUS_OPTIONS = [
 	{ label: '', value: ' ' },
@@ -109,7 +111,7 @@ const mailDataExchanges = useList({
 	filters: () => {
 		const filters: Record<string, string> = {
 			user: user.data.name,
-			operation: operation.value,
+			operation: tabIndex.value ? 'Export' : 'Import',
 		}
 		if (status.value !== ' ') filters.status = status.value
 		return filters
@@ -128,11 +130,10 @@ const listColumns = computed(() => {
 		{ label: __('Status'), key: 'status' },
 		{
 			label: __('Format'),
-			key: operation.value === 'Import' ? 'import_format' : 'export_format',
+			key: tabIndex.value ? 'export_format' : 'import_format',
 		},
 	]
-	if (operation.value === 'Export')
-		columns.push({ label: __('Archive Type'), key: 'export_archive_type' })
+	if (tabIndex.value) columns.push({ label: __('Archive Type'), key: 'export_archive_type' })
 	return columns
 })
 
@@ -141,4 +142,9 @@ const LIST_OPTIONS = {
 	getRowRoute: (row) => ({ name: 'MailExchange', params: { id: row.name } }),
 	emptyState: { description: __('No mail exchanges found.') },
 }
+
+const TABS = [
+	{ label: __('Import'), icon: HardDriveDownload, index: 0 },
+	{ label: __('Export'), icon: HardDriveUpload, index: 1 },
+]
 </script>
