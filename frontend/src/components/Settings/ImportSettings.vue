@@ -72,7 +72,7 @@ const mailImport = reactive({
 	format: 'eml',
 	file: '',
 	mailbox: '',
-	seen: false,
+	seen: true,
 })
 
 const mailboxOptions = computed(() =>

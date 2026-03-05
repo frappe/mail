@@ -838,7 +838,7 @@ class MailExchange(Document):
 		frappe.publish_realtime(
 			"mail_exchange_completed",
 			{"action": action, "success": success, "message": subject},
-			user=self.owner,
+			user=self.user,
 		)
 		frappe.sendmail(
 			recipients=email,

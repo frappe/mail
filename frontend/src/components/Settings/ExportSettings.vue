@@ -64,7 +64,7 @@
 		<FormControl
 			v-if="mailExport.limit && mailExport.limit > 0"
 			v-model="mailExport.sort"
-			:label="__('Sort By')"
+			:label="__('Start From')"
 			type="select"
 			variant="outline"
 			:options="sortOptions"
@@ -126,8 +126,8 @@ const mailboxOptions = computed(() =>
 )
 
 const sortOptions = computed(() => [
-	{ label: __('Received At (ASC)'), value: 'Received At (ASC)' },
-	{ label: __('Received At (DESC)'), value: 'Received At (DESC)' },
+	{ label: __('Oldest Emails'), value: 'Received At (ASC)' },
+	{ label: __('Newest Emails'), value: 'Received At (DESC)' },
 ])
 
 const createMailExport = createResource({
