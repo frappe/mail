@@ -442,11 +442,11 @@ def search_mails(filter: dict | None = None, limit: int = 5) -> tuple[list[dict]
 	if not filter:
 		return ([], 0)
 
-	normalized_filter = normalize_search_filter(filter)
+	normalized_filter = normalize_filter(filter)
 	return search_messages(frappe.session.user, normalized_filter, limit=limit)
 
 
-def normalize_search_filter(filter: dict) -> dict:
+def normalize_filter(filter: dict) -> dict:
 	"""Normalize and transform filter parameters for email search."""
 
 	filter = filter.copy()

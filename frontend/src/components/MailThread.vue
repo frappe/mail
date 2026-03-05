@@ -535,7 +535,6 @@ const isCollapsed = (mail: Mail) =>
 
 const showReplyAll = (mail: Mail) =>
 	!mail.draft &&
-	mail.from_email !== user.data.email &&
 	mail.groupedRecipients.to
 		?.concat(mail.groupedRecipients.cc)
 		.filter((m) => m !== user.data.email).length > 0

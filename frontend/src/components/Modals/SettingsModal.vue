@@ -41,9 +41,10 @@
 import { computed, inject, markRaw, ref } from 'vue'
 import {
 	Code,
-	DatabaseBackup,
 	Feather,
 	Fingerprint,
+	HardDriveDownload,
+	HardDriveUpload,
 	Mailbox,
 	Palette,
 	TreePalm,
@@ -54,8 +55,9 @@ import { Button, Dialog } from 'frappe-ui'
 import AccountSettings from '@/components/Settings/AccountSettings.vue'
 import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
 import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
+import ExportSettings from '@/components/Settings/ExportSettings.vue'
 import IdentitySettings from '@/components/Settings/IdentitySettings.vue'
-import MailDataExchangeSettings from '@/components/Settings/MailDataExchangeSettings.vue'
+import ImportSettings from '@/components/Settings/ImportSettings.vue'
 import ProfileSettings from '@/components/Settings/ProfileSettings.vue'
 import SignatureSettings from '@/components/Settings/SignatureSettings.vue'
 import VacationResponseSettings from '@/components/Settings/VacationResponseSettings.vue'
@@ -101,10 +103,16 @@ const tabs = computed(() => {
 			condition: user.data.is_mail_user,
 		},
 		{
-			label: __('Mail Data Exchange'),
-			icon: DatabaseBackup,
-			component: markRaw(MailDataExchangeSettings),
-			condition: user.data.is_mail_user && user.data.tenant,
+			label: __('Import'),
+			icon: HardDriveDownload,
+			component: markRaw(ImportSettings),
+			condition: user.data.is_mail_user,
+		},
+		{
+			label: __('Export'),
+			icon: HardDriveUpload,
+			component: markRaw(ExportSettings),
+			condition: user.data.is_mail_user,
 		},
 		{
 			label: __('Advanced'),

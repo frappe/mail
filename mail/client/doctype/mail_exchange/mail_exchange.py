@@ -842,6 +842,11 @@ class MailExchange(Document):
 			return
 
 		subject = _("Mail Data {0} {1}").format(action, "Completed" if success else "Failed")
+		frappe.publish_realtime(
+			"mail_exchange_completed",
+			{"action": action, "success": success, "message": subject},
+			user=self.user,
+		)
 		frappe.sendmail(
 			recipients=email,
 			subject=subject,

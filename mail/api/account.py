@@ -1,3 +1,4 @@
+import json
 from typing import Literal
 
 import frappe
@@ -6,6 +7,7 @@ from frappe.utils import cint, get_datetime, get_url, now_datetime
 from frappe.utils.data import sha256_hash
 
 from mail.api.admin import add_member
+from mail.api.mail import normalize_filter
 from mail.client.doctype.identity.identity import fetch_identities
 from mail.server.doctype.mail_account_request.mail_account_request import create_user
 from mail.utils import convert_html_to_text, user_context
@@ -229,20 +231,46 @@ def get_user_for_reset_password_key(key: str) -> str:
 
 
 @frappe.whitelist()
-def create_mail_data_exchange(
-	operation: Literal["Import", "Export"],
-	import_format: Literal["jmap", "mbox", "maildir", "maildir-nested"],
-	import_file: str,
-	export_archive_type: Literal[".zip", ".tgz", ".tar.gz"],
+def create_mail_import(
+	format: Literal["eml", "jmap", "mbox", "maildir", "maildir-nested"],
+	file: str,
+	mailbox: str | None = None,
+	seen: bool = False,
 ) -> None:
-	"""Creates mail data exchange"""
+	"""Creates mail exchange of operation import"""
 
-	doc = frappe.new_doc("Mail Data Exchange")
+	doc = frappe.new_doc("Mail Exchange")
 	doc.user = frappe.session.user
-	doc.operation = operation
-	doc.import_format = import_format
-	doc.import_file = import_file
-	doc.export_archive_type = export_archive_type
+	doc.operation = "Import"
+	doc.import_format = format
+	doc.import_file = file
+	if format in ["eml", "maildir"] and mailbox:
+		doc.import_metadata = json.dumps({"mailboxIds": {mailbox: True}, "keywords": {"$seen": seen}})
+	doc.insert()
+	doc.submit()
+
+
+@frappe.whitelist()
+def create_mail_export(
+	format: Literal["jmap", "mbox", "maildir", "maildir-nested"],
+	archive_type: Literal[".zip", ".tgz", ".tar.gz"],
+	sort: Literal["Received At (ASC)", "Received At (DESC)"],
+	limit: int | None = None,
+	filter: dict | None = None,
+) -> None:
+	"""Creates mail exchange of operation export"""
+
+	doc = frappe.new_doc("Mail Exchange")
+	doc.user = frappe.session.user
+	doc.operation = "Export"
+	doc.export_format = format
+	doc.export_archive_type = archive_type
+	doc.export_sort = sort
+	doc.export_limit = limit
+	if filter:
+		filter = {k: v for k, v in filter.items() if v}
+		if filter:
+			doc.export_filter = json.dumps(normalize_filter(filter))
 	doc.insert()
 	doc.submit()
 
