@@ -14,7 +14,16 @@ from bs4 import BeautifulSoup
 from frappe import _
 from frappe.model.document import Document
 from frappe.push_notification import PushNotification
-from frappe.utils import add_to_date, cint, escape_html, get_datetime, get_url, now, time_diff_in_seconds
+from frappe.utils import (
+	add_to_date,
+	cint,
+	escape_html,
+	get_datetime,
+	get_url,
+	now,
+	random_string,
+	time_diff_in_seconds,
+)
 
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_jmap_client
@@ -1049,7 +1058,7 @@ def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 					"type": p["type"],
 					"charset": p["charset"],
 					"disposition": p["disposition"],
-					"cid": p["cid"],
+					"cid": p["cid"] or random_string(10),
 					"language": str(p["language"]),
 					"location": p["location"],
 				}

@@ -192,7 +192,7 @@ def create_mail(
 
 	doc_attachments = []
 	for d in attachments:
-		cid = d.get("cid", random_string(10))
+		cid = d.get("cid") or random_string(10)
 		doc_attachments.append(
 			{
 				"file_url": d.get("file_url", ""),
@@ -252,7 +252,6 @@ def update_draft_mail(
 	doc.attachments = []
 
 	for d in attachments or []:
-		cid = d.get("cid", random_string(10))
 		if file_url := d.get("file_url"):
 			doc.append(
 				"attachments",
@@ -260,13 +259,13 @@ def update_draft_mail(
 					"file_url": file_url,
 					"filename": d.get("filename", ""),
 					"disposition": d.get("disposition"),
-					"cid": cid,
+					"cid": d["cid"],
 				},
 			)
 		else:
-			existing_attachment = _attachments.get(cid)
+			existing_attachment = _attachments.get(d["cid"])
 			if not existing_attachment:
-				frappe.throw(_("Attachment with cid {0} not found in the current draft.").format(cid))
+				frappe.throw(_("Attachment with cid {0} not found in the current draft.").format(d["cid"]))
 
 			doc.append(
 				"attachments",
@@ -276,7 +275,7 @@ def update_draft_mail(
 					"size": existing_attachment.size,
 					"filename": existing_attachment.filename,
 					"disposition": existing_attachment.disposition,
-					"cid": cid,
+					"cid": d["cid"],
 				},
 			)
 
