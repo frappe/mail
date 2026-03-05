@@ -705,7 +705,7 @@ class JMAPClient:
 		return response["methodResponses"][0][1]
 
 	# -------------------------------
-	# Email/Thread
+	# Email
 	# -------------------------------
 
 	def email_create(
@@ -1152,31 +1152,6 @@ class JMAPClient:
 
 		return emails, state
 
-	def thread_get(self, ids: list[str]) -> dict[str, list]:
-		"""Returns the threads for the provided thread IDs."""
-
-		result = {}
-		for ids_batch in create_batch(ids, self.max_objects_in_get):
-			response = self._make_request(
-				using=["urn:ietf:params:jmap:mail"],
-				method_calls=[
-					[
-						"Thread/get",
-						{
-							"accountId": self.primary_account_id,
-							"ids": ids_batch,
-							"properties": ["emailIds"],
-						},
-						"0",
-					]
-				],
-			)
-
-			if threads := response["methodResponses"][0][1]["list"]:
-				result.update({thread["id"]: thread["emailIds"] for thread in threads})
-
-		return result
-
 	def email_update(
 		self, ids: list[str], mailbox_id: str | None = None, keywords: dict[str, bool] | None = None
 	) -> dict:
@@ -1260,6 +1235,35 @@ class JMAPClient:
 		)
 
 		return response["methodResponses"][0][1]
+
+	# -------------------------------
+	# Thread
+	# -------------------------------
+
+	def thread_get(self, ids: list[str]) -> dict[str, list]:
+		"""Returns the threads for the provided thread IDs."""
+
+		result = {}
+		for ids_batch in create_batch(ids, self.max_objects_in_get):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:mail"],
+				method_calls=[
+					[
+						"Thread/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+							"properties": ["emailIds"],
+						},
+						"0",
+					]
+				],
+			)
+
+			if threads := response["methodResponses"][0][1]["list"]:
+				result.update({thread["id"]: thread["emailIds"] for thread in threads})
+
+		return result
 
 	# -------------------------------
 	# Vacation Response
