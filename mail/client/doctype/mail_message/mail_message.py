@@ -965,11 +965,17 @@ def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 
 		return str(soup)
 
+	# Ref: https://github.com/stalwartlabs/stalwart/discussions/2891
+	try:
+		received_at = parse_iso_datetime(message["receivedAt"])
+	except Exception:
+		message["receivedAt"] = message["sentAt"] or to_iso8601_z(get_datetime())
+		received_at = parse_iso_datetime(message["receivedAt"])
+
 	if not message["sentAt"]:
 		message["sentAt"] = message["receivedAt"]
 
 	sent_at = parse_iso_datetime(message["sentAt"])
-	received_at = parse_iso_datetime(message["receivedAt"])
 	formatted_message = {
 		"user": user,
 		"sent_at": sent_at,
