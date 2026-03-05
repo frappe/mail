@@ -1,15 +1,13 @@
 from datetime import UTC, datetime
 
 import frappe
-from bs4 import BeautifulSoup
 from frappe import _
-from frappe.utils import format_datetime, get_url, random_string
+from frappe.utils import format_datetime, random_string
 
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
 	empty_mailbox,
 	fetch_blob,
-	fetch_blobs,
 	fetch_thread,
 	fetch_threads,
 	get_message_ids,
@@ -93,7 +91,7 @@ def get_attachment(blob_id: str, filename: str | None = None) -> None:
 	"""Fetches and returns the attachment."""
 
 	if not blob_id:
-		frappe.throw(_("Blob ID is required"))
+		frappe.throw(_("Blob ID is required."))
 
 	content = fetch_blob(frappe.session.user, blob_id, filename)
 
@@ -150,28 +148,16 @@ def serialize_mail(mail: dict) -> dict:
 		"reply_to",
 	]
 
-	attachments = serialize_attachments(mail.get("attachments", []))
-	if attachments:
-		blobs = []
-		for attachment in attachments:
-			if attachment["disposition"] == "inline" and attachment["cid"] and attachment["blob_id"]:
-				blobs.append((attachment["blob_id"], attachment["filename"]))
-				url = get_attachment_url(attachment["blob_id"], attachment["filename"])
-				mail["html_body"] = convert_img_src_from_cid_to_url(mail["html_body"], attachment["cid"], url)
-
-		if blobs:
-			fetch_blobs(mail["user"], blobs)
-
 	return {
 		**{field: mail[field] for field in mail_fields},
-		"attachments": attachments,
+		"attachments": serialize_attachments(mail.get("attachments", [])),
 	}
 
 
 def serialize_attachments(attachments: list[dict]) -> list[dict]:
 	"""Serializes attachment for response."""
 
-	attachment_fields = ["filename", "type", "size", "blob_id", "disposition", "cid"]
+	attachment_fields = ["filename", "type", "size", "blob_id", "disposition", "cid", "url"]
 
 	return [
 		{field: attachment[field] for field in attachment_fields}
@@ -180,37 +166,11 @@ def serialize_attachments(attachments: list[dict]) -> list[dict]:
 	]
 
 
-def get_attachment_url(blob_id: str, filename: str | None = None) -> str:
-	"""Returns the URL for the attachment."""
-
-	return get_url(f"/api/method/mail.api.mail.get_attachment?blob_id={blob_id}&filename={filename or ''}")
-
-
 @frappe.whitelist()
 def fetch_attachment(blob_id: str) -> bytes:
 	"""Returns the content of an attachment."""
 
 	return fetch_blob(frappe.session.user, blob_id)
-
-
-@frappe.whitelist()
-def get_mail_contacts(txt=None) -> list:
-	"""Returns the mail contacts for the current user."""
-
-	filters = {"user": frappe.session.user}
-	if txt:
-		filters["email"] = ["like", f"%{txt}%"]
-
-	contacts = frappe.get_all("Mail Contact", filters=filters, fields=["email"], page_length=10)
-
-	for contact in contacts:
-		details = frappe.db.get_value(
-			"User", {"email": contact.email}, ["user_image", "full_name", "email"], as_dict=1
-		)
-		if details:
-			contact.update(details)
-
-	return contacts
 
 
 @frappe.whitelist()
@@ -232,7 +192,7 @@ def create_mail(
 
 	doc_attachments = []
 	for d in attachments:
-		cid = random_string(10)
+		cid = d.get("cid", random_string(10))
 		doc_attachments.append(
 			{
 				"file_url": d.get("file_url", ""),
@@ -244,8 +204,6 @@ def create_mail(
 				"cid": cid,
 			}
 		)
-		if d.get("disposition") == "inline":
-			html_body = convert_img_src_from_file_url_to_cid(html_body, d.get("file_url"), cid)
 
 	recipients = [{"type": "To", "email": email} for email in to]
 	recipients += [{"type": "Cc", "email": email} for email in cc]
@@ -290,25 +248,39 @@ def update_draft_mail(
 	doc.from_name = from_name
 	doc.subject = subject
 
+	_attachments = {a.cid: a for a in doc.attachments if a.cid}
 	doc.attachments = []
+
 	for d in attachments or []:
 		cid = d.get("cid", random_string(10))
-		doc.append(
-			"attachments",
-			{
-				"blob_id": d.get("blob_id", ""),
-				"file_url": d.get("file_url", ""),
-				"type": d.get("type", ""),
-				"size": d.get("size", ""),
-				"filename": d.get("filename", ""),
-				"disposition": d.get("disposition"),
-				"cid": cid,
-			},
-		)
-		if d.get("disposition") == "inline":
-			html_body = convert_img_src_from_file_url_to_cid(html_body, d.get("file_url"), cid)
+		if file_url := d.get("file_url"):
+			doc.append(
+				"attachments",
+				{
+					"file_url": file_url,
+					"filename": d.get("filename", ""),
+					"disposition": d.get("disposition"),
+					"cid": cid,
+				},
+			)
+		else:
+			existing_attachment = _attachments.get(cid)
+			if not existing_attachment:
+				frappe.throw(_("Attachment with cid {0} not found in the current draft.").format(cid))
 
-	doc.html_body = convert_img_src_from_base64_to_cid(html_body)
+			doc.append(
+				"attachments",
+				{
+					"blob_id": existing_attachment.blob_id,
+					"type": existing_attachment.type,
+					"size": existing_attachment.size,
+					"filename": existing_attachment.filename,
+					"disposition": existing_attachment.disposition,
+					"cid": cid,
+				},
+			)
+
+	doc.html_body = html_body
 	doc.text_body = convert_html_to_text(doc.html_body)
 
 	doc.recipients = []
@@ -322,48 +294,6 @@ def update_draft_mail(
 	new_doc = doc.submit() if submit else doc.save_draft()
 
 	return {"id": new_doc.id, "status": new_doc.status, "error": new_doc.error_message}
-
-
-def convert_img_src_from_file_url_to_cid(html_body: str, file_url: str, cid: str) -> str:
-	"""Converts url-based images in HTML body to CID references."""
-
-	soup = BeautifulSoup(html_body, "html.parser")
-	for img in soup.find_all("img", src=file_url):
-		img["src"] = f"cid:{cid}"
-
-	return str(soup)
-
-
-def convert_img_src_from_base64_to_cid(html_body: str) -> str:
-	"""Converts base64 images in HTML body to CID references."""
-
-	soup = BeautifulSoup(html_body, "html.parser")
-	for img in soup.find_all("img", attrs={"data-cid": True}):
-		img["src"] = f"cid:{img['data-cid']}"
-
-	return str(soup)
-
-
-def convert_img_src_from_cid_to_base64(html_body: str, cid: str, type: str, base64_content) -> str:
-	"""Converts CID-based images in HTML body to base 64."""
-
-	soup = BeautifulSoup(html_body, "html.parser")
-	for img in soup.find_all("img", src=f"cid:{cid}"):
-		img["data-cid"] = cid
-		img["src"] = f"data:{type};base64,{base64_content}"
-
-	return str(soup)
-
-
-def convert_img_src_from_cid_to_url(html_body: str, cid: str, url: str) -> str:
-	"""Converts CID-based images in HTML body to URL."""
-
-	soup = BeautifulSoup(html_body, "html.parser")
-	for img in soup.find_all("img", src=f"cid:{cid}"):
-		img["data-cid"] = cid
-		img["src"] = url
-
-	return str(soup)
 
 
 @frappe.whitelist()
@@ -512,11 +442,11 @@ def search_mails(filter: dict | None = None, limit: int = 5) -> tuple[list[dict]
 	if not filter:
 		return ([], 0)
 
-	normalized_filter = normalize_search_filter(filter)
+	normalized_filter = normalize_filter(filter)
 	return search_messages(frappe.session.user, normalized_filter, limit=limit)
 
 
-def normalize_search_filter(filter: dict) -> dict:
+def normalize_filter(filter: dict) -> dict:
 	"""Normalize and transform filter parameters for email search."""
 
 	filter = filter.copy()

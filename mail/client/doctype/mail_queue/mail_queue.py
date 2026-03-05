@@ -26,6 +26,7 @@ from frappe.utils import (
 	now_datetime,
 	random_string,
 	time_diff_in_seconds,
+	validate_email_address,
 )
 
 from mail import __version__
@@ -33,7 +34,7 @@ from mail.jmap import get_identities, get_jmap_client
 from mail.utils.cache import get_tenant_for_user
 from mail.utils.dt import parsedate_to_datetime
 from mail.utils.user import has_role, is_administrator, is_tenant_bound_user
-from mail.utils.validation import has_permission_for_user, validate_email_address
+from mail.utils.validation import has_permission_for_user
 
 
 class MailQueue(Document):
@@ -441,8 +442,7 @@ class MailQueue(Document):
 			if not rcpt["type"] or not rcpt["email"]:
 				continue
 
-			if not validate_email_address(rcpt["email"], check_mx=False, verify=False):
-				frappe.throw(_("Invalid email address: {0}").format(frappe.bold(rcpt["email"])))
+			validate_email_address(rcpt["email"], throw=True)
 
 			recipients.append(
 				{
@@ -462,24 +462,32 @@ class MailQueue(Document):
 
 		user = self.user if frappe.session.user == "Administrator" else frappe.session.user
 
-		blob_ids = []
-		attachments = []
+		normalized = []
+		seen_blob_ids = set()
+
 		for a in json_loads(self.attachments, default=[]):
+			disposition = a["disposition"]
+			cid = a.get("cid", random_string(length=10))
+
 			if blob_id := a.get("blob_id"):
-				if blob_id not in blob_ids:
-					attachments.append(
-						{
-							"blob_id": blob_id,
-							"type": a["type"],
-							"size": a["size"],
-							"filename": a["filename"],
-							"disposition": a["disposition"],
-							"cid": a["cid"]
-							if a["disposition"] == "inline"
-							else a.get("cid", random_string(length=10)),
-						}
-					)
-					blob_ids.append(blob_id)
+				if blob_id in seen_blob_ids:
+					continue
+
+				if not a.get("type"):
+					frappe.throw(_("type is required for blob attachments."))
+
+				normalized.append(
+					{
+						"blob_id": blob_id,
+						"type": a["type"],
+						"size": a["size"],
+						"filename": a["filename"],
+						"disposition": disposition,
+						"cid": cid,
+					}
+				)
+				seen_blob_ids.add(blob_id)
+
 			elif file_url := a.get("file_url"):
 				if file_url.startswith("/private/files"):
 					MailQueue._get_file(file_url=file_url, user=user, check_permission=True)
@@ -490,20 +498,19 @@ class MailQueue(Document):
 						).format(file_url)
 					)
 
-				attachments.append(
+				normalized.append(
 					{
 						"file_url": file_url,
 						"filename": a.get("filename") or Path(file_url).name,
-						"disposition": a["disposition"],
-						"cid": a["cid"]
-						if a["disposition"] == "inline"
-						else a.get("cid", random_string(length=10)),
+						"disposition": disposition,
+						"cid": cid,
 					}
 				)
+
 			else:
 				frappe.throw(_("Either blob_id or file_url is required for attachments."))
 
-		self.attachments = json.dumps(attachments)
+		self.attachments = json.dumps(normalized)
 
 	def validate_message_id(self) -> None:
 		"""Validates the message ID."""

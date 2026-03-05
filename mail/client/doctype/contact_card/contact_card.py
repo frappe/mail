@@ -79,6 +79,7 @@ class ContactCard(Document):
 						"region": address.region,
 						"country": address.country,
 						"postcode": address.postcode,
+						"time_zone": address.time_zone,
 					}
 				)
 
@@ -127,32 +128,25 @@ class ContactCard(Document):
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
 
-		user = filters.get("user")
-		address_book = filters.get("address_book")
-		if address_book:
-			validate_address_book_name_format(address_book)
-
-			if user and user != address_book.split("|")[0]:
-				frappe.throw(
-					_("Address Book {0} does not belong to User {1}.").format(
-						frappe.bold(address_book), frappe.bold(user)
-					)
-				)
-
-			user, address_book_id = address_book.split("|")
-		else:
-			user = user or frappe.session.user
-			address_book_id = None
+		id = filters.get("id")
+		user = filters.get("user") or frappe.session.user
 
 		if not user or user in ("Guest", "Administrator"):
 			frappe.msgprint(_("Please select a user to view contact cards."), alert=True)
 			return []
 
-		filter = {}
-		if address_book_id:
-			filter["inAddressBook"] = address_book_id
-		limit = cint(kwargs.get("start")) + page_length
-		contact_cards, total = fetch_contact_cards(user, filter, limit=limit)
+		if id:
+			contact_cards = get_contact_cards(user, [id])
+			total = len(contact_cards)
+		else:
+			filter = {
+				prop: value
+				for field, prop in {"full_name": "name", "email": "email", "phone": "phone"}.items()
+				if (value := filters.get(field))
+			}
+			limit = cint(kwargs.get("start")) + page_length
+			contact_cards, total = fetch_contact_cards(user, filter, limit=limit)
+
 		frappe.cache.set_value(_get_total_cache_key(user), total, expires_in_sec=600)
 
 		if not contact_cards:
@@ -215,7 +209,7 @@ def add_contact_card(
 	emails: list[dict] | None = None,
 	phones: list[dict] | None = None,
 	addresses: list[dict] | None = None,
-	kind: str = "individual",
+	kind: str | None = None,
 ) -> str:
 	"""Adds a contact card for the given user with the specified parameters."""
 
@@ -224,7 +218,7 @@ def add_contact_card(
 	creation_id = str(uuid7())
 	client = get_jmap_client(user)
 	response = client.contact_card_create(
-		creation_id, address_book_ids, full_name, emails, phones, addresses, kind
+		creation_id, address_book_ids, full_name, emails, phones, addresses, kind or "individual"
 	)
 
 	title = _("Contact Card Creation Error")
@@ -310,14 +304,16 @@ def update_contact_card(
 	emails: list[dict] | None = None,
 	phones: list[dict] | None = None,
 	addresses: list[dict] | None = None,
-	kind: str = "individual",
+	kind: str | None = None,
 ) -> None:
 	"""Updates an existing contact card with the given parameters."""
 
 	has_permission_for_user(user)
 
 	client = get_jmap_client(user)
-	response = client.contact_card_update(id, address_book_ids, full_name, emails, phones, addresses, kind)
+	response = client.contact_card_update(
+		id, address_book_ids, full_name, emails, phones, addresses, kind or "individual"
+	)
 
 	title = _("Contact Card Update Error")
 	if not response.get("updated"):
@@ -530,27 +526,19 @@ def format_contact_card(user: str, address_book_map: dict, contact_card: dict) -
 
 	addresses = []
 	for address in contact_card.get("addresses", {}).values():
+		time_zone = address.get("timeZone")
 		contexts = address.get("contexts", {})
-		type = next(context for context in contexts.keys()) if contexts else None
-
-		street = None
-		if _street := address.get("street"):
-			if isinstance(_street, dict):
-				components = _street.get("components", [])
-				street = next(
-					(component["value"] for component in components if component["kind"] == "name"), None
-				)
-			elif isinstance(_street, str):
-				street = _street
+		component_map = {c["kind"]: c["value"] for c in address.get("components", [])}
 
 		addresses.append(
 			{
-				"type": type,
-				"street": street,
-				"locality": address.get("locality"),
-				"region": address.get("region"),
-				"country": address.get("country"),
-				"postcode": address.get("postcode"),
+				"type": next(iter(contexts), None),
+				"street": component_map.get("name"),
+				"locality": component_map.get("locality"),
+				"region": component_map.get("region"),
+				"postcode": component_map.get("postcode"),
+				"country": component_map.get("country"),
+				"time_zone": time_zone,
 				"contexts": json.dumps(contexts, indent=4),
 			}
 		)
@@ -565,6 +553,7 @@ def format_contact_card(user: str, address_book_map: dict, contact_card: dict) -
 		"name": f"{user}|{contact_card['id']}",
 		"user": user,
 		"id": contact_card["id"],
+		"uid": contact_card.get("uid"),
 		"kind": contact_card.get("kind"),
 		"name_breakup": json.dumps(contact_card.get("name", {}), indent=4),
 		"full_name": full_name,

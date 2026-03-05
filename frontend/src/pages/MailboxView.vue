@@ -197,7 +197,9 @@
 						</div>
 					</TransitionGroup>
 					<div
-						v-if="threadsResource.loading && threadsResource.data.length === limit"
+						v-if="
+							threadsResource.loading && threadsResource.data.length === limit - 50
+						"
 						class="flex items-center justify-center py-4"
 					>
 						<div class="text-ink-gray-5 flex items-center space-x-2">
@@ -752,6 +754,10 @@ onMounted(() => {
 	socket.on('new_mail_created', (updatedMailboxes: string[]) => {
 		if (updatedMailboxes.includes(mailbox)) reloadThreads()
 	})
+
+	socket.on('mail_exchange_completed', (payload: { success: boolean; message: string }) =>
+		raiseToast(payload.message, payload.success ? 'success' : 'error'),
+	)
 })
 
 onUnmounted(() => {

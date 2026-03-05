@@ -87,7 +87,7 @@ const domains = createResource({
 	cache: ['mailTenantDomains', user.data.tenant, search.value, status.value],
 })
 
-watchDebounced(() => search.value, domains.reload, { debounce: 500 })
+watchDebounced(() => search.value, domains.reload, { debounce: 300 })
 
 const LIST_COLUMNS = [
 	{ label: __('Domain'), key: 'name' },

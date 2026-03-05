@@ -87,7 +87,10 @@
 				</template>
 			</div>
 
-			<div v-if="identity?.doc && !identity.loading" class="sticky bottom-0 bg-white py-4">
+			<div
+				v-if="identity?.doc && !identity.loading"
+				class="bg-surface-modal sticky bottom-0 py-4"
+			>
 				<Button
 					:label="__('Save')"
 					variant="solid"

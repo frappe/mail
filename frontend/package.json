@@ -11,14 +11,16 @@
   "dependencies": {
     "@iframe-resizer/vue": "5.4.6",
     "@vueuse/core": "^10.4.1",
+    "cheerio": "^1.2.0",
     "dayjs": "^1.11.11",
     "dompurify": "^3.2.6",
     "firebase": "^12.2.1",
-    "frappe-ui": "0.1.235",
+    "frappe-ui": "0.1.262",
     "gemoji": "^8.1.0",
     "lucide-vue-next": "^0.383.0",
     "pinia": "^2.1.7",
     "vue": "^3.5",
+    "vue-pdf-embed": "^2.1.3",
     "vue-router": "^4.0.12"
   },
   "devDependencies": {

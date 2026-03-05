@@ -87,9 +87,11 @@
 						'px-3 py-5': isMobile,
 						'max-sm:border-b sm:rounded-xl sm:p-5':
 							thread.data.length > 1 || mail.draft,
-						'sm:border': thread.data.length > 1 && !mail.draft,
+						'sm:border':
+							(thread.data.length > 1 && !mail.draft) ||
+							(mail.draft && activeTheme === 'dark'),
 						'cursor-pointer': isCollapsed(mail),
-						'shadow-elevation-light-md': mail.draft && !isMobile,
+						'sm:shadow-elevation-light-md': mail.draft && activeTheme === 'light',
 					}"
 					@click="mail.collapsed = false"
 				>
@@ -228,14 +230,15 @@
 
 							<div v-if="mail.attachments?.length" class="mt-8 flex flex-wrap">
 								<AttachmentCapsule
-									v-for="attachment in mail.attachments.filter(
-										(a: Attachment) => a.disposition === 'attachment',
-									)"
-									:key="attachment.name"
+									v-for="(attachment, idx) in filteredAttachments(mail)"
+									:key="idx"
 									:file-name="attachment.filename"
 									:blob-i-d="attachment.blob_id"
 									:type="attachment.type"
 									class="mb-2 mr-2"
+									@click.stop.prevent="
+										openAttachment(filteredAttachments(mail), Number(idx))
+									"
 								/>
 							</div>
 						</div>
@@ -270,6 +273,11 @@
 			:mail-details="draftMails[focusedDraft]"
 			@reload-mails="reload"
 			@discard-mail="discardLocalDraft(focusedDraft)"
+		/>
+		<AttachmentViewer
+			v-model="showAttachmentViewer"
+			:attachments="attachments"
+			:initial-index="attachmentIndex"
 		/>
 	</div>
 
@@ -313,9 +321,10 @@ import {
 	getGroupedRecipients,
 	shouldIgnoreKeypress,
 } from '@/utils'
-import { useScreenSize } from '@/utils/composables'
+import { useScreenSize, useTheme } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
+import AttachmentViewer from '@/components/AttachmentViewer.vue'
 import ComposeMailEditor from '@/components/ComposeMailEditor.vue'
 import EmailContent from '@/components/EmailContent.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
@@ -348,10 +357,12 @@ const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const { mailboxes, mailboxIds, identities } = userStore()
 
-const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
-
 const route = useRoute()
 const router = useRouter()
+const { activeTheme } = useTheme()
+
+const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
+
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
 const thread = createResource({
@@ -506,12 +517,24 @@ const replyForwardActions = computed(() =>
 
 const showMailDetails = ref<string>()
 
+const filteredAttachments = (mail: Mail) =>
+	mail.attachments.filter((a: Attachment) => a.disposition === 'attachment')
+
+const showAttachmentViewer = ref(false)
+const attachments = ref<Attachment[]>([])
+const attachmentIndex = ref(0)
+
+const openAttachment = (mailAttachments: Attachment[], idx: number) => {
+	attachments.value = mailAttachments
+	attachmentIndex.value = idx
+	showAttachmentViewer.value = true
+}
+
 const isCollapsed = (mail: Mail) =>
 	!!(mail.collapsed && mail !== thread.data[thread.data.length - 1])
 
 const showReplyAll = (mail: Mail) =>
 	!mail.draft &&
-	mail.from_email !== user.data.email &&
 	mail.groupedRecipients.to
 		?.concat(mail.groupedRecipients.cc)
 		.filter((m) => m !== user.data.email).length > 0
@@ -616,6 +639,7 @@ const getSourceMail = (mail: string) =>
 const getReplyDetails = (mail: Mail) => ({
 	subject: mail.subject?.startsWith('Re: ') ? mail.subject : `Re: ${mail.subject}`,
 	quoted_content: getQuotedContent(mail),
+	attachments: mail.attachments?.filter((a: Attachment) => a.disposition === 'inline') || [],
 	in_reply_to: mail.message_id,
 	in_reply_to_id: mail.id,
 })
@@ -655,7 +679,7 @@ const getQuotedContent = (mail: Mail) =>
 
 const getForwardedContent = (mail: Mail) =>
 	`
-		<div class="frappe_mail_quote">
+		<div class="frappe_mail_fwd">
 			<br><br>
 			---------- Forwarded message ---------<br>
 			From: ${mail.from_name} < ${mail.from_email} ><br>

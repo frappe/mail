@@ -65,7 +65,7 @@ class MailAccountRequest(Document):
 			frappe.throw(_("Backup Email is required."))
 
 		self.email = self.email.strip().lower()
-		validate_email_address(self.email, True)
+		validate_email_address(self.email, throw=True)
 
 	def set_expires_at(self) -> None:
 		"""Sets the expiry date of the request."""
@@ -125,7 +125,7 @@ class MailAccountRequest(Document):
 		"""Validates the account."""
 
 		self.account = self.account.strip().lower()
-		validate_email_address(self.account, True)
+		validate_email_address(self.account, throw=True)
 		is_subaddressed_email(self.account, raise_exception=True)
 		is_email_assigned(self.account, raise_exception=True)
 

@@ -99,7 +99,21 @@ class DMARCReport(Document):
 		data = response.json()["data"]
 		frappe.cache.set_value(get_total_cache_key(cluster, text), data["total"], expires_in_sec=600)
 
-		return [DMARCReport._format(f"{cluster}|{id}") for id in data["items"]]
+		reports = []
+		for idx in range(min(len(data["items"]), limit)):
+			report_id = data["items"][idx]
+			if report := frappe.cache.hget("dmarc_reports", f"{cluster}|{report_id}"):
+				reports.append(report)
+				continue
+
+			response = backend_api.request(method="GET", endpoint=f"/api/reports/dmarc/{report_id}")
+			report = response.json()["data"]
+			report["id"] = report_id
+			report = DMARCReport._format(report, cluster)
+			frappe.cache.hset("dmarc_reports", f"{cluster}|{report_id}", report)
+			reports.append(report)
+
+		return reports
 
 	def _update(self) -> None:
 		raise NotImplementedError

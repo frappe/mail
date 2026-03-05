@@ -6,6 +6,7 @@ import re
 from email.utils import formataddr
 from functools import cached_property
 from typing import Literal
+from urllib.parse import quote
 from uuid import uuid7
 
 import frappe
@@ -13,7 +14,7 @@ from bs4 import BeautifulSoup
 from frappe import _
 from frappe.model.document import Document
 from frappe.push_notification import PushNotification
-from frappe.utils import add_to_date, cint, escape_html, get_datetime, now, time_diff_in_seconds
+from frappe.utils import add_to_date, cint, escape_html, get_datetime, get_url, now, time_diff_in_seconds
 
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_jmap_client
@@ -27,7 +28,7 @@ from mail.utils import (
 	user_context,
 )
 from mail.utils.cache import get_user_emails
-from mail.utils.dt import parse_iso_datetime
+from mail.utils.dt import convert_to_utc, parse_iso_datetime, to_iso8601_z
 from mail.utils.email_parser import EmailParser
 from mail.utils.lock import acquire_lock, release_lock
 from mail.utils.user import get_sync_state, update_sync_state
@@ -185,6 +186,8 @@ class MailMessage(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
+
+		id = filters.get("id")
 		user = filters.get("user") or frappe.session.user
 
 		if not user or user in ("Guest", "Administrator"):
@@ -195,8 +198,39 @@ class MailMessage(Document):
 			frappe.msgprint(_("You do not have permission to view messages for this user."), alert=True)
 			return []
 
-		limit = cint(kwargs.get("start")) + page_length
-		messages, total = fetch_messages(user, limit=limit)
+		if id:
+			messages = get_messages(user, ids=[id])
+			total = len(messages)
+		else:
+			filter = {
+				prop: value
+				for field, prop in {
+					"in_mailbox": "inMailbox",
+					"_from": "from",
+					"_to": "to",
+					"_cc": "cc",
+					"_bcc": "bcc",
+					"text": "text",
+					"body": "body",
+					"subject": "subject",
+					"min_size": "minSize",
+					"max_size": "maxSize",
+					"has_keyword": "hasKeyword",
+					"not_keyword": "notKeyword",
+				}.items()
+				if (value := filters.get(field))
+			}
+
+			if filters.get("has_attachment"):
+				filter["hasAttachment"] = True
+
+			for field in ("before", "after"):
+				if value := filters.get(field):
+					filter[field] = to_iso8601_z(convert_to_utc(value))
+
+			limit = cint(kwargs.get("start")) + page_length
+			messages, total = fetch_messages(user, filter, limit=limit)
+
 		frappe.cache.set_value(_get_total_cache_key(user), total, expires_in_sec=600)
 
 		fields_to_remove = [
@@ -479,19 +513,6 @@ class MailMessage(Document):
 			}
 			for a in self.attachments
 		]
-
-		for body_part in self._html_body + self._text_body:
-			if body_part.disposition == "inline":
-				attachments.append(
-					{
-						"blob_id": body_part.blob_id,
-						"type": body_part.type,
-						"size": body_part.size,
-						"filename": body_part.filename,
-						"disposition": body_part.disposition,
-						"cid": body_part.cid,
-					}
-				)
 
 		return MailQueue._create(
 			user=self.user,
@@ -925,6 +946,16 @@ def fetch_blobs(user: str, blobs: list[str] | list[tuple[str, str | None]]) -> d
 def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 	"""Returns a formatted message dictionary for the provided message data."""
 
+	def convert_img_src_from_cid_to_url(html_body: str, cid: str, url: str) -> str:
+		"""Convert img src from cid to URL in the HTML body."""
+
+		soup = BeautifulSoup(html_body, "html.parser")
+		for img in soup.find_all("img", src=f"cid:{cid}"):
+			img["data-cid"] = cid
+			img["src"] = url
+
+		return str(soup)
+
 	if not message["sentAt"]:
 		message["sentAt"] = message["receivedAt"]
 
@@ -1023,6 +1054,20 @@ def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 					"location": p["location"],
 				}
 			)
+
+	for attachment in formatted_message["attachments"]:
+		if blob_id := attachment["blob_id"]:
+			params = f"blob_id={blob_id}"
+			if filename := attachment["filename"]:
+				params += f"&filename={quote(filename)}"
+			attachment["url"] = get_url(f"/api/method/mail.api.mail.get_attachment?{params}")
+
+			if attachment["disposition"] == "inline" and attachment["cid"] and formatted_message["html_body"]:
+				formatted_message["html_body"] = convert_img_src_from_cid_to_url(
+					formatted_message["html_body"],
+					attachment["cid"],
+					attachment["url"],
+				)
 
 	return formatted_message
 

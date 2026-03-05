@@ -213,7 +213,7 @@ class MailPrincipal(Document):
 			emails = [self._name, *self._emails]
 			for email in emails:
 				if not is_catch_all_address(email):
-					validate_email_address(email, True)
+					validate_email_address(email, throw=True)
 				validate_wildcard_email(email)
 				is_subaddressed_email(email, raise_exception=True)
 
@@ -221,27 +221,27 @@ class MailPrincipal(Document):
 
 		if self.type in ["Group", "Individual"]:
 			for group in self._member_of:
-				validate_email_address(group, True)
+				validate_email_address(group, throw=True)
 				validate_wildcard_email(group)
 
 			ensure_groups_belong_to_tenant(self.tenant, self._member_of)
 
 			for lst in self._lists:
-				validate_email_address(lst, True)
+				validate_email_address(lst, throw=True)
 				validate_wildcard_email(lst)
 
 			ensure_lists_belong_to_tenant(self.tenant, self._lists)
 
 		if self.type in ["Group", "List"]:
 			for member in self._members:
-				validate_email_address(member, True)
+				validate_email_address(member, throw=True)
 				validate_wildcard_email(member)
 
 			ensure_members_belong_to_tenant(self.tenant, self._members)
 
 		if self.type == "List":
 			for member in self._external_members:
-				validate_email_address(member, True)
+				validate_email_address(member, throw=True)
 
 	@frappe.whitelist()
 	def verify_dns_records(self) -> bool:

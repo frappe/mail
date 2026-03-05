@@ -30,6 +30,13 @@ ALLOWED_PATHS = [
 	"/api/method/upload_file",
 	"/api/method/mail.utils.user.get_user_tenant",
 	"/api/method/mail.utils.user.generate_user_keys",
+	"/api/method/mail.www.mail.get_context_for_dev",
+	"/api/method/notification_relay.api.get_config",
+	"/api/method/mail.client.doctype.address_book.address_book.add_address_book",
+	"/api/method/mail.client.doctype.contact_card.contact_card.add_contact_card",
+	"/api/method/mail.client.doctype.contact_card.contact_card.contact_card_add_to_address_book",
+	"/api/method/mail.client.doctype.contact_card.contact_card.contact_card_remove_from_address_book",
+	"/api/method/mail.client.doctype.contact_card.contact_card.delete_contact_cards",
 ]
 
 ALLOWED_WILDCARD_PATHS = [
@@ -37,6 +44,7 @@ ALLOWED_WILDCARD_PATHS = [
 	"/api/method/frappe.client.",
 	"/api/method/wiki.",
 	"/api/method/frappe.integrations.oauth2_logins.",
+	"/api/v2/document/",
 ]
 
 DENIED_PATHS = ["/printview", "/printpreview"]

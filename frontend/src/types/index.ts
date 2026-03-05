@@ -45,6 +45,7 @@ export interface Attachment {
 	size: string
 	file_url: string | null
 	disposition: string
+	cid?: string
 }
 
 export interface Mail {

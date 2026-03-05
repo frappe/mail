@@ -47,6 +47,7 @@
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "ID",
    "read_only": 1,
    "set_only_once": 1
@@ -125,7 +126,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-12-17 10:54:02.407375",
+ "modified": "2026-01-30 11:07:10.753429",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Identity",

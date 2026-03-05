@@ -4,6 +4,20 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "in_mailbox",
+  "before",
+  "after",
+  "_from",
+  "_to",
+  "_cc",
+  "_bcc",
+  "body",
+  "text",
+  "column_break_avyr",
+  "min_size",
+  "max_size",
+  "has_keyword",
+  "not_keyword",
   "section_break_8xbl",
   "user",
   "from_name",
@@ -94,6 +108,7 @@
    "fieldname": "subject",
    "fieldtype": "Small Text",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Subject",
    "read_only": 1,
    "read_only_depends_on": "eval: !doc.draft"
@@ -187,6 +202,8 @@
    "depends_on": "eval: !doc.__islocal",
    "fieldname": "has_attachment",
    "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Has Attachment",
    "read_only": 1
   },
@@ -446,6 +463,7 @@
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Mail ID",
    "read_only": 1
   },
@@ -459,6 +477,129 @@
    "read_only": 1,
    "reqd": 1,
    "set_only_once": 1
+  },
+  {
+   "fieldname": "before",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Before",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "after",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "After",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_avyr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "min_size",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Min Size (Bytes)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "max_size",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Max Size (Bytes)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "in_mailbox",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "In Mailbox",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "has_keyword",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Has Keyword",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "not_keyword",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Not Keyword",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "text",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Text",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "_from",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "From",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "_to",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "To",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "_cc",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Cc",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "_bcc",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Bcc",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "body",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Body",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
@@ -466,7 +607,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-12-09 13:24:37.593079",
+ "modified": "2026-01-30 13:02:54.335255",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message",

@@ -47,7 +47,7 @@
 		>
 			<div
 				class="flex items-center"
-				:class="isFullWidth ? 'min-w-48 max-w-48' : 'justify-between'"
+				:class="isFullWidth ? 'w-48 shrink-0' : 'justify-between'"
 			>
 				<h3 class="mr-1 mt-0.5 flex items-center truncate">
 					<span
@@ -99,14 +99,60 @@
 						:type="attachment.type"
 						class="mr-2"
 						:class="isFullWidth ? 'max-w-32' : 'max-w-20'"
-						@click.stop.prevent
+						@click.stop.prevent="openAttachment(idx)"
 					/>
 				</Tooltip>
-				<AttachmentCapsule
-					v-if="attachments.length > 2"
-					:file-name="__('+{0}', [String(attachments.length - 2)])"
-					class="mr-2"
-				/>
+				<Popover v-if="attachments.length > 2" placement="bottom">
+					<template #target="{ togglePopover }">
+						<Tooltip :text="__('View remaining attachments')">
+							<AttachmentCapsule
+								:file-name="`+${String(attachments.length - 2)}`"
+								class="mr-2"
+								@click.stop.prevent="togglePopover()"
+							/>
+						</Tooltip>
+					</template>
+					<template #body-main>
+						<div class="max-h-80 overflow-y-auto p-1">
+							<Tooltip
+								v-for="(attachment, idx) in attachments.slice(2)"
+								:key="idx"
+								:text="attachment.filename"
+							>
+								<div
+									class="group/capsule hover:bg-surface-gray-1 flex max-w-60 cursor-pointer space-x-2 truncate rounded px-2 py-1.5"
+									@click.stop.prevent="openAttachment(idx + 2)"
+								>
+									<div class="text-ink-gray-4">
+										<Loader
+											v-if="
+												currentlyDownloading.includes(attachment.blob_id)
+											"
+											class="h-4 w-4 shrink-0 animate-spin"
+										/>
+										<template v-else>
+											<component
+												:is="getFileIcon(attachment.type)"
+												class="h-4 w-4 shrink-0 sm:group-hover/capsule:hidden"
+											/>
+											<button
+												class="hidden sm:group-hover/capsule:block"
+												@click.stop.prevent="
+													downloadAttachment(attachment)
+												"
+											>
+												<Download
+													class="hover:text-ink-gray-8 h-4 w-4 shrink-0"
+												/>
+											</button>
+										</template>
+									</div>
+									<span class="truncate text-sm">{{ attachment.filename }}</span>
+								</div>
+							</Tooltip>
+						</div>
+					</template>
+				</Popover>
 				<Badge
 					v-if="mail.draft"
 					class="ml-auto"
@@ -154,21 +200,28 @@
 				</template>
 			</Button>
 		</div>
+		<AttachmentViewer
+			v-model="showAttachmentViewer"
+			:attachments="mail.attachments"
+			:initial-index="attachmentIndex"
+		/>
 	</router-link>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Check, Mail, MailOpen, Trash2 } from 'lucide-vue-next'
-import { Avatar, Badge, Button, Checkbox, Tooltip } from 'frappe-ui'
+import { Check, Download, Loader, Mail, MailOpen, Trash2 } from 'lucide-vue-next'
+import { Avatar, Badge, Button, Checkbox, Popover, Tooltip } from 'frappe-ui'
 
-import { getFirstAlphabet, getFormattedRecipients } from '@/utils'
+import { getAttachmentUrl } from '@/resources'
+import { getFileIcon, getFirstAlphabet, getFormattedRecipients } from '@/utils'
 import { useLayout, useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
+import AttachmentViewer from '@/components/AttachmentViewer.vue'
 import MailDate from '@/components/MailDate.vue'
 
-import type { Thread } from '@/types'
+import type { Attachment, Thread } from '@/types'
 
 const { mailbox, mail, isSelected } = defineProps<{
 	mailbox: string
@@ -201,6 +254,14 @@ const header = computed(() => {
 
 const isHovered = ref(false)
 
+const showAttachmentViewer = ref(false)
+const attachmentIndex = ref(0)
+
+const openAttachment = (idx: number) => {
+	attachmentIndex.value = idx
+	showAttachmentViewer.value = true
+}
+
 defineExpose({ id: mail.thread_id })
 
 const actions = computed(() =>
@@ -231,6 +292,32 @@ const actions = computed(() =>
 		},
 	].filter((action) => action.condition),
 )
+
+// attachment
+
+const currentlyDownloading = ref<string[]>([])
+
+const downloadAttachment = async (attachment: Attachment) => {
+	currentlyDownloading.value.push(attachment.blob_id)
+	const url = await getAttachmentUrl(attachment.blob_id, attachment.type)
+	if (!url) {
+		currentlyDownloading.value = currentlyDownloading.value.filter(
+			(id) => id !== attachment.blob_id,
+		)
+		return
+	}
+
+	const link = document.createElement('a')
+	link.href = url
+	link.download = attachment.filename || 'attachment'
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+	URL.revokeObjectURL(url)
+	currentlyDownloading.value = currentlyDownloading.value.filter(
+		(id) => id !== attachment.blob_id,
+	)
+}
 
 // touch
 

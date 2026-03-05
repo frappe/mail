@@ -1,8 +1,14 @@
+import * as cheerio from 'cheerio'
+import { File, Paperclip } from 'lucide-vue-next'
 import { toast } from 'frappe-ui'
 
 import dayjs from '@/utils/dayjs'
+import AudioIcon from '@/components/Icons/AudioIcon.vue'
+import ImageIcon from '@/components/Icons/ImageIcon.vue'
+import PDFIcon from '@/components/Icons/PDFIcon.vue'
+import VideoIcon from '@/components/Icons/VideoIcon.vue'
 
-import type { Recipient } from '@/types'
+import type { ComposeMailData, Recipient } from '@/types'
 
 export const toTitleCase = (str: string) =>
 	str
@@ -59,11 +65,11 @@ export const formatBytes = (bytes: number) => {
 	if (!+bytes) return '0 Bytes'
 
 	const k = 1024
-	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+	const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
 	const i = Math.floor(Math.log(bytes) / Math.log(k))
 
-	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))}${sizes[i]}`
+	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
 }
 
 export const raiseToast = (message: string, type = 'success') => {
@@ -204,7 +210,7 @@ export const isMac = navigator.platform.toUpperCase().includes('MAC')
 
 export const isOverlayPresent = () =>
 	!!document.querySelector(
-		'[role="dialog"]:not([role="alert"]), [role="alertdialog"], .modal-open, [data-state="open"]:not([data-reka-collection-item])',
+		'[role="dialog"]:not([role="alert"]), [role="alertdialog"], .modal-open, [data-state="open"]:not([data-reka-collection-item]), [data-attachment-viewer]',
 	)
 
 export const shouldIgnoreKeypress = (
@@ -254,3 +260,62 @@ export const convertHtmlToText = (html: string) => {
 }
 
 export const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+
+export const getFileIcon = (type?: string) => {
+	if (!type) return Paperclip
+	if (type?.startsWith('image/')) return ImageIcon
+	if (type === 'application/pdf') return PDFIcon
+	if (type?.startsWith('video/')) return VideoIcon
+	if (type?.startsWith('audio/')) return AudioIcon
+
+	return File
+}
+
+export const randomString = (length: number) => {
+	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+	let result = ''
+	for (let i = 0; i < length; i++) {
+		result += chars.charAt(Math.floor(Math.random() * chars.length))
+	}
+	return result
+}
+
+export const processInlineImages = (mail: ComposeMailData) => {
+	const htmlBody = mail.html_body! + mail.quoted_content
+	const $ = cheerio.load(htmlBody)
+
+	const regularAttachments = mail.attachments?.filter((a) => a.disposition !== 'inline') || []
+	const inlineAttachments = mail.attachments?.filter((a) => a.disposition === 'inline') || []
+	const processedAttachments = [...regularAttachments]
+
+	$('img').each((_, img) => {
+		const $img = $(img)
+		const src = $img.attr('src')
+		if (!src) return
+
+		const cid = $img.attr('data-cid')
+		if (!cid) return
+
+		$img.attr('src', `cid:${cid}`)
+
+		if (src.startsWith('/files') || src.startsWith('/private/files')) {
+			processedAttachments.push({ file_url: src, disposition: 'inline', cid })
+			return
+		}
+
+		const url = new URL(src)
+		const blob_id = url.searchParams.get('blob_id')
+		if (!blob_id) return
+
+		const attachment = inlineAttachments.find((a) => a.blob_id === blob_id)
+		if (attachment) processedAttachments.push({ ...attachment, cid })
+	})
+
+	return { html_body: $.html(), attachments: processedAttachments }
+}
+
+export const extractNameFromEmail = (email: string) =>
+	email
+		.split('@')[0]
+		.replace(/[._-]/g, ' ')
+		.replace(/\b\w/g, (c) => c.toUpperCase())
