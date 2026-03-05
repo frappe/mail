@@ -1,8 +1,12 @@
+import base64
+import hashlib
 from datetime import UTC, datetime
 
 import frappe
+import requests
 from frappe import _
-from frappe.utils import format_datetime, random_string
+from frappe.utils import format_datetime, get_gravatar_url, random_string
+from frappe.utils.identicon import Identicon
 
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
@@ -21,6 +25,8 @@ from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_mailbox_id_by_role
 from mail.utils import convert_html_to_text
 from mail.utils.user import has_role
+
+AVATAR_CACHE_TTL = 60 * 60 * 24
 
 
 @frappe.whitelist()
@@ -468,3 +474,39 @@ def normalize_filter(filter: dict) -> dict:
 def parse_date_to_utc_iso(date_str: str) -> str:
 	"""Parse date string and convert to ISO format with UTC timezone."""
 	return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=UTC).isoformat()
+
+
+@frappe.whitelist()
+def get_avatar(email: str) -> None:
+	"""Fetches and returns the avatar for the given email."""
+
+	if not email:
+		frappe.throw(_("Email is required to fetch avatar."))
+
+	email = email.strip().lower()
+	email_hash = hashlib.md5(email.encode()).hexdigest()
+
+	cache_key = f"avatar:{email_hash}"
+	avatar = frappe.cache.get_value(cache_key)
+
+	if not avatar:
+		gravatar_url = get_gravatar_url(email)
+
+		try:
+			response = requests.get(gravatar_url, timeout=5)
+			if response.ok:
+				avatar = response.content
+
+		except requests.RequestException:
+			pass
+
+		if not avatar:
+			data = Identicon(email).base64()
+			avatar = base64.b64decode(data.split(",")[1])
+
+		frappe.cache.set_value(cache_key, avatar, expires_in_sec=AVATAR_CACHE_TTL)
+
+	frappe.local.response.filename = f"{email_hash}.png"
+	frappe.local.response.filecontent = avatar
+	frappe.local.response.mimetype = "image/png"
+	frappe.local.response.type = "binary"
