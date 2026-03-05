@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "creation": "2026-01-09 22:27:40.925606",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_mobp",
+  "uid",
+  "schedule_id",
+  "send_to",
+  "roles",
+  "column_break_ycmk",
+  "kind",
+  "_name",
+  "email",
+  "participation_status",
+  "expect_reply",
+  "section_break_gwzl",
+  "description",
+  "comment"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_mobp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "A unique identifier for this participant.",
+   "fieldname": "uid",
+   "fieldtype": "Data",
+   "label": "UID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ycmk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The email address associated with the participant.",
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email",
+   "options": "Email",
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+  },
+  {
+   "default": "Individual",
+   "description": "The type of participant.",
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Kind",
+   "options": "\nIndividual\nGroup\nResource\nLocation",
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+  },
+  {
+   "description": "The display name of the participant.",
+   "fieldname": "_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+  },
+  {
+   "default": "1",
+   "description": "Indicates whether a response is expected from this participant.",
+   "fieldname": "expect_reply",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Expect Reply"
+  },
+  {
+   "default": "NEEDS-ACTION",
+   "description": "The participant\u2019s current participation status.",
+   "fieldname": "participation_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "\nNEEDS-ACTION\nACCEPTED\nDECLINED\nTENTATIVE"
+  },
+  {
+   "default": "{\"required\":true}",
+   "description": "Defines the participant\u2019s role(s) in the event.\n<br>\nExample: <code>{\n  \"organizer\": false,\n  \"owner\": false,\n  \"chair\": true,\n  \"optional\": false,\n  \"required\": true,\n  \"informational\": false\n}</code>",
+   "fieldname": "roles",
+   "fieldtype": "JSON",
+   "label": "Roles",
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+  },
+  {
+   "fieldname": "section_break_gwzl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Optional additional information about the participant.",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+  },
+  {
+   "description": "The scheduling identifier used to uniquely identify this participant in scheduling messages.",
+   "fieldname": "schedule_id",
+   "fieldtype": "Data",
+   "label": "Schedule ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "{}",
+   "depends_on": "eval: doc.send_to != \"{}\"",
+   "description": "The delivery address used for scheduling messages related to this participant.",
+   "fieldname": "send_to",
+   "fieldtype": "JSON",
+   "label": "Send To",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Small Text",
+   "label": "Comment",
+   "no_copy": 1,
+   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-24 16:42:53.770697",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Event Participant",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

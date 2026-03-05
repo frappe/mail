@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "creation": "2026-01-10 11:36:28.349135",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_hxjt",
+  "uid",
+  "action",
+  "column_break_qjea",
+  "type",
+  "relative_to",
+  "offset",
+  "when"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_hxjt",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "A unique identifier for this alert.",
+   "fieldname": "uid",
+   "fieldtype": "Data",
+   "label": "UID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qjea",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Display",
+   "description": "Specifies how the alert is delivered to the user.",
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Action",
+   "options": "Display\nEmail\nAudio",
+   "reqd": 1
+  },
+  {
+   "default": "Start",
+   "depends_on": "eval: doc.type == \"OffsetTrigger\"",
+   "description": "Specifies the event reference point used for offset-based alerts.",
+   "fieldname": "relative_to",
+   "fieldtype": "Select",
+   "label": "Relative To",
+   "mandatory_depends_on": "eval: doc.type == \"OffsetTrigger\"",
+   "options": "Start\nEnd"
+  },
+  {
+   "default": "-PT10M",
+   "depends_on": "eval: doc.type == \"OffsetTrigger\"",
+   "description": "The time offset relative to the event start or end.",
+   "fieldname": "offset",
+   "fieldtype": "Data",
+   "label": "Offset",
+   "mandatory_depends_on": "eval: doc.type == \"OffsetTrigger\""
+  },
+  {
+   "default": "OffsetTrigger",
+   "description": "Defines how the alert time is calculated.",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "OffsetTrigger\nAbsoluteTrigger",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.type == \"AbsoluteTrigger\"",
+   "description": "The exact date and time when the alert should trigger.",
+   "fieldname": "when",
+   "fieldtype": "Data",
+   "label": "When",
+   "mandatory_depends_on": "eval: doc.type == \"AbsoluteTrigger\""
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-23 15:00:14.568635",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Event Alert",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

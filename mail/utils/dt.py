@@ -3,6 +3,7 @@ from email.utils import parsedate_to_datetime as parsedate
 from zoneinfo import ZoneInfo
 
 import frappe
+import isodate
 from frappe import _
 from frappe.utils import convert_utc_to_system_timezone, get_datetime, get_datetime_str, get_system_timezone
 
@@ -89,3 +90,21 @@ def to_iso8601_z(dt: datetime) -> str:
 		dt = dt.astimezone(UTC)
 
 	return dt.isoformat().replace("+00:00", "Z")
+
+
+def add_iso_duration(
+	start_dt: str,
+	duration: str,
+	time_zone: str,
+) -> datetime:
+	"""
+	Add ISO-8601 duration to an ISO datetime string using timezone-aware math,
+	but return a naive datetime (no offset) in the same local timezone.
+	"""
+
+	tz = ZoneInfo(time_zone)
+	start = datetime.fromisoformat(start_dt).replace(tzinfo=tz)
+	delta = isodate.parse_duration(duration)
+	end = start + delta
+
+	return end.replace(tzinfo=None)

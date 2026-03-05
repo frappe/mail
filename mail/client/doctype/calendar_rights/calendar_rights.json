@@ -1,0 +1,113 @@
+{
+ "actions": [],
+ "creation": "2026-01-15 21:16:35.850686",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "principal_id",
+  "section_break_ueun",
+  "may_read_free_busy",
+  "may_read_items",
+  "may_write_all",
+  "may_write_own",
+  "column_break_jtqq",
+  "may_update_private",
+  "may_rsvp",
+  "may_admin",
+  "may_delete"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_ueun",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "description": "The principal may read the free-busy information for this calendar as part of a call to `Principal/getAvailability`.",
+   "fieldname": "may_read_free_busy",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "May Read Free Busy"
+  },
+  {
+   "default": "0",
+   "description": "The principal may fetch the events in this calendar.",
+   "fieldname": "may_read_items",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "May Read Items"
+  },
+  {
+   "default": "0",
+   "description": "The principal may create, modify or destroy all events in this calendar, or move events to or from this calendar.",
+   "fieldname": "may_write_all",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "May Write All"
+  },
+  {
+   "default": "0",
+   "description": "The principal may create, modify or destroy an event on this calendar if either they are the owner of the event or the event has no owner.",
+   "fieldname": "may_write_own",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "May Write Own"
+  },
+  {
+   "fieldname": "column_break_jtqq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "The principal may modify per-user properties on all events in the calendar.",
+   "fieldname": "may_update_private",
+   "fieldtype": "Check",
+   "label": "May Update Private"
+  },
+  {
+   "default": "0",
+   "description": "The principal may modify the properties of any Participant object that corresponds to one of the user's Participant Identity objects in the account.",
+   "fieldname": "may_rsvp",
+   "fieldtype": "Check",
+   "label": "May RSVP"
+  },
+  {
+   "default": "0",
+   "description": "The principal may modify the \"shareWith\" property for this calendar.",
+   "fieldname": "may_admin",
+   "fieldtype": "Check",
+   "label": "May Admin"
+  },
+  {
+   "default": "0",
+   "description": "The principal may delete the calendar itself.",
+   "fieldname": "may_delete",
+   "fieldtype": "Check",
+   "label": "May Delete"
+  },
+  {
+   "description": "The unique identifier of a principal (user, group, or resource) to grant access to this calendar.",
+   "fieldname": "principal_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Principal ID",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-15 21:38:35.292181",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Calendar Rights",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

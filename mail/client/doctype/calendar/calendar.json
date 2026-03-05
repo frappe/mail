@@ -1,0 +1,284 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-12-09 11:41:03.957394",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_fgkh",
+  "user",
+  "column_break_pjqh",
+  "subscribed",
+  "visible",
+  "default",
+  "section_break_uaer",
+  "id",
+  "_name",
+  "color",
+  "sort_order",
+  "include_in_availability",
+  "time_zone",
+  "column_break_tamj",
+  "description",
+  "section_break_weht",
+  "share_with",
+  "rights_section",
+  "may_read_free_busy",
+  "may_read_items",
+  "may_write_all",
+  "may_write_own",
+  "column_break_ezso",
+  "may_update_private",
+  "may_rsvp",
+  "may_admin",
+  "may_delete"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_fgkh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The user this calendar belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "section_break_uaer",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The ID of the calendar.",
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "label": "ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_tamj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The user-visible name of the calendar.",
+   "fieldname": "_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "reqd": 1
+  },
+  {
+   "description": "An optional longer-form description of the calendar.",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "description": "A color to be used when displaying events associated with the calendar.",
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "label": "Color"
+  },
+  {
+   "default": "0",
+   "description": "Defines the sort order of calendars when presented in the client's UI.",
+   "fieldname": "sort_order",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sort Order",
+   "no_copy": 1,
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_pjqh",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "description": "Checked if the user has indicated they wish to see this Calendar in their client.",
+   "fieldname": "subscribed",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Subscribed"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval: !doc.__islocal",
+   "description": "Should the calendar's events be displayed to the user at the moment?",
+   "fieldname": "visible",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Visible",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "This should be true for exactly one calendar in any account.",
+   "fieldname": "default",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Default",
+   "no_copy": 1
+  },
+  {
+   "default": "All",
+   "depends_on": "eval: !doc.__islocal",
+   "description": "What calendar's events be used as part of availability calculation?",
+   "fieldname": "include_in_availability",
+   "fieldtype": "Select",
+   "label": "Include In Availability",
+   "options": "All\nAttending\nNone",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "description": "The time zone to use for events without a time zone.",
+   "fieldname": "time_zone",
+   "fieldtype": "Autocomplete",
+   "label": "Time Zone"
+  },
+  {
+   "collapsible": 1,
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "rights_section",
+   "fieldtype": "Section Break",
+   "label": "Rights"
+  },
+  {
+   "default": "0",
+   "description": "The user may read the free-busy information for this calendar as part of a call to `Principal/getAvailability`.",
+   "fieldname": "may_read_free_busy",
+   "fieldtype": "Check",
+   "label": "May Read Free Busy",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may fetch the events in this calendar.",
+   "fieldname": "may_read_items",
+   "fieldtype": "Check",
+   "label": "May Read Items",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may create, modify or destroy all events in this calendar, or move events to or from this calendar.",
+   "fieldname": "may_write_all",
+   "fieldtype": "Check",
+   "label": "May Write All",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may create, modify or destroy an event on this calendar if either they are the owner of the event or the event has no owner.",
+   "fieldname": "may_write_own",
+   "fieldtype": "Check",
+   "label": "May Write Own",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ezso",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "The user may modify per-user properties on all events in the calendar.",
+   "fieldname": "may_update_private",
+   "fieldtype": "Check",
+   "label": "May Update Private",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may modify the properties of any Participant object that corresponds to one of the user's Participant Identity objects in the account.",
+   "fieldname": "may_rsvp",
+   "fieldtype": "Check",
+   "label": "May RSVP",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may modify the \"shareWith\" property for this calendar.",
+   "fieldname": "may_admin",
+   "fieldtype": "Check",
+   "label": "May Admin",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "The user may delete the calendar itself.",
+   "fieldname": "may_delete",
+   "fieldtype": "Check",
+   "label": "May Delete",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_weht",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The principals this calendar is shared with, and the access rights granted to each.",
+   "fieldname": "share_with",
+   "fieldtype": "Table",
+   "label": "Share With",
+   "options": "Calendar Rights",
+   "read_only_depends_on": "eval: !doc.may_admin"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [
+  {
+   "link_doctype": "Calendar Event",
+   "link_fieldname": "calendar"
+  }
+ ],
+ "modified": "2026-01-23 14:42:44.306278",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Calendar",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

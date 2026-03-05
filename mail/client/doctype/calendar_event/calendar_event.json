@@ -1,0 +1,461 @@
+{
+ "actions": [],
+ "creation": "2025-12-18 09:53:53.514893",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_nfos",
+  "user",
+  "role",
+  "created_utc",
+  "updated_utc",
+  "after",
+  "before",
+  "column_break_kdxa",
+  "draft",
+  "origin",
+  "may_invite_self",
+  "may_invite_others",
+  "hide_attendees",
+  "use_default_alerts",
+  "show_without_time",
+  "send_scheduling_messages",
+  "section_break_fsjr",
+  "id",
+  "uid",
+  "title",
+  "privacy",
+  "free_busy_status",
+  "column_break_dqmn",
+  "status",
+  "description",
+  "section_break_nzql",
+  "column_break_gypo",
+  "organizer",
+  "sequence",
+  "column_break_dcpf",
+  "start",
+  "duration",
+  "time_zone",
+  "section_break_bnnv",
+  "calendars",
+  "recurrence_tab",
+  "recurrence_section",
+  "recurrence_rule",
+  "locations_tab",
+  "section_break_sznu",
+  "locations",
+  "links_tab",
+  "section_break_jhsu",
+  "links",
+  "alerts_tab",
+  "section_break_lpbz",
+  "alerts",
+  "participants_tab",
+  "section_break_mduw",
+  "participants"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_nfos",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The user this event belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.__islocal || doc.role == \"Organizer\"",
+   "description": "Indicates whether the event is a draft and not yet finalized or sent.",
+   "fieldname": "draft",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Draft",
+   "no_copy": 1,
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "fieldname": "section_break_nzql",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The server-assigned unique identifier of the event.",
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "label": "ID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_dcpf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_bnnv",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The calendars to which this event belongs.",
+   "fieldname": "calendars",
+   "fieldtype": "Table",
+   "label": "Calendars",
+   "options": "Event Calendar"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.origin",
+   "description": "Indicates whether this event is the original source event created by the organizer.",
+   "fieldname": "origin",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Origin",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.may_invite_self",
+   "description": "Indicates whether the organizer may add themselves as a participant.",
+   "fieldname": "may_invite_self",
+   "fieldtype": "Check",
+   "label": "May Invite Self",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.may_invite_others",
+   "description": "Indicates whether the organizer is allowed to invite additional participants.",
+   "fieldname": "may_invite_others",
+   "fieldtype": "Check",
+   "label": "May Invite Others",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.hide_attendees",
+   "description": "Indicates whether the attendee list should be hidden from other participants.",
+   "fieldname": "hide_attendees",
+   "fieldtype": "Check",
+   "label": "Hide Attendees",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "A short, human-readable summary of the event.",
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "description": "The time zone in which the event start time is defined.",
+   "fieldname": "time_zone",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "label": "Time Zone",
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "description": "Additional free-text details about the event.",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "description": "Identifies the principal responsible for the event.",
+   "fieldname": "organizer",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Organizer",
+   "no_copy": 1,
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "default": "Confirmed",
+   "description": "The overall status of the event.",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Tentative\nConfirmed\nCancelled",
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "description": "The length of the event expressed as a duration (e.g., PT30M, P1D).",
+   "fieldname": "duration",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Duration",
+   "mandatory_depends_on": "eval: !doc.draft",
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "default": "Busy",
+   "description": "Indicates how the event affects the availability.",
+   "fieldname": "free_busy_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Free Busy Status",
+   "options": "\nBusy\nFree"
+  },
+  {
+   "description": "A monotonically increasing number representing the version of the event.",
+   "fieldname": "sequence",
+   "fieldtype": "Int",
+   "label": "Sequence",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "description": "The start date-time of the event.",
+   "fieldname": "start",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Start",
+   "mandatory_depends_on": "eval: !doc.draft",
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "description": "A globally unique identifier for the event.",
+   "fieldname": "uid",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "UID",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_sznu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The physical or virtual locations where the event takes place.",
+   "fieldname": "locations",
+   "fieldtype": "Table",
+   "label": "Locations",
+   "options": "Event Location",
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "fieldname": "section_break_mduw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The people or entities involved in the event.",
+   "fieldname": "participants",
+   "fieldtype": "Table",
+   "label": "Participants",
+   "options": "Event Participant",
+   "read_only_depends_on": "eval: doc.role == \"Viewer\""
+  },
+  {
+   "default": "0",
+   "description": "Indicates whether the event is displayed without a specific start time.",
+   "fieldname": "show_without_time",
+   "fieldtype": "Check",
+   "label": "Show Without Time",
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "depends_on": "eval: doc.role == \"Organizer\" || doc.recurrence_rule != \"{}\"",
+   "description": "Defines how the event repeats over time.\n<br><br>\nExample: \n<pre>{\n  \"frequency\": \"yearly\", \n  /*\n    REQUIRED.\n    Allowed values:\n      \"yearly\", \"monthly\", \"weekly\", \"daily\",\n      \"hourly\", \"minutely\", \"secondly\"\n  */\n\n  \"interval\": 1,\n  /*\n    OPTIONAL.\n    Integer \u2265 1.\n    Repeats every N units of `frequency`.\n  */\n\n  \"count\": 10,\n  /*\n    OPTIONAL.\n    Integer \u2265 1.\n    Number of total occurrences.\n    MUTUALLY EXCLUSIVE with `until`.\n  */\n\n  \"until\": \"2026-12-31T23:59:59Z\",\n  /*\n    OPTIONAL.\n    UTC date-time only (RFC 3339).\n    MUTUALLY EXCLUSIVE with `count`.\n  */\n\n  \"firstDayOfWeek\": \"mo\",\n  /*\n    OPTIONAL.\n    Allowed values:\n      \"mo\", \"tu\", \"we\", \"th\", \"fr\", \"sa\", \"su\"\n  */\n\n  \"bySecond\": [0, 30],\n  /*\n    OPTIONAL.\n    Each value: 0\u201360\n  */\n\n  \"byMinute\": [0, 15, 30, 45],\n  /*\n    OPTIONAL.\n    Each value: 0\u201359\n  */\n\n  \"byHour\": [9, 12, 18],\n  /*\n    OPTIONAL.\n    Each value: 0\u201323\n  */\n\n  \"byDay\": [\n    \"mo\",\n    \"we\",\n    \"fr\",\n    \"1mo\",\n    \"-1fr\"\n  ],\n  /*\n    OPTIONAL.\n    Allowed values:\n      \"mo\"  \u2013 Monday\n      \"tu\"  \u2013 Tuesday\n      \"we\"  \u2013 Wednesday\n      \"th\"  \u2013 Thursday\n      \"fr\"  \u2013 Friday\n      \"sa\"  \u2013 Saturday\n      \"su\"  \u2013 Sunday\n\n    Positional weekdays (monthly/yearly only):\n      \"1mo\"   \u2192 first Monday\n      \"2tu\"   \u2192 second Tuesday\n      \"-1fr\"  \u2192 last Friday\n  */\n\n  \"byMonthDay\": [1, 15, -1],\n  /*\n    OPTIONAL.\n    Values:\n      1\u201331   \u2192 day of month\n      -1     \u2192 last day of month\n      -2     \u2192 second-to-last day\n  */\n\n  \"byYearDay\": [1, 100, -1],\n  /*\n    OPTIONAL.\n    Values:\n      1\u2013366  \u2192 day of year\n      -1     \u2192 last day of year\n  */\n\n  \"byWeekNo\": [1, 26, 52, -1],\n  /*\n    OPTIONAL.\n    ISO week numbers.\n    Values:\n      1\u201353\n      -1 \u2192 last week of year\n    VALID ONLY when frequency = \"yearly\"\n  */\n\n  \"byMonth\": [1, 6, 12],\n  /*\n    OPTIONAL.\n    Values:\n      1  \u2192 January\n      6  \u2192 June\n      12 \u2192 December\n  */\n\n  \"bySetPosition\": [1, -1]\n  /*\n    OPTIONAL.\n    Selects specific occurrences AFTER all other rules are applied.\n    Values:\n      Positive \u2192 nth occurrence\n      Negative \u2192 nth-from-last occurrence\n  */\n}\n</pre>",
+   "fieldname": "recurrence_rule",
+   "fieldtype": "JSON",
+   "label": "Recurrence Rule",
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "fieldname": "section_break_lpbz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: !doc.use_default_alerts",
+   "description": "Reminders or notifications associated with the event.",
+   "fieldname": "alerts",
+   "fieldtype": "Table",
+   "label": "Alerts",
+   "options": "Event Alert",
+   "read_only_depends_on": "eval: doc.use_default_alerts"
+  },
+  {
+   "fieldname": "section_break_fsjr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dqmn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: !doc.draft",
+   "description": "Indicates whether scheduling messages (invitations, updates, cancellations) should be sent when the event changes.",
+   "fieldname": "send_scheduling_messages",
+   "fieldtype": "Check",
+   "label": "Send Scheduling Messages",
+   "read_only_depends_on": "eval: doc.role == \"Viewer\""
+  },
+  {
+   "description": "The UTC timestamp when the event was created.",
+   "fieldname": "created_utc",
+   "fieldtype": "Data",
+   "label": "Created (UTC)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "The UTC timestamp of the most recent modification to the event.",
+   "fieldname": "updated_utc",
+   "fieldtype": "Data",
+   "label": "Updated (UTC)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.use_default_alerts",
+   "description": "Indicates whether calendar-level default alerts should be applied.",
+   "fieldname": "use_default_alerts",
+   "fieldtype": "Check",
+   "label": "Use Default Alerts",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_kdxa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "recurrence_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_jhsu",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Links to external resources associated with the event.",
+   "fieldname": "links",
+   "fieldtype": "Table",
+   "label": "Links",
+   "options": "Event Link",
+   "read_only_depends_on": "eval: doc.role != \"Organizer\""
+  },
+  {
+   "fieldname": "recurrence_tab",
+   "fieldtype": "Tab Break",
+   "label": "Recurrence"
+  },
+  {
+   "fieldname": "locations_tab",
+   "fieldtype": "Tab Break",
+   "label": "Locations"
+  },
+  {
+   "fieldname": "links_tab",
+   "fieldtype": "Tab Break",
+   "label": "Links"
+  },
+  {
+   "fieldname": "alerts_tab",
+   "fieldtype": "Tab Break",
+   "label": "Alerts"
+  },
+  {
+   "fieldname": "participants_tab",
+   "fieldtype": "Tab Break",
+   "label": "Participants"
+  },
+  {
+   "fieldname": "after",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "After",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "before",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "in_standard_filter": 1,
+   "label": "Before",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "Public",
+   "description": "Controls the visibility of event details to users who have access to the calendar.",
+   "fieldname": "privacy",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Privacy",
+   "options": "\nPublic\nPrivate"
+  },
+  {
+   "fieldname": "column_break_gypo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Organizer",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "role",
+   "fieldtype": "Select",
+   "is_virtual": 1,
+   "label": "Role",
+   "no_copy": 1,
+   "options": "Organizer\nAttendee\nViewer",
+   "reqd": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2026-01-24 13:18:53.536601",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Calendar Event",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "title"
+}
