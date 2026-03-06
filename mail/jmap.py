@@ -2681,6 +2681,31 @@ class JMAPClient:
 	# Sieve Script
 	# -------------------------------
 
+	def sieve_script_create(self, creation_id: str, name: str, blob_id: str, active: bool = False) -> dict:
+		"""Creates a sieve script with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:sieve"],
+			method_calls=[
+				[
+					"SieveScript/set",
+					{
+						"accountId": self.primary_account_id,
+						"create": {
+							creation_id: {
+								"name": name,
+								"blobId": blob_id,
+							}
+						},
+						"onSuccessActivateScript": f"#{creation_id}" if active else None,
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
 	def sieve_script_get(self, ids: list[str] | None = None) -> list[dict]:
 		"""Returns the sieve scripts for the provided sieve script IDs."""
 

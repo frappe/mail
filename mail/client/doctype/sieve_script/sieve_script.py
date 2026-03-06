@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import json
+from uuid import uuid7
 
 import frappe
 from frappe import _
@@ -15,7 +16,8 @@ from mail.utils.validation import has_permission_for_user
 
 class SieveScript(Document):
 	def db_insert(self, *args, **kwargs) -> None:
-		raise NotImplementedError
+		self.id = SieveScript._add_sieve_script(self.user, self._name, self.content, bool(self.active))
+		self.name = f"{self.user}|{self.id}"
 
 	def load_from_db(self) -> "SieveScript":
 		user, id = self.name.split("|")
@@ -79,6 +81,31 @@ class SieveScript(Document):
 	@staticmethod
 	def get_stats(**kwargs) -> dict:
 		return {}
+
+	@classmethod
+	def _add_sieve_script(
+		cls,
+		user: str,
+		name: str,
+		content: str,
+		active: bool = False,
+	) -> str:
+		"""Adds a sieve script for the given user with the specified parameters."""
+
+		has_permission_for_user(user)
+
+		creation_id = str(uuid7())
+		client = get_jmap_client(user)
+		blob = client.upload_blob(content.encode("utf-8"), "application/sieve")
+		response = client.sieve_script_create(creation_id, name, blob["blobId"], active)
+
+		title = _("Sieve Script Creation Error")
+		if response.get("created"):
+			return response["created"][creation_id]["id"]
+		elif response.get("notCreated"):
+			frappe.throw(_(response["notCreated"][creation_id]["description"]), title=title)
+		else:
+			frappe.throw(_(response["description"]), title=title)
 
 	@classmethod
 	def _fetch_sieve_scripts(
@@ -159,6 +186,16 @@ class SieveScript(Document):
 			)
 
 	@classmethod
+	def _update_sieve_script(
+		cls,
+		user: str,
+		id: str,
+		content: str,
+		active: bool = False,
+	) -> None:
+		pass
+
+	@classmethod
 	def _delete_sieve_scripts(cls, user: str, ids: list[str]) -> None:
 		"""Deletes sieve scripts for the given list of IDs and user."""
 
@@ -210,16 +247,6 @@ def bulk_delete(names: str | list[str]) -> None:
 		SieveScript._delete_sieve_scripts(user, ids)
 
 	frappe.msgprint(_("Sieve Scripts deleted successfully."), alert=True)
-
-
-@frappe.whitelist()
-def add_sieve_script() -> str:
-	pass
-
-
-@frappe.whitelist()
-def update_sieve_script() -> None:
-	pass
 
 
 def format_sieve_script(user: str, script: dict) -> dict:
