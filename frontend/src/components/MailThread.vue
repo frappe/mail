@@ -570,7 +570,7 @@ const replyAll = (mail: Mail) =>
 
 const forward = (mail: Mail) =>
 	createLocalDraft(mail, {
-		subject: `Fwd: ${mail.subject}`,
+		subject: `Fwd: ${mail.subject || ''}`,
 		html_body: getForwardedContent(mail),
 		attachments: mail.attachments || [],
 		forwarded_from_id: mail.id,

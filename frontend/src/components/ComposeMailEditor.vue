@@ -589,7 +589,12 @@ const CustomImageExtension = ImageExtension.extend({
 				default: null,
 				parseHTML: (element) => element.getAttribute('data-cid'),
 				renderHTML: (attributes) => {
-					if (!attributes['data-cid']) attributes['data-cid'] = randomString(10)
+					const src = attributes.src || ''
+					if (
+						!attributes['data-cid'] &&
+						(src.startsWith('/files') || src.startsWith('/private/files'))
+					)
+						attributes['data-cid'] = randomString(10)
 					return { 'data-cid': attributes['data-cid'] }
 				},
 			},
