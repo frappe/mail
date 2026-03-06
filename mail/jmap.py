@@ -2761,6 +2761,7 @@ class JMAPClient:
 		"""Query sieve scripts in batches until reaching the limit."""
 
 		_filter = {}
+		filter = filter or {}
 		for key in ["name", "isActive"]:
 			if value := filter.get(key):
 				_filter[key] = value
