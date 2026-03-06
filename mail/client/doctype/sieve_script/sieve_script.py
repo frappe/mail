@@ -21,8 +21,7 @@ class SieveScript(Document):
 
 	def load_from_db(self) -> "SieveScript":
 		user, id = self.name.split("|")
-		frappe.flags.download_sieve_script_content = True
-		if scripts := SieveScript._get_sieve_scripts(user, [id]):
+		if scripts := SieveScript._get_sieve_scripts(user, [id], download_content=True):
 			return super(Document, self).__init__(scripts[0])
 
 		frappe.throw(
@@ -148,7 +147,7 @@ class SieveScript(Document):
 		return scripts[:limit], total
 
 	@classmethod
-	def _get_sieve_scripts(cls, user: str, ids: list[str]) -> list[dict]:
+	def _get_sieve_scripts(cls, user: str, ids: list[str], download_content: bool = False) -> list[dict]:
 		"""Returns a list of sieve scripts for the provided IDs in the same order as ids."""
 
 		has_permission_for_user(user)
@@ -158,7 +157,7 @@ class SieveScript(Document):
 		client = get_jmap_client(user)
 		scripts = client.sieve_script_get(ids)
 
-		if frappe.flags.download_sieve_script_content:
+		if download_content:
 			blobs = [(s["blobId"], None) for s in scripts if s["blobId"]]
 			data = client.download_blobs_concurrently(blobs)
 
