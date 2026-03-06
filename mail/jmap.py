@@ -2678,6 +2678,151 @@ class JMAPClient:
 		return response["methodResponses"][0][1]
 
 	# -------------------------------
+	# Sieve Script
+	# -------------------------------
+
+	def sieve_script_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the sieve scripts for the provided sieve script IDs."""
+
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:sieve"],
+				method_calls=[
+					[
+						"SieveScript/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			scripts = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				scripts.extend(fetch(ids_batch))
+			return scripts
+
+		return fetch(ids)
+
+	def sieve_script_update(self, id: str, name: str, active: bool = False) -> dict:
+		"""Updates the sieve script with the given parameters."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:sieve"],
+			method_calls=[
+				[
+					"SieveScript/set",
+					{
+						"accountId": self.primary_account_id,
+						"update": {
+							id: {
+								"name": name,
+								"isActive": active or False,
+							}
+						},
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	def sieve_script_delete(self, ids: list[str]) -> dict:
+		"""Destroys the sieve scripts with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:sieve"],
+				method_calls=[
+					[
+						"SieveScript/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
+	def sieve_script_query(self, filter: dict | None = None, position: int = 0, limit: int = 50) -> dict:
+		"""Query sieve scripts in batches until reaching the limit."""
+
+		_filter = {}
+		for key in ["name", "isActive"]:
+			if value := filter.get(key):
+				_filter[key] = value
+
+		ids = []
+		total = None
+		batch_size = min(limit, self.max_objects_in_get)
+
+		while len(ids) < limit:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:sieve"],
+				method_calls=[
+					[
+						"SieveScript/query",
+						{
+							"accountId": self.primary_account_id,
+							"filter": _filter,
+							"position": position,
+							"limit": batch_size,
+							"calculateTotal": True if total is None else False,
+						},
+						"0",
+					]
+				],
+			)
+			result = response["methodResponses"][0][1]
+
+			if total is None:
+				total = result["total"]
+
+			_ids = result["ids"]
+			if not _ids:
+				break
+
+			ids.extend(_ids)
+			position += len(_ids)
+
+			if len(_ids) < batch_size:
+				break
+
+		return {"ids": ids[:limit], "total": total}
+
+	def sieve_script_validate(self, blob_id: str) -> dict:
+		"""Validates the sieve script content in the provided blob ID."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:sieve"],
+			method_calls=[
+				[
+					"SieveScript/validate",
+					{
+						"accountId": self.primary_account_id,
+						"blobId": blob_id,
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	# -------------------------------
 	# Blob
 	# -------------------------------
 
