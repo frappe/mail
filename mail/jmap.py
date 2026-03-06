@@ -2791,8 +2791,8 @@ class JMAPClient:
 		_filter = {}
 		filter = filter or {}
 		for key in ["name", "isActive"]:
-			if value := filter.get(key):
-				_filter[key] = value
+			if key in filter and filter[key] is not None:
+				_filter[key] = filter[key]
 
 		ids = []
 		total = None
