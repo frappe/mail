@@ -96,6 +96,9 @@ class SieveScript(Document):
 	) -> str:
 		"""Adds a sieve script for the given user with the specified parameters."""
 
+		if not content or not content.strip():
+			frappe.throw(_("Sieve script content cannot be empty."))
+
 		has_permission_for_user(user)
 
 		creation_id = str(uuid7())
@@ -174,7 +177,7 @@ class SieveScript(Document):
 	def _validate_sieve_script(cls, user: str, content: str) -> None:
 		"""Validates a sieve script for the given user."""
 
-		if not content.strip():
+		if not content or not content.strip():
 			frappe.throw(_("Sieve script content cannot be empty."))
 
 		has_permission_for_user(user)
@@ -200,7 +203,7 @@ class SieveScript(Document):
 	) -> None:
 		"""Updates a sieve script for the given user and ID with the specified parameters."""
 
-		if not content.strip():
+		if not content or not content.strip():
 			frappe.throw(_("Sieve script content cannot be empty."))
 
 		has_permission_for_user(user)
