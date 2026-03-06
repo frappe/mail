@@ -295,7 +295,7 @@ def bulk_delete(names: str | list[str]) -> None:
 
 
 def format_sieve_script(user: str, script: dict) -> dict:
-	"""Format the sieve script for display.z"""
+	"""Format the sieve script for display."""
 
 	read_only = script["name"].lower() == "vacation"
 
