@@ -236,3 +236,10 @@ def format_sieve_script(user: str, script: dict) -> dict:
 		"creation": today(),
 		"modified": today(),
 	}
+
+
+def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
+	if doc.doctype != "Sieve Script":
+		return False
+
+	return has_permission_for_user(doc.user, raise_exception=False)
