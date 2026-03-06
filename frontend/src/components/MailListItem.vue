@@ -35,6 +35,7 @@
 			<Avatar
 				v-else
 				:label="getFirstAlphabet(mail.from_name) || getFirstAlphabet(mail.from_email)"
+				:image="mail.user_image"
 				:size="isFullWidth ? 'lg' : '2xl'"
 				class="border"
 				@click.stop.prevent="emit('setSelected', true)"

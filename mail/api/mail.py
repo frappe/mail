@@ -50,6 +50,49 @@ def get_user_mailboxes(user) -> list[dict]:
 	return frappe.get_all("Mailbox", filters={"user": user})
 
 
+def get_avatar_url(email: str) -> str:
+	"""Returns the avatar URL for the given email."""
+
+	return f"/api/method/mail.api.mail.get_avatar?email={email}"
+
+
+def add_user_images_to_emails(emails: list[dict], unique_senders: set[str]) -> list[dict]:
+	"""Appends avatar URLs to the given list of emails."""
+
+	user_images = {}
+
+	user_data = frappe.get_all(
+		"User", filters={"name": ["in", list(unique_senders)]}, fields=["name", "user_image"]
+	)
+	user_image_map = {u["name"]: u["user_image"] for u in user_data if u.get("user_image")}
+
+	if emails_without_images := unique_senders - set(user_image_map.keys()):
+		identity_data = frappe.get_all(
+			"Identity", filters={"email": ["in", list(emails_without_images)]}, fields=["email", "user"]
+		)
+
+		if identity_map := {i["email"]: i["user"] for i in identity_data}:
+			identity_users = list(set(identity_map.values()))
+			identity_user_data = frappe.get_all(
+				"User", filters={"name": ["in", identity_users]}, fields=["name", "user_image"]
+			)
+			identity_user_image_map = {
+				u["name"]: u["user_image"] for u in identity_user_data if u.get("user_image")
+			}
+
+			for email, user in identity_map.items():
+				if user_img := identity_user_image_map.get(user):
+					user_image_map[email] = user_img
+
+	for email in unique_senders:
+		user_images[email] = user_image_map.get(email) or get_avatar_url(email)
+
+	for email in emails:
+		email["user_image"] = user_images.get(email["from_email"])
+
+	return emails
+
+
 @frappe.whitelist()
 def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 	"""Returns threads from the selected mailbox for the current user."""
@@ -82,14 +125,28 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 	else:
 		filter = {"operator": "AND", "conditions": conditions}
 
-	return [serialize_thread(thread) for thread in fetch_threads(user, filter, 0, limit)]
+	threads = []
+	unique_senders = set()
+	for thread in fetch_threads(user, filter, 0, limit):
+		serialized = serialize_thread(thread)
+		threads.append(serialized)
+		unique_senders.add(serialized["from_email"])
+
+	return add_user_images_to_emails(threads, unique_senders)
 
 
 @frappe.whitelist()
 def get_thread(thread_id: str) -> list[dict]:
 	"""Returns mails for the given thread id."""
 
-	return [serialize_mail(mail) for mail in fetch_thread(frappe.session.user, thread_id)]
+	mails = []
+	unique_senders = set()
+	for mail in fetch_thread(frappe.session.user, thread_id):
+		serialized = serialize_mail(mail)
+		mails.append(serialized)
+		unique_senders.add(serialized["from_email"])
+
+	return add_user_images_to_emails(mails, unique_senders)
 
 
 @frappe.whitelist()
