@@ -118,7 +118,7 @@ class SieveScript(Document):
 		filter: dict | None = None,
 		position: int = 0,
 		limit: int = 50,
-	) -> list:
+	) -> tuple[list, int]:
 		"""Returns a list of sieve scripts for the given user."""
 
 		has_permission_for_user(user)
