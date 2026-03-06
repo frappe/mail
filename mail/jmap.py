@@ -864,17 +864,15 @@ class JMAPClient:
 				call_id += 1
 
 		else:
-			method_calls.append(
-				[
-					"Email/set",
-					{
-						"accountId": self.primary_account_id,
-						"create": {draft_ref: build_draft_payload(draft_mailbox_id)},
-						"destroy": [existing_id] if existing_id else None,
-					},
-					str(call_id),
-				]
-			)
+			payload = {
+				"accountId": self.primary_account_id,
+				"create": {draft_ref: build_draft_payload(draft_mailbox_id)},
+			}
+
+			if existing_id:
+				payload["destroy"] = [existing_id]
+
+			method_calls.append(["Email/set", payload, str(call_id)])
 			call_id += 1
 
 		if save_as_draft:
@@ -1450,27 +1448,25 @@ class JMAPClient:
 	) -> dict:
 		"""Creates a address book with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"create": {
+				creation_id: {
+					"name": name,
+					"description": description or None,
+					"sortOrder": sort_order or 0,
+					"isSubscribed": subscribed or False,
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = f"#{creation_id}"
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:contacts"],
-			method_calls=[
-				[
-					"AddressBook/set",
-					{
-						"accountId": self.primary_account_id,
-						"create": {
-							creation_id: {
-								"name": name,
-								"description": description or None,
-								"sortOrder": sort_order or 0,
-								"isSubscribed": subscribed or False,
-							}
-						},
-						"onSuccessSetIsDefault": f"#{creation_id}" if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:contacts"], method_calls=[["AddressBook/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def address_book_get(self, ids: list[str] | None = None) -> list[dict]:
@@ -1511,27 +1507,25 @@ class JMAPClient:
 	) -> dict:
 		"""Updates the address book with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"update": {
+				id: {
+					"name": name,
+					"description": description or None,
+					"sortOrder": sort_order or 0,
+					"isSubscribed": subscribed or False,
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = id
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:contacts"],
-			method_calls=[
-				[
-					"AddressBook/set",
-					{
-						"accountId": self.primary_account_id,
-						"update": {
-							id: {
-								"name": name,
-								"description": description or None,
-								"sortOrder": sort_order or 0,
-								"isSubscribed": subscribed or False,
-							}
-						},
-						"onSuccessSetIsDefault": id if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:contacts"], method_calls=[["AddressBook/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def address_book_delete(self, ids: list[str], remove_contents: bool = False) -> dict:
@@ -1880,31 +1874,29 @@ class JMAPClient:
 	) -> dict:
 		"""Creates a calendar book with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"create": {
+				creation_id: {
+					"name": name,
+					"color": color or None,
+					"description": description or None,
+					"sortOrder": sort_order or 0,
+					"includeInAvailability": include_in_availability,
+					"timeZone": time_zone or None,
+					"isSubscribed": subscribed or False,
+					"isVisible": visible or True,
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = f"#{creation_id}"
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:calendars"],
-			method_calls=[
-				[
-					"Calendar/set",
-					{
-						"accountId": self.primary_account_id,
-						"create": {
-							creation_id: {
-								"name": name,
-								"color": color or None,
-								"description": description or None,
-								"sortOrder": sort_order or 0,
-								"includeInAvailability": include_in_availability,
-								"timeZone": time_zone or None,
-								"isSubscribed": subscribed or False,
-								"isVisible": visible or True,
-							}
-						},
-						"onSuccessSetIsDefault": f"#{creation_id}" if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:calendars"], method_calls=[["Calendar/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def calendar_get(self, ids: list[str] | None = None) -> list[dict]:
@@ -1949,31 +1941,29 @@ class JMAPClient:
 	) -> dict:
 		"""Updates the calendar with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"update": {
+				id: {
+					"name": name,
+					"color": color or None,
+					"description": description or None,
+					"sortOrder": sort_order or 0,
+					"includeInAvailability": include_in_availability,
+					"timeZone": time_zone or None,
+					"isSubscribed": subscribed or False,
+					"isVisible": visible or False,
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = id
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:calendars"],
-			method_calls=[
-				[
-					"Calendar/set",
-					{
-						"accountId": self.primary_account_id,
-						"update": {
-							id: {
-								"name": name,
-								"color": color or None,
-								"description": description or None,
-								"sortOrder": sort_order or 0,
-								"includeInAvailability": include_in_availability,
-								"timeZone": time_zone or None,
-								"isSubscribed": subscribed or False,
-								"isVisible": visible or False,
-							}
-						},
-						"onSuccessSetIsDefault": id if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:calendars"], method_calls=[["Calendar/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def calendar_delete(self, ids: list[str], remove_events: bool = False) -> dict:
@@ -2375,25 +2365,23 @@ class JMAPClient:
 	) -> dict:
 		"""Creates a participant identity with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"create": {
+				creation_id: {
+					"name": name,
+					"calendarAddress": f"mailto:{email}",
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = f"#{creation_id}"
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:calendars"],
-			method_calls=[
-				[
-					"ParticipantIdentity/set",
-					{
-						"accountId": self.primary_account_id,
-						"create": {
-							creation_id: {
-								"name": name,
-								"calendarAddress": f"mailto:{email}",
-							}
-						},
-						"onSuccessSetIsDefault": f"#{creation_id}" if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:calendars"], method_calls=[["ParticipantIdentity/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def participant_identity_get(self, ids: list[str] | None = None) -> list[dict]:
@@ -2432,25 +2420,23 @@ class JMAPClient:
 	) -> dict:
 		"""Updates the participant identity with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"update": {
+				id: {
+					"name": name,
+					"calendarAddress": f"mailto:{email}",
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = id
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:calendars"],
-			method_calls=[
-				[
-					"ParticipantIdentity/set",
-					{
-						"accountId": self.primary_account_id,
-						"update": {
-							id: {
-								"name": name,
-								"calendarAddress": f"mailto:{email}",
-							}
-						},
-						"onSuccessSetIsDefault": id if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:calendars"], method_calls=[["ParticipantIdentity/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def participant_identity_delete(self, ids: list[str]) -> dict:
@@ -2684,17 +2670,15 @@ class JMAPClient:
 	def sieve_script_create(self, creation_id: str, name: str, blob_id: str, active: bool = False) -> dict:
 		"""Creates a sieve script with the given parameters."""
 
-		payload = (
-			{
-				"accountId": self.primary_account_id,
-				"create": {
-					creation_id: {
-						"name": name,
-						"blobId": blob_id,
-					}
-				},
+		payload = {
+			"accountId": self.primary_account_id,
+			"create": {
+				creation_id: {
+					"name": name,
+					"blobId": blob_id,
+				}
 			},
-		)
+		}
 
 		if active:
 			payload["onSuccessActivateScript"] = f"#{creation_id}"
@@ -2743,6 +2727,9 @@ class JMAPClient:
 		self, id: str, name: str, blob_id: str, active: bool = False, deactivate: bool = False
 	) -> dict:
 		"""Updates the sieve script with the given parameters."""
+
+		if active and deactivate:
+			frappe.throw(_("A sieve script cannot be activated and deactivated at the same time."))
 
 		payload = {
 			"accountId": self.primary_account_id,

@@ -290,6 +290,8 @@ def bulk_delete(names: str | list[str]) -> None:
 def format_sieve_script(user: str, script: dict) -> dict:
 	"""Format the sieve script for display.z"""
 
+	read_only = script["name"].lower() == "vacation"
+
 	return {
 		"name": f"{user}|{script['id']}",
 		"user": user,
@@ -298,6 +300,7 @@ def format_sieve_script(user: str, script: dict) -> dict:
 		"active": cint(script["isActive"]),
 		"blob_id": script["blobId"],
 		"content": script.get("content") or "",
+		"read_only": read_only,
 		"creation": today(),
 		"modified": today(),
 	}
