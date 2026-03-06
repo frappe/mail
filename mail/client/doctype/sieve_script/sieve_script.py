@@ -31,10 +31,15 @@ class SieveScript(Document):
 		)
 
 	def db_update(self) -> None:
-		raise NotImplementedError
+		SieveScript._update_sieve_script(self.user, self.id, self._name, self.content, bool(self.active))
+		self.reload()
 
 	def delete(self) -> None:
 		user, id = self.name.split("|")
+
+		if self.active:
+			frappe.throw(_("Cannot delete an active sieve script. Please deactivate it first."))
+
 		SieveScript._delete_sieve_scripts(user, [id])
 
 	@staticmethod
@@ -190,10 +195,43 @@ class SieveScript(Document):
 		cls,
 		user: str,
 		id: str,
+		name: str,
 		content: str,
 		active: bool = False,
 	) -> None:
-		pass
+		"""Updates a sieve script for the given user and ID with the specified parameters."""
+
+		if not content.strip():
+			frappe.throw(_("Sieve script content cannot be empty."))
+
+		has_permission_for_user(user)
+
+		client = get_jmap_client(user)
+		scripts = client.sieve_script_get([id])
+
+		if not scripts:
+			frappe.throw(
+				_("Sieve Script with ID {0} not found.").format(frappe.bold(id)),
+				title=_("Sieve Script Not Found"),
+			)
+
+		script = scripts[0]
+		blob_id = script["blobId"]
+		current_content = client.download_blob(blob_id).decode("utf-8")
+
+		if content != current_content:
+			new_blob = client.upload_blob(content.encode("utf-8"), "application/sieve")
+			blob_id = new_blob["blobId"]
+
+		deactivate = script["isActive"] and not active
+		response = client.sieve_script_update(id, name, blob_id, active, deactivate)
+
+		title = _("Sieve Script Update Error")
+		if not response.get("updated"):
+			if response.get("notUpdated"):
+				frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
+			else:
+				frappe.throw(_(response["description"]), title=title)
 
 	@classmethod
 	def _delete_sieve_scripts(cls, user: str, ids: list[str]) -> None:

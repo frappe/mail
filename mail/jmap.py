@@ -2684,21 +2684,27 @@ class JMAPClient:
 	def sieve_script_create(self, creation_id: str, name: str, blob_id: str, active: bool = False) -> dict:
 		"""Creates a sieve script with the given parameters."""
 
+		payload = (
+			{
+				"accountId": self.primary_account_id,
+				"create": {
+					creation_id: {
+						"name": name,
+						"blobId": blob_id,
+					}
+				},
+			},
+		)
+
+		if active:
+			payload["onSuccessActivateScript"] = f"#{creation_id}"
+
 		response = self._make_request(
 			using=["urn:ietf:params:jmap:sieve"],
 			method_calls=[
 				[
 					"SieveScript/set",
-					{
-						"accountId": self.primary_account_id,
-						"create": {
-							creation_id: {
-								"name": name,
-								"blobId": blob_id,
-							}
-						},
-						"onSuccessActivateScript": f"#{creation_id}" if active else None,
-					},
+					payload,
 					"0",
 				]
 			],
@@ -2733,23 +2739,33 @@ class JMAPClient:
 
 		return fetch(ids)
 
-	def sieve_script_update(self, id: str, name: str, active: bool = False) -> dict:
+	def sieve_script_update(
+		self, id: str, name: str, blob_id: str, active: bool = False, deactivate: bool = False
+	) -> dict:
 		"""Updates the sieve script with the given parameters."""
+
+		payload = {
+			"accountId": self.primary_account_id,
+			"update": {
+				id: {
+					"name": name,
+					"blobId": blob_id,
+				}
+			},
+		}
+
+		if active:
+			payload["onSuccessActivateScript"] = id
+
+		if deactivate:
+			payload["onSuccessDeactivateScript"] = True
 
 		response = self._make_request(
 			using=["urn:ietf:params:jmap:sieve"],
 			method_calls=[
 				[
 					"SieveScript/set",
-					{
-						"accountId": self.primary_account_id,
-						"update": {
-							id: {
-								"name": name,
-								"isActive": active or False,
-							}
-						},
-					},
+					payload,
 					"0",
 				]
 			],
