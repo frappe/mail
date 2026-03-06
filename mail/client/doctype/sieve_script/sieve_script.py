@@ -251,6 +251,13 @@ class SieveScript(Document):
 				title=_("Sieve Script Deletion Error"),
 			)
 
+	def validate(self) -> None:
+		if self.read_only:
+			frappe.throw(
+				_("The '{0}' sieve script cannot be modified.").format(self._name),
+				title=_("Read-Only Sieve Script"),
+			)
+
 	@frappe.whitelist()
 	def validate_script(self) -> None:
 		"""Validates the sieve script content."""
