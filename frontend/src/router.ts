@@ -158,6 +158,12 @@ const routes = [
 		props: true,
 		meta: { isDashboard: true },
 	},
+	{
+		path: '/calendar',
+		name: 'Calendar',
+		component: () => import('@/pages/calendar/CalendarView.vue'),
+		meta: { noLayout: true },
+	},
 ]
 
 const router = createRouter({ history: createWebHistory('/mail'), routes })
