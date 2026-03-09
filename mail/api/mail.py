@@ -24,6 +24,7 @@ from mail.client.doctype.mail_message.mail_message import (
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_mailbox_id_by_role
 from mail.utils import convert_html_to_text
+from mail.utils.cache import get_user_emails
 from mail.utils.user import has_role
 
 AVATAR_CACHE_TTL = 60 * 60 * 24
@@ -56,17 +57,56 @@ def get_avatar_url(email: str) -> str:
 	return f"/api/method/mail.api.mail.get_avatar?email={email}"
 
 
-def add_user_images_to_emails(mails: list[dict], unique_senders: set[str]) -> list[dict]:
+def add_user_images_to_emails(mails: list[dict]) -> list[dict]:
 	"""Append avatar URLs to the given list of emails."""
 
-	user_data = frappe.db.get_all(
-		"User", filters={"name": ["in", list(unique_senders)]}, fields=["name", "user_image"]
-	)
-	user_image_map = {u["name"]: u["user_image"] for u in user_data if u.user_image}
-	images = {s: user_image_map.get(s) or get_avatar_url(s) for s in unique_senders}
+	if not mails:
+		return mails
+
+	email_map: dict[str, str] = {}
+	rcpt_order = {"To": 0, "Cc": 1, "Bcc": 2}
+	user_emails = {e.lower() for e in get_user_emails(frappe.session.user)}
 
 	for mail in mails:
-		mail["user_image"] = images.get(mail.get("from_email"))
+		name = mail["name"]
+		if not name:
+			continue
+
+		from_email = (mail.get("from_email") or "").lower()
+
+		if not from_email:
+			continue
+
+		selected_email = from_email
+
+		is_thread = "id" not in mail and "thread_id" in mail
+		if is_thread and from_email in user_emails:
+			recipients = sorted(mail["recipients"], key=lambda r: rcpt_order[r["type"] or 99])
+
+			for rcpt in recipients:
+				rcpt_email = (rcpt.get("email") or "").lower()
+				if rcpt_email and rcpt_email not in user_emails:
+					selected_email = rcpt_email
+					break
+
+		email_map[name] = selected_email
+
+	unique_emails = {e for e in email_map.values() if e}
+
+	user_image_map = {}
+	if unique_emails:
+		user_data = frappe.db.get_all(
+			"User",
+			filters={"name": ["in", list(unique_emails)]},
+			fields=["name", "user_image"],
+		)
+		user_image_map = {u["name"]: u["user_image"] for u in user_data if u.get("user_image")}
+
+	images = {email: user_image_map.get(email) or get_avatar_url(email) for email in unique_emails}
+
+	for mail in mails:
+		email = email_map.get(mail["name"])
+		mail["user_image"] = images.get(email) if email else None
 
 	return mails
 
@@ -103,28 +143,17 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 	else:
 		filter = {"operator": "AND", "conditions": conditions}
 
-	threads = []
-	unique_senders = set()
-	for thread in fetch_threads(user, filter, 0, limit):
-		serialized = serialize_thread(thread)
-		threads.append(serialized)
-		unique_senders.add(serialized["from_email"])
+	threads = [serialize_thread(t) for t in fetch_threads(user, filter, 0, limit)]
 
-	return add_user_images_to_emails(threads, unique_senders)
+	return add_user_images_to_emails(threads)
 
 
 @frappe.whitelist()
 def get_thread(thread_id: str) -> list[dict]:
 	"""Returns mails for the given thread id."""
 
-	mails = []
-	unique_senders = set()
-	for mail in fetch_thread(frappe.session.user, thread_id):
-		serialized = serialize_mail(mail)
-		mails.append(serialized)
-		unique_senders.add(serialized["from_email"])
-
-	return add_user_images_to_emails(mails, unique_senders)
+	mails = [serialize_mail(m) for m in fetch_thread(frappe.session.user, thread_id)]
+	return add_user_images_to_emails(mails)
 
 
 @frappe.whitelist()
@@ -512,7 +541,7 @@ def parse_date_to_utc_iso(date_str: str) -> str:
 
 
 @frappe.whitelist()
-def get_avatar(email: str, size: int = 128, strict: bool = True) -> None:
+def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 	"""Fetch and return avatar for the given email."""
 
 	if not email:
