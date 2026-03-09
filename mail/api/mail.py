@@ -512,7 +512,7 @@ def parse_date_to_utc_iso(date_str: str) -> str:
 
 
 @frappe.whitelist()
-def get_avatar(email: str, size: int = 128) -> None:
+def get_avatar(email: str, size: int = 128, strict: bool = True) -> None:
 	"""Fetch and return avatar for the given email."""
 
 	if not email:
@@ -523,11 +523,11 @@ def get_avatar(email: str, size: int = 128) -> None:
 
 	cache_key = f"avatar:{email_hash}:{size}"
 
-	# 1. Try to get avatar from cache
+	# 1. Try cache
 	avatar = frappe.cache.get_value(cache_key)
 
 	if not avatar:
-		# 2. Try to fetch from Gravatar
+		# 2. Try Gravatar
 		try:
 			res = requests.get(
 				f"https://secure.gravatar.com/avatar/{email_hash}", params={"d": "404", "s": size}, timeout=3
@@ -537,8 +537,11 @@ def get_avatar(email: str, size: int = 128) -> None:
 		except requests.RequestException:
 			pass
 
-		# 3. Generate identicon if not found in Gravatar
+		# 3. Handle missing gravatar
 		if not avatar:
+			if strict:
+				frappe.throw(_("Avatar not found."), frappe.DoesNotExistError)
+
 			letter = email[0].upper()
 
 			bg = "#00000000"
