@@ -1,12 +1,12 @@
-import base64
 import hashlib
+import io
 from datetime import UTC, datetime
 
 import frappe
 import requests
 from frappe import _
-from frappe.utils import format_datetime, get_gravatar_url, random_string
-from frappe.utils.identicon import Identicon
+from frappe.utils import format_datetime, random_string
+from PIL import Image, ImageDraw, ImageFont
 
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
@@ -56,41 +56,19 @@ def get_avatar_url(email: str) -> str:
 	return f"/api/method/mail.api.mail.get_avatar?email={email}"
 
 
-def add_user_images_to_emails(emails: list[dict], unique_senders: set[str]) -> list[dict]:
-	"""Appends avatar URLs to the given list of emails."""
+def add_user_images_to_emails(mails: list[dict], unique_senders: set[str]) -> list[dict]:
+	"""Append avatar URLs to the given list of emails."""
 
-	user_images = {}
-
-	user_data = frappe.get_all(
+	user_data = frappe.db.get_all(
 		"User", filters={"name": ["in", list(unique_senders)]}, fields=["name", "user_image"]
 	)
-	user_image_map = {u["name"]: u["user_image"] for u in user_data if u.get("user_image")}
+	user_image_map = {u["name"]: u["user_image"] for u in user_data if u.user_image}
+	images = {s: user_image_map.get(s) or get_avatar_url(s) for s in unique_senders}
 
-	if emails_without_images := unique_senders - set(user_image_map.keys()):
-		identity_data = frappe.get_all(
-			"Identity", filters={"email": ["in", list(emails_without_images)]}, fields=["email", "user"]
-		)
+	for mail in mails:
+		mail["user_image"] = images.get(mail.get("from_email"))
 
-		if identity_map := {i["email"]: i["user"] for i in identity_data}:
-			identity_users = list(set(identity_map.values()))
-			identity_user_data = frappe.get_all(
-				"User", filters={"name": ["in", identity_users]}, fields=["name", "user_image"]
-			)
-			identity_user_image_map = {
-				u["name"]: u["user_image"] for u in identity_user_data if u.get("user_image")
-			}
-
-			for email, user in identity_map.items():
-				if user_img := identity_user_image_map.get(user):
-					user_image_map[email] = user_img
-
-	for email in unique_senders:
-		user_images[email] = user_image_map.get(email) or get_avatar_url(email)
-
-	for email in emails:
-		email["user_image"] = user_images.get(email["from_email"])
-
-	return emails
+	return mails
 
 
 @frappe.whitelist()
@@ -534,8 +512,8 @@ def parse_date_to_utc_iso(date_str: str) -> str:
 
 
 @frappe.whitelist()
-def get_avatar(email: str) -> None:
-	"""Fetches and returns the avatar for the given email."""
+def get_avatar(email: str, size: int = 128) -> None:
+	"""Fetch and return avatar for the given email."""
 
 	if not email:
 		frappe.throw(_("Email is required to fetch avatar."))
@@ -543,24 +521,42 @@ def get_avatar(email: str) -> None:
 	email = email.strip().lower()
 	email_hash = hashlib.md5(email.encode()).hexdigest()
 
-	cache_key = f"avatar:{email_hash}"
+	cache_key = f"avatar:{email_hash}:{size}"
+
+	# 1. Try to get avatar from cache
 	avatar = frappe.cache.get_value(cache_key)
 
 	if not avatar:
-		gravatar_url = get_gravatar_url(email)
-
+		# 2. Try to fetch from Gravatar
 		try:
-			response = requests.get(gravatar_url, timeout=5)
-			if response.ok:
-				avatar = response.content
-
+			res = requests.get(
+				f"https://secure.gravatar.com/avatar/{email_hash}", params={"d": "404", "s": size}, timeout=3
+			)
+			if res.ok:
+				avatar = res.content
 		except requests.RequestException:
 			pass
 
+		# 3. Generate identicon if not found in Gravatar
 		if not avatar:
-			data = Identicon(email).base64()
-			avatar = base64.b64decode(data.split(",")[1])
+			letter = email[0].upper()
 
+			bg = "#00000000"
+			text = "#7C7C7C"
+
+			img = Image.new("RGBA", (size, size), bg)
+			draw = ImageDraw.Draw(img)
+
+			font_size = int(size * 0.6)
+			font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+
+			draw.text((size / 2, size / 2), letter, fill=text, font=font, anchor="mm")
+
+			buffer = io.BytesIO()
+			img.save(buffer, format="PNG")
+			avatar = buffer.getvalue()
+
+		# Cache the avatar for future requests
 		frappe.cache.set_value(cache_key, avatar, expires_in_sec=AVATAR_CACHE_TTL)
 
 	frappe.local.response.filename = f"{email_hash}.png"
