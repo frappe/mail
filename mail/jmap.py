@@ -1,5 +1,6 @@
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from functools import cached_property
 from typing import Any, Literal
 from urllib.parse import urljoin
@@ -11,9 +12,96 @@ from frappe import _
 from frappe.utils import create_batch
 
 from mail import __version__
+from mail.utils import batch_dict
 from mail.utils.dt import convert_to_utc, utcnow
 from mail.utils.user import has_role
 from mail.utils.validation import has_permission_for_user
+
+
+@dataclass
+class DataSourceObject:
+	"""
+	Dataclass to represent a data source object for uploads.
+	Exactly one of `as_text`, `as_base64`, or `blob_id` must be provided.
+
+	Parameters:
+	- as_text: The data as a UTF-8 string.
+	- as_base64: The data as a Base64-encoded string.
+	- blob_id: The ID of the blob.
+	- offset: The offset within the blob.
+	- length: The length of the data within the blob.
+	"""
+
+	as_text: str | None = None
+	as_base64: str | None = None
+	blob_id: str | None = None
+	offset: int | None = None
+	length: int | None = None
+
+	def __post_init__(self) -> None:
+		inline_count = sum(v is not None for v in (self.as_text, self.as_base64))
+		blob_used = self.blob_id is not None
+
+		if blob_used and inline_count > 0:
+			raise ValueError("DataSourceObject cannot have both blob_id and inline data.")
+
+		if not blob_used and inline_count != 1:
+			raise ValueError(
+				"DataSourceObject must have exactly one of as_text or as_base64 when blob_id is not used."
+			)
+
+		if blob_used:
+			if self.offset is not None and self.offset < 0:
+				raise ValueError("Offset must be a non-negative integer.")
+
+			if self.length is not None and self.length < 0:
+				raise ValueError("Length must be a non-negative integer.")
+
+			if self.offset is None:
+				self.offset = 0
+
+	def to_json(self) -> dict:
+		"""Convert the DataSourceObject to a JSON-serializable dictionary."""
+
+		if self.as_text is not None:
+			return {"data:asText": self.as_text}
+
+		if self.as_base64 is not None:
+			return {"data:asBase64": self.as_base64}
+
+		obj = {"blobId": self.blob_id}
+
+		if self.offset is not None:
+			obj["offset"] = self.offset
+
+		if self.length is not None:
+			obj["length"] = self.length
+
+		return obj
+
+
+@dataclass
+class UploadObject:
+	"""
+	Dataclass to represent an upload object for Blob/upload.
+
+	Parameters:
+	- data: A list of DataSourceObject instances representing the data to be uploaded.
+	- type: The MIME type of the data being uploaded (e.g., "text/plain", "image/jpeg").
+	"""
+
+	data: list[DataSourceObject]
+	type: str | None = None
+
+	def to_json(self) -> dict:
+		"""Convert the UploadObject to a JSON-serializable dictionary."""
+
+		obj = {"data": [d.to_json() for d in self.data]}
+
+		if self.type is not None:
+			obj["type"] = self.type
+
+		return obj
 
 
 class JMAPClient:
@@ -864,17 +952,15 @@ class JMAPClient:
 				call_id += 1
 
 		else:
-			method_calls.append(
-				[
-					"Email/set",
-					{
-						"accountId": self.primary_account_id,
-						"create": {draft_ref: build_draft_payload(draft_mailbox_id)},
-						"destroy": [existing_id] if existing_id else None,
-					},
-					str(call_id),
-				]
-			)
+			payload = {
+				"accountId": self.primary_account_id,
+				"create": {draft_ref: build_draft_payload(draft_mailbox_id)},
+			}
+
+			if existing_id:
+				payload["destroy"] = [existing_id]
+
+			method_calls.append(["Email/set", payload, str(call_id)])
 			call_id += 1
 
 		if save_as_draft:
@@ -1450,27 +1536,25 @@ class JMAPClient:
 	) -> dict:
 		"""Creates a address book with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"create": {
+				creation_id: {
+					"name": name,
+					"description": description or None,
+					"sortOrder": sort_order or 0,
+					"isSubscribed": subscribed or False,
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = f"#{creation_id}"
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:contacts"],
-			method_calls=[
-				[
-					"AddressBook/set",
-					{
-						"accountId": self.primary_account_id,
-						"create": {
-							creation_id: {
-								"name": name,
-								"description": description or None,
-								"sortOrder": sort_order or 0,
-								"isSubscribed": subscribed or False,
-							}
-						},
-						"onSuccessSetIsDefault": f"#{creation_id}" if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:contacts"], method_calls=[["AddressBook/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def address_book_get(self, ids: list[str] | None = None) -> list[dict]:
@@ -1511,27 +1595,25 @@ class JMAPClient:
 	) -> dict:
 		"""Updates the address book with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"update": {
+				id: {
+					"name": name,
+					"description": description or None,
+					"sortOrder": sort_order or 0,
+					"isSubscribed": subscribed or False,
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = id
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:contacts"],
-			method_calls=[
-				[
-					"AddressBook/set",
-					{
-						"accountId": self.primary_account_id,
-						"update": {
-							id: {
-								"name": name,
-								"description": description or None,
-								"sortOrder": sort_order or 0,
-								"isSubscribed": subscribed or False,
-							}
-						},
-						"onSuccessSetIsDefault": id if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:contacts"], method_calls=[["AddressBook/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def address_book_delete(self, ids: list[str], remove_contents: bool = False) -> dict:
@@ -1880,31 +1962,29 @@ class JMAPClient:
 	) -> dict:
 		"""Creates a calendar book with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"create": {
+				creation_id: {
+					"name": name,
+					"color": color or None,
+					"description": description or None,
+					"sortOrder": sort_order or 0,
+					"includeInAvailability": include_in_availability,
+					"timeZone": time_zone or None,
+					"isSubscribed": subscribed or False,
+					"isVisible": visible or True,
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = f"#{creation_id}"
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:calendars"],
-			method_calls=[
-				[
-					"Calendar/set",
-					{
-						"accountId": self.primary_account_id,
-						"create": {
-							creation_id: {
-								"name": name,
-								"color": color or None,
-								"description": description or None,
-								"sortOrder": sort_order or 0,
-								"includeInAvailability": include_in_availability,
-								"timeZone": time_zone or None,
-								"isSubscribed": subscribed or False,
-								"isVisible": visible or True,
-							}
-						},
-						"onSuccessSetIsDefault": f"#{creation_id}" if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:calendars"], method_calls=[["Calendar/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def calendar_get(self, ids: list[str] | None = None) -> list[dict]:
@@ -1949,31 +2029,29 @@ class JMAPClient:
 	) -> dict:
 		"""Updates the calendar with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"update": {
+				id: {
+					"name": name,
+					"color": color or None,
+					"description": description or None,
+					"sortOrder": sort_order or 0,
+					"includeInAvailability": include_in_availability,
+					"timeZone": time_zone or None,
+					"isSubscribed": subscribed or False,
+					"isVisible": visible or False,
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = id
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:calendars"],
-			method_calls=[
-				[
-					"Calendar/set",
-					{
-						"accountId": self.primary_account_id,
-						"update": {
-							id: {
-								"name": name,
-								"color": color or None,
-								"description": description or None,
-								"sortOrder": sort_order or 0,
-								"includeInAvailability": include_in_availability,
-								"timeZone": time_zone or None,
-								"isSubscribed": subscribed or False,
-								"isVisible": visible or False,
-							}
-						},
-						"onSuccessSetIsDefault": id if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:calendars"], method_calls=[["Calendar/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def calendar_delete(self, ids: list[str], remove_events: bool = False) -> dict:
@@ -2375,25 +2453,23 @@ class JMAPClient:
 	) -> dict:
 		"""Creates a participant identity with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"create": {
+				creation_id: {
+					"name": name,
+					"calendarAddress": f"mailto:{email}",
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = f"#{creation_id}"
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:calendars"],
-			method_calls=[
-				[
-					"ParticipantIdentity/set",
-					{
-						"accountId": self.primary_account_id,
-						"create": {
-							creation_id: {
-								"name": name,
-								"calendarAddress": f"mailto:{email}",
-							}
-						},
-						"onSuccessSetIsDefault": f"#{creation_id}" if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:calendars"], method_calls=[["ParticipantIdentity/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def participant_identity_get(self, ids: list[str] | None = None) -> list[dict]:
@@ -2432,25 +2508,23 @@ class JMAPClient:
 	) -> dict:
 		"""Updates the participant identity with the given parameters."""
 
+		payload = {
+			"accountId": self.primary_account_id,
+			"update": {
+				id: {
+					"name": name,
+					"calendarAddress": f"mailto:{email}",
+				}
+			},
+		}
+
+		if default:
+			payload["onSuccessSetIsDefault"] = id
+
 		response = self._make_request(
-			using=["urn:ietf:params:jmap:calendars"],
-			method_calls=[
-				[
-					"ParticipantIdentity/set",
-					{
-						"accountId": self.primary_account_id,
-						"update": {
-							id: {
-								"name": name,
-								"calendarAddress": f"mailto:{email}",
-							}
-						},
-						"onSuccessSetIsDefault": id if default else None,
-					},
-					"0",
-				]
-			],
+			using=["urn:ietf:params:jmap:calendars"], method_calls=[["ParticipantIdentity/set", payload, "0"]]
 		)
+
 		return response["methodResponses"][0][1]
 
 	def participant_identity_delete(self, ids: list[str]) -> dict:
@@ -2678,8 +2752,275 @@ class JMAPClient:
 		return response["methodResponses"][0][1]
 
 	# -------------------------------
+	# Sieve Script
+	# -------------------------------
+
+	def sieve_script_create(self, creation_id: str, name: str, blob_id: str, active: bool = False) -> dict:
+		"""Creates a sieve script with the given parameters."""
+
+		payload = {
+			"accountId": self.primary_account_id,
+			"create": {
+				creation_id: {
+					"name": name,
+					"blobId": blob_id,
+				}
+			},
+		}
+
+		if active:
+			payload["onSuccessActivateScript"] = f"#{creation_id}"
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:sieve"],
+			method_calls=[
+				[
+					"SieveScript/set",
+					payload,
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	def sieve_script_get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Returns the sieve scripts for the provided sieve script IDs."""
+
+		def fetch(ids_batch: list[str] | None) -> list[dict]:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:sieve"],
+				method_calls=[
+					[
+						"SieveScript/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+			return response["methodResponses"][0][1]["list"]
+
+		if ids and len(ids) > self.max_objects_in_get:
+			scripts = []
+			for ids_batch in create_batch(ids, self.max_objects_in_get):
+				scripts.extend(fetch(ids_batch))
+			return scripts
+
+		return fetch(ids)
+
+	def sieve_script_update(
+		self, id: str, name: str, blob_id: str, active: bool = False, deactivate: bool = False
+	) -> dict:
+		"""Updates the sieve script with the given parameters."""
+
+		if active and deactivate:
+			frappe.throw(_("A sieve script cannot be activated and deactivated at the same time."))
+
+		payload = {
+			"accountId": self.primary_account_id,
+			"update": {
+				id: {
+					"name": name,
+					"blobId": blob_id,
+				}
+			},
+		}
+
+		if active:
+			payload["onSuccessActivateScript"] = id
+
+		if deactivate:
+			payload["onSuccessDeactivateScript"] = True
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:sieve"],
+			method_calls=[
+				[
+					"SieveScript/set",
+					payload,
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	def sieve_script_delete(self, ids: list[str]) -> dict:
+		"""Destroys the sieve scripts with the given IDs."""
+
+		result = {"destroyed": [], "notDestroyed": {}}
+		for ids_batch in create_batch(ids, self.max_objects_in_set):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:sieve"],
+				method_calls=[
+					[
+						"SieveScript/set",
+						{
+							"accountId": self.primary_account_id,
+							"destroy": ids_batch,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["destroyed"].extend(response["methodResponses"][0][1].get("destroyed", []))
+			if not_destroyed := response["methodResponses"][0][1].get("notDestroyed", {}):
+				result["notDestroyed"].update(not_destroyed)
+
+		return result
+
+	def sieve_script_query(self, filter: dict | None = None, position: int = 0, limit: int = 50) -> dict:
+		"""Query sieve scripts in batches until reaching the limit."""
+
+		_filter = {}
+		filter = filter or {}
+		for key in ["name", "isActive"]:
+			if key in filter and filter[key] is not None:
+				_filter[key] = filter[key]
+
+		ids = []
+		total = None
+		batch_size = min(limit, self.max_objects_in_get)
+
+		while len(ids) < limit:
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:sieve"],
+				method_calls=[
+					[
+						"SieveScript/query",
+						{
+							"accountId": self.primary_account_id,
+							"filter": _filter,
+							"position": position,
+							"limit": batch_size,
+							"calculateTotal": True if total is None else False,
+						},
+						"0",
+					]
+				],
+			)
+			result = response["methodResponses"][0][1]
+
+			if total is None:
+				total = result["total"]
+
+			_ids = result["ids"]
+			if not _ids:
+				break
+
+			ids.extend(_ids)
+			position += len(_ids)
+
+			if len(_ids) < batch_size:
+				break
+
+		return {"ids": ids[:limit], "total": total}
+
+	def sieve_script_validate(self, blob_id: str) -> dict:
+		"""Validates the sieve script content in the provided blob ID."""
+
+		response = self._make_request(
+			using=["urn:ietf:params:jmap:sieve"],
+			method_calls=[
+				[
+					"SieveScript/validate",
+					{
+						"accountId": self.primary_account_id,
+						"blobId": blob_id,
+					},
+					"0",
+				]
+			],
+		)
+
+		return response["methodResponses"][0][1]
+
+	# -------------------------------
 	# Blob
 	# -------------------------------
+
+	def blob_upload(self, blobs: dict[str, UploadObject]) -> dict:
+		"""Uploads the blobs with the given blob IDs and upload objects."""
+
+		result = {"created": [], "notCreated": {}}
+		for blobs_batch in batch_dict(blobs, self.max_objects_in_set):
+			payload = {creation_id: upload.to_json() for creation_id, upload in blobs_batch.items()}
+
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:blob"],
+				method_calls=[
+					[
+						"Blob/upload",
+						{
+							"accountId": self.primary_account_id,
+							"create": payload,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["created"].extend(response["methodResponses"][0][1].get("created", []))
+			if not_created := response["methodResponses"][0][1].get("notCreated", {}):
+				result["notCreated"].update(not_created)
+
+		return result
+
+	def blob_get(self, ids: list[str], properties: list[str]) -> dict:
+		"""Returns the blob information for the provided blob IDs."""
+
+		result = {"list": [], "notFound": []}
+		for ids_batch in create_batch(ids, self.max_objects_in_get):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:blob"],
+				method_calls=[
+					[
+						"Blob/get",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+							"properties": properties,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["list"].extend(response["methodResponses"][0][1].get("list", []))
+			if not_found := response["methodResponses"][0][1].get("notFound", []):
+				result["notFound"].extend(not_found)
+
+		return result
+
+	def blob_lookup(self, ids: list[str], type_names: list[str]) -> dict:
+		"""Returns the blob information for the provided blob IDs based on the type names."""
+
+		result = {"list": [], "notFound": []}
+		for ids_batch in create_batch(ids, self.max_objects_in_get):
+			response = self._make_request(
+				using=["urn:ietf:params:jmap:blob"],
+				method_calls=[
+					[
+						"Blob/lookup",
+						{
+							"accountId": self.primary_account_id,
+							"ids": ids_batch,
+							"typeNames": type_names,
+						},
+						"0",
+					]
+				],
+			)
+
+			result["list"].extend(response["methodResponses"][0][1].get("list", []))
+			if not_found := response["methodResponses"][0][1].get("notFound", []):
+				result["notFound"].extend(not_found)
+
+		return result
 
 	def upload_blob(self, blob: bytes | str, content_type: str = "message/rfc822") -> dict:
 		"""Uploads the blob data and returns a dictionary containing the response."""

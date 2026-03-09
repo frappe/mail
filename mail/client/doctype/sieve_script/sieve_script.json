@@ -1,0 +1,156 @@
+{
+ "actions": [],
+ "creation": "2026-03-06 09:15:28.245348",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_iw72",
+  "user",
+  "column_break_cesj",
+  "active",
+  "read_only",
+  "section_break_cmyq",
+  "id",
+  "_name",
+  "column_break_wrwl",
+  "blob_id",
+  "section_break_jwqh",
+  "content",
+  "validate_script"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_iw72",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The user this script belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The ID of the script.",
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "Display name of the Sieve script.",
+   "fieldname": "_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Name",
+   "no_copy": 1,
+   "read_only_depends_on": "eval: doc.read_only",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "The ID of the blob containing the raw octets of the script.",
+   "fieldname": "blob_id",
+   "fieldtype": "Data",
+   "label": "Blob ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "default": "0",
+   "description": "Indicates whether this script is currently active.",
+   "fieldname": "active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Active",
+   "no_copy": 1,
+   "read_only_depends_on": "eval: doc.read_only"
+  },
+  {
+   "fieldname": "column_break_cesj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_cmyq",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_wrwl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_jwqh",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "The Sieve script code used for mail filtering rules.",
+   "fieldname": "content",
+   "fieldtype": "Code",
+   "label": "Content",
+   "read_only_depends_on": "eval: doc.read_only",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: !doc.read_only",
+   "fieldname": "validate_script",
+   "fieldtype": "Button",
+   "label": "Validate Script"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.read_only",
+   "description": "Prevents editing of system scripts (e.g., vacation).",
+   "fieldname": "read_only",
+   "fieldtype": "Check",
+   "label": "Read Only",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2026-03-06 17:20:17.751947",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Sieve Script",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
