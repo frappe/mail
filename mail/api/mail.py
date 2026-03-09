@@ -1,11 +1,13 @@
 import base64
 import hashlib
+import os
 from datetime import UTC, datetime
 
 import frappe
 import requests
 from frappe import _
-from frappe.utils import format_datetime, get_gravatar_url, random_string
+from frappe.handler import check_write_permission
+from frappe.utils import cint, format_datetime, get_gravatar_url, random_string
 from frappe.utils.identicon import Identicon
 
 from mail.client.doctype.mail_message.mail_message import (
@@ -27,6 +29,85 @@ from mail.utils import convert_html_to_text
 from mail.utils.user import has_role
 
 AVATAR_CACHE_TTL = 60 * 60 * 24
+
+
+@frappe.whitelist(methods=["POST"])
+def upload_file_chunk():
+	if not has_role(frappe.session.user, "Mail User"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	files = frappe.request.files
+
+	filename = frappe.form_dict.filename
+	chunk_index = cint(frappe.form_dict.chunk_index)
+	total_chunks = cint(frappe.form_dict.total_chunks)
+	upload_id = frappe.form_dict.upload_id
+	total_file_size = cint(frappe.form_dict.total_file_size)
+
+	doctype = frappe.form_dict.doctype
+	docname = frappe.form_dict.docname
+	fieldname = frappe.form_dict.fieldname
+	folder = frappe.form_dict.folder or "Home"
+	is_private = cint(frappe.form_dict.is_private)
+
+	check_write_permission(doctype, docname)
+
+	max_file_size_mb = cint(frappe.conf.max_file_size_mb) or 1024
+	max_file_size = max_file_size_mb * 1024 * 1024
+
+	if total_file_size > max_file_size:
+		frappe.throw(_("File size exceeds the maximum allowed limit of {0} MB.").format(max_file_size_mb))
+
+	chunk_dir = frappe.get_site_path("private", "tmp", "chunk_uploads")
+	chunk_folder = os.path.join(chunk_dir, upload_id)
+
+	os.makedirs(chunk_dir, exist_ok=True)
+	os.makedirs(chunk_folder, exist_ok=True)
+
+	file = files["file"]
+	chunk_path = os.path.join(chunk_folder, f"{chunk_index}.part")
+
+	with open(chunk_path, "wb") as f:
+		f.write(file.stream.read())
+
+	if chunk_index + 1 == total_chunks:
+		final_path = os.path.join(chunk_folder, filename)
+
+		with open(final_path, "wb") as final_file:
+			for i in range(total_chunks):
+				part_path = os.path.join(chunk_folder, f"{i}.part")
+
+				with open(part_path, "rb") as part:
+					final_file.write(part.read())
+
+				os.remove(part_path)
+
+		with open(final_path, "rb") as f:
+			content = f.read()
+
+		file_doc = frappe.get_doc(
+			{
+				"doctype": "File",
+				"attached_to_doctype": doctype,
+				"attached_to_name": docname,
+				"attached_to_field": fieldname,
+				"folder": folder,
+				"file_name": filename,
+				"is_private": is_private,
+				"content": content,
+			}
+		).save()
+
+		os.remove(final_path)
+		os.rmdir(chunk_folder)
+
+		return file_doc
+
+	return {
+		"status": "chunk_received",
+		"chunk_index": chunk_index,
+		"total_chunks": total_chunks,
+	}
 
 
 @frappe.whitelist()
