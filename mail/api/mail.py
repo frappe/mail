@@ -181,7 +181,7 @@ def add_user_images_to_emails(mails: list[dict]) -> list[dict]:
 			filters={"name": ["in", list(unique_emails)]},
 			fields=["name", "user_image"],
 		)
-		user_image_map = {u["name"]: u["user_image"] for u in user_data if u.get("user_image")}
+		user_image_map = {u.name: u.user_image for u in user_data if u.user_image}
 
 	images = {email: user_image_map.get(email) or get_avatar_url(email) for email in unique_emails}
 
@@ -638,9 +638,12 @@ def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 
 	if not avatar:
 		# 2. Try Gravatar
+		default = frappe.conf.gravatar_default_avatar or "404"
 		try:
 			res = requests.get(
-				f"https://secure.gravatar.com/avatar/{email_hash}", params={"d": "404", "s": size}, timeout=3
+				f"https://secure.gravatar.com/avatar/{email_hash}",
+				params={"d": default, "s": size},
+				timeout=3,
 			)
 			if res.ok:
 				avatar = res.content
