@@ -1,14 +1,13 @@
-import base64
 import hashlib
 import os
 from datetime import UTC, datetime
 
 import frappe
+import pydenticon
 import requests
 from frappe import _
 from frappe.handler import check_write_permission
-from frappe.utils import cint, format_datetime, get_gravatar_url, random_string
-from frappe.utils.identicon import Identicon
+from frappe.utils import cint, format_datetime, random_string
 
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
@@ -26,6 +25,7 @@ from mail.client.doctype.mail_message.mail_message import (
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_mailbox_id_by_role
 from mail.utils import convert_html_to_text
+from mail.utils.cache import get_user_emails
 from mail.utils.user import has_role
 
 AVATAR_CACHE_TTL = 60 * 60 * 24
@@ -131,6 +131,65 @@ def get_user_mailboxes(user) -> list[dict]:
 	return frappe.get_all("Mailbox", filters={"user": user})
 
 
+def get_avatar_url(email: str) -> str:
+	"""Returns the avatar URL for the given email."""
+
+	return f"/api/method/mail.api.mail.get_avatar?email={email}"
+
+
+def add_user_images_to_emails(mails: list[dict], is_thread: bool = False) -> list[dict]:
+	"""Append avatar URLs to the given list of emails."""
+
+	if not mails:
+		return mails
+
+	email_map: dict[str, str] = {}
+	rcpt_order = {"To": 0, "Cc": 1, "Bcc": 2}
+	user_emails = {e.lower() for e in get_user_emails(frappe.session.user)}
+
+	for mail in mails:
+		name = mail["name"]
+		if not name:
+			continue
+
+		from_email = (mail.get("from_email") or "").lower()
+
+		if not from_email:
+			continue
+
+		selected_email = from_email
+
+		if not is_thread and from_email in user_emails:
+			recipients = sorted(mail["recipients"], key=lambda r: rcpt_order[r["type"] or 99])
+
+			for rcpt in recipients:
+				rcpt_email = (rcpt.get("email") or "").lower()
+				if rcpt_email and rcpt_email not in user_emails:
+					selected_email = rcpt_email
+					break
+
+		email_map[name] = selected_email
+
+	unique_emails = {e for e in email_map.values() if e}
+
+	user_image_map = {}
+	if unique_emails:
+		user_data = frappe.db.get_all(
+			"User",
+			filters={"name": ["in", list(unique_emails)]},
+			fields=["name", "user_image"],
+		)
+		user_image_map = {u.name: u.user_image for u in user_data if u.user_image}
+
+	images = {email: user_image_map.get(email) or get_avatar_url(email) for email in unique_emails}
+
+	for mail in mails:
+		email = email_map.get(mail["name"])
+		mail["user_image"] = images.get(email) if email else None
+
+	return mails
+
+
 @frappe.whitelist()
 def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 	"""Returns threads from the selected mailbox for the current user."""
@@ -163,14 +222,17 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 	else:
 		filter = {"operator": "AND", "conditions": conditions}
 
-	return [serialize_thread(thread) for thread in fetch_threads(user, filter, 0, limit)]
+	threads = [serialize_thread(t) for t in fetch_threads(user, filter, 0, limit)]
+
+	return add_user_images_to_emails(threads, is_thread=False)
 
 
 @frappe.whitelist()
 def get_thread(thread_id: str) -> list[dict]:
 	"""Returns mails for the given thread id."""
 
-	return [serialize_mail(mail) for mail in fetch_thread(frappe.session.user, thread_id)]
+	mails = [serialize_mail(m) for m in fetch_thread(frappe.session.user, thread_id)]
+	return add_user_images_to_emails(mails, is_thread=True)
 
 
 @frappe.whitelist()
@@ -529,7 +591,9 @@ def search_mails(filter: dict | None = None, limit: int = 5) -> tuple[list[dict]
 		return ([], 0)
 
 	normalized_filter = normalize_filter(filter)
-	return search_messages(frappe.session.user, normalized_filter, limit=limit)
+	mails, total = search_messages(frappe.session.user, normalized_filter, limit=limit)
+
+	return add_user_images_to_emails(mails), total
 
 
 def normalize_filter(filter: dict) -> dict:
@@ -558,8 +622,8 @@ def parse_date_to_utc_iso(date_str: str) -> str:
 
 
 @frappe.whitelist()
-def get_avatar(email: str) -> None:
-	"""Fetches and returns the avatar for the given email."""
+def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
+	"""Fetch and return avatar for the given email."""
 
 	if not email:
 		frappe.throw(_("Email is required to fetch avatar."))
@@ -567,24 +631,45 @@ def get_avatar(email: str) -> None:
 	email = email.strip().lower()
 	email_hash = hashlib.md5(email.encode()).hexdigest()
 
-	cache_key = f"avatar:{email_hash}"
+	cache_key = f"avatar:{email_hash}:{size}"
+
+	# 1. Try cache
 	avatar = frappe.cache.get_value(cache_key)
 
 	if not avatar:
-		gravatar_url = get_gravatar_url(email)
-
+		# 2. Try Gravatar
+		default = frappe.conf.gravatar_default_avatar or "404"
 		try:
-			response = requests.get(gravatar_url, timeout=5)
-			if response.ok:
-				avatar = response.content
-
+			res = requests.get(
+				f"https://secure.gravatar.com/avatar/{email_hash}",
+				params={"d": default, "s": size},
+				timeout=3,
+			)
+			if res.ok:
+				avatar = res.content
 		except requests.RequestException:
 			pass
 
+		# 3. Handle missing gravatar
 		if not avatar:
-			data = Identicon(email).base64()
-			avatar = base64.b64decode(data.split(",")[1])
+			if strict:
+				frappe.throw(_("Avatar not found."), frappe.DoesNotExistError)
 
+			generator = pydenticon.Generator(
+				5,
+				5,
+				foreground=[
+					"#1abc9c",
+					"#2ecc71",
+					"#3498db",
+					"#9b59b6",
+					"#e74c3c",
+				],
+				background="#ffffff",
+			)
+			avatar = generator.generate(email_hash, size, size, output_format="png")
+
+		# Cache the avatar for future requests
 		frappe.cache.set_value(cache_key, avatar, expires_in_sec=AVATAR_CACHE_TTL)
 
 	frappe.local.response.filename = f"{email_hash}.png"

@@ -71,6 +71,7 @@ export interface Mail {
 	}
 	reply_to: { display_name: string; email: string }[]
 	attachments: Attachment[]
+	user_image?: string
 	collapsed?: boolean
 }
 
@@ -110,6 +111,7 @@ export interface Thread {
 	answered: 0 | 1
 	forwarded: 0 | 1
 	attachments: Attachment[]
+	user_image?: string
 }
 
 export interface MailboxData {
