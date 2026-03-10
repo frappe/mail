@@ -138,7 +138,7 @@ def get_avatar_url(email: str) -> str:
 	return f"/api/method/mail.api.mail.get_avatar?email={email}"
 
 
-def add_user_images_to_emails(mails: list[dict]) -> list[dict]:
+def add_user_images_to_emails(mails: list[dict], is_thread: bool = False) -> list[dict]:
 	"""Append avatar URLs to the given list of emails."""
 
 	if not mails:
@@ -160,8 +160,7 @@ def add_user_images_to_emails(mails: list[dict]) -> list[dict]:
 
 		selected_email = from_email
 
-		is_thread = "id" not in mail and "thread_id" in mail
-		if is_thread and from_email in user_emails:
+		if not is_thread and from_email in user_emails:
 			recipients = sorted(mail["recipients"], key=lambda r: rcpt_order[r["type"] or 99])
 
 			for rcpt in recipients:
@@ -226,7 +225,7 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 
 	threads = [serialize_thread(t) for t in fetch_threads(user, filter, 0, limit)]
 
-	return add_user_images_to_emails(threads)
+	return add_user_images_to_emails(threads, is_thread=False)
 
 
 @frappe.whitelist()
@@ -234,7 +233,7 @@ def get_thread(thread_id: str) -> list[dict]:
 	"""Returns mails for the given thread id."""
 
 	mails = [serialize_mail(m) for m in fetch_thread(frappe.session.user, thread_id)]
-	return add_user_images_to_emails(mails)
+	return add_user_images_to_emails(mails, is_thread=True)
 
 
 @frappe.whitelist()
@@ -593,7 +592,9 @@ def search_mails(filter: dict | None = None, limit: int = 5) -> tuple[list[dict]
 		return ([], 0)
 
 	normalized_filter = normalize_filter(filter)
-	return search_messages(frappe.session.user, normalized_filter, limit=limit)
+	mails, total = search_messages(frappe.session.user, normalized_filter, limit=limit)
+
+	return add_user_images_to_emails(mails), total
 
 
 def normalize_filter(filter: dict) -> dict:
