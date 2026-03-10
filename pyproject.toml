@@ -15,6 +15,7 @@ dependencies = [
     "isodate~=0.7.2",
     "paramiko~=4.0.0",
     "dnspython~=2.4.2",
+    "pydenticon~=0.3.1",
     "dns-lexicon~=3.20.1",
     "markdown-it-py~=4.0.0",
     "ansible-runner~=2.4.1",

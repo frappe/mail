@@ -1,14 +1,13 @@
 import hashlib
-import io
 import os
 from datetime import UTC, datetime
 
 import frappe
+import pydenticon
 import requests
 from frappe import _
 from frappe.handler import check_write_permission
 from frappe.utils import cint, format_datetime, random_string
-from PIL import Image, ImageDraw, ImageFont
 
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
@@ -656,22 +655,19 @@ def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 			if strict:
 				frappe.throw(_("Avatar not found."), frappe.DoesNotExistError)
 
-			letter = email[0].upper()
-
-			bg = "#00000000"
-			text = "#7C7C7C"
-
-			img = Image.new("RGBA", (size, size), bg)
-			draw = ImageDraw.Draw(img)
-
-			font_size = int(size * 0.6)
-			font = ImageFont.truetype("DejaVuSans.ttf", font_size)
-
-			draw.text((size / 2, size / 2), letter, fill=text, font=font, anchor="mm")
-
-			buffer = io.BytesIO()
-			img.save(buffer, format="PNG")
-			avatar = buffer.getvalue()
+			generator = pydenticon.Generator(
+				5,
+				5,
+				foreground=[
+					"#1abc9c",
+					"#2ecc71",
+					"#3498db",
+					"#9b59b6",
+					"#e74c3c",
+				],
+				background="#ffffff",
+			)
+			avatar = generator.generate(email_hash, size, size, output_format="png")
 
 		# Cache the avatar for future requests
 		frappe.cache.set_value(cache_key, avatar, expires_in_sec=AVATAR_CACHE_TTL)
