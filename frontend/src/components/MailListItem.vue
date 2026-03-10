@@ -33,11 +33,10 @@
 				<Check class="text-ink-gray-5 m-auto h-5 w-5" />
 			</div>
 			<Avatar
-				v-else
+				v-show="!isSelected && (!isHovered || isMobile)"
 				:label="getFirstAlphabet(mail.from_name) || getFirstAlphabet(mail.from_email)"
 				:image="mail.user_image"
 				:size="isFullWidth ? 'lg' : '2xl'"
-				class="border"
 				@click.stop.prevent="emit('setSelected', true)"
 			/>
 		</div>
