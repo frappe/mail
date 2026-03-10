@@ -19,4 +19,4 @@ def get_calendar_events(from_date: str, to_date: str) -> list[dict]:
 
 	events = fetch_calendar_events(frappe.session.user, {"after": from_date, "before": to_date})
 
-	return events
+	return events[0]
