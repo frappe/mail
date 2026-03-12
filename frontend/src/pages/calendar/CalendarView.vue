@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, ref, useTemplateRef, watch } from 'vue'
+import { inject, reactive, ref, useTemplateRef, watch } from 'vue'
 import { Calendar, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
@@ -50,7 +50,10 @@ const events = createResource({
 
 const showAddEvent = ref(false)
 
+const event = reactive({})
+
 const handleCellClick = (e) => {
+	Object.assign(event, e)
 	showAddEvent.value = true
 }
 </script>
@@ -71,5 +74,9 @@ const handleCellClick = (e) => {
 			</div>
 		</div>
 	</div>
-	<AddCalendarEventModal v-model="showAddEvent" @reload-events="events.reload()" />
+	<AddCalendarEventModal
+		v-model="showAddEvent"
+		:selected-event="event"
+		@reload-events="events.reload()"
+	/>
 </template>

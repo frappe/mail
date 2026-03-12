@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, reactive, ref } from 'vue'
+import { computed, inject, reactive, ref, watch } from 'vue'
 import {
 	Button,
 	Dialog,
@@ -16,6 +16,8 @@ import ContactsModal from '@/components/Modals/ContactsModal.vue'
 
 const show = defineModel<boolean>()
 
+const { selectedEvent } = defineProps<{ selectedEvent: any }>()
+
 const emit = defineEmits(['reload-events'])
 
 const user = inject('$user')
@@ -25,17 +27,30 @@ const step = ref(0)
 const participantInput = ref('')
 const showContactsModal = ref(false)
 
-const event = reactive({
+const DEFAULT_EVENT = {
 	title: '',
-	date: '',
-	startDate: '',
-	startTime: '',
-	endDate: '',
-	endTime: '',
-	isFullDay: false,
-	send_scheduling_messages: false,
-	calendars: [],
+	isFullDay: true,
+	startDate: dayjs().format('YYYY-MM-DD'),
+	startTime: '10:00',
+	endDate: dayjs().format('YYYY-MM-DD'),
+	endTime: '10:30',
+	description: '',
 	participants: [] as Array<{ email: string }>,
+	send_scheduling_messages: false,
+}
+
+const event = reactive({ ...DEFAULT_EVENT })
+
+watch(show, (val) => {
+	if (!val) return
+	Object.assign(event, DEFAULT_EVENT)
+	if (dayjs(selectedEvent.date).format('YYYY-MM-DD') === event.startDate) {
+		event.startTime = dayjs().add(1, 'hour').minute(0).second(0).format('HH:mm')
+		event.endTime = dayjs(event.startTime, 'HH:mm').add(30, 'minute').format('HH:mm')
+	} else {
+		event.startDate = dayjs(selectedEvent.date).format('YYYY-MM-DD')
+		event.endDate = dayjs(selectedEvent.date).format('YYYY-MM-DD')
+	}
 })
 
 const addParticipant = (email: string) => {
@@ -64,10 +79,14 @@ const createEvent = createResource({
 	url: 'mail.client.doctype.calendar_event.calendar_event.add_calendar_event',
 	makeParams: () => {
 		const start = dayjs(event.startDate + 'T' + event.startTime)
-		let duration = 'PT'
+		let duration: string
 		if (event.isFullDay) {
-			duration += '24H'
+			const startDay = dayjs(event.startDate)
+			const endDay = dayjs(event.endDate)
+			const days = endDay.diff(startDay, 'day') + 1
+			duration = 'P' + days + 'D'
 		} else {
+			duration = 'PT'
 			const end = dayjs(event.endDate + 'T' + event.endTime)
 			const totalMinutes = end.diff(start, 'minute')
 			const hours = Math.floor(totalMinutes / 60)
@@ -77,18 +96,16 @@ const createEvent = createResource({
 			if (hours === 0 && minutes === 0) duration += '0M'
 		}
 
-		const startStr = start.format('YYYY-MM-DD[T]HH:mm:ss')
-
-		const params = {
+		return {
 			user: user.data.name,
 			organizer: user.data.name,
 			title: event.title,
-			start: startStr,
+			start: start.format('YYYY-MM-DD[T]HH:mm:ss'),
 			duration,
 			participants: event.participants,
+			description: event.description,
+			send_scheduling_messages: event.send_scheduling_messages,
 		}
-
-		return params
 	},
 	onSuccess: () => {
 		raiseToast(__('Event created successfully'), 'success')
@@ -162,6 +179,7 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 						/>
 					</div>
 					<FormControl
+						v-model="event.description"
 						:label="__('Description')"
 						type="textarea"
 						placeholder="example.com"
