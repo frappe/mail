@@ -99,6 +99,7 @@ export default defineConfig(({ mode }) => ({
 		}),
 	],
 	resolve: {
+		dedupe: ['vue'],
 		alias: [
 			{ find: '@', replacement: path.resolve(__dirname, 'src') },
 			...(loadEnv(mode, process.cwd(), '').LOCAL_FRAPPE_UI === 'true'

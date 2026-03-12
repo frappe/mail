@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { inject, useTemplateRef, watch } from 'vue'
+import { inject, ref, useTemplateRef, watch } from 'vue'
 import { Calendar, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import CalendarSidebar from '@/components/CalendarSidebar.vue'
+import AddCalendarEventModal from '@/components/Modals/AddCalendarEventModal.vue'
 
 const dayjs = inject('$dayjs')
 
@@ -32,6 +33,8 @@ const transformEvent = (event) => {
 		toDate: end.format('YYYY-MM-DD'),
 		fromTime: start.format('HH:mm'),
 		toTime: end.format('HH:mm'),
+		participant: event.organizer,
+		venue: event.locations?.[0]?._name || '',
 	}
 }
 
@@ -44,6 +47,12 @@ const events = createResource({
 	transform: (data) => data.map(transformEvent),
 	onError: (error) => raiseToast(error.message, 'error'),
 })
+
+const showAddEvent = ref(false)
+
+const handleCellClick = (e) => {
+	showAddEvent.value = true
+}
 </script>
 
 <template>
@@ -54,11 +63,13 @@ const events = createResource({
 				<Calendar
 					ref="calendar"
 					:events="events.data"
-					@create="(event) => console.log('createEvent', event)"
+					:config="{ isEditMode: true }"
+					:on-cell-click="(event) => handleCellClick(event)"
 					@update="(event) => console.log('updateEvent', event)"
 					@delete="(eventID) => console.log('deleteEvent', eventID)"
 				/>
 			</div>
 		</div>
 	</div>
+	<AddCalendarEventModal v-model="showAddEvent" @reload-events="events.reload()" />
 </template>
