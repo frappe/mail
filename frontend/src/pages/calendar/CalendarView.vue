@@ -6,6 +6,7 @@ import { raiseToast } from '@/utils'
 import CalendarSidebar from '@/components/CalendarSidebar.vue'
 import AddCalendarEventModal from '@/components/Modals/AddCalendarEventModal.vue'
 
+const user = inject('$user')
 const dayjs = inject('$dayjs')
 
 const calendar = useTemplateRef('calendar')
@@ -51,6 +52,13 @@ const events = createResource({
 	onError: (error) => raiseToast(error.message, 'error'),
 })
 
+const deleteEvent = createResource({
+	url: 'mail.client.doctype.calendar_event.calendar_event.delete_calendar_events',
+	makeParams: (id) => ({ user: user.data.name, ids: [id] }),
+	onSuccess: () => raiseToast('Event deleted.', 'success'),
+	onError: (error) => raiseToast(error.message, 'error'),
+})
+
 const visibleEvents = computed(
 	() =>
 		events.data?.filter((event) =>
@@ -90,7 +98,7 @@ const handleCellClick = (e) => {
 					:config="{ isEditMode: true }"
 					:on-cell-click="(event) => handleCellClick(event)"
 					@update="(event) => console.log('updateEvent', event)"
-					@delete="(eventID) => console.log('deleteEvent', eventID)"
+					@delete="(eventID) => deleteEvent.submit(eventID)"
 				/>
 			</div>
 		</div>

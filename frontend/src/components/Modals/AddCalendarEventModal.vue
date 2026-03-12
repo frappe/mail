@@ -109,7 +109,7 @@ const createEvent = createResource({
 		}
 	},
 	onSuccess: () => {
-		raiseToast(__('Event created successfully'), 'success')
+		raiseToast(__('Event created.'), 'success')
 		show.value = false
 		emit('reload-events')
 	},
