@@ -43,6 +43,7 @@ const event = reactive({ ...DEFAULT_EVENT })
 
 watch(show, (val) => {
 	if (!val) return
+	step.value = 0
 	Object.assign(event, DEFAULT_EVENT)
 	if (dayjs(selectedEvent.date).format('YYYY-MM-DD') === event.startDate) {
 		event.startTime = dayjs().add(1, 'hour').minute(0).second(0).format('HH:mm')

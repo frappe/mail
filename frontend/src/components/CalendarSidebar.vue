@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { computed, h, inject } from 'vue'
-import { LayoutGrid, LogOut } from 'lucide-vue-next'
-import { SidebarHeader, createResource } from 'frappe-ui'
+import { Eye, EyeOff, LayoutGrid, LogOut } from 'lucide-vue-next'
+import { Sidebar, createResource } from 'frappe-ui'
 
 import { toTitleCase } from '@/utils'
 import { sessionStore } from '@/stores/session'
 import CalendarLogo from '@/components/Icons/CalendarLogo.vue'
+
+const { calendars, visibleCalendars } = defineProps<{
+	calendars: any[]
+	visibleCalendars: string[]
+}>()
+
+const emit = defineEmits(['update:visibleCalendars'])
 
 const { branding, logout } = sessionStore()
 
@@ -46,21 +53,29 @@ const menuItems = computed(() => [
 		onClick: logout.submit,
 	},
 ])
+
+const sidebarItems = computed(() => [
+	{
+		label: __('Calendars'),
+		items:
+			calendars.map((calendar) => ({
+				label: calendar._name,
+				icon: visibleCalendars.includes(calendar.name) ? Eye : EyeOff,
+				onClick: () => emit('update:visibleCalendars', calendar.name),
+			})) || [],
+	},
+])
 </script>
 
 <template>
-	<div
-		class="border-outline-gray-1 bg-surface-menu-bar flex h-full flex-shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r p-2 transition-all duration-300 ease-in-out"
-	>
-		<SidebarHeader
-			:title="title"
-			:subtitle="toTitleCase(user.data.full_name)"
-			:logo="branding.data?.brand_html || CalendarLogo"
-			:menu-items
-		>
-			<template #logo>
-				<slot name="header-logo"></slot>
-			</template>
-		</SidebarHeader>
-	</div>
+	<Sidebar
+		:header="{
+			title,
+			subtitle: toTitleCase(user.data.full_name),
+			menuItems,
+			logo: branding.data?.brand_html || CalendarLogo,
+		}"
+		:sections="sidebarItems"
+		:disable-collapse="true"
+	/>
 </template>

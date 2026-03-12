@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, reactive, ref, useTemplateRef, watch } from 'vue'
+import { computed, inject, reactive, ref, useTemplateRef, watch } from 'vue'
 import { Calendar, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
@@ -14,12 +14,6 @@ watch(
 	() => [calendar.value?.currentYear, calendar.value?.currentMonth],
 	() => events.reload(),
 )
-
-const calendars = createResource({
-	url: 'mail.api.calendar.get_calendars',
-	auto: true,
-	onError: (error) => raiseToast(error.message, 'error'),
-})
 
 const transformEvent = (event) => {
 	const start = dayjs(event.start)
@@ -38,6 +32,15 @@ const transformEvent = (event) => {
 	}
 }
 
+const calendars = createResource({
+	url: 'mail.api.calendar.get_calendars',
+	auto: true,
+	onSuccess: (data) => (visibleCalendars.value = data.map((cal) => cal.name)),
+	onError: (error) => raiseToast(error.message, 'error'),
+})
+
+const visibleCalendars = ref<string[]>([])
+
 const events = createResource({
 	url: 'mail.api.calendar.get_calendar_events',
 	makeParams: () => ({
@@ -47,6 +50,15 @@ const events = createResource({
 	transform: (data) => data.map(transformEvent),
 	onError: (error) => raiseToast(error.message, 'error'),
 })
+
+const visibleEvents = computed(
+	() =>
+		events.data?.filter((event) =>
+			event.calendars
+				.map((c) => c.calendar)
+				.some((cal) => visibleCalendars.value.includes(cal)),
+		) || [],
+)
 
 const showAddEvent = ref(false)
 
@@ -61,11 +73,20 @@ const handleCellClick = (e) => {
 <template>
 	<div class="flex h-screen min-h-0 w-full min-w-0 flex-col">
 		<div class="flex min-h-0 min-w-0 flex-1">
-			<CalendarSidebar />
+			<CalendarSidebar
+				:calendars="calendars?.data || []"
+				:visible-calendars
+				@update:visible-calendars="
+					(name) =>
+						visibleCalendars.includes(name)
+							? visibleCalendars.splice(visibleCalendars.indexOf(name), 1)
+							: visibleCalendars.push(name)
+				"
+			/>
 			<div class="min-h-0 min-w-0 flex-1 p-4">
 				<Calendar
 					ref="calendar"
-					:events="events.data"
+					:events="visibleEvents"
 					:config="{ isEditMode: true }"
 					:on-cell-click="(event) => handleCellClick(event)"
 					@update="(event) => console.log('updateEvent', event)"
