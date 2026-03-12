@@ -236,13 +236,16 @@ def get_thread(thread_id: str) -> list[dict]:
 
 
 @frappe.whitelist()
-def get_attachment(blob_id: str, filename: str | None = None) -> None:
+def get_attachment(user: str, blob_id: str, filename: str | None = None) -> None:
 	"""Fetches and returns the attachment."""
+
+	if not user:
+		frappe.throw(_("User is required."))
 
 	if not blob_id:
 		frappe.throw(_("Blob ID is required."))
 
-	content = fetch_blob(frappe.session.user, blob_id, filename)
+	content = fetch_blob(user, blob_id, filename)
 
 	frappe.local.response.filename = filename or blob_id
 	frappe.local.response.filecontent = content

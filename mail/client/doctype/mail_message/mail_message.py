@@ -1072,7 +1072,7 @@ def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 
 	for attachment in formatted_message["attachments"]:
 		if blob_id := attachment["blob_id"]:
-			params = f"blob_id={blob_id}"
+			params = f"user={user}&blob_id={blob_id}"
 			if filename := attachment["filename"]:
 				params += f"&filename={quote(filename)}"
 			attachment["url"] = get_url(f"/api/method/mail.api.mail.get_attachment?{params}")
