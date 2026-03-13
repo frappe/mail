@@ -54,6 +54,7 @@ declare module 'vue' {
     EditSignatureModal: typeof import('./src/components/Modals/EditSignatureModal.vue')['default']
     EmailContent: typeof import('./src/components/EmailContent.vue')['default']
     EmojiPicker: typeof import('./src/components/EmojiPicker.vue')['default']
+    EventRepeatSettingsModal: typeof import('./src/components/Modals/EventRepeatSettingsModal.vue')['default']
     ExportSettings: typeof import('./src/components/Settings/ExportSettings.vue')['default']
     FrappeLogo: typeof import('./src/components/Icons/FrappeLogo.vue')['default']
     HeaderActions: typeof import('./src/components/HeaderActions.vue')['default']

@@ -319,3 +319,13 @@ export const extractNameFromEmail = (email: string) =>
 		.split('@')[0]
 		.replace(/[._-]/g, ' ')
 		.replace(/\b\w/g, (c) => c.toUpperCase())
+
+export const getRepeatFrequencyOptions = (interval: number) => [
+	{ label: interval === 1 ? __('Year') : __('Years'), value: 'yearly' },
+	{ label: interval === 1 ? __('Month') : __('Months'), value: 'monthly' },
+	{ label: interval === 1 ? __('Week') : __('Weeks'), value: 'weekly' },
+	{ label: interval === 1 ? __('Day') : __('Days'), value: 'daily' },
+	{ label: interval === 1 ? __('Hour') : __('Hours'), value: 'hourly' },
+	{ label: interval === 1 ? __('Minute') : __('Minutes'), value: 'minutely' },
+	{ label: interval === 1 ? __('Second') : __('Seconds'), value: 'secondly' },
+]

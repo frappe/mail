@@ -13,7 +13,8 @@ import {
 	createResource,
 } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
+import { getRepeatFrequencyOptions, raiseToast } from '@/utils'
+import EventRepeatSettingsModal from '@/components/Modals/EventRepeatSettingsModal.vue'
 
 const show = defineModel<boolean>()
 
@@ -26,7 +27,8 @@ const dayjs = inject('$dayjs')
 
 const DEFAULT_EVENT = {
 	title: '',
-	isFullDay: true,
+	isAllDay: true,
+	repeat: false,
 	startDate: dayjs().format('YYYY-MM-DD'),
 	startTime: '10:00',
 	endDate: dayjs().format('YYYY-MM-DD'),
@@ -35,6 +37,7 @@ const DEFAULT_EVENT = {
 	description: '',
 	participants: [] as Array<{ email: string }>,
 	send_scheduling_messages: false,
+	recurrence_rule: {},
 }
 
 const event = reactive({ ...DEFAULT_EVENT })
@@ -49,6 +52,36 @@ watch(show, (val) => {
 		event.startDate = dayjs(selectedEvent.date).format('YYYY-MM-DD')
 		event.endDate = dayjs(selectedEvent.date).format('YYYY-MM-DD')
 	}
+})
+
+const showRepeatSettings = ref(false)
+
+watch(
+	() => showRepeatSettings.value,
+	(val) => {
+		if (!val && !event.recurrence_rule?.frequency) event.repeat = false
+	},
+)
+
+const repeatMessage = computed(() => {
+	if (!event.recurrence_rule?.frequency) return ''
+	const message = __('Every {0} {1}', [
+		event.recurrence_rule.interval === 1 ? '' : event.recurrence_rule.interval,
+		getRepeatFrequencyOptions(event.recurrence_rule.interval)
+			.find((option) => option.value === event.recurrence_rule.frequency)
+			?.label.toLowerCase(),
+	])
+
+	if (event.recurrence_rule?.until)
+		return __('{0} until {1}', [
+			message,
+			dayjs(event.recurrence_rule.until).format('MMM DD, YYYY'),
+		])
+
+	if (event.recurrence_rule?.count)
+		return __('{0}, {1} occurrences', [message, event.recurrence_rule.count])
+
+	return message
 })
 
 const addParticipant = (email: string) => {
@@ -82,7 +115,7 @@ const createEvent = createResource({
 	makeParams: () => {
 		const start = dayjs(event.startDate + 'T' + event.startTime)
 		let duration: string
-		if (event.isFullDay) {
+		if (event.isAllDay) {
 			const startDay = dayjs(event.startDate)
 			const endDay = dayjs(event.endDate)
 			const days = endDay.diff(startDay, 'day') + 1
@@ -108,6 +141,7 @@ const createEvent = createResource({
 			participants: event.participants,
 			description: event.description,
 			send_scheduling_messages: event.send_scheduling_messages,
+			recurrence_rule: event.recurrence_rule,
 		}
 	},
 	onSuccess: () => {
@@ -147,7 +181,17 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 					:placeholder="__('Meeting with Team')"
 					autocomplete="off"
 				/>
-				<FormControl v-model="event.isFullDay" :label="__('All Day')" type="checkbox" />
+				<div class="flex items-center space-x-6">
+					<FormControl v-model="event.isAllDay" :label="__('All Day')" type="checkbox" />
+					<FormControl
+						v-model="event.repeat"
+						:label="__('Repeat: {0}', [repeatMessage || __('Off')])"
+						type="checkbox"
+						@update:model-value="
+							$event ? (showRepeatSettings = true) : (event.recurrence_rule = {})
+						"
+					/>
+				</div>
 				<div class="flex space-x-4">
 					<FormControl
 						v-model="event.startDate"
@@ -157,7 +201,7 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 						class="w-full"
 					/>
 					<FormControl
-						v-if="!event.isFullDay"
+						v-if="!event.isAllDay"
 						v-model="event.startTime"
 						type="time"
 						:label="__('Start Time')"
@@ -173,7 +217,7 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 						class="w-full"
 					/>
 					<FormControl
-						v-if="!event.isFullDay"
+						v-if="!event.isAllDay"
 						v-model="event.endTime"
 						type="time"
 						:label="__('End Time')"
@@ -241,4 +285,8 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 			</div>
 		</template>
 	</Dialog>
+	<EventRepeatSettingsModal
+		v-model="showRepeatSettings"
+		@update-recurrence-rule="(val) => (event.recurrence_rule = val)"
+	/>
 </template>
