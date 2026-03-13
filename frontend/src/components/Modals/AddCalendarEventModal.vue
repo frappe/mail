@@ -24,8 +24,6 @@ const emit = defineEmits(['reload-events'])
 const user = inject('$user')
 const dayjs = inject('$dayjs')
 
-const step = ref(0)
-
 const DEFAULT_EVENT = {
 	title: '',
 	isFullDay: true,
@@ -33,6 +31,7 @@ const DEFAULT_EVENT = {
 	startTime: '10:00',
 	endDate: dayjs().format('YYYY-MM-DD'),
 	endTime: '10:30',
+	location: '',
 	description: '',
 	participants: [] as Array<{ email: string }>,
 	send_scheduling_messages: false,
@@ -42,7 +41,6 @@ const event = reactive({ ...DEFAULT_EVENT })
 
 watch(show, (val) => {
 	if (!val) return
-	step.value = 0
 	Object.assign(event, DEFAULT_EVENT)
 	if (dayjs(selectedEvent.date).format('YYYY-MM-DD') === event.startDate) {
 		event.startTime = dayjs().add(1, 'hour').minute(0).second(0).format('HH:mm')
@@ -106,6 +104,7 @@ const createEvent = createResource({
 			title: event.title,
 			start: start.format('YYYY-MM-DD[T]HH:mm:ss'),
 			duration,
+			locations: [{ _name: event.location }],
 			participants: event.participants,
 			description: event.description,
 			send_scheduling_messages: event.send_scheduling_messages,
@@ -129,17 +128,11 @@ const mailContacts = createResource({
 
 const debouncedSearch = useDebounceFn((text: string) => text && mailContacts.reload(text), 300)
 
-const dialogOptions = computed(() => {
-	const actions = []
-	if (step.value === 1) actions.push({ label: __('Previous'), onClick: () => step.value-- })
-	actions.push({
-		label: step.value ? __('Save') : __('Next'),
-		variant: 'solid',
-		onClick: () => (step.value ? createEvent.submit() : step.value++),
-	})
-
-	return { title: __('Add Event'), size: 'xl', actions }
-})
+const dialogOptions = computed(() => ({
+	title: __('Add Event'),
+	size: '2xl',
+	actions: [{ label: __('Save'), variant: 'solid', onClick: () => createEvent.submit() }],
+}))
 
 const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 </script>
@@ -148,104 +141,103 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 	<Dialog v-model="show" :options="dialogOptions">
 		<template #body-content>
 			<div class="space-y-4">
-				<template v-if="step === 0">
+				<FormControl
+					v-model="event.title"
+					:label="__('Title')"
+					:placeholder="__('Meeting with Team')"
+					autocomplete="off"
+				/>
+				<FormControl v-model="event.isFullDay" :label="__('All Day')" type="checkbox" />
+				<div class="flex space-x-4">
 					<FormControl
-						v-model="event.title"
-						:label="__('Title')"
-						placeholder="example.com"
+						v-model="event.startDate"
+						type="date"
+						:label="__('Start Date')"
 						autocomplete="off"
+						class="w-full"
 					/>
 					<FormControl
-						v-model="event.isFullDay"
-						:label="__('All Day')"
-						type="checkbox"
+						v-if="!event.isFullDay"
+						v-model="event.startTime"
+						type="time"
+						:label="__('Start Time')"
+						class="w-full"
 					/>
-					<div class="flex space-x-4">
-						<FormControl
-							v-model="event.startDate"
-							type="date"
-							:label="__('Start Date')"
-							autocomplete="off"
-							class="w-full"
-						/>
-						<FormControl
-							v-if="!event.isFullDay"
-							v-model="event.startTime"
-							type="time"
-							:label="__('Start Time')"
-							class="w-full"
-						/>
-					</div>
-					<div class="flex space-x-4">
-						<FormControl
-							v-model="event.endDate"
-							type="date"
-							:label="__('End Date')"
-							autocomplete="off"
-							class="w-full"
-						/>
-						<FormControl
-							v-if="!event.isFullDay"
-							v-model="event.endTime"
-							type="time"
-							:label="__('End Time')"
-							class="w-full"
-						/>
-					</div>
+				</div>
+				<div class="flex space-x-4">
 					<FormControl
-						v-model="event.description"
-						:label="__('Description')"
-						type="textarea"
-						placeholder="example.com"
+						v-model="event.endDate"
+						type="date"
+						:label="__('End Date')"
 						autocomplete="off"
+						class="w-full"
 					/>
-				</template>
-				<template v-else>
-					<div class="space-y-1.5">
-						<label class="text-ink-gray-5 block text-xs">
-							{{ __('Enter Participants') }}
-						</label>
-						<Combobox
-							v-model="participantsInput"
-							:options="mailContacts?.data || []"
-							placeholder="john@example.com"
-							@input="debouncedSearch($event)"
-							@keyup.enter="handleParticipantEnter($event)"
-						/>
-					</div>
-					<ListView
-						:columns="PARTICIPANT_COLUMNS"
-						:rows="event.participants"
-						row-key="email"
-						class="max-h-32"
-					>
-						<ListHeader v-if="event.participants.length" />
-						<ListRows />
+					<FormControl
+						v-if="!event.isFullDay"
+						v-model="event.endTime"
+						type="time"
+						:label="__('End Time')"
+						class="w-full"
+					/>
+				</div>
+				<FormControl
+					v-model="event.location"
+					:label="__('Location')"
+					:placeholder="__('Meeting location')"
+					autocomplete="off"
+				/>
+				<FormControl
+					v-model="event.description"
+					:label="__('Description')"
+					type="textarea"
+					:placeholder="__('Event description')"
+					autocomplete="off"
+				/>
 
-						<ListSelectBanner>
-							<template #actions="{ selections, unselectAll }">
-								<Button
-									variant="ghost"
-									theme="red"
-									:label="__('Remove')"
-									@click="
-										() => {
-											event.participants = event.participants.filter(
-												(p) => !selections.has(p.email),
-											)
-											unselectAll()
-										}
-									"
-								/>
-							</template>
-						</ListSelectBanner>
-					</ListView>
-					<FormControl
-						v-model="event.send_scheduling_messages"
-						:label="__('Send Invites and Updates')"
-						type="checkbox"
-					/>
-				</template>
+				<hr />
+
+				<h3 class="text-base font-medium">{{ __('Enter Participants') }}</h3>
+
+				<Combobox
+					v-model="participantsInput"
+					:options="mailContacts?.data || []"
+					placeholder="john@example.com"
+					@input="debouncedSearch($event)"
+					@keyup.enter="handleParticipantEnter($event)"
+				/>
+
+				<ListView
+					:columns="PARTICIPANT_COLUMNS"
+					:rows="event.participants"
+					row-key="email"
+					class="max-h-32"
+				>
+					<ListHeader v-if="event.participants.length" />
+					<ListRows />
+
+					<ListSelectBanner>
+						<template #actions="{ selections, unselectAll }">
+							<Button
+								variant="ghost"
+								theme="red"
+								:label="__('Remove')"
+								@click="
+									() => {
+										event.participants = event.participants.filter(
+											(p) => !selections.has(p.email),
+										)
+										unselectAll()
+									}
+								"
+							/>
+						</template>
+					</ListSelectBanner>
+				</ListView>
+				<FormControl
+					v-model="event.send_scheduling_messages"
+					:label="__('Send Invites and Updates')"
+					type="checkbox"
+				/>
 			</div>
 		</template>
 	</Dialog>
