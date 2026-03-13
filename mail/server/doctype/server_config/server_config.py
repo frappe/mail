@@ -537,7 +537,7 @@ def get_config_toml(server: str) -> str | None:
 					"ttl": _format_value_or_zero(cluster.jmap_protocol_upload_ttl, "h"),
 					"quota": {
 						"files": cluster.jmap_protocol_upload_quota_files,
-						"size": cluster.jmap_protocol_upload_quota_size,
+						"size": cluster.jmap_protocol_upload_quota_size * 1024 * 1024,
 					},
 				},
 			},
