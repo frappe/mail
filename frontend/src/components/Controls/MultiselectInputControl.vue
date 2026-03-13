@@ -153,7 +153,6 @@ const mailContacts = createResource({
 	}),
 	transform: (data) =>
 		data.map((option) => ({ label: option.full_name || option.email, value: option.email })),
-	auto: false,
 })
 
 const debouncedSearch = useDebounceFn((text: string) => mailContacts.reload(text), 300)

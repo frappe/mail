@@ -55,8 +55,11 @@ const events = createResource({
 const deleteEvent = createResource({
 	url: 'mail.client.doctype.calendar_event.calendar_event.delete_calendar_events',
 	makeParams: (id) => ({ user: user.data.name, ids: [id] }),
-	onSuccess: () => raiseToast('Event deleted.', 'success'),
-	onError: (error) => raiseToast(error.message, 'error'),
+	onSuccess: () => raiseToast(__('Event deleted.'), 'success'),
+	onError: (error) => {
+		raiseToast(error.message, 'error')
+		events.reload()
+	},
 })
 
 const visibleEvents = computed(

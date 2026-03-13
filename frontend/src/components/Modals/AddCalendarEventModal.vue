@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, inject, reactive, ref, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import {
 	Button,
+	Combobox,
 	Dialog,
 	FormControl,
 	ListHeader,
@@ -12,7 +14,6 @@ import {
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import ContactsModal from '@/components/Modals/ContactsModal.vue'
 
 const show = defineModel<boolean>()
 
@@ -24,8 +25,6 @@ const user = inject('$user')
 const dayjs = inject('$dayjs')
 
 const step = ref(0)
-const participantInput = ref('')
-const showContactsModal = ref(false)
 
 const DEFAULT_EVENT = {
 	title: '',
@@ -65,15 +64,19 @@ const addParticipant = (email: string) => {
 	event.participants.push({ email })
 }
 
-const handleParticipantEnter = () => {
-	const value = participantInput.value.trim()
+const participantsInput = ref('')
+
+const handleParticipantEnter = (event: Event) => {
+	const target = event.target as HTMLInputElement
+	const value = target.value.trim()
 	if (!value) return
 	const emails = value
 		.split(',')
 		.map((e) => e.trim())
 		.filter((e) => e)
 	emails.forEach(addParticipant)
-	participantInput.value = ''
+	target.value = ''
+	participantsInput.value = ''
 }
 
 const createEvent = createResource({
@@ -115,6 +118,16 @@ const createEvent = createResource({
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })
+
+const mailContacts = createResource({
+	url: 'mail.api.contacts.get_contacts',
+	makeParams: (text: string) => ({
+		filter: { operator: 'OR', conditions: [{ text }, { email: text }] },
+	}),
+	transform: (data) => data.map((option) => option.email),
+})
+
+const debouncedSearch = useDebounceFn((text: string) => text && mailContacts.reload(text), 300)
 
 const dialogOptions = computed(() => {
 	const actions = []
@@ -188,16 +201,18 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 					/>
 				</template>
 				<template v-else>
-					<FormControl
-						v-model="participantInput"
-						:label="__('Enter Participants')"
-						placeholder="name@example.com"
-						autocomplete="email"
-						@keyup.enter="handleParticipantEnter"
-					/>
-					<button class="!mt-2 text-sm text-blue-500" @click="showContactsModal = true">
-						{{ __('Choose from contacts') }}
-					</button>
+					<div class="space-y-1.5">
+						<label class="text-ink-gray-5 block text-xs">
+							{{ __('Enter Participants') }}
+						</label>
+						<Combobox
+							v-model="participantsInput"
+							:options="mailContacts?.data || []"
+							placeholder="john@example.com"
+							@input="debouncedSearch($event)"
+							@keyup.enter="handleParticipantEnter($event)"
+						/>
+					</div>
 					<ListView
 						:columns="PARTICIPANT_COLUMNS"
 						:rows="event.participants"
@@ -234,8 +249,4 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 			</div>
 		</template>
 	</Dialog>
-	<ContactsModal
-		v-model="showContactsModal"
-		@insert="(emails) => emails.forEach(addParticipant)"
-	/>
 </template>
