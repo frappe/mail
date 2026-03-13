@@ -121,7 +121,9 @@ class JMAPClient:
 		"""Discover JMAP configuration from the server."""
 
 		well_known_url = urljoin(self.__host, "/.well-known/jmap")
-		response = self.__session.get(well_known_url, headers={"Accept": "application/json"})
+		response = self.__session.get(
+			well_known_url, headers={"Accept": "application/json"}, timeout=(10, 30)
+		)
 		raise_for_status(response)
 		self.__config = response.json()
 
@@ -168,7 +170,7 @@ class JMAPClient:
 		headers = {"Content-Type": "application/json", "Accept": "application/json"}
 		payload = {"using": using, "methodCalls": method_calls}
 		response = self.__session.post(
-			self.api_url, headers=headers, data=json.dumps(payload, ensure_ascii=False), timeout=(5, 30)
+			self.api_url, headers=headers, data=json.dumps(payload, ensure_ascii=False), timeout=(30, 60)
 		)
 		raise_for_status(response)
 
