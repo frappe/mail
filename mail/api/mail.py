@@ -330,7 +330,7 @@ def update_draft_mail(
 					"file_url": file_url,
 					"filename": d.get("filename", ""),
 					"disposition": d.get("disposition"),
-					"cid": d["cid"],
+					"cid": d.get("cid") or random_string(10),
 				},
 			)
 		else:

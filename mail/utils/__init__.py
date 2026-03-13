@@ -51,7 +51,7 @@ def reconnect_on_failure(max_retries: int = 3) -> callable:
 				is_db_error = frappe.db.is_interface_error(e) or isinstance(e, OperationalError)
 
 				if not is_db_error or retries >= max_retries:
-					raise
+					raise type(e)(f"{e!s} | Retries attempted: {retries}/{max_retries}") from e
 
 				retries += 1
 				frappe.db.connect()
