@@ -598,7 +598,6 @@ class MailExchange(Document):
 		self._db_set(status="Queued", queued_at=now())
 		self.process()
 
-	@reconnect_on_failure()
 	def _import(self) -> None:
 		"""Imports the mail data."""
 
@@ -649,7 +648,6 @@ class MailExchange(Document):
 		self._mark_completed(**kwargs)
 		self._notify_user(success=kwargs.get("status") == "Completed", action="Import")
 
-	@reconnect_on_failure()
 	def _export(self) -> None:
 		"""Exports the mail data."""
 
@@ -714,7 +712,6 @@ class MailExchange(Document):
 			started_after=time_diff_in_seconds(started_at, self.queued_at),
 		)
 
-	@reconnect_on_failure()
 	def _mark_completed(self, **kwargs) -> None:
 		"""Marks the mail exchange as completed and updates the completed_at and duration fields."""
 
@@ -814,6 +811,7 @@ class MailExchange(Document):
 
 		return result
 
+	@reconnect_on_failure()
 	def _attach_export(self, out_dir: str) -> None:
 		"""Attaches the exported file to the mail exchange."""
 
@@ -862,6 +860,7 @@ class MailExchange(Document):
 			now=True,
 		)
 
+	@reconnect_on_failure()
 	def _db_set(self, **kwargs) -> None:
 		"""Updates the document with the given key-value pairs."""
 

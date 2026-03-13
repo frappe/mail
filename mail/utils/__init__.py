@@ -11,7 +11,7 @@ import unicodedata
 import zipfile
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from io import BytesIO
 from typing import Any, Literal
 
@@ -22,9 +22,9 @@ from bs4 import BeautifulSoup, Comment
 from frappe import _
 from frappe.types.filter import FilterTuple
 from frappe.utils import get_bench_path
-from frappe.utils.caching import redis_cache
 from markdown_it import MarkdownIt
 from passlib.hash import sha512_crypt
+from pymysql import OperationalError
 
 INVISIBLE_CHARS = (
 	r"[\u0000-\u001F\u007F-\u009F"  # ASCII control chars
@@ -36,18 +36,25 @@ INVISIBLE_CHARS = (
 )
 
 
-def reconnect_on_failure() -> callable:
+def reconnect_on_failure(max_retries: int = 3) -> callable:
 	"""Decorator to reconnect to the database if a connection error occurs."""
 
 	@wrapt.decorator
 	def wrapper(wrapped, instance, args, kwargs):
-		try:
-			return wrapped(*args, **kwargs)
-		except Exception as e:
-			if frappe.db.is_interface_error(e):
-				frappe.db.connect()
+		retries = 0
+
+		while True:
+			try:
 				return wrapped(*args, **kwargs)
-			raise
+
+			except Exception as e:
+				is_db_error = frappe.db.is_interface_error(e) or isinstance(e, OperationalError)
+
+				if not is_db_error or retries >= max_retries:
+					raise
+
+				retries += 1
+				frappe.db.connect()
 
 	return wrapper
 
