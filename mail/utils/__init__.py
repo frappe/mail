@@ -23,8 +23,8 @@ from frappe import _
 from frappe.types.filter import FilterTuple
 from frappe.utils import get_bench_path
 from markdown_it import MarkdownIt
+from MySQLdb import OperationalError
 from passlib.hash import sha512_crypt
-from pymysql import OperationalError
 
 INVISIBLE_CHARS = (
 	r"[\u0000-\u001F\u007F-\u009F"  # ASCII control chars
