@@ -714,6 +714,7 @@ class MailExchange(Document):
 			started_after=time_diff_in_seconds(started_at, self.queued_at),
 		)
 
+	@reconnect_on_failure()
 	def _mark_completed(self, **kwargs) -> None:
 		"""Marks the mail exchange as completed and updates the completed_at and duration fields."""
 
@@ -833,6 +834,7 @@ class MailExchange(Document):
 		# https://github.com/frappe/frappe/issues/26615
 		frappe.db.set_value("File", file.name, {"file_url": url, "file_name": archive})
 
+	@reconnect_on_failure()
 	def _notify_user(self, success: bool, action: Literal["Import", "Export"]) -> None:
 		"""Sends notification email to the owner of the mail exchange."""
 
