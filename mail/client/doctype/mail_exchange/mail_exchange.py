@@ -7,7 +7,11 @@ import os
 import shutil
 from contextlib import closing
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime, timezone
+from email import message_from_binary_file
+from email.message import Message
+from email.parser import BytesHeaderParser
+from email.utils import parsedate_to_datetime
 from typing import Literal
 from uuid import uuid7
 
@@ -40,6 +44,7 @@ from mail.utils import (
 	reconnect_on_failure,
 )
 from mail.utils.cache import get_tenant_for_user
+from mail.utils.dt import parse_iso_datetime
 from mail.utils.user import (
 	clear_sync_state,
 	get_user_email_address,
@@ -67,6 +72,7 @@ class ImportEmailMeta:
 	blob_path: str
 	mailbox_ids: set[str]
 	keywords: set[str]
+	received_at: datetime
 
 
 @dataclass(slots=True)
@@ -126,11 +132,35 @@ class ImportMetadataLoader:
 
 		keywords = set(metadata.get("keywords", {}).keys() or [])
 
+		if metadata_received_at := metadata.get("receivedAt"):
+			metadata_received_at = parse_iso_datetime(metadata_received_at, as_str=False)
+
 		files = [f for f in os.listdir(base_dir) if f.lower().endswith(".eml")]
 		if not files:
 			frappe.throw(_("No .eml files found"))
 
-		return [ImportEmailMeta(f, mailbox_ids, keywords) for f in files]
+		result: list[ImportEmailMeta] = []
+		parser = BytesHeaderParser()
+
+		for fname in files:
+			received_at = metadata_received_at
+
+			if not received_at:
+				with open(os.path.join(base_dir, fname), "rb") as f:
+					msg: Message = parser.parse(f)
+
+				received_at = extract_received_or_sent(msg)
+
+			result.append(
+				ImportEmailMeta(
+					fname,
+					mailbox_ids,
+					keywords,
+					received_at,
+				)
+			)
+
+		return result
 
 	@classmethod
 	def _from_jmap(cls, base_dir: str, *args, **kwargs) -> list[ImportEmailMeta]:
@@ -145,6 +175,7 @@ class ImportMetadataLoader:
 					blob_path=os.path.join("blobs", meta["blobId"]),
 					mailbox_ids=set(meta["mailboxIds"].keys()),
 					keywords=set(meta.get("keywords", {}).keys() or []),
+					received_at=parse_iso_datetime(meta["receivedAt"], as_str=False),
 				)
 			)
 
@@ -170,6 +201,7 @@ class ImportMetadataLoader:
 			with closing(mailbox.mbox(mbox_path, factory=None)) as mbox:
 				for key, msg in mbox.items():
 					msg_id = msg.get("Message-ID") or key
+					received_at = extract_received_or_sent(msg)
 
 					if msg_id in by_message_id:
 						by_message_id[msg_id].mailbox_ids.add(mailbox_id)
@@ -183,6 +215,7 @@ class ImportMetadataLoader:
 						blob_path=blob,
 						mailbox_ids={mailbox_id},
 						keywords=set(),
+						received_at=received_at,
 					)
 
 		return list(by_message_id.values())
@@ -217,11 +250,16 @@ class ImportMetadataLoader:
 		"""Loads import metadata for Maildir format."""
 
 		validate_maildir_or_maildirpp(base_dir, raise_exception=True)
+
 		mailbox_ids = set(metadata.get("mailboxIds", {}).keys())
 		if not mailbox_ids:
 			frappe.throw(_("mailboxIds are required in Metadata for Maildir format."))
 
+		if metadata_received_at := metadata.get("receivedAt"):
+			metadata_received_at = parse_iso_datetime(metadata_received_at, as_str=False)
+
 		result: list[ImportEmailMeta] = []
+
 		for subdir in ("cur", "new"):
 			path = os.path.join(base_dir, subdir)
 			if not os.path.isdir(path):
@@ -229,11 +267,20 @@ class ImportMetadataLoader:
 
 			for fname in os.listdir(path):
 				keywords = cls._parse_maildir_flags(fname, subdir == "cur")
+
+				received_at = metadata_received_at
+				if not received_at:
+					with open(os.path.join(path, fname), "rb") as f:
+						msg: Message = message_from_binary_file(f)
+
+					received_at = extract_received_or_sent(msg)
+
 				result.append(
 					ImportEmailMeta(
 						blob_path=os.path.join(subdir, fname),
 						mailbox_ids=mailbox_ids,
 						keywords=keywords,
+						received_at=received_at,
 					)
 				)
 
@@ -246,6 +293,10 @@ class ImportMetadataLoader:
 		"""Loads import metadata for Nested Maildir format."""
 
 		validate_nested_maildir_tree(base_dir, raise_exception=True)
+
+		if metadata_received_at := metadata.get("receivedAt"):
+			metadata_received_at = parse_iso_datetime(metadata_received_at, as_str=False)
+
 		result: list[ImportEmailMeta] = []
 
 		path_to_id = {v: k for k, v in mailbox_map.items()}
@@ -286,9 +337,18 @@ class ImportMetadataLoader:
 					if fname.startswith("."):
 						continue
 
+					file_path = os.path.join(path, fname)
+
+					received_at = metadata_received_at
+					if not received_at:
+						with open(file_path, "rb") as f:
+							msg: Message = message_from_binary_file(f)
+
+						received_at = extract_received_or_sent(msg)
+
 					keywords = cls._parse_maildir_flags(fname, subdir == "cur")
-					rel_blob = os.path.relpath(os.path.join(path, fname), base_dir)
-					result.append(ImportEmailMeta(rel_blob, {mailbox_id}, keywords))
+					rel_blob = os.path.relpath(file_path, base_dir)
+					result.append(ImportEmailMeta(rel_blob, {mailbox_id}, keywords, received_at))
 
 		return result
 
@@ -598,6 +658,7 @@ class MailExchange(Document):
 		self._db_set(status="Queued", queued_at=now())
 		self.process()
 
+	@reconnect_on_failure()
 	def _import(self) -> None:
 		"""Imports the mail data."""
 
@@ -648,6 +709,7 @@ class MailExchange(Document):
 		self._mark_completed(**kwargs)
 		self._notify_user(success=kwargs.get("status") == "Completed", action="Import")
 
+	@reconnect_on_failure()
 	def _export(self) -> None:
 		"""Exports the mail data."""
 
@@ -741,6 +803,7 @@ class MailExchange(Document):
 					"blobId": resp["blobId"],
 					"mailboxIds": {mid: True for mid in meta.mailbox_ids},
 					"keywords": {k: True for k in meta.keywords or []},
+					"receivedAt": meta.received_at.isoformat(),
 				}
 
 			client._make_request(
@@ -811,7 +874,6 @@ class MailExchange(Document):
 
 		return result
 
-	@reconnect_on_failure()
 	def _attach_export(self, out_dir: str) -> None:
 		"""Attaches the exported file to the mail exchange."""
 
@@ -832,7 +894,6 @@ class MailExchange(Document):
 		# https://github.com/frappe/frappe/issues/26615
 		frappe.db.set_value("File", file.name, {"file_url": url, "file_name": archive})
 
-	@reconnect_on_failure()
 	def _notify_user(self, success: bool, action: Literal["Import", "Export"]) -> None:
 		"""Sends notification email to the owner of the mail exchange."""
 
@@ -860,7 +921,6 @@ class MailExchange(Document):
 			now=True,
 		)
 
-	@reconnect_on_failure()
 	def _db_set(self, **kwargs) -> None:
 		"""Updates the document with the given key-value pairs."""
 
@@ -897,6 +957,45 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 		return doc.user == user
 
 	return False
+
+
+def extract_received_or_sent(msg: Message) -> datetime:
+	"""
+	Extracts the received date from the email headers.
+	If the Received header is not available or invalid, it falls back to the Date header.
+	Ensures the resulting datetime is not in the future.
+	Raises an exception if neither header is valid.
+	"""
+
+	now = datetime.now(UTC)
+
+	if received_headers := msg.get_all("Received", []):
+		last_received = received_headers[-1]
+
+		if ";" in last_received:
+			date_part = last_received.rsplit(";", 1)[-1].strip()
+			try:
+				dt = parsedate_to_datetime(date_part)
+				if dt.tzinfo is None:
+					dt = dt.replace(tzinfo=UTC)
+
+				if dt <= now:
+					return dt
+			except Exception:
+				pass
+
+	if sent_date := msg.get("Date"):
+		try:
+			dt = parsedate_to_datetime(sent_date)
+			if dt.tzinfo is None:
+				dt = dt.replace(tzinfo=UTC)
+
+			if dt <= now:
+				return dt
+		except Exception:
+			pass
+
+	frappe.throw(_("Email must have a valid non-future Received or Date header."))
 
 
 def retry_stuck_mail_exchanges() -> None:
