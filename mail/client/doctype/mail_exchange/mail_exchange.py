@@ -182,30 +182,33 @@ class ImportMetadataLoader:
 		return result
 
 	@staticmethod
-	def _from_mbox(base_dir: str, mailbox_map: dict[str, str], *args, **kwargs) -> list[ImportEmailMeta]:
+	def _from_mbox(base_dir: str, mailbox_map: dict[str, str], metadata: dict) -> list[ImportEmailMeta]:
 		"""Loads import metadata for MBOX format."""
 
 		mbox_files = get_mbox_files(base_dir)
 		if not mbox_files:
 			frappe.throw(_("No .mbox files found"))
 
-		by_message_id: dict[str, ImportEmailMeta] = {}
-		for mbox_path in mbox_files:
-			mailbox_id = next(
-				(k for k, v in mailbox_map.items() if f"{v}.mbox" == os.path.basename(mbox_path)),
-				None,
-			)
-			if not mailbox_id:
-				frappe.throw(_("Mailbox not found for {0}").format(mbox_path))
+		mailbox_ids = set(metadata.get("mailboxIds", {}).keys())
+		if not mailbox_ids:
+			frappe.throw(_("mailboxIds are required in Metadata for MBOX format."))
 
+		keywords = set(metadata.get("keywords", {}).keys() or [])
+
+		if metadata_received_at := metadata.get("receivedAt"):
+			metadata_received_at = parse_iso_datetime(metadata_received_at, as_str=False)
+
+		by_message_id: dict[str, ImportEmailMeta] = {}
+
+		for mbox_path in mbox_files:
 			with closing(mailbox.mbox(mbox_path, factory=None)) as mbox:
 				for key, msg in mbox.items():
-					msg_id = msg.get("Message-ID") or key
-					received_at = extract_received_or_sent(msg)
+					msg_id = (msg.get("Message-ID") or key).strip().lower()
 
 					if msg_id in by_message_id:
-						by_message_id[msg_id].mailbox_ids.add(mailbox_id)
 						continue
+
+					received_at = metadata_received_at or extract_received_or_sent(msg)
 
 					blob = f"{uuid7()}.eml"
 					with open(os.path.join(base_dir, blob), "wb") as f:
@@ -213,8 +216,8 @@ class ImportMetadataLoader:
 
 					by_message_id[msg_id] = ImportEmailMeta(
 						blob_path=blob,
-						mailbox_ids={mailbox_id},
-						keywords=set(),
+						mailbox_ids=mailbox_ids,
+						keywords=keywords,
 						received_at=received_at,
 					)
 
@@ -517,6 +520,7 @@ class MailExchange(Document):
 		return {
 			"mailboxIds": filter_truthy_items("mailboxIds"),
 			"keywords": filter_truthy_items("keywords"),
+			"receivedAt": metadata.get("receivedAt"),
 		}
 
 	def autoname(self) -> None:
@@ -569,10 +573,10 @@ class MailExchange(Document):
 				)
 			)
 
-		if self.import_format in ("eml", "maildir"):
+		if self.import_format in ("eml", "mbox", "maildir"):
 			meta = self.import_metadata_dict
 			if not meta.get("mailboxIds"):
-				frappe.throw(_("mailboxIds are required in Metadata for EML and Maildir formats."))
+				frappe.throw(_("mailboxIds are required in Metadata for EML, MBOX, and Maildir formats."))
 		else:
 			self.import_metadata = json.dumps({})
 
@@ -682,9 +686,7 @@ class MailExchange(Document):
 			client = get_jmap_client(self.user)
 
 			mailbox_map = {}
-			if self.import_format == "mbox":
-				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
-			elif self.import_format == "maildir-nested":
+			if self.import_format == "maildir-nested":
 				mailbox_map = self._build_mailbox_map(client.mailboxes)
 
 			meta = ImportMetadataLoader.load(
