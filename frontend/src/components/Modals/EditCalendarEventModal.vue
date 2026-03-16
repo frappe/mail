@@ -25,33 +25,56 @@ const emit = defineEmits(['reload-events'])
 const user = inject('$user')
 const dayjs = inject('$dayjs')
 
-const DEFAULT_EVENT = {
-	title: '',
-	isAllDay: true,
-	repeat: false,
-	startDate: dayjs().format('YYYY-MM-DD'),
-	startTime: '10:00',
-	endDate: dayjs().format('YYYY-MM-DD'),
-	endTime: '10:30',
-	location: '',
-	description: '',
-	participants: [] as Array<{ email: string }>,
-	send_scheduling_messages: false,
-	recurrence_rule: {},
+const getDefaultEvent = () => {
+	const startTime = dayjs(selectedEvent.date).isToday()
+		? dayjs().add(1, 'hour').minute(0).second(0).format('HH:mm')
+		: '10:00'
+
+	return {
+		title: '',
+		isAllDay: true,
+		repeat: false,
+		startDate: dayjs(selectedEvent.date).format('YYYY-MM-DD'),
+		startTime,
+		endDate: dayjs(selectedEvent.date).format('YYYY-MM-DD'),
+		endTime: dayjs(startTime, 'HH:mm').add(30, 'minute').format('HH:mm'),
+		location: '',
+		description: '',
+		participants: [] as Array<{ email: string }>,
+		send_scheduling_messages: false,
+		recurrence_rule: {},
+	}
 }
 
-const event = reactive({ ...DEFAULT_EVENT })
+const getEvent = () => {
+	const start = dayjs(selectedEvent.calendarEvent?.start)
+	const duration = dayjs.duration(selectedEvent.calendarEvent?.duration)
+	const end = start.add(duration)
+	const isAllDay =
+		duration.days() > 0 &&
+		duration.hours() === 0 &&
+		duration.minutes() === 0 &&
+		duration.seconds() === 0
+
+	return {
+		title: selectedEvent.calendarEvent.title || '',
+		isAllDay,
+		repeat: !!selectedEvent.calendarEvent.recurrence_rule?.frequency,
+		startDate: start.format('YYYY-MM-DD'),
+		startTime: start.format('HH:mm'),
+		endDate: end.format('YYYY-MM-DD'),
+		endTime: end.format('HH:mm'),
+		location: selectedEvent.calendarEvent.locations?.[0]?._name || '',
+		description: selectedEvent.calendarEvent.description || '',
+		participants: selectedEvent.calendarEvent.participants || [],
+		recurrence_rule: selectedEvent.calendarEvent.recurrence_rule || {},
+	}
+}
+
+const event = reactive({})
 
 watch(show, (val) => {
-	if (!val) return
-	Object.assign(event, DEFAULT_EVENT)
-	if (dayjs(selectedEvent.date).format('YYYY-MM-DD') === event.startDate) {
-		event.startTime = dayjs().add(1, 'hour').minute(0).second(0).format('HH:mm')
-		event.endTime = dayjs(event.startTime, 'HH:mm').add(30, 'minute').format('HH:mm')
-	} else {
-		event.startDate = dayjs(selectedEvent.date).format('YYYY-MM-DD')
-		event.endDate = dayjs(selectedEvent.date).format('YYYY-MM-DD')
-	}
+	if (val) Object.assign(event, selectedEvent?.calendarEvent ? getEvent() : getDefaultEvent())
 })
 
 const showRepeatSettings = ref(false)
@@ -116,19 +139,14 @@ const createEvent = createResource({
 		const start = dayjs(event.startDate + 'T' + event.startTime)
 		let duration: string
 		if (event.isAllDay) {
-			const startDay = dayjs(event.startDate)
-			const endDay = dayjs(event.endDate)
-			const days = endDay.diff(startDay, 'day') + 1
-			duration = 'P' + days + 'D'
+			const days = dayjs(event.endDate).diff(dayjs(event.startDate), 'day') + 1
+			duration = dayjs.duration({ days }).toISOString()
 		} else {
-			duration = 'PT'
 			const end = dayjs(event.endDate + 'T' + event.endTime)
-			const totalMinutes = end.diff(start, 'minute')
-			const hours = Math.floor(totalMinutes / 60)
-			const minutes = totalMinutes % 60
-			if (hours > 0) duration += hours + 'H'
-			if (minutes > 0) duration += minutes + 'M'
-			if (hours === 0 && minutes === 0) duration += '0M'
+			const diff = dayjs.duration(end.diff(start))
+			const hours = Math.floor(diff.asHours())
+			const minutes = diff.minutes()
+			duration = dayjs.duration({ hours, minutes }).toISOString()
 		}
 
 		return {
@@ -137,7 +155,7 @@ const createEvent = createResource({
 			title: event.title,
 			start: start.format('YYYY-MM-DD[T]HH:mm:ss'),
 			duration,
-			locations: [{ _name: event.location }],
+			locations: [{ name: event.location }],
 			participants: event.participants,
 			description: event.description,
 			send_scheduling_messages: event.send_scheduling_messages,
@@ -163,7 +181,7 @@ const mailContacts = createResource({
 const debouncedSearch = useDebounceFn((text: string) => text && mailContacts.reload(text), 300)
 
 const dialogOptions = computed(() => ({
-	title: __('Add Event'),
+	title: selectedEvent?.calendarEvent ? __('Edit Event') : __('Add Event'),
 	size: '2xl',
 	actions: [{ label: __('Save'), variant: 'solid', onClick: () => createEvent.submit() }],
 }))
@@ -240,12 +258,12 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 
 				<hr />
 
-				<h3 class="text-base font-medium">{{ __('Enter Participants') }}</h3>
+				<h3 class="text-base font-medium">{{ __('Participants') }}</h3>
 
 				<Combobox
 					v-model="participantsInput"
 					:options="mailContacts?.data || []"
-					placeholder="john@example.com"
+					:placeholder="__('Enter participants')"
 					@input="debouncedSearch($event)"
 					@keyup.enter="handleParticipantEnter($event)"
 				/>
@@ -278,6 +296,7 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 					</ListSelectBanner>
 				</ListView>
 				<FormControl
+					v-if="!selectedEvent?.calendarEvent"
 					v-model="event.send_scheduling_messages"
 					:label="__('Send Invites and Updates')"
 					type="checkbox"

@@ -4,7 +4,7 @@ import { Calendar, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import CalendarSidebar from '@/components/CalendarSidebar.vue'
-import AddCalendarEventModal from '@/components/Modals/AddCalendarEventModal.vue'
+import EditCalendarEventModal from '@/components/Modals/EditCalendarEventModal.vue'
 
 const user = inject('$user')
 const dayjs = inject('$dayjs')
@@ -71,14 +71,21 @@ const visibleEvents = computed(
 		) || [],
 )
 
-const showAddEvent = ref(false)
+const showEditEvent = ref(false)
 
 const event = reactive({})
 
-const handleCellClick = (e) => {
+const handleOpenEvent = (e) => {
 	Object.assign(event, e)
-	showAddEvent.value = true
+	showEditEvent.value = true
 }
+
+watch(
+	() => showEditEvent.value,
+	(val) => {
+		if (!val) Object.keys(event).forEach((key) => delete event[key])
+	},
+)
 </script>
 
 <template>
@@ -99,15 +106,15 @@ const handleCellClick = (e) => {
 					ref="calendar"
 					:events="visibleEvents"
 					:config="{ isEditMode: true }"
-					:on-cell-click="(event) => handleCellClick(event)"
-					@update="(event) => console.log('updateEvent', event)"
+					:on-dbl-click="(event) => handleOpenEvent(event)"
+					:on-cell-click="(event) => handleOpenEvent(event)"
 					@delete="(eventID) => deleteEvent.submit(eventID)"
 				/>
 			</div>
 		</div>
 	</div>
-	<AddCalendarEventModal
-		v-model="showAddEvent"
+	<EditCalendarEventModal
+		v-model="showEditEvent"
 		:selected-event="event"
 		@reload-events="events.reload()"
 	/>
