@@ -5,7 +5,8 @@ from frappe import _
 from frappe.model.document import Document
 
 from mail.backend import get_mail_backend_api
-from mail.jmap import JMAPClient
+from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
+from mail.jmap.services.mail.identity import IdentityService
 from mail.server.doctype.mail_principal.mail_principal import PRINCIPAL_ENDPOINT, MailPrincipal
 from mail.utils import reformat_pbkdf2_hash
 from mail.utils.user import (
@@ -100,16 +101,11 @@ def _validate_default_outgoing_email(doc: Document) -> None:
 	if not doc.jmap_default_outgoing_email:
 		return
 
-	client = JMAPClient(
-		doc.jmap_server_url,
-		doc.jmap_username,
-		doc.get_password("jmap_app_password"),
-	)
+	info = JMAPConnectionInfo(doc.jmap_server_url, doc.jmap_username, doc.get_password("jmap_app_password"))
+	connection = JMAPConnection(info)
+	identity_service = IdentityService(doc.name, connection)
 
-	identities = client.identity_get()
-	target = doc.jmap_default_outgoing_email.lower()
-
-	if not any(identity.get("email", "").lower() == target for identity in identities):
+	if not identity_service.get_identity_id_by_email(doc.jmap_default_outgoing_email):
 		frappe.throw(
 			_("Default Outgoing Email {0} is not found in the identities of the JMAP account.").format(
 				frappe.bold(doc.jmap_default_outgoing_email)

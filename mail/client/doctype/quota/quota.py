@@ -8,7 +8,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
-from mail.jmap import get_jmap_client
+from mail.jmap import get_quota_service
 from mail.utils import parse_filters
 from mail.utils.validation import has_permission_for_user
 
@@ -77,8 +77,9 @@ def get_quota(user: str, id: str, raise_exception: bool = True) -> dict | None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	if quotas := client.quota_get([id]):
+	service = get_quota_service(user)
+
+	if quotas := service.get([id]):
 		return format_quota(user, quotas[0])
 
 	if raise_exception:
@@ -94,8 +95,8 @@ def fetch_quotas(user: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	quotas = client.quota_get()
+	service = get_quota_service(user)
+	quotas = service.get()
 	formatted_quotas = [format_quota(user, quota) for quota in quotas]
 	frappe.cache.set_value(_get_total_cache_key(user), len(quotas), expires_in_sec=600)
 

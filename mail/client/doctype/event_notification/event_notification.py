@@ -7,7 +7,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
-from mail.jmap import get_jmap_client
+from mail.jmap import get_calendar_event_notification_service
 from mail.utils import parse_filters
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
@@ -109,25 +109,14 @@ def fetch_event_notifications(
 	has_permission_for_user(user)
 
 	notifications = []
-	client = get_jmap_client(user)
 
-	while len(notifications) < limit:
-		result = client.calendar_event_notification_query(filter, position, limit, sort)
-		ids = result["ids"]
-		total = result["total"]
+	service = get_calendar_event_notification_service(user)
+	data = service.query(filter, position, limit, sort)
 
-		if not ids:
-			break
+	ids = data.get("ids", [])
+	total = data.get("total", 0)
 
-		notifications.extend(get_event_notifications(user, ids))
-
-		if len(notifications) >= limit:
-			break
-
-		position += len(ids)
-
-		if position >= total:
-			break
+	notifications.extend(get_event_notifications(user, ids))
 
 	return notifications[:limit], total
 
@@ -138,10 +127,10 @@ def get_event_notifications(user: str, ids: list[str]) -> list[dict]:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
+	service = get_calendar_event_notification_service(user)
 
 	notifications = {}
-	for notification in client.calendar_event_notification_get(ids):
+	for notification in service.get(ids):
 		notification = format_event_notification(user, notification)
 		notifications[notification["id"]] = notification
 
@@ -154,8 +143,8 @@ def delete_event_notifications(user: str, ids: list[str]) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.calendar_event_notification_delete(ids)
+	service = get_calendar_event_notification_service(user)
+	response = service.delete(ids)
 
 	if response.get("notDestroyed"):
 		error_messages = []

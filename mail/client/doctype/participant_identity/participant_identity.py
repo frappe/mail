@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, today
 
-from mail.jmap import get_jmap_client
+from mail.jmap import get_participant_identity_service
 from mail.utils import parse_filters
 from mail.utils.validation import has_permission_for_user
 
@@ -111,8 +111,15 @@ def add_participant_identity(user: str, name: str, email: str, default: bool = F
 	has_permission_for_user(user)
 
 	creation_id = str(uuid7())
-	client = get_jmap_client(user)
-	response = client.participant_identity_create(creation_id, name, email, default)
+	participant_identity = {
+		"creation_id": creation_id,
+		"name": name,
+		"email": email,
+		"is_default": default,
+	}
+
+	service = get_participant_identity_service(user)
+	response = service.create([participant_identity])
 
 	title = _("Participant Identity Creation Error")
 	if response.get("created"):
@@ -129,8 +136,8 @@ def get_participant_identity(user: str, id: str) -> dict:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	if identities := client.participant_identity_get([id]):
+	service = get_participant_identity_service(user)
+	if identities := service.get([id]):
 		return format_participant_identity(user, identities[0])
 
 	frappe.throw(
@@ -147,8 +154,15 @@ def update_participant_identity(user: str, id: str, name: str, email: str, defau
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.participant_identity_update(id, name, email, default)
+	participant_identity = {
+		"id": id,
+		"name": name,
+		"email": email,
+		"is_default": default,
+	}
+
+	service = get_participant_identity_service(user)
+	response = service.update([participant_identity])
 
 	if not response.get("updated"):
 		title = _("Participant Identity Update Error")
@@ -164,8 +178,8 @@ def delete_participant_identities(user: str, ids: list[str]) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.participant_identity_delete(ids)
+	service = get_participant_identity_service(user)
+	response = service.delete(ids)
 
 	if response.get("notDestroyed"):
 		error_messages = []
@@ -183,8 +197,8 @@ def fetch_participant_identities(user: str, page: int = 1, limit: int = 10) -> l
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	identities = client.participant_identity_get()
+	service = get_participant_identity_service(user)
+	identities = service.get()
 	formatted_identities = [format_participant_identity(user, identity) for identity in identities]
 	frappe.cache.set_value(_get_total_cache_key(user), len(identities), expires_in_sec=600)
 

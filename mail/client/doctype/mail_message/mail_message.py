@@ -26,7 +26,9 @@ from frappe.utils import (
 )
 
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
-from mail.jmap import get_jmap_client
+from mail.jmap import get_email_service, get_jmap_connection, get_thread_service
+from mail.jmap.services.mail.email import EmailService
+from mail.jmap.services.mail.mailbox import MailboxService
 from mail.utils import (
 	convert_html_to_text,
 	enqueue_job,
@@ -625,25 +627,14 @@ def fetch_messages(
 	has_permission_for_user(user)
 
 	messages = []
-	client = get_jmap_client(user)
 
-	while len(messages) < limit:
-		result = client.email_query(filter, position, limit, sort)
-		ids = result["ids"]
-		total = result["total"]
+	service = get_email_service(user)
+	data = service.query(filter, position, limit, sort)
 
-		if not ids:
-			break
+	ids = data.get("ids", [])
+	total = data.get("total", 0)
 
-		messages.extend(get_messages(user, ids=ids))
-
-		if len(messages) >= limit:
-			break
-
-		position += len(ids)
-
-		if position >= total:
-			break
+	messages.extend(get_messages(user, ids=ids))
 
 	return messages[:limit], total
 
@@ -653,8 +644,8 @@ def fetch_threads(user: str, filter: dict | None = None, position: int = 0, limi
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	ids = client.thread_query(filter, position, limit, fetch_all=False)
+	service = get_email_service(user)
+	ids = service.query_thread(filter, position, limit, fetch_all=False)
 	messages = get_messages(user, ids=ids)
 
 	return messages
@@ -665,8 +656,8 @@ def fetch_thread(user: str, thread_id: str) -> list[dict]:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	result = client.thread_get([thread_id])
+	service = get_thread_service(user)
+	result = service.get([thread_id])
 	ids = result.get(thread_id, [])
 	messages = get_messages(user, ids=ids)
 
@@ -716,10 +707,10 @@ def get_messages(user: str, ids: list[str]) -> list[dict]:
 			ids_to_fetch.append(id)
 
 	if ids_to_fetch:
-		client = get_jmap_client(user)
-		emails, _state = client.email_get(ids_to_fetch)
+		service = get_email_service(user)
+		emails = service.get(ids_to_fetch)
 
-		mailbox_map = {mb["id"]: mb["_name"] for mb in client.mailboxes}
+		mailbox_map = {mb["id"]: mb["name"] for mb in service.mailboxes}
 
 		for email in emails:
 			message = format_message(user, mailbox_map, email)
@@ -738,14 +729,15 @@ def get_message_ids(user: str, thread_ids: list[str], mailbox_id: str | list[str
 	has_permission_for_user(user)
 
 	try:
-		client = get_jmap_client(user)
-		result = client.thread_get(thread_ids)
+		thread_service = get_thread_service(user)
+		result = thread_service.get(thread_ids)
 		ids = [id for _thread_id, ids in result.items() for id in ids]
 
 		if not mailbox_id:
 			return ids
 
-		emails, _state = client.email_get(ids, properties=["id", "mailboxIds"])
+		email_service = get_email_service(user)
+		emails = email_service.get(ids, properties=["id", "mailboxIds"])
 		if isinstance(mailbox_id, str):
 			return [email["id"] for email in emails if mailbox_id in email["mailboxIds"]]
 		else:
@@ -765,8 +757,8 @@ def delete_messages(user: str, ids: list[str]) -> None:
 	has_permission_for_user(user)
 
 	try:
-		client = get_jmap_client(user)
-		client.email_delete(ids)
+		service = get_email_service(user)
+		service.delete(ids)
 		_remove_messages_from_cache(user, ids)
 	except Exception:
 		frappe.log_error(
@@ -785,18 +777,16 @@ def empty_mailbox(user: str, mailbox_id: str) -> None:
 	has_permission_for_user(user)
 
 	try:
-		client = get_jmap_client(user)
+		service = get_email_service(user)
 
 		while True:
-			result = client.email_query(
-				{"inMailbox": mailbox_id}, position=0, limit=client.max_objects_in_get
-			)
+			result = service.query({"inMailbox": mailbox_id}, position=0, limit=service.max_objects_in_get)
 
 			ids = result["ids"]
 			if not ids:
 				break
 
-			client.email_delete(ids)
+			service.delete(ids)
 			_remove_messages_from_cache(user, ids)
 	except Exception:
 		frappe.log_error(
@@ -815,8 +805,9 @@ def move_messages(user: str, ids: list[str], mailbox_id: str) -> None:
 	has_permission_for_user(user)
 
 	try:
-		client = get_jmap_client(user)
-		client.email_update(ids, mailbox_id)
+		emails = [{"id": id, "mailbox_ids": {mailbox_id: True}} for id in ids]
+		service = get_email_service(user)
+		service.update(emails)
 		_remove_messages_from_cache(user, ids)
 	except Exception:
 		frappe.log_error(
@@ -835,8 +826,9 @@ def set_seen_status(user: str, ids: list[str], seen: bool = True) -> None:
 	has_permission_for_user(user)
 
 	try:
-		client = get_jmap_client(user)
-		client.email_update(ids, keywords={"$seen": bool(seen)})
+		emails = [{"id": id, "keywords": {"$seen": seen}} for id in ids]
+		service = get_email_service(user)
+		service.update(emails)
 
 		for id in ids:
 			if message := _get_message_from_cache(user, id):
@@ -864,8 +856,9 @@ def set_flagged_status(user: str, ids: list[str], flagged: bool = True) -> None:
 	has_permission_for_user(user)
 
 	try:
-		client = get_jmap_client(user)
-		client.email_update(ids, keywords={"$flagged": bool(flagged)})
+		emails = [{"id": id, "keywords": {"$flagged": flagged}} for id in ids]
+		service = get_email_service(user)
+		service.update(emails)
 
 		for id in ids:
 			if message := _get_message_from_cache(user, id):
@@ -893,11 +886,19 @@ def set_spam_status(user: str, ids: list[str], spam: bool = True) -> None:
 	has_permission_for_user(user)
 
 	try:
-		client = get_jmap_client(user)
-		mailbox_id = client.get_mailbox_id_by_role(
+		connection = get_jmap_connection(user)
+		email_service = EmailService(user, connection)
+		mailbox_service = MailboxService(user, connection)
+
+		mailbox_id = mailbox_service.get_mailbox_id_by_role(
 			"junk" if spam else "inbox", create_if_not_exists=True, raise_exception=True
 		)
-		client.email_update(ids, mailbox_id, {"$junk": spam, "$notjunk": not spam})
+		emails = [
+			{"id": id, "mailbox_ids": {mailbox_id: True}, "keywords": {"$junk": spam, "$notjunk": not spam}}
+			for id in ids
+		]
+		email_service.update(emails)
+
 		_remove_messages_from_cache(user, ids)
 	except Exception:
 		frappe.log_error(
@@ -936,8 +937,8 @@ def fetch_blobs(user: str, blobs: list[str] | list[tuple[str, str | None]]) -> d
 		return result
 
 	try:
-		client = get_jmap_client(user)
-		fetched_blobs = client.download_blobs_concurrently(blobs_to_fetch)
+		service = get_email_service(user)
+		fetched_blobs = service.download_blobs_concurrently(blobs_to_fetch)
 
 		for blob_id, content in fetched_blobs.items():
 			_store_blob_in_cache(user, blob_id, content)
@@ -1182,12 +1183,15 @@ def fetch_changes(user: str, email_state: str | None = None) -> None:
 		return
 
 	try:
-		client = get_jmap_client(user)
-		result = client.email_changes(current_state)
+		connection = get_jmap_connection(user)
+		email_service = EmailService(user, connection)
+		mailbox_service = MailboxService(user, connection)
+
+		result = email_service.changes(current_state)
 
 		if created_ids := result["created"]:
 			if messages := get_messages(user, ids=created_ids):
-				inbox_id = client.get_mailbox_id_by_role(
+				inbox_id = mailbox_service.get_mailbox_id_by_role(
 					"inbox", create_if_not_exists=True, raise_exception=True
 				)
 

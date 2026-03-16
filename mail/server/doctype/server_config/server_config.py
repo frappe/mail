@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 
 from mail.backend import get_mail_backend_api
-from mail.jmap import raise_for_status
+from mail.jmap.connection import raise_for_status
 from mail.utils import flatten_dict, password_or_none
 
 LOCAL_KEYS = [

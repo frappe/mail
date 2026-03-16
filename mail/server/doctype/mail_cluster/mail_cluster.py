@@ -14,7 +14,7 @@ from frappe.query_builder import Order
 from frappe.utils import cint, random_string
 
 from mail.backend import MailBackendAPI, Principal
-from mail.jmap import raise_for_status
+from mail.jmap.connection import raise_for_status
 from mail.server.doctype.dns_record.dns_record import create_or_update_dns_record
 from mail.utils import generate_secret, get_spf_host_for_cluster, hash_password
 from mail.utils.dns import get_dns_record

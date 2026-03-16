@@ -650,13 +650,6 @@ def password_or_none(doc, field: str) -> str | None:
 	return doc.get_password(field) if doc.get(field) else None
 
 
-def batch_dict(d: dict[str, Any], batch_size: int) -> list[dict[str, Any]]:
-	"""Splits a dictionary into smaller dictionaries of a specified batch size."""
-
-	keys = list(d.keys())
-	return [{k: d[k] for k in keys[i : i + batch_size]} for i in range(0, len(keys), batch_size)]
-
-
 def get_dotted_path(func: Callable) -> str:
 	"""Returns the dotted path of a function."""
 

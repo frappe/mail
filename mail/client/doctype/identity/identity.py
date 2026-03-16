@@ -10,7 +10,7 @@ from frappe.model.document import Document
 from frappe.utils import cint, today
 
 from mail.backend import get_mail_backend_api
-from mail.jmap import get_jmap_client
+from mail.jmap import get_identity_service
 from mail.utils import parse_filters
 from mail.utils.cache import get_cluster_for_tenant
 from mail.utils.user import get_tenant_for_user, is_administrator, is_tenant_admin
@@ -138,7 +138,7 @@ def _add_identity(
 			[
 				"Identity/set",
 				{
-					"accountId": get_jmap_client(user, ignore_permissions=True).primary_account_id,
+					"accountId": get_identity_service(user, ignore_permissions=True).primary_account_id,
 					"create": {
 						creation_id: {
 							"email": email,
@@ -217,8 +217,18 @@ def add_identity(
 	has_permission_for_user(user)
 
 	creation_id = str(uuid7())
-	client = get_jmap_client(user)
-	response = client.identity_create(creation_id, email, name, reply_to, bcc, text_signature, html_signature)
+	identity = {
+		"creation_id": creation_id,
+		"email": email,
+		"name": name,
+		"reply_to": reply_to,
+		"bcc": bcc,
+		"text_signature": text_signature,
+		"html_signature": html_signature,
+	}
+
+	service = get_identity_service(user)
+	response = service.create([identity])
 
 	title = _("Identity Creation Error")
 	if response.get("created"):
@@ -235,8 +245,8 @@ def get_identity(user: str, id: str, raise_exception: bool = True) -> dict | Non
 
 	has_permission_for_identity(user)
 
-	client = get_jmap_client(user, ignore_permissions=True)
-	if identities := client.identity_get([id]):
+	service = get_identity_service(user)
+	if identities := service.get([id]):
 		return format_identity(user, identities[0])
 
 	if raise_exception:
@@ -260,8 +270,17 @@ def update_identity(
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.identity_update(id, name, reply_to, bcc, text_signature, html_signature)
+	identity = {
+		"id": id,
+		"name": name,
+		"reply_to": reply_to,
+		"bcc": bcc,
+		"text_signature": text_signature,
+		"html_signature": html_signature,
+	}
+
+	service = get_identity_service(user)
+	response = service.update([identity])
 
 	if not response.get("updated"):
 		title = _("Identity Update Error")
@@ -277,8 +296,8 @@ def delete_identities(user: str, ids: list[str]) -> None:
 
 	has_permission_for_identity(user)
 
-	client = get_jmap_client(user, ignore_permissions=True)
-	response = client.identity_delete(ids)
+	service = get_identity_service(user)
+	response = service.delete(ids)
 
 	if response.get("notDestroyed"):
 		error_messages = []
@@ -302,8 +321,9 @@ def fetch_identities(user: str, page: int = 1, limit: int = 10) -> list:
 				)
 			)
 
-	client = get_jmap_client(user, ignore_permissions=True)
-	identities = client.identity_get()
+	service = get_identity_service(user)
+	identities = service.get()
+
 	formatted_identities = [format_identity(user, identity) for identity in identities]
 	frappe.cache.set_value(_get_total_cache_key(user), len(identities), expires_in_sec=600)
 

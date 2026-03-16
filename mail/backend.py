@@ -6,7 +6,7 @@ import frappe
 import requests
 from frappe import _
 
-from mail.jmap import raise_for_status
+from mail.jmap.connection import raise_for_status
 
 
 @dataclass
