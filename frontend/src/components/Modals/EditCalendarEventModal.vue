@@ -40,6 +40,8 @@ const getDefaultEvent = () => {
 		endTime: dayjs(startTime, 'HH:mm').add(30, 'minute').format('HH:mm'),
 		location: '',
 		description: '',
+		free_busy_status: 'Busy',
+		privacy: '',
 		participants: [] as Array<{ email: string }>,
 		send_scheduling_messages: false,
 		recurrence_rule: {},
@@ -56,18 +58,22 @@ const getEvent = () => {
 		duration.minutes() === 0 &&
 		duration.seconds() === 0
 
+	const recurrence_rule = JSON.parse(selectedEvent.calendarEvent.recurrence_rule)
+
 	return {
 		title: selectedEvent.calendarEvent.title || '',
 		isAllDay,
-		repeat: !!selectedEvent.calendarEvent.recurrence_rule?.frequency,
+		repeat: !!recurrence_rule?.frequency,
 		startDate: start.format('YYYY-MM-DD'),
 		startTime: start.format('HH:mm'),
 		endDate: end.format('YYYY-MM-DD'),
 		endTime: end.format('HH:mm'),
+		free_busy_status: selectedEvent.calendarEvent.free_busy_status,
+		privacy: selectedEvent.calendarEvent.privacy,
 		location: selectedEvent.calendarEvent.locations?.[0]?._name || '',
 		description: selectedEvent.calendarEvent.description || '',
 		participants: selectedEvent.calendarEvent.participants || [],
-		recurrence_rule: selectedEvent.calendarEvent.recurrence_rule || {},
+		recurrence_rule,
 	}
 }
 
@@ -156,10 +162,13 @@ const createEvent = createResource({
 			start: start.format('YYYY-MM-DD[T]HH:mm:ss'),
 			duration,
 			locations: [{ name: event.location }],
+			free_busy_status: event.free_busy_status,
+			privacy: event.privacy,
 			participants: event.participants,
 			description: event.description,
 			send_scheduling_messages: event.send_scheduling_messages,
 			recurrence_rule: event.recurrence_rule,
+			time_zone: dayjs.tz.guess(),
 		}
 	},
 	onSuccess: () => {
@@ -186,6 +195,16 @@ const dialogOptions = computed(() => ({
 	actions: [{ label: __('Save'), variant: 'solid', onClick: () => createEvent.submit() }],
 }))
 
+const AVAILABILITY_OPTIONS = [
+	{ label: __('Free'), value: 'Free' },
+	{ label: __('Busy'), value: 'Busy' },
+]
+
+const VISIBILITY_OPTIONS = [
+	{ label: __('Public'), value: 'Public' },
+	{ label: __('Private'), value: 'Private' },
+]
+
 const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 </script>
 
@@ -197,7 +216,6 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 					v-model="event.title"
 					:label="__('Title')"
 					:placeholder="__('Meeting with Team')"
-					autocomplete="off"
 				/>
 				<div class="flex items-center space-x-6">
 					<FormControl v-model="event.isAllDay" :label="__('All Day')" type="checkbox" />
@@ -215,7 +233,6 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 						v-model="event.startDate"
 						type="date"
 						:label="__('Start Date')"
-						autocomplete="off"
 						class="w-full"
 					/>
 					<FormControl
@@ -231,7 +248,6 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 						v-model="event.endDate"
 						type="date"
 						:label="__('End Date')"
-						autocomplete="off"
 						class="w-full"
 					/>
 					<FormControl
@@ -246,14 +262,28 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 					v-model="event.location"
 					:label="__('Location')"
 					:placeholder="__('Meeting location')"
-					autocomplete="off"
 				/>
+				<div class="flex space-x-4">
+					<FormControl
+						v-model="event.free_busy_status"
+						type="select"
+						:label="__('Availability')"
+						:options="AVAILABILITY_OPTIONS"
+						class="w-full"
+					/>
+					<FormControl
+						v-model="event.privacy"
+						type="select"
+						:label="__('Visibility')"
+						:options="VISIBILITY_OPTIONS"
+						class="w-full"
+					/>
+				</div>
 				<FormControl
 					v-model="event.description"
 					:label="__('Description')"
 					type="textarea"
 					:placeholder="__('Event description')"
-					autocomplete="off"
 				/>
 
 				<hr />
