@@ -336,6 +336,7 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 	</Dialog>
 	<EventRepeatSettingsModal
 		v-model="showRepeatSettings"
+		:start-date="event?.startDate"
 		@update-recurrence-rule="(val) => (event.recurrence_rule = val)"
 	/>
 </template>

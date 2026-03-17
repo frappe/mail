@@ -326,6 +326,4 @@ export const getRepeatFrequencyOptions = (interval: number) => [
 	{ label: interval === 1 ? __('Week') : __('Weeks'), value: 'weekly' },
 	{ label: interval === 1 ? __('Day') : __('Days'), value: 'daily' },
 	{ label: interval === 1 ? __('Hour') : __('Hours'), value: 'hourly' },
-	{ label: interval === 1 ? __('Minute') : __('Minutes'), value: 'minutely' },
-	{ label: interval === 1 ? __('Second') : __('Seconds'), value: 'secondly' },
 ]
