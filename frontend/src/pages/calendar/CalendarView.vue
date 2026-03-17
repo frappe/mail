@@ -44,10 +44,14 @@ const visibleCalendars = ref<string[]>([])
 
 const events = createResource({
 	url: 'mail.api.calendar.get_calendar_events',
-	makeParams: () => ({
-		from_date: new Date(calendar.value?.currentYear, calendar.value?.currentMonth, 1),
-		to_date: new Date(calendar.value?.currentYear, calendar.value?.currentMonth + 1, 0),
-	}),
+	makeParams: () => {
+		const date = dayjs().year(calendar.value?.currentYear).month(calendar.value?.currentMonth)
+		return {
+			from_date: date.startOf('month').subtract(7, 'day').toDate(),
+			to_date: date.endOf('month').toDate(),
+			time_zone: dayjs.tz.guess(),
+		}
+	},
 	transform: (data) => data.map(transformEvent),
 	onError: (error) => raiseToast(error.message, 'error'),
 })

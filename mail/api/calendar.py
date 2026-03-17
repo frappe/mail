@@ -14,9 +14,15 @@ def get_calendars() -> list[dict[str, str]]:
 
 
 @frappe.whitelist()
-def get_calendar_events(from_date: str, to_date: str) -> list[dict]:
+def get_calendar_events(from_date: str, to_date: str, time_zone: str) -> list[dict]:
 	"""Fetches calendar events between from_date and to_date for the current user."""
 
-	events = fetch_calendar_events(frappe.session.user, {"after": from_date, "before": to_date})
+	events = fetch_calendar_events(
+		frappe.session.user,
+		{"after": from_date, "before": to_date},
+		limit=999,
+		time_zone=time_zone,
+		expand_recurrences=True,
+	)
 
 	return events[0]
