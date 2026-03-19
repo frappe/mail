@@ -124,9 +124,12 @@ class CalendarEventService(CalendarsService):
 				}
 
 				organizer = event.get("organizer")
-				organizer = organizer.lower()
-				if not organizer.startswith("mailto:"):
-					organizer = f"mailto:{organizer}"
+
+				if organizer:
+					organizer = organizer.lower()
+
+					if not organizer.startswith("mailto:"):
+						organizer = f"mailto:{organizer}"
 
 				payload[event["id"]].update(
 					{
