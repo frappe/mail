@@ -280,16 +280,31 @@ class CalendarEventService(CalendarsService):
 		"""Public method to update a specific instance of a recurring calendar event based on its ID and recurrence ID by applying the provided patch to the master event's recurrence overrides."""
 
 		if not id or not recurrence_id:
-			raise ValueError("Both 'id' and 'recurrence_id' are required to update an event instance.")
+			raise ValueError("Both 'id' and 'recurrence_id' are required.")
 
-		payload = {}
-		for key, value in patch.items():
-			payload[id][f"recurrenceOverrides/{recurrence_id}/{key}"] = value
+		if not patch:
+			raise ValueError("Patch data is required to update an instance.")
+
+		events = self.get([id])
+		if not events:
+			raise ValueError(f"Event with id '{id}' not found.")
+
+		event = events[0]
+		recurrence_overrides = event.get("recurrenceOverrides", {}) or {}
+
+		if recurrence_id in recurrence_overrides:
+			payload = {id: {}}
+			for k, v in patch.items():
+				payload[id][f"recurrenceOverrides/{recurrence_id}/{k}"] = v
+		else:
+			recurrence_overrides[recurrence_id] = patch
+			payload = {id: {"recurrenceOverrides": recurrence_overrides}}
 
 		payload[id]["updated"] = utcnow()
 
-		result = {"updated": [], "notUpdated": {}}
 		response = self._update(payload, sendSchedulingMessages=send_scheduling_messages)
+
+		result = {"updated": [], "notUpdated": {}}
 		if method_responses := response.get("methodResponses"):
 			result["updated"].extend(method_responses[0][1].get("updated", {}).keys())
 			if not_updated := method_responses[0][1].get("notUpdated", {}):
@@ -301,12 +316,19 @@ class CalendarEventService(CalendarsService):
 		"""Public method to delete a specific instance of a recurring calendar event based on its ID and recurrence ID by marking it as excluded in the master event's recurrence overrides."""
 
 		if not id or not recurrence_id:
-			raise ValueError("Both 'id' and 'recurrence_id' are required to delete an event instance.")
+			raise ValueError("Both 'id' and 'recurrence_id' are required.")
+
+		events = self.get([id])
+		if not events:
+			raise ValueError(f"Event with id '{id}' not found.")
+
+		event = events[0]
+		recurrence_overrides = event.get("recurrenceOverrides", {}) or {}
+		recurrence_overrides.setdefault(recurrence_id, {}).update({"excluded": True})
+
+		response = self._update({id: {"recurrenceOverrides": recurrence_overrides, "updated": utcnow()}})
 
 		result = {"updated": [], "notUpdated": {}}
-		response = self._update(
-			{id: {f"recurrenceOverrides/{recurrence_id}/excluded": True, "updated": utcnow()}}
-		)
 		if method_responses := response.get("methodResponses"):
 			result["updated"].extend(method_responses[0][1].get("updated", {}).keys())
 			if not_updated := method_responses[0][1].get("notUpdated", {}):
