@@ -255,6 +255,60 @@ class CalendarEventService(CalendarsService):
 
 		return result
 
+	def get_by_uid(self, uid: str) -> dict | None:
+		"""Public method to get a calendar event by its UID."""
+
+		response = self._query(
+			filter={"uid": uid},
+			position=0,
+			limit=1,
+			sort=None,
+			calculate_total=False,
+		)
+
+		if method_responses := response.get("methodResponses"):
+			if ids := method_responses[0][1].get("ids", []):
+				if events := self.get(ids):
+					return events[0]
+
+	def update_instance(
+		self, uid: str, recurrence_id: str, patch: dict, send_scheduling_messages: bool = False
+	) -> dict:
+		"""Public method to update a specific instance of a recurring calendar event based on its UID and recurrence ID by applying the provided patch to the master event's recurrence overrides."""
+
+		if not uid or not recurrence_id:
+			raise ValueError("Both 'uid' and 'recurrence_id' are required to update an event instance.")
+
+		master_event = self.get_by_uid(uid)
+		if not master_event:
+			raise ValueError(f"No master event found with UID '{uid}'.")
+
+		event_id = master_event["id"]
+
+		payload = {}
+		for key, value in patch.items():
+			payload[event_id][f"recurrenceOverrides/{recurrence_id}/{key}"] = value
+
+		payload[event_id]["updated"] = utcnow()
+
+		return self._update(payload, sendSchedulingMessages=send_scheduling_messages)
+
+	def delete_instance(self, uid: str, recurrence_id: str) -> dict:
+		"""Public method to delete a specific instance of a recurring calendar event based on its UID and recurrence ID by marking it as excluded in the master event's recurrence overrides."""
+
+		if not uid or not recurrence_id:
+			raise ValueError("Both 'uid' and 'recurrence_id' are required to update an event instance.")
+
+		master_event = self.get_by_uid(uid)
+		if not master_event:
+			raise ValueError(f"No master event found with UID '{uid}'.")
+
+		event_id = master_event["id"]
+
+		return self._update(
+			{event_id: {f"recurrenceOverrides/{recurrence_id}/excluded": True, "updated": utcnow()}}
+		)
+
 	@staticmethod
 	def _get_locations_map(locations: list[dict] | None = None) -> dict[str, dict] | None:
 		if locations:

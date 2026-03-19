@@ -378,6 +378,25 @@ def get_calendar_events(user: str, ids: list[str]) -> list[dict]:
 
 
 @frappe.whitelist()
+def get_calendar_event_by_uid(user: str, uid: str) -> dict:
+	"""Returns a calendar event for the specified user and event UID."""
+
+	has_permission_for_user(user)
+
+	service = get_calendar_event_service(user)
+	calendar_map = {c["id"]: c["name"] for c in service.calendars}
+
+	event = service.get_by_uid(uid)
+	if event:
+		return format_calendar_event(user, calendar_map, event)
+
+	frappe.throw(
+		_("Calendar Event with UID {0} not found for user {1}.").format(frappe.bold(uid), frappe.bold(user)),
+		title=_("Calendar Event Not Found"),
+	)
+
+
+@frappe.whitelist()
 def update_calendar_event(
 	user: str,
 	id: str,
@@ -441,6 +460,31 @@ def update_calendar_event(
 
 
 @frappe.whitelist()
+def update_calendar_event_instance(
+	user: str,
+	uid: str,
+	recurrence_id: str,
+	patch: dict,
+	send_scheduling_messages: bool = False,
+) -> None:
+	"""Updates a specific instance of a recurring calendar event based on its UID and recurrence ID."""
+
+	has_permission_for_user(user)
+
+	service = get_calendar_event_service(user)
+	response = service.update_instance(
+		uid, recurrence_id, patch, send_scheduling_messages=send_scheduling_messages
+	)
+
+	title = _("Calendar Event Instance Update Error")
+	if not response.get("updated"):
+		if response.get("notUpdated"):
+			frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
+		else:
+			frappe.throw(_(response["description"]), title=title)
+
+
+@frappe.whitelist()
 def delete_calendar_events(user: str, ids: list[str]) -> None:
 	"""Deletes a calendar event for the given user by its ID."""
 
@@ -460,6 +504,25 @@ def delete_calendar_events(user: str, ids: list[str]) -> None:
 
 	if response.get("notDestroyed"):
 		frappe.throw(_(response["notDestroyed"][id]["description"]), title=_("Calendar Event Deletion Error"))
+
+
+@frappe.whitelist()
+def delete_calendar_event_instance(user: str, uid: str, recurrence_id: str) -> None:
+	"""Deletes a specific instance of a recurring calendar event based on its UID and recurrence ID."""
+
+	has_permission_for_user(user)
+
+	service = get_calendar_event_service(user)
+	response = service.delete_instance(uid, recurrence_id)
+
+	if response.get("notDestroyed"):
+		error_messages = []
+		for id, error in response["notDestroyed"].items():
+			error_messages.append(f"{id}: {error['description']}")
+		frappe.throw(
+			_("Calendar Event Instance Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
+			title=_("Calendar Event Instance Deletion Error"),
+		)
 
 
 @frappe.whitelist()
