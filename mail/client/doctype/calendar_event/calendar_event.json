@@ -23,6 +23,7 @@
   "section_break_fsjr",
   "id",
   "uid",
+  "recurrence_id",
   "title",
   "privacy",
   "free_busy_status",
@@ -37,6 +38,7 @@
   "start",
   "duration",
   "time_zone",
+  "recurrence_id_time_zone",
   "section_break_bnnv",
   "calendars",
   "recurrence_tab",
@@ -420,13 +422,29 @@
    "no_copy": 1,
    "options": "Organizer\nAttendee\nViewer",
    "reqd": 1
+  },
+  {
+   "fieldname": "recurrence_id",
+   "fieldtype": "Data",
+   "label": "Recurrence ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "recurrence_id_time_zone",
+   "fieldtype": "Autocomplete",
+   "label": "Recurrence ID Time Zone",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-24 13:18:53.536601",
+ "modified": "2026-03-19 12:58:53.345554",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",
