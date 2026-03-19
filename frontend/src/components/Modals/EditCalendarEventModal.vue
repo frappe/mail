@@ -26,6 +26,7 @@ const user = inject('$user')
 const dayjs = inject('$dayjs')
 
 const isNew = computed(() => !selectedEvent?.calendarEvent)
+const role = computed(() => selectedEvent?.calendarEvent?.role || 'Organizer')
 
 const getDefaultEvent = () => {
 	const startTime = dayjs(selectedEvent.date).isToday()
@@ -79,6 +80,22 @@ const getEvent = () => {
 }
 
 const event = reactive({})
+
+const duration = computed(() => {
+	let duration: string
+	if (event.isAllDay) {
+		const days = dayjs(event.endDate).diff(dayjs(event.startDate), 'day') + 1
+		duration = dayjs.duration({ days }).toISOString()
+	} else {
+		const start = dayjs(event.startDate + 'T' + event.startTime)
+		const end = dayjs(event.endDate + 'T' + event.endTime)
+		const diff = dayjs.duration(end.diff(start))
+		const hours = Math.floor(diff.asHours())
+		const minutes = diff.minutes()
+		duration = dayjs.duration({ hours, minutes }).toISOString()
+	}
+	return duration
+})
 
 watch(show, (val) => {
 	if (val) Object.assign(event, isNew.value ? getDefaultEvent() : getEvent())
@@ -143,7 +160,7 @@ const handleParticipantEnter = (event: Event) => {
 const participantsListview = useTemplateRef('participantsListview')
 
 const removeParticipants = () => {
-	if (isNew.value || selectedEvent?.calendarEvent.role === 'Organizer')
+	if (role.value === 'Organizer')
 		event.participants = event.participants.filter(
 			(p) => !participantsListview.value?.selections.has(p.email),
 		)
@@ -159,48 +176,25 @@ const removeParticipants = () => {
 	participantsListview.value.toggleAllRows(false)
 }
 
-const saveWithoutSending = () => {
-	createEvent.submit({ sendEmail: false })
-	showSendEmailModal.value = false
-}
-
-const saveWithSending = () => {
-	createEvent.submit({ sendEmail: true })
-	showSendEmailModal.value = false
-}
+const getEventParams = (sendEmail: boolean) => ({
+	user: user.data.name,
+	organizer: user.data.name,
+	title: event.title,
+	start: dayjs(event.startDate + 'T' + event.startTime).format('YYYY-MM-DD[T]HH:mm:ss'),
+	duration: duration.value,
+	time_zone: dayjs.tz.guess(),
+	recurrence_rule: event.recurrence_rule,
+	privacy: event.privacy,
+	free_busy_status: event.free_busy_status,
+	description: event.description,
+	locations: [{ name: event.location }],
+	participants: event.participants,
+	send_scheduling_messages: sendEmail,
+})
 
 const createEvent = createResource({
 	url: 'mail.client.doctype.calendar_event.calendar_event.add_calendar_event',
-	makeParams: ({ sendEmail }: { sendEmail: boolean }) => {
-		const start = dayjs(event.startDate + 'T' + event.startTime)
-		let duration: string
-		if (event.isAllDay) {
-			const days = dayjs(event.endDate).diff(dayjs(event.startDate), 'day') + 1
-			duration = dayjs.duration({ days }).toISOString()
-		} else {
-			const end = dayjs(event.endDate + 'T' + event.endTime)
-			const diff = dayjs.duration(end.diff(start))
-			const hours = Math.floor(diff.asHours())
-			const minutes = diff.minutes()
-			duration = dayjs.duration({ hours, minutes }).toISOString()
-		}
-
-		return {
-			user: user.data.name,
-			organizer: user.data.name,
-			title: event.title,
-			start: start.format('YYYY-MM-DD[T]HH:mm:ss'),
-			duration,
-			locations: [{ name: event.location }],
-			free_busy_status: event.free_busy_status,
-			privacy: event.privacy,
-			participants: event.participants,
-			description: event.description,
-			send_scheduling_messages: sendEmail,
-			recurrence_rule: event.recurrence_rule,
-			time_zone: dayjs.tz.guess(),
-		}
-	},
+	makeParams: ({ sendEmail }: { sendEmail: boolean }) => getEventParams(sendEmail),
 	onSuccess: () => {
 		raiseToast(__('Event created.'), 'success')
 		show.value = false
@@ -208,6 +202,27 @@ const createEvent = createResource({
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })
+
+const editEvent = createResource({
+	url: 'mail.client.doctype.calendar_event.calendar_event.update_calendar_event',
+	makeParams: ({ sendEmail }: { sendEmail: boolean }) => ({
+		...getEventParams(sendEmail),
+		id: selectedEvent.calendarEvent.id,
+		uid: selectedEvent.calendarEvent.uid,
+	}),
+	onSuccess: () => {
+		raiseToast(__('Event updated.'), 'success')
+		show.value = false
+		emit('reload-events')
+	},
+	onError: (error) => raiseToast(error.message, 'error'),
+})
+
+const save = (sendEmail: boolean) => {
+	if (isNew.value) createEvent.submit({ sendEmail })
+	else editEvent.submit({ sendEmail })
+	showSendEmailModal.value = false
+}
 
 const mailContacts = createResource({
 	url: 'mail.api.contacts.get_contacts',
@@ -227,8 +242,11 @@ const dialogOptions = computed(() => ({
 			label: __('Save'),
 			variant: 'solid',
 			onClick: () => {
-				if (isNew.value && !event.participants.length)
-					createEvent.submit({ sendEmail: false })
+				if (
+					!selectedEvent?.calendarEvent?.participants?.length &&
+					!event.participants.length
+				)
+					save(false)
 				else showSendEmailModal.value = true
 			},
 		},
@@ -379,8 +397,8 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 	<Dialog v-model="showSendEmailModal" :options="showSendEmailModalOptions">
 		<template #actions>
 			<div class="flex justify-end space-x-2">
-				<Button variant="outline" @click="saveWithoutSending">{{ __('Skip') }}</Button>
-				<Button variant="solid" @click="saveWithSending">{{ __('Send Email') }}</Button>
+				<Button variant="outline" @click="save(false)">{{ __('Skip') }}</Button>
+				<Button variant="solid" @click="save(true)">{{ __('Send Email') }}</Button>
 			</div>
 		</template>
 	</Dialog>
