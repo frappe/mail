@@ -7,7 +7,7 @@ import os
 import shutil
 from contextlib import closing
 from dataclasses import dataclass
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from email import message_from_binary_file
 from email.message import Message
 from email.parser import BytesHeaderParser
@@ -34,7 +34,8 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
-from mail.jmap import JMAPClient, get_jmap_client
+from mail.jmap import get_email_service
+from mail.jmap.services.mail.email import EmailService
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,
@@ -683,11 +684,11 @@ class MailExchange(Document):
 			else:
 				extract_compressed_file(import_file, base_dir)
 
-			client = get_jmap_client(self.user)
+			service = get_email_service(self.user)
 
 			mailbox_map = {}
 			if self.import_format == "maildir-nested":
-				mailbox_map = self._build_mailbox_map(client.mailboxes)
+				mailbox_map = self._build_mailbox_map(service.mailboxes)
 
 			meta = ImportMetadataLoader.load(
 				self.import_format, base_dir, mailbox_map, self.import_metadata_dict
@@ -698,7 +699,7 @@ class MailExchange(Document):
 			if len(meta) > self.max_import:
 				frappe.throw(_("Import limit exceeded."))
 
-			self._import_batches(client, base_dir, meta)
+			self._import_batches(service, base_dir, meta)
 			clear_sync_state(self.user, type="email")
 
 			kwargs.update({"status": "Completed", "output": _("Import completed")})
@@ -724,21 +725,19 @@ class MailExchange(Document):
 
 		kwargs = {}
 		try:
-			client = get_jmap_client(self.user)
-			total = client.email_query(self.export_filter_dict, limit=1)["total"]
+			service = get_email_service(self.user)
+			total = service.query(self.export_filter_dict, limit=1)["total"]
 			limit = min(total, cint(self.export_limit or total))
 
 			if limit > self.max_export:
 				frappe.throw(_("Export limit exceeded."))
 
-			ids = client.email_query(self.export_filter_dict, sort=self.export_sort_clause, limit=limit)[
-				"ids"
-			]
+			ids = service.query(self.export_filter_dict, sort=self.export_sort_clause, limit=limit)["ids"]
 			if not ids:
 				frappe.throw(_("No emails found for export."))
 
 			properties = ["id", "from", "blobId", "keywords", "mailboxIds", "messageId", "receivedAt"]
-			emails, _state = client.email_get(ids, properties=properties)
+			emails = service.get(ids, properties=properties)
 
 			if self.deduplicate_export:
 				unique_emails = {}
@@ -750,11 +749,11 @@ class MailExchange(Document):
 
 			mailbox_map = {}
 			if self.export_format == "mbox":
-				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
+				mailbox_map = {m["id"]: m["name"] for m in service.mailboxes}
 			elif self.export_format == "maildir-nested":
-				mailbox_map = self._build_mailbox_map(client.mailboxes)
+				mailbox_map = self._build_mailbox_map(service.mailboxes)
 
-			self._export_batches(client, emails, out_dir, mailbox_map)
+			self._export_batches(service, emails, out_dir, mailbox_map)
 			self._attach_export(out_dir)
 
 			kwargs.update({"status": "Completed", "output": _("Export completed")})
@@ -787,17 +786,17 @@ class MailExchange(Document):
 
 		self._db_set(**kwargs)
 
-	def _import_batches(self, client: JMAPClient, base_dir: str, metadata: list[ImportEmailMeta]) -> None:
-		"""Imports emails in batches using the JMAP client."""
+	def _import_batches(self, service: EmailService, base_dir: str, metadata: list[ImportEmailMeta]) -> None:
+		"""Imports emails in batches using the EmailService."""
 
-		batch_size = client.max_objects_in_set
+		batch_size = service.max_objects_in_set
 		for batch in create_batch(metadata, batch_size):
 			blobs: list[tuple[bytes, str]] = []
 			for meta in batch:
 				with open(os.path.join(base_dir, meta.blob_path), "rb") as f:
 					blobs.append((f.read(), "message/rfc822"))
 
-			responses = client.upload_blobs_concurrently(blobs)
+			responses = service.upload_blobs_concurrently(blobs)
 			emails = {}
 			for i, resp in enumerate(responses):
 				meta = batch[i]
@@ -808,17 +807,21 @@ class MailExchange(Document):
 					"receivedAt": meta.received_at.isoformat(),
 				}
 
-			client._make_request(
-				using=["urn:ietf:params:jmap:mail"],
+			service._call(
+				capabilities=service.capabilities,
 				method_calls=[
-					["Email/import", {"accountId": client.primary_account_id, "emails": emails}, "0"]
+					[
+						f"{service.type}/import",
+						{"accountId": service.primary_account_id, "emails": emails},
+						"0",
+					]
 				],
 			)
 
 	def _export_batches(
-		self, client: JMAPClient, emails: list[dict], out_dir: str, mailbox_map: dict[str, str]
+		self, service: EmailService, emails: list[dict], out_dir: str, mailbox_map: dict[str, str]
 	) -> None:
-		"""Exports emails in batches using the JMAP client."""
+		"""Exports emails in batches using the EmailService."""
 
 		if self.export_format == "jmap":
 			ExportWriter.write_meta(emails, out_dir)
@@ -826,7 +829,7 @@ class MailExchange(Document):
 		batch_size = cint(frappe.conf.mail_exchange_export_batch_size) or 500
 		for batch in create_batch(emails, batch_size):
 			blobs = [(e["blobId"], None) for e in batch if e.get("blobId")]
-			data = client.download_blobs_concurrently(blobs)
+			data = service.download_blobs_concurrently(blobs)
 
 			export_emails = []
 			for e in batch:
@@ -859,8 +862,8 @@ class MailExchange(Document):
 				return result[mailbox_id]
 
 			mailbox = by_id[mailbox_id]
-			name = mailbox["_name"]
-			parent_id = mailbox.get("parent_id")
+			name = mailbox["name"]
+			parent_id = mailbox.get("parentId")
 
 			if parent_id:
 				parent_path = resolve_path(parent_id)

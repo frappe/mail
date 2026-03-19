@@ -9,8 +9,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, today
 
-from mail.jmap import get_jmap_client
-from mail.utils import batch_dict, parse_filters
+from mail.jmap import get_mailbox_service
+from mail.utils import parse_filters
 from mail.utils.validation import has_permission_for_user
 
 DEFAULT_MAILBOX_GAP = 1000
@@ -117,8 +117,17 @@ def add_mailbox(
 	has_permission_for_user(user)
 
 	creation_id = str(uuid7())
-	client = get_jmap_client(user)
-	response = client.mailbox_create(creation_id, name, role, parent, sort_order, subscribed)
+	mailbox = {
+		"creation_id": creation_id,
+		"name": name,
+		"role": role,
+		"parent_id": parent,
+		"sort_order": sort_order,
+		"is_subscribed": subscribed,
+	}
+
+	service = get_mailbox_service(user)
+	response = service.create([mailbox])
 
 	title = _("Mailbox Creation Error")
 	if response.get("created"):
@@ -130,13 +139,13 @@ def add_mailbox(
 
 
 @frappe.whitelist()
-def get_mailbox(user: str, id: str, raise_exception=False) -> dict | None:
+def get_mailbox(user: str, id: str, raise_exception: bool = False) -> dict | None:
 	"""Returns mailbox details for the given name in the format 'user|id'."""
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	if mailboxes := client.mailbox_get([id]):
+	service = get_mailbox_service(user)
+	if mailboxes := service.get([id]):
 		return format_mailbox(user, mailboxes[0])
 
 	if raise_exception:
@@ -164,8 +173,17 @@ def update_mailbox(
 	if parent and id == parent:
 		frappe.throw(_("Mailbox cannot be a parent of itself."), title=title)
 
-	client = get_jmap_client(user)
-	response = client.mailbox_update(id, name, role, parent, sort_order, subscribed)
+	mailbox = {
+		"id": id,
+		"name": name,
+		"role": role,
+		"parent_id": parent,
+		"sort_order": sort_order,
+		"is_subscribed": subscribed,
+	}
+
+	service = get_mailbox_service(user)
+	response = service.update([mailbox])
 
 	if not response.get("updated"):
 		if response.get("notUpdated"):
@@ -180,8 +198,8 @@ def delete_mailboxes(user: str, ids: list[str], remove_emails: bool = True) -> N
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.mailbox_delete(ids, remove_emails=remove_emails)
+	service = get_mailbox_service(user)
+	response = service.delete(ids, remove_emails=remove_emails)
 
 	if response.get("notDestroyed"):
 		error_messages = []
@@ -199,8 +217,8 @@ def fetch_mailboxes(user: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	mailboxes = client.mailbox_get()
+	service = get_mailbox_service(user)
+	mailboxes = service.get()
 	formatted_mailboxes = [format_mailbox(user, mailbox) for mailbox in mailboxes]
 	sorted_mailboxes = sorted(
 		formatted_mailboxes, key=lambda m: (m["sort_order"], get_sort_order(m["role"]), m["_name"], m["id"])
@@ -292,31 +310,32 @@ def update_mailbox_position(user: str, target_mailbox_id: str, prior_mailbox_id:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
+	service = get_mailbox_service(user)
 	mailboxes = sorted(
-		client.mailbox_get(), key=lambda m: (m["sortOrder"], get_sort_order(m["role"]), m["name"], m["id"])
+		service.get(), key=lambda m: (m["sortOrder"], get_sort_order(m["role"]), m["name"], m["id"])
 	)
 	updates = get_updates(mailboxes, target_mailbox_id, prior_mailbox_id)
 
-	result = {"updated": {}, "notUpdated": {}}
-	for updates_batch in batch_dict(updates, client.max_objects_in_set):
-		response = client._make_request(
-			using=["urn:ietf:params:jmap:mail"],
+	result = {"updated": [], "notUpdated": {}}
+	for batch in service.batch_dict(updates, service.max_objects_in_set):
+		response = service._call(
+			capabilities=service.capabilities,
 			method_calls=[
 				[
-					"Mailbox/set",
+					f"{service.type}/set",
 					{
-						"accountId": client.primary_account_id,
-						"update": {k: {"sortOrder": v} for k, v in updates_batch.items()},
+						"accountId": service.primary_account_id,
+						"update": {k: {"sortOrder": v} for k, v in batch.items()},
 					},
 					"0",
 				]
 			],
 		)
 
-		result["updated"].update(response["methodResponses"][0][1].get("updated", {}))
-		if not_updated := response["methodResponses"][0][1].get("notUpdated", {}):
-			result["notUpdated"].update(not_updated)
+		if method_responses := response.get("methodResponses"):
+			result["updated"].extend(method_responses[0][1].get("updated", {}).keys())
+			if not_updated := method_responses[0][1].get("notUpdated", {}):
+				result["notUpdated"].update(not_updated)
 
 	title = _("Mailbox Position Update Error")
 	if not result.get("updated"):

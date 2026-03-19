@@ -29,8 +29,10 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail import __version__
-from mail.jmap import get_identities, get_jmap_client
+from mail.jmap import get_email_service, get_identities, get_jmap_connection
+from mail.jmap.models import EmailAddress, EmailAttachment, EmailCreateModel, EmailHeader, EmailRecipient
+from mail.jmap.services.mail.email import EmailService
+from mail.jmap.services.mail.mailbox import MailboxService
 from mail.utils.cache import get_tenant_for_user
 from mail.utils.dt import parsedate_to_datetime
 from mail.utils.user import has_role, is_administrator, is_tenant_bound_user
@@ -552,8 +554,8 @@ class MailQueue(Document):
 
 		if self.in_reply_to and not self.in_reply_to_id:
 			try:
-				client = get_jmap_client(self.user)
-				result = client.email_query({"header": ["Message-ID", self.in_reply_to]})
+				service = get_email_service(self.user)
+				result = service.query({"header": ["Message-ID", self.in_reply_to]})
 				if ids := result["ids"]:
 					self.in_reply_to_id = ids[0]
 			except Exception:
@@ -588,56 +590,83 @@ class MailQueue(Document):
 		kwargs = {}
 
 		try:
-			client = get_jmap_client(self.user)
-			draft_mailbox_id = client.get_mailbox_id_by_role(
+			connection = get_jmap_connection(self.user)
+			email_service = EmailService(self.user, connection)
+			mailbox_service = MailboxService(self.user, connection)
+
+			draft_mailbox_id = mailbox_service.get_mailbox_id_by_role(
 				"drafts", create_if_not_exists=True, raise_exception=True
 			)
-			sent_mailbox_id = client.get_mailbox_id_by_role(
+			sent_mailbox_id = mailbox_service.get_mailbox_id_by_role(
 				"sent", create_if_not_exists=True, raise_exception=True
 			)
 
-			headers = {}
-			reply_to = []
-			attachments = []
+			headers: list[EmailHeader] = []
+			reply_to: list[EmailAddress] = []
+			attachments: list[EmailAttachment] = []
 
 			if not self.raw_message:
-				headers = json_loads(self.headers, default={})
-				reply_to = json_loads(self.reply_to, default=[])
+				headers = [
+					EmailHeader(name=key, value=value)
+					for key, value in json_loads(self.headers, default={}).items()
+				]
+				reply_to = [
+					EmailAddress(name=r["display_name"], email=r["email"].lower())
+					for r in json_loads(self.reply_to, default=[])
+				]
 
+				_attachments = []
 				for a in json_loads(self.attachments, default=[]):
 					blob_id = a.get("blob_id")
 					if not blob_id:
 						file = MailQueue._get_file(file_url=a["file_url"], check_permission=False)
 						content = file.get_content()
 						content_type = guess_type(file.file_name)[0]
-						blob = client.upload_blob(content, content_type)
+						blob = email_service.upload_blob(content, content_type)
 						a.update({"type": blob["type"], "size": blob["size"], "blob_id": blob["blobId"]})
-					attachments.append(a)
+					_attachments.append(a)
 
-				kwargs["attachments"] = json.dumps(attachments)
+				kwargs["attachments"] = json.dumps(_attachments)
+				attachments = [
+					EmailAttachment(
+						name=a["filename"],
+						type=a["type"],
+						cid=a["cid"],
+						blob_id=a["blob_id"],
+						disposition=a["disposition"],
+					)
+					for a in _attachments
+				]
 
-			response = client.email_create(
-				self.name,
-				self.from_email,
-				json_loads(self.recipients),
-				self.from_name,
-				self.subject,
-				self.sent_at,
-				self.message_id,
-				reply_to,
-				self.in_reply_to,
-				headers,
-				self.text_body,
-				self.html_body,
-				attachments,
-				self.raw_message,
-				self.id,
-				bool(self.save_as_draft),
-				self._priority,
-				bool(self.destroy_after_submit),
-				self.forwarded_from_id,
-				self.in_reply_to_id,
+			recipients = [
+				EmailRecipient(type=r["type"].lower(), name=r["display_name"], email=r["email"].lower())
+				for r in json_loads(self.recipients)
+			]
+
+			email = EmailCreateModel(
+				creation_id=self.name,
+				from_email=self.from_email,
+				recipients=recipients,
+				from_name=self.from_name,
+				subject=self.subject,
+				sent_at=self.sent_at,
+				message_id=self.message_id,
+				reply_to=reply_to,
+				in_reply_to=self.in_reply_to,
+				headers=headers,
+				text_body=self.text_body,
+				html_body=self.html_body,
+				attachments=attachments,
+				raw_message=self.raw_message,
+				existing_id=self.id,
+				save_as_draft=(self.save_as_draft),
+				priority=self._priority,
+				destroy_after_submit=bool(self.destroy_after_submit),
+				forwarded_id=self.forwarded_from_id,
+				reply_to_id=self.in_reply_to_id,
 			)
+
+			response = email_service.create([email])
 
 			kwargs.update({"status": "Failed", "_response": json.dumps(response)})
 			if data := response["methodResponses"][0][1].get("created", {}).get(f"draft-{self.name}"):

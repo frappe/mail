@@ -13,7 +13,7 @@ from frappe.model.document import Document
 from frappe.utils import cint
 
 from mail.client.doctype.calendar.calendar import validate_calendar_name_format
-from mail.jmap import get_jmap_client
+from mail.jmap import get_calendar_event_service, get_identity_service
 from mail.utils import parse_filters
 from mail.utils.cache import get_root_domain_name
 from mail.utils.dt import convert_to_utc, parse_iso_datetime, utcnow
@@ -30,13 +30,14 @@ class CalendarEvent(Document):
 		if self.is_new():
 			role = "Organizer"
 		elif self.user and (self.organizer or self.participants):
-			client = get_jmap_client(self.user)
-			if self.organizer and client.get_identity_id_by_email(self.organizer.replace("mailto:", "")):
+			service = get_identity_service(self.user)
+
+			if self.organizer and service.get_identity_id_by_email(self.organizer.replace("mailto:", "")):
 				role = "Organizer"
 			elif any(
 				p
 				for p in self.participants
-				if p.email and client.get_identity_id_by_email(p.email.replace("mailto:", ""))
+				if p.email and service.get_identity_id_by_email(p.email.replace("mailto:", ""))
 			):
 				role = "Attendee"
 
@@ -188,6 +189,7 @@ class CalendarEvent(Document):
 		filters = parse_filters(filters)
 
 		title = filters.get("title")
+		calendar = filters.get("calendar")
 		user = filters.get("user") or frappe.session.user
 		after = filters.get("after") and convert_to_utc(filters.get("after"), naive=True).strftime(
 			"%Y-%m-%dT%H:%M:%SZ"
@@ -203,6 +205,9 @@ class CalendarEvent(Document):
 		filter = {}
 		if title:
 			filter["title"] = title
+		if calendar:
+			validate_calendar_name_format(calendar)
+			filter["inCalendar"] = calendar.split("|")[1]
 		if after:
 			filter["after"] = after
 		if before:
@@ -316,30 +321,31 @@ def add_calendar_event(
 
 	uid = f"{uuid7().hex}@{get_root_domain_name()}"
 	creation_id = str(uuid7())
-	client = get_jmap_client(user)
-	response = client.calendar_event_create(
-		creation_id=creation_id,
-		uid=uid,
-		organizer=organizer,
-		calendar_ids=calendar_ids,
-		status=status.lower(),
-		draft=draft,
-		title=title,
-		start=start,
-		duration=duration,
-		time_zone=time_zone,
-		recurrence_rule=recurrence_rule,
-		show_without_time=show_without_time,
-		privacy=privacy.lower() if privacy else None,
-		free_busy_status=free_busy_status.lower() if free_busy_status else None,
-		description=description,
-		locations=locations,
-		links=links,
-		participants=participants,
-		alerts=alerts,
-		use_default_alerts=use_default_alerts,
-		send_scheduling_messages=send_scheduling_messages,
-	)
+	event = {
+		"creation_id": creation_id,
+		"uid": uid,
+		"organizer": organizer,
+		"calendar_ids": calendar_ids,
+		"status": status.lower(),
+		"draft": draft,
+		"title": title,
+		"start": start,
+		"duration": duration,
+		"time_zone": time_zone,
+		"recurrence_rule": recurrence_rule,
+		"show_without_time": show_without_time,
+		"privacy": privacy.lower() if privacy else None,
+		"free_busy_status": free_busy_status.lower() if free_busy_status else None,
+		"description": description,
+		"locations": locations,
+		"links": links,
+		"participants": participants,
+		"alerts": alerts,
+		"use_default_alerts": use_default_alerts,
+	}
+
+	service = get_calendar_event_service(user)
+	response = service.create([event], send_scheduling_messages=send_scheduling_messages)
 
 	title = _("Calendar Event Creation Error")
 	if response.get("created"):
@@ -365,25 +371,14 @@ def fetch_calendar_events(
 	has_permission_for_user(user)
 
 	calendar_events = []
-	client = get_jmap_client(user)
 
-	while len(calendar_events) < limit:
-		result = client.calendar_event_query(filter, position, limit, sort, time_zone, expand_recurrences)
-		ids = result["ids"]
-		total = result["total"]
+	service = get_calendar_event_service(user)
+	data = service.query(filter, position, limit, sort, time_zone, expand_recurrences)
 
-		if not ids:
-			break
+	ids = data.get("ids", [])
+	total = data.get("total", 0)
 
-		calendar_events.extend(get_calendar_events(user, ids))
-
-		if len(calendar_events) >= limit:
-			break
-
-		position += len(ids)
-
-		if position >= total:
-			break
+	calendar_events.extend(get_calendar_events(user, ids))
 
 	return calendar_events[:limit], total
 
@@ -394,11 +389,11 @@ def get_calendar_events(user: str, ids: list[str]) -> list[dict]:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	calendar_map = {c["id"]: c["_name"] for c in client.calendars}
+	service = get_calendar_event_service(user)
+	calendar_map = {c["id"]: c["name"] for c in service.calendars}
 
 	events = {}
-	for event in client.calendar_event_get(ids):
+	for event in service.get(ids):
 		event = format_calendar_event(user, calendar_map, event)
 		events[event["id"]] = event
 
@@ -435,31 +430,32 @@ def update_calendar_event(
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.calendar_event_update(
-		id=id,
-		role=role.lower(),
-		uid=uid,
-		organizer=organizer,
-		calendar_ids=calendar_ids,
-		status=status.lower(),
-		draft=draft,
-		title=title,
-		start=start,
-		duration=duration,
-		time_zone=time_zone,
-		recurrence_rule=recurrence_rule,
-		show_without_time=show_without_time,
-		privacy=privacy.lower() if privacy else None,
-		free_busy_status=free_busy_status.lower() if free_busy_status else None,
-		description=description,
-		locations=locations,
-		links=links,
-		participants=participants,
-		alerts=alerts,
-		use_default_alerts=use_default_alerts,
-		send_scheduling_messages=send_scheduling_messages,
-	)
+	event = {
+		"id": id,
+		"uid": uid,
+		"role": role.lower(),
+		"organizer": organizer,
+		"calendar_ids": calendar_ids,
+		"status": status.lower(),
+		"draft": draft,
+		"title": title,
+		"start": start,
+		"duration": duration,
+		"time_zone": time_zone,
+		"recurrence_rule": recurrence_rule,
+		"show_without_time": show_without_time,
+		"privacy": privacy.lower() if privacy else None,
+		"free_busy_status": free_busy_status.lower() if free_busy_status else None,
+		"description": description,
+		"locations": locations,
+		"links": links,
+		"participants": participants,
+		"alerts": alerts,
+		"use_default_alerts": use_default_alerts,
+	}
+
+	service = get_calendar_event_service(user)
+	response = service.update([event], send_scheduling_messages=send_scheduling_messages)
 
 	title = _("Calendar Event Update Error")
 	if not response.get("updated"):
@@ -475,8 +471,8 @@ def delete_calendar_events(user: str, ids: list[str]) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.calendar_event_delete(ids)
+	service = get_calendar_event_service(user)
+	response = service.delete(ids)
 
 	if response.get("notDestroyed"):
 		error_messages = []
@@ -497,13 +493,13 @@ def parse_ics(user: str, ics_data: bytes | str) -> list[dict]:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	blob_id = client.upload_blob(ics_data, content_type="text/calendar; charset=utf-8").get("blobId")
+	service = get_calendar_event_service(user)
+	blob_id = service.upload_blob(ics_data, content_type="text/calendar; charset=utf-8").get("blobId")
 
 	if not blob_id:
 		frappe.throw(_("Failed to upload ICS data."), title=_("ICS Upload Error"))
 
-	response = client.calendar_event_parse([blob_id])
+	response = service.parse([blob_id])
 
 	title = _("ICS Parsing Error")
 	if parsed := response.get("parsed"):

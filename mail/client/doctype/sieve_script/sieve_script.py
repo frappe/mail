@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, today
 
-from mail.jmap import get_jmap_client
+from mail.jmap import get_sieve_script_service
 from mail.utils import parse_filters
 from mail.utils.validation import has_permission_for_user
 
@@ -102,9 +102,15 @@ class SieveScript(Document):
 		has_permission_for_user(user)
 
 		creation_id = str(uuid7())
-		client = get_jmap_client(user)
-		blob = client.upload_blob(content.encode("utf-8"), "application/sieve")
-		response = client.sieve_script_create(creation_id, name, blob["blobId"], active)
+		service = get_sieve_script_service(user)
+		blob = service.upload_blob(content.encode("utf-8"), "application/sieve")
+		sieve_script = {
+			"creation_id": creation_id,
+			"name": name,
+			"blob_id": blob["blobId"],
+			"is_active": active,
+		}
+		response = service.create([sieve_script])
 
 		title = _("Sieve Script Creation Error")
 		if response.get("created"):
@@ -127,25 +133,14 @@ class SieveScript(Document):
 		has_permission_for_user(user)
 
 		scripts = []
-		client = get_jmap_client(user)
 
-		while len(scripts) < limit:
-			result = client.sieve_script_query(filter, position, limit)
-			ids = result["ids"]
-			total = result["total"]
+		service = get_sieve_script_service(user)
+		data = service.query(filter, position, limit)
 
-			if not ids:
-				break
+		ids = data.get("ids", [])
+		total = data.get("total", 0)
 
-			scripts.extend(SieveScript._get_sieve_scripts(user, ids))
-
-			if len(scripts) >= limit:
-				break
-
-			position += len(ids)
-
-			if position >= total:
-				break
+		scripts.extend(SieveScript._get_sieve_scripts(user, ids))
 
 		return scripts[:limit], total
 
@@ -157,12 +152,12 @@ class SieveScript(Document):
 
 		sieve_scripts = {}
 
-		client = get_jmap_client(user)
-		scripts = client.sieve_script_get(ids)
+		service = get_sieve_script_service(user)
+		scripts = service.get(ids)
 
 		if download_content:
 			blobs = [(s["blobId"], None) for s in scripts if s["blobId"]]
-			data = client.download_blobs_concurrently(blobs)
+			data = service.download_blobs_concurrently(blobs)
 
 			for script in scripts:
 				script["content"] = data.get(script["blobId"], b"").decode("utf-8")
@@ -182,9 +177,9 @@ class SieveScript(Document):
 
 		has_permission_for_user(user)
 
-		client = get_jmap_client(user)
-		blob = client.upload_blob(content.encode("utf-8"), "application/sieve")
-		response = client.sieve_script_validate(blob["blobId"])
+		service = get_sieve_script_service(user)
+		blob = service.upload_blob(content.encode("utf-8"), "application/sieve")
+		response = service.validate(blob["blobId"])
 
 		if error := response.get("error"):
 			frappe.throw(
@@ -208,8 +203,8 @@ class SieveScript(Document):
 
 		has_permission_for_user(user)
 
-		client = get_jmap_client(user)
-		scripts = client.sieve_script_get([id])
+		service = get_sieve_script_service(user)
+		scripts = service.get([id])
 
 		if not scripts:
 			frappe.throw(
@@ -219,14 +214,15 @@ class SieveScript(Document):
 
 		script = scripts[0]
 		blob_id = script["blobId"]
-		current_content = client.download_blob(blob_id).decode("utf-8")
+		current_content = service.download_blob(blob_id).decode("utf-8")
 
 		if content != current_content:
-			new_blob = client.upload_blob(content.encode("utf-8"), "application/sieve")
+			new_blob = service.upload_blob(content.encode("utf-8"), "application/sieve")
 			blob_id = new_blob["blobId"]
 
 		deactivate = script["isActive"] and not active
-		response = client.sieve_script_update(id, name, blob_id, active, deactivate)
+		sieve_script = {"id": id, "name": name, "blob_id": blob_id, "is_active": bool(active)}
+		response = service.update([sieve_script], deactivate=deactivate)
 
 		title = _("Sieve Script Update Error")
 		if not response.get("updated"):
@@ -241,8 +237,8 @@ class SieveScript(Document):
 
 		has_permission_for_user(user)
 
-		client = get_jmap_client(user)
-		response = client.sieve_script_delete(ids)
+		service = get_sieve_script_service(user)
+		response = service.delete(ids)
 
 		if response.get("notDestroyed"):
 			error_messages = []

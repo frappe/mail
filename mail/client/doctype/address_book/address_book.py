@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, today
 
-from mail.jmap import get_jmap_client
+from mail.jmap import get_address_book_service
 from mail.utils import parse_filters
 from mail.utils.validation import has_permission_for_user
 
@@ -130,8 +130,17 @@ def add_address_book(
 	has_permission_for_user(user)
 
 	creation_id = str(uuid7())
-	client = get_jmap_client(user)
-	response = client.address_book_create(creation_id, name, description, sort_order, default, subscribed)
+	address_book = {
+		"creation_id": creation_id,
+		"name": name,
+		"description": description,
+		"sort_order": sort_order,
+		"is_default": default,
+		"is_subscribed": subscribed,
+	}
+
+	service = get_address_book_service(user)
+	response = service.create([address_book])
 
 	title = _("Address Book Creation Error")
 	if response.get("created"):
@@ -148,8 +157,8 @@ def get_address_book(user: str, id: str, raise_exception: bool = True) -> dict |
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	if address_books := client.address_book_get([id]):
+	service = get_address_book_service(user)
+	if address_books := service.get([id]):
 		return format_address_book(user, address_books[0])
 
 	if raise_exception:
@@ -173,8 +182,17 @@ def update_address_book(
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.address_book_update(id, name, description, sort_order, default, subscribed)
+	address_book = {
+		"id": id,
+		"name": name,
+		"description": description,
+		"sort_order": sort_order,
+		"is_default": default,
+		"is_subscribed": subscribed,
+	}
+
+	service = get_address_book_service(user)
+	response = service.update([address_book])
 
 	title = _("Address Book Update Error")
 	if not response.get("updated"):
@@ -190,8 +208,8 @@ def delete_address_books(user: str, ids: list[str]) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.address_book_delete(ids, remove_contents=True)
+	service = get_address_book_service(user)
+	response = service.delete(ids, remove_contents=True)
 
 	if response.get("notDestroyed"):
 		error_messages = []
@@ -209,8 +227,8 @@ def fetch_address_books(user: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	address_books = client.address_book_get()
+	service = get_address_book_service(user)
+	address_books = service.get()
 	formatted_address_books = [format_address_book(user, book) for book in address_books]
 	sorted_address_books = sorted(formatted_address_books, key=lambda x: x["sort_order"])
 	frappe.cache.set_value(_get_total_cache_key(user), len(address_books), expires_in_sec=600)
