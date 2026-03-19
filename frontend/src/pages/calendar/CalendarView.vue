@@ -3,11 +3,14 @@ import { computed, inject, reactive, ref, useTemplateRef, watch } from 'vue'
 import { Calendar, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 import CalendarSidebar from '@/components/CalendarSidebar.vue'
 import EditCalendarEventModal from '@/components/Modals/EditCalendarEventModal.vue'
 
 const user = inject('$user')
 const dayjs = inject('$dayjs')
+
+const { identities } = userStore()
 
 const calendar = useTemplateRef('calendar')
 
@@ -30,7 +33,24 @@ const transformEvent = (event) => {
 		toTime: end.format('HH:mm'),
 		participant: event.organizer,
 		venue: event.locations?.[0]?._name || '',
+		role: getEventRole(event),
 	}
+}
+
+const getEventRole = (event) => {
+	if (
+		identities.data.some(
+			(identity) => identity.email === event.organizer.replace('mailto:', ''),
+		)
+	)
+		return 'Organizer'
+	if (
+		identities.data.some((identity) =>
+			event.participants?.some((p) => p.email.replace('mailto:', '') === identity.email),
+		)
+	)
+		return 'Attendee'
+	return 'Viewer'
 }
 
 const calendars = createResource({

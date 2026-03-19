@@ -98,6 +98,7 @@
 					<ComposeMailEditor
 						v-if="mail.draft && !isMobile"
 						v-model="mail.show"
+						:disable-outside-click-to-close="true"
 						:reload-mails="reload"
 						:mail-details="draftMails[mail.name]"
 						:is-in-thread="true"

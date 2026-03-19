@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, reactive, ref, watch } from 'vue'
+import { computed, inject, reactive, ref, useTemplateRef, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import {
 	Button,
@@ -25,6 +25,8 @@ const emit = defineEmits(['reload-events'])
 const user = inject('$user')
 const dayjs = inject('$dayjs')
 
+const isNew = computed(() => !selectedEvent?.calendarEvent)
+
 const getDefaultEvent = () => {
 	const startTime = dayjs(selectedEvent.date).isToday()
 		? dayjs().add(1, 'hour').minute(0).second(0).format('HH:mm')
@@ -43,7 +45,6 @@ const getDefaultEvent = () => {
 		free_busy_status: 'Busy',
 		privacy: '',
 		participants: [] as Array<{ email: string }>,
-		send_scheduling_messages: false,
 		recurrence_rule: {},
 	}
 }
@@ -80,7 +81,7 @@ const getEvent = () => {
 const event = reactive({})
 
 watch(show, (val) => {
-	if (val) Object.assign(event, selectedEvent?.calendarEvent ? getEvent() : getDefaultEvent())
+	if (val) Object.assign(event, isNew.value ? getDefaultEvent() : getEvent())
 })
 
 const showRepeatSettings = ref(false)
@@ -139,9 +140,38 @@ const handleParticipantEnter = (event: Event) => {
 	participantsInput.value = ''
 }
 
+const participantsListview = useTemplateRef('participantsListview')
+
+const removeParticipants = () => {
+	if (isNew.value || selectedEvent?.calendarEvent.role === 'Organizer')
+		event.participants = event.participants.filter(
+			(p) => !participantsListview.value?.selections.has(p.email),
+		)
+	else
+		event.participants = event.participants.filter(
+			(p) =>
+				!participantsListview.value?.selections.has(p.email) ||
+				selectedEvent?.calendarEvent?.participants?.some(
+					(participant) => participant.email === p.email,
+				),
+		)
+
+	participantsListview.value.toggleAllRows(false)
+}
+
+const saveWithoutSending = () => {
+	createEvent.submit({ sendEmail: false })
+	showSendEmailModal.value = false
+}
+
+const saveWithSending = () => {
+	createEvent.submit({ sendEmail: true })
+	showSendEmailModal.value = false
+}
+
 const createEvent = createResource({
 	url: 'mail.client.doctype.calendar_event.calendar_event.add_calendar_event',
-	makeParams: () => {
+	makeParams: ({ sendEmail }: { sendEmail: boolean }) => {
 		const start = dayjs(event.startDate + 'T' + event.startTime)
 		let duration: string
 		if (event.isAllDay) {
@@ -166,7 +196,7 @@ const createEvent = createResource({
 			privacy: event.privacy,
 			participants: event.participants,
 			description: event.description,
-			send_scheduling_messages: event.send_scheduling_messages,
+			send_scheduling_messages: sendEmail,
 			recurrence_rule: event.recurrence_rule,
 			time_zone: dayjs.tz.guess(),
 		}
@@ -190,9 +220,28 @@ const mailContacts = createResource({
 const debouncedSearch = useDebounceFn((text: string) => text && mailContacts.reload(text), 300)
 
 const dialogOptions = computed(() => ({
-	title: selectedEvent?.calendarEvent ? __('Edit Event') : __('Add Event'),
+	title: isNew.value ? __('Add Event') : __('Edit Event'),
 	size: '2xl',
-	actions: [{ label: __('Save'), variant: 'solid', onClick: () => createEvent.submit() }],
+	actions: [
+		{
+			label: __('Save'),
+			variant: 'solid',
+			onClick: () => {
+				if (isNew.value && !event.participants.length)
+					createEvent.submit({ sendEmail: false })
+				else showSendEmailModal.value = true
+			},
+		},
+	],
+}))
+
+const showSendEmailModal = ref(false)
+
+const showSendEmailModalOptions = computed(() => ({
+	title: __('Notify Participants'),
+	message: isNew.value
+		? __("Send an email to let attendees know they've been invited?")
+		: __('Send an email to let attendees know this event has been updated?'),
 }))
 
 const AVAILABILITY_OPTIONS = [
@@ -209,7 +258,7 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 </script>
 
 <template>
-	<Dialog v-model="show" :options="dialogOptions">
+	<Dialog v-model="show" :disable-outside-click-to-close="true" :options="dialogOptions">
 		<template #body-content>
 			<div class="space-y-4">
 				<FormControl
@@ -299,6 +348,7 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 				/>
 
 				<ListView
+					ref="participantsListview"
 					:columns="PARTICIPANT_COLUMNS"
 					:rows="event.participants"
 					row-key="email"
@@ -308,29 +358,16 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 					<ListRows />
 
 					<ListSelectBanner>
-						<template #actions="{ selections, unselectAll }">
+						<template #actions>
 							<Button
 								variant="ghost"
 								theme="red"
 								:label="__('Remove')"
-								@click="
-									() => {
-										event.participants = event.participants.filter(
-											(p) => !selections.has(p.email),
-										)
-										unselectAll()
-									}
-								"
+								@click="removeParticipants"
 							/>
 						</template>
 					</ListSelectBanner>
 				</ListView>
-				<FormControl
-					v-if="!selectedEvent?.calendarEvent"
-					v-model="event.send_scheduling_messages"
-					:label="__('Send Invites and Updates')"
-					type="checkbox"
-				/>
 			</div>
 		</template>
 	</Dialog>
@@ -339,4 +376,12 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 		:start-date="event?.startDate"
 		@update-recurrence-rule="(val) => (event.recurrence_rule = val)"
 	/>
+	<Dialog v-model="showSendEmailModal" :options="showSendEmailModalOptions">
+		<template #actions>
+			<div class="flex justify-end space-x-2">
+				<Button variant="outline" @click="saveWithoutSending">{{ __('Skip') }}</Button>
+				<Button variant="solid" @click="saveWithSending">{{ __('Send Email') }}</Button>
+			</div>
+		</template>
+	</Dialog>
 </template>
