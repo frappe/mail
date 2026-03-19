@@ -158,8 +158,11 @@ class CalendarEvent(Document):
 		self.reload()
 
 	def delete(self) -> None:
-		user, id = self.name.split("|")
-		delete_calendar_events(user, [id])
+		if self.get("recurrence_id") and self.get("uid"):
+			delete_calendar_event_instance(self.user, self.uid, self.recurrence_id)
+		else:
+			user, id = self.name.split("|")
+			delete_calendar_events(user, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
@@ -472,8 +475,19 @@ def update_calendar_event_instance(
 	has_permission_for_user(user)
 
 	service = get_calendar_event_service(user)
+	master_event = service.get_by_uid(uid)
+
+	if not master_event:
+		frappe.throw(
+			_("Master calendar event with UID {0} not found for user {1}.").format(
+				frappe.bold(uid), frappe.bold(user)
+			),
+			title=_("Calendar Event Not Found"),
+		)
+
+	id = master_event["id"]
 	response = service.update_instance(
-		uid, recurrence_id, patch, send_scheduling_messages=send_scheduling_messages
+		id, recurrence_id, patch, send_scheduling_messages=send_scheduling_messages
 	)
 
 	title = _("Calendar Event Instance Update Error")
@@ -513,16 +527,25 @@ def delete_calendar_event_instance(user: str, uid: str, recurrence_id: str) -> N
 	has_permission_for_user(user)
 
 	service = get_calendar_event_service(user)
-	response = service.delete_instance(uid, recurrence_id)
+	master_event = service.get_by_uid(uid)
 
-	if response.get("notDestroyed"):
-		error_messages = []
-		for id, error in response["notDestroyed"].items():
-			error_messages.append(f"{id}: {error['description']}")
+	if not master_event:
 		frappe.throw(
-			_("Calendar Event Instance Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
-			title=_("Calendar Event Instance Deletion Error"),
+			_("Master calendar event with UID {0} not found for user {1}.").format(
+				frappe.bold(uid), frappe.bold(user)
+			),
+			title=_("Calendar Event Not Found"),
 		)
+
+	id = master_event["id"]
+	response = service.delete_instance(id, recurrence_id)
+
+	title = _("Calendar Event Instance Deletion Error")
+	if not response.get("updated"):
+		if response.get("notUpdated"):
+			frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
+		else:
+			frappe.throw(_(response["description"]), title=title)
 
 
 @frappe.whitelist()
