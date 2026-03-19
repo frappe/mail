@@ -109,17 +109,6 @@ class CalendarEventService(CalendarsService):
 		for batch in self.create_batches(events, self.max_objects_in_set):
 			payload = {}
 			for event in batch:
-				role = event["role"]
-				if role not in ["organizer", "attendee", "viewer"]:
-					raise ValueError(
-						f"Invalid role '{role}' for event with id '{event['id']}'. Role must be one of 'organizer', 'attendee', or 'viewer'."
-					)
-
-				if role == "viewer" and send_scheduling_messages:
-					raise ValueError(
-						f"Cannot send scheduling messages for event with id '{event['id']}' because the role is 'viewer'. Scheduling messages can only be sent for events where the role is 'organizer' or 'attendee'."
-					)
-
 				calendar_ids = event.get("calendar_ids")
 				if not calendar_ids:
 					calendar_ids = [
@@ -135,51 +124,30 @@ class CalendarEventService(CalendarsService):
 				}
 
 				organizer = event.get("organizer")
-				if role == "organizer":
-					if not organizer:
-						organizer = ParticipantIdentityService(self.user, self.connection).get_default(
-							raise_exception=True
-						)
+				organizer = organizer.lower()
+				if not organizer.startswith("mailto:"):
+					organizer = f"mailto:{organizer}"
 
-					organizer = organizer.lower()
-					if not organizer.startswith("mailto:"):
-						organizer = f"mailto:{organizer}"
-
-					payload[event["id"]].update(
-						{
-							"uid": event["uid"],
-							"organizerCalendarAddress": organizer,
-							"status": event.get("status"),
-							"isDraft": bool(event.get("is_draft") or False),
-							"title": event.get("title"),
-							"start": event.get("start"),
-							"duration": event.get("duration"),
-							"timeZone": event.get("time_zone"),
-							"recurrenceRule": event.get("recurrence_rule"),
-							"showWithoutTime": bool(event.get("show_without_time") or False),
-							"description": event.get("description"),
-							"locations": self._get_locations_map(event.get("locations")),
-							"links": self._get_links_map(event.get("links")),
-							"participants": self._get_participants_map(organizer, event.get("participants")),
-							"useDefaultAlerts": bool(event.get("use_default_alerts") or False),
-							"updated": utcnow(),
-						}
-					)
-
-				elif role == "attendee":
-					if participants := self._get_participants_map(organizer, event.get("participants")):
-						for pid, participant in participants.items():
-							if calendar_address := participant.get("calendarAddress") and participant[
-								"calendarAddress"
-							].lower().replace("mailto:", ""):
-								if self.get_identity_id_by_email(calendar_address):
-									key = f"participants/{pid}"
-									payload[event["id"]].update(
-										{
-											f"{key}/expectReply": participant["expectReply"],
-											f"{key}/participationStatus": participant["participationStatus"],
-										}
-									)
+				payload[event["id"]].update(
+					{
+						"uid": event["uid"],
+						"organizerCalendarAddress": organizer,
+						"status": event.get("status"),
+						"isDraft": bool(event.get("is_draft") or False),
+						"title": event.get("title"),
+						"start": event.get("start"),
+						"duration": event.get("duration"),
+						"timeZone": event.get("time_zone"),
+						"recurrenceRule": event.get("recurrence_rule"),
+						"showWithoutTime": bool(event.get("show_without_time") or False),
+						"description": event.get("description"),
+						"locations": self._get_locations_map(event.get("locations")),
+						"links": self._get_links_map(event.get("links")),
+						"participants": self._get_participants_map(organizer, event.get("participants")),
+						"useDefaultAlerts": bool(event.get("use_default_alerts") or False),
+						"updated": utcnow(),
+					}
+				)
 
 			response = self._update(payload, **kwargs)
 

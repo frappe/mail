@@ -21,28 +21,6 @@ from mail.utils.validation import has_permission_for_user
 
 
 class CalendarEvent(Document):
-	@cached_property
-	def role(self) -> Literal["Organizer", "Attendee", "Viewer"]:
-		"""Returns the role of the current user in relation to the event."""
-
-		role = "Viewer"
-
-		if self.is_new():
-			role = "Organizer"
-		elif self.user and (self.organizer or self.participants):
-			service = get_identity_service(self.user)
-
-			if self.organizer and service.get_identity_id_by_email(self.organizer.replace("mailto:", "")):
-				role = "Organizer"
-			elif any(
-				p
-				for p in self.participants
-				if p.email and service.get_identity_id_by_email(p.email.replace("mailto:", ""))
-			):
-				role = "Attendee"
-
-		return role
-
 	@property
 	def calendar_ids(self) -> list[str]:
 		"""Returns a list of calendar IDs associated with the event."""
@@ -155,7 +133,6 @@ class CalendarEvent(Document):
 	def db_update(self) -> None:
 		update_calendar_event(
 			user=self.user,
-			role=self.role,
 			id=self.id,
 			uid=self.uid,
 			organizer=self.organizer,
@@ -403,7 +380,6 @@ def get_calendar_events(user: str, ids: list[str]) -> list[dict]:
 @frappe.whitelist()
 def update_calendar_event(
 	user: str,
-	role: Literal["Organizer", "Attendee", "Viewer"],
 	id: str,
 	uid: str | None = None,
 	organizer: str | None = None,
@@ -433,7 +409,6 @@ def update_calendar_event(
 	event = {
 		"id": id,
 		"uid": uid,
-		"role": role.lower(),
 		"organizer": organizer,
 		"calendar_ids": calendar_ids,
 		"status": status.lower(),
