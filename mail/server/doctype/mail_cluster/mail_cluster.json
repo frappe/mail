@@ -582,11 +582,11 @@
    "reqd": 1
   },
   {
-   "default": "500000000",
+   "default": "5120",
    "description": "Defines the total size of files that a user can upload within a certain period.",
    "fieldname": "jmap_protocol_upload_quota_size",
    "fieldtype": "Int",
-   "label": "Total Size (Bytes)",
+   "label": "Total Size (MB)",
    "non_negative": 1,
    "reqd": 1
   },
@@ -913,7 +913,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2025-12-23 21:58:16.231800",
+ "modified": "2026-03-13 11:15:08.699480",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster",

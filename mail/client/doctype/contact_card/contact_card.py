@@ -10,7 +10,7 @@ from frappe.model.document import Document
 from frappe.utils import cint, today
 
 from mail.client.doctype.address_book.address_book import validate_address_book_name_format
-from mail.jmap import get_jmap_client
+from mail.jmap import get_contact_card_service
 from mail.utils import parse_filters
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
@@ -139,9 +139,18 @@ class ContactCard(Document):
 			contact_cards = get_contact_cards(user, [id])
 			total = len(contact_cards)
 		else:
+			if address_book := filters.get("address_book"):
+				validate_address_book_name_format(address_book)
+				filters["address_book"] = address_book.split("|")[1]
+
 			filter = {
 				prop: value
-				for field, prop in {"full_name": "name", "email": "email", "phone": "phone"}.items()
+				for field, prop in {
+					"address_book": "inAddressBook",
+					"full_name": "name",
+					"email": "email",
+					"phone": "phone",
+				}.items()
 				if (value := filters.get(field))
 			}
 			limit = cint(kwargs.get("start")) + page_length
@@ -216,10 +225,18 @@ def add_contact_card(
 	has_permission_for_user(user)
 
 	creation_id = str(uuid7())
-	client = get_jmap_client(user)
-	response = client.contact_card_create(
-		creation_id, address_book_ids, full_name, emails, phones, addresses, kind or "individual"
-	)
+	contact_card = {
+		"creation_id": creation_id,
+		"address_book_ids": address_book_ids,
+		"full_name": full_name,
+		"emails": emails,
+		"phones": phones,
+		"addresses": addresses,
+		"kind": kind or "individual",
+	}
+
+	service = get_contact_card_service(user)
+	response = service.create([contact_card])
 
 	title = _("Contact Card Creation Error")
 	if response.get("created"):
@@ -243,25 +260,14 @@ def fetch_contact_cards(
 	has_permission_for_user(user)
 
 	contact_cards = []
-	client = get_jmap_client(user)
 
-	while len(contact_cards) < limit:
-		result = client.contact_card_query(filter, position, limit, sort)
-		ids = result["ids"]
-		total = result["total"]
+	service = get_contact_card_service(user)
+	data = service.query(filter, position, limit, sort)
 
-		if not ids:
-			break
+	ids = data.get("ids", [])
+	total = data.get("total", 0)
 
-		contact_cards.extend(get_contact_cards(user, ids))
-
-		if len(contact_cards) >= limit:
-			break
-
-		position += len(ids)
-
-		if position >= total:
-			break
+	contact_cards.extend(get_contact_cards(user, ids))
 
 	return contact_cards[:limit], total
 
@@ -282,10 +288,10 @@ def get_contact_cards(user: str, ids: list[str]) -> list[dict]:
 			ids_to_fetch.append(id)
 
 	if ids_to_fetch:
-		client = get_jmap_client(user)
-		cards = client.contact_card_get(ids_to_fetch)
+		service = get_contact_card_service(user)
+		cards = service.get(ids_to_fetch)
 
-		address_book_map = {ab["id"]: ab["_name"] for ab in client.address_books}
+		address_book_map = {f"{service.user}|{ab['id']}": ab["name"] for ab in service.address_books}
 
 		for card in cards:
 			contact_card = format_contact_card(user, address_book_map, card)
@@ -310,10 +316,18 @@ def update_contact_card(
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.contact_card_update(
-		id, address_book_ids, full_name, emails, phones, addresses, kind or "individual"
-	)
+	contact_card = {
+		"id": id,
+		"address_book_ids": address_book_ids,
+		"full_name": full_name,
+		"emails": emails,
+		"phones": phones,
+		"addresses": addresses,
+		"kind": kind or "individual",
+	}
+
+	service = get_contact_card_service(user)
+	response = service.update([contact_card])
 
 	title = _("Contact Card Update Error")
 	if not response.get("updated"):
@@ -344,8 +358,8 @@ def contact_card_update_address_books(
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.contact_card_update_address_books(
+	service = get_contact_card_service(user)
+	response = service.update_address_book_ids(
 		ids, add_address_book_id, remove_address_book_id, move_to_address_book_id
 	)
 
@@ -408,8 +422,8 @@ def delete_contact_cards(user: str, ids: list[str]) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	client.contact_card_delete(ids)
+	service = get_contact_card_service(user)
+	service.delete(ids)
 	_remove_contact_cards_from_cache(user, ids)
 
 

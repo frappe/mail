@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 
 from mail.backend import get_mail_backend_api
-from mail.jmap import raise_for_status
+from mail.jmap.connection import raise_for_status
 from mail.utils import flatten_dict, password_or_none
 
 LOCAL_KEYS = [
@@ -537,7 +537,7 @@ def get_config_toml(server: str) -> str | None:
 					"ttl": _format_value_or_zero(cluster.jmap_protocol_upload_ttl, "h"),
 					"quota": {
 						"files": cluster.jmap_protocol_upload_quota_files,
-						"size": cluster.jmap_protocol_upload_quota_size,
+						"size": cluster.jmap_protocol_upload_quota_size * 1024 * 1024,
 					},
 				},
 			},

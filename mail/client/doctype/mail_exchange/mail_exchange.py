@@ -7,7 +7,11 @@ import os
 import shutil
 from contextlib import closing
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
+from email import message_from_binary_file
+from email.message import Message
+from email.parser import BytesHeaderParser
+from email.utils import parsedate_to_datetime
 from typing import Literal
 from uuid import uuid7
 
@@ -30,7 +34,8 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
-from mail.jmap import JMAPClient, get_jmap_client
+from mail.jmap import get_email_service
+from mail.jmap.services.mail.email import EmailService
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,
@@ -40,6 +45,7 @@ from mail.utils import (
 	reconnect_on_failure,
 )
 from mail.utils.cache import get_tenant_for_user
+from mail.utils.dt import parse_iso_datetime
 from mail.utils.user import (
 	clear_sync_state,
 	get_user_email_address,
@@ -67,6 +73,7 @@ class ImportEmailMeta:
 	blob_path: str
 	mailbox_ids: set[str]
 	keywords: set[str]
+	received_at: datetime
 
 
 @dataclass(slots=True)
@@ -126,11 +133,35 @@ class ImportMetadataLoader:
 
 		keywords = set(metadata.get("keywords", {}).keys() or [])
 
+		if metadata_received_at := metadata.get("receivedAt"):
+			metadata_received_at = parse_iso_datetime(metadata_received_at, as_str=False)
+
 		files = [f for f in os.listdir(base_dir) if f.lower().endswith(".eml")]
 		if not files:
 			frappe.throw(_("No .eml files found"))
 
-		return [ImportEmailMeta(f, mailbox_ids, keywords) for f in files]
+		result: list[ImportEmailMeta] = []
+		parser = BytesHeaderParser()
+
+		for fname in files:
+			received_at = metadata_received_at
+
+			if not received_at:
+				with open(os.path.join(base_dir, fname), "rb") as f:
+					msg: Message = parser.parse(f)
+
+				received_at = extract_received_or_sent(msg)
+
+			result.append(
+				ImportEmailMeta(
+					fname,
+					mailbox_ids,
+					keywords,
+					received_at,
+				)
+			)
+
+		return result
 
 	@classmethod
 	def _from_jmap(cls, base_dir: str, *args, **kwargs) -> list[ImportEmailMeta]:
@@ -145,35 +176,40 @@ class ImportMetadataLoader:
 					blob_path=os.path.join("blobs", meta["blobId"]),
 					mailbox_ids=set(meta["mailboxIds"].keys()),
 					keywords=set(meta.get("keywords", {}).keys() or []),
+					received_at=parse_iso_datetime(meta["receivedAt"], as_str=False),
 				)
 			)
 
 		return result
 
 	@staticmethod
-	def _from_mbox(base_dir: str, mailbox_map: dict[str, str], *args, **kwargs) -> list[ImportEmailMeta]:
+	def _from_mbox(base_dir: str, mailbox_map: dict[str, str], metadata: dict) -> list[ImportEmailMeta]:
 		"""Loads import metadata for MBOX format."""
 
 		mbox_files = get_mbox_files(base_dir)
 		if not mbox_files:
 			frappe.throw(_("No .mbox files found"))
 
-		by_message_id: dict[str, ImportEmailMeta] = {}
-		for mbox_path in mbox_files:
-			mailbox_id = next(
-				(k for k, v in mailbox_map.items() if f"{v}.mbox" == os.path.basename(mbox_path)),
-				None,
-			)
-			if not mailbox_id:
-				frappe.throw(_("Mailbox not found for {0}").format(mbox_path))
+		mailbox_ids = set(metadata.get("mailboxIds", {}).keys())
+		if not mailbox_ids:
+			frappe.throw(_("mailboxIds are required in Metadata for MBOX format."))
 
+		keywords = set(metadata.get("keywords", {}).keys() or [])
+
+		if metadata_received_at := metadata.get("receivedAt"):
+			metadata_received_at = parse_iso_datetime(metadata_received_at, as_str=False)
+
+		by_message_id: dict[str, ImportEmailMeta] = {}
+
+		for mbox_path in mbox_files:
 			with closing(mailbox.mbox(mbox_path, factory=None)) as mbox:
 				for key, msg in mbox.items():
-					msg_id = msg.get("Message-ID") or key
+					msg_id = (msg.get("Message-ID") or key).strip().lower()
 
 					if msg_id in by_message_id:
-						by_message_id[msg_id].mailbox_ids.add(mailbox_id)
 						continue
+
+					received_at = metadata_received_at or extract_received_or_sent(msg)
 
 					blob = f"{uuid7()}.eml"
 					with open(os.path.join(base_dir, blob), "wb") as f:
@@ -181,8 +217,9 @@ class ImportMetadataLoader:
 
 					by_message_id[msg_id] = ImportEmailMeta(
 						blob_path=blob,
-						mailbox_ids={mailbox_id},
-						keywords=set(),
+						mailbox_ids=mailbox_ids,
+						keywords=keywords,
+						received_at=received_at,
 					)
 
 		return list(by_message_id.values())
@@ -217,11 +254,16 @@ class ImportMetadataLoader:
 		"""Loads import metadata for Maildir format."""
 
 		validate_maildir_or_maildirpp(base_dir, raise_exception=True)
+
 		mailbox_ids = set(metadata.get("mailboxIds", {}).keys())
 		if not mailbox_ids:
 			frappe.throw(_("mailboxIds are required in Metadata for Maildir format."))
 
+		if metadata_received_at := metadata.get("receivedAt"):
+			metadata_received_at = parse_iso_datetime(metadata_received_at, as_str=False)
+
 		result: list[ImportEmailMeta] = []
+
 		for subdir in ("cur", "new"):
 			path = os.path.join(base_dir, subdir)
 			if not os.path.isdir(path):
@@ -229,11 +271,20 @@ class ImportMetadataLoader:
 
 			for fname in os.listdir(path):
 				keywords = cls._parse_maildir_flags(fname, subdir == "cur")
+
+				received_at = metadata_received_at
+				if not received_at:
+					with open(os.path.join(path, fname), "rb") as f:
+						msg: Message = message_from_binary_file(f)
+
+					received_at = extract_received_or_sent(msg)
+
 				result.append(
 					ImportEmailMeta(
 						blob_path=os.path.join(subdir, fname),
 						mailbox_ids=mailbox_ids,
 						keywords=keywords,
+						received_at=received_at,
 					)
 				)
 
@@ -246,6 +297,10 @@ class ImportMetadataLoader:
 		"""Loads import metadata for Nested Maildir format."""
 
 		validate_nested_maildir_tree(base_dir, raise_exception=True)
+
+		if metadata_received_at := metadata.get("receivedAt"):
+			metadata_received_at = parse_iso_datetime(metadata_received_at, as_str=False)
+
 		result: list[ImportEmailMeta] = []
 
 		path_to_id = {v: k for k, v in mailbox_map.items()}
@@ -286,9 +341,18 @@ class ImportMetadataLoader:
 					if fname.startswith("."):
 						continue
 
+					file_path = os.path.join(path, fname)
+
+					received_at = metadata_received_at
+					if not received_at:
+						with open(file_path, "rb") as f:
+							msg: Message = message_from_binary_file(f)
+
+						received_at = extract_received_or_sent(msg)
+
 					keywords = cls._parse_maildir_flags(fname, subdir == "cur")
-					rel_blob = os.path.relpath(os.path.join(path, fname), base_dir)
-					result.append(ImportEmailMeta(rel_blob, {mailbox_id}, keywords))
+					rel_blob = os.path.relpath(file_path, base_dir)
+					result.append(ImportEmailMeta(rel_blob, {mailbox_id}, keywords, received_at))
 
 		return result
 
@@ -457,6 +521,7 @@ class MailExchange(Document):
 		return {
 			"mailboxIds": filter_truthy_items("mailboxIds"),
 			"keywords": filter_truthy_items("keywords"),
+			"receivedAt": metadata.get("receivedAt"),
 		}
 
 	def autoname(self) -> None:
@@ -509,10 +574,10 @@ class MailExchange(Document):
 				)
 			)
 
-		if self.import_format in ("eml", "maildir"):
+		if self.import_format in ("eml", "mbox", "maildir"):
 			meta = self.import_metadata_dict
 			if not meta.get("mailboxIds"):
-				frappe.throw(_("mailboxIds are required in Metadata for EML and Maildir formats."))
+				frappe.throw(_("mailboxIds are required in Metadata for EML, MBOX, and Maildir formats."))
 		else:
 			self.import_metadata = json.dumps({})
 
@@ -619,13 +684,11 @@ class MailExchange(Document):
 			else:
 				extract_compressed_file(import_file, base_dir)
 
-			client = get_jmap_client(self.user)
+			service = get_email_service(self.user)
 
 			mailbox_map = {}
-			if self.import_format == "mbox":
-				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
-			elif self.import_format == "maildir-nested":
-				mailbox_map = self._build_mailbox_map(client.mailboxes)
+			if self.import_format == "maildir-nested":
+				mailbox_map = self._build_mailbox_map(service.mailboxes)
 
 			meta = ImportMetadataLoader.load(
 				self.import_format, base_dir, mailbox_map, self.import_metadata_dict
@@ -636,7 +699,7 @@ class MailExchange(Document):
 			if len(meta) > self.max_import:
 				frappe.throw(_("Import limit exceeded."))
 
-			self._import_batches(client, base_dir, meta)
+			self._import_batches(service, base_dir, meta)
 			clear_sync_state(self.user, type="email")
 
 			kwargs.update({"status": "Completed", "output": _("Import completed")})
@@ -662,21 +725,19 @@ class MailExchange(Document):
 
 		kwargs = {}
 		try:
-			client = get_jmap_client(self.user)
-			total = client.email_query(self.export_filter_dict, limit=1)["total"]
+			service = get_email_service(self.user)
+			total = service.query(self.export_filter_dict, limit=1)["total"]
 			limit = min(total, cint(self.export_limit or total))
 
 			if limit > self.max_export:
 				frappe.throw(_("Export limit exceeded."))
 
-			ids = client.email_query(self.export_filter_dict, sort=self.export_sort_clause, limit=limit)[
-				"ids"
-			]
+			ids = service.query(self.export_filter_dict, sort=self.export_sort_clause, limit=limit)["ids"]
 			if not ids:
 				frappe.throw(_("No emails found for export."))
 
 			properties = ["id", "from", "blobId", "keywords", "mailboxIds", "messageId", "receivedAt"]
-			emails, _state = client.email_get(ids, properties=properties)
+			emails = service.get(ids, properties=properties)
 
 			if self.deduplicate_export:
 				unique_emails = {}
@@ -688,11 +749,11 @@ class MailExchange(Document):
 
 			mailbox_map = {}
 			if self.export_format == "mbox":
-				mailbox_map = {m["id"]: m["_name"] for m in client.mailboxes}
+				mailbox_map = {m["id"]: m["name"] for m in service.mailboxes}
 			elif self.export_format == "maildir-nested":
-				mailbox_map = self._build_mailbox_map(client.mailboxes)
+				mailbox_map = self._build_mailbox_map(service.mailboxes)
 
-			self._export_batches(client, emails, out_dir, mailbox_map)
+			self._export_batches(service, emails, out_dir, mailbox_map)
 			self._attach_export(out_dir)
 
 			kwargs.update({"status": "Completed", "output": _("Export completed")})
@@ -725,17 +786,17 @@ class MailExchange(Document):
 
 		self._db_set(**kwargs)
 
-	def _import_batches(self, client: JMAPClient, base_dir: str, metadata: list[ImportEmailMeta]) -> None:
-		"""Imports emails in batches using the JMAP client."""
+	def _import_batches(self, service: EmailService, base_dir: str, metadata: list[ImportEmailMeta]) -> None:
+		"""Imports emails in batches using the EmailService."""
 
-		batch_size = client.max_objects_in_set
+		batch_size = service.max_objects_in_set
 		for batch in create_batch(metadata, batch_size):
 			blobs: list[tuple[bytes, str]] = []
 			for meta in batch:
 				with open(os.path.join(base_dir, meta.blob_path), "rb") as f:
 					blobs.append((f.read(), "message/rfc822"))
 
-			responses = client.upload_blobs_concurrently(blobs)
+			responses = service.upload_blobs_concurrently(blobs)
 			emails = {}
 			for i, resp in enumerate(responses):
 				meta = batch[i]
@@ -743,19 +804,24 @@ class MailExchange(Document):
 					"blobId": resp["blobId"],
 					"mailboxIds": {mid: True for mid in meta.mailbox_ids},
 					"keywords": {k: True for k in meta.keywords or []},
+					"receivedAt": meta.received_at.isoformat(),
 				}
 
-			client._make_request(
-				using=["urn:ietf:params:jmap:mail"],
+			service._call(
+				capabilities=service.capabilities,
 				method_calls=[
-					["Email/import", {"accountId": client.primary_account_id, "emails": emails}, "0"]
+					[
+						f"{service.type}/import",
+						{"accountId": service.primary_account_id, "emails": emails},
+						"0",
+					]
 				],
 			)
 
 	def _export_batches(
-		self, client: JMAPClient, emails: list[dict], out_dir: str, mailbox_map: dict[str, str]
+		self, service: EmailService, emails: list[dict], out_dir: str, mailbox_map: dict[str, str]
 	) -> None:
-		"""Exports emails in batches using the JMAP client."""
+		"""Exports emails in batches using the EmailService."""
 
 		if self.export_format == "jmap":
 			ExportWriter.write_meta(emails, out_dir)
@@ -763,7 +829,7 @@ class MailExchange(Document):
 		batch_size = cint(frappe.conf.mail_exchange_export_batch_size) or 500
 		for batch in create_batch(emails, batch_size):
 			blobs = [(e["blobId"], None) for e in batch if e.get("blobId")]
-			data = client.download_blobs_concurrently(blobs)
+			data = service.download_blobs_concurrently(blobs)
 
 			export_emails = []
 			for e in batch:
@@ -796,8 +862,8 @@ class MailExchange(Document):
 				return result[mailbox_id]
 
 			mailbox = by_id[mailbox_id]
-			name = mailbox["_name"]
-			parent_id = mailbox.get("parent_id")
+			name = mailbox["name"]
+			parent_id = mailbox.get("parentId")
 
 			if parent_id:
 				parent_path = resolve_path(parent_id)
@@ -896,6 +962,45 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 		return doc.user == user
 
 	return False
+
+
+def extract_received_or_sent(msg: Message) -> datetime:
+	"""
+	Extracts the received date from the email headers.
+	If the Received header is not available or invalid, it falls back to the Date header.
+	Ensures the resulting datetime is not in the future.
+	Raises an exception if neither header is valid.
+	"""
+
+	now = datetime.now(UTC)
+
+	if received_headers := msg.get_all("Received", []):
+		last_received = received_headers[-1]
+
+		if ";" in last_received:
+			date_part = last_received.rsplit(";", 1)[-1].strip()
+			try:
+				dt = parsedate_to_datetime(date_part)
+				if dt.tzinfo is None:
+					dt = dt.replace(tzinfo=UTC)
+
+				if dt <= now:
+					return dt
+			except Exception:
+				pass
+
+	if sent_date := msg.get("Date"):
+		try:
+			dt = parsedate_to_datetime(sent_date)
+			if dt.tzinfo is None:
+				dt = dt.replace(tzinfo=UTC)
+
+			if dt <= now:
+				return dt
+		except Exception:
+			pass
+
+	frappe.throw(_("Email must have a valid non-future Received or Date header."))
 
 
 def retry_stuck_mail_exchanges() -> None:

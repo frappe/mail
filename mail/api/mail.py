@@ -1,14 +1,11 @@
-import base64
 import hashlib
-import os
 from datetime import UTC, datetime
 
 import frappe
+import pydenticon
 import requests
 from frappe import _
-from frappe.handler import check_write_permission
-from frappe.utils import cint, format_datetime, get_gravatar_url, random_string
-from frappe.utils.identicon import Identicon
+from frappe.utils import format_datetime, random_string
 
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
@@ -26,88 +23,10 @@ from mail.client.doctype.mail_message.mail_message import (
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_mailbox_id_by_role
 from mail.utils import convert_html_to_text
+from mail.utils.cache import get_user_emails
 from mail.utils.user import has_role
 
 AVATAR_CACHE_TTL = 60 * 60 * 24
-
-
-@frappe.whitelist(methods=["POST"])
-def upload_file_chunk():
-	if not has_role(frappe.session.user, "Mail User"):
-		frappe.throw(_("Not permitted"), frappe.PermissionError)
-
-	files = frappe.request.files
-
-	filename = frappe.form_dict.filename
-	chunk_index = cint(frappe.form_dict.chunk_index)
-	total_chunks = cint(frappe.form_dict.total_chunks)
-	upload_id = frappe.form_dict.upload_id
-	total_file_size = cint(frappe.form_dict.total_file_size)
-
-	doctype = frappe.form_dict.doctype
-	docname = frappe.form_dict.docname
-	fieldname = frappe.form_dict.fieldname
-	folder = frappe.form_dict.folder or "Home"
-	is_private = cint(frappe.form_dict.is_private)
-
-	check_write_permission(doctype, docname)
-
-	max_file_size_mb = cint(frappe.conf.max_file_size_mb) or 1024
-	max_file_size = max_file_size_mb * 1024 * 1024
-
-	if total_file_size > max_file_size:
-		frappe.throw(_("File size exceeds the maximum allowed limit of {0} MB.").format(max_file_size_mb))
-
-	chunk_dir = frappe.get_site_path("private", "tmp", "chunk_uploads")
-	chunk_folder = os.path.join(chunk_dir, upload_id)
-
-	os.makedirs(chunk_dir, exist_ok=True)
-	os.makedirs(chunk_folder, exist_ok=True)
-
-	file = files["file"]
-	chunk_path = os.path.join(chunk_folder, f"{chunk_index}.part")
-
-	with open(chunk_path, "wb") as f:
-		f.write(file.stream.read())
-
-	if chunk_index + 1 == total_chunks:
-		final_path = os.path.join(chunk_folder, filename)
-
-		with open(final_path, "wb") as final_file:
-			for i in range(total_chunks):
-				part_path = os.path.join(chunk_folder, f"{i}.part")
-
-				with open(part_path, "rb") as part:
-					final_file.write(part.read())
-
-				os.remove(part_path)
-
-		with open(final_path, "rb") as f:
-			content = f.read()
-
-		file_doc = frappe.get_doc(
-			{
-				"doctype": "File",
-				"attached_to_doctype": doctype,
-				"attached_to_name": docname,
-				"attached_to_field": fieldname,
-				"folder": folder,
-				"file_name": filename,
-				"is_private": is_private,
-				"content": content,
-			}
-		).save()
-
-		os.remove(final_path)
-		os.rmdir(chunk_folder)
-
-		return file_doc
-
-	return {
-		"status": "chunk_received",
-		"chunk_index": chunk_index,
-		"total_chunks": total_chunks,
-	}
 
 
 @frappe.whitelist()
@@ -129,6 +48,65 @@ def get_user_mailboxes(user) -> list[dict]:
 	"""Returns the user's mailboxes."""
 
 	return frappe.get_all("Mailbox", filters={"user": user})
+
+
+def get_avatar_url(email: str) -> str:
+	"""Returns the avatar URL for the given email."""
+
+	return f"/api/method/mail.api.mail.get_avatar?email={email}"
+
+
+def add_user_images_to_emails(mails: list[dict], is_thread: bool = False) -> list[dict]:
+	"""Append avatar URLs to the given list of emails."""
+
+	if not mails:
+		return mails
+
+	email_map: dict[str, str] = {}
+	rcpt_order = {"To": 0, "Cc": 1, "Bcc": 2}
+	user_emails = {e.lower() for e in get_user_emails(frappe.session.user)}
+
+	for mail in mails:
+		name = mail["name"]
+		if not name:
+			continue
+
+		from_email = (mail.get("from_email") or "").lower()
+
+		if not from_email:
+			continue
+
+		selected_email = from_email
+
+		if not is_thread and from_email in user_emails:
+			recipients = sorted(mail["recipients"], key=lambda r: rcpt_order[r["type"] or 99])
+
+			for rcpt in recipients:
+				rcpt_email = (rcpt.get("email") or "").lower()
+				if rcpt_email and rcpt_email not in user_emails:
+					selected_email = rcpt_email
+					break
+
+		email_map[name] = selected_email
+
+	unique_emails = {e for e in email_map.values() if e}
+
+	user_image_map = {}
+	if unique_emails:
+		user_data = frappe.db.get_all(
+			"User",
+			filters={"name": ["in", list(unique_emails)]},
+			fields=["name", "user_image"],
+		)
+		user_image_map = {u.name: u.user_image for u in user_data if u.user_image}
+
+	images = {email: user_image_map.get(email) or get_avatar_url(email) for email in unique_emails}
+
+	for mail in mails:
+		email = email_map.get(mail["name"])
+		mail["user_image"] = images.get(email) if email else None
+
+	return mails
 
 
 @frappe.whitelist()
@@ -163,24 +141,30 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 	else:
 		filter = {"operator": "AND", "conditions": conditions}
 
-	return [serialize_thread(thread) for thread in fetch_threads(user, filter, 0, limit)]
+	threads = [serialize_thread(t) for t in fetch_threads(user, filter, 0, limit)]
+
+	return add_user_images_to_emails(threads, is_thread=False)
 
 
 @frappe.whitelist()
 def get_thread(thread_id: str) -> list[dict]:
 	"""Returns mails for the given thread id."""
 
-	return [serialize_mail(mail) for mail in fetch_thread(frappe.session.user, thread_id)]
+	mails = [serialize_mail(m) for m in fetch_thread(frappe.session.user, thread_id)]
+	return add_user_images_to_emails(mails, is_thread=True)
 
 
 @frappe.whitelist()
-def get_attachment(blob_id: str, filename: str | None = None) -> None:
+def get_attachment(user: str, blob_id: str, filename: str | None = None) -> None:
 	"""Fetches and returns the attachment."""
+
+	if not user:
+		frappe.throw(_("User is required."))
 
 	if not blob_id:
 		frappe.throw(_("Blob ID is required."))
 
-	content = fetch_blob(frappe.session.user, blob_id, filename)
+	content = fetch_blob(user, blob_id, filename)
 
 	frappe.local.response.filename = filename or blob_id
 	frappe.local.response.filecontent = content
@@ -346,7 +330,7 @@ def update_draft_mail(
 					"file_url": file_url,
 					"filename": d.get("filename", ""),
 					"disposition": d.get("disposition"),
-					"cid": d["cid"],
+					"cid": d.get("cid") or random_string(10),
 				},
 			)
 		else:
@@ -529,7 +513,9 @@ def search_mails(filter: dict | None = None, limit: int = 5) -> tuple[list[dict]
 		return ([], 0)
 
 	normalized_filter = normalize_filter(filter)
-	return search_messages(frappe.session.user, normalized_filter, limit=limit)
+	mails, total = search_messages(frappe.session.user, normalized_filter, limit=limit)
+
+	return add_user_images_to_emails(mails), total
 
 
 def normalize_filter(filter: dict) -> dict:
@@ -558,8 +544,8 @@ def parse_date_to_utc_iso(date_str: str) -> str:
 
 
 @frappe.whitelist()
-def get_avatar(email: str) -> None:
-	"""Fetches and returns the avatar for the given email."""
+def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
+	"""Fetch and return avatar for the given email."""
 
 	if not email:
 		frappe.throw(_("Email is required to fetch avatar."))
@@ -567,24 +553,45 @@ def get_avatar(email: str) -> None:
 	email = email.strip().lower()
 	email_hash = hashlib.md5(email.encode()).hexdigest()
 
-	cache_key = f"avatar:{email_hash}"
+	cache_key = f"avatar:{email_hash}:{size}"
+
+	# 1. Try cache
 	avatar = frappe.cache.get_value(cache_key)
 
 	if not avatar:
-		gravatar_url = get_gravatar_url(email)
-
+		# 2. Try Gravatar
+		default = frappe.conf.gravatar_default_avatar or "404"
 		try:
-			response = requests.get(gravatar_url, timeout=5)
-			if response.ok:
-				avatar = response.content
-
+			res = requests.get(
+				f"https://secure.gravatar.com/avatar/{email_hash}",
+				params={"d": default, "s": size},
+				timeout=3,
+			)
+			if res.ok:
+				avatar = res.content
 		except requests.RequestException:
 			pass
 
+		# 3. Handle missing gravatar
 		if not avatar:
-			data = Identicon(email).base64()
-			avatar = base64.b64decode(data.split(",")[1])
+			if strict:
+				frappe.throw(_("Avatar not found."), frappe.DoesNotExistError)
 
+			generator = pydenticon.Generator(
+				5,
+				5,
+				foreground=[
+					"#1abc9c",
+					"#2ecc71",
+					"#3498db",
+					"#9b59b6",
+					"#e74c3c",
+				],
+				background="#ffffff",
+			)
+			avatar = generator.generate(email_hash, size, size, output_format="png")
+
+		# Cache the avatar for future requests
 		frappe.cache.set_value(cache_key, avatar, expires_in_sec=AVATAR_CACHE_TTL)
 
 	frappe.local.response.filename = f"{email_hash}.png"

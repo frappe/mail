@@ -8,7 +8,7 @@
 		:options="FORMAT_OPTIONS"
 		required
 	/>
-	<template v-if="['eml', 'maildir'].includes(mailImport.format)">
+	<template v-if="['eml', 'mbox', 'maildir'].includes(mailImport.format)">
 		<FormControl
 			v-model="mailImport.mailbox"
 			:label="__('Folder')"

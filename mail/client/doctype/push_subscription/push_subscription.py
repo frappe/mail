@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import today
 
-from mail.jmap import get_jmap_client
+from mail.jmap import get_push_subscription_service
 from mail.utils import generate_uuid_style_hash, parse_filters
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
@@ -144,8 +144,15 @@ def add_push_subscription(
 	types = types or None
 
 	creation_id = str(uuid7())
-	client = get_jmap_client(user, ignore_permissions=ignore_permissions)
-	response = client.push_subscription_create(creation_id, device_client_id, url, types)
+	push_subscription = {
+		"creation_id": creation_id,
+		"device_client_id": device_client_id,
+		"url": url,
+		"types": types,
+	}
+
+	service = get_push_subscription_service(user, ignore_permissions=ignore_permissions)
+	response = service.create([push_subscription])
 
 	title = _("Push Subscription Creation Error")
 	if response.get("created"):
@@ -162,8 +169,8 @@ def get_push_subscription(user: str, id: str, raise_exception: bool = True) -> d
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	if subscriptions := client.push_subscription_get([id]):
+	service = get_push_subscription_service(user)
+	if subscriptions := service.get([id]):
 		return format_push_subscription(user, subscriptions[0])
 
 	if raise_exception:
@@ -181,14 +188,17 @@ def verify_push_subscription(user: str, id: str, verification_code: str) -> None
 	if not frappe.db.exists("User", {"name": user, "enabled": 1}):
 		frappe.throw(_("User does not exist or is disabled."))
 
-	client = get_jmap_client(user, ignore_permissions=True)
-	response = client.push_subscription_update(id, verification_code)
+	push_subscription = {"id": id, "verification_code": verification_code}
 
-	if response[0][1].get("notUpdated"):
-		frappe.throw(
-			_(response[0][1]["notUpdated"][id]["description"]),
-			title=_("Push Subscription Verification Error"),
-		)
+	service = get_push_subscription_service(user, ignore_permissions=True)
+	response = service.update([push_subscription])
+
+	title = _("Push Subscription Renewal Error")
+	if not response.get("updated"):
+		if response.get("notUpdated"):
+			frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
+		else:
+			frappe.throw(_(response["description"]), title=title)
 
 
 @frappe.whitelist()
@@ -197,13 +207,15 @@ def renew_push_subscription(user: str, id: str) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.push_subscription_update(id)
+	service = get_push_subscription_service(user)
+	response = service.update([{"id": id}])
 
-	if response[0][1].get("notUpdated"):
-		frappe.throw(
-			_(response[0][1]["notUpdated"][id]["description"]), title=_("Push Subscription Renewal Error")
-		)
+	title = _("Push Subscription Renewal Error")
+	if not response.get("updated"):
+		if response.get("notUpdated"):
+			frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
+		else:
+			frappe.throw(_(response["description"]), title=title)
 
 
 @frappe.whitelist()
@@ -212,8 +224,8 @@ def delete_push_subscriptions(user: str, ids: list[str]) -> None:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.push_subscription_delete(ids)
+	service = get_push_subscription_service(user)
+	response = service.delete(ids)
 
 	if response.get("notDestroyed"):
 		error_messages = []
@@ -231,8 +243,8 @@ def fetch_push_subscriptions(user: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	subscriptions = client.push_subscription_get()
+	service = get_push_subscription_service(user)
+	subscriptions = service.get()
 	formatted_subscriptions = [format_push_subscription(user, sub) for sub in subscriptions]
 	frappe.cache.set_value(_get_total_cache_key(user), len(subscriptions), expires_in_sec=600)
 

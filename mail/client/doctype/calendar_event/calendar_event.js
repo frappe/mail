@@ -5,6 +5,7 @@ frappe.ui.form.on('Calendar Event', {
 	before_load: (frm) => {
 		const update_tz_options = () => {
 			frm.fields_dict.time_zone.set_data(frappe.all_timezones)
+			frm.fields_dict.recurrence_id_time_zone.set_data(frappe.all_timezones)
 		}
 
 		if (!frappe.all_timezones) {

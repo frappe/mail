@@ -160,7 +160,6 @@ class MailDataExchange(Document):
 		self._db_set(status="Queued", queued_at=now())
 		self.process()
 
-	@reconnect_on_failure()
 	def _import(self) -> None:
 		"""Imports the account data."""
 
@@ -229,7 +228,6 @@ class MailDataExchange(Document):
 		self._mark_completed(**kwargs)
 		self._notify_user(success=kwargs.get("status") == "Completed", action="Import")
 
-	@reconnect_on_failure()
 	def _export(self) -> None:
 		"""Exports the account data."""
 
@@ -308,6 +306,7 @@ class MailDataExchange(Document):
 		# https://github.com/frappe/frappe/issues/26615
 		frappe.db.set_value("File", file.name, {"file_url": url, "file_name": archive})
 
+	@reconnect_on_failure()
 	def _notify_user(self, success: bool, action: Literal["Import", "Export"]) -> None:
 		"""Sends notification email to the owner of the data exchange."""
 
@@ -330,6 +329,7 @@ class MailDataExchange(Document):
 			now=True,
 		)
 
+	@reconnect_on_failure()
 	def _db_set(self, **kwargs) -> None:
 		"""Updates the document with the given key-value pairs."""
 

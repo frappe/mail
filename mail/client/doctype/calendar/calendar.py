@@ -10,7 +10,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, today
 
-from mail.jmap import get_jmap_client
+from mail.jmap import get_calendar_service
 from mail.utils import parse_filters
 from mail.utils.validation import has_permission_for_user
 
@@ -137,19 +137,21 @@ def add_calendar(
 	has_permission_for_user(user)
 
 	creation_id = str(uuid7())
-	client = get_jmap_client(user)
-	response = client.calendar_create(
-		creation_id,
-		name,
-		color,
-		description,
-		sort_order,
-		include_in_availability.lower(),
-		time_zone,
-		subscribed,
-		visible,
-		default,
-	)
+	calendar = {
+		"creation_id": creation_id,
+		"name": name,
+		"color": color,
+		"description": description,
+		"sort_order": sort_order,
+		"include_in_availability": include_in_availability.lower(),
+		"time_zone": time_zone,
+		"is_subscribed": subscribed,
+		"is_visible": visible,
+		"is_default": default,
+	}
+
+	service = get_calendar_service(user)
+	response = service.create([calendar])
 
 	title = _("Calendar Creation Error")
 	if response.get("created"):
@@ -166,8 +168,8 @@ def get_calendar(user: str, id: str) -> dict:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	if calendars := client.calendar_get([id]):
+	service = get_calendar_service(user)
+	if calendars := service.get([id]):
 		return format_calendar(user, calendars[0])
 
 	frappe.throw(
@@ -194,19 +196,21 @@ def update_calendar(
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.calendar_update(
-		id,
-		name,
-		color,
-		description,
-		sort_order,
-		include_in_availability.lower(),
-		time_zone,
-		subscribed,
-		visible,
-		default,
-	)
+	calendar = {
+		"id": id,
+		"name": name,
+		"color": color,
+		"description": description,
+		"sort_order": sort_order,
+		"include_in_availability": include_in_availability.lower(),
+		"time_zone": time_zone,
+		"is_subscribed": subscribed,
+		"is_visible": visible,
+		"is_default": default,
+	}
+
+	service = get_calendar_service(user)
+	response = service.update([calendar])
 
 	title = _("Calendar Update Error")
 	if not response.get("updated"):
@@ -222,8 +226,8 @@ def delete_calendars(user: str, ids: list[str], remove_events: bool = True) -> N
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	response = client.calendar_delete(ids, remove_events=remove_events)
+	service = get_calendar_service(user)
+	response = service.delete(ids, remove_events=remove_events)
 
 	if response.get("notDestroyed"):
 		error_messages = []
@@ -241,8 +245,8 @@ def fetch_calendars(user: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(user)
 
-	client = get_jmap_client(user)
-	calendars = client.calendar_get()
+	service = get_calendar_service(user)
+	calendars = service.get()
 	formatted_calendars = [format_calendar(user, calendar) for calendar in calendars]
 	frappe.cache.set_value(_get_total_cache_key(user), len(calendars), expires_in_sec=600)
 

@@ -7,7 +7,7 @@ from frappe.core.doctype.user.user import generate_keys
 from frappe.query_builder import Table
 from frappe.utils.caching import request_cache
 
-from mail.utils import user_context
+from mail.utils import reconnect_on_failure, user_context
 from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
 
 
@@ -260,6 +260,7 @@ def update_sync_state(user: str, type: Literal["email"], state: str) -> None:
 	).run()
 
 
+@reconnect_on_failure()
 def clear_sync_state(user: str, type: Literal["email"]) -> None:
 	"""Clear the Sync State for the given user and type."""
 

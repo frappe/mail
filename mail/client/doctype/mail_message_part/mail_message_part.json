@@ -18,7 +18,9 @@
   "blob_id",
   "cid",
   "size",
-  "url"
+  "url",
+  "section_break_frkm",
+  "image"
  ],
  "fields": [
   {
@@ -107,6 +109,19 @@
    "no_copy": 1,
    "options": "URL",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
+   "fieldname": "section_break_frkm",
+   "fieldtype": "Section Break",
+   "label": "Preview"
+  },
+  {
+   "depends_on": "eval: doc.parentfield == \"attachments\" && doc.type && doc.type.includes(\"image/\")",
+   "fieldname": "image",
+   "fieldtype": "Image",
+   "options": "url"
   }
  ],
  "grid_page_length": 50,
@@ -114,7 +129,7 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-27 12:58:50.231044",
+ "modified": "2026-03-12 20:02:37.173596",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message Part",
