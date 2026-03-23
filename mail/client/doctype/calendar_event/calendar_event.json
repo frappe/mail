@@ -155,8 +155,8 @@
    "fieldname": "title",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Title"  
-},
+   "label": "Title"
+  },
   {
    "description": "The time zone in which the event start time is defined.",
    "fieldname": "time_zone",
@@ -261,7 +261,6 @@
    "label": "Show Without Time"
   },
   {
-   "depends_on": "eval: doc.recurrence_rule != \"{}\"",
    "description": "Defines how the event repeats over time.\n<br><br>\nExample: \n<pre>{\n  \"frequency\": \"yearly\", \n  /*\n    REQUIRED.\n    Allowed values:\n      \"yearly\", \"monthly\", \"weekly\", \"daily\",\n      \"hourly\", \"minutely\", \"secondly\"\n  */\n\n  \"interval\": 1,\n  /*\n    OPTIONAL.\n    Integer \u2265 1.\n    Repeats every N units of `frequency`.\n  */\n\n  \"count\": 10,\n  /*\n    OPTIONAL.\n    Integer \u2265 1.\n    Number of total occurrences.\n    MUTUALLY EXCLUSIVE with `until`.\n  */\n\n  \"until\": \"2026-12-31T23:59:59Z\",\n  /*\n    OPTIONAL.\n    UTC date-time only (RFC 3339).\n    MUTUALLY EXCLUSIVE with `count`.\n  */\n\n  \"firstDayOfWeek\": \"mo\",\n  /*\n    OPTIONAL.\n    Allowed values:\n      \"mo\", \"tu\", \"we\", \"th\", \"fr\", \"sa\", \"su\"\n  */\n\n  \"bySecond\": [0, 30],\n  /*\n    OPTIONAL.\n    Each value: 0\u201360\n  */\n\n  \"byMinute\": [0, 15, 30, 45],\n  /*\n    OPTIONAL.\n    Each value: 0\u201359\n  */\n\n  \"byHour\": [9, 12, 18],\n  /*\n    OPTIONAL.\n    Each value: 0\u201323\n  */\n\n  \"byDay\": [\n    \"mo\",\n    \"we\",\n    \"fr\",\n    \"1mo\",\n    \"-1fr\"\n  ],\n  /*\n    OPTIONAL.\n    Allowed values:\n      \"mo\"  \u2013 Monday\n      \"tu\"  \u2013 Tuesday\n      \"we\"  \u2013 Wednesday\n      \"th\"  \u2013 Thursday\n      \"fr\"  \u2013 Friday\n      \"sa\"  \u2013 Saturday\n      \"su\"  \u2013 Sunday\n\n    Positional weekdays (monthly/yearly only):\n      \"1mo\"   \u2192 first Monday\n      \"2tu\"   \u2192 second Tuesday\n      \"-1fr\"  \u2192 last Friday\n  */\n\n  \"byMonthDay\": [1, 15, -1],\n  /*\n    OPTIONAL.\n    Values:\n      1\u201331   \u2192 day of month\n      -1     \u2192 last day of month\n      -2     \u2192 second-to-last day\n  */\n\n  \"byYearDay\": [1, 100, -1],\n  /*\n    OPTIONAL.\n    Values:\n      1\u2013366  \u2192 day of year\n      -1     \u2192 last day of year\n  */\n\n  \"byWeekNo\": [1, 26, 52, -1],\n  /*\n    OPTIONAL.\n    ISO week numbers.\n    Values:\n      1\u201353\n      -1 \u2192 last week of year\n    VALID ONLY when frequency = \"yearly\"\n  */\n\n  \"byMonth\": [1, 6, 12],\n  /*\n    OPTIONAL.\n    Values:\n      1  \u2192 January\n      6  \u2192 June\n      12 \u2192 December\n  */\n\n  \"bySetPosition\": [1, -1]\n  /*\n    OPTIONAL.\n    Selects specific occurrences AFTER all other rules are applied.\n    Values:\n      Positive \u2192 nth occurrence\n      Negative \u2192 nth-from-last occurrence\n  */\n}\n</pre>",
    "fieldname": "recurrence_rule",
    "fieldtype": "JSON",
@@ -418,7 +417,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-03-19 15:30:06.997557",
+ "modified": "2026-03-23 12:27:20.726300",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",
