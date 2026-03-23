@@ -11,6 +11,7 @@ import {
 	ListSelectBanner,
 	ListView,
 	createResource,
+	toast,
 } from 'frappe-ui'
 
 import { getRepeatFrequencyOptions, raiseToast } from '@/utils'
@@ -181,7 +182,7 @@ const getEventParams = (sendEmail: boolean) => {
 		user: user.data.name,
 		organizer: user.data.name,
 		send_scheduling_messages: sendEmail,
-		start: dayjs(event.startDate + 'T' + (event.allDay ? '00:00' : event.startTime)).format(
+		start: dayjs(event.startDate + 'T' + (event.isAllDay ? '00:00' : event.startTime)).format(
 			'YYYY-MM-DD[T]HH:mm:ss',
 		),
 		duration: duration.value,
@@ -204,7 +205,6 @@ const createEvent = createResource({
 	url: 'mail.client.doctype.calendar_event.calendar_event.add_calendar_event',
 	makeParams: ({ sendEmail }: { sendEmail: boolean }) => getEventParams(sendEmail),
 	onSuccess: () => {
-		raiseToast(__('Event created.'), 'success')
 		show.value = false
 		emit('reload-events')
 	},
@@ -227,8 +227,16 @@ const editEvent = createResource({
 })
 
 const save = (sendEmail: boolean) => {
-	if (isNew.value) createEvent.submit({ sendEmail })
-	else editEvent.submit({ sendEmail })
+	if (isNew.value)
+		toast.promise(createEvent.submit({ sendEmail }), {
+			loading: __('Creating event...'),
+			success: __('Event created.'),
+		})
+	else
+		toast.promise(editEvent.submit({ sendEmail }), {
+			loading: __('Updating event...'),
+			success: __('Event updated.'),
+		})
 	showSendEmailModal.value = false
 }
 
@@ -249,6 +257,7 @@ const dialogOptions = computed(() => ({
 		{
 			label: __('Save'),
 			variant: 'solid',
+			disabled: createEvent.loading || editEvent.loading,
 			onClick: () => {
 				if (
 					!selectedEvent?.calendarEvent?.participants?.length &&

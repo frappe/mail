@@ -129,7 +129,7 @@ const recurrenceRule = computed(() => {
 			rule.byDay = [{ day: `-1${startDay.value}` }]
 	}
 
-	if (repeat.end === 'On Date') rule.until = repeat.until
+	if (repeat.end === 'On Date') rule.until = `${repeat.until}T23:59:59Z`
 	else if (repeat.end === 'After Occurrences') rule.count = repeat.count
 
 	return rule

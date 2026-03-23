@@ -5,9 +5,9 @@ import { Calendar, createResource } from 'frappe-ui'
 import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 import CalendarSidebar from '@/components/CalendarSidebar.vue'
+import EventPopoverContent from '@/components/EventPopoverContent.vue'
 import EditCalendarEventModal from '@/components/Modals/EditCalendarEventModal.vue'
 
-const user = inject('$user')
 const dayjs = inject('$dayjs')
 
 const { identities } = userStore()
@@ -76,16 +76,6 @@ const events = createResource({
 	onError: (error) => raiseToast(error.message, 'error'),
 })
 
-const deleteEvent = createResource({
-	url: 'mail.client.doctype.calendar_event.calendar_event.delete_calendar_events',
-	makeParams: (id) => ({ user: user.data.name, ids: [id] }),
-	onSuccess: () => raiseToast(__('Event deleted.'), 'success'),
-	onError: (error) => {
-		raiseToast(error.message, 'error')
-		events.reload()
-	},
-})
-
 const visibleEvents = computed(
 	() =>
 		events.data?.filter((event) =>
@@ -132,8 +122,16 @@ watch(
 					:config="{ isEditMode: true }"
 					:on-dbl-click="(event) => handleOpenEvent(event)"
 					:on-cell-click="(event) => handleOpenEvent(event)"
-					@delete="(eventID) => deleteEvent.submit(eventID)"
-				/>
+				>
+					<template #event-popover-content="{ calendarEvent, close }">
+						<EventPopoverContent
+							:calendar-event
+							:close
+							@edit="handleOpenEvent({ calendarEvent })"
+							@reload-events="events.reload()"
+						/>
+					</template>
+				</Calendar>
 			</div>
 		</div>
 	</div>
