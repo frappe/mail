@@ -33,7 +33,9 @@
 							:class="[
 								{
 									'border-r': i !== WEEKDAYS.length - 1,
-									'bg-surface-gray-2': !repeat.byDay.includes(d.value),
+									'bg-surface-gray-2': !repeat.byDay
+										.map((d) => d.day)
+										.includes(d.value),
 								},
 							]"
 							@click="toggleDay(d.value)"
@@ -99,20 +101,20 @@ const getDefaultRepeat = () => ({
 	end: ' ',
 	until: dayjs().add(1, 'week').format('YYYY-MM-DD'),
 	count: 10,
-	byDay: startDay.value ? [startDay.value] : ([] as string[]),
+	byDay: startDay.value ? [{ day: startDay.value }] : ([] as { day: string }[]),
 	repeatOn: 'day_of_month',
 })
 
 const repeat = reactive({ ...getDefaultRepeat() })
 
 function toggleDay(day: string) {
-	const idx = repeat.byDay.indexOf(day)
-	if (idx === -1) repeat.byDay.push(day)
+	const idx = repeat.byDay.findIndex((d) => d.day === day)
+	if (idx === -1) repeat.byDay.push({ day })
 	else repeat.byDay.splice(idx, 1)
 }
 
 const recurrenceRule = computed(() => {
-	const rule: Record<string, string | string[] | number | number[]> = {
+	const rule: Record<string, string | string[] | number | number[] | { day: string }[]> = {
 		frequency: repeat.frequency,
 		interval: repeat.interval,
 	}
@@ -121,9 +123,10 @@ const recurrenceRule = computed(() => {
 	else if (repeat.frequency === 'monthly') {
 		if (repeat.repeatOn === 'day_of_month') rule.byMonthDay = [dayjs(startDate).date()]
 		else if (repeat.repeatOn === 'day_of_week')
-			rule.byDay = [`${startWeekNumber.value}${startDay.value}`]
+			rule.byDay = [{ day: `${startWeekNumber.value}${startDay.value}` }]
 		else if (repeat.repeatOn === 'last_day_of_month') rule.byMonthDay = [-1]
-		else if (repeat.repeatOn === 'last_day_of_week') rule.byDay = [`-1${startDay.value}`]
+		else if (repeat.repeatOn === 'last_day_of_week')
+			rule.byDay = [{ day: `-1${startDay.value}` }]
 	}
 
 	if (repeat.end === 'On Date') rule.until = repeat.until

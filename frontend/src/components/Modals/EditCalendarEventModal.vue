@@ -176,21 +176,29 @@ const removeParticipants = () => {
 	participantsListview.value.toggleAllRows(false)
 }
 
-const getEventParams = (sendEmail: boolean) => ({
-	user: user.data.name,
-	organizer: user.data.name,
-	title: event.title,
-	start: dayjs(event.startDate + 'T' + event.startTime).format('YYYY-MM-DD[T]HH:mm:ss'),
-	duration: duration.value,
-	time_zone: dayjs.tz.guess(),
-	recurrence_rule: event.recurrence_rule,
-	privacy: event.privacy,
-	free_busy_status: event.free_busy_status,
-	description: event.description,
-	locations: [{ name: event.location }],
-	participants: event.participants,
-	send_scheduling_messages: sendEmail,
-})
+const getEventParams = (sendEmail: boolean) => {
+	const params = {
+		user: user.data.name,
+		organizer: user.data.name,
+		send_scheduling_messages: sendEmail,
+		start: dayjs(event.startDate + 'T' + (event.allDay ? '00:00' : event.startTime)).format(
+			'YYYY-MM-DD[T]HH:mm:ss',
+		),
+		duration: duration.value,
+	}
+
+	if (event.title) params.title = event.title
+	if (dayjs && dayjs.tz) params.time_zone = dayjs.tz.guess()
+	if (event.recurrence_rule && Object.keys(event.recurrence_rule).length)
+		params.recurrence_rule = event.recurrence_rule
+	if (event.privacy) params.privacy = event.privacy
+	if (event.free_busy_status) params.free_busy_status = event.free_busy_status
+	if (event.description) params.description = event.description
+	if (event.location) params.locations = [{ name: event.location }]
+	if (event.participants && event.participants.length) params.participants = event.participants
+
+	return params
+}
 
 const createEvent = createResource({
 	url: 'mail.client.doctype.calendar_event.calendar_event.add_calendar_event',
