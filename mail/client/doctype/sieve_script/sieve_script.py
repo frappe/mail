@@ -103,11 +103,10 @@ class SieveScript(Document):
 
 		creation_id = str(uuid7())
 		service = get_sieve_script_service(user)
-		blob = service.upload_blob(content.encode("utf-8"), "application/sieve")
 		sieve_script = {
 			"creation_id": creation_id,
 			"name": name,
-			"blob_id": blob["blobId"],
+			"content": content,
 			"is_active": active,
 		}
 		response = service.create([sieve_script])
@@ -178,8 +177,7 @@ class SieveScript(Document):
 		has_permission_for_user(user)
 
 		service = get_sieve_script_service(user)
-		blob = service.upload_blob(content.encode("utf-8"), "application/sieve")
-		response = service.validate(blob["blobId"])
+		response = service.validate(content)
 
 		if error := response.get("error"):
 			frappe.throw(
@@ -213,15 +211,8 @@ class SieveScript(Document):
 			)
 
 		script = scripts[0]
-		blob_id = script["blobId"]
-		current_content = service.download_blob(blob_id).decode("utf-8")
-
-		if content != current_content:
-			new_blob = service.upload_blob(content.encode("utf-8"), "application/sieve")
-			blob_id = new_blob["blobId"]
-
 		deactivate = script["isActive"] and not active
-		sieve_script = {"id": id, "name": name, "blob_id": blob_id, "is_active": bool(active)}
+		sieve_script = {"id": id, "name": name, "content": content, "is_active": bool(active)}
 		response = service.update([sieve_script], deactivate=deactivate)
 
 		title = _("Sieve Script Update Error")

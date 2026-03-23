@@ -31,9 +31,11 @@ class SieveScriptService(CoreService):
 			payload = {}
 			kwargs = {}
 			for sieve_script in batch:
+				content = sieve_script["content"]
+				blob = self.upload_blob(content.encode("utf-8"), "application/sieve")
 				payload[sieve_script["creation_id"]] = {
 					"name": sieve_script["name"],
-					"blobId": sieve_script["blob_id"],
+					"blobId": blob["blobId"],
 				}
 
 				if bool(sieve_script.get("is_active") or False):
@@ -73,9 +75,11 @@ class SieveScriptService(CoreService):
 			payload = {}
 			kwargs = {}
 			for sieve_script in batch:
+				content = sieve_script["content"]
+				blob = self.upload_blob(content.encode("utf-8"), "application/sieve")
 				payload[sieve_script["id"]] = {
 					"name": sieve_script["name"],
-					"blobId": sieve_script["blob_id"],
+					"blobId": blob["blobId"],
 				}
 
 				if bool(sieve_script.get("is_active") or False):
@@ -142,9 +146,10 @@ class SieveScriptService(CoreService):
 
 		return {"ids": ids[:limit], "total": total}
 
-	def validate(self, blob_id: str) -> dict:
-		"""Public method to validate a sieve script blob ID."""
+	def validate(self, content: str) -> dict:
+		"""Public method to validate a sieve script's content."""
 
+		blob = self.upload_blob(content.encode("utf-8"), "application/sieve")
 		response = self._call(
 			self.capabilities,
 			[
@@ -152,7 +157,7 @@ class SieveScriptService(CoreService):
 					f"{self.type}/validate",
 					{
 						"accountId": self.primary_account_id,
-						"blobId": blob_id,
+						"blobId": blob["blobId"],
 					},
 					"0",
 				]
