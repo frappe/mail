@@ -291,7 +291,7 @@ def get_contact_cards(user: str, ids: list[str]) -> list[dict]:
 		service = get_contact_card_service(user)
 		cards = service.get(ids_to_fetch)
 
-		address_book_map = {f"{service.user}|{ab['id']}": ab["name"] for ab in service.address_books}
+		address_book_map = {ab["id"]: ab["name"] for ab in service.address_books}
 
 		for card in cards:
 			contact_card = format_contact_card(user, address_book_map, card)
