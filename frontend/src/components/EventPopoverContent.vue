@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import { CalendarDays, MapPin, Repeat, Text, User, Users } from 'lucide-vue-next'
-import { Button, Dropdown, createResource, toast } from 'frappe-ui'
+import { CalendarDays, Edit2, MapPin, Repeat, Text, Trash2, User, Users } from 'lucide-vue-next'
+import { Dropdown, createResource, toast } from 'frappe-ui'
 
 import { isUrl, raiseToast } from '@/utils'
 import { getRepeatMessage } from '@/utils/format'
@@ -70,14 +70,26 @@ const edit = () => {
 	close()
 }
 
-const deleteOptions = computed(() => [
-	{ label: __('This instance'), onClick: () => handleDeleteEventInstance() },
-	{
-		label: __('This and following instances'),
-		onClick: () => handleDeleteEvent(calendarEvent.date),
-	},
-	{ label: __('Entire series'), onClick: () => handleDeleteEvent() },
-])
+const options = computed(() => {
+	const opts = [{ label: __('Edit'), icon: Edit2, onClick: edit }]
+
+	if (calendarEvent.recurrence_id)
+		opts.push({
+			label: __('Delete'),
+			icon: Trash2,
+			submenu: [
+				{ label: __('This instance'), onClick: () => handleDeleteEventInstance() },
+				{
+					label: __('This and following instances'),
+					onClick: () => handleDeleteEvent(calendarEvent.date),
+				},
+				{ label: __('Entire series'), onClick: () => handleDeleteEvent() },
+			],
+		})
+	else opts.push({ label: __('Delete'), icon: Trash2, onClick: () => handleDeleteEvent() })
+
+	return opts
+})
 
 const handleDeleteEventInstance = () =>
 	toast.promise(deleteEventInstance.submit(), {
@@ -133,24 +145,15 @@ const openUrl = () => {
 <template>
 	<div class="bg-surface-modal text-ink-gray-8 w-[32rem] rounded p-5 shadow-xl" @click.stop>
 		<div class="mb-2 flex justify-end space-x-2">
-			<Button :tooltip="__('Edit')" variant="ghost" icon="edit-2" @click="edit" />
-			<Dropdown v-if="calendarEvent.recurrence_id" :options="deleteOptions">
-				<Button
-					:tooltip="__('Delete')"
-					:loading="deleteEvent.loading || deleteEventInstance.loading"
-					variant="ghost"
-					icon="trash-2"
-				/>
-			</Dropdown>
-			<Button
-				v-else
-				:tooltip="__('Delete')"
-				:loading="deleteEvent.loading"
-				variant="ghost"
-				icon="trash-2"
-				@click="handleDeleteEvent"
+			<Dropdown
+				:options
+				:button="{
+					icon: 'more-vertical',
+					tooltip: __('Actions'),
+					disabled: deleteEvent.loading || deleteEventInstance.loading,
+					variant: 'ghost',
+				}"
 			/>
-			<Button :tooltip="__('Close')" variant="ghost" icon="x" @click="close" />
 		</div>
 		<div class="flex flex-col gap-4">
 			<h2 class="flex gap-3 text-left" :class="{ italic: !calendarEvent.title }">
