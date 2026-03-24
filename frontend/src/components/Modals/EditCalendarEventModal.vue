@@ -14,7 +14,8 @@ import {
 	toast,
 } from 'frappe-ui'
 
-import { getRepeatFrequencyOptions, raiseToast } from '@/utils'
+import { raiseToast } from '@/utils'
+import { getRepeatFrequencyOptions } from '@/utils/format'
 import EventRepeatSettingsModal from '@/components/Modals/EventRepeatSettingsModal.vue'
 
 const show = defineModel<boolean>()

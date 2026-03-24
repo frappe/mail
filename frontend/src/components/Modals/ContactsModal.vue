@@ -43,7 +43,7 @@ import {
 	createResource,
 } from 'frappe-ui'
 
-import { extractNameFromEmail } from '@/utils'
+import { extractNameFromEmail } from '@/utils/format'
 import { userStore } from '@/stores/user'
 
 const show = defineModel<boolean>()

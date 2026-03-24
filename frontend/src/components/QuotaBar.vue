@@ -26,7 +26,7 @@ import { computed, inject } from 'vue'
 import { Cloud } from 'lucide-vue-next'
 import { createResource } from 'frappe-ui'
 
-import { formatBytes } from '@/utils'
+import { formatBytes } from '@/utils/format'
 
 const { isCollapsed } = defineProps<{ isCollapsed: boolean }>()
 

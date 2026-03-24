@@ -3,7 +3,7 @@ import { computed, h, inject } from 'vue'
 import { Eye, EyeOff, LayoutGrid, LogOut } from 'lucide-vue-next'
 import { Sidebar, createResource } from 'frappe-ui'
 
-import { toTitleCase } from '@/utils'
+import { toTitleCase } from '@/utils/format'
 import { sessionStore } from '@/stores/session'
 import CalendarLogo from '@/components/Icons/CalendarLogo.vue'
 

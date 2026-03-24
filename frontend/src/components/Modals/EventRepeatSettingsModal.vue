@@ -82,7 +82,7 @@
 import { computed, inject, reactive, watch } from 'vue'
 import { Dialog, FormControl } from 'frappe-ui'
 
-import { getRepeatFrequencyOptions } from '@/utils'
+import { getRepeatFrequencyOptions } from '@/utils/format'
 
 const show = defineModel<boolean>()
 
@@ -114,7 +114,10 @@ function toggleDay(day: string) {
 }
 
 const recurrenceRule = computed(() => {
-	const rule: Record<string, string | string[] | number | number[] | { day: string }[]> = {
+	const rule: Record<
+		string,
+		string | string[] | number | number[] | { day: string; nthOfPeriod?: number }[]
+	> = {
 		frequency: repeat.frequency,
 		interval: repeat.interval,
 	}
@@ -123,10 +126,10 @@ const recurrenceRule = computed(() => {
 	else if (repeat.frequency === 'monthly') {
 		if (repeat.repeatOn === 'day_of_month') rule.byMonthDay = [dayjs(startDate).date()]
 		else if (repeat.repeatOn === 'day_of_week')
-			rule.byDay = [{ day: `${startWeekNumber.value}${startDay.value}` }]
+			rule.byDay = [{ day: startDay.value, nthOfPeriod: startWeekNumber.value }]
 		else if (repeat.repeatOn === 'last_day_of_month') rule.byMonthDay = [-1]
 		else if (repeat.repeatOn === 'last_day_of_week')
-			rule.byDay = [{ day: `-1${startDay.value}` }]
+			rule.byDay = [{ day: startDay.value, nthOfPeriod: -1 }]
 	}
 
 	if (repeat.end === 'On Date') rule.until = `${repeat.until}T23:59:59Z`

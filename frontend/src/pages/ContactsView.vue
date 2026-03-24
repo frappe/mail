@@ -54,7 +54,8 @@ import {
 	createResource,
 } from 'frappe-ui'
 
-import { extractNameFromEmail, raiseToast } from '@/utils'
+import { raiseToast } from '@/utils'
+import { extractNameFromEmail } from '@/utils/format'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddContactModal from '@/components/Modals/AddContactModal.vue'
 

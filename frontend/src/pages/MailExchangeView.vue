@@ -53,7 +53,8 @@ import { useRouter } from 'vue-router'
 import { Download } from 'lucide-vue-next'
 import { Badge, Breadcrumbs, Dropdown, createResource } from 'frappe-ui'
 
-import { formatBytes, getTheme } from '@/utils'
+import { getTheme } from '@/utils'
+import { formatBytes } from '@/utils/format'
 import CopyCode from '@/components/CopyCode.vue'
 
 const { id } = defineProps<{ id: string }>()

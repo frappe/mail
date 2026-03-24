@@ -109,7 +109,8 @@ import {
 	createResource,
 } from 'frappe-ui'
 
-import { extractNameFromEmail, raiseToast } from '@/utils'
+import { raiseToast } from '@/utils'
+import { extractNameFromEmail } from '@/utils/format'
 import { userStore } from '@/stores/user'
 import DashboardCard from '@/components/DashboardCard.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'

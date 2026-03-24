@@ -268,7 +268,6 @@ import {
 
 import { getAttachmentUrl } from '@/resources'
 import {
-	formatBytes,
 	isOverlayPresent,
 	processInlineImages,
 	raiseToast,
@@ -276,6 +275,7 @@ import {
 	validateEmail,
 } from '@/utils'
 import { useScreenSize, useVisualViewport } from '@/utils/composables'
+import { formatBytes } from '@/utils/format'
 import { CustomParagraphExtension } from '@/utils/text-editor'
 import { userStore } from '@/stores/user'
 import ComposeMailToolbar from '@/components/ComposeMailToolbar.vue'

@@ -2,22 +2,12 @@ import * as cheerio from 'cheerio'
 import { File, Paperclip } from 'lucide-vue-next'
 import { toast } from 'frappe-ui'
 
-import dayjs from '@/utils/dayjs'
 import AudioIcon from '@/components/Icons/AudioIcon.vue'
 import ImageIcon from '@/components/Icons/ImageIcon.vue'
 import PDFIcon from '@/components/Icons/PDFIcon.vue'
 import VideoIcon from '@/components/Icons/VideoIcon.vue'
 
 import type { ComposeMailData, Recipient } from '@/types'
-
-export const toTitleCase = (str: string) =>
-	str
-		?.toLowerCase()
-		.split(' ')
-		.map(function (word: string) {
-			return word.charAt(0).toUpperCase().concat(word.substr(1))
-		})
-		.join(' ') || ''
 
 export function startResizing(event) {
 	const startX = event.clientX
@@ -42,34 +32,10 @@ export function startResizing(event) {
 	document.addEventListener('mouseup', onMouseUp)
 }
 
-export const singularize = (word: string) => {
-	const endings = {
-		ves: 'fe',
-		ies: 'y',
-		i: 'us',
-		zes: 'ze',
-		ses: 's',
-		es: 'e',
-		s: '',
-	}
-	return word.replace(new RegExp(`(${Object.keys(endings).join('|')})$`), (r) => endings[r])
-}
-
 export const validateEmail = (email: string) => {
 	const regExp =
 		/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
 	return regExp.test(email)
-}
-
-export const formatBytes = (bytes: number) => {
-	if (!+bytes) return '0 Bytes'
-
-	const k = 1024
-	const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-
-	const i = Math.floor(Math.log(bytes) / Math.log(k))
-
-	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
 }
 
 export const raiseToast = (message: string, type = 'success') => {
@@ -103,12 +69,6 @@ export const raisePromiseToast = (
 
 	toast.promise(action(), { loading, success, error })
 }
-
-export const kebabToTitleCase = (str: string) =>
-	str
-		.split('-')
-		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-		.join(' ')
 
 export const copyToClipBoard = async (text: string) => {
 	try {
@@ -158,15 +118,6 @@ export const getFormattedRecipients = (mailRecipients: Recipient[]) => {
 	if (groupedRecipients.cc) formattedRecipients += __('Cc:') + ` ${groupedRecipients.cc} `
 	if (groupedRecipients.bcc) formattedRecipients += __('Bcc:') + ` ${groupedRecipients.bcc} `
 	return formattedRecipients
-}
-
-export const getFormattedDate = (date: Date | string, omitDate = false) => {
-	const dateObj = dayjs(date)
-	const isCurrentYear = dateObj.year() === dayjs().year()
-	if (omitDate) return dateObj.format(isCurrentYear ? 'MMMM' : 'MMMM YYYY')
-	if (dateObj.isToday()) return __('Today')
-	if (dateObj.isYesterday()) return __('Yesterday')
-	return dateObj.format(isCurrentYear ? 'D MMMM' : 'D MMMM YYYY')
 }
 
 export const getFirstAlphabet = (str?: string) => str?.match(/\p{L}/u)?.[0]
@@ -313,17 +264,3 @@ export const processInlineImages = (mail: ComposeMailData) => {
 
 	return { html_body: $.html(), attachments: processedAttachments }
 }
-
-export const extractNameFromEmail = (email: string) =>
-	email
-		.split('@')[0]
-		.replace(/[._-]/g, ' ')
-		.replace(/\b\w/g, (c) => c.toUpperCase())
-
-export const getRepeatFrequencyOptions = (interval: number) => [
-	{ label: interval === 1 ? __('Year') : __('Years'), value: 'yearly' },
-	{ label: interval === 1 ? __('Month') : __('Months'), value: 'monthly' },
-	{ label: interval === 1 ? __('Week') : __('Weeks'), value: 'weekly' },
-	{ label: interval === 1 ? __('Day') : __('Days'), value: 'daily' },
-	{ label: interval === 1 ? __('Hour') : __('Hours'), value: 'hourly' },
-]

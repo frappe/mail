@@ -307,15 +307,9 @@ import {
 	toast,
 } from 'frappe-ui'
 
-import {
-	getFormattedDate,
-	isMac,
-	raisePromiseToast,
-	raiseToast,
-	shouldIgnoreKeypress,
-	startResizing,
-} from '@/utils'
+import { isMac, raisePromiseToast, raiseToast, shouldIgnoreKeypress, startResizing } from '@/utils'
 import { useLayout, useScreenSize, useSidebar, useUndo } from '@/utils/composables'
+import { getFormattedDate } from '@/utils/format'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'

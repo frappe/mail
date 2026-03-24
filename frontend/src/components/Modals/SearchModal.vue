@@ -161,8 +161,8 @@ import { ChevronLeft, Paperclip, Search, SlidersHorizontal } from 'lucide-vue-ne
 import { Button, Dialog, FormControl, createResource } from 'frappe-ui'
 
 import { getAttachmentOptions, getReadStatusOptions } from '@/constants'
-import { getFormattedDate } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
+import { getFormattedDate } from '@/utils/format'
 import { userStore } from '@/stores/user'
 import SearchMobileLayout from '@/components/SearchMobileLayout.vue'
 
