@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import { CalendarDays } from 'lucide-vue-next'
-import { Button, Dropdown, FeatherIcon, createResource, toast } from 'frappe-ui'
+import { CalendarDays, MapPin, Repeat, Text, User, Users } from 'lucide-vue-next'
+import { Button, Dropdown, createResource, toast } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
+import { isUrl, raiseToast } from '@/utils'
 import { getRepeatMessage } from '@/utils/format'
 
 const { calendarEvent, close } = defineProps<{ calendarEvent: any; close: () => void }>()
@@ -34,6 +34,35 @@ const date = computed(() => {
 		else
 			return `${start.format(showYear ? 'MMM D, YYYY' : 'MMM D')}, ${start.format('HH:mm')} - ${end.format(showYear ? 'MMM D, YYYY' : 'MMM D')}, ${end.format('HH:mm')}`
 	}
+})
+
+const participants = computed(() => {
+	const total = calendarEvent.participants.length
+	const accepted = calendarEvent.participants.filter(
+		(p) => p.participation_status === 'ACCEPTED',
+	)
+	const declined = calendarEvent.participants.filter(
+		(p) => p.participation_status === 'DECLINED',
+	)
+	const tentative = calendarEvent.participants.filter(
+		(p) => p.participation_status === 'TENTATIVE',
+	)
+	const needsAction = calendarEvent.participants.filter(
+		(p) => p.participation_status === 'NEEDS-ACTION',
+	)
+
+	const parts = [
+		accepted.length && `${accepted.length} ${__('yes')}`,
+		declined.length && `${declined.length} ${__('no')}`,
+		tentative.length && `${tentative.length} ${__('maybe')}`,
+		needsAction.length && `${needsAction.length} ${__('pending')}`,
+	].filter(Boolean)
+
+	return __('{0} {1} {2}', [
+		total,
+		total === 1 ? __('participant') : __('participants'),
+		parts.length ? `(${parts.join(', ')})` : '',
+	])
 })
 
 const edit = () => {
@@ -94,6 +123,11 @@ const deleteEventInstance = createResource({
 		emit('reloadEvents')
 	},
 })
+
+const openUrl = () => {
+	const location = calendarEvent.locations[0]._name
+	if (isUrl(location)) window.open(location, '_blank')
+}
 </script>
 
 <template>
@@ -119,34 +153,50 @@ const deleteEventInstance = createResource({
 			<Button :tooltip="__('Close')" variant="ghost" icon="x" @click="close" />
 		</div>
 		<div class="flex flex-col gap-4">
-			<h2
-				class="flex items-center space-x-2 text-left"
-				:class="{ italic: !calendarEvent.title }"
-			>
+			<h2 class="flex gap-3 text-left" :class="{ italic: !calendarEvent.title }">
 				<span class="h-4 w-4 shrink-0 rounded-full bg-blue-500" />
-				<span class="truncate">
+				<span class="min-w-0 break-words text-left">
 					{{ calendarEvent.title || __('[No title]') }}
 				</span>
 			</h2>
-			<div class="space-y-2">
-				<div class="flex items-center gap-2">
-					<CalendarDays class="stroke-1.5 text-ink-gray-5 h-4 w-4" />
-					<span class="text-sm"> {{ date }} </span>
-				</div>
-				<div v-if="calendarEvent.recurrence_id" class="ml-6 text-left text-sm">
-					{{ getRepeatMessage(JSON.parse(calendarEvent.recurrence_rule)) }}
-				</div>
+			<div class="flex gap-3">
+				<CalendarDays class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
+				<span class="mt-px min-w-0 break-words text-left text-sm"> {{ date }} </span>
 			</div>
-			<div v-if="calendarEvent.participant" class="flex items-center gap-2">
-				<FeatherIcon name="user" class="h-4 w-4" />
-				<span class="text-sm font-normal">
-					{{ calendarEvent.participant }}
+			<div v-if="calendarEvent.recurrence_id" class="flex gap-3">
+				<Repeat class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
+				<span class="min-w-0 break-words text-left text-sm">
+					{{ getRepeatMessage(JSON.parse(calendarEvent.recurrence_rule)) }}
 				</span>
 			</div>
-			<div v-if="calendarEvent.venue" class="flex items-center gap-2">
-				<FeatherIcon name="map-pin" class="h-4 w-4" />
-				<span class="text-sm font-normal">
-					{{ calendarEvent.venue }}
+			<div v-if="calendarEvent.locations.length" class="flex gap-3">
+				<MapPin class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
+				<span
+					class="mt-px min-w-0 break-words text-left text-sm"
+					:class="{
+						'text-ink-blue-3 cursor-pointer hover:underline': isUrl(
+							calendarEvent.locations[0]._name,
+						),
+					}"
+					@click="openUrl"
+				>
+					{{ calendarEvent.locations[0]._name }}
+				</span>
+			</div>
+			<div class="flex gap-3">
+				<Users class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
+				<span class="mt-px text-sm"> {{ participants }} </span>
+			</div>
+			<div v-if="calendarEvent.description" class="flex gap-3">
+				<Text class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
+				<span class="mt-px min-w-0 break-words text-left text-sm">
+					{{ calendarEvent.description }}
+				</span>
+			</div>
+			<div class="flex gap-3">
+				<User class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
+				<span class="mt-px min-w-0 break-words text-left text-sm">
+					{{ calendarEvent.organizer }}
 				</span>
 			</div>
 		</div>

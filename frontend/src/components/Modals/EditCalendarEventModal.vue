@@ -15,7 +15,7 @@ import {
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import { getRepeatFrequencyOptions } from '@/utils/format'
+import { getRepeatMessage } from '@/utils/format'
 import EventRepeatSettingsModal from '@/components/Modals/EventRepeatSettingsModal.vue'
 
 const show = defineModel<boolean>()
@@ -114,27 +114,6 @@ watch(
 		if (!val && !event.recurrence_rule?.frequency) event.repeat = false
 	},
 )
-
-const repeatMessage = computed(() => {
-	if (!event.recurrence_rule?.frequency) return ''
-	const message = __('Every {0} {1}', [
-		event.recurrence_rule.interval === 1 ? '' : event.recurrence_rule.interval,
-		getRepeatFrequencyOptions(event.recurrence_rule.interval)
-			.find((option) => option.value === event.recurrence_rule.frequency)
-			?.label.toLowerCase(),
-	])
-
-	if (event.recurrence_rule?.until)
-		return __('{0} until {1}', [
-			message,
-			dayjs(event.recurrence_rule.until).format('MMM DD, YYYY'),
-		])
-
-	if (event.recurrence_rule?.count)
-		return __('{0}, {1} occurrences', [message, event.recurrence_rule.count])
-
-	return message
-})
 
 const addParticipant = (email: string) => {
 	email = email.trim()
@@ -309,7 +288,13 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 					<FormControl v-model="event.isAllDay" :label="__('All Day')" type="checkbox" />
 					<FormControl
 						v-model="event.repeat"
-						:label="__('Repeat: {0}', [repeatMessage || __('Off')])"
+						:label="
+							__('Repeat: {0}', [
+								event.recurrence_rule?.frequency
+									? getRepeatMessage(event.recurrence_rule)
+									: __('Off'),
+							])
+						"
 						type="checkbox"
 						@update:model-value="
 							$event ? (showRepeatSettings = true) : (event.recurrence_rule = {})

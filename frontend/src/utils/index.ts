@@ -264,3 +264,15 @@ export const processInlineImages = (mail: ComposeMailData) => {
 
 	return { html_body: $.html(), attachments: processedAttachments }
 }
+export const isUrl = (str: string) => {
+	if (typeof str !== 'string' || !str.trim()) return false
+	str = str.trim()
+	try {
+		const url = new URL(/^https?:\/\//i.test(str) ? str : 'https://' + str)
+		if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
+		const parts = url.hostname.split('.')
+		return parts.length >= 2 && parts.every((p) => p.length > 0)
+	} catch {
+		return false
+	}
+}
