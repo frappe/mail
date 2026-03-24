@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
-import { CalendarDays, Edit2, MapPin, Repeat, Text, Trash2, User, Users } from 'lucide-vue-next'
-import { Dropdown, createResource, toast } from 'frappe-ui'
+import { computed, inject, onMounted, ref, useTemplateRef } from 'vue'
+import { CalendarDays, Edit2, Globe, MapPin, Repeat, Text, Trash2, Users } from 'lucide-vue-next'
+import { Button, Dropdown, createResource, toast } from 'frappe-ui'
 
 import { isUrl, raiseToast } from '@/utils'
 import { getRepeatMessage } from '@/utils/format'
@@ -12,6 +12,17 @@ const emit = defineEmits(['edit', 'reloadEvents'])
 
 const user = inject('$user')
 const dayjs = inject('$dayjs')
+
+const descriptionExpanded = ref(false)
+const descriptionRef = useTemplateRef('descriptionRef')
+const isDescriptionClamped = ref(false)
+
+onMounted(() => {
+	const el = descriptionRef.value
+	if (el) {
+		isDescriptionClamped.value = el.scrollHeight > el.clientHeight
+	}
+})
 
 const date = computed(() => {
 	const start = dayjs(calendarEvent.start)
@@ -143,8 +154,14 @@ const openUrl = () => {
 </script>
 
 <template>
-	<div class="bg-surface-modal text-ink-gray-8 w-[32rem] rounded p-5 shadow-xl" @click.stop>
-		<div class="mb-2 flex justify-end space-x-2">
+	<div class="bg-surface-modal text-ink-gray-8 w-[32rem] rounded shadow-xl" @click.stop>
+		<div class="flex justify-between border-b p-5">
+			<div class="space-y-2">
+				<h2 class="flex gap-3 text-left" :class="{ italic: !calendarEvent.title }">
+					{{ calendarEvent.title || __('[No title]') }}
+				</h2>
+				<div class="mt-px min-w-0 break-words text-left text-sm">{{ date }}</div>
+			</div>
 			<Dropdown
 				:options
 				:button="{
@@ -155,17 +172,7 @@ const openUrl = () => {
 				}"
 			/>
 		</div>
-		<div class="flex flex-col gap-4">
-			<h2 class="flex gap-3 text-left" :class="{ italic: !calendarEvent.title }">
-				<span class="h-4 w-4 shrink-0 rounded-full bg-blue-500" />
-				<span class="min-w-0 break-words text-left">
-					{{ calendarEvent.title || __('[No title]') }}
-				</span>
-			</h2>
-			<div class="flex gap-3">
-				<CalendarDays class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
-				<span class="mt-px min-w-0 break-words text-left text-sm"> {{ date }} </span>
-			</div>
+		<div class="flex flex-col gap-4 p-5">
 			<div v-if="calendarEvent.recurrence_id" class="flex gap-3">
 				<Repeat class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
 				<span class="min-w-0 break-words text-left text-sm">
@@ -173,7 +180,10 @@ const openUrl = () => {
 				</span>
 			</div>
 			<div v-if="calendarEvent.locations.length" class="flex gap-3">
-				<MapPin class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
+				<component
+					:is="isUrl(calendarEvent.locations[0]._name) ? Globe : MapPin"
+					class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0"
+				/>
 				<span
 					class="mt-px min-w-0 break-words text-left text-sm"
 					:class="{
@@ -192,15 +202,36 @@ const openUrl = () => {
 			</div>
 			<div v-if="calendarEvent.description" class="flex gap-3">
 				<Text class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
-				<span class="mt-px min-w-0 break-words text-left text-sm">
-					{{ calendarEvent.description }}
-				</span>
+				<div class="mt-px min-w-0 text-left text-sm">
+					<span
+						ref="descriptionRef"
+						class="break-words"
+						:class="{ 'line-clamp-3': !descriptionExpanded }"
+					>
+						{{ calendarEvent.description }}
+					</span>
+					<button
+						v-if="isDescriptionClamped && !descriptionExpanded"
+						class="text-ink-blue-3 mt-0.5 block"
+						@click="descriptionExpanded = true"
+					>
+						{{ __('Show more') }}
+					</button>
+				</div>
 			</div>
 			<div class="flex gap-3">
-				<User class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
+				<CalendarDays class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
 				<span class="mt-px min-w-0 break-words text-left text-sm">
 					{{ calendarEvent.organizer }}
 				</span>
+			</div>
+		</div>
+		<div class="bg-surface-menu-bar flex items-center justify-between rounded-b border-t p-5">
+			<div class="text-left text-sm">{{ __('Are you attending?') }}</div>
+			<div class="flex gap-2">
+				<Button :label="__('Yes')" variant="outline" />
+				<Button :label="__('Maybe')" variant="outline" />
+				<Button :label="__('No')" variant="outline" />
 			</div>
 		</div>
 	</div>
