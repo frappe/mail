@@ -56,6 +56,9 @@ const getEvent = () => {
 	const duration = dayjs.duration(selectedEvent.calendarEvent?.duration)
 	const end = start.add(duration)
 	const isAllDay =
+		start.hour() === 0 &&
+		start.minute() === 0 &&
+		start.second() === 0 &&
 		duration.days() > 0 &&
 		duration.hours() === 0 &&
 		duration.minutes() === 0 &&
