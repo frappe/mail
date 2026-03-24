@@ -25,15 +25,28 @@ def get_calendars() -> list[dict[str, str]]:
 def get_calendar_events(from_date: str, to_date: str, time_zone: str) -> list[dict]:
 	"""Fetches calendar events between from_date and to_date for the current user."""
 
+	user = frappe.session.user
 	events = fetch_calendar_events(
-		frappe.session.user,
+		user,
 		{"after": from_date, "before": to_date},
 		limit=999,
 		time_zone=time_zone,
 		expand_recurrences=True,
-	)
+	)[0]
 
-	return events[0]
+	recurring_event_uids = set([event["uid"] for event in events if event["recurrence_id"]])
+
+	recurrence_rule_map = {}
+	for uid in recurring_event_uids:
+		event = get_calendar_event_by_uid(user, uid)
+		if event:
+			recurrence_rule_map[uid] = event.get("recurrence_rule")
+
+	for event in events:
+		if event.get("recurrence_id") and event["uid"] in recurrence_rule_map:
+			event["recurrence_rule"] = recurrence_rule_map[event["uid"]]
+
+	return events
 
 
 @frappe.whitelist()

@@ -4,6 +4,7 @@ import { CalendarDays } from 'lucide-vue-next'
 import { Button, Dropdown, FeatherIcon, createResource, toast } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { getRepeatMessage } from '@/utils/format'
 
 const { calendarEvent, close } = defineProps<{ calendarEvent: any; close: () => void }>()
 
@@ -20,14 +21,18 @@ const date = computed(() => {
 	const isSameDay =
 		start.isSame(end, 'day') || (isFullDay && start.isSame(end.subtract(1, 'ms'), 'day'))
 
+	const currentYear = dayjs().year()
+	const showYear = start.year() !== currentYear || end.year() !== currentYear
+
 	if (isFullDay) {
-		if (isSameDay) return start.format('ddd, MMM D')
-		else return `${start.format('MMM D')} - ${end.subtract(1, 'day').format('MMM D')}`
+		if (isSameDay) return start.format(showYear ? 'ddd, MMM D, YYYY' : 'ddd, MMM D')
+		else
+			return `${start.format(showYear ? 'MMM D, YYYY' : 'MMM D')} - ${end.subtract(1, 'day').format(showYear ? 'MMM D, YYYY' : 'MMM D')}`
 	} else {
 		if (isSameDay)
-			return `${start.format('ddd, MMM D')} · ${start.format('HH:mm')} - ${end.format('HH:mm')}`
+			return `${start.format(showYear ? 'ddd, MMM D, YYYY' : 'ddd, MMM D')} · ${start.format('HH:mm')} - ${end.format('HH:mm')}`
 		else
-			return `${start.format('MMM D')}, ${start.format('HH:mm')} - ${end.format('MMM D')}, ${end.format('HH:mm')}`
+			return `${start.format(showYear ? 'MMM D, YYYY' : 'MMM D')}, ${start.format('HH:mm')} - ${end.format(showYear ? 'MMM D, YYYY' : 'MMM D')}, ${end.format('HH:mm')}`
 	}
 })
 
@@ -123,9 +128,14 @@ const deleteEventInstance = createResource({
 					{{ calendarEvent.title || __('[No title]') }}
 				</span>
 			</h2>
-			<div class="flex items-center gap-2">
-				<CalendarDays class="stroke-1.5 text-ink-gray-5 h-4 w-4" />
-				<span class="text-sm"> {{ date }} </span>
+			<div class="space-y-2">
+				<div class="flex items-center gap-2">
+					<CalendarDays class="stroke-1.5 text-ink-gray-5 h-4 w-4" />
+					<span class="text-sm"> {{ date }} </span>
+				</div>
+				<div v-if="calendarEvent.recurrence_id" class="ml-6 text-left text-sm">
+					{{ getRepeatMessage(JSON.parse(calendarEvent.recurrence_rule)) }}
+				</div>
 			</div>
 			<div v-if="calendarEvent.participant" class="flex items-center gap-2">
 				<FeatherIcon name="user" class="h-4 w-4" />
