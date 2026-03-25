@@ -42,8 +42,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Email",
-   "options": "Email",
-   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+   "options": "Email"
   },
   {
    "default": "Individual",
@@ -52,16 +51,14 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Kind",
-   "options": "\nIndividual\nGroup\nResource\nLocation",
-   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+   "options": "\nIndividual\nGroup\nResource\nLocation"
   },
   {
    "description": "The display name of the participant.",
    "fieldname": "_name",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Name",
-   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+   "label": "Name"
   },
   {
    "default": "1",
@@ -85,8 +82,7 @@
    "description": "Defines the participant\u2019s role(s) in the event.\n<br>\nExample: <code>{\n  \"organizer\": false,\n  \"owner\": false,\n  \"chair\": true,\n  \"optional\": false,\n  \"required\": true,\n  \"informational\": false\n}</code>",
    "fieldname": "roles",
    "fieldtype": "JSON",
-   "label": "Roles",
-   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+   "label": "Roles"
   },
   {
    "fieldname": "section_break_gwzl",
@@ -96,8 +92,7 @@
    "description": "Optional additional information about the participant.",
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "label": "Description",
-   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+   "label": "Description"
   },
   {
    "description": "The scheduling identifier used to uniquely identify this participant in scheduling messages.",
@@ -121,8 +116,7 @@
    "fieldname": "comment",
    "fieldtype": "Small Text",
    "label": "Comment",
-   "no_copy": 1,
-   "read_only_depends_on": "eval: parent.role != \"Organizer\""
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,
@@ -130,7 +124,7 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-24 16:42:53.770697",
+ "modified": "2026-03-25 13:04:04.214533",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Event Participant",

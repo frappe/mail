@@ -62,7 +62,7 @@ class CalendarEventService(CalendarsService):
 					"description": event.get("description"),
 					"locations": self._get_locations_map(event.get("locations")),
 					"links": self._get_links_map(event.get("links")),
-					"participants": self._get_participants_map(organizer, event.get("participants")),
+					"participants": self._get_participants_map(event.get("participants")),
 					"alerts": self._get_alerts_map(event.get("alerts")),
 					"useDefaultAlerts": bool(event.get("use_default_alerts") or False),
 					"created": timestamp,
@@ -146,7 +146,7 @@ class CalendarEventService(CalendarsService):
 						"description": event.get("description"),
 						"locations": self._get_locations_map(event.get("locations")),
 						"links": self._get_links_map(event.get("links")),
-						"participants": self._get_participants_map(organizer, event.get("participants")),
+						"participants": self._get_participants_map(event.get("participants")),
 						"useDefaultAlerts": bool(event.get("use_default_alerts") or False),
 						"updated": utcnow(),
 					}
@@ -386,21 +386,14 @@ class CalendarEventService(CalendarsService):
 			return alerts_map
 
 	@staticmethod
-	def _get_participants_map(
-		organizer: str, participants: list[dict] | None = None
-	) -> dict[str, dict] | None:
+	def _get_participants_map(participants: list[dict] | None = None) -> dict[str, dict] | None:
 		"""Helper method to construct the 'participants' property map for a calendar event based on the provided list of participant dictionaries."""
 
 		if participants:
-			organizer = organizer.replace("mailto:", "").lower()
-
 			participants_map = {}
 			participants_emails = []
 			for participant in participants:
 				email = participant["email"].lower()
-				if email == organizer or email in participants_emails:
-					continue
-
 				uid = participant.get("uid") or str(uuid7())
 				expect_reply = participant.get("expect_reply", False)
 				calendar_address = f"mailto:{email}" if email else None
