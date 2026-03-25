@@ -3,7 +3,6 @@
 
 
 import json
-from functools import cached_property
 from typing import Literal
 from uuid import uuid7
 
@@ -13,7 +12,7 @@ from frappe.model.document import Document
 from frappe.utils import cint
 
 from mail.client.doctype.calendar.calendar import validate_calendar_name_format
-from mail.jmap import get_calendar_event_service, get_identity_service
+from mail.jmap import get_calendar_event_service
 from mail.utils import parse_filters
 from mail.utils.cache import get_root_domain_name
 from mail.utils.dt import convert_to_utc, parse_iso_datetime, utcnow
@@ -381,22 +380,23 @@ def get_calendar_events(user: str, ids: list[str]) -> list[dict]:
 
 
 @frappe.whitelist()
-def get_calendar_event_by_uid(user: str, uid: str) -> dict:
-	"""Returns a calendar event for the specified user and event UID."""
+def get_master_events_by_uids(user: str, uids: list[str]) -> dict:
+	"""Returns a dictionary of master calendar events for the specified user and UIDs."""
 
 	has_permission_for_user(user)
 
+	events = {}
+
 	service = get_calendar_event_service(user)
-	calendar_map = {c["id"]: c["name"] for c in service.calendars}
 
-	event = service.get_by_uid(uid)
-	if event:
-		return format_calendar_event(user, calendar_map, event)
+	if master_ids := service.get_master_ids(uids):
+		calendar_map = {c["id"]: c["name"] for c in service.calendars}
 
-	frappe.throw(
-		_("Calendar Event with UID {0} not found for user {1}.").format(frappe.bold(uid), frappe.bold(user)),
-		title=_("Calendar Event Not Found"),
-	)
+		for event in service.get(master_ids):
+			event = format_calendar_event(user, calendar_map, event)
+			events[event["uid"]] = event
+
+	return events
 
 
 @frappe.whitelist()
@@ -465,35 +465,24 @@ def update_calendar_event(
 @frappe.whitelist()
 def update_calendar_event_instance(
 	user: str,
-	uid: str,
+	master_id: str,
 	recurrence_id: str,
 	patch: dict,
 	send_scheduling_messages: bool = False,
 ) -> None:
-	"""Updates a specific instance of a recurring calendar event based on its UID and recurrence ID."""
+	"""Updates a specific instance of a recurring calendar event based on its master ID and recurrence ID."""
 
 	has_permission_for_user(user)
 
 	service = get_calendar_event_service(user)
-	master_event = service.get_by_uid(uid)
-
-	if not master_event:
-		frappe.throw(
-			_("Master calendar event with UID {0} not found for user {1}.").format(
-				frappe.bold(uid), frappe.bold(user)
-			),
-			title=_("Calendar Event Not Found"),
-		)
-
-	id = master_event["id"]
 	response = service.update_instance(
-		id, recurrence_id, patch, send_scheduling_messages=send_scheduling_messages
+		master_id, recurrence_id, patch, send_scheduling_messages=send_scheduling_messages
 	)
 
 	title = _("Calendar Event Instance Update Error")
 	if not response.get("updated"):
 		if response.get("notUpdated"):
-			frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
+			frappe.throw(_(response["notUpdated"][master_id]["description"]), title=title)
 		else:
 			frappe.throw(_(response["description"]), title=title)
 
@@ -521,29 +510,18 @@ def delete_calendar_events(user: str, ids: list[str]) -> None:
 
 
 @frappe.whitelist()
-def delete_calendar_event_instance(user: str, uid: str, recurrence_id: str) -> None:
-	"""Deletes a specific instance of a recurring calendar event based on its UID and recurrence ID."""
+def delete_calendar_event_instance(user: str, master_id: str, recurrence_id: str) -> None:
+	"""Deletes a specific instance of a recurring calendar event based on its master ID and recurrence ID."""
 
 	has_permission_for_user(user)
 
 	service = get_calendar_event_service(user)
-	master_event = service.get_by_uid(uid)
-
-	if not master_event:
-		frappe.throw(
-			_("Master calendar event with UID {0} not found for user {1}.").format(
-				frappe.bold(uid), frappe.bold(user)
-			),
-			title=_("Calendar Event Not Found"),
-		)
-
-	id = master_event["id"]
-	response = service.delete_instance(id, recurrence_id)
+	response = service.delete_instance(master_id, recurrence_id)
 
 	title = _("Calendar Event Instance Deletion Error")
 	if not response.get("updated"):
 		if response.get("notUpdated"):
-			frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
+			frappe.throw(_(response["notUpdated"][master_id]["description"]), title=title)
 		else:
 			frappe.throw(_(response["description"]), title=title)
 

@@ -255,24 +255,18 @@ class CalendarEventService(CalendarsService):
 
 		return result
 
-	def get_by_uid(self, uid: str) -> dict | None:
-		"""Public method to get a calendar event by its UID."""
+	def get_master_ids(self, uids: list[str]) -> list[str]:
+		"""Public method to get master event IDs for a list of UIDs."""
 
-		if not uid:
-			raise ValueError("UID is required to get a calendar event by UID.")
-
-		response = self._query(
-			filter={"uid": uid},
+		return self.query(
+			{
+				"operator": "OR",
+				"conditions": [{"uid": uid} for uid in uids],
+			},
 			position=0,
-			limit=1,
-			sort=None,
-			calculate_total=False,
-		)
-
-		if method_responses := response.get("methodResponses"):
-			if ids := method_responses[0][1].get("ids", []):
-				if events := self.get(ids):
-					return events[0]
+			limit=len(uids),
+			expand_recurrences=False,
+		).get("ids", [])
 
 	def update_instance(
 		self, id: str, recurrence_id: str, patch: dict, send_scheduling_messages: bool = False
