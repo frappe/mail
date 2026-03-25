@@ -5,11 +5,12 @@ from frappe import _
 
 from mail.client.doctype.calendar.calendar import fetch_calendars
 from mail.client.doctype.calendar_event.calendar_event import (
-	delete_calendar_event_instance,
-	delete_calendar_events,
 	fetch_calendar_events,
 	get_master_events_by_uids,
 	update_calendar_event,
+)
+from mail.client.doctype.calendar_event.calendar_event import (
+	get_calendar_events as get_calendar_events_by_ids,
 )
 
 
@@ -35,57 +36,54 @@ def get_calendar_events(from_date: str, to_date: str, time_zone: str) -> list[di
 		expand_recurrences=True,
 	)[0]
 
-	recurring_event_uids = {event["uid"] for event in events if event["recurrence_id"]}
-	recurring_event_masters = get_master_events_by_uids(user, list(recurring_event_uids))
-	recurrence_rule_map = {uid: master["recurrence_rule"] for uid, master in recurring_event_masters.items()}
+	uids = {event["uid"] for event in events}
+	masters = get_master_events_by_uids(user, list(uids))
+	master_map = {
+		uid: {"recurrence_rule": json.loads(master["recurrence_rule"]), "master_id": master["id"]}
+		for uid, master in masters.items()
+	}
 
 	for event in events:
-		if rule := recurrence_rule_map.get(event["uid"]):
-			event["recurrence_rule"] = rule
+		event.update(master_map.get(event["uid"], {}))
 
 	return events
 
 
 @frappe.whitelist()
-def delete_event(uid: str, until=None) -> None:
-	"""Deletes a calendar event by its UID or sets the end date for recurring events."""
-
+def edit_calendar_event(id: str, **kwargs) -> None:
 	user = frappe.session.user
-	event = get_master_events_by_uids(user, [uid])[uid]
-	if not until:
-		return delete_calendar_events(user, [event["id"]])
+	event = get_calendar_events_by_ids(user, [id])[0]
 
-	recurrence_rule = json.loads(event["recurrence_rule"])
-	recurrence_rule["until"] = until
-	update_calendar_event(
-		user,
-		event["id"],
-		event["uid"],
-		event["organizer"],
-		[calendar["calendar_id"] for calendar in event["calendars"]],
-		event["status"],
-		event["draft"],
-		event["title"],
-		event["start"],
-		event["duration"],
-		event["time_zone"],
-		recurrence_rule,
-		event["show_without_time"],
-		event["privacy"],
-		event["free_busy_status"],
-		event["description"],
-		event["locations"],
-		event["links"],
-		event["participants"],
-		event["alerts"],
-		event["use_default_alerts"],
+	def resolve(key):
+		return kwargs[key] if key in kwargs else event[key]
+
+	calendar_ids = (
+		kwargs["calendar_ids"]
+		if "calendar_ids" in kwargs
+		else [calendar["calendar_id"] for calendar in event["calendars"]]
 	)
 
-
-@frappe.whitelist()
-def delete_event_instance(uid: str, recurrence_id: str) -> None:
-	"""Deletes a specific instance of a recurring calendar event."""
-
-	user = frappe.session.user
-	master_id = get_master_events_by_uids(user, [uid])[uid]["id"]
-	delete_calendar_event_instance(user, master_id, recurrence_id)
+	update_calendar_event(
+		user,
+		id,
+		event["uid"],
+		event["organizer"],
+		calendar_ids,
+		resolve("status"),
+		resolve("draft"),
+		resolve("title"),
+		resolve("start"),
+		resolve("duration"),
+		resolve("time_zone"),
+		json.loads(resolve("recurrence_rule")),
+		resolve("show_without_time"),
+		resolve("privacy"),
+		resolve("free_busy_status"),
+		resolve("description"),
+		resolve("locations"),
+		resolve("links"),
+		resolve("participants"),
+		resolve("alerts"),
+		resolve("use_default_alerts"),
+		kwargs.get("send_scheduling_messages", False),
+	)

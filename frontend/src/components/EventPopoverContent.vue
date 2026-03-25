@@ -3,8 +3,9 @@ import { computed, inject, onMounted, ref, useTemplateRef } from 'vue'
 import { CalendarDays, Edit2, Globe, MapPin, Repeat, Text, Trash2, Users } from 'lucide-vue-next'
 import { Button, Dropdown, createResource, toast } from 'frappe-ui'
 
-import { isUrl, raiseToast } from '@/utils'
+import { isUrl } from '@/utils'
 import { getRepeatMessage } from '@/utils/format'
+import { userStore } from '@/stores/user'
 
 const { calendarEvent, close } = defineProps<{ calendarEvent: any; close: () => void }>()
 
@@ -13,15 +14,20 @@ const emit = defineEmits(['edit', 'reloadEvents'])
 const user = inject('$user')
 const dayjs = inject('$dayjs')
 
+const { identities } = userStore()
+
+const userParticipant = computed(() =>
+	calendarEvent.participants.find((p) => identities.data.some((id) => id.email === p.email)),
+)
+const userResponse = computed(() => userParticipant.value?.participation_status)
+
 const descriptionExpanded = ref(false)
 const descriptionRef = useTemplateRef('descriptionRef')
 const isDescriptionClamped = ref(false)
 
 onMounted(() => {
 	const el = descriptionRef.value
-	if (el) {
-		isDescriptionClamped.value = el.scrollHeight > el.clientHeight
-	}
+	if (el) isDescriptionClamped.value = el.scrollHeight > el.clientHeight
 })
 
 const date = computed(() => {
@@ -63,10 +69,10 @@ const participants = computed(() => {
 	)
 
 	const parts = [
-		accepted.length && `${accepted.length} ${__('yes')}`,
-		declined.length && `${declined.length} ${__('no')}`,
-		tentative.length && `${tentative.length} ${__('maybe')}`,
-		needsAction.length && `${needsAction.length} ${__('pending')}`,
+		accepted.length && __('{0} yes', [accepted.length]),
+		declined.length && __('{0} no', [declined.length]),
+		tentative.length && __('{0} maybe', [tentative.length]),
+		needsAction.length && __('{0} pending', [needsAction.length]),
 	].filter(Boolean)
 
 	return __('{0} {1} {2}', [
@@ -76,13 +82,8 @@ const participants = computed(() => {
 	])
 })
 
-const edit = () => {
-	emit('edit')
-	close()
-}
-
 const options = computed(() => {
-	const opts = [{ label: __('Edit'), icon: Edit2, onClick: edit }]
+	const opts = [{ label: __('Edit'), icon: Edit2, onClick: () => openEditModal() }]
 
 	if (calendarEvent.recurrence_id)
 		opts.push({
@@ -92,7 +93,7 @@ const options = computed(() => {
 				{ label: __('This instance'), onClick: () => handleDeleteEventInstance() },
 				{
 					label: __('This and following instances'),
-					onClick: () => handleDeleteEvent(calendarEvent.date),
+					onClick: () => handleDeleteFollowingEventInstances(),
 				},
 				{ label: __('Entire series'), onClick: () => handleDeleteEvent() },
 			],
@@ -102,48 +103,105 @@ const options = computed(() => {
 	return opts
 })
 
+const openEditModal = () => {
+	emit('edit')
+	close()
+}
+
+const setParticipantStatus = (response: string) => {
+	if (response === userResponse.value) return
+	const participants = calendarEvent.participants.map((p) =>
+		p.email === userParticipant.value?.email ? { ...p, participation_status: response } : p,
+	)
+	const patch = { participants }
+	toast.promise(
+		calendarEvent.recurrence_id
+			? editEventInstance.submit({ patch })
+			: editEvent.submit({ patch }),
+		{
+			loading: __('Sending response...'),
+			success: __('Response sent.'),
+			error: __('Action failed. Please try again in some time.'),
+		},
+	)
+}
+
+const editEventInstance = createResource({
+	url: 'mail.client.doctype.calendar_event.calendar_event.update_calendar_event_instance',
+	makeParams: ({ patch }) => ({
+		user: user.data.name,
+		master_id: calendarEvent.master_id,
+		recurrence_id: calendarEvent.recurrence_id,
+		patch,
+		send_scheduling_messages: true,
+	}),
+	onSuccess: () => {
+		emit('reloadEvents')
+		close()
+	},
+})
+
+const editEvent = createResource({
+	url: 'mail.api.calendar.edit_calendar_event',
+	makeParams: ({ patch }) => ({
+		id: calendarEvent.master_id,
+		...patch,
+		send_scheduling_messages: true,
+	}),
+	onSuccess: () => {
+		emit('reloadEvents')
+		close()
+	},
+})
+
 const handleDeleteEventInstance = () =>
 	toast.promise(deleteEventInstance.submit(), {
 		loading: __('Deleting event...'),
 		success: __('Event deleted.'),
+		error: __('Action failed. Please try again in some time.'),
 	})
 
-const handleDeleteEvent = (date?: string) =>
-	toast.promise(deleteEvent.submit(date), {
+const handleDeleteFollowingEventInstances = () => {
+	const recurrenceRule = calendarEvent.recurrence_rule
+	recurrenceRule.until = `${calendarEvent.date}T00:00:00Z`
+	const patch = { recurrence_rule: JSON.stringify(recurrenceRule) }
+
+	toast.promise(editEvent.submit({ patch }), {
+		loading: __('Deleting events...'),
+		success: __('Events deleted.'),
+		error: __('Action failed. Please try again in some time.'),
+	})
+}
+
+const handleDeleteEvent = () =>
+	toast.promise(deleteEvent.submit(), {
 		loading: calendarEvent.recurrence_id ? __('Deleting events...') : __('Deleting event...'),
 		success: calendarEvent.recurrence_id ? __('Events deleted.') : __('Event deleted.'),
+		error: __('Action failed. Please try again in some time.'),
 	})
-
-const deleteEvent = createResource({
-	url: 'mail.api.calendar.delete_event',
-	makeParams: (until?: string) => ({
-		uid: calendarEvent.uid,
-		until: until ? `${until}T00:00:00Z` : undefined,
-	}),
-	onSuccess: () => {
-		close()
-		emit('reloadEvents')
-	},
-	onError: (error) => {
-		raiseToast(error.message, 'error')
-		emit('reloadEvents')
-	},
-})
 
 const deleteEventInstance = createResource({
 	url: 'mail.client.doctype.calendar_event.calendar_event.delete_calendar_event_instance',
 	makeParams: () => ({
 		user: user.data.name,
-		uid: calendarEvent.uid,
+		master_id: calendarEvent.master_id,
 		recurrence_id: calendarEvent.recurrence_id,
 	}),
 	onSuccess: () => {
+		emit('reloadEvents')
 		close()
-		emit('reloadEvents')
 	},
-	onError: (error) => {
-		raiseToast(error.message, 'error')
+})
+
+const deleteEvent = createResource({
+	url: 'mail.client.doctype.calendar_event.calendar_event.delete_calendar_events',
+	makeParams: () => ({
+		user: user.data.name,
+		ids: [calendarEvent.master_id],
+	}),
+	onSuccess: () => {
 		emit('reloadEvents')
+		close()
 	},
 })
 
@@ -167,7 +225,7 @@ const openUrl = () => {
 				:button="{
 					icon: 'more-vertical',
 					tooltip: __('Actions'),
-					disabled: deleteEvent.loading || deleteEventInstance.loading,
+					disabled: deleteEventInstance.loading || deleteEvent.loading,
 					variant: 'ghost',
 				}"
 			/>
@@ -176,7 +234,7 @@ const openUrl = () => {
 			<div v-if="calendarEvent.recurrence_id" class="flex gap-3">
 				<Repeat class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
 				<span class="min-w-0 break-words text-left text-sm">
-					{{ getRepeatMessage(JSON.parse(calendarEvent.recurrence_rule)) }}
+					{{ getRepeatMessage(calendarEvent.recurrence_rule) }}
 				</span>
 			</div>
 			<div v-if="calendarEvent.locations.length" class="flex gap-3">
@@ -226,12 +284,33 @@ const openUrl = () => {
 				</span>
 			</div>
 		</div>
-		<div class="bg-surface-menu-bar flex items-center justify-between rounded-b border-t p-5">
+		<div
+			v-if="userParticipant.expect_reply"
+			class="bg-surface-menu-bar flex items-center justify-between rounded-b border-t p-5"
+		>
 			<div class="text-left text-sm">{{ __('Are you attending?') }}</div>
 			<div class="flex gap-2">
-				<Button :label="__('Yes')" variant="outline" />
-				<Button :label="__('Maybe')" variant="outline" />
-				<Button :label="__('No')" variant="outline" />
+				<Button
+					:label="__('Yes')"
+					variant="outline"
+					class="text-xs"
+					:class="{ '!bg-surface-gray-3': userResponse === 'ACCEPTED' }"
+					@click="setParticipantStatus('ACCEPTED')"
+				/>
+				<Button
+					:label="__('Maybe')"
+					variant="outline"
+					class="text-xs"
+					:class="{ '!bg-surface-gray-3': userResponse === 'TENTATIVE' }"
+					@click="setParticipantStatus('TENTATIVE')"
+				/>
+				<Button
+					:label="__('No')"
+					variant="outline"
+					class="text-xs"
+					:class="{ '!bg-surface-gray-3': userResponse === 'DECLINED' }"
+					@click="setParticipantStatus('DECLINED')"
+				/>
 			</div>
 		</div>
 	</div>

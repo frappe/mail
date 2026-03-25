@@ -188,7 +188,6 @@ const createEvent = createResource({
 		show.value = false
 		emit('reload-events')
 	},
-	onError: (error) => raiseToast(error.message, 'error'),
 })
 
 const editEvent = createResource({
@@ -203,7 +202,6 @@ const editEvent = createResource({
 		show.value = false
 		emit('reload-events')
 	},
-	onError: (error) => raiseToast(error.message, 'error'),
 })
 
 const save = (sendEmail: boolean) => {
@@ -211,11 +209,13 @@ const save = (sendEmail: boolean) => {
 		toast.promise(createEvent.submit({ sendEmail }), {
 			loading: __('Creating event...'),
 			success: __('Event created.'),
+			error: __('Action failed. Please try again in some time.'),
 		})
 	else
 		toast.promise(editEvent.submit({ sendEmail }), {
 			loading: __('Updating event...'),
 			success: __('Event updated.'),
+			error: __('Action failed. Please try again in some time.'),
 		})
 	showSendEmailModal.value = false
 }
