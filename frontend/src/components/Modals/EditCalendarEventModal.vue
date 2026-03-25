@@ -116,14 +116,11 @@ watch(
 )
 
 const addParticipant = (email: string) => {
-	email = email.trim()
-	if (!email) return
-	if (!/^\S+@\S+\.\S+$/.test(email)) {
-		raiseToast(__('Invalid email address'), 'error')
-		return
-	}
+	if (!email?.trim()) return
+	if (!/^\S+@\S+\.\S+$/.test(email)) return raiseToast(__('Invalid email address'), 'error')
 	if (event.participants.some((p) => p.email.toLowerCase() === email.toLowerCase())) return
-	event.participants.push({ email })
+
+	event.participants.push({ email, participation_status: 'NEEDS-ACTION', expect_reply: true })
 }
 
 const participantsInput = ref('')
@@ -179,7 +176,7 @@ const getEventParams = (sendEmail: boolean) => {
 	if (event.free_busy_status) params.free_busy_status = event.free_busy_status
 	if (event.description) params.description = event.description
 	if (event.location) params.locations = [{ name: event.location }]
-	if (event.participants && event.participants.length) params.participants = event.participants
+	if (event.participants?.length) params.participants = event.participants
 
 	return params
 }
@@ -244,7 +241,7 @@ const dialogOptions = computed(() => ({
 			onClick: () => {
 				if (
 					!selectedEvent?.calendarEvent?.participants?.length &&
-					!event.participants.length
+					!event.participants?.length
 				)
 					save(false)
 				else showSendEmailModal.value = true
