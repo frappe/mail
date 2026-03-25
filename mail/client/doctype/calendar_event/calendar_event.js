@@ -23,7 +23,6 @@ frappe.ui.form.on('Calendar Event', {
 
 	refresh(frm) {
 		frm.trigger('set_queries')
-		frm.trigger('toggle_participants_editable')
 	},
 
 	set_queries(frm) {
@@ -33,10 +32,5 @@ frappe.ui.form.on('Calendar Event', {
 				user: frm.doc.user,
 			},
 		}))
-	},
-
-	toggle_participants_editable(frm) {
-		frm.set_df_property('participants', 'cannot_add_rows', frm.doc.role != 'Organizer')
-		frm.set_df_property('participants', 'cannot_delete_rows', frm.doc.role != 'Organizer')
 	},
 })
