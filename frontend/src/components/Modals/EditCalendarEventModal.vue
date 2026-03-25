@@ -65,7 +65,7 @@ const getEvent = () => {
 		duration.minutes() === 0 &&
 		duration.seconds() === 0
 
-	const recurrence_rule = JSON.parse(selectedEvent.calendarEvent.recurrence_rule)
+	const recurrence_rule = selectedEvent.calendarEvent.recurrence_rule
 
 	return {
 		title: selectedEvent.calendarEvent.title || '',

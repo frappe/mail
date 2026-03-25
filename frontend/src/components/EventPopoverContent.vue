@@ -108,16 +108,19 @@ const openEditModal = () => {
 	close()
 }
 
-const setParticipantStatus = (response: string) => {
+const responseOptions = (status: string) => [
+	{ label: __('This instance'), onClick: () => handleSetResponse(status, false) },
+	{ label: __('Entire series'), onClick: () => handleSetResponse(status, true) },
+]
+
+const handleSetResponse = (response: string, updateAllInstances: boolean) => {
 	if (response === userResponse.value) return
 	const participants = calendarEvent.participants.map((p) =>
 		p.email === userParticipant.value?.email ? { ...p, participation_status: response } : p,
 	)
 	const patch = { participants }
 	toast.promise(
-		calendarEvent.recurrence_id
-			? editEventInstance.submit({ patch })
-			: editEvent.submit({ patch }),
+		updateAllInstances ? editEvent.submit({ patch }) : editEventInstance.submit({ patch }),
 		{
 			loading: __('Sending response...'),
 			success: __('Response sent.'),
@@ -209,6 +212,8 @@ const openUrl = () => {
 	const location = calendarEvent.locations[0]._name
 	if (isUrl(location)) window.open(location, '_blank')
 }
+
+const RESPONSE_STATUS_MAPPING = { ACCEPTED: __('Yes'), TENTATIVE: __('Maybe'), DECLINED: __('No') }
 </script>
 
 <template>
@@ -290,27 +295,31 @@ const openUrl = () => {
 		>
 			<div class="text-left text-sm">{{ __('Are you attending?') }}</div>
 			<div class="flex gap-2">
-				<Button
-					:label="__('Yes')"
-					variant="outline"
-					class="text-xs"
-					:class="{ '!bg-surface-gray-3': userResponse === 'ACCEPTED' }"
-					@click="setParticipantStatus('ACCEPTED')"
-				/>
-				<Button
-					:label="__('Maybe')"
-					variant="outline"
-					class="text-xs"
-					:class="{ '!bg-surface-gray-3': userResponse === 'TENTATIVE' }"
-					@click="setParticipantStatus('TENTATIVE')"
-				/>
-				<Button
-					:label="__('No')"
-					variant="outline"
-					class="text-xs"
-					:class="{ '!bg-surface-gray-3': userResponse === 'DECLINED' }"
-					@click="setParticipantStatus('DECLINED')"
-				/>
+				<template v-if="calendarEvent.recurrence_id">
+					<Dropdown
+						v-for="(label, status) in RESPONSE_STATUS_MAPPING"
+						:key="status"
+						:options="responseOptions(status)"
+					>
+						<Button
+							:label
+							variant="outline"
+							class="text-xs"
+							:class="{ '!bg-surface-gray-3': userResponse === status }"
+						/>
+					</Dropdown>
+				</template>
+				<template v-else>
+					<Button
+						v-for="(label, status) in RESPONSE_STATUS_MAPPING"
+						:key="status"
+						:label
+						variant="outline"
+						class="text-xs"
+						:class="{ '!bg-surface-gray-3': userResponse === status }"
+						@click="handleSetResponse(status, true)"
+					/>
+				</template>
 			</div>
 		</div>
 	</div>

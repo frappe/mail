@@ -78,9 +78,10 @@ export const getRepeatFrequencyOptions = (interval: number) => [
 ]
 
 export const getRepeatMessage = (recurrenceRule: RecurrenceRule) => {
+	const interval = recurrenceRule.interval || 1
 	const message = __('Every {0} {1}', [
-		recurrenceRule.interval === 1 ? '' : recurrenceRule.interval,
-		getRepeatFrequencyOptions(recurrenceRule.interval)
+		interval === 1 ? '' : interval,
+		getRepeatFrequencyOptions(interval)
 			.find((option) => option.value === recurrenceRule.frequency)!
 			.label.toLowerCase(),
 	])
