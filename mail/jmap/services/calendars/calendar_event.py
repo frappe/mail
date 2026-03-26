@@ -18,10 +18,6 @@ class CalendarEventService(CalendarsService):
 		If send_scheduling_messages is True, includes the sendSchedulingMessages flag in the request payload to indicate that scheduling messages should be sent for the created events.
 		"""
 
-		kwargs = {}
-		if send_scheduling_messages:
-			kwargs["sendSchedulingMessages"] = True
-
 		result = {"created": {}, "notCreated": {}}
 		for batch in self.create_batches(events, self.max_objects_in_set):
 			payload = {}
@@ -69,7 +65,7 @@ class CalendarEventService(CalendarsService):
 					"updated": timestamp,
 				}
 
-			response = self._create(payload, **kwargs)
+			response = self._create(payload, sendSchedulingMessages=send_scheduling_messages)
 
 			if method_responses := response.get("methodResponses"):
 				result["created"].update(method_responses[0][1].get("created", {}))
@@ -100,10 +96,6 @@ class CalendarEventService(CalendarsService):
 		Public method to update calendar events, handling batching if the number of events exceeds the server's maximum allowed in a single 'set' call.
 		If send_scheduling_messages is True, includes the sendSchedulingMessages flag in the request payload to indicate that scheduling messages should be sent for the updated events.
 		"""
-
-		kwargs = {}
-		if send_scheduling_messages:
-			kwargs["sendSchedulingMessages"] = True
 
 		result = {"updated": [], "notUpdated": {}}
 		for batch in self.create_batches(events, self.max_objects_in_set):
@@ -152,7 +144,7 @@ class CalendarEventService(CalendarsService):
 					}
 				)
 
-			response = self._update(payload, **kwargs)
+			response = self._update(payload, sendSchedulingMessages=send_scheduling_messages)
 
 			if method_responses := response.get("methodResponses"):
 				result["updated"].extend(method_responses[0][1].get("updated", {}).keys())
@@ -275,7 +267,6 @@ class CalendarEventService(CalendarsService):
 
 		if not id or not recurrence_id:
 			raise ValueError("Both 'id' and 'recurrence_id' are required.")
-
 		if not patch:
 			raise ValueError("Patch data is required to update an instance.")
 
@@ -286,12 +277,43 @@ class CalendarEventService(CalendarsService):
 		event = events[0]
 		recurrence_overrides = event.get("recurrenceOverrides", {}) or {}
 
+		def _mailto(value: str) -> str:
+			value = value.lower()
+			return value if value.startswith("mailto:") else f"mailto:{value}"
+
+		FIELD_MAP = {
+			"calendar_ids": ("calendarIds", lambda v: {i: True for i in v}),
+			"privacy": ("privacy", None),
+			"free_busy_status": ("freeBusyStatus", None),
+			"alerts": ("alerts", self._get_alerts_map),
+			"organizer": ("organizerCalendarAddress", _mailto),
+			"uid": ("uid", None),
+			"status": ("status", None),
+			"title": ("title", None),
+			"start": ("start", None),
+			"duration": ("duration", None),
+			"time_zone": ("timeZone", None),
+			"recurrence_rule": ("recurrenceRule", None),
+			"show_without_time": ("showWithoutTime", lambda v: bool(v)),
+			"description": ("description", None),
+			"locations": ("locations", self._get_locations_map),
+			"links": ("links", self._get_links_map),
+			"participants": ("participants", self._get_participants_map),
+			"use_default_alerts": ("useDefaultAlerts", lambda v: bool(v)),
+		}
+
+		out = {}
+		for key, (target, transform) in FIELD_MAP.items():
+			if key in patch:
+				value = patch[key]
+				out[target] = transform(value) if transform else value
+
+		payload = {id: {}}
+
 		if recurrence_id in recurrence_overrides:
-			payload = {id: {}}
-			for k, v in patch.items():
-				payload[id][f"recurrenceOverrides/{recurrence_id}/{k}"] = v
+			payload[id].update({f"recurrenceOverrides/{recurrence_id}/{k}": v for k, v in out.items()})
 		else:
-			recurrence_overrides[recurrence_id] = patch
+			recurrence_overrides[recurrence_id] = out
 			payload = {id: {"recurrenceOverrides": recurrence_overrides}}
 
 		payload[id]["updated"] = utcnow()
