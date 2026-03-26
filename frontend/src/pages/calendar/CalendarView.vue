@@ -67,8 +67,8 @@ const events = createResource({
 	makeParams: () => {
 		const date = dayjs().year(calendar.value?.currentYear).month(calendar.value?.currentMonth)
 		return {
-			from_date: date.startOf('month').subtract(7, 'day').toDate(),
-			to_date: date.endOf('month').toDate(),
+			from_date: date.startOf('month').subtract(37, 'day').toDate(),
+			to_date: date.endOf('month').add(37, 'day').toDate(),
 			time_zone: dayjs.tz.guess(),
 		}
 	},
