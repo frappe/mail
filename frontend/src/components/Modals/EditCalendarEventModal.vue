@@ -30,6 +30,7 @@ const getDefaultEvent = () => {
 
 	return {
 		title: '',
+		organizer: user.data.name,
 		isAllDay: true,
 		repeat: false,
 		startDate: dayjs(selectedEvent.date).format('YYYY-MM-DD'),
@@ -40,7 +41,13 @@ const getDefaultEvent = () => {
 		description: '',
 		free_busy_status: 'Busy',
 		privacy: '',
-		participants: [] as Array<{ email: string }>,
+		participants: [
+			{
+				email: user.data.name,
+				_name: user.data.full_name,
+				participation_status: 'ACCEPTED',
+			},
+		],
 		recurrence_rule: {},
 	}
 }
@@ -62,6 +69,7 @@ const getEvent = () => {
 
 	return {
 		title: selectedEvent.calendarEvent.title || '',
+		organizer: selectedEvent.calendarEvent.organizer,
 		isAllDay,
 		repeat: !!recurrence_rule?.frequency,
 		startDate: start.format('YYYY-MM-DD'),
@@ -95,10 +103,20 @@ const duration = computed(() => {
 	return duration
 })
 
+const participants = computed(() => {
+	const organizer = event.participants.find((p) => p.email === event.organizer)
+	const rest = event.participants.filter((p) => p.email !== event.organizer)
+	return organizer ? [organizer, ...rest] : event.participants
+})
+
+const userParticipant = computed(() =>
+	participants.value.find((p) => identities.data.some((id) => id.email === p.email)),
+)
+
 const eventParams = computed(() => {
 	const params = {
 		user: user.data.name,
-		organizer: user.data.name,
+		organizer: event.organizer,
 		start: dayjs(event.startDate + 'T' + (event.isAllDay ? '00:00' : event.startTime)).format(
 			'YYYY-MM-DD[T]HH:mm:ss',
 		),
@@ -166,6 +184,11 @@ const handleParticipantEnter = (event: Event) => {
 	participantsInput.value = ''
 }
 
+const showRemoveParticipant = (email: string) =>
+	email !== event.organizer &&
+	(role.value === 'Organizer' ||
+		!selectedEvent.calendarEvent.participants.some((p) => p.email === email))
+
 const handleSuccess = () => {
 	show.value = false
 	emit('reloadEvents')
@@ -225,7 +248,7 @@ const createOrEditEvent = (sendEmail: boolean) => {
 		})
 	else
 		toast.promise(
-			isUpdateInstance.value
+			isUpdateInstance.value && selectedEvent.calendarEvent.recurrence_id
 				? editEventInstance.submit({ sendEmail })
 				: editEvent.submit({ sendEmail }),
 			{
@@ -300,6 +323,13 @@ const getParticipantStatusValues = (status: string) => {
 	return { icon: X, class: 'bg-surface-red-1 text-ink-red-3' }
 }
 
+const RSVP_OPTIONS = [
+	{ label: __(' '), value: 'NEEDS-ACTION' },
+	{ label: __('Yes'), value: 'ACCEPTED' },
+	{ label: __('Maybe'), value: 'TENTATIVE' },
+	{ label: __('No'), value: 'DECLINED' },
+]
+
 const AVAILABILITY_OPTIONS = [
 	{ label: __('Free'), value: 'Free' },
 	{ label: __('Busy'), value: 'Busy' },
@@ -314,8 +344,8 @@ const VISIBILITY_OPTIONS = [
 <template>
 	<Dialog v-model="show" :disable-outside-click-to-close="true" :options="dialogOptions">
 		<template #body-content>
-			<div class="grid grid-cols-7 gap-6">
-				<div class="col-span-4 space-y-4">
+			<div class="grid grid-cols-5 gap-6">
+				<div class="col-span-3 space-y-4">
 					<h3 class="text-base font-medium">{{ __('Event Details') }}</h3>
 					<FormControl
 						v-model="event.title"
@@ -401,7 +431,17 @@ const VISIBILITY_OPTIONS = [
 						:placeholder="__('Event description')"
 					/>
 				</div>
-				<div class="col-span-3 flex h-full flex-col space-y-4 border-l pl-6">
+				<div class="col-span-2 flex h-full flex-col space-y-4 border-l pl-6">
+					<template v-if="role !== 'Organizer'">
+						<h3 class="text-base font-medium">{{ __('RSVP') }}</h3>
+						<FormControl
+							v-model="userParticipant.participation_status"
+							type="select"
+							:label="__('Are you attending?')"
+							:options="RSVP_OPTIONS"
+							class="w-full"
+						/>
+					</template>
 					<h3 class="text-base font-medium">{{ __('Participants') }}</h3>
 					<Combobox
 						v-model="participantsInput"
@@ -410,8 +450,8 @@ const VISIBILITY_OPTIONS = [
 						@input="debouncedSearch($event)"
 						@keyup.enter="handleParticipantEnter($event)"
 					/>
-					<div class="min-h-0 flex-1 space-y-3">
-						<div v-for="p in event.participants" :key="p.email">
+					<div class="min-h-0 flex-1 space-y-4 overflow-y-auto">
+						<div v-for="p in participants" :key="p.email">
 							<div class="flex items-center justify-between">
 								<div class="flex items-center space-x-2">
 									<Avatar
@@ -424,6 +464,13 @@ const VISIBILITY_OPTIONS = [
 											<span class="text-sm font-medium">
 												{{ extractNameFromEmail(p._name || p.email) }}
 											</span>
+											<span
+												v-if="p.email === event.organizer"
+												class="text-ink-gray-4 text-xs"
+											>
+												({{ __('Organizer') }})
+											</span>
+
 											<div
 												v-if="
 													p.participation_status &&
@@ -451,12 +498,7 @@ const VISIBILITY_OPTIONS = [
 								</div>
 
 								<Button
-									v-if="
-										role === 'Organizer' ||
-										!selectedEvent.calendarEvent.participants.some(
-											(part) => part.email === p.email,
-										)
-									"
+									v-if="showRemoveParticipant(p.email)"
 									variant="ghost"
 									icon="x"
 									@click="
