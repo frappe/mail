@@ -1,5 +1,6 @@
 import frappe
 
+from mail.api.mail import get_user_images
 from mail.client.doctype.address_book.address_book import fetch_address_books
 from mail.client.doctype.contact_card.contact_card import fetch_contact_cards
 
@@ -40,6 +41,12 @@ def get_contacts(filter: dict | None = None, limit: int = 50) -> list[dict]:
 		if emails := card.get("emails"):
 			for email in emails:
 				contacts.append({"full_name": card.get("full_name"), "email": email.get("address")})
+
+	images = get_user_images([c.get("email") for c in contacts])
+
+	for contact in contacts:
+		email = contact.get("email")
+		contact["user_image"] = images.get(email) if email else None
 
 	return contacts
 

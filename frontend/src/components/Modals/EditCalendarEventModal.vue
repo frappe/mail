@@ -1,21 +1,11 @@
 <script setup lang="ts">
-import { computed, inject, reactive, ref, useTemplateRef, watch } from 'vue'
+import { computed, inject, reactive, ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
-import {
-	Button,
-	Combobox,
-	Dialog,
-	FormControl,
-	ListHeader,
-	ListRows,
-	ListSelectBanner,
-	ListView,
-	createResource,
-	toast,
-} from 'frappe-ui'
+import { Check, Minus, X } from 'lucide-vue-next'
+import { Avatar, Button, Combobox, Dialog, FormControl, createResource, toast } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import { getRepeatMessage } from '@/utils/format'
+import { extractNameFromEmail, getRepeatMessage } from '@/utils/format'
 import { userStore } from '@/stores/user'
 import EventRepeatSettingsModal from '@/components/Modals/EventRepeatSettingsModal.vue'
 
@@ -82,7 +72,7 @@ const getEvent = () => {
 		privacy: selectedEvent.calendarEvent.privacy,
 		location: selectedEvent.calendarEvent.locations?.[0]?._name || '',
 		description: selectedEvent.calendarEvent.description || '',
-		participants: selectedEvent.calendarEvent.participants || [],
+		participants: [...selectedEvent.calendarEvent.participants],
 		recurrence_rule,
 	}
 }
@@ -174,25 +164,6 @@ const handleParticipantEnter = (event: Event) => {
 	emails.forEach(addParticipant)
 	target.value = ''
 	participantsInput.value = ''
-}
-
-const participantsListview = useTemplateRef('participantsListview')
-
-const removeParticipants = () => {
-	if (role.value === 'Organizer')
-		event.participants = event.participants.filter(
-			(p) => !participantsListview.value?.selections.has(p.email),
-		)
-	else
-		event.participants = event.participants.filter(
-			(p) =>
-				!participantsListview.value?.selections.has(p.email) ||
-				selectedEvent?.calendarEvent?.participants?.some(
-					(participant) => participant.email === p.email,
-				),
-		)
-
-	participantsListview.value.toggleAllRows(false)
 }
 
 const handleSuccess = () => {
@@ -323,6 +294,12 @@ const handleSaveRecurringEvent = (updateInstance: boolean) => {
 	handleSave()
 }
 
+const getParticipantStatusValues = (status: string) => {
+	if (status === 'ACCEPTED') return { icon: Check, class: 'bg-surface-green-1 text-ink-green-3' }
+	if (status === 'TENTATIVE') return { icon: Minus, class: 'bg-surface-gray-1 text-ink-gray-6' }
+	return { icon: X, class: 'bg-surface-red-1 text-ink-red-3' }
+}
+
 const AVAILABILITY_OPTIONS = [
 	{ label: __('Free'), value: 'Free' },
 	{ label: __('Busy'), value: 'Busy' },
@@ -332,8 +309,6 @@ const VISIBILITY_OPTIONS = [
 	{ label: __('Public'), value: 'Public' },
 	{ label: __('Private'), value: 'Private' },
 ]
-
-const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 </script>
 
 <template>
@@ -435,26 +410,64 @@ const PARTICIPANT_COLUMNS = [{ label: __('Email'), key: 'email' }]
 						@input="debouncedSearch($event)"
 						@keyup.enter="handleParticipantEnter($event)"
 					/>
-					<ListView
-						ref="participantsListview"
-						:columns="PARTICIPANT_COLUMNS"
-						:rows="event.participants"
-						row-key="email"
-						class="min-h-0 flex-1"
-					>
-						<ListHeader v-if="event.participants.length" />
-						<ListRows />
-						<ListSelectBanner>
-							<template #actions>
+					<div class="min-h-0 flex-1 space-y-3">
+						<div v-for="p in event.participants" :key="p.email">
+							<div class="flex items-center justify-between">
+								<div class="flex items-center space-x-2">
+									<Avatar
+										:image="p.user_image"
+										:label="p._name || p.email"
+										size="xl"
+									/>
+									<div class="flex flex-col space-y-0.5">
+										<div class="flex items-center space-x-1">
+											<span class="text-sm font-medium">
+												{{ extractNameFromEmail(p._name || p.email) }}
+											</span>
+											<div
+												v-if="
+													p.participation_status &&
+													p.participation_status !== 'NEEDS-ACTION'
+												"
+												class="rounded-full p-px"
+												:class="
+													getParticipantStatusValues(
+														p.participation_status,
+													).class
+												"
+											>
+												<component
+													:is="
+														getParticipantStatusValues(
+															p.participation_status,
+														).icon
+													"
+													class="h-3 w-3"
+												/>
+											</div>
+										</div>
+										<span class="text-ink-gray-4 text-sm">{{ p.email }}</span>
+									</div>
+								</div>
+
 								<Button
+									v-if="
+										role === 'Organizer' ||
+										!selectedEvent.calendarEvent.participants.some(
+											(part) => part.email === p.email,
+										)
+									"
 									variant="ghost"
-									theme="red"
-									:label="__('Remove')"
-									@click="removeParticipants"
+									icon="x"
+									@click="
+										event.participants = event.participants.filter(
+											(part) => part.email !== p.email,
+										)
+									"
 								/>
-							</template>
-						</ListSelectBanner>
-					</ListView>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</template>

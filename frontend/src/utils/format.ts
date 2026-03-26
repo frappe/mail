@@ -1,3 +1,4 @@
+import { isEmail } from '@/utils'
 import dayjs from '@/utils/dayjs'
 
 const DAYS_MAP: Record<string, string> = {
@@ -65,10 +66,12 @@ export const formatBytes = (bytes: number) => {
 }
 
 export const extractNameFromEmail = (email: string) =>
-	email
-		.split('@')[0]
-		.replace(/[._-]/g, ' ')
-		.replace(/\b\w/g, (c) => c.toUpperCase())
+	isEmail(email)
+		? email
+				.split('@')[0]
+				.replace(/[._-]/g, ' ')
+				.replace(/\b\w/g, (c) => c.toUpperCase())
+		: email
 
 export const getRepeatFrequencyOptions = (interval: number) => [
 	{ label: interval === 1 ? __('Year') : __('Years'), value: 'yearly' },

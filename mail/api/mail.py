@@ -50,6 +50,17 @@ def get_user_mailboxes(user) -> list[dict]:
 	return frappe.get_all("Mailbox", filters={"user": user})
 
 
+def get_user_images(emails: list[str]) -> dict[str, str]:
+	"""Returns a mapping of user emails to their avatar URLs."""
+
+	user_image_map = {}
+	if emails:
+		user_data = frappe.get_all("User", filters={"name": ["in", emails]}, fields=["name", "user_image"])
+		user_image_map = {u.name: u.user_image for u in user_data if u.user_image}
+
+	return {email: user_image_map.get(email) or get_avatar_url(email) for email in emails}
+
+
 def get_avatar_url(email: str) -> str:
 	"""Returns the avatar URL for the given email."""
 
@@ -89,18 +100,9 @@ def add_user_images_to_emails(mails: list[dict], is_thread: bool = False) -> lis
 
 		email_map[name] = selected_email
 
-	unique_emails = {e for e in email_map.values() if e}
+	unique_emails = list({e for e in email_map.values() if e})
 
-	user_image_map = {}
-	if unique_emails:
-		user_data = frappe.db.get_all(
-			"User",
-			filters={"name": ["in", list(unique_emails)]},
-			fields=["name", "user_image"],
-		)
-		user_image_map = {u.name: u.user_image for u in user_data if u.user_image}
-
-	images = {email: user_image_map.get(email) or get_avatar_url(email) for email in unique_emails}
+	images = get_user_images(unique_emails)
 
 	for mail in mails:
 		email = email_map.get(mail["name"])
