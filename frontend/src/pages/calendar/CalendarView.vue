@@ -38,15 +38,11 @@ const transformEvent = (event) => {
 }
 
 const getEventRole = (event) => {
-	if (
-		identities.data.some(
-			(identity) => identity.email === event.organizer.replace('mailto:', ''),
-		)
-	)
+	if (identities.data.some((id) => id.email === event.organizer.replace('mailto:', '')))
 		return 'Organizer'
 	if (
-		identities.data.some((identity) =>
-			event.participants?.some((p) => p.email.replace('mailto:', '') === identity.email),
+		identities.data.some((id) =>
+			event.participants?.some((p) => p.email.replace('mailto:', '') === id.email),
 		)
 	)
 		return 'Attendee'

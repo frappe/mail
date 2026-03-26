@@ -54,7 +54,7 @@ const date = computed(() => {
 })
 
 const participants = computed(() => {
-	const total = calendarEvent.participants.length
+	const total = new Set(calendarEvent.participants.map((p) => p.email)).size
 	const accepted = calendarEvent.participants.filter(
 		(p) => p.participation_status === 'ACCEPTED',
 	)
