@@ -79,18 +79,19 @@ const getEvent = () => {
 
 			let unit: string
 			let number: number
-			if (offset.weeks()) {
+			const d = offset.$d
+			if (d.weeks) {
 				unit = 'weeks'
-				number = Math.abs(offset.weeks())
-			} else if (offset.days()) {
+				number = Math.abs(d.weeks)
+			} else if (d.days) {
 				unit = 'days'
-				number = Math.abs(offset.days())
-			} else if (offset.hours()) {
+				number = Math.abs(d.days)
+			} else if (d.hours) {
 				unit = 'hours'
-				number = Math.abs(offset.hours())
+				number = Math.abs(d.hours)
 			} else {
 				unit = 'minutes'
-				number = Math.abs(offset.minutes())
+				number = Math.abs(d.minutes)
 			}
 
 			return {
@@ -564,7 +565,7 @@ const RELATIVE_TO_OPTIONS = [
 								<FormControl
 									v-model="event.alerts[i].number"
 									type="number"
-									class="mt-auto w-full"
+									class="mt-auto w-16 shrink-0"
 								/>
 								<FormControl
 									v-model="event.alerts[i].unit"
