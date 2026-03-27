@@ -73,6 +73,44 @@ const getEvent = () => {
 		? selectedEvent.calendarEvent.locations.map((l) => l._name)
 		: ['']
 
+	const alerts = selectedEvent.calendarEvent.alerts?.map((a) => {
+		if (a.type === 'OffsetTrigger') {
+			const offset = dayjs.duration(a.offset)
+
+			let unit: string
+			let number: number
+			if (offset.weeks()) {
+				unit = 'weeks'
+				number = Math.abs(offset.weeks())
+			} else if (offset.days()) {
+				unit = 'days'
+				number = Math.abs(offset.days())
+			} else if (offset.hours()) {
+				unit = 'hours'
+				number = Math.abs(offset.hours())
+			} else {
+				unit = 'minutes'
+				number = Math.abs(offset.minutes())
+			}
+
+			return {
+				type: a.type,
+				action: a.action,
+				number,
+				unit,
+				direction: a.offset.startsWith('-') ? -1 : 1,
+				relative_to: a.relative_to,
+			}
+		} else {
+			return {
+				type: a.type,
+				action: a.action,
+				date: dayjs.utc(a.when).format('YYYY-MM-DD'),
+				time: dayjs.utc(a.when).format('HH:mm'),
+			}
+		}
+	})
+
 	return {
 		title: selectedEvent.calendarEvent.title || '',
 		organizer: selectedEvent.calendarEvent.organizer,
@@ -85,6 +123,7 @@ const getEvent = () => {
 		free_busy_status: selectedEvent.calendarEvent.free_busy_status,
 		privacy: selectedEvent.calendarEvent.privacy,
 		locations,
+		alerts,
 		description: selectedEvent.calendarEvent.description || '',
 		participants: [...selectedEvent.calendarEvent.participants],
 		recurrence_rule,
@@ -141,6 +180,22 @@ const eventParams = computed(() => {
 	if (event.locations?.some((l) => l?.trim()))
 		params.locations = event.locations.filter((l) => l?.trim()).map((name) => ({ name }))
 	if (event.participants?.length) params.participants = event.participants
+	if (event.alerts?.length) {
+		params.alerts = event.alerts.map((a) => {
+			const alert = { action: a.action, type: a.type }
+			if (a.type === 'OffsetTrigger')
+				return {
+					...alert,
+					offset: dayjs.duration({ [a.unit]: a.number * a.direction }).toISOString(),
+					relative_to: a.relative_to,
+				}
+			else
+				return {
+					...alert,
+					when: dayjs(a.date + 'T' + a.time).format('YYYY-MM-DD[T]HH:mm:ss'),
+				}
+		})
+	}
 
 	return params
 })
@@ -175,12 +230,12 @@ const addAlertOptions = computed(() => [
 		label: __('Relative to event'),
 		onClick: () => {
 			event.alerts.push({
+				type: 'OffsetTrigger',
 				action: 'Display',
 				number: 10,
-				unit: 'minute',
-				direction: 'Before',
+				unit: 'minutes',
+				direction: -1,
 				relative_to: 'Start',
-				type: 'OffsetTrigger',
 			})
 		},
 	},
@@ -188,10 +243,10 @@ const addAlertOptions = computed(() => [
 		label: __('On a specific date'),
 		onClick: () => {
 			event.alerts.push({
+				type: 'AbsoluteTrigger',
 				action: 'Display',
 				date: dayjs(event.startDate).subtract(1, 'day').format('YYYY-MM-DD'),
 				time: '09:00',
-				type: 'AbsoluteTrigger',
 			})
 		},
 	},
@@ -375,15 +430,15 @@ const ALERT_ACTION_OPTIONS = [
 ]
 
 const UNIT_OPTIONS = [
-	{ label: __('Minutes'), value: 'minute' },
-	{ label: __('Hours'), value: 'hour' },
-	{ label: __('Days'), value: 'day' },
-	{ label: __('Weeks'), value: 'week' },
+	{ label: __('Minutes'), value: 'minutes' },
+	{ label: __('Hours'), value: 'hours' },
+	{ label: __('Days'), value: 'days' },
+	{ label: __('Weeks'), value: 'weeks' },
 ]
 
 const DIRECTION_OPTIONS = [
-	{ label: __('Before'), value: 'Before' },
-	{ label: __('After'), value: 'After' },
+	{ label: __('Before'), value: -1 },
+	{ label: __('After'), value: 1 },
 ]
 
 const RELATIVE_TO_OPTIONS = [
