@@ -6,7 +6,7 @@ import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 import CalendarSidebar from '@/components/CalendarSidebar.vue'
 import EventPopoverContent from '@/components/EventPopoverContent.vue'
-import EditCalendarEventModal from '@/components/Modals/EditCalendarEventModal.vue'
+import EventModal from '@/components/Modals/EventModal.vue'
 
 const dayjs = inject('$dayjs')
 
@@ -131,9 +131,5 @@ watch(
 			</div>
 		</div>
 	</div>
-	<EditCalendarEventModal
-		v-model="showEditEvent"
-		:selected-event="event"
-		@reload-events="events.reload()"
-	/>
+	<EventModal v-model="showEditEvent" :selected-event="event" @reload-events="events.reload()" />
 </template>

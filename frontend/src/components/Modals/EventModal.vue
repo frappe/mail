@@ -6,7 +6,7 @@ import { Button, Combobox, Dialog, Dropdown, FormControl, createResource, toast 
 import { getReorderedParticipants, raiseToast } from '@/utils'
 import { getRepeatMessage } from '@/utils/format'
 import { userStore } from '@/stores/user'
-import EventAlertsInput from '@/components/EventAlertsInput.vue'
+import EventAlertList from '@/components/EventAlertList.vue'
 import EventParticipantList from '@/components/EventParticipantList.vue'
 import EventRepeatSettingsModal from '@/components/Modals/EventRepeatSettingsModal.vue'
 
@@ -523,7 +523,7 @@ const VISIBILITY_OPTIONS = [
 
 					<!-- Alerts -->
 					<div class="space-y-2">
-						<EventAlertsInput v-model:alerts="event.alerts" />
+						<EventAlertList v-model:alerts="event.alerts" />
 						<Dropdown
 							v-if="event.alerts.length < 3"
 							:button="{ label: __('Add Alert') }"
