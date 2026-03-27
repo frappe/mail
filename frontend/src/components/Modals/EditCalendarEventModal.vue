@@ -3,7 +3,7 @@ import { computed, inject, reactive, ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { Button, Combobox, Dialog, FormControl, createResource, toast } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
+import { getReorderedParticipants, raiseToast } from '@/utils'
 import { getRepeatMessage } from '@/utils/format'
 import { userStore } from '@/stores/user'
 import EventParticipantList from '@/components/EventParticipantList.vue'
@@ -102,16 +102,13 @@ const duration = computed(() => {
 	return duration
 })
 
-const participants = computed(() => {
-	const original = new Set(selectedEvent?.calendarEvent?.participants.map((p) => p.email) || [])
-
-	const organizer = event.participants.find((p) => p.email === event.organizer)
-	const rest = event.participants
-		.filter((p) => p.email !== event.organizer)
-		.map((p) => ({ ...p, isOrganizer: false, isNew: !original.has(p.email) }))
-
-	return organizer ? [{ ...organizer, isOrganizer: true }, ...rest] : rest
-})
+const participants = computed(() =>
+	getReorderedParticipants(
+		event.participants,
+		event.organizer,
+		selectedEvent.calendarEvent?.participants,
+	),
+)
 
 const userParticipant = computed(() =>
 	participants.value.find((p) => identities.data.some((id) => id.email === p.email)),
@@ -428,7 +425,7 @@ const VISIBILITY_OPTIONS = [
 					/>
 				</div>
 				<div class="col-span-2 flex h-full flex-col space-y-4 border-l pl-6">
-					<template v-if="selectedEvent?.calendarEvent?.role !== 'Organizer'">
+					<template v-if="!isNew && selectedEvent?.calendarEvent?.role !== 'Organizer'">
 						<h3 class="text-base font-medium">{{ __('RSVP') }}</h3>
 						<FormControl
 							v-model="userParticipant.participation_status"

@@ -3,9 +3,11 @@ import { computed, inject, onMounted, ref, useTemplateRef } from 'vue'
 import { CalendarDays, Edit2, Globe, MapPin, Repeat, Text, Trash2, Users } from 'lucide-vue-next'
 import { Button, Dropdown, createResource, toast } from 'frappe-ui'
 
-import { isUrl } from '@/utils'
+import { getReorderedParticipants, isUrl } from '@/utils'
 import { getRepeatMessage } from '@/utils/format'
 import { userStore } from '@/stores/user'
+
+import EventParticipantList from './EventParticipantList.vue'
 
 const { calendarEvent, close } = defineProps<{ calendarEvent: any; close: () => void }>()
 
@@ -218,6 +220,7 @@ const RESPONSE_STATUS_MAPPING = { ACCEPTED: __('Yes'), TENTATIVE: __('Maybe'), D
 
 <template>
 	<div class="bg-surface-modal text-ink-gray-8 w-[32rem] rounded shadow-xl" @click.stop>
+		<!-- Header: title, date, and actions -->
 		<div class="flex justify-between border-b p-5">
 			<div class="space-y-2">
 				<h2 class="flex gap-3 text-left" :class="{ italic: !calendarEvent.title }">
@@ -236,12 +239,15 @@ const RESPONSE_STATUS_MAPPING = { ACCEPTED: __('Yes'), TENTATIVE: __('Maybe'), D
 			/>
 		</div>
 		<div class="flex flex-col gap-4 p-5">
+			<!-- Recurrence rule -->
 			<div v-if="calendarEvent.recurrence_id" class="flex gap-3">
 				<Repeat class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
 				<span class="min-w-0 break-words text-left text-sm">
 					{{ getRepeatMessage(calendarEvent.recurrence_rule) }}
 				</span>
 			</div>
+
+			<!-- Locations -->
 			<div v-if="calendarEvent.locations.length" class="flex gap-3">
 				<component
 					:is="isUrl(calendarEvent.locations[0]._name) ? Globe : MapPin"
@@ -259,10 +265,25 @@ const RESPONSE_STATUS_MAPPING = { ACCEPTED: __('Yes'), TENTATIVE: __('Maybe'), D
 					{{ calendarEvent.locations[0]._name }}
 				</span>
 			</div>
+
+			<!-- Participants -->
 			<div class="flex gap-3">
 				<Users class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
 				<span class="mt-px text-sm"> {{ participants }} </span>
 			</div>
+			<div class="max-h-44 space-y-4 overflow-y-scroll pl-7">
+				<EventParticipantList
+					:participants="
+						getReorderedParticipants(
+							calendarEvent.participants,
+							calendarEvent.organizer,
+						)
+					"
+					:dont-show-remove="true"
+				/>
+			</div>
+
+			<!-- Description -->
 			<div v-if="calendarEvent.description" class="flex gap-3">
 				<Text class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
 				<div class="mt-px min-w-0 text-left text-sm">
@@ -282,6 +303,8 @@ const RESPONSE_STATUS_MAPPING = { ACCEPTED: __('Yes'), TENTATIVE: __('Maybe'), D
 					</button>
 				</div>
 			</div>
+
+			<!-- Organizer -->
 			<div class="flex gap-3">
 				<CalendarDays class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0" />
 				<span class="mt-px min-w-0 break-words text-left text-sm">
@@ -289,6 +312,8 @@ const RESPONSE_STATUS_MAPPING = { ACCEPTED: __('Yes'), TENTATIVE: __('Maybe'), D
 				</span>
 			</div>
 		</div>
+
+		<!-- RSVP -->
 		<div
 			v-if="userParticipant.expect_reply"
 			class="bg-surface-menu-bar flex items-center justify-between rounded-b border-t p-5"

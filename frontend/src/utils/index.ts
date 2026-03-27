@@ -276,3 +276,18 @@ export const isUrl = (str: string) => {
 		return false
 	}
 }
+
+export const getReorderedParticipants = (
+	participants,
+	organizerEmail,
+	originalParticipants?: any[],
+) => {
+	const original = new Set(originalParticipants?.map((p) => p.email) || [])
+
+	const organizer = participants.find((p) => p.email === organizerEmail)
+	const rest = participants
+		.filter((p) => p.email !== organizerEmail)
+		.map((p) => ({ ...p, isOrganizer: false, isNew: !original.has(p.email) }))
+
+	return organizer ? [{ ...organizer, isOrganizer: true }, ...rest] : rest
+}

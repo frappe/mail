@@ -6,7 +6,10 @@ import { Avatar, Button } from 'frappe-ui'
 import { extractNameFromEmail } from '@/utils/format'
 import { userStore } from '@/stores/user'
 
-const { participants } = defineProps<{ participants: any[] }>()
+const { participants, dontShowRemove } = defineProps<{
+	participants: any[]
+	dontShowRemove?: boolean
+}>()
 
 defineEmits(['removeParticipant'])
 
@@ -19,7 +22,7 @@ const isUserOrganizer = computed(() =>
 )
 
 const showRemoveParticipant = (participant: any) =>
-	!participant.isOrganizer && (isUserOrganizer.value || participant.isNew)
+	!participant.isOrganizer && (isUserOrganizer.value || participant.isNew) && !dontShowRemove
 
 const getParticipantStatusValues = (status: string) => {
 	if (status === 'ACCEPTED') return { icon: Check, class: 'bg-surface-green-1 text-ink-green-3' }
@@ -29,7 +32,7 @@ const getParticipantStatusValues = (status: string) => {
 </script>
 <template>
 	<div v-for="p in participants" :key="p.email">
-		<div class="flex items-center justify-between">
+		<div class="flex items-center justify-between text-left">
 			<div class="flex items-center space-x-2">
 				<Avatar :image="p.user_image" :label="p._name || p.email" size="xl" />
 				<div class="flex flex-col space-y-0.5">
