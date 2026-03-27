@@ -4,6 +4,7 @@
 from uuid import uuid7
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin
@@ -30,9 +31,50 @@ class MailboxSettings(Document):
 
 		if existing:
 			frappe.throw(
-				f"Mailbox Settings for user {frappe.bold(self.user)} with mailbox ID {frappe.bold(self.mailbox_id)} already exists.",
-				title="Duplicate Mailbox Settings",
+				_("Mailbox Settings for user {0} with mailbox ID {1} already exists.").format(
+					frappe.bold(self.user), frappe.bold(self.mailbox_id)
+				),
+				title=_("Duplicate Mailbox Settings"),
 			)
+
+	def _db_set(
+		self,
+		update_modified: bool = True,
+		commit: bool = False,
+		notify: bool = False,
+		**kwargs,
+	) -> None:
+		"""Updates the document with the given key-value pairs."""
+
+		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
+
+
+def get_mailbox_settings(user: str, mailbox_id: str, raise_exception: bool = True) -> MailboxSettings | None:
+	"""Fetches the Mailbox Settings for a given user and mailbox ID."""
+
+	if settings := frappe.db.get_value("Mailbox Settings", {"user": user, "mailbox_id": mailbox_id}):
+		return frappe.get_doc("Mailbox Settings", settings)
+
+	if raise_exception:
+		frappe.throw(
+			_("Mailbox Settings for user {0} with mailbox ID {1} not found.").format(
+				frappe.bold(user), frappe.bold(mailbox_id)
+			)
+		)
+
+
+def set_mailbox_settings(user: str, mailbox_id: str, **kwargs) -> None:
+	"""Sets the Mailbox Settings for a given user and mailbox ID. Creates a new document if it doesn't exist."""
+
+	settings = get_mailbox_settings(user, mailbox_id, raise_exception=False)
+
+	if not settings:
+		settings = frappe.new_doc("Mailbox Settings")
+		settings.user = user
+		settings.mailbox_id = mailbox_id
+		settings.insert()
+
+	settings._db_set(**kwargs)
 
 
 def on_doctype_update() -> None:
