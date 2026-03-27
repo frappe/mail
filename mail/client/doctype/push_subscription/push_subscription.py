@@ -188,6 +188,9 @@ def verify_push_subscription(user: str, id: str, verification_code: str) -> None
 	if not frappe.db.exists("User", {"name": user, "enabled": 1}):
 		frappe.throw(_("User does not exist or is disabled."))
 
+	if not frappe.db.exists("User Settings", {"user": user}):
+		frappe.throw(_("User Settings not found for the user."))
+
 	push_subscription = {"id": id, "verification_code": verification_code}
 
 	service = get_push_subscription_service(user, ignore_permissions=True)
