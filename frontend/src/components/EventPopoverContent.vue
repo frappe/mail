@@ -210,8 +210,7 @@ const deleteEvent = createResource({
 	},
 })
 
-const openUrl = () => {
-	const location = calendarEvent.locations[0]._name
+const openUrl = (location: string) => {
 	if (isUrl(location)) window.open(location, '_blank')
 }
 
@@ -253,17 +252,21 @@ const RESPONSE_STATUS_MAPPING = { ACCEPTED: __('Yes'), TENTATIVE: __('Maybe'), D
 					:is="isUrl(calendarEvent.locations[0]._name) ? Globe : MapPin"
 					class="stroke-1.5 text-ink-gray-5 h-4 w-4 shrink-0"
 				/>
-				<span
-					class="mt-px min-w-0 break-words text-left text-sm"
-					:class="{
-						'text-ink-blue-3 cursor-pointer hover:underline': isUrl(
-							calendarEvent.locations[0]._name,
-						),
-					}"
-					@click="openUrl"
-				>
-					{{ calendarEvent.locations[0]._name }}
-				</span>
+				<div class="space-y-2">
+					<div
+						v-for="location in calendarEvent.locations"
+						:key="location.uid"
+						class="mt-px min-w-0 break-words text-left text-sm"
+						:class="{
+							'text-ink-blue-3 cursor-pointer hover:underline': isUrl(
+								location._name,
+							),
+						}"
+						@click="openUrl(location._name)"
+					>
+						{{ location._name }}
+					</div>
+				</div>
 			</div>
 
 			<!-- Participants -->

@@ -36,7 +36,7 @@ const getDefaultEvent = () => {
 		startTime,
 		endDate: dayjs(selectedEvent.date).format('YYYY-MM-DD'),
 		endTime: dayjs(startTime, 'HH:mm').add(30, 'minute').format('HH:mm'),
-		location: '',
+		locations: [''],
 		description: '',
 		free_busy_status: 'Busy',
 		privacy: '',
@@ -66,6 +66,10 @@ const getEvent = () => {
 
 	const recurrence_rule = selectedEvent.calendarEvent.recurrence_rule
 
+	const locations = selectedEvent.calendarEvent.locations.length
+		? selectedEvent.calendarEvent.locations.map((l) => l._name)
+		: ['']
+
 	return {
 		title: selectedEvent.calendarEvent.title || '',
 		organizer: selectedEvent.calendarEvent.organizer,
@@ -77,7 +81,7 @@ const getEvent = () => {
 		endTime: end.format('HH:mm'),
 		free_busy_status: selectedEvent.calendarEvent.free_busy_status,
 		privacy: selectedEvent.calendarEvent.privacy,
-		location: selectedEvent.calendarEvent.locations?.[0]?._name || '',
+		locations,
 		description: selectedEvent.calendarEvent.description || '',
 		participants: [...selectedEvent.calendarEvent.participants],
 		recurrence_rule,
@@ -131,7 +135,8 @@ const eventParams = computed(() => {
 	if (event.privacy) params.privacy = event.privacy
 	if (event.free_busy_status) params.free_busy_status = event.free_busy_status
 	if (event.description) params.description = event.description
-	if (event.location) params.locations = [{ name: event.location }]
+	if (event.locations?.some((l) => l?.trim()))
+		params.locations = event.locations.filter((l) => l?.trim()).map((name) => ({ name }))
 	if (event.participants?.length) params.participants = event.participants
 
 	return params
@@ -366,6 +371,8 @@ const VISIBILITY_OPTIONS = [
 							"
 						/>
 					</div>
+
+					<!-- Date and Time -->
 					<div class="flex space-x-4">
 						<FormControl
 							v-model="event.startDate"
@@ -396,11 +403,37 @@ const VISIBILITY_OPTIONS = [
 							class="w-full"
 						/>
 					</div>
-					<FormControl
-						v-model="event.location"
-						:label="__('Location')"
-						:placeholder="__('Meeting location')"
-					/>
+
+					<!-- Locations -->
+					<div class="space-y-2">
+						<div v-for="(_, i) in event.locations" :key="i" class="flex space-x-2">
+							<FormControl
+								v-model="event.locations[i]"
+								:label="
+									i === 0
+										? event.locations.length > 1
+											? __('Locations')
+											: __('Location')
+										: ''
+								"
+								:placeholder="__('Meeting location {0}', [i + 1])"
+								class="w-full"
+							/>
+							<Button
+								v-if="event.locations.length > 1"
+								icon="x"
+								class="mt-auto"
+								@click="event.locations.splice(i, 1)"
+							/>
+						</div>
+						<Button
+							v-if="event.locations.length < 3"
+							:label="__('Add Location')"
+							@click="event.locations.push('')"
+						/>
+					</div>
+
+					<!-- Availability and Privacy -->
 					<div class="flex space-x-4">
 						<FormControl
 							v-model="event.free_busy_status"
@@ -417,6 +450,8 @@ const VISIBILITY_OPTIONS = [
 							class="w-full"
 						/>
 					</div>
+
+					<!-- Description -->
 					<FormControl
 						v-model="event.description"
 						:label="__('Description')"
@@ -425,6 +460,7 @@ const VISIBILITY_OPTIONS = [
 					/>
 				</div>
 				<div class="col-span-2 flex h-full flex-col space-y-4 border-l pl-6">
+					<!-- RSVP -->
 					<template v-if="!isNew && selectedEvent?.calendarEvent?.role !== 'Organizer'">
 						<h3 class="text-base font-medium">{{ __('RSVP') }}</h3>
 						<FormControl
@@ -435,6 +471,8 @@ const VISIBILITY_OPTIONS = [
 							class="w-full"
 						/>
 					</template>
+
+					<!-- Participants -->
 					<h3 class="text-base font-medium">{{ __('Participants') }}</h3>
 					<Combobox
 						v-model="participantsInput"
