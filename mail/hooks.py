@@ -168,6 +168,7 @@ permission_query_conditions = {
 	# Client
 	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.get_permission_query_condition",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
+	"Mailbox Settings": "mail.client.doctype.mailbox_settings.mailbox_settings.get_permission_query_condition",
 }
 
 has_permission = {
@@ -189,6 +190,7 @@ has_permission = {
 	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.has_permission",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.has_permission",
 	"Mailbox": "mail.client.doctype.mailbox.mailbox.has_permission",
+	"Mailbox Settings": "mail.client.doctype.mailbox_settings.mailbox_settings.has_permission",
 	"Participant Identity": "mail.client.doctype.participant_identity.participant_identity.has_permission",
 	"Push Subscription": "mail.client.doctype.push_subscription.push_subscription.has_permission",
 	"Quota": "mail.client.doctype.quota.quota.has_permission",
