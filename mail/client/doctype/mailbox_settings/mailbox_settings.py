@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
-from mail.utils.user import has_role, is_system_manager, is_tenant_admin
+from mail.utils.user import has_role, is_system_manager
 
 
 class MailboxSettings(Document):

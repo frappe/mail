@@ -169,6 +169,7 @@ permission_query_conditions = {
 	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.get_permission_query_condition",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
 	"Mailbox Settings": "mail.client.doctype.mailbox_settings.mailbox_settings.get_permission_query_condition",
+	"User Settings": "mail.client.doctype.user_settings.user_settings.get_permission_query_condition",
 }
 
 has_permission = {
@@ -195,6 +196,7 @@ has_permission = {
 	"Push Subscription": "mail.client.doctype.push_subscription.push_subscription.has_permission",
 	"Quota": "mail.client.doctype.quota.quota.has_permission",
 	"Sieve Script": "mail.client.doctype.sieve_script.sieve_script.has_permission",
+	"User Settings": "mail.client.doctype.user_settings.user_settings.has_permission",
 	"Vacation Response": "mail.client.doctype.vacation_response.vacation_response.has_permission",
 }
 
@@ -290,17 +292,18 @@ scheduler_events = {
 
 ignore_links_on_delete = [
 	# Server
-	"Mail Tenant Member",
-	"Mail Tenant",
-	"Mail Domain Request",
-	"Mail Data Exchange",
 	"Mail Account Request",
+	"Mail Data Exchange",
+	"Mail Domain Request",
+	"Mail Tenant",
+	"Mail Tenant Member",
 	# Client
-	"Mailbox Settings",
-	"Mail Sync History",
-	"Mail Signature",
-	"Mail Queue",
 	"Mail Exchange",
+	"Mail Queue",
+	"Mail Signature",
+	"Mail Sync History",
+	"Mailbox Settings",
+	"User Settings",
 ]
 
 # Request Events
