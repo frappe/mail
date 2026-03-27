@@ -1,0 +1,247 @@
+{
+ "actions": [],
+ "autoname": "field:user",
+ "creation": "2026-03-27 16:27:12.818547",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "user",
+  "column_break_klzk",
+  "jmap_credentials_section",
+  "server_url",
+  "column_break_uxkb",
+  "username",
+  "app_password",
+  "jmap_state_section",
+  "email_previous_state",
+  "email_current_state",
+  "column_break_mylj",
+  "email_state_last_update",
+  "outgoing_section",
+  "default_outgoing_email",
+  "column_break_scmb",
+  "destroy_email_after_submit",
+  "destroy_newsletter_after_submit",
+  "recovery_section",
+  "backup_email",
+  "column_break_gotn",
+  "ui_tab",
+  "appearance_section",
+  "color_scheme",
+  "column_break_cxak",
+  "group_messages_by",
+  "show_reading_pane"
+ ],
+ "fields": [
+  {
+   "description": "URL of the JMAP server.",
+   "fieldname": "server_url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Server URL",
+   "length": 255,
+   "placeholder": "https://mail.frappemail.com/",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_uxkb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Email address or username used to sign in to your JMAP account.",
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Username",
+   "placeholder": "john@example.com",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "App-specific password or account password used for authentication with the JMAP server.",
+   "fieldname": "app_password",
+   "fieldtype": "Password",
+   "label": "App Password",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "description": "Previously synced email state used to detect changes from the server.",
+   "fieldname": "email_previous_state",
+   "fieldtype": "Data",
+   "label": "Previous State (Email)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "Latest email state retrieved from the server for synchronization.",
+   "fieldname": "email_current_state",
+   "fieldtype": "Data",
+   "label": "Current State (Email)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "Timestamp of the last successful email state synchronization.",
+   "fieldname": "email_state_last_update",
+   "fieldtype": "Datetime",
+   "label": "State Last Update (Email)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Automatically deletes the email from your mailbox after it is sent.",
+   "fieldname": "destroy_email_after_submit",
+   "fieldtype": "Check",
+   "label": "Destroy Email After Submit"
+  },
+  {
+   "default": "0",
+   "description": "Automatically delete newsletters after they are sent.",
+   "fieldname": "destroy_newsletter_after_submit",
+   "fieldtype": "Check",
+   "label": "Destroy Newsletter After Submit"
+  },
+  {
+   "fieldname": "jmap_credentials_section",
+   "fieldtype": "Section Break",
+   "label": "JMAP Credentials"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "jmap_state_section",
+   "fieldtype": "Section Break",
+   "label": "JMAP State"
+  },
+  {
+   "description": "Default email address used as the sender when composing new messages.",
+   "fieldname": "default_outgoing_email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Default Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "column_break_scmb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Secondary email address used for account recovery and important notifications.",
+   "fieldname": "backup_email",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Backup Email",
+   "search_index": 1
+  },
+  {
+   "description": "The user this settings belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "set_only_once": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "column_break_klzk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "outgoing_section",
+   "fieldtype": "Section Break",
+   "label": "Outgoing"
+  },
+  {
+   "fieldname": "ui_tab",
+   "fieldtype": "Tab Break",
+   "label": "UI"
+  },
+  {
+   "fieldname": "appearance_section",
+   "fieldtype": "Section Break",
+   "label": "Appearance"
+  },
+  {
+   "default": "System Default",
+   "description": "Choose your preferred interface theme.",
+   "fieldname": "color_scheme",
+   "fieldtype": "Select",
+   "label": "Color Scheme",
+   "options": "Light Mode\nDark Mode\nSystem Default",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_cxak",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Group email messages in the list by time period (e.g., day or month).",
+   "fieldname": "group_messages_by",
+   "fieldtype": "Select",
+   "label": "Group Messages By",
+   "options": "\nDay\nMonth"
+  },
+  {
+   "default": "0",
+   "description": "Show a preview pane beside the email list for quick reading.",
+   "fieldname": "show_reading_pane",
+   "fieldtype": "Check",
+   "label": "Show Reading Pane"
+  },
+  {
+   "fieldname": "recovery_section",
+   "fieldtype": "Section Break",
+   "label": "Recovery"
+  },
+  {
+   "fieldname": "column_break_gotn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_mylj",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-03-27 17:39:19.628008",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "User Settings",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
