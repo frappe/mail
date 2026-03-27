@@ -718,6 +718,9 @@ class MailPrincipal(Document):
 			if member := frappe.db.exists("Mail Tenant Member", {"tenant": self.tenant, "user": self.name}):
 				frappe.delete_doc("Mail Tenant Member", member, ignore_permissions=True)
 
+			if frappe.db.exists("User Settings", self.name):
+				frappe.delete_doc("User Settings", self.name, ignore_permissions=True)
+
 			if frappe.db.exists("User", self.name):
 				frappe.delete_doc("User", self.name, ignore_permissions=True)
 
