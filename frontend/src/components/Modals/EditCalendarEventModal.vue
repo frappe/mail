@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, reactive, ref, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
-import { Button, Combobox, Dialog, FormControl, createResource, toast } from 'frappe-ui'
+import { Button, Combobox, Dialog, Dropdown, FormControl, createResource, toast } from 'frappe-ui'
 
 import { getReorderedParticipants, raiseToast } from '@/utils'
 import { getRepeatMessage } from '@/utils/format'
@@ -22,6 +22,8 @@ const { identities } = userStore()
 
 const isNew = computed(() => !selectedEvent?.calendarEvent)
 
+const showRSVP = computed(() => !isNew.value && selectedEvent.calendarEvent.role !== 'Organizer')
+
 const getDefaultEvent = () => {
 	const startTime = dayjs(selectedEvent.date).isToday()
 		? dayjs().add(1, 'hour').minute(0).second(0).format('HH:mm')
@@ -37,6 +39,7 @@ const getDefaultEvent = () => {
 		endDate: dayjs(selectedEvent.date).format('YYYY-MM-DD'),
 		endTime: dayjs(startTime, 'HH:mm').add(30, 'minute').format('HH:mm'),
 		locations: [''],
+		alerts: [],
 		description: '',
 		free_busy_status: 'Busy',
 		privacy: '',
@@ -166,6 +169,33 @@ watch(
 		if (!val && !event.recurrence_rule?.frequency) event.repeat = false
 	},
 )
+
+const addAlertOptions = computed(() => [
+	{
+		label: __('Relative to event'),
+		onClick: () => {
+			event.alerts.push({
+				action: 'Display',
+				number: 10,
+				unit: 'minute',
+				direction: 'Before',
+				relative_to: 'Start',
+				type: 'OffsetTrigger',
+			})
+		},
+	},
+	{
+		label: __('On a specific date'),
+		onClick: () => {
+			event.alerts.push({
+				action: 'Display',
+				date: dayjs(event.startDate).subtract(1, 'day').format('YYYY-MM-DD'),
+				time: '09:00',
+				type: 'AbsoluteTrigger',
+			})
+		},
+	},
+])
 
 const addParticipant = (email: string) => {
 	if (!email?.trim()) return
@@ -337,12 +367,35 @@ const VISIBILITY_OPTIONS = [
 	{ label: __('Public'), value: 'Public' },
 	{ label: __('Private'), value: 'Private' },
 ]
+
+const ALERT_ACTION_OPTIONS = [
+	{ label: __('Screen Pop-up'), value: 'Display' },
+	{ label: __('Email Notice'), value: 'Email' },
+	{ label: __('Sound Alert'), value: 'Audio' },
+]
+
+const UNIT_OPTIONS = [
+	{ label: __('Minutes'), value: 'minute' },
+	{ label: __('Hours'), value: 'hour' },
+	{ label: __('Days'), value: 'day' },
+	{ label: __('Weeks'), value: 'week' },
+]
+
+const DIRECTION_OPTIONS = [
+	{ label: __('Before'), value: 'Before' },
+	{ label: __('After'), value: 'After' },
+]
+
+const RELATIVE_TO_OPTIONS = [
+	{ label: __('Start'), value: 'Start' },
+	{ label: __('End'), value: 'End' },
+]
 </script>
 
 <template>
 	<Dialog v-model="show" :disable-outside-click-to-close="true" :options="dialogOptions">
 		<template #body-content>
-			<div class="grid grid-cols-5 gap-6">
+			<div class="grid max-h-[48rem] grid-cols-5 gap-6 overflow-y-auto">
 				<div class="col-span-3 space-y-4">
 					<h3 class="text-base font-medium">{{ __('Event Details') }}</h3>
 					<FormControl
@@ -420,16 +473,88 @@ const VISIBILITY_OPTIONS = [
 								class="w-full"
 							/>
 							<Button
-								v-if="event.locations.length > 1"
+								v-if="
+									event.locations.length === i + 1 && event.locations.length < 3
+								"
+								icon="plus"
+								class="mt-auto"
+								@click="event.locations.push('')"
+							/>
+							<Button
+								v-else
 								icon="x"
 								class="mt-auto"
 								@click="event.locations.splice(i, 1)"
 							/>
 						</div>
-						<Button
-							v-if="event.locations.length < 3"
-							:label="__('Add Location')"
-							@click="event.locations.push('')"
+					</div>
+
+					<!-- Alerts -->
+					<div class="space-y-2">
+						<div v-for="(_, i) in event.alerts" :key="i" class="flex space-x-2">
+							<FormControl
+								v-model="event.alerts[i].action"
+								:label="
+									i === 0
+										? event.alerts.length > 1
+											? __('Alerts')
+											: __('Alert')
+										: ''
+								"
+								type="select"
+								:options="ALERT_ACTION_OPTIONS"
+								class="w-40 shrink-0"
+							/>
+							<template v-if="event.alerts[i].type === 'OffsetTrigger'">
+								<FormControl
+									v-model="event.alerts[i].number"
+									type="number"
+									class="mt-auto w-full"
+								/>
+								<FormControl
+									v-model="event.alerts[i].unit"
+									type="select"
+									:options="UNIT_OPTIONS"
+									class="mt-auto w-full"
+								/>
+								<FormControl
+									v-model="event.alerts[i].direction"
+									type="select"
+									:options="DIRECTION_OPTIONS"
+									class="mt-auto w-full"
+								/>
+								<FormControl
+									v-model="event.alerts[i].relative_to"
+									type="select"
+									:options="RELATIVE_TO_OPTIONS"
+									class="mt-auto w-full"
+								/>
+							</template>
+							<template v-else>
+								<span class="text-ink-gray-8 mb-1.5 mt-auto text-base">
+									{{ __('on') }}
+								</span>
+								<FormControl
+									v-model="event.alerts[i].date"
+									type="date"
+									class="mt-auto w-full"
+								/>
+								<span class="text-ink-gray-8 mb-1.5 mt-auto text-base">
+									{{ __('at') }}
+								</span>
+								<FormControl
+									v-model="event.alerts[i].time"
+									type="time"
+									class="mt-auto w-full"
+								/>
+							</template>
+							<Button icon="x" class="mt-auto" @click="event.alerts.splice(i, 1)" />
+						</div>
+
+						<Dropdown
+							v-if="event.alerts.length < 3"
+							:button="{ label: __('Add Alert') }"
+							:options="addAlertOptions"
 						/>
 					</div>
 
@@ -461,7 +586,7 @@ const VISIBILITY_OPTIONS = [
 				</div>
 				<div class="col-span-2 flex h-full flex-col space-y-4 border-l pl-6">
 					<!-- RSVP -->
-					<template v-if="!isNew && selectedEvent?.calendarEvent?.role !== 'Organizer'">
+					<template v-if="showRSVP">
 						<h3 class="text-base font-medium">{{ __('RSVP') }}</h3>
 						<FormControl
 							v-model="userParticipant.participation_status"
@@ -481,7 +606,7 @@ const VISIBILITY_OPTIONS = [
 						@input="debouncedSearch($event)"
 						@keyup.enter="handleParticipantEnter($event)"
 					/>
-					<div class="min-h-0 flex-1 space-y-4 overflow-y-auto">
+					<div class="max-h-[32rem] space-y-4 overflow-y-auto">
 						<EventParticipantList
 							:participants
 							@remove-participant="removeParticipant"
