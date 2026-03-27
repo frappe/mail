@@ -296,9 +296,11 @@ ignore_links_on_delete = [
 	"Mail Data Exchange",
 	"Mail Account Request",
 	# Client
-	"Mail Queue",
-	"Mail Signature",
+	"Mailbox Settings",
 	"Mail Sync History",
+	"Mail Signature",
+	"Mail Queue",
+	"Mail Exchange",
 ]
 
 # Request Events
