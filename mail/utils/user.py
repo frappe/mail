@@ -71,7 +71,7 @@ def is_tenant_member(tenant: str, user: str) -> bool:
 def get_account_for_user(user: str) -> str | None:
 	"""Returns the account of the user."""
 
-	return frappe.db.get_value("User", user, "jmap_username")
+	return frappe.db.get_value("User Settings", user, "username")
 
 
 def get_user_hashed_password(user: str) -> str | None:
@@ -206,8 +206,8 @@ def get_caldav_settings(user: str) -> dict:
 
 	caldav_settings = {}
 
-	user_doc = frappe.get_doc("User", user)
-	if user_doc.jmap_server_url and user_doc.jmap_username and user_doc.jmap_app_password:
+	user_settings = frappe.get_doc("User Settings", user)
+	if user_settings.server_url and user_settings.username and user_settings.app_password:
 		cluster = get_cluster_for_tenant(get_tenant_for_user(user))
 		base_url = frappe.db.get_value("Mail Cluster", cluster, "base_url")
 		caldav_url = urljoin(base_url, ".well-known/caldav")
@@ -216,8 +216,8 @@ def get_caldav_settings(user: str) -> dict:
 			{
 				"url": caldav_url,
 				"auth": (
-					user_doc.jmap_username,
-					user_doc.get_password("jmap_app_password"),
+					user_settings.username,
+					user_settings.get_password("app_password"),
 				),
 			}
 		)
