@@ -6,6 +6,7 @@ import { Button, Combobox, Dialog, Dropdown, FormControl, createResource, toast 
 import { getReorderedParticipants, raiseToast } from '@/utils'
 import { getRepeatMessage } from '@/utils/format'
 import { userStore } from '@/stores/user'
+import EventAlertsInput from '@/components/EventAlertsInput.vue'
 import EventParticipantList from '@/components/EventParticipantList.vue'
 import EventRepeatSettingsModal from '@/components/Modals/EventRepeatSettingsModal.vue'
 
@@ -229,7 +230,7 @@ watch(
 const addAlertOptions = computed(() => [
 	{
 		label: __('Relative to event'),
-		onClick: () => {
+		onClick: () =>
 			event.alerts.push({
 				type: 'OffsetTrigger',
 				action: 'Display',
@@ -237,19 +238,17 @@ const addAlertOptions = computed(() => [
 				unit: 'minutes',
 				direction: -1,
 				relative_to: 'Start',
-			})
-		},
+			}),
 	},
 	{
-		label: __('On a specific date'),
-		onClick: () => {
+		label: __('On specific date'),
+		onClick: () =>
 			event.alerts.push({
 				type: 'AbsoluteTrigger',
 				action: 'Display',
 				date: dayjs(event.startDate).subtract(1, 'day').format('YYYY-MM-DD'),
 				time: '09:00',
-			})
-		},
+			}),
 	},
 ])
 
@@ -423,29 +422,6 @@ const VISIBILITY_OPTIONS = [
 	{ label: __('Public'), value: 'Public' },
 	{ label: __('Private'), value: 'Private' },
 ]
-
-const ALERT_ACTION_OPTIONS = [
-	{ label: __('Screen Pop-up'), value: 'Display' },
-	{ label: __('Email Notice'), value: 'Email' },
-	{ label: __('Sound Alert'), value: 'Audio' },
-]
-
-const UNIT_OPTIONS = [
-	{ label: __('Minutes'), value: 'minutes' },
-	{ label: __('Hours'), value: 'hours' },
-	{ label: __('Days'), value: 'days' },
-	{ label: __('Weeks'), value: 'weeks' },
-]
-
-const DIRECTION_OPTIONS = [
-	{ label: __('Before'), value: -1 },
-	{ label: __('After'), value: 1 },
-]
-
-const RELATIVE_TO_OPTIONS = [
-	{ label: __('Start'), value: 'Start' },
-	{ label: __('End'), value: 'End' },
-]
 </script>
 
 <template>
@@ -547,66 +523,7 @@ const RELATIVE_TO_OPTIONS = [
 
 					<!-- Alerts -->
 					<div class="space-y-2">
-						<div v-for="(_, i) in event.alerts" :key="i" class="flex space-x-2">
-							<FormControl
-								v-model="event.alerts[i].action"
-								:label="
-									i === 0
-										? event.alerts.length > 1
-											? __('Alerts')
-											: __('Alert')
-										: ''
-								"
-								type="select"
-								:options="ALERT_ACTION_OPTIONS"
-								class="w-40 shrink-0"
-							/>
-							<template v-if="event.alerts[i].type === 'OffsetTrigger'">
-								<FormControl
-									v-model="event.alerts[i].number"
-									type="number"
-									class="mt-auto w-16 shrink-0"
-								/>
-								<FormControl
-									v-model="event.alerts[i].unit"
-									type="select"
-									:options="UNIT_OPTIONS"
-									class="mt-auto w-full"
-								/>
-								<FormControl
-									v-model="event.alerts[i].direction"
-									type="select"
-									:options="DIRECTION_OPTIONS"
-									class="mt-auto w-full"
-								/>
-								<FormControl
-									v-model="event.alerts[i].relative_to"
-									type="select"
-									:options="RELATIVE_TO_OPTIONS"
-									class="mt-auto w-full"
-								/>
-							</template>
-							<template v-else>
-								<span class="text-ink-gray-8 mb-1.5 mt-auto text-base">
-									{{ __('on') }}
-								</span>
-								<FormControl
-									v-model="event.alerts[i].date"
-									type="date"
-									class="mt-auto w-full"
-								/>
-								<span class="text-ink-gray-8 mb-1.5 mt-auto text-base">
-									{{ __('at') }}
-								</span>
-								<FormControl
-									v-model="event.alerts[i].time"
-									type="time"
-									class="mt-auto w-full"
-								/>
-							</template>
-							<Button icon="x" class="mt-auto" @click="event.alerts.splice(i, 1)" />
-						</div>
-
+						<EventAlertsInput v-model:alerts="event.alerts" />
 						<Dropdown
 							v-if="event.alerts.length < 3"
 							:button="{ label: __('Add Alert') }"
