@@ -13,6 +13,27 @@ class MailboxSettings(Document):
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
+	def validate(self) -> None:
+		self.validate_duplicate()
+
+	def validate_duplicate(self) -> None:
+		"""Checks for duplicate Mailbox Settings for the same user and mailbox ID."""
+
+		existing = frappe.db.exists(
+			"Mailbox Settings",
+			{
+				"user": self.user,
+				"mailbox_id": self.mailbox_id,
+				"name": ["!=", self.name],
+			},
+		)
+
+		if existing:
+			frappe.throw(
+				f"Mailbox Settings for user {frappe.bold(self.user)} with mailbox ID {frappe.bold(self.mailbox_id)} already exists.",
+				title="Duplicate Mailbox Settings",
+			)
+
 
 def on_doctype_update() -> None:
 	frappe.db.add_unique("Mailbox Settings", ["user", "mailbox_id"], constraint_name="unique_user_mailbox")
