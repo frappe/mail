@@ -21,8 +21,22 @@ class UserSettings(Document):
 	def validate_jmap_settings(self) -> None:
 		"""Validate the JMAP settings by connecting to the JMAP server and verifying the default outgoing email."""
 
-		info = JMAPConnectionInfo(self.server_url, self.username, self.get_password("app_password"))
-		connection = JMAPConnection(info)
+		try:
+			info = JMAPConnectionInfo(self.server_url, self.username, self.get_password("app_password"))
+			connection = JMAPConnection(info)
+		except Exception as e:
+			if (
+				hasattr(e, "response")
+				and hasattr(e.response, "status_code")
+				and e.response.status_code == 401
+			):
+				frappe.throw(_("Unable to connect to the JMAP server. Please check your credentials."))
+
+			frappe.throw(
+				_(
+					"Unable to connect to the JMAP server. Please check the server URL and your network connection."
+				)
+			)
 
 		if self.default_outgoing_email:
 			identity_service = IdentityService(self.user, connection)
