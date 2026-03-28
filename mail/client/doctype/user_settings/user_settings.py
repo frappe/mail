@@ -12,6 +12,9 @@ from mail.utils.user import get_tenant_for_user, has_role, is_system_manager, is
 
 class UserSettings(Document):
 	def validate(self) -> None:
+		if frappe.flags.in_migrate:
+			return
+
 		self.validate_jmap_settings()
 		self.validate_tenant_bound_user()
 
