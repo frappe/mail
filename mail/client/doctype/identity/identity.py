@@ -296,7 +296,7 @@ def delete_identities(user: str, ids: list[str]) -> None:
 
 	has_permission_for_identity(user)
 
-	service = get_identity_service(user)
+	service = get_identity_service(user, ignore_permissions=True)
 	response = service.delete(ids)
 
 	if response.get("notDestroyed"):
@@ -321,7 +321,7 @@ def fetch_identities(user: str, page: int = 1, limit: int = 10) -> list:
 				)
 			)
 
-	service = get_identity_service(user)
+	service = get_identity_service(user, ignore_permissions=True)
 	identities = service.get()
 
 	formatted_identities = [format_identity(user, identity) for identity in identities]
