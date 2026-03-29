@@ -1270,18 +1270,22 @@ def enqueue_fetch_changes(user: str, email_state: str | None = None) -> None:
 
 
 def schedule_fetch_changes() -> None:
-	"""Scheduled job to fetch changes for users that haven't been synced in the last 3 hours."""
+	"""Schedule fetch_changes for users who have email accounts configured and haven't had their email state updated in the last 3 hours."""
 
 	USER = frappe.qb.DocType("User")
+	USER_SETTINGS = frappe.qb.DocType("User Settings")
+
 	users = (
 		frappe.qb.from_(USER)
+		.join(USER_SETTINGS)
+		.on(USER.name == USER_SETTINGS.user)
 		.select(USER.name)
 		.where(
 			(USER.enabled == 1)
-			& (USER.jmap_username.isnotnull())
+			& (USER_SETTINGS.username.isnotnull())
 			& (
-				USER.jmap_email_state_last_update.isnull()
-				| (USER.jmap_email_state_last_update < get_datetime(add_to_date(now(), hours=-3)))
+				USER_SETTINGS.email_state_last_update.isnull()
+				| (USER_SETTINGS.email_state_last_update < get_datetime(add_to_date(now(), hours=-3)))
 			)
 		)
 	).run(pluck="user")

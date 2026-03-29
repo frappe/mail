@@ -32,16 +32,16 @@ def get_jmap_connection(user: str, ignore_permissions: bool = False, cache: bool
 	"""Returns a JMAPConnection instance for the specified user, with optional permission checks and caching."""
 
 	def generator() -> JMAPConnection:
-		user_doc = frappe.get_lazy_doc("User", user)
+		user_settings = frappe.get_lazy_doc("User Settings", user)
 
-		if not user_doc.jmap_server_url or not user_doc.jmap_username or not user_doc.jmap_app_password:
+		if not user_settings.server_url or not user_settings.username or not user_settings.app_password:
 			frappe.throw(
 				_("JMAP settings are not configured for user {0}.").format(frappe.bold(user)),
 				frappe.ValidationError,
 			)
 
 		if frappe.db.get_value("Mail Tenant Member", {"user": user}, "tenant"):
-			if user_doc.name != user_doc.jmap_username:
+			if user_settings.user != user_settings.username:
 				frappe.throw(
 					_(
 						"JMAP username for tenant-bound user {0} must be the same as the system username."
@@ -50,7 +50,7 @@ def get_jmap_connection(user: str, ignore_permissions: bool = False, cache: bool
 				)
 
 		info = JMAPConnectionInfo(
-			user_doc.jmap_server_url, user_doc.jmap_username, user_doc.get_password("jmap_app_password")
+			user_settings.server_url, user_settings.username, user_settings.get_password("app_password")
 		)
 		return JMAPConnection(info)
 

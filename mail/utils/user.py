@@ -71,7 +71,7 @@ def is_tenant_member(tenant: str, user: str) -> bool:
 def get_account_for_user(user: str) -> str | None:
 	"""Returns the account of the user."""
 
-	return frappe.db.get_value("User", user, "jmap_username")
+	return frappe.db.get_value("User Settings", user, "username")
 
 
 def get_user_hashed_password(user: str) -> str | None:
@@ -206,8 +206,8 @@ def get_caldav_settings(user: str) -> dict:
 
 	caldav_settings = {}
 
-	user_doc = frappe.get_doc("User", user)
-	if user_doc.jmap_server_url and user_doc.jmap_username and user_doc.jmap_app_password:
+	user_settings = frappe.get_doc("User Settings", user)
+	if user_settings.server_url and user_settings.username and user_settings.app_password:
 		cluster = get_cluster_for_tenant(get_tenant_for_user(user))
 		base_url = frappe.db.get_value("Mail Cluster", cluster, "base_url")
 		caldav_url = urljoin(base_url, ".well-known/caldav")
@@ -216,8 +216,8 @@ def get_caldav_settings(user: str) -> dict:
 			{
 				"url": caldav_url,
 				"auth": (
-					user_doc.jmap_username,
-					user_doc.get_password("jmap_app_password"),
+					user_settings.username,
+					user_settings.get_password("app_password"),
 				),
 			}
 		)
@@ -228,7 +228,7 @@ def get_caldav_settings(user: str) -> dict:
 def get_sync_state(user: str, type: Literal["email"]) -> str | None:
 	"""Returns the Sync State for the given user and type."""
 
-	return frappe.db.get_value("User", user, f"jmap_{type}_current_state")
+	return frappe.db.get_value("User Settings", user, f"{type}_current_state")
 
 
 @frappe.whitelist(methods=["POST"])
@@ -246,17 +246,17 @@ def generate_user_keys(user: str) -> dict:
 def update_sync_state(user: str, type: Literal["email"], state: str) -> None:
 	"""Updates the Sync State for the given user and type."""
 
-	state_last_update = f"jmap_{type}_state_last_update"
-	previous_state = f"jmap_{type}_previous_state"
-	current_state = f"jmap_{type}_current_state"
+	state_last_update = f"{type}_state_last_update"
+	previous_state = f"{type}_previous_state"
+	current_state = f"{type}_current_state"
 
-	USER = frappe.qb.DocType("User")
+	USER_SETTINGS = frappe.qb.DocType("User Settings")
 	(
-		frappe.qb.update(USER)
-		.set(getattr(USER, state_last_update), frappe.utils.now())
-		.set(getattr(USER, previous_state), getattr(USER, current_state))
-		.set(getattr(USER, current_state), state)
-		.where(USER.name == user)
+		frappe.qb.update(USER_SETTINGS)
+		.set(getattr(USER_SETTINGS, state_last_update), frappe.utils.now())
+		.set(getattr(USER_SETTINGS, previous_state), getattr(USER_SETTINGS, current_state))
+		.set(getattr(USER_SETTINGS, current_state), state)
+		.where(USER_SETTINGS.user == user)
 	).run()
 
 
@@ -264,4 +264,4 @@ def update_sync_state(user: str, type: Literal["email"], state: str) -> None:
 def clear_sync_state(user: str, type: Literal["email"]) -> None:
 	"""Clear the Sync State for the given user and type."""
 
-	frappe.db.set_value("User", user, f"jmap_{type}_current_state", None, update_modified=False)
+	frappe.db.set_value("User Settings", user, f"{type}_current_state", None, update_modified=False)

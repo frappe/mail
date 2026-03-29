@@ -131,4 +131,6 @@ def raise_for_status(response: requests.Response) -> None:
 	"""Raises an HTTPError if the response status code indicates an error."""
 
 	if not response.ok:
-		raise requests.exceptions.HTTPError(f"Request failed: {response.text}")
+		raise requests.exceptions.HTTPError(
+			f"Request failed with status {response.status_code}: {response.text}", response=response
+		)

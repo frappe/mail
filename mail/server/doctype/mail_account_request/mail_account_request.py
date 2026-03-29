@@ -239,7 +239,7 @@ class MailAccountRequest(Document):
 			roles.append("Mail Admin")
 
 		# Create User
-		user = create_user(self.account, first_name, last_name, password, self.email, roles)
+		user = create_user(self.account, first_name, last_name, password, roles)
 		_add_user_to_tenant(self.tenant, user, self.is_admin)
 
 		# Generate App Password
@@ -256,13 +256,16 @@ class MailAccountRequest(Document):
 		principal.append("app_passwords", {"identifier": frappe.local.site, "password": app_password})
 		principal.insert(ignore_permissions=True)
 
-		# Update User JMAP settings
-		jmap_server_url = frappe.db.get_value("Mail Cluster", get_cluster_for_tenant(self.tenant), "base_url")
-		user_doc = frappe.get_doc("User", user)
-		user_doc.jmap_server_url = jmap_server_url
-		user_doc.jmap_username = self.account
-		user_doc.jmap_app_password = app_password
-		user_doc.save(ignore_permissions=True)
+		# Create User Settings
+		user_settings = frappe.new_doc("User Settings")
+		user_settings.user = user
+		user_settings.server_url = frappe.db.get_value(
+			"Mail Cluster", get_cluster_for_tenant(self.tenant), "base_url"
+		)
+		user_settings.username = self.account
+		user_settings.app_password = app_password
+		user_settings.backup_email = self.email
+		user_settings.save(ignore_permissions=True)
 
 		# Create Push Subscription
 		if frappe.utils.get_url().startswith("https"):
@@ -276,7 +279,6 @@ def create_user(
 	first_name: str,
 	last_name: str | None = None,
 	password: str | None = None,
-	backup_email: str | None = None,
 	roles: list[str] | None = None,
 ) -> str:
 	"""Creates a User document"""
@@ -287,7 +289,6 @@ def create_user(
 	user.username = email
 	user.email = email
 	user.owner = email
-	user.backup_email = backup_email
 	user.send_welcome_email = 0
 	if roles:
 		user.append_roles(*roles)
