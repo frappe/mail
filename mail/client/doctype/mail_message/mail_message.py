@@ -1283,6 +1283,7 @@ def schedule_fetch_changes() -> None:
 		.where(
 			(USER.enabled == 1)
 			& (USER_SETTINGS.username.isnotnull())
+			& (USER_SETTINGS.skip_schedule_fetch_changes == 0)
 			& (
 				USER_SETTINGS.email_state_last_update.isnull()
 				| (USER_SETTINGS.email_state_last_update < get_datetime(add_to_date(now(), hours=-3)))
