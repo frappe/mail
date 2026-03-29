@@ -174,7 +174,7 @@
    "fieldname": "color_scheme",
    "fieldtype": "Select",
    "label": "Color Scheme",
-   "options": "Light Mode\nDark Mode\nSystem Default",
+   "options": "System Default\nLight Mode\nDark Mode",
    "reqd": 1
   },
   {
@@ -212,7 +212,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-28 09:54:02.381750",
+ "modified": "2026-03-29 14:45:04.629433",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",

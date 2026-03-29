@@ -21,6 +21,9 @@ class UserSettings(Document):
 	def validate_jmap_settings(self) -> None:
 		"""Validate the JMAP settings by connecting to the JMAP server and verifying the default outgoing email."""
 
+		if self.flags.skip_jmap_validation:
+			return
+
 		try:
 			info = JMAPConnectionInfo(self.server_url, self.username, self.get_password("app_password"))
 			connection = JMAPConnection(info)
