@@ -39,7 +39,12 @@ def get_calendar_events(from_date: str, to_date: str, time_zone: str) -> list[di
 	uids = {event["uid"] for event in events}
 	masters = get_master_events_by_uids(user, list(uids))
 	master_map = {
-		uid: {"recurrence_rule": json.loads(master["recurrence_rule"]), "master_id": master["id"]}
+		uid: {
+			"recurrence_rule": json.loads(master["recurrence_rule"]),
+			"master_id": master["id"],
+			"master_start": master["start"],
+			"master_duration": master["duration"],
+		}
 		for uid, master in masters.items()
 	}
 

@@ -171,6 +171,10 @@ const eventParams = computed(() => {
 		),
 		duration: duration.value,
 	}
+	if (selectedEvent.calendarEvent?.recurrence_id && !isUpdateInstance.value) {
+		params.start = selectedEvent.calendarEvent.master_start
+		params.duration = selectedEvent.calendarEvent.master_duration
+	}
 
 	if (event.title) params.title = event.title
 	if (dayjs && dayjs.tz) params.time_zone = dayjs.tz.guess()
@@ -371,11 +375,10 @@ const dialogOptions = computed(() => ({
 				editEvent.loading ||
 				editEventInstance.loading ||
 				(!isNew.value && !Object.keys(patch.value).length),
-			onClick: () => {
-				if (selectedEvent?.calendarEvent?.recurrence_id)
-					showRecurringEventModal.value = true
-				else handleSave()
-			},
+			onClick: () =>
+				shouldShowRecurringEventModal.value
+					? (showRecurringEventModal.value = true)
+					: handleSave(),
 		},
 	],
 }))
@@ -390,6 +393,12 @@ const showSendEmailModalOptions = computed(() => ({
 		: __('Send an email to let attendees know this event has been updated?'),
 }))
 
+const shouldShowRecurringEventModal = computed(
+	() =>
+		selectedEvent?.calendarEvent?.recurrence_id &&
+		!Object.keys(patch.value).includes('recurrence_rule'),
+)
+
 const showRecurringEventModal = ref(false)
 
 const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
@@ -398,7 +407,7 @@ const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
 	message: __('Do you want to update just this instance, or all events in the series?'),
 }
 
-const isUpdateInstance = ref(true)
+const isUpdateInstance = ref(false)
 
 const handleSaveRecurringEvent = (updateInstance: boolean) => {
 	isUpdateInstance.value = updateInstance
