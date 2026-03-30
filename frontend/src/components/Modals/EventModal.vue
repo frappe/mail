@@ -11,25 +11,56 @@ import EventParticipantList from '@/components/EventParticipantList.vue'
 import EventRepeatSettingsModal from '@/components/Modals/EventRepeatSettingsModal.vue'
 
 const show = defineModel<boolean>()
-
 const { selectedEvent } = defineProps<{ selectedEvent: any }>()
-
 const emit = defineEmits(['reloadEvents'])
 
 const user = inject('$user')
 const dayjs = inject('$dayjs')
-
 const { identities } = userStore()
 
 const isNew = computed(() => !selectedEvent?.calendarEvent)
-
 const showRSVP = computed(() => !isNew.value && selectedEvent.calendarEvent.role !== 'Organizer')
 
-const getDefaultEvent = () => {
+// --- Event initialization ---
+
+const getEventData = () => {
+	if (isNew.value) return getDefaultEventData()
+
+	const { calendarEvent: ev } = selectedEvent
+	const start = dayjs(ev.start)
+	const end = start.add(dayjs.duration(ev.duration))
+	const isAllDay =
+		start.hour() === 0 &&
+		start.minute() === 0 &&
+		start.second() === 0 &&
+		dayjs.duration(ev.duration).days() > 0 &&
+		dayjs.duration(ev.duration).hours() === 0 &&
+		dayjs.duration(ev.duration).minutes() === 0 &&
+		dayjs.duration(ev.duration).seconds() === 0
+
+	return {
+		title: ev.title || '',
+		organizer: ev.organizer,
+		isAllDay,
+		repeat: !!ev.recurrence_rule?.frequency,
+		startDate: start.format('YYYY-MM-DD'),
+		startTime: start.format('HH:mm'),
+		endDate: end.format('YYYY-MM-DD'),
+		endTime: end.format('HH:mm'),
+		free_busy_status: ev.free_busy_status,
+		privacy: ev.privacy,
+		locations: ev.locations.length ? ev.locations.map((l) => l._name) : [''],
+		alerts: ev.alerts?.map(parseAlert) ?? [],
+		description: ev.description || '',
+		participants: [...ev.participants],
+		recurrence_rule: ev.recurrence_rule,
+	}
+}
+
+const getDefaultEventData = () => {
 	const startTime = dayjs(selectedEvent.date).isToday()
 		? dayjs().add(1, 'hour').minute(0).second(0).format('HH:mm')
 		: '10:00'
-
 	return {
 		title: '',
 		organizer: user.data.name,
@@ -55,99 +86,23 @@ const getDefaultEvent = () => {
 	}
 }
 
-const getEvent = () => {
-	const start = dayjs(selectedEvent.calendarEvent?.start)
-	const duration = dayjs.duration(selectedEvent.calendarEvent?.duration)
-	const end = start.add(duration)
-	const isAllDay =
-		start.hour() === 0 &&
-		start.minute() === 0 &&
-		start.second() === 0 &&
-		duration.days() > 0 &&
-		duration.hours() === 0 &&
-		duration.minutes() === 0 &&
-		duration.seconds() === 0
-
-	const recurrence_rule = selectedEvent.calendarEvent.recurrence_rule
-
-	const locations = selectedEvent.calendarEvent.locations.length
-		? selectedEvent.calendarEvent.locations.map((l) => l._name)
-		: ['']
-
-	const alerts = selectedEvent.calendarEvent.alerts?.map((a) => {
-		if (a.type === 'OffsetTrigger') {
-			const offset = dayjs.duration(a.offset)
-
-			let unit: string
-			let number: number
-			const d = offset.$d
-			if (d.weeks) {
-				unit = 'weeks'
-				number = Math.abs(d.weeks)
-			} else if (d.days) {
-				unit = 'days'
-				number = Math.abs(d.days)
-			} else if (d.hours) {
-				unit = 'hours'
-				number = Math.abs(d.hours)
-			} else {
-				unit = 'minutes'
-				number = Math.abs(d.minutes)
-			}
-
-			return {
-				type: a.type,
-				action: a.action,
-				number,
-				unit,
-				direction: a.offset.startsWith('-') ? -1 : 1,
-				relative_to: a.relative_to,
-			}
-		} else {
-			return {
-				type: a.type,
-				action: a.action,
-				date: dayjs.utc(a.when).format('YYYY-MM-DD'),
-				time: dayjs.utc(a.when).format('HH:mm'),
-			}
-		}
-	})
-
-	return {
-		title: selectedEvent.calendarEvent.title || '',
-		organizer: selectedEvent.calendarEvent.organizer,
-		isAllDay,
-		repeat: !!recurrence_rule?.frequency,
-		startDate: start.format('YYYY-MM-DD'),
-		startTime: start.format('HH:mm'),
-		endDate: end.format('YYYY-MM-DD'),
-		endTime: end.format('HH:mm'),
-		free_busy_status: selectedEvent.calendarEvent.free_busy_status,
-		privacy: selectedEvent.calendarEvent.privacy,
-		locations,
-		alerts,
-		description: selectedEvent.calendarEvent.description || '',
-		participants: [...selectedEvent.calendarEvent.participants],
-		recurrence_rule,
-	}
-}
-
 const event = reactive({})
+let originalParams = {}
+
+// --- Computed params ---
 
 const duration = computed(() => {
-	let duration: string
 	if (event.isAllDay) {
 		const days = dayjs(event.endDate).diff(dayjs(event.startDate), 'day') + 1
-		duration = dayjs.duration({ days }).toISOString()
-	} else {
-		const start = dayjs(event.startDate + 'T' + event.startTime)
-		const end = dayjs(event.endDate + 'T' + event.endTime)
-		const diff = dayjs.duration(end.diff(start))
-		const hours = Math.floor(diff.asHours())
-		const minutes = diff.minutes()
-		duration = dayjs.duration({ hours, minutes }).toISOString()
+		return dayjs.duration({ days }).toISOString()
 	}
-	return duration
+
+	const start = dayjs(`${event.startDate}T${event.startTime}`)
+	const end = dayjs(`${event.endDate}T${event.endTime}`)
+	const diff = dayjs.duration(end.diff(start))
+	const hours = Math.floor(diff.asHours())
+	const minutes = diff.minutes()
+	return dayjs.duration({ hours, minutes }).toISOString()
 })
 
 const participants = computed(() =>
@@ -163,21 +118,22 @@ const userParticipant = computed(() =>
 )
 
 const eventParams = computed(() => {
-	const params = {
+	const params: Record<string, any> = {
 		user: user.data.name,
 		organizer: event.organizer,
-		start: dayjs(event.startDate + 'T' + (event.isAllDay ? '00:00' : event.startTime)).format(
+		start: dayjs(`${event.startDate}T${event.isAllDay ? '00:00' : event.startTime}`).format(
 			'YYYY-MM-DD[T]HH:mm:ss',
 		),
 		duration: duration.value,
 	}
+
 	if (selectedEvent.calendarEvent?.recurrence_id && !isUpdateInstance.value) {
 		params.start = selectedEvent.calendarEvent.master_start
 		params.duration = selectedEvent.calendarEvent.master_duration
 	}
 
 	if (event.title) params.title = event.title
-	if (dayjs && dayjs.tz) params.time_zone = dayjs.tz.guess()
+	if (dayjs?.tz) params.time_zone = dayjs.tz.guess()
 	if (event.recurrence_rule && Object.keys(event.recurrence_rule).length)
 		params.recurrence_rule = event.recurrence_rule
 	if (event.privacy) params.privacy = event.privacy
@@ -188,99 +144,98 @@ const eventParams = computed(() => {
 	if (event.participants?.length) params.participants = event.participants
 	if (event.alerts?.length) {
 		params.alerts = event.alerts.map((a) => {
-			const alert = { action: a.action, type: a.type }
-			if (a.type === 'OffsetTrigger')
+			const base = { action: a.action, type: a.type }
+			if (a.type === 'AbsoluteTrigger')
 				return {
-					...alert,
-					offset: dayjs.duration({ [a.unit]: a.number * a.direction }).toISOString(),
-					relative_to: a.relative_to,
+					...base,
+					when: dayjs(`${a.date}T${a.time}`).format('YYYY-MM-DD[T]HH:mm:ss'),
 				}
-			else
-				return {
-					...alert,
-					when: dayjs(a.date + 'T' + a.time).format('YYYY-MM-DD[T]HH:mm:ss'),
-				}
+
+			return {
+				...base,
+				offset: dayjs.duration({ [a.unit]: a.number * a.direction }).toISOString(),
+				relative_to: a.relative_to,
+			}
 		})
 	}
 
 	return params
 })
 
-const originalEventParams = reactive({})
-
-watch(show, (val) => {
-	if (!val) return
-	Object.assign(event, isNew.value ? getDefaultEvent() : getEvent())
-	Object.assign(originalEventParams, JSON.parse(JSON.stringify(eventParams.value)))
-})
-
 const patch = computed(() =>
 	Object.fromEntries(
 		Object.entries(eventParams.value).filter(
-			([key, value]) => JSON.stringify(value) !== JSON.stringify(originalEventParams[key]),
+			([k, v]) => JSON.stringify(v) !== JSON.stringify(originalParams[k]),
 		),
 	),
 )
 
+// --- Helpers ---
+
+const parseAlert = (a: any) => {
+	if (a.type === 'AbsoluteTrigger')
+		return {
+			type: a.type,
+			action: a.action,
+			date: dayjs.utc(a.when).format('YYYY-MM-DD'),
+			time: dayjs.utc(a.when).format('HH:mm'),
+		}
+
+	const d = dayjs.duration(a.offset).$d
+	const units = ['weeks', 'days', 'hours', 'minutes']
+	const unit = units.find((u) => d[u]) ?? 'minutes'
+	const number = d[unit]
+
+	return {
+		type: a.type,
+		action: a.action,
+		number: Math.abs(number),
+		unit,
+		direction: a.offset.startsWith('-') ? -1 : 1,
+		relative_to: a.relative_to,
+	}
+}
+
+const hasParticipantsOtherThanUser = (participants: any[]) =>
+	participants?.some((p) => identities.data.every((i) => i.email !== p.email)) ?? false
+
+// --- Watchers ---
+
+watch(show, (val) => {
+	if (!val) return
+	Object.assign(event, getEventData())
+	originalParams = JSON.parse(JSON.stringify(eventParams.value))
+})
+
 const showRepeatSettings = ref(false)
+watch(showRepeatSettings, (val) => {
+	if (!val && !event.recurrence_rule?.frequency) event.repeat = false
+})
 
-watch(
-	() => showRepeatSettings.value,
-	(val) => {
-		if (!val && !event.recurrence_rule?.frequency) event.repeat = false
-	},
-)
-
-const addAlertOptions = computed(() => [
-	{
-		label: __('Relative to event'),
-		onClick: () =>
-			event.alerts.push({
-				type: 'OffsetTrigger',
-				action: 'Display',
-				number: 10,
-				unit: 'minutes',
-				direction: -1,
-				relative_to: 'Start',
-			}),
-	},
-	{
-		label: __('On specific date'),
-		onClick: () =>
-			event.alerts.push({
-				type: 'AbsoluteTrigger',
-				action: 'Display',
-				date: dayjs(event.startDate).subtract(1, 'day').format('YYYY-MM-DD'),
-				time: '09:00',
-			}),
-	},
-])
+// --- Participants ---
 
 const addParticipant = (email: string) => {
 	if (!email?.trim()) return
 	if (!/^\S+@\S+\.\S+$/.test(email)) return raiseToast(__('Invalid email address'), 'error')
 	if (event.participants.some((p) => p.email.toLowerCase() === email.toLowerCase())) return
-
 	event.participants.push({ email, participation_status: 'NEEDS-ACTION', expect_reply: true })
 }
 
-const participantsInput = ref('')
-
-const handleParticipantEnter = (event: Event) => {
-	const target = event.target as HTMLInputElement
-	const value = target.value.trim()
+const handleParticipantEnter = (e: Event) => {
+	const value = (e.target as HTMLInputElement).value.trim()
 	if (!value) return
-	const emails = value
+	value
 		.split(',')
-		.map((e) => e.trim())
-		.filter((e) => e)
-	emails.forEach(addParticipant)
-	target.value = ''
-	participantsInput.value = ''
+		.map((s) => s.trim())
+		.filter(Boolean)
+		.forEach(addParticipant)
+	;(e.target as HTMLInputElement).value = ''
 }
 
 const removeParticipant = (email: string) =>
 	(event.participants = event.participants.filter((p) => p.email !== email))
+
+// --- Save logic ---
 
 const handleSuccess = () => {
 	show.value = false
@@ -319,49 +274,85 @@ const editEvent = createResource({
 	onSuccess: handleSuccess,
 })
 
-const hasParticipantsOtherThanUser = (participants) =>
-	participants?.some((p) => identities.data.every((i) => i.email !== p.email)) ?? false
+const isUpdateInstance = ref(false)
 
-const hadOtherParticipants = computed(() =>
-	hasParticipantsOtherThanUser(selectedEvent?.calendarEvent?.participants),
-)
-const hasOtherParticipants = computed(() => hasParticipantsOtherThanUser(event.participants))
+const submitEvent = (sendEmail: boolean) => {
+	const isInstance = isUpdateInstance.value && selectedEvent.calendarEvent?.recurrence_id
+	const resource = isNew.value ? createEvent : isInstance ? editEventInstance : editEvent
+	const messages = isNew.value
+		? { loading: __('Creating event...'), success: __('Event created.') }
+		: { loading: __('Updating event...'), success: __('Event updated.') }
 
-const handleSave = () => {
-	if (hadOtherParticipants.value || hasOtherParticipants.value) showSendEmailModal.value = true
-	else createOrEditEvent(false)
-}
-
-const createOrEditEvent = (sendEmail: boolean) => {
-	if (isNew.value)
-		toast.promise(createEvent.submit({ sendEmail }), {
-			loading: __('Creating event...'),
-			success: __('Event created.'),
-			error: __('Action failed. Please try again in some time.'),
-		})
-	else
-		toast.promise(
-			isUpdateInstance.value && selectedEvent.calendarEvent.recurrence_id
-				? editEventInstance.submit({ sendEmail })
-				: editEvent.submit({ sendEmail }),
-			{
-				loading: __('Updating event...'),
-				success: __('Event updated.'),
-				error: __('Action failed. Please try again in some time.'),
-			},
-		)
+	toast.promise(resource.submit({ sendEmail }), {
+		...messages,
+		error: __('Action failed. Please try again in some time.'),
+	})
 	showSendEmailModal.value = false
 }
+
+const showSendEmailModal = ref(false)
+const showRecurringEventModal = ref(false)
+
+const handleSave = () => {
+	const needsEmail =
+		hasParticipantsOtherThanUser(selectedEvent?.calendarEvent?.participants) ||
+		hasParticipantsOtherThanUser(event.participants)
+	if (needsEmail) showSendEmailModal.value = true
+	else submitEvent(false)
+}
+
+const handleSaveRecurringEvent = (updateInstance: boolean) => {
+	isUpdateInstance.value = updateInstance
+	showRecurringEventModal.value = false
+	handleSave()
+}
+
+const shouldShowRecurringEventModal = computed(
+	() =>
+		selectedEvent?.calendarEvent?.recurrence_id &&
+		!Object.keys(patch.value).includes('recurrence_rule'),
+)
+
+// --- Alerts ---
+
+const addAlertOptions = computed(() => [
+	{
+		label: __('Relative to event'),
+		onClick: () =>
+			event.alerts.push({
+				type: 'OffsetTrigger',
+				action: 'Display',
+				number: 10,
+				unit: 'minutes',
+				direction: -1,
+				relative_to: 'Start',
+			}),
+	},
+	{
+		label: __('On specific date'),
+		onClick: () =>
+			event.alerts.push({
+				type: 'AbsoluteTrigger',
+				action: 'Display',
+				date: dayjs(event.startDate).subtract(1, 'day').format('YYYY-MM-DD'),
+				time: '09:00',
+			}),
+	},
+])
+
+// --- Contacts search ---
 
 const mailContacts = createResource({
 	url: 'mail.api.contacts.get_contacts',
 	makeParams: (text: string) => ({
 		filter: { operator: 'OR', conditions: [{ text }, { email: text }] },
 	}),
-	transform: (data) => data.map((option) => option.email),
+	transform: (data) => data.map((o) => o.email),
 })
 
 const debouncedSearch = useDebounceFn((text: string) => text && mailContacts.reload(text), 300)
+
+// --- Dialog options ---
 
 const dialogOptions = computed(() => ({
 	title: isNew.value ? __('Add Event') : __('Edit Event'),
@@ -383,38 +374,6 @@ const dialogOptions = computed(() => ({
 	],
 }))
 
-const showSendEmailModal = ref(false)
-
-const showSendEmailModalOptions = computed(() => ({
-	title: __('Notify Participants'),
-	icon: { name: 'bell' },
-	message: isNew.value
-		? __("Send an email to let attendees know they've been invited?")
-		: __('Send an email to let attendees know this event has been updated?'),
-}))
-
-const shouldShowRecurringEventModal = computed(
-	() =>
-		selectedEvent?.calendarEvent?.recurrence_id &&
-		!Object.keys(patch.value).includes('recurrence_rule'),
-)
-
-const showRecurringEventModal = ref(false)
-
-const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
-	title: __('Update Recurring Event'),
-	icon: { name: 'repeat' },
-	message: __('Do you want to update just this instance, or all events in the series?'),
-}
-
-const isUpdateInstance = ref(false)
-
-const handleSaveRecurringEvent = (updateInstance: boolean) => {
-	isUpdateInstance.value = updateInstance
-	showRecurringEventModal.value = false
-	handleSave()
-}
-
 const RSVP_OPTIONS = [
 	{ label: __(' '), value: 'NEEDS-ACTION' },
 	{ label: __('Yes'), value: 'ACCEPTED' },
@@ -431,6 +390,20 @@ const VISIBILITY_OPTIONS = [
 	{ label: __('Public'), value: 'Public' },
 	{ label: __('Private'), value: 'Private' },
 ]
+
+const showSendEmailModalOptions = computed(() => ({
+	title: __('Notify Participants'),
+	icon: { name: 'bell' },
+	message: isNew.value
+		? __("Send an email to let attendees know they've been invited?")
+		: __('Send an email to let attendees know this event has been updated?'),
+}))
+
+const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
+	title: __('Update Recurring Event'),
+	icon: { name: 'repeat' },
+	message: __('Do you want to update just this instance, or all events in the series?'),
+}
 </script>
 
 <template>
@@ -616,10 +589,8 @@ const VISIBILITY_OPTIONS = [
 	<Dialog v-model="showSendEmailModal" :options="showSendEmailModalOptions">
 		<template #actions>
 			<div class="flex justify-end space-x-2">
-				<Button variant="outline" @click="createOrEditEvent(false)">
-					{{ __('Skip') }}
-				</Button>
-				<Button variant="solid" @click="createOrEditEvent(true)">
+				<Button variant="outline" @click="submitEvent(false)"> {{ __('Skip') }} </Button>
+				<Button variant="solid" @click="submitEvent(true)">
 					{{ __('Send Email') }}
 				</Button>
 			</div>
