@@ -28,7 +28,6 @@ const getEventData = () => {
 
 	const { calendarEvent: ev } = selectedEvent
 	const start = dayjs(ev.start)
-	const end = start.add(dayjs.duration(ev.duration))
 	const isAllDay =
 		start.hour() === 0 &&
 		start.minute() === 0 &&
@@ -37,6 +36,8 @@ const getEventData = () => {
 		dayjs.duration(ev.duration).hours() === 0 &&
 		dayjs.duration(ev.duration).minutes() === 0 &&
 		dayjs.duration(ev.duration).seconds() === 0
+	const end = start.add(dayjs.duration(ev.duration))
+	const displayEnd = isAllDay ? end.subtract(1, 'day') : end
 
 	return {
 		title: ev.title || '',
@@ -45,7 +46,7 @@ const getEventData = () => {
 		repeat: !!ev.recurrence_rule?.frequency,
 		startDate: start.format('YYYY-MM-DD'),
 		startTime: start.format('HH:mm'),
-		endDate: end.format('YYYY-MM-DD'),
+		endDate: displayEnd.format('YYYY-MM-DD'),
 		endTime: end.format('HH:mm'),
 		free_busy_status: ev.free_busy_status,
 		privacy: ev.privacy,
@@ -132,7 +133,6 @@ const eventParams = computed(() => {
 
 	if (selectedEvent.calendarEvent?.recurrence_id && !isUpdateInstance.value) {
 		params.start = selectedEvent.calendarEvent.master_start
-		params.duration = selectedEvent.calendarEvent.master_duration
 	}
 
 	if (event.title) params.title = event.title
