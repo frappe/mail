@@ -164,9 +164,11 @@ const eventParams = computed(() => {
 
 const patch = computed(() =>
 	Object.fromEntries(
-		Object.entries(eventParams.value).filter(
-			([k, v]) => JSON.stringify(v) !== JSON.stringify(originalParams[k]),
-		),
+		[...new Set([...Object.keys(eventParams.value), ...Object.keys(originalParams)])]
+			.filter(
+				(k) => JSON.stringify(eventParams.value[k]) !== JSON.stringify(originalParams[k]),
+			)
+			.map((k) => [k, eventParams.value[k]]),
 	),
 )
 
@@ -423,20 +425,31 @@ const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
 							:label="__('All Day')"
 							type="checkbox"
 						/>
-						<FormControl
-							v-model="event.repeat"
-							:label="
-								__('Repeat: {0}', [
+						<div class="flex items-center space-x-3">
+							<FormControl
+								v-model="event.repeat"
+								:label="
 									event.recurrence_rule?.frequency
-										? getRepeatMessage(event.recurrence_rule)
-										: __('Off'),
-								])
-							"
-							type="checkbox"
-							@update:model-value="
-								$event ? (showRepeatSettings = true) : (event.recurrence_rule = {})
-							"
-						/>
+										? __('Repeat: {0}', [
+												getRepeatMessage(event.recurrence_rule),
+											])
+										: __('Repeat')
+								"
+								type="checkbox"
+								@update:model-value="
+									$event
+										? (showRepeatSettings = true)
+										: (event.recurrence_rule = {})
+								"
+							/>
+							<span
+								v-if="event.recurrence_rule?.frequency"
+								class="text-ink-gray-4 cursor-pointer text-base hover:underline"
+								@click="showRepeatSettings = true"
+							>
+								{{ __('Edit') }}
+							</span>
+						</div>
 					</div>
 
 					<!-- Date and Time -->
@@ -555,7 +568,6 @@ const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
 					<!-- Participants -->
 					<h3 class="text-base font-medium">{{ __('Participants') }}</h3>
 					<Combobox
-						v-model="participantsInput"
 						:options="mailContacts?.data || []"
 						:placeholder="__('Enter participants')"
 						@input="debouncedSearch($event)"
@@ -574,6 +586,7 @@ const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
 	<EventRepeatSettingsModal
 		v-model="showRepeatSettings"
 		:start-date="event?.startDate"
+		:r-rule="event?.recurrence_rule"
 		@update-recurrence-rule="(val) => (event.recurrence_rule = val)"
 	/>
 	<Dialog v-model="showRecurringEventModal" :options="SHOW_RECURRING_EVENT_MODAL_OPTIONS">
