@@ -58,18 +58,21 @@ const getEventData = () => {
 }
 
 const getDefaultEventData = () => {
-	const startTime = dayjs(selectedEvent.date).isToday()
-		? dayjs().add(1, 'hour').minute(0).second(0).format('HH:mm')
-		: '10:00'
+	const startTime = selectedEvent?.time
+		? dayjs(selectedEvent.time, 'h a').format('HH:mm')
+		: dayjs(selectedEvent.date).isToday()
+			? dayjs().add(1, 'hour').startOf('hour').format('HH:mm')
+			: '10:00'
+
 	return {
 		title: '',
 		organizer: user.data.name,
-		isAllDay: true,
+		isAllDay: !selectedEvent?.time,
 		repeat: false,
 		startDate: dayjs(selectedEvent.date).format('YYYY-MM-DD'),
 		startTime,
 		endDate: dayjs(selectedEvent.date).format('YYYY-MM-DD'),
-		endTime: dayjs(startTime, 'HH:mm').add(30, 'minute').format('HH:mm'),
+		endTime: dayjs(startTime, 'HH:mm').add(1, 'hour').format('HH:mm'),
 		locations: [''],
 		alerts: [],
 		description: '',
@@ -411,8 +414,8 @@ const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
 <template>
 	<Dialog v-model="show" :disable-outside-click-to-close="true" :options="dialogOptions">
 		<template #body-content>
-			<div class="grid max-h-[48rem] grid-cols-5 gap-6 overflow-y-auto">
-				<div class="col-span-3 space-y-4">
+			<div class="grid max-h-[48rem] grid-cols-11 gap-6 overflow-y-auto">
+				<div class="col-span-7 space-y-4">
 					<h3 class="text-base font-medium">{{ __('Event Details') }}</h3>
 					<!-- Title -->
 					<FormControl
@@ -545,7 +548,7 @@ const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
 						:placeholder="__('Event description')"
 					/>
 				</div>
-				<div class="col-span-2 flex h-full flex-col space-y-4 border-l pl-6">
+				<div class="col-span-4 flex h-full flex-col space-y-4 border-l pl-6">
 					<!-- RSVP -->
 					<template v-if="showRSVP">
 						<h3 class="text-base font-medium">{{ __('RSVP') }}</h3>

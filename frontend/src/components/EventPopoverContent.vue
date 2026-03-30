@@ -218,7 +218,7 @@ const RESPONSE_STATUS_MAPPING = { ACCEPTED: __('Yes'), TENTATIVE: __('Maybe'), D
 </script>
 
 <template>
-	<div class="bg-surface-modal text-ink-gray-8 w-[32rem] rounded shadow-xl" @click.stop>
+	<div class="bg-surface-modal text-ink-gray-8 w-[32rem] rounded shadow-2xl" @click.stop>
 		<!-- Header: title, date, and actions -->
 		<div class="flex justify-between border-b p-5">
 			<div class="space-y-2">
