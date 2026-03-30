@@ -2,7 +2,7 @@
 import { computed, inject, reactive, watch } from 'vue'
 import { Dialog, FormControl } from 'frappe-ui'
 
-import { getRepeatFrequencyOptions } from '@/utils/format'
+import { getRepeatFrequencyOptions, getRepeatMessage } from '@/utils/format'
 
 const show = defineModel<boolean>()
 const { startDate, rRule } = defineProps<{ startDate: string; rRule: any }>()
@@ -179,7 +179,7 @@ const DIALOG_OPTIONS = {
 				<!-- Interval + Frequency -->
 				<div class="flex space-x-4">
 					<FormControl
-						v-model="repeat.interval"
+						v-model.number="repeat.interval"
 						:label="__('Repeat Every')"
 						type="number"
 						class="w-full"
@@ -241,10 +241,14 @@ const DIALOG_OPTIONS = {
 				/>
 				<FormControl
 					v-else-if="repeat.end === 'After Occurrences'"
-					v-model="repeat.count"
+					v-model.number="repeat.count"
 					type="number"
 					:label="__('Total Occurrences')"
 				/>
+
+				<hr />
+
+				<div class="text-base font-medium">{{ getRepeatMessage(recurrenceRule) }}</div>
 			</div>
 		</template>
 	</Dialog>

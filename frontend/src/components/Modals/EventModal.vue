@@ -414,45 +414,15 @@ const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
 			<div class="grid max-h-[48rem] grid-cols-5 gap-6 overflow-y-auto">
 				<div class="col-span-3 space-y-4">
 					<h3 class="text-base font-medium">{{ __('Event Details') }}</h3>
+					<!-- Title -->
 					<FormControl
 						v-model="event.title"
 						:label="__('Title')"
 						:placeholder="__('Meeting with Team')"
 					/>
-					<div class="flex items-center space-x-6">
-						<FormControl
-							v-model="event.isAllDay"
-							:label="__('All Day')"
-							type="checkbox"
-						/>
-						<div class="flex items-center space-x-3">
-							<FormControl
-								v-model="event.repeat"
-								:label="
-									event.recurrence_rule?.frequency
-										? __('Repeat: {0}', [
-												getRepeatMessage(event.recurrence_rule),
-											])
-										: __('Repeat')
-								"
-								type="checkbox"
-								@update:model-value="
-									$event
-										? (showRepeatSettings = true)
-										: (event.recurrence_rule = {})
-								"
-							/>
-							<span
-								v-if="event.recurrence_rule?.frequency"
-								class="text-ink-gray-4 cursor-pointer text-base hover:underline"
-								@click="showRepeatSettings = true"
-							>
-								{{ __('Edit') }}
-							</span>
-						</div>
-					</div>
 
 					<!-- Date and Time -->
+					<FormControl v-model="event.isAllDay" :label="__('All Day')" type="checkbox" />
 					<div class="flex space-x-4">
 						<FormControl
 							v-model="event.startDate"
@@ -482,6 +452,29 @@ const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
 							:label="__('End Time')"
 							class="w-full"
 						/>
+					</div>
+
+					<!-- Repeat -->
+					<div class="flex items-center space-x-3">
+						<FormControl
+							v-model="event.repeat"
+							:label="
+								event.recurrence_rule?.frequency
+									? __('Repeat: {0}', [getRepeatMessage(event.recurrence_rule)])
+									: __('Repeat')
+							"
+							type="checkbox"
+							@update:model-value="
+								$event ? (showRepeatSettings = true) : (event.recurrence_rule = {})
+							"
+						/>
+						<span
+							v-if="event.recurrence_rule?.frequency"
+							class="text-ink-gray-4 cursor-pointer text-base hover:underline"
+							@click="showRepeatSettings = true"
+						>
+							{{ __('Edit') }}
+						</span>
 					</div>
 
 					<!-- Locations -->
