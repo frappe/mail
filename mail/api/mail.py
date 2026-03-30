@@ -21,10 +21,11 @@ from mail.client.doctype.mail_message.mail_message import (
 	set_spam_status,
 )
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
-from mail.jmap import get_mailbox_id_by_role
+from mail.jmap import get_email_service, get_mailbox_id_by_role
 from mail.utils import convert_html_to_text
 from mail.utils.cache import get_user_emails
 from mail.utils.user import has_role
+from mail.utils.validation import has_permission_for_user
 
 AVATAR_CACHE_TTL = 60 * 60 * 24
 
@@ -598,3 +599,16 @@ def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 	frappe.local.response.filecontent = avatar
 	frappe.local.response.mimetype = "image/png"
 	frappe.local.response.type = "binary"
+
+
+def get_email_suggestions(query: str, limit: int = 5) -> list[str]:
+	"""Returns email suggestions based on the given query."""
+
+	if not query:
+		return []
+
+	user = frappe.session.user
+	has_permission_for_user(user)
+
+	service = get_email_service(frappe.session.user)
+	return service.get_email_suggestions(query, limit)

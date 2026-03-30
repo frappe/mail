@@ -263,6 +263,73 @@ class EmailService(MailService):
 
 		return threads if fetch_all else [ids[0] for ids in threads.values()]
 
+	def get_email_suggestions(self, text: str, limit: int = 5, separate_requests: bool = False) -> list[str]:
+		"""
+		Get email suggestions based on the given text.
+
+		Args:
+		        text (str): The text to search for in email addresses.
+		        limit (int): The maximum number of suggestions to return.
+		        separate_requests (bool): Whether to make separate requests for each filter.
+
+		Returns:
+		        list[str]: A list of email addresses matching the given text.
+		"""
+
+		ids: list[str] = []
+		addresses: list[str] = []
+
+		def collect_ids(response) -> None:
+			"""Helper function to collect unique email IDs from the method responses."""
+
+			for _method, result, _call_id in response.get("methodResponses", []):
+				for id in result.get("ids", []):
+					if id not in ids:
+						ids.append(id)
+
+		filters = [
+			{"from": text},
+			{"to": text},
+			{"cc": text},
+			{"bcc": text},
+		]
+
+		method_calls = [
+			[
+				f"{self._type}/query",
+				{
+					"accountId": self.primary_account_id,
+					"filter": f,
+					"position": 0,
+					"limit": limit,
+					"sort": [{"property": "receivedAt", "isAscending": False}],
+					"calculateTotal": False,
+				},
+				str(i),
+			]
+			for i, f in enumerate(filters)
+		]
+
+		if separate_requests:
+			for call in method_calls:
+				collect_ids(self._call(self.capabilities, method_calls=[call]))
+		else:
+			collect_ids(self._call(self.capabilities, method_calls=method_calls))
+
+		if not ids:
+			return addresses
+
+		emails = self.get(ids, properties=["from", "to", "cc", "bcc"])
+
+		for email in emails:
+			for field in ("from", "to", "cc", "bcc"):
+				for addr in email.get(field) or []:
+					email_address = addr.get("email")
+					if email_address and text.lower() in email_address.lower() not in addresses:
+						addresses.append(email_address)
+
+		return addresses[:limit]
+
 	def _create(self, emails: list[EmailCreateModel], call_id_gen: CallIdGenerator) -> tuple[list, dict]:
 		"""Helper method to create email drafts for the given list of EmailCreateModel instances and return the method calls for the JMAP request along with a mapping of creation IDs to draft references."""
 
