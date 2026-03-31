@@ -20,9 +20,9 @@ from mail.jmap.services.mail.mailbox import MailboxService
 from mail.jmap.services.mail.push_subscription import PushSubscriptionService
 from mail.jmap.services.mail.submission.email_submission import EmailSubmissionService
 from mail.jmap.services.mail.thread import ThreadService
-from mail.jmap.services.mail.vacationresponse.vacation_response import VacationResponseService
 from mail.jmap.services.quota.quota import QuotaService
 from mail.jmap.services.sieve.sieve_script import SieveScriptService
+from mail.jmap.services.vacationresponse.vacation_response import VacationResponseService
 from mail.jmap.services.websocket.websocket import WebSocketService
 from mail.utils.user import has_role
 from mail.utils.validation import has_permission_for_user
