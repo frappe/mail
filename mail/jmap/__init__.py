@@ -10,7 +10,6 @@ from mail.jmap.services.calendars.calendar import CalendarService
 from mail.jmap.services.calendars.calendar_event import CalendarEventService
 from mail.jmap.services.calendars.calendar_event_notification import CalendarEventNotificationService
 from mail.jmap.services.calendars.participant_identity import ParticipantIdentityService
-from mail.jmap.services.calendars.principal import PrincipalService
 from mail.jmap.services.contacts.address_book import AddressBookService
 from mail.jmap.services.contacts.contact_card import ContactCardService
 from mail.jmap.services.core import CoreService
@@ -20,6 +19,7 @@ from mail.jmap.services.mail.mailbox import MailboxService
 from mail.jmap.services.mail.push_subscription import PushSubscriptionService
 from mail.jmap.services.mail.submission.email_submission import EmailSubmissionService
 from mail.jmap.services.mail.thread import ThreadService
+from mail.jmap.services.principals.principal import PrincipalService
 from mail.jmap.services.quota.quota import QuotaService
 from mail.jmap.services.sieve.sieve_script import SieveScriptService
 from mail.jmap.services.vacationresponse.vacation_response import VacationResponseService

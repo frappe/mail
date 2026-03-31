@@ -23,6 +23,23 @@ class QuotaService(CoreService):
 
 		return self.connection.primary_accounts["urn:ietf:params:jmap:quota"]
 
+	def get(self, ids: list[str] | None = None) -> list[dict]:
+		"""Public method to get quotas, handling batching if a list of ids is provided."""
+
+		results = []
+		if ids:
+			for batch in self.create_batches(ids, self.max_objects_in_get):
+				response = self._get(batch)
+
+				if method_responses := response.get("methodResponses"):
+					results.extend(method_responses[0][1].get("list", []))
+		else:
+			response = self._get()
+			if method_responses := response.get("methodResponses"):
+				results.extend(method_responses[0][1].get("list", []))
+
+		return results
+
 	def query(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, sort: list[dict] | None = None
 	) -> dict:
@@ -49,23 +66,6 @@ class QuotaService(CoreService):
 				position += batch_size
 
 		return {"ids": ids[:limit], "total": total}
-
-	def get(self, ids: list[str] | None = None) -> list[dict]:
-		"""Public method to get quotas, handling batching if a list of ids is provided."""
-
-		results = []
-		if ids:
-			for batch in self.create_batches(ids, self.max_objects_in_get):
-				response = self._get(batch)
-
-				if method_responses := response.get("methodResponses"):
-					results.extend(method_responses[0][1].get("list", []))
-		else:
-			response = self._get()
-			if method_responses := response.get("methodResponses"):
-				results.extend(method_responses[0][1].get("list", []))
-
-		return results
 
 	def changes(self, since_state: str) -> dict:
 		"""Public method to get quota changes since a given state."""
