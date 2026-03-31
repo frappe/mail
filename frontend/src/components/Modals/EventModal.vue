@@ -292,17 +292,17 @@ const submitEvent = (sendEmail: boolean) => {
 		...messages,
 		error: __('Action failed. Please try again in some time.'),
 	})
-	showSendEmailModal.value = false
+	showNotifyParticipantsModal.value = false
 }
 
-const showSendEmailModal = ref(false)
+const showNotifyParticipantsModal = ref(false)
 const showRecurringEventModal = ref(false)
 
 const handleSave = () => {
 	const needsEmail =
 		hasParticipantsOtherThanUser(selectedEvent?.calendarEvent?.participants) ||
 		hasParticipantsOtherThanUser(event.participants)
-	if (needsEmail) showSendEmailModal.value = true
+	if (needsEmail) showNotifyParticipantsModal.value = true
 	else submitEvent(false)
 }
 
@@ -396,7 +396,7 @@ const VISIBILITY_OPTIONS = [
 	{ label: __('Private'), value: 'Private' },
 ]
 
-const showSendEmailModalOptions = computed(() => ({
+const showNotifyParticipantsOptions = computed(() => ({
 	title: __('Notify Participants'),
 	icon: { name: 'bell' },
 	message: isNew.value
@@ -595,7 +595,7 @@ const SHOW_RECURRING_EVENT_MODAL_OPTIONS = {
 			</div>
 		</template>
 	</Dialog>
-	<Dialog v-model="showSendEmailModal" :options="showSendEmailModalOptions">
+	<Dialog v-model="showNotifyParticipantsModal" :options="showNotifyParticipantsOptions">
 		<template #actions>
 			<div class="flex justify-end space-x-2">
 				<Button variant="outline" @click="submitEvent(false)"> {{ __('Skip') }} </Button>

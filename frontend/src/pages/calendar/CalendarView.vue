@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, inject, reactive, ref, useTemplateRef, watch } from 'vue'
+import { computed, inject, onMounted, reactive, ref, useTemplateRef, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { Calendar, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
@@ -12,12 +13,24 @@ const dayjs = inject('$dayjs')
 
 const { identities } = userStore()
 
+const route = useRoute()
+const router = useRouter()
+
 const calendar = useTemplateRef('calendar')
 
 watch(
 	() => [calendar.value?.currentYear, calendar.value?.currentMonth],
 	() => events.reload(),
 )
+
+watch(
+	() => calendar.value?.activeView,
+	(view) => router.replace({ query: { ...route.query, view } }),
+)
+
+onMounted(() => {
+	if (route.query.view) calendar.value.activeView = route.query.view.toString()
+})
 
 const transformEvent = (event) => {
 	const start = dayjs(event.start)
