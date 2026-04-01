@@ -62,13 +62,13 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 
 	response = backend.request(
 		"PATCH",
-		f"{PRINCIPAL_ENDPOINT}/{doc.jmap_username}",
+		f"{PRINCIPAL_ENDPOINT}/{username}",
 		data=json.dumps(actions),
 	)
 
 	if response.json().get("error"):
 		frappe.throw(
 			_("Failed to update password for Mail Principal {0}. Response: {1}").format(
-				frappe.bold(doc.jmap_username), frappe.bold(response.text)
+				frappe.bold(username), frappe.bold(response.text)
 			)
 		)
