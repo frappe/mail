@@ -73,6 +73,13 @@ class UserSettings(Document):
 				)
 			)
 
+	@frappe.whitelist()
+	def show_app_password(self) -> str:
+		"""Returns the app password of the user."""
+
+		frappe.only_for("Administrator")
+		return self.get_password("app_password")
+
 	def _db_set(
 		self,
 		update_modified: bool = True,
