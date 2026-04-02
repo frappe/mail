@@ -17,6 +17,14 @@
   "email_current_state",
   "column_break_mylj",
   "email_state_last_update",
+  "cache_section",
+  "has_cached_jmap_connection",
+  "has_cached_jmap_identities",
+  "has_cached_jmap_mailboxes",
+  "column_break_uuod",
+  "total_cached_blobs",
+  "total_cached_mail_messages",
+  "total_cached_contact_cards",
   "outgoing_section",
   "default_outgoing_email",
   "column_break_scmb",
@@ -228,12 +236,76 @@
    "fieldtype": "Check",
    "label": "Skip Schedule Fetch Changes",
    "search_index": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "cache_section",
+   "fieldtype": "Section Break",
+   "label": "Cache"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_cached_jmap_connection",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "Has Cached JMAP Connection",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "has_cached_jmap_identities",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "Has Cached JMAP Identities",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "has_cached_jmap_mailboxes",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "Has Cached JMAP Mailboxes",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_uuod",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_cached_mail_messages",
+   "fieldtype": "Int",
+   "is_virtual": 1,
+   "label": "Total Cached Mail Messages",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_cached_contact_cards",
+   "fieldtype": "Int",
+   "is_virtual": 1,
+   "label": "Total Cached Contact Cards",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "total_cached_blobs",
+   "fieldtype": "Int",
+   "is_virtual": 1,
+   "label": "Total Cached Blobs",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-29 15:58:51.611037",
+ "modified": "2026-04-02 23:46:21.232489",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",

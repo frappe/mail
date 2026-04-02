@@ -19,7 +19,6 @@ from frappe.utils import (
 	cint,
 	escape_html,
 	get_datetime,
-	get_url,
 	now,
 	random_string,
 	time_diff_in_seconds,
