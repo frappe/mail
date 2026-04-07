@@ -303,7 +303,7 @@ export const processInlineImages = (mail: ComposeMailData) => {
 			return
 		}
 
-		const url = new URL(src)
+		const url = new URL(src, window.location.origin)
 		const blob_id = url.searchParams.get('blob_id')
 		if (!blob_id) return
 
