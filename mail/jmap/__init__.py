@@ -24,7 +24,8 @@ from mail.jmap.services.quota.quota import QuotaService
 from mail.jmap.services.sieve.sieve_script import SieveScriptService
 from mail.jmap.services.vacationresponse.vacation_response import VacationResponseService
 from mail.jmap.services.websocket.websocket import WebSocketService
-from mail.utils.user import has_role
+from mail.utils import get_mail_config
+from mail.utils.user import has_jmap_settings, has_role
 from mail.utils.validation import has_permission_for_user
 
 
@@ -32,13 +33,8 @@ def get_jmap_connection(user: str, ignore_permissions: bool = False, cache: bool
 	"""Returns a JMAPConnection instance for the specified user, with optional permission checks and caching."""
 
 	def generator() -> JMAPConnection:
+		has_jmap_settings(user, raise_exception=True)
 		user_settings = frappe.get_lazy_doc("User Settings", user)
-
-		if not user_settings.server_url or not user_settings.username or not user_settings.app_password:
-			frappe.throw(
-				_("JMAP settings are not configured for user {0}.").format(frappe.bold(user)),
-				frappe.ValidationError,
-			)
 
 		if frappe.db.get_value("Mail Tenant Member", {"user": user}, "tenant"):
 			if user_settings.user != user_settings.username:
@@ -49,8 +45,15 @@ def get_jmap_connection(user: str, ignore_permissions: bool = False, cache: bool
 					frappe.ValidationError,
 				)
 
+		server_url = user_settings.server_url or get_mail_config().get("server_url")
+		if not server_url:
+			frappe.throw(
+				_("Server URL must be set in either the user's settings or the site configuration."),
+				frappe.ValidationError,
+			)
+
 		info = JMAPConnectionInfo(
-			user_settings.server_url, user_settings.username, user_settings.get_password("app_password")
+			server_url, user_settings.username, user_settings.get_password("app_password")
 		)
 		return JMAPConnection(info)
 

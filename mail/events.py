@@ -12,6 +12,7 @@ from mail.utils.user import (
 	get_cluster_for_tenant,
 	get_tenant_for_user,
 	get_user_hashed_password,
+	has_user_settings,
 	is_tenant_bound_user,
 )
 from mail.utils.validation import ensure_tenant_has_cluster
@@ -20,11 +21,7 @@ from mail.utils.validation import ensure_tenant_has_cluster
 def update_account_password(doc: Document, method: str | None = None) -> None:
 	"""Update the password in the Principal when the User's password is changed, but ONLY if the hash is different from the backend stored hash."""
 
-	if not (
-		doc.enabled
-		and is_tenant_bound_user(doc.name)
-		and frappe.db.exists("User Settings", {"user": doc.name})
-	):
+	if not (doc.enabled and is_tenant_bound_user(doc.name) and has_user_settings(doc.name)):
 		return
 
 	tenant = get_tenant_for_user(doc.name)

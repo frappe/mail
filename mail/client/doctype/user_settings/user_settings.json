@@ -52,8 +52,7 @@
    "in_standard_filter": 1,
    "label": "Server URL",
    "length": 255,
-   "placeholder": "https://mail.frappemail.com/",
-   "reqd": 1
+   "placeholder": "https://mail.frappemail.com/"
   },
   {
    "fieldname": "column_break_uxkb",
@@ -67,7 +66,6 @@
    "in_standard_filter": 1,
    "label": "Username",
    "placeholder": "john@example.com",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -75,8 +73,8 @@
    "fieldname": "app_password",
    "fieldtype": "Password",
    "label": "App Password",
-   "no_copy": 1,
-   "reqd": 1
+   "mandatory_depends_on": "eval: doc.username",
+   "no_copy": 1
   },
   {
    "description": "Previously synced email state used to detect changes from the server.",
@@ -124,6 +122,7 @@
   },
   {
    "collapsible": 1,
+   "depends_on": "eval: doc.username",
    "fieldname": "jmap_state_section",
    "fieldtype": "Section Break",
    "label": "JMAP State"
@@ -166,6 +165,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.username",
    "fieldname": "outgoing_section",
    "fieldtype": "Section Break",
    "label": "Outgoing"
@@ -194,6 +194,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.username",
    "description": "Group email messages in the list by time period (e.g., day or month).",
    "fieldname": "group_messages_by",
    "fieldtype": "Select",
@@ -202,6 +203,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval: doc.username",
    "description": "Show a preview pane beside the email list for quick reading.",
    "fieldname": "show_reading_pane",
    "fieldtype": "Check",
@@ -221,6 +223,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "depends_on": "eval: doc.username",
    "fieldname": "inbound_section",
    "fieldtype": "Section Break",
    "label": "Inbound"
@@ -239,6 +242,7 @@
   },
   {
    "collapsible": 1,
+   "depends_on": "eval: doc.username",
    "fieldname": "cache_section",
    "fieldtype": "Section Break",
    "label": "Cache"
@@ -305,7 +309,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-02 23:46:21.232489",
+ "modified": "2026-04-07 12:35:31.180621",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",
@@ -328,7 +332,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

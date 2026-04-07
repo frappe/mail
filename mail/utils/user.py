@@ -39,6 +39,30 @@ def is_system_manager(user: str) -> bool:
 	return is_administrator(user) or has_role(user, "System Manager")
 
 
+def has_user_settings(user: str, raise_exception: bool = False) -> bool:
+	"""Returns True if the user has User Settings else False."""
+
+	if frappe.db.exists("User Settings", {"user": user}):
+		return True
+
+	if raise_exception:
+		frappe.throw(_("User {0} does not have User Settings configured.").format(frappe.bold(user)))
+
+	return False
+
+
+def has_jmap_settings(user: str, raise_exception: bool = False) -> bool:
+	"""Returns True if the user has JMAP settings configured else False."""
+
+	if frappe.db.exists("User Settings", {"user": user, "username": ["!=", None]}):
+		return True
+
+	if raise_exception:
+		frappe.throw(_("User {0} does not have JMAP settings configured.").format(frappe.bold(user)))
+
+	return False
+
+
 def is_tenant_bound_user(user: str) -> bool:
 	"""Returns True if the user is a tenant bound user else False."""
 

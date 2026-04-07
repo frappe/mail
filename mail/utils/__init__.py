@@ -59,6 +59,13 @@ def reconnect_on_failure(max_retries: int = 3) -> callable:
 	return wrapper
 
 
+def get_mail_config() -> dict[str, Any]:
+	"""Returns the mail configuration from frappe.conf, or an empty dict if not set."""
+
+	config = frappe.conf.mail or {}
+	return config
+
+
 def is_probable_hash(s: str) -> bool:
 	"""Return True if string looks like a known password hash."""
 

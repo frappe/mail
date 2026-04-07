@@ -14,6 +14,7 @@ from mail.jmap import (
 )
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
+from mail.utils import get_mail_config
 from mail.utils.user import get_tenant_for_user, has_role, is_system_manager, is_tenant_bound_user
 from mail.utils.validation import has_permission_for_user
 
@@ -29,12 +30,18 @@ class UserSettings(Document):
 	def has_cached_jmap_identities(self) -> int:
 		"""Check if there are cached JMAP identities for the user."""
 
+		if not self.username:
+			return 0
+
 		service = get_core_service(self.user)
 		return cint(bool(service.cache.get("identities")))
 
 	@property
 	def has_cached_jmap_mailboxes(self) -> int:
 		"""Check if there are cached JMAP mailboxes for the user."""
+
+		if not self.username:
+			return 0
 
 		service = get_core_service(self.user)
 		return cint(bool(service.cache.get("mailboxes")))
@@ -61,7 +68,7 @@ class UserSettings(Document):
 		return len(frappe.cache.lrange(list_key, 0, -1) or [])
 
 	def validate(self) -> None:
-		if frappe.flags.in_migrate:
+		if not self.username or frappe.flags.in_migrate:
 			return
 
 		self.validate_jmap_settings()
@@ -73,8 +80,16 @@ class UserSettings(Document):
 		if self.flags.skip_jmap_validation:
 			return
 
+		if not self.username:
+			return
+
+		server_url = self.server_url or get_mail_config().get("server_url")
+
+		if not server_url or not self.get_password("app_password"):
+			frappe.throw(_("Server URL and App Password are required to validate JMAP settings."))
+
 		try:
-			info = JMAPConnectionInfo(self.server_url, self.username, self.get_password("app_password"))
+			info = JMAPConnectionInfo(server_url, self.username, self.get_password("app_password"))
 			connection = JMAPConnection(info)
 		except Exception as e:
 			if (

@@ -32,7 +32,13 @@ from mail.utils import (
 )
 from mail.utils.cache import get_cluster_for_tenant, get_root_domain_name
 from mail.utils.dns import verify_dns_record
-from mail.utils.user import get_principal_tenant, get_tenant_for_user, is_system_manager, is_tenant_admin
+from mail.utils.user import (
+	get_principal_tenant,
+	get_tenant_for_user,
+	has_user_settings,
+	is_system_manager,
+	is_tenant_admin,
+)
 from mail.utils.validation import (
 	ensure_access_to_tenant,
 	ensure_emails_belong_to_tenant_domains,
@@ -718,7 +724,7 @@ class MailPrincipal(Document):
 			if member := frappe.db.exists("Mail Tenant Member", {"tenant": self.tenant, "user": self.name}):
 				frappe.delete_doc("Mail Tenant Member", member, ignore_permissions=True)
 
-			if frappe.db.exists("User Settings", self.name):
+			if has_user_settings(self.name):
 				frappe.delete_doc("User Settings", self.name, ignore_permissions=True)
 
 			if frappe.db.exists("User", self.name):

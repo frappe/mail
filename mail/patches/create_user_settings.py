@@ -1,11 +1,13 @@
 import frappe
 
+from mail.utils.user import has_user_settings
+
 
 def execute() -> None:
 	users = frappe.db.get_all("User", {"jmap_username": ["!=", ""]}, pluck="name")
 
 	for user in users:
-		if frappe.db.exists("User Settings", {"user": user}):
+		if has_user_settings(user):
 			continue
 
 		user_doc = frappe.get_doc("User", user)
