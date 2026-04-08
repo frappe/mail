@@ -171,6 +171,7 @@ class MailSettings(Document):
 		self.jmap_push_auth = base64.urlsafe_b64encode(auth_bytes).decode()
 
 		self.flags.ignore_mandatory = True
+		self.flags.ignore_validate = True
 		self.save()
 
 	@staticmethod
