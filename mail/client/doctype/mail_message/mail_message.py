@@ -1171,17 +1171,30 @@ def _store_blob_in_cache(user: str, blob_id: str, content: bytes) -> None:
 			frappe.cache.delete_key(_get_blob_cache_key(user, oldest_id))
 
 
-def fetch_changes(user: str, email_state: str | None = None) -> None:
+def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = None) -> None:
 	"""Fetch changes from the server and remove MailMessage documents from the cache."""
+
+	ctx = ctx or {}
+
+	logger = frappe.logger("mail.push", allow_site=True, file_count=100)
+	logger.setLevel("DEBUG")
 
 	current_state = get_sync_state(user, type="email")
 
+	ctx["current_state"] = current_state
+	ctx["email_state"] = email_state
+
 	if not current_state:
+		logger.debug({**ctx, "event": "initializing-email-sync-state"})
 		return update_sync_state(user, type="email", state=email_state)
+
 	elif email_state == current_state:
+		logger.debug({**ctx, "event": "email-state-unchanged"})
 		return
 
 	try:
+		logger.debug({**ctx, "event": "fetching-changes-from-server"})
+
 		connection = get_jmap_connection(user)
 		email_service = EmailService(user, connection)
 		mailbox_service = MailboxService(user, connection)
@@ -1189,6 +1202,8 @@ def fetch_changes(user: str, email_state: str | None = None) -> None:
 		result = email_service.changes(current_state)
 
 		if created_ids := result["created"]:
+			logger.debug({**ctx, "event": "new-messages-created", "count": len(created_ids)})
+
 			if messages := get_messages(user, ids=created_ids):
 				inbox_id = mailbox_service.get_mailbox_id_by_role(
 					"inbox", create_if_not_exists=True, raise_exception=True
@@ -1203,10 +1218,20 @@ def fetch_changes(user: str, email_state: str | None = None) -> None:
 							if mailbox["mailbox_id"] == inbox_id:
 								notify_candidates.append(message)
 
+				logger.debug({**ctx, "notify_candidates_count": len(notify_candidates)})
+
 				max_push_notifications = cint(frappe.conf.max_push_notifications) or 5
 				recent_messages = notify_candidates[:max_push_notifications]
+
+				logger.debug({**ctx, "recent_notify_candidates_count": len(recent_messages)})
+
 				pn = PushNotification("mail")
+
 				if pn.is_enabled():
+					logger.debug(
+						{**ctx, "event": "sending-push-notifications", "count": len(recent_messages)}
+					)
+
 					url = frappe.utils.get_url()
 					for message in recent_messages:
 						pn.send_notification_to_user(
@@ -1216,53 +1241,87 @@ def fetch_changes(user: str, email_state: str | None = None) -> None:
 							f"{url}/mail/mailbox/{inbox_id}/{message['thread_id']}",
 							f"{url}/assets/mail/frontend/manifest/manifest-icon-192.maskable.png",
 						)
+				else:
+					logger.debug({**ctx, "event": "push-notifications-disabled"})
 
 				if mailboxes:
 					frappe.publish_realtime("new_mail_created", list(mailboxes), user=user)
 
 		if updated_ids := result["updated"]:
+			logger.debug({**ctx, "event": "messages-updated", "count": len(updated_ids)})
 			_remove_messages_from_cache(user, updated_ids)
 
 		if destroyed_ids := result["destroyed"]:
+			logger.debug({**ctx, "event": "messages-deleted", "count": len(destroyed_ids)})
 			_remove_messages_from_cache(user, destroyed_ids)
 
 		new_state = result["newState"]
+
+		ctx["new_state"] = new_state
+		logger.debug({**ctx, "event": "updating-email-sync-state"})
+
 		update_sync_state(user, type="email", state=new_state)
 
 		if result["hasMoreChanges"]:
-			fetch_changes(user)
+			logger.debug({**ctx, "event": "more-changes-to-fetch"})
+			ctx.pop("current_state", None)
+			ctx.pop("email_state", None)
+			ctx.pop("new_state", None)
+
+			fetch_changes(user, ctx=ctx)
+
 	except Exception:
+		logger.error({**ctx, "event": "fetch-changes-failed"})
 		frappe.log_error(
 			title=_("Failed to fetch changes"),
 			message=frappe.get_traceback(with_context=True),
 		)
 
 
-def locked_fetch_changes(user: str, email_state: str | None, lock_id: str) -> None:
+def locked_fetch_changes(user: str, email_state: str | None, lock_id: str, ctx: dict | None = None) -> None:
 	"""Fetch changes for the specified user with a lock to prevent concurrent execution."""
 
+	ctx = ctx or {}
+
+	logger = frappe.logger("mail.push", allow_site=True, file_count=100)
+	logger.setLevel("DEBUG")
+
 	try:
-		fetch_changes(user, email_state)
+		logger.debug({**ctx, "event": "starting-fetch-changes"})
+		fetch_changes(user, email_state, ctx=ctx)
 	finally:
+		logger.debug({**ctx, "event": "releasing-fetch-changes-lock"})
 		release_lock(f"fetch_changes:{user}", lock_id)
 
 
-def enqueue_fetch_changes(user: str, email_state: str | None = None) -> None:
+def enqueue_fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = None) -> None:
 	"""Enqueue the fetch_changes job for the specified user."""
+
+	ctx = ctx or {}
+
+	logger = frappe.logger("mail.push", allow_site=True, file_count=100)
+	logger.setLevel("DEBUG")
+
+	logger.debug({**ctx, "event": "enqueueing-fetch-changes"})
 
 	lockname = f"fetch_changes:{user}"
 	fetch_lock_timeout = cint(frappe.conf.fetch_lock_timeout) or 300
 	identifier = acquire_lock(lockname, acquire_timeout=0, lock_timeout=fetch_lock_timeout)
 
 	if not identifier:
+		logger.debug({**ctx, "event": "fetch-changes-lock-not-acquired"})
 		return
 
+	ctx["lock_id"] = identifier
+
 	with user_context("Administrator"):
+		logger.debug({**ctx, "event": "fetch-changes-lock-acquired"})
 		enqueue_job(
 			locked_fetch_changes,
 			user=user,
 			email_state=email_state,
 			lock_id=identifier,
+			ctx=ctx,
 			queue="short",
 			enqueue_after_commit=True,
 		)
