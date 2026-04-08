@@ -119,7 +119,12 @@ const { mailboxes } = userStore()
 
 const user = inject('$user')
 
-const apps = createResource({ url: 'mail.api.get_apps', cache: 'otherApps', auto: true })
+const apps = createResource({
+	url: 'mail.api.get_apps',
+	cache: 'otherApps',
+	auto: true,
+	transform: (data) => data.filter((app) => app.name !== 'mail'),
+})
 
 const showSettings = ref(false)
 const showAddMailbox = ref(false)

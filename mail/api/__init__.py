@@ -50,14 +50,13 @@ def get_translations() -> dict:
 @redis_cache()
 def get_apps():
 	apps = get_permitted_apps()
-	app_list = [
-		{
-			"name": "frappe",
-			"logo": "/assets/mail/images/desk.png",
-			"title": "Desk",
-			"route": "/app",
-		}
-	]
-	app_list += [app for app in apps if app.get("name") != "mail"]
+	desk = {
+		"name": "frappe",
+		"logo": "/assets/mail/images/desk.png",
+		"title": "Desk",
+		"route": "/app",
+	}
 
-	return app_list
+	apps.insert(0, desk)
+
+	return apps
