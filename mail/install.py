@@ -14,6 +14,7 @@ def after_install() -> None:
 	add_rate_limits()
 	create_default_tenant()
 	create_new_folder("Frappe Mail", "Home")
+	generate_jmap_push_keys()
 
 
 def after_migrate() -> None:
@@ -61,6 +62,14 @@ def create_default_tenant() -> None:
 	tenant.user = "Administrator"
 	tenant.allow_personal_signup = 1
 	tenant.insert(ignore_permissions=True)
+
+
+def generate_jmap_push_keys() -> None:
+	"""Generates new JMAP push subscription encryption keys and saves them in Mail Settings."""
+
+	settings = frappe.get_single("Mail Settings")
+	if not settings.jmap_push_p256dh or not settings.jmap_push_private_key or not settings.jmap_push_auth:
+		settings._generate_jmap_push_keys()
 
 
 def install_stalwart_cli() -> str:
