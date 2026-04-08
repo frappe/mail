@@ -97,7 +97,7 @@ def push_notification() -> dict:
 								"event": "queueing-email-sync",
 							}
 						)
-						enqueue_fetch_changes(user, state)
+						enqueue_fetch_changes(user, state, ctx=ctx)
 
 					elif entity == "Mailbox":
 						logger.info(
