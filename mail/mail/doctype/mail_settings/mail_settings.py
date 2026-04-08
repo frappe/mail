@@ -27,7 +27,8 @@ class MailSettings(Document):
 	def validate_root_domain_name(self) -> None:
 		"""Validates the Root Domain Name."""
 
-		self.root_domain_name = self.root_domain_name.lower()
+		if self.root_domain_name:
+			self.root_domain_name = self.root_domain_name.lower()
 
 	def validate_dns_provider(self) -> None:
 		"""Validates the DNS Provider."""
