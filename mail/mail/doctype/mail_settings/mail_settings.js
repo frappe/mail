@@ -8,6 +8,7 @@ frappe.ui.form.on('Mail Settings', {
 
 	refresh(frm) {
 		frm.trigger('add_comments')
+		frm.trigger('add_actions')
 	},
 
 	set_queries(frm) {
@@ -41,5 +42,32 @@ frappe.ui.form.on('Mail Settings', {
 			)
 			frm.dashboard.add_comment(msg, 'yellow', true)
 		}
+	},
+
+	add_actions(frm) {
+		frm.add_custom_button(
+			__('Generate JMAP Push Keys'),
+			() => frm.trigger('generate_jmap_push_keys'),
+			__('Actions'),
+		)
+	},
+
+	generate_jmap_push_keys(frm) {
+		frappe.confirm(
+			__(
+				'This will replace any existing JMAP Push keys. Existing push subscriptions must be recreated after generating new keys. Continue?',
+			),
+			() => {
+				frappe.call({
+					doc: frm.doc,
+					method: 'generate_jmap_push_keys',
+					freeze: true,
+					freeze_message: __('Generating keys…'),
+					callback: (r) => {
+						if (!r.exc) frm.reload_doc()
+					},
+				})
+			},
+		)
 	},
 })

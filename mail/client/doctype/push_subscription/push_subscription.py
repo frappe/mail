@@ -1,6 +1,7 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import base64
 import json
 from uuid import uuid7
 
@@ -150,6 +151,7 @@ def add_push_subscription(
 		"device_client_id": device_client_id,
 		"url": url,
 		"types": types,
+		"keys": get_push_subscription_keys(),
 	}
 
 	service = get_push_subscription_service(user, ignore_permissions=ignore_permissions)
@@ -272,6 +274,108 @@ def format_push_subscription(user: str, push_subscription: dict) -> dict:
 		"creation": today(),
 		"modified": today(),
 	}
+
+
+def get_push_subscription_keys() -> dict | None:
+	"""Returns the JMAP push subscription encryption keys from Mail Settings, or None if not configured."""
+
+	settings = frappe.get_cached_doc("Mail Settings")
+	p256dh = (settings.get("jmap_push_p256dh") or "").strip()
+	auth = (settings.get_password("jmap_push_auth") if settings.get("jmap_push_auth") else "").strip()
+
+	if p256dh and auth:
+		return {"p256dh": p256dh, "auth": auth}
+
+
+def decrypt_jmap_push_payload(raw_body: bytes) -> dict:
+	"""Decrypts the JMAP push notification payload using the encryption keys from Mail Settings and returns the decrypted data as a dictionary."""
+
+	import struct
+
+	from cryptography.hazmat.primitives.asymmetric import ec
+	from cryptography.hazmat.primitives.asymmetric.ec import ECDH
+	from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+	from cryptography.hazmat.primitives.hashes import SHA256
+	from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+	from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
+	def _b64decode(s: str) -> bytes:
+		s = s.strip()
+		return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+
+	settings = frappe.get_cached_doc("Mail Settings")
+	private_key_b64 = (
+		settings.get_password("jmap_push_private_key") if settings.get("jmap_push_private_key") else ""
+	).strip()
+	auth_b64 = (settings.get_password("jmap_push_auth") if settings.get("jmap_push_auth") else "").strip()
+
+	if not private_key_b64 or not auth_b64:
+		frappe.throw(_("JMAP Push Subscription decryption keys are not configured in Mail Settings."))
+
+	auth_bytes = _b64decode(auth_b64)
+
+	priv_bytes = _b64decode(private_key_b64)
+	private_key = ec.derive_private_key(int.from_bytes(priv_bytes, "big"), ec.SECP256R1())
+
+	if len(raw_body) < 21:
+		frappe.throw(_("Encrypted push notification payload is too short."))
+
+	salt = raw_body[:16]
+	rs = struct.unpack_from(">I", raw_body, 16)[0]
+	idlen = raw_body[20]
+
+	if len(raw_body) < 21 + idlen:
+		frappe.throw(_("Encrypted push notification payload is malformed."))
+
+	sender_pub_bytes = raw_body[21 : 21 + idlen]
+	ciphertext_data = raw_body[21 + idlen :]
+
+	try:
+		sender_pub = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256R1(), sender_pub_bytes)
+	except Exception:
+		frappe.throw(_("Encrypted push notification contains an invalid sender public key."))
+
+	shared_secret = private_key.exchange(ECDH(), sender_pub)
+
+	receiver_pub_bytes = private_key.public_key().public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
+	auth_info = b"WebPush: info\x00" + receiver_pub_bytes + sender_pub_bytes
+
+	ikm = HKDF(algorithm=SHA256(), length=32, salt=auth_bytes, info=auth_info).derive(shared_secret)
+
+	cek = HKDF(algorithm=SHA256(), length=16, salt=salt, info=b"Content-Encoding: aes128gcm\x00").derive(ikm)
+	nonce_base = HKDF(algorithm=SHA256(), length=12, salt=salt, info=b"Content-Encoding: nonce\x00").derive(
+		ikm
+	)
+
+	aesgcm = AESGCM(cek)
+	plaintext = b""
+	seq = 0
+	pos = 0
+
+	while pos < len(ciphertext_data):
+		record = ciphertext_data[pos : pos + rs]
+		pos += rs
+
+		nonce = bytes(a ^ b for a, b in zip(nonce_base, seq.to_bytes(12, "big"), strict=False))
+
+		try:
+			decrypted = aesgcm.decrypt(nonce, record, None)
+		except Exception:
+			frappe.throw(_("Failed to decrypt push notification: authentication tag mismatch."))
+
+		i = len(decrypted) - 1
+		while i >= 0 and decrypted[i] == 0x00:
+			i -= 1
+		if i < 0 or decrypted[i] not in (0x01, 0x02):
+			frappe.throw(_("Invalid padding in decrypted push notification record."))
+
+		plaintext += decrypted[:i]
+		seq += 1
+
+	try:
+		return json.loads(plaintext)
+	except json.JSONDecodeError:
+		frappe.throw(_("Decrypted push notification payload is not valid JSON."))
 
 
 def freeze_jmap_push_notifications(user: str) -> None:

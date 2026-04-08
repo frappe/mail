@@ -18,6 +18,7 @@ class PushSubscriptionService(MailService):
 				payload[subscription["creation_id"]] = {
 					"deviceClientId": subscription["device_client_id"],
 					"url": subscription["url"],
+					"keys": subscription.get("keys") or None,
 					"types": subscription["types"],
 				}
 

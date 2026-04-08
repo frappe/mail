@@ -7,6 +7,11 @@
   "section_break_hrww",
   "root_domain_name",
   "column_break_4ccc",
+  "section_break_qvpk",
+  "jmap_push_p256dh",
+  "jmap_push_private_key",
+  "column_break_wpvf",
+  "jmap_push_auth",
   "dns_provider_section",
   "dns_provider",
   "column_break_pntn",
@@ -66,6 +71,36 @@
   {
    "fieldname": "column_break_4ccc",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_qvpk",
+   "fieldtype": "Section Break",
+   "label": "JMAP Push"
+  },
+  {
+   "description": "P-256 ECDH public key for JMAP PushSubscription encryption.",
+   "fieldname": "jmap_push_p256dh",
+   "fieldtype": "Data",
+   "label": "JMAP Push Key (P256DH)",
+   "read_only": 1
+  },
+  {
+   "description": "ECDH P-256 private key used to decrypt incoming encrypted push notifications.",
+   "fieldname": "jmap_push_private_key",
+   "fieldtype": "Password",
+   "label": "JMAP Push Private Key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_wpvf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Authentication secret for JMAP PushSubscription encryption.",
+   "fieldname": "jmap_push_auth",
+   "fieldtype": "Password",
+   "label": "JMAP Push Auth Secret",
+   "read_only": 1
   },
   {
    "fieldname": "spamassassin_tab",
@@ -240,7 +275,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-11-27 14:40:21.513257",
+ "modified": "2026-04-08 09:54:08.953300",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

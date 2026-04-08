@@ -5,6 +5,8 @@ from frappe import _
 
 from mail.client.doctype.mail_message.mail_message import enqueue_fetch_changes
 from mail.client.doctype.push_subscription.push_subscription import (
+	decrypt_jmap_push_payload,
+	get_push_subscription_keys,
 	is_jmap_push_notifications_frozen,
 	verify_push_subscription,
 )
@@ -21,7 +23,21 @@ def push_notification() -> dict:
 			frappe.throw(_("Missing user query parameter."))
 
 		user = unquote(user)
-		request_data = frappe.request.get_json()
+
+		keys = get_push_subscription_keys()
+		content_encoding = frappe.request.headers.get("Content-Encoding", "")
+
+		if keys:
+			if content_encoding != "aes128gcm":
+				frappe.throw(
+					_(
+						"Push notification must be encrypted (Content-Encoding: aes128gcm)"
+						" when JMAP Push keys are configured."
+					)
+				)
+			request_data = decrypt_jmap_push_payload(frappe.request.get_data())
+		else:
+			request_data = frappe.request.get_json()
 
 		if request_data["@type"] == "PushVerification":
 			verify_push_subscription(
