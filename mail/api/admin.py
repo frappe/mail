@@ -191,7 +191,7 @@ def get_mailing_lists(txt: str | None = None) -> list[dict]:
 	"""Get mailing lists for user's tenant"""
 
 	if not (
-		lists := frappe.db.get_list("Mail Principal", filters={"type": "List", "text": txt}, page_length=50)
+		lists := frappe.get_list("Mail Principal", filters={"type": "List", "text": txt}, page_length=500)
 	):
 		return []
 

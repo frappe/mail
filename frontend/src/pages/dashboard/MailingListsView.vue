@@ -16,7 +16,7 @@
 			ref="listView"
 			class="flex-1"
 			:columns="LIST_COLUMNS"
-			:rows="lists.data"
+			:rows="lists.data.filter((l) => l.name.includes(search))"
 			:options="LIST_OPTIONS"
 			row-key="name"
 		>
