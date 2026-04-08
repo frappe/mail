@@ -1217,6 +1217,10 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 							mailboxes.add(mailbox["mailbox_id"])
 							if mailbox["mailbox_id"] == inbox_id:
 								notify_candidates.append(message)
+					else:
+						logger.debug(
+							{**ctx, "event": "skipping-notification-for-message", "message_id": message["id"]}
+						)
 
 				logger.debug({**ctx, "notify_candidates_count": len(notify_candidates)})
 
