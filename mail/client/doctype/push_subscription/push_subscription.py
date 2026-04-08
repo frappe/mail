@@ -304,78 +304,136 @@ def decrypt_jmap_push_payload(raw_body: bytes) -> dict:
 		return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
 
 	settings = frappe.get_cached_doc("Mail Settings")
+
 	private_key_b64 = (
 		settings.get_password("jmap_push_private_key") if settings.get("jmap_push_private_key") else ""
 	).strip()
+
 	auth_b64 = (settings.get_password("jmap_push_auth") if settings.get("jmap_push_auth") else "").strip()
 
 	if not private_key_b64 or not auth_b64:
 		frappe.throw(_("JMAP Push Subscription decryption keys are not configured in Mail Settings."))
 
-	auth_bytes = _b64decode(auth_b64)
+	try:
+		auth_bytes = _b64decode(auth_b64)
+		priv_bytes = _b64decode(private_key_b64)
+	except Exception:
+		frappe.throw(_("Invalid base64 encoding in JMAP push keys."))
 
-	priv_bytes = _b64decode(private_key_b64)
-	private_key = ec.derive_private_key(int.from_bytes(priv_bytes, "big"), ec.SECP256R1())
+	if len(priv_bytes) != 32:
+		frappe.throw(_("Invalid JMAP push private key length (must be 32 bytes)."))
+
+	try:
+		private_key = ec.derive_private_key(int.from_bytes(priv_bytes, "big"), ec.SECP256R1())
+	except Exception:
+		frappe.throw(_("Failed to construct EC private key."))
 
 	if len(raw_body) < 21:
-		frappe.throw(_("Encrypted push notification payload is too short."))
+		frappe.throw(_("Encrypted push payload is too short."))
 
 	salt = raw_body[:16]
 	rs = struct.unpack_from(">I", raw_body, 16)[0]
 	idlen = raw_body[20]
 
+	if rs <= 0:
+		frappe.throw(_("Invalid record size in encrypted payload."))
+
 	if len(raw_body) < 21 + idlen:
-		frappe.throw(_("Encrypted push notification payload is malformed."))
+		frappe.throw(_("Malformed encrypted payload (invalid key length)."))
 
 	sender_pub_bytes = raw_body[21 : 21 + idlen]
 	ciphertext_data = raw_body[21 + idlen :]
 
+	if not ciphertext_data:
+		frappe.throw(_("Encrypted payload missing ciphertext data."))
+
 	try:
 		sender_pub = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256R1(), sender_pub_bytes)
 	except Exception:
-		frappe.throw(_("Encrypted push notification contains an invalid sender public key."))
+		frappe.throw(_("Invalid sender public key in encrypted payload."))
 
-	shared_secret = private_key.exchange(ECDH(), sender_pub)
+	try:
+		shared_secret = private_key.exchange(ECDH(), sender_pub)
+	except Exception:
+		frappe.throw(_("ECDH key exchange failed."))
 
 	receiver_pub_bytes = private_key.public_key().public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
+
 	auth_info = b"WebPush: info\x00" + receiver_pub_bytes + sender_pub_bytes
 
-	ikm = HKDF(algorithm=SHA256(), length=32, salt=auth_bytes, info=auth_info).derive(shared_secret)
+	try:
+		ikm = HKDF(
+			algorithm=SHA256(),
+			length=32,
+			salt=auth_bytes,
+			info=auth_info,
+		).derive(shared_secret)
 
-	cek = HKDF(algorithm=SHA256(), length=16, salt=salt, info=b"Content-Encoding: aes128gcm\x00").derive(ikm)
-	nonce_base = HKDF(algorithm=SHA256(), length=12, salt=salt, info=b"Content-Encoding: nonce\x00").derive(
-		ikm
-	)
+		cek = HKDF(
+			algorithm=SHA256(),
+			length=16,
+			salt=salt,
+			info=b"Content-Encoding: aes128gcm\x00",
+		).derive(ikm)
+
+		nonce_base = HKDF(
+			algorithm=SHA256(),
+			length=12,
+			salt=salt,
+			info=b"Content-Encoding: nonce\x00",
+		).derive(ikm)
+	except Exception:
+		frappe.throw(_("Key derivation failed."))
+
+	if len(nonce_base) != 12:
+		frappe.throw(_("Invalid nonce base length derived."))
 
 	aesgcm = AESGCM(cek)
-	plaintext = b""
+
+	plaintext = bytearray()
 	seq = 0
 	pos = 0
+
+	MAX_PLAINTEXT_SIZE = 1024 * 1024
 
 	while pos < len(ciphertext_data):
 		record = ciphertext_data[pos : pos + rs]
 		pos += rs
 
-		nonce = bytes(a ^ b for a, b in zip(nonce_base, seq.to_bytes(12, "big"), strict=False))
+		if not record:
+			break
+
+		# Nonce = nonce_base XOR seq (12 bytes)
+		seq_bytes = seq.to_bytes(12, "big")
+		nonce = bytes(a ^ b for a, b in zip(nonce_base, seq_bytes, strict=False))
 
 		try:
 			decrypted = aesgcm.decrypt(nonce, record, None)
 		except Exception:
-			frappe.throw(_("Failed to decrypt push notification: authentication tag mismatch."))
+			frappe.throw(_("Failed to decrypt push payload (authentication failed)."))
 
 		i = len(decrypted) - 1
 		while i >= 0 and decrypted[i] == 0x00:
 			i -= 1
-		if i < 0 or decrypted[i] not in (0x01, 0x02):
-			frappe.throw(_("Invalid padding in decrypted push notification record."))
 
-		plaintext += decrypted[:i]
+		if i < 0:
+			frappe.throw(_("Invalid padding in decrypted record."))
+
+		pad_delimiter = decrypted[i]
+		if pad_delimiter not in (0x01, 0x02):
+			frappe.throw(_("Invalid padding delimiter in decrypted record."))
+
+		plaintext.extend(decrypted[:i])
+
+		if len(plaintext) > MAX_PLAINTEXT_SIZE:
+			frappe.throw(_("Decrypted payload exceeds maximum allowed size."))
+
 		seq += 1
 
 	try:
-		return json.loads(plaintext)
+		return json.loads(bytes(plaintext))
 	except json.JSONDecodeError:
-		frappe.throw(_("Decrypted push notification payload is not valid JSON."))
+		frappe.throw(_("Decrypted push payload is not valid JSON."))
 
 
 def freeze_jmap_push_notifications(user: str) -> None:
