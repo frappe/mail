@@ -383,18 +383,46 @@ def load_compressed_file(file_path: str | None = None, file_data: bytes | None =
 
 
 def extract_compressed_file(file_path: str, destination: str) -> None:
-	"""Extract a .zip, .tar.gz, or .tgz archive to the specified destination directory."""
+	"""Extract a .zip, .tar.gz, or .tgz archive safely."""
+
+	def is_within_directory(base_path, target_path) -> bool:
+		"""Ensure target_path is inside base_path"""
+
+		base_path = os.path.abspath(base_path)
+		target_path = os.path.abspath(target_path)
+		return os.path.commonpath([base_path]) == os.path.commonpath([base_path, target_path])
+
+	def safe_extract_zip(archive, destination) -> None:
+		"""Safely extract ZIP files, preventing path traversal."""
+
+		for member in archive.namelist():
+			member_path = os.path.join(destination, member)
+			if not is_within_directory(destination, member_path):
+				frappe.throw(_("Unsafe file path detected: {0}").format(member))
+		archive.extractall(destination)
+
+	def safe_extract_tar(archive, destination) -> None:
+		"""Safely extract TAR files, preventing path traversal."""
+
+		for member in archive.getmembers():
+			member_path = os.path.join(destination, member.name)
+			if not is_within_directory(destination, member_path):
+				frappe.throw(_("Unsafe file path detected: {0}").format(member.name))
+		archive.extractall(destination)
 
 	if not os.path.exists(file_path):
 		frappe.throw(_("File not found: {0}").format(file_path))
 
+	if not os.path.exists(destination):
+		os.makedirs(destination, exist_ok=True)
+
 	if file_path.endswith(".zip"):
 		with zipfile.ZipFile(file_path, "r") as archive:
-			archive.extractall(destination)
+			safe_extract_zip(archive, destination)
 
 	elif file_path.endswith((".tar.gz", ".tgz")):
 		with tarfile.open(file_path, "r:gz") as archive:
-			archive.extractall(destination)
+			safe_extract_tar(archive, destination)
 
 	else:
 		frappe.throw(_("Unsupported file format: {0}").format(file_path))
