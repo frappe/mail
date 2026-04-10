@@ -42,8 +42,7 @@ const options = computed(() => ({
 }))
 
 const KIND_OPTIONS = [
-	{ label: __('Personal'), value: 'Personal' },
-	{ label: __('Work'), value: 'Work' },
-	{ label: __('Other'), value: 'Other' },
+	{ label: __('Individual'), value: 'Individual' },
+	{ label: __('Group'), value: 'Group' },
 ]
 </script>
