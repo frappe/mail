@@ -248,6 +248,26 @@ def add_contact_card(
 
 
 @frappe.whitelist()
+def bulk_add_contact_cards(user: str, contact_cards: list[dict], raise_exception: bool = True) -> None:
+	"""Adds multiple contact cards for the given user and returns their IDs."""
+
+	has_permission_for_user(user)
+
+	service = get_contact_card_service(user)
+
+	for card in contact_cards:
+		if not card.get("creation_id"):
+			card["creation_id"] = str(uuid7())
+
+	response = service.create(contact_cards)
+
+	title = _("Contact Card Creation Error")
+	if response.get("notCreated"):
+		if raise_exception:
+			frappe.throw(_("One or more contact cards failed to create"), title=title)
+
+
+@frappe.whitelist()
 def fetch_contact_cards(
 	user: str,
 	filter: dict | None = None,
