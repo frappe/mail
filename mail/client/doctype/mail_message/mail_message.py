@@ -34,6 +34,7 @@ from mail.utils import (
 	ensure_html,
 	ensure_text,
 	extract_latest_email_body,
+	get_push_logger,
 	parse_filters,
 	user_context,
 )
@@ -1176,8 +1177,7 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 
 	ctx = ctx or {}
 
-	logger = frappe.logger("mail.push", allow_site=True, file_count=100)
-	logger.setLevel("DEBUG")
+	logger = get_push_logger()
 
 	current_state = get_sync_state(user, type="email")
 
@@ -1185,15 +1185,15 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 	ctx["email_state"] = email_state
 
 	if not current_state:
-		logger.debug({**ctx, "event": "initializing-email-sync-state"})
+		logger.info({**ctx, "event": "initializing-email-sync-state"})
 		return update_sync_state(user, type="email", state=email_state)
 
 	elif email_state == current_state:
-		logger.debug({**ctx, "event": "email-state-unchanged"})
+		logger.info({**ctx, "event": "email-state-unchanged"})
 		return
 
 	try:
-		logger.debug({**ctx, "event": "fetching-changes-from-server"})
+		logger.info({**ctx, "event": "fetching-changes-from-server"})
 
 		connection = get_jmap_connection(user)
 		email_service = EmailService(user, connection)
@@ -1202,7 +1202,7 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 		result = email_service.changes(current_state)
 
 		if created_ids := result["created"]:
-			logger.debug({**ctx, "event": "new-messages-created", "count": len(created_ids)})
+			logger.info({**ctx, "event": "new-messages-created", "count": len(created_ids)})
 
 			if messages := get_messages(user, ids=created_ids):
 				inbox_id = mailbox_service.get_mailbox_id_by_role(
@@ -1217,9 +1217,21 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 							mailboxes.add(mailbox["mailbox_id"])
 							if mailbox["mailbox_id"] == inbox_id:
 								notify_candidates.append(message)
+							else:
+								logger.debug(
+									{
+										**ctx,
+										"event": "skipping-notification-for-non-inbox",
+										"message_id": message["id"],
+									}
+								)
 					else:
 						logger.debug(
-							{**ctx, "event": "skipping-notification-for-message", "message_id": message["id"]}
+							{
+								**ctx,
+								"event": "skipping-notification-for-draft-seen",
+								"message_id": message["id"],
+							}
 						)
 
 				logger.debug({**ctx, "notify_candidates_count": len(notify_candidates)})
@@ -1232,9 +1244,7 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 				pn = PushNotification("mail")
 
 				if pn.is_enabled():
-					logger.debug(
-						{**ctx, "event": "sending-push-notifications", "count": len(recent_messages)}
-					)
+					logger.info({**ctx, "event": "sending-push-notifications", "count": len(recent_messages)})
 
 					url = frappe.utils.get_url()
 					for message in recent_messages:
@@ -1246,28 +1256,28 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 							f"{url}/assets/mail/frontend/manifest/manifest-icon-192.maskable.png",
 						)
 				else:
-					logger.debug({**ctx, "event": "push-notifications-disabled"})
+					logger.info({**ctx, "event": "push-notifications-disabled"})
 
 				if mailboxes:
 					frappe.publish_realtime("new_mail_created", list(mailboxes), user=user)
 
 		if updated_ids := result["updated"]:
-			logger.debug({**ctx, "event": "messages-updated", "count": len(updated_ids)})
+			logger.info({**ctx, "event": "messages-updated", "count": len(updated_ids)})
 			_remove_messages_from_cache(user, updated_ids)
 
 		if destroyed_ids := result["destroyed"]:
-			logger.debug({**ctx, "event": "messages-deleted", "count": len(destroyed_ids)})
+			logger.info({**ctx, "event": "messages-deleted", "count": len(destroyed_ids)})
 			_remove_messages_from_cache(user, destroyed_ids)
 
 		new_state = result["newState"]
 
 		ctx["new_state"] = new_state
-		logger.debug({**ctx, "event": "updating-email-sync-state"})
+		logger.info({**ctx, "event": "updating-email-sync-state"})
 
 		update_sync_state(user, type="email", state=new_state)
 
 		if result["hasMoreChanges"]:
-			logger.debug({**ctx, "event": "more-changes-to-fetch"})
+			logger.info({**ctx, "event": "more-changes-to-fetch"})
 			ctx.pop("current_state", None)
 			ctx.pop("email_state", None)
 			ctx.pop("new_state", None)
@@ -1287,14 +1297,13 @@ def locked_fetch_changes(user: str, email_state: str | None, lock_id: str, ctx: 
 
 	ctx = ctx or {}
 
-	logger = frappe.logger("mail.push", allow_site=True, file_count=100)
-	logger.setLevel("DEBUG")
+	logger = get_push_logger()
 
 	try:
-		logger.debug({**ctx, "event": "starting-fetch-changes"})
+		logger.info({**ctx, "event": "starting-fetch-changes"})
 		fetch_changes(user, email_state, ctx=ctx)
 	finally:
-		logger.debug({**ctx, "event": "releasing-fetch-changes-lock"})
+		logger.info({**ctx, "event": "releasing-fetch-changes-lock"})
 		release_lock(f"fetch_changes:{user}", lock_id)
 
 
@@ -1303,17 +1312,16 @@ def enqueue_fetch_changes(user: str, email_state: str | None = None, ctx: dict |
 
 	ctx = ctx or {}
 
-	logger = frappe.logger("mail.push", allow_site=True, file_count=100)
-	logger.setLevel("DEBUG")
+	logger = get_push_logger()
 
-	logger.debug({**ctx, "event": "enqueueing-fetch-changes"})
+	logger.info({**ctx, "event": "enqueueing-fetch-changes"})
 
 	lockname = f"fetch_changes:{user}"
 	fetch_lock_timeout = cint(frappe.conf.fetch_lock_timeout) or 300
 	identifier = acquire_lock(lockname, acquire_timeout=0, lock_timeout=fetch_lock_timeout)
 
 	if not identifier:
-		logger.debug({**ctx, "event": "fetch-changes-lock-not-acquired"})
+		logger.info({**ctx, "event": "fetch-changes-lock-not-acquired"})
 		return
 
 	ctx["lock_id"] = identifier
@@ -1354,5 +1362,12 @@ def schedule_fetch_changes() -> None:
 	).run(pluck="user")
 
 	if users:
-		for user in users:
-			enqueue_fetch_changes(user)
+		req_id = random_string(10)
+		ctx = {"req_id": req_id}
+		logger = get_push_logger()
+
+		logger.info({**ctx, "event": "scheduling-fetch-changes", "user_count": len(users)})
+
+		for idx, user in enumerate(users, start=1):
+			ctx.update({"req_id": f"{req_id}-{idx}", "user": user})
+			enqueue_fetch_changes(user, ctx=ctx)

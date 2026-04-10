@@ -13,7 +13,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from io import BytesIO
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import bcrypt
 import frappe
@@ -21,10 +21,13 @@ import wrapt
 from bs4 import BeautifulSoup, Comment
 from frappe import _
 from frappe.types.filter import FilterTuple
-from frappe.utils import get_bench_path
+from frappe.utils import cint, get_bench_path
 from markdown_it import MarkdownIt
 from MySQLdb import OperationalError
 from passlib.hash import sha512_crypt
+
+if TYPE_CHECKING:
+	from logging import Logger
 
 INVISIBLE_CHARS = (
 	r"[\u0000-\u001F\u007F-\u009F"  # ASCII control chars
@@ -64,6 +67,21 @@ def get_mail_config() -> dict[str, Any]:
 
 	config = frappe.conf.mail or {}
 	return config
+
+
+def get_push_logger() -> "Logger":
+	"""Returns a logger instance for mail push notifications."""
+
+	config = get_mail_config()
+
+	max_size = cint(config.get("push_log_max_size")) or 5_000_000
+	file_count = cint(config.get("push_log_file_count")) or 10
+	logger = frappe.logger("mail.push", allow_site=True, max_size=max_size, file_count=file_count)
+
+	log_level = config.get("push_log_level", "INFO").upper() or "INFO"
+	logger.setLevel(log_level)
+
+	return logger
 
 
 def is_probable_hash(s: str) -> bool:

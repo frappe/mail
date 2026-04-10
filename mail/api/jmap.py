@@ -12,14 +12,14 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	verify_push_subscription,
 )
 from mail.jmap import invalidate_jmap_identities_cache, invalidate_jmap_mailboxes_cache
+from mail.utils import get_push_logger
 
 
 @frappe.whitelist(methods=["POST"], allow_guest=True)
 def push_notification() -> dict:
 	"""Handle JMAP Push Notification."""
 
-	logger = frappe.logger("mail.push", allow_site=True, file_count=100)
-	logger.setLevel("DEBUG")
+	logger = get_push_logger()
 
 	ctx = {
 		"req_id": random_string(10),
@@ -36,8 +36,6 @@ def push_notification() -> dict:
 
 		user = unquote(user)
 		ctx["user"] = user
-
-		logger.info({**ctx, "event": "processing"})
 
 		if is_jmap_push_notifications_frozen(user):
 			logger.warning({**ctx, "event": "frozen"})
@@ -81,7 +79,7 @@ def push_notification() -> dict:
 			return {"status": "verified"}
 
 		elif event_type == "StateChange":
-			logger.info({**ctx, "type": event_type, "event": "state-change-received"})
+			logger.debug({**ctx, "type": event_type, "event": "state-change-received"})
 
 			changes = [c for c in request_data.get("changed", {}).values()]
 
@@ -124,7 +122,7 @@ def push_notification() -> dict:
 						invalidate_jmap_identities_cache(user)
 
 					else:
-						logger.debug(
+						logger.warning(
 							{
 								**ctx,
 								"type": event_type,
