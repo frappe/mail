@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "check-bun": "chmod +x ./scripts/install-bun.sh && ./scripts/install-bun.sh",
-    "postinstall": "bun run check-bun && cd frontend && bun install",
+    "postinstall": "npm run check-bun && cd frontend && bun install",
     "dev": "cd frontend && bun run dev",
     "build": "bun run build-app && bun run build-email-css",
     "build-email-css": "bunx tailwindcss -i ./mail/public/email/style.css -o ./mail/public/css/email.css --config ./mail/public/email/tailwind.config.js",
