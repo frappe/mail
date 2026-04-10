@@ -168,10 +168,11 @@ const srcdoc = computed(() => {
 
 				// Forward link clicks to parent
 				document.addEventListener('click', (e) => {
-					if (e.target.tagName === 'A') {
+					const anchor = e.target.closest('a');
+					if (anchor) {
 						e.preventDefault();
-						if (e.target.getAttribute('href')?.trim()) {
-							window.open(e.target.href, '_blank');
+						if (anchor.getAttribute('href')?.trim()) {
+							window.open(anchor.href, '_blank');
 						}
 					}
 				});
