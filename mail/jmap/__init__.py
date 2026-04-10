@@ -346,6 +346,22 @@ def get_mailbox_name_by_id(user: str, id: str, raise_exception: bool = False) ->
 	return service.get_mailbox_name_by_id(id, raise_exception=raise_exception)
 
 
+def get_default_address_book_id(user: str, raise_exception: bool = False) -> str | None:
+	"""Returns the ID of the default address book for the specified user, or None if not found."""
+
+	connection = get_jmap_connection(user)
+	service = AddressBookService(user, connection)
+	return service.get_default(raise_exception=raise_exception)
+
+
+def get_default_calendar_id(user: str, raise_exception: bool = False) -> str | None:
+	"""Returns the ID of the default calendar for the specified user, or None if not found."""
+
+	connection = get_jmap_connection(user)
+	service = CalendarService(user, connection)
+	return service.get_default(raise_exception=raise_exception)
+
+
 @frappe.whitelist()
 def get_mailboxes_for_user(user: str) -> list[dict]:
 	"""Returns the list of mailboxes for the specified user."""

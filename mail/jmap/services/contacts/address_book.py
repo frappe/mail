@@ -92,3 +92,13 @@ class AddressBookService(ContactsService):
 					result["notDestroyed"].update(not_destroyed)
 
 		return result
+
+	def get_default(self, raise_exception: bool = False) -> str | None:
+		"""Returns the ID of the default address book, or None if no default address book is found. If raise_exception is True, raises a ValueError if no default address book is found."""
+
+		for address_book in self.address_books:
+			if address_book.get("isDefault"):
+				return address_book["id"]
+
+		if raise_exception:
+			raise ValueError("No default address book found.")
