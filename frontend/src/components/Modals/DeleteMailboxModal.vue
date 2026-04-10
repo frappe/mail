@@ -24,7 +24,7 @@ import type { MailboxData } from '@/types'
 
 const show = defineModel<boolean>()
 
-const { mailbox } = defineProps<{ mailbox: MailboxData }>()
+const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 
 const user = inject('$user')
 const { mailboxes } = userStore()

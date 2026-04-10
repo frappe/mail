@@ -1,12 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 interface DocType {
 	name: string
 	creation: string
 	modified: string
 	owner: string
 	modified_by: string
-	docstatus: 0 | 1 | 2
 }
 
 interface ChildDocType extends DocType {
@@ -158,7 +155,7 @@ export interface PersonalSignupDomain extends ChildDocType {
 	principal: string
 }
 
-// Last updated: 2025-11-27 14:40:21.513257
+// Last updated: 2026-04-08 09:54:08.953300
 export interface MailSettings extends DocType {
 	/** Root Domain Name: Data */
 	root_domain_name: string
@@ -174,6 +171,12 @@ export interface MailSettings extends DocType {
 		| 'GoDaddy'
 	/** Token: Password */
 	dns_provider_token?: string
+	/** JMAP Push Key (P256DH): Data */
+	jmap_push_p256dh?: string
+	/** JMAP Push Private Key: Password */
+	jmap_push_private_key?: string
+	/** JMAP Push Auth Secret: Password */
+	jmap_push_auth?: string
 	/** Host: Data */
 	spamd_host?: string
 	/** Port: Int */
