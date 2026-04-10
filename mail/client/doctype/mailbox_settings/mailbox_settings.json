@@ -11,7 +11,8 @@
   "section_break_qhyu",
   "icon",
   "color",
-  "column_break_mbnv"
+  "column_break_mbnv",
+  "disable_push_notification"
  ],
  "fields": [
   {
@@ -19,7 +20,7 @@
    "fieldtype": "Section Break"
   },
   {
-   "description": "The user this setting belongs to.",
+   "description": "The user to whom these mailbox settings apply.",
    "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -35,6 +36,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Unique identifier of the mailbox associated with the user.",
    "fieldname": "mailbox_id",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -49,11 +51,13 @@
    "fieldtype": "Section Break"
   },
   {
+   "description": "Icon used to visually represent the mailbox in the UI.",
    "fieldname": "icon",
    "fieldtype": "Icon",
    "label": "Icon"
   },
   {
+   "description": "Color assigned to the mailbox for easy identification and UI customization.",
    "fieldname": "color",
    "fieldtype": "Color",
    "label": "Color"
@@ -61,12 +65,20 @@
   {
    "fieldname": "column_break_mbnv",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Check to disable push notifications for this mailbox.",
+   "fieldname": "disable_push_notification",
+   "fieldtype": "Check",
+   "label": "Disable Push Notification",
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-27 12:27:14.092609",
+ "modified": "2026-04-10 10:05:17.331537",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox Settings",

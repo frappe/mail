@@ -1205,34 +1205,38 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 			logger.info({**ctx, "event": "new-messages-created", "count": len(created_ids)})
 
 			if messages := get_messages(user, ids=created_ids):
-				inbox_id = mailbox_service.get_mailbox_id_by_role(
-					"inbox", create_if_not_exists=True, raise_exception=True
-				)
+				subscribed_mailboxes = set([m["id"] for m in mailbox_service.mailboxes if m["isSubscribed"]])
+				logger.debug({**ctx, "subscribed_mailboxes": subscribed_mailboxes})
 
-				mailboxes = set()
+				disabled_mailboxes = set(
+					frappe.db.get_all(
+						"Mailbox Settings", {"user": user, "disable_push_notification": 1}, pluck="mailbox_id"
+					)
+				)
+				logger.debug({**ctx, "disabled_mailboxes_for_notification": disabled_mailboxes})
+
 				notify_candidates = []
+				mailboxes_to_reload = set()
+
 				for message in messages:
-					if not message["draft"] and not message["seen"]:
-						for mailbox in message["mailboxes"]:
-							mailboxes.add(mailbox["mailbox_id"])
-							if mailbox["mailbox_id"] == inbox_id:
-								notify_candidates.append(message)
-							else:
-								logger.debug(
-									{
-										**ctx,
-										"event": "skipping-notification-for-non-inbox",
-										"message_id": message["id"],
-									}
-								)
-					else:
-						logger.debug(
-							{
-								**ctx,
-								"event": "skipping-notification-for-draft-seen",
-								"message_id": message["id"],
-							}
-						)
+					if message["draft"] or message["seen"]:
+						continue
+
+					mailbox_id = None
+					is_candidate = False
+
+					for mailbox in message["mailboxes"]:
+						if mailbox["mailbox_id"] not in subscribed_mailboxes:
+							continue
+
+						mailboxes_to_reload.add(mailbox["mailbox_id"])
+
+						if not is_candidate and mailbox["mailbox_id"] not in disabled_mailboxes:
+							mailbox_id = mailbox["mailbox_id"]
+							is_candidate = True
+
+					if is_candidate:
+						notify_candidates.append((mailbox_id, message))
 
 				logger.debug({**ctx, "notify_candidates_count": len(notify_candidates)})
 
@@ -1247,19 +1251,19 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 					logger.info({**ctx, "event": "sending-push-notifications", "count": len(recent_messages)})
 
 					url = frappe.utils.get_url()
-					for message in recent_messages:
+					for mailbox_id, message in recent_messages:
 						pn.send_notification_to_user(
 							user,
 							message["from_name"] or message["from_email"],
 							message["subject"] or _("[No subject]"),
-							f"{url}/mail/mailbox/{inbox_id}/{message['thread_id']}",
+							f"{url}/mail/mailbox/{mailbox_id}/{message['thread_id']}",
 							f"{url}/assets/mail/frontend/manifest/manifest-icon-192.maskable.png",
 						)
 				else:
 					logger.info({**ctx, "event": "push-notifications-disabled"})
 
-				if mailboxes:
-					frappe.publish_realtime("new_mail_created", list(mailboxes), user=user)
+				if mailboxes_to_reload:
+					frappe.publish_realtime("new_mail_created", list(mailboxes_to_reload), user=user)
 
 		if updated_ids := result["updated"]:
 			logger.info({**ctx, "event": "messages-updated", "count": len(updated_ids)})
