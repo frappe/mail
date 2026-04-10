@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test-local": "cypress open --e2e --browser chrome",
-    "postinstall": "cd frontend && yarn install --check-files",
-    "dev": "cd frontend && yarn dev",
-    "build": "yarn build-app && yarn build-email-css",
-    "build-email-css": "npx tailwindcss -i ./mail/public/email/style.css -o ./mail/public/css/email.css --config ./mail/public/email/tailwind.config.js",
-    "build-app": "cd frontend && yarn build"
+    "check-bun": "chmod +x ./scripts/install-bun.sh && ./scripts/install-bun.sh",
+    "postinstall": "bun run check-bun && cd frontend && bun install",
+    "dev": "cd frontend && bun run dev",
+    "build": "bun run build-app && bun run build-email-css",
+    "build-email-css": "bunx tailwindcss -i ./mail/public/email/style.css -o ./mail/public/css/email.css --config ./mail/public/email/tailwind.config.js",
+    "build-app": "cd frontend && bun run build"
   },
   "repository": "https://github.com/frappe/mail",
   "author": "Frappe",
