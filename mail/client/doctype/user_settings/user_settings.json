@@ -41,7 +41,9 @@
   "color_scheme",
   "column_break_cxak",
   "group_messages_by",
-  "show_reading_pane"
+  "show_reading_pane",
+  "contacts_section",
+  "create_contacts_after_email_submit"
  ],
  "fields": [
   {
@@ -304,13 +306,25 @@
    "label": "Total Cached Blobs",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "contacts_section",
+   "fieldtype": "Section Break",
+   "label": "Contacts"
+  },
+  {
+   "default": "0",
+   "description": "Automatically creates contact cards for new recipients after an email is sent.",
+   "fieldname": "create_contacts_after_email_submit",
+   "fieldtype": "Check",
+   "label": "Create Contacts After Email Submit"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-07 12:35:31.180621",
- "modified_by": "Administrator",
+ "modified": "2026-04-10 19:12:40.084169",
+ "modified_by": "akash@frappe.io",
  "module": "Client",
  "name": "User Settings",
  "naming_rule": "By fieldname",

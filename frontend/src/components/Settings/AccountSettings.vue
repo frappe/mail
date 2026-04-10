@@ -2,12 +2,20 @@
 	<template v-if="account.doc">
 		<h1>{{ __('Outgoing') }}</h1>
 		<FormControl
-			v-model="account.doc.jmap_default_outgoing_email"
+			v-model="account.doc.default_outgoing_email"
 			type="combobox"
 			:label="__('Default Outgoing Email')"
 			variant="outline"
 			:options="identities.data.map((i: Identity) => i.email)"
 			:open-on-click="true"
+		/>
+		<Switch
+			v-model="createContactsAfterEmailSubmit"
+			:label="__('Create Contacts After Sending Email')"
+			:description="
+				__('Automatically creates contacts for new recipients after an email is sent.')
+			"
+			class="!p-0"
 		/>
 		<Switch
 			v-model="destroyEmailAfterSubmit"
@@ -59,20 +67,25 @@ const user = inject('$user')
 const { identities } = userStore()
 
 const account = createDocumentResource({
-	doctype: 'User',
+	doctype: 'User Settings',
 	name: user.data?.name,
 	setValue: {
 		onSuccess: () => raiseToast(__('Account updated.')),
 	},
 })
 
+const createContactsAfterEmailSubmit = computed({
+	get: () => !!account.doc.create_contacts_after_email_submit,
+	set: (val: boolean) => (account.doc.create_contacts_after_email_submit = val ? 1 : 0),
+})
+
 const destroyEmailAfterSubmit = computed({
-	get: () => !!account.doc.jmap_destroy_email_after_submit,
-	set: (val: boolean) => (account.doc.jmap_destroy_email_after_submit = val ? 1 : 0),
+	get: () => !!account.doc.destroy_email_after_submit,
+	set: (val: boolean) => (account.doc.destroy_email_after_submit = val ? 1 : 0),
 })
 
 const destroyNewsletterAfterSubmit = computed({
-	get: () => !!account.doc.jmap_destroy_newsletter_after_submit,
-	set: (val: boolean) => (account.doc.jmap_destroy_newsletter_after_submit = val ? 1 : 0),
+	get: () => !!account.doc.destroy_newsletter_after_submit,
+	set: (val: boolean) => (account.doc.destroy_newsletter_after_submit = val ? 1 : 0),
 })
 </script>

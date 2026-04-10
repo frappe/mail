@@ -7,6 +7,7 @@ import requests
 from frappe import _
 from frappe.utils import format_datetime, random_string
 
+from mail.api.contacts import create_contacts_if_not_exists
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
 	empty_mailbox,
@@ -295,6 +296,9 @@ def create_mail(
 		save_as_draft=save_as_draft,
 	)
 
+	if not save_as_draft and doc.status == "Submitted":
+		create_contacts_if_not_exists(doc.recipients)
+
 	return {"id": doc.id, "status": doc.status, "error": doc.error_message}
 
 
@@ -363,6 +367,9 @@ def update_draft_mail(
 		doc.append("recipients", {"type": "Bcc", "email": email})
 
 	new_doc = doc.submit() if submit else doc.save_draft()
+
+	if submit and new_doc.status == "Submitted":
+		create_contacts_if_not_exists(doc.recipients)
 
 	return {"id": new_doc.id, "status": new_doc.status, "error": new_doc.error_message}
 
