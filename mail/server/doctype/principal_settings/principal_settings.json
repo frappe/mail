@@ -47,7 +47,7 @@
    "in_standard_filter": 1,
    "label": "Principal Name",
    "no_copy": 1,
-   "options": "Mail Principal",
+   "options": "Principal",
    "reqd": 1,
    "unique": 1
   },

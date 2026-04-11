@@ -93,7 +93,7 @@ class MailDomainRequest(Document):
 		if frappe.db.exists("Principal Settings", {"principal_name": self.domain_name}):
 			frappe.throw(_("Domain {0} already registered.").format(frappe.bold(self.domain_name)))
 
-		principal = frappe.new_doc("Mail Principal")
+		principal = frappe.new_doc("Principal")
 		principal.tenant = self.tenant
 		principal.type = "Domain"
 		principal._name = self.domain_name

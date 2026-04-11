@@ -246,7 +246,7 @@ class MailAccountRequest(Document):
 		app_password = generate_random_phrase()
 
 		# Create Principal
-		principal = frappe.new_doc("Mail Principal")
+		principal = frappe.new_doc("Principal")
 		principal.tenant = self.tenant
 		principal.type = "Individual"
 		principal._name = self.account

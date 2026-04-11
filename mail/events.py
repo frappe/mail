@@ -5,7 +5,7 @@ from frappe import _
 from frappe.model.document import Document
 
 from mail.backend import get_mail_backend_api
-from mail.server.doctype.mail_principal.mail_principal import PRINCIPAL_ENDPOINT, MailPrincipal
+from mail.server.doctype.principal.principal import PRINCIPAL_ENDPOINT, Principal
 from mail.utils import reformat_pbkdf2_hash
 from mail.utils.user import (
 	get_account_for_user,
@@ -30,7 +30,7 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 	username = get_account_for_user(doc.name)
 
 	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
-	principal = MailPrincipal._fetch(backend, username, ignore_not_found=False)
+	principal = Principal._fetch(backend, username, ignore_not_found=False)
 
 	backend_secrets = principal.get("secrets", [])
 	backend_hash = next((s for s in backend_secrets if not s.startswith("$app$")), None)
@@ -65,7 +65,7 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 
 	if response.json().get("error"):
 		frappe.throw(
-			_("Failed to update password for Mail Principal {0}. Response: {1}").format(
+			_("Failed to update password for Principal {0}. Response: {1}").format(
 				frappe.bold(username), frappe.bold(response.text)
 			)
 		)

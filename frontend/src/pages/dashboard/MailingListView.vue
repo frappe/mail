@@ -192,7 +192,7 @@ const showAddInternalMembers = ref(false)
 const showAddExternalMember = ref(false)
 
 const list = createDocumentResource({
-	doctype: 'Mail Principal',
+	doctype: 'Principal',
 	name: listName,
 	setValue: {
 		onSuccess: () => raiseToast(__('Mailing list updated.')),

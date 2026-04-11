@@ -30,7 +30,7 @@ class MailTenantMember(Document):
 		"""Deletes the principal settings associated with the user."""
 
 		if frappe.db.exists("Principal Settings", {"principal_name": self.user}):
-			frappe.delete_doc("Mail Principal", self.user)
+			frappe.delete_doc("Principal", self.user)
 
 	def validate_user(self) -> None:
 		"""Validates if the user is a valid user and has the required roles."""

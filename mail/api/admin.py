@@ -136,7 +136,7 @@ def delete_mailing_lists(names: list) -> None:
 	"""Delete Mailing Lists"""
 
 	for d in names:
-		doc = frappe.get_doc("Mail Principal", d)
+		doc = frappe.get_doc("Principal", d)
 		doc.delete()
 
 
@@ -161,9 +161,7 @@ def get_domains(txt: str | None = None, is_verified: int | None = None) -> list[
 	"""Get domains for user's tenant"""
 
 	if not (
-		domains := frappe.db.get_list(
-			"Mail Principal", filters={"type": "Domain", "text": txt}, page_length=50
-		)
+		domains := frappe.db.get_list("Principal", filters={"type": "Domain", "text": txt}, page_length=50)
 	):
 		return []
 
@@ -190,9 +188,7 @@ def get_domains(txt: str | None = None, is_verified: int | None = None) -> list[
 def get_mailing_lists(txt: str | None = None) -> list[dict]:
 	"""Get mailing lists for user's tenant"""
 
-	if not (
-		lists := frappe.get_list("Mail Principal", filters={"type": "List", "text": txt}, page_length=500)
-	):
+	if not (lists := frappe.get_list("Principal", filters={"type": "List", "text": txt}, page_length=500)):
 		return []
 
 	fields = ["name", "total_members"]

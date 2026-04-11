@@ -177,7 +177,7 @@ has_permission = {
 	"Mail Account Request": "mail.server.doctype.mail_account_request.mail_account_request.has_permission",
 	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.has_permission",
 	"Mail Domain Request": "mail.server.doctype.mail_domain_request.mail_domain_request.has_permission",
-	"Mail Principal": "mail.server.doctype.mail_principal.mail_principal.has_permission",
+	"Principal": "mail.server.doctype.principal.principal.has_permission",
 	"Principal Settings": "mail.server.doctype.principal_settings.principal_settings.has_permission",
 	"Mail Tenant": "mail.server.doctype.mail_tenant.mail_tenant.has_permission",
 	"Mail Tenant Member": "mail.server.doctype.mail_tenant_member.mail_tenant_member.has_permission",

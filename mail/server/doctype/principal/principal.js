@@ -1,7 +1,7 @@
 // Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Mail Principal', {
+frappe.ui.form.on('Principal', {
 	refresh(frm) {
 		frm.trigger('add_actions')
 		frm.trigger('add_comments')

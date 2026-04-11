@@ -107,7 +107,7 @@ const router = useRouter()
 const showConfirmDialog = ref(false)
 
 const domain = createDocumentResource({
-	doctype: 'Mail Principal',
+	doctype: 'Principal',
 	name: domainName,
 	setValue: {
 		onSuccess: () => {

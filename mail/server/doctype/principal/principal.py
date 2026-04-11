@@ -70,7 +70,7 @@ TYPE_MAP = {
 }
 
 
-class MailPrincipal(Document):
+class Principal(Document):
 	@property
 	def _app_passwords(self) -> list[str]:
 		"""Returns a list of app password identifiers."""
@@ -135,7 +135,7 @@ class MailPrincipal(Document):
 	def db_insert(self, *args, **kwargs) -> None:
 		self._create()
 
-	def load_from_db(self) -> "MailPrincipal":
+	def load_from_db(self) -> "Principal":
 		principal = self._get()
 		return super(Document, self).__init__(principal)
 
@@ -160,7 +160,7 @@ class MailPrincipal(Document):
 			frappe.throw(_("You do not have permission to access principals."))
 
 		limit = cint(kwargs.get("start", 1)) + page_length
-		principals, total = MailPrincipal._get_all(tenant, type, limit=limit)
+		principals, total = Principal._get_all(tenant, type, limit=limit)
 
 		frappe.cache.set_value(_get_total_cache_key(tenant, type, text), total, expires_in_sec=600)
 
@@ -464,7 +464,7 @@ class MailPrincipal(Document):
 		identities_emails_map = {identity["email"]: identity["name"] for identity in identities}
 		identities_emails = set(identities_emails_map.keys())
 
-		principal = frappe.get_doc("Mail Principal", self.name)
+		principal = frappe.get_doc("Principal", self.name)
 		principal_emails = set([principal.name, *principal._emails])
 		explicit_emails = {email for email in principal_emails if not is_catch_all_address(email)}
 
@@ -522,10 +522,10 @@ class MailPrincipal(Document):
 				return cached
 
 		backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
-		principal = MailPrincipal._fetch(
+		principal = Principal._fetch(
 			backend, self.name, skip_dns_records=skip_dns_records, ignore_not_found=False
 		)
-		formatted = MailPrincipal._format(tenant, principal)
+		formatted = Principal._format(tenant, principal)
 		_store_principal_in_cache(tenant, self.name, formatted)
 
 		return formatted
@@ -562,13 +562,13 @@ class MailPrincipal(Document):
 				principals.append(principal)
 				continue
 
-			principal = MailPrincipal._fetch(backend, pname, ignore_not_found=True)
+			principal = Principal._fetch(backend, pname, ignore_not_found=True)
 
 			if not principal:
 				total -= 1
 				continue
 
-			formatted = MailPrincipal._format(tenant, principal)
+			formatted = Principal._format(tenant, principal)
 			_store_principal_in_cache(tenant, pname, formatted)
 			principals.append(formatted)
 
@@ -580,7 +580,7 @@ class MailPrincipal(Document):
 		ensure_principal_belong_to_tenant(self.tenant, self.name)
 		backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(self.tenant))
 		existing_principal = frappe._dict(
-			MailPrincipal._fetch(backend, self.name, skip_dns_records=True, ignore_not_found=False)
+			Principal._fetch(backend, self.name, skip_dns_records=True, ignore_not_found=False)
 		)
 
 		if self.name != self._name or self.type != TYPE_MAP[existing_principal.type]:
@@ -701,7 +701,7 @@ class MailPrincipal(Document):
 		"""Deletes the principal from the backend."""
 
 		_remove_principal_from_cache(self.tenant, self.name)
-		principal = frappe.get_doc("Mail Principal", self.name)
+		principal = frappe.get_doc("Principal", self.name)
 
 		if principal.type == "Domain":
 			if principal.total_members > 0:
@@ -794,7 +794,7 @@ class MailPrincipal(Document):
 			cluster = get_cluster_for_tenant(tenant)
 			formatted.update(
 				{
-					"dns_records": MailPrincipal._format_dns_records(
+					"dns_records": Principal._format_dns_records(
 						principal["name"], cluster, principal["dnsRecords"]
 					),
 					"total_members": cint(principal.get("members")),
@@ -1083,7 +1083,7 @@ def _remove_principal_from_cache(tenant: str, pname: str) -> None:
 
 
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
-	if doc.doctype != "Mail Principal":
+	if doc.doctype != "Principal":
 		return False
 
 	user = user or frappe.session.user

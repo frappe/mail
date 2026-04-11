@@ -265,7 +265,7 @@ const userDates = createResource({
 const role = ref(isAdmin?.data ? 'Mail Admin' : 'Mail User')
 
 const account = createDocumentResource({
-	doctype: 'Mail Principal',
+	doctype: 'Principal',
 	name: memberName,
 	setValue: {
 		onSuccess: () => raiseToast(__('Account updated.')),
