@@ -68,7 +68,7 @@ def is_subaddressed_email(email: str, raise_exception: bool = False) -> bool:
 def is_email_assigned(email: str, raise_exception: bool = False) -> bool:
 	"""Returns True if the email address is already assigned else False."""
 
-	if frappe.db.exists("Mail Principal Binding", {"principal_name": email}):
+	if frappe.db.exists("Principal Settings", {"principal_name": email}):
 		if raise_exception:
 			frappe.throw(_("The email address {0} is already assigned.").format(frappe.bold(email)))
 		return True
@@ -97,7 +97,7 @@ def is_valid_email_for_domain(email: str, domain_name: str, raise_exception: boo
 def validate_domain_is_verified(domain_name: str) -> None:
 	"""Validates if the domain is verified."""
 
-	if not frappe.db.exists("Mail Principal Binding", {"principal_name": domain_name, "is_verified": 1}):
+	if not frappe.db.exists("Principal Settings", {"principal_name": domain_name, "is_verified": 1}):
 		frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(domain_name)))
 
 
@@ -113,7 +113,7 @@ def validate_max_domains(tenant: str) -> None:
 	"""Validates if the tenant has reached the maximum limit of domains."""
 
 	max_domains = frappe.db.get_value("Mail Tenant", tenant, "max_domains")
-	total_domains = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "principal_type": "Domain"})
+	total_domains = frappe.db.count("Principal Settings", {"tenant": tenant, "principal_type": "Domain"})
 
 	if total_domains >= max_domains:
 		frappe.throw(
@@ -127,7 +127,7 @@ def validate_max_groups(tenant: str) -> None:
 	"""Validates if the tenant has reached the maximum limit of groups."""
 
 	max_groups = frappe.db.get_value("Mail Tenant", tenant, "max_groups")
-	total_groups = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "principal_type": "Group"})
+	total_groups = frappe.db.count("Principal Settings", {"tenant": tenant, "principal_type": "Group"})
 
 	if total_groups >= max_groups:
 		frappe.throw(
@@ -141,9 +141,7 @@ def validate_max_accounts(tenant: str) -> None:
 	"""Validates if the tenant has reached the maximum limit of mail accounts."""
 
 	max_accounts = frappe.db.get_value("Mail Tenant", tenant, "max_accounts")
-	total_accounts = frappe.db.count(
-		"Mail Principal Binding", {"tenant": tenant, "principal_type": "Individual"}
-	)
+	total_accounts = frappe.db.count("Principal Settings", {"tenant": tenant, "principal_type": "Individual"})
 
 	if total_accounts >= max_accounts:
 		frappe.throw(
@@ -157,7 +155,7 @@ def validate_max_lists(tenant: str) -> None:
 	"""Validates if the tenant has reached the maximum limit of lists."""
 
 	max_lists = frappe.db.get_value("Mail Tenant", tenant, "max_mailing_lists")
-	total_lists = frappe.db.count("Mail Principal Binding", {"tenant": tenant, "principal_type": "List"})
+	total_lists = frappe.db.count("Principal Settings", {"tenant": tenant, "principal_type": "List"})
 
 	if total_lists >= max_lists:
 		frappe.throw(
@@ -379,7 +377,7 @@ def ensure_tenant_has_cluster(tenant: str) -> None:
 def ensure_principal_belong_to_tenant(tenant: str, principal_name: str, raise_exception: bool = True) -> bool:
 	"""Ensure that the principal belongs to the given tenant."""
 
-	if not frappe.db.exists("Mail Principal Binding", {"tenant": tenant, "principal_name": principal_name}):
+	if not frappe.db.exists("Principal Settings", {"tenant": tenant, "principal_name": principal_name}):
 		if raise_exception:
 			frappe.throw(
 				_("Principal {0} does not belong to tenant {1}.").format(
@@ -395,7 +393,7 @@ def ensure_emails_belong_to_tenant_domains(tenant: str, emails: list[str]) -> No
 	"""Ensure that the email domains belong to the given tenant."""
 
 	domains = frappe.db.get_all(
-		"Mail Principal Binding",
+		"Principal Settings",
 		filters={"tenant": tenant, "principal_type": "Domain", "is_verified": 1},
 		pluck="principal_name",
 	)
@@ -445,7 +443,7 @@ def ensure_members_belong_to_tenant(tenant: str, members: list[str]) -> None:
 	"""Ensure that the members belong to the given tenant."""
 
 	tenant_emails = frappe.db.get_all(
-		"Mail Principal Binding",
+		"Principal Settings",
 		filters={"tenant": tenant, "principal_type": ["in", ["Group", "Individual"]]},
 		pluck="principal_name",
 	)

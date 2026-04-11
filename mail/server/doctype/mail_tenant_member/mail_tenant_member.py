@@ -27,9 +27,9 @@ class MailTenantMember(Document):
 		self.clear_cache()
 
 	def after_delete(self) -> None:
-		"""Deletes the principal binding associated with the user."""
+		"""Deletes the principal settings associated with the user."""
 
-		if frappe.db.exists("Mail Principal Binding", {"principal_name": self.user}):
+		if frappe.db.exists("Principal Settings", {"principal_name": self.user}):
 			frappe.delete_doc("Mail Principal", self.user)
 
 	def validate_user(self) -> None:

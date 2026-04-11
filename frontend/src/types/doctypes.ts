@@ -151,7 +151,7 @@ export interface MailDomainRequest extends DocType {
 
 // Last updated: 2025-11-27 13:25:44.326974
 export interface PersonalSignupDomain extends ChildDocType {
-	/** Domain: Link (Mail Principal Binding) */
+	/** Domain: Link (Principal Settings) */
 	principal: string
 }
 

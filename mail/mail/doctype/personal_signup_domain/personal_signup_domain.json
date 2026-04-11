@@ -14,7 +14,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Domain",
-   "options": "Mail Principal Binding",
+   "options": "Principal Settings",
    "reqd": 1
   }
  ],

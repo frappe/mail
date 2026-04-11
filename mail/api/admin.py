@@ -26,7 +26,7 @@ def create_tenant(tenant_name: str) -> None:
 def get_domain_request(domain_name: str, mail_tenant: str) -> "MailDomainRequest":
 	"""Fetches Mail Domain Request for a given domain name if it exists, and creates a new one if not"""
 
-	if frappe.db.exists("Mail Principal Binding", {"principal_name": domain_name}):
+	if frappe.db.exists("Principal Settings", {"principal_name": domain_name}):
 		frappe.throw(_("Domain {0} has already been registered.").format(frappe.bold(domain_name)))
 
 	if name := frappe.db.exists(
@@ -170,7 +170,7 @@ def get_domains(txt: str | None = None, is_verified: int | None = None) -> list[
 	tenant = get_tenant_for_user(frappe.session.user)
 	domain_names = [d["name"] for d in domains]
 	is_verified_mapping = frappe.get_all(
-		"Mail Principal Binding",
+		"Principal Settings",
 		{"tenant": tenant, "principal_type": "Domain", "principal_name": ["in", domain_names]},
 		["principal_name", "is_verified"],
 	)
@@ -206,7 +206,7 @@ def get_verified_domains() -> list[str]:
 	tenant = get_tenant_for_user(frappe.session.user)
 
 	return frappe.get_all(
-		"Mail Principal Binding",
+		"Principal Settings",
 		{"tenant": tenant, "principal_type": "Domain", "is_verified": 1},
 		pluck="principal_name",
 	)

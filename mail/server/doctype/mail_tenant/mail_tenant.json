@@ -118,7 +118,7 @@
   },
   {
    "group": "Principal",
-   "link_doctype": "Mail Principal Binding",
+   "link_doctype": "Principal Settings",
    "link_fieldname": "tenant"
   }
  ],

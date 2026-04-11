@@ -12,7 +12,7 @@ from frappe.utils import cint
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin
 
 
-class MailPrincipalBinding(Document):
+class PrincipalSettings(Document):
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -26,23 +26,23 @@ class MailPrincipalBinding(Document):
 			self.is_verified = 0
 
 
-def create_principal_binding(
+def create_principal_settings(
 	tenant: str,
 	principal_name: str,
 	principal_type: Literal["API Key", "Domain", "Group", "Individual", "List", "OAuth Client", "Role"],
 	is_verified: bool = False,
-) -> "MailPrincipalBinding":
-	"""Create a Mail Principal Binding document."""
+) -> "PrincipalSettings":
+	"""Create a Principal Settings document."""
 
-	binding = frappe.new_doc("Mail Principal Binding")
-	binding.tenant = tenant
-	binding.principal_name = principal_name
-	binding.principal_type = principal_type
-	binding.is_verified = cint(is_verified)
-	binding.flags.ignore_links = True
-	binding.insert(ignore_permissions=True)
+	settings = frappe.new_doc("Principal Settings")
+	settings.tenant = tenant
+	settings.principal_name = principal_name
+	settings.principal_type = principal_type
+	settings.is_verified = cint(is_verified)
+	settings.flags.ignore_links = True
+	settings.insert(ignore_permissions=True)
 
-	return binding
+	return settings
 
 
 def get_tenant_principals(
@@ -56,9 +56,9 @@ def get_tenant_principals(
 	if text:
 		filters["principal_name"] = ["like", f"%{text}%"]
 
-	if total := frappe.db.count("Mail Principal Binding", filters):
+	if total := frappe.db.count("Principal Settings", filters):
 		return frappe.db.get_all(
-			"Mail Principal Binding",
+			"Principal Settings",
 			filters=filters,
 			pluck="principal_name",
 			start=(page - 1) * limit,
@@ -68,25 +68,25 @@ def get_tenant_principals(
 	return [], 0
 
 
-def update_principal_binding(pname: str, **kwargs) -> None:
-	"""Update a Mail Principal Binding document."""
+def update_principal_settings(pname: str, **kwargs) -> None:
+	"""Update a Principal Settings document."""
 
-	if binding := frappe.db.exists("Mail Principal Binding", {"principal_name": pname}):
-		doc = frappe.get_doc("Mail Principal Binding", binding)
+	if settings := frappe.db.exists("Principal Settings", {"principal_name": pname}):
+		doc = frappe.get_doc("Principal Settings", settings)
 		for key, value in kwargs.items():
 			setattr(doc, key, value)
 		doc.flags.ignore_links = True
 		doc.save(ignore_permissions=True)
 
 
-def delete_principal_binding(principal_name: str, raise_exception: bool = True) -> None:
-	"""Delete a Mail Principal Binding document."""
+def delete_principal_settings(principal_name: str, raise_exception: bool = True) -> None:
+	"""Delete a Principal Settings document."""
 
-	if binding := frappe.db.exists("Mail Principal Binding", {"principal_name": principal_name}):
-		frappe.delete_doc("Mail Principal Binding", binding, ignore_permissions=True)
+	if settings := frappe.db.exists("Principal Settings", {"principal_name": principal_name}):
+		frappe.delete_doc("Principal Settings", settings, ignore_permissions=True)
 	elif raise_exception:
 		frappe.throw(
-			_("No Mail Principal Binding found for principal name: {0}").format(frappe.bold(principal_name))
+			_("No Principal Settings found for principal name: {0}").format(frappe.bold(principal_name))
 		)
 
 
@@ -97,13 +97,13 @@ def get_permission_query_condition(user: str | None = None) -> str:
 		return ""
 	elif has_role(user, "Mail Admin"):
 		tenant = frappe.db.get_value("Mail Tenant Member", {"user": user}, "tenant")
-		return f"(`tabMail Principal Binding`.tenant = '{tenant}')"
+		return f"(`tabPrincipal Settings`.tenant = '{tenant}')"
 	else:
 		return "1=0"
 
 
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
-	if doc.doctype != "Mail Principal Binding":
+	if doc.doctype != "Principal Settings":
 		return False
 
 	user = user or frappe.session.user

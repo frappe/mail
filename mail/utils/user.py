@@ -140,20 +140,20 @@ def get_user_tenant() -> str | None:
 def get_principals_tenant_map(principal_names: list[str]) -> dict[str, str]:
 	"""Returns a mapping of principal names to their associated tenants."""
 
-	bindings = frappe.db.get_all(
-		"Mail Principal Binding",
+	settings = frappe.db.get_all(
+		"Principal Settings",
 		{"principal_name": ["in", principal_names]},
 		["principal_name", "tenant"],
 	)
 
-	return {b.principal_name: b.tenant for b in bindings}
+	return {b.principal_name: b.tenant for b in settings}
 
 
 def _get_tenant_principals(tenant: str, principal_type: str, order_by: str = "creation desc") -> list[str]:
 	"""Returns a list of principals of the given type for the given tenant."""
 
 	return frappe.db.get_all(
-		"Mail Principal Binding",
+		"Principal Settings",
 		filters={"tenant": tenant, "principal_type": principal_type},
 		order_by=order_by,
 		pluck="principal_name",
@@ -206,7 +206,7 @@ def get_tenant_emails(tenant: str, order_by: str = "creation desc") -> list[str]
 	"""Returns a list of email addresses associated with the given tenant."""
 
 	return frappe.db.get_all(
-		"Mail Principal Binding",
+		"Principal Settings",
 		filters={"tenant": tenant, "principal_type": ["in", ["Group", "Individual", "List"]]},
 		order_by=order_by,
 		pluck="principal_name",
@@ -216,12 +216,12 @@ def get_tenant_emails(tenant: str, order_by: str = "creation desc") -> list[str]
 def get_principal_tenant(principal_name: str, raise_exception: bool = True) -> str | None:
 	"""Returns the tenant associated with the given principal name."""
 
-	if tenant := frappe.db.get_value("Mail Principal Binding", {"principal_name": principal_name}, "tenant"):
+	if tenant := frappe.db.get_value("Principal Settings", {"principal_name": principal_name}, "tenant"):
 		return tenant
 
 	if raise_exception:
 		frappe.throw(
-			_("No Mail Principal Binding found for principal name: {0}").format(frappe.bold(principal_name))
+			_("No Principal Settings found for principal name: {0}").format(frappe.bold(principal_name))
 		)
 
 

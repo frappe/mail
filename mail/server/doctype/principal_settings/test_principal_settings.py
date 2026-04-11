@@ -11,9 +11,9 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class IntegrationTestMailPrincipalBinding(IntegrationTestCase):
+class IntegrationTestPrincipalSettings(IntegrationTestCase):
 	"""
-	Integration tests for MailPrincipalBinding.
+	Integration tests for PrincipalSettings.
 	Use this class for testing interactions between multiple components.
 	"""
 

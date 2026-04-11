@@ -66,7 +66,7 @@
  "modified": "2025-12-09 13:43:45.661692",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Principal Binding",
+ "name": "Principal Settings",
  "owner": "Administrator",
  "permissions": [
   {

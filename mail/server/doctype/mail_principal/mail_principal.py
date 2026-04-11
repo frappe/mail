@@ -12,11 +12,11 @@ from frappe.utils import cint, today, validate_email_address
 from mail.backend import MailBackendAPI, get_mail_backend_api
 from mail.client.doctype.identity.identity import _add_identity as add_identity
 from mail.jmap import invalidate_jmap_cache
-from mail.server.doctype.mail_principal_binding.mail_principal_binding import (
-	create_principal_binding,
-	delete_principal_binding,
+from mail.server.doctype.principal_settings.principal_settings import (
+	create_principal_settings,
+	delete_principal_settings,
 	get_tenant_principals,
-	update_principal_binding,
+	update_principal_settings,
 )
 from mail.utils import (
 	generate_app_password,
@@ -130,9 +130,7 @@ class MailPrincipal(Document):
 		if self.type != "Domain":
 			return None
 
-		return bool(
-			frappe.db.get_value("Mail Principal Binding", {"principal_name": self.name}, "is_verified")
-		)
+		return bool(frappe.db.get_value("Principal Settings", {"principal_name": self.name}, "is_verified"))
 
 	def db_insert(self, *args, **kwargs) -> None:
 		self._create()
@@ -276,7 +274,7 @@ class MailPrincipal(Document):
 		else:
 			frappe.msgprint(errors, title="DNS Verification Failed", indicator="red", as_list=True)
 
-		update_principal_binding(self.name, is_verified=cint(is_verified))
+		update_principal_settings(self.name, is_verified=cint(is_verified))
 
 		return is_verified
 
@@ -312,7 +310,7 @@ class MailPrincipal(Document):
 			self._delete_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
 			self._create_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
 
-		update_principal_binding(self.name, is_verified=0)
+		update_principal_settings(self.name, is_verified=0)
 
 		_remove_principal_from_cache(self.tenant, self.name)
 		self.reload()
@@ -388,7 +386,7 @@ class MailPrincipal(Document):
 		if response.json().get("error"):
 			frappe.throw(_("Failed to add principal {0}: {1}").format(frappe.bold(self.name), response.text))
 
-		create_principal_binding(self.tenant, self.name, self.type)
+		create_principal_settings(self.tenant, self.name, self.type)
 
 		if self.type == "Domain":
 			try:
@@ -457,7 +455,7 @@ class MailPrincipal(Document):
 		ensure_tenant_has_cluster(self.tenant)
 
 		if not frappe.db.exists(
-			"Mail Principal Binding",
+			"Principal Settings",
 			{"tenant": self.tenant, "principal_name": self.name, "principal_type": "Individual"},
 		):
 			return
@@ -682,7 +680,7 @@ class MailPrincipal(Document):
 		_remove_principal_from_cache(self.tenant, self.name)
 
 		if self.name != self._name or self.type != TYPE_MAP[existing_principal.type]:
-			update_principal_binding(self.name, principal_name=self._name, principal_type=self.type)
+			update_principal_settings(self.name, principal_name=self._name, principal_type=self.type)
 
 		for pname in principals_to_invalidate:
 			_remove_principal_from_cache(self.tenant, pname)
@@ -715,7 +713,7 @@ class MailPrincipal(Document):
 
 		backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(self.tenant))
 		backend.request("DELETE", f"{PRINCIPAL_ENDPOINT}/{self.name}")
-		delete_principal_binding(self.name, raise_exception=False)
+		delete_principal_settings(self.name, raise_exception=False)
 
 		# If the principal is an Individual, remove member from tenant and delete User
 		if principal.type == "Individual":

@@ -72,8 +72,8 @@
    "icon": "book-check",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Principal Binding",
-   "link_to": "Mail Principal Binding",
+   "label": "Principal Settings",
+   "link_to": "Principal Settings",
    "link_type": "DocType",
    "show_arrow": 0,
    "type": "Link"

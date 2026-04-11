@@ -207,7 +207,7 @@ const list = createDocumentResource({
 const listCreation = createResource({
 	url: 'frappe.client.get_value',
 	makeParams: () => ({
-		doctype: 'Mail Principal Binding',
+		doctype: 'Principal Settings',
 		fieldname: 'creation',
 		filters: { tenant: user.data.tenant, principal_name: listName, principal_type: 'List' },
 		as_dict: false,
