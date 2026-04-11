@@ -50,7 +50,7 @@ class MailDomainRequest(Document):
 		if re.fullmatch(domain_regex, self.domain_name) is None:
 			frappe.throw(_("Invalid domain name"))
 
-		if frappe.db.exists("Mail Principal Binding", {"principal_name": self.domain_name}):
+		if frappe.db.exists("Principal Settings", {"principal_name": self.domain_name}):
 			frappe.throw(_("Domain {0} already registered.").format(frappe.bold(self.domain_name)))
 
 	def validate_user_and_tenant(self) -> None:
@@ -90,10 +90,10 @@ class MailDomainRequest(Document):
 	def create_domain(self) -> str:
 		"""Create the principal domain."""
 
-		if frappe.db.exists("Mail Principal Binding", {"principal_name": self.domain_name}):
+		if frappe.db.exists("Principal Settings", {"principal_name": self.domain_name}):
 			frappe.throw(_("Domain {0} already registered.").format(frappe.bold(self.domain_name)))
 
-		principal = frappe.new_doc("Mail Principal")
+		principal = frappe.new_doc("Principal")
 		principal.tenant = self.tenant
 		principal.type = "Domain"
 		principal._name = self.domain_name

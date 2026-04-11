@@ -192,7 +192,7 @@ const showAddInternalMembers = ref(false)
 const showAddExternalMember = ref(false)
 
 const list = createDocumentResource({
-	doctype: 'Mail Principal',
+	doctype: 'Principal',
 	name: listName,
 	setValue: {
 		onSuccess: () => raiseToast(__('Mailing list updated.')),
@@ -207,7 +207,7 @@ const list = createDocumentResource({
 const listCreation = createResource({
 	url: 'frappe.client.get_value',
 	makeParams: () => ({
-		doctype: 'Mail Principal Binding',
+		doctype: 'Principal Settings',
 		fieldname: 'creation',
 		filters: { tenant: user.data.tenant, principal_name: listName, principal_type: 'List' },
 		as_dict: false,

@@ -17,9 +17,7 @@ def get_personal_signup_domains() -> list:
 	def generator() -> list:
 		mail_settings = frappe.get_doc("Mail Settings")
 		principals = [d.principal for d in mail_settings.personal_signup_domains]
-		return frappe.db.get_all(
-			"Mail Principal Binding", {"name": ["in", principals]}, pluck="principal_name"
-		)
+		return frappe.db.get_all("Principal Settings", {"name": ["in", principals]}, pluck="principal_name")
 
 	return frappe.cache.hget("mail-settings", "personal_signup_domains", generator)
 

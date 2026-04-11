@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "creation": "2025-11-26 08:05:40.646156",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_ykmf",
+  "category",
+  "type",
+  "host",
+  "priority",
+  "mandatory",
+  "column_break_jvdb",
+  "value",
+  "ttl"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_ykmf",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "Alias\nAuto-config\nAuto-discover\nDKIM\nDMARC\nOther\nReceiving\nSending\nServer\nTLS Reporting\nTXT",
+   "reqd": 1
+  },
+  {
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "\nA\nAAAA\nCNAME\nMX\nSRV\nTXT",
+   "reqd": 1
+  },
+  {
+   "fieldname": "host",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Host",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: doc.type == \"MX\"",
+   "fieldname": "priority",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Priority",
+   "no_copy": 1,
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_jvdb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Text",
+   "in_list_view": 1,
+   "label": "Value",
+   "no_copy": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "ttl",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "TTL (Recommended)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "mandatory",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Mandatory",
+   "no_copy": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-11-26 08:59:27.749122",
+ "modified_by": "Administrator",
+ "module": "Server",
+ "name": "Principal DNS Record",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

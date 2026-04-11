@@ -2,7 +2,7 @@ import frappe
 from frappe.modules.utils import sync_customizations
 from frappe.utils.password import get_decrypted_password
 
-from mail.server.doctype.mail_principal_binding.mail_principal_binding import create_principal_binding
+from mail.server.doctype.principal_settings.principal_settings import create_principal_settings
 from mail.utils.cache import get_cluster_for_tenant
 
 DOCTYPES = ["Mail Domain", "Mail Account", "Mailing List"]
@@ -28,8 +28,8 @@ def execute() -> None:
 		rows = frappe.db.get_all(doctype, filters={"enabled": 1}, fields=fields)
 
 		for row in rows:
-			if not frappe.db.exists("Mail Principal Binding", {"principal_name": row.name}):
-				create_principal_binding(
+			if not frappe.db.exists("Principal Settings", {"principal_name": row.name}):
+				create_principal_settings(
 					row.tenant, row.name, TYPE_MAPPING[doctype], bool(row.get("is_verified", 0))
 				)
 

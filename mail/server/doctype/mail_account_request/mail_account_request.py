@@ -225,7 +225,7 @@ class MailAccountRequest(Document):
 		if not self.is_verified:
 			frappe.throw(_("Please verify the email address first."))
 
-		if frappe.db.exists("Mail Principal Binding", {"principal_name": self.account}):
+		if frappe.db.exists("Principal Settings", {"principal_name": self.account}):
 			frappe.throw(_("Account {0} is already created.").format(self.account))
 
 		if not password:
@@ -246,7 +246,7 @@ class MailAccountRequest(Document):
 		app_password = generate_random_phrase()
 
 		# Create Principal
-		principal = frappe.new_doc("Mail Principal")
+		principal = frappe.new_doc("Principal")
 		principal.tenant = self.tenant
 		principal.type = "Individual"
 		principal._name = self.account

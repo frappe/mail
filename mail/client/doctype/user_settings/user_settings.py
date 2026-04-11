@@ -116,7 +116,7 @@ class UserSettings(Document):
 				)
 
 	def validate_tenant_bound_user(self) -> None:
-		"""Validate that if the user is tenant-bound, then the JMAP username must be the same as the User name and a Mail Principal Binding must exist for the user."""
+		"""Validate that if the user is tenant-bound, then the JMAP username must be the same as the User name and a Principal Settings must exist for the user."""
 
 		if not is_tenant_bound_user(self.user):
 			return
@@ -127,7 +127,7 @@ class UserSettings(Document):
 		tenant = get_tenant_for_user(self.user)
 
 		if not frappe.db.exists(
-			"Mail Principal Binding",
+			"Principal Settings",
 			{"tenant": tenant, "principal_name": self.username},
 			"principal_name",
 		):

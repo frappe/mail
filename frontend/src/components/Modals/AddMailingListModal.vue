@@ -68,7 +68,7 @@ const defaultList = {
 }
 
 const list = useNewDoc(
-	'Mail Principal',
+	'Principal',
 	{ ...defaultList },
 	{
 		beforeSubmit: () => {

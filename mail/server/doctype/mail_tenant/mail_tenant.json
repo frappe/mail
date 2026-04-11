@@ -113,12 +113,12 @@
   },
   {
    "group": "Principal",
-   "link_doctype": "Mail Principal",
+   "link_doctype": "Principal",
    "link_fieldname": "tenant"
   },
   {
    "group": "Principal",
-   "link_doctype": "Mail Principal Binding",
+   "link_doctype": "Principal Settings",
    "link_fieldname": "tenant"
   }
  ],

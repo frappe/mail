@@ -75,7 +75,7 @@ class MailSettings(Document):
 			return
 
 		principals = frappe.db.get_all(
-			"Mail Principal Binding",
+			"Principal Settings",
 			{"name": ["in", [d.principal for d in self.personal_signup_domains]]},
 			["principal_name", "is_verified", "tenant"],
 		)

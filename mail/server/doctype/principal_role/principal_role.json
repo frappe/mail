@@ -1,34 +1,39 @@
 {
  "actions": [],
- "allow_rename": 1,
- "creation": "2025-03-26 11:42:30.621300",
+ "creation": "2025-11-23 08:42:38.447752",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "principal"
+  "section_break_hk92",
+  "value"
  ],
  "fields": [
   {
-   "fieldname": "principal",
-   "fieldtype": "Link",
+   "fieldname": "section_break_hk92",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Domain",
-   "options": "Principal Settings",
+   "label": "Value",
    "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
+ "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-27 13:25:44.326974",
+ "modified": "2025-11-23 21:15:59.158524",
  "modified_by": "Administrator",
- "module": "Mail",
- "name": "Personal Signup Domain",
+ "module": "Server",
+ "name": "Principal Role",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

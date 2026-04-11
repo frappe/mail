@@ -26,7 +26,7 @@ def create_tenant(tenant_name: str) -> None:
 def get_domain_request(domain_name: str, mail_tenant: str) -> "MailDomainRequest":
 	"""Fetches Mail Domain Request for a given domain name if it exists, and creates a new one if not"""
 
-	if frappe.db.exists("Mail Principal Binding", {"principal_name": domain_name}):
+	if frappe.db.exists("Principal Settings", {"principal_name": domain_name}):
 		frappe.throw(_("Domain {0} has already been registered.").format(frappe.bold(domain_name)))
 
 	if name := frappe.db.exists(
@@ -136,7 +136,7 @@ def delete_mailing_lists(names: list) -> None:
 	"""Delete Mailing Lists"""
 
 	for d in names:
-		doc = frappe.get_doc("Mail Principal", d)
+		doc = frappe.get_doc("Principal", d)
 		doc.delete()
 
 
@@ -161,16 +161,14 @@ def get_domains(txt: str | None = None, is_verified: int | None = None) -> list[
 	"""Get domains for user's tenant"""
 
 	if not (
-		domains := frappe.db.get_list(
-			"Mail Principal", filters={"type": "Domain", "text": txt}, page_length=50
-		)
+		domains := frappe.db.get_list("Principal", filters={"type": "Domain", "text": txt}, page_length=50)
 	):
 		return []
 
 	tenant = get_tenant_for_user(frappe.session.user)
 	domain_names = [d["name"] for d in domains]
 	is_verified_mapping = frappe.get_all(
-		"Mail Principal Binding",
+		"Principal Settings",
 		{"tenant": tenant, "principal_type": "Domain", "principal_name": ["in", domain_names]},
 		["principal_name", "is_verified"],
 	)
@@ -190,9 +188,7 @@ def get_domains(txt: str | None = None, is_verified: int | None = None) -> list[
 def get_mailing_lists(txt: str | None = None) -> list[dict]:
 	"""Get mailing lists for user's tenant"""
 
-	if not (
-		lists := frappe.get_list("Mail Principal", filters={"type": "List", "text": txt}, page_length=500)
-	):
+	if not (lists := frappe.get_list("Principal", filters={"type": "List", "text": txt}, page_length=500)):
 		return []
 
 	fields = ["name", "total_members"]
@@ -206,7 +202,7 @@ def get_verified_domains() -> list[str]:
 	tenant = get_tenant_for_user(frappe.session.user)
 
 	return frappe.get_all(
-		"Mail Principal Binding",
+		"Principal Settings",
 		{"tenant": tenant, "principal_type": "Domain", "is_verified": 1},
 		pluck="principal_name",
 	)

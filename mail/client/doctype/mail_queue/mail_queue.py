@@ -358,7 +358,7 @@ class MailQueue(Document):
 		from_domain = self.from_email.split("@")[-1]
 
 		if not frappe.db.exists(
-			"Mail Principal Binding", {"tenant": tenant, "principal_name": from_domain, "is_verified": 1}
+			"Principal Settings", {"tenant": tenant, "principal_name": from_domain, "is_verified": 1}
 		):
 			frappe.throw(
 				_(
