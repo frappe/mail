@@ -33,6 +33,9 @@
   "inbound_section",
   "skip_schedule_fetch_changes",
   "column_break_nqwp",
+  "sieve_section",
+  "last_active_sieve_script_id",
+  "column_break_mgfr",
   "recovery_section",
   "backup_email",
   "column_break_gotn",
@@ -318,13 +321,30 @@
    "fieldname": "create_contacts_after_email_submit",
    "fieldtype": "Check",
    "label": "Create Contacts After Email Submit"
+  },
+  {
+   "fieldname": "sieve_section",
+   "fieldtype": "Section Break",
+   "label": "Sieve"
+  },
+  {
+   "fieldname": "column_break_mgfr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_active_sieve_script_id",
+   "fieldtype": "Data",
+   "label": "Last Active Sieve Script ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-10 19:12:40.084169",
- "modified_by": "akash@frappe.io",
+ "modified": "2026-04-11 10:19:59.596016",
+ "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",
  "naming_rule": "By fieldname",

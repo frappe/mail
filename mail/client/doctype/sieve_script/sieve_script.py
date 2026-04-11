@@ -283,6 +283,47 @@ def bulk_delete(names: str | list[str]) -> None:
 	frappe.msgprint(_("Sieve Scripts deleted successfully."), alert=True)
 
 
+def get_active_sieve_script_id(user: str) -> str | None:
+	"""Returns the ID of the currently active sieve script for the given user, if any."""
+
+	service = get_sieve_script_service(user)
+	query_result = service.query({"isActive": True})
+
+	if query_result.get("ids") and len(query_result["ids"]) > 0:
+		return query_result["ids"][0]
+
+
+def activate_last_active_sieve_script(user: str) -> None:
+	"""Activates the last active sieve script for the given user, if any, and clears the last active sieve script setting."""
+
+	sieve_script_id = frappe.db.get_value("User Settings", user, "last_active_sieve_script_id")
+
+	if not sieve_script_id:
+		return
+
+	if sieve_scripts := SieveScript._get_sieve_scripts(user, [sieve_script_id], download_content=True):
+		sieve_script = sieve_scripts[0]
+
+		if (sieve_script.get("_name") or "").lower() != "vacation" and not sieve_script["active"]:
+			SieveScript._update_sieve_script(
+				user,
+				sieve_script_id,
+				sieve_script["_name"],
+				sieve_script["content"],
+				active=True,
+			)
+
+	set_last_active_sieve_script_id(user, None)
+
+
+def set_last_active_sieve_script_id(user: str, sieve_script_id: str | None = None) -> None:
+	"""Sets the given sieve script ID as the last active sieve script for the given user."""
+
+	frappe.db.set_value(
+		"User Settings", user, "last_active_sieve_script_id", sieve_script_id, update_modified=False
+	)
+
+
 def format_sieve_script(user: str, script: dict) -> dict:
 	"""Format the sieve script for display."""
 

@@ -9,6 +9,11 @@ from frappe.model.document import Document
 from frappe.utils import cint, today
 from frappe.utils.data import convert_utc_to_system_timezone, get_datetime
 
+from mail.client.doctype.sieve_script.sieve_script import (
+	activate_last_active_sieve_script,
+	get_active_sieve_script_id,
+	set_last_active_sieve_script_id,
+)
 from mail.jmap import get_vacation_response_service
 from mail.utils import convert_html_to_text
 from mail.utils.dt import convert_to_utc
@@ -97,8 +102,12 @@ def update_vacation_response(
 	if not convert_html_to_text(html_body):
 		html_body = None
 
+	current_active_sieve_script_id = get_active_sieve_script_id(user)
+
 	service = get_vacation_response_service(user)
-	service.update(
+	previous_vacation_response = service.get()
+
+	vacation_update_result = service.update(
 		{
 			"is_enabled": bool(enabled),
 			"from_date": from_date,
@@ -108,6 +117,13 @@ def update_vacation_response(
 			"html_body": html_body,
 		}
 	)
+
+	if vacation_update_result.get("updated"):
+		if enabled:
+			if not previous_vacation_response.get("isEnabled"):
+				set_last_active_sieve_script_id(user, current_active_sieve_script_id)
+		else:
+			activate_last_active_sieve_script(user)
 
 
 def format_vacation_response(user, vc: dict) -> dict:
