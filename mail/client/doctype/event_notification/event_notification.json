@@ -204,7 +204,7 @@
   {
    "delete": 1,
    "read": 1,
-   "role": "Mail User"
+   "role": "All"
   }
  ],
  "row_format": "Dynamic",

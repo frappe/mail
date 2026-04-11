@@ -114,7 +114,7 @@
   },
   {
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

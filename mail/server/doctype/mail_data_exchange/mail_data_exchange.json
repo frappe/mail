@@ -248,7 +248,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "submit": 1,
    "write": 1
   }

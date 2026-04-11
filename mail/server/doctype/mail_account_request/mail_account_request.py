@@ -234,9 +234,7 @@ class MailAccountRequest(Document):
 		if frappe.db.exists("User", {"email": self.account}):
 			frappe.throw(_("User with email {0} already exists.").format(frappe.bold(self.account)))
 
-		roles = ["Mail User"]
-		if self.is_admin:
-			roles.append("Mail Admin")
+		roles = ["Mail Admin"] if self.is_admin else []
 
 		# Create User
 		user = create_user(self.account, first_name, last_name, password, roles)

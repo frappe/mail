@@ -176,7 +176,7 @@ router.beforeEach(async (to, _, next) => {
 
 	if (user.is_mail_admin) {
 		if (!user.tenant) return to.meta.isSetup ? next() : next({ name: 'Setup' })
-		if (!user.is_mail_user && !to.meta.isDashboard) return next({ name: 'Domains' })
+		if (!user.is_jmap_configured && !to.meta.isDashboard) return next({ name: 'Domains' })
 	} else if (to.meta.isDashboard) return next(mailboxRoute)
 
 	if (['/', '/mailbox', '/mailbox/'].includes(to.path)) return next(mailboxRoute)

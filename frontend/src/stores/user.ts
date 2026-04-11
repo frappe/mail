@@ -20,7 +20,7 @@ export const userStore = defineStore('mail-users', () => {
 				tenantOwner.fetch(data.tenant)
 			}
 
-			if (!data?.is_mail_user) return
+			if (!data?.is_jmap_configured) return
 
 			mailboxes.fetch()
 			addressBooks.fetch()

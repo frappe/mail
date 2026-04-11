@@ -103,12 +103,11 @@
 	>
 		<template #body-content>
 			<div class="space-y-4">
-				<FormControl
-					v-model="role"
-					type="combobox"
-					:label="__('Role')"
-					:options="['Mail User', 'Mail Admin']"
-					:open-on-click="true"
+				<Switch
+					v-model="isMailAdmin"
+					:label="__('Mail Admin')"
+					:description="__('Enable to grant the Mail Admin role')"
+					class="hover:!bg-surface-white !cursor-default !p-0"
 				/>
 				<FormControl
 					v-model="account.doc.description"
@@ -246,7 +245,7 @@ const isAdmin = createResource({
 		filters: memberName,
 		as_dict: false,
 	}),
-	onSuccess: (data) => (role.value = data === 1 ? 'Mail Admin' : 'Mail User'),
+	onSuccess: (data) => (isMailAdmin.value = data === 1),
 	auto: true,
 	cache: ['isAdmin', memberName],
 })
@@ -262,7 +261,9 @@ const userDates = createResource({
 	cache: ['userDates', memberName],
 })
 
-const role = ref(isAdmin?.data ? 'Mail Admin' : 'Mail User')
+const isMailAdmin = ref(!!isAdmin?.data)
+
+const role = computed(() => (isMailAdmin.value ? 'Mail Admin' : 'Member'))
 
 const account = createDocumentResource({
 	doctype: 'Principal',
@@ -291,9 +292,7 @@ const editIsAdmin = createResource({
 	onError: (error) => raiseToast(error.messages[0], 'error'),
 })
 
-const isRoleDirty = computed(
-	() => (isAdmin.data === 1 ? 'Mail Admin' : 'Mail User') !== role.value,
-)
+const isRoleDirty = computed(() => Boolean(isAdmin.data) !== isMailAdmin.value)
 
 const isAccountDirty = computed(
 	() => JSON.stringify(account.doc) !== JSON.stringify(account.originalDoc),
@@ -301,7 +300,7 @@ const isAccountDirty = computed(
 
 const save = async () => {
 	if (isRoleDirty.value)
-		editIsAdmin.submit({ name: memberName, is_admin: role.value === 'Mail User' ? 0 : 1 })
+		editIsAdmin.submit({ name: memberName, is_admin: isMailAdmin.value ? 1 : 0 })
 	if (isAccountDirty.value) account.save.submit()
 }
 

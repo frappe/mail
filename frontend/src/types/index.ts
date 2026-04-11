@@ -13,7 +13,7 @@ export interface User {
 	jmap_default_outgoing_email?: string
 
 	enabled: boolean
-	is_mail_user: boolean
+	is_jmap_configured: boolean
 	is_mail_admin: boolean
 	is_tenant_owner?: boolean
 	is_system_manager: boolean

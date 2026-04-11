@@ -36,19 +36,16 @@
 					/>
 				</div>
 				<FormControl
-					v-model="accountRequest.role"
-					type="select"
-					:label="__('Member Role')"
-					:options="[
-						{ label: __('Mail User'), value: 'Mail User' },
-						{ label: __('Mail Admin'), value: 'Mail Admin' },
-					]"
-				/>
-				<FormControl
 					v-model="accountRequest.email"
 					type="email"
 					:label="__('Backup Email')"
 					placeholder="johndoe@personal.com"
+				/>
+				<Switch
+					v-model="accountRequest.is_admin"
+					:label="__('Mail Admin')"
+					:description="__('Enable to grant the Mail Admin role')"
+					class="hover:!bg-surface-white !cursor-default !p-0"
 				/>
 				<hr />
 
@@ -106,7 +103,7 @@ const { domains } = userStore()
 const defaultAccountRequest = {
 	username: '',
 	domain: '',
-	role: 'Mail User',
+	is_admin: false,
 	send_invite: true,
 	expires_at: dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm'),
 	email: '',

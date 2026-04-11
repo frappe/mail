@@ -46,17 +46,13 @@ class MailTenantMember(Document):
 				)
 
 	def validate_user_roles(self) -> None:
-		"""Validates if the user has the required roles to be a member of the Mail Tenant."""
+		"""Validates if the tenant owner has the required admin role."""
 
-		# Tenant Owner must have Mail Admin role.
-		# Tenant Member must have Mail User role and can have Mail Admin role.
-		required_role = "Mail Admin" if is_tenant_owner(self.tenant, self.user) else "Mail User"
-		if not has_role(self.user, required_role):
-			frappe.throw(
-				_("User {0} does not have {1} role.").format(
-					frappe.bold(self.user), frappe.bold(required_role)
-				)
-			)
+		if not is_tenant_owner(self.tenant, self.user):
+			return
+
+		if not has_role(self.user, "Mail Admin"):
+			frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(self.user)))
 
 	def validate_is_admin(self) -> None:
 		"""Validates if the user is an admin of the Mail Tenant."""

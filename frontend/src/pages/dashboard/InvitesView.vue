@@ -43,7 +43,7 @@
 					<ListRowItem :item="item">
 						<Badge
 							v-if="column.key == 'is_admin'"
-							:label="__(item ? 'Mail Admin' : 'Mail User')"
+							:label="__(item ? 'Mail Admin' : 'Member')"
 							:theme="item ? 'blue' : 'gray'"
 						/>
 						<Badge
@@ -105,7 +105,7 @@ const user = inject('$user')
 
 const search = ref('')
 const debouncedSearch = useDebounce(search, 500)
-const role = ref<'Mail User' | 'Mail Admin' | ''>('')
+const role = ref<'Member' | 'Mail Admin' | ''>('')
 const status = ref<'Pending' | 'Accepted' | 'Expired' | ''>('')
 const selectedInvite = ref('')
 const showEditInvite = ref(false)
@@ -201,7 +201,7 @@ const LIST_OPTIONS = {
 
 const ROLE_OPTIONS = [
 	{ label: '', value: '' },
-	{ label: __('Mail User'), value: 'Mail User' },
+	{ label: __('Member'), value: 'Member' },
 	{ label: __('Mail Admin'), value: 'Mail Admin' },
 ]
 

@@ -97,7 +97,7 @@ const user = inject('$user')
 const { tenantOwner } = userStore()
 
 const search = ref('')
-const role = ref<'Mail User' | 'Mail Admin' | 'Both' | ''>('')
+const role = ref<'Member' | 'Mail Admin' | 'Both' | ''>('')
 const showRemoveMember = ref(false)
 const memberToBeRemoved = ref('')
 
@@ -180,7 +180,7 @@ const LIST_OPTIONS = {
 
 const ROLE_OPTIONS = [
 	{ label: '', value: 'Both' },
-	{ label: __('Mail User'), value: 'Mail User' },
+	{ label: __('Member'), value: 'Member' },
 	{ label: __('Mail Admin'), value: 'Mail Admin' },
 ]
 </script>

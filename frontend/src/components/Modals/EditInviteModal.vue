@@ -23,7 +23,7 @@
 				/>
 				<FormControl
 					:label="__('Assigned Role')"
-					:value="accountRequest.doc.is_admin ? __('Mail Admin') : __('Mail User')"
+					:value="accountRequest.doc.is_admin ? __('Mail Admin') : __('Member')"
 					disabled
 				/>
 				<FormControl

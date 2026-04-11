@@ -15,7 +15,11 @@ from mail.jmap import (
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
 from mail.utils import get_mail_config
-from mail.utils.user import get_tenant_for_user, has_role, is_system_manager, is_tenant_bound_user
+from mail.utils.user import (
+	get_tenant_for_user,
+	is_system_manager,
+	is_tenant_bound_user,
+)
 from mail.utils.validation import has_permission_for_user
 
 
@@ -248,10 +252,7 @@ def get_permission_query_condition(user: str | None = None) -> str:
 	if is_system_manager(user):
 		return ""
 
-	if has_role(user, "Mail User"):
-		return f"(`tabUser Settings`.user = '{user}')"
-
-	return "1=0"
+	return f"(`tabUser Settings`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
@@ -262,7 +263,5 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 
 	if is_system_manager(user):
 		return True
-	elif has_role(user, "Mail User"):
-		return doc.user == user
 
-	return False
+	return doc.user == user

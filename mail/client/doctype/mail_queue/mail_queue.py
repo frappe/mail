@@ -35,7 +35,7 @@ from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
 from mail.utils.cache import get_tenant_for_user
 from mail.utils.dt import parsedate_to_datetime
-from mail.utils.user import has_role, is_administrator, is_tenant_bound_user
+from mail.utils.user import has_role, is_administrator, is_jmap_configured, is_tenant_bound_user
 from mail.utils.validation import has_permission_for_user
 
 
@@ -883,10 +883,8 @@ def get_permission_query_condition(user: str | None = None) -> str:
 
 	if is_administrator(user):
 		return ""
-	elif has_role(user, "Mail User"):
-		return f"(`tabMail Queue`.user = '{user}')"
-	else:
-		return "1=0"
+
+	return f"(`tabMail Queue`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:

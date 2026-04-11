@@ -51,7 +51,7 @@ def has_user_settings(user: str, raise_exception: bool = False) -> bool:
 	return False
 
 
-def has_jmap_settings(user: str, raise_exception: bool = False) -> bool:
+def is_jmap_configured(user: str, raise_exception: bool = False) -> bool:
 	"""Returns True if the user has JMAP settings configured else False."""
 
 	if frappe.db.exists("User Settings", {"user": user, "username": ["!=", None]}):

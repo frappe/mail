@@ -346,10 +346,7 @@ def get_permission_query_condition(user: str | None = None) -> str:
 		if tenant := get_tenant_for_user(user):
 			return f"(`tabMail Data Exchange`.tenant = '{tenant}')"
 
-	if has_role(user, "Mail User"):
-		return f"(`tabMail Data Exchange`.user = '{user}')"
-
-	return "1=0"
+	return f"(`tabMail Data Exchange`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
@@ -362,10 +359,8 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 		return True
 	elif has_role(user, "Mail Admin"):
 		return is_tenant_admin(doc.tenant, user)
-	elif has_role(user, "Mail User"):
-		return doc.user == user
 
-	return False
+	return doc.user == user
 
 
 def _run_stalwart_cli_command(command: str | list[str], _credentials: str, timeout: int | None = None) -> str:

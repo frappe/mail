@@ -13,7 +13,7 @@ from mail.server.doctype.mail_account_request.mail_account_request import create
 from mail.utils import convert_html_to_text, user_context
 from mail.utils.cache import get_personal_signup_domains
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import get_tenant_for_domain, get_user_tenant
+from mail.utils.user import get_tenant_for_domain, get_user_tenant, is_jmap_configured
 from mail.utils.validation import is_email_assigned
 
 
@@ -46,7 +46,16 @@ def personal_signup(
 
 	with user_context("Administrator"):
 		tenant = get_tenant_for_domain(domain)
-		add_member(tenant, username, domain, "Mail User", False, email, first_name, last_name, password)
+		add_member(
+			tenant,
+			username,
+			domain,
+			send_invite=False,
+			email=email,
+			first_name=first_name,
+			last_name=last_name,
+			password=password,
+		)
 
 
 @frappe.whitelist(allow_guest=True)
@@ -153,7 +162,7 @@ def get_user_info() -> dict | None:
 	)
 	user_roles = frappe.get_roles(user)
 	user_dict.tenant = get_user_tenant()
-	user_dict.is_mail_user = "Mail User" in user_roles and user != "Administrator"
+	user_dict.is_jmap_configured = is_jmap_configured(user)
 	user_dict.is_mail_admin = "Mail Admin" in user_roles
 	user_dict.is_system_manager = "System Manager" in user_roles or user == "Administrator"
 

@@ -51,6 +51,7 @@ from mail.utils.user import (
 	get_user_email_address,
 	has_role,
 	is_administrator,
+	is_jmap_configured,
 	is_system_manager,
 	is_tenant_admin,
 )
@@ -550,8 +551,7 @@ class MailExchange(Document):
 	def validate_user(self) -> None:
 		"""Validate the user."""
 
-		if not has_role(self.user, "Mail User"):
-			frappe.throw(_("User must have the 'Mail User' role."))
+		is_jmap_configured(self.user, raise_exception=True)
 
 	def validate_tenant(self) -> None:
 		"""Validate the tenant."""
@@ -942,10 +942,7 @@ def get_permission_query_condition(user: str | None = None) -> str:
 		if tenant := get_tenant_for_user(user):
 			return f"(`tabMail Exchange`.tenant = '{tenant}')"
 
-	if has_role(user, "Mail User"):
-		return f"(`tabMail Exchange`.user = '{user}')"
-
-	return "1=0"
+	return f"(`tabMail Exchange`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
@@ -958,10 +955,8 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 		return True
 	elif has_role(user, "Mail Admin"):
 		return is_tenant_admin(doc.tenant, user)
-	elif has_role(user, "Mail User"):
-		return doc.user == user
 
-	return False
+	return doc.user == user
 
 
 def extract_received_or_sent(msg: Message) -> datetime:
