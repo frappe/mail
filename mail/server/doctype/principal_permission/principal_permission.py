@@ -5,7 +5,7 @@
 from frappe.model.document import Document
 
 
-class MailPrincipalMember(Document):
+class PrincipalPermission(Document):
 	def db_insert(self, *args, **kwargs):
 		raise NotImplementedError
 

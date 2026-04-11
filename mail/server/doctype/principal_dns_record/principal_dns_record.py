@@ -5,7 +5,7 @@
 from frappe.model.document import Document
 
 
-class MailPrincipalDNSRecord(Document):
+class PrincipalDNSRecord(Document):
 	def db_insert(self, *args, **kwargs):
 		raise NotImplementedError
 

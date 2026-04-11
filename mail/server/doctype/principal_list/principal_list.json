@@ -29,7 +29,7 @@
  "modified": "2025-11-23 21:15:31.500660",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Principal List",
+ "name": "Principal List",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

@@ -5,7 +5,7 @@
 from frappe.model.document import Document
 
 
-class MailPrincipalURL(Document):
+class PrincipalMember(Document):
 	def db_insert(self, *args, **kwargs):
 		raise NotImplementedError
 

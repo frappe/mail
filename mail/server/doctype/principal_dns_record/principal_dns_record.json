@@ -90,7 +90,7 @@
  "modified": "2025-11-26 08:59:27.749122",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Principal DNS Record",
+ "name": "Principal DNS Record",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

@@ -114,7 +114,7 @@
    "fieldtype": "Table",
    "label": "Emails",
    "no_copy": 1,
-   "options": "Mail Principal Email"
+   "options": "Principal Email"
   },
   {
    "fieldname": "section_break_rlmo",
@@ -123,7 +123,7 @@
   {
    "fieldname": "urls",
    "fieldtype": "Table",
-   "options": "Mail Principal URL"
+   "options": "Principal URL"
   },
   {
    "fieldname": "section_break_ynbr",
@@ -134,13 +134,13 @@
    "fieldname": "member_of",
    "fieldtype": "Table",
    "label": "Member Of",
-   "options": "Mail Principal Member Of"
+   "options": "Principal Member Of"
   },
   {
    "fieldname": "roles",
    "fieldtype": "Table",
    "label": "Roles",
-   "options": "Mail Principal Role",
+   "options": "Principal Role",
    "read_only": 1
   },
   {
@@ -148,14 +148,14 @@
    "fieldname": "lists",
    "fieldtype": "Table",
    "label": "Mailing Lists",
-   "options": "Mail Principal List"
+   "options": "Principal List"
   },
   {
    "depends_on": "eval: [\"Group\", \"List\"].includes(doc.type)",
    "fieldname": "members",
    "fieldtype": "Table",
    "label": "Members",
-   "options": "Mail Principal Member"
+   "options": "Principal Member"
   },
   {
    "fieldname": "section_break_dnwf",
@@ -182,7 +182,7 @@
    "fieldname": "external_members",
    "fieldtype": "Table",
    "label": "External Members",
-   "options": "Mail Principal Member"
+   "options": "Principal Member"
   },
   {
    "fieldname": "urls_tab",
@@ -257,7 +257,7 @@
    "fieldtype": "Table",
    "label": "App Passwords",
    "no_copy": 1,
-   "options": "Mail Principal Password"
+   "options": "Principal Password"
   },
   {
    "fieldname": "section_break_xxrq",
@@ -276,7 +276,7 @@
    "fieldname": "permissions",
    "fieldtype": "Table",
    "label": "Permissions",
-   "options": "Mail Principal Permission"
+   "options": "Principal Permission"
   },
   {
    "fieldname": "section_break_wzvt",
@@ -288,7 +288,7 @@
    "fieldtype": "Table",
    "label": "DNS Records",
    "no_copy": 1,
-   "options": "Mail Principal DNS Record",
+   "options": "Principal DNS Record",
    "read_only": 1
   },
   {

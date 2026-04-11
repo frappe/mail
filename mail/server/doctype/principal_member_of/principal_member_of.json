@@ -29,7 +29,7 @@
  "modified": "2025-11-23 21:08:28.853550",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Principal Member Of",
+ "name": "Principal Member Of",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

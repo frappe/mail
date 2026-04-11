@@ -1,16 +1,16 @@
 {
  "actions": [],
- "creation": "2025-11-23 08:42:38.447752",
+ "creation": "2025-11-23 08:41:29.093987",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_break_hk92",
+  "section_break_xo4m",
   "value"
  ],
  "fields": [
   {
-   "fieldname": "section_break_hk92",
+   "fieldname": "section_break_xo4m",
    "fieldtype": "Section Break"
   },
   {
@@ -26,10 +26,10 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-11-23 21:15:59.158524",
+ "modified": "2025-11-23 21:08:56.105244",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Principal Role",
+ "name": "Principal Email",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

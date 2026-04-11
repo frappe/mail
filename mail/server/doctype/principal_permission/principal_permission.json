@@ -1,46 +1,46 @@
 {
  "actions": [],
- "creation": "2025-11-23 17:27:50.851151",
+ "creation": "2025-11-23 11:46:35.388918",
  "doctype": "DocType",
+ "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_break_dibc",
-  "identifier",
-  "password",
-  "column_break_fzna",
+  "section_break_lbne",
+  "description",
+  "column_break_rxyn",
+  "type",
   "value"
  ],
  "fields": [
   {
-   "fieldname": "section_break_dibc",
+   "fieldname": "section_break_lbne",
    "fieldtype": "Section Break"
   },
   {
+   "default": "Default",
    "fieldname": "value",
-   "fieldtype": "Small Text",
+   "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Value",
+   "options": "On\nOff\nDefault"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description",
    "no_copy": 1,
    "read_only": 1
   },
   {
-   "fieldname": "identifier",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Identifier",
-   "read_only_depends_on": "eval: doc.value",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "column_break_fzna",
+   "fieldname": "column_break_rxyn",
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: !doc.value",
-   "fieldname": "password",
+   "fieldname": "type",
    "fieldtype": "Data",
-   "label": "Password",
-   "mandatory_depends_on": "eval: !doc.value"
+   "in_list_view": 1,
+   "label": "Type"
   }
  ],
  "grid_page_length": 50,
@@ -48,10 +48,10 @@
  "is_virtual": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-01 12:36:26.018958",
+ "modified": "2025-11-23 17:53:40.687730",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Principal Password",
+ "name": "Principal Permission",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

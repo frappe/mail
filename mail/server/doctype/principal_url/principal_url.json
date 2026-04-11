@@ -29,7 +29,7 @@
  "modified": "2025-11-23 21:16:12.527185",
  "modified_by": "Administrator",
  "module": "Server",
- "name": "Mail Principal URL",
+ "name": "Principal URL",
  "owner": "Administrator",
  "permissions": [],
  "row_format": "Dynamic",

@@ -90,9 +90,9 @@ msgid ""
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
-#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
+#. Option for the 'Type' (Select) field in DocType 'Principal DNS Record'
 #: mail/server/doctype/dns_record/dns_record.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "A"
 msgstr ""
 
@@ -182,9 +182,9 @@ msgid "A unique identifier for this participant."
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
-#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
+#. Option for the 'Type' (Select) field in DocType 'Principal DNS Record'
 #: mail/server/doctype/dns_record/dns_record.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "AAAA"
 msgstr ""
 
@@ -553,7 +553,7 @@ msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
 #. Record'
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "Alias"
 msgstr ""
 
@@ -914,13 +914,13 @@ msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
 #. Record'
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "Auto-config"
 msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
 #. Record'
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "Auto-discover"
 msgstr ""
 
@@ -1159,9 +1159,9 @@ msgid "CC"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
-#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
+#. Option for the 'Type' (Select) field in DocType 'Principal DNS Record'
 #: mail/server/doctype/dns_record/dns_record.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "CNAME"
 msgstr ""
 
@@ -1329,9 +1329,9 @@ msgid "Catch-all email addresses are not allowed for principals."
 msgstr ""
 
 #. Label of the category (Select) field in DocType 'DNS Record'
-#. Label of the category (Select) field in DocType 'Mail Principal DNS Record'
+#. Label of the category (Select) field in DocType 'Principal DNS Record'
 #: mail/server/doctype/dns_record/dns_record.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "Category"
 msgstr ""
 
@@ -1993,7 +1993,7 @@ msgstr ""
 #. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
 #. Record'
 #: mail/api/mail.py:419 mail/client/doctype/mail_message/mail_message.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "DKIM"
 msgstr ""
 
@@ -2038,7 +2038,7 @@ msgstr ""
 #. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
 #. Record'
 #: mail/api/mail.py:421 mail/client/doctype/mail_message/mail_message.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "DMARC"
 msgstr ""
 
@@ -2212,7 +2212,7 @@ msgstr ""
 #. Label of the default (Check) field in DocType 'Address Book'
 #. Label of the default (Check) field in DocType 'Calendar'
 #. Label of the default (Check) field in DocType 'Participant Identity'
-#. Option for the 'Value' (Select) field in DocType 'Mail Principal Permission'
+#. Option for the 'Value' (Select) field in DocType 'Principal Permission'
 #. Label of the default (Check) field in DocType 'Mail Server ACME Provider'
 #. Label of the default (Check) field in DocType 'Mail Server TLS Certificate'
 #: frontend/src/pages/AddressBookView.vue:5
@@ -2220,7 +2220,7 @@ msgstr ""
 #: mail/client/doctype/address_book/address_book.json
 #: mail/client/doctype/calendar/calendar.json
 #: mail/client/doctype/participant_identity/participant_identity.json
-#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
+#: mail/server/doctype/principal_permission/principal_permission.json
 #: mail/server/doctype/mail_server_acme_provider/mail_server_acme_provider.json
 #: mail/server/doctype/mail_server_tls_certificate/mail_server_tls_certificate.json
 msgid "Default"
@@ -2594,7 +2594,7 @@ msgstr ""
 #. Label of the description (Small Text) field in DocType 'Event Participant'
 #. Label of the description (Small Text) field in DocType 'Quota'
 #. Label of the description (Small Text) field in DocType 'Mail Principal'
-#. Label of the description (Data) field in DocType 'Mail Principal Permission'
+#. Label of the description (Data) field in DocType 'Principal Permission'
 #: frontend/src/components/Modals/AddAddressBookModal.vue:26
 #: frontend/src/components/Modals/AddMailingListModal.vue:41
 #: frontend/src/components/Modals/EditAddressBookModal.vue:13
@@ -2609,7 +2609,7 @@ msgstr ""
 #: mail/client/doctype/event_participant/event_participant.json
 #: mail/client/doctype/quota/quota.json
 #: mail/server/doctype/mail_principal/mail_principal.json
-#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
+#: mail/server/doctype/principal_permission/principal_permission.json
 msgid "Description"
 msgstr ""
 
@@ -4234,13 +4234,13 @@ msgstr ""
 #. Label of the host (Data) field in DocType 'Allowed IP'
 #. Label of the host (Data) field in DocType 'Blocked IP'
 #. Label of the host (Data) field in DocType 'DNS Record'
-#. Label of the host (Data) field in DocType 'Mail Principal DNS Record'
+#. Label of the host (Data) field in DocType 'Principal DNS Record'
 #: frontend/src/components/DNSRecords.vue:50
 #: mail/mail/doctype/mail_settings/mail_settings.json
 #: mail/server/doctype/allowed_ip/allowed_ip.json
 #: mail/server/doctype/blocked_ip/blocked_ip.json
 #: mail/server/doctype/dns_record/dns_record.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "Host"
 msgstr ""
 
@@ -4417,8 +4417,8 @@ msgstr ""
 msgid "Icon used to visually represent the mailbox in the UI."
 msgstr ""
 
-#. Label of the identifier (Data) field in DocType 'Mail Principal Password'
-#: mail/server/doctype/mail_principal_password/mail_principal_password.json
+#. Label of the identifier (Data) field in DocType 'Principal Password'
+#: mail/server/doctype/principal_password/principal_password.json
 msgid "Identifier"
 msgstr ""
 
@@ -5376,9 +5376,9 @@ msgid "MIME Message"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
-#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
+#. Option for the 'Type' (Select) field in DocType 'Principal DNS Record'
 #: mail/server/doctype/dns_record/dns_record.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "MX"
 msgstr ""
 
@@ -5539,48 +5539,48 @@ msgid "Mail Principal"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
-msgid "Mail Principal DNS Record"
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
+msgid "Principal DNS Record"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_principal_email/mail_principal_email.json
-msgid "Mail Principal Email"
+#: mail/server/doctype/principal_email/principal_email.json
+msgid "Principal Email"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_principal_list/mail_principal_list.json
-msgid "Mail Principal List"
+#: mail/server/doctype/principal_list/principal_list.json
+msgid "Principal List"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_principal_member/mail_principal_member.json
-msgid "Mail Principal Member"
+#: mail/server/doctype/principal_member/principal_member.json
+msgid "Principal Member"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_principal_member_of/mail_principal_member_of.json
-msgid "Mail Principal Member Of"
+#: mail/server/doctype/principal_member_of/principal_member_of.json
+msgid "Principal Member Of"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_principal_password/mail_principal_password.json
-msgid "Mail Principal Password"
+#: mail/server/doctype/principal_password/principal_password.json
+msgid "Principal Password"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
-msgid "Mail Principal Permission"
+#: mail/server/doctype/principal_permission/principal_permission.json
+msgid "Principal Permission"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_principal_role/mail_principal_role.json
-msgid "Mail Principal Role"
+#: mail/server/doctype/principal_role/principal_role.json
+msgid "Principal Role"
 msgstr ""
 
 #. Name of a DocType
-#: mail/server/doctype/mail_principal_url/mail_principal_url.json
-msgid "Mail Principal URL"
+#: mail/server/doctype/principal_url/principal_url.json
+msgid "Principal URL"
 msgstr ""
 
 #. Name of a DocType
@@ -5890,8 +5890,8 @@ msgstr ""
 msgid "ManageSieve"
 msgstr ""
 
-#. Label of the mandatory (Check) field in DocType 'Mail Principal DNS Record'
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#. Label of the mandatory (Check) field in DocType 'Principal DNS Record'
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "Mandatory"
 msgstr ""
 
@@ -6963,8 +6963,8 @@ msgstr ""
 msgid "OTP"
 msgstr ""
 
-#. Option for the 'Value' (Select) field in DocType 'Mail Principal Permission'
-#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
+#. Option for the 'Value' (Select) field in DocType 'Principal Permission'
+#: mail/server/doctype/principal_permission/principal_permission.json
 msgid "Off"
 msgstr ""
 
@@ -6982,8 +6982,8 @@ msgstr ""
 msgid "Oldest Emails"
 msgstr ""
 
-#. Option for the 'Value' (Select) field in DocType 'Mail Principal Permission'
-#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
+#. Option for the 'Value' (Select) field in DocType 'Principal Permission'
+#: mail/server/doctype/principal_permission/principal_permission.json
 msgid "On"
 msgstr ""
 
@@ -7111,7 +7111,7 @@ msgstr ""
 #: frontend/src/components/Modals/AddContactEmailModal.vue:57
 #: frontend/src/components/Modals/AddContactPhoneModal.vue:52
 #: frontend/src/components/Modals/ShortcutsModal.vue:100
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "Other"
 msgstr ""
 
@@ -7223,7 +7223,7 @@ msgstr ""
 #. Cluster'
 #. Label of the password (Password) field in DocType 'Mail Cluster Store'
 #. Label of the password (Data) field in DocType 'Mail Principal'
-#. Label of the password (Data) field in DocType 'Mail Principal Password'
+#. Label of the password (Data) field in DocType 'Principal Password'
 #: frontend/src/components/Modals/AddMemberModal.vue:80
 #: frontend/src/pages/BusinessSignupView.vue:37
 #: frontend/src/pages/LoginView.vue:12 frontend/src/pages/SignupView.vue:54
@@ -7231,7 +7231,7 @@ msgstr ""
 #: mail/server/doctype/mail_cluster/mail_cluster.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 #: mail/server/doctype/mail_principal/mail_principal.json
-#: mail/server/doctype/mail_principal_password/mail_principal_password.json
+#: mail/server/doctype/principal_password/principal_password.json
 msgid "Password"
 msgstr ""
 
@@ -7675,12 +7675,12 @@ msgstr ""
 
 #. Label of the priority (Select) field in DocType 'Mail Queue'
 #. Label of the priority (Int) field in DocType 'DNS Record'
-#. Label of the priority (Data) field in DocType 'Mail Principal DNS Record'
+#. Label of the priority (Data) field in DocType 'Principal DNS Record'
 #. Label of the priority (Int) field in DocType 'Mail Server'
 #: frontend/src/components/DNSRecords.vue:51
 #: mail/client/doctype/mail_queue/mail_queue.json
 #: mail/server/doctype/dns_record/dns_record.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 #: mail/server/doctype/mail_server/mail_server.json
 msgid "Priority"
 msgstr ""
@@ -8081,7 +8081,7 @@ msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
 #. Record'
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "Receiving"
 msgstr ""
 
@@ -8694,8 +8694,8 @@ msgstr ""
 msgid "SQLite"
 msgstr ""
 
-#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#. Option for the 'Type' (Select) field in DocType 'Principal DNS Record'
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "SRV"
 msgstr ""
 
@@ -8952,7 +8952,7 @@ msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
 #. Record'
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "Sending"
 msgstr ""
 
@@ -8981,7 +8981,7 @@ msgstr ""
 #. Label of the server (Link) field in DocType 'Server Job'
 #. Title of a Workspace Sidebar
 #. Label of a Workspace Sidebar Item
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 #: mail/server/doctype/server_ansible_play/server_ansible_play.json
 #: mail/server/doctype/server_config/server_config.json
 #: mail/server/doctype/server_deployment/server_deployment.json
@@ -9882,7 +9882,7 @@ msgstr ""
 
 #. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
 #. Record'
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "TLS Reporting"
 msgstr ""
 
@@ -9903,18 +9903,18 @@ msgstr ""
 msgid "TTL"
 msgstr ""
 
-#. Label of the ttl (Int) field in DocType 'Mail Principal DNS Record'
+#. Label of the ttl (Int) field in DocType 'Principal DNS Record'
 #: frontend/src/components/DNSRecords.vue:52
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "TTL (Recommended)"
 msgstr ""
 
 #. Option for the 'Type' (Select) field in DocType 'DNS Record'
 #. Option for the 'Category' (Select) field in DocType 'Mail Principal DNS
 #. Record'
-#. Option for the 'Type' (Select) field in DocType 'Mail Principal DNS Record'
+#. Option for the 'Type' (Select) field in DocType 'Principal DNS Record'
 #: mail/server/doctype/dns_record/dns_record.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
 msgid "TXT"
 msgstr ""
 
@@ -11150,8 +11150,8 @@ msgstr ""
 #. Label of the type (Select) field in DocType 'DNS Record'
 #. Label of the type (Select) field in DocType 'Mail Cluster Store'
 #. Label of the type (Select) field in DocType 'Mail Principal'
-#. Label of the type (Select) field in DocType 'Mail Principal DNS Record'
-#. Label of the type (Data) field in DocType 'Mail Principal Permission'
+#. Label of the type (Select) field in DocType 'Principal DNS Record'
+#. Label of the type (Data) field in DocType 'Principal Permission'
 #: frontend/src/components/DNSRecords.vue:49
 #: frontend/src/components/Modals/AddContactAddressModal.vue:8
 #: frontend/src/components/Modals/AddContactEmailModal.vue:14
@@ -11169,8 +11169,8 @@ msgstr ""
 #: mail/server/doctype/dns_record/dns_record.json
 #: mail/server/doctype/mail_cluster_store/mail_cluster_store.json
 #: mail/server/doctype/mail_principal/mail_principal.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
-#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
+#: mail/server/doctype/principal_permission/principal_permission.json
 msgid "Type"
 msgstr ""
 
@@ -11723,28 +11723,28 @@ msgid "Validating Script..."
 msgstr ""
 
 #. Label of the value (Text) field in DocType 'DNS Record'
-#. Label of the value (Text) field in DocType 'Mail Principal DNS Record'
-#. Label of the value (Data) field in DocType 'Mail Principal Email'
-#. Label of the value (Data) field in DocType 'Mail Principal List'
-#. Label of the value (Data) field in DocType 'Mail Principal Member'
-#. Label of the value (Data) field in DocType 'Mail Principal Member Of'
-#. Label of the value (Small Text) field in DocType 'Mail Principal Password'
-#. Label of the value (Select) field in DocType 'Mail Principal Permission'
-#. Label of the value (Data) field in DocType 'Mail Principal Role'
-#. Label of the value (Data) field in DocType 'Mail Principal URL'
+#. Label of the value (Text) field in DocType 'Principal DNS Record'
+#. Label of the value (Data) field in DocType 'Principal Email'
+#. Label of the value (Data) field in DocType 'Principal List'
+#. Label of the value (Data) field in DocType 'Principal Member'
+#. Label of the value (Data) field in DocType 'Principal Member Of'
+#. Label of the value (Small Text) field in DocType 'Principal Password'
+#. Label of the value (Select) field in DocType 'Principal Permission'
+#. Label of the value (Data) field in DocType 'Principal Role'
+#. Label of the value (Data) field in DocType 'Principal URL'
 #. Label of the value (Small Text) field in DocType 'Server Ansible Play
 #. Variable'
 #: frontend/src/components/DNSRecords.vue:53
 #: mail/server/doctype/dns_record/dns_record.json
-#: mail/server/doctype/mail_principal_dns_record/mail_principal_dns_record.json
-#: mail/server/doctype/mail_principal_email/mail_principal_email.json
-#: mail/server/doctype/mail_principal_list/mail_principal_list.json
-#: mail/server/doctype/mail_principal_member/mail_principal_member.json
-#: mail/server/doctype/mail_principal_member_of/mail_principal_member_of.json
-#: mail/server/doctype/mail_principal_password/mail_principal_password.json
-#: mail/server/doctype/mail_principal_permission/mail_principal_permission.json
-#: mail/server/doctype/mail_principal_role/mail_principal_role.json
-#: mail/server/doctype/mail_principal_url/mail_principal_url.json
+#: mail/server/doctype/principal_dns_record/principal_dns_record.json
+#: mail/server/doctype/principal_email/principal_email.json
+#: mail/server/doctype/principal_list/principal_list.json
+#: mail/server/doctype/principal_member/principal_member.json
+#: mail/server/doctype/principal_member_of/principal_member_of.json
+#: mail/server/doctype/principal_password/principal_password.json
+#: mail/server/doctype/principal_permission/principal_permission.json
+#: mail/server/doctype/principal_role/principal_role.json
+#: mail/server/doctype/principal_url/principal_url.json
 #: mail/server/doctype/server_ansible_play_variable/server_ansible_play_variable.json
 msgid "Value"
 msgstr ""
