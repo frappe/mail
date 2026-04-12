@@ -39,12 +39,10 @@ export interface MailHeader extends ChildDocType {
 export interface MailAccountRequest extends DocType {
 	/** Request Key: Data */
 	request_key?: string
-	/** Email: Data */
-	email: string
+	/** Backup Email: Data */
+	backup_email: string
 	/** Tenant: Link (Mail Tenant) */
 	tenant?: string
-	/** OTP: Data */
-	otp?: string
 	/** Invited By: Link (User) */
 	invited_by?: string
 	/** Is Verified: Check */

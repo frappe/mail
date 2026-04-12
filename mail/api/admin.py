@@ -113,7 +113,7 @@ def add_member(
 	account_request.account = f"{username}@{domain}"
 	account_request.is_admin = cint(role == "Mail Admin")
 	account_request.invited_by = frappe.session.user
-	account_request.email = email
+	account_request.backup_email = email
 	account_request.send_invite = cint(send_invite)
 	account_request.expires_at = expires_at
 	account_request.insert()

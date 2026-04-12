@@ -28,7 +28,7 @@
 				/>
 				<FormControl
 					:label="__('Backup Email')"
-					:value="accountRequest.doc.email"
+					:value="accountRequest.doc.backup_email"
 					disabled
 				/>
 				<FormControl

@@ -113,7 +113,15 @@ const showDeleteInvites = ref(false)
 
 const invites = useList({
 	doctype: 'Mail Account Request',
-	fields: ['name', 'email', 'account', 'is_admin', 'is_verified', 'expires_at', 'invited_by'],
+	fields: [
+		'name',
+		'backup_email',
+		'account',
+		'is_admin',
+		'is_verified',
+		'expires_at',
+		'invited_by',
+	],
 	orderBy: 'creation desc',
 	filters: () => {
 		const filters: Record<string, string | string[] | number> = {
@@ -183,7 +191,7 @@ const DELETE_INVITES_OPTIONS = {
 const LIST_COLUMNS = [
 	{ label: __('Assigned Email'), key: 'account' },
 	{ label: __('Assigned Role'), key: 'is_admin' },
-	{ label: __('Backup Email'), key: 'email' },
+	{ label: __('Backup Email'), key: 'backup_email' },
 	{ label: __('Invited By'), key: 'invited_by' },
 	{ label: __('Invitation Status'), key: 'status' },
 ]

@@ -2,6 +2,8 @@
 # For license information, please see license.txt
 
 
+from uuid import uuid7
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -29,6 +31,9 @@ from mail.utils.validation import (
 
 
 class MailAccountRequest(Document):
+	def autoname(self) -> None:
+		self.name = str(uuid7())
+
 	@property
 	def is_expired(self) -> bool:
 		return self.expires_at and get_datetime(self.expires_at) < now_datetime()
@@ -56,11 +61,11 @@ class MailAccountRequest(Document):
 	def validate_email(self) -> None:
 		"""Validates email if needed."""
 
-		if not self.email:
+		if not self.backup_email:
 			frappe.throw(_("Backup Email is required."))
 
-		self.email = self.email.strip().lower()
-		validate_email_address(self.email, throw=True)
+		self.backup_email = self.backup_email.strip().lower()
+		validate_email_address(self.backup_email, throw=True)
 
 	def set_expires_at(self) -> None:
 		"""Sets the expiry date of the request."""
@@ -135,7 +140,7 @@ class MailAccountRequest(Document):
 	def send_verification_email(self) -> None:
 		"""Send verification email to the user."""
 
-		if not self.email:
+		if not self.backup_email:
 			frappe.throw(_("Email is required to send invite"))
 
 		self.validate_expired()
@@ -154,7 +159,7 @@ class MailAccountRequest(Document):
 			}
 
 			frappe.sendmail(
-				recipients=self.email,
+				recipients=self.backup_email,
 				subject=subject,
 				template=template,
 				args=args,
@@ -223,7 +228,7 @@ class MailAccountRequest(Document):
 		)
 		user_settings.username = self.account
 		user_settings.app_password = app_password
-		user_settings.backup_email = self.email
+		user_settings.backup_email = self.backup_email
 		user_settings.save(ignore_permissions=True)
 
 		# Create Push Subscription

@@ -45,7 +45,7 @@
 					]"
 				/>
 				<FormControl
-					v-model="accountRequest.email"
+					v-model="accountRequest.backup_email"
 					type="email"
 					:label="__('Backup Email')"
 					placeholder="johndoe@personal.com"
@@ -109,7 +109,7 @@ const defaultAccountRequest = {
 	role: 'Mail User',
 	send_invite: true,
 	expires_at: dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm'),
-	email: '',
+	backup_email: '',
 	first_name: '',
 	last_name: '',
 	password: '',

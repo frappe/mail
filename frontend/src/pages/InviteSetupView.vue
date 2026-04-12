@@ -67,8 +67,8 @@ const getAccountRequest = createResource({
 	url: 'mail.api.account.get_account_request',
 	makeParams: () => ({ request_key: requestKey }),
 	onSuccess: (data) => {
-		if ((data?.email || data?.account) && !data?.is_verified && !data?.is_expired)
-			email.value = data.account || data.email
+		if ((data?.backup_email || data?.account) && !data?.is_verified && !data?.is_expired)
+			email.value = data.account || data.backup_email
 		else router.replace({ name: 'SignUp' })
 	},
 })

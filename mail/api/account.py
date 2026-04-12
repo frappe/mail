@@ -81,7 +81,7 @@ def get_account_request(request_key: str) -> dict | None:
 	if account_request := frappe.db.get_value(
 		"Mail Account Request",
 		{"request_key": request_key},
-		["email", "is_verified", "expires_at", "account"],
+		["backup_email", "is_verified", "expires_at", "account"],
 		as_dict=True,
 	):
 		is_expired = 0
@@ -105,7 +105,7 @@ def create_account(request_key: str, first_name: str, last_name: str, password: 
 	if account_request.account:
 		account_request.create_account(first_name, last_name, password)
 	else:
-		create_user(account_request.email, first_name, last_name, password, ["Mail Admin"])
+		create_user(account_request.backup_email, first_name, last_name, password, ["Mail Admin"])
 
 
 @frappe.whitelist(allow_guest=True)
