@@ -13,7 +13,7 @@ from mail.server.doctype.mail_account_request.mail_account_request import create
 from mail.utils import convert_html_to_text, user_context
 from mail.utils.cache import get_personal_signup_domains
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import get_tenant_for_domain, get_user_tenant
+from mail.utils.user import get_tenant_for_domain, get_user_tenant, has_user_settings
 from mail.utils.validation import is_email_assigned
 
 
@@ -132,6 +132,11 @@ def get_user_info() -> dict | None:
 	user = frappe.session.user
 	if user == "Guest":
 		return None
+
+	if not has_user_settings(user):
+		user_settings = frappe.new_doc("User Settings")
+		user_settings.user = user
+		user_settings.insert(ignore_permissions=True)
 
 	USER = frappe.qb.DocType("User")
 	USER_SETTINGS = frappe.qb.DocType("User Settings")
