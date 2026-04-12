@@ -62,10 +62,14 @@ def reconnect_on_failure(max_retries: int = 3) -> callable:
 	return wrapper
 
 
-def get_mail_config() -> dict[str, Any]:
+def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 	"""Returns the mail configuration from frappe.conf, or an empty dict if not set."""
 
 	config = frappe.conf.mail or {}
+
+	if key:
+		return config.get(key)
+
 	return config
 
 

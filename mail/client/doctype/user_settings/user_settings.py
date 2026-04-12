@@ -88,7 +88,7 @@ class UserSettings(Document):
 		if not self.username:
 			return
 
-		server_url = self.server_url or get_mail_config().get("server_url")
+		server_url = self.server_url or get_mail_config("server_url")
 
 		if not server_url or not self.get_password("app_password"):
 			frappe.throw(_("Server URL and App Password are required to validate JMAP settings."))

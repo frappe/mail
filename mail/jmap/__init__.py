@@ -48,7 +48,7 @@ def get_jmap_connection(user: str, ignore_permissions: bool = False, cache: bool
 					frappe.ValidationError,
 				)
 
-		server_url = user_settings.server_url or get_mail_config().get("server_url")
+		server_url = user_settings.server_url or get_mail_config("server_url")
 		if not server_url:
 			frappe.throw(
 				_("Server URL must be set in either the user's settings or the site configuration."),
