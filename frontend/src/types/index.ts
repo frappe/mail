@@ -10,7 +10,11 @@ export interface User {
 	user_image: string | null
 	api_key: string | null
 	tenant: string | null
+	user_settings?: string
 	default_outgoing_email?: string
+	color_scheme?: 'System Default' | 'Light Mode' | 'Dark Mode'
+	group_messages_by?: '' | 'Day' | 'Month'
+	show_reading_pane?: 0 | 1
 
 	enabled: boolean
 	is_mail_user: boolean

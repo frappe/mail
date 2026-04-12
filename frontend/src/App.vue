@@ -11,7 +11,7 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { FrappeUIProvider } from 'frappe-ui'
 
-import { type Theme, useScreenSize, useTheme } from '@/utils/composables'
+import { useScreenSize, useTheme } from '@/utils/composables'
 import { showNotification } from '@/utils/push-notifications'
 import DefaultLayout from '@/components/DefaultLayout.vue'
 import InstallPrompt from '@/components/InstallPrompt.vue'
@@ -41,8 +41,7 @@ onMounted(() => {
 	window.frappePushNotification?.onMessage((payload: NotificationPayload) =>
 		showNotification(payload),
 	)
-	const storedTheme = localStorage.getItem('theme') as Theme | null
-	setTheme(storedTheme || 'system')
+	if (!document.documentElement.getAttribute('data-theme')) setTheme('system')
 	mediaQuery.addEventListener('change', handleSystemThemeChange)
 })
 onUnmounted(() => mediaQuery.removeEventListener('change', handleSystemThemeChange))

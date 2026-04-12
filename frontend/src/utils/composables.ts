@@ -40,7 +40,6 @@ export const useTheme = () => {
 			'data-theme',
 			theme === 'system' ? getSystemTheme() : theme,
 		)
-		localStorage.setItem('theme', theme)
 	}
 
 	const activeTheme = computed<'light' | 'dark'>(() =>
@@ -56,14 +55,12 @@ const showReadingPane = ref(false)
 const groupMessagesBy = ref<GroupMessagesBy>('day')
 
 export const useLayout = () => {
-	const setShowReadingPane = (user: string, show: boolean) => {
+	const setShowReadingPane = (show: boolean) => {
 		showReadingPane.value = show
-		localStorage.setItem(`user:${user}:showReadingPane`, String(show))
 	}
 
-	const setGroupMessagesBy = (user: string, groupBy: GroupMessagesBy) => {
+	const setGroupMessagesBy = (groupBy: GroupMessagesBy) => {
 		groupMessagesBy.value = groupBy
-		localStorage.setItem(`user:${user}:groupMessagesBy`, groupBy)
 	}
 
 	return { showReadingPane, setShowReadingPane, groupMessagesBy, setGroupMessagesBy }
