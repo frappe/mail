@@ -32,7 +32,7 @@ from mail.utils import (
 from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
 from mail.utils.user import (
 	clear_sync_state,
-	get_account_for_user,
+	get_jmap_username,
 	get_user_email_address,
 	has_role,
 	is_administrator,
@@ -184,7 +184,7 @@ class MailDataExchange(Document):
 				command.append("account")
 			else:
 				command.extend(["messages", "-f", self.import_format])
-			command.append(get_account_for_user(self.user))
+			command.append(get_jmap_username(self.user))
 
 			if self.import_format == "jmap":
 				validate_jmap_structure(base_dir, raise_exception=True)
@@ -242,7 +242,7 @@ class MailDataExchange(Document):
 		try:
 			cli_path = get_stalwart_cli_path()
 			host, _credentials = self._get_host_and_credentials()
-			command = f"{cli_path} -u {host} export account {get_account_for_user(self.user)} {out_dir}"
+			command = f"{cli_path} -u {host} export account {get_jmap_username(self.user)} {out_dir}"
 			output = _run_stalwart_cli_command(command, _credentials)
 			self._attach_export(out_dir)
 			kwargs.update({"status": "Completed", "output": output})
@@ -292,7 +292,7 @@ class MailDataExchange(Document):
 		archive = f"{self.name}{self.export_archive_type}"
 		url = f"/private/files/{archive}"
 		path = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{url}")
-		compress_directory(os.path.join(out_dir, get_account_for_user(self.user)), path)
+		compress_directory(os.path.join(out_dir, get_jmap_username(self.user)), path)
 
 		file = frappe.new_doc("File")
 		file.is_private = 1

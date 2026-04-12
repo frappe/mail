@@ -1,12 +1,12 @@
 {
  "actions": [],
- "autoname": "field:user",
  "creation": "2026-03-27 16:27:12.818547",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
   "user",
   "column_break_klzk",
+  "managed",
   "jmap_credentials_section",
   "server_url",
   "column_break_uxkb",
@@ -338,16 +338,25 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.managed",
+   "fieldname": "managed",
+   "fieldtype": "Check",
+   "label": "Managed",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-11 10:19:59.596016",
+ "modified": "2026-04-12 09:08:33.688765",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",
- "naming_rule": "By fieldname",
  "owner": "Administrator",
  "permissions": [
   {

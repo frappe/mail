@@ -68,7 +68,7 @@ const { identities } = userStore()
 
 const account = createDocumentResource({
 	doctype: 'User Settings',
-	name: user.data?.name,
+	name: user.data?.user_settings,
 	setValue: {
 		onSuccess: () => raiseToast(__('Account updated.')),
 	},

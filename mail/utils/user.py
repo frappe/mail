@@ -63,6 +63,15 @@ def is_jmap_configured(user: str, raise_exception: bool = False) -> bool:
 	return False
 
 
+def is_managed_user(user: str) -> bool:
+	"""Returns True if the user is a managed user else False."""
+
+	if frappe.db.exists("User", {"user": user, "managed": 1}):
+		return True
+
+	return False
+
+
 def is_tenant_bound_user(user: str) -> bool:
 	"""Returns True if the user is a tenant bound user else False."""
 
@@ -92,10 +101,10 @@ def is_tenant_member(tenant: str, user: str) -> bool:
 	return frappe.db.exists("Mail Tenant Member", {"tenant": tenant, "user": user})
 
 
-def get_account_for_user(user: str) -> str | None:
-	"""Returns the account of the user."""
+def get_jmap_username(user: str) -> str | None:
+	"""Returns the JMAP username of the user."""
 
-	return frappe.db.get_value("User Settings", user, "username")
+	return frappe.db.get_value("User Settings", {"user": user}, "username")
 
 
 def get_user_hashed_password(user: str) -> str | None:
@@ -230,8 +239,8 @@ def get_caldav_settings(user: str) -> dict:
 
 	caldav_settings = {}
 
-	user_settings = frappe.get_doc("User Settings", user)
-	if user_settings.server_url and user_settings.username and user_settings.app_password:
+	user = frappe.get_lazy_doc("User", user)
+	if user.server_url and user.username and user.app_password:
 		cluster = get_cluster_for_tenant(get_tenant_for_user(user))
 		base_url = frappe.db.get_value("Mail Cluster", cluster, "base_url")
 		caldav_url = urljoin(base_url, ".well-known/caldav")
@@ -240,8 +249,8 @@ def get_caldav_settings(user: str) -> dict:
 			{
 				"url": caldav_url,
 				"auth": (
-					user_settings.username,
-					user_settings.get_password("app_password"),
+					user.username,
+					user.get_password("app_password"),
 				),
 			}
 		)
@@ -252,7 +261,7 @@ def get_caldav_settings(user: str) -> dict:
 def get_sync_state(user: str, type: Literal["email"]) -> str | None:
 	"""Returns the Sync State for the given user and type."""
 
-	return frappe.db.get_value("User Settings", user, f"{type}_current_state")
+	return frappe.db.get_value("User Settings", {"user": user}, f"{type}_current_state")
 
 
 @frappe.whitelist(methods=["POST"])
@@ -288,4 +297,4 @@ def update_sync_state(user: str, type: Literal["email"], state: str) -> None:
 def clear_sync_state(user: str, type: Literal["email"]) -> None:
 	"""Clear the Sync State for the given user and type."""
 
-	frappe.db.set_value("User Settings", user, f"{type}_current_state", None, update_modified=False)
+	frappe.db.set_value("User Settings", {"user": user}, f"{type}_current_state", None, update_modified=False)

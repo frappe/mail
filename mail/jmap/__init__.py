@@ -25,7 +25,7 @@ from mail.jmap.services.sieve.sieve_script import SieveScriptService
 from mail.jmap.services.vacationresponse.vacation_response import VacationResponseService
 from mail.jmap.services.websocket.websocket import WebSocketService
 from mail.utils import get_mail_config
-from mail.utils.user import has_role, is_jmap_configured
+from mail.utils.user import has_role
 from mail.utils.validation import has_permission_for_user
 
 
@@ -33,8 +33,11 @@ def get_jmap_connection(user: str, ignore_permissions: bool = False, cache: bool
 	"""Returns a JMAPConnection instance for the specified user, with optional permission checks and caching."""
 
 	def generator() -> JMAPConnection:
-		is_jmap_configured(user, raise_exception=True)
-		user_settings = frappe.get_lazy_doc("User Settings", user)
+		settings = frappe.db.exists("User Settings", {"user": user, "username": ["!=", None]})
+		if not settings:
+			frappe.throw(_("User {0} does not have JMAP settings configured.").format(frappe.bold(user)))
+
+		user_settings = frappe.get_lazy_doc("User Settings", settings)
 
 		if frappe.db.get_value("Mail Tenant Member", {"user": user}, "tenant"):
 			if user_settings.user != user_settings.username:

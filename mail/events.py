@@ -8,8 +8,8 @@ from mail.backend import get_mail_backend_api
 from mail.server.doctype.principal.principal import PRINCIPAL_ENDPOINT, Principal
 from mail.utils import reformat_pbkdf2_hash
 from mail.utils.user import (
-	get_account_for_user,
 	get_cluster_for_tenant,
+	get_jmap_username,
 	get_tenant_for_user,
 	get_user_hashed_password,
 	has_user_settings,
@@ -27,7 +27,7 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 	tenant = get_tenant_for_user(doc.name)
 	ensure_tenant_has_cluster(tenant)
 
-	username = get_account_for_user(doc.name)
+	username = get_jmap_username(doc.name)
 
 	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
 	principal = Principal._fetch(backend, username, ignore_not_found=False)

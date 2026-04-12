@@ -296,7 +296,7 @@ def get_active_sieve_script_id(user: str) -> str | None:
 def activate_last_active_sieve_script(user: str) -> None:
 	"""Activates the last active sieve script for the given user, if any, and clears the last active sieve script setting."""
 
-	sieve_script_id = frappe.db.get_value("User Settings", user, "last_active_sieve_script_id")
+	sieve_script_id = frappe.db.get_value("User Settings", {"user": user}, "last_active_sieve_script_id")
 
 	if not sieve_script_id:
 		return
@@ -320,7 +320,7 @@ def set_last_active_sieve_script_id(user: str, sieve_script_id: str | None = Non
 	"""Sets the given sieve script ID as the last active sieve script for the given user."""
 
 	frappe.db.set_value(
-		"User Settings", user, "last_active_sieve_script_id", sieve_script_id, update_modified=False
+		"User Settings", {"user": user}, "last_active_sieve_script_id", sieve_script_id, update_modified=False
 	)
 
 

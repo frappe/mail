@@ -10,7 +10,7 @@ export interface User {
 	user_image: string | null
 	api_key: string | null
 	tenant: string | null
-	jmap_default_outgoing_email?: string
+	default_outgoing_email?: string
 
 	enabled: boolean
 	is_mail_user: boolean

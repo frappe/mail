@@ -133,49 +133,60 @@ def get_user_info() -> dict | None:
 	if user == "Guest":
 		return None
 
-	user_dict = frappe.db.get_value(
-		"User",
-		user,
-		[
-			"name",
-			"email",
-			"enabled",
-			"user_image",
-			"full_name",
-			"first_name",
-			"last_name",
-			"user_type",
-			"username",
-			"api_key",
-			"jmap_default_outgoing_email",
-		],
-		as_dict=1,
-	)
-	user_roles = frappe.get_roles(user)
-	user_dict.tenant = get_user_tenant()
-	user_dict.is_mail_user = "Mail User" in user_roles and user != "Administrator"
-	user_dict.is_mail_admin = "Mail Admin" in user_roles
-	user_dict.is_system_manager = "System Manager" in user_roles or user == "Administrator"
+	USER = frappe.qb.DocType("User")
+	USER_SETTINGS = frappe.qb.DocType("User Settings")
 
-	if user_dict.tenant:
-		user_dict.tenant_name, tenant_owner = frappe.db.get_value(
-			"Mail Tenant", user_dict.tenant, ["tenant_name", "user"]
+	result = (
+		frappe.qb.from_(USER)
+		.join(USER_SETTINGS)
+		.on(USER.name == USER_SETTINGS.user)
+		.select(
+			USER.name,
+			USER.email,
+			USER.enabled,
+			USER.user_image,
+			USER.full_name,
+			USER.first_name,
+			USER.last_name,
+			USER.user_type,
+			USER.username,
+			USER.api_key,
+			USER_SETTINGS.default_outgoing_email,
+			USER_SETTINGS.name.as_("user_settings"),
 		)
-		user_dict.is_tenant_owner = tenant_owner == user
+		.where(USER.name == user)
+	).run(as_dict=True)
 
-	return user_dict
+	if not result:
+		return None
+
+	data = result[0]
+
+	user_roles = frappe.get_roles(user)
+	data.tenant = get_user_tenant()
+	data.is_mail_user = "Mail User" in user_roles and user != "Administrator"
+	data.is_mail_admin = "Mail Admin" in user_roles
+	data.is_system_manager = "System Manager" in user_roles or user == "Administrator"
+
+	if data.tenant:
+		data.tenant_name, tenant_owner = frappe.db.get_value(
+			"Mail Tenant", data.tenant, ["tenant_name", "user"]
+		)
+		data.is_tenant_owner = tenant_owner == user
+
+	return data
 
 
-def get_backup_email(email: str) -> str:
+def get_backup_email(user: str) -> str:
 	"""Return backup email for a user or the user's email if backup doesn't exist"""
 
-	if backup_email := frappe.db.get_value("User Settings", email, "backup_email"):
+	if backup_email := frappe.db.get_value("User Settings", {"user": user}, "backup_email"):
 		return backup_email
 
-	if frappe.db.exists("User", email):
-		return email
+	if frappe.db.exists("User", user):
+		return frappe.db.get_value("User", user, "email")
 
-	frappe.throw(_("User {0} does not exist.").format(frappe.bold(email)))
+	frappe.throw(_("User {0} does not exist.").format(frappe.bold(user)))
 
 
 def set_reset_password_key(email: str) -> str:
@@ -201,23 +212,24 @@ def censor_email(email: str) -> str:
 
 @frappe.whitelist(allow_guest=True)
 @dynamic_rate_limit()
-def send_reset_password_link(email: str) -> str:
+def send_reset_password_link(user: str) -> str:
 	"""Send reset password link to the user"""
 
-	user = get_backup_email(email)
-	key = set_reset_password_key(email)
+	email = get_backup_email(user)
+	key = set_reset_password_key(user)
 
 	frappe.sendmail(
-		recipients=user,
+		recipients=email,
 		subject=_("Reset Password"),
 		template="reset_password",
 		args={"link": get_url("/mail/reset-password/" + key)},
 		now=True,
 	)
 
-	if user == email:
-		return user
-	return censor_email(user)
+	if email == user:
+		return email
+
+	return censor_email(email)
 
 
 @frappe.whitelist(allow_guest=True)

@@ -35,7 +35,6 @@ from mail.utils.dns import verify_dns_record
 from mail.utils.user import (
 	get_principal_tenant,
 	get_tenant_for_user,
-	has_user_settings,
 	is_system_manager,
 	is_tenant_admin,
 )
@@ -722,8 +721,8 @@ class Principal(Document):
 			if member := frappe.db.exists("Mail Tenant Member", {"tenant": self.tenant, "user": self.name}):
 				frappe.delete_doc("Mail Tenant Member", member, ignore_permissions=True)
 
-			if has_user_settings(self.name):
-				frappe.delete_doc("User Settings", self.name, ignore_permissions=True)
+			if settings := frappe.db.exists("User Settings", {"user": self.name}):
+				frappe.delete_doc("User Settings", settings, ignore_permissions=True)
 
 			if frappe.db.exists("User", self.name):
 				frappe.delete_doc("User", self.name, ignore_permissions=True)

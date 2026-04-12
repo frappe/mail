@@ -59,7 +59,7 @@ def create_contacts_if_not_exists(recipients: list[dict] | str) -> None:
 	"""Creates contacts for the given recipients if they do not exist."""
 
 	user = frappe.session.user
-	if not frappe.db.get_value("User Settings", user, "create_contacts_after_email_submit"):
+	if not frappe.db.get_value("User Settings", {"user": user}, "create_contacts_after_email_submit"):
 		return
 
 	if isinstance(recipients, str):
