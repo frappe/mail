@@ -155,7 +155,7 @@ def _add_identity(
 		],
 	}
 
-	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	backend = get_mail_backend_api()
 	response = backend.request("POST", "/jmap", json=payload)
 
 	title = _("Identity Creation Error")

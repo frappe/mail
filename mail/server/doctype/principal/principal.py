@@ -300,7 +300,7 @@ class Principal(Document):
 		if self.type != "Domain":
 			frappe.throw(_("DKIM Keys can only be rotated for Domain principals."))
 
-		backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(self.tenant))
+		backend = get_mail_backend_api()
 
 		self._delete_dkim_signature(backend, "rsa-sha256", raise_exception=False)
 		self._create_dkim_signature(backend, "rsa-sha256", raise_exception=False)
@@ -379,7 +379,7 @@ class Principal(Document):
 			"externalMembers": _external_members,
 			"locale": self.locale,
 		}
-		backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(self.tenant))
+		backend = get_mail_backend_api()
 		response = backend.request("POST", PRINCIPAL_ENDPOINT, data=json.dumps(payload))
 
 		if response.json().get("error"):
@@ -520,7 +520,7 @@ class Principal(Document):
 			if cached := _get_principal_from_cache(tenant, self.name):
 				return cached
 
-		backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+		backend = get_mail_backend_api()
 		principal = Principal._fetch(
 			backend, self.name, skip_dns_records=skip_dns_records, ignore_not_found=False
 		)
@@ -553,7 +553,7 @@ class Principal(Document):
 			)
 			return [], 0
 
-		backend = get_mail_backend_api("Mail Cluster", cluster)
+		backend = get_mail_backend_api()
 
 		principals = []
 		for pname in tenant_principals:
@@ -577,7 +577,7 @@ class Principal(Document):
 		"""Updates the principal in the backend."""
 
 		ensure_principal_belong_to_tenant(self.tenant, self.name)
-		backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(self.tenant))
+		backend = get_mail_backend_api()
 		existing_principal = frappe._dict(
 			Principal._fetch(backend, self.name, skip_dns_records=True, ignore_not_found=False)
 		)
@@ -710,7 +710,7 @@ class Principal(Document):
 					)
 				)
 
-		backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(self.tenant))
+		backend = get_mail_backend_api()
 		backend.request("DELETE", f"{PRINCIPAL_ENDPOINT}/{self.name}")
 		delete_principal_settings(self.name, raise_exception=False)
 

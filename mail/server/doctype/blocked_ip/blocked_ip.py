@@ -80,7 +80,7 @@ class BlockedIP(Document):
 				}
 			)
 
-		backend_api = get_mail_backend_api("Mail Cluster", self.cluster)
+		backend_api = get_mail_backend_api()
 		backend_api.request(
 			method="POST",
 			endpoint="/api/settings",
@@ -91,7 +91,7 @@ class BlockedIP(Document):
 		"""Returns the blocked IP from the backend."""
 
 		cluster, ip_address = self.name.split("|")
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		response = backend_api.request(
 			method="GET",
 			endpoint="api/settings/group",
@@ -105,7 +105,7 @@ class BlockedIP(Document):
 	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
 		"""Returns all blocked IPs for the given cluster."""
 
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		response = backend_api.request(
 			method="GET",
 			endpoint="api/settings/group",
@@ -128,7 +128,7 @@ class BlockedIP(Document):
 		for ip in ip_addresses:
 			request_data.append({"type": "delete", "keys": [f"server.blocked-ip.{ip}"]})
 
-		backend_api = get_mail_backend_api("Mail Cluster", self.cluster)
+		backend_api = get_mail_backend_api()
 		backend_api.request(
 			method="POST",
 			endpoint="/api/settings",

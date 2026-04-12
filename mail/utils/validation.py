@@ -9,6 +9,7 @@ from croniter import CroniterBadCronError, croniter
 from frappe import _
 from frappe.utils.caching import request_cache
 
+from mail.utils import get_mail_config
 from mail.utils.user import (
 	get_cluster_for_tenant,
 	get_principal_tenant,
@@ -344,6 +345,25 @@ def has_permission_for_user(user: str, raise_exception: bool = True) -> bool:
 		frappe.throw(_("You do not have permission to access this resource."), frappe.PermissionError)
 
 	return has_permission
+
+
+def validate_mail_config() -> None:
+	"""Validates the mail configuration. Checks if the server URL is set and if the fallback admin credentials are set."""
+
+	config = get_mail_config()
+	if not config:
+		frappe.throw(_("Mail configuration is not set."))
+
+	if not config.get("server_url"):
+		frappe.throw(_("Mail server URL is not set in Mail Configuration."))
+
+	fallback_admin_api_key = config.get("fallback_admin_api_key")
+
+	fallback_admin_user = config.get("fallback_admin_user")
+	fallback_admin_password = config.get("fallback_admin_password")
+
+	if not fallback_admin_api_key and not (fallback_admin_user and fallback_admin_password):
+		frappe.throw(_("Fallback admin credentials are not set in Mail Configuration."))
 
 
 def ensure_tenant_bound_user(user: str) -> None:

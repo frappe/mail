@@ -229,18 +229,6 @@ class MailServer(Document):
 				frappe.delete_doc("DNS Record", spf_ehlo_dns_record, ignore_permissions=True)
 
 	@frappe.whitelist()
-	def reload_config(self) -> None:
-		"""Reloads the Server configuration."""
-
-		frappe.only_for("System Manager")
-
-		if not self.enabled:
-			frappe.throw(_("Mail Server {0} is disabled.").format(frappe.bold(self.name)))
-
-		backend = get_mail_backend_api(self.doctype, self.name)
-		backend.request("GET", "/api/reload")
-
-	@frappe.whitelist()
 	def verify_ssh_connection(self) -> None:
 		"""Verifies the SSH connection to the server."""
 
@@ -372,28 +360,6 @@ class MailServer(Document):
 		"""Updates the document with the given key-value pairs."""
 
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
-
-
-@frappe.whitelist()
-def reload_servers_config(servers: str | list[str]) -> None:
-	"""Reloads the configuration of the specified servers."""
-
-	frappe.only_for("System Manager")
-
-	if isinstance(servers, str):
-		servers = json.loads(servers)
-
-	reloaded_servers = []
-	for server in servers:
-		server = frappe.get_cached_doc("Mail Server", server)
-		if server.enabled:
-			server.reload_config()
-			reloaded_servers.append(server.name)
-		else:
-			frappe.msgprint(_("Mail Server {0} is disabled.").format(frappe.bold(server.name)), alert=True)
-
-	if reloaded_servers:
-		frappe.msgprint(_("Configuration reloaded."), alert=True)
 
 
 def on_doctype_update() -> None:

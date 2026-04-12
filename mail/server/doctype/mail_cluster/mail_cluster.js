@@ -159,16 +159,6 @@ frappe.ui.form.on('Mail Cluster', {
 				__('Actions'),
 			)
 		}
-
-		if (frm.doc.enabled && !frm.is_dirty()) {
-			frm.add_custom_button(
-				__('Reload Configuration'),
-				() => {
-					frm.trigger('reload_config')
-				},
-				__('Actions'),
-			)
-		}
 	},
 
 	show_password(frm) {
@@ -193,21 +183,6 @@ frappe.ui.form.on('Mail Cluster', {
 			freeze_message: __('Generating API Key...'),
 			callback: (r) => {
 				if (!r.exc) {
-					frm.refresh()
-				}
-			},
-		})
-	},
-
-	reload_config(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: 'reload_config',
-			freeze: true,
-			freeze_message: __('Reloading Configuration...'),
-			callback: (r) => {
-				if (!r.exc) {
-					frappe.show_alert(__('Configuration reloaded.'), 5)
 					frm.refresh()
 				}
 			},

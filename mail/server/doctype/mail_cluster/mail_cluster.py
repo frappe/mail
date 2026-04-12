@@ -333,43 +333,6 @@ class MailCluster(Document):
 
 		return f"api_{base64.b64encode(f'{name}:{secret}'.encode()).decode()}"
 
-	@frappe.whitelist()
-	def reload_config(self) -> None:
-		"""Reloads the Mail Cluster configuration."""
-
-		if not frappe.flags.ignore_permissions:
-			frappe.only_for("System Manager")
-
-		if not self.enabled:
-			frappe.throw(_("Mail Cluster {0} is disabled.").format(frappe.bold(self.name)))
-
-		servers = frappe.db.get_all("Mail Server", filters={"cluster": self.name, "enabled": 1}, pluck="name")
-		for server in servers:
-			server = frappe.get_cached_doc("Mail Server", server)
-			server.reload_config()
-
-
-@frappe.whitelist()
-def reload_clusters_config(clusters: str | list[str]) -> None:
-	"""Reloads the configuration of the specified clusters."""
-
-	frappe.flags.ignore_permissions = True
-
-	if isinstance(clusters, str):
-		clusters = json.loads(clusters)
-
-	reloaded_clusters = []
-	for cluster in clusters:
-		cluster = frappe.get_cached_doc("Mail Cluster", cluster)
-		if cluster.enabled:
-			cluster.reload_config()
-			reloaded_clusters.append(cluster.name)
-		else:
-			frappe.msgprint(_("Mail Cluster {0} is disabled.").format(frappe.bold(cluster.name)), alert=True)
-
-	if reloaded_clusters:
-		frappe.msgprint(_("Configuration reloaded."), alert=True)
-
 
 def get_storage_labels() -> dict:
 	"""Returns the storage labels."""

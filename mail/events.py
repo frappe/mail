@@ -29,7 +29,7 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 
 	username = get_jmap_username(doc.name)
 
-	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	backend = get_mail_backend_api()
 	principal = Principal._fetch(backend, username, ignore_not_found=False)
 
 	backend_secrets = principal.get("secrets", [])
