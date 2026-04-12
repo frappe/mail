@@ -13,7 +13,7 @@ from frappe.utils import today
 from mail.jmap import get_push_subscription_service
 from mail.utils import generate_uuid_style_hash, parse_filters
 from mail.utils.dt import parse_iso_datetime
-from mail.utils.user import has_jmap_settings
+from mail.utils.user import is_jmap_configured
 from mail.utils.validation import has_permission_for_user
 
 
@@ -191,7 +191,7 @@ def verify_push_subscription(user: str, id: str, verification_code: str) -> None
 	if not frappe.db.exists("User", {"name": user, "enabled": 1}):
 		frappe.throw(_("User does not exist or is disabled."))
 
-	has_jmap_settings(user, raise_exception=True)
+	is_jmap_configured(user, raise_exception=True)
 
 	push_subscription = {"id": id, "verification_code": verification_code}
 
