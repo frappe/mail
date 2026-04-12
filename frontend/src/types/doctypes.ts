@@ -51,8 +51,6 @@ export interface MailAccountRequest extends DocType {
 	is_verified: 0 | 1
 	/** Is Expired: Check */
 	is_expired: 0 | 1
-	/** Is Invite: Check */
-	is_invite: 0 | 1
 	/** Account: Data */
 	account?: string
 	/** Domain: Data */
@@ -117,8 +115,6 @@ export interface MailTenant extends DocType {
 	max_accounts: number
 	/** User: Link (User) */
 	user: string
-	/** Allow Personal Signup: Check */
-	allow_personal_signup: 0 | 1
 	/** Cluster: Link (Mail Cluster) */
 	cluster?: string
 	/** Maximum No. of Mailing Lists: Int */
@@ -150,7 +146,7 @@ export interface MailDomainRequest extends DocType {
 }
 
 // Last updated: 2025-11-27 13:25:44.326974
-export interface PersonalSignupDomain extends ChildDocType {
+export interface SignupDomain extends ChildDocType {
 	/** Domain: Link (Principal Settings) */
 	principal: string
 }
@@ -187,12 +183,10 @@ export interface MailSettings extends DocType {
 	spamd_hybrid_scanning_threshold?: number
 	/** Enable Spam Detection: Check */
 	enable_spamd: 0 | 1
-	/** Allow Business Signup: Check */
-	allow_business_signup: 0 | 1
-	/** Allow Personal Signup: Check */
-	allow_personal_signup: 0 | 1
-	/** Personal Signup Domains: Table MultiSelect (Personal Signup Domain) */
-	personal_signup_domains: PersonalSignupDomain[]
+	/** Allow Signup: Check */
+	allow_signup: 0 | 1
+	/** Signup Domains: Table MultiSelect (Personal Signup Domain) */
+	signup_domains: SignupDomain[]
 	/** Username: Data */
 	dns_provider_username?: string
 	/** Zone ID: Data */

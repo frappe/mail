@@ -26,8 +26,7 @@ def add_rate_limits() -> None:
 
 	rate_limits = [
 		# mail.api.account
-		{"method_path": "mail.api.account.personal_signup", "limit": 5, "seconds": 60 * 60},
-		{"method_path": "mail.api.account.business_signup", "limit": 5, "seconds": 60 * 60},
+		{"method_path": "mail.api.account.signup", "limit": 5, "seconds": 60 * 60},
 		{"method_path": "mail.api.account.resend_otp", "limit": 5, "seconds": 60 * 60},
 		{"method_path": "mail.api.account.verify_otp", "limit": 5, "seconds": 60 * 60},
 		{"method_path": "mail.api.account.get_account_request", "limit": 5, "seconds": 60 * 60},
@@ -60,7 +59,6 @@ def create_default_tenant() -> None:
 	tenant = frappe.new_doc("Mail Tenant")
 	tenant.tenant_name = "Frappe Mail"
 	tenant.user = "Administrator"
-	tenant.allow_personal_signup = 1
 	tenant.insert(ignore_permissions=True)
 
 

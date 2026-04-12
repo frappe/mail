@@ -16,7 +16,7 @@ class MailSettings(Document):
 		self.validate_root_domain_name()
 		self.validate_dns_provider()
 		self.validate_jmap_push_subscription_keys()
-		self.validate_personal_signup_domains()
+		self.validate_signup_domains()
 
 	def on_update(self) -> None:
 		self.clear_cache()
@@ -68,30 +68,24 @@ class MailSettings(Document):
 			dns_provider = get_dns_provider(self)
 			dns_provider.read_dns_records("MX")
 
-	def validate_personal_signup_domains(self) -> None:
-		"""Validates the Personal Signup Domains."""
+	def validate_signup_domains(self) -> None:
+		"""Validates the Signup Domains."""
 
-		if not self.personal_signup_domains:
+		if not self.signup_domains:
 			return
 
 		principals = frappe.db.get_all(
 			"Principal Settings",
-			{"name": ["in", [d.principal for d in self.personal_signup_domains]]},
+			{"name": ["in", [d.principal for d in self.signup_domains]]},
 			["principal_name", "is_verified", "tenant"],
 		)
 
 		if not principals:
-			self.personal_signup_domains = []
+			self.signup_domains = []
 			return
 
 		for principal in principals:
-			if not frappe.db.get_value("Mail Tenant", principal.tenant, "allow_personal_signup"):
-				frappe.throw(
-					_("Personal Signup is not allowed for the domain {0}.").format(
-						frappe.bold(principal.principal_name)
-					)
-				)
-			elif not principal.is_verified:
+			if not principal.is_verified:
 				frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(principal.principal_name)))
 
 	def validate_jmap_push_subscription_keys(self) -> None:

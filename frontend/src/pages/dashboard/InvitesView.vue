@@ -118,7 +118,6 @@ const invites = useList({
 	filters: () => {
 		const filters: Record<string, string | string[] | number> = {
 			tenant: user.data?.tenant,
-			is_invite: 1,
 			send_invite: 1,
 			account: ['like', debouncedSearch.value],
 		}

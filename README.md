@@ -552,69 +552,26 @@ Some of its features include:
 
 ### Sign-up Flow
 
-Before accessing the Mailbox or Admin Dashboard, users complete a one-time sign-up and setup flow. Depending on the user and their requirements, Frappe Mail offers three types of sign-ups:
+Before accessing the Mailbox or Admin Dashboard, users complete a one-time sign-up and setup flow. Depending on the user and their requirements, Frappe Mail offers two types of sign-ups:
 
-- Business Sign-up
-- Personal Sign-up
+- Sign-up
 - Invite-based Sign-up
 
-#### Business Sign-up
-
-For organizations setting up their own tenant, including custom domains, accounts, and organization-level configurations.
-
-Note: This has to be enabled in Mail Settings
-
-1. Go to `/mail/signup` and select 'Business (For work or company use)'
-
-![Business](docs/screenshots/ui/signup/business-1.png)
-
-2. Enter your current email address
-
-![Business - Email](docs/screenshots/ui/signup/business-2.png)
-
-3. A verification email will be sent to this account
-
-![Business - Verification Code](docs/screenshots/ui/signup/business-3.png)
-
-4. Copy the code and paste it into the Mail app, or click on 'Verify Account'
-
-![Business - Verification Email](docs/screenshots/ui/signup/business-4.png)
-
-5. Enter your details
-
-![Business - Details](docs/screenshots/ui/signup/business-5.png)
-
-6. Enter the name of your orangization, and click on 'Create Organization'
-
-![Business - Organization](docs/screenshots/ui/signup/business-6.png)
-
-A new tenant will be created with you as the tenant owner. Click on 'Add Domain' and follow the instructions on screen to set up your first domain and its corresponding members.
-
-#### Personal Sign-up
+#### Sign-up
 
 For allowing users to create an account with one of the domains whitelisted by a system administrator.
 
 Note: This has to be enabled in Mail Settings
 
-1. Go to `/mail/signup` and select 'Personal (For individual user)'
-
-![Personal](docs/screenshots/ui/signup/personal-1.png)
+1. Go to `/mail/signup`
 
 2. Enter your name
 
-![Personal - Name](docs/screenshots/ui/signup/personal-2.png)
-
 3. Enter a username and select one of the whitelisted domains
-
-![Personal - Email](docs/screenshots/ui/signup/personal-3.png)
 
 4. Enter a backup email address for recovery
 
-![Personal - Backup](docs/screenshots/ui/signup/personal-4.png)
-
-4. Enter a password, and click on 'Sign Up'
-
-![Personal - Password](docs/screenshots/ui/signup/personal-5.png)
+5. Enter a password, and click on 'Sign Up'
 
 The user will now have a mail account with the selected domain and user details on Frappe Mail.
 

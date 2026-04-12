@@ -10,7 +10,6 @@
   "user",
   "logo",
   "column_break_kaqu",
-  "allow_personal_signup",
   "max_domains",
   "max_accounts",
   "max_mailing_lists"
@@ -64,14 +63,6 @@
    "unique": 1
   },
   {
-   "default": "0",
-   "fieldname": "allow_personal_signup",
-   "fieldtype": "Check",
-   "label": "Allow Personal Signup",
-   "permlevel": 1,
-   "search_index": 1
-  },
-  {
    "fieldname": "cluster",
    "fieldtype": "Link",
    "label": "Cluster",
@@ -122,7 +113,7 @@
    "link_fieldname": "tenant"
   }
  ],
- "modified": "2025-11-25 18:35:06.533431",
+ "modified": "2026-04-12 14:38:54.888997",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Tenant",

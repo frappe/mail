@@ -7,7 +7,6 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import (
 	add_to_date,
-	cint,
 	get_datetime,
 	get_url,
 	now,
@@ -16,7 +15,7 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.utils import generate_otp, generate_random_phrase
+from mail.utils import generate_random_phrase
 from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
 from mail.utils.user import has_role, is_system_manager, is_tenant_admin
 from mail.utils.validation import (
@@ -36,8 +35,6 @@ class MailAccountRequest(Document):
 
 	def before_insert(self) -> None:
 		self.set_request_key()
-		if not self.is_invite:
-			self.set_otp()
 
 	def validate(self) -> None:
 		self.validate_email()
@@ -46,13 +43,11 @@ class MailAccountRequest(Document):
 			self.set_expires_at()
 			self.set_ip_address()
 
-			if self.is_invite:
-				validate_max_accounts(self.tenant)
-				self.validate_invited_by_and_tenant()
-				self.validate_domain()
-				self.validate_account()
-			else:
-				self.validate_business_signup()
+			validate_max_accounts(self.tenant)
+
+			self.validate_invited_by_and_tenant()
+			self.validate_domain()
+			self.validate_account()
 
 	def after_insert(self) -> None:
 		if self.send_invite:
@@ -77,20 +72,6 @@ class MailAccountRequest(Document):
 		"""Sets the IP address of the request."""
 
 		self.ip_address = frappe.local.request_ip
-
-	def validate_business_signup(self) -> None:
-		"""Validates business signup."""
-
-		is_subaddressed_email(self.email, raise_exception=True)
-
-		if frappe.db.exists("User", {"email": self.email}):
-			frappe.throw(_("User {0} is already registered.").format(self.email))
-
-		self.is_admin = 1
-		self.invited_by = None
-		self.tenant = None
-		self.domain_name = None
-		self.account = None
 
 	def validate_invited_by_and_tenant(self) -> None:
 		"""Validates the invited_by and tenant fields."""
@@ -150,19 +131,6 @@ class MailAccountRequest(Document):
 
 		self.request_key = random_string(32)
 
-	def set_otp(self) -> None:
-		"""Sets a random 5-digit OTP for the request."""
-
-		if not self.name:
-			self.set_new_name()
-
-		self.otp = "12345" if frappe.conf.developer_mode else str(generate_otp())
-		frappe.cache.set_value(
-			f"account_request_otp_hash:{self.name}",
-			frappe.utils.sha256_hash(str(self.otp)),
-			expires_in_sec=cint(frappe.conf.expires_otp_in_sec) or 60 * 10,
-		)
-
 	@frappe.whitelist()
 	def send_verification_email(self) -> None:
 		"""Send verification email to the user."""
@@ -172,9 +140,7 @@ class MailAccountRequest(Document):
 
 		self.validate_expired()
 
-		link = get_url("/mail/signup/business/" + self.request_key)
-
-		if self.is_invite and self.invited_by:
+		if self.invited_by:
 			subject = _("You have been invited by {0} to join Frappe Mail").format(self.invited_by)
 			template = "generic"
 			tenant_name = frappe.db.get_value("Mail Tenant", self.tenant, "tenant_name")
@@ -184,30 +150,23 @@ class MailAccountRequest(Document):
 				),
 				"description": _("Please confirm your email address by clicking the button below."),
 				"button": _("Verify Account"),
-				"link": link,
+				"link": get_url("/mail/signup/" + self.request_key),
 			}
-		else:
-			subject = _("{0} - OTP for Frappe Mail Account Verification").format(self.otp)
-			template = "business_signup"
-			args = {"link": link, "otp": self.otp}
 
-		frappe.sendmail(
-			recipients=self.email,
-			subject=subject,
-			template=template,
-			args=args,
-			now=True,
-		)
-		frappe.msgprint(_("Verification email sent successfully."), indicator="green", alert=True)
+			frappe.sendmail(
+				recipients=self.email,
+				subject=subject,
+				template=template,
+				args=args,
+				now=True,
+			)
+			frappe.msgprint(_("Verification email sent successfully."), indicator="green", alert=True)
 
 	@frappe.whitelist()
 	def force_verify_and_create_account(self, first_name: str, last_name: str, password: str) -> None:
 		"""Force verify and create account for invited user."""
 
 		self.validate_expired()
-
-		if not self.is_invite:
-			frappe.throw(_("This method can only be called for invited users."))
 
 		if self.is_verified:
 			frappe.throw(_("Account is already verified and created."))

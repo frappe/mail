@@ -11,15 +11,15 @@ def get_root_domain_name() -> str | None:
 	return frappe.cache.hget("mail-settings", "root_domain_name", generator)
 
 
-def get_personal_signup_domains() -> list:
-	"""Returns the personal signup domains."""
+def get_signup_domains() -> list:
+	"""Returns the signup domains."""
 
 	def generator() -> list:
 		mail_settings = frappe.get_doc("Mail Settings")
-		principals = [d.principal for d in mail_settings.personal_signup_domains]
+		principals = [d.principal for d in mail_settings.signup_domains]
 		return frappe.db.get_all("Principal Settings", {"name": ["in", principals]}, pluck="principal_name")
 
-	return frappe.cache.hget("mail-settings", "personal_signup_domains", generator)
+	return frappe.cache.hget("mail-settings", "signup_domains", generator)
 
 
 def get_cluster_for_tenant(tenant: str) -> str | None:

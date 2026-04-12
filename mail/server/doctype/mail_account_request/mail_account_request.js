@@ -4,14 +4,9 @@
 frappe.ui.form.on('Mail Account Request', {
 	refresh(frm) {
 		frm.trigger('add_actions')
-		frm.trigger('set_is_invite')
 		frm.trigger('set_invited_by')
 		frm.trigger('set_tenant')
 		frm.trigger('make_fields_read_only')
-	},
-
-	is_invite(frm) {
-		frm.trigger('set_is_admin')
 	},
 
 	tenant(frm) {
@@ -29,8 +24,6 @@ frappe.ui.form.on('Mail Account Request', {
 			__('Actions'),
 		)
 
-		if (!frm.doc.is_invite) return
-
 		frm.add_custom_button(
 			__('Force Verify and Create Account'),
 			() => {
@@ -38,18 +31,6 @@ frappe.ui.form.on('Mail Account Request', {
 			},
 			__('Actions'),
 		)
-	},
-
-	set_is_admin(frm) {
-		if (!frm.doc.is_invite) {
-			frm.set_value('is_admin', 1)
-		}
-	},
-
-	set_is_invite(frm) {
-		if (frm.doc.__islocal && !frm.doc.is_invite) {
-			frm.set_value('is_invite', 1)
-		}
 	},
 
 	set_invited_by(frm) {
@@ -74,7 +55,6 @@ frappe.ui.form.on('Mail Account Request', {
 	make_fields_read_only(frm) {
 		if (frappe.user_roles.includes('System Manager')) return
 
-		frm.set_df_property('is_invite', 'read_only', 1)
 		frm.set_df_property('invited_by', 'read_only', 1)
 		frm.set_df_property('tenant', 'read_only', 1)
 	},

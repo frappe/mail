@@ -32,7 +32,7 @@ def get_tenant_users(
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
-def get_personal_signup_domains(
+def get_signup_domains(
 	doctype: str | None = None,
 	txt: str | None = None,
 	searchfield: str | None = None,
@@ -40,7 +40,7 @@ def get_personal_signup_domains(
 	page_len: int = 20,
 	filters: dict | None = None,
 ) -> list:
-	"""Returns a list of Domains that allow personal signup."""
+	"""Returns a list of Domains that allow signup."""
 
 	TENANT = frappe.qb.DocType("Mail Tenant")
 	PRINCIPAL_SETTINGS = frappe.qb.DocType("Principal Settings")
@@ -53,7 +53,6 @@ def get_personal_signup_domains(
 			(PRINCIPAL_SETTINGS.is_verified == 1)
 			& (PRINCIPAL_SETTINGS.principal_type == "Domain")
 			& (PRINCIPAL_SETTINGS.principal_name.like(f"%{txt}%"))
-			& (TENANT.allow_personal_signup == 1)
 		)
 	).run(as_dict=False)
 

@@ -6,7 +6,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_ikiq",
-  "is_invite",
+  "column_break_cqhu",
   "column_break_0kvc",
   "ip_address",
   "user_details_section",
@@ -23,8 +23,7 @@
   "is_expired",
   "column_break_vcxy",
   "expires_at",
-  "request_key",
-  "otp"
+  "request_key"
  ],
  "fields": [
   {
@@ -53,36 +52,27 @@
    "set_only_once": 1
   },
   {
-   "depends_on": "eval: doc.is_invite",
    "fieldname": "tenant",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Tenant",
-   "mandatory_depends_on": "eval: doc.is_invite",
    "no_copy": 1,
    "options": "Mail Tenant",
+   "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
   },
   {
-   "fieldname": "otp",
-   "fieldtype": "Data",
-   "label": "OTP",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval: doc.is_invite",
    "fieldname": "invited_by",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Invited By",
    "link_filters": "[[\"User\",\"role\",\"=\",\"Mail Admin\"]]",
-   "mandatory_depends_on": "eval: doc.is_invite",
    "no_copy": 1,
    "options": "User",
+   "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
   },
@@ -111,37 +101,27 @@
    "read_only": 1
   },
   {
-   "default": "0",
-   "fieldname": "is_invite",
-   "fieldtype": "Check",
-   "label": "Is Invite",
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "section_break_ikiq",
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval: doc.is_invite",
    "fieldname": "account",
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Account",
    "length": 255,
-   "mandatory_depends_on": "eval: doc.is_invite",
    "options": "Email",
+   "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
   },
   {
-   "depends_on": "eval: doc.is_invite",
    "fieldname": "domain_name",
    "fieldtype": "Data",
    "in_standard_filter": 1,
    "label": "Domain",
-   "mandatory_depends_on": "eval: doc.is_invite",
+   "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
   },
@@ -151,7 +131,6 @@
    "fieldtype": "Check",
    "in_list_view": 1,
    "label": "Is Admin",
-   "read_only_depends_on": "eval: !doc.is_invite",
    "set_only_once": 1
   },
   {
@@ -189,12 +168,16 @@
    "label": "Expires At",
    "no_copy": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "column_break_cqhu",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-26 15:04:37.459073",
+ "modified": "2026-04-12 14:58:41.495108",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Account Request",

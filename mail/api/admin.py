@@ -108,7 +108,6 @@ def add_member(
 	"""Create a new Mail Account Request for adding a member"""
 
 	account_request = frappe.new_doc("Mail Account Request")
-	account_request.is_invite = 1
 	account_request.tenant = tenant
 	account_request.domain_name = domain
 	account_request.account = f"{username}@{domain}"
