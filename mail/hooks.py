@@ -163,8 +163,6 @@ permission_query_conditions = {
 	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.get_permission_query_condition",
 	"Mail Domain Request": "mail.server.doctype.mail_domain_request.mail_domain_request.get_permission_query_condition",
 	"Principal Settings": "mail.server.doctype.principal_settings.principal_settings.get_permission_query_condition",
-	"Mail Tenant": "mail.server.doctype.mail_tenant.mail_tenant.get_permission_query_condition",
-	"Mail Tenant Member": "mail.server.doctype.mail_tenant_member.mail_tenant_member.get_permission_query_condition",
 	# Client
 	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.get_permission_query_condition",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
@@ -179,8 +177,6 @@ has_permission = {
 	"Mail Domain Request": "mail.server.doctype.mail_domain_request.mail_domain_request.has_permission",
 	"Principal": "mail.server.doctype.principal.principal.has_permission",
 	"Principal Settings": "mail.server.doctype.principal_settings.principal_settings.has_permission",
-	"Mail Tenant": "mail.server.doctype.mail_tenant.mail_tenant.has_permission",
-	"Mail Tenant Member": "mail.server.doctype.mail_tenant_member.mail_tenant_member.has_permission",
 	# Client
 	"Address Book": "mail.client.doctype.address_book.address_book.has_permission",
 	"Calendar": "mail.client.doctype.calendar.calendar.has_permission",
@@ -294,8 +290,6 @@ ignore_links_on_delete = [
 	"Mail Account Request",
 	"Mail Data Exchange",
 	"Mail Domain Request",
-	"Mail Tenant",
-	"Mail Tenant Member",
 	# Client
 	"Mail Exchange",
 	"Mail Queue",
@@ -352,7 +346,7 @@ default_log_clearing_doctypes = {"Mail Queue": 3, "Spam Check Log": 7}
 fixtures = [
 	{
 		"dt": "Role",
-		"filters": [["role_name", "in", ["Mail Admin", "Mail User"]]],
+		"filters": [["role_name", "in", ["Mail Admin"]]],
 	},
 ]
 

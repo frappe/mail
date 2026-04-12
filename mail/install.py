@@ -12,7 +12,6 @@ from mail.utils import get_mail_app_path, get_stalwart_cli_path, get_stalwart_ve
 
 def after_install() -> None:
 	add_rate_limits()
-	create_default_tenant()
 	create_new_folder("Frappe Mail", "Home")
 	generate_jmap_push_keys()
 
@@ -53,13 +52,7 @@ def add_rate_limits() -> None:
 		create_rate_limit(**rl)
 
 
-def create_default_tenant() -> None:
-	"""Create the default tenant."""
 
-	tenant = frappe.new_doc("Mail Tenant")
-	tenant.tenant_name = "Frappe Mail"
-	tenant.user = "Administrator"
-	tenant.insert(ignore_permissions=True)
 
 
 def generate_jmap_push_keys() -> None:

@@ -10,10 +10,9 @@
   "ip_address",
   "user_details_section",
   "backup_email",
-  "is_admin",
+  "roles",
   "column_break_hswp",
   "invited_by",
-  "tenant",
   "domain_name",
   "account",
   "verification_details_section",
@@ -46,18 +45,6 @@
    "label": "Backup Email",
    "length": 255,
    "options": "Email",
-   "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "tenant",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Tenant",
-   "no_copy": 1,
-   "options": "Mail Tenant",
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
@@ -125,14 +112,6 @@
    "set_only_once": 1
   },
   {
-   "default": "0",
-   "fieldname": "is_admin",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "label": "Is Admin",
-   "set_only_once": 1
-  },
-  {
    "fieldname": "user_details_section",
    "fieldtype": "Section Break",
    "label": "User Details"
@@ -171,12 +150,21 @@
   {
    "fieldname": "column_break_cqhu",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "User",
+   "fieldname": "roles",
+   "fieldtype": "Small Text",
+   "label": "Roles",
+   "no_copy": 1,
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-12 15:33:32.974370",
+ "modified": "2026-04-13 10:27:23.941932",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Account Request",

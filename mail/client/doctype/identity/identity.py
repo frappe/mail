@@ -12,8 +12,7 @@ from frappe.utils import cint, today
 from mail.backend import get_mail_backend_api
 from mail.jmap import get_identity_service
 from mail.utils import parse_filters
-from mail.utils.cache import get_cluster_for_tenant
-from mail.utils.user import get_tenant_for_user, is_administrator, is_tenant_admin
+from mail.utils.user import is_administrator, is_mail_admin
 from mail.utils.validation import has_permission_for_user
 
 
@@ -123,8 +122,7 @@ def _add_identity(
 ) -> str:
 	"""Adds an identity for the given user with the specified parameters."""
 
-	tenant = get_tenant_for_user(user)
-	if not is_administrator(frappe.session.user) and not is_tenant_admin(tenant, frappe.session.user):
+	if not is_administrator(frappe.session.user) and not is_mail_admin(frappe.session.user):
 		frappe.throw(
 			_("User {0} does not have permission to create identity for user {1}.").format(
 				frappe.bold(frappe.session.user), frappe.bold(user)
@@ -173,10 +171,7 @@ def _add_identity(
 def has_permission_for_identity(user: str) -> bool:
 	"""Checks if the user has permission for the identity."""
 
-	tenant = get_tenant_for_user(user)
-	if not has_permission_for_user(user, raise_exception=False) and not is_tenant_admin(
-		tenant, frappe.session.user
-	):
+	if not has_permission_for_user(user, raise_exception=False) and not is_mail_admin(frappe.session.user):
 		frappe.throw(
 			_("User {0} does not have permission to view identities for user {1}.").format(
 				frappe.bold(frappe.session.user), frappe.bold(user)
@@ -314,7 +309,7 @@ def fetch_identities(user: str, page: int = 1, limit: int = 10) -> list:
 	"""Returns a list of identities for the given user."""
 
 	if not has_permission_for_user(user, raise_exception=False):
-		if not is_tenant_admin(get_tenant_for_user(user), frappe.session.user):
+		if not is_mail_admin(frappe.session.user):
 			frappe.throw(
 				_("User {0} does not have permission to view identities for user {1}.").format(
 					frappe.bold(frappe.session.user), frappe.bold(user)

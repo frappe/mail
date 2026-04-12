@@ -25,7 +25,7 @@ from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_email_service, get_mailbox_id_by_role
 from mail.utils import convert_html_to_text
 from mail.utils.cache import get_user_emails
-from mail.utils.user import has_role
+from mail.utils.user import has_role, is_jmap_configured
 from mail.utils.validation import has_permission_for_user
 
 AVATAR_CACHE_TTL = 60 * 60 * 24
@@ -36,7 +36,7 @@ def get_mailboxes() -> list[dict]:
 	"""Serializes and returns the user's mailboxes."""
 
 	user = frappe.session.user
-	if not has_role(user, "Mail User") or user == "Administrator":
+	if not is_jmap_configured(user):
 		return []
 
 	fields = ["id", "_name", "role", "total_threads", "unread_threads"]

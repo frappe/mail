@@ -87,10 +87,7 @@ def get_permission_query_condition(user: str | None = None) -> str:
 	if is_system_manager(user):
 		return ""
 
-	if has_role(user, "Mail User"):
-		return f"(`tabMailbox Settings`.user = '{user}')"
-
-	return "1=0"
+	return f"(`tabMailbox Settings`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
@@ -101,7 +98,5 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 
 	if is_system_manager(user):
 		return True
-	elif has_role(user, "Mail User"):
-		return doc.user == user
 
-	return False
+	return doc.user == user

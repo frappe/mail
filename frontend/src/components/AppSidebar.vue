@@ -24,7 +24,7 @@
 			:disable-collapse="isMobile"
 		>
 			<template #footer-items="{ isCollapsed }">
-				<QuotaBar v-if="user.data.is_mail_user" :is-collapsed />
+				<QuotaBar v-if="user.data.is_jmap_configured" :is-collapsed />
 			</template>
 			<template #sidebar-item="{ item }">
 				<SidebarItem
@@ -159,15 +159,15 @@ const menuItems = computed(() => [
 		label: __('Mailbox'),
 		onClick: () => router.push('/mailbox'),
 		condition: () =>
-			user.data.is_mail_admin && user.data.is_mail_user && route.meta.isDashboard,
+			user.data.is_mail_admin && user.data.is_jmap_configured && route.meta.isDashboard,
 	},
 	{
 		icon: Crown,
 		label: __('Admin Dashboard'),
 		onClick: () => router.push('/dashboard'),
 		condition: () =>
+			user.data.is_jmap_configured &&
 			user.data.is_mail_admin &&
-			user.data.is_mail_user &&
 			!route.meta.isDashboard &&
 			!isMobile.value,
 	},

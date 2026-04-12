@@ -1,42 +1,29 @@
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
-from frappe.query_builder import Case, Order
 from frappe.utils import cint
 
+from mail.api.mail import get_avatar_url
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import get_tenant_for_user, is_tenant_admin
+from mail.utils.user import is_mail_admin
 
 if TYPE_CHECKING:
 	from mail.server.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
 
 
 @frappe.whitelist()
-def create_tenant(tenant_name: str) -> None:
-	"""Create a new Mail Tenant"""
-
-	tenant = frappe.new_doc("Mail Tenant")
-	tenant.tenant_name = tenant_name
-	tenant.user = frappe.session.user
-	tenant.insert(ignore_permissions=True)
-
-
-@frappe.whitelist()
-def get_domain_request(domain_name: str, mail_tenant: str) -> "MailDomainRequest":
+def get_domain_request(domain_name: str) -> "MailDomainRequest":
 	"""Fetches Mail Domain Request for a given domain name if it exists, and creates a new one if not"""
 
 	if frappe.db.exists("Principal Settings", {"principal_name": domain_name}):
 		frappe.throw(_("Domain {0} has already been registered.").format(frappe.bold(domain_name)))
 
-	if name := frappe.db.exists(
-		"Mail Domain Request", {"domain_name": domain_name, "tenant": mail_tenant, "is_verified": 0}
-	):
+	if name := frappe.db.exists("Mail Domain Request", {"domain_name": domain_name, "is_verified": 0}):
 		return frappe.get_doc("Mail Domain Request", name)
 
 	domain_request = frappe.new_doc("Mail Domain Request")
 	domain_request.domain_name = domain_name
-	domain_request.tenant = mail_tenant
 	domain_request.user = frappe.session.user
 	domain_request.insert()
 
@@ -53,53 +40,56 @@ def verify_dns_record(domain_request: str) -> bool:
 
 
 @frappe.whitelist()
-def get_tenant_members(tenant: str, search: str, role: str) -> list:
-	"""Returns list of members for the given tenant"""
-
+def get_members(search: str | None = None) -> list:
 	user = frappe.session.user
-	if not is_tenant_admin(tenant, user):
-		frappe.throw(_("User {0} is not a Mail Admin of Tenant {1}.").format(user, tenant))
+	if not is_mail_admin(user):
+		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
 
-	MTM = frappe.qb.DocType("Mail Tenant Member")
-	User = frappe.qb.DocType("User")
-	owner = frappe.db.get_value("Mail Tenant", tenant, "user")
-	sort_order = (
-		Case()
-		.when(MTM.user == owner, 0)  # Owner First
-		.when(MTM.is_admin == 1, 1)  # Admins Second
-		.else_(2)  # Members Last
-	)
+	result = []
 
-	query = (
-		frappe.qb.from_(MTM)
-		.left_join(User)
-		.on(MTM.user == User.name)
-		.select(
-			User.name,
-			User.full_name,
-			User.user_image,
-			MTM.is_admin,
-			sort_order,
+	filters = {"type": "Individual"}
+	if search:
+		filters["text"] = search
+
+	principals = frappe.db.get_all("Principal", filters=filters, page_length=1000)
+
+	for principal in principals:
+		result.append(
+			{
+				"name": principal["name"],
+				"full_name": principal["description"],
+				"email_count": len(principal["emails"]),
+				"quota_total": principal["quota"],
+				"quota_used": principal["used_quota"],
+				"quota_usage_percent": principal["used_percentage"],
+				"group_count": len(principal["member_of"]),
+				"list_count": len(principal["lists"]),
+				"assigned_roles": [r["role"] for r in principal["roles"]],
+			}
 		)
-		.where((MTM.tenant == tenant) & (User.name.like(f"%{search}%") | User.full_name.like(f"%{search}%")))
+
+	user_extras = frappe.db.get_all(
+		"User", {"name": ["in", [p["name"] for p in principals]]}, ["name", "user_image", "last_active"]
 	)
+	user_extras_map = {
+		u["name"]: {"user_image": u["user_image"], "last_active": u["last_active"]} for u in user_extras
+	}
+	for r in result:
+		user_extra = user_extras_map.get(r["name"], {})
+		r["user_image"] = user_extra.get("user_image") or get_avatar_url(r["name"])
+		r["last_active"] = user_extra.get("last_active")
 
-	if role:
-		is_admin = 1 if role == "Mail Admin" else 0
-		query = query.where(MTM.is_admin == is_admin)
-
-	return (query.orderby(sort_order, order=Order.asc).orderby(MTM.name, order=Order.asc)).run(as_dict=True)
+	return result
 
 
 @frappe.whitelist()
 @dynamic_rate_limit()
 def add_member(
-	tenant: str,
 	username: str,
 	domain: str,
-	role: Literal["Mail User", "Mail Admin"],
+	roles: list[str],
 	send_invite: bool,
-	email: str,
+	backup_email: str,
 	first_name: str | None = None,
 	last_name: str | None = None,
 	password: str | None = None,
@@ -108,12 +98,11 @@ def add_member(
 	"""Create a new Mail Account Request for adding a member"""
 
 	account_request = frappe.new_doc("Mail Account Request")
-	account_request.tenant = tenant
 	account_request.domain_name = domain
 	account_request.account = f"{username}@{domain}"
-	account_request.is_admin = cint(role == "Mail Admin")
+	account_request.roles = "\n".join(roles)
 	account_request.invited_by = frappe.session.user
-	account_request.backup_email = email
+	account_request.backup_email = backup_email
 	account_request.send_invite = cint(send_invite)
 	account_request.expires_at = expires_at
 	account_request.insert()
@@ -123,11 +112,12 @@ def add_member(
 
 
 @frappe.whitelist()
-def delete_aliases(names: list) -> None:
-	"""Delete Mail Aliases"""
+def delete_members(names: list) -> None:
+	"""Delete Members (Principal docs)"""
 
 	for d in names:
-		frappe.delete_doc("Mail Alias", d)
+		doc = frappe.get_doc("Principal", d)
+		doc.delete()
 
 
 @frappe.whitelist()
@@ -140,14 +130,6 @@ def delete_mailing_lists(names: list) -> None:
 
 
 @frappe.whitelist()
-def delete_list_members(names: list, is_external: bool) -> None:
-	"""Delete Mailing List Members"""
-
-	doctype = "Mailing List External Member" if is_external else "Mailing List Member"
-	frappe.db.delete(doctype, {"name": ["in", names]})
-
-
-@frappe.whitelist()
 def delete_account_requests(names: list) -> None:
 	"""Delete Mail Account Requests"""
 
@@ -157,51 +139,96 @@ def delete_account_requests(names: list) -> None:
 
 @frappe.whitelist()
 def get_domains(txt: str | None = None, is_verified: int | None = None) -> list[dict]:
-	"""Get domains for user's tenant"""
+	"""Returns the list of domains for user's with their verification status"""
 
-	if not (
-		domains := frappe.db.get_list("Principal", filters={"type": "Domain", "text": txt}, page_length=50)
-	):
-		return []
+	user = frappe.session.user
+	if not is_mail_admin(user):
+		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
 
-	tenant = get_tenant_for_user(frappe.session.user)
-	domain_names = [d["name"] for d in domains]
-	is_verified_mapping = frappe.get_all(
+	result = []
+	domains = frappe.db.get_all("Principal", filters={"type": "Domain", "text": txt}, page_length=1000)
+
+	domain_extras = frappe.db.get_all(
 		"Principal Settings",
-		{"tenant": tenant, "principal_type": "Domain", "principal_name": ["in", domain_names]},
+		{"principal_type": "Domain", "principal_name": ["in", [d["name"] for d in domains]]},
 		["principal_name", "is_verified"],
 	)
-	is_verified_dict = {d["principal_name"]: d["is_verified"] for d in is_verified_mapping}
+	domain_extras_map = {d["principal_name"]: d["is_verified"] for d in domain_extras}
 
 	for domain in domains:
-		domain["is_verified"] = is_verified_dict.get(domain["name"], 0)
+		domain["is_verified"] = domain_extras_map.get(domain["name"], 0)
+		result.append(
+			{
+				"name": domain["name"],
+				"is_verified": domain["is_verified"],
+				"total_members": domain["total_members"],
+			}
+		)
 
 	if is_verified is not None:
-		domains = [d for d in domains if d["is_verified"] == is_verified]
+		result = [d for d in result if d["is_verified"] == is_verified]
 
-	fields = ["name", "is_verified", "total_members"]
-	return [{f: d[f] for f in fields} for d in domains]
+	return result
 
 
 @frappe.whitelist()
-def get_mailing_lists(txt: str | None = None) -> list[dict]:
-	"""Get mailing lists for user's tenant"""
+def get_mailing_lists(search: str | None = None) -> list:
+	"""Returns the list of mailing lists"""
 
-	if not (lists := frappe.get_list("Principal", filters={"type": "List", "text": txt}, page_length=500)):
-		return []
+	user = frappe.session.user
+	if not is_mail_admin(user):
+		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
 
-	fields = ["name", "total_members"]
-	return [{f: d[f] for f in fields} for d in lists]
+	result = []
+
+	filters = {"type": "List"}
+	if search:
+		filters["text"] = search
+
+	lists = frappe.db.get_all("Principal", filters=filters, page_length=1000)
+
+	for l in lists:
+		result.append(
+			{
+				"name": l["name"],
+				"full_name": l["description"],
+				"email_count": len(l["emails"]),
+				"member_count": len(l["members"]),
+				"external_member_count": len(l["external_members"]),
+			}
+		)
+
+	return result
+
+
+@frappe.whitelist()
+def get_eligible_members(search: str | None = None, exclude: list[str] | None = None) -> list[dict]:
+	"""Returns Individual principals eligible to be added as mailing list members"""
+
+	user = frappe.session.user
+	if not is_mail_admin(user):
+		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
+
+	filters = {"type": "Individual"}
+	if search:
+		filters["text"] = search
+
+	principals = frappe.db.get_all("Principal", filters=filters, page_length=1000)
+
+	exclude_set = set(exclude or [])
+	return [
+		{"name": p["name"], "description": p.get("description", "")}
+		for p in principals
+		if p["name"] not in exclude_set
+	]
 
 
 @frappe.whitelist()
 def get_verified_domains() -> list[str]:
-	"""Get verified domains for user's tenant"""
+	"""Returns the list of verified domains"""
 
-	tenant = get_tenant_for_user(frappe.session.user)
-
-	return frappe.get_all(
+	return frappe.db.get_all(
 		"Principal Settings",
-		{"tenant": tenant, "principal_type": "Domain", "is_verified": 1},
+		{"principal_type": "Domain", "is_verified": 1},
 		pluck="principal_name",
 	)

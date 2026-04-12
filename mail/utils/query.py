@@ -7,58 +7,6 @@ from mail.client.doctype.mailbox.mailbox import fetch_mailboxes
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
-def get_tenant_users(
-	doctype: str | None = None,
-	txt: str | None = None,
-	searchfield: str | None = None,
-	start: int = 0,
-	page_len: int = 20,
-	filters: dict | None = None,
-) -> list:
-	"""Returns a list of users for the tenant."""
-
-	filters = filters or {}
-	tenant = filters.get("tenant")
-	if not tenant:
-		return []
-
-	TENANT_MEMBER = frappe.qb.DocType("Mail Tenant Member")
-	return (
-		frappe.qb.from_(TENANT_MEMBER)
-		.select(TENANT_MEMBER.name, TENANT_MEMBER.user)
-		.where((TENANT_MEMBER.tenant == tenant) & (TENANT_MEMBER.user.like(f"%{txt}%")))
-	).run(as_dict=False)
-
-
-@frappe.whitelist()
-@frappe.validate_and_sanitize_search_inputs
-def get_signup_domains(
-	doctype: str | None = None,
-	txt: str | None = None,
-	searchfield: str | None = None,
-	start: int = 0,
-	page_len: int = 20,
-	filters: dict | None = None,
-) -> list:
-	"""Returns a list of Domains that allow signup."""
-
-	TENANT = frappe.qb.DocType("Mail Tenant")
-	PRINCIPAL_SETTINGS = frappe.qb.DocType("Principal Settings")
-	return (
-		frappe.qb.from_(PRINCIPAL_SETTINGS)
-		.left_join(TENANT)
-		.on(PRINCIPAL_SETTINGS.tenant == TENANT.name)
-		.select(PRINCIPAL_SETTINGS.name, PRINCIPAL_SETTINGS.principal_name)
-		.where(
-			(PRINCIPAL_SETTINGS.is_verified == 1)
-			& (PRINCIPAL_SETTINGS.principal_type == "Domain")
-			& (PRINCIPAL_SETTINGS.principal_name.like(f"%{txt}%"))
-		)
-	).run(as_dict=False)
-
-
-@frappe.whitelist()
-@frappe.validate_and_sanitize_search_inputs
 def get_user_mailboxes(
 	doctype: str | None = None,
 	txt: str | None = None,

@@ -5,12 +5,7 @@ frappe.ui.form.on('Mail Account Request', {
 	refresh(frm) {
 		frm.trigger('add_actions')
 		frm.trigger('set_invited_by')
-		frm.trigger('set_tenant')
 		frm.trigger('make_fields_read_only')
-	},
-
-	tenant(frm) {
-		frm.trigger('set_domain_query')
 	},
 
 	add_actions(frm) {
@@ -39,24 +34,10 @@ frappe.ui.form.on('Mail Account Request', {
 		}
 	},
 
-	set_tenant(frm) {
-		if (frm.doc.__islocal && !frm.doc.tenant) {
-			frappe.call({
-				method: 'mail.utils.user.get_user_tenant',
-				callback: (r) => {
-					if (r.message) {
-						frm.set_value('tenant', r.message)
-					}
-				},
-			})
-		}
-	},
-
 	make_fields_read_only(frm) {
 		if (frappe.user_roles.includes('System Manager')) return
 
 		frm.set_df_property('invited_by', 'read_only', 1)
-		frm.set_df_property('tenant', 'read_only', 1)
 	},
 
 	send_verification_email(frm) {

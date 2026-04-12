@@ -607,7 +607,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-30 13:02:54.335255",
+ "modified": "2026-04-13 12:54:57.926655",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message",
@@ -626,16 +626,9 @@
    "write": 1
   },
   {
-   "role": "Mail Admin",
-   "select": 1
-  },
-  {
    "delete": 1,
-   "export": 1,
-   "print": 1,
    "read": 1,
-   "report": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

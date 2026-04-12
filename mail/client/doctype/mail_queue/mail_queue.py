@@ -33,9 +33,8 @@ from mail.jmap import get_email_service, get_identities, get_jmap_connection
 from mail.jmap.models import EmailAddress, EmailAttachment, EmailCreateModel, EmailHeader, EmailRecipient
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
-from mail.utils.cache import get_tenant_for_user
 from mail.utils.dt import parsedate_to_datetime
-from mail.utils.user import has_role, is_administrator, is_tenant_bound_user
+from mail.utils.user import has_role, is_administrator, is_local_user
 from mail.utils.validation import has_permission_for_user
 
 
@@ -351,19 +350,16 @@ class MailQueue(Document):
 	def validate_from_domain(self) -> None:
 		"""Validates the from domain."""
 
-		if not is_tenant_bound_user(self.user):
+		if not is_local_user(self.user):
 			return
 
-		tenant = get_tenant_for_user(self.user)
 		from_domain = self.from_email.split("@")[-1]
 
-		if not frappe.db.exists(
-			"Principal Settings", {"tenant": tenant, "principal_name": from_domain, "is_verified": 1}
-		):
+		if not frappe.db.exists("Principal Settings", {"principal_name": from_domain, "is_verified": 1}):
 			frappe.throw(
 				_(
-					"The From email domain {0} is not available for tenant {1}. Please ensure that the domain is associated with the tenant and has been verified."
-				).format(frappe.bold(from_domain), frappe.bold(tenant))
+					"The domain {0} is not verified. Please verify the domain or use an email address with a verified domain."
+				).format(frappe.bold(from_domain))
 			)
 
 	def validate_destroy_after_submit(self) -> None:
@@ -883,10 +879,8 @@ def get_permission_query_condition(user: str | None = None) -> str:
 
 	if is_administrator(user):
 		return ""
-	elif has_role(user, "Mail User"):
-		return f"(`tabMail Queue`.user = '{user}')"
-	else:
-		return "1=0"
+
+	return f"(`tabMail Queue`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:

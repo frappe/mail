@@ -9,30 +9,6 @@
   {
    "child": 0,
    "collapsible": 1,
-   "icon": "bolt",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Tenant",
-   "link_to": "Mail Tenant",
-   "link_type": "DocType",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "collapsible": 1,
-   "icon": "users",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Tenant Member",
-   "link_to": "Mail Tenant Member",
-   "link_type": "DocType",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 0,
-   "collapsible": 1,
    "icon": "shortcut",
    "indent": 0,
    "keep_closed": 0,
@@ -256,7 +232,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-12-07 21:53:39.015948",
+ "modified": "2025-04-13 21:53:39.015948",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Server",

@@ -6,13 +6,6 @@
 			</template>
 		</FormControl>
 		<FormControl
-			v-model="role"
-			:placeholder="__('Assigned Role')"
-			class="w-40"
-			type="select"
-			:options="ROLE_OPTIONS"
-		/>
-		<FormControl
 			v-model="status"
 			:placeholder="__('Invitation Status')"
 			class="w-40"
@@ -41,11 +34,24 @@
 					class="hover:!bg-surface-gray-1"
 				>
 					<ListRowItem :item="item">
-						<Badge
-							v-if="column.key == 'is_admin'"
-							:label="__(item ? 'Mail Admin' : 'Mail User')"
-							:theme="item ? 'blue' : 'gray'"
-						/>
+						<template v-if="column.key === 'roles'">
+							<div class="flex flex-wrap gap-1">
+								<Badge
+									v-for="r in item"
+									:key="r"
+									:label="r"
+									:theme="
+										r === 'Admin'
+											? 'red'
+											: r === 'Tenant Admin'
+												? 'orange'
+												: r === 'User'
+													? 'blue'
+													: 'gray'
+									"
+								/>
+							</div>
+						</template>
 						<Badge
 							v-else-if="column.key == 'status'"
 							:label="item"
@@ -101,11 +107,10 @@ import { raiseToast } from '@/utils'
 import EditInviteModal from '@/components/Modals/EditInviteModal.vue'
 
 const dayjs = inject('$dayjs')
-const user = inject('$user')
 
 const search = ref('')
 const debouncedSearch = useDebounce(search, 500)
-const role = ref<'Mail User' | 'Mail Admin' | ''>('')
+
 const status = ref<'Pending' | 'Accepted' | 'Expired' | ''>('')
 const selectedInvite = ref('')
 const showEditInvite = ref(false)
@@ -117,7 +122,7 @@ const invites = useList({
 		'name',
 		'backup_email',
 		'account',
-		'is_admin',
+		'roles',
 		'is_verified',
 		'expires_at',
 		'invited_by',
@@ -125,12 +130,10 @@ const invites = useList({
 	orderBy: 'creation desc',
 	filters: () => {
 		const filters: Record<string, string | string[] | number> = {
-			tenant: user.data?.tenant,
 			send_invite: 1,
 			account: ['like', debouncedSearch.value],
 		}
 
-		if (role.value) filters.is_admin = Number(role.value === 'Mail Admin')
 		if (status.value) {
 			if (status.value === 'Accepted') filters.is_verified = 1
 			else {
@@ -144,6 +147,7 @@ const invites = useList({
 	transform: (data) =>
 		data.map((row) => ({
 			...row,
+			roles: row.roles ? row.roles.split('\n') : [],
 			status: row.is_verified
 				? 'Accepted'
 				: dayjs().isAfter(row.expires_at)
@@ -151,13 +155,7 @@ const invites = useList({
 					: 'Pending',
 		})),
 	limit: 100,
-	cacheKey: [
-		'memberInvites',
-		user.data?.tenant,
-		debouncedSearch.value,
-		role.value,
-		status.value,
-	],
+	cacheKey: ['memberInvites', debouncedSearch.value, status.value],
 })
 
 const reloadInvites = () => invites.reload()
@@ -190,7 +188,7 @@ const DELETE_INVITES_OPTIONS = {
 
 const LIST_COLUMNS = [
 	{ label: __('Assigned Email'), key: 'account' },
-	{ label: __('Assigned Role'), key: 'is_admin' },
+	{ label: __('Roles'), key: 'roles' },
 	{ label: __('Backup Email'), key: 'backup_email' },
 	{ label: __('Invited By'), key: 'invited_by' },
 	{ label: __('Invitation Status'), key: 'status' },
@@ -205,12 +203,6 @@ const LIST_OPTIONS = {
 		showEditInvite.value = true
 	},
 }
-
-const ROLE_OPTIONS = [
-	{ label: '', value: '' },
-	{ label: __('Mail User'), value: 'Mail User' },
-	{ label: __('Mail Admin'), value: 'Mail Admin' },
-]
 
 const STATUS_OPTIONS = [
 	{ label: '', value: '' },

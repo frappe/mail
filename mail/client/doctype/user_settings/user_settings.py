@@ -17,7 +17,7 @@ from mail.jmap import (
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
 from mail.utils import get_mail_config
-from mail.utils.user import get_tenant_for_user, has_role, is_system_manager, is_tenant_bound_user
+from mail.utils.user import is_local_user, is_system_manager
 from mail.utils.validation import has_permission_for_user
 
 
@@ -77,7 +77,7 @@ class UserSettings(Document):
 			return
 
 		self.validate_jmap_settings()
-		self.validate_tenant_bound_user()
+		self.validate_local_user()
 
 	def validate_jmap_settings(self) -> None:
 		"""Validate the JMAP settings by connecting to the JMAP server and verifying the default outgoing email."""
@@ -120,26 +120,24 @@ class UserSettings(Document):
 					).format(frappe.bold(self.default_outgoing_email))
 				)
 
-	def validate_tenant_bound_user(self) -> None:
-		"""Validate that if the user is tenant-bound, then the JMAP username must be the same as the User name and a Principal Settings must exist for the user."""
+	def validate_local_user(self) -> None:
+		"""Validate that if the user is local, then the JMAP username must be the same as the User name and a Principal Settings must exist for the user."""
 
-		if not is_tenant_bound_user(self.user):
+		if not is_local_user(self.user):
 			return
 
 		if self.username != self.user:
 			frappe.throw(_("JMAP Username must be the same as the User name."))
 
-		tenant = get_tenant_for_user(self.user)
-
 		if not frappe.db.exists(
 			"Principal Settings",
-			{"tenant": tenant, "principal_name": self.username},
+			{"principal_name": self.username},
 			"principal_name",
 		):
 			frappe.throw(
-				_("Account {0} is not bound to Tenant {1}").format(
-					frappe.bold(self.username), frappe.bold(tenant)
-				)
+				_(
+					"Principal Settings for {0} does not exist. Please create Principal Settings with the principal name same as the JMAP username."
+				).format(frappe.bold(self.username))
 			)
 
 	@frappe.whitelist()
@@ -253,10 +251,7 @@ def get_permission_query_condition(user: str | None = None) -> str:
 	if is_system_manager(user):
 		return ""
 
-	if has_role(user, "Mail User"):
-		return f"(`tabUser Settings`.user = '{user}')"
-
-	return "1=0"
+	return f"(`tabUser Settings`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
@@ -267,7 +262,5 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 
 	if is_system_manager(user):
 		return True
-	elif has_role(user, "Mail User"):
-		return doc.user == user
 
-	return False
+	return doc.user == user

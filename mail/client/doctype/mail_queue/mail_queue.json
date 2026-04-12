@@ -556,7 +556,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-23 07:42:00.560255",
+ "modified": "2026-04-13 12:55:02.847255",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Queue",
@@ -577,7 +577,7 @@
   {
    "create": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

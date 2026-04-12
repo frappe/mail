@@ -124,9 +124,7 @@ class MailCluster(Document):
 		if self.enabled:
 			return
 
-		if tenant := frappe.db.exists("Mail Tenant", {"cluster": self.name}):
-			frappe.throw(_("Mail Tenant {0} is using this cluster.").format(frappe.bold(tenant)))
-		elif server := frappe.db.exists("Mail Server", {"enabled": 1, "cluster": self.name}):
+		if server := frappe.db.exists("Mail Server", {"enabled": 1, "cluster": self.name}):
 			frappe.throw(
 				_("Mail Server {0} is enabled. Please disable it first.").format(frappe.bold(server))
 			)

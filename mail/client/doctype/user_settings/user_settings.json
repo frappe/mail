@@ -6,7 +6,6 @@
  "field_order": [
   "user",
   "column_break_klzk",
-  "managed",
   "jmap_credentials_section",
   "server_url",
   "column_break_uxkb",
@@ -339,22 +338,12 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.managed",
-   "fieldname": "managed",
-   "fieldtype": "Check",
-   "label": "Managed",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-12 10:27:00.492310",
+ "modified": "2026-04-13 11:45:47.752577",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",

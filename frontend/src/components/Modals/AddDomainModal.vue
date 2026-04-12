@@ -49,14 +49,13 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { Dialog, ErrorMessage, FormControl, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import CopyControl from '@/components/Controls/CopyControl.vue'
 
 const show = defineModel<boolean>()
-const user = inject('$user')
 
 const domainName = ref('')
 const verificationError = ref('')
@@ -74,7 +73,7 @@ watch(show, () => {
 
 const domainRequest = createResource({
 	url: 'mail.api.admin.get_domain_request',
-	makeParams: () => ({ domain_name: domainName.value, mail_tenant: user.data.tenant }),
+	makeParams: () => ({ domain_name: domainName.value }),
 })
 
 const verifyDNS = createResource({

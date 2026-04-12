@@ -25,7 +25,7 @@ from mail.jmap.services.sieve.sieve_script import SieveScriptService
 from mail.jmap.services.vacationresponse.vacation_response import VacationResponseService
 from mail.jmap.services.websocket.websocket import WebSocketService
 from mail.utils import get_mail_config
-from mail.utils.user import has_role
+from mail.utils.user import is_local_user
 from mail.utils.validation import has_permission_for_user
 
 
@@ -39,12 +39,12 @@ def get_jmap_connection(user: str, ignore_permissions: bool = False, cache: bool
 
 		user_settings = frappe.get_lazy_doc("User Settings", settings)
 
-		if frappe.db.get_value("Mail Tenant Member", {"user": user}, "tenant"):
+		if is_local_user(user):
 			if user_settings.user != user_settings.username:
 				frappe.throw(
-					_(
-						"JMAP username for tenant-bound user {0} must be the same as the system username."
-					).format(frappe.bold(user)),
+					_("JMAP username for local user {0} must be the same as the system username.").format(
+						frappe.bold(user)
+					),
 					frappe.ValidationError,
 				)
 
@@ -71,9 +71,6 @@ def get_jmap_connection(user: str, ignore_permissions: bool = False, cache: bool
 
 	if not bool(frappe.db.get_value("User", user, "enabled")):
 		frappe.throw(_("User {0} is disabled.").format(frappe.bold(user)))
-
-	if not has_role(user, ["Mail User"]):
-		frappe.throw(_("User {0} does not have the Mail User role.").format(frappe.bold(user)))
 
 	if cache:
 		return frappe.cache.hget("jmap:connection", user, generator)

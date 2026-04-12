@@ -77,7 +77,7 @@ class MailSettings(Document):
 		principals = frappe.db.get_all(
 			"Principal Settings",
 			{"name": ["in", [d.principal for d in self.signup_domains]]},
-			["principal_name", "is_verified", "tenant"],
+			["principal_name", "is_verified"],
 		)
 
 		if not principals:

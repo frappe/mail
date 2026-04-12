@@ -22,24 +22,6 @@ def get_signup_domains() -> list:
 	return frappe.cache.hget("mail-settings", "signup_domains", generator)
 
 
-def get_cluster_for_tenant(tenant: str) -> str | None:
-	"""Returns the cluster for the tenant."""
-
-	def generator() -> str | None:
-		return frappe.db.get_value("Mail Tenant", tenant, "cluster")
-
-	return frappe.cache.hget(f"tenant|{tenant}", "cluster", generator)
-
-
-def get_tenant_for_user(user: str) -> str | None:
-	"""Returns the tenant of the user."""
-
-	def generator() -> str | None:
-		return frappe.db.get_value("Mail Tenant Member", user, "tenant")
-
-	return frappe.cache.hget(f"user|{user}", "tenant", generator)
-
-
 def get_user_emails(user: str) -> list:
 	"""Returns the list of emails associated with the user."""
 

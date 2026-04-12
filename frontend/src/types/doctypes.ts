@@ -41,8 +41,6 @@ export interface MailAccountRequest extends DocType {
 	request_key?: string
 	/** Backup Email: Data */
 	backup_email: string
-	/** Tenant: Link (Mail Tenant) */
-	tenant?: string
 	/** Invited By: Link (User) */
 	invited_by?: string
 	/** Is Verified: Check */
@@ -51,7 +49,7 @@ export interface MailAccountRequest extends DocType {
 	is_expired: 0 | 1
 	/** Account: Data */
 	account?: string
-	/** Domain: Data */
+	/** Domain Name: Data */
 	domain_name?: string
 	/** Is Admin: Check */
 	is_admin: 0 | 1
@@ -95,38 +93,8 @@ export interface MailDomain extends DocType {
 	dkim_rsa_key_size?: '' | '2048' | '4096'
 	/** Root Domain: Check */
 	is_root_domain: 0 | 1
-	/** Tenant: Link (Mail Tenant) */
-	tenant: string
 	/** Default Disk Quota (in GB): Float */
 	default_disk_quota?: number
-}
-
-// Last updated: 2025-11-25 18:35:06.533431
-export interface MailTenant extends DocType {
-	/** Tenant Name: Data */
-	tenant_name: string
-	/** Logo: Attach Image */
-	logo?: string
-	/** Maximum No. of Domains: Int */
-	max_domains: number
-	/** Maximum No. of Accounts: Int */
-	max_accounts: number
-	/** User: Link (User) */
-	user: string
-	/** Cluster: Link (Mail Cluster) */
-	cluster?: string
-	/** Maximum No. of Mailing Lists: Int */
-	max_mailing_lists: number
-}
-
-// Last updated: 2025-01-31 15:53:10.550269
-export interface MailTenantMember extends DocType {
-	/** User: Link (User) */
-	user: string
-	/** Tenant: Link (Mail Tenant) */
-	tenant: string
-	/** Is Admin: Check */
-	is_admin: 0 | 1
 }
 
 // Last updated: 2025-01-28 15:33:09.730936
@@ -139,8 +107,6 @@ export interface MailDomainRequest extends DocType {
 	verification_key?: string
 	/** Is Verified: Check */
 	is_verified: 0 | 1
-	/** Tenant: Link (Mail Tenant) */
-	tenant: string
 }
 
 // Last updated: 2025-11-27 13:25:44.326974

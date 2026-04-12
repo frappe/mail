@@ -17,15 +17,14 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.utils import generate_random_phrase
-from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
-from mail.utils.user import has_role, is_system_manager, is_tenant_admin
+from mail.utils import generate_random_phrase, get_mail_config
+from mail.utils.user import is_mail_admin, is_system_manager
 from mail.utils.validation import (
 	is_email_assigned,
 	is_subaddressed_email,
 	is_valid_email_for_domain,
 	validate_domain_is_verified,
-	validate_domain_owned_by_tenant,
+	validate_local_domain,
 	validate_max_accounts,
 )
 
@@ -48,11 +47,12 @@ class MailAccountRequest(Document):
 			self.set_expires_at()
 			self.set_ip_address()
 
-			validate_max_accounts(self.tenant)
+			validate_max_accounts()
 
-			self.validate_invited_by_and_tenant()
+			self.validate_invited_by()
 			self.validate_domain()
 			self.validate_account()
+			self.validate_roles()
 
 	def after_insert(self) -> None:
 		if self.send_invite:
@@ -78,25 +78,19 @@ class MailAccountRequest(Document):
 
 		self.ip_address = frappe.local.request_ip
 
-	def validate_invited_by_and_tenant(self) -> None:
-		"""Validates the invited_by and tenant fields."""
+	def validate_invited_by(self) -> None:
+		"""Validates the invited_by."""
 
 		user = frappe.session.user
+
 		if is_system_manager(user):
 			if not self.invited_by:
 				frappe.throw(_("Invited By is required"))
-			elif not self.tenant:
-				frappe.throw(_("Tenant is required"))
 		else:
 			self.invited_by = user
-			self.tenant = get_tenant_for_user(user)
 
-		if not is_tenant_admin(self.tenant, self.invited_by):
-			frappe.throw(
-				_("User {0} is not authorized to invite users to the tenant.").format(
-					frappe.bold(self.invited_by)
-				)
-			)
+		if not is_mail_admin(self.invited_by):
+			frappe.throw(_("User {0} does not have permission to invite.").format(self.invited_by))
 
 	def validate_domain(self) -> None:
 		"""Validates the domain."""
@@ -104,7 +98,7 @@ class MailAccountRequest(Document):
 		if not self.domain_name:
 			frappe.throw(_("Domain is mandatory."))
 
-		validate_domain_owned_by_tenant(self.domain_name, self.tenant)
+		validate_local_domain(self.domain_name)
 		validate_domain_is_verified(self.domain_name)
 
 	def validate_account(self) -> None:
@@ -124,6 +118,13 @@ class MailAccountRequest(Document):
 
 		if frappe.db.exists("User", {"email": self.account}):
 			frappe.throw(_("User {0} is already registered.").format(self.account))
+
+	def validate_roles(self) -> None:
+		"""Validates the roles."""
+
+		roles = set([r.strip() for r in self.roles.split("\n")]) if self.roles else set()
+		roles.add("User")
+		self.roles = "\n".join(roles)
 
 	def validate_expired(self) -> None:
 		"""Forbids action if the request has expired."""
@@ -148,11 +149,8 @@ class MailAccountRequest(Document):
 		if self.invited_by:
 			subject = _("You have been invited by {0} to join Frappe Mail").format(self.invited_by)
 			template = "generic"
-			tenant_name = frappe.db.get_value("Mail Tenant", self.tenant, "tenant_name")
 			args = {
-				"title": _('You have been invited by {0} to join tenant "{1}" on Frappe Mail.').format(
-					self.invited_by, tenant_name
-				),
+				"title": _("You have been invited by {0} to join Frappe Mail.").format(self.invited_by),
 				"description": _("Please confirm your email address by clicking the button below."),
 				"button": _("Verify Account"),
 				"link": get_url("/mail/signup/" + self.request_key),
@@ -177,7 +175,7 @@ class MailAccountRequest(Document):
 			frappe.throw(_("Account is already verified and created."))
 
 		user = frappe.session.user
-		if not is_system_manager(user) and not is_tenant_admin(self.tenant, user):
+		if not is_system_manager(user) and not is_mail_admin(user):
 			frappe.throw(_("You are not authorized to perform this action."))
 
 		self.db_set("is_verified", 1)
@@ -198,34 +196,33 @@ class MailAccountRequest(Document):
 		if frappe.db.exists("User", {"email": self.account}):
 			frappe.throw(_("User with email {0} already exists.").format(frappe.bold(self.account)))
 
-		roles = ["Mail User"]
-		if self.is_admin:
-			roles.append("Mail Admin")
+		roles = set([r.lower() for r in self.roles.split("\n")]) if self.roles else set(["user"])
+		local_roles = ["Mail Admin"] if "admin" in roles or "tenant-admin" in roles else []
 
 		# Create User
-		user = create_user(self.account, first_name, last_name, password, roles)
-		_add_user_to_tenant(self.tenant, user, self.is_admin)
+		user = create_user(self.account, first_name, last_name, password, local_roles)
 
 		# Generate App Password
 		app_password = generate_random_phrase()
 
 		# Create Principal
 		principal = frappe.new_doc("Principal")
-		principal.tenant = self.tenant
 		principal.type = "Individual"
 		principal._name = self.account
 		principal.description = f"{first_name} {last_name}"
 		principal.password = password
 		principal.user = user
 		principal.append("app_passwords", {"identifier": frappe.local.site, "password": app_password})
+
+		for role in roles:
+			principal.append("roles", {"role": role})
+
 		principal.insert(ignore_permissions=True)
 
 		# Create User Settings
 		user_settings = frappe.new_doc("User Settings")
 		user_settings.user = user
-		user_settings.server_url = frappe.db.get_value(
-			"Mail Cluster", get_cluster_for_tenant(self.tenant), "base_url"
-		)
+		user_settings.server_url = get_mail_config().get("server_url")
 		user_settings.username = self.account
 		user_settings.app_password = app_password
 		user_settings.backup_email = self.backup_email
@@ -263,23 +260,13 @@ def create_user(
 	return user.name
 
 
-def _add_user_to_tenant(tenant: str, user: str, is_admin: bool) -> None:
-	"""Adds a User to a Tenant"""
-
-	tenant = frappe.get_doc("Mail Tenant", tenant)
-	tenant.add_member(user, is_admin)
-
-
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
 	if doc.doctype != "Mail Account Request":
 		return False
 
 	user = user or frappe.session.user
 
-	if is_system_manager(user):
-		return True
-
-	if is_tenant_admin(doc.tenant, user):
+	if is_system_manager(user) or is_mail_admin(user):
 		return True
 
 	return False
@@ -288,11 +275,7 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 def get_permission_query_condition(user: str | None = None) -> str:
 	user = user or frappe.session.user
 
-	if is_system_manager(user):
+	if is_system_manager(user) or is_mail_admin(user):
 		return ""
-
-	if has_role(user, "Mail Admin"):
-		if tenant := get_tenant_for_user(user):
-			return f"(`tabMail Account Request`.`tenant` = {frappe.db.escape(tenant)})"
 
 	return "1=0"

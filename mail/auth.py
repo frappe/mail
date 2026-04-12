@@ -31,7 +31,6 @@ ALLOWED_PATHS = [
 	"/api/method/login",
 	"/api/method/logout",
 	"/api/method/upload_file",
-	"/api/method/mail.utils.user.get_user_tenant",
 	"/api/method/mail.utils.user.generate_user_keys",
 	"/api/method/mail.www.mail.get_context_for_dev",
 	"/api/method/notification_relay.api.get_config",

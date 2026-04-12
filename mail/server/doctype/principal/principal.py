@@ -15,14 +15,12 @@ from mail.jmap import invalidate_jmap_cache
 from mail.server.doctype.principal_settings.principal_settings import (
 	create_principal_settings,
 	delete_principal_settings,
-	get_tenant_principals,
 	update_principal_settings,
 )
 from mail.utils import (
 	generate_app_password,
 	generate_dkim_keys,
 	get_dkim_selector,
-	get_spf_host_for_cluster,
 	hash_password,
 	is_catch_all_address,
 	is_probable_hash,
@@ -30,23 +28,16 @@ from mail.utils import (
 	parse_token,
 	snake_to_camel,
 )
-from mail.utils.cache import get_cluster_for_tenant, get_root_domain_name
 from mail.utils.dns import verify_dns_record
 from mail.utils.user import (
-	get_principal_tenant,
-	get_tenant_for_user,
+	is_local_user,
+	is_mail_admin,
 	is_system_manager,
-	is_tenant_admin,
 )
 from mail.utils.validation import (
-	ensure_access_to_tenant,
-	ensure_emails_belong_to_tenant_domains,
-	ensure_groups_belong_to_tenant,
-	ensure_lists_belong_to_tenant,
-	ensure_members_belong_to_tenant,
-	ensure_principal_belong_to_tenant,
-	ensure_tenant_has_cluster,
+	ensure_access_to_backend,
 	is_subaddressed_email,
+	validate_mail_config,
 	validate_max_accounts,
 	validate_max_domains,
 	validate_max_groups,
@@ -80,31 +71,31 @@ class Principal(Document):
 	def _emails(self) -> list[str]:
 		"""Returns a list of email addresses associated with the principal."""
 
-		return [e.value for e in self.get("emails") or []]
+		return [e.email for e in self.get("emails") or []]
 
 	@property
 	def _member_of(self) -> list[str]:
 		"""Returns a list of groups the principal is a member of."""
 
-		return [m.value for m in self.get("member_of") or []]
+		return [m.member_of for m in self.get("member_of") or []]
 
 	@property
 	def _roles(self) -> list[str]:
 		"""Returns a list of roles assigned to the principal."""
 
-		return [r.value for r in self.get("roles") or []]
+		return [r.role.lower() for r in self.get("roles") or []]
 
 	@property
 	def _lists(self) -> list[str]:
 		"""Returns a list of lists the principal is part of."""
 
-		return [l.value for l in self.get("lists") or []]
+		return [l.list for l in self.get("lists") or []]
 
 	@property
 	def _members(self) -> list[str]:
 		"""Returns a list of members of the principal."""
 
-		return [m.value for m in self.get("members") or []]
+		return [m.member for m in self.get("members") or []]
 
 	@property
 	def _enabled_permissions(self) -> list[str]:
@@ -122,7 +113,7 @@ class Principal(Document):
 	def _external_members(self) -> list[str]:
 		"""Returns a list of external members of the principal."""
 
-		return [em.value for em in self.get("external_members") or []]
+		return [em.member for em in self.get("external_members") or []]
 
 	@property
 	def is_verified(self) -> bool | None:
@@ -148,62 +139,47 @@ class Principal(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
-		tenant = filters.get("tenant") or get_tenant_for_user(frappe.session.user)
 		type = filters.get("type")
 		text = filters.get("text")
 
-		if not tenant:
-			if is_system_manager(frappe.session.user):
-				frappe.msgprint(_("Please specify tenant to fetch principals."), alert=True)
-				return []
-			frappe.throw(_("You do not have permission to access principals."))
-
 		limit = cint(kwargs.get("start", 1)) + page_length
-		principals, total = Principal._get_all(tenant, type, limit=limit)
-
-		frappe.cache.set_value(_get_total_cache_key(tenant, type, text), total, expires_in_sec=600)
+		principals, total = Principal._get_all(type, text, limit=limit)
+		frappe.cache.set_value(_get_total_cache_key(type, text), total, expires_in_sec=600)
 
 		return principals
 
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
-		tenant = filters.get("tenant") or get_tenant_for_user(frappe.session.user)
 		type = filters.get("type")
 		text = filters.get("text")
 
-		if not tenant:
-			return 0
+		ensure_access_to_backend()
 
-		ensure_access_to_tenant(tenant)
-
-		return cint(frappe.cache.get_value(_get_total_cache_key(tenant, type, text)))
+		return cint(frappe.cache.get_value(_get_total_cache_key(type, text)))
 
 	@staticmethod
 	def get_stats(**kwargs) -> dict:
 		return {}
 
 	def before_insert(self) -> None:
-		if not self.tenant:
-			frappe.throw(_("Tenant is required."))
-
 		if self.type == "Domain":
-			validate_max_domains(self.tenant)
+			validate_max_domains()
 		elif self.type == "Group":
-			validate_max_groups(self.tenant)
+			validate_max_groups()
 		elif self.type == "Individual":
-			validate_max_accounts(self.tenant)
+			validate_max_accounts()
 		elif self.type == "List":
-			validate_max_lists(self.tenant)
+			validate_max_lists()
 
 	def validate(self) -> None:
 		if self.type in ["API Key", "Group", "OAuth Client", "Role"]:
 			raise NotImplementedError(_("Principal type {0} is not supported yet.").format(self.type))
 
 		if not bool(self.flags.ignore_permissions):
-			ensure_access_to_tenant(self.tenant)
+			ensure_access_to_backend()
 
-		ensure_tenant_has_cluster(self.tenant)
+		validate_mail_config()
 
 		if self.type == "Domain":
 			if "." not in self._name:
@@ -220,27 +196,19 @@ class Principal(Document):
 				validate_wildcard_email(email)
 				is_subaddressed_email(email, raise_exception=True)
 
-			ensure_emails_belong_to_tenant_domains(self.tenant, emails)
-
 		if self.type in ["Group", "Individual"]:
 			for group in self._member_of:
 				validate_email_address(group, throw=True)
 				validate_wildcard_email(group)
 
-			ensure_groups_belong_to_tenant(self.tenant, self._member_of)
-
 			for lst in self._lists:
 				validate_email_address(lst, throw=True)
 				validate_wildcard_email(lst)
-
-			ensure_lists_belong_to_tenant(self.tenant, self._lists)
 
 		if self.type in ["Group", "List"]:
 			for member in self._members:
 				validate_email_address(member, throw=True)
 				validate_wildcard_email(member)
-
-			ensure_members_belong_to_tenant(self.tenant, self._members)
 
 		if self.type == "List":
 			for member in self._external_members:
@@ -281,12 +249,11 @@ class Principal(Document):
 	def refresh_dns_records(self) -> None:
 		"""Refreshes the DNS Records."""
 
-		ensure_access_to_tenant(self.tenant)
+		ensure_access_to_backend()
 
 		if self.type != "Domain":
 			frappe.throw(_("DNS Records can only be refreshed for Domain principals."))
 
-		_remove_principal_from_cache(self.tenant, self.name)
 		self.reload()
 
 		frappe.msgprint(_("DNS Records refreshed successfully."), indicator="green", alert=True)
@@ -295,7 +262,7 @@ class Principal(Document):
 	def rotate_dkim_keys(self) -> None:
 		"""Rotates the DKIM Keys."""
 
-		ensure_access_to_tenant(self.tenant)
+		ensure_access_to_backend()
 
 		if self.type != "Domain":
 			frappe.throw(_("DKIM Keys can only be rotated for Domain principals."))
@@ -311,7 +278,6 @@ class Principal(Document):
 
 		update_principal_settings(self.name, is_verified=0)
 
-		_remove_principal_from_cache(self.tenant, self.name)
 		self.reload()
 
 		frappe.msgprint(_("DKIM Keys rotated successfully."), indicator="green", alert=True)
@@ -320,7 +286,7 @@ class Principal(Document):
 	def sync_jmap_identities(self) -> None:
 		"""Syncs JMAP identities for the principal."""
 
-		ensure_access_to_tenant(self.tenant)
+		ensure_access_to_backend()
 		self._sync_jmap_identities()
 
 	def _create(self) -> None:
@@ -336,10 +302,12 @@ class Principal(Document):
 		_enabled_permissions = []
 		_disabled_permissions = []
 		_external_members = []
-		principals_to_invalidate = set()
 
 		if self.type == "Individual":
-			_roles = ["user"]
+			_roles = set(self._roles)
+			if "admin" in _roles:
+				_roles.remove("admin")
+
 			_secrets.append(hash_password(self.password))
 			if self.app_passwords:
 				for ap in self.app_passwords:
@@ -347,18 +315,9 @@ class Principal(Document):
 
 		if self.type in ["Group", "Individual", "List"]:
 			_emails = [self.name, *self._emails]
-			principals_to_invalidate.update([email.split("@")[1] for email in _emails])
 
 		if self.type in ["Group", "Individual"]:
-			if _member_of := self._member_of:
-				principals_to_invalidate.update(_member_of)
-			if _lists := self._lists:
-				principals_to_invalidate.update(_lists)
 			_disabled_permissions = self._disabled_permissions
-
-		if self.type in ["Group", "List"]:
-			if _members := self._members:
-				principals_to_invalidate.update(_members)
 
 		if self.type == "List":
 			_external_members = self._external_members
@@ -371,7 +330,7 @@ class Principal(Document):
 			"secrets": _secrets,
 			"emails": _emails,
 			"memberOf": _member_of,
-			"roles": _roles,
+			"roles": list(_roles),
 			"lists": _lists,
 			"members": _members,
 			"enabledPermissions": _enabled_permissions,
@@ -385,7 +344,7 @@ class Principal(Document):
 		if response.json().get("error"):
 			frappe.throw(_("Failed to add principal {0}: {1}").format(frappe.bold(self.name), response.text))
 
-		create_principal_settings(self.tenant, self.name, self.type)
+		create_principal_settings(self.name, self.type)
 
 		if self.type == "Domain":
 			try:
@@ -398,9 +357,6 @@ class Principal(Document):
 					title=f"Failed to create DKIM signature for domain {self.name}",
 					message=frappe.get_traceback(with_context=True),
 				)
-
-		for pname in principals_to_invalidate:
-			_remove_principal_from_cache(self.tenant, pname)
 
 	def _create_dkim_signature(
 		self,
@@ -450,12 +406,12 @@ class Principal(Document):
 		if self.type != "Individual":
 			frappe.throw(_("JMAP Identities can only be synced for Individual principals."))
 
-		ensure_access_to_tenant(self.tenant)
-		ensure_tenant_has_cluster(self.tenant)
+		ensure_access_to_backend()
+		validate_mail_config()
 
 		if not frappe.db.exists(
 			"Principal Settings",
-			{"tenant": self.tenant, "principal_name": self.name, "principal_type": "Individual"},
+			{"principal_name": self.name, "principal_type": "Individual"},
 		):
 			return
 
@@ -508,75 +464,59 @@ class Principal(Document):
 
 		return principal
 
-	def _get(self, skip_dns_records: bool = False, ignore_cache: bool = False) -> dict:
+	def _get(self, skip_dns_records: bool = False) -> dict:
 		"""Returns the principal details."""
 
-		tenant = get_principal_tenant(self.name)
-		ensure_access_to_tenant(tenant)
-		ensure_tenant_has_cluster(tenant)
-		ensure_principal_belong_to_tenant(tenant, self.name)
-
-		if not ignore_cache:
-			if cached := _get_principal_from_cache(tenant, self.name):
-				return cached
+		ensure_access_to_backend()
+		validate_mail_config()
 
 		backend = get_mail_backend_api()
 		principal = Principal._fetch(
 			backend, self.name, skip_dns_records=skip_dns_records, ignore_not_found=False
 		)
-		formatted = Principal._format(tenant, principal)
-		_store_principal_in_cache(tenant, self.name, formatted)
+		formatted = Principal._format(principal)
+
+		if formatted["type"] == "Domain":
+			if not frappe.db.exists("Principal Settings", {"principal_name": formatted["name"]}):
+				create_principal_settings(formatted["name"], formatted["type"])
+				frappe.db.commit()
 
 		return formatted
 
 	@staticmethod
 	def _get_all(
-		tenant: str,
 		type: str | None = None,
 		filter: str | None = None,
 		page: int = 1,
 		limit: int = 10,
 	) -> tuple[list, int]:
-		"""Returns all principals for the tenant."""
+		"""Returns all principals."""
 
-		ensure_access_to_tenant(tenant)
+		ensure_access_to_backend()
 
-		tenant_principals, total = get_tenant_principals(tenant, type, filter, page, limit)
-
-		if total == 0:
-			return [], total
-
-		cluster = get_cluster_for_tenant(tenant)
-		if not cluster:
-			frappe.msgprint(
-				_("Tenant {0} is not assigned to any cluster.").format(frappe.bold(tenant)), alert=True
-			)
-			return [], 0
+		params = {"page": page, "limit": limit}
+		if type:
+			params["types"] = _get_principal_type(type)
+		if filter:
+			params["filter"] = filter
 
 		backend = get_mail_backend_api()
+		response = backend.request("GET", f"{PRINCIPAL_ENDPOINT}", params=params)
+
+		data = response.json().get("data", {})
+		items = data.get("items", [])
+		total = data.get("total", 0)
 
 		principals = []
-		for pname in tenant_principals:
-			if principal := _get_principal_from_cache(tenant, pname):
-				principals.append(principal)
-				continue
-
-			principal = Principal._fetch(backend, pname, ignore_not_found=True)
-
-			if not principal:
-				total -= 1
-				continue
-
-			formatted = Principal._format(tenant, principal)
-			_store_principal_in_cache(tenant, pname, formatted)
-			principals.append(formatted)
+		for principal in items:
+			principal["dnsRecords"] = []
+			principals.append(Principal._format(principal))
 
 		return principals, total
 
 	def _update(self) -> None:
 		"""Updates the principal in the backend."""
 
-		ensure_principal_belong_to_tenant(self.tenant, self.name)
 		backend = get_mail_backend_api()
 		existing_principal = frappe._dict(
 			Principal._fetch(backend, self.name, skip_dns_records=True, ignore_not_found=False)
@@ -615,7 +555,7 @@ class Principal(Document):
 
 			if self.app_passwords:
 				for ap in self.app_passwords:
-					updates["secrets"].append(ap.value or generate_app_password(ap.identifier, ap.password))
+					updates["secrets"].append(ap.secret or generate_app_password(ap.identifier, ap.password))
 
 		if self.type in ["Group", "Individual", "List"]:
 			updates["emails"] = [self._name, *self._emails]
@@ -633,7 +573,6 @@ class Principal(Document):
 			updates["external_members"] = self._external_members
 
 		actions = []
-		principals_to_invalidate = set()
 		for field, value in updates.items():
 			if field in ["name", "quota", "description", "locale"]:
 				if existing_principal.get(field) != value:
@@ -649,25 +588,9 @@ class Principal(Document):
 				for v in values_to_add:
 					actions.append({"action": "addItem", "field": server_field, "value": v})
 
-				if field == "emails" and self.type in ["Group", "Individual", "List"]:
-					principals_to_invalidate.update([email.split("@")[1] for email in values_to_add])
-
-				if (field in ["member_of", "lists"] and self.type in ["Group", "Individual"]) or (
-					field == "members" and self.type in ["Group", "List"]
-				):
-					principals_to_invalidate.update(values_to_add)
-
 			if values_to_remove := set(existing_values) - set(value):
 				for v in values_to_remove:
 					actions.append({"action": "removeItem", "field": server_field, "value": v})
-
-				if field == "emails" and self.type in ["Group", "Individual", "List"]:
-					principals_to_invalidate.update([email.split("@")[1] for email in values_to_remove])
-
-				if (field in ["member_of", "lists"] and self.type in ["Group", "Individual"]) or (
-					field == "members" and self.type in ["Group", "List"]
-				):
-					principals_to_invalidate.update(values_to_remove)
 
 		response = backend.request("PATCH", f"{PRINCIPAL_ENDPOINT}/{self.name}", data=json.dumps(actions))
 
@@ -676,13 +599,8 @@ class Principal(Document):
 				_("Failed to update principal {0}: {1}").format(frappe.bold(self.name), response.text)
 			)
 
-		_remove_principal_from_cache(self.tenant, self.name)
-
 		if self.name != self._name or self.type != TYPE_MAP[existing_principal.type]:
 			update_principal_settings(self.name, principal_name=self._name, principal_type=self.type)
-
-		for pname in principals_to_invalidate:
-			_remove_principal_from_cache(self.tenant, pname)
 
 		if self.type == "Individual":
 			try:
@@ -699,7 +617,6 @@ class Principal(Document):
 	def _delete(self) -> None:
 		"""Deletes the principal from the backend."""
 
-		_remove_principal_from_cache(self.tenant, self.name)
 		principal = frappe.get_doc("Principal", self.name)
 
 		if principal.type == "Domain":
@@ -712,14 +629,12 @@ class Principal(Document):
 
 		backend = get_mail_backend_api()
 		backend.request("DELETE", f"{PRINCIPAL_ENDPOINT}/{self.name}")
-		delete_principal_settings(self.name, raise_exception=False)
+		delete_principal_settings(self.name)
 
-		# If the principal is an Individual, remove member from tenant and delete User
+		# If the principal is an Individual, delete the User
 		if principal.type == "Individual":
-			invalidate_jmap_cache(self.name)
-
-			if member := frappe.db.exists("Mail Tenant Member", {"tenant": self.tenant, "user": self.name}):
-				frappe.delete_doc("Mail Tenant Member", member, ignore_permissions=True)
+			if is_local_user(self.name):
+				invalidate_jmap_cache(self.name)
 
 			if settings := frappe.db.exists("User Settings", {"user": self.name}):
 				frappe.delete_doc("User Settings", settings, ignore_permissions=True)
@@ -731,18 +646,6 @@ class Principal(Document):
 			self._delete_dkim_signature(backend, "rsa-sha256", raise_exception=False)
 			if bool(frappe.conf.enable_ed25519_dkim):
 				self._delete_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
-
-		principals_to_invalidate = set()
-		if principal.type in ["Group", "Individual", "List"]:
-			principals_to_invalidate.update([email.split("@")[1] for email in principal._emails])
-		if principal.type in ["Group", "Individual"]:
-			principals_to_invalidate.update(principal._member_of)
-			principals_to_invalidate.update(principal._lists)
-		if principal.type in ["Group", "List"]:
-			principals_to_invalidate.update(principal._members)
-
-		for pname in principals_to_invalidate:
-			_remove_principal_from_cache(self.tenant, pname)
 
 	def _delete_dkim_signature(
 		self,
@@ -773,13 +676,12 @@ class Principal(Document):
 				frappe.msgprint(message, alert=True)
 
 	@staticmethod
-	def _format(tenant: str, principal: dict) -> dict:
+	def _format(principal: dict) -> dict:
 		"""Formats the principal data from backend to Frappe Doc format."""
 
 		type = _get_local_type(principal["type"])
 		formatted = {
 			"type": type,
-			"tenant": tenant,
 			"id": principal["id"],
 			"name": principal["name"],
 			"_name": principal["name"],
@@ -790,12 +692,9 @@ class Principal(Document):
 		}
 
 		if type == "Domain":
-			cluster = get_cluster_for_tenant(tenant)
 			formatted.update(
 				{
-					"dns_records": Principal._format_dns_records(
-						principal["name"], cluster, principal["dnsRecords"]
-					),
+					"dns_records": Principal._format_dns_records(principal["name"], principal["dnsRecords"]),
 					"total_members": cint(principal.get("members")),
 				}
 			)
@@ -810,7 +709,7 @@ class Principal(Document):
 			]
 			formatted.update(
 				{
-					"roles": [{"value": r} for r in principal.get("roles", [])],
+					"roles": [{"role": r.title()} for r in principal.get("roles", [])],
 					"enabled_permissions": json.dumps(principal.get("enabledPermissions", []), indent=4),
 					"disabled_permissions": json.dumps(principal.get("disabledPermissions", []), indent=4),
 					"permissions": permissions,
@@ -828,16 +727,16 @@ class Principal(Document):
 					"quota": quota,
 					"used_quota": used_quota,
 					"used_percentage": (cint(cint(used_quota) / cint(quota) * 100) if cint(quota) > 0 else 0),
-					"member_of": [{"value": m} for m in principal.get("memberOf", [])],
-					"lists": [{"value": l} for l in principal.get("lists", [])],
+					"member_of": [{"member_of": m} for m in principal.get("memberOf", [])],
+					"lists": [{"list": l} for l in principal.get("lists", [])],
 				}
 			)
 
 		if type in ["Group", "Individual", "List"]:
-			formatted["emails"] = [{"value": e} for e in principal.get("emails", [])]
+			formatted["emails"] = [{"email": e} for e in principal.get("emails", [])]
 
 		if type in ["Group", "List"]:
-			members = [{"value": m} for m in principal.get("members", [])]
+			members = [{"member": m} for m in principal.get("members", [])]
 			formatted.update(
 				{
 					"members": members,
@@ -847,7 +746,7 @@ class Principal(Document):
 
 		if type == "Individual":
 			app_passwords = [
-				{"identifier": parse_token(s)["decoded_metadata"], "value": s}
+				{"identifier": parse_token(s)["decoded_metadata"], "secret": s}
 				for s in principal.get("secrets", [])
 				if s.startswith("$app$")
 			]
@@ -859,73 +758,13 @@ class Principal(Document):
 			)
 
 		if type == "List":
-			formatted["external_members"] = [{"value": m} for m in principal.get("externalMembers", [])]
+			formatted["external_members"] = [{"member": m} for m in principal.get("externalMembers", [])]
 
 		return formatted
 
 	@staticmethod
-	def _format_dns_records(domain: str, cluster: str, dns_records: list[dict]) -> list[dict]:
+	def _format_dns_records(domain: str, dns_records: list[dict]) -> list[dict]:
 		"""Formats the DNS records for the domain principal."""
-
-		def replace_mx_records() -> None:
-			"""Replace existing MX records with mail server MX records."""
-
-			nonlocal dns_records
-			dns_records = [record for record in dns_records if record["type"] != "MX"]
-
-			servers = frappe.db.get_all(
-				"Mail Server",
-				{"cluster": cluster, "enabled": 1, "outbound_only": 0, "include_in_mx_records": 1},
-				["hostname", "priority"],
-				order_by="priority asc",
-			)
-			for server in servers:
-				dns_records.append(
-					{
-						"type": "MX",
-						"name": domain,
-						"content": f"{server['priority']} {server['hostname'].split(':')[0]}.",
-					}
-				)
-
-		def replace_spf_record() -> None:
-			"""Replace existing SPF record with mail server SPF record."""
-
-			nonlocal dns_records
-			dns_records = [
-				record
-				for record in dns_records
-				if not (record["type"] == "TXT" and "v=spf1" in record["content"])
-			]
-
-			spf_host = get_spf_host_for_cluster(cluster)
-			dns_records.append(
-				{
-					"type": "TXT",
-					"name": domain,
-					"content": f"v=spf1 include:{spf_host}.{get_root_domain_name()} ~all",
-				}
-			)
-
-		def is_internal_hostname(host: str) -> bool:
-			"""Return True if the hostname does NOT end with domain."""
-
-			host = host.rstrip(".")
-			return not host.endswith(domain)
-
-		def rewrite_last_hostname(content: str) -> str:
-			"""Rewrite only the last token in DNS content (SRV, CNAME)."""
-
-			parts = content.split()
-			if not parts:
-				return content
-
-			last = parts[-1].rstrip(".")
-
-			if is_internal_hostname(last):
-				parts[-1] = hostname
-
-			return " ".join(parts)
 
 		def infer_category(record: dict) -> str:
 			"""Infers the category of the DNS record based on its type and name."""
@@ -990,23 +829,15 @@ class Principal(Document):
 			return False
 
 		domain = domain.rstrip(".")
-		hostname = cluster.rstrip(".") + "."
-
-		replace_mx_records()
-		replace_spf_record()
 
 		formatted_records = []
 		for record in dns_records:
-			rewritten_content = record["content"]
-			if record["type"] in ("CNAME", "SRV"):
-				rewritten_content = rewrite_last_hostname(rewritten_content)
-
 			entry = {
 				"category": infer_category(record),
 				"type": record["type"],
 				"host": record["name"],
 				"priority": parse_priority(record),
-				"value": rewritten_content,
+				"value": record["content"],
 				"mandatory": cint(is_mandatory(record)),
 				"ttl": cint(frappe.conf.default_dns_ttl) or 3600,
 			}
@@ -1031,54 +862,10 @@ def _get_principal_type(local_type: str) -> str:
 	return reversed_map[local_type]
 
 
-def _get_total_cache_key(tenant: str, type: str | None, text: str | None) -> str:
-	"""Returns a cache key for storing total count of principals for the given tenant, type and text."""
+def _get_total_cache_key(type: str | None, text: str | None) -> str:
+	"""Returns a cache key for storing total count of principals for the given type and text."""
 
-	return f"principals:{tenant}:{type}:{text}:total"
-
-
-def _get_principal_cache_key(tenant: str, pname: str) -> str:
-	"""Returns a cache key for the principal with the given tenant and principal name."""
-
-	return f"principal:{tenant}:{pname}"
-
-
-def _get_principal_from_cache(tenant: str, pname: str) -> dict | None:
-	"""Returns the principal from cache if exists."""
-
-	cache_key = _get_principal_cache_key(tenant, pname)
-	return frappe.cache.get_value(cache_key)
-
-
-def _store_principal_in_cache(tenant: str, pname: str, principal: dict) -> None:
-	"""Store a principal in cache with TTL and maintain per-tenant bucket size."""
-
-	cache_key = _get_principal_cache_key(tenant, pname)
-	list_key = f"principal:{tenant}:names"
-	principal_bucket_size = cint(frappe.conf.principal_bucket_size) or 100000
-
-	principal_cache_ttl = cint(frappe.conf.principal_cache_ttl) or 2 * 24 * 60 * 60  # 2 days
-	frappe.cache.set_value(cache_key, principal, expires_in_sec=principal_cache_ttl)
-	frappe.cache.lpush(list_key, pname)
-
-	frappe.cache.ltrim(list_key, 0, principal_bucket_size - 1)
-
-	while frappe.cache.llen(list_key) > principal_bucket_size:
-		if oldest_id := frappe.cache.rpop(list_key):
-			frappe.cache.delete_key(_get_principal_cache_key(tenant, oldest_id))
-
-
-def _remove_principal_from_cache(tenant: str, pname: str) -> None:
-	"""Removes a principal from cache."""
-
-	cache_key = _get_principal_cache_key(tenant, pname)
-	frappe.cache.delete_value(cache_key)
-
-	list_key = f"principal:{tenant}:names"
-	frappe.cache.lrem(list_key, 0, pname)
-
-	if not frappe.cache.llen(list_key):
-		frappe.cache.delete_value(list_key)
+	return f"principals:{type}:{text}:total"
 
 
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
@@ -1088,10 +875,10 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	user = user or frappe.session.user
 	if is_system_manager(user):
 		return True
-	elif doc.tenant and is_tenant_admin(doc.tenant, user):
+	elif is_mail_admin(user):
 		if ptype == "create":
 			return doc.type in ["List"]
 
-		return ensure_principal_belong_to_tenant(doc.tenant, doc.name, raise_exception=False)
+		return True
 
 	return False

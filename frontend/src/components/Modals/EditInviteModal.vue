@@ -21,11 +21,25 @@
 					:value="accountRequest.doc.account"
 					disabled
 				/>
-				<FormControl
-					:label="__('Assigned Role')"
-					:value="accountRequest.doc.is_admin ? __('Mail Admin') : __('Mail User')"
-					disabled
-				/>
+				<div class="space-y-1.5">
+					<label class="text-ink-gray-5 block text-xs">{{ __('Roles') }}</label>
+					<div class="flex flex-wrap gap-1">
+						<Badge
+							v-for="r in (accountRequest.doc.roles || '').split('\n')"
+							:key="r"
+							:label="r"
+							:theme="
+								r === 'Admin'
+									? 'red'
+									: r === 'Tenant Admin'
+										? 'orange'
+										: r === 'User'
+											? 'blue'
+											: 'gray'
+							"
+						/>
+					</div>
+				</div>
 				<FormControl
 					:label="__('Backup Email')"
 					:value="accountRequest.doc.backup_email"
@@ -48,7 +62,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { Dialog, FormControl, createDocumentResource } from 'frappe-ui'
+import { Badge, Dialog, FormControl, createDocumentResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 

@@ -8,7 +8,6 @@ from frappe.query_builder import Table
 from frappe.utils.caching import request_cache
 
 from mail.utils import reconnect_on_failure, user_context
-from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
 
 
 def is_administrator(user: str) -> bool:
@@ -39,6 +38,13 @@ def is_system_manager(user: str) -> bool:
 	return is_administrator(user) or has_role(user, "System Manager")
 
 
+@request_cache
+def is_mail_admin(user: str) -> bool:
+	"""Returns True if the user is a Mail Admin else False."""
+
+	return has_role(user, "Mail Admin")
+
+
 def has_user_settings(user: str, raise_exception: bool = False) -> bool:
 	"""Returns True if the user has User Settings else False."""
 
@@ -63,42 +69,15 @@ def is_jmap_configured(user: str, raise_exception: bool = False) -> bool:
 	return False
 
 
-def is_managed_user(user: str) -> bool:
-	"""Returns True if the user is a managed user else False."""
+def is_local_user(user: str) -> bool:
+	"""Returns True if the user is a local user else False."""
 
-	if frappe.db.exists("User", {"user": user, "managed": 1}):
+	if has_user_settings(user) and frappe.db.exists(
+		"Principal Settings", {"principal_type": "Individual", "principal_name": user}
+	):
 		return True
 
 	return False
-
-
-def is_tenant_bound_user(user: str) -> bool:
-	"""Returns True if the user is a tenant bound user else False."""
-
-	return bool(get_tenant_for_user(user))
-
-
-@request_cache
-def is_tenant_owner(tenant: str, user: str) -> bool:
-	"""Returns True if the user is the owner of the tenant else False."""
-
-	return frappe.db.get_value("Mail Tenant", tenant, "user") == user
-
-
-@request_cache
-def is_tenant_admin(tenant: str, user: str) -> bool:
-	"""Returns True if the user is an admin of the tenant else False."""
-
-	return has_role(user, "Mail Admin") and frappe.db.exists(
-		"Mail Tenant Member", {"tenant": tenant, "user": user, "is_admin": 1}
-	)
-
-
-@request_cache
-def is_tenant_member(tenant: str, user: str) -> bool:
-	"""Returns True if the user is a member of the tenant else False."""
-
-	return frappe.db.exists("Mail Tenant Member", {"tenant": tenant, "user": user})
 
 
 def get_jmap_username(user: str) -> str | None:
@@ -133,129 +112,68 @@ def get_user_email_address(user: str) -> str | None:
 	return frappe.db.get_value("User", user, "email")
 
 
-def get_tenant_for_domain(domain_name: str) -> str | None:
-	"""Returns the tenant for the domain."""
-
-	return get_principal_tenant(domain_name, raise_exception=False)
-
-
-@frappe.whitelist()
-def get_user_tenant() -> str | None:
-	"""Returns the tenant of the user."""
-
-	return get_tenant_for_user(frappe.session.user)
-
-
-def get_principals_tenant_map(principal_names: list[str]) -> dict[str, str]:
-	"""Returns a mapping of principal names to their associated tenants."""
-
-	settings = frappe.db.get_all(
-		"Principal Settings",
-		{"principal_name": ["in", principal_names]},
-		["principal_name", "tenant"],
-	)
-
-	return {b.principal_name: b.tenant for b in settings}
-
-
-def _get_tenant_principals(tenant: str, principal_type: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of principals of the given type for the given tenant."""
+def _get_local_principals(principal_type: str, order_by: str = "creation desc") -> list[str]:
+	"""Returns a list of principal names for the given principal type."""
 
 	return frappe.db.get_all(
 		"Principal Settings",
-		filters={"tenant": tenant, "principal_type": principal_type},
+		filters={"principal_type": principal_type},
 		order_by=order_by,
 		pluck="principal_name",
 	)
 
 
-def get_tenant_api_keys(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of API Key principals for the given tenant."""
+def get_local_api_keys(order_by: str = "creation desc") -> list[str]:
+	"""Returns a list of API Key principals."""
 
-	return _get_tenant_principals(tenant, "API Key", order_by)
-
-
-def get_tenant_domains(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of domain principals for the given tenant."""
-
-	return _get_tenant_principals(tenant, "Domain", order_by)
+	return _get_local_principals("API Key", order_by)
 
 
-def get_tenant_groups(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of group principals for the given tenant."""
+def get_local_domains(order_by: str = "creation desc") -> list[str]:
+	"""Returns a list of Domain principals."""
 
-	return _get_tenant_principals(tenant, "Group", order_by)
-
-
-def get_tenant_individuals(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of individual principals for the given tenant."""
-
-	return _get_tenant_principals(tenant, "Individual", order_by)
+	return _get_local_principals("Domain", order_by)
 
 
-def get_tenant_mailing_lists(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of list principals for the given tenant."""
+def get_local_groups(order_by: str = "creation desc") -> list[str]:
+	"""Returns a list of Group principals."""
 
-	return _get_tenant_principals(tenant, "List", order_by)
-
-
-def get_tenant_oauth_clients(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of OAuth Client principals for the given tenant."""
-
-	return _get_tenant_principals(tenant, "OAuth Client", order_by)
+	return _get_local_principals("Group", order_by)
 
 
-def get_tenant_roles(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of Role principals for the given tenant."""
+def get_local_individuals(order_by: str = "creation desc") -> list[str]:
+	"""Returns a list of Individual principals."""
 
-	return _get_tenant_principals(tenant, "Role", order_by)
+	return _get_local_principals("Individual", order_by)
 
 
-def get_tenant_emails(tenant: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of email addresses associated with the given tenant."""
+def get_local_mailing_lists(order_by: str = "creation desc") -> list[str]:
+	"""Returns a list of List principals."""
+
+	return _get_local_principals("List", order_by)
+
+
+def get_local_oauth_clients(order_by: str = "creation desc") -> list[str]:
+	"""Returns a list of OAuth Client principals."""
+
+	return _get_local_principals("OAuth Client", order_by)
+
+
+def get_local_roles(order_by: str = "creation desc") -> list[str]:
+	"""Returns a list of Role principals."""
+
+	return _get_local_principals("Role", order_by)
+
+
+def get_local_emails(order_by: str = "creation desc") -> list[str]:
+	"""Returns a list of associated email addresses."""
 
 	return frappe.db.get_all(
 		"Principal Settings",
-		filters={"tenant": tenant, "principal_type": ["in", ["Group", "Individual", "List"]]},
+		filters={"principal_type": ["in", ["Group", "Individual", "List"]]},
 		order_by=order_by,
 		pluck="principal_name",
 	)
-
-
-def get_principal_tenant(principal_name: str, raise_exception: bool = True) -> str | None:
-	"""Returns the tenant associated with the given principal name."""
-
-	if tenant := frappe.db.get_value("Principal Settings", {"principal_name": principal_name}, "tenant"):
-		return tenant
-
-	if raise_exception:
-		frappe.throw(
-			_("No Principal Settings found for principal name: {0}").format(frappe.bold(principal_name))
-		)
-
-
-def get_caldav_settings(user: str) -> dict:
-	"""Returns the CalDAV settings for the user."""
-
-	caldav_settings = {}
-
-	user = frappe.get_lazy_doc("User", user)
-	if user.server_url and user.username and user.app_password:
-		cluster = get_cluster_for_tenant(get_tenant_for_user(user))
-		base_url = frappe.db.get_value("Mail Cluster", cluster, "base_url")
-		caldav_url = urljoin(base_url, ".well-known/caldav")
-
-		caldav_settings.update(
-			{
-				"url": caldav_url,
-				"auth": (
-					user.username,
-					user.get_password("app_password"),
-				),
-			}
-		)
-
-	return caldav_settings
 
 
 def get_sync_state(user: str, type: Literal["email"]) -> str | None:
