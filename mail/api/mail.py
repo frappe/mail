@@ -39,11 +39,35 @@ def get_mailboxes() -> list[dict]:
 	if not is_jmap_configured(user):
 		return []
 
-	fields = ["id", "_name", "role", "total_threads", "unread_threads"]
 	mailboxes = get_user_mailboxes(user)
-	return [
-		{field: mailbox[field] for field in fields} for mailbox in mailboxes if mailbox["subscribed"] == 1
-	]
+	if not mailboxes:
+		return []
+
+	fields = ["id", "_name", "role", "total_threads", "unread_threads"]
+
+	mailbox_settings = frappe.db.get_all(
+		"Mailbox Settings",
+		filters={"user": user, "mailbox_id": ["in", [m["id"] for m in mailboxes]]},
+		fields=["mailbox_id", "icon", "color", "disable_push_notification"],
+	)
+
+	settings_map = {
+		s.mailbox_id: {
+			"icon": s.icon,
+			"color": s.color,
+			"disable_push_notification": s.disable_push_notification,
+		}
+		for s in mailbox_settings
+	}
+
+	result = []
+	for mailbox in mailboxes:
+		if mailbox["subscribed"] == 1:
+			mailbox_data = {field: mailbox[field] for field in fields}
+			mailbox_data.update(settings_map.get(mailbox["id"], {}))
+			result.append(mailbox_data)
+
+	return result
 
 
 def get_user_mailboxes(user) -> list[dict]:

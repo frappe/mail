@@ -26,46 +26,6 @@ export const useSidebar = () => {
 	return { isSidebarOpen, openSidebar, closeSidebar }
 }
 
-export type Theme = 'light' | 'dark' | 'system'
-
-const currentTheme = ref<Theme>('light')
-
-export const useTheme = () => {
-	const getSystemTheme = (): 'light' | 'dark' =>
-		window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-
-	const setTheme = (theme: Theme) => {
-		currentTheme.value = theme
-		document.documentElement.setAttribute(
-			'data-theme',
-			theme === 'system' ? getSystemTheme() : theme,
-		)
-	}
-
-	const activeTheme = computed<'light' | 'dark'>(() =>
-		currentTheme.value === 'system' ? getSystemTheme() : currentTheme.value,
-	)
-
-	return { currentTheme, getSystemTheme, setTheme, activeTheme }
-}
-
-export type GroupMessagesBy = 'none' | 'day' | 'month'
-
-const showReadingPane = ref(false)
-const groupMessagesBy = ref<GroupMessagesBy>('day')
-
-export const useLayout = () => {
-	const setShowReadingPane = (show: boolean) => {
-		showReadingPane.value = show
-	}
-
-	const setGroupMessagesBy = (groupBy: GroupMessagesBy) => {
-		groupMessagesBy.value = groupBy
-	}
-
-	return { showReadingPane, setShowReadingPane, groupMessagesBy, setGroupMessagesBy }
-}
-
 export const useTextEditorButtons = () => {
 	const { isMobile } = useScreenSize()
 

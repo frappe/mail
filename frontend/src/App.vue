@@ -11,14 +11,18 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { FrappeUIProvider } from 'frappe-ui'
 
-import { useScreenSize, useTheme } from '@/utils/composables'
+import { useScreenSize } from '@/utils/composables'
 import { showNotification } from '@/utils/push-notifications'
+import { userStore } from '@/stores/user'
 import DefaultLayout from '@/components/DefaultLayout.vue'
 import InstallPrompt from '@/components/InstallPrompt.vue'
 import LoginLayout from '@/components/LoginLayout.vue'
 
 import type { NotificationPayload } from '@/types'
 
+import { getDataTheme } from './utils'
+
+const { userResource } = userStore()
 const { isMobile } = useScreenSize()
 
 const route = useRoute()
@@ -29,20 +33,19 @@ const Layout = computed(() => {
 	return DefaultLayout
 })
 
-const { currentTheme, getSystemTheme, setTheme } = useTheme()
-
 const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-const handleSystemThemeChange = () => {
-	if (currentTheme.value === 'system')
-		document.documentElement.setAttribute('data-theme', getSystemTheme())
-}
+const setTheme = () =>
+	document.documentElement.setAttribute(
+		'data-theme',
+		getDataTheme(userResource.data.color_scheme),
+	)
 
 onMounted(() => {
 	window.frappePushNotification?.onMessage((payload: NotificationPayload) =>
 		showNotification(payload),
 	)
-	if (!document.documentElement.getAttribute('data-theme')) setTheme('system')
-	mediaQuery.addEventListener('change', handleSystemThemeChange)
+	if (!document.documentElement.getAttribute('data-theme')) setTheme()
+	mediaQuery.addEventListener('change', setTheme)
 })
-onUnmounted(() => mediaQuery.removeEventListener('change', handleSystemThemeChange))
+onUnmounted(() => mediaQuery.removeEventListener('change', setTheme))
 </script>

@@ -89,9 +89,9 @@
 							thread.data.length > 1 || mail.draft,
 						'sm:border':
 							(thread.data.length > 1 && !mail.draft) ||
-							(mail.draft && activeTheme === 'dark'),
+							(mail.draft && activeTheme === 'Dark Mode'),
 						'cursor-pointer': isCollapsed(mail),
-						'sm:shadow-elevation-light-md': mail.draft && activeTheme === 'light',
+						'sm:shadow-elevation-light-md': mail.draft && activeTheme === 'Light Mode',
 					}"
 					@click="mail.collapsed = false"
 				>
@@ -319,9 +319,10 @@ import {
 	getFirstAlphabet,
 	getFormattedRecipients,
 	getGroupedRecipients,
+	getSystemTheme,
 	shouldIgnoreKeypress,
 } from '@/utils'
-import { useScreenSize, useTheme } from '@/utils/composables'
+import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
 import AttachmentViewer from '@/components/AttachmentViewer.vue'
@@ -355,11 +356,14 @@ const emit = defineEmits([
 
 const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
+const user = inject('$user')
 const { mailboxes, mailboxIds, identities } = userStore()
 
 const route = useRoute()
 const router = useRouter()
-const { activeTheme } = useTheme()
+const activeTheme = computed(() =>
+	user.data.color_scheme === 'System Default' ? getSystemTheme() : user.data.color_scheme,
+)
 
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
 
@@ -423,8 +427,6 @@ const reload = () => {
 }
 
 watch(() => threadID, reload)
-
-const user = inject('$user')
 
 const moveToOptions = computed(() => {
 	const excludedMailboxes = new Set([
