@@ -74,7 +74,18 @@ def set_mailbox_settings(user: str, mailbox_id: str, **kwargs) -> None:
 		settings.mailbox_id = mailbox_id
 		settings.insert()
 
-	settings._db_set(**kwargs)
+	mailbox_fields = ["subscribed", "parent", "_name", "role", "sort_order"]
+	filtered_kwargs = {k: v for k, v in kwargs.items() if k not in mailbox_fields}
+
+	if filtered_kwargs:
+		settings._db_set(**filtered_kwargs)
+
+	if any(field in kwargs for field in mailbox_fields):
+		mailbox = frappe.get_doc("Mailbox", f"{user}|{mailbox_id}")
+		for field in mailbox_fields:
+			if field in kwargs:
+				setattr(mailbox, field, kwargs[field])
+		mailbox.save()
 
 
 def on_doctype_update() -> None:
