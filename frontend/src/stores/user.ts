@@ -3,26 +3,7 @@ import { defineStore } from 'pinia'
 import { createResource } from 'frappe-ui'
 
 import router from '@/router'
-import { type GroupMessagesBy, type Theme, useLayout, useTheme } from '@/utils/composables'
-
-const { setShowReadingPane, setGroupMessagesBy } = useLayout()
-const { setTheme } = useTheme()
-
-const getThemeFromColorScheme = (
-	colorScheme: 'System Default' | 'Light Mode' | 'Dark Mode' | undefined,
-): Theme => {
-	if (colorScheme === 'Light Mode') return 'light'
-	if (colorScheme === 'Dark Mode') return 'dark'
-	return 'system'
-}
-
-const getGroupMessagesByFromUserSettings = (
-	groupMessagesBy: '' | 'Day' | 'Month' | undefined,
-): GroupMessagesBy => {
-	if (groupMessagesBy === 'Day') return 'day'
-	if (groupMessagesBy === 'Month') return 'month'
-	return 'none'
-}
+import { getDataTheme } from '@/utils'
 
 import type { UserResource } from '@/types'
 
@@ -32,9 +13,7 @@ export const userStore = defineStore('mail-users', () => {
 	const userResource: UserResource = createResource({
 		url: 'mail.api.account.get_user_info',
 		onSuccess: (data) => {
-			setTheme(getThemeFromColorScheme(data?.color_scheme))
-			setShowReadingPane(!!data?.show_reading_pane)
-			setGroupMessagesBy(getGroupMessagesByFromUserSettings(data?.group_messages_by))
+			document.documentElement.setAttribute('data-theme', getDataTheme(data.color_scheme))
 
 			if (data?.is_mail_admin) {
 				domains.fetch()

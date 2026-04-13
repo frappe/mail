@@ -18,16 +18,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref } from 'vue'
 // eslint-disable-next-line import/no-unresolved
 import IframeResizer from '@iframe-resizer/vue/sfc'
 import DOMPurify from 'dompurify'
 
-import { useTheme } from '@/utils/composables'
+import { getDataTheme } from '@/utils'
 
 const { content } = defineProps<{ content: string }>()
 
-const { activeTheme } = useTheme()
+const user = inject('$user')
+const activeTheme = computed(() => getDataTheme(user.data.color_scheme))
 
 const isIframeReady = ref(false)
 

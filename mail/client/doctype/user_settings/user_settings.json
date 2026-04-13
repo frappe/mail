@@ -199,12 +199,13 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Day",
    "depends_on": "eval: doc.username",
    "description": "Group email messages in the list by time period (e.g., day or month).",
    "fieldname": "group_messages_by",
    "fieldtype": "Select",
    "label": "Group Messages By",
-   "options": "\nDay\nMonth"
+   "options": "None\nDay\nMonth"
   },
   {
    "default": "0",
@@ -354,7 +355,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-12 10:27:00.492310",
+ "modified": "2026-04-13 13:31:55.521692",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",

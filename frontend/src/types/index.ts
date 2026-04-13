@@ -13,7 +13,7 @@ export interface User {
 	user_settings?: string
 	default_outgoing_email?: string
 	color_scheme?: 'System Default' | 'Light Mode' | 'Dark Mode'
-	group_messages_by?: '' | 'Day' | 'Month'
+	group_messages_by?: 'None' | 'Day' | 'Month'
 	show_reading_pane?: 0 | 1
 
 	enabled: boolean

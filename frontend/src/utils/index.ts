@@ -319,3 +319,12 @@ export const extractNameFromEmail = (email: string) =>
 		.split('@')[0]
 		.replace(/[._-]/g, ' ')
 		.replace(/\b\w/g, (c) => c.toUpperCase())
+
+export const getSystemTheme = () =>
+	window.matchMedia('(prefers-color-scheme: dark)').matches ? 'Dark Mode' : 'Light Mode'
+
+export const getDataTheme = (colorScheme?: 'Light Mode' | 'Dark Mode' | 'System Default') => {
+	const resolved =
+		!colorScheme || colorScheme === 'System Default' ? getSystemTheme() : colorScheme
+	return resolved === 'Dark Mode' ? 'dark' : 'light'
+}

@@ -1,12 +1,11 @@
 <template>
 	<h1>{{ __('Appearance') }}</h1>
 	<FormControl
-		:model-value="currentTheme"
+		v-model="colorScheme"
 		:label="__('Color Scheme')"
 		type="select"
 		variant="outline"
 		:options="COLOR_SCHEMES"
-		@update:model-value="setColorScheme"
 	/>
 	<template v-if="user.data.is_mail_user">
 		<Switch
@@ -14,7 +13,7 @@
 			:label="__('Show Reading Pane')"
 			:description="__('Display message preview beside your mail list')"
 			class="!p-0"
-			@update:model-value="setReadingPane"
+			@update:model-value="(v) => (showReadingPane = v)"
 		/>
 		<FormControl
 			:model-value="groupMessagesBy"
@@ -22,85 +21,64 @@
 			type="select"
 			variant="outline"
 			:options="GROUP_MESSAGES_OPTIONS"
-			@update:model-value="setGroupBy"
+			@update:model-value="(v) => (groupMessagesBy = v)"
 		/>
 	</template>
+	<Button
+		:label="__('Save')"
+		variant="solid"
+		:loading="saveSettings.loading"
+		:disabled="isNotDirty"
+		@click="() => saveSettings.submit()"
+	/>
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
-import { FormControl, Switch, createResource } from 'frappe-ui'
+import { computed, inject, ref } from 'vue'
+import { Button, FormControl, Switch, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
-import { useLayout, useTheme } from '@/utils/composables'
-import type { GroupMessagesBy, Theme } from '@/utils/composables'
-
-const { currentTheme, setTheme } = useTheme()
-const { showReadingPane, setShowReadingPane, groupMessagesBy, setGroupMessagesBy } = useLayout()
 
 const user = inject('$user')
 
-type UserSettingsField = 'color_scheme' | 'show_reading_pane' | 'group_messages_by'
+const colorScheme = ref(user.data.color_scheme)
+const showReadingPane = ref(!!user.data.show_reading_pane)
+const groupMessagesBy = ref(user.data.group_messages_by)
 
-const setUserSetting = createResource({
+const isNotDirty = computed(
+	() =>
+		colorScheme.value === user.data.color_scheme &&
+		showReadingPane.value === !!user.data.show_reading_pane &&
+		groupMessagesBy.value === user.data.group_messages_by,
+)
+
+const saveSettings = createResource({
 	url: 'frappe.client.set_value',
-	makeParams: ({
-		fieldname,
-		value,
-	}: {
-		fieldname: UserSettingsField
-		value: string | number
-	}) => ({
+	makeParams: () => ({
 		doctype: 'User Settings',
-		name: user.data?.user_settings,
-		fieldname,
-		value,
+		name: user.data.user_settings,
+		fieldname: {
+			color_scheme: colorScheme.value,
+			show_reading_pane: showReadingPane.value ? 1 : 0,
+			group_messages_by: groupMessagesBy.value,
+		},
 	}),
+	onSuccess: () => {
+		raiseToast(__('Appearance updated.'))
+		user.reload()
+	},
 	onError: () => raiseToast(__('Unable to save appearance settings.'), 'error'),
 })
 
-const getColorSchemeFromTheme = (theme: Theme): 'System Default' | 'Light Mode' | 'Dark Mode' => {
-	if (theme === 'light') return 'Light Mode'
-	if (theme === 'dark') return 'Dark Mode'
-	return 'System Default'
-}
-
-const getUserSettingsGroupBy = (groupBy: GroupMessagesBy): '' | 'Day' | 'Month' => {
-	if (groupBy === 'day') return 'Day'
-	if (groupBy === 'month') return 'Month'
-	return ''
-}
-
-const setColorScheme = (theme: Theme) => {
-	setTheme(theme)
-	if (!user.data?.user_settings) return
-	setUserSetting.submit({ fieldname: 'color_scheme', value: getColorSchemeFromTheme(theme) })
-}
-
-const setReadingPane = (show: boolean) => {
-	setShowReadingPane(show)
-	if (!user.data?.user_settings) return
-	setUserSetting.submit({ fieldname: 'show_reading_pane', value: show ? 1 : 0 })
-}
-
-const setGroupBy = (groupBy: GroupMessagesBy) => {
-	setGroupMessagesBy(groupBy)
-	if (!user.data?.user_settings) return
-	setUserSetting.submit({
-		fieldname: 'group_messages_by',
-		value: getUserSettingsGroupBy(groupBy),
-	})
-}
-
 const COLOR_SCHEMES = [
-	{ label: __('System Default'), value: 'system' },
-	{ label: __('Light Mode'), value: 'light' },
-	{ label: __('Dark Mode'), value: 'dark' },
+	{ label: __('System Default'), value: 'System Default' },
+	{ label: __('Light Mode'), value: 'Light Mode' },
+	{ label: __('Dark Mode'), value: 'Dark Mode' },
 ]
 
 const GROUP_MESSAGES_OPTIONS = [
-	{ label: __('None'), value: 'none' },
-	{ label: __('Day'), value: 'day' },
-	{ label: __('Month'), value: 'month' },
+	{ label: __('None'), value: 'None' },
+	{ label: __('Day'), value: 'Day' },
+	{ label: __('Month'), value: 'Month' },
 ]
 </script>

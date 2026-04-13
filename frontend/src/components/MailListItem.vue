@@ -209,13 +209,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { Check, Download, Loader, Mail, MailOpen, Trash2 } from 'lucide-vue-next'
 import { Avatar, Badge, Button, Checkbox, Popover, Tooltip } from 'frappe-ui'
 
 import { getAttachmentUrl } from '@/resources'
 import { getFileIcon, getFirstAlphabet, getFormattedRecipients } from '@/utils'
-import { useLayout, useScreenSize } from '@/utils/composables'
+import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
 import AttachmentViewer from '@/components/AttachmentViewer.vue'
@@ -231,8 +231,8 @@ const { mailbox, mail, isSelected } = defineProps<{
 
 const emit = defineEmits(['setSeen', 'trashThread', 'deleteThread', 'setSelected'])
 
+const user = inject('$user')
 const { isMobile } = useScreenSize()
-const { showReadingPane } = useLayout()
 const { mailboxIds } = userStore()
 
 const mailboxes = computed(() => mail.mailboxes.map((m) => m.mailbox_id))
@@ -241,7 +241,7 @@ const attachments = computed(
 	() => mail.attachments.filter((m) => m.filename && m.disposition === 'attachment') || [],
 )
 
-const isFullWidth = computed(() => !(showReadingPane.value || isMobile.value))
+const isFullWidth = computed(() => !(user.data.show_reading_pane || isMobile.value))
 
 const header = computed(() => {
 	const isOutgoing =

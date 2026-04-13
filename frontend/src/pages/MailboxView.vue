@@ -122,7 +122,7 @@
 					<TransitionGroup name="mail-group" tag="div">
 						<div v-for="(group, key) in groupedThreads" :key="key">
 							<Tooltip
-								v-if="groupMessagesBy !== 'none'"
+								v-if="groupMessagesBy !== 'None'"
 								:text="
 									isLastGroup(key)
 										? ''
@@ -147,7 +147,7 @@
 										{{
 											getFormattedDate(
 												key,
-												groupMessagesBy === 'month',
+												groupMessagesBy === 'Month',
 											).toUpperCase()
 										}}
 									</span>
@@ -315,7 +315,7 @@ import {
 	shouldIgnoreKeypress,
 	startResizing,
 } from '@/utils'
-import { useLayout, useScreenSize, useSidebar, useUndo } from '@/utils/composables'
+import { useScreenSize, useSidebar, useUndo } from '@/utils/composables'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
@@ -331,7 +331,6 @@ const route = useRoute()
 const router = useRouter()
 const { isMobile } = useScreenSize()
 const { openSidebar } = useSidebar()
-const { showReadingPane, groupMessagesBy } = useLayout()
 const { setUndoAction, undo } = useUndo()
 
 const socket = inject('$socket')
@@ -340,12 +339,17 @@ const dayjs = inject('$dayjs')
 
 const { mailboxes, mailboxIds } = userStore()
 
+// Appearance
+
+const showReadingPane = computed(() => !!user.data?.show_reading_pane)
+const groupMessagesBy = computed(() => user.data.group_messages_by)
+
 // Thread Groups
 
 const groupedThreads = computed<Record<string, Thread[]>>(() =>
 	threadsResource.value?.data?.reduce((groups: Record<string, Thread[]>, thread: Thread) => {
 		const date = dayjs(thread.received_at).format(
-			groupMessagesBy.value === 'day' ? 'YYYY-MM-DD' : 'YYYY-MM',
+			groupMessagesBy.value === 'Day' ? 'YYYY-MM-DD' : 'YYYY-MM',
 		)
 		if (!groups[date]) groups[date] = []
 		groups[date].push(thread)
