@@ -29,6 +29,7 @@
    "no_copy": 1,
    "options": "User",
    "reqd": 1,
+   "search_index": 1,
    "set_only_once": 1
   },
   {
@@ -44,6 +45,7 @@
    "label": "Mailbox ID",
    "no_copy": 1,
    "reqd": 1,
+   "search_index": 1,
    "set_only_once": 1
   },
   {
@@ -78,7 +80,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-10 10:05:17.331537",
+ "modified": "2026-04-13 16:48:28.836719",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox Settings",
