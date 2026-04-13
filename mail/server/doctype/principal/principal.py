@@ -629,23 +629,24 @@ class Principal(Document):
 
 		backend = get_mail_backend_api()
 		backend.request("DELETE", f"{PRINCIPAL_ENDPOINT}/{self.name}")
-		delete_principal_settings(self.name)
 
 		# If the principal is an Individual, delete the User
 		if principal.type == "Individual":
 			if is_local_user(self.name):
 				invalidate_jmap_cache(self.name)
 
-			if settings := frappe.db.exists("User Settings", {"user": self.name}):
-				frappe.delete_doc("User Settings", settings, ignore_permissions=True)
+				if settings := frappe.db.exists("User Settings", {"user": self.name}):
+					frappe.delete_doc("User Settings", settings, ignore_permissions=True)
 
-			if frappe.db.exists("User", self.name):
-				frappe.delete_doc("User", self.name, ignore_permissions=True)
+				if frappe.db.exists("User", self.name):
+					frappe.delete_doc("User", self.name, ignore_permissions=True)
 
 		elif principal.type == "Domain":
 			self._delete_dkim_signature(backend, "rsa-sha256", raise_exception=False)
 			if bool(frappe.conf.enable_ed25519_dkim):
 				self._delete_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
+
+		delete_principal_settings(self.name)
 
 	def _delete_dkim_signature(
 		self,

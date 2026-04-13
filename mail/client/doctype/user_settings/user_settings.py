@@ -35,7 +35,7 @@ class UserSettings(Document):
 	def has_cached_jmap_identities(self) -> int:
 		"""Check if there are cached JMAP identities for the user."""
 
-		if not self.username:
+		if not self.username or self.flags.in_delete:
 			return 0
 
 		service = get_core_service(self.user)
@@ -45,7 +45,7 @@ class UserSettings(Document):
 	def has_cached_jmap_mailboxes(self) -> int:
 		"""Check if there are cached JMAP mailboxes for the user."""
 
-		if not self.username:
+		if not self.username or self.flags.in_delete:
 			return 0
 
 		service = get_core_service(self.user)
