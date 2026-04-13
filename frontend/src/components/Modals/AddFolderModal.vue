@@ -16,6 +16,30 @@
 		<template #body-content>
 			<div class="space-y-4">
 				<FormControl v-model="folder.name" :label="__('Folder Name')" />
+
+				<div class="space-y-1.5">
+					<label class="text-ink-gray-5 block text-xs">{{ __('Icon') }}</label>
+					<IconPicker v-model="folder.icon" />
+				</div>
+
+				<FormControl
+					v-model="folder.color"
+					type="select"
+					:label="__('Color')"
+					:options="COLOR_OPTIONS"
+				>
+					<template #prefix>
+						<span class="h-4 w-4 shrink-0 rounded-full" :class="folder.color" />
+					</template>
+				</FormControl>
+
+				<hr />
+				<Switch
+					v-model="folder.disable_push_notification"
+					:label="__('Disable Push Notifications')"
+					:description="__('Check to disable push notifications for this folder.')"
+					class="!p-0"
+				/>
 			</div>
 		</template>
 	</Dialog>
@@ -23,7 +47,8 @@
 
 <script setup lang="ts">
 import { inject, reactive, watch } from 'vue'
-import { Dialog, FormControl, createResource } from 'frappe-ui'
+import { IconPicker } from 'frappe-ui/icons'
+import { Dialog, FormControl, Switch, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
@@ -41,6 +66,9 @@ const defaultFolder = {
 	user: user.data.name,
 	name: '',
 	parent: null,
+	icon: 'folder',
+	color: 'bg-surface-gray-6',
+	disable_push_notification: false,
 }
 
 const folder = reactive({ ...defaultFolder })

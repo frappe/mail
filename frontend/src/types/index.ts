@@ -124,6 +124,9 @@ export interface MailboxData {
 	total_threads: number
 	unread_threads: number
 	_name: string
+	icon?: string
+	color?: string
+	disable_push_notification?: 0 | 1
 }
 
 export interface NotificationPayload {
