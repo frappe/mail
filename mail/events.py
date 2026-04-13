@@ -21,7 +21,7 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 	if not (doc.enabled and is_local_user(doc.name)):
 		return
 
-	validate_mail_config(doc.name)
+	validate_mail_config()
 
 	username = get_jmap_username(doc.name)
 

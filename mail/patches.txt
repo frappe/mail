@@ -8,3 +8,4 @@ mail.patches.set_cluster_spf_identifier
 mail.patches.create_user_settings
 mail.patches.create_push_subscriptions
 mail.patches.rename_user_settings
+mail.patches.remove_mail_admin_role
