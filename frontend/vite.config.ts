@@ -1,9 +1,12 @@
+import fs from 'fs'
 import path from 'path'
 
 import vue from '@vitejs/plugin-vue'
 import frappeui from 'frappe-ui/vite'
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+
+const frappeUIPath = path.resolve(__dirname, '../frappe-ui/src/index.ts')
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -101,13 +104,8 @@ export default defineConfig(({ mode }) => ({
 	resolve: {
 		alias: [
 			{ find: '@', replacement: path.resolve(__dirname, 'src') },
-			...(loadEnv(mode, process.cwd(), '').LOCAL_FRAPPE_UI === 'true'
-				? [
-						{
-							find: /^frappe-ui$/,
-							replacement: path.resolve(__dirname, '../frappe-ui/src/index.ts'),
-						},
-					]
+			...(fs.existsSync(frappeUIPath)
+				? [{ find: /^frappe-ui$/, replacement: frappeUIPath }]
 				: []),
 		],
 	},
