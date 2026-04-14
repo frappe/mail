@@ -11,7 +11,7 @@
 		<Switch
 			:model-value="showReadingPane"
 			:label="__('Show Reading Pane')"
-			:description="__('Display message preview beside your mail list')"
+			:description="__('Preview emails alongside the message list.')"
 			class="!p-0"
 			@update:model-value="(v) => (showReadingPane = v)"
 		/>

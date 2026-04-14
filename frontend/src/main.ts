@@ -1,6 +1,7 @@
 import './index.css'
 
 import { createApp } from 'vue'
+import { spritePlugin } from 'frappe-ui/icons'
 import { createPinia } from 'pinia'
 import { frappeRequest, pageMetaPlugin, setConfig } from 'frappe-ui'
 
@@ -20,6 +21,7 @@ app.use(router)
 app.use(createPinia())
 app.use(translationPlugin)
 app.use(pageMetaPlugin)
+app.use(spritePlugin)
 
 const { userResource } = userStore()
 app.provide('$user', userResource)

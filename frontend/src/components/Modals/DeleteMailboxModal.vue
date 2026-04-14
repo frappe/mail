@@ -14,7 +14,6 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
 import { Dialog, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
@@ -26,12 +25,11 @@ const show = defineModel<boolean>()
 
 const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 
-const user = inject('$user')
 const { mailboxes } = userStore()
 
 const deleteFolder = createResource({
-	url: 'mail.client.doctype.mailbox.mailbox.delete_mailboxes',
-	makeParams: () => ({ user: user.data.name, ids: [mailbox.id] }),
+	url: 'mail.api.mail.delete_mailbox',
+	makeParams: () => ({ id: mailbox.id }),
 	onSuccess: () => {
 		raiseToast(__('Folder deleted.'))
 		show.value = false
