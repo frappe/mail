@@ -22,7 +22,7 @@ from mail.client.doctype.mail_message.mail_message import (
 	set_spam_status,
 )
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
-from mail.client.doctype.mailbox.mailbox import add_mailbox
+from mail.client.doctype.mailbox.mailbox import add_mailbox, delete_mailboxes
 from mail.client.doctype.mailbox_settings.mailbox_settings import set_mailbox_settings
 from mail.jmap import get_email_service, get_mailbox_id_by_role
 from mail.utils import convert_html_to_text
@@ -691,3 +691,12 @@ def update_mailbox(
 		color=color,
 		disable_push_notification=disable_push_notification,
 	)
+
+
+@frappe.whitelist()
+def delete_mailbox(id: str) -> None:
+	"""Deletes the mailbox with the given mailbox ID, followed by its settings."""
+
+	user = frappe.session.user
+	delete_mailboxes(user, [id])
+	frappe.db.delete("Mailbox Settings", {"user": user, "mailbox_id": id})

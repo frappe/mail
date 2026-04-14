@@ -311,6 +311,7 @@ const FOLDER_COLOR_MAP = {
 	Green: 'text-green-500',
 	Amber: 'text-amber-500',
 	Red: 'text-red-500',
+	Purple: 'text-purple-500',
 }
 </script>
 

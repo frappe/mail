@@ -63,7 +63,7 @@
    "fieldname": "color",
    "fieldtype": "Select",
    "label": "Color",
-   "options": "Gray\nBlue\nGreen\nAmber\nRed"
+   "options": "Gray\nBlue\nGreen\nAmber\nRed\nPurple"
   },
   {
    "fieldname": "column_break_mbnv",
@@ -81,7 +81,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-14 12:16:29.529530",
+ "modified": "2026-04-14 15:23:24.721293",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox Settings",

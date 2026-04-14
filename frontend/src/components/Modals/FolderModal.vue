@@ -134,5 +134,6 @@ const COLOR_OPTIONS = [
 	{ label: __('Green'), value: 'Green' },
 	{ label: __('Amber'), value: 'Amber' },
 	{ label: __('Red'), value: 'Red' },
+	{ label: __('Purple'), value: 'Purple' },
 ]
 </script>
