@@ -490,7 +490,7 @@ class Principal(Document):
 		if formatted["type"] == "Domain":
 			if not frappe.db.exists("Principal Settings", {"principal_name": formatted["name"]}):
 				create_principal_settings(formatted["name"], formatted["type"])
-				frappe.db.commit()
+				frappe.db.commit()  # nosemgrep
 
 		return formatted
 

@@ -52,9 +52,6 @@ def add_rate_limits() -> None:
 		create_rate_limit(**rl)
 
 
-
-
-
 def generate_jmap_push_keys() -> None:
 	"""Generates new JMAP push subscription encryption keys and saves them in Mail Settings."""
 
