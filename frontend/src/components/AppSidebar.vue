@@ -64,8 +64,7 @@
 
 	<SettingsModal v-if="!isMobile" v-model="showSettings" />
 	<PWASettings v-else-if="showSettings" @close="showSettings = false" />
-	<AddFolderModal v-model="showAddMailbox" />
-	<FolderSettingsModal v-model="showEditMailbox" :mailbox="selectedMailbox" />
+	<FolderModal v-model="showFolderModal" :mailbox="selectedMailbox" />
 	<DeleteMailboxModal v-model="showDeleteMailbox" :mailbox="selectedMailbox" />
 </template>
 
@@ -82,9 +81,8 @@ import { useScreenSize, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 import MailLogo from '@/components/Icons/MailLogo.vue'
-import AddFolderModal from '@/components/Modals/AddFolderModal.vue'
 import DeleteMailboxModal from '@/components/Modals/DeleteMailboxModal.vue'
-import FolderSettingsModal from '@/components/Modals/FolderSettingsModal.vue'
+import FolderModal from '@/components/Modals/FolderModal.vue'
 import SettingsModal from '@/components/Modals/SettingsModal.vue'
 import PWASettings from '@/components/PWASettings.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
@@ -124,9 +122,8 @@ const apps = createResource({
 })
 
 const showSettings = ref(false)
-const showAddMailbox = ref(false)
+const showFolderModal = ref(false)
 const selectedMailbox = ref()
-const showEditMailbox = ref(false)
 const showDeleteMailbox = ref(false)
 
 const menuItems = computed(() => [
@@ -219,7 +216,7 @@ const mailboxItems = computed(
 					icon: Settings,
 					onClick: () => {
 						selectedMailbox.value = mailbox
-						showEditMailbox.value = true
+						showFolderModal.value = true
 					},
 				},
 				{
@@ -255,7 +252,10 @@ const sidebarItems = computed(() => {
 	const addMailboxItem = {
 		label: __('New Folder'),
 		icon: Plus,
-		onClick: () => (showAddMailbox.value = true),
+		onClick: () => {
+			selectedMailbox.value = undefined
+			showFolderModal.value = true
+		},
 	}
 	const customItems = [...customMailboxes, addMailboxItem]
 

@@ -2,20 +2,20 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			title: __('New Folder'),
+			title: isNew ? __('New Folder') : __('Folder Settings'),
 			actions: [
 				{
 					label: __('Save'),
 					variant: 'solid',
-					disabled: !folder.name,
-					onClick: createFolder.submit,
+					disabled: !folder.name || (isNew && isNotDirty),
+					onClick: () => (isNew ? createFolder.submit() : updateFolder.submit()),
 				},
 			],
 		}"
 	>
 		<template #body-content>
 			<div class="space-y-4">
-				<FormControl v-model="folder.name" :label="__('Folder Name')" />
+				<FormControl v-model="folder.name" :label="__('Name')" />
 
 				<div class="space-y-1.5">
 					<label class="text-ink-gray-5 block text-xs">{{ __('Icon') }}</label>
@@ -49,24 +49,28 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { IconPicker } from 'frappe-ui/icons'
 import { Dialog, FormControl, Switch, createResource } from 'frappe-ui'
 
-import { FOLDER_COLOR_MAP } from '@/constants'
+import { FOLDER_COLOR_MAP, FOLDER_ICON_MAP } from '@/constants'
 import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
+import type { MailboxData } from '@/types'
+
 const show = defineModel<boolean>()
+
+const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 
 const { mailboxes } = userStore()
 
-// const parentFolderOptions = computed(() =>
-// 	mailboxes.data.map((mailbox) => ({ label: mailbox._name, value: mailbox.id })),
-// )
+const isNew = computed(() => !mailbox)
 
 const defaultFolder = {
+	id: '',
 	name: '',
+	role: null,
 	parent: null,
 	icon: 'folder',
 	color: 'Gray',
@@ -74,6 +78,16 @@ const defaultFolder = {
 }
 
 const folder = reactive({ ...defaultFolder })
+
+const original = reactive({ ...defaultFolder })
+
+const isNotDirty = computed(
+	() =>
+		folder.name === original.name &&
+		folder.icon === original.icon &&
+		folder.color === original.color &&
+		folder.disable_push_notification === original.disable_push_notification,
+)
 
 const createFolder = createResource({
 	url: 'mail.api.mail.create_mailbox',
@@ -86,8 +100,32 @@ const createFolder = createResource({
 	onError: (error) => raiseToast(error.message, 'error'),
 })
 
+const updateFolder = createResource({
+	url: 'mail.api.mail.update_mailbox',
+	makeParams: () => folder,
+	onSuccess: () => {
+		raiseToast(__('Folder updated.'))
+		show.value = false
+		mailboxes.reload()
+	},
+	onError: (error) => raiseToast(error.message, 'error'),
+})
+
 watch(show, (val) => {
-	if (val) Object.assign(folder, defaultFolder)
+	if (!val) return
+
+	if (isNew.value) {
+		Object.assign(folder, defaultFolder)
+		return
+	}
+
+	folder.id = original.id = mailbox.id
+	folder.name = original.name = mailbox._name
+	folder.role = original.role = mailbox.role
+	folder.icon = original.icon = mailbox.icon || FOLDER_ICON_MAP[mailbox.role] || 'folder'
+	folder.color = original.color = mailbox.color || 'Gray'
+	folder.disable_push_notification = original.disable_push_notification =
+		!!mailbox.disable_push_notification
 })
 
 const COLOR_OPTIONS = [
