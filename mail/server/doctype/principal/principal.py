@@ -46,6 +46,7 @@ from mail.utils.validation import (
 	validate_wildcard_email,
 )
 
+RELOAD_ENDPOINT = "/api/reload"
 SETTINGS_ENDPOINT = "/api/settings"
 PRINCIPAL_ENDPOINT = "/api/principal"
 DNS_RECORDS_ENDPOINT = "/api/dns/records"
@@ -282,6 +283,8 @@ class Principal(Document):
 			self._delete_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
 			self._create_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
 
+		backend.request("GET", RELOAD_ENDPOINT)
+
 		update_principal_settings(self.name, is_verified=0)
 
 		self.reload()
@@ -358,6 +361,8 @@ class Principal(Document):
 
 				if bool(get_mail_config("enable_ed25519_dkim")):
 					self._create_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
+
+				backend.request("GET", RELOAD_ENDPOINT)
 			except Exception:
 				frappe.log_error(
 					title=f"Failed to create DKIM signature for domain {self.name}",
@@ -651,6 +656,8 @@ class Principal(Document):
 			self._delete_dkim_signature(backend, "rsa-sha256", raise_exception=False)
 			if bool(get_mail_config("enable_ed25519_dkim")):
 				self._delete_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
+
+			backend.request("GET", RELOAD_ENDPOINT)
 
 		delete_principal_settings(self.name)
 
