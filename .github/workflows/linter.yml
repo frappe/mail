@@ -24,7 +24,11 @@ jobs:
           python-version: '3.14'
           cache: pip
       - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+      - run: yarn install --frozen-lockfile
       - uses: pre-commit/action@v3.0.0
 
       - name: Download Semgrep rules
