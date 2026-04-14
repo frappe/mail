@@ -307,11 +307,11 @@ const getIcon = (mailbox: MailboxData) => {
 }
 
 const FOLDER_COLOR_MAP = {
-	Blue: 'text-blue-500',
-	Green: 'text-green-500',
-	Amber: 'text-amber-500',
-	Red: 'text-red-500',
-	Purple: 'text-purple-500',
+	Blue: '!text-blue-500',
+	Green: '!text-green-500',
+	Amber: '!text-amber-500',
+	Red: '!text-red-500',
+	Purple: '!text-purple-500',
 }
 </script>
 
