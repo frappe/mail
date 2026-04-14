@@ -21,7 +21,13 @@
 		</div>
 	</div>
 
-	<div v-else class="text-ink-gray-5 text-sm">{{ __('No signatures found.') }}</div>
+	<div v-else class="text-ink-gray-6 flex flex-col space-y-2 text-sm">
+		<p class="text-base font-medium">{{ __('No signatures found.') }}</p>
+
+		<p>
+			{{ __('Signatures let you automatically add personalized content to your emails.') }}
+		</p>
+	</div>
 
 	<AddSignatureModal v-model="showAddSignature" @reload-signatures="signatures.reload()" />
 	<SetDefaultSignatureModal v-model="showSetSignature" :signature="selectedSignature" />

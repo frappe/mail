@@ -42,6 +42,7 @@ import { computed, inject, markRaw, ref } from 'vue'
 import {
 	Code,
 	Feather,
+	FileCode,
 	Fingerprint,
 	HardDriveDownload,
 	HardDriveUpload,
@@ -55,6 +56,7 @@ import { Button, Dialog } from 'frappe-ui'
 import AccountSettings from '@/components/Settings/AccountSettings.vue'
 import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
 import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
+import AutomationSettings from '@/components/Settings/AutomationSettings.vue'
 import ExportSettings from '@/components/Settings/ExportSettings.vue'
 import IdentitySettings from '@/components/Settings/IdentitySettings.vue'
 import ImportSettings from '@/components/Settings/ImportSettings.vue'
@@ -100,6 +102,12 @@ const tabs = computed(() => {
 			label: __('Vacation Response'),
 			icon: TreePalm,
 			component: markRaw(VacationResponseSettings),
+			condition: user.data.is_mail_user,
+		},
+		{
+			label: __('Automation'),
+			icon: FileCode,
+			component: markRaw(AutomationSettings),
 			condition: user.data.is_mail_user,
 		},
 		{
