@@ -29,7 +29,10 @@
 					:options="COLOR_OPTIONS"
 				>
 					<template #prefix>
-						<span class="h-4 w-4 shrink-0 rounded-full" :class="folder.color" />
+						<span
+							class="h-4 w-4 shrink-0 rounded-full"
+							:class="FOLDER_COLOR_MAP[folder.color]"
+						/>
 					</template>
 				</FormControl>
 
@@ -46,16 +49,16 @@
 </template>
 
 <script setup lang="ts">
-import { inject, reactive, watch } from 'vue'
+import { reactive, watch } from 'vue'
 import { IconPicker } from 'frappe-ui/icons'
 import { Dialog, FormControl, Switch, createResource } from 'frappe-ui'
 
+import { FOLDER_COLOR_MAP } from '@/constants'
 import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
 const show = defineModel<boolean>()
 
-const user = inject('$user')
 const { mailboxes } = userStore()
 
 // const parentFolderOptions = computed(() =>
@@ -63,18 +66,17 @@ const { mailboxes } = userStore()
 // )
 
 const defaultFolder = {
-	user: user.data.name,
 	name: '',
 	parent: null,
 	icon: 'folder',
-	color: 'bg-surface-gray-6',
+	color: 'Gray',
 	disable_push_notification: false,
 }
 
 const folder = reactive({ ...defaultFolder })
 
 const createFolder = createResource({
-	url: 'mail.client.doctype.mailbox.mailbox.add_mailbox',
+	url: 'mail.api.mail.create_mailbox',
 	makeParams: () => folder,
 	onSuccess: () => {
 		raiseToast(__('Folder created.'))
@@ -87,4 +89,12 @@ const createFolder = createResource({
 watch(show, (val) => {
 	if (val) Object.assign(folder, defaultFolder)
 })
+
+const COLOR_OPTIONS = [
+	{ label: __('Gray'), value: 'Gray' },
+	{ label: __('Blue'), value: 'Blue' },
+	{ label: __('Green'), value: 'Green' },
+	{ label: __('Amber'), value: 'Amber' },
+	{ label: __('Red'), value: 'Red' },
+]
 </script>

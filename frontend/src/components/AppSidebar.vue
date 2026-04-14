@@ -64,8 +64,8 @@
 
 	<SettingsModal v-if="!isMobile" v-model="showSettings" />
 	<PWASettings v-else-if="showSettings" @close="showSettings = false" />
-	<AddMailboxModal v-model="showAddMailbox" />
-	<EditMailboxModal v-model="showEditMailbox" :mailbox="selectedMailbox" />
+	<AddFolderModal v-model="showAddMailbox" />
+	<FolderSettingsModal v-model="showEditMailbox" :mailbox="selectedMailbox" />
 	<DeleteMailboxModal v-model="showDeleteMailbox" :mailbox="selectedMailbox" />
 </template>
 
@@ -73,37 +73,34 @@
 import { computed, h, inject, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStorage } from '@vueuse/core'
+import { Icon } from 'frappe-ui/icons'
 import { Button, Dropdown, Sidebar, SidebarItem, createResource } from 'frappe-ui'
 
+import { FOLDER_ICON_MAP } from '@/constants'
 import { toTitleCase } from '@/utils'
 import { useScreenSize, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 import MailLogo from '@/components/Icons/MailLogo.vue'
-import AddMailboxModal from '@/components/Modals/AddMailboxModal.vue'
+import AddFolderModal from '@/components/Modals/AddFolderModal.vue'
 import DeleteMailboxModal from '@/components/Modals/DeleteMailboxModal.vue'
-import EditMailboxModal from '@/components/Modals/EditMailboxModal.vue'
+import FolderSettingsModal from '@/components/Modals/FolderSettingsModal.vue'
 import SettingsModal from '@/components/Modals/SettingsModal.vue'
 import PWASettings from '@/components/PWASettings.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
 
-import Archive from '~icons/lucide/archive'
+import type { MailboxData } from '@/types'
+
 import BookUser from '~icons/lucide/book-user'
-import Bookmark from '~icons/lucide/bookmark'
 import ContactRound from '~icons/lucide/contact-round'
 import Crown from '~icons/lucide/crown'
-import Edit3 from '~icons/lucide/edit-3'
 import Ellipsis from '~icons/lucide/ellipsis'
-import Folder from '~icons/lucide/folder'
 import Globe from '~icons/lucide/globe'
-import Inbox from '~icons/lucide/inbox'
 import LayoutGrid from '~icons/lucide/layout-grid'
 import LogOut from '~icons/lucide/log-out'
-import MailWarning from '~icons/lucide/mail-warning'
 import Mailbox from '~icons/lucide/mailbox'
 import Mails from '~icons/lucide/mails'
 import Plus from '~icons/lucide/plus'
-import Send from '~icons/lucide/send'
 import Settings from '~icons/lucide/settings'
 import Star from '~icons/lucide/star'
 import Trash2 from '~icons/lucide/trash-2'
@@ -208,61 +205,59 @@ const dashboardItems = [
 	},
 ]
 
-const MAILBOX_ICONS = {
-	inbox: Inbox,
-	sent: Send,
-	trash: Trash2,
-	junk: MailWarning,
-	drafts: Edit3,
-	archive: Archive,
-	important: Bookmark,
-}
+const mailboxItems = computed(
+	() =>
+		mailboxes.data?.map((mailbox: MailboxData) => ({
+			label: mailbox._name,
+			icon: h(Icon, { name: getIcon(mailbox), class: FOLDER_COLOR_MAP[mailbox.color] }),
+			to: { name: 'Mailbox', params: { mailbox: mailbox.id } },
+			suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
+			activeFor: [mailbox.id],
+			menuOptions: [
+				{
+					label: __('Configure'),
+					icon: Settings,
+					onClick: () => {
+						selectedMailbox.value = mailbox
+						showEditMailbox.value = true
+					},
+				},
+				{
+					label: __('Delete'),
+					theme: 'red',
+					icon: Trash2,
+					onClick: () => {
+						selectedMailbox.value = mailbox
+						showDeleteMailbox.value = true
+					},
+				},
+			],
+		})) || [],
+)
 
 const sidebarItems = computed(() => {
 	if (route.meta.isDashboard) return dashboardItems
 
-	const mailboxItems =
-		mailboxes.data?.map(
-			(mailbox: { id: string; _name: string; role?: string; unread_threads: number }) => ({
-				label: mailbox._name,
-				icon:
-					mailbox.role && mailbox.role in MAILBOX_ICONS
-						? MAILBOX_ICONS[mailbox.role as keyof typeof MAILBOX_ICONS]
-						: Folder,
-				to: { name: 'Mailbox', params: { mailbox: mailbox.id } },
-				suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
-				activeFor: [mailbox.id],
-				menuOptions: [
-					{
-						label: __('Edit Folder'),
-						onClick: () => {
-							selectedMailbox.value = mailbox
-							showEditMailbox.value = true
-						},
-					},
-					{
-						label: __('Delete Folder'),
-						onClick: () => {
-							selectedMailbox.value = mailbox
-							showDeleteMailbox.value = true
-						},
-					},
-				],
-			}),
-		) || []
-
+	const defaultMailboxes = mailboxItems.value.filter(
+		(item) => mailboxes.data?.find((m) => m.id === item.activeFor[0])?.role,
+	)
 	const starredItem = {
 		label: __('Starred'),
 		icon: Star,
 		to: { name: 'Mailbox', params: { mailbox: 'starred' } },
 		activeFor: ['starred'],
 	}
+	const defaultItems = [...defaultMailboxes, starredItem]
 
+	const customMailboxes = mailboxItems.value.filter(
+		(item) => !mailboxes.data?.find((m) => m.id === item.activeFor[0])?.role,
+	)
 	const addMailboxItem = {
 		label: __('New Folder'),
 		icon: Plus,
 		onClick: () => (showAddMailbox.value = true),
 	}
+	const customItems = [...customMailboxes, addMailboxItem]
 
 	const contactsItems = [
 		{
@@ -279,23 +274,11 @@ const sidebarItems = computed(() => {
 		},
 	]
 
-	return mailboxes.data?.length
-		? [
-				{
-					label: __('Folders'),
-					items: [
-						mailboxItems[0],
-						starredItem,
-						...mailboxItems.slice(1),
-						addMailboxItem,
-					],
-				},
-				{
-					label: __('People'),
-					items: contactsItems,
-				},
-			]
-		: []
+	return [
+		{ label: __('Default'), items: defaultItems },
+		{ label: __('Custom'), items: customItems },
+		{ label: __('People'), items: contactsItems },
+	]
 })
 
 // Shortcuts
@@ -316,6 +299,19 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 onMounted(() => window.addEventListener('keydown', handleKeyDown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeyDown))
+
+const getIcon = (mailbox: MailboxData) => {
+	if (mailbox.icon) return mailbox.icon
+	if (mailbox.role && mailbox.role in FOLDER_ICON_MAP) return FOLDER_ICON_MAP[mailbox.role]
+	return 'folder'
+}
+
+const FOLDER_COLOR_MAP = {
+	Blue: 'text-blue-500',
+	Green: 'text-green-500',
+	Amber: 'text-amber-500',
+	Red: 'text-red-500',
+}
 </script>
 
 <style scoped>

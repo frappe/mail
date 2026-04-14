@@ -61,8 +61,9 @@
   {
    "description": "Color assigned to the mailbox for easy identification and UI customization.",
    "fieldname": "color",
-   "fieldtype": "Color",
-   "label": "Color"
+   "fieldtype": "Select",
+   "label": "Color",
+   "options": "Gray\nBlue\nGreen\nAmber\nRed"
   },
   {
    "fieldname": "column_break_mbnv",
@@ -80,7 +81,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-13 16:48:28.836719",
+ "modified": "2026-04-14 12:16:29.529530",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox Settings",

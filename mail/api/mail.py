@@ -22,6 +22,8 @@ from mail.client.doctype.mail_message.mail_message import (
 	set_spam_status,
 )
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
+from mail.client.doctype.mailbox.mailbox import add_mailbox
+from mail.client.doctype.mailbox_settings.mailbox_settings import set_mailbox_settings
 from mail.jmap import get_email_service, get_mailbox_id_by_role
 from mail.utils import convert_html_to_text
 from mail.utils.cache import get_user_emails
@@ -643,3 +645,49 @@ def get_email_suggestions(query: str, limit: int = 5) -> list[str]:
 
 	service = get_email_service(frappe.session.user)
 	return service.get_email_suggestions(query, limit)
+
+
+@frappe.whitelist()
+def create_mailbox(
+	name: str,
+	parent: str | None = None,
+	icon: str | None = None,
+	color: str | None = None,
+	disable_push_notification: bool = False,
+) -> str:
+	"""Creates a new mailbox and initializes its settings for the current user."""
+
+	user = frappe.session.user
+	mailbox_id = add_mailbox(user, name, None, parent)
+
+	set_mailbox_settings(
+		user,
+		mailbox_id,
+		icon=icon,
+		color=color,
+		disable_push_notification=disable_push_notification,
+	)
+
+
+@frappe.whitelist()
+def update_mailbox(
+	id: str,
+	name: str | None = None,
+	role: str | None = None,
+	parent: str | None = None,
+	icon: str | None = None,
+	color: str | None = None,
+	disable_push_notification: bool = False,
+) -> None:
+	"""Updates Mailbox Settings for the given mailbox ID."""
+
+	set_mailbox_settings(
+		frappe.session.user,
+		id,
+		_name=name,
+		role=role,
+		parent=parent,
+		icon=icon,
+		color=color,
+		disable_push_notification=disable_push_notification,
+	)

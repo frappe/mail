@@ -7,7 +7,7 @@
 				{
 					label: __('Save'),
 					variant: 'solid',
-					disabled: !folder.name,
+					disabled: !folder.name || isNotDirty,
 					onClick: updateFolder.submit,
 				},
 			],
@@ -29,7 +29,10 @@
 					:options="COLOR_OPTIONS"
 				>
 					<template #prefix>
-						<span class="h-4 w-4 shrink-0 rounded-full" :class="folder.color" />
+						<span
+							class="h-4 w-4 shrink-0 rounded-full"
+							:class="FOLDER_COLOR_MAP[folder.color]"
+						/>
 					</template>
 				</FormControl>
 
@@ -46,10 +49,11 @@
 </template>
 
 <script setup lang="ts">
-import { inject, reactive, watch } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { IconPicker } from 'frappe-ui/icons'
-import { Dialog, FormControl, Select, Switch, createResource } from 'frappe-ui'
+import { Dialog, FormControl, Switch, createResource } from 'frappe-ui'
 
+import { FOLDER_COLOR_MAP } from '@/constants'
 import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
@@ -59,7 +63,6 @@ const show = defineModel<boolean>()
 
 const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 
-const user = inject('$user')
 const { mailboxes } = userStore()
 
 // const parentFolderOptions = computed(() =>
@@ -67,18 +70,35 @@ const { mailboxes } = userStore()
 // )
 
 const folder = reactive({
-	user: user.data.name,
 	id: '',
 	name: '',
 	role: null,
 	parent: null,
 	icon: 'folder',
-	color: 'bg-surface-gray-6',
+	color: 'Gray',
 	disable_push_notification: false,
 })
 
+const original = reactive({
+	id: '',
+	name: '',
+	role: null,
+	parent: null,
+	icon: 'folder',
+	color: 'Gray',
+	disable_push_notification: false,
+})
+
+const isNotDirty = computed(
+	() =>
+		folder.name === original.name &&
+		folder.icon === original.icon &&
+		folder.color === original.color &&
+		folder.disable_push_notification === original.disable_push_notification,
+)
+
 const updateFolder = createResource({
-	url: 'mail.client.doctype.mailbox.mailbox.update_mailbox',
+	url: 'mail.api.mail.update_mailbox',
 	makeParams: () => folder,
 	onSuccess: () => {
 		raiseToast(__('Folder updated.'))
@@ -90,20 +110,20 @@ const updateFolder = createResource({
 
 watch(show, (val) => {
 	if (!val || !mailbox) return
-	folder.id = mailbox.id
-	folder.name = mailbox._name
-	folder.role = mailbox.role
-	if (mailbox.icon) folder.icon = mailbox.icon
-	if (mailbox.color) folder.color = mailbox.color
-	if (mailbox.disable_push_notification)
-		folder.disable_push_notification = !!mailbox.disable_push_notification
+	folder.id = original.id = mailbox.id
+	folder.name = original.name = mailbox._name
+	folder.role = original.role = mailbox.role
+	folder.icon = original.icon = mailbox.icon || 'folder'
+	folder.color = original.color = mailbox.color || 'Gray'
+	folder.disable_push_notification = original.disable_push_notification =
+		!!mailbox.disable_push_notification
 })
 
 const COLOR_OPTIONS = [
-	{ label: __('Gray'), value: 'bg-surface-gray-6' },
-	{ label: __('Blue'), value: 'bg-surface-blue-3' },
-	{ label: __('Green'), value: 'bg-surface-green-3' },
-	{ label: __('Amber'), value: 'bg-surface-amber-3' },
-	{ label: __('Red'), value: 'bg-surface-red-5' },
+	{ label: __('Gray'), value: 'Gray' },
+	{ label: __('Blue'), value: 'Blue' },
+	{ label: __('Green'), value: 'Green' },
+	{ label: __('Amber'), value: 'Amber' },
+	{ label: __('Red'), value: 'Red' },
 ]
 </script>
