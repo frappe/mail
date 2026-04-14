@@ -108,6 +108,7 @@ export default defineConfig(({ mode }) => ({
 				? [{ find: /^frappe-ui$/, replacement: frappeUIPath }]
 				: []),
 		],
+		dedupe: ['vue', 'prosemirror-state', 'prosemirror-view'],
 	},
 	optimizeDeps: {
 		include: [

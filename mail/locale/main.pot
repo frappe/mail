@@ -2993,7 +2993,7 @@ msgid "Edit Draft"
 msgstr ""
 
 #: frontend/src/components/AppSidebar.vue:237
-#: frontend/src/components/Modals/EditMailboxModal.vue:5
+#: frontend/src/components/Modals/FolderSettingsModal.vue:5
 msgid "Edit Folder"
 msgstr ""
 
@@ -3849,12 +3849,12 @@ msgstr ""
 msgid "Folder"
 msgstr ""
 
-#: frontend/src/components/Modals/AddMailboxModal.vue:18
-#: frontend/src/components/Modals/EditMailboxModal.vue:18
+#: frontend/src/components/Modals/AddFolderModal.vue:18
+#: frontend/src/components/Modals/FolderSettingsModal.vue:18
 msgid "Folder Name"
 msgstr ""
 
-#: frontend/src/components/Modals/AddMailboxModal.vue:52
+#: frontend/src/components/Modals/AddFolderModal.vue:52
 msgid "Folder created."
 msgstr ""
 
@@ -3862,7 +3862,7 @@ msgstr ""
 msgid "Folder deleted."
 msgstr ""
 
-#: frontend/src/components/Modals/EditMailboxModal.vue:56
+#: frontend/src/components/Modals/FolderSettingsModal.vue:56
 msgid "Folder updated."
 msgstr ""
 
@@ -6544,7 +6544,7 @@ msgid "New External Member"
 msgstr ""
 
 #: frontend/src/components/AppSidebar.vue:262
-#: frontend/src/components/Modals/AddMailboxModal.vue:5
+#: frontend/src/components/Modals/AddFolderModal.vue:5
 msgid "New Folder"
 msgstr ""
 
@@ -8735,13 +8735,13 @@ msgstr ""
 #: frontend/src/components/Modals/AddContactEmailModal.vue:39
 #: frontend/src/components/Modals/AddContactModal.vue:8
 #: frontend/src/components/Modals/AddContactPhoneModal.vue:34
-#: frontend/src/components/Modals/AddMailboxModal.vue:8
+#: frontend/src/components/Modals/AddFolderModal.vue:8
 #: frontend/src/components/Modals/AddMailingListModal.vue:8
 #: frontend/src/components/Modals/AddSignatureModal.vue:66
 #: frontend/src/components/Modals/EditAddressBookModal.vue:47
 #: frontend/src/components/Modals/EditContactModal.vue:33
 #: frontend/src/components/Modals/EditInviteModal.vue:9
-#: frontend/src/components/Modals/EditMailboxModal.vue:8
+#: frontend/src/components/Modals/FolderSettingsModal.vue:8
 #: frontend/src/components/Modals/EditSignatureModal.vue:66
 #: frontend/src/components/Modals/SetDefaultSignatureModal.vue:54
 #: frontend/src/components/Settings/AccountSettings.vue:44
