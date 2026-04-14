@@ -331,7 +331,23 @@ def get_identities() -> list[dict]:
 
 @frappe.whitelist()
 def set_signature(identity: str, signature: str) -> None:
+	"""Set the email signature for an identity"""
+
 	doc = frappe.get_doc("Identity", identity)
 	doc.html_signature = signature
 	doc.text_signature = convert_html_to_text(signature)
 	doc.db_update()
+
+
+@frappe.whitelist()
+def get_sieve_scripts() -> list[dict]:
+	"""Return the sieve scripts for the user"""
+
+	return frappe.get_list("Sieve Script", filters={"user": frappe.session.user})
+
+
+@frappe.whitelist()
+def delete_sieve_script(name: str) -> None:
+	"""Delete a sieve script for the user"""
+
+	frappe.delete_doc("Sieve Script", name)

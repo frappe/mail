@@ -468,3 +468,21 @@ export interface VacationResponse extends DocType {
 	/** HTML: Text Editor */
 	html_body?: string
 }
+
+// Last updated: 2026-03-06 17:20:17.751947
+export interface SieveScript extends DocType {
+	/** User: Link (User) */
+	user: string
+	/** ID: Data */
+	id?: string
+	/** Name: Data */
+	_name: string
+	/** Blob ID: Data */
+	blob_id?: string
+	/** Active: Check */
+	active: 0 | 1
+	/** Content: Code */
+	content: string
+	/** Read Only: Check */
+	read_only: 0 | 1
+}

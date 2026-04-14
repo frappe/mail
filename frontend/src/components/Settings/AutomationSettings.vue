@@ -4,26 +4,16 @@
 		<Button icon-left="plus" :label="__('New')" @click="showAddScript = true" />
 	</div>
 
-	<div v-if="scripts?.data?.length">
-		<div class="text-ink-gray-5 flex gap-4 py-2 text-sm">
-			<div class="flex-1">{{ __('Script Name') }}</div>
-			<div class="w-24 text-center">{{ __('Status') }}</div>
-		</div>
+	<div v-if="scripts?.data?.filter((s) => s._name !== 'vacation').length">
+		<div class="text-ink-gray-5 py-2 text-sm">{{ __('Script Name') }}</div>
 		<div
 			v-for="script in scripts?.data"
 			:key="script.name"
-			class="flex items-center justify-between border-t py-2"
+			class="flex items-center justify-between border-t py-1"
 		>
-			<div class="flex flex-1 items-center gap-2">
+			<div class="flex items-center gap-2">
 				<span class="text-base">{{ script._name }}</span>
-			</div>
-			<div class="flex w-24 items-center justify-center">
-				<Badge
-					:variant="script.active ? 'subtle' : 'outline'"
-					:theme="script.active ? 'green' : 'gray'"
-					:label="script.active ? __('Active') : __('Inactive')"
-					size="md"
-				/>
+				<Badge v-if="script.active" :label="__('Active')" theme="blue" size="sm" />
 			</div>
 			<Dropdown :options="scriptOptions(script)">
 				<Button variant="ghost" @click.stop>
@@ -56,66 +46,65 @@
 	<AddSieveScriptModal v-model="showAddScript" @reload-scripts="scripts.reload()" />
 	<EditSieveScriptModal
 		v-model="showEditScript"
-		:script-name="selectedScript"
+		:script="selectedScript"
 		@reload-scripts="scripts.reload()"
 	/>
-	<ViewSieveScriptModal v-model="showViewScript" :script-name="selectedScript" />
+	<DeleteSieveScriptModal
+		v-if="selectedScript"
+		v-model="showDeleteScript"
+		:script="selectedScript"
+		@reload-scripts="scripts.reload()"
+	/>
 </template>
 
 <script setup lang="ts">
 import { inject, ref } from 'vue'
 import { Ellipsis } from 'lucide-vue-next'
-import { Badge, Button, Dropdown, useList } from 'frappe-ui'
+import { Badge, Button, Dropdown, createResource } from 'frappe-ui'
 
 import AddSieveScriptModal from '@/components/Modals/AddSieveScriptModal.vue'
+import DeleteSieveScriptModal from '@/components/Modals/DeleteSieveScriptModal.vue'
 import EditSieveScriptModal from '@/components/Modals/EditSieveScriptModal.vue'
-import ViewSieveScriptModal from '@/components/Modals/ViewSieveScriptModal.vue'
+
+import type { SieveScript } from '@/types'
 
 const user = inject('$user')
 
 const showAddScript = ref(false)
-const selectedScript = ref('')
+const selectedScript = ref<SieveScript>()
 const showEditScript = ref(false)
-const showViewScript = ref(false)
+const showSetScriptAsActive = ref(false)
+const showDeleteScript = ref(false)
 
-const scripts = useList({
-	doctype: 'Sieve Script',
-	immediate: true,
-	fields: ['name', '_name', 'active', 'id'],
-	filters: { user: user.data.name },
-	cacheKey: ['sieveScripts', user.data.name],
+const scripts = createResource({
+	url: 'mail.api.account.get_sieve_scripts',
+	auto: true,
+	cache: ['sieveScripts', user.data.name],
 })
 
-const scriptOptions = (script: any) => [
+const scriptOptions = (script: SieveScript) => [
 	{
-		label: __('View'),
+		label: script.active ? __('Set as Inactive') : __('Set as Active'),
 		onClick: () => {
-			selectedScript.value = script.name
-			showViewScript.value = true
+			selectedScript.value = script
+			showSetScriptAsActive.value = true
 		},
 	},
 	{
 		label: __('Edit'),
 		onClick: () => {
-			selectedScript.value = script.name
+			selectedScript.value = script
 			showEditScript.value = true
 		},
-	},
-	{
-		label: script.active ? __('Deactivate') : __('Activate'),
-		onClick: async () => {
-			await scripts.setValue.submit({
-				name: script.name,
-				fieldname: 'active',
-				value: !script.active,
-			})
-			scripts.reload()
-		},
+		condition: () => !script.read_only,
 	},
 	{
 		label: __('Delete'),
-		onClick: () => scripts.delete.submit({ name: script.name }),
-		condition: () => !script.active,
+		onClick: () => {
+			selectedScript.value = script
+			showDeleteScript.value = true
+		},
+		condition: () => !script.read_only,
 	},
 ]
 </script>
