@@ -14,14 +14,13 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
-from mail.backend import get_mail_backend_api
 from mail.mail.doctype.mail_settings.mail_settings import (
 	validate_mail_settings,
 )
 from mail.server.doctype.dns_record.dns_record import create_or_update_dns_record
 from mail.server.doctype.mail_cluster.mail_cluster import create_or_update_spf_dns_record_for_cluster
 from mail.server.doctype.server_config.server_config import create_server_config
-from mail.utils import get_spf_host_for_cluster
+from mail.utils import get_mail_config, get_spf_host_for_cluster
 from mail.utils.cache import get_root_domain_name
 from mail.utils.dns import get_dns_record
 
@@ -215,7 +214,7 @@ class MailServer(Document):
 
 		host = self.hostname[: -len(root_domain_name) - 1]
 		spf_host = get_spf_host_for_cluster(self.cluster)
-		default_ttl = cint(frappe.conf.default_dns_ttl) or 3600
+		default_ttl = cint(get_mail_config("default_dns_ttl"))
 		if self.enabled:
 			create_or_update_dns_record(
 				host=host,

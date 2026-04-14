@@ -7,7 +7,7 @@ from frappe.model.document import Document
 from frappe.utils import cint, now
 
 from mail.server.doctype.dns_record.dns_provider import DNSProvider
-from mail.utils import enqueue_job, password_or_none, user_context
+from mail.utils import enqueue_job, get_mail_config, password_or_none, user_context
 from mail.utils.cache import get_root_domain_name
 from mail.utils.dns import verify_dns_record
 
@@ -52,7 +52,7 @@ class DNSRecord(Document):
 	def validate_ttl(self) -> None:
 		"""Validates the TTL value"""
 
-		self.ttl = self.ttl or cint(frappe.conf.default_dns_ttl) or 3600
+		self.ttl = self.ttl or cint(get_mail_config("default_dns_ttl"))
 
 	@frappe.whitelist()
 	def sync_dns_record(self) -> None:

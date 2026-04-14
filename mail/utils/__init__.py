@@ -65,10 +65,66 @@ def reconnect_on_failure(max_retries: int = 3) -> callable:
 def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 	"""Returns the mail configuration from frappe.conf, or an empty dict if not set."""
 
+	default_config = {
+		"ansible_play_timeout": 1500,
+		"blob_bucket_size": 1000,
+		"blob_cache_ttl": 12 * 60 * 60,  # 12 hours
+		"contact_card_bucket_size": 5000,
+		"contact_card_cache_ttl": 2 * 24 * 60 * 60,  # 2 days
+		"data_exchange_export_timeout": 3600,
+		"data_exchange_import_timeout": 3600,
+		"default_dns_ttl": 3600,
+		"default_mail_quota": 1024**3,  # 1 GB
+		"enable_ed25519_dkim": False,
+		"exchange_export_batch_size": 500,
+		"exchange_export_timeout": 3600,
+		"exchange_import_timeout": 3600,
+		"exchange_max_export": 1_000,
+		"exchange_max_import": 1_000,
+		"fetch_lock_timeout": 300,
+		"gravatar_default_avatar": "404",
+		"lock_acquire_timeout": 0,
+		"lock_timeout": 10,
+		"max_accounts": 0,
+		"max_domains": 0,
+		"max_email_sync": 100,
+		"max_groups": 0,
+		"max_lists": 0,
+		"max_message_payload_size": 25 * 1024 * 1024,  # 25 MB
+		"max_push_notifications": 5,
+		"msg_bucket_size": 5_000,
+		"msg_cache_ttl": 2 * 24 * 60 * 60,  # 2 days
+		"process_pending_emails_batch_size": 2_500,
+		"process_pending_emails_max_batch_size": 25_000,
+		"process_pending_emails_timeout": 1500,
+		"rsa_key_size": 2048,
+		"scan_message_timeout": 60 * 2,  # 2 minutes
+		"server_deployment_timeout": 1500,
+		"server_job_timeout": 1500,
+		"stalwart_cli_command_timeout": 3600,
+		"stalwart_version": "v0.15.4",
+	}
+
 	config = frappe.conf.mail or {}
+	config = {**default_config, **config}
+
+	for k, v in config.items():
+		if k in default_config and not isinstance(v, type(default_config[k])):
+			frappe.throw(
+				_("Mail config key '{0}' has invalid type. Expected {1}.").format(
+					k, type(default_config[k]).__name__
+				)
+			)
 
 	if key:
-		return config.get(key)
+		if key not in config:
+			frappe.throw(_("Mail config key '{0}' not found").format(key))
+
+		value = config[key]
+		if not value and type(value) not in (int, float):
+			frappe.throw(_("Mail config key '{0}' is not set").format(key))
+
+		return config[key]
 
 	return config
 
@@ -811,4 +867,4 @@ def is_catch_all_address(address: str) -> bool:
 def get_stalwart_version() -> str:
 	"""Returns the Stalwart version from configuration or default."""
 
-	return frappe.conf.stalwart_version or "v0.15.4"
+	return get_mail_config("stalwart_version")

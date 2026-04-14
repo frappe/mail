@@ -34,7 +34,6 @@ from mail.utils.user import (
 	clear_sync_state,
 	get_jmap_username,
 	get_user_email_address,
-	has_role,
 	is_administrator,
 	is_mail_admin,
 	is_system_manager,
@@ -108,7 +107,7 @@ class MailDataExchange(Document):
 				self.name,
 				"_import",
 				queue="long",
-				timeout=cint(frappe.conf.data_exchange_import_timeout) or 3600,
+				timeout=cint(get_mail_config("data_exchange_import_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -120,7 +119,7 @@ class MailDataExchange(Document):
 				self.name,
 				"_export",
 				queue="long",
-				timeout=cint(frappe.conf.data_exchange_export_timeout) or 3600,
+				timeout=cint(get_mail_config("data_exchange_export_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -265,10 +264,7 @@ class MailDataExchange(Document):
 		validate_mail_config()
 		config = get_mail_config()
 
-		return (
-			config["server_url"],
-			f"{config['fallback_admin_user']}:{config['fallback_admin_password']}",
-		)
+		return (config["server_url"], f"{config['username']}:{config['password']}")
 
 	def _mark_completed(self, **kwargs) -> None:
 		"""Marks the data exchange as completed and updates the completed_at and duration fields."""
@@ -358,7 +354,7 @@ def _run_stalwart_cli_command(command: str | list[str], _credentials: str, timeo
 	if isinstance(command, list):
 		command = " ".join(shlex.quote(arg) for arg in command)
 
-	timeout = timeout or cint(frappe.conf.stalwart_cli_command_timeout) or 3600
+	timeout = timeout or cint(get_mail_config("stalwart_cli_command_timeout"))
 	child = pexpect.spawn(command, encoding="utf-8", timeout=timeout)
 	child.expect("Enter administrator credentials or press \\[ENTER\\] to use OAuth:")
 	child.sendline(_credentials)

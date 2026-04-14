@@ -23,7 +23,7 @@ from mail.client.doctype.mail_message.mail_message import (
 )
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_email_service, get_mailbox_id_by_role
-from mail.utils import convert_html_to_text
+from mail.utils import convert_html_to_text, get_mail_config
 from mail.utils.cache import get_user_emails
 from mail.utils.user import has_role, is_jmap_configured
 from mail.utils.validation import has_permission_for_user
@@ -592,7 +592,7 @@ def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 
 	if not avatar:
 		# 2. Try Gravatar
-		default = frappe.conf.gravatar_default_avatar or "404"
+		default = get_mail_config("gravatar_default_avatar")
 		try:
 			res = requests.get(
 				f"https://secure.gravatar.com/avatar/{email_hash}",

@@ -9,7 +9,7 @@ from werkzeug.datastructures.file_storage import FileStorage
 from werkzeug.utils import secure_filename
 
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
-from mail.utils import get_messages_directory
+from mail.utils import get_mail_config, get_messages_directory
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import is_jmap_configured
 
@@ -225,7 +225,7 @@ def _normalize_recipients(
 def _get_max_message_payload_size() -> int:
 	"""Returns the maximum message payload size from configuration."""
 
-	return cint(frappe.conf.max_message_payload_size) or 25 * 1024 * 1024  # 25 MB
+	return cint(get_mail_config("max_message_payload_size"))
 
 
 def _enqueue_mail(from_: str, to: str | list[str], raw_message: str, is_newsletter: bool = False) -> str:

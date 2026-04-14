@@ -112,7 +112,7 @@ def validate_local_domain(domain_name: str) -> None:
 def validate_max_domains() -> None:
 	"""Validates if the maximum number of domains has been reached."""
 
-	max_domains = cint(get_mail_config().get("max_domains", 0))
+	max_domains = cint(get_mail_config("max_domains"))
 	if max_domains <= 0:
 		return
 
@@ -125,7 +125,7 @@ def validate_max_domains() -> None:
 def validate_max_groups() -> None:
 	"""Validates if the maximum number of groups has been reached."""
 
-	max_groups = cint(get_mail_config().get("max_groups", 0))
+	max_groups = cint(get_mail_config("max_groups"))
 	if max_groups <= 0:
 		return
 
@@ -138,7 +138,7 @@ def validate_max_groups() -> None:
 def validate_max_accounts() -> None:
 	"""Validates if the maximum number of accounts has been reached."""
 
-	max_accounts = cint(get_mail_config().get("max_accounts", 0))
+	max_accounts = cint(get_mail_config("max_accounts"))
 	if max_accounts <= 0:
 		return
 
@@ -153,7 +153,7 @@ def validate_max_accounts() -> None:
 def validate_max_lists() -> None:
 	"""Validates if the maximum number of lists has been reached."""
 
-	max_lists = cint(get_mail_config().get("max_lists", 0))
+	max_lists = cint(get_mail_config("max_lists"))
 	if max_lists <= 0:
 		return
 
@@ -354,13 +354,13 @@ def validate_mail_config() -> None:
 	if not config.get("server_url"):
 		frappe.throw(_("Mail server URL is not set in Mail Configuration."))
 
-	fallback_admin_api_key = config.get("fallback_admin_api_key")
+	api_key = config.get("api_key")
 
-	fallback_admin_user = config.get("fallback_admin_user")
-	fallback_admin_password = config.get("fallback_admin_password")
+	username = config.get("username")
+	password = config.get("password")
 
-	if not fallback_admin_api_key and not (fallback_admin_user and fallback_admin_password):
-		frappe.throw(_("Fallback admin credentials are not set in Mail Configuration."))
+	if not api_key and not (username and password):
+		frappe.throw(_("Admin credentials are not set in Mail Configuration."))
 
 
 def ensure_local_user(user: str) -> None:

@@ -34,6 +34,7 @@ from mail.utils import (
 	ensure_html,
 	ensure_text,
 	extract_latest_email_body,
+	get_mail_config,
 	get_push_logger,
 	parse_filters,
 	user_context,
@@ -1118,9 +1119,9 @@ def _store_message_in_cache(user: str, id: str, message: dict) -> None:
 
 	cache_key = _get_message_cache_key(user, id)
 	list_key = f"jmap:message:{user}:ids"
-	msg_bucket_size = cint(frappe.conf.msg_bucket_size) or 5000
+	msg_bucket_size = cint(get_mail_config("msg_bucket_size"))
 
-	msg_cache_ttl = cint(frappe.conf.msg_cache_ttl) or 2 * 24 * 60 * 60  # 2 days
+	msg_cache_ttl = cint(get_mail_config("msg_cache_ttl"))
 	frappe.cache.set_value(cache_key, message, expires_in_sec=msg_cache_ttl)
 	frappe.cache.lpush(list_key, id)
 
@@ -1159,8 +1160,8 @@ def _store_blob_in_cache(user: str, blob_id: str, content: bytes) -> None:
 	cache_key = _get_blob_cache_key(user, blob_id)
 	list_key = f"jmap:blob:{user}:blob_ids"
 
-	blob_cache_ttl = cint(frappe.conf.blob_cache_ttl) or 12 * 60 * 60  # 12 hours
-	blob_bucket_size = cint(frappe.conf.blob_bucket_size) or 1000
+	blob_bucket_size = cint(get_mail_config("blob_bucket_size"))
+	blob_cache_ttl = cint(get_mail_config("blob_cache_ttl"))
 
 	frappe.cache.set_value(cache_key, content, expires_in_sec=blob_cache_ttl)
 	frappe.cache.lpush(list_key, blob_id)
@@ -1250,7 +1251,7 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 
 				logger.debug({**ctx, "notify_candidates_count": len(notify_candidates)})
 
-				max_push_notifications = cint(frappe.conf.max_push_notifications) or 5
+				max_push_notifications = cint(get_mail_config("max_push_notifications"))
 				recent_messages = notify_candidates[:max_push_notifications]
 
 				logger.debug({**ctx, "recent_notify_candidates_count": len(recent_messages)})
@@ -1331,7 +1332,7 @@ def enqueue_fetch_changes(user: str, email_state: str | None = None, ctx: dict |
 	logger.info({**ctx, "event": "enqueueing-fetch-changes"})
 
 	lockname = f"fetch_changes:{user}"
-	fetch_lock_timeout = cint(frappe.conf.fetch_lock_timeout) or 300
+	fetch_lock_timeout = cint(get_mail_config("fetch_lock_timeout"))
 	identifier = acquire_lock(lockname, acquire_timeout=0, lock_timeout=fetch_lock_timeout)
 
 	if not identifier:

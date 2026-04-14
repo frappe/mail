@@ -222,7 +222,6 @@ class MailAccountRequest(Document):
 		# Create User Settings
 		user_settings = frappe.new_doc("User Settings")
 		user_settings.user = user
-		user_settings.server_url = get_mail_config().get("server_url")
 		user_settings.username = self.account
 		user_settings.app_password = app_password
 		user_settings.backup_email = self.backup_email

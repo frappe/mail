@@ -11,7 +11,7 @@ from frappe.utils import cint, today
 
 from mail.client.doctype.address_book.address_book import validate_address_book_name_format
 from mail.jmap import get_contact_card_service
-from mail.utils import parse_filters
+from mail.utils import get_mail_config, parse_filters
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
 
@@ -486,15 +486,16 @@ def _store_contact_card_in_cache(user: str, id: str, contact_card: dict) -> None
 
 	cache_key = _get_contact_card_cache_key(user, id)
 	list_key = f"jmap:contact_card:{user}:ids"
-	contact_card_bucket_size = cint(frappe.conf.contact_card_bucket_size) or 5000
 
-	contact_card_cache_ttl = cint(frappe.conf.contact_card_cache_ttl) or 2 * 24 * 60 * 60  # 2 days
-	frappe.cache.set_value(cache_key, contact_card, expires_in_sec=contact_card_cache_ttl)
+	bucket_size = cint(get_mail_config("contact_card_bucket_size"))
+	cache_ttl = cint(get_mail_config("contact_card_cache_ttl"))
+
+	frappe.cache.set_value(cache_key, contact_card, expires_in_sec=cache_ttl)
 	frappe.cache.lpush(list_key, id)
 
-	frappe.cache.ltrim(list_key, 0, contact_card_bucket_size - 1)
+	frappe.cache.ltrim(list_key, 0, bucket_size - 1)
 
-	while frappe.cache.llen(list_key) > contact_card_bucket_size:
+	while frappe.cache.llen(list_key) > bucket_size:
 		if oldest_id := frappe.cache.rpop(list_key):
 			frappe.cache.delete_key(_get_contact_card_cache_key(user, oldest_id))
 

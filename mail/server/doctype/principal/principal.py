@@ -21,6 +21,7 @@ from mail.utils import (
 	generate_app_password,
 	generate_dkim_keys,
 	get_dkim_selector,
+	get_mail_config,
 	hash_password,
 	is_catch_all_address,
 	is_probable_hash,
@@ -277,7 +278,7 @@ class Principal(Document):
 		self._delete_dkim_signature(backend, "rsa-sha256", raise_exception=False)
 		self._create_dkim_signature(backend, "rsa-sha256", raise_exception=False)
 
-		if bool(frappe.conf.enable_ed25519_dkim):
+		if bool(get_mail_config("enable_ed25519_dkim")):
 			self._delete_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
 			self._create_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
 
@@ -330,7 +331,7 @@ class Principal(Document):
 		payload = {
 			"name": self.name,
 			"type": _get_principal_type(self.type),
-			"quota": cint(self.quota) or cint(frappe.conf.default_mail_quota) or 1024**3,
+			"quota": cint(self.quota) or cint(get_mail_config("default_mail_quota")),
 			"description": self.description or "",
 			"secrets": _secrets,
 			"emails": _emails,
@@ -355,7 +356,7 @@ class Principal(Document):
 			try:
 				self._create_dkim_signature(backend, "rsa-sha256", raise_exception=False)
 
-				if bool(frappe.conf.enable_ed25519_dkim):
+				if bool(get_mail_config("enable_ed25519_dkim")):
 					self._create_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
 			except Exception:
 				frappe.log_error(
@@ -376,7 +377,7 @@ class Principal(Document):
 
 		key_type = algorithm.split("-")[0]
 		selector = get_dkim_selector(key_type)
-		rsa_key_size = cint(frappe.conf.rsa_key_size) or 2048
+		rsa_key_size = cint(get_mail_config("rsa_key_size"))
 		private_key, _public_key = generate_dkim_keys(algorithm, rsa_key_size)
 
 		payload = [
@@ -648,7 +649,7 @@ class Principal(Document):
 
 		elif principal.type == "Domain":
 			self._delete_dkim_signature(backend, "rsa-sha256", raise_exception=False)
-			if bool(frappe.conf.enable_ed25519_dkim):
+			if bool(get_mail_config("enable_ed25519_dkim")):
 				self._delete_dkim_signature(backend, "ed25519-sha256", raise_exception=False)
 
 		delete_principal_settings(self.name)
@@ -845,7 +846,7 @@ class Principal(Document):
 				"priority": parse_priority(record),
 				"value": record["content"],
 				"mandatory": cint(is_mandatory(record)),
-				"ttl": cint(frappe.conf.default_dns_ttl) or 3600,
+				"ttl": cint(get_mail_config("default_dns_ttl")),
 			}
 
 			formatted_records.append(entry)

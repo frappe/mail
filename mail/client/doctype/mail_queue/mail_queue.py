@@ -33,8 +33,9 @@ from mail.jmap import get_email_service, get_identities, get_jmap_connection
 from mail.jmap.models import EmailAddress, EmailAttachment, EmailCreateModel, EmailHeader, EmailRecipient
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
+from mail.utils import get_mail_config
 from mail.utils.dt import parsedate_to_datetime
-from mail.utils.user import has_role, is_administrator, is_local_user
+from mail.utils.user import is_administrator, is_local_user
 from mail.utils.validation import has_permission_for_user
 
 
@@ -812,8 +813,8 @@ def process_pending_emails(mails: list[str]) -> None:
 def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size: int | None = None) -> None:
 	"""Enqueue process pending emails."""
 
-	batch_size = batch_size or cint(frappe.conf.process_pending_emails_batch_size) or 2_500
-	max_batch_size = max_batch_size or cint(frappe.conf.process_pending_emails_max_batch_size) or 25_000
+	batch_size = batch_size or cint(get_mail_config("process_pending_emails_batch_size"))
+	max_batch_size = max_batch_size or cint(get_mail_config("process_pending_emails_max_batch_size"))
 
 	if batch_size > max_batch_size:
 		batch_size = max_batch_size
@@ -858,7 +859,7 @@ def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size
 			frappe.enqueue(
 				process_pending_emails,
 				queue="long",
-				timeout=cint(frappe.conf.process_pending_emails_timeout) or 1500,
+				timeout=cint(get_mail_config("process_pending_emails_timeout")),
 				job_name=f"process_pending_emails_{i}_{len(batch)}",
 				enqueue_after_commit=False,
 				mails=batch,

@@ -112,7 +112,7 @@ def get_mail_backend_api() -> MailBackendAPI:
 
 	return MailBackendAPI(
 		config["server_url"],
-		api_key=config.get("fallback_admin_api_key"),
-		username=config.get("fallback_admin_user"),
-		password=config.get("fallback_admin_password"),
+		api_key=config.get("api_key"),
+		username=config.get("username"),
+		password=config.get("password"),
 	)
