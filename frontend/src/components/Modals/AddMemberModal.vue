@@ -104,15 +104,14 @@ const dayjs = inject('$dayjs')
 const { domains } = userStore()
 
 const ROLE_OPTIONS = [
-	{ label: __('User'), value: 'User' },
-	{ label: __('Admin'), value: 'Admin' },
-	{ label: __('Tenant Admin'), value: 'Tenant Admin' },
+	{ label: __('user'), value: 'user' },
+	{ label: __('tenant-admin'), value: 'tenant-admin' },
 ]
 
 const defaultAccountRequest = {
 	username: '',
 	domain: '',
-	roles: ['User'] as string[],
+	roles: ['user'] as string[],
 	send_invite: true,
 	expires_at: dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm'),
 	backup_email: '',

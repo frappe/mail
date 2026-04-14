@@ -42,11 +42,11 @@
 									:key="role"
 									:label="role"
 									:theme="
-										role === 'Admin'
+										role === 'admin'
 											? 'red'
-											: role === 'Tenant-Admin'
+											: role === 'tenant-admin'
 												? 'orange'
-												: role === 'User'
+												: role === 'user'
 													? 'blue'
 													: 'gray'
 									"

@@ -122,8 +122,8 @@ class MailAccountRequest(Document):
 	def validate_roles(self) -> None:
 		"""Validates the roles."""
 
-		roles = set([r.strip() for r in self.roles.split("\n")]) if self.roles else set()
-		roles.add("User")
+		roles = set([r.strip().lower() for r in self.roles.split("\n")]) if self.roles else set()
+		roles.add("user")
 		self.roles = "\n".join(roles)
 
 	def validate_expired(self) -> None:

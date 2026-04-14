@@ -41,11 +41,11 @@
 									:key="r"
 									:label="r"
 									:theme="
-										r === 'Admin'
+										r === 'admin'
 											? 'red'
-											: r === 'Tenant Admin'
+											: r === 'tenant-admin'
 												? 'orange'
-												: r === 'User'
+												: r === 'user'
 													? 'blue'
 													: 'gray'
 									"

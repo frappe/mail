@@ -83,7 +83,12 @@ class Principal(Document):
 	def _roles(self) -> list[str]:
 		"""Returns a list of roles assigned to the principal."""
 
-		return [r.role.lower() for r in self.get("roles") or []]
+		roles = set([r.role.lower() for r in self.get("roles") or []])
+		if "admin" in roles:
+			roles.remove("admin")
+			roles.add("tenant-admin")
+
+		return list(roles)
 
 	@property
 	def _lists(self) -> list[str]:
@@ -710,7 +715,7 @@ class Principal(Document):
 			]
 			formatted.update(
 				{
-					"roles": [{"role": r.title()} for r in principal.get("roles", [])],
+					"roles": [{"role": r} for r in principal.get("roles", [])],
 					"enabled_permissions": json.dumps(principal.get("enabledPermissions", []), indent=4),
 					"disabled_permissions": json.dumps(principal.get("disabledPermissions", []), indent=4),
 					"permissions": permissions,
