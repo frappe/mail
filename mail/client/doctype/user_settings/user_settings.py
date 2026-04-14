@@ -38,8 +38,11 @@ class UserSettings(Document):
 		if not self.username or self.flags.in_delete:
 			return 0
 
-		service = get_core_service(self.user)
-		return cint(bool(service.cache.get("identities")))
+		try:
+			service = get_core_service(self.user)
+			return cint(bool(service.cache.get("identities")))
+		except Exception:
+			return 0
 
 	@property
 	def has_cached_jmap_mailboxes(self) -> int:
@@ -48,8 +51,11 @@ class UserSettings(Document):
 		if not self.username or self.flags.in_delete:
 			return 0
 
-		service = get_core_service(self.user)
-		return cint(bool(service.cache.get("mailboxes")))
+		try:
+			service = get_core_service(self.user)
+			return cint(bool(service.cache.get("mailboxes")))
+		except Exception:
+			return 0
 
 	@property
 	def total_cached_blobs(self) -> int:

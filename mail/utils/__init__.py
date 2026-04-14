@@ -97,8 +97,11 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		"process_pending_emails_batch_size": 2_500,
 		"process_pending_emails_max_batch_size": 25_000,
 		"process_pending_emails_timeout": 1500,
+		"push_log_file_count": 10,
+		"push_log_level": "INFO",
+		"push_log_max_size": 5_000_000,
 		"rsa_key_size": 2048,
-		"scan_message_timeout": 60 * 2,  # 2 minutes
+		"scan_message_timeout": 2 * 60,  # 2 minutes
 		"server_deployment_timeout": 1500,
 		"server_job_timeout": 1500,
 		"stalwart_cli_command_timeout": 3600,
@@ -121,7 +124,7 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 			frappe.throw(_("Mail config key '{0}' not found").format(key))
 
 		value = config[key]
-		if not value and type(value) not in (int, float):
+		if not value and type(value) not in (int, float, bool):
 			frappe.throw(_("Mail config key '{0}' is not set").format(key))
 
 		return config[key]
@@ -134,11 +137,11 @@ def get_push_logger() -> "Logger":
 
 	config = get_mail_config()
 
-	max_size = cint(config.get("push_log_max_size")) or 5_000_000
-	file_count = cint(config.get("push_log_file_count")) or 10
+	max_size = cint(config["push_log_max_size"])
+	file_count = cint(config["push_log_file_count"])
 	logger = frappe.logger("mail.push", allow_site=True, max_size=max_size, file_count=file_count)
 
-	log_level = config.get("push_log_level", "INFO").upper() or "INFO"
+	log_level = config["push_log_level"].upper()
 	logger.setLevel(log_level)
 
 	return logger
