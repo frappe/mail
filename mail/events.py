@@ -8,28 +8,24 @@ from mail.backend import get_mail_backend_api
 from mail.server.doctype.principal.principal import PRINCIPAL_ENDPOINT, Principal
 from mail.utils import reformat_pbkdf2_hash
 from mail.utils.user import (
-	get_cluster_for_tenant,
 	get_jmap_username,
-	get_tenant_for_user,
 	get_user_hashed_password,
-	has_user_settings,
-	is_tenant_bound_user,
+	is_local_user,
 )
-from mail.utils.validation import ensure_tenant_has_cluster
+from mail.utils.validation import validate_mail_config
 
 
 def update_account_password(doc: Document, method: str | None = None) -> None:
 	"""Update the password in the Principal when the User's password is changed, but ONLY if the hash is different from the backend stored hash."""
 
-	if not (doc.enabled and is_tenant_bound_user(doc.name) and has_user_settings(doc.name)):
+	if not (doc.enabled and is_local_user(doc.name)):
 		return
 
-	tenant = get_tenant_for_user(doc.name)
-	ensure_tenant_has_cluster(tenant)
+	validate_mail_config()
 
 	username = get_jmap_username(doc.name)
 
-	backend = get_mail_backend_api("Mail Cluster", get_cluster_for_tenant(tenant))
+	backend = get_mail_backend_api()
 	principal = Principal._fetch(backend, username, ignore_not_found=False)
 
 	backend_secrets = principal.get("secrets", [])

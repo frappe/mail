@@ -241,7 +241,7 @@ const dropdownOptions = computed(() => [
 			{
 				label: __('View in Desk'),
 				icon: 'external-link',
-				onClick: () => window.open(`/desk/mail-domain/${domainName}`, '_blank')?.focus(),
+				onClick: () => window.open(`/desk/principal/${domainName}`, '_blank')?.focus(),
 			},
 		],
 	},

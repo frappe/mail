@@ -23,8 +23,6 @@ export default defineConfig(({ mode }) => ({
 					frappe: ['file'],
 					mail: [
 						'mail_message',
-						'mail_tenant',
-						'mail_tenant_member',
 						'mail_domain_request',
 						'mail_account_request',
 						'mail_contact',

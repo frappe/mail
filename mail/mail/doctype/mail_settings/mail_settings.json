@@ -25,10 +25,9 @@
   "dns_provider_token",
   "dns_provider_private_zone",
   "signup_tab",
-  "allow_business_signup",
+  "allow_signup",
   "column_break_daqm",
-  "allow_personal_signup",
-  "personal_signup_domains",
+  "signup_domains",
   "spamassassin_tab",
   "section_break_hgqa",
   "enable_spamd",
@@ -168,29 +167,22 @@
   },
   {
    "default": "0",
-   "description": "Allows users to sign up as a business and creates a tenant.",
-   "fieldname": "allow_business_signup",
+   "description": "Allows users to sign up and select a preferred username.",
+   "fieldname": "allow_signup",
    "fieldtype": "Check",
-   "label": "Allow Business Signup"
-  },
-  {
-   "default": "0",
-   "description": "Allows users to sign up for personal use and select a preferred username.",
-   "fieldname": "allow_personal_signup",
-   "fieldtype": "Check",
-   "label": "Allow Personal Signup"
+   "label": "Allow Signup"
   },
   {
    "fieldname": "column_break_daqm",
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.allow_personal_signup",
-   "description": "Domains allowed for personal signup.",
-   "fieldname": "personal_signup_domains",
+   "depends_on": "eval: doc.allow_signup",
+   "description": "Domains allowed for signup.",
+   "fieldname": "signup_domains",
    "fieldtype": "Table MultiSelect",
-   "label": "Personal Signup Domains",
-   "mandatory_depends_on": "eval: doc.allow_personal_signup",
+   "label": "Signup Domains",
+   "mandatory_depends_on": "eval: doc.allow_signup",
    "options": "Personal Signup Domain"
   },
   {

@@ -13,7 +13,7 @@ from frappe.model.document import Document
 from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 
-from mail.utils import get_stalwart_version
+from mail.utils import get_mail_config, get_stalwart_version
 
 
 class ServerDeployment(Document):
@@ -104,7 +104,7 @@ class ServerDeployment(Document):
 				self.name,
 				"execute",
 				queue="long",
-				timeout=cint(frappe.conf.server_deployment_timeout) or 1500,
+				timeout=cint(get_mail_config("server_deployment_timeout")),
 				enqueue_after_commit=True,
 			)
 
@@ -323,7 +323,7 @@ class ServerDeployment(Document):
 			self.name,
 			"execute",
 			queue="long",
-			timeout=cint(frappe.conf.ansible_play_timeout) or 1500,
+			timeout=cint(get_mail_config("server_deployment_timeout")),
 			enqueue_after_commit=True,
 		)
 

@@ -17,10 +17,9 @@ export const userStore = defineStore('mail-users', () => {
 
 			if (data?.is_mail_admin) {
 				domains.fetch()
-				tenantOwner.fetch(data.tenant)
 			}
 
-			if (!data?.is_mail_user) return
+			if (!data?.is_jmap_configured) return
 
 			mailboxes.fetch()
 			addressBooks.fetch()
@@ -54,17 +53,7 @@ export const userStore = defineStore('mail-users', () => {
 
 	const identities = createResource({ url: 'mail.api.account.get_identities' })
 
-	const tenantOwner = createResource({
-		url: 'frappe.client.get_value',
-		makeParams: (tenant: string) => ({
-			doctype: 'Mail Tenant',
-			fieldname: 'user',
-			filters: tenant,
-			as_dict: false,
-		}),
-	})
-
 	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
 
-	return { userResource, mailboxes, mailboxIds, addressBooks, identities, tenantOwner, domains }
+	return { userResource, mailboxes, mailboxIds, addressBooks, identities, domains }
 })

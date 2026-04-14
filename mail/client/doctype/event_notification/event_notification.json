@@ -185,7 +185,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-23 14:53:35.614204",
+ "modified": "2026-04-13 12:51:59.479461",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Event Notification",
@@ -204,7 +204,7 @@
   {
    "delete": 1,
    "read": 1,
-   "role": "Mail User"
+   "role": "All"
   }
  ],
  "row_format": "Dynamic",

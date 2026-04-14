@@ -7,7 +7,7 @@
 		variant="outline"
 		:options="COLOR_SCHEMES"
 	/>
-	<template v-if="user.data.is_mail_user">
+	<template v-if="user.data.is_jmap_configured">
 		<Switch
 			:model-value="showReadingPane"
 			:label="__('Show Reading Pane')"

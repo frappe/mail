@@ -126,7 +126,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-30 11:07:10.753429",
+ "modified": "2026-04-13 12:52:13.936658",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Identity",
@@ -148,7 +148,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

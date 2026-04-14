@@ -9,7 +9,6 @@ export interface User {
 	username: string | null
 	user_image: string | null
 	api_key: string | null
-	tenant: string | null
 	user_settings?: string
 	default_outgoing_email?: string
 	color_scheme?: 'System Default' | 'Light Mode' | 'Dark Mode'
@@ -17,12 +16,10 @@ export interface User {
 	show_reading_pane?: 0 | 1
 
 	enabled: boolean
-	is_mail_user: boolean
 	is_mail_admin: boolean
-	is_tenant_owner?: boolean
 	is_system_manager: boolean
+	is_jmap_configured: boolean
 
-	tenant_name?: string
 	mailboxes: { id: string; name: string; role: string }[]
 }
 

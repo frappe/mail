@@ -7,17 +7,17 @@ import socket
 import frappe
 from croniter import CroniterBadCronError, croniter
 from frappe import _
+from frappe.utils import cint
 from frappe.utils.caching import request_cache
 
+from mail.utils import get_mail_config
 from mail.utils.user import (
-	get_cluster_for_tenant,
-	get_principal_tenant,
-	get_tenant_groups,
-	get_tenant_mailing_lists,
+	get_local_groups,
+	get_local_mailing_lists,
 	is_administrator,
+	is_local_user,
+	is_mail_admin,
 	is_system_manager,
-	is_tenant_admin,
-	is_tenant_bound_user,
 )
 
 
@@ -102,67 +102,65 @@ def validate_domain_is_verified(domain_name: str) -> None:
 
 
 @request_cache
-def validate_domain_owned_by_tenant(domain_name: str, tenant: str) -> None:
-	"""Validates if the domain is owned by the tenant."""
+def validate_local_domain(domain_name: str) -> None:
+	if not frappe.db.exists(
+		"Principal Settings", {"principal_type": "Domain", "principal_name": domain_name}
+	):
+		frappe.throw(_("Domain {0} not found.").format(frappe.bold(domain_name)))
 
-	if tenant != get_principal_tenant(domain_name, raise_exception=False):
-		frappe.throw(_("Domain {0} is not owned by the tenant.").format(frappe.bold(domain_name)))
 
+def validate_max_domains() -> None:
+	"""Validates if the maximum number of domains has been reached."""
 
-def validate_max_domains(tenant: str) -> None:
-	"""Validates if the tenant has reached the maximum limit of domains."""
+	max_domains = cint(get_mail_config("max_domains"))
+	if max_domains <= 0:
+		return
 
-	max_domains = frappe.db.get_value("Mail Tenant", tenant, "max_domains")
-	total_domains = frappe.db.count("Principal Settings", {"tenant": tenant, "principal_type": "Domain"})
+	total_domains = frappe.db.count("Principal Settings", {"principal_type": "Domain"})
 
 	if total_domains >= max_domains:
-		frappe.throw(
-			_("You have reached the maximum limit of {0} domains for the tenant.").format(
-				frappe.bold(max_domains)
-			)
-		)
+		frappe.throw(_("You have reached the maximum limit of {0} domains.").format(frappe.bold(max_domains)))
 
 
-def validate_max_groups(tenant: str) -> None:
-	"""Validates if the tenant has reached the maximum limit of groups."""
+def validate_max_groups() -> None:
+	"""Validates if the maximum number of groups has been reached."""
 
-	max_groups = frappe.db.get_value("Mail Tenant", tenant, "max_groups")
-	total_groups = frappe.db.count("Principal Settings", {"tenant": tenant, "principal_type": "Group"})
+	max_groups = cint(get_mail_config("max_groups"))
+	if max_groups <= 0:
+		return
+
+	total_groups = frappe.db.count("Principal Settings", {"principal_type": "Group"})
 
 	if total_groups >= max_groups:
-		frappe.throw(
-			_("You have reached the maximum limit of {0} groups for the tenant.").format(
-				frappe.bold(max_groups)
-			)
-		)
+		frappe.throw(_("You have reached the maximum limit of {0} groups.").format(frappe.bold(max_groups)))
 
 
-def validate_max_accounts(tenant: str) -> None:
-	"""Validates if the tenant has reached the maximum limit of mail accounts."""
+def validate_max_accounts() -> None:
+	"""Validates if the maximum number of accounts has been reached."""
 
-	max_accounts = frappe.db.get_value("Mail Tenant", tenant, "max_accounts")
-	total_accounts = frappe.db.count("Principal Settings", {"tenant": tenant, "principal_type": "Individual"})
+	max_accounts = cint(get_mail_config("max_accounts"))
+	if max_accounts <= 0:
+		return
+
+	total_accounts = frappe.db.count("Principal Settings", {"principal_type": "Individual"})
 
 	if total_accounts >= max_accounts:
 		frappe.throw(
-			_("You have reached the maximum limit of {0} accounts for the tenant.").format(
-				frappe.bold(max_accounts)
-			)
+			_("You have reached the maximum limit of {0} accounts.").format(frappe.bold(max_accounts))
 		)
 
 
-def validate_max_lists(tenant: str) -> None:
-	"""Validates if the tenant has reached the maximum limit of lists."""
+def validate_max_lists() -> None:
+	"""Validates if the maximum number of lists has been reached."""
 
-	max_lists = frappe.db.get_value("Mail Tenant", tenant, "max_mailing_lists")
-	total_lists = frappe.db.count("Principal Settings", {"tenant": tenant, "principal_type": "List"})
+	max_lists = cint(get_mail_config("max_lists"))
+	if max_lists <= 0:
+		return
+
+	total_lists = frappe.db.count("Principal Settings", {"principal_type": "List"})
 
 	if total_lists >= max_lists:
-		frappe.throw(
-			_("You have reached the maximum limit of {0} lists for the tenant.").format(
-				frappe.bold(max_lists)
-			)
-		)
+		frappe.throw(_("You have reached the maximum limit of {0} lists.").format(frappe.bold(max_lists)))
 
 
 def is_valid_cron_expression(expression: str, raise_exception: bool = False) -> bool:
@@ -346,116 +344,38 @@ def has_permission_for_user(user: str, raise_exception: bool = True) -> bool:
 	return has_permission
 
 
-def ensure_tenant_bound_user(user: str) -> None:
-	"""Raises an exception if the user is not a tenant bound user."""
+def validate_mail_config() -> None:
+	"""Validates the mail configuration. Checks if the server URL is set and if the fallback admin credentials are set."""
 
-	if not is_tenant_bound_user(user):
-		frappe.throw(
-			_("User {0} is not a tenant bound user").format(user),
-			frappe.PermissionError,
-		)
+	config = get_mail_config()
+	if not config:
+		frappe.throw(_("Mail configuration is not set."))
+
+	if not config.get("server_url"):
+		frappe.throw(_("Mail server URL is not set in Mail Configuration."))
+
+	api_key = config.get("api_key")
+
+	username = config.get("username")
+	password = config.get("password")
+
+	if not api_key and not (username and password):
+		frappe.throw(_("Admin credentials are not set in Mail Configuration."))
 
 
-def ensure_access_to_tenant(tenant: str) -> None:
-	"""Ensures that the current user has access to the tenant."""
+def ensure_local_user(user: str) -> None:
+	"""Ensures that the user is a managed user."""
+
+	if not is_local_user(user):
+		frappe.throw(_("User {0} is not a local user.").format(frappe.bold(user)))
+
+
+def ensure_access_to_backend() -> None:
+	"""Ensures that the current user has access to the mail backend."""
 
 	user = frappe.session.user
-	if tenant:
-		if not is_tenant_admin(tenant, user) and not is_system_manager(user):
-			frappe.throw(_("You do not permission to access Tenant {0}.").format(tenant))
-	else:
-		frappe.throw(_("Tenant not specified."))
-
-
-def ensure_tenant_has_cluster(tenant: str) -> None:
-	"""Ensures that the tenant is assigned to a mail cluster."""
-
-	if not get_cluster_for_tenant(tenant):
-		frappe.throw(_("Tenant {0} is not assigned to any cluster.").format(frappe.bold(tenant)))
-
-
-def ensure_principal_belong_to_tenant(tenant: str, principal_name: str, raise_exception: bool = True) -> bool:
-	"""Ensure that the principal belongs to the given tenant."""
-
-	if not frappe.db.exists("Principal Settings", {"tenant": tenant, "principal_name": principal_name}):
-		if raise_exception:
-			frappe.throw(
-				_("Principal {0} does not belong to tenant {1}.").format(
-					frappe.bold(principal_name), frappe.bold(tenant)
-				)
-			)
-		return False
-
-	return True
-
-
-def ensure_emails_belong_to_tenant_domains(tenant: str, emails: list[str]) -> None:
-	"""Ensure that the email domains belong to the given tenant."""
-
-	domains = frappe.db.get_all(
-		"Principal Settings",
-		filters={"tenant": tenant, "principal_type": "Domain", "is_verified": 1},
-		pluck="principal_name",
-	)
-	tenant_name = frappe.db.get_value("Mail Tenant", tenant, "tenant_name")
-
-	for email in emails:
-		_user, domain = email.split("@", 1)
-		if domain not in domains:
-			frappe.throw(
-				_("Email domain {0} is not associated with tenant {1} or is not verified.").format(
-					frappe.bold(domain), frappe.bold(tenant_name)
-				)
-			)
-
-
-def ensure_groups_belong_to_tenant(tenant: str, groups: list[str]) -> None:
-	"""Ensure that the groups belong to the given tenant."""
-
-	tenant_groups = get_tenant_groups(tenant)
-	tenant_name = frappe.db.get_value("Mail Tenant", tenant, "tenant_name")
-
-	for group in groups:
-		if group not in tenant_groups:
-			frappe.throw(
-				_("Group {0} is not associated with tenant {1}.").format(
-					frappe.bold(group), frappe.bold(tenant_name)
-				)
-			)
-
-
-def ensure_lists_belong_to_tenant(tenant: str, lists: list[str]) -> None:
-	"""Ensure that the lists belong to the given tenant."""
-
-	tenant_lists = get_tenant_mailing_lists(tenant)
-	tenant_name = frappe.db.get_value("Mail Tenant", tenant, "tenant_name")
-
-	for lst in lists:
-		if lst not in tenant_lists:
-			frappe.throw(
-				_("List {0} is not associated with tenant {1}.").format(
-					frappe.bold(lst), frappe.bold(tenant_name)
-				)
-			)
-
-
-def ensure_members_belong_to_tenant(tenant: str, members: list[str]) -> None:
-	"""Ensure that the members belong to the given tenant."""
-
-	tenant_emails = frappe.db.get_all(
-		"Principal Settings",
-		filters={"tenant": tenant, "principal_type": ["in", ["Group", "Individual"]]},
-		pluck="principal_name",
-	)
-	tenant_name = frappe.db.get_value("Mail Tenant", tenant, "tenant_name")
-
-	for member in members:
-		if member not in tenant_emails:
-			frappe.throw(
-				_("Member {0} is not associated with tenant {1}.").format(
-					frappe.bold(member), frappe.bold(tenant_name)
-				)
-			)
+	if not is_mail_admin(user) and not is_system_manager(user):
+		frappe.throw(_("You do not have permission to access the mail backend."), frappe.PermissionError)
 
 
 def validate_wildcard_email(email: str, raise_exception: bool = True) -> bool:

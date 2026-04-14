@@ -75,7 +75,7 @@ class DMARCReport(Document):
 		if report := frappe.cache.hget("dmarc_reports", f"{cluster}|{id}"):
 			return report
 
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		response = backend_api.request(method="GET", endpoint=f"/api/reports/dmarc/{id}")
 
 		report = response.json()["data"]
@@ -89,7 +89,7 @@ class DMARCReport(Document):
 	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
 		"""Returns list of DMARC reports from backend."""
 
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		response = backend_api.request(
 			method="GET",
 			endpoint="api/reports/dmarc",
@@ -122,7 +122,7 @@ class DMARCReport(Document):
 		"""Deletes DMARC report from backend and cache."""
 
 		cluster, id = self.name.split("|")
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		backend_api.request(method="DELETE", endpoint=f"/api/reports/dmarc/{id}")
 
 	@staticmethod

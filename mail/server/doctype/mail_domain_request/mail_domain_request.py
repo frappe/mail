@@ -8,40 +8,36 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import random_string
 
-from mail.utils.cache import get_tenant_for_user
 from mail.utils.dns import verify_dns_record
-from mail.utils.user import has_role, is_system_manager, is_tenant_admin
+from mail.utils.user import has_role, is_mail_admin, is_system_manager
 from mail.utils.validation import validate_max_domains
 
 
 class MailDomainRequest(Document):
 	def before_validate(self) -> None:
 		if self.is_new():
-			self.set_user_and_tenant()
+			self.set_user()
 
 	def before_insert(self) -> None:
 		self.set_verification_key()
 
 	def validate(self) -> None:
 		if self.is_new():
-			validate_max_domains(self.tenant)
+			validate_max_domains()
 			self.validate_domain_name()
 
-		self.validate_user_and_tenant()
+		self.validate_user()
 
-	def set_user_and_tenant(self) -> None:
-		"""Set the user and tenant"""
+	def set_user(self) -> None:
+		"""Set the user"""
 
 		user = frappe.session.user
 
 		if is_system_manager(user):
 			if not self.user:
 				frappe.throw(_("User is required"))
-			elif not self.tenant:
-				frappe.throw(_("Tenant is required"))
 		else:
 			self.user = user
-			self.tenant = get_tenant_for_user(user)
 
 	def validate_domain_name(self) -> None:
 		"""Validates the domain name"""
@@ -53,11 +49,11 @@ class MailDomainRequest(Document):
 		if frappe.db.exists("Principal Settings", {"principal_name": self.domain_name}):
 			frappe.throw(_("Domain {0} already registered.").format(frappe.bold(self.domain_name)))
 
-	def validate_user_and_tenant(self) -> None:
-		"""Validates the user and tenant"""
+	def validate_user(self) -> None:
+		"""Validates the user"""
 
-		if not is_tenant_admin(self.tenant, self.user):
-			frappe.throw(_("User must be an admin of the tenant"))
+		if not is_mail_admin(self.user):
+			frappe.throw(_("User {0} is not a Mail Admin.").format(frappe.bold(self.user)))
 
 	def set_verification_key(self) -> None:
 		"""Set the verification key"""
@@ -94,7 +90,6 @@ class MailDomainRequest(Document):
 			frappe.throw(_("Domain {0} already registered.").format(frappe.bold(self.domain_name)))
 
 		principal = frappe.new_doc("Principal")
-		principal.tenant = self.tenant
 		principal.type = "Domain"
 		principal._name = self.domain_name
 		principal.insert(ignore_permissions=True)
@@ -111,7 +106,7 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if is_system_manager(user):
 		return True
 
-	if is_tenant_admin(doc.tenant, user):
+	if is_mail_admin(user):
 		if ptype in ("create", "read", "write"):
 			return True
 
@@ -121,11 +116,7 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 def get_permission_query_condition(user: str | None = None) -> str:
 	user = user or frappe.session.user
 
-	if is_system_manager(user):
+	if is_system_manager(user) or is_mail_admin(user):
 		return ""
-
-	if has_role(user, "Mail Admin"):
-		if tenant := get_tenant_for_user(user):
-			return f"(`tabMail Domain Request`.`tenant` = {frappe.db.escape(tenant)})"
 
 	return "1=0"

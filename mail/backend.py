@@ -7,6 +7,9 @@ import requests
 from frappe import _
 
 from mail.jmap.connection import raise_for_status
+from mail.utils import get_mail_config
+from mail.utils.user import is_jmap_configured, is_mail_admin, is_system_manager
+from mail.utils.validation import validate_mail_config
 
 
 @dataclass
@@ -102,32 +105,26 @@ class MailBackendAPI:
 				frappe.throw(_("Backend request failed. Check Error Log for details."))
 
 
-def get_mail_backend_api(
-	backend_type: Literal["Mail Cluster", "Mail Server"], backend_name: str
-) -> MailBackendAPI:
+def get_mail_backend_api() -> MailBackendAPI:
 	"""Returns an authenticated BackendAPI instance."""
 
-	cluster_name = backend_name
-	if backend_type == "Mail Server":
-		cluster_name = frappe.db.get_value("Mail Server", backend_name, "cluster")
+	user = frappe.session.user
+	if is_mail_admin(user) and not is_system_manager(user):
+		is_jmap_configured(user, raise_exception=True)
 
-		if not cluster_name:
-			frappe.throw(_("Mail Server {0} does not have a cluster.").format(backend_name))
+		user_settings = frappe.get_doc("User Settings", {"user": user})
+		return MailBackendAPI(
+			get_mail_config("server_url"),
+			username=user_settings.username,
+			password=user_settings.get_password("app_password"),
+		)
 
-	cluster = frappe.get_cached_doc("Mail Cluster", cluster_name)
-
-	base_url = cluster.base_url
-	if backend_type == "Mail Server":
-		base_url = frappe.db.get_value("Mail Server", backend_name, "base_url")
-
-		if not base_url:
-			frappe.throw(_("Mail Server {0} does not have a base URL.").format(backend_name))
-
-	api_key = cluster.get_password("api_key") if cluster.api_key else None
+	validate_mail_config()
+	config = get_mail_config()
 
 	return MailBackendAPI(
-		base_url,
-		api_key=api_key,
-		username=cluster.fallback_admin_user,
-		password=cluster.get_password("fallback_admin_password"),
+		config["server_url"],
+		api_key=config.get("api_key"),
+		username=config.get("username"),
+		password=config.get("password"),
 	)

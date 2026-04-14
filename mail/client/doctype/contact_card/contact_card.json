@@ -177,7 +177,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-03-03 14:37:59.531734",
+ "modified": "2026-04-13 12:51:32.378954",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Contact Card",
@@ -199,7 +199,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

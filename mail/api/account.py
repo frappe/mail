@@ -11,9 +11,9 @@ from mail.api.mail import normalize_filter
 from mail.client.doctype.identity.identity import fetch_identities
 from mail.server.doctype.mail_account_request.mail_account_request import create_user
 from mail.utils import convert_html_to_text, user_context
-from mail.utils.cache import get_personal_signup_domains
+from mail.utils.cache import get_signup_domains
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import get_tenant_for_domain, get_user_tenant, has_user_settings
+from mail.utils.user import has_user_settings, is_jmap_configured, is_mail_admin, is_system_manager
 from mail.utils.validation import is_email_assigned
 
 
@@ -28,7 +28,7 @@ def validate_email_assigned(email: str) -> None:
 
 @frappe.whitelist(allow_guest=True)
 @dynamic_rate_limit()
-def personal_signup(
+def signup(
 	username: str,
 	domain: str,
 	email: str,
@@ -36,34 +36,16 @@ def personal_signup(
 	first_name: str,
 	last_name: str | None = None,
 ) -> None:
-	"""Create a new Mail Account for personal signup"""
+	"""Create a new Mail Account for signup"""
 
-	if not frappe.db.get_single_value("Mail Settings", "allow_personal_signup"):
-		frappe.throw(_("Personal signup is disabled."))
+	if not frappe.db.get_single_value("Mail Settings", "allow_signup"):
+		frappe.throw(_("Signup is disabled."))
 
-	if domain not in get_personal_signup_domains():
-		frappe.throw(_("Domain {0} is not allowed for personal signup.").format(domain))
+	if domain not in get_signup_domains():
+		frappe.throw(_("Domain {0} is not allowed for signup.").format(domain))
 
 	with user_context("Administrator"):
-		tenant = get_tenant_for_domain(domain)
-		add_member(tenant, username, domain, "Mail User", False, email, first_name, last_name, password)
-
-
-@frappe.whitelist(allow_guest=True)
-@dynamic_rate_limit()
-def business_signup(email: str) -> str:
-	"""Create a new Mail Account Request for business signup"""
-
-	if not frappe.db.get_single_value("Mail Settings", "allow_business_signup"):
-		frappe.throw(_("Business signup is disabled."))
-
-	account_request = frappe.new_doc("Mail Account Request")
-	account_request.email = email
-	account_request.is_admin = 1
-	account_request.send_invite = 1
-	account_request.insert(ignore_permissions=True)
-
-	return account_request.name
+		add_member(username, domain, ["User"], False, email, first_name, last_name, password)
 
 
 @frappe.whitelist(allow_guest=True)
@@ -98,7 +80,7 @@ def get_account_request(request_key: str) -> dict | None:
 	if account_request := frappe.db.get_value(
 		"Mail Account Request",
 		{"request_key": request_key},
-		["email", "is_verified", "expires_at", "account"],
+		["backup_email", "is_verified", "expires_at", "account"],
 		as_dict=True,
 	):
 		is_expired = 0
@@ -122,7 +104,7 @@ def create_account(request_key: str, first_name: str, last_name: str, password: 
 	if account_request.account:
 		account_request.create_account(first_name, last_name, password)
 	else:
-		create_user(account_request.email, first_name, last_name, password, ["Mail Admin"])
+		create_user(account_request.backup_email, first_name, last_name, password, ["Mail Admin"])
 
 
 @frappe.whitelist(allow_guest=True)
@@ -170,17 +152,9 @@ def get_user_info() -> dict | None:
 
 	data = result[0]
 
-	user_roles = frappe.get_roles(user)
-	data.tenant = get_user_tenant()
-	data.is_mail_user = "Mail User" in user_roles and user != "Administrator"
-	data.is_mail_admin = "Mail Admin" in user_roles
-	data.is_system_manager = "System Manager" in user_roles or user == "Administrator"
-
-	if data.tenant:
-		data.tenant_name, tenant_owner = frappe.db.get_value(
-			"Mail Tenant", data.tenant, ["tenant_name", "user"]
-		)
-		data.is_tenant_owner = tenant_owner == user
+	data.is_mail_admin = is_mail_admin(user)
+	data.is_system_manager = is_system_manager(user)
+	data.is_jmap_configured = is_jmap_configured(user)
 
 	return data
 

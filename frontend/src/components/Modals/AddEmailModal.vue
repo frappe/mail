@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { Dialog, FeatherIcon, FormControl, createResource } from 'frappe-ui'
 
 import { userStore } from '@/stores/user'
@@ -65,7 +65,6 @@ const { isList } = defineProps<{ isList: boolean }>()
 
 const emit = defineEmits(['addEmail'])
 
-const user = inject('$user')
 const { domains } = userStore()
 
 const email = ref('')
@@ -76,7 +75,7 @@ const lists = createResource({
 	url: 'mail.api.admin.get_mailing_lists',
 	auto: true,
 	transform: (data) => data.map((l) => l.name),
-	cache: ['mailTenantMailingLists', user.data?.tenant],
+	cache: ['mailMailingLists'],
 })
 
 watch(show, (val) => {

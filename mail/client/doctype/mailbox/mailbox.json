@@ -270,7 +270,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-30 11:11:20.151804",
+ "modified": "2026-04-13 12:55:28.382075",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox",
@@ -292,7 +292,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

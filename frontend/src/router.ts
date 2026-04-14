@@ -11,21 +11,9 @@ const routes = [
 		meta: { isLogin: true },
 	},
 	{
-		path: '/signup/personal',
-		name: 'PersonalSignUp',
-		component: () => import('@/pages/SignupView.vue'),
-		meta: { isLogin: true },
-	},
-	{
-		path: '/signup/business',
-		name: 'BusinessSignUp',
-		component: () => import('@/pages/BusinessSignupView.vue'),
-		meta: { isLogin: true },
-	},
-	{
-		path: '/signup/business/:requestKey',
-		name: 'BusinessSetup',
-		component: () => import('@/pages/BusinessSignupView.vue'),
+		path: '/signup/:requestKey',
+		name: 'InviteSetup',
+		component: () => import('@/pages/InviteSetupView.vue'),
 		props: true,
 		meta: { isLogin: true },
 	},
@@ -47,12 +35,6 @@ const routes = [
 		component: () => import('@/pages/ResetPasswordView.vue'),
 		props: true,
 		meta: { isLogin: true },
-	},
-	{
-		path: '/setup',
-		name: 'Setup',
-		component: () => import('@/pages/SetupView.vue'),
-		meta: { isSetup: true },
 	},
 	{
 		path: '/mailbox/:mailbox',
@@ -175,13 +157,12 @@ router.beforeEach(async (to, _, next) => {
 	const mailboxRoute = { name: 'Mailbox', params: { mailbox: mailboxes.data?.[0]?.id } }
 
 	if (user.is_mail_admin) {
-		if (!user.tenant) return to.meta.isSetup ? next() : next({ name: 'Setup' })
-		if (!user.is_mail_user && !to.meta.isDashboard) return next({ name: 'Domains' })
+		if (!user.is_jmap_configured && !to.meta.isDashboard) return next({ name: 'Domains' })
 	} else if (to.meta.isDashboard) return next(mailboxRoute)
 
 	if (['/', '/mailbox', '/mailbox/'].includes(to.path)) return next(mailboxRoute)
 
-	return to.meta.isLogin || to.meta.isSetup ? next(mailboxRoute) : next()
+	return to.meta.isLogin ? next(mailboxRoute) : next()
 })
 
 export default router

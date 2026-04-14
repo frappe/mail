@@ -16,7 +16,7 @@ from frappe.utils import cint, random_string
 from mail.backend import MailBackendAPI, Principal
 from mail.jmap.connection import raise_for_status
 from mail.server.doctype.dns_record.dns_record import create_or_update_dns_record
-from mail.utils import generate_secret, get_spf_host_for_cluster, hash_password
+from mail.utils import generate_secret, get_mail_config, get_spf_host_for_cluster, hash_password
 from mail.utils.dns import get_dns_record
 from mail.utils.validation import is_valid_cron_expression
 
@@ -124,9 +124,7 @@ class MailCluster(Document):
 		if self.enabled:
 			return
 
-		if tenant := frappe.db.exists("Mail Tenant", {"cluster": self.name}):
-			frappe.throw(_("Mail Tenant {0} is using this cluster.").format(frappe.bold(tenant)))
-		elif server := frappe.db.exists("Mail Server", {"enabled": 1, "cluster": self.name}):
+		if server := frappe.db.exists("Mail Server", {"enabled": 1, "cluster": self.name}):
 			frappe.throw(
 				_("Mail Server {0} is enabled. Please disable it first.").format(frappe.bold(server))
 			)
@@ -333,43 +331,6 @@ class MailCluster(Document):
 
 		return f"api_{base64.b64encode(f'{name}:{secret}'.encode()).decode()}"
 
-	@frappe.whitelist()
-	def reload_config(self) -> None:
-		"""Reloads the Mail Cluster configuration."""
-
-		if not frappe.flags.ignore_permissions:
-			frappe.only_for("System Manager")
-
-		if not self.enabled:
-			frappe.throw(_("Mail Cluster {0} is disabled.").format(frappe.bold(self.name)))
-
-		servers = frappe.db.get_all("Mail Server", filters={"cluster": self.name, "enabled": 1}, pluck="name")
-		for server in servers:
-			server = frappe.get_cached_doc("Mail Server", server)
-			server.reload_config()
-
-
-@frappe.whitelist()
-def reload_clusters_config(clusters: str | list[str]) -> None:
-	"""Reloads the configuration of the specified clusters."""
-
-	frappe.flags.ignore_permissions = True
-
-	if isinstance(clusters, str):
-		clusters = json.loads(clusters)
-
-	reloaded_clusters = []
-	for cluster in clusters:
-		cluster = frappe.get_cached_doc("Mail Cluster", cluster)
-		if cluster.enabled:
-			cluster.reload_config()
-			reloaded_clusters.append(cluster.name)
-		else:
-			frappe.msgprint(_("Mail Cluster {0} is disabled.").format(frappe.bold(cluster.name)), alert=True)
-
-	if reloaded_clusters:
-		frappe.msgprint(_("Configuration reloaded."), alert=True)
-
 
 def get_storage_labels() -> dict:
 	"""Returns the storage labels."""
@@ -387,7 +348,7 @@ def create_or_update_spf_dns_record_for_cluster(cluster: str) -> None:
 	"""Creates or updates the SPF DNS record for the cluster."""
 
 	spf_host = get_spf_host_for_cluster(cluster)
-	default_ttl = cint(frappe.conf.default_dns_ttl) or 3600
+	default_ttl = cint(get_mail_config("default_dns_ttl"))
 
 	SERVER = frappe.qb.DocType("Mail Server")
 	CLUSTER = frappe.qb.DocType("Mail Cluster")

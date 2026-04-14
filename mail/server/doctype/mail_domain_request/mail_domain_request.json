@@ -7,7 +7,6 @@
  "field_order": [
   "section_break_c44a",
   "user",
-  "tenant",
   "domain_name",
   "column_break_batf",
   "verification_key",
@@ -60,26 +59,13 @@
    "search_index": 1
   },
   {
-   "fieldname": "tenant",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Tenant",
-   "no_copy": 1,
-   "options": "Mail Tenant",
-   "permlevel": 1,
-   "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "section_break_c44a",
    "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-01-28 15:33:09.730936",
+ "modified": "2026-04-12 23:51:49.709930",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Domain Request",
@@ -126,6 +112,7 @@
    "role": "Mail Admin"
   }
  ],
+ "row_format": "Dynamic",
  "show_title_field_in_link": 1,
  "sort_field": "creation",
  "sort_order": "DESC",
