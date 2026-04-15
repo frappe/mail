@@ -192,6 +192,7 @@ has_permission = {
 	"Push Subscription": "mail.client.doctype.push_subscription.push_subscription.has_permission",
 	"Quota": "mail.client.doctype.quota.quota.has_permission",
 	"Sieve Script": "mail.client.doctype.sieve_script.sieve_script.has_permission",
+	"User Account": "mail.client.doctype.user_account.user_account.has_permission",
 	"User Settings": "mail.client.doctype.user_settings.user_settings.has_permission",
 	"Vacation Response": "mail.client.doctype.vacation_response.vacation_response.has_permission",
 }

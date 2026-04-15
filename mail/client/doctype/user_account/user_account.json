@@ -1,0 +1,124 @@
+{
+ "actions": [],
+ "creation": "2026-04-15 07:46:52.716128",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_ekq5",
+  "user",
+  "column_break_ukmq",
+  "id",
+  "_name",
+  "is_personal",
+  "is_read_only",
+  "capabilities_section",
+  "capabilities"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_ekq5",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_ukmq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name",
+   "no_copy": 1,
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_personal",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Personal",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_read_only",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Readonly",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "capabilities_section",
+   "fieldtype": "Section Break",
+   "label": "Capabilities"
+  },
+  {
+   "depends_on": "eval: doc.capabilities && doc.capabilities != \"{}\"",
+   "fieldname": "capabilities",
+   "fieldtype": "JSON",
+   "label": "Capabilities",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_virtual": 1,
+ "links": [],
+ "modified": "2026-04-15 08:27:17.244854",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "User Account",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
