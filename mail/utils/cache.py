@@ -22,7 +22,7 @@ def get_signup_domains() -> list:
 	return frappe.cache.hget("mail-settings", "signup_domains", generator)
 
 
-def get_user_emails(user: str) -> list:
+def get_account_emails(user: str) -> list:
 	"""Returns the list of emails associated with the user."""
 
 	def generator() -> list:

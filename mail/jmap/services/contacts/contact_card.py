@@ -218,7 +218,7 @@ class ContactCardService(ContactsService):
 					[
 						f"{self.type}/set",
 						{
-							"accountId": self.primary_account_id,
+							"accountId": self.account_id,
 							"update": {id: payload for id in batch},
 						},
 						"0",

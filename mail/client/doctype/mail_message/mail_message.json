@@ -19,7 +19,7 @@
   "has_keyword",
   "not_keyword",
   "section_break_8xbl",
-  "user",
+  "account",
   "from_name",
   "from_email",
   "column_break_nwlx",
@@ -468,17 +468,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "options": "User",
-   "read_only": 1,
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "before",
    "fieldtype": "Datetime",
    "hidden": 1,
@@ -600,6 +589,17 @@
    "label": "Body",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "options": "User Account",
+   "read_only": 1,
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
@@ -607,7 +607,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-13 12:54:57.926655",
+ "modified": "2026-04-15 14:10:29.833441",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message",

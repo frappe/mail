@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_qwpt",
-  "user",
+  "account",
   "column_break_owjz",
   "may_delete",
   "section_break_mtnr",
@@ -48,7 +48,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "ID",
+   "label": "Identity ID",
    "read_only": 1,
    "set_only_once": 1
   },
@@ -110,14 +110,14 @@
    "label": "Signature"
   },
   {
-   "description": "The user this identity belongs to.",
-   "fieldname": "user",
+   "description": "The account this identity belongs to.",
+   "fieldname": "account",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "User",
+   "label": "Account",
    "no_copy": 1,
-   "options": "User",
+   "options": "User Account",
    "reqd": 1,
    "set_only_once": 1
   }
@@ -126,7 +126,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-13 12:52:13.936658",
+ "modified": "2026-04-15 11:06:39.040222",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Identity",

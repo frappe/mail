@@ -41,8 +41,8 @@ class EmailSubmissionService(CoreService):
 
 		method_calls = []
 
-		identity_service = IdentityService(self.user, self.connection)
-		mailbox_service = MailboxService(self.user, self.connection)
+		identity_service = IdentityService(self.account, self.connection)
+		mailbox_service = MailboxService(self.account, self.connection)
 
 		draft_mailbox_id = mailbox_service.get_mailbox_id_by_role(
 			"drafts", create_if_not_exists=True, raise_exception=True
@@ -127,7 +127,7 @@ class EmailSubmissionService(CoreService):
 
 		if create_payload:
 			payload = {
-				"accountId": self.primary_account_id,
+				"accountId": self.account_id,
 				"create": create_payload,
 			}
 

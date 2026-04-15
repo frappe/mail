@@ -14,7 +14,7 @@ from mail.client.doctype.sieve_script.sieve_script import (
 	get_active_sieve_script_id,
 	set_last_active_sieve_script_id,
 )
-from mail.jmap import get_vacation_response_service
+from mail.jmap import get_vacation_response_service, parse_account
 from mail.utils import convert_html_to_text
 from mail.utils.dt import convert_to_utc
 from mail.utils.validation import has_permission_for_user
@@ -26,22 +26,21 @@ class VacationResponse(Document):
 
 	@frappe.whitelist()
 	def load_from_db(self) -> "VacationResponse":
-		self.user = self.get("user") or frappe.session.user
+		self.account = self.get("account")
 
-		if not self.user or self.user in ("Guest", "Administrator"):
-			self.user = None
-			frappe.msgprint(_("Please select a user to view vacation response details."), alert=True)
+		if not self.account:
+			frappe.msgprint(_("Please select an account to view vacation response details."), alert=True)
 			return super(Document, self).__init__({"creation": today(), "modified": today()})
 
-		vc = get_vacation_response(self.user)
+		vc = get_vacation_response(self.account)
 		return super(Document, self).__init__(vc)
 
 	def on_update(self) -> None:
-		if not self.user or self.user in ("Guest", "Administrator"):
+		if not self.account:
 			return
 
 		update_vacation_response(
-			self.user,
+			self.account,
 			self.enabled,
 			self.from_date,
 			self.to_date,
@@ -68,19 +67,20 @@ class VacationResponse(Document):
 
 
 @frappe.whitelist()
-def get_vacation_response(user: str) -> dict:
-	"""Returns the vacation response settings for the given user."""
+def get_vacation_response(account: str) -> dict:
+	"""Returns the vacation response settings for the given account."""
 
+	user, _account_id = parse_account(account)
 	has_permission_for_user(user)
 
-	service = get_vacation_response_service(user)
+	service = get_vacation_response_service(account)
 	vc = service.get()
-	return format_vacation_response(user, vc)
+	return format_vacation_response(account, vc)
 
 
 @frappe.whitelist()
 def update_vacation_response(
-	user: str,
+	account: str,
 	enabled: bool | int,
 	from_date: datetime | str | None = None,
 	to_date: datetime | str | None = None,
@@ -88,8 +88,9 @@ def update_vacation_response(
 	text_body: str | None = None,
 	html_body: str | None = None,
 ) -> None:
-	"""Updates the vacation response settings for the given user."""
+	"""Updates the vacation response settings for the given account."""
 
+	user, account_id = parse_account(account)
 	has_permission_for_user(user)
 
 	enabled = bool(enabled)
@@ -102,9 +103,11 @@ def update_vacation_response(
 	if not convert_html_to_text(html_body):
 		html_body = None
 
-	current_active_sieve_script_id = get_active_sieve_script_id(user)
+	service = get_vacation_response_service(account)
+	current_active_sieve_script_id = (
+		get_active_sieve_script_id(account) if account_id == service.personal_account_id else None
+	)
 
-	service = get_vacation_response_service(user)
 	previous_vacation_response = service.get()
 
 	vacation_update_result = service.update(
@@ -118,15 +121,15 @@ def update_vacation_response(
 		}
 	)
 
-	if vacation_update_result.get("updated"):
+	if vacation_update_result.get("updated") and account_id == service.personal_account_id:
 		if enabled:
 			if not previous_vacation_response.get("isEnabled"):
 				set_last_active_sieve_script_id(user, current_active_sieve_script_id)
 		else:
-			activate_last_active_sieve_script(user)
+			activate_last_active_sieve_script(account)
 
 
-def format_vacation_response(user, vc: dict) -> dict:
+def format_vacation_response(account, vc: dict) -> dict:
 	"""Formats the vacation response data."""
 
 	from_date = vc.get("fromDate", None)
@@ -136,7 +139,7 @@ def format_vacation_response(user, vc: dict) -> dict:
 	local_to_date = convert_utc_to_system_timezone(get_datetime(to_date)) if to_date else None
 
 	return {
-		"user": user,
+		"account": account,
 		"enabled": cint(vc.get("isEnabled")),
 		"from_date": local_from_date,
 		"to_date": local_to_date,
@@ -152,4 +155,6 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Vacation Response":
 		return False
 
-	return has_permission_for_user(doc.user, raise_exception=False)
+	doc_user, _account_id = parse_account(doc.account)
+
+	return has_permission_for_user(doc_user, raise_exception=False)

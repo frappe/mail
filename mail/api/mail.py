@@ -26,8 +26,8 @@ from mail.client.doctype.mailbox.mailbox import add_mailbox, delete_mailboxes
 from mail.client.doctype.mailbox_settings.mailbox_settings import set_mailbox_settings
 from mail.jmap import get_email_service, get_mailbox_id_by_role
 from mail.utils import convert_html_to_text, get_mail_config
-from mail.utils.cache import get_user_emails
-from mail.utils.user import has_role, is_jmap_configured
+from mail.utils.cache import get_account_emails
+from mail.utils.user import is_jmap_configured
 from mail.utils.validation import has_permission_for_user
 
 AVATAR_CACHE_TTL = 60 * 60 * 24
@@ -92,7 +92,7 @@ def add_user_images_to_emails(mails: list[dict], is_thread: bool = False) -> lis
 
 	email_map: dict[str, str] = {}
 	rcpt_order = {"To": 0, "Cc": 1, "Bcc": 2}
-	user_emails = {e.lower() for e in get_user_emails(frappe.session.user)}
+	user_emails = {e.lower() for e in get_account_emails(frappe.session.user)}
 
 	for mail in mails:
 		name = mail["name"]

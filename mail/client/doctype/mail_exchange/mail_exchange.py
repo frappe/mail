@@ -810,7 +810,7 @@ class MailExchange(Document):
 				method_calls=[
 					[
 						f"{service.type}/import",
-						{"accountId": service.primary_account_id, "emails": emails},
+						{"accountId": service.account_id, "emails": emails},
 						"0",
 					]
 				],

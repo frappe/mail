@@ -27,9 +27,9 @@ frappe.ui.form.on('Calendar Event', {
 
 	set_queries(frm) {
 		frm.set_query('calendar', 'calendars', () => ({
-			query: 'mail.utils.query.get_user_calendars',
+			query: 'mail.utils.query.get_account_calendars',
 			filters: {
-				user: frm.doc.user,
+				account: frm.doc.account,
 			},
 		}))
 	},

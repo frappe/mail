@@ -18,7 +18,7 @@ class UserAccount(Document):
 		raise NotImplementedError
 
 	def load_from_db(self) -> "UserAccount":
-		user, id = self.name.split("|")
+		user, id = self.name.split(":")
 		account = get_user_account(user, id)
 		return super(Document, self).__init__(account)
 
@@ -110,7 +110,7 @@ def format_user_account(user: str, account: dict) -> dict:
 	"""Formats account data for display."""
 
 	return {
-		"name": f"{user}|{account['id']}",
+		"name": f"{user}:{account['id']}",
 		"user": user,
 		"id": account["id"],
 		"_name": account["name"],

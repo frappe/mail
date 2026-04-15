@@ -176,12 +176,6 @@ def get_local_emails(order_by: str = "creation desc") -> list[str]:
 	)
 
 
-def get_sync_state(user: str, type: Literal["email"]) -> str | None:
-	"""Returns the Sync State for the given user and type."""
-
-	return frappe.db.get_value("User Settings", {"user": user}, f"{type}_current_state")
-
-
 @frappe.whitelist(methods=["POST"])
 def generate_user_keys(user: str) -> dict:
 	"""Generates API and Secret keys for the user."""
@@ -194,25 +188,41 @@ def generate_user_keys(user: str) -> dict:
 	frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
-def update_sync_state(user: str, type: Literal["email"], state: str) -> None:
-	"""Updates the Sync State for the given user and type."""
+def get_sync_state(account: str, type: Literal["email"]) -> str | None:
+	"""Returns the Sync State for the given account and type."""
+
+	value = frappe.db.get_value("Account State", {"account": account}, f"{type}_current_state")
+
+	if not value and not frappe.db.exists("Account State", {"account": account}):
+		state = frappe.new_doc("Account State")
+		state.account = account
+		state.flags.ignore_links = True
+		state.insert(ignore_permissions=True)
+
+	return value
+
+
+def update_sync_state(account: str, type: Literal["email"], state: str) -> None:
+	"""Updates the Sync State for the given account and type."""
 
 	state_last_update = f"{type}_state_last_update"
 	previous_state = f"{type}_previous_state"
 	current_state = f"{type}_current_state"
 
-	USER_SETTINGS = frappe.qb.DocType("User Settings")
+	ACCOUNT_STATE = frappe.qb.DocType("Account State")
 	(
-		frappe.qb.update(USER_SETTINGS)
-		.set(getattr(USER_SETTINGS, state_last_update), frappe.utils.now())
-		.set(getattr(USER_SETTINGS, previous_state), getattr(USER_SETTINGS, current_state))
-		.set(getattr(USER_SETTINGS, current_state), state)
-		.where(USER_SETTINGS.user == user)
+		frappe.qb.update(ACCOUNT_STATE)
+		.set(getattr(ACCOUNT_STATE, state_last_update), frappe.utils.now())
+		.set(getattr(ACCOUNT_STATE, previous_state), getattr(ACCOUNT_STATE, current_state))
+		.set(getattr(ACCOUNT_STATE, current_state), state)
+		.where(ACCOUNT_STATE.account == account)
 	).run()
 
 
 @reconnect_on_failure()
-def clear_sync_state(user: str, type: Literal["email"]) -> None:
-	"""Clear the Sync State for the given user and type."""
+def clear_sync_state(account: str, type: Literal["email"]) -> None:
+	"""Clear the Sync State for the given account and type."""
 
-	frappe.db.set_value("User Settings", {"user": user}, f"{type}_current_state", None, update_modified=False)
+	frappe.db.set_value(
+		"Account State", {"account": account}, f"{type}_current_state", None, update_modified=False
+	)

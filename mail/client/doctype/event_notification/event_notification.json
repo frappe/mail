@@ -4,7 +4,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "user",
+  "account",
   "column_break_oamr",
   "draft",
   "section_break_iay5",
@@ -31,23 +31,11 @@
    "fieldtype": "Section Break"
   },
   {
-   "description": "The user this notification belongs to.",
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "no_copy": 1,
-   "options": "User",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
    "description": "The id of the Event Notification.",
    "fieldname": "id",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "ID",
+   "label": "Event Notification ID",
    "no_copy": 1,
    "read_only": 1,
    "set_only_once": 1
@@ -179,13 +167,25 @@
    "label": "Event Patch",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "description": "The account this notification belongs to.",
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "no_copy": 1,
+   "options": "User Account",
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-13 12:51:59.479461",
+ "modified": "2026-04-15 11:19:52.949998",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Event Notification",

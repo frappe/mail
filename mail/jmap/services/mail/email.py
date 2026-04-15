@@ -29,7 +29,7 @@ class EmailService(MailService):
 		draft_calls, draft_refs = self._create(emails, call_id_gen)
 		method_calls.extend(draft_calls)
 
-		submission_service = EmailSubmissionService(self.user, self.connection)
+		submission_service = EmailSubmissionService(self.account, self.connection)
 		submission_calls = submission_service._create(emails, draft_refs, call_id_gen)
 		method_calls.extend(submission_calls)
 
@@ -188,7 +188,7 @@ class EmailService(MailService):
 			[
 				f"{self._type}/query",
 				{
-					"accountId": self.primary_account_id,
+					"accountId": self.account_id,
 					"filter": f,
 					"position": 0,
 					"limit": limit,
@@ -225,7 +225,7 @@ class EmailService(MailService):
 					[
 						f"{self.type}/query",
 						{
-							"accountId": self.primary_account_id,
+							"accountId": self.account_id,
 							"filter": filter,
 							"sort": [{"property": "receivedAt", "isAscending": False}],
 							"position": fetched,
@@ -236,7 +236,7 @@ class EmailService(MailService):
 					[
 						f"{self.type}/get",
 						{
-							"accountId": self.primary_account_id,
+							"accountId": self.account_id,
 							"#ids": {"resultOf": "0", "name": f"{self.type}/query", "path": "/ids"},
 							"properties": ["id", "threadId"],
 						},
@@ -298,7 +298,7 @@ class EmailService(MailService):
 			[
 				f"{self._type}/query",
 				{
-					"accountId": self.primary_account_id,
+					"accountId": self.account_id,
 					"filter": f,
 					"position": 0,
 					"limit": limit,
@@ -336,7 +336,7 @@ class EmailService(MailService):
 		method_calls = []
 		draft_refs = {}
 
-		mailbox_service = MailboxService(self.user, self.connection)
+		mailbox_service = MailboxService(self.account, self.connection)
 		draft_mailbox_id = mailbox_service.get_mailbox_id_by_role(
 			"drafts", create_if_not_exists=True, raise_exception=True
 		)
@@ -356,7 +356,7 @@ class EmailService(MailService):
 					[
 						f"{self.type}/import",
 						{
-							"accountId": self.primary_account_id,
+							"accountId": self.account_id,
 							"emails": {
 								draft_ref: {
 									"blobId": blob["blobId"],
@@ -375,7 +375,7 @@ class EmailService(MailService):
 						[
 							f"{self.type}/set",
 							{
-								"accountId": self.primary_account_id,
+								"accountId": self.account_id,
 								"destroy": [email.existing_id],
 							},
 							call_id_gen.next(),
@@ -388,7 +388,7 @@ class EmailService(MailService):
 
 			else:
 				payload = {
-					"accountId": self.primary_account_id,
+					"accountId": self.account_id,
 					"create": {draft_ref: self._get_draft(email, draft_mailbox_id)},
 				}
 

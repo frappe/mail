@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_j2bb",
-  "user",
+  "account",
   "section_break_chdl",
   "id",
   "url",
@@ -18,17 +18,6 @@
   {
    "fieldname": "section_break_j2bb",
    "fieldtype": "Section Break"
-  },
-  {
-   "description": "The user this push subscription belongs to.",
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "options": "User",
-   "reqd": 1,
-   "set_only_once": 1
   },
   {
    "fieldname": "section_break_chdl",
@@ -78,16 +67,27 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "ID",
+   "label": "Push Subscription ID",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "description": "The account this push subscription belongs to.",
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "options": "User Account",
+   "reqd": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-13 12:55:50.911101",
+ "modified": "2026-04-15 12:48:16.123603",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Push Subscription",

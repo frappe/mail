@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Vacation Response', {
-	user(frm) {
+	account(frm) {
 		frm.trigger('get_vacation_response')
 	},
 

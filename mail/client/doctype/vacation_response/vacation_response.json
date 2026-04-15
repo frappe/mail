@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_bvdc",
-  "user",
+  "account",
   "column_break_ksnk",
   "enabled",
   "section_break_rrca",
@@ -23,21 +23,12 @@
    "fieldtype": "Section Break"
   },
   {
-   "description": "The user this vacation response belongs to.",
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "User",
-   "options": "User",
-   "reqd": 1
-  },
-  {
    "fieldname": "column_break_ksnk",
    "fieldtype": "Column Break"
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.user",
+   "depends_on": "eval: doc.account",
    "description": "Should a vacation response be sent if a message arrives between the From Date and To Date?",
    "fieldname": "enabled",
    "fieldtype": "Check",
@@ -48,14 +39,14 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval: doc.user",
+   "depends_on": "eval: doc.account",
    "description": "Messages that arrive on or after this date-time (but before the To Date if defined) should receive the user's vacation response.",
    "fieldname": "from_date",
    "fieldtype": "Datetime",
    "label": "From Date"
   },
   {
-   "depends_on": "eval: doc.user",
+   "depends_on": "eval: doc.account",
    "description": "Messages that arrive before this date-time (but on or after the From Date if defined) should receive the user's vacation response.",
    "fieldname": "to_date",
    "fieldtype": "Datetime",
@@ -66,7 +57,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval: doc.user",
+   "depends_on": "eval: doc.account",
    "description": "The subject that will be used by the message sent in response to messages when the vacation response is enabled.",
    "fieldname": "subject",
    "fieldtype": "Data",
@@ -77,18 +68,27 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval: doc.user",
+   "depends_on": "eval: doc.account",
    "description": "The plaintext body to send in response to messages when the vacation response is enabled.",
    "fieldname": "text_body",
    "fieldtype": "Code",
    "label": "Text"
   },
   {
-   "depends_on": "eval: doc.user",
+   "depends_on": "eval: doc.account",
    "description": "The HTML body to send in response to messages when the vacation response is enabled.",
    "fieldname": "html_body",
    "fieldtype": "Text Editor",
    "label": "HTML"
+  },
+  {
+   "description": "The account this vacation response belongs to.",
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Account",
+   "options": "User Account",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
@@ -96,7 +96,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-04-13 12:56:15.406985",
+ "modified": "2026-04-15 13:01:25.390374",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Vacation Response",

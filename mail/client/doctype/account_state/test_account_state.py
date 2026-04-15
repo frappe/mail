@@ -1,4 +1,4 @@
-# Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and Contributors
+# Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
 
 # import frappe
@@ -11,9 +11,9 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class IntegrationTestPushSubscription(IntegrationTestCase):
+class IntegrationTestAccountState(IntegrationTestCase):
 	"""
-	Integration tests for PushSubscription.
+	Integration tests for AccountState.
 	Use this class for testing interactions between multiple components.
 	"""
 
