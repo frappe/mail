@@ -88,6 +88,7 @@ declare module 'vue' {
     SendMail: typeof import('./src/components/SendMail.vue')['default']
     SendMailMobileLayout: typeof import('./src/components/SendMailMobileLayout.vue')['default']
     SetDefaultSignatureModal: typeof import('./src/components/Modals/SetDefaultSignatureModal.vue')['default']
+    SetSieveScriptStateModal: typeof import('./src/components/Modals/SetSieveScriptStateModal.vue')['default']
     SettingsModal: typeof import('./src/components/Modals/SettingsModal.vue')['default']
     ShortcutsModal: typeof import('./src/components/Modals/ShortcutsModal.vue')['default']
     SignatureSettings: typeof import('./src/components/Settings/SignatureSettings.vue')['default']

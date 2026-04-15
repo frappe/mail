@@ -347,6 +347,16 @@ def get_sieve_scripts() -> list[dict]:
 
 
 @frappe.whitelist()
+def update_sieve_script(name: str, _name: str | None = None, active: bool = False) -> None:
+	"""Update a sieve script for the user"""
+
+	doc = frappe.get_doc("Sieve Script", name)
+	doc._name = _name
+	doc.active = active
+	doc.save()
+
+
+@frappe.whitelist()
 def delete_sieve_script(name: str) -> None:
 	"""Delete a sieve script for the user"""
 

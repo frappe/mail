@@ -4,10 +4,10 @@
 		<Button icon-left="plus" :label="__('New')" @click="showAddScript = true" />
 	</div>
 
-	<div v-if="scripts?.data?.filter((s) => s._name !== 'vacation').length">
+	<div v-if="filteredScripts.length">
 		<div class="text-ink-gray-5 py-2 text-sm">{{ __('Script Name') }}</div>
 		<div
-			v-for="script in scripts?.data"
+			v-for="script in filteredScripts"
 			:key="script.name"
 			class="flex items-center justify-between border-t py-1"
 		>
@@ -49,6 +49,13 @@
 		:script="selectedScript"
 		@reload-scripts="scripts.reload()"
 	/>
+	<SetSieveScriptStateModal
+		v-if="selectedScript"
+		v-model="showSetScriptAsActive"
+		:script="selectedScript"
+		:current-active-script="scripts.data.find((s) => s.active)"
+		@reload-scripts="scripts.reload()"
+	/>
 	<DeleteSieveScriptModal
 		v-if="selectedScript"
 		v-model="showDeleteScript"
@@ -58,13 +65,14 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { Ellipsis } from 'lucide-vue-next'
 import { Badge, Button, Dropdown, createResource } from 'frappe-ui'
 
 import AddSieveScriptModal from '@/components/Modals/AddSieveScriptModal.vue'
 import DeleteSieveScriptModal from '@/components/Modals/DeleteSieveScriptModal.vue'
 import EditSieveScriptModal from '@/components/Modals/EditSieveScriptModal.vue'
+import SetSieveScriptStateModal from '@/components/Modals/SetSieveScriptStateModal.vue'
 
 import type { SieveScript } from '@/types'
 
@@ -81,6 +89,8 @@ const scripts = createResource({
 	auto: true,
 	cache: ['sieveScripts', user.data.name],
 })
+
+const filteredScripts = computed(() => scripts.data?.filter((s) => s._name !== 'vacation') || [])
 
 const scriptOptions = (script: SieveScript) => [
 	{
