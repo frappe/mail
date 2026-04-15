@@ -1,7 +1,7 @@
 <template>
 	<div class="flex items-center justify-between">
 		<h1>{{ __('Sieve Scripts') }}</h1>
-		<Button icon-left="plus" :label="__('New')" @click="showAddScript = true" />
+		<Button icon-left="plus" :label="__('New')" @click="addScript" />
 	</div>
 
 	<div v-if="filteredScripts.length">
@@ -43,17 +43,17 @@
 		</div>
 	</div>
 
-	<AddSieveScriptModal v-model="showAddScript" @reload-scripts="scripts.reload()" />
+	<SieveScriptModal
+		v-model="showSieveScript"
+		:selected-script
+		:current-active-script
+		@reload-scripts="scripts.reload()"
+	/>
 	<SetSieveScriptStateModal
 		v-if="selectedScript"
 		v-model="showSetScriptAsActive"
 		:script="selectedScript"
-		:current-active-script="scripts.data.find((s) => s.active)"
-		@reload-scripts="scripts.reload()"
-	/>
-	<EditSieveScriptModal
-		v-model="showEditScript"
-		:script="selectedScript"
+		:current-active-script
 		@reload-scripts="scripts.reload()"
 	/>
 	<DeleteSieveScriptModal
@@ -69,18 +69,16 @@ import { computed, inject, ref } from 'vue'
 import { Ellipsis } from 'lucide-vue-next'
 import { Badge, Button, Dropdown, createResource } from 'frappe-ui'
 
-import AddSieveScriptModal from '@/components/Modals/AddSieveScriptModal.vue'
 import DeleteSieveScriptModal from '@/components/Modals/DeleteSieveScriptModal.vue'
-import EditSieveScriptModal from '@/components/Modals/EditSieveScriptModal.vue'
 import SetSieveScriptStateModal from '@/components/Modals/SetSieveScriptStateModal.vue'
+import SieveScriptModal from '@/components/Modals/SieveScriptModal.vue'
 
 import type { SieveScript } from '@/types'
 
 const user = inject('$user')
 
-const showAddScript = ref(false)
+const showSieveScript = ref(false)
 const selectedScript = ref<SieveScript>()
-const showEditScript = ref(false)
 const showSetScriptAsActive = ref(false)
 const showDeleteScript = ref(false)
 
@@ -90,11 +88,19 @@ const scripts = createResource({
 	cache: ['sieveScripts', user.data.name],
 })
 
+const currentActiveScript = computed(() => scripts.data?.find((s) => s.active)?._name)
+
 const filteredScripts = computed(() => scripts.data?.filter((s) => s._name !== 'vacation') || [])
+
+const addScript = () => {
+	selectedScript.value = undefined
+	showSieveScript.value = true
+}
 
 const scriptOptions = (script: SieveScript) => [
 	{
 		label: script.active ? __('Set as Inactive') : __('Set as Active'),
+		icon: script.active ? 'eye-off' : 'eye',
 		onClick: () => {
 			selectedScript.value = script
 			showSetScriptAsActive.value = true
@@ -102,19 +108,22 @@ const scriptOptions = (script: SieveScript) => [
 	},
 	{
 		label: __('Edit'),
+		icon: 'edit-2',
 		onClick: () => {
 			selectedScript.value = script
-			showEditScript.value = true
+			showSieveScript.value = true
 		},
 		condition: () => !script.read_only,
 	},
 	{
 		label: __('Delete'),
+		icon: 'trash-2',
+		theme: 'red',
 		onClick: () => {
 			selectedScript.value = script
 			showDeleteScript.value = true
 		},
-		condition: () => !script.read_only,
+		condition: () => !script.read_only && !script.active,
 	},
 ]
 </script>

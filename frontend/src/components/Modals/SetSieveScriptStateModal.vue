@@ -6,7 +6,7 @@
 			message,
 			icon: { name: 'alert-triangle', appearance: 'warning' },
 			actions: [
-				{ label: __('Confirm'), variant: 'solid', onClick: () => deleteScript.submit() },
+				{ label: __('Confirm'), variant: 'solid', onClick: () => setScriptState.submit() },
 			],
 		}"
 	/>
@@ -23,7 +23,7 @@ import type { SieveScript } from '@/types'
 const show = defineModel<boolean>()
 const { script, currentActiveScript } = defineProps<{
 	script: SieveScript
-	currentActiveScript?: SieveScript
+	currentActiveScript?: string
 }>()
 const emit = defineEmits(['reloadScripts'])
 
@@ -38,22 +38,22 @@ const message = computed(() => {
 
 	if (!currentActiveScript) return __("Are you sure you want to activate '{0}'?", [script._name])
 
-	if (currentActiveScript._name === 'vacation')
+	if (currentActiveScript === 'vacation')
 		return __(
-			"Vacation Response is currently active. Setting '{0}' as active will stop your vacation response from functioning. Are you sure you want to proceed?",
+			"Vacation Response is currently enabled. Setting '{0}' as active will stop your vacation response from functioning. Are you sure you want to proceed?",
 			[script._name],
 		)
 	return __(
 		"'{0}' is currently active. Setting '{1}' as active will deactivate '{0}'. Are you sure you want to proceed?",
-		[currentActiveScript._name, script._name],
+		[currentActiveScript, script._name],
 	)
 })
 
-const deleteScript = createResource({
+const setScriptState = createResource({
 	url: 'mail.api.account.update_sieve_script',
 	makeParams: () => ({ ...script, active: !script.active }),
 	onSuccess: () => {
-		raiseToast(__('Sieve script set as {0}.', [newState.value]))
+		raiseToast(script.active ? __('Sieve script deactivated.') : __('Sieve script activated.'))
 		emit('reloadScripts')
 		show.value = false
 	},

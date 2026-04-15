@@ -91,6 +91,7 @@ declare module 'vue' {
     SetSieveScriptStateModal: typeof import('./src/components/Modals/SetSieveScriptStateModal.vue')['default']
     SettingsModal: typeof import('./src/components/Modals/SettingsModal.vue')['default']
     ShortcutsModal: typeof import('./src/components/Modals/ShortcutsModal.vue')['default']
+    SieveScriptModal: typeof import('./src/components/Modals/SieveScriptModal.vue')['default']
     SignatureSettings: typeof import('./src/components/Settings/SignatureSettings.vue')['default']
     VacationResponseSettings: typeof import('./src/components/Settings/VacationResponseSettings.vue')['default']
     VideoIcon: typeof import('./src/components/Icons/VideoIcon.vue')['default']
