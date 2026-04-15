@@ -7,7 +7,7 @@
 				{
 					label: __('Save'),
 					variant: 'solid',
-					disabled: !folder.name || (isNew && isNotDirty),
+					disabled: !folder.name || (!isNew && isNotDirty),
 					onClick: () => (isNew ? createFolder.submit() : updateFolder.submit()),
 				},
 			],
@@ -40,6 +40,7 @@
 				<Switch
 					v-model="folder.disable_push_notification"
 					:label="__('Disable Push Notifications')"
+					:disabled="isNotificationsDisabled"
 					:description="__('Check to disable push notifications for this folder.')"
 					class="!p-0"
 				/>
@@ -67,7 +68,7 @@ const { mailboxes } = userStore()
 
 const isNew = computed(() => !mailbox)
 
-const defaultFolder = {
+const DEFAULT_FOLDER = {
 	id: '',
 	name: '',
 	role: null,
@@ -77,9 +78,16 @@ const defaultFolder = {
 	disable_push_notification: false,
 }
 
-const folder = reactive({ ...defaultFolder })
+const folder = reactive({ ...DEFAULT_FOLDER })
 
-const original = reactive({ ...defaultFolder })
+const original = reactive({ ...DEFAULT_FOLDER })
+
+const isNotificationsDisabled = computed(
+	() =>
+		!isNew.value &&
+		mailbox?.role &&
+		['sent', 'drafts', 'junk', 'trash'].includes(mailbox.role),
+)
 
 const isNotDirty = computed(
 	() =>
@@ -115,7 +123,7 @@ watch(show, (val) => {
 	if (!val) return
 
 	if (isNew.value) {
-		Object.assign(folder, defaultFolder)
+		Object.assign(folder, DEFAULT_FOLDER)
 		return
 	}
 
@@ -125,7 +133,7 @@ watch(show, (val) => {
 	folder.icon = original.icon = mailbox.icon || FOLDER_ICON_MAP[mailbox.role] || 'folder'
 	folder.color = original.color = mailbox.color || 'Gray'
 	folder.disable_push_notification = original.disable_push_notification =
-		!!mailbox.disable_push_notification
+		isNotificationsDisabled.value ? true : !!mailbox.disable_push_notification
 })
 
 const COLOR_OPTIONS = [
