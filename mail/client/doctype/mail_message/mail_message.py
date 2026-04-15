@@ -1213,10 +1213,12 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 					frappe.db.get_all(
 						"Mailbox Settings", {"user": user, "disable_push_notification": 1}, pluck="mailbox_id"
 					)
-				)
+				) | {
+					m["id"]
+					for m in mailbox_service.mailboxes
+					if m["role"] in ["sent", "drafts", "junk", "trash"]
+				}
 				logger.debug({**ctx, "disabled_mailboxes_for_notification": disabled_mailboxes})
-
-				junk_mailbox_id = mailbox_service.get_mailbox_id_by_role("junk")
 
 				notify_candidates = []
 				mailboxes_to_reload = set()
@@ -1233,14 +1235,6 @@ def fetch_changes(user: str, email_state: str | None = None, ctx: dict | None = 
 							continue
 
 						mailboxes_to_reload.add(mailbox["mailbox_id"])
-
-						if mailbox["mailbox_id"] == junk_mailbox_id:
-							if message["junk"]:
-								mailbox_id = None
-								is_candidate = False
-								break
-
-							continue
 
 						if not is_candidate and mailbox["mailbox_id"] not in disabled_mailboxes:
 							mailbox_id = mailbox["mailbox_id"]
