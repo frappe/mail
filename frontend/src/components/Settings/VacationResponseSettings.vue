@@ -45,15 +45,17 @@
 			"
 			:loading="updateVacationResponse.loading"
 			class="min-h-7"
-			@click="() => updateVacationResponse.submit()"
+			@click="handleSave"
 		/>
+		<Dialog v-model="showConfirmDialog" :options="confirmDialogOptions" />
 	</template>
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import { computed, inject, ref } from 'vue'
 import {
 	Button,
+	Dialog,
 	FormControl,
 	Switch,
 	TextEditor,
@@ -70,6 +72,23 @@ const user = inject('$user')
 const dayjs = inject('$dayjs')
 
 const { buttons } = useTextEditorButtons()
+
+const showConfirmDialog = ref(false)
+
+const scripts = createResource({
+	url: 'mail.api.account.get_sieve_scripts',
+	auto: true,
+	cache: ['sieveScripts', user.data.name],
+})
+
+const activeSieveScript = computed(
+	() => scripts.data?.find((s) => s.active && s._name !== 'vacation')?._name,
+)
+
+const handleSave = () => {
+	if (activeSieveScript.value && vacationResponse.doc.enabled) showConfirmDialog.value = true
+	else updateVacationResponse.submit()
+}
 
 const vacationResponse = createDocumentResource({
 	doctype: 'Vacation Response',
@@ -98,4 +117,28 @@ const updateVacationResponse = createResource({
 	},
 	onError: (error) => raiseToast(error.messages[0], 'error'),
 })
+
+const confirmDialogOptions = computed(() => ({
+	title: __('Active Sieve Script Detected'),
+	message: __(
+		"You have an active sieve script '{0}' which will be deactivated if you enable vacation response. Do you want to proceed?",
+		[activeSieveScript.value || ''],
+	),
+	icon: { name: 'alert-triangle', appearance: 'warning' },
+	actions: [
+		{
+			label: __('Yes, enable vacation response'),
+			variant: 'solid',
+			onClick: () => {
+				updateVacationResponse.submit()
+				showConfirmDialog.value = false
+			},
+		},
+		{
+			label: __('No, keep it disabled'),
+			variant: 'outline',
+			onClick: () => (showConfirmDialog.value = false),
+		},
+	],
+}))
 </script>
