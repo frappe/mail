@@ -3,6 +3,36 @@ import frappe
 from mail.client.doctype.address_book.address_book import fetch_address_books
 from mail.client.doctype.calendar.calendar import fetch_calendars
 from mail.client.doctype.mailbox.mailbox import fetch_mailboxes
+from mail.client.doctype.user_account.user_account import fetch_user_accounts
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_user_accounts(
+	doctype: str | None = None,
+	txt: str | None = None,
+	searchfield: str | None = None,
+	start: int = 0,
+	page_len: int = 20,
+	filters: dict | None = None,
+) -> list:
+	"""Returns a list of accounts for the user."""
+
+	filters = filters or {}
+	user = filters.get("user") or frappe.session.user
+
+	if not user or user in ("Guest", "Administrator"):
+		return []
+
+	result = []
+	if user_accounts := fetch_user_accounts(user):
+		for account in user_accounts:
+			if txt and txt.lower() not in account["name"].lower():
+				continue
+
+			result.append([account["name"]])
+
+	return result[start : start + page_len]
 
 
 @frappe.whitelist()
