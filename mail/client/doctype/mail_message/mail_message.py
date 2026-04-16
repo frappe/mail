@@ -39,11 +39,10 @@ from mail.utils import (
 	parse_filters,
 	user_context,
 )
-from mail.utils.cache import get_account_emails
 from mail.utils.dt import convert_to_utc, parse_iso_datetime, to_iso8601_z
 from mail.utils.email_parser import EmailParser
 from mail.utils.lock import acquire_lock, release_lock
-from mail.utils.user import get_sync_state, update_sync_state
+from mail.utils.user import get_account_emails, get_sync_state, update_sync_state
 from mail.utils.validation import has_permission_for_user
 
 

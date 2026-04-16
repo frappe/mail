@@ -26,8 +26,7 @@ from mail.client.doctype.mailbox.mailbox import add_mailbox, delete_mailboxes
 from mail.client.doctype.mailbox_settings.mailbox_settings import set_mailbox_settings
 from mail.jmap import get_email_service, get_mailbox_id_by_role
 from mail.utils import convert_html_to_text, get_mail_config
-from mail.utils.cache import get_account_emails
-from mail.utils.user import is_jmap_configured
+from mail.utils.user import get_account_emails, is_jmap_configured
 from mail.utils.validation import has_permission_for_user
 
 AVATAR_CACHE_TTL = 60 * 60 * 24

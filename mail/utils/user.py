@@ -1,5 +1,4 @@
 from typing import Literal
-from urllib.parse import urljoin
 
 import frappe
 from frappe import _
@@ -84,6 +83,31 @@ def get_jmap_username(user: str) -> str | None:
 	"""Returns the JMAP username of the user."""
 
 	return frappe.db.get_value("User Settings", {"user": user}, "username")
+
+
+def get_account_emails(account: str) -> list[str]:
+	"""Returns the list of email addresses associated with the account."""
+
+	from mail.jmap import get_identities
+
+	emails = []
+	for identity in get_identities(account):
+		emails.append(identity["email"])
+
+	return emails
+
+
+def get_user_emails(user: str) -> list[str]:
+	"""Returns the list of email addresses associated with the user."""
+
+	from mail.client.doctype.user_account.user_account import fetch_user_accounts
+
+	emails = []
+
+	for account in [a["name"] for a in fetch_user_accounts(user, limit=None)]:
+		emails.extend(get_account_emails(account))
+
+	return emails
 
 
 def get_user_hashed_password(user: str) -> str | None:
