@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_e10u",
-  "user",
+  "account",
   "column_break_zgrx",
   "mailbox_id",
   "section_break_qhyu",
@@ -20,24 +20,11 @@
    "fieldtype": "Section Break"
   },
   {
-   "description": "The user to whom these mailbox settings apply.",
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "no_copy": 1,
-   "options": "User",
-   "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "column_break_zgrx",
    "fieldtype": "Column Break"
   },
   {
-   "description": "Unique identifier of the mailbox associated with the user.",
+   "description": "Unique identifier of the mailbox associated with the account.",
    "fieldname": "mailbox_id",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -76,12 +63,25 @@
    "fieldtype": "Check",
    "label": "Disable Push Notification",
    "search_index": 1
+  },
+  {
+   "description": "The account to whom these mailbox settings apply.",
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "no_copy": 1,
+   "options": "User Account",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-14 15:23:24.721293",
+ "modified": "2026-04-16 11:42:44.064982",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox Settings",
