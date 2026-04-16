@@ -300,10 +300,10 @@ class CoreService(CoreServiceHelper):
 		)
 
 	def _exec(self, action: Literal["get", "set", "query", "changes", "upload", "lookup"], **payload) -> dict:
-		payload = {
-			"accountId": self.account_id,
-			**{k: v for k, v in payload.items() if v is not None},
-		}
+		payload = {**{k: v for k, v in payload.items() if v is not None}}
+
+		if self._type != "PushSubscription":
+			payload["accountId"] = self.account_id
 
 		return self._call(
 			capabilities=self.capabilities,

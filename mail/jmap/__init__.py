@@ -16,10 +16,10 @@ from mail.jmap.services.core import CoreService, parse_account
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.identity import IdentityService
 from mail.jmap.services.mail.mailbox import MailboxService
-from mail.jmap.services.mail.push_subscription import PushSubscriptionService
 from mail.jmap.services.mail.submission.email_submission import EmailSubmissionService
 from mail.jmap.services.mail.thread import ThreadService
 from mail.jmap.services.principals.principal import PrincipalService
+from mail.jmap.services.push_subscription import PushSubscriptionService
 from mail.jmap.services.quota.quota import QuotaService
 from mail.jmap.services.sieve.sieve_script import SieveScriptService
 from mail.jmap.services.vacationresponse.vacation_response import VacationResponseService
@@ -201,13 +201,12 @@ def get_principal_service(
 
 
 def get_push_subscription_service(
-	account: str, ignore_permissions: bool = False, cache: bool = True
+	user: str, ignore_permissions: bool = False, cache: bool = True
 ) -> PushSubscriptionService:
-	"""Returns an instance of PushSubscriptionService for handling push subscription-related operations for the specified account."""
+	"""Returns an instance of PushSubscriptionService for handling push subscription-related operations for the specified user."""
 
-	user, _account_id = parse_account(account)
 	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
-	return PushSubscriptionService(account, connection)
+	return PushSubscriptionService(user, connection)
 
 
 def get_quota_service(account: str, ignore_permissions: bool = False, cache: bool = True) -> QuotaService:

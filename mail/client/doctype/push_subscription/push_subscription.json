@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_j2bb",
-  "account",
+  "user",
   "section_break_chdl",
   "id",
   "url",
@@ -72,13 +72,13 @@
    "read_only": 1
   },
   {
-   "description": "The account this push subscription belongs to.",
-   "fieldname": "account",
+   "description": "The user this push subscription belongs to.",
+   "fieldname": "user",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Account",
-   "options": "User Account",
+   "label": "User",
+   "options": "User",
    "reqd": 1,
    "set_only_once": 1
   }
@@ -87,7 +87,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-15 12:48:16.123603",
+ "modified": "2026-04-16 20:11:56.710258",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Push Subscription",

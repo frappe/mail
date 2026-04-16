@@ -669,7 +669,9 @@ class MailExchange(Document):
 		if self.operation != "Import":
 			return
 
-		freeze_jmap_push_notifications(self.account)
+		user, _account_id = parse_account(self.account)
+
+		freeze_jmap_push_notifications(user)
 		self._mark_started()
 
 		import_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{self.import_file}")
@@ -706,7 +708,7 @@ class MailExchange(Document):
 			kwargs.update({"status": "Failed", "output": frappe.get_traceback(with_context=False)})
 		finally:
 			shutil.rmtree(base_dir, ignore_errors=True)
-			unfreeze_jmap_push_notifications(self.account)
+			unfreeze_jmap_push_notifications(user)
 
 		self._mark_completed(**kwargs)
 		self._notify_user(success=kwargs.get("status") == "Completed", action="Import")
