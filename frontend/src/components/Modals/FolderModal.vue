@@ -171,13 +171,22 @@ const isNotificationsDisabled = computed(
 		['sent', 'drafts', 'junk', 'trash'].includes(mailbox.role),
 )
 
-const isNotDirty = computed(
-	() =>
+const isNotDirty = computed(() => {
+	const folderUnchanged =
 		folder.name === original.name &&
 		folder.icon === original.icon &&
 		folder.color === original.color &&
-		folder.disable_push_notification === original.disable_push_notification,
-)
+		folder.disable_push_notification === original.disable_push_notification
+
+	const automationUnchanged =
+		automationRules.emails_from === originalAutomationRules.emails_from &&
+		automationRules.subject_contains === originalAutomationRules.subject_contains &&
+		automationRules.mark_as_read === originalAutomationRules.mark_as_read &&
+		automationRules.add_star === originalAutomationRules.add_star &&
+		automationRules.match_if === originalAutomationRules.match_if
+
+	return folderUnchanged && automationUnchanged
+})
 
 const createFolder = createResource({
 	url: 'mail.api.mail.create_mailbox',
@@ -214,9 +223,9 @@ watch(show, (val) => {
 	if (!val) return
 
 	tab.value = 0
+	Object.assign(automationRules, DEFAULT_AUTOMATION_RULES)
+	Object.assign(originalAutomationRules, DEFAULT_AUTOMATION_RULES)
 
-	if (parsedAutomationRules.value) Object.assign(automationRules, parsedAutomationRules.value)
-	else Object.assign(automationRules, DEFAULT_AUTOMATION_RULES)
 	if (isNew.value) {
 		Object.assign(folder, DEFAULT_FOLDER)
 		return
@@ -229,6 +238,11 @@ watch(show, (val) => {
 	folder.color = original.color = mailbox.color || 'Gray'
 	folder.disable_push_notification = original.disable_push_notification =
 		isNotificationsDisabled.value ? true : !!mailbox.disable_push_notification
+
+	if (parsedAutomationRules.value) {
+		Object.assign(automationRules, parsedAutomationRules.value)
+		Object.assign(originalAutomationRules, parsedAutomationRules.value)
+	}
 })
 
 const COLOR_OPTIONS = [
@@ -249,28 +263,22 @@ const DEFAULT_AUTOMATION_RULES = {
 }
 
 const automationRules = reactive({ ...DEFAULT_AUTOMATION_RULES })
+const originalAutomationRules = reactive({ ...DEFAULT_AUTOMATION_RULES })
 
 const parsedAutomationRules = computed(() => {
-	if (isNew.value || !automationSieve.data || !original.name) {
-		return null
-	}
+	if (isNew.value || !automationSieve.data || !original.name) return null
 
 	const script = automationSieve.data
-	// Find the block for this mailbox
-	const commentPattern = `# Mailbox: ${original.name}`
+	const commentPattern = `# Mailbox: ${original.name}\n`
 	const commentIndex = script.indexOf(commentPattern)
 
-	if (commentIndex === -1) {
-		return null
-	}
+	if (commentIndex === -1) return null
 
 	// Extract the block (from comment to closing brace)
 	const blockStart = commentIndex
 	const blockEnd = script.indexOf('\n}', blockStart)
 
-	if (blockEnd === -1) {
-		return null
-	}
+	if (blockEnd === -1) return null
 
 	const block = script.substring(blockStart, blockEnd + 2)
 
@@ -278,28 +286,23 @@ const parsedAutomationRules = computed(() => {
 
 	// Parse emails_from
 	const emailsMatch = block.match(/address :is "from" \[(.*?)\]/)
-	if (emailsMatch) {
+	if (emailsMatch)
 		rules.emails_from = emailsMatch[1]
 			.split(',')
 			.map((email: string) => email.trim().replace(/"/g, ''))
 			.join(', ')
-	}
 
 	// Parse subject_contains
 	const subjectMatch = block.match(/header :contains "subject" \[(.*?)\]/)
-	if (subjectMatch) {
+	if (subjectMatch)
 		rules.subject_contains = subjectMatch[1]
 			.split(',')
 			.map((keyword: string) => keyword.trim().replace(/"/g, ''))
 			.join(', ')
-	}
 
 	// Parse match_if (anyof vs allof)
-	if (block.includes('allof')) {
-		rules.match_if = 'all'
-	} else if (block.includes('anyof')) {
-		rules.match_if = 'any'
-	}
+	if (block.includes('allof')) rules.match_if = 'all'
+	else if (block.includes('anyof')) rules.match_if = 'any'
 
 	// Parse flags
 	rules.mark_as_read = block.includes('setflag "\\\\Seen"')
