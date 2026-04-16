@@ -20,7 +20,10 @@
   "column_break_brmt",
   "total_cached_blobs",
   "total_cached_mail_messages",
-  "total_cached_contact_cards"
+  "total_cached_contact_cards",
+  "sieve_section",
+  "last_active_sieve_script_id",
+  "column_break_jaxh"
  ],
  "fields": [
   {
@@ -146,12 +149,29 @@
    "label": "Total Cached Contact Cards",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "sieve_section",
+   "fieldtype": "Section Break",
+   "label": "Sieve"
+  },
+  {
+   "fieldname": "last_active_sieve_script_id",
+   "fieldtype": "Data",
+   "label": "Last Active Sieve Script ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_jaxh",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-16 11:12:11.861487",
+ "modified": "2026-04-16 12:00:08.110047",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Account Settings",

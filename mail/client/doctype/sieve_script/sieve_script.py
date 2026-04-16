@@ -307,14 +307,10 @@ def get_active_sieve_script_id(account: str) -> str | None:
 def activate_last_active_sieve_script(account: str) -> None:
 	"""Activates the last active sieve script for the given account, if any, and clears the last active sieve script setting."""
 
-	user, account_id = parse_account(account)
-
-	sieve_script_id = frappe.db.get_value("User Settings", {"user": user}, "last_active_sieve_script_id")
+	sieve_script_id = frappe.db.get_value(
+		"Account Settings", {"account": account}, "last_active_sieve_script_id"
+	)
 	if not sieve_script_id:
-		return
-
-	service = get_sieve_script_service(account)
-	if account_id != service.personal_account_id:
 		return
 
 	if sieve_scripts := SieveScript._get_sieve_scripts(account, [sieve_script_id], download_content=True):
@@ -329,14 +325,18 @@ def activate_last_active_sieve_script(account: str) -> None:
 				active=True,
 			)
 
-	set_last_active_sieve_script_id(user, None)
+	set_last_active_sieve_script_id(account, None)
 
 
-def set_last_active_sieve_script_id(user: str, sieve_script_id: str | None = None) -> None:
-	"""Sets the given sieve script ID as the last active sieve script for the given user."""
+def set_last_active_sieve_script_id(account: str, sieve_script_id: str | None = None) -> None:
+	"""Sets the given sieve script ID as the last active sieve script for the given account."""
 
 	frappe.db.set_value(
-		"User Settings", {"user": user}, "last_active_sieve_script_id", sieve_script_id, update_modified=False
+		"Account Settings",
+		{"account": account},
+		"last_active_sieve_script_id",
+		sieve_script_id,
+		update_modified=False,
 	)
 
 

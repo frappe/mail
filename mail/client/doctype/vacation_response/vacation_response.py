@@ -90,7 +90,7 @@ def update_vacation_response(
 ) -> None:
 	"""Updates the vacation response settings for the given account."""
 
-	user, account_id = parse_account(account)
+	user, _account_id = parse_account(account)
 	has_permission_for_user(user)
 
 	enabled = bool(enabled)
@@ -103,13 +103,10 @@ def update_vacation_response(
 	if not convert_html_to_text(html_body):
 		html_body = None
 
+	current_active_sieve_script_id = get_active_sieve_script_id(account)
+
 	service = get_vacation_response_service(account)
-	current_active_sieve_script_id = (
-		get_active_sieve_script_id(account) if account_id == service.personal_account_id else None
-	)
-
 	previous_vacation_response = service.get()
-
 	vacation_update_result = service.update(
 		{
 			"is_enabled": bool(enabled),
@@ -121,10 +118,10 @@ def update_vacation_response(
 		}
 	)
 
-	if vacation_update_result.get("updated") and account_id == service.personal_account_id:
+	if vacation_update_result.get("updated"):
 		if enabled:
 			if not previous_vacation_response.get("isEnabled"):
-				set_last_active_sieve_script_id(user, current_active_sieve_script_id)
+				set_last_active_sieve_script_id(account, current_active_sieve_script_id)
 		else:
 			activate_last_active_sieve_script(account)
 
