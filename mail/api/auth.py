@@ -2,7 +2,12 @@ import frappe
 from frappe import _
 
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import get_user_emails, is_jmap_configured, is_system_manager
+from mail.utils.user import (
+	get_account_emails,
+	get_user_personal_account,
+	is_jmap_configured,
+	is_system_manager,
+)
 
 
 def check_app_permission() -> bool:
@@ -35,8 +40,9 @@ def validate_email_ownership(email: str) -> None:
 		frappe.throw(_("Email address is required."), frappe.MandatoryError)
 
 	user = frappe.session.user
+	account = get_user_personal_account(user, raise_exception=True)
 
-	if email not in get_user_emails(user):
+	if email not in get_account_emails(account):
 		frappe.throw(
 			_("Email address '{0}' is not associated with any account of the user '{1}'.").format(
 				email, user

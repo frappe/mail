@@ -102,7 +102,7 @@ def get_user_personal_account(user: str, raise_exception: bool = False) -> str |
 
 	from mail.client.doctype.user_account.user_account import fetch_user_accounts
 
-	for account in [a["name"] for a in fetch_user_accounts(user, limit=None)]:
+	for account in fetch_user_accounts(user, limit=None):
 		if account["is_personal"]:
 			return account["name"]
 
