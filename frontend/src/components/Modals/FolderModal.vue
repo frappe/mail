@@ -17,7 +17,7 @@
 		<template #body-content>
 			<Tabs v-model="tab" :tabs="TABS">
 				<template #tab-panel>
-					<div class="h-80 shrink-0 space-y-4 pt-4 sm:pt-6">
+					<div class="h-96 shrink-0 space-y-4 pt-4 sm:pt-6">
 						<!-- General -->
 						<template v-if="tab === 0">
 							<FormControl v-model="folder.name" :label="__('Name')" required />
@@ -84,29 +84,31 @@
 									{ label: __('Both conditions are met'), value: 'all' },
 								]"
 							/>
-							<hr />
-							<Switch
-								v-model="automation.mark_as_read"
-								:label="__('Mark as Read')"
-								:disabled="isNotificationsDisabled"
-								:description="
-									__(
-										'Automatically mark emails as read when they are moved to this folder.',
-									)
-								"
-								class="!p-0"
-							/>
-							<Switch
-								v-model="automation.star"
-								:label="__('Add Star')"
-								:disabled="isNotificationsDisabled"
-								:description="
-									__(
-										'Automatically star emails when they are moved to this folder.',
-									)
-								"
-								class="!p-0"
-							/>
+							<template v-if="automation.emails_from || automation.subject_contains">
+								<hr />
+								<Switch
+									v-model="automation.mark_as_read"
+									:label="__('Mark as Read')"
+									:disabled="isNotificationsDisabled"
+									:description="
+										__(
+											'Automatically mark emails as read when they are moved to this folder.',
+										)
+									"
+									class="!p-0"
+								/>
+								<Switch
+									v-model="automation.add_star"
+									:label="__('Add Star')"
+									:disabled="isNotificationsDisabled"
+									:description="
+										__(
+											'Automatically star emails when they are moved to this folder.',
+										)
+									"
+									class="!p-0"
+								/>
+							</template>
 						</template>
 					</div>
 				</template>
@@ -187,7 +189,11 @@ const createFolder = createResource({
 
 const updateFolder = createResource({
 	url: 'mail.api.mail.update_mailbox',
-	makeParams: () => folder,
+	makeParams: () => ({
+		...folder,
+		old_name: original.name,
+		automation_rules: isDefaultAutomation.value ? null : automation,
+	}),
 	onSuccess: () => {
 		raiseToast(__('Folder updated.'))
 		show.value = false
@@ -229,7 +235,7 @@ const DEFAULT_AUTOMATION = {
 	emails_from: '',
 	subject_contains: '',
 	mark_as_read: false,
-	star: false,
+	add_star: false,
 	match_if: 'any',
 }
 

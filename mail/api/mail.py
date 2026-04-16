@@ -1,4 +1,5 @@
 import hashlib
+import re
 from datetime import UTC, datetime
 
 import frappe
@@ -655,7 +656,7 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 	                - emails_from: comma-separated email addresses
 	                - subject_contains: comma-separated keywords
 	                - mark_as_read: boolean
-	                - star: boolean
+	                - add_star: boolean
 	                - match_if: 'any' or 'all'
 	        folder_name: Name of the folder to file emails into
 	        mailbox_id: Optional mailbox ID for reference
@@ -713,13 +714,42 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 	if automation.get("mark_as_read"):
 		script_parts.append('  setflag "\\\\Seen";')
 
-	if automation.get("star"):
+	if automation.get("add_star"):
 		script_parts.append('  setflag "\\\\Flagged";')
 
 	script_parts.append("  stop;")
 	script_parts.append("}")
 
 	return "\n".join(script_parts)
+
+
+def remove_sieve_block(sieve_script: str, mailbox_name: str) -> str:
+	"""
+	Remove an entire Sieve filter block by its mailbox name comment.
+
+	Args:
+	    sieve_script: The full Sieve script as a string
+	    mailbox_name: The mailbox name to remove (e.g., "Yo", "Chill")
+
+	Returns:
+	    The updated Sieve script with the block removed
+	"""
+	pattern = rf"# Mailbox: {re.escape(mailbox_name)}\n.*?stop;\n}}\n?"
+	result = re.sub(pattern, "", sieve_script, flags=re.DOTALL)
+	return result
+
+
+def update_sieve_script_for_mailbox(
+	name: str, automation_rules: dict | None = None, old_name: str | None = None
+) -> None:
+	"""Updates the Sieve script for the given mailbox based on the provided automation rules."""
+
+	doc = frappe.get_doc("Sieve Script", "akash@frappe.io|m")
+	doc.content = remove_sieve_block(doc.content, old_name or name)
+	if automation_rules:
+		mailbox_rule_set = rule_object_to_sieve(automation_rules, name)
+		doc.content += f"\n\n# Mailbox: {name}{mailbox_rule_set}"
+	doc.save()
 
 
 @frappe.whitelist()
@@ -744,24 +774,20 @@ def create_mailbox(
 		disable_push_notification=disable_push_notification,
 	)
 
-	if not automation_rules:
-		return
-
-	doc = frappe.get_doc("Sieve Script", "akash@frappe.io|m")
-	sieve = rule_object_to_sieve(automation_rules, name)
-	doc.content += f"\n\n# Mailbox: {name}{sieve}"
-	doc.save()
+	update_sieve_script_for_mailbox(name, automation_rules)
 
 
 @frappe.whitelist()
 def update_mailbox(
 	id: str,
-	name: str | None = None,
+	name: str,
+	old_name: str,
 	role: str | None = None,
 	parent: str | None = None,
 	icon: str | None = None,
 	color: str | None = None,
 	disable_push_notification: bool = False,
+	automation_rules: dict | None = None,
 ) -> None:
 	"""Updates Mailbox Settings for the given mailbox ID."""
 
@@ -776,11 +802,14 @@ def update_mailbox(
 		disable_push_notification=disable_push_notification,
 	)
 
+	update_sieve_script_for_mailbox(name, automation_rules, old_name)
+
 
 @frappe.whitelist()
-def delete_mailbox(id: str) -> None:
+def delete_mailbox(id: str, name: str) -> None:
 	"""Deletes the mailbox with the given mailbox ID, followed by its settings."""
 
 	user = frappe.session.user
 	delete_mailboxes(user, [id])
+	update_sieve_script_for_mailbox(name)
 	frappe.db.delete("Mailbox Settings", {"user": user, "mailbox_id": id})
