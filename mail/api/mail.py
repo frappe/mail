@@ -647,6 +647,81 @@ def get_email_suggestions(query: str, limit: int = 5) -> list[str]:
 	return service.get_email_suggestions(query, limit)
 
 
+def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
+	"""Converts automation rules to Sieve script format.
+
+	Args:
+	        automation: Dictionary containing automation rules with keys:
+	                - emails_from: comma-separated email addresses
+	                - subject_contains: comma-separated keywords
+	                - mark_as_read: boolean
+	                - star: boolean
+	                - match_if: 'any' or 'all'
+	        folder_name: Name of the folder to file emails into
+	        mailbox_id: Optional mailbox ID for reference
+
+	Returns:
+	        Sieve script as a string
+	"""
+
+	# Parse email addresses and subject keywords
+	emails_from = [
+		email.strip() for email in (automation.get("emails_from") or "").split(",") if email.strip()
+	]
+	subject_contains = [
+		keyword.strip()
+		for keyword in (automation.get("subject_contains") or "").split(",")
+		if keyword.strip()
+	]
+
+	# If no conditions specified, return empty script
+	if not emails_from and not subject_contains:
+		return ""
+
+	# Build the script
+	script_parts = [""]
+
+	# Build conditions
+	conditions = []
+	if emails_from:
+		email_list = ", ".join(f'"{email}"' for email in emails_from)
+		conditions.append(f'address :is "from" [{email_list}]')
+
+	if subject_contains:
+		keyword_list = ", ".join(f'"{keyword}"' for keyword in subject_contains)
+		conditions.append(f'header :contains "subject" [{keyword_list}]')
+
+	# Determine operator (anyof or allof)
+	match_if = automation.get("match_if", "any")
+	operator = "allof" if match_if == "all" else "anyof"
+
+	# Build if statement
+	if len(conditions) == 1:
+		script_parts.append(f"if {conditions[0]} {{")
+	else:
+		script_parts.append(f"if {operator} (")
+		for i, condition in enumerate(conditions):
+			if i < len(conditions) - 1:
+				script_parts.append(f"  {condition},")
+			else:
+				script_parts.append(f"  {condition}")
+		script_parts.append(") {")
+
+	# Add actions
+	script_parts.append(f'  fileinto "{folder_name}";')
+
+	if automation.get("mark_as_read"):
+		script_parts.append('  setflag "\\\\Seen";')
+
+	if automation.get("star"):
+		script_parts.append('  setflag "\\\\Flagged";')
+
+	script_parts.append("  stop;")
+	script_parts.append("}")
+
+	return "\n".join(script_parts)
+
+
 @frappe.whitelist()
 def create_mailbox(
 	name: str,
@@ -654,6 +729,7 @@ def create_mailbox(
 	icon: str | None = None,
 	color: str | None = None,
 	disable_push_notification: bool = False,
+	automation_rules: dict | None = None,
 ) -> str:
 	"""Creates a new mailbox and initializes its settings for the current user."""
 
@@ -667,6 +743,14 @@ def create_mailbox(
 		color=color,
 		disable_push_notification=disable_push_notification,
 	)
+
+	if not automation_rules:
+		return
+
+	doc = frappe.get_doc("Sieve Script", "akash@frappe.io|m")
+	sieve = rule_object_to_sieve(automation_rules, name)
+	doc.content += f"\n\n# Mailbox: {name}{sieve}"
+	doc.save()
 
 
 @frappe.whitelist()

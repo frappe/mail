@@ -57,7 +57,7 @@
 							<FormControl
 								v-model="automation.emails_from"
 								:label="__('Emails From')"
-								placeholder="john@example.com, jane@example.com, .*@example.io"
+								placeholder="john@example.com, jane@example.com, dory@example.io"
 								:description="
 									__(
 										'Emails from these addresses will be automatically moved to this folder.',
@@ -173,7 +173,10 @@ const isNotDirty = computed(
 
 const createFolder = createResource({
 	url: 'mail.api.mail.create_mailbox',
-	makeParams: () => folder,
+	makeParams: () => ({
+		...folder,
+		automation_rules: isDefaultAutomation.value ? null : automation,
+	}),
 	onSuccess: () => {
 		raiseToast(__('Folder created.'))
 		show.value = false
@@ -196,8 +199,11 @@ const updateFolder = createResource({
 watch(show, (val) => {
 	if (!val) return
 
+	tab.value = 0
+
 	if (isNew.value) {
 		Object.assign(folder, DEFAULT_FOLDER)
+		Object.assign(automation, DEFAULT_AUTOMATION)
 		return
 	}
 
@@ -228,4 +234,8 @@ const DEFAULT_AUTOMATION = {
 }
 
 const automation = reactive({ ...DEFAULT_AUTOMATION })
+
+const isDefaultAutomation = computed(
+	() => JSON.stringify(automation) === JSON.stringify(DEFAULT_AUTOMATION),
+)
 </script>

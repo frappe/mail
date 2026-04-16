@@ -6,7 +6,10 @@
 			<Breadcrumbs
 				:items="[{ label: mailboxName, route: { name: 'Mailbox', params: { mailbox } } }]"
 			>
-				<template v-if="mailbox !== 'starred'" #suffix>
+				<template
+					v-if="mailbox !== 'starred' && !mailboxes.loading && !searchResults.loading"
+					#suffix
+				>
 					<span class="text-ink-gray-5 ml-2 self-end pb-px text-xs">
 						{{ noOfThreads }}
 					</span>
