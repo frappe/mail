@@ -3,6 +3,7 @@
 		v-model="show"
 		:options="{
 			title: isNew ? __('New Folder') : __('Folder Settings'),
+			size: 'xl',
 			actions: [
 				{
 					label: __('Save'),
@@ -14,45 +15,111 @@
 		}"
 	>
 		<template #body-content>
-			<div class="space-y-4">
-				<FormControl v-model="folder.name" :label="__('Name')" />
+			<Tabs v-model="tab" :tabs="TABS">
+				<template #tab-panel>
+					<div class="h-80 shrink-0 space-y-4 pt-4 sm:pt-6">
+						<!-- General -->
+						<template v-if="tab === 0">
+							<FormControl v-model="folder.name" :label="__('Name')" required />
+							<div class="space-y-1.5">
+								<label class="text-ink-gray-5 block text-xs">{{
+									__('Icon')
+								}}</label>
+								<IconPicker v-model="folder.icon" />
+							</div>
+							<FormControl
+								v-model="folder.color"
+								type="select"
+								:label="__('Color')"
+								:options="COLOR_OPTIONS"
+							>
+								<template #prefix>
+									<span
+										class="h-4 w-4 shrink-0 rounded-full"
+										:class="FOLDER_COLOR_MAP[folder.color]"
+									/>
+								</template>
+							</FormControl>
+							<hr />
+							<Switch
+								v-model="folder.disable_push_notification"
+								:label="__('Disable Push Notifications')"
+								:disabled="isNotificationsDisabled"
+								:description="
+									__('Check to disable push notifications for this folder.')
+								"
+								class="!p-0"
+							/>
+						</template>
 
-				<div class="space-y-1.5">
-					<label class="text-ink-gray-5 block text-xs">{{ __('Icon') }}</label>
-					<IconPicker v-model="folder.icon" />
-				</div>
-
-				<FormControl
-					v-model="folder.color"
-					type="select"
-					:label="__('Color')"
-					:options="COLOR_OPTIONS"
-				>
-					<template #prefix>
-						<span
-							class="h-4 w-4 shrink-0 rounded-full"
-							:class="FOLDER_COLOR_MAP[folder.color]"
-						/>
-					</template>
-				</FormControl>
-
-				<hr />
-				<Switch
-					v-model="folder.disable_push_notification"
-					:label="__('Disable Push Notifications')"
-					:disabled="isNotificationsDisabled"
-					:description="__('Check to disable push notifications for this folder.')"
-					class="!p-0"
-				/>
-			</div>
+						<!-- Automation  -->
+						<template v-else>
+							<FormControl
+								v-model="automation.emails_from"
+								:label="__('Emails From')"
+								placeholder="john@example.com, jane@example.com, .*@example.io"
+								:description="
+									__(
+										'Emails from these addresses will be automatically moved to this folder.',
+									)
+								"
+							/>
+							<FormControl
+								v-model="automation.subject_contains"
+								:label="__('Subject Contains')"
+								placeholder="Important, Urgent, Follow Up"
+								:description="
+									__(
+										'Emails with these keywords in the subject will be automatically moved to this folder.',
+									)
+								"
+							/>
+							<FormControl
+								v-if="automation.emails_from && automation.subject_contains"
+								v-model="automation.match_if"
+								:label="__('Match If')"
+								type="select"
+								:options="[
+									{ label: __('Either condition is met'), value: 'any' },
+									{ label: __('Both conditions are met'), value: 'all' },
+								]"
+							/>
+							<hr />
+							<Switch
+								v-model="automation.mark_as_read"
+								:label="__('Mark as Read')"
+								:disabled="isNotificationsDisabled"
+								:description="
+									__(
+										'Automatically mark emails as read when they are moved to this folder.',
+									)
+								"
+								class="!p-0"
+							/>
+							<Switch
+								v-model="automation.star"
+								:label="__('Add Star')"
+								:disabled="isNotificationsDisabled"
+								:description="
+									__(
+										'Automatically star emails when they are moved to this folder.',
+									)
+								"
+								class="!p-0"
+							/>
+						</template>
+					</div>
+				</template>
+			</Tabs>
 		</template>
 	</Dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { IconPicker } from 'frappe-ui/icons'
-import { Dialog, FormControl, Switch, createResource } from 'frappe-ui'
+import { Settings, Zap } from 'lucide-vue-next'
+import { Dialog, FormControl, Switch, Tabs, createResource } from 'frappe-ui'
 
 import { FOLDER_COLOR_MAP, FOLDER_ICON_MAP } from '@/constants'
 import { raiseToast } from '@/utils'
@@ -67,6 +134,13 @@ const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 const { mailboxes } = userStore()
 
 const isNew = computed(() => !mailbox)
+
+const tab = ref(0)
+
+const TABS = [
+	{ label: __('General'), icon: Settings, index: 0 },
+	{ label: __('Automation'), icon: Zap, index: 1 },
+]
 
 const DEFAULT_FOLDER = {
 	id: '',
@@ -144,4 +218,14 @@ const COLOR_OPTIONS = [
 	{ label: __('Red'), value: 'Red' },
 	{ label: __('Purple'), value: 'Purple' },
 ]
+
+const DEFAULT_AUTOMATION = {
+	emails_from: '',
+	subject_contains: '',
+	mark_as_read: false,
+	star: false,
+	match_if: 'any',
+}
+
+const automation = reactive({ ...DEFAULT_AUTOMATION })
 </script>
