@@ -57,7 +57,7 @@
 							<FormControl
 								v-model="automationRules.emails_from"
 								:label="__('Emails From')"
-								placeholder="john@example.com, jane@example.com, dory@example.io"
+								placeholder="john@example.com, jane@example.com, *@example.io"
 								:description="
 									__(
 										'Emails from these addresses will be automatically moved to this folder.',
@@ -139,9 +139,12 @@ const show = defineModel<boolean>()
 
 const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 
-const { mailboxes, automationSieve } = userStore()
+const { mailboxes, sieveScripts } = userStore()
 
 const isNew = computed(() => !mailbox)
+const automationScript = computed(
+	() => sieveScripts.data?.find((s) => s._name === 'Frappe Mail Automation')?.content,
+)
 
 const tab = ref(0)
 
@@ -198,7 +201,7 @@ const createFolder = createResource({
 		raiseToast(__('Folder created.'))
 		show.value = false
 		mailboxes.reload()
-		automationSieve.reload()
+		sieveScripts.reload()
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })
@@ -214,7 +217,7 @@ const updateFolder = createResource({
 		raiseToast(__('Folder updated.'))
 		show.value = false
 		mailboxes.reload()
-		automationSieve.reload()
+		sieveScripts.reload()
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })
@@ -266,26 +269,25 @@ const automationRules = reactive({ ...DEFAULT_AUTOMATION_RULES })
 const originalAutomationRules = reactive({ ...DEFAULT_AUTOMATION_RULES })
 
 const parsedAutomationRules = computed(() => {
-	if (isNew.value || !automationSieve.data || !original.name) return null
+	if (isNew.value || !automationScript.value || !original.name) return null
 
-	const script = automationSieve.data
 	const commentPattern = `# Mailbox: ${original.name}\n`
-	const commentIndex = script.indexOf(commentPattern)
+	const commentIndex = automationScript.value.indexOf(commentPattern)
 
 	if (commentIndex === -1) return null
 
 	// Extract the block (from comment to closing brace)
 	const blockStart = commentIndex
-	const blockEnd = script.indexOf('\n}', blockStart)
+	const blockEnd = automationScript.value.indexOf('\n}', blockStart)
 
 	if (blockEnd === -1) return null
 
-	const block = script.substring(blockStart, blockEnd + 2)
+	const block = automationScript.value.substring(blockStart, blockEnd + 2)
 
 	const rules = { ...DEFAULT_AUTOMATION_RULES }
 
 	// Parse emails_from
-	const emailsMatch = block.match(/address :is "from" \[(.*?)\]/)
+	const emailsMatch = block.match(/address :matches "from" \[(.*?)\]/)
 	if (emailsMatch)
 		rules.emails_from = emailsMatch[1]
 			.split(',')

@@ -25,7 +25,7 @@ export const userStore = defineStore('mail-users', () => {
 			mailboxes.fetch()
 			addressBooks.fetch()
 			identities.fetch()
-			automationSieve.fetch()
+			sieveScripts.fetch()
 		},
 		onError: (error) => {
 			if (error && error.exc_type === 'AuthenticationError') router.push('/login')
@@ -67,7 +67,7 @@ export const userStore = defineStore('mail-users', () => {
 
 	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
 
-	const automationSieve = createResource({ url: 'mail.api.account.get_automation_sieve_script' })
+	const sieveScripts = createResource({ url: 'mail.api.account.get_sieve_scripts' })
 
 	return {
 		userResource,
@@ -77,6 +77,6 @@ export const userStore = defineStore('mail-users', () => {
 		identities,
 		tenantOwner,
 		domains,
-		automationSieve,
+		sieveScripts,
 	}
 })

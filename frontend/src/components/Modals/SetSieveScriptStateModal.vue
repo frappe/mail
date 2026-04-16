@@ -17,16 +17,16 @@ import { computed } from 'vue'
 import { Dialog, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 
 import type { SieveScript } from '@/types'
 
 const show = defineModel<boolean>()
-const { script, currentActiveScript } = defineProps<{
-	script: SieveScript
-	currentActiveScript?: string
-}>()
+const { script } = defineProps<{ script: SieveScript }>()
 const emit = defineEmits(['reloadScripts'])
 
+const { sieveScripts } = userStore()
+const currentActiveScript = computed(() => sieveScripts.data?.find((s) => s.active)?._name)
 const newState = computed(() => (script.active ? __('Inactive') : __('Active')))
 
 const message = computed(() => {
@@ -36,16 +36,17 @@ const message = computed(() => {
 			[script._name],
 		)
 
-	if (!currentActiveScript) return __("Are you sure you want to activate '{0}'?", [script._name])
+	if (!currentActiveScript.value)
+		return __("Are you sure you want to activate '{0}'?", [script._name])
 
-	if (currentActiveScript === 'vacation')
+	if (currentActiveScript.value === 'vacation')
 		return __(
 			"Vacation Response is currently enabled. Setting '{0}' as active will stop your vacation response from functioning. Are you sure you want to proceed?",
 			[script._name],
 		)
 	return __(
 		"'{0}' is currently active. Setting '{1}' as active will deactivate '{0}'. Are you sure you want to proceed?",
-		[currentActiveScript, script._name],
+		[currentActiveScript.value, script._name],
 	)
 })
 

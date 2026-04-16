@@ -686,7 +686,7 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 	conditions = []
 	if emails_from:
 		email_list = ", ".join(f'"{email}"' for email in emails_from)
-		conditions.append(f'address :is "from" [{email_list}]')
+		conditions.append(f'address :matches "from" [{email_list}]')
 
 	if subject_contains:
 		keyword_list = ", ".join(f'"{keyword}"' for keyword in subject_contains)

@@ -65,6 +65,7 @@ import {
 
 import { convertHtmlToText, raiseToast } from '@/utils'
 import { useTextEditorButtons } from '@/utils/composables'
+import { userStore } from '@/stores/user'
 
 import type { VacationResponse } from '@/types/doctypes'
 
@@ -75,14 +76,10 @@ const { buttons } = useTextEditorButtons()
 
 const showConfirmDialog = ref(false)
 
-const scripts = createResource({
-	url: 'mail.api.account.get_sieve_scripts',
-	auto: true,
-	cache: ['sieveScripts', user.data.name],
-})
+const { sieveScripts } = userStore()
 
 const activeSieveScript = computed(
-	() => scripts.data?.find((s) => s.active && s._name !== 'vacation')?._name,
+	() => sieveScripts.data?.find((s) => s.active && s._name !== 'vacation')?._name,
 )
 
 const handleSave = () => {

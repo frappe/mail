@@ -72,15 +72,16 @@ import { computed, reactive, watch } from 'vue'
 import { Alert, Dialog, FormControl, Switch, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 
 import type { SieveScript } from '@/types'
 
 const show = defineModel<boolean>()
-const { selectedScript, currentActiveScript } = defineProps<{
-	selectedScript?: SieveScript
-	currentActiveScript?: string
-}>()
+const { selectedScript } = defineProps<{ selectedScript?: SieveScript }>()
 const emit = defineEmits(['reloadScripts'])
+
+const { sieveScripts } = userStore()
+const currentActiveScript = computed(() => sieveScripts.data?.find((s) => s.active)?._name)
 
 const DEFAULT_SCRIPT = { _name: '', content: '', active: false }
 

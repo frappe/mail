@@ -46,51 +46,44 @@
 	<SieveScriptModal
 		v-model="showSieveScript"
 		:selected-script
-		:current-active-script
-		@reload-scripts="scripts.reload()"
+		@reload-scripts="sieveScripts.reload()"
 	/>
 	<SetSieveScriptStateModal
 		v-if="selectedScript"
 		v-model="showSetScriptAsActive"
 		:script="selectedScript"
-		:current-active-script
-		@reload-scripts="scripts.reload()"
+		@reload-scripts="sieveScripts.reload()"
 	/>
 	<DeleteSieveScriptModal
 		v-if="selectedScript"
 		v-model="showDeleteScript"
 		:script="selectedScript"
-		@reload-scripts="scripts.reload()"
+		@reload-scripts="sieveScripts.reload()"
 	/>
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Ellipsis } from 'lucide-vue-next'
-import { Badge, Button, Dropdown, createResource } from 'frappe-ui'
+import { Badge, Button, Dropdown } from 'frappe-ui'
 
+import { userStore } from '@/stores/user'
 import DeleteSieveScriptModal from '@/components/Modals/DeleteSieveScriptModal.vue'
 import SetSieveScriptStateModal from '@/components/Modals/SetSieveScriptStateModal.vue'
 import SieveScriptModal from '@/components/Modals/SieveScriptModal.vue'
 
 import type { SieveScript } from '@/types'
 
-const user = inject('$user')
+const { sieveScripts } = userStore()
 
 const showSieveScript = ref(false)
 const selectedScript = ref<SieveScript>()
 const showSetScriptAsActive = ref(false)
 const showDeleteScript = ref(false)
 
-const scripts = createResource({
-	url: 'mail.api.account.get_sieve_scripts',
-	auto: true,
-	cache: ['sieveScripts', user.data.name],
-})
-
-const currentActiveScript = computed(() => scripts.data?.find((s) => s.active)?._name)
-
-const filteredScripts = computed(() => scripts.data?.filter((s) => s._name !== 'vacation') || [])
+const filteredScripts = computed(
+	() => sieveScripts.data?.filter((s) => s._name !== 'vacation') || [],
+)
 
 const addScript = () => {
 	selectedScript.value = undefined
