@@ -191,13 +191,13 @@ def generate_user_keys(user: str) -> dict:
 def get_sync_state(account: str, type: Literal["email"]) -> str | None:
 	"""Returns the Sync State for the given account and type."""
 
-	value = frappe.db.get_value("Account State", {"account": account}, f"{type}_current_state")
+	value = frappe.db.get_value("Account Settings", {"account": account}, f"{type}_current_state")
 
-	if not value and not frappe.db.exists("Account State", {"account": account}):
-		state = frappe.new_doc("Account State")
-		state.account = account
-		state.flags.ignore_links = True
-		state.insert(ignore_permissions=True)
+	if not value and not frappe.db.exists("Account Settings", {"account": account}):
+		settings = frappe.new_doc("Account Settings")
+		settings.account = account
+		settings.flags.ignore_links = True
+		settings.insert(ignore_permissions=True)
 
 	return value
 
@@ -209,13 +209,13 @@ def update_sync_state(account: str, type: Literal["email"], state: str) -> None:
 	previous_state = f"{type}_previous_state"
 	current_state = f"{type}_current_state"
 
-	ACCOUNT_STATE = frappe.qb.DocType("Account State")
+	ACCOUNT_SETTINGS = frappe.qb.DocType("Account Settings")
 	(
-		frappe.qb.update(ACCOUNT_STATE)
-		.set(getattr(ACCOUNT_STATE, state_last_update), frappe.utils.now())
-		.set(getattr(ACCOUNT_STATE, previous_state), getattr(ACCOUNT_STATE, current_state))
-		.set(getattr(ACCOUNT_STATE, current_state), state)
-		.where(ACCOUNT_STATE.account == account)
+		frappe.qb.update(ACCOUNT_SETTINGS)
+		.set(getattr(ACCOUNT_SETTINGS, state_last_update), frappe.utils.now())
+		.set(getattr(ACCOUNT_SETTINGS, previous_state), getattr(ACCOUNT_SETTINGS, current_state))
+		.set(getattr(ACCOUNT_SETTINGS, current_state), state)
+		.where(ACCOUNT_SETTINGS.account == account)
 	).run()
 
 
@@ -224,5 +224,5 @@ def clear_sync_state(account: str, type: Literal["email"]) -> None:
 	"""Clear the Sync State for the given account and type."""
 
 	frappe.db.set_value(
-		"Account State", {"account": account}, f"{type}_current_state", None, update_modified=False
+		"Account Settings", {"account": account}, f"{type}_current_state", None, update_modified=False
 	)

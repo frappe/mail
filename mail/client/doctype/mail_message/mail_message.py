@@ -1384,17 +1384,17 @@ def schedule_fetch_changes() -> None:
 
 	USER = frappe.qb.DocType("User")
 	USER_SETTINGS = frappe.qb.DocType("User Settings")
-	ACCOUNT_STATE = frappe.qb.DocType("Account State")
+	ACCOUNT_SETTINGS = frappe.qb.DocType("Account Settings")
 
 	threshold = add_to_date(now(), hours=-3)
 
 	accounts = (
-		frappe.qb.from_(ACCOUNT_STATE)
+		frappe.qb.from_(ACCOUNT_SETTINGS)
 		.join(USER)
-		.on(USER.name == ACCOUNT_STATE.user)
+		.on(USER.name == ACCOUNT_SETTINGS.user)
 		.join(USER_SETTINGS)
 		.on(USER_SETTINGS.user == USER.name)
-		.select(ACCOUNT_STATE.account)
+		.select(ACCOUNT_SETTINGS.account)
 		.distinct()
 		.where(
 			(USER.enabled == 1)
@@ -1402,8 +1402,8 @@ def schedule_fetch_changes() -> None:
 			& (USER_SETTINGS.username.isnotnull())
 			& (USER_SETTINGS.skip_schedule_fetch_changes == 0)
 			& (
-				ACCOUNT_STATE.email_state_last_update.isnull()
-				| (ACCOUNT_STATE.email_state_last_update < threshold)
+				ACCOUNT_SETTINGS.email_state_last_update.isnull()
+				| (ACCOUNT_SETTINGS.email_state_last_update < threshold)
 			)
 		)
 	).run(pluck="account")

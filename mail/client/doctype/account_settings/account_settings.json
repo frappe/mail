@@ -12,7 +12,15 @@
   "email_previous_state",
   "email_current_state",
   "column_break_vftu",
-  "email_state_last_update"
+  "email_state_last_update",
+  "cache_section",
+  "has_cached_jmap_connection",
+  "has_cached_jmap_identities",
+  "has_cached_jmap_mailboxes",
+  "column_break_brmt",
+  "total_cached_blobs",
+  "total_cached_mail_messages",
+  "total_cached_contact_cards"
  ],
  "fields": [
   {
@@ -78,15 +86,75 @@
    "options": "User",
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "cache_section",
+   "fieldtype": "Section Break",
+   "label": "Cache"
+  },
+  {
+   "default": "0",
+   "fieldname": "has_cached_jmap_connection",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "Has Cached JMAP Connection",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "has_cached_jmap_identities",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "Has Cached JMAP Identities",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "has_cached_jmap_mailboxes",
+   "fieldtype": "Check",
+   "is_virtual": 1,
+   "label": "Has Cached JMAP Mailboxes",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_brmt",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_cached_blobs",
+   "fieldtype": "Int",
+   "is_virtual": 1,
+   "label": "Total Cached Blobs",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_cached_mail_messages",
+   "fieldtype": "Int",
+   "is_virtual": 1,
+   "label": "Total Cached Mail Messages",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_cached_contact_cards",
+   "fieldtype": "Int",
+   "is_virtual": 1,
+   "label": "Total Cached Contact Cards",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-15 16:08:48.925327",
+ "modified": "2026-04-16 11:12:11.861487",
  "modified_by": "Administrator",
  "module": "Client",
- "name": "Account State",
+ "name": "Account Settings",
  "owner": "Administrator",
  "permissions": [
   {
