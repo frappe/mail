@@ -732,10 +732,18 @@ def remove_sieve_block(sieve_script: str, mailbox_name: str) -> str:
 	    mailbox_name: The mailbox name to remove (e.g., "Yo", "Chill")
 
 	Returns:
-	    The updated Sieve script with the block removed
+	    The updated Sieve script with the block removed and normalized spacing
 	"""
+	# Remove the mailbox block
 	pattern = rf"# Mailbox: {re.escape(mailbox_name)}\n.*?stop;\n}}\n?"
 	result = re.sub(pattern, "", sieve_script, flags=re.DOTALL)
+
+	# Normalize spacing: replace multiple consecutive blank lines with single blank line
+	result = re.sub(r"\n{3,}", "\n\n", result)
+
+	# Clean up any trailing whitespace at the end
+	result = result.rstrip() + "\n"
+
 	return result
 
 
@@ -746,9 +754,12 @@ def update_sieve_script_for_mailbox(
 
 	doc = frappe.get_doc("Sieve Script", "akash@frappe.io|m")
 	doc.content = remove_sieve_block(doc.content, old_name or name)
+
 	if automation_rules:
 		mailbox_rule_set = rule_object_to_sieve(automation_rules, name)
-		doc.content += f"\n\n# Mailbox: {name}{mailbox_rule_set}"
+		doc.content = doc.content.rstrip() + "\n"
+		doc.content += f"\n# Mailbox: {name}{mailbox_rule_set}"
+
 	doc.save()
 
 
