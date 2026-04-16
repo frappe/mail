@@ -5,23 +5,13 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "user",
+  "account",
   "source",
   "column_break_6jsu",
   "last_received_at",
   "last_received_mail"
  ],
  "fields": [
-  {
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "options": "User",
-   "reqd": 1,
-   "search_index": 1
-  },
   {
    "fieldname": "column_break_6jsu",
    "fieldtype": "Column Break"
@@ -46,11 +36,21 @@
    "fieldname": "last_received_mail",
    "fieldtype": "Data",
    "label": "Last Received Mail"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "options": "User Account",
+   "reqd": 1,
+   "search_index": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-23 07:05:53.424301",
+ "modified": "2026-04-16 18:39:23.658673",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Sync History",
