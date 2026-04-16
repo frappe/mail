@@ -341,10 +341,20 @@ def set_signature(identity: str, signature: str) -> None:
 
 
 @frappe.whitelist()
+def get_automation_sieve_script() -> str:
+	"""Return Frappe Mail Automation sieve script for the user"""
+
+	doc = frappe.get_doc("Sieve Script", "akash@frappe.io|m")
+	return doc.content
+
+
+@frappe.whitelist()
 def get_sieve_scripts() -> list[dict]:
 	"""Return the sieve scripts for the user"""
 
-	return SieveScript._fetch_sieve_scripts(frappe.session.user)[0]
+	user = frappe.session.user
+	ids = [d["id"] for d in SieveScript._fetch_sieve_scripts(user)[0]]
+	return SieveScript._get_sieve_scripts(user, ids, True)
 
 
 @frappe.whitelist()

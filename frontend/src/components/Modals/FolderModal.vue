@@ -55,7 +55,7 @@
 						<!-- Automation  -->
 						<template v-else>
 							<FormControl
-								v-model="automation.emails_from"
+								v-model="automationRules.emails_from"
 								:label="__('Emails From')"
 								placeholder="john@example.com, jane@example.com, dory@example.io"
 								:description="
@@ -65,7 +65,7 @@
 								"
 							/>
 							<FormControl
-								v-model="automation.subject_contains"
+								v-model="automationRules.subject_contains"
 								:label="__('Subject Contains')"
 								placeholder="Important, Urgent, Follow Up"
 								:description="
@@ -75,8 +75,10 @@
 								"
 							/>
 							<FormControl
-								v-if="automation.emails_from && automation.subject_contains"
-								v-model="automation.match_if"
+								v-if="
+									automationRules.emails_from && automationRules.subject_contains
+								"
+								v-model="automationRules.match_if"
 								:label="__('Match If')"
 								type="select"
 								:options="[
@@ -84,10 +86,14 @@
 									{ label: __('Both conditions are met'), value: 'all' },
 								]"
 							/>
-							<template v-if="automation.emails_from || automation.subject_contains">
+							<template
+								v-if="
+									automationRules.emails_from || automationRules.subject_contains
+								"
+							>
 								<hr />
 								<Switch
-									v-model="automation.mark_as_read"
+									v-model="automationRules.mark_as_read"
 									:label="__('Mark as Read')"
 									:disabled="isNotificationsDisabled"
 									:description="
@@ -98,7 +104,7 @@
 									class="!p-0"
 								/>
 								<Switch
-									v-model="automation.add_star"
+									v-model="automationRules.add_star"
 									:label="__('Add Star')"
 									:disabled="isNotificationsDisabled"
 									:description="
@@ -133,7 +139,7 @@ const show = defineModel<boolean>()
 
 const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 
-const { mailboxes } = userStore()
+const { mailboxes, automationSieve } = userStore()
 
 const isNew = computed(() => !mailbox)
 
@@ -177,12 +183,13 @@ const createFolder = createResource({
 	url: 'mail.api.mail.create_mailbox',
 	makeParams: () => ({
 		...folder,
-		automation_rules: isDefaultAutomation.value ? null : automation,
+		automation_rules: isDefaultAutomation.value ? null : automationRules,
 	}),
 	onSuccess: () => {
 		raiseToast(__('Folder created.'))
 		show.value = false
 		mailboxes.reload()
+		automationSieve.reload()
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })
@@ -192,12 +199,13 @@ const updateFolder = createResource({
 	makeParams: () => ({
 		...folder,
 		old_name: original.name,
-		automation_rules: isDefaultAutomation.value ? null : automation,
+		automation_rules: isDefaultAutomation.value ? null : automationRules,
 	}),
 	onSuccess: () => {
 		raiseToast(__('Folder updated.'))
 		show.value = false
 		mailboxes.reload()
+		automationSieve.reload()
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })
@@ -207,9 +215,10 @@ watch(show, (val) => {
 
 	tab.value = 0
 
+	if (parsedAutomationRules.value) Object.assign(automationRules, parsedAutomationRules.value)
+	else Object.assign(automationRules, DEFAULT_AUTOMATION_RULES)
 	if (isNew.value) {
 		Object.assign(folder, DEFAULT_FOLDER)
-		Object.assign(automation, DEFAULT_AUTOMATION)
 		return
 	}
 
@@ -231,7 +240,7 @@ const COLOR_OPTIONS = [
 	{ label: __('Purple'), value: 'Purple' },
 ]
 
-const DEFAULT_AUTOMATION = {
+const DEFAULT_AUTOMATION_RULES = {
 	emails_from: '',
 	subject_contains: '',
 	mark_as_read: false,
@@ -239,9 +248,67 @@ const DEFAULT_AUTOMATION = {
 	match_if: 'any',
 }
 
-const automation = reactive({ ...DEFAULT_AUTOMATION })
+const automationRules = reactive({ ...DEFAULT_AUTOMATION_RULES })
+
+const parsedAutomationRules = computed(() => {
+	if (isNew.value || !automationSieve.data || !original.name) {
+		return null
+	}
+
+	const script = automationSieve.data
+	// Find the block for this mailbox
+	const commentPattern = `# Mailbox: ${original.name}`
+	const commentIndex = script.indexOf(commentPattern)
+
+	if (commentIndex === -1) {
+		return null
+	}
+
+	// Extract the block (from comment to closing brace)
+	const blockStart = commentIndex
+	const blockEnd = script.indexOf('\n}', blockStart)
+
+	if (blockEnd === -1) {
+		return null
+	}
+
+	const block = script.substring(blockStart, blockEnd + 2)
+
+	const rules = { ...DEFAULT_AUTOMATION_RULES }
+
+	// Parse emails_from
+	const emailsMatch = block.match(/address :is "from" \[(.*?)\]/)
+	if (emailsMatch) {
+		rules.emails_from = emailsMatch[1]
+			.split(',')
+			.map((email: string) => email.trim().replace(/"/g, ''))
+			.join(', ')
+	}
+
+	// Parse subject_contains
+	const subjectMatch = block.match(/header :contains "subject" \[(.*?)\]/)
+	if (subjectMatch) {
+		rules.subject_contains = subjectMatch[1]
+			.split(',')
+			.map((keyword: string) => keyword.trim().replace(/"/g, ''))
+			.join(', ')
+	}
+
+	// Parse match_if (anyof vs allof)
+	if (block.includes('allof')) {
+		rules.match_if = 'all'
+	} else if (block.includes('anyof')) {
+		rules.match_if = 'any'
+	}
+
+	// Parse flags
+	rules.mark_as_read = block.includes('setflag "\\\\Seen"')
+	rules.add_star = block.includes('setflag "\\\\Flagged"')
+
+	return rules
+})
 
 const isDefaultAutomation = computed(
-	() => JSON.stringify(automation) === JSON.stringify(DEFAULT_AUTOMATION),
+	() => JSON.stringify(automationRules) === JSON.stringify(DEFAULT_AUTOMATION_RULES),
 )
 </script>
