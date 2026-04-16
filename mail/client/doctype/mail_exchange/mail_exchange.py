@@ -34,7 +34,7 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
-from mail.jmap import get_email_service
+from mail.jmap import get_email_service, parse_account
 from mail.jmap.services.mail.email import EmailService
 from mail.utils import (
 	compress_directory,
@@ -49,7 +49,6 @@ from mail.utils.dt import parse_iso_datetime
 from mail.utils.user import (
 	clear_sync_state,
 	get_user_email_address,
-	has_role,
 	is_administrator,
 	is_jmap_configured,
 	is_mail_admin,
@@ -530,7 +529,7 @@ class MailExchange(Document):
 
 	def validate(self) -> None:
 		if self.is_new():
-			self.validate_user()
+			self.validate_account()
 
 		if self.operation == "Import":
 			self.validate_import()
@@ -547,12 +546,14 @@ class MailExchange(Document):
 	def before_cancel(self) -> None:
 		self.status = "Cancelled"
 
-	def validate_user(self) -> None:
-		"""Validate the user."""
+	def validate_account(self) -> None:
+		"""Validate the account."""
 
-		if not is_jmap_configured(self.user):
+		user, _account_id = parse_account(self.account)
+
+		if not is_jmap_configured(user):
 			frappe.throw(
-				_("User {0} does not have JMAP settings configured.").format(frappe.bold(self.user)),
+				_("User {0} does not have JMAP settings configured.").format(frappe.bold(user)),
 				frappe.PermissionError,
 			)
 
@@ -668,7 +669,7 @@ class MailExchange(Document):
 		if self.operation != "Import":
 			return
 
-		freeze_jmap_push_notifications(self.user)
+		freeze_jmap_push_notifications(self.account)
 		self._mark_started()
 
 		import_file = os.path.join(get_bench_path(), f"sites/{frappe.local.site}{self.import_file}")
@@ -682,7 +683,7 @@ class MailExchange(Document):
 			else:
 				extract_compressed_file(import_file, base_dir)
 
-			service = get_email_service(self.user)
+			service = get_email_service(self.account)
 
 			mailbox_map = {}
 			if self.import_format == "maildir-nested":
@@ -698,14 +699,14 @@ class MailExchange(Document):
 				frappe.throw(_("Import limit exceeded."))
 
 			self._import_batches(service, base_dir, meta)
-			clear_sync_state(self.user, type="email")
+			clear_sync_state(self.account, type="email")
 
 			kwargs.update({"status": "Completed", "output": _("Import completed")})
 		except Exception:
 			kwargs.update({"status": "Failed", "output": frappe.get_traceback(with_context=False)})
 		finally:
 			shutil.rmtree(base_dir, ignore_errors=True)
-			unfreeze_jmap_push_notifications(self.user)
+			unfreeze_jmap_push_notifications(self.account)
 
 		self._mark_completed(**kwargs)
 		self._notify_user(success=kwargs.get("status") == "Completed", action="Import")
@@ -723,7 +724,7 @@ class MailExchange(Document):
 
 		kwargs = {}
 		try:
-			service = get_email_service(self.user)
+			service = get_email_service(self.account)
 			total = service.query(self.export_filter_dict, limit=1)["total"]
 			limit = min(total, cint(self.export_limit or total))
 
@@ -905,11 +906,13 @@ class MailExchange(Document):
 		if not (email := get_user_email_address(self.owner)):
 			return
 
+		user, _account_id = parse_account(self.account)
+
 		subject = _("Mail Data {0} {1}").format(action, "Completed" if success else "Failed")
 		frappe.publish_realtime(
 			"mail_exchange_completed",
 			{"action": action, "success": success, "message": subject},
-			user=self.user,
+			user=user,
 		)
 		frappe.sendmail(
 			recipients=email,
@@ -936,7 +939,9 @@ def get_permission_query_condition(user: str | None = None) -> str:
 	if is_system_manager(user) or is_mail_admin(user):
 		return ""
 
-	return f"(`tabMail Exchange`.user = '{user}')"
+	user_accounts = [a["name"] for a in frappe.db.get_all("User Account", {"user": user})]
+
+	return f"(`tabMail Exchange`.account IN ({', '.join([f"'{account}'" for account in user_accounts])}))"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
@@ -948,7 +953,7 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if is_system_manager(user) or is_mail_admin(user):
 		return True
 
-	return doc.user == user
+	return doc.account in [a["name"] for a in frappe.db.get_all("User Account", {"user": user})]
 
 
 def extract_received_or_sent(msg: Message) -> datetime:
