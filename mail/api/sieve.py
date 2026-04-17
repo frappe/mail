@@ -61,7 +61,6 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 	        Sieve script as a string
 	"""
 
-	# Parse email addresses and subject keywords
 	emails_from = [
 		email.strip() for email in (automation.get("emails_from") or "").split(",") if email.strip()
 	]
@@ -71,15 +70,12 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 		if keyword.strip()
 	]
 
-	# If no conditions specified, return empty script
 	if not emails_from and not subject_contains:
 		return ""
 
-	# Build the script
 	script_parts = [""]
-
-	# Build conditions
 	conditions = []
+
 	if emails_from:
 		email_list = ", ".join(f'"{email}"' for email in emails_from)
 		conditions.append(f'address :matches "from" [{email_list}]')
@@ -88,11 +84,9 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 		keyword_list = ", ".join(f'"{keyword}"' for keyword in subject_contains)
 		conditions.append(f'header :contains "subject" [{keyword_list}]')
 
-	# Determine operator (anyof or allof)
 	match_if = automation.get("match_if", "any")
 	operator = "allof" if match_if == "all" else "anyof"
 
-	# Build if statement
 	if len(conditions) == 1:
 		script_parts.append(f"if {conditions[0]} {{")
 	else:
@@ -104,7 +98,6 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 				script_parts.append(f"  {condition}")
 		script_parts.append(") {")
 
-	# Add actions
 	script_parts.append(f'  fileinto "{folder_name}";')
 
 	if automation.get("mark_as_read"):
@@ -120,24 +113,11 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 
 
 def remove_sieve_block(sieve_script: str, mailbox_name: str) -> str:
-	"""
-	Remove an entire Sieve filter block by its mailbox name comment.
+	"""Remove an entire Sieve filter block by its mailbox name comment."""
 
-	Args:
-	    sieve_script: The full Sieve script as a string
-	    mailbox_name: The mailbox name to remove (e.g., "Yo", "Chill")
-
-	Returns:
-	    The updated Sieve script with the block removed and normalized spacing
-	"""
-	# Remove the mailbox block
 	pattern = rf"# Mailbox: {re.escape(mailbox_name)}\n.*?stop;\n}}\n?"
 	result = re.sub(pattern, "", sieve_script, flags=re.DOTALL)
-
-	# Normalize spacing: replace multiple consecutive blank lines with single blank line
 	result = re.sub(r"\n{3,}", "\n\n", result)
-
-	# Clean up any trailing whitespace at the end
 	result = result.rstrip() + "\n"
 
 	return result

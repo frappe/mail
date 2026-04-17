@@ -200,12 +200,13 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "Day",
    "depends_on": "eval: doc.username",
    "description": "Group email messages in the list by time period (e.g., day or month).",
    "fieldname": "group_messages_by",
    "fieldtype": "Select",
    "label": "Group Messages By",
-   "options": "\nDay\nMonth"
+   "options": "None\nDay\nMonth"
   },
   {
    "default": "0",
@@ -345,8 +346,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-14 10:59:52.608339",
- "modified_by": "Administrator",
+ "modified": "2026-04-17 15:51:02.397921",
+ "modified_by": "akash@frappe.io",
  "module": "Client",
  "name": "User Settings",
  "owner": "Administrator",

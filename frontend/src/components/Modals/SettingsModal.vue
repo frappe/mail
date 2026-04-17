@@ -108,7 +108,7 @@ const tabs = computed(() => {
 			label: __('Automation'),
 			icon: FileCode,
 			component: markRaw(AutomationSettings),
-			condition: user.data.is_mail_user,
+			condition: user.data.is_jmap_configure,
 		},
 		{
 			label: __('Import'),
