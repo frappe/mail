@@ -67,7 +67,7 @@ export const userStore = defineStore('mail-users', () => {
 
 	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
 
-	const sieveScripts = createResource({ url: 'mail.api.account.get_sieve_scripts' })
+	const sieveScripts = createResource({ url: 'mail.api.sieve.get_sieve_scripts' })
 
 	return {
 		userResource,

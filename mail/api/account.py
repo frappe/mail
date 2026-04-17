@@ -9,7 +9,6 @@ from frappe.utils.data import sha256_hash
 from mail.api.admin import add_member
 from mail.api.mail import normalize_filter
 from mail.client.doctype.identity.identity import fetch_identities
-from mail.client.doctype.sieve_script.sieve_script import SieveScript
 from mail.server.doctype.mail_account_request.mail_account_request import create_user
 from mail.utils import convert_html_to_text, user_context
 from mail.utils.cache import get_personal_signup_domains
@@ -338,42 +337,3 @@ def set_signature(identity: str, signature: str) -> None:
 	doc.html_signature = signature
 	doc.text_signature = convert_html_to_text(signature)
 	doc.db_update()
-
-
-@frappe.whitelist()
-def get_sieve_scripts() -> list[dict]:
-	"""Return the sieve scripts for the user"""
-
-	user = frappe.session.user
-	ids = [d["id"] for d in SieveScript._fetch_sieve_scripts(user)[0]]
-	return SieveScript._get_sieve_scripts(user, ids, True)
-
-
-@frappe.whitelist()
-def create_sieve_script(_name: str, content: str, active: bool) -> None:
-	"""Create a sieve script for the user"""
-
-	doc = frappe.new_doc("Sieve Script")
-	doc.user = frappe.session.user
-	doc._name = _name
-	doc.content = content
-	doc.active = active
-	doc.save()
-
-
-@frappe.whitelist()
-def update_sieve_script(name: str, _name: str, content: str, active: bool = False) -> None:
-	"""Update a sieve script for the user"""
-
-	doc = frappe.get_doc("Sieve Script", name)
-	doc._name = _name
-	doc.content = content
-	doc.active = active
-	doc.save()
-
-
-@frappe.whitelist()
-def delete_sieve_script(name: str) -> None:
-	"""Delete a sieve script for the user"""
-
-	frappe.delete_doc("Sieve Script", name)

@@ -26,7 +26,7 @@ const { script } = defineProps<{ script: SieveScript }>()
 const { sieveScripts } = userStore()
 
 const deleteScript = createResource({
-	url: 'mail.api.account.delete_sieve_script',
+	url: 'mail.api.sieve.delete_sieve_script',
 	makeParams: () => ({ name: script.name }),
 	onSuccess: () => {
 		raiseToast(__('Sieve script deleted.'))
