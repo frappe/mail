@@ -250,7 +250,7 @@
    "link_fieldname": "calendar"
   }
  ],
- "modified": "2026-01-23 14:42:44.306278",
+ "modified": "2026-04-13 12:51:01.709330",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar",
@@ -272,7 +272,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

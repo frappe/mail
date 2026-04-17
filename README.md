@@ -11,7 +11,7 @@
 
 ## Frappe Mail
 
-Frappe Mail is a **generic JMAP client** and an **orchestration layer** designed to deploy and manage **Stalwart Mail clusters**. It supports **multi-tenancy** and **multi-cluster** setups, where each tenant manages its own domains, members, and configurations, and must be assigned to a specific cluster. Frappe Mail handles provisioning, configuration, synchronization, and lifecycle operations across clusters, while exposing a unified interface for applications.
+Frappe Mail is a **generic JMAP client** and an **orchestration layer** designed to deploy and manage **Stalwart Mail clusters**. It supports **multi-cluster** setups, where each cluster manages its own domains, members, and configurations. Frappe Mail handles provisioning, configuration, synchronization, and lifecycle operations across clusters, while exposing a unified interface for applications.
 
 ## Table of Contents
 
@@ -32,7 +32,7 @@ Frappe Mail is a **generic JMAP client** and an **orchestration layer** designed
 
 ## Introduction
 
-Frappe Mail is an **end-to-end email management platform** built on the [Frappe Framework](https://github.com/frappe/frappe). It combines a fully compliant **JMAP client** with a powerful **orchestration layer** for deploying, configuring, and managing **Stalwart Mail clusters**. Whether you are connecting to an existing JMAP-compatible mailbox, self-hosting for your organization, or running a multi-tenant email service, Frappe Mail provides a unified interface for provisioning, automation, monitoring, and day-to-day email operations.
+Frappe Mail is an **end-to-end email management platform** built on the [Frappe Framework](https://github.com/frappe/frappe). It combines a fully compliant **JMAP client** with a powerful **orchestration layer** for deploying, configuring, and managing **Stalwart Mail clusters**. Whether you are connecting to an existing JMAP-compatible mailbox or self-hosting for your organization, Frappe Mail provides a unified interface for provisioning, automation, monitoring, and day-to-day email operations.
 
 ### Overview
 
@@ -40,18 +40,17 @@ At its core, Frappe Mail serves two major roles:
 
 **1. A Generic JMAP Client**
 
-It offers a modern, standards-compliant interface for sending, receiving, and managing email. Any mailbox hosted on a JMAP-compatible provider—such as Stalwart Mail or FastMail—can be accessed through Frappe Mail’s UI and APIs.
+It offers a modern, standards-compliant interface for sending, receiving, and managing email. Any mailbox hosted on a JMAP-compatible provider—such as Stalwart Mail or FastMail—can be accessed through Frappe Mail's UI and APIs.
 
 **2. A Multi-Cluster Orchestration Layer for Stalwart Mail**
 
-Frappe Mail can deploy and manage one or many Stalwart Mail clusters. It provisions servers, configures storage backends, manages TLS, syncs tenant/domain/account settings, and exposes lifecycle operations through a unified control plane.
+Frappe Mail can deploy and manage one or many Stalwart Mail clusters. It provisions servers, configures storage backends, manages TLS, syncs domain/account settings, and exposes lifecycle operations through a unified control plane.
 
-With **multi-tenant** and **multi-cluster** support, each tenant operates its own domains, mailboxes, and configurations, while the system ensures consistent provisioning and synchronization across all connected Stalwart nodes.
+With **multi-cluster** support, the system ensures consistent provisioning and synchronization across all connected Stalwart nodes.
 
 This makes Frappe Mail suitable for:
 
 - organizations self-hosting their email infrastructure,
-- companies offering email as a service,
 - developers integrating a JMAP-first mail system into their applications,
 - or teams simply looking for a unified admin and client interface over existing Stalwart clusters.
 
@@ -91,7 +90,6 @@ The first step is to install the Frappe Mail app. You can choose between using D
    Visit http://mail.localhost in your browser.
 
    **Default Credentials:**
-
    - **Username:** `administrator`
    - **Password:** `admin`
 
@@ -112,7 +110,7 @@ The first step is to install the Frappe Mail app. You can choose between using D
 
 #### Step 2: Installing & Configuring Stalwart Mail Server
 
-The Stalwart Mail Server acts as the backbone of Frappe Mail’s infrastructure. Below is an improved, structured guide for setting up Stalwart for both development and production.
+The Stalwart Mail Server acts as the backbone of Frappe Mail's infrastructure. Below is an improved, structured guide for setting up Stalwart for both development and production.
 
 ##### Step 1: Configure Mail Settings
 
@@ -120,8 +118,7 @@ The Stalwart Mail Server acts as the backbone of Frappe Mail’s infrastructure.
 
 - Open **Mail Settings** and set the **Root Domain Name**.
 - This domain is used for DNS configurations such as the **root SPF record**.
-- If you are offering Frappe Mail as an **email service provider**, set this to your primary domain (e.g., `frappemail.com`, `gmail.com`).
-- For organizational use, set it to your company’s domain.
+- For organizational use, set it to your company's domain.
 
 **1.2 Configure DNS Provider (Optional)**
 
@@ -169,7 +166,7 @@ After saving the Mail Server:
 
 1. Open the **SSH** tab in the Mail Server document.
 2. Copy the auto-generated **public SSH key**.
-3. Add the key to your server’s `~/.ssh/authorized_keys` file.
+3. Add the key to your server's `~/.ssh/authorized_keys` file.
 4. Click **Actions → Verify SSH Connection**.
 
 When verified, extra actions become available:
@@ -187,7 +184,7 @@ For production environments, **HTTPS/TLS** is strongly recommended.
 **Option A: Use ACME (Recommended)**
 
 - Configure an **ACME Provider** in the Mail Server.
-- Ensure your domain’s DNS records point to the server before proceeding.
+- Ensure your domain's DNS records point to the server before proceeding.
 - Example: mail.example.com → A record → Server IP.
 
 ![Mail Server ACME Provider](docs/screenshots/server-tls-acme.png)
@@ -196,7 +193,6 @@ For production environments, **HTTPS/TLS** is strongly recommended.
 
 1. Copy your TLS certificate and private key to the server.
 2. Add a new entry in the **TLS Certificates** table with:
-
    - Certificate Path
    - Private Key Path
    - Subject Alternative Names
@@ -211,9 +207,7 @@ Whenever you make changes to a **Mail Cluster** or **Mail Server**, you must reg
 
 1. In the Mail Server document, click **Actions → Generate Config**.
 2. Deploy the updated configuration using one of the following options:
-
    - **Actions → Install Stalwart**
-
      - Installs Stalwart and always uses the latest generated configuration.
        ![Actions > Install Stalwart](docs/screenshots/server-install-stalwart.png)
 
@@ -229,13 +223,30 @@ After installation completes:
 
 ![Stalwart Login Page](docs/screenshots/stalwart-login.png)
 
-##### Step 3: Assign Cluster to Default Tenant
+##### Step 3: Configure `site_config.json`
 
-- During Mail app installation, a default tenant named **"Frappe Mail"** is created.
-- Each tenant must be assigned a Mail Cluster.
-- Open the tenant → set the Mail Cluster created earlier.
+Ensure the following keys are properly configured in your `site_config.json` for Stalwart API communication:
 
-![Mail Tenant](docs/screenshots/tenant.png)
+```json
+{
+  "mail": {
+    "server_url": "https://mail.example.com",
+    "api_key": "your-stalwart-api-key"
+  }
+}
+```
+
+Alternatively, you can use username/password authentication:
+
+```json
+{
+  "mail": {
+    "server_url": "https://mail.example.com",
+    "username": "admin",
+    "password": "your-password"
+  }
+}
+```
 
 ##### Step 4: Adding Domains (Desk)
 
@@ -243,7 +254,7 @@ After installation completes:
 
 - Go to **Mail Domain Request → New**.
 - After saving, a **Verification Key (TXT record)** is generated.
-- Add this TXT record to your domain’s DNS settings.
+- Add this TXT record to your domain's DNS settings.
 - If the domain matches the **Root Domain** and your DNS provider is integrated, you can auto‑create this record via a **DNS Record** document.
 
 ![Mail Domain Request](docs/screenshots/domain-request.png)
@@ -258,10 +269,8 @@ After installation completes:
 
   ![Domain Principal](docs/screenshots/domain.png)
 
-  **2. A domain–tenant binding is created.**
-  This links the domain to the tenant for management and provisioning.
-
-  ![Domain Binding](docs/screenshots/domain-binding.png)
+  **2. A Principal Settings record is created.**
+  This links the domain for management and provisioning.
 
 **4.3 Development Mode (Optional)**
 
@@ -275,7 +284,7 @@ Repeat the above process to add additional domains.
 
   ![Mail Account Request](docs/screenshots/account-request.png)
 
-- **Email**: Used for invitations and password resets.
+- **Backup Email**: Used for invitations and password resets.
 - **Account**: The mailbox address; used to create the User document and login to the Mail UI.
 - Enable **Send Invite** if you want to send an onboarding email.
   Ensure you have a **default Email Account** configured for outbound mail.
@@ -369,7 +378,7 @@ APIs for retrieving emails.
         "size": 5243,
         "received_at": "2025-12-08 12:51:10+00:00",
         "blob_id": "ccodqfu9bg1aevchbuyrlcpprhctnqq9ao2h3gkbdy1zysoseq33qpaax2ba",
-        "subject": "Hello \ud83d\udc4b",
+        "subject": "Hello 👋",
         "thread_id": "jm",
         "name": "sagar.s@frappemail.com|bfqaaaaj3",
         "preview": "Hello, From Frappe Mail...",
@@ -388,7 +397,7 @@ APIs for retrieving emails.
             "email": "sagar.s@frappemail.com"
           }
         ],
-        "html_body": "<div>Hello, From Frappe Mail\u2026</div>",
+        "html_body": "<div>Hello, From Frappe Mail…</div>",
         "text_body": "Hello, From Frappe Mail...",
         "mailboxes": [
           {
@@ -453,7 +462,7 @@ APIs for retrieving emails.
   {
     "message": {
       "mails": [
-        "Delivered-To: sagar.s@frappemail.com\r\nReceived: from outbound.frappemail.com (outbound.frappemail.com [13.232.52.137] (AS16509 Amazon.com, Inc., IN))\r\n\t(using TLSv1.3 with cipher TLS13_AES_256_GCM_SHA384)\r\n\tby inbound.frappemail.com (Stalwart SMTP) with ESMTPS id 3DE517AF3D36E02;\r\n\tMon, 8 Dec 2025 12:51:09 +0000\r\nAuthentication-Results: inbound.frappemail.com;\r\n\tdkim=pass header.d=frappe.io header.s=frappemail-r header.b=EmGbuDcw;\r\n\tspf=pass (inbound.frappemail.com: domain of postmaster@outbound.frappemail.com designates 13.232.52.137 as permitted sender) smtp.helo=outbound.frappemail.com;\r\n\tspf=pass (inbound.frappemail.com: domain of sagar.s@frappe.io designates 13.232.52.137 as permitted sender) smtp.mailfrom=sagar.s@frappe.io;\r\n\tiprev=pass policy.iprev=13.232.52.137;\r\n\tdmarc=pass header.from=frappe.io policy.dmarc=none\r\nReceived-SPF: pass (inbound.frappemail.com: domain of sagar.s@frappe.io designates 13.232.52.137 as permitted sender)\r\n\treceiver=inbound.frappemail.com; client-ip=13.232.52.137; envelope-from=\"sagar.s@frappe.io\"; helo=outbound.frappemail.com;\r\nARC-Seal: i=1; a=rsa-sha256; s=frappemail-r; d=frappemail.com; cv=none;\r\n\tb=nYEPel+3YDOZLQWFY8EjRetymxtxfAz8K+BABOzTBUF9rGsjo99ILbsDwExo+9o1rpm/wHekh\r\n\tEUumEVVqAk9cX16CpzpMy6T+SahqyfZA1ywPZcTxXoDcBbn3Hs5LF5DeHewYPBE920EWijGXcf1\r\n\tL/AvyqEor10cL+6iYcLzkg4/gjVp7jwWitBfGTu9tBSuITYeK4YKh6zUsLDn5O/VCsS96j6Bfss\r\n\ttAGNYNPzALsLEMSMsSZBHhqsC93z8nFEFZIt9834x2UjmSQPCeYcnDSP5IVY5LaYSbM4wEt2Y+k\r\n\tMyLCz7Aa4X4hSJZdFZ+s4BB7pS9drvegGw/BzY+Svkfw==;\r\nARC-Message-Signature: i=1; a=rsa-sha256; s=frappemail-r; d=frappemail.com; c=relaxed/relaxed;\r\n\th=Message-ID:Date:Subject:To:From:DKIM-Signature; t=1765198269; bh=HU/S44HL\r\n\tsW+Js8pc9uxS0io7t8u6R4AN0oaeXnEotTY=; b=qIFx/XH2QIv69i98admlzL5Uj0q7Jr2Q2aw\r\n\tigLKuUsjn7UKqpESiKgKLP/S2xMvt/wtQ6BvgENBEcbrUPAznnmS7rOErj7iptHAvaCVVWoHuSd\r\n\ttHLdntULe+2lK4+Td6Zos05KegkbQWGiMSjaK8trxSEZBapv87aSWcUUIZSVAhRIcXK4a5vhF0l\r\n\tQiDAAOxT5hyPOsoC4mxzceXHM7PAT477OBFBxFERoqtT9bcJR+eqoDrdcCMiWBoU0sBm/wnN/KS\r\n\tfK+m78KQruROrrRg2NgbbXDC0OhtN873ifGNF44Dviia2qgZnzSJZlGL0dhn68aBLRN0BbvQkR6\r\n\tz4zawRA==;\r\nARC-Authentication-Results: i=1; inbound.frappemail.com;\r\n\tdkim=pass header.d=frappe.io header.s=frappemail-r header.b=EmGbuDcw;\r\n\tspf=pass (inbound.frappemail.com: domain of postmaster@outbound.frappemail.com designates 13.232.52.137 as permitted sender) smtp.helo=outbound.frappemail.com;\r\n\tspf=pass (inbound.frappemail.com: domain of sagar.s@frappe.io designates 13.232.52.137 as permitted sender) smtp.mailfrom=sagar.s@frappe.io;\r\n\tiprev=pass policy.iprev=13.232.52.137;\r\n\tdmarc=pass header.from=frappe.io policy.dmarc=none\r\nX-Spam-Result: TRUSTED_DOMAIN (-7.00),\r\n\tDMARC_POLICY_ALLOW (-0.50),\r\n\tDKIM_ALLOW (-0.20),\r\n\tSPF_ALLOW (-0.20),\r\n\tARC_NA (0.00),\r\n\tDBL_BLOCKED_OPENRESOLVER (0.00),\r\n\tDKIM_SIGNED (0.00),\r\n\tFROM_EQ_ENV_FROM (0.00),\r\n\tFROM_HAS_DN (0.00),\r\n\tHTML_SHORT_1 (0.00),\r\n\tMID_RHS_MATCH_ENV_FROM (0.00),\r\n\tRBL_SENDERSCORE_REPUT_BLOCKED (0.00),\r\n\tRBL_SPAMHAUS_BLOCKED_OPENRESOLVER (0.00),\r\n\tRCPT_COUNT_ONE (0.00),\r\n\tRCVD_TLS_LAST (0.00),\r\n\tTO_DN_NONE (0.00),\r\n\tTO_MATCH_ENVRCPT_ALL (0.00),\r\n\tXM_UA_NO_VERSION (0.01),\r\n\tRCVD_COUNT_ZERO (0.10),\r\n\tMID_RHS_MATCH_FROM (1.00),\r\n\tDIRECT_TO_MX (2.00)\r\nX-Spam-Status: No, score=-4.79\r\nReturn-Path: <sagar.s@frappe.io>\r\nDKIM-Signature: v=1; a=rsa-sha256; s=frappemail-r; d=frappe.io; c=relaxed/relaxed; r=y;\r\n\th=Message-ID:Date:Subject:To:From; t=1765198270; bh=HU/S44HLsW+Js8pc9uxS0io\r\n\t7t8u6R4AN0oaeXnEotTY=; b=uxoGwis9QYH+P/IXCi2hEMHUTP8Y4v3XprDTK7YtW74ye0MZrq\r\n\tIYkUykR6upglHaH1SReQwnMq3SbTP3aRXD4j9JHdOhIONLUB85q7ld7Khw/nX7lBnJZzjQar0tQ\r\n\tgmZcDifHtLXhVg9j5CXEdYzl5MnXfVy8OFYW5qhmw/MxBpObP+6WcpdaGmMSuadjjCpfWbwq0hu\r\n\t5AAMtxxw1l/YdI6C3+kardnf50XBVrRaVcZOU5bN5W2uUfTIkOzjTO06HaqsKYRobhzyR2kQzU+\r\n\tGwbaksXPUEErHU547w58SOOqRb76oMI6q8iCwLs9apYcVhx3wwrBYNIeywM47gcuUJQ==;\r\nDKIM-Signature: v=1; a=rsa-sha256; s=frappemail-r; d=frappe.io; c=relaxed/relaxed; r=y;\r\n\th=Message-ID:Date:Subject:To:From; t=1765198269; bh=HU/S44HLsW+Js8pc9uxS0io\r\n\t7t8u6R4AN0oaeXnEotTY=; b=EmGbuDcwO/LTKiJAyMcxYv7qNl5MwEMQYfaKAMDXSV5CNW1dcf\r\n\tbMz/Ei/pIs+F2DWZtFmJJvKx8K1bAlV8ky0M/GXemoX09dBxZKn+ncBmdsP2E5hSZdj1smUZRRG\r\n\tgGiHje0msh0SK93nysiq0Fmb7C86wfXGTDwTanvBky7LFq4ijJR3QKVqaHJBlCOKpD3jl0h/8PA\r\n\tYEbD2ay9cmCMZPNPhTfFfEfjQCpo99UX9ocjWKmDeta8M312jyJ5rjmI0Nxj4jB9IxlQgN3Prng\r\n\tiCBZREA5FAO5ueFziF6lP11yW3EAh16fQ+Ty6ocWouuxCuYZ6VuAULiv/UlnTYexVCA==;\r\nFrom: \"Sagar Sharma\" <sagar.s@frappe.io>\r\nTo: <sagar.s@frappemail.com>\r\nSubject: =?utf-8?B?SGVsbG8g8J+Riw==?=\r\nDate: Mon, 8 Dec 2025 12:51:09 +0000\r\nMessage-ID: <176519819654.76284.13616894718620722082@frappe.io>\r\nUser-Agent: Frappe Mail v0.0.1 (Frappe v16.0.0-dev)\r\nX-Mailer: Frappe Mail\r\nX-Mail-Queue: 019afe04-0aeb-7cd1-a3b6-5f93feddbedc\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; \r\n\tboundary=\"187f3e793201e2ca_b8edd88d54e943e0_a21106607a32b002\"\r\n\r\n\r\n--187f3e793201e2ca_b8edd88d54e943e0_a21106607a32b002\r\nContent-Type: text/plain; charset=\"utf-8\"\r\nContent-Transfer-Encoding: 7bit\r\n\r\nHello, From Frappe Mail...\r\n--187f3e793201e2ca_b8edd88d54e943e0_a21106607a32b002\r\nContent-Type: text/html; charset=\"utf-8\"\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n<div>Hello, From Frappe Mail=E2=80=A6</div>\r\n--187f3e793201e2ca_b8edd88d54e943e0_a21106607a32b002--\r\n"
+        "Delivered-To: sagar.s@frappemail.com\r\nReceived: from outbound.frappemail.com ..."
       ],
       "last_received_at": "2025-12-08 12:51:10+00:00",
       "last_received_mail": "sagar.s@frappemail.com|bfqaaaaj3"
@@ -524,13 +533,13 @@ Some of its features include:
 
 ![Data exchange](docs/screenshots/ui/data-exchange.png)
 
-#### 8. Progressive Web App (PWA) support for a fast, app-like experience
+#### 9. Progressive Web App (PWA) support for a fast, app-like experience
 
 ![PWA](docs/screenshots/ui/pwa.png)
 
 ### Admin Dashboard
 
-The Admin Dashboard is the administrative and configuration interface of Frappe Mail. It is designed for tenant administrators to manage accounts, domains, and tenant-wide settings.
+The Admin Dashboard is the administrative and configuration interface of Frappe Mail. It is designed for administrators to manage accounts, domains, and site-wide settings.
 
 Some of its features include:
 
@@ -542,7 +551,7 @@ Some of its features include:
 
 ![Member](docs/screenshots/ui/member.png)
 
-#### 3. Inviting new users to the tenant
+#### 3. Inviting new users
 
 ![Invites](docs/screenshots/ui/invites.png)
 
@@ -552,75 +561,30 @@ Some of its features include:
 
 ### Sign-up Flow
 
-Before accessing the Mailbox or Admin Dashboard, users complete a one-time sign-up and setup flow. Depending on the user and their requirements, Frappe Mail offers three types of sign-ups:
+Before accessing the Mailbox or Admin Dashboard, users complete a one-time sign-up and setup flow. Frappe Mail offers two types of sign-ups:
 
-- Business Sign-up
-- Personal Sign-up
+- Sign-up
 - Invite-based Sign-up
 
-#### Business Sign-up
-
-For organizations setting up their own tenant, including custom domains, accounts, and organization-level configurations.
-
-Note: This has to be enabled in Mail Settings
-
-1. Go to `/mail/signup` and select 'Business (For work or company use)'
-
-![Business](docs/screenshots/ui/signup/business-1.png)
-
-2. Enter your current email address
-
-![Business - Email](docs/screenshots/ui/signup/business-2.png)
-
-3. A verification email will be sent to this account
-
-![Business - Verification Code](docs/screenshots/ui/signup/business-3.png)
-
-4. Copy the code and paste it into the Mail app, or click on 'Verify Account'
-
-![Business - Verification Email](docs/screenshots/ui/signup/business-4.png)
-
-5. Enter your details
-
-![Business - Details](docs/screenshots/ui/signup/business-5.png)
-
-6. Enter the name of your orangization, and click on 'Create Organization'
-
-![Business - Organization](docs/screenshots/ui/signup/business-6.png)
-
-A new tenant will be created with you as the tenant owner. Click on 'Add Domain' and follow the instructions on screen to set up your first domain and its corresponding members.
-
-#### Personal Sign-up
+#### Sign-up
 
 For allowing users to create an account with one of the domains whitelisted by a system administrator.
 
-Note: This has to be enabled in Mail Settings
+Note: This has to be enabled in Mail Settings.
 
-1. Go to `/mail/signup` and select 'Personal (For individual user)'
+1. Go to `/mail/signup`
 
-![Personal](docs/screenshots/ui/signup/personal-1.png)
+2. Enter a username and select one of the whitelisted domains
 
-2. Enter your name
+3. Enter a backup email address for recovery
 
-![Personal - Name](docs/screenshots/ui/signup/personal-2.png)
-
-3. Enter a username and select one of the whitelisted domains
-
-![Personal - Email](docs/screenshots/ui/signup/personal-3.png)
-
-4. Enter a backup email address for recovery
-
-![Personal - Backup](docs/screenshots/ui/signup/personal-4.png)
-
-4. Enter a password, and click on 'Sign Up'
-
-![Personal - Password](docs/screenshots/ui/signup/personal-5.png)
+4. Enter a password and your name, then click on 'Sign Up'
 
 The user will now have a mail account with the selected domain and user details on Frappe Mail.
 
 #### Invite-based Sign-up
 
-For inviting external individuals to be members of your tenant.
+For inviting individuals to create an account on the platform.
 
 1. Invite the member through the Admin Dashboard by assigning them an email address, and clicking on 'Invite Member'
 
@@ -633,8 +597,6 @@ For inviting external individuals to be members of your tenant.
 3. Fill out the details, and click on 'Create Account'
 
 ![Invite email](docs/screenshots/ui/signup/invite-based-3.png)
-
-This will result in the creation of a new tenant account with the given details.
 
 ## Contributing
 
@@ -659,10 +621,10 @@ Pre-commit is configured to use the following tools for checking and formatting 
 <br/>
 <br/>
 <div align="center" style="padding-top: 0.75rem;">
-	<a href="https://frappe.io" target="_blank">
-		<picture>
-			<source media="(prefers-color-scheme: dark)" srcset="https://frappe.io/files/Frappe-white.png">
-			<img src="https://frappe.io/files/Frappe-black.png" alt="Frappe Technologies" height="28"/>
-		</picture>
-	</a>
+<a href="https://frappe.io" target="_blank">
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://frappe.io/files/Frappe-white.png">
+<img src="https://frappe.io/files/Frappe-black.png" alt="Frappe Technologies" height="28"/>
+</picture>
+</a>
 </div>

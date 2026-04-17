@@ -160,7 +160,7 @@
    "link_fieldname": "address_book"
   }
  ],
- "modified": "2026-01-30 11:19:23.770634",
+ "modified": "2026-04-13 12:56:49.385930",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Address Book",
@@ -182,7 +182,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

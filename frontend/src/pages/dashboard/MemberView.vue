@@ -1,17 +1,21 @@
 <template>
 	<DashboardLayout
 		:breadcrumbs="BREADCRUMBS"
-		:badge-label="isAdmin.data === 1 ? __('Admin') : ''"
+		:badge-label="isAdmin ? __('Admin') : ''"
 		badge-theme="blue"
 	>
 		<template #actions>
 			<Button
+				variant="ghost"
+				theme="red"
+				:label="__('Delete')"
+				@click="showDeleteMember = true"
+			/>
+			<Button
 				variant="solid"
 				:label="__('Save')"
-				:loading="account.save.loading || editIsAdmin.loading"
-				:disabled="
-					account.get.loading || isAdmin.loading || !(isAccountDirty || isRoleDirty)
-				"
+				:loading="account.save.loading"
+				:disabled="account.get.loading || !isAccountDirty"
 				@click="save"
 			/>
 		</template>
@@ -22,7 +26,7 @@
 					:button-label="__('Edit')"
 					@action="showEditGeneral = true"
 				>
-					<InformationField :label="__('Role')" :value="role" />
+					<InformationField :label="__('Roles')" :value="assignedRoles || __('None')" />
 					<InformationField
 						:label="__('Description')"
 						:value="account.doc.description"
@@ -37,7 +41,6 @@
 						:label="__('Joined On')"
 						:value="dayjs(userDates.data.creation).format('MMM D YYYY, h:mm A')"
 					/>
-					<InformationField :label="__('Organization')" :value="user.data.tenant_name" />
 				</DashboardCard>
 				<DashboardCard
 					:title="__('Quota Usage')"
@@ -55,6 +58,7 @@
 					:rows="account.doc.emails"
 					:title="__('Email Addresses')"
 					:column-label="__('Email Address')"
+					row="email"
 					class="h-80"
 					@add="addEmail(false)"
 					@remove="
@@ -68,6 +72,7 @@
 					:rows="account.doc.lists"
 					:title="__('Mailing Lists')"
 					:column-label="__('Mailing List')"
+					row="list"
 					class="h-80"
 					@add="addEmail(true)"
 					@remove="
@@ -82,7 +87,7 @@
 	</DashboardLayout>
 
 	<Dialog
-		v-if="account?.originalDoc && isAdmin?.data !== undefined"
+		v-if="account?.originalDoc"
 		v-model="showEditGeneral"
 		:options="{
 			title: __('Edit General Information'),
@@ -90,9 +95,7 @@
 				{
 					label: __('Save'),
 					variant: 'solid',
-					disabled:
-						account.doc.description === account.originalDoc.description &&
-						!isRoleDirty,
+					disabled: account.doc.description === account.originalDoc.description,
 					onClick: () => {
 						save()
 						showEditGeneral = false
@@ -103,13 +106,6 @@
 	>
 		<template #body-content>
 			<div class="space-y-4">
-				<FormControl
-					v-model="role"
-					type="combobox"
-					:label="__('Role')"
-					:options="['Mail User', 'Mail Admin']"
-					:open-on-click="true"
-				/>
 				<FormControl
 					v-model="account.doc.description"
 					:label="__('Description')"
@@ -181,13 +177,17 @@
 		:is-list="isAddList"
 		@add-email="
 			(value) =>
-				isAddList ? account.doc.lists.push({ value }) : account.doc.emails.push({ value })
+				isAddList
+					? account.doc.lists.push({ list: value })
+					: account.doc.emails.push({ email: value })
 		"
 	/>
+	<Dialog v-model="showDeleteMember" :options="DELETE_MEMBER_OPTIONS" />
 </template>
 
 <script setup lang="ts">
 import { computed, inject, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import {
 	Button,
 	Dialog,
@@ -207,10 +207,11 @@ import QuotaProgressBar from '@/components/QuotaProgressBar.vue'
 
 const { memberName } = defineProps<{ memberName: string }>()
 
-const user = inject('$user')
 const dayjs = inject('$dayjs')
+const router = useRouter()
 
 const showEditGeneral = ref(false)
+const showDeleteMember = ref(false)
 
 const showEditQuota = ref(false)
 const setQuotaRestriction = ref(false)
@@ -238,19 +239,6 @@ const addEmail = (isList: boolean) => {
 	showAddEmail.value = true
 }
 
-const isAdmin = createResource({
-	url: 'frappe.client.get_value',
-	makeParams: () => ({
-		doctype: 'Mail Tenant Member',
-		fieldname: 'is_admin',
-		filters: memberName,
-		as_dict: false,
-	}),
-	onSuccess: (data) => (role.value = data === 1 ? 'Mail Admin' : 'Mail User'),
-	auto: true,
-	cache: ['isAdmin', memberName],
-})
-
 const userDates = createResource({
 	url: 'frappe.client.get_value',
 	makeParams: () => ({
@@ -260,9 +248,10 @@ const userDates = createResource({
 	}),
 	auto: true,
 	cache: ['userDates', memberName],
+	onError: () => {
+		userDates.data = null
+	},
 })
-
-const role = ref(isAdmin?.data ? 'Mail Admin' : 'Mail User')
 
 const account = createDocumentResource({
 	doctype: 'Principal',
@@ -276,23 +265,12 @@ const account = createDocumentResource({
 	},
 })
 
-const editIsAdmin = createResource({
-	url: 'frappe.client.set_value',
-	makeParams: ({ name, is_admin }: { name: string; is_admin: 0 | 1 }) => ({
-		doctype: 'Mail Tenant Member',
-		name: name,
-		fieldname: 'is_admin',
-		value: is_admin,
-	}),
-	onSuccess: () => {
-		isAdmin.reload()
-		raiseToast(__('Role updated.'))
-	},
-	onError: (error) => raiseToast(error.messages[0], 'error'),
-})
+const isAdmin = computed(() =>
+	account.doc?.roles?.some((r: { role: string }) => r.role === 'admin'),
+)
 
-const isRoleDirty = computed(
-	() => (isAdmin.data === 1 ? 'Mail Admin' : 'Mail User') !== role.value,
+const assignedRoles = computed(() =>
+	account.doc?.roles?.map((r: { role: string }) => r.role).join(', '),
 )
 
 const isAccountDirty = computed(
@@ -300,12 +278,29 @@ const isAccountDirty = computed(
 )
 
 const save = async () => {
-	if (isRoleDirty.value)
-		editIsAdmin.submit({ name: memberName, is_admin: role.value === 'Mail User' ? 0 : 1 })
 	if (isAccountDirty.value) account.save.submit()
 }
 
 const BREADCRUMBS = [{ label: __('Members'), route: '/dashboard/members' }, { label: memberName }]
+
+const deleteMember = createResource({
+	url: 'mail.api.admin.delete_members',
+	makeParams: () => ({ names: [memberName] }),
+	onSuccess: () => {
+		raiseToast(__('Member deleted.'))
+		router.push({ name: 'Members' })
+	},
+	onError: (error) => {
+		showDeleteMember.value = false
+		raiseToast(error.messages[0], 'error')
+	},
+})
+
+const DELETE_MEMBER_OPTIONS = {
+	title: __('Delete Member'),
+	message: __('Are you sure you want to delete this member? This action cannot be undone.'),
+	actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteMember.submit }],
+}
 
 const GB = 1024 * 1024 * 1024
 </script>

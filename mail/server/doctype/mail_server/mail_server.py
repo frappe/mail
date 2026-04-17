@@ -14,14 +14,13 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
-from mail.backend import get_mail_backend_api
 from mail.mail.doctype.mail_settings.mail_settings import (
 	validate_mail_settings,
 )
 from mail.server.doctype.dns_record.dns_record import create_or_update_dns_record
 from mail.server.doctype.mail_cluster.mail_cluster import create_or_update_spf_dns_record_for_cluster
 from mail.server.doctype.server_config.server_config import create_server_config
-from mail.utils import get_spf_host_for_cluster
+from mail.utils import get_mail_config, get_spf_host_for_cluster
 from mail.utils.cache import get_root_domain_name
 from mail.utils.dns import get_dns_record
 
@@ -215,7 +214,7 @@ class MailServer(Document):
 
 		host = self.hostname[: -len(root_domain_name) - 1]
 		spf_host = get_spf_host_for_cluster(self.cluster)
-		default_ttl = cint(frappe.conf.default_dns_ttl) or 3600
+		default_ttl = cint(get_mail_config("default_dns_ttl"))
 		if self.enabled:
 			create_or_update_dns_record(
 				host=host,
@@ -227,18 +226,6 @@ class MailServer(Document):
 		else:
 			if spf_ehlo_dns_record := frappe.db.exists("DNS Record", {"host": host, "type": "TXT"}):
 				frappe.delete_doc("DNS Record", spf_ehlo_dns_record, ignore_permissions=True)
-
-	@frappe.whitelist()
-	def reload_config(self) -> None:
-		"""Reloads the Server configuration."""
-
-		frappe.only_for("System Manager")
-
-		if not self.enabled:
-			frappe.throw(_("Mail Server {0} is disabled.").format(frappe.bold(self.name)))
-
-		backend = get_mail_backend_api(self.doctype, self.name)
-		backend.request("GET", "/api/reload")
 
 	@frappe.whitelist()
 	def verify_ssh_connection(self) -> None:
@@ -372,28 +359,6 @@ class MailServer(Document):
 		"""Updates the document with the given key-value pairs."""
 
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
-
-
-@frappe.whitelist()
-def reload_servers_config(servers: str | list[str]) -> None:
-	"""Reloads the configuration of the specified servers."""
-
-	frappe.only_for("System Manager")
-
-	if isinstance(servers, str):
-		servers = json.loads(servers)
-
-	reloaded_servers = []
-	for server in servers:
-		server = frappe.get_cached_doc("Mail Server", server)
-		if server.enabled:
-			server.reload_config()
-			reloaded_servers.append(server.name)
-		else:
-			frappe.msgprint(_("Mail Server {0} is disabled.").format(frappe.bold(server.name)), alert=True)
-
-	if reloaded_servers:
-		frappe.msgprint(_("Configuration reloaded."), alert=True)
 
 
 def on_doctype_update() -> None:

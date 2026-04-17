@@ -1,18 +1,18 @@
 interface DocType {
-	name: string
-	creation: string
-	modified: string
-	owner: string
-	modified_by: string
-}
+    name: string;
+    creation: string;
+    modified: string;
+    owner: string;
+    modified_by: string;
+  }
 
-interface ChildDocType extends DocType {
-	parent?: string
-	parentfield?: string
-	parenttype?: string
-	idx?: number
-}
-
+  interface ChildDocType extends DocType {
+    parent?: string;
+    parentfield?: string;
+    parenttype?: string;
+    idx?: number;
+  }
+  
 // Last updated: 2025-02-19 19:18:44.222087
 export interface MailRecipient extends ChildDocType {
 	/** Display Name: Data */
@@ -35,36 +35,30 @@ export interface MailHeader extends ChildDocType {
 	value?: string
 }
 
-// Last updated: 2025-11-26 15:04:37.459073
+// Last updated: 2026-04-13 10:27:23.941932
 export interface MailAccountRequest extends DocType {
-	/** Request Key: Data */
-	request_key?: string
-	/** Email: Data */
-	email: string
-	/** Tenant: Link (Mail Tenant) */
-	tenant?: string
-	/** OTP: Data */
-	otp?: string
-	/** Invited By: Link (User) */
-	invited_by?: string
-	/** Is Verified: Check */
-	is_verified: 0 | 1
-	/** Is Expired: Check */
-	is_expired: 0 | 1
-	/** Is Invite: Check */
-	is_invite: 0 | 1
-	/** Account: Data */
-	account?: string
-	/** Domain: Data */
-	domain_name?: string
-	/** Is Admin: Check */
-	is_admin: 0 | 1
-	/** Send Invite: Check */
-	send_invite: 0 | 1
-	/** IP Address: Data */
-	ip_address?: string
-	/** Expires At: Datetime */
-	expires_at?: string
+  /** Request Key: Data */
+  request_key?: string;
+  /** Backup Email: Data */
+  backup_email: string;
+  /** Invited By: Link (User) */
+  invited_by: string;
+  /** Is Verified: Check */
+  is_verified: 0 | 1;
+  /** Is Expired: Check */
+  is_expired: 0 | 1;
+  /** Account: Data */
+  account: string;
+  /** Domain: Data */
+  domain_name: string;
+  /** Send Invite: Check */
+  send_invite: 0 | 1;
+  /** IP Address: Data */
+  ip_address?: string;
+  /** Expires At: Datetime */
+  expires_at?: string;
+  /** Roles: Small Text */
+  roles: string;
 }
 
 // Last updated: 2025-02-03 17:11:17.517836
@@ -99,58 +93,24 @@ export interface MailDomain extends DocType {
 	dkim_rsa_key_size?: '' | '2048' | '4096'
 	/** Root Domain: Check */
 	is_root_domain: 0 | 1
-	/** Tenant: Link (Mail Tenant) */
-	tenant: string
 	/** Default Disk Quota (in GB): Float */
 	default_disk_quota?: number
 }
 
-// Last updated: 2025-11-25 18:35:06.533431
-export interface MailTenant extends DocType {
-	/** Tenant Name: Data */
-	tenant_name: string
-	/** Logo: Attach Image */
-	logo?: string
-	/** Maximum No. of Domains: Int */
-	max_domains: number
-	/** Maximum No. of Accounts: Int */
-	max_accounts: number
-	/** User: Link (User) */
-	user: string
-	/** Allow Personal Signup: Check */
-	allow_personal_signup: 0 | 1
-	/** Cluster: Link (Mail Cluster) */
-	cluster?: string
-	/** Maximum No. of Mailing Lists: Int */
-	max_mailing_lists: number
-}
-
-// Last updated: 2025-01-31 15:53:10.550269
-export interface MailTenantMember extends DocType {
-	/** User: Link (User) */
-	user: string
-	/** Tenant: Link (Mail Tenant) */
-	tenant: string
-	/** Is Admin: Check */
-	is_admin: 0 | 1
-}
-
-// Last updated: 2025-01-28 15:33:09.730936
+// Last updated: 2026-04-12 23:51:49.709930
 export interface MailDomainRequest extends DocType {
-	/** Domain Name: Data */
-	domain_name: string
-	/** User: Link (User) */
-	user: string
-	/** Verification Key: Data */
-	verification_key?: string
-	/** Is Verified: Check */
-	is_verified: 0 | 1
-	/** Tenant: Link (Mail Tenant) */
-	tenant: string
+  /** Domain Name: Data */
+  domain_name: string;
+  /** User: Link (User) */
+  user: string;
+  /** Verification Key: Data */
+  verification_key?: string;
+  /** Is Verified: Check */
+  is_verified: 0 | 1;
 }
 
 // Last updated: 2025-11-27 13:25:44.326974
-export interface PersonalSignupDomain extends ChildDocType {
+export interface SignupDomain extends ChildDocType {
 	/** Domain: Link (Principal Settings) */
 	principal: string
 }
@@ -187,12 +147,10 @@ export interface MailSettings extends DocType {
 	spamd_hybrid_scanning_threshold?: number
 	/** Enable Spam Detection: Check */
 	enable_spamd: 0 | 1
-	/** Allow Business Signup: Check */
-	allow_business_signup: 0 | 1
-	/** Allow Personal Signup: Check */
-	allow_personal_signup: 0 | 1
-	/** Personal Signup Domains: Table MultiSelect (Personal Signup Domain) */
-	personal_signup_domains: PersonalSignupDomain[]
+	/** Allow Signup: Check */
+	allow_signup: 0 | 1
+	/** Signup Domains: Table MultiSelect (Personal Signup Domain) */
+	signup_domains: SignupDomain[]
 	/** Username: Data */
 	dns_provider_username?: string
 	/** Zone ID: Data */
@@ -229,146 +187,148 @@ export interface EmailAddress extends ChildDocType {
 	email: string
 }
 
-// Last updated: 2026-01-27 12:58:50.231044
+// Last updated: 2026-03-12 20:02:37.173596
 export interface MailMessagePart extends ChildDocType {
-	/** Part ID: Data */
-	part_id?: string
-	/** File Name: Data */
-	filename?: string
-	/** Charset: Data */
-	charset?: string
-	/** Disposition: Select */
-	disposition?: '' | 'inline' | 'attachment'
-	/** Language: Data */
-	language?: string
-	/** Location: Data */
-	location?: string
-	/** File URL: Attach */
-	file_url?: any
-	/** Type: Data */
-	type?: string
-	/** Blob ID: Data */
-	blob_id?: string
-	/** Size: Int */
-	size?: number
-	/** Content ID: Data */
-	cid?: string
-	/** URL: Data */
-	url?: string
+  /** Part ID: Data */
+  part_id?: string;
+  /** File Name: Data */
+  filename?: string;
+  /** Charset: Data */
+  charset?: string;
+  /** Disposition: Select */
+  disposition?: '' | 'inline' | 'attachment';
+  /** Language: Data */
+  language?: string;
+  /** Location: Data */
+  location?: string;
+  /** File URL: Attach */
+  file_url?: any;
+  /** Type: Data */
+  type?: string;
+  /** Blob ID: Data */
+  blob_id?: string;
+  /** Size: Int */
+  size?: number;
+  /** Content ID: Data */
+  cid?: string;
+  /** URL: Data */
+  url?: string;
+  /** undefined: Image */
+  image?: any;
 }
 
-// Last updated: 2026-01-30 13:02:54.335255
+// Last updated: 2026-04-13 12:54:57.926655
 export interface MailMessage extends DocType {
-	/** From Name: Data */
-	from_name?: string
-	/** From Email: Data */
-	from_email?: string
-	/** Subject: Small Text */
-	subject?: string
-	/** undefined: Table (Email Address) */
-	reply_to: EmailAddress[]
-	/** undefined: Table (Mail Message Recipient) */
-	recipients: MailMessageRecipient[]
-	/** HTML: Code */
-	html_body?: string
-	/** Text: Code */
-	text_body?: string
-	/** Attachments: Table (Mail Message Part) */
-	attachments: MailMessagePart[]
-	/** Message ID: Data */
-	message_id?: string
-	/** Blob ID: Data */
-	blob_id?: string
-	/** Size: Int */
-	size?: number
-	/** Has Attachment: Check */
-	has_attachment: 0 | 1
-	/** Sent At: Datetime */
-	sent_at?: string
-	/** Received At: Datetime */
-	received_at?: string
-	/** Received After (Seconds): Float */
-	received_after?: number
-	/** Sender Name: Data */
-	sender_name?: string
-	/** Sender Email: Data */
-	sender_email?: string
-	/** In Reply To (Message ID): Data */
-	in_reply_to?: string
-	/** Thread ID: Data */
-	thread_id?: string
-	/** Draft: Check */
-	draft: 0 | 1
-	/** Seen: Check */
-	seen: 0 | 1
-	/** Flagged: Check */
-	flagged: 0 | 1
-	/** Answered: Check */
-	answered: 0 | 1
-	/** Forwarded: Check */
-	forwarded: 0 | 1
-	/** Keywords: JSON */
-	keywords?: any
-	/** From IP: Data */
-	from_ip?: string
-	/** From Host: Data */
-	from_host?: string
-	/** Spam Score: Float */
-	spam_score?: number
-	/** SPF: Check */
-	spf_pass: 0 | 1
-	/** DKIM: Check */
-	dkim_pass: 0 | 1
-	/** DMARC: Check */
-	dmarc_pass: 0 | 1
-	/** SPF Description: Small Text */
-	spf_description?: string
-	/** DKIM Description: Small Text */
-	dkim_description?: string
-	/** DMARC Description: Small Text */
-	dmarc_description?: string
-	/** HTML Body: Table (Mail Message Part) */
-	_html_body: MailMessagePart[]
-	/** Text Body: Table (Mail Message Part) */
-	_text_body: MailMessagePart[]
-	/** Message: Code */
-	message?: string
-	/** undefined: Table (Mail Message Mailbox) */
-	mailboxes: MailMessageMailbox[]
-	/** Preview: Code */
-	preview?: string
-	/** Junk: Check */
-	junk: 0 | 1
-	/** Mail ID: Data */
-	id?: string
-	/** User: Link (User) */
-	user: string
-	/** Before: Datetime */
-	before?: string
-	/** After: Datetime */
-	after?: string
-	/** Min Size (Bytes): Int */
-	min_size?: number
-	/** Max Size (Bytes): Int */
-	max_size?: number
-	/** In Mailbox: Data */
-	in_mailbox?: string
-	/** Has Keyword: Data */
-	has_keyword?: string
-	/** Not Keyword: Data */
-	not_keyword?: string
-	/** Text: Data */
-	text?: string
-	/** From: Data */
-	_from?: string
-	/** To: Data */
-	_to?: string
-	/** Cc: Data */
-	_cc?: string
-	/** Bcc: Data */
-	_bcc?: string
-	/** Body: Data */
-	body?: string
+  /** From Name: Data */
+  from_name?: string;
+  /** From Email: Data */
+  from_email?: string;
+  /** Subject: Small Text */
+  subject?: string;
+  /** undefined: Table (Email Address) */
+  reply_to: EmailAddress[];
+  /** undefined: Table (Mail Message Recipient) */
+  recipients: MailMessageRecipient[];
+  /** HTML: Code */
+  html_body?: string;
+  /** Text: Code */
+  text_body?: string;
+  /** Attachments: Table (Mail Message Part) */
+  attachments: MailMessagePart[];
+  /** Message ID: Data */
+  message_id?: string;
+  /** Blob ID: Data */
+  blob_id?: string;
+  /** Size: Int */
+  size?: number;
+  /** Has Attachment: Check */
+  has_attachment: 0 | 1;
+  /** Sent At: Datetime */
+  sent_at?: string;
+  /** Received At: Datetime */
+  received_at?: string;
+  /** Received After (Seconds): Float */
+  received_after?: number;
+  /** Sender Name: Data */
+  sender_name?: string;
+  /** Sender Email: Data */
+  sender_email?: string;
+  /** In Reply To (Message ID): Data */
+  in_reply_to?: string;
+  /** Thread ID: Data */
+  thread_id?: string;
+  /** Draft: Check */
+  draft: 0 | 1;
+  /** Seen: Check */
+  seen: 0 | 1;
+  /** Flagged: Check */
+  flagged: 0 | 1;
+  /** Answered: Check */
+  answered: 0 | 1;
+  /** Forwarded: Check */
+  forwarded: 0 | 1;
+  /** Keywords: JSON */
+  keywords?: any;
+  /** From IP: Data */
+  from_ip?: string;
+  /** From Host: Data */
+  from_host?: string;
+  /** Spam Score: Float */
+  spam_score?: number;
+  /** SPF: Check */
+  spf_pass: 0 | 1;
+  /** DKIM: Check */
+  dkim_pass: 0 | 1;
+  /** DMARC: Check */
+  dmarc_pass: 0 | 1;
+  /** SPF Description: Small Text */
+  spf_description?: string;
+  /** DKIM Description: Small Text */
+  dkim_description?: string;
+  /** DMARC Description: Small Text */
+  dmarc_description?: string;
+  /** HTML Body: Table (Mail Message Part) */
+  _html_body: MailMessagePart[];
+  /** Text Body: Table (Mail Message Part) */
+  _text_body: MailMessagePart[];
+  /** Message: Code */
+  message?: string;
+  /** undefined: Table (Mail Message Mailbox) */
+  mailboxes: MailMessageMailbox[];
+  /** Preview: Code */
+  preview?: string;
+  /** Junk: Check */
+  junk: 0 | 1;
+  /** Mail ID: Data */
+  id?: string;
+  /** User: Link (User) */
+  user: string;
+  /** Before: Datetime */
+  before?: string;
+  /** After: Datetime */
+  after?: string;
+  /** Min Size (Bytes): Int */
+  min_size?: number;
+  /** Max Size (Bytes): Int */
+  max_size?: number;
+  /** In Mailbox: Data */
+  in_mailbox?: string;
+  /** Has Keyword: Data */
+  has_keyword?: string;
+  /** Not Keyword: Data */
+  not_keyword?: string;
+  /** Text: Data */
+  text?: string;
+  /** From: Data */
+  _from?: string;
+  /** To: Data */
+  _to?: string;
+  /** Cc: Data */
+  _cc?: string;
+  /** Bcc: Data */
+  _bcc?: string;
+  /** Body: Data */
+  body?: string;
 }
 
 // Last updated: 2025-01-15 11:46:42.917146
@@ -419,70 +379,70 @@ export interface MailMessageMailbox extends ChildDocType {
 	mailbox_name: string
 }
 
-// Last updated: 2026-01-30 11:07:10.753429
+// Last updated: 2026-04-13 12:52:13.936658
 export interface Identity extends DocType {
-	/** May Delete: Check */
-	may_delete: 0 | 1
-	/** ID: Data */
-	id?: string
-	/** Name: Data */
-	_name?: string
-	/** Email: Data */
-	email: string
-	/** Bcc: Table (Email Address) */
-	bcc: EmailAddress[]
-	/** Reply To: Table (Email Address) */
-	reply_to: EmailAddress[]
-	/** HTML: HTML Editor */
-	html_signature?: any
-	/** Text: Code */
-	text_signature?: string
-	/** User: Link (User) */
-	user: string
+  /** May Delete: Check */
+  may_delete: 0 | 1;
+  /** ID: Data */
+  id?: string;
+  /** Name: Data */
+  _name?: string;
+  /** Email: Data */
+  email: string;
+  /** Bcc: Table (Email Address) */
+  bcc: EmailAddress[];
+  /** Reply To: Table (Email Address) */
+  reply_to: EmailAddress[];
+  /** HTML: HTML Editor */
+  html_signature?: any;
+  /** Text: Code */
+  text_signature?: string;
+  /** User: Link (User) */
+  user: string;
 }
 
-// Last updated: 2025-12-01 15:16:26.188319
+// Last updated: 2026-04-13 12:55:18.622092
 export interface MailSignature extends DocType {
-	/** Account: Link (User) */
-	account: string
-	/** Signature Name: Data */
-	signature_name: string
-	/** HTML: Code */
-	html_body?: string
+  /** Account: Link (User) */
+  account: string;
+  /** Signature Name: Data */
+  signature_name: string;
+  /** HTML: Code */
+  html_body?: string;
 }
 
-// Last updated: 2025-12-15 11:47:17.806197
+// Last updated: 2026-04-13 12:56:15.406985
 export interface VacationResponse extends DocType {
-	/** User: Link (User) */
-	user: string
-	/** Enabled: Check */
-	enabled: 0 | 1
-	/** From Date: Datetime */
-	from_date?: string
-	/** To Date: Datetime */
-	to_date?: string
-	/** Subject: Data */
-	subject?: string
-	/** Text: Code */
-	text_body?: string
-	/** HTML: Text Editor */
-	html_body?: string
+  /** User: Link (User) */
+  user: string;
+  /** Enabled: Check */
+  enabled: 0 | 1;
+  /** From Date: Datetime */
+  from_date?: string;
+  /** To Date: Datetime */
+  to_date?: string;
+  /** Subject: Data */
+  subject?: string;
+  /** Text: Code */
+  text_body?: string;
+  /** HTML: Text Editor */
+  html_body?: string;
 }
 
-// Last updated: 2026-03-06 17:20:17.751947
+// Last updated: 2026-04-13 12:56:06.413428
 export interface SieveScript extends DocType {
-	/** User: Link (User) */
-	user: string
-	/** ID: Data */
-	id?: string
-	/** Name: Data */
-	_name: string
-	/** Blob ID: Data */
-	blob_id?: string
-	/** Active: Check */
-	active: 0 | 1
-	/** Content: Code */
-	content: string
-	/** Read Only: Check */
-	read_only: 0 | 1
+  /** User: Link (User) */
+  user: string;
+  /** ID: Data */
+  id?: string;
+  /** Name: Data */
+  _name: string;
+  /** Blob ID: Data */
+  blob_id?: string;
+  /** Active: Check */
+  active: 0 | 1;
+  /** Content: Code */
+  content: string;
+  /** Read Only: Check */
+  read_only: 0 | 1;
 }

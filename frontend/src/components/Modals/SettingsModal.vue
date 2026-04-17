@@ -79,13 +79,13 @@ const tabs = computed(() => {
 			label: __('Account'),
 			icon: Mailbox,
 			component: markRaw(AccountSettings),
-			condition: user.data.is_mail_user,
+			condition: user.data.is_jmap_configured,
 		},
 		{
 			label: __('Identity'),
 			icon: Fingerprint,
 			component: markRaw(IdentitySettings),
-			condition: user.data.is_mail_user,
+			condition: user.data.is_jmap_configured,
 		},
 		{
 			label: __('Appearance'),
@@ -96,13 +96,13 @@ const tabs = computed(() => {
 			label: __('Signature'),
 			icon: Feather,
 			component: markRaw(SignatureSettings),
-			condition: user.data.is_mail_user,
+			condition: user.data.is_jmap_configured,
 		},
 		{
 			label: __('Vacation Response'),
 			icon: TreePalm,
 			component: markRaw(VacationResponseSettings),
-			condition: user.data.is_mail_user,
+			condition: user.data.is_jmap_configured,
 		},
 		{
 			label: __('Automation'),
@@ -114,19 +114,19 @@ const tabs = computed(() => {
 			label: __('Import'),
 			icon: HardDriveDownload,
 			component: markRaw(ImportSettings),
-			condition: user.data.is_mail_user,
+			condition: user.data.is_jmap_configured,
 		},
 		{
 			label: __('Export'),
 			icon: HardDriveUpload,
 			component: markRaw(ExportSettings),
-			condition: user.data.is_mail_user,
+			condition: user.data.is_jmap_configured,
 		},
 		{
 			label: __('Advanced'),
 			icon: Code,
 			component: markRaw(AdvancedSettings),
-			condition: user.data.is_mail_user,
+			condition: user.data.is_jmap_configured,
 		},
 	]
 	return allTabs.filter((tab) => tab.condition === undefined || tab.condition)

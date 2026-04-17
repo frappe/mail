@@ -42,10 +42,10 @@ import {
 import DashboardCard from '@/components/DashboardCard.vue'
 
 const { row = 'value' } = defineProps<{
-	rows: { value: string }[]
+	rows: Record<string, string>[]
 	title: string
 	columnLabel: string
-	row: string
+	row?: string
 }>()
 
 const emit = defineEmits(['add', 'remove'])

@@ -96,7 +96,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-12-15 11:47:17.806197",
+ "modified": "2026-04-13 12:56:15.406985",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Vacation Response",
@@ -114,7 +114,7 @@
   },
   {
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

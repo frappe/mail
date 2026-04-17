@@ -6,7 +6,6 @@
  "field_order": [
   "user",
   "column_break_klzk",
-  "managed",
   "jmap_credentials_section",
   "server_url",
   "column_break_uxkb",
@@ -158,6 +157,8 @@
    "description": "The user this settings belongs to.",
    "fieldname": "user",
    "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "User",
    "no_copy": 1,
    "options": "User",
@@ -199,13 +200,12 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "Day",
    "depends_on": "eval: doc.username",
    "description": "Group email messages in the list by time period (e.g., day or month).",
    "fieldname": "group_messages_by",
    "fieldtype": "Select",
    "label": "Group Messages By",
-   "options": "None\nDay\nMonth"
+   "options": "\nDay\nMonth"
   },
   {
    "default": "0",
@@ -340,22 +340,12 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.managed",
-   "fieldname": "managed",
-   "fieldtype": "Check",
-   "label": "Managed",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-13 13:31:55.521692",
+ "modified": "2026-04-14 10:59:52.608339",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",

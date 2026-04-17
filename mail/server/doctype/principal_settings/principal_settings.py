@@ -9,7 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
-from mail.utils.user import has_role, is_system_manager, is_tenant_admin
+from mail.utils.user import has_role, is_mail_admin, is_system_manager
 
 
 class PrincipalSettings(Document):
@@ -27,7 +27,6 @@ class PrincipalSettings(Document):
 
 
 def create_principal_settings(
-	tenant: str,
 	principal_name: str,
 	principal_type: Literal["API Key", "Domain", "Group", "Individual", "List", "OAuth Client", "Role"],
 	is_verified: bool = False,
@@ -35,7 +34,6 @@ def create_principal_settings(
 	"""Create a Principal Settings document."""
 
 	settings = frappe.new_doc("Principal Settings")
-	settings.tenant = tenant
 	settings.principal_name = principal_name
 	settings.principal_type = principal_type
 	settings.is_verified = cint(is_verified)
@@ -45,12 +43,12 @@ def create_principal_settings(
 	return settings
 
 
-def get_tenant_principals(
-	tenant: str, principal_type: str | None = None, text: str | None = None, page: int = 1, limit: int = 10
+def get_local_principals(
+	principal_type: str | None = None, text: str | None = None, page: int = 1, limit: int = 10
 ) -> tuple[list[str], int]:
-	"""Returns a list of principal names for the given tenant."""
+	"""Returns a list of local principal names based on the given filters and pagination parameters."""
 
-	filters = {"tenant": tenant}
+	filters = {}
 	if principal_type:
 		filters["principal_type"] = principal_type
 	if text:
@@ -79,27 +77,20 @@ def update_principal_settings(pname: str, **kwargs) -> None:
 		doc.save(ignore_permissions=True)
 
 
-def delete_principal_settings(principal_name: str, raise_exception: bool = True) -> None:
+def delete_principal_settings(principal_name: str) -> None:
 	"""Delete a Principal Settings document."""
 
 	if settings := frappe.db.exists("Principal Settings", {"principal_name": principal_name}):
 		frappe.delete_doc("Principal Settings", settings, ignore_permissions=True)
-	elif raise_exception:
-		frappe.throw(
-			_("No Principal Settings found for principal name: {0}").format(frappe.bold(principal_name))
-		)
 
 
 def get_permission_query_condition(user: str | None = None) -> str:
 	user = user or frappe.session.user
 
-	if is_system_manager(user):
+	if is_system_manager(user) or is_mail_admin(user):
 		return ""
-	elif has_role(user, "Mail Admin"):
-		tenant = frappe.db.get_value("Mail Tenant Member", {"user": user}, "tenant")
-		return f"(`tabPrincipal Settings`.tenant = '{tenant}')"
-	else:
-		return "1=0"
+
+	return "1=0"
 
 
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
@@ -109,7 +100,7 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	user = user or frappe.session.user
 	if is_system_manager(user):
 		return True
-	elif doc.tenant and is_tenant_admin(doc.tenant, user):
+	elif is_mail_admin(user):
 		if ptype == "read":
 			return True
 

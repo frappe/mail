@@ -6,6 +6,8 @@ from frappe import _
 from frappe.utils import cint
 from redis.exceptions import WatchError
 
+from mail.utils import get_mail_config
+
 
 def acquire_lock(
 	lockname: str, acquire_timeout: int | None = None, lock_timeout: int | None = None
@@ -19,8 +21,8 @@ def acquire_lock(
 	:param lock_timeout: TTL for lock in seconds, default: 10
 	"""
 
-	acquire_timeout = acquire_timeout or cint(frappe.conf.lock_acquire_timeout) or 0
-	lock_timeout = lock_timeout or cint(frappe.conf.lock_timeout) or 10
+	acquire_timeout = acquire_timeout or cint(get_mail_config("lock_acquire_timeout"))
+	lock_timeout = lock_timeout or cint(get_mail_config("lock_timeout"))
 
 	if lock_timeout <= 0:
 		frappe.throw(_("Lock timeout must be greater than 0 seconds."))

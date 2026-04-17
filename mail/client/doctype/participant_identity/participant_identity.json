@@ -71,7 +71,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-01-16 12:40:52.372207",
+ "modified": "2026-04-13 12:55:43.299900",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Participant Identity",
@@ -93,7 +93,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

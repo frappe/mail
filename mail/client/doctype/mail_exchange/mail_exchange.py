@@ -39,20 +39,21 @@ from mail.jmap.services.mail.email import EmailService
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,
+	get_mail_config,
 	get_mail_export_directory,
 	get_mail_import_directory,
 	get_mbox_files,
 	reconnect_on_failure,
 )
-from mail.utils.cache import get_tenant_for_user
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.user import (
 	clear_sync_state,
 	get_user_email_address,
 	has_role,
 	is_administrator,
+	is_jmap_configured,
+	is_mail_admin,
 	is_system_manager,
-	is_tenant_admin,
 )
 from mail.utils.validation import (
 	validate_jmap_structure,
@@ -481,13 +482,13 @@ class MailExchange(Document):
 	def max_import(self) -> int:
 		"""Returns the maximum number of emails allowed for import."""
 
-		return cint(frappe.conf.mail_exchange_max_import) or 1_000
+		return cint(get_mail_config("exchange_max_import"))
 
 	@property
 	def max_export(self) -> int:
 		"""Returns the maximum number of emails allowed for export."""
 
-		return cint(frappe.conf.mail_exchange_max_export) or 1_000
+		return cint(get_mail_config("exchange_max_export"))
 
 	@property
 	def export_filter_dict(self) -> dict:
@@ -530,7 +531,6 @@ class MailExchange(Document):
 	def validate(self) -> None:
 		if self.is_new():
 			self.validate_user()
-			self.validate_tenant()
 
 		if self.operation == "Import":
 			self.validate_import()
@@ -550,13 +550,11 @@ class MailExchange(Document):
 	def validate_user(self) -> None:
 		"""Validate the user."""
 
-		if not has_role(self.user, "Mail User"):
-			frappe.throw(_("User must have the 'Mail User' role."))
-
-	def validate_tenant(self) -> None:
-		"""Validate the tenant."""
-
-		self.tenant = get_tenant_for_user(self.user)
+		if not is_jmap_configured(self.user):
+			frappe.throw(
+				_("User {0} does not have JMAP settings configured.").format(frappe.bold(self.user)),
+				frappe.PermissionError,
+			)
 
 	def validate_import(self) -> None:
 		"""Validate the import parameters."""
@@ -616,7 +614,7 @@ class MailExchange(Document):
 				self.name,
 				"_import",
 				queue="long",
-				timeout=cint(frappe.conf.mail_exchange_import_timeout) or 3600,
+				timeout=cint(get_mail_config("exchange_import_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -628,7 +626,7 @@ class MailExchange(Document):
 				self.name,
 				"_export",
 				queue="long",
-				timeout=cint(frappe.conf.mail_exchange_export_timeout) or 3600,
+				timeout=cint(get_mail_config("exchange_export_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -826,7 +824,7 @@ class MailExchange(Document):
 		if self.export_format == "jmap":
 			ExportWriter.write_meta(emails, out_dir)
 
-		batch_size = cint(frappe.conf.mail_exchange_export_batch_size) or 500
+		batch_size = cint(get_mail_config("exchange_export_batch_size"))
 		for batch in create_batch(emails, batch_size):
 			blobs = [(e["blobId"], None) for e in batch if e.get("blobId")]
 			data = service.download_blobs_concurrently(blobs)
@@ -935,17 +933,10 @@ class MailExchange(Document):
 def get_permission_query_condition(user: str | None = None) -> str:
 	user = user or frappe.session.user
 
-	if is_system_manager(user):
+	if is_system_manager(user) or is_mail_admin(user):
 		return ""
 
-	if has_role(user, "Mail Admin"):
-		if tenant := get_tenant_for_user(user):
-			return f"(`tabMail Exchange`.tenant = '{tenant}')"
-
-	if has_role(user, "Mail User"):
-		return f"(`tabMail Exchange`.user = '{user}')"
-
-	return "1=0"
+	return f"(`tabMail Exchange`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
@@ -954,14 +945,10 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 
 	user = user or frappe.session.user
 
-	if is_system_manager(user):
+	if is_system_manager(user) or is_mail_admin(user):
 		return True
-	elif has_role(user, "Mail Admin"):
-		return is_tenant_admin(doc.tenant, user)
-	elif has_role(user, "Mail User"):
-		return doc.user == user
 
-	return False
+	return doc.user == user
 
 
 def extract_received_or_sent(msg: Message) -> datetime:

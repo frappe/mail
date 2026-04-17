@@ -10,6 +10,7 @@ from mail.api.auth import validate_user
 from mail.client.doctype.mail_message.mail_message import fetch_blobs, fetch_messages
 from mail.client.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
 from mail.jmap import get_mailbox_id_by_role
+from mail.utils import get_mail_config
 from mail.utils.dt import convert_to_utc
 from mail.utils.rate_limiter import dynamic_rate_limit
 
@@ -77,7 +78,7 @@ def pull_raw(
 def validate_max_sync_limit(limit: int) -> None:
 	"""Validates if the limit is within the maximum limit."""
 
-	max_sync = cint(frappe.conf.max_email_sync_limit) or 100
+	max_sync = cint(get_mail_config("max_email_sync"))
 
 	if limit > max_sync:
 		frappe.throw(_("Cannot fetch more than {0} emails at a time.").format(max_sync))

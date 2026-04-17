@@ -11,6 +11,7 @@ from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 
 from mail.ansible import Ansible
+from mail.utils import get_mail_config
 
 
 class ServerAnsiblePlay(Document):
@@ -31,7 +32,7 @@ class ServerAnsiblePlay(Document):
 				self.name,
 				"execute",
 				queue="long",
-				timeout=cint(frappe.conf.ansible_play_timeout) or 1500,
+				timeout=cint(get_mail_config("ansible_play_timeout")),
 				enqueue_after_commit=True,
 			)
 
@@ -138,7 +139,7 @@ class ServerAnsiblePlay(Document):
 			self.name,
 			"execute",
 			queue="long",
-			timeout=cint(frappe.conf.ansible_play_timeout) or 1500,
+			timeout=cint(get_mail_config("ansible_play_timeout")),
 			enqueue_after_commit=True,
 		)
 

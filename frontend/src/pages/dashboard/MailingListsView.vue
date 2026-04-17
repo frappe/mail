@@ -16,7 +16,7 @@
 			ref="listView"
 			class="flex-1"
 			:columns="LIST_COLUMNS"
-			:rows="lists.data.filter((l) => l.name.includes(search))"
+			:rows="lists.data"
 			:options="LIST_OPTIONS"
 			row-key="name"
 		>
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, useTemplateRef } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import {
 	Button,
@@ -59,8 +59,6 @@ import { raiseToast } from '@/utils'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddMailingListModal from '@/components/Modals/AddMailingListModal.vue'
 
-const user = inject('$user')
-
 const listView = useTemplateRef('listView')
 
 const search = ref('')
@@ -71,9 +69,8 @@ const showDeleteLists = ref(false)
 const lists = createResource({
 	url: 'mail.api.admin.get_mailing_lists',
 	auto: true,
-	makeParams: () => ({ txt: search.value }),
-	transform: (data) => data.map((l) => ({ ...l, total_members: l.total_members.toString() })),
-	cache: ['mailTenantMailingLists', user.data?.tenant, search.value],
+	makeParams: () => ({ search: search.value }),
+	cache: ['mailMailingLists', search.value],
 })
 
 watchDebounced(() => search.value, lists.reload, { debounce: 300 })
@@ -107,6 +104,9 @@ const LIST_OPTIONS = {
 
 const LIST_COLUMNS = [
 	{ label: __('Mailing List'), key: 'name' },
-	{ label: __('Total Members'), key: 'total_members' },
+	{ label: __('Name'), key: 'full_name' },
+	{ label: __('Emails'), key: 'email_count' },
+	{ label: __('Members'), key: 'member_count' },
+	{ label: __('External Members'), key: 'external_member_count' },
 ]
 </script>

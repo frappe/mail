@@ -33,9 +33,9 @@ from mail.jmap import get_email_service, get_identities, get_jmap_connection
 from mail.jmap.models import EmailAddress, EmailAttachment, EmailCreateModel, EmailHeader, EmailRecipient
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
-from mail.utils.cache import get_tenant_for_user
+from mail.utils import get_mail_config
 from mail.utils.dt import parsedate_to_datetime
-from mail.utils.user import has_role, is_administrator, is_tenant_bound_user
+from mail.utils.user import is_administrator, is_local_user
 from mail.utils.validation import has_permission_for_user
 
 
@@ -351,19 +351,16 @@ class MailQueue(Document):
 	def validate_from_domain(self) -> None:
 		"""Validates the from domain."""
 
-		if not is_tenant_bound_user(self.user):
+		if not is_local_user(self.user):
 			return
 
-		tenant = get_tenant_for_user(self.user)
 		from_domain = self.from_email.split("@")[-1]
 
-		if not frappe.db.exists(
-			"Principal Settings", {"tenant": tenant, "principal_name": from_domain, "is_verified": 1}
-		):
+		if not frappe.db.exists("Principal Settings", {"principal_name": from_domain, "is_verified": 1}):
 			frappe.throw(
 				_(
-					"The From email domain {0} is not available for tenant {1}. Please ensure that the domain is associated with the tenant and has been verified."
-				).format(frappe.bold(from_domain), frappe.bold(tenant))
+					"The domain {0} is not verified. Please verify the domain or use an email address with a verified domain."
+				).format(frappe.bold(from_domain))
 			)
 
 	def validate_destroy_after_submit(self) -> None:
@@ -816,8 +813,8 @@ def process_pending_emails(mails: list[str]) -> None:
 def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size: int | None = None) -> None:
 	"""Enqueue process pending emails."""
 
-	batch_size = batch_size or cint(frappe.conf.process_pending_emails_batch_size) or 2_500
-	max_batch_size = max_batch_size or cint(frappe.conf.process_pending_emails_max_batch_size) or 25_000
+	batch_size = batch_size or cint(get_mail_config("process_pending_emails_batch_size"))
+	max_batch_size = max_batch_size or cint(get_mail_config("process_pending_emails_max_batch_size"))
 
 	if batch_size > max_batch_size:
 		batch_size = max_batch_size
@@ -862,7 +859,7 @@ def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size
 			frappe.enqueue(
 				process_pending_emails,
 				queue="long",
-				timeout=cint(frappe.conf.process_pending_emails_timeout) or 1500,
+				timeout=cint(get_mail_config("process_pending_emails_timeout")),
 				job_name=f"process_pending_emails_{i}_{len(batch)}",
 				enqueue_after_commit=False,
 				mails=batch,
@@ -883,10 +880,8 @@ def get_permission_query_condition(user: str | None = None) -> str:
 
 	if is_administrator(user):
 		return ""
-	elif has_role(user, "Mail User"):
-		return f"(`tabMail Queue`.user = '{user}')"
-	else:
-		return "1=0"
+
+	return f"(`tabMail Queue`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:

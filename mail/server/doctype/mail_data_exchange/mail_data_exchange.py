@@ -24,24 +24,24 @@ from mail.utils import (
 	extract_compressed_file,
 	get_data_export_directory,
 	get_data_import_directory,
+	get_mail_config,
 	get_mbox_files,
 	get_stalwart_cli_path,
 	reconnect_on_failure,
 	sanitize_cli_output,
 )
-from mail.utils.cache import get_cluster_for_tenant, get_tenant_for_user
 from mail.utils.user import (
 	clear_sync_state,
 	get_jmap_username,
 	get_user_email_address,
-	has_role,
 	is_administrator,
+	is_mail_admin,
 	is_system_manager,
-	is_tenant_admin,
 )
 from mail.utils.validation import (
-	ensure_tenant_bound_user,
+	ensure_local_user,
 	validate_jmap_structure,
+	validate_mail_config,
 	validate_maildir_or_maildirpp,
 	validate_nested_maildir_tree,
 )
@@ -54,7 +54,6 @@ class MailDataExchange(Document):
 	def validate(self) -> None:
 		if self.is_new():
 			self.validate_user()
-			self.validate_tenant()
 
 		if self.operation == "Import":
 			self.validate_import()
@@ -74,12 +73,7 @@ class MailDataExchange(Document):
 	def validate_user(self) -> None:
 		"""Validate the user."""
 
-		ensure_tenant_bound_user(self.user)
-
-	def validate_tenant(self) -> None:
-		"""Validate the tenant."""
-
-		self.tenant = get_tenant_for_user(self.user)
+		ensure_local_user(self.user)
 
 	def validate_import(self) -> None:
 		"""Validate the import parameters."""
@@ -113,7 +107,7 @@ class MailDataExchange(Document):
 				self.name,
 				"_import",
 				queue="long",
-				timeout=cint(frappe.conf.data_exchange_import_timeout) or 3600,
+				timeout=cint(get_mail_config("data_exchange_import_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -125,7 +119,7 @@ class MailDataExchange(Document):
 				self.name,
 				"_export",
 				queue="long",
-				timeout=cint(frappe.conf.data_exchange_export_timeout) or 3600,
+				timeout=cint(get_mail_config("data_exchange_export_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -267,13 +261,10 @@ class MailDataExchange(Document):
 	def _get_host_and_credentials(self) -> tuple[str, str]:
 		"""Returns the host and credentials for the user's cluster."""
 
-		tenant = get_tenant_for_user(self.user)
-		cluster = frappe.get_doc("Mail Cluster", get_cluster_for_tenant(tenant))
+		validate_mail_config()
+		config = get_mail_config()
 
-		return (
-			cluster.base_url,
-			f"{cluster.fallback_admin_user}:{cluster.get_password('fallback_admin_password')}",
-		)
+		return (config["server_url"], f"{config['username']}:{config['password']}")
 
 	def _mark_completed(self, **kwargs) -> None:
 		"""Marks the data exchange as completed and updates the completed_at and duration fields."""
@@ -339,17 +330,10 @@ class MailDataExchange(Document):
 def get_permission_query_condition(user: str | None = None) -> str:
 	user = user or frappe.session.user
 
-	if is_system_manager(user):
+	if is_system_manager(user) or is_mail_admin(user):
 		return ""
 
-	if has_role(user, "Mail Admin"):
-		if tenant := get_tenant_for_user(user):
-			return f"(`tabMail Data Exchange`.tenant = '{tenant}')"
-
-	if has_role(user, "Mail User"):
-		return f"(`tabMail Data Exchange`.user = '{user}')"
-
-	return "1=0"
+	return f"(`tabMail Data Exchange`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
@@ -358,14 +342,10 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 
 	user = user or frappe.session.user
 
-	if is_system_manager(user):
+	if is_system_manager(user) or is_mail_admin(user):
 		return True
-	elif has_role(user, "Mail Admin"):
-		return is_tenant_admin(doc.tenant, user)
-	elif has_role(user, "Mail User"):
-		return doc.user == user
 
-	return False
+	return doc.user == user
 
 
 def _run_stalwart_cli_command(command: str | list[str], _credentials: str, timeout: int | None = None) -> str:
@@ -374,7 +354,7 @@ def _run_stalwart_cli_command(command: str | list[str], _credentials: str, timeo
 	if isinstance(command, list):
 		command = " ".join(shlex.quote(arg) for arg in command)
 
-	timeout = timeout or cint(frappe.conf.stalwart_cli_command_timeout) or 3600
+	timeout = timeout or cint(get_mail_config("stalwart_cli_command_timeout"))
 	child = pexpect.spawn(command, encoding="utf-8", timeout=timeout)
 	child.expect("Enter administrator credentials or press \\[ENTER\\] to use OAuth:")
 	child.sendline(_credentials)

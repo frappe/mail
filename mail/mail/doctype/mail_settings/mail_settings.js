@@ -12,10 +12,10 @@ frappe.ui.form.on('Mail Settings', {
 	},
 
 	set_queries(frm) {
-		frm.set_query('personal_signup_domains', () => ({
-			query: 'mail.utils.query.get_personal_signup_domains',
+		frm.set_query('signup_domains', () => ({
 			filters: {
 				is_verified: 1,
+				principal_type: 'Domain',
 			},
 		}))
 	},

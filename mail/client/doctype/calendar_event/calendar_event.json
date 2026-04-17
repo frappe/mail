@@ -417,7 +417,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-03-23 12:27:20.726300",
+ "modified": "2026-04-13 12:51:16.297827",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar Event",
@@ -439,7 +439,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "write": 1
   }
  ],

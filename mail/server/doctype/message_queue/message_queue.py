@@ -82,7 +82,7 @@ class MessageQueue(Document):
 		"""Returns the message details from the server."""
 
 		cluster, id = self.name.split("|")
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		response = backend_api.request(method="GET", endpoint=f"/api/queue/messages/{id}")
 
 		message = response.json()["data"]
@@ -95,7 +95,7 @@ class MessageQueue(Document):
 	def _get_blob(cluster: str, blob_id: str) -> str:
 		"""Returns the raw message blob from the server."""
 
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		response = backend_api.request(method="GET", endpoint=f"/api/store/blobs/{blob_id}")
 		return response.text.strip()
 
@@ -103,7 +103,7 @@ class MessageQueue(Document):
 	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
 		"""Returns all messages from the server."""
 
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		response = backend_api.request(
 			method="GET",
 			endpoint="/api/queue/messages",
@@ -120,14 +120,14 @@ class MessageQueue(Document):
 	def _update(cluster: str, id: str) -> None:
 		"""Retries delivery of a message to all recipients."""
 
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		backend_api.request(method="PATCH", endpoint=f"/api/queue/messages/{id}")
 
 	def _delete(self, recipient: str | None = None) -> None:
 		"""Deletes a message or cancels delivery to a specific recipient."""
 
 		cluster, id = self.name.split("|")
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		backend_api.request(
 			method="DELETE", endpoint=f"/api/queue/messages/{id}", params={"filter": recipient}
 		)
@@ -136,7 +136,7 @@ class MessageQueue(Document):
 	def _pause(cluster: str) -> None:
 		"""Pauses queue processing on the server."""
 
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		backend_api.request(
 			method="PATCH",
 			endpoint="/api/queue/status/stop",
@@ -146,7 +146,7 @@ class MessageQueue(Document):
 	def _resume(cluster: str) -> None:
 		"""Resumes queue processing on the server."""
 
-		backend_api = get_mail_backend_api("Mail Cluster", cluster)
+		backend_api = get_mail_backend_api()
 		backend_api.request(
 			method="PATCH",
 			endpoint="/api/queue/status/start",

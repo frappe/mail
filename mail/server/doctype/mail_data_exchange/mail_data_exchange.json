@@ -9,7 +9,6 @@
   "section_break_hiuo",
   "column_break_3krp",
   "user",
-  "tenant",
   "operation",
   "import_format",
   "import_file",
@@ -175,18 +174,6 @@
    "options": "jmap"
   },
   {
-   "fieldname": "tenant",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "in_standard_filter": 1,
-   "label": "Tenant",
-   "no_copy": 1,
-   "options": "Mail Tenant",
-   "read_only": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
    "default": "0",
    "depends_on": "eval: doc.retries",
    "fieldname": "retries",
@@ -216,7 +203,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-23 17:41:27.699001",
+ "modified": "2026-04-13 12:53:13.823693",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Data Exchange",
@@ -248,7 +235,7 @@
    "create": 1,
    "delete": 1,
    "read": 1,
-   "role": "Mail User",
+   "role": "All",
    "submit": 1,
    "write": 1
   }

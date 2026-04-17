@@ -1,18 +1,6 @@
 <template>
 	<form class="flex flex-col space-y-4" @submit.prevent="next">
-		<FormControl
-			v-if="route.name === 'SignUp'"
-			v-model="accountType"
-			type="select"
-			:label="__('What type of account do you need?')"
-			:options="[
-				{ value: 'personal', label: __('Personal (For individual use)') },
-				{ value: 'business', label: __('Business (For work or company use)') },
-			]"
-			class="w-full"
-		/>
-
-		<div v-else-if="route.query.step === '1'" class="flex items-center justify-between">
+		<div v-if="route.query.step === '1'" class="flex items-center justify-between">
 			<FormControl
 				v-model="user.username"
 				:label="__('Username')"
@@ -24,11 +12,11 @@
 			/>
 			<FeatherIcon class="text-ink-gray-3 mx-2.5 mb-1.5 mt-auto h-4 w-4" name="at-sign" />
 			<FormControl
-				v-if="personalSignupDomains?.data?.length"
+				v-if="signupDomains?.data?.length"
 				v-model="user.domain"
-				:type="personalSignupDomains?.data?.length === 1 ? 'text' : 'select'"
-				:readonly="personalSignupDomains?.data?.length === 1"
-				:options="personalSignupDomains?.data"
+				:type="signupDomains?.data?.length === 1 ? 'text' : 'select'"
+				:readonly="signupDomains?.data?.length === 1"
+				:options="signupDomains?.data"
 				:label="__('Domain Name')"
 				class="w-full"
 				required
@@ -84,7 +72,7 @@
 			type="submit"
 		/>
 		<Button
-			v-if="route.name === 'PersonalSignUp' && route.query.step"
+			v-if="route.query.step"
 			:label="__('Back')"
 			@click.prevent="router.push({ query: { step: Number(route.query.step) - 1 } })"
 		/>
@@ -107,7 +95,6 @@ const router = useRouter()
 const route = useRoute()
 const { login } = sessionStore()
 
-const accountType = ref('personal')
 const usernameVerified = ref(false)
 
 const user = reactive({
@@ -123,14 +110,13 @@ createResource({
 	url: 'mail.api.get_signup_settings',
 	auto: true,
 	onSuccess: (data) => {
-		if (!Number(data.allow_personal_signup)) {
-			if (Number(data.allow_business_signup)) router.replace('/signup/business')
-			else router.push('/login')
-		} else if (!Number(data.allow_business_signup)) router.replace('/signup/personal')
+		if (!Number(data.allow_signup)) {
+			router.push('/login')
+		}
 	},
 })
 
-const personalSignupDomains = createResource({
+const signupDomains = createResource({
 	url: 'mail.api.get_signup_domains',
 	auto: true,
 	onSuccess: (data) => (user.domain = data[0]),
@@ -146,14 +132,13 @@ const validateUsername = createResource({
 })
 
 const signup = createResource({
-	url: 'mail.api.account.personal_signup',
+	url: 'mail.api.account.signup',
 	makeParams: () => ({ ...user }),
 	onSuccess: () => login.submit({ usr: `${user.username}@${user.domain}`, pwd: user.password }),
 })
 
 const next = () => {
-	if (route.name === 'SignUp') router.push(`/signup/${accountType.value}`)
-	else if (route.query.step === '1') validateUsername.submit()
+	if (route.query.step === '1') validateUsername.submit()
 	else if (route.query.step === '3') signup.submit()
 	else router.push({ query: { step: Number(route.query.step || 0) + 1 } })
 }

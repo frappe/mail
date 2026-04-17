@@ -37,16 +37,6 @@ frappe.ui.form.on('Mail Server', {
 			__('Actions'),
 		)
 
-		if (frm.doc.enabled && !frm.is_dirty()) {
-			frm.add_custom_button(
-				__('Reload Configuration'),
-				() => {
-					frm.trigger('reload_config')
-				},
-				__('Actions'),
-			)
-		}
-
 		frm.add_custom_button(
 			__('Verify SSH Connection'),
 			() => {
@@ -92,21 +82,6 @@ frappe.ui.form.on('Mail Server', {
 			freeze_message: __('Generating Config...'),
 			callback: (r) => {
 				if (!r.exc) {
-					frm.refresh()
-				}
-			},
-		})
-	},
-
-	reload_config(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: 'reload_config',
-			freeze: true,
-			freeze_message: __('Reloading Configuration...'),
-			callback: (r) => {
-				if (!r.exc) {
-					frappe.show_alert(__('Configuration reloaded.'), 5)
 					frm.refresh()
 				}
 			},

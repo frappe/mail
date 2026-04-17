@@ -24,13 +24,7 @@
 		<ErrorMessage :message="login.error" />
 		<Button variant="solid" :loading="login.loading" :label="__('Log In')" type="submit" />
 	</form>
-	<div
-		v-if="
-			Number(signupSettings.data?.allow_personal_signup) ||
-			Number(signupSettings.data?.allow_business_signup)
-		"
-		class="mt-6 text-center"
-	>
+	<div v-if="Number(signupSettings.data?.allow_signup)" class="mt-6 text-center">
 		<router-link class="text-center text-base font-medium hover:underline" to="/signup">
 			{{ __('New member? Create an account.') }}
 		</router-link>

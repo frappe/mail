@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, watch } from 'vue'
+import { watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog, FeatherIcon, FormControl, useNewDoc } from 'frappe-ui'
 
@@ -56,11 +56,9 @@ import { userStore } from '@/stores/user'
 const show = defineModel<boolean>()
 
 const { domains } = userStore()
-const user = inject('$user')
 const router = useRouter()
 
 const defaultList = {
-	tenant: user.data.tenant,
 	type: 'List',
 	username: '',
 	domain_name: '',
