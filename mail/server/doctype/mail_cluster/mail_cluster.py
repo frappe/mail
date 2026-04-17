@@ -93,7 +93,6 @@ class MailCluster(Document):
 
 	def validate(self) -> None:
 		self.validate_enabled()
-		self.validate_public()
 		self.validate_hostname()
 		self.validate_spf_identifier()
 		self.validate_fallback_admin_password()
@@ -127,18 +126,6 @@ class MailCluster(Document):
 		if server := frappe.db.exists("Mail Server", {"enabled": 1, "cluster": self.name}):
 			frappe.throw(
 				_("Mail Server {0} is enabled. Please disable it first.").format(frappe.bold(server))
-			)
-
-	def validate_public(self) -> None:
-		"""Validates the public status of the cluster."""
-
-		if not self.public and not bool(
-			frappe.db.count("Mail Cluster", {"enabled": 1, "public": 1, "name": ["!=", self.name]})
-		):
-			self.public = 1
-			frappe.msgprint(
-				_("At least one public cluster must be enabled. This cluster has been made public."),
-				alert=True,
 			)
 
 	def validate_hostname(self) -> None:
