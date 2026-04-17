@@ -5,6 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_iw72",
+  "user",
   "account",
   "column_break_cesj",
   "active",
@@ -109,12 +110,21 @@
   {
    "description": "The account this script belongs to.",
    "fieldname": "account",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Account",
-   "options": "User Account",
    "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The user this script belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
    "set_only_once": 1
   }
  ],
@@ -122,7 +132,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-15 11:49:26.893585",
+ "modified": "2026-04-17 13:38:14.276046",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Sieve Script",

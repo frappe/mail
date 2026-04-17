@@ -19,6 +19,7 @@
   "has_keyword",
   "not_keyword",
   "section_break_8xbl",
+  "user",
   "account",
   "from_name",
   "from_email",
@@ -592,13 +593,21 @@
   },
   {
    "fieldname": "account",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Account",
-   "options": "User Account",
    "read_only": 1,
    "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
    "set_only_once": 1
   }
  ],
@@ -607,7 +616,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-15 14:10:29.833441",
+ "modified": "2026-04-17 14:04:45.131751",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Message",

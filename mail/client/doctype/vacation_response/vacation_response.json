@@ -5,6 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_bvdc",
+  "user",
   "account",
   "column_break_ksnk",
   "enabled",
@@ -84,11 +85,19 @@
   {
    "description": "The account this vacation response belongs to.",
    "fieldname": "account",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Account",
-   "options": "User Account",
    "reqd": 1
+  },
+  {
+   "description": "The user this vacation response belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "remember_last_selected_value": 1
   }
  ],
  "grid_page_length": 50,
@@ -96,7 +105,7 @@
  "is_virtual": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-04-15 13:01:25.390374",
+ "modified": "2026-04-17 14:12:49.529770",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Vacation Response",

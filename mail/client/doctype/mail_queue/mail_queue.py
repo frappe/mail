@@ -266,6 +266,9 @@ class MailQueue(Document):
 			self.validate_in_reply_to()
 			self.validate_in_reply_to_id()
 
+	def before_insert(self) -> None:
+		self.user = parse_account(self.account)[0]
+
 	def after_insert(self) -> None:
 		if self.delivery_mode == "Immediate":
 			self._process()
@@ -351,7 +354,7 @@ class MailQueue(Document):
 	def validate_from_domain(self) -> None:
 		"""Validates the from domain."""
 
-		if not is_local_user(parse_account(self.account)[0]):
+		if not is_local_user(self.user):
 			return
 
 		from_domain = self.from_email.split("@")[-1]
@@ -369,12 +372,10 @@ class MailQueue(Document):
 		if self.save_as_draft or self.destroy_after_submit:
 			return
 
-		user = parse_account(self.account)[0]
-
 		if self.newsletter:
-			if frappe.db.get_value("User Settings", {"user": user}, "destroy_newsletter_after_submit"):
+			if frappe.db.get_value("User Settings", {"user": self.user}, "destroy_newsletter_after_submit"):
 				self.destroy_after_submit = 1
-		elif frappe.db.get_value("User Settings", {"user": user}, "destroy_email_after_submit"):
+		elif frappe.db.get_value("User Settings", {"user": self.user}, "destroy_email_after_submit"):
 			self.destroy_after_submit = 1
 
 	def validate_delivery_mode(self) -> None:
@@ -461,9 +462,7 @@ class MailQueue(Document):
 	def validate_attachments(self) -> None:
 		"""Validates the attachments."""
 
-		user = (
-			parse_account(self.account)[0] if is_administrator(frappe.session.user) else frappe.session.user
-		)
+		user = self.user if is_administrator(frappe.session.user) else frappe.session.user
 
 		normalized = []
 		seen_blob_ids = set()
@@ -590,10 +589,8 @@ class MailQueue(Document):
 
 		kwargs = {}
 
-		user = parse_account(self.account)[0]
-
 		try:
-			connection = get_jmap_connection(user)
+			connection = get_jmap_connection(self.user)
 			email_service = EmailService(self.account, connection)
 			mailbox_service = MailboxService(self.account, connection)
 
@@ -887,13 +884,11 @@ def get_permission_query_condition(user: str | None = None) -> str:
 	if is_administrator(user):
 		return ""
 
-	user_accounts = [a["name"] for a in frappe.db.get_all("User Account", {"user": user})]
-
-	return f"(`tabMail Queue`.account IN ({', '.join([f"'{account}'" for account in user_accounts])}))"
+	return f"(`tabMail Queue`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if doc.doctype != "Mail Queue":
 		return False
 
-	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)
+	return has_permission_for_user(doc.user, raise_exception=False)

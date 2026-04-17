@@ -5,6 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_nuoa",
+  "user",
   "account",
   "column_break_5a4x",
   "subscribed",
@@ -257,12 +258,21 @@
   {
    "description": "The account this mailbox belongs to.",
    "fieldname": "account",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_standard_filter": 1,
    "label": "Account",
    "no_copy": 1,
-   "options": "User Account",
    "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The user this mailbox belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
    "set_only_once": 1
   }
  ],
@@ -270,7 +280,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-15 12:38:01.158383",
+ "modified": "2026-04-17 13:36:09.962762",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox",

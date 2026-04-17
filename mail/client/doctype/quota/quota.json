@@ -5,6 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_i7qy",
+  "user",
   "account",
   "column_break_mzms",
   "resource_type",
@@ -126,13 +127,22 @@
   {
    "description": "The account this quota belongs to.",
    "fieldname": "account",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Account",
    "no_copy": 1,
-   "options": "User Account",
    "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The user this quota belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
    "set_only_once": 1
   }
  ],
@@ -141,7 +151,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-15 11:01:53.409552",
+ "modified": "2026-04-17 13:57:59.059084",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Quota",

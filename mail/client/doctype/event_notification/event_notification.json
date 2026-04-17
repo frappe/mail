@@ -4,6 +4,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "user",
   "account",
   "column_break_oamr",
   "draft",
@@ -171,13 +172,22 @@
   {
    "description": "The account this notification belongs to.",
    "fieldname": "account",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Account",
    "no_copy": 1,
-   "options": "User Account",
    "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The user this notification belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
    "set_only_once": 1
   }
  ],
@@ -185,7 +195,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-15 11:19:52.949998",
+ "modified": "2026-04-17 13:41:47.967951",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Event Notification",

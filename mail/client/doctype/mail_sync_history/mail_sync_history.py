@@ -5,10 +5,13 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from mail.jmap import parse_account
+
 
 class MailSyncHistory(Document):
 	def before_insert(self) -> None:
 		self.validate_duplicate()
+		self.user = parse_account(self.account)[0]
 
 	def validate_duplicate(self) -> None:
 		"""Validate if the Mail Sync History already exists."""

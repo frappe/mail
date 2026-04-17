@@ -5,6 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_rxvr",
+  "user",
   "account",
   "column_break_lzqg",
   "default",
@@ -141,13 +142,22 @@
   {
    "description": "The account this address book belongs to.",
    "fieldname": "account",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Account",
    "no_copy": 1,
-   "options": "User Account",
    "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The user this address book belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
    "set_only_once": 1
   }
  ],
@@ -160,7 +170,7 @@
    "link_fieldname": "address_book"
   }
  ],
- "modified": "2026-04-15 10:30:29.378894",
+ "modified": "2026-04-17 13:52:03.036656",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Address Book",

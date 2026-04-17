@@ -147,7 +147,7 @@ def format_vacation_response(account, vc: dict) -> dict:
 
 
 def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
-	if doc.doctype != "Vacation Response":
+	if doc.doctype != "Vacation Response" or not doc.account:
 		return False
 
 	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

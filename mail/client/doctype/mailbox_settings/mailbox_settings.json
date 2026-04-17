@@ -5,6 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_e10u",
+  "user",
   "account",
   "column_break_zgrx",
   "mailbox_id",
@@ -67,13 +68,24 @@
   {
    "description": "The account to whom these mailbox settings apply.",
    "fieldname": "account",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Account",
    "no_copy": 1,
-   "options": "User Account",
    "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The user to whom these mailbox settings apply.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
    "search_index": 1,
    "set_only_once": 1
   }
@@ -81,7 +93,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-16 11:42:44.064982",
+ "modified": "2026-04-17 15:15:30.171327",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox Settings",

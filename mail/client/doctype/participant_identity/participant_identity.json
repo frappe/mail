@@ -5,6 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_xhno",
+  "user",
   "account",
   "id",
   "column_break_zfsx",
@@ -57,13 +58,22 @@
   {
    "description": "The account this identity belongs to.",
    "fieldname": "account",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Account",
    "no_copy": 1,
-   "options": "User Account",
    "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The user this identity belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
    "set_only_once": 1
   }
  ],
@@ -71,7 +81,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-15 12:44:14.751911",
+ "modified": "2026-04-17 14:02:22.746619",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Participant Identity",

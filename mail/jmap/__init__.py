@@ -403,6 +403,17 @@ def get_default_calendar_id(account: str, raise_exception: bool = False) -> str 
 
 
 @frappe.whitelist()
+def get_user_accounts(user: str) -> list[str]:
+	"""Returns a list of account names for the specified user."""
+
+	has_permission_for_user(user)
+
+	from mail.client.doctype.user_account.user_account import fetch_user_accounts
+
+	return [a["name"] for a in fetch_user_accounts(user, limit=None)]
+
+
+@frappe.whitelist()
 def get_mailboxes_for_account(account: str) -> list[dict]:
 	"""Returns the list of mailboxes for the specified account."""
 

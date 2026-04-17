@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from mail.jmap import parse_account
 from mail.utils.user import is_system_manager
 
 
@@ -16,6 +17,9 @@ class MailboxSettings(Document):
 
 	def validate(self) -> None:
 		self.validate_duplicate()
+
+	def before_insert(self) -> None:
+		self.user = parse_account(self.account)[0]
 
 	def validate_duplicate(self) -> None:
 		"""Checks for duplicate Mailbox Settings for the same account and mailbox ID."""
@@ -102,9 +106,7 @@ def get_permission_query_condition(user: str | None = None) -> str:
 	if is_system_manager(user):
 		return ""
 
-	user_accounts = [a["name"] for a in frappe.db.get_all("User Account", {"user": user})]
-
-	return f"(`tabMailbox Settings`.account IN ({', '.join([f"'{account}'" for account in user_accounts])}))"
+	return f"(`tabMailbox Settings`.user = '{user}')"
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
@@ -116,4 +118,4 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if is_system_manager(user):
 		return True
 
-	return doc.account in [a["name"] for a in frappe.db.get_all("User Account", {"user": user})]
+	return doc.user == user

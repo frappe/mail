@@ -31,7 +31,7 @@ class AccountSettings(Document):
 	def core_service(self) -> "CoreService" | None:
 		"""Return the JMAP core service for the account, or None if there is an error."""
 
-		if self.flags.in_delete:
+		if self.flags.in_delete or not self.account:
 			return None
 
 		try:
@@ -204,3 +204,11 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 		return True
 
 	return doc.user == user
+
+
+def on_doctype_update() -> None:
+	frappe.db.add_unique(
+		"Account Settings",
+		["account"],
+		constraint_name="unique_account_settings",
+	)
