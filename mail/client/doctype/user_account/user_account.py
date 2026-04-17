@@ -106,6 +106,19 @@ def fetch_user_accounts(user: str, page: int = 1, limit: int | None = 10) -> lis
 	return sorted_accounts[start:end]
 
 
+@frappe.whitelist()
+def get_user_personal_account_id(user: str, raise_exception: bool = False) -> str | None:
+	"""Returns the ID of the user's personal account, or None if not found."""
+
+	accounts = fetch_user_accounts(user, limit=None)
+	for account in accounts:
+		if account["is_personal"]:
+			return account["id"]
+
+	if raise_exception:
+		frappe.throw(_("User {0} does not have a personal account configured.").format(frappe.bold(user)))
+
+
 def format_user_account(user: str, account: dict) -> dict:
 	"""Formats account data for display."""
 

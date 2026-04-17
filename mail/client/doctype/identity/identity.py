@@ -10,6 +10,7 @@ from frappe.model.document import Document
 from frappe.utils import cint, today
 
 from mail.backend import get_mail_backend_api
+from mail.client.doctype.user_account.user_account import get_user_personal_account_id
 from mail.jmap import get_identity_service, parse_account
 from mail.utils import parse_filters
 from mail.utils.user import is_administrator, is_mail_admin
@@ -113,7 +114,7 @@ def _get_total_cache_key(account: str) -> str:
 
 
 def _add_identity(
-	account: str,
+	user: str,
 	email: str,
 	name: str | None = None,
 	reply_to: list[dict] | None = None,
@@ -122,8 +123,6 @@ def _add_identity(
 	html_signature: str | None = None,
 ) -> str:
 	"""Adds an identity for the given account with the specified parameters."""
-
-	user, account_id = parse_account(account)
 
 	if not is_administrator(frappe.session.user) and not is_mail_admin(frappe.session.user):
 		frappe.throw(
@@ -139,7 +138,7 @@ def _add_identity(
 			[
 				"Identity/set",
 				{
-					"accountId": account_id,
+					"accountId": get_user_personal_account_id(user, raise_exception=True),
 					"create": {
 						creation_id: {
 							"email": email,
