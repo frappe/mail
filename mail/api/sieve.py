@@ -18,16 +18,14 @@ def get_sieve_scripts() -> list[dict]:
 def create_sieve_script(_name: str, content: str, active: bool) -> None:
 	"""Create a sieve script for the user"""
 
-	SieveScript._add_sieve_script(user=frappe.session.user, name=_name, content=content, active=active)
+	SieveScript._add_sieve_script(frappe.session.user, _name, content, active)
 
 
 @frappe.whitelist()
 def update_sieve_script(id: str, _name: str, content: str, active: bool = False) -> None:
 	"""Update a sieve script for the user"""
 
-	SieveScript._update_sieve_script(
-		user=frappe.session.user, id=id, name=_name, content=content, active=active
-	)
+	SieveScript._update_sieve_script(frappe.session.user, id, _name, content, active)
 
 
 @frappe.whitelist()
@@ -41,14 +39,14 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 	"""Converts automation rules to Sieve script format.
 
 	Args:
-	        automation: Dictionary containing automation rules with keys:
-	                - emails_from: comma-separated email addresses
-	                - subject_contains: comma-separated keywords
-	                - mark_as_read: boolean
-	                - add_star: boolean
-	                - match_if: 'any' or 'all'
-	        folder_name: Name of the folder to file emails into
-	        mailbox_id: Optional mailbox ID for reference
+		automation: Dictionary containing automation rules with keys:
+			- emails_from: comma-separated email addresses
+			- subject_contains: comma-separated keywords
+			- mark_as_read: boolean
+			- add_star: boolean
+			- match_if: 'any' or 'all'
+		folder_name: Name of the folder to file emails into
+		mailbox_id: Optional mailbox ID for reference
 
 	Returns:
 	        Sieve script as a string
@@ -121,10 +119,10 @@ def update_sieve_script_for_mailbox(
 ) -> None:
 	"""Updates the Sieve script for the given mailbox based on the provided automation rules."""
 
-	automation_script_id = SieveScript._fetch_sieve_scripts(
+	automation_script_name = SieveScript._fetch_sieve_scripts(
 		frappe.session.user, filter={"name": "frappe_mail_automation"}
-	)[0][0]
-	doc = frappe.get_doc("Sieve Script", automation_script_id)
+	)[0][0]["name"]
+	doc = frappe.get_doc("Sieve Script", automation_script_name)
 	doc.content = remove_sieve_block(doc.content, old_name or name)
 
 	if automation_rules:

@@ -65,7 +65,7 @@
 	<SettingsModal v-if="!isMobile" v-model="showSettings" />
 	<PWASettings v-else-if="showSettings" @close="showSettings = false" />
 	<FolderModal v-model="showFolderModal" :mailbox="selectedMailbox" />
-	<DeleteMailboxModal v-model="showDeleteMailbox" :mailbox="selectedMailbox" />
+	<DeleteFolderModal v-model="showDeleteMailbox" :mailbox="selectedMailbox" />
 </template>
 
 <script setup lang="ts">
@@ -81,7 +81,7 @@ import { useScreenSize, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 import MailLogo from '@/components/Icons/MailLogo.vue'
-import DeleteMailboxModal from '@/components/Modals/DeleteMailboxModal.vue'
+import DeleteFolderModal from '@/components/Modals/DeleteFolderModal.vue'
 import FolderModal from '@/components/Modals/FolderModal.vue'
 import SettingsModal from '@/components/Modals/SettingsModal.vue'
 import PWASettings from '@/components/PWASettings.vue'
