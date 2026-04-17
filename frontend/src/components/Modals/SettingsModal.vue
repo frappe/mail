@@ -42,7 +42,6 @@ import { computed, inject, markRaw, ref } from 'vue'
 import {
 	Code,
 	Feather,
-	FileCode,
 	Fingerprint,
 	HardDriveDownload,
 	HardDriveUpload,
@@ -50,6 +49,7 @@ import {
 	Palette,
 	TreePalm,
 	User,
+	Zap,
 } from 'lucide-vue-next'
 import { Button, Dialog } from 'frappe-ui'
 
@@ -106,7 +106,7 @@ const tabs = computed(() => {
 		},
 		{
 			label: __('Automation'),
-			icon: FileCode,
+			icon: Zap,
 			component: markRaw(AutomationSettings),
 			condition: user.data.is_jmap_configure,
 		},

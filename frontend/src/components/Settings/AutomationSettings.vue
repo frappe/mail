@@ -5,18 +5,18 @@
 	</div>
 
 	<div v-if="filteredScripts.length">
-		<div class="text-ink-gray-5 py-2 text-sm">{{ __('Script Name') }}</div>
 		<div
 			v-for="script in filteredScripts"
 			:key="script.name"
-			class="flex items-center justify-between border-t py-1"
+			class="hover:bg-surface-gray-1 -mx-2 flex cursor-pointer items-center justify-between rounded px-3 py-1"
+			@click="editScript(script)"
 		>
 			<div class="flex items-center gap-2">
 				<span class="text-base">{{ script._name }}</span>
 				<Badge v-if="script.active" :label="__('Active')" theme="blue" size="sm" />
 			</div>
 			<Dropdown :options="scriptOptions(script)">
-				<Button variant="ghost" @click.stop>
+				<Button variant="" @click.stop>
 					<template #icon>
 						<Ellipsis class="text-ink-gray-5 h-4 w-4" />
 					</template>
@@ -82,6 +82,11 @@ const addScript = () => {
 	showSieveScript.value = true
 }
 
+const editScript = (script: SieveScript) => {
+	selectedScript.value = script
+	showSieveScript.value = true
+}
+
 const scriptOptions = (script: SieveScript) => [
 	{
 		label: script.active ? __('Deactivate') : __('Activate'),
@@ -94,10 +99,7 @@ const scriptOptions = (script: SieveScript) => [
 	{
 		label: __('Edit'),
 		icon: 'edit-2',
-		onClick: () => {
-			selectedScript.value = script
-			showSieveScript.value = true
-		},
+		onClick: () => editScript(script),
 	},
 	{
 		label: __('Delete'),
