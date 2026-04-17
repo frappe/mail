@@ -55,7 +55,7 @@
 						<!-- Automation  -->
 						<template v-else>
 							<Alert
-								v-if="activeScript !== 'Folder Automation'"
+								v-if="activeScript !== 'frappe_mail_automation'"
 								:title="__('Folder Automation Disabled')"
 								:description="
 									__(
@@ -144,8 +144,9 @@
 	</Dialog>
 
 	<SetSieveScriptStateModal
+		v-if="automationScript"
 		v-model="showEnableFolderAutomation"
-		:script="sieveScripts.data.find((s) => s._name === 'Folder Automation')"
+		:script="automationScript"
 	/>
 </template>
 
@@ -170,8 +171,8 @@ const { mailboxes, sieveScripts } = userStore()
 
 const isNew = computed(() => !mailbox)
 const activeScript = computed(() => sieveScripts.data?.find((s) => s.active)?._name)
-const automationScript = computed(
-	() => sieveScripts.data?.find((s) => s._name === 'Folder Automation')?.content,
+const automationScript = computed(() =>
+	sieveScripts.data?.find((s) => s._name === 'frappe_mail_automation'),
 )
 
 const tab = ref(0)
@@ -299,18 +300,20 @@ const originalAutomationRules = reactive({ ...DEFAULT_AUTOMATION_RULES })
 const parsedAutomationRules = computed(() => {
 	if (isNew.value || !automationScript.value || !original.name) return null
 
+	const content = automationScript.value.content
+
 	const commentPattern = `# Mailbox: ${original.name}\n`
-	const commentIndex = automationScript.value.indexOf(commentPattern)
+	const commentIndex = content.indexOf(commentPattern)
 
 	if (commentIndex === -1) return null
 
 	// Extract the block (from comment to closing brace)
 	const blockStart = commentIndex
-	const blockEnd = automationScript.value.indexOf('\n}', blockStart)
+	const blockEnd = content.indexOf('\n}', blockStart)
 
 	if (blockEnd === -1) return null
 
-	const block = automationScript.value.substring(blockStart, blockEnd + 2)
+	const block = content.substring(blockStart, blockEnd + 2)
 
 	const rules = { ...DEFAULT_AUTOMATION_RULES }
 

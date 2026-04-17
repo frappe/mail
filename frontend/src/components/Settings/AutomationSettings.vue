@@ -75,9 +75,7 @@ const selectedScript = ref<SieveScript>()
 const showSetScriptAsActive = ref(false)
 const showDeleteScript = ref(false)
 
-const filteredScripts = computed(
-	() => sieveScripts.data?.filter((s) => s._name !== 'vacation') || [],
-)
+const filteredScripts = computed(() => sieveScripts.data?.filter((s) => !s.read_only) || [])
 
 const addScript = () => {
 	selectedScript.value = undefined
@@ -86,7 +84,7 @@ const addScript = () => {
 
 const scriptOptions = (script: SieveScript) => [
 	{
-		label: script.active ? __('Set as Inactive') : __('Set as Active'),
+		label: script.active ? __('Deactivate') : __('Activate'),
 		icon: script.active ? 'eye-off' : 'eye',
 		onClick: () => {
 			selectedScript.value = script
@@ -100,7 +98,6 @@ const scriptOptions = (script: SieveScript) => [
 			selectedScript.value = script
 			showSieveScript.value = true
 		},
-		condition: () => !script.read_only,
 	},
 	{
 		label: __('Delete'),
@@ -110,7 +107,7 @@ const scriptOptions = (script: SieveScript) => [
 			selectedScript.value = script
 			showDeleteScript.value = true
 		},
-		condition: () => !script.read_only && !script.active,
+		condition: () => !script.active,
 	},
 ]
 </script>

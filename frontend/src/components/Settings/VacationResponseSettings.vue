@@ -47,7 +47,12 @@
 			class="min-h-7"
 			@click="handleSave"
 		/>
-		<Dialog v-model="showConfirmDialog" :options="confirmDialogOptions" />
+		<SetSieveScriptStateModal
+			v-if="vacationResponseScript"
+			v-model="showConfirmDialog"
+			:script="vacationResponseScript"
+			:action="updateVacationResponse.submit"
+		/>
 	</template>
 </template>
 
@@ -55,7 +60,6 @@
 import { computed, inject, ref } from 'vue'
 import {
 	Button,
-	Dialog,
 	FormControl,
 	Switch,
 	TextEditor,
@@ -77,7 +81,9 @@ const { buttons } = useTextEditorButtons()
 const showConfirmDialog = ref(false)
 
 const { sieveScripts } = userStore()
-
+const vacationResponseScript = computed(() =>
+	sieveScripts.data?.find((s) => s._name === 'vacation'),
+)
 const activeSieveScript = computed(
 	() => sieveScripts.data?.find((s) => s.active && s._name !== 'vacation')?._name,
 )
@@ -112,47 +118,11 @@ const updateVacationResponse = createResource({
 		vacationResponse.reload()
 		sieveScripts.reload()
 		raiseToast(__('Vacation response updated.'))
+		showConfirmDialog.value = false
 	},
-	onError: (error) => raiseToast(error.messages[0], 'error'),
-})
-
-const confirmDialogOptions = computed(() => ({
-	title: confirmTitle.value,
-	message: confirmMessage.value,
-	icon: { name: 'alert-triangle', appearance: 'warning' },
-	actions: [
-		{
-			label: __('Yes, enable Vacation Response'),
-			onClick: () => {
-				updateVacationResponse.submit()
-				showConfirmDialog.value = false
-			},
-		},
-		{
-			label: __('Cancel'),
-			variant: 'outline',
-			onClick: () => {
-				vacationResponse.doc.enabled = false
-				showConfirmDialog.value = false
-			},
-		},
-	],
-}))
-
-const confirmTitle = computed(() => {
-	if (activeSieveScript.value === 'Folder Automation') return __('Disable Folder Automation?')
-	return __('Active Sieve Script Detected')
-})
-
-const confirmMessage = computed(() => {
-	if (activeSieveScript.value === 'Folder Automation')
-		return __(
-			'Enabling Vacation Response will disable Folder Automation. Do you want to proceed?',
-		)
-
-	return __(
-		"Enabling Vacation Response will deactivate sieve script '{0}'. Do you want to proceed?",
-		[activeSieveScript.value],
-	)
+	onError: (error) => {
+		raiseToast(error.messages[0], 'error')
+		showConfirmDialog.value = false
+	},
 })
 </script>

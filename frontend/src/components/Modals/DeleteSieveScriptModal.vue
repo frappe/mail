@@ -6,12 +6,7 @@
 			message: __(`Are you sure you want to delete '{0}'? `, [script._name]),
 			icon: { name: 'alert-triangle', appearance: 'warning' },
 			actions: [
-				{
-					label: __('Confirm'),
-					variant: 'solid',
-					theme: 'red',
-					onClick: () => deleteScript.submit(),
-				},
+				{ label: __('Confirm'), theme: 'red', onClick: () => deleteScript.submit() },
 			],
 		}"
 	/>

@@ -35,24 +35,23 @@
 				<Switch
 					v-model="script.active"
 					:label="__('Activate Script')"
-					:description="__('Enable this script to start filtering emails.')"
+					:description="__('Activate this script to apply your rules and filters.')"
 					class="!p-0"
 				/>
 				<Alert
-					v-if="script.active && activeScript && activeScript !== script._name"
+					v-if="script.active && activeScript && activeScript !== original._name"
 					:title="
-						activeScript === 'vacation'
-							? __('Vacation Response Active')
-							: __('Active Script Detected')
+						isSystemScript(activeScript)
+							? __('{0} Enabled', [getScriptName(activeScript)])
+							: __('Active Script {0} Detected', [getScriptName(activeScript)])
 					"
 					:description="
-						activeScript === 'vacation'
-							? __(
-									'Vacation response is currently enabled. Activating this will turn it off.',
-								)
+						isSystemScript(activeScript)
+							? __('Activating this script will disable {0}.', [
+									getScriptName(activeScript),
+								])
 							: __(
-									`Script '{0}' is currently active. Only one script can be active at a time. Activating this will turn off the current active script.`,
-									[activeScript],
+									'Activating this script will deactivate the currently active script.',
 								)
 					"
 					theme="yellow"
@@ -67,7 +66,7 @@
 import { computed, reactive, watch } from 'vue'
 import { Alert, Dialog, FormControl, Switch, createResource } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
+import { getScriptName, isSystemScript, raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
 import type { SieveScript } from '@/types'
