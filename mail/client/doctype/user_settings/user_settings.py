@@ -8,6 +8,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
+from mail.client.doctype.sieve_script.sieve_script import SieveScript
 from mail.jmap import (
 	get_core_service,
 	invalidate_jmap_connection_cache,
@@ -146,6 +147,12 @@ class UserSettings(Document):
 				).format(frappe.bold(self.username))
 			)
 
+	def after_insert(self) -> None:
+		"""Create the frappe_mail_automation sieve script for the user after insert."""
+
+		if self.username and not frappe.flags.in_migrate:
+			create_frappe_mail_automation_script(self.user)
+
 	@frappe.whitelist()
 	def show_app_password(self) -> str:
 		"""Returns the app password of the user."""
@@ -270,3 +277,22 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 		return True
 
 	return doc.user == user
+
+
+def create_frappe_mail_automation_script(user: str) -> None:
+	"""Create the frappe_mail_automation sieve script for the user if it doesn't exist."""
+
+	try:
+		if not SieveScript._fetch_sieve_scripts(user, filter={"name": "frappe_mail_automation"})[0]:
+			SieveScript._add_sieve_script(
+				user=user,
+				name="frappe_mail_automation",
+				content='require ["fileinto", "imap4flags"];',
+				active=False,
+			)
+
+	except Exception as e:
+		frappe.log_error(
+			title="Sieve Script Creation Failed",
+			message=f"Failed to create frappe_mail_automation script for user {user}: {e!s}",
+		)

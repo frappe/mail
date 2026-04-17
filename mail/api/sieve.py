@@ -18,30 +18,23 @@ def get_sieve_scripts() -> list[dict]:
 def create_sieve_script(_name: str, content: str, active: bool) -> None:
 	"""Create a sieve script for the user"""
 
-	doc = frappe.new_doc("Sieve Script")
-	doc.user = frappe.session.user
-	doc._name = _name
-	doc.content = content
-	doc.active = active
-	doc.save()
+	SieveScript._add_sieve_script(user=frappe.session.user, name=_name, content=content, active=active)
 
 
 @frappe.whitelist()
-def update_sieve_script(name: str, _name: str, content: str, active: bool = False) -> None:
+def update_sieve_script(id: str, _name: str, content: str, active: bool = False) -> None:
 	"""Update a sieve script for the user"""
 
-	doc = frappe.get_doc("Sieve Script", name)
-	doc._name = _name
-	doc.content = content
-	doc.active = active
-	doc.save()
+	SieveScript._update_sieve_script(
+		user=frappe.session.user, id=id, name=_name, content=content, active=active
+	)
 
 
 @frappe.whitelist()
-def delete_sieve_script(name: str) -> None:
+def delete_sieve_script(id: str) -> None:
 	"""Delete a sieve script for the user"""
 
-	frappe.delete_doc("Sieve Script", name)
+	SieveScript._delete_sieve_scripts(frappe.session.user, [id])
 
 
 def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
@@ -128,7 +121,10 @@ def update_sieve_script_for_mailbox(
 ) -> None:
 	"""Updates the Sieve script for the given mailbox based on the provided automation rules."""
 
-	doc = frappe.get_doc("Sieve Script", "akash@frappe.io|m")
+	automation_script_id = SieveScript._fetch_sieve_scripts(
+		frappe.session.user, filter={"name": "frappe_mail_automation"}
+	)[0][0]
+	doc = frappe.get_doc("Sieve Script", automation_script_id)
 	doc.content = remove_sieve_block(doc.content, old_name or name)
 
 	if automation_rules:

@@ -101,8 +101,8 @@ const createScript = createResource({
 })
 
 const updateScript = createResource({
-	url: 'mail.api.account.update_sieve_script',
-	makeParams: () => ({ name: selectedScript!.name, ...script }),
+	url: 'mail.api.sieve.update_sieve_script',
+	makeParams: () => ({ id: selectedScript!.id, ...script }),
 	onSuccess: () => {
 		raiseToast(__('Sieve script updated.'))
 		sieveScripts.reload()
