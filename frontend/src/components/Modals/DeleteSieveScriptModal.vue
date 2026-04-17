@@ -21,19 +21,21 @@
 import { Dialog, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 
 import type { SieveScript } from '@/types'
 
 const show = defineModel<boolean>()
 const { script } = defineProps<{ script: SieveScript }>()
-const emit = defineEmits(['reloadScripts'])
+
+const { sieveScripts } = userStore()
 
 const deleteScript = createResource({
 	url: 'mail.api.account.delete_sieve_script',
 	makeParams: () => ({ name: script.name }),
 	onSuccess: () => {
 		raiseToast(__('Sieve script deleted.'))
-		emit('reloadScripts')
+		sieveScripts.reload()
 		show.value = false
 	},
 	onError: (error) => raiseToast(error.message, 'error'),

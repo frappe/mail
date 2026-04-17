@@ -23,10 +23,9 @@ import type { SieveScript } from '@/types'
 
 const show = defineModel<boolean>()
 const { script } = defineProps<{ script: SieveScript }>()
-const emit = defineEmits(['reloadScripts'])
 
 const { sieveScripts } = userStore()
-const currentActiveScript = computed(() => sieveScripts.data?.find((s) => s.active)?._name)
+const activeScript = computed(() => sieveScripts.data?.find((s) => s.active)?._name)
 const newState = computed(() => (script.active ? __('Inactive') : __('Active')))
 
 const message = computed(() => {
@@ -36,17 +35,16 @@ const message = computed(() => {
 			[script._name],
 		)
 
-	if (!currentActiveScript.value)
-		return __("Are you sure you want to activate '{0}'?", [script._name])
+	if (!activeScript.value) return __("Are you sure you want to activate '{0}'?", [script._name])
 
-	if (currentActiveScript.value === 'vacation')
+	if (activeScript.value === 'vacation')
 		return __(
-			"Vacation Response is currently enabled. Setting '{0}' as active will stop your vacation response from functioning. Are you sure you want to proceed?",
+			"Vacation Response is currently enabled. Setting '{0}' as active will stop your vacation response from functioning. Do you want to proceed?",
 			[script._name],
 		)
 	return __(
-		"'{0}' is currently active. Setting '{1}' as active will deactivate '{0}'. Are you sure you want to proceed?",
-		[currentActiveScript.value, script._name],
+		"'{0}' is currently active. Setting '{1}' as active will deactivate '{0}'. Do you want to proceed?",
+		[activeScript.value, script._name],
 	)
 })
 
@@ -55,7 +53,7 @@ const setScriptState = createResource({
 	makeParams: () => ({ ...script, active: !script.active }),
 	onSuccess: () => {
 		raiseToast(script.active ? __('Sieve script deactivated.') : __('Sieve script activated.'))
-		emit('reloadScripts')
+		sieveScripts.reload()
 		show.value = false
 	},
 	onError: (error) => raiseToast(error.message, 'error'),

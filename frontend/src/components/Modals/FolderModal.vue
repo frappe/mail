@@ -54,6 +54,27 @@
 
 						<!-- Automation  -->
 						<template v-else>
+							<Alert
+								v-if="activeScript !== 'Folder Automation'"
+								:title="__('Folder Automation Disabled')"
+								:description="
+									__(
+										`Please enable it to ensure that your rules function properly.`,
+										[activeScript],
+									)
+								"
+								theme="yellow"
+								:dismissable="false"
+							>
+								<template #footer>
+									<Button
+										class="col-span-full"
+										:label="__('Enable')"
+										variant="outline"
+										@click="showEnableFolderAutomation = true"
+									/>
+								</template>
+							</Alert>
 							<FormControl
 								v-model="automationRules.emails_from"
 								:label="__('Emails From')"
@@ -121,17 +142,23 @@
 			</Tabs>
 		</template>
 	</Dialog>
+
+	<SetSieveScriptStateModal
+		v-model="showEnableFolderAutomation"
+		:script="sieveScripts.data.find((s) => s._name === 'Folder Automation')"
+	/>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { IconPicker } from 'frappe-ui/icons'
 import { Settings, Zap } from 'lucide-vue-next'
-import { Dialog, FormControl, Switch, Tabs, createResource } from 'frappe-ui'
+import { Alert, Button, Dialog, FormControl, Switch, Tabs, createResource } from 'frappe-ui'
 
 import { FOLDER_COLOR_MAP, FOLDER_ICON_MAP } from '@/constants'
 import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
+import SetSieveScriptStateModal from '@/components/Modals/SetSieveScriptStateModal.vue'
 
 import type { MailboxData } from '@/types'
 
@@ -142,8 +169,9 @@ const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 const { mailboxes, sieveScripts } = userStore()
 
 const isNew = computed(() => !mailbox)
+const activeScript = computed(() => sieveScripts.data?.find((s) => s.active)?._name)
 const automationScript = computed(
-	() => sieveScripts.data?.find((s) => s._name === 'Frappe Mail Automation')?.content,
+	() => sieveScripts.data?.find((s) => s._name === 'Folder Automation')?.content,
 )
 
 const tab = ref(0)
@@ -316,4 +344,6 @@ const parsedAutomationRules = computed(() => {
 const isDefaultAutomation = computed(
 	() => JSON.stringify(automationRules) === JSON.stringify(DEFAULT_AUTOMATION_RULES),
 )
+
+const showEnableFolderAutomation = ref(false)
 </script>

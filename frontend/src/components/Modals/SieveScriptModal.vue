@@ -39,24 +39,20 @@
 					class="!p-0"
 				/>
 				<Alert
-					v-if="
-						script.active &&
-						currentActiveScript &&
-						currentActiveScript !== script._name
-					"
+					v-if="script.active && activeScript && activeScript !== script._name"
 					:title="
-						currentActiveScript === 'vacation'
+						activeScript === 'vacation'
 							? __('Vacation Response Active')
 							: __('Active Script Detected')
 					"
 					:description="
-						currentActiveScript === 'vacation'
+						activeScript === 'vacation'
 							? __(
 									'Vacation response is currently enabled. Activating this will turn it off.',
 								)
 							: __(
 									`Script '{0}' is currently active. Only one script can be active at a time. Activating this will turn off the current active script.`,
-									[currentActiveScript],
+									[activeScript],
 								)
 					"
 					theme="yellow"
@@ -78,10 +74,9 @@ import type { SieveScript } from '@/types'
 
 const show = defineModel<boolean>()
 const { selectedScript } = defineProps<{ selectedScript?: SieveScript }>()
-const emit = defineEmits(['reloadScripts'])
 
 const { sieveScripts } = userStore()
-const currentActiveScript = computed(() => sieveScripts.data?.find((s) => s.active)?._name)
+const activeScript = computed(() => sieveScripts.data?.find((s) => s.active)?._name)
 
 const DEFAULT_SCRIPT = { _name: '', content: '', active: false }
 
@@ -100,8 +95,8 @@ const createScript = createResource({
 	makeParams: () => script,
 	onSuccess: () => {
 		raiseToast(__('Sieve script created.'))
+		sieveScripts.reload()
 		show.value = false
-		emit('reloadScripts')
 	},
 	onError: (e) => raiseToast(e.messages[0], 'error'),
 })
@@ -111,8 +106,8 @@ const updateScript = createResource({
 	makeParams: () => ({ name: selectedScript!.name, ...script }),
 	onSuccess: () => {
 		raiseToast(__('Sieve script updated.'))
+		sieveScripts.reload()
 		show.value = false
-		emit('reloadScripts')
 	},
 	onError: (e) => raiseToast(e.messages[0], 'error'),
 })

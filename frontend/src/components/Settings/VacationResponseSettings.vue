@@ -110,32 +110,49 @@ const updateVacationResponse = createResource({
 	}),
 	onSuccess: () => {
 		vacationResponse.reload()
+		sieveScripts.reload()
 		raiseToast(__('Vacation response updated.'))
 	},
 	onError: (error) => raiseToast(error.messages[0], 'error'),
 })
 
 const confirmDialogOptions = computed(() => ({
-	title: __('Active Sieve Script Detected'),
-	message: __(
-		"You have an active sieve script '{0}' which will be deactivated if you enable vacation response. Do you want to proceed?",
-		[activeSieveScript.value || ''],
-	),
+	title: confirmTitle.value,
+	message: confirmMessage.value,
 	icon: { name: 'alert-triangle', appearance: 'warning' },
 	actions: [
 		{
-			label: __('Yes, enable vacation response'),
-			variant: 'solid',
+			label: __('Yes, enable Vacation Response'),
 			onClick: () => {
 				updateVacationResponse.submit()
 				showConfirmDialog.value = false
 			},
 		},
 		{
-			label: __('No, keep it disabled'),
+			label: __('Cancel'),
 			variant: 'outline',
-			onClick: () => (showConfirmDialog.value = false),
+			onClick: () => {
+				vacationResponse.doc.enabled = false
+				showConfirmDialog.value = false
+			},
 		},
 	],
 }))
+
+const confirmTitle = computed(() => {
+	if (activeSieveScript.value === 'Folder Automation') return __('Disable Folder Automation?')
+	return __('Active Sieve Script Detected')
+})
+
+const confirmMessage = computed(() => {
+	if (activeSieveScript.value === 'Folder Automation')
+		return __(
+			'Enabling Vacation Response will disable Folder Automation. Do you want to proceed?',
+		)
+
+	return __(
+		"Enabling Vacation Response will deactivate sieve script '{0}'. Do you want to proceed?",
+		[activeSieveScript.value],
+	)
+})
 </script>

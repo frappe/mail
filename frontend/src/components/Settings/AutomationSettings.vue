@@ -43,22 +43,16 @@
 		</div>
 	</div>
 
-	<SieveScriptModal
-		v-model="showSieveScript"
-		:selected-script
-		@reload-scripts="sieveScripts.reload()"
-	/>
+	<SieveScriptModal v-model="showSieveScript" :selected-script />
 	<SetSieveScriptStateModal
 		v-if="selectedScript"
 		v-model="showSetScriptAsActive"
 		:script="selectedScript"
-		@reload-scripts="sieveScripts.reload()"
 	/>
 	<DeleteSieveScriptModal
 		v-if="selectedScript"
 		v-model="showDeleteScript"
 		:script="selectedScript"
-		@reload-scripts="sieveScripts.reload()"
 	/>
 </template>
 
