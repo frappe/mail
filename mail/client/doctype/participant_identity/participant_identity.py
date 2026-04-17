@@ -71,9 +71,7 @@ class ParticipantIdentity(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -111,8 +109,7 @@ def bulk_delete(names: str | list[str]) -> None:
 def add_participant_identity(account: str, name: str, email: str, default: bool = False) -> str:
 	"""Adds a participant identity for the given account and returns the identity ID."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	creation_id = str(uuid7())
 	participant_identity = {
@@ -138,8 +135,7 @@ def add_participant_identity(account: str, name: str, email: str, default: bool 
 def get_participant_identity(account: str, id: str) -> dict:
 	"""Returns participant identity details for the given account and identity ID."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_participant_identity_service(account)
 	if identities := service.get([id]):
@@ -157,8 +153,7 @@ def get_participant_identity(account: str, id: str) -> dict:
 def update_participant_identity(account: str, id: str, name: str, email: str, default: bool = False) -> None:
 	"""Updates an existing participant identity with the given parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	participant_identity = {
 		"id": id,
@@ -182,8 +177,7 @@ def update_participant_identity(account: str, id: str, name: str, email: str, de
 def delete_participant_identities(account: str, ids: list[str]) -> None:
 	"""Deletes participant identities for the specified account and ID(s)."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_participant_identity_service(account)
 	response = service.delete(ids)
@@ -202,8 +196,7 @@ def delete_participant_identities(account: str, ids: list[str]) -> None:
 def fetch_participant_identities(account: str, page: int = 1, limit: int = 10) -> list:
 	"""Fetches and returns all participant identities for the given account."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_participant_identity_service(account)
 	identities = service.get()
@@ -235,6 +228,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Participant Identity":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

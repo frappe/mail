@@ -52,10 +52,8 @@ class CoreService(CoreServiceHelper):
 	def __init__(self, account: str, connection: JMAPConnection) -> None:
 		"""Initializes the CoreService with the provided account and JMAP connection."""
 
-		_user, account_id = parse_account(account)
-
 		self.account = account
-		self.account_id = account_id
+		self.account_id = parse_account(account)[1]
 		self.connection = connection
 
 	def __post_init__(self) -> None:

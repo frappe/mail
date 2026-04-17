@@ -96,9 +96,7 @@ class Identity(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -214,8 +212,7 @@ def add_identity(
 ) -> str:
 	"""Adds an identity for the given account with the specified parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	creation_id = str(uuid7())
 	identity = {
@@ -244,8 +241,7 @@ def add_identity(
 def get_identity(account: str, id: str, raise_exception: bool = True) -> dict | None:
 	"""Returns identity details for the given name in the format 'account|id'."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_identity(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_identity_service(account)
 	if identities := service.get([id]):
@@ -270,8 +266,7 @@ def update_identity(
 ) -> None:
 	"""Updates an existing identity with the given parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	identity = {
 		"id": id,
@@ -297,8 +292,7 @@ def update_identity(
 def delete_identities(account: str, ids: list[str]) -> None:
 	"""Deletes identities for the given account and list of identity IDs."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_identity(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_identity_service(account, ignore_permissions=True)
 	response = service.delete(ids)
@@ -317,7 +311,7 @@ def delete_identities(account: str, ids: list[str]) -> None:
 def fetch_identities(account: str, page: int = 1, limit: int = 10) -> list:
 	"""Returns a list of identities for the given account."""
 
-	user, _account_id = parse_account(account)
+	user = parse_account(account)[0]
 
 	if not has_permission_for_user(user, raise_exception=False):
 		if not is_mail_admin(frappe.session.user):
@@ -370,6 +364,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Identity":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

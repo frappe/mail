@@ -171,9 +171,7 @@ class ContactCard(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -227,8 +225,7 @@ def add_contact_card(
 ) -> str:
 	"""Adds a contact card for the given account with the specified parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	creation_id = str(uuid7())
 	contact_card = {
@@ -257,8 +254,7 @@ def add_contact_card(
 def bulk_add_contact_cards(account: str, contact_cards: list[dict], raise_exception: bool = True) -> None:
 	"""Adds multiple contact cards for the given account and returns their IDs."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_contact_card_service(account)
 
@@ -284,8 +280,7 @@ def fetch_contact_cards(
 ) -> tuple[list[dict], int]:
 	"""Returns a list of contact cards and total count based on the provided filter."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	contact_cards = []
 
@@ -304,8 +299,7 @@ def fetch_contact_cards(
 def get_contact_cards(account: str, ids: list[str]) -> list[dict]:
 	"""Returns a list of contact cards for the provided IDs in the same order as ids."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	contact_cards = {}
 	ids_to_fetch = []
@@ -343,8 +337,7 @@ def update_contact_card(
 ) -> None:
 	"""Updates an existing contact card with the given parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	contact_card = {
 		"id": id,
@@ -386,8 +379,7 @@ def contact_card_update_address_books(
 	- move_to_address_book_id: replaces addressBookIds entirely
 	"""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_contact_card_service(account)
 	response = service.update_address_book_ids(
@@ -451,8 +443,7 @@ def contact_card_move_to_address_book(
 def delete_contact_cards(account: str, ids: list[str]) -> None:
 	"""Deletes contact cards for the given account by its IDs."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_contact_card_service(account)
 	service.delete(ids)
@@ -619,6 +610,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Contact Card":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

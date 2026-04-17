@@ -83,24 +83,27 @@ def get_address_book_service(
 ) -> AddressBookService:
 	"""Returns an instance of AddressBookService for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return AddressBookService(account, connection)
 
 
 def get_core_service(account: str, ignore_permissions: bool = False, cache: bool = True) -> CoreService:
 	"""Returns an instance of CoreService for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return CoreService(account, connection)
 
 
 def get_blob_service(account: str, ignore_permissions: bool = False, cache: bool = True) -> BlobService:
 	"""Returns an instance of BlobService for handling blob-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return BlobService(account, connection)
 
 
@@ -109,8 +112,9 @@ def get_calendar_event_notification_service(
 ) -> CalendarEventNotificationService:
 	"""Returns an instance of CalendarEventNotificationService for handling calendar event notification-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return CalendarEventNotificationService(account, connection)
 
 
@@ -119,8 +123,9 @@ def get_calendar_event_service(
 ) -> CalendarEventService:
 	"""Returns an instance of CalendarEventService for handling calendar event-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return CalendarEventService(account, connection)
 
 
@@ -129,8 +134,9 @@ def get_calendar_service(
 ) -> CalendarService:
 	"""Returns an instance of CalendarService for handling calendar-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return CalendarService(account, connection)
 
 
@@ -139,16 +145,18 @@ def get_contact_card_service(
 ) -> ContactCardService:
 	"""Returns an instance of ContactCardService for handling contact card-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return ContactCardService(account, connection)
 
 
 def get_email_service(account: str, ignore_permissions: bool = False, cache: bool = True) -> EmailService:
 	"""Returns an instance of EmailService for handling email-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return EmailService(account, connection)
 
 
@@ -157,8 +165,9 @@ def get_email_submission_service(
 ) -> EmailSubmissionService:
 	"""Returns an instance of EmailSubmissionService for handling email submission-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return EmailSubmissionService(account, connection)
 
 
@@ -167,16 +176,18 @@ def get_identity_service(
 ) -> IdentityService:
 	"""Returns an instance of IdentityService for handling identity-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return IdentityService(account, connection)
 
 
 def get_mailbox_service(account: str, ignore_permissions: bool = False, cache: bool = True) -> MailboxService:
 	"""Returns an instance of MailboxService for handling mailbox-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return MailboxService(account, connection)
 
 
@@ -185,8 +196,9 @@ def get_participant_identity_service(
 ) -> ParticipantIdentityService:
 	"""Returns an instance of ParticipantIdentityService for handling participant identity-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return ParticipantIdentityService(account, connection)
 
 
@@ -195,8 +207,9 @@ def get_principal_service(
 ) -> PrincipalService:
 	"""Returns an instance of PrincipalService for handling principal-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return PrincipalService(account, connection)
 
 
@@ -212,8 +225,9 @@ def get_push_subscription_service(
 def get_quota_service(account: str, ignore_permissions: bool = False, cache: bool = True) -> QuotaService:
 	"""Returns an instance of QuotaService for handling quota-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return QuotaService(account, connection)
 
 
@@ -222,16 +236,18 @@ def get_sieve_script_service(
 ) -> SieveScriptService:
 	"""Returns an instance of SieveScriptService for handling sieve script-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return SieveScriptService(account, connection)
 
 
 def get_thread_service(account: str, ignore_permissions: bool = False, cache: bool = True) -> ThreadService:
 	"""Returns an instance of ThreadService for handling thread-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return ThreadService(account, connection)
 
 
@@ -240,8 +256,9 @@ def get_vacation_response_service(
 ) -> VacationResponseService:
 	"""Returns an instance of VacationResponseService for handling vacation response-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return VacationResponseService(account, connection)
 
 
@@ -250,16 +267,16 @@ def get_websocket_service(
 ) -> WebSocketService:
 	"""Returns an instance of WebSocketService for handling WebSocket-related operations for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, cache=cache)
+	connection = get_jmap_connection(
+		parse_account(account)[0], ignore_permissions=ignore_permissions, cache=cache
+	)
 	return WebSocketService(account, connection)
 
 
 def invalidate_jmap_cache(account: str) -> None:
 	"""Invalidates all JMAP-related caches for the specified account."""
 
-	user, _account_id = parse_account(account)
-	invalidate_jmap_connection_cache(user)
+	invalidate_jmap_connection_cache(parse_account(account)[0])
 	invalidate_jmap_identities_cache(account)
 	invalidate_jmap_mailboxes_cache(account)
 
@@ -286,8 +303,7 @@ def invalidate_jmap_mailboxes_cache(account: str) -> None:
 def get_identities(account: str) -> list[dict]:
 	"""Returns the list of identities for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user)
+	connection = get_jmap_connection(parse_account(account)[0])
 	service = IdentityService(account, connection)
 
 	identities = [
@@ -314,8 +330,7 @@ def get_identities(account: str) -> list[dict]:
 def get_identity_id_by_email(account: str, email: str, raise_exception: bool = False) -> str | None:
 	"""Returns the identity ID for the specified email address, or None if not found."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user)
+	connection = get_jmap_connection(parse_account(account)[0])
 	service = IdentityService(account, connection)
 	return service.get_identity_id_by_email(email, raise_exception=raise_exception)
 
@@ -323,8 +338,7 @@ def get_identity_id_by_email(account: str, email: str, raise_exception: bool = F
 def get_mailboxes(account: str) -> list[dict]:
 	"""Returns the list of mailboxes for the specified account."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user)
+	connection = get_jmap_connection(parse_account(account)[0])
 	service = MailboxService(account, connection)
 
 	mailboxes = [
@@ -349,8 +363,7 @@ def get_mailbox_id_by_role(
 ) -> str | None:
 	"""Returns the mailbox ID for the specified role, or None if not found. Optionally creates the mailbox if it does not exist."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user)
+	connection = get_jmap_connection(parse_account(account)[0])
 	service = MailboxService(account, connection)
 	return service.get_mailbox_id_by_role(
 		role, create_if_not_exists=create_if_not_exists, raise_exception=raise_exception
@@ -360,8 +373,7 @@ def get_mailbox_id_by_role(
 def get_mailbox_role_by_id(account: str, id: str, raise_exception: bool = False) -> str | None:
 	"""Returns the mailbox role for the specified mailbox ID, or None if not found."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user)
+	connection = get_jmap_connection(parse_account(account)[0])
 	service = MailboxService(account, connection)
 	return service.get_mailbox_role_by_id(id, raise_exception=raise_exception)
 
@@ -369,8 +381,7 @@ def get_mailbox_role_by_id(account: str, id: str, raise_exception: bool = False)
 def get_mailbox_name_by_id(account: str, id: str, raise_exception: bool = False) -> str | None:
 	"""Returns the mailbox name for the specified mailbox ID, or None if not found."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user)
+	connection = get_jmap_connection(parse_account(account)[0])
 	service = MailboxService(account, connection)
 	return service.get_mailbox_name_by_id(id, raise_exception=raise_exception)
 
@@ -378,8 +389,7 @@ def get_mailbox_name_by_id(account: str, id: str, raise_exception: bool = False)
 def get_default_address_book_id(account: str, raise_exception: bool = False) -> str | None:
 	"""Returns the ID of the default address book for the specified account, or None if not found."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user)
+	connection = get_jmap_connection(parse_account(account)[0])
 	service = AddressBookService(account, connection)
 	return service.get_default(raise_exception=raise_exception)
 
@@ -387,8 +397,7 @@ def get_default_address_book_id(account: str, raise_exception: bool = False) -> 
 def get_default_calendar_id(account: str, raise_exception: bool = False) -> str | None:
 	"""Returns the ID of the default calendar for the specified account, or None if not found."""
 
-	user, _account_id = parse_account(account)
-	connection = get_jmap_connection(user)
+	connection = get_jmap_connection(parse_account(account)[0])
 	service = CalendarService(account, connection)
 	return service.get_default(raise_exception=raise_exception)
 
@@ -397,8 +406,7 @@ def get_default_calendar_id(account: str, raise_exception: bool = False) -> str 
 def get_mailboxes_for_account(account: str) -> list[dict]:
 	"""Returns the list of mailboxes for the specified account."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 	return get_mailboxes(account)
 
 
@@ -408,8 +416,7 @@ def get_mailbox_id_for_account(
 ) -> str | None:
 	"""Returns the mailbox ID for the specified role, or None if not found. Optionally creates the mailbox if it does not exist."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 	return get_mailbox_id_by_role(
 		account, role, create_if_not_exists=create_if_not_exists, raise_exception=raise_exception
 	)
@@ -419,8 +426,7 @@ def get_mailbox_id_for_account(
 def get_mailbox_name_for_account(account: str, id: str, raise_exception: bool = False) -> str | None:
 	"""Returns the mailbox name for the specified mailbox ID, or None if not found."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 	return get_mailbox_name_by_id(account, id, raise_exception=raise_exception)
 
 
@@ -428,7 +434,7 @@ def get_mailbox_name_for_account(account: str, id: str, raise_exception: bool = 
 def make_jmap_request(account: str, capabilities: list[str], method_calls: list[list]) -> Any:
 	"""Makes a JMAP request on behalf of the specified account, with the given method calls."""
 
-	user, _account_id = parse_account(account)
+	user = parse_account(account)[0]
 	has_permission_for_user(user)
 
 	connection = get_jmap_connection(user)

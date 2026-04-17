@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_zwhk",
-  "user",
+  "account",
   "status",
   "from_name",
   "from_email",
@@ -533,17 +533,6 @@
    "search_index": 1
   },
   {
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "options": "User",
-   "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
    "default": "0",
    "depends_on": "eval: !doc.save_as_draft",
    "description": "If enabled, the message will be deleted after successful submission.",
@@ -551,12 +540,23 @@
    "fieldtype": "Check",
    "label": "Destroy After Submit",
    "set_only_once": 1
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "options": "User Account",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-13 12:55:02.847255",
+ "modified": "2026-04-17 10:43:53.216154",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Queue",

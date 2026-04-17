@@ -70,8 +70,7 @@ class VacationResponse(Document):
 def get_vacation_response(account: str) -> dict:
 	"""Returns the vacation response settings for the given account."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_vacation_response_service(account)
 	vc = service.get()
@@ -90,8 +89,7 @@ def update_vacation_response(
 ) -> None:
 	"""Updates the vacation response settings for the given account."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	enabled = bool(enabled)
 	from_date = convert_to_utc(from_date).isoformat() if from_date else None
@@ -152,6 +150,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Vacation Response":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

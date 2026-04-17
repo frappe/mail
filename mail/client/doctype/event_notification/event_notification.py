@@ -63,9 +63,7 @@ class EventNotification(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -109,8 +107,7 @@ def fetch_event_notifications(
 ) -> tuple[list[dict], int]:
 	"""Returns a list of event notifications and total count based on the provided filter."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	notifications = []
 
@@ -129,8 +126,7 @@ def fetch_event_notifications(
 def get_event_notifications(account: str, ids: list[str]) -> list[dict]:
 	"""Returns a list of event notifications for the specified account and IDs."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_calendar_event_notification_service(account)
 
@@ -146,8 +142,7 @@ def get_event_notifications(account: str, ids: list[str]) -> list[dict]:
 def delete_event_notifications(account: str, ids: list[str]) -> None:
 	"""Deletes event notifications for the specified account and ID(s)."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_calendar_event_notification_service(account)
 	response = service.delete(ids)
@@ -196,6 +191,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Event Notification":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

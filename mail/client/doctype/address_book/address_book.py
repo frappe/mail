@@ -75,9 +75,7 @@ class AddressBook(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -130,8 +128,7 @@ def add_address_book(
 ) -> str:
 	"""Adds a address book for the given account with the specified parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	creation_id = str(uuid7())
 	address_book = {
@@ -159,8 +156,7 @@ def add_address_book(
 def get_address_book(account: str, id: str, raise_exception: bool = True) -> dict | None:
 	"""Returns address book details for the given name in the format 'account|id'."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_address_book_service(account)
 	if address_books := service.get([id]):
@@ -187,8 +183,7 @@ def update_address_book(
 ) -> None:
 	"""Updates an existing address book with the given parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	address_book = {
 		"id": id,
@@ -214,8 +209,7 @@ def update_address_book(
 def delete_address_books(account: str, ids: list[str]) -> None:
 	"""Deletes address books for the given account and list of address book IDs."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_address_book_service(account)
 	response = service.delete(ids, remove_contents=True)
@@ -234,8 +228,7 @@ def delete_address_books(account: str, ids: list[str]) -> None:
 def fetch_address_books(account: str, page: int = 1, limit: int = 10) -> list:
 	"""Returns a list of address books for the given account."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_address_book_service(account)
 	address_books = service.get()
@@ -277,6 +270,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Address Book":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

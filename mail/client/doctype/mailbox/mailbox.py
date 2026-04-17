@@ -70,9 +70,7 @@ class Mailbox(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -117,8 +115,7 @@ def add_mailbox(
 ) -> str:
 	"""Adds a mailbox for the given account with the specified parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	creation_id = str(uuid7())
 	mailbox = {
@@ -146,8 +143,7 @@ def add_mailbox(
 def get_mailbox(account: str, id: str, raise_exception: bool = False) -> dict | None:
 	"""Returns mailbox details for the given name in the format 'account|id'."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_mailbox_service(account)
 	if mailboxes := service.get([id]):
@@ -172,8 +168,7 @@ def update_mailbox(
 ) -> None:
 	"""Updates an existing mailbox with the given parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	title = _("Mailbox Update Error")
 	if parent and id == parent:
@@ -202,8 +197,7 @@ def update_mailbox(
 def delete_mailboxes(account: str, ids: list[str], remove_emails: bool = True) -> None:
 	"""Deletes a mailbox for the given account by its ID."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_mailbox_service(account)
 	response = service.delete(ids, remove_emails=remove_emails)
@@ -222,8 +216,7 @@ def delete_mailboxes(account: str, ids: list[str], remove_emails: bool = True) -
 def fetch_mailboxes(account: str, page: int = 1, limit: int = 10) -> list:
 	"""Returns a list of mailboxes for the given account."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_mailbox_service(account)
 	mailboxes = service.get()
@@ -318,8 +311,7 @@ def update_mailbox_position(
 
 		return updates
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_mailbox_service(account)
 	mailboxes = sorted(
@@ -404,6 +396,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Mailbox":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

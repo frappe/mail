@@ -205,9 +205,7 @@ class MailMessage(Document):
 			frappe.msgprint(_("Please select an account to view messages."), alert=True)
 			return []
 
-		user, _account_id = parse_account(account)
-
-		if not has_permission_for_user(user, raise_exception=False):
+		if not has_permission_for_user(parse_account(account)[0], raise_exception=False):
 			frappe.msgprint(_("You do not have permission to view messages for this account."), alert=True)
 			return []
 
@@ -273,9 +271,7 @@ class MailMessage(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -629,8 +625,7 @@ def fetch_messages(
 ) -> tuple[list[dict], int]:
 	"""Returns a list of messages and total count based on the provided filter."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	messages = []
 
@@ -648,8 +643,7 @@ def fetch_messages(
 def fetch_threads(account: str, filter: dict | None = None, position: int = 0, limit: int = 50) -> list[dict]:
 	"""Returns a list of threads based on the provided filter."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_email_service(account)
 	ids = service.query_thread(filter, position, limit, fetch_all=False)
@@ -661,8 +655,7 @@ def fetch_threads(account: str, filter: dict | None = None, position: int = 0, l
 def fetch_thread(account: str, thread_id: str) -> list[dict]:
 	"""Returns a list of messages in a thread based on the provided thread ID."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_thread_service(account)
 	result = service.get([thread_id])
@@ -703,8 +696,7 @@ def search_messages(
 def get_messages(account: str, ids: list[str]) -> list[dict]:
 	"""Returns a list of messages for the provided IDs in the same order as ids."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	messages = {}
 	ids_to_fetch = []
@@ -737,8 +729,7 @@ def get_message_ids(
 	if not account or not thread_ids:
 		frappe.throw(_("Account and Thread IDs are required."))
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	try:
 		thread_service = get_thread_service(account)
@@ -766,8 +757,7 @@ def delete_messages(account: str, ids: list[str]) -> None:
 	if not account or not ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	try:
 		service = get_email_service(account)
@@ -787,8 +777,7 @@ def empty_mailbox(account: str, mailbox_id: str) -> None:
 	if not account or not mailbox_id:
 		frappe.throw(_("Account and Mailbox ID are required."))
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	try:
 		service = get_email_service(account)
@@ -816,8 +805,7 @@ def move_messages(account: str, ids: list[str], mailbox_id: str) -> None:
 	if not account or not ids or not mailbox_id:
 		frappe.throw(_("Accounts, Mail IDs, and Mailbox ID are required."))
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	try:
 		emails = [{"id": id, "mailbox_ids": {mailbox_id: True}} for id in ids]
@@ -838,8 +826,7 @@ def set_seen_status(account: str, ids: list[str], seen: bool = True) -> None:
 	if not account or not ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	try:
 		emails = [{"id": id, "keywords": {"$seen": seen}} for id in ids]
@@ -869,8 +856,7 @@ def set_flagged_status(account: str, ids: list[str], flagged: bool = True) -> No
 	if not account or not ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	try:
 		emails = [{"id": id, "keywords": {"$flagged": flagged}} for id in ids]
@@ -900,7 +886,7 @@ def set_spam_status(account: str, ids: list[str], spam: bool = True) -> None:
 	if not account or not ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
-	user, _account_id = parse_account(account)
+	user = parse_account(account)[0]
 	has_permission_for_user(user)
 
 	try:
@@ -938,8 +924,7 @@ def fetch_blobs(account: str, blobs: list[str] | list[tuple[str, str | None]]) -
 	if not account:
 		frappe.throw(_("Account is required."))
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	if isinstance(blobs, list) and all(isinstance(b, str) for b in blobs):
 		blobs = [(blob_id, None) for blob_id in blobs]
@@ -1211,7 +1196,7 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 		logger.info({**ctx, "event": "email-state-unchanged"})
 		return
 
-	user, _account_id = parse_account(account)
+	user = parse_account(account)[0]
 
 	try:
 		logger.info({**ctx, "event": "fetching-changes-from-server"})

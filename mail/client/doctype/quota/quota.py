@@ -56,9 +56,7 @@ class Quota(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -78,8 +76,7 @@ def _get_total_cache_key(account: str) -> str:
 def get_quota(account: str, id: str, raise_exception: bool = True) -> dict | None:
 	"""Returns quota details for the given name in the format 'account|id'."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_quota_service(account)
 
@@ -97,8 +94,7 @@ def get_quota(account: str, id: str, raise_exception: bool = True) -> dict | Non
 def fetch_quotas(account: str, page: int = 1, limit: int = 10) -> list:
 	"""Returns a list of quotas for the given account."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_quota_service(account)
 	quotas = service.get()
@@ -134,6 +130,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Quota":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

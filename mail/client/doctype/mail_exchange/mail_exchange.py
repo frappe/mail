@@ -549,7 +549,7 @@ class MailExchange(Document):
 	def validate_account(self) -> None:
 		"""Validate the account."""
 
-		user, _account_id = parse_account(self.account)
+		user = parse_account(self.account)[0]
 
 		if not is_jmap_configured(user):
 			frappe.throw(
@@ -669,7 +669,7 @@ class MailExchange(Document):
 		if self.operation != "Import":
 			return
 
-		user, _account_id = parse_account(self.account)
+		user = parse_account(self.account)[0]
 
 		freeze_jmap_push_notifications(user)
 		self._mark_started()
@@ -908,13 +908,11 @@ class MailExchange(Document):
 		if not (email := get_user_email_address(self.owner)):
 			return
 
-		user, _account_id = parse_account(self.account)
-
 		subject = _("Mail Data {0} {1}").format(action, "Completed" if success else "Failed")
 		frappe.publish_realtime(
 			"mail_exchange_completed",
 			{"action": action, "success": success, "message": subject},
-			user=user,
+			user=parse_account(self.account)[0],
 		)
 		frappe.sendmail(
 			recipients=email,

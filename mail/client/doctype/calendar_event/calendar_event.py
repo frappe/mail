@@ -209,9 +209,7 @@ class CalendarEvent(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -302,8 +300,7 @@ def add_calendar_event(
 ) -> str:
 	"""Adds a calendar event for the given account and returns the event ID."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	uid = f"{uuid7().hex}@{get_root_domain_name()}"
 	creation_id = str(uuid7())
@@ -354,8 +351,7 @@ def fetch_calendar_events(
 ) -> list:
 	"""Returns a list of calendar events for the given account based on the provided filters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	calendar_events = []
 
@@ -374,8 +370,7 @@ def fetch_calendar_events(
 def get_calendar_events(account: str, ids: list[str]) -> list[dict]:
 	"""Returns a list of calendar events for the specified account and IDs."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_calendar_event_service(account)
 	calendar_map = {c["id"]: c["name"] for c in service.calendars}
@@ -392,8 +387,7 @@ def get_calendar_events(account: str, ids: list[str]) -> list[dict]:
 def get_master_events_by_uids(account: str, uids: list[str]) -> dict:
 	"""Returns a dictionary of master calendar events for the specified account and UIDs."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	events = {}
 
@@ -436,8 +430,7 @@ def update_calendar_event(
 ) -> None:
 	"""Updates a calendar event for the given account and event ID."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	event = {
 		"id": id,
@@ -483,8 +476,7 @@ def update_calendar_event_instance(
 ) -> None:
 	"""Updates a specific instance of a recurring calendar event based on its master ID and recurrence ID."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_calendar_event_service(account)
 	response = service.update_instance(
@@ -503,8 +495,7 @@ def update_calendar_event_instance(
 def delete_calendar_events(account: str, ids: list[str]) -> None:
 	"""Deletes a calendar event for the given account by its ID."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_calendar_event_service(account)
 	response = service.delete(ids)
@@ -526,8 +517,7 @@ def delete_calendar_events(account: str, ids: list[str]) -> None:
 def delete_calendar_event_instance(account: str, master_id: str, recurrence_id: str) -> None:
 	"""Deletes a specific instance of a recurring calendar event based on its master ID and recurrence ID."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_calendar_event_service(account)
 	response = service.delete_instance(master_id, recurrence_id)
@@ -544,8 +534,7 @@ def delete_calendar_event_instance(account: str, master_id: str, recurrence_id: 
 def parse_ics(account: str, ics_data: bytes | str) -> list[dict]:
 	"""Parses ICS data and returns calendar event details."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_calendar_event_service(account)
 	blob_id = service.upload_blob(ics_data, content_type="text/calendar; charset=utf-8").get("blobId")
@@ -673,6 +662,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Calendar Event":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

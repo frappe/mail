@@ -78,9 +78,7 @@ class Calendar(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -137,8 +135,7 @@ def add_calendar(
 ) -> str:
 	"""Adds a calendar for the given account with the specified parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	creation_id = str(uuid7())
 	calendar = {
@@ -170,8 +167,7 @@ def add_calendar(
 def get_calendar(account: str, id: str) -> dict:
 	"""Returns calendar details for the given name in the format 'account|id'."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_calendar_service(account)
 	if calendars := service.get([id]):
@@ -199,8 +195,7 @@ def update_calendar(
 ) -> None:
 	"""Updates an existing calendar with the given parameters."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	calendar = {
 		"id": id,
@@ -230,8 +225,7 @@ def update_calendar(
 def delete_calendars(account: str, ids: list[str], remove_events: bool = True) -> None:
 	"""Deletes calendars for the specified account and ID(s)."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_calendar_service(account)
 	response = service.delete(ids, remove_events=remove_events)
@@ -250,8 +244,7 @@ def delete_calendars(account: str, ids: list[str], remove_events: bool = True) -
 def fetch_calendars(account: str, page: int = 1, limit: int = 10) -> list:
 	"""Returns a list of calendars for the given account."""
 
-	user, _account_id = parse_account(account)
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	service = get_calendar_service(account)
 	calendars = service.get()
@@ -316,6 +309,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Calendar":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

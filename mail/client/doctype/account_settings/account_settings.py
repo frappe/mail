@@ -88,8 +88,7 @@ class AccountSettings(Document):
 		return len(frappe.cache.lrange(list_key, 0, -1) or [])
 
 	def before_insert(self) -> None:
-		user, _account_id = parse_account(self.account)
-		self.user = user
+		self.user = parse_account(self.account)[0]
 
 	@frappe.whitelist()
 	def clear_cached_jmap_connection(self) -> None:

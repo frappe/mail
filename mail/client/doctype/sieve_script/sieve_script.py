@@ -80,9 +80,7 @@ class SieveScript(Document):
 		account = filters.get("account")
 
 		if account:
-			user, _account_id = parse_account(account)
-
-			if has_permission_for_user(user, raise_exception=False):
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
 				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
 
 		return 0
@@ -104,8 +102,7 @@ class SieveScript(Document):
 		if not content or not content.strip():
 			frappe.throw(_("Sieve script content cannot be empty."))
 
-		user, _account_id = parse_account(account)
-		has_permission_for_user(user)
+		has_permission_for_user(parse_account(account)[0])
 
 		creation_id = str(uuid7())
 		service = get_sieve_script_service(account)
@@ -135,8 +132,7 @@ class SieveScript(Document):
 	) -> tuple[list, int]:
 		"""Returns a list of sieve scripts for the given account."""
 
-		user, _account_id = parse_account(account)
-		has_permission_for_user(user)
+		has_permission_for_user(parse_account(account)[0])
 
 		scripts = []
 
@@ -154,8 +150,7 @@ class SieveScript(Document):
 	def _get_sieve_scripts(cls, account: str, ids: list[str], download_content: bool = False) -> list[dict]:
 		"""Returns a list of sieve scripts for the provided IDs in the same order as ids."""
 
-		user, _account_id = parse_account(account)
-		has_permission_for_user(user)
+		has_permission_for_user(parse_account(account)[0])
 
 		sieve_scripts = {}
 
@@ -182,8 +177,7 @@ class SieveScript(Document):
 		if not content or not content.strip():
 			frappe.throw(_("Sieve script content cannot be empty."))
 
-		user, _account_id = parse_account(account)
-		has_permission_for_user(user)
+		has_permission_for_user(parse_account(account)[0])
 
 		service = get_sieve_script_service(account)
 		response = service.validate(content)
@@ -208,8 +202,7 @@ class SieveScript(Document):
 		if not content or not content.strip():
 			frappe.throw(_("Sieve script content cannot be empty."))
 
-		user, _account_id = parse_account(account)
-		has_permission_for_user(user)
+		has_permission_for_user(parse_account(account)[0])
 
 		service = get_sieve_script_service(account)
 		scripts = service.get([id])
@@ -236,8 +229,7 @@ class SieveScript(Document):
 	def _delete_sieve_scripts(cls, account: str, ids: list[str]) -> None:
 		"""Deletes sieve scripts for the given list of IDs and account."""
 
-		user, _account_id = parse_account(account)
-		has_permission_for_user(user)
+		has_permission_for_user(parse_account(account)[0])
 
 		service = get_sieve_script_service(account)
 		response = service.delete(ids)
@@ -263,8 +255,7 @@ class SieveScript(Document):
 		"""Validates the sieve script content."""
 
 		account, _id = self.name.split("|")
-		user, _account_id = parse_account(account)
-		has_permission_for_user(user)
+		has_permission_for_user(parse_account(account)[0])
 
 		self._validate_sieve_script(account, self.content)
 		frappe.msgprint(_("Sieve script is valid."), indicator="green", alert=True)
@@ -363,6 +354,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Sieve Script":
 		return False
 
-	doc_user, _account_id = parse_account(doc.account)
-
-	return has_permission_for_user(doc_user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)
