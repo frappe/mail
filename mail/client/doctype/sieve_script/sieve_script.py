@@ -242,6 +242,9 @@ class SieveScript(Document):
 
 	def validate(self) -> None:
 		if self.read_only:
+			if self.flags.ignore_read_only:
+				return
+
 			frappe.throw(
 				_("The '{0}' sieve script cannot be modified.").format(self._name),
 				title=_("Read-Only Sieve Script"),
