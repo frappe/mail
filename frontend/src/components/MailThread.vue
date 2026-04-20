@@ -228,7 +228,10 @@
 							</pre
 							>
 
-							<div v-if="mail.attachments?.length" class="mt-8 flex flex-wrap">
+							<div
+								v-if="filteredAttachments(mail).length"
+								class="mt-8 flex flex-wrap"
+							>
 								<AttachmentCapsule
 									v-for="(attachment, idx) in filteredAttachments(mail)"
 									:key="idx"
@@ -520,7 +523,9 @@ const replyForwardActions = computed(() =>
 const showMailDetails = ref<string>()
 
 const filteredAttachments = (mail: Mail) =>
-	mail.attachments.filter((a: Attachment) => a.disposition === 'attachment')
+	mail.attachments.filter(
+		(a: Attachment) => a.disposition === 'attachment' || !a.type.startsWith('image/'),
+	)
 
 const showAttachmentViewer = ref(false)
 const attachments = ref<Attachment[]>([])
