@@ -327,7 +327,7 @@ def set_last_active_sieve_script_id(user: str, sieve_script_id: str | None = Non
 def format_sieve_script(user: str, script: dict) -> dict:
 	"""Format the sieve script for display."""
 
-	read_only = script["name"].lower() == "vacation"
+	read_only = script["name"].lower() in ["vacation", "frappe_mail_automation"]
 
 	return {
 		"name": f"{user}|{script['id']}",
