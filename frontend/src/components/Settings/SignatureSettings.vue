@@ -4,15 +4,15 @@
 		<Button icon-left="plus" :label="__('New')" @click="showAddSignature = true" />
 	</div>
 	<div v-if="signatures?.data?.length">
-		<div class="text-ink-gray-5 py-2 text-sm">{{ __('Signature Name') }}</div>
 		<div
 			v-for="signature in signatures?.data"
 			:key="signature.name"
-			class="flex items-center justify-between border-t py-1"
+			class="hover:bg-surface-gray-1 -mx-2 flex cursor-pointer items-center justify-between rounded px-3 py-1"
+			@click="editSignature(signature.name)"
 		>
 			<span class="text-base">{{ signature.signature_name }}</span>
 			<Dropdown :options="signatureOptions(signature)">
-				<Button variant="ghost" @click.stop>
+				<Button variant="" @click.stop>
 					<template #icon>
 						<Ellipsis class="text-ink-gray-5 h-4 w-4" />
 					</template>
@@ -21,7 +21,13 @@
 		</div>
 	</div>
 
-	<div v-else class="text-ink-gray-5 text-sm">{{ __('No signatures found.') }}</div>
+	<div v-else class="text-ink-gray-6 flex flex-col space-y-2 text-sm">
+		<p class="text-base font-medium">{{ __('No signatures found.') }}</p>
+
+		<p>
+			{{ __('Signatures let you automatically add personalized content to your emails.') }}
+		</p>
+	</div>
 
 	<AddSignatureModal v-model="showAddSignature" @reload-signatures="signatures.reload()" />
 	<SetDefaultSignatureModal v-model="showSetSignature" :signature="selectedSignature" />
@@ -34,7 +40,7 @@
 
 <script setup lang="ts">
 import { inject, ref } from 'vue'
-import { Ellipsis } from 'lucide-vue-next'
+import { Edit2, Ellipsis, Pin, Trash2 } from 'lucide-vue-next'
 import { Button, Dropdown, useList } from 'frappe-ui'
 
 import AddSignatureModal from '@/components/Modals/AddSignatureModal.vue'
@@ -58,9 +64,15 @@ const signatures = useList({
 	cacheKey: ['mailSignatures', user.data.name],
 })
 
+const editSignature = (signature: string) => {
+	selectedSignature.value = signature
+	showEditSignature.value = true
+}
+
 const signatureOptions = (signature: MailSignature) => [
 	{
 		label: __('Set Default'),
+		icon: Pin,
 		onClick: () => {
 			selectedSignature.value = signature.html_body!
 			showSetSignature.value = true
@@ -69,13 +81,13 @@ const signatureOptions = (signature: MailSignature) => [
 	},
 	{
 		label: __('Edit'),
-		onClick: () => {
-			selectedSignature.value = signature.name
-			showEditSignature.value = true
-		},
+		icon: Edit2,
+		onClick: () => editSignature(signature.name),
 	},
 	{
 		label: __('Delete'),
+		icon: Trash2,
+		theme: 'red',
 		onClick: () => signatures.delete.submit({ name: signature.name }),
 	},
 ]

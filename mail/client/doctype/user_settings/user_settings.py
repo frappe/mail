@@ -8,6 +8,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
+from mail.client.doctype.sieve_script.sieve_script import SieveScript
 from mail.jmap import (
 	get_core_service,
 	invalidate_jmap_connection_cache,

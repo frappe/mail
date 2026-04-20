@@ -305,6 +305,8 @@ def get_identities() -> list[dict]:
 
 @frappe.whitelist()
 def set_signature(identity: str, signature: str) -> None:
+	"""Set the email signature for an identity"""
+
 	doc = frappe.get_doc("Identity", identity)
 	doc.html_signature = signature
 	doc.text_signature = convert_html_to_text(signature)

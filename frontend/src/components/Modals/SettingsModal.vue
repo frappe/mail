@@ -49,12 +49,14 @@ import {
 	Palette,
 	TreePalm,
 	User,
+	Zap,
 } from 'lucide-vue-next'
 import { Button, Dialog } from 'frappe-ui'
 
 import AccountSettings from '@/components/Settings/AccountSettings.vue'
 import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
 import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
+import AutomationSettings from '@/components/Settings/AutomationSettings.vue'
 import ExportSettings from '@/components/Settings/ExportSettings.vue'
 import IdentitySettings from '@/components/Settings/IdentitySettings.vue'
 import ImportSettings from '@/components/Settings/ImportSettings.vue'
@@ -101,6 +103,12 @@ const tabs = computed(() => {
 			icon: TreePalm,
 			component: markRaw(VacationResponseSettings),
 			condition: user.data.is_jmap_configured,
+		},
+		{
+			label: __('Automation'),
+			icon: Zap,
+			component: markRaw(AutomationSettings),
+			condition: user.data.is_jmap_configure,
 		},
 		{
 			label: __('Import'),

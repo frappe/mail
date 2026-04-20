@@ -328,3 +328,12 @@ export const getDataTheme = (colorScheme?: 'Light Mode' | 'Dark Mode' | 'System 
 		!colorScheme || colorScheme === 'System Default' ? getSystemTheme() : colorScheme
 	return resolved === 'Dark Mode' ? 'dark' : 'light'
 }
+
+export const getScriptName = (scriptName: string) => {
+	if (scriptName === 'vacation') return __('Vacation Response')
+	if (scriptName === 'frappe_mail_automation') return __('Folder Automation')
+	return `'${scriptName}'`
+}
+
+export const isSystemScript = (scriptName: string) =>
+	['vacation', 'frappe_mail_automation'].includes(scriptName)
