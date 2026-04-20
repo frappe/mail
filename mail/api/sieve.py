@@ -117,6 +117,7 @@ def remove_sieve_block(sieve_script: str, mailbox_name: str) -> str:
 def create_automation_script(active: bool = False) -> str:
 	"""Create the frappe_mail_automation sieve script for the user."""
 
+	frappe.flags.allow_automation_script_creation = True
 	return SieveScript._add_sieve_script(
 		user=frappe.session.user,
 		name="frappe_mail_automation",
