@@ -114,6 +114,18 @@ def remove_sieve_block(sieve_script: str, mailbox_name: str) -> str:
 	return result
 
 
+@frappe.whitelist()
+def create_automation_script(active: bool = False) -> str:
+	"""Create the frappe_mail_automation sieve script for the user."""
+
+	return SieveScript._add_sieve_script(
+		user=frappe.session.user,
+		name="frappe_mail_automation",
+		content='require ["fileinto", "imap4flags"];',
+		active=active,
+	)
+
+
 def get_automation_script_name() -> str:
 	"""Returns the name of the frappe_mail_automation sieve script for the user, creating it if it doesn't exist."""
 
@@ -123,12 +135,8 @@ def get_automation_script_name() -> str:
 	if scripts and scripts[0]:
 		return scripts[0][0]["name"]
 
-	script_name = SieveScript._add_sieve_script(
-		user=user,
-		name="frappe_mail_automation",
-		content='require ["fileinto", "imap4flags"];',
-		active=False,
-	)
+	script_name = create_automation_script()
+
 	return f"{user}|{script_name}"
 
 

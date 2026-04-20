@@ -22,9 +22,9 @@
 						<template v-if="tab === 0">
 							<FormControl v-model="folder.name" :label="__('Name')" required />
 							<div class="space-y-1.5">
-								<label class="text-ink-gray-5 block text-xs">{{
-									__('Icon')
-								}}</label>
+								<label class="text-ink-gray-5 block text-xs">
+									{{ __('Icon') }}
+								</label>
 								<IconPicker v-model="folder.icon" />
 							</div>
 							<FormControl
@@ -144,9 +144,9 @@
 	</Dialog>
 
 	<SetSieveScriptStateModal
-		v-if="automationScript"
 		v-model="showEnableFolderAutomation"
-		:script="automationScript"
+		:script="automationScript || DEFAULT_AUTOMATION_SCRIPT"
+		:action="automationScript ? undefined : createAutomationScript.submit"
 	/>
 </template>
 
@@ -251,6 +251,17 @@ const updateFolder = createResource({
 	onError: (error) => raiseToast(error.message, 'error'),
 })
 
+const createAutomationScript = createResource({
+	url: 'mail.api.sieve.create_automation_script',
+	makeParams: () => ({ active: true }),
+	onSuccess: () => {
+		raiseToast(__('Folder Automation enabled.'))
+		sieveScripts.reload()
+		showEnableFolderAutomation.value = false
+	},
+	onError: (e) => raiseToast(e.messages[0], 'error'),
+})
+
 watch(show, (val) => {
 	if (!val) return
 
@@ -349,4 +360,6 @@ const isDefaultAutomation = computed(
 )
 
 const showEnableFolderAutomation = ref(false)
+
+const DEFAULT_AUTOMATION_SCRIPT = { _name: 'frappe_mail_automation' }
 </script>
