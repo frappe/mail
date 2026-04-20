@@ -242,9 +242,6 @@ class SieveScript(Document):
 
 	def validate(self) -> None:
 		if self.read_only:
-			if self.flags.ignore_read_only:
-				return
-
 			frappe.throw(
 				_("The '{0}' sieve script cannot be modified.").format(self._name),
 				title=_("Read-Only Sieve Script"),
@@ -330,7 +327,7 @@ def set_last_active_sieve_script_id(user: str, sieve_script_id: str | None = Non
 def format_sieve_script(user: str, script: dict) -> dict:
 	"""Format the sieve script for display."""
 
-	read_only = script["name"].lower() in ["vacation", "frappe_mail_automation"]
+	read_only = script["name"].lower() == "vacation"
 
 	return {
 		"name": f"{user}|{script['id']}",

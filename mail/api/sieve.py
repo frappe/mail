@@ -146,5 +146,4 @@ def update_sieve_script_for_mailbox(
 		doc.content = doc.content.rstrip() + "\n"
 		doc.content += f"\n# Mailbox: {name}{mailbox_rule_set}"
 
-	doc.flags.ignore_read_only = True
 	doc.save()
