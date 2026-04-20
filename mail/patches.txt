@@ -10,4 +10,3 @@ mail.patches.create_push_subscriptions
 mail.patches.rename_user_settings
 mail.patches.remove_mail_admin_role
 mail.patches.remove_mail_user_role
-mail.patches.create_frappe_mail_automation_sieve_script

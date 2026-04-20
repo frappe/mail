@@ -39,14 +39,14 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 	"""Converts automation rules to Sieve script format.
 
 	Args:
-		automation: Dictionary containing automation rules with keys:
-			- emails_from: comma-separated email addresses
-			- subject_contains: comma-separated keywords
-			- mark_as_read: boolean
-			- add_star: boolean
-			- match_if: 'any' or 'all'
-		folder_name: Name of the folder to file emails into
-		mailbox_id: Optional mailbox ID for reference
+	        automation: Dictionary containing automation rules with keys:
+	                - emails_from: comma-separated email addresses
+	                - subject_contains: comma-separated keywords
+	                - mark_as_read: boolean
+	                - add_star: boolean
+	                - match_if: 'any' or 'all'
+	        folder_name: Name of the folder to file emails into
+	        mailbox_id: Optional mailbox ID for reference
 
 	Returns:
 	        Sieve script as a string
@@ -114,14 +114,30 @@ def remove_sieve_block(sieve_script: str, mailbox_name: str) -> str:
 	return result
 
 
+def get_automation_script_name() -> str:
+	"""Returns the name of the frappe_mail_automation sieve script for the user, creating it if it doesn't exist."""
+
+	user = frappe.session.user
+
+	scripts = SieveScript._fetch_sieve_scripts(user, filter={"name": "frappe_mail_automation"})
+	if scripts and scripts[0]:
+		return scripts[0][0]["name"]
+
+	script_name = SieveScript._add_sieve_script(
+		user=user,
+		name="frappe_mail_automation",
+		content='require ["fileinto", "imap4flags"];',
+		active=False,
+	)
+	return f"{user}|{script_name}"
+
+
 def update_sieve_script_for_mailbox(
 	name: str, automation_rules: dict | None = None, old_name: str | None = None
 ) -> None:
 	"""Updates the Sieve script for the given mailbox based on the provided automation rules."""
 
-	automation_script_name = SieveScript._fetch_sieve_scripts(
-		frappe.session.user, filter={"name": "frappe_mail_automation"}
-	)[0][0]["name"]
+	automation_script_name = get_automation_script_name()
 	doc = frappe.get_doc("Sieve Script", automation_script_name)
 	doc.content = remove_sieve_block(doc.content, old_name or name)
 
