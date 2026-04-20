@@ -75,7 +75,11 @@ const selectedScript = ref<SieveScript>()
 const showSetScriptAsActive = ref(false)
 const showDeleteScript = ref(false)
 
-const filteredScripts = computed(() => sieveScripts.data?.filter((s) => !s.read_only) || [])
+const filteredScripts = computed(
+	() =>
+		sieveScripts.data?.filter((s) => !s.read_only && s._name !== 'frappe_mail_automation') ||
+		[],
+)
 
 const addScript = () => {
 	selectedScript.value = undefined

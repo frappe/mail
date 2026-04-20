@@ -46,7 +46,6 @@ def rule_object_to_sieve(automation: dict, folder_name: str) -> str:
 	                - add_star: boolean
 	                - match_if: 'any' or 'all'
 	        folder_name: Name of the folder to file emails into
-	        mailbox_id: Optional mailbox ID for reference
 
 	Returns:
 	        Sieve script as a string
