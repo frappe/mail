@@ -1,17 +1,23 @@
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { defineStore } from 'pinia'
 import { createResource } from 'frappe-ui'
 
 import router from '@/router'
 import { getDataTheme } from '@/utils'
+import { account } from '@/utils/composables'
 
 import type { UserResource } from '@/types'
 
 export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
 
-export const account = ref('')
-
 export const userStore = defineStore('mail-users', () => {
+	const setAccount = (name: string) => {
+		account.value = name
+		mailboxes.fetch()
+		addressBooks.fetch()
+		identities.fetch()
+	}
+
 	const userResource: UserResource = createResource({
 		url: 'mail.api.account.get_user_info',
 		onSuccess: (data) => {
@@ -20,10 +26,7 @@ export const userStore = defineStore('mail-users', () => {
 			if (data?.is_mail_admin) domains.fetch()
 			if (!data?.is_jmap_configured) return
 
-			account.value = data.accounts?.find((a) => a.is_personal).name
-			mailboxes.fetch()
-			addressBooks.fetch()
-			identities.fetch()
+			setAccount(data.accounts?.find((a) => a.is_personal).name)
 		},
 		onError: (error) => {
 			if (error && error.exc_type === 'AuthenticationError') router.push('/login')
@@ -67,5 +70,14 @@ export const userStore = defineStore('mail-users', () => {
 
 	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
 
-	return { account, userResource, mailboxes, mailboxIds, addressBooks, identities, domains }
+	return {
+		account,
+		setAccount,
+		userResource,
+		mailboxes,
+		mailboxIds,
+		addressBooks,
+		identities,
+		domains,
+	}
 })

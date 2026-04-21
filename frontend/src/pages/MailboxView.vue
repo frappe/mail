@@ -315,7 +315,7 @@ import {
 	shouldIgnoreKeypress,
 	startResizing,
 } from '@/utils'
-import { useScreenSize, useSidebar, useUndo } from '@/utils/composables'
+import { account, useScreenSize, useSidebar, useUndo } from '@/utils/composables'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
@@ -337,7 +337,7 @@ const socket = inject('$socket')
 const user = inject('$user') as UserResource
 const dayjs = inject('$dayjs')
 
-const { account, mailboxes, mailboxIds } = userStore()
+const { mailboxes, mailboxIds } = userStore()
 
 // Appearance
 
@@ -692,7 +692,7 @@ const noOfSearchResults = ref(0)
 
 const searchResults = createResource({
 	url: 'mail.api.mail.search_mails',
-	makeParams: () => ({ account, filter: route.query, limit: limit.value }),
+	makeParams: () => ({ account: account.value, filter: route.query, limit: limit.value }),
 	transform: (data: [Thread[], number]) => {
 		noOfSearchResults.value = data[1]
 		return data[0]
@@ -719,7 +719,7 @@ const filter = ref<string | null>(
 const threads = createResource({
 	url: 'mail.api.mail.get_threads',
 	makeParams: () => ({
-		account,
+		account: account.value,
 		mailbox,
 		limit: limit.value,
 		filter_by: filter.value,
@@ -744,7 +744,7 @@ const reloadThreads: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) =
 }
 
 watch(
-	() => mailbox,
+	() => [mailbox, account.value],
 	() => {
 		threadsResource.value.data = []
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
@@ -824,7 +824,7 @@ type SetSeenParams = {
 
 const setSeen = createResource({
 	url: 'mail.api.mail.set_seen',
-	makeParams: (thread_ids: SetSeenParams) => ({ account, thread_ids, mailbox }),
+	makeParams: (thread_ids: SetSeenParams) => ({ account: account.value, thread_ids, mailbox }),
 	onSuccess: (thread_ids: SetSeenParams) => {
 		mailboxes.reload()
 		for (const [seenStr, ids] of Object.entries(thread_ids)) {
@@ -847,7 +847,7 @@ type MoveThreadsParams = Record<string, string[]>
 
 const moveThreads = createResource({
 	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: (thread_ids: MoveThreadsParams) => ({ account, thread_ids }),
+	makeParams: (thread_ids: MoveThreadsParams) => ({ account: account.value, thread_ids }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
@@ -862,7 +862,7 @@ const moveToOptions = computed(() =>
 
 const setSpamStatus = createResource({
 	url: 'mail.api.mail.set_threads_spam_status',
-	makeParams: (thread_ids: SetSeenParams) => ({ account, thread_ids }),
+	makeParams: (thread_ids: SetSeenParams) => ({ account: account.value, thread_ids }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
@@ -914,7 +914,7 @@ const junkOrDeleteThreadsOptions = computed(() => ({
 
 const deleteThreads = createResource({
 	url: 'mail.api.mail.delete_threads',
-	makeParams: (thread_ids: string[]) => ({ account, thread_ids, mailbox }),
+	makeParams: (thread_ids: string[]) => ({ account: account.value, thread_ids, mailbox }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids, false),
 })
 
@@ -922,7 +922,7 @@ const showEmptyMailbox = ref(false)
 
 const emptyMailbox = createResource({
 	url: 'mail.api.mail.empty_user_mailbox',
-	makeParams: () => ({ account, mailbox }),
+	makeParams: () => ({ account: account.value, mailbox }),
 	onSuccess: () => {
 		threadsResource.value.data = []
 		raiseToast(__('{0} emptied.', [mailboxName.value]))

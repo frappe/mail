@@ -322,7 +322,7 @@ import {
 	getSystemTheme,
 	shouldIgnoreKeypress,
 } from '@/utils'
-import { useScreenSize } from '@/utils/composables'
+import { account, useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
 import AttachmentViewer from '@/components/AttachmentViewer.vue'
@@ -357,7 +357,7 @@ const emit = defineEmits([
 const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const user = inject('$user')
-const { account, mailboxes, mailboxIds, identities } = userStore()
+const { mailboxes, mailboxIds, identities } = userStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -372,7 +372,7 @@ const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, qu
 const thread = createResource({
 	url: 'mail.api.mail.get_thread',
 	auto: !!threadID,
-	makeParams: () => ({ account, thread_id: threadID }),
+	makeParams: () => ({ account: account.value, thread_id: threadID }),
 	transform: (data: Mail[]) =>
 		data
 			.filter((mail) => filterRelevantMails(mail))

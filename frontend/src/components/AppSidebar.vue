@@ -73,11 +73,12 @@ import { computed, h, inject, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStorage } from '@vueuse/core'
 import { Icon } from 'frappe-ui/icons'
-import { Button, Dropdown, Sidebar, SidebarItem, createResource } from 'frappe-ui'
+import { Check, User } from 'lucide-vue-next'
+import { Avatar, Button, Dropdown, Sidebar, SidebarItem, createResource } from 'frappe-ui'
 
 import { FOLDER_ICON_MAP } from '@/constants'
 import { toTitleCase } from '@/utils'
-import { useScreenSize, useSidebar } from '@/utils/composables'
+import { account, useScreenSize, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 import MailLogo from '@/components/Icons/MailLogo.vue'
@@ -110,7 +111,7 @@ const { isMobile } = useScreenSize()
 const { isSidebarOpen, closeSidebar } = useSidebar()
 const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)
 const { logout, branding } = sessionStore()
-const { mailboxes } = userStore()
+const { setAccount, mailboxes } = userStore()
 
 const user = inject('$user')
 
@@ -131,8 +132,6 @@ const menuItems = computed(() => [
 		icon: LayoutGrid,
 		label: __('Apps'),
 		submenu: apps.data?.map?.((app) => ({
-			label: app.title,
-			icon: app.logo,
 			component: h(
 				'a',
 				{
@@ -147,7 +146,26 @@ const menuItems = computed(() => [
 		})),
 		condition: () => user.data.is_system_manager && !isMobile.value,
 	},
-	// todo: go to last open page
+	{
+		icon: User,
+		label: __('Accounts'),
+		submenu: user.data.accounts.map?.((a) => ({
+			component: h(
+				'div',
+				{
+					class: 'flex items-center gap-2 p-1.5 rounded hover:bg-surface-gray-2 cursor-pointer',
+					onClick: () => setAccount(a.name),
+				},
+				[
+					h(Avatar, { label: a._name, size: 'md' }),
+					h('span', { class: 'w-32 text-sm w-full truncate shrink-0' }, a._name),
+					account.value === a.name &&
+						h(Check, { label: a._name, class: 'h-4 shrink-0 stroke-1.5' }),
+				],
+			),
+		})),
+		condition: () => user.data.accounts?.length > 1,
+	},
 	{
 		icon: Mailbox,
 		label: __('Mailbox'),

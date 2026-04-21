@@ -268,6 +268,7 @@ def fetch_attachment(account: str, blob_id: str) -> bytes:
 
 @frappe.whitelist()
 def create_mail(
+	account: str,
 	from_email: str,
 	to: list[str],
 	cc: list[str],
@@ -304,6 +305,7 @@ def create_mail(
 
 	doc = MailQueue._create(
 		user=frappe.session.user,
+		account=account,
 		from_email=from_email,
 		from_name=from_name,
 		subject=subject,
@@ -317,13 +319,14 @@ def create_mail(
 	)
 
 	if not save_as_draft and doc.status == "Submitted":
-		create_contacts_if_not_exists(doc.recipients)
+		create_contacts_if_not_exists(account, doc.recipients)
 
 	return {"id": doc.id, "status": doc.status, "error": doc.error_message}
 
 
 @frappe.whitelist()
 def update_draft_mail(
+	account: str,
 	id: str,
 	from_email: str,
 	to: list[str],
@@ -389,7 +392,7 @@ def update_draft_mail(
 	new_doc = doc.submit() if submit else doc.save_draft()
 
 	if submit and new_doc.status == "Submitted":
-		create_contacts_if_not_exists(doc.recipients)
+		create_contacts_if_not_exists(account, doc.recipients)
 
 	return {"id": new_doc.id, "status": new_doc.status, "error": new_doc.error_message}
 
@@ -487,7 +490,7 @@ def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]]) -> dict:
 	"""Sets mailbox for threads."""
 
 	for move_to_mailbox, ids in thread_ids.items():
-		messages = get_filtered_message_ids(account, ids, move_to_mailbox)
+		messages = get_filtered_message_ids(account, ids)
 		move_messages(account, messages, move_to_mailbox)
 
 	return thread_ids

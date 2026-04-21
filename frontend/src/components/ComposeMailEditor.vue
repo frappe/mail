@@ -299,7 +299,7 @@ const {
 
 const emit = defineEmits(['discardMail', 'reply', 'replyAll', 'forward', 'popOut'])
 
-const { identities } = userStore()
+const { account, identities } = userStore()
 
 const getIdentity = (email: string) =>
 	identities.data?.find((identity: Identity) => identity.email === email)
@@ -444,6 +444,7 @@ const onMailUpdateSuccess = ({
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
 	makeParams: ({ save_as_draft }: { save_as_draft: boolean }) => ({
+		account,
 		...mail,
 		...processInlineImages(mail),
 		from_name: getIdentity(mail.from_email!)._name,
