@@ -8,7 +8,7 @@ from frappe import _
 from frappe.utils import format_datetime, random_string
 
 from mail.api.contacts import create_contacts_if_not_exists
-from mail.api.sieve import update_sieve_script_for_mailbox
+from mail.api.sieve import sync_sieve_script_for_mailbox
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
 	empty_mailbox,
@@ -670,7 +670,7 @@ def create_mailbox(
 		disable_push_notification=disable_push_notification,
 	)
 
-	update_sieve_script_for_mailbox(name, automation_rules)
+	sync_sieve_script_for_mailbox(name, automation_rules)
 
 
 @frappe.whitelist()
@@ -698,7 +698,7 @@ def update_mailbox(
 		disable_push_notification=disable_push_notification,
 	)
 
-	update_sieve_script_for_mailbox(name, automation_rules, old_name)
+	sync_sieve_script_for_mailbox(name, automation_rules, old_name)
 
 
 @frappe.whitelist()
@@ -707,5 +707,5 @@ def delete_mailbox(id: str, name: str) -> None:
 
 	user = frappe.session.user
 	delete_mailboxes(user, [id])
-	update_sieve_script_for_mailbox(name)
+	sync_sieve_script_for_mailbox(name)
 	frappe.db.delete("Mailbox Settings", {"user": user, "mailbox_id": id})
