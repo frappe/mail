@@ -99,6 +99,9 @@ import { Avatar, ErrorMessage, Popover, createResource } from 'frappe-ui'
 
 import { isEmail } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
+import { userStore } from '@/stores/user'
+
+const { account } = userStore()
 
 interface Option {
 	label: string
@@ -149,6 +152,7 @@ const displayedValues = computed(() => {
 const mailContacts = createResource({
 	url: 'mail.api.contacts.get_contacts',
 	makeParams: (text: string) => ({
+		account,
 		filter: { operator: 'OR', conditions: [{ text }, { email: text }] },
 	}),
 	transform: (data) =>

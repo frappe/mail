@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => ({
 						'identity',
 						'mail_signature',
 						'vacation_response',
+						'user_account',
 					],
 				},
 			},

@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { createResource } from 'frappe-ui'
 
@@ -9,18 +9,18 @@ import type { UserResource } from '@/types'
 
 export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
 
+export const account = ref('')
+
 export const userStore = defineStore('mail-users', () => {
 	const userResource: UserResource = createResource({
 		url: 'mail.api.account.get_user_info',
 		onSuccess: (data) => {
 			document.documentElement.setAttribute('data-theme', getDataTheme(data.color_scheme))
 
-			if (data?.is_mail_admin) {
-				domains.fetch()
-			}
-
+			if (data?.is_mail_admin) domains.fetch()
 			if (!data?.is_jmap_configured) return
 
+			account.value = data.accounts?.find((a) => a.is_personal).name
 			mailboxes.fetch()
 			addressBooks.fetch()
 			identities.fetch()
@@ -31,7 +31,11 @@ export const userStore = defineStore('mail-users', () => {
 		auto: true,
 	})
 
-	const mailboxes = createResource({ url: 'mail.api.mail.get_mailboxes' })
+	const mailboxes = createResource({
+		url: 'mail.api.mail.get_mailboxes',
+		makeParams: () => ({ account: account.value }),
+		cache: ['mailboxes', account.value],
+	})
 
 	const mailboxIds = computed(() => {
 		const ids: Record<MailboxRole, string> = {
@@ -49,11 +53,19 @@ export const userStore = defineStore('mail-users', () => {
 		return ids
 	})
 
-	const addressBooks = createResource({ url: 'mail.api.contacts.get_address_books' })
+	const addressBooks = createResource({
+		url: 'mail.api.contacts.get_address_books',
+		makeParams: () => ({ account: account.value }),
+		cache: ['addressBooks', account.value],
+	})
 
-	const identities = createResource({ url: 'mail.api.account.get_identities' })
+	const identities = createResource({
+		url: 'mail.api.account.get_identities',
+		makeParams: () => ({ account: account.value }),
+		cache: ['identities', account.value],
+	})
 
 	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
 
-	return { userResource, mailboxes, mailboxIds, addressBooks, identities, domains }
+	return { account, userResource, mailboxes, mailboxIds, addressBooks, identities, domains }
 })

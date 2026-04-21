@@ -226,6 +226,7 @@ import {
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 import DashboardCard from '@/components/DashboardCard.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import InformationField from '@/components/InformationField.vue'
@@ -253,9 +254,11 @@ const showRemovePhones = ref(false)
 const showRemoveAddresses = ref(false)
 const showDeleteContact = ref(false)
 
+const { account } = userStore()
+
 const contact = createDocumentResource({
 	doctype: 'Contact Card',
-	name: `${user.data.name}|${contactName}`,
+	name: `${account}|${contactName}`,
 	onError: () => router.replace({ name: 'Contacts' }),
 	setValue: {
 		onSuccess: () => raiseToast(__('Contact updated.')),

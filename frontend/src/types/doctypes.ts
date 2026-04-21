@@ -35,30 +35,30 @@ export interface MailHeader extends ChildDocType {
 	value?: string
 }
 
-// Last updated: 2025-11-26 15:04:37.459073
+// Last updated: 2026-04-13 10:27:23.941932
 export interface MailAccountRequest extends DocType {
 	/** Request Key: Data */
 	request_key?: string
 	/** Backup Email: Data */
 	backup_email: string
 	/** Invited By: Link (User) */
-	invited_by?: string
+	invited_by: string
 	/** Is Verified: Check */
 	is_verified: 0 | 1
 	/** Is Expired: Check */
 	is_expired: 0 | 1
 	/** Account: Data */
-	account?: string
-	/** Domain Name: Data */
-	domain_name?: string
-	/** Is Admin: Check */
-	is_admin: 0 | 1
+	account: string
+	/** Domain: Data */
+	domain_name: string
 	/** Send Invite: Check */
 	send_invite: 0 | 1
 	/** IP Address: Data */
 	ip_address?: string
 	/** Expires At: Datetime */
 	expires_at?: string
+	/** Roles: Small Text */
+	roles: string
 }
 
 // Last updated: 2025-02-03 17:11:17.517836
@@ -97,7 +97,7 @@ export interface MailDomain extends DocType {
 	default_disk_quota?: number
 }
 
-// Last updated: 2025-01-28 15:33:09.730936
+// Last updated: 2026-04-12 23:51:49.709930
 export interface MailDomainRequest extends DocType {
 	/** Domain Name: Data */
 	domain_name: string
@@ -187,7 +187,7 @@ export interface EmailAddress extends ChildDocType {
 	email: string
 }
 
-// Last updated: 2026-01-27 12:58:50.231044
+// Last updated: 2026-03-12 20:02:37.173596
 export interface MailMessagePart extends ChildDocType {
 	/** Part ID: Data */
 	part_id?: string
@@ -213,9 +213,11 @@ export interface MailMessagePart extends ChildDocType {
 	cid?: string
 	/** URL: Data */
 	url?: string
+	/** undefined: Image */
+	image?: any
 }
 
-// Last updated: 2026-01-30 13:02:54.335255
+// Last updated: 2026-04-17 14:04:45.131751
 export interface MailMessage extends DocType {
 	/** From Name: Data */
 	from_name?: string
@@ -299,8 +301,6 @@ export interface MailMessage extends DocType {
 	junk: 0 | 1
 	/** Mail ID: Data */
 	id?: string
-	/** User: Link (User) */
-	user: string
 	/** Before: Datetime */
 	before?: string
 	/** After: Datetime */
@@ -327,6 +327,10 @@ export interface MailMessage extends DocType {
 	_bcc?: string
 	/** Body: Data */
 	body?: string
+	/** Account: Select */
+	account: any
+	/** User: Link (User) */
+	user?: string
 }
 
 // Last updated: 2025-01-15 11:46:42.917146
@@ -377,11 +381,11 @@ export interface MailMessageMailbox extends ChildDocType {
 	mailbox_name: string
 }
 
-// Last updated: 2026-01-30 11:07:10.753429
+// Last updated: 2026-04-17 13:35:58.399195
 export interface Identity extends DocType {
 	/** May Delete: Check */
 	may_delete: 0 | 1
-	/** ID: Data */
+	/** Identity ID: Data */
 	id?: string
 	/** Name: Data */
 	_name?: string
@@ -395,24 +399,24 @@ export interface Identity extends DocType {
 	html_signature?: any
 	/** Text: Code */
 	text_signature?: string
+	/** Account: Select */
+	account: any
 	/** User: Link (User) */
-	user: string
+	user?: string
 }
 
-// Last updated: 2025-12-01 15:16:26.188319
+// Last updated: 2026-04-16 12:20:38.930196
 export interface MailSignature extends DocType {
-	/** Account: Link (User) */
-	account: string
 	/** Signature Name: Data */
 	signature_name: string
 	/** HTML: Code */
 	html_body?: string
-}
-
-// Last updated: 2025-12-15 11:47:17.806197
-export interface VacationResponse extends DocType {
 	/** User: Link (User) */
 	user: string
+}
+
+// Last updated: 2026-04-17 14:12:49.529770
+export interface VacationResponse extends DocType {
 	/** Enabled: Check */
 	enabled: 0 | 1
 	/** From Date: Datetime */
@@ -425,4 +429,24 @@ export interface VacationResponse extends DocType {
 	text_body?: string
 	/** HTML: Text Editor */
 	html_body?: string
+	/** Account: Select */
+	account: any
+	/** User: Link (User) */
+	user?: string
+}
+
+// Last updated: 2026-04-15 08:27:17.244854
+export interface UserAccount extends DocType {
+	/** User: Link (User) */
+	user: string
+	/** Name: Data */
+	_name: string
+	/** Personal: Check */
+	is_personal: 0 | 1
+	/** Readonly: Check */
+	is_read_only: 0 | 1
+	/** Account ID: Data */
+	id: string
+	/** Capabilities: JSON */
+	capabilities?: any
 }

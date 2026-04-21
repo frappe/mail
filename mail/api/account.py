@@ -155,6 +155,7 @@ def get_user_info() -> dict | None:
 	data.is_mail_admin = is_mail_admin(user)
 	data.is_system_manager = is_system_manager(user)
 	data.is_jmap_configured = is_jmap_configured(user)
+	data.accounts = frappe.get_all("User Account", filters={"user": user})
 
 	return data
 
@@ -224,6 +225,7 @@ def get_user_for_reset_password_key(key: str) -> str:
 
 @frappe.whitelist()
 def create_mail_import(
+	account: str,
 	format: Literal["eml", "jmap", "mbox", "maildir", "maildir-nested"],
 	file: str,
 	mailbox: str | None = None,
@@ -233,6 +235,7 @@ def create_mail_import(
 
 	doc = frappe.new_doc("Mail Exchange")
 	doc.user = frappe.session.user
+	doc.account = account
 	doc.operation = "Import"
 	doc.import_format = format
 	doc.import_file = file
@@ -244,6 +247,7 @@ def create_mail_import(
 
 @frappe.whitelist()
 def create_mail_export(
+	account: str,
 	format: Literal["jmap", "mbox", "maildir", "maildir-nested"],
 	archive_type: Literal[".zip", ".tgz", ".tar.gz"],
 	sort: Literal["Received At (ASC)", "Received At (DESC)"],
@@ -254,6 +258,7 @@ def create_mail_export(
 
 	doc = frappe.new_doc("Mail Exchange")
 	doc.user = frappe.session.user
+	doc.account = account
 	doc.operation = "Export"
 	doc.export_format = format
 	doc.export_archive_type = archive_type
@@ -273,7 +278,7 @@ def is_push_notification_relay_enabled() -> bool:
 
 
 @frappe.whitelist()
-def get_quota() -> dict:
+def get_quota(account: str) -> dict:
 	"""Return quota usage for the user"""
 
 	result = {
@@ -282,7 +287,7 @@ def get_quota() -> dict:
 		"used_percentage": 0,
 	}
 
-	for quota in frappe.db.get_all("Quota", {"user": frappe.session.user}):
+	for quota in frappe.db.get_all("Quota", {"account": account}):
 		if scope := quota["scope"]:
 			if scope == "account":
 				result["disk_quota"] = quota["hard_limit"]
@@ -297,10 +302,10 @@ def get_quota() -> dict:
 
 
 @frappe.whitelist()
-def get_identities() -> list[dict]:
+def get_identities(account: str) -> list[dict]:
 	"""Return the email identities for the user"""
 
-	return fetch_identities(frappe.session.user, page=1, limit=100)
+	return fetch_identities(account, page=1, limit=100)
 
 
 @frappe.whitelist()

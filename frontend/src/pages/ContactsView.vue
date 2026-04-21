@@ -55,10 +55,12 @@ import {
 } from 'frappe-ui'
 
 import { extractNameFromEmail, raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddContactModal from '@/components/Modals/AddContactModal.vue'
 
 const user = inject('$user')
+const { account } = userStore()
 
 const listView = useTemplateRef('listView')
 
@@ -70,7 +72,11 @@ const limit = ref(50)
 const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
-	makeParams: () => ({ filter: { text: search.value }, limit: limit.value }),
+	makeParams: () => ({
+		account,
+		filter: { text: search.value },
+		limit: limit.value,
+	}),
 	transform: (data) =>
 		data.map((c) => {
 			const full_name = c.full_name || extractNameFromEmail(c.emails[0]?.address || '')

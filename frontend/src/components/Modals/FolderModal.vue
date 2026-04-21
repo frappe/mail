@@ -63,11 +63,11 @@ const show = defineModel<boolean>()
 
 const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 
-const { mailboxes } = userStore()
+const { account, mailboxes } = userStore()
 
 const isNew = computed(() => !mailbox)
 
-const defaultFolder = {
+const DEFAULT_FOLDER = {
 	id: '',
 	name: '',
 	role: null,
@@ -77,9 +77,9 @@ const defaultFolder = {
 	disable_push_notification: false,
 }
 
-const folder = reactive({ ...defaultFolder })
+const folder = reactive({ ...DEFAULT_FOLDER })
 
-const original = reactive({ ...defaultFolder })
+const original = reactive({ ...DEFAULT_FOLDER })
 
 const isNotDirty = computed(
 	() =>
@@ -91,7 +91,7 @@ const isNotDirty = computed(
 
 const createFolder = createResource({
 	url: 'mail.api.mail.create_mailbox',
-	makeParams: () => folder,
+	makeParams: () => ({ account, ...folder }),
 	onSuccess: () => {
 		raiseToast(__('Folder created.'))
 		show.value = false
@@ -102,7 +102,7 @@ const createFolder = createResource({
 
 const updateFolder = createResource({
 	url: 'mail.api.mail.update_mailbox',
-	makeParams: () => folder,
+	makeParams: () => ({ account, ...folder }),
 	onSuccess: () => {
 		raiseToast(__('Folder updated.'))
 		show.value = false
@@ -115,7 +115,7 @@ watch(show, (val) => {
 	if (!val) return
 
 	if (isNew.value) {
-		Object.assign(folder, defaultFolder)
+		Object.assign(folder, DEFAULT_FOLDER)
 		return
 	}
 

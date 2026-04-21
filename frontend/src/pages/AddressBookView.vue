@@ -121,7 +121,7 @@ const { addressBookName } = defineProps<{ addressBookName: string }>()
 
 const user = inject('$user')
 const router = useRouter()
-const { addressBooks } = userStore()
+const { addressBooks, account } = userStore()
 
 const showEditGeneral = ref(false)
 const showDeleteAddressBook = ref(false)
@@ -130,7 +130,7 @@ const showRemoveContacts = ref(false)
 
 const addressBook = createDocumentResource({
 	doctype: 'Address Book',
-	name: `${user.data.name}|${addressBookName}`,
+	name: `${account}|${addressBookName}`,
 	onError: () => router.replace({ name: 'AddressBooks' }),
 	setValue: {
 		onSuccess: () => {
@@ -151,6 +151,7 @@ const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
 	makeParams: () => ({
+		account,
 		filter: { inAddressBook: addressBookName, text: search.value },
 		limit: limit.value,
 	}),
@@ -171,7 +172,7 @@ const contacts = createResource({
 const totalContacts = createResource({
 	url: 'mail.api.contacts.get_address_book_contact_count',
 	auto: true,
-	makeParams: () => ({ address_book: addressBookName }),
+	makeParams: () => ({ account, address_book: addressBookName }),
 	cache: ['addressBookContactCount', addressBookName],
 })
 

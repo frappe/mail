@@ -33,14 +33,14 @@ AVATAR_CACHE_TTL = 60 * 60 * 24
 
 
 @frappe.whitelist()
-def get_mailboxes() -> list[dict]:
+def get_mailboxes(account: str) -> list[dict]:
 	"""Serializes and returns the user's mailboxes."""
 
 	user = frappe.session.user
 	if not is_jmap_configured(user):
 		return []
 
-	mailboxes = get_user_mailboxes(user)
+	mailboxes = get_user_mailboxes(account)
 	if not mailboxes:
 		return []
 
@@ -71,10 +71,10 @@ def get_mailboxes() -> list[dict]:
 	return result
 
 
-def get_user_mailboxes(user) -> list[dict]:
+def get_user_mailboxes(account: str) -> list[dict]:
 	"""Returns the user's mailboxes."""
 
-	return frappe.get_all("Mailbox", filters={"user": user})
+	return frappe.get_all("Mailbox", filters={"account": account})
 
 
 def get_avatar_url(email: str) -> str:
@@ -83,7 +83,7 @@ def get_avatar_url(email: str) -> str:
 	return f"/api/method/mail.api.mail.get_avatar?email={email}"
 
 
-def add_user_images_to_emails(mails: list[dict], is_thread: bool = False) -> list[dict]:
+def add_user_images_to_emails(account: str, mails: list[dict], is_thread: bool = False) -> list[dict]:
 	"""Append avatar URLs to the given list of emails."""
 
 	if not mails:
@@ -91,7 +91,7 @@ def add_user_images_to_emails(mails: list[dict], is_thread: bool = False) -> lis
 
 	email_map: dict[str, str] = {}
 	rcpt_order = {"To": 0, "Cc": 1, "Bcc": 2}
-	user_emails = {e.lower() for e in get_account_emails(frappe.session.user)}
+	user_emails = {e.lower() for e in get_account_emails(account)}
 
 	for mail in mails:
 		name = mail["name"]
@@ -137,17 +137,15 @@ def add_user_images_to_emails(mails: list[dict], is_thread: bool = False) -> lis
 
 
 @frappe.whitelist()
-def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
-	"""Returns threads from the selected mailbox for the current user."""
-
-	user = frappe.session.user
+def get_threads(account: str, mailbox: str, limit: int, filter_by: str | None = None) -> list:
+	"""Returns threads from the selected mailbox for the given account."""
 
 	if mailbox == "starred":
 		conditions = [
 			{
 				"inMailboxOtherThan": [
-					get_mailbox_id_by_role(user, "junk", create_if_not_exists=True, raise_exception=True),
-					get_mailbox_id_by_role(user, "trash", create_if_not_exists=True, raise_exception=True),
+					get_mailbox_id_by_role(account, "junk", create_if_not_exists=True, raise_exception=True),
+					get_mailbox_id_by_role(account, "trash", create_if_not_exists=True, raise_exception=True),
 				]
 			},
 			{"someInThreadHaveKeyword": "$flagged"},
@@ -168,30 +166,27 @@ def get_threads(mailbox: str, limit: int, filter_by: str | None = None) -> list:
 	else:
 		filter = {"operator": "AND", "conditions": conditions}
 
-	threads = [serialize_thread(t) for t in fetch_threads(user, filter, 0, limit)]
+	threads = [serialize_thread(t) for t in fetch_threads(account, filter, 0, limit)]
 
-	return add_user_images_to_emails(threads, is_thread=False)
+	return add_user_images_to_emails(account, threads, is_thread=False)
 
 
 @frappe.whitelist()
-def get_thread(thread_id: str) -> list[dict]:
+def get_thread(account: str, thread_id: str) -> list[dict]:
 	"""Returns mails for the given thread id."""
 
-	mails = [serialize_mail(m) for m in fetch_thread(frappe.session.user, thread_id)]
-	return add_user_images_to_emails(mails, is_thread=True)
+	mails = [serialize_mail(m) for m in fetch_thread(account, thread_id)]
+	return add_user_images_to_emails(account, mails, is_thread=True)
 
 
 @frappe.whitelist()
-def get_attachment(user: str, blob_id: str, filename: str | None = None) -> None:
+def get_attachment(account: str, blob_id: str, filename: str | None = None) -> None:
 	"""Fetches and returns the attachment."""
-
-	if not user:
-		frappe.throw(_("User is required."))
 
 	if not blob_id:
 		frappe.throw(_("Blob ID is required."))
 
-	content = fetch_blob(user, blob_id, filename)
+	content = fetch_blob(account, blob_id, filename)
 
 	frappe.local.response.filename = filename or blob_id
 	frappe.local.response.filecontent = content
@@ -203,7 +198,7 @@ def serialize_thread(thread: dict) -> dict:
 
 	thread_fields = [
 		"name",
-		"user",
+		"account",
 		"thread_id",
 		"mailboxes",
 		"from_name",
@@ -265,10 +260,10 @@ def serialize_attachments(attachments: list[dict]) -> list[dict]:
 
 
 @frappe.whitelist()
-def fetch_attachment(blob_id: str) -> bytes:
+def fetch_attachment(account: str, blob_id: str) -> bytes:
 	"""Returns the content of an attachment."""
 
-	return fetch_blob(frappe.session.user, blob_id)
+	return fetch_blob(account, blob_id)
 
 
 @frappe.whitelist()
@@ -400,10 +395,10 @@ def update_draft_mail(
 
 
 @frappe.whitelist()
-def delete_mail(id: str) -> None:
+def delete_mail(account: str, id: str) -> None:
 	"""Deletes the given mail."""
 
-	delete_messages(frappe.session.user, [id])
+	delete_messages(account, [id])
 
 
 @frappe.whitelist()
@@ -448,107 +443,104 @@ def get_mime_message(name: str) -> dict:
 	return result
 
 
-def get_user_and_filtered_message_ids(
-	thread_ids: list[str], mailbox: str | None = None
+def get_filtered_message_ids(
+	account: str, thread_ids: list[str], mailbox: str | None = None
 ) -> tuple[str, list[str]]:
-	"""Gets user and filtered message IDs for the given mailbox."""
+	"""Gets filtered message IDs for the given mailbox."""
 
-	user = frappe.session.user
 	if mailbox == "starred":
-		mailbox = [d["id"] for d in get_user_mailboxes(user) if d["role"] != "trash"]
+		mailbox = [d["id"] for d in get_user_mailboxes(account) if d["role"] != "trash"]
 	elif mailbox == "search":
 		mailbox = None
-	messages = get_message_ids(user, thread_ids, mailbox)
-
-	return user, messages
+	return get_message_ids(account, thread_ids, mailbox)
 
 
 @frappe.whitelist()
-def set_seen(thread_ids: dict[bool, list[str]], mailbox: str) -> dict:
+def set_seen(account: str, thread_ids: dict[bool, list[str]], mailbox: str) -> dict:
 	"""Sets seen for threads."""
 
 	for is_seen, ids in thread_ids.items():
-		user, messages = get_user_and_filtered_message_ids(ids, mailbox)
-		set_seen_status(user, messages, is_seen)
+		messages = get_filtered_message_ids(account, ids, mailbox)
+		set_seen_status(account, messages, is_seen)
 
 	return thread_ids
 
 
 @frappe.whitelist()
-def set_flagged(ids: list[str], flagged: bool) -> dict:
+def set_flagged(account: str, ids: list[str], flagged: bool) -> dict:
 	"""Sets flagged for mails."""
 
-	set_flagged_status(frappe.session.user, ids, flagged)
+	set_flagged_status(account, ids, flagged)
 
 	return {"ids": ids, "flagged": flagged}
 
 
 @frappe.whitelist()
-def move_mails(ids: list[str], mailbox: str) -> None:
+def move_mails(account: str, ids: list[str], mailbox: str) -> None:
 	"""Sets mailbox for mails."""
 
-	move_messages(frappe.session.user, ids, mailbox)
+	move_messages(account, ids, mailbox)
 
 
 @frappe.whitelist()
-def set_threads_mailbox(thread_ids: dict[str, list[str]]) -> dict:
+def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]]) -> dict:
 	"""Sets mailbox for threads."""
 
 	for move_to_mailbox, ids in thread_ids.items():
-		user, messages = get_user_and_filtered_message_ids(ids)
-		move_messages(user, messages, move_to_mailbox)
+		messages = get_filtered_message_ids(account, ids, move_to_mailbox)
+		move_messages(account, messages, move_to_mailbox)
 
 	return thread_ids
 
 
 @frappe.whitelist()
-def set_mails_spam_status(ids: list[str], spam: bool) -> list[str]:
+def set_mails_spam_status(account: str, ids: list[str], spam: bool) -> list[str]:
 	"""Sets spam status of the given mails."""
 
-	set_spam_status(frappe.session.user, ids, spam)
+	set_spam_status(account, ids, spam)
 
 	return ids
 
 
 @frappe.whitelist()
-def set_threads_spam_status(thread_ids: dict[bool, list[str]]) -> dict:
+def set_threads_spam_status(account: str, thread_ids: dict[bool, list[str]]) -> dict:
 	"""Sets spam status for the mails belonging to the given threads."""
 
 	for is_spam, ids in thread_ids.items():
-		user, messages = get_user_and_filtered_message_ids(ids)
-		set_spam_status(user, messages, is_spam)
+		messages = get_filtered_message_ids(account, ids)
+		set_spam_status(account, messages, is_spam)
 
 	return thread_ids
 
 
 @frappe.whitelist()
-def delete_threads(thread_ids: list[str], mailbox: str) -> list[str]:
+def delete_threads(account: str, thread_ids: list[str], mailbox: str) -> list[str]:
 	"""Deletes mails belonging to the given threads."""
 
-	user, messages = get_user_and_filtered_message_ids(thread_ids, mailbox)
-	delete_messages(user, messages)
+	messages = get_filtered_message_ids(account, thread_ids, mailbox)
+	delete_messages(account, messages)
 
 	return thread_ids
 
 
 @frappe.whitelist()
-def empty_user_mailbox(mailbox: str) -> None:
+def empty_user_mailbox(account: str, mailbox: str) -> None:
 	"""Empties the given mailbox."""
 
-	empty_mailbox(frappe.session.user, mailbox)
+	empty_mailbox(account, mailbox)
 
 
 @frappe.whitelist()
-def search_mails(filter: dict | None = None, limit: int = 5) -> tuple[list[dict], int]:
+def search_mails(account: str, filter: dict | None = None, limit: int = 5) -> tuple[list[dict], int]:
 	"""Returns search results for the given query."""
 
 	if not filter:
 		return ([], 0)
 
 	normalized_filter = normalize_filter(filter)
-	mails, total = search_messages(frappe.session.user, normalized_filter, limit=limit)
+	mails, total = search_messages(account, normalized_filter, limit=limit)
 
-	return add_user_images_to_emails(mails), total
+	return add_user_images_to_emails(account, mails), total
 
 
 def normalize_filter(filter: dict) -> dict:
@@ -633,34 +625,32 @@ def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 	frappe.local.response.type = "binary"
 
 
-def get_email_suggestions(query: str, limit: int = 5) -> list[str]:
+def get_email_suggestions(account: str, query: str, limit: int = 5) -> list[str]:
 	"""Returns email suggestions based on the given query."""
 
 	if not query:
 		return []
 
-	user = frappe.session.user
-	has_permission_for_user(user)
-
-	service = get_email_service(frappe.session.user)
+	has_permission_for_user(frappe.session.user)
+	service = get_email_service(account)
 	return service.get_email_suggestions(query, limit)
 
 
 @frappe.whitelist()
 def create_mailbox(
+	account: str,
 	name: str,
 	parent: str | None = None,
 	icon: str | None = None,
 	color: str | None = None,
 	disable_push_notification: bool = False,
 ) -> str:
-	"""Creates a new mailbox and initializes its settings for the current user."""
+	"""Creates a new mailbox and initializes its settings for the given account."""
 
-	user = frappe.session.user
-	mailbox_id = add_mailbox(user, name, None, parent)
+	mailbox_id = add_mailbox(account, name, None, parent)
 
 	set_mailbox_settings(
-		user,
+		account,
 		mailbox_id,
 		icon=icon,
 		color=color,
@@ -670,6 +660,7 @@ def create_mailbox(
 
 @frappe.whitelist()
 def update_mailbox(
+	account: str,
 	id: str,
 	name: str | None = None,
 	role: str | None = None,
@@ -681,7 +672,7 @@ def update_mailbox(
 	"""Updates Mailbox Settings for the given mailbox ID."""
 
 	set_mailbox_settings(
-		frappe.session.user,
+		account,
 		id,
 		_name=name,
 		role=role,
@@ -693,9 +684,8 @@ def update_mailbox(
 
 
 @frappe.whitelist()
-def delete_mailbox(id: str) -> None:
+def delete_mailbox(account: str, id: str) -> None:
 	"""Deletes the mailbox with the given mailbox ID, followed by its settings."""
 
-	user = frappe.session.user
-	delete_mailboxes(user, [id])
-	frappe.db.delete("Mailbox Settings", {"user": user, "mailbox_id": id})
+	delete_mailboxes(account, [id])
+	frappe.db.delete("Mailbox Settings", {"account": account, "mailbox_id": id})

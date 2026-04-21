@@ -1,3 +1,5 @@
+import type { UserAccount } from './doctypes'
+
 export * from './doctypes'
 
 export interface User {
@@ -21,6 +23,7 @@ export interface User {
 	is_jmap_configured: boolean
 
 	mailboxes: { id: string; name: string; role: string }[]
+	accounts: UserAccount[]
 }
 
 export interface UserResource {

@@ -35,6 +35,9 @@ import {
 } from 'frappe-ui'
 
 import { extractNameFromEmail } from '@/utils'
+import { userStore } from '@/stores/user'
+
+const { account } = userStore()
 
 const show = defineModel<boolean>()
 
@@ -63,7 +66,11 @@ const limit = ref(50)
 const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
-	makeParams: () => ({ filter: { text: search.value }, limit: limit.value }),
+	makeParams: () => ({
+		account,
+		filter: { text: search.value },
+		limit: limit.value,
+	}),
 	transform: (data) =>
 		data.map((c) => {
 			const full_name = c.full_name || extractNameFromEmail(c.emails[0]?.address || '')

@@ -22,20 +22,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed } from 'vue'
 import { Cloud } from 'lucide-vue-next'
 import { createResource } from 'frappe-ui'
 
 import { formatBytes } from '@/utils'
+import { userStore } from '@/stores/user'
 
 const { isCollapsed } = defineProps<{ isCollapsed: boolean }>()
 
-const user = inject('$user')
+const { account } = userStore()
 
 const quota = createResource({
 	url: 'mail.api.account.get_quota',
 	auto: true,
-	cache: ['quota', user.data.name],
+	makeParams: () => ({ account }),
+	cache: ['quota', account],
 })
 
 const displayedQuota = computed(() => {
