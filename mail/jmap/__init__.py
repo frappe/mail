@@ -346,6 +346,14 @@ def get_mailbox_name_by_id(user: str, id: str, raise_exception: bool = False) ->
 	return service.get_mailbox_name_by_id(id, raise_exception=raise_exception)
 
 
+def get_mailbox_id_by_name(user: str, name: str, raise_exception: bool = False) -> str | None:
+	"""Returns the mailbox ID for the specified mailbox name, or None if not found."""
+
+	connection = get_jmap_connection(user)
+	service = MailboxService(user, connection)
+	return service.get_mailbox_id_by_name(name, raise_exception=raise_exception)
+
+
 def get_default_address_book_id(user: str, raise_exception: bool = False) -> str | None:
 	"""Returns the ID of the default address book for the specified user, or None if not found."""
 
