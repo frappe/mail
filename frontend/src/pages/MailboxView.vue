@@ -465,6 +465,7 @@ const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 const isShiftPressed = ref(false)
 const isGPressed = ref(false)
 const gPressTimeout = ref<ReturnType<typeof setTimeout>>()
+const reloadInterval = ref<ReturnType<typeof setInterval>>()
 
 const handleKeyDown = (e: KeyboardEvent) => {
 	isShiftPressed.value = e.shiftKey
@@ -757,9 +758,10 @@ watch(
 onMounted(() => {
 	window.addEventListener('keydown', handleKeyDown)
 	window.addEventListener('keyup', handleKeyUp)
+	reloadInterval.value = setInterval(() => threadsResource.value.reload(), 30000)
 
 	socket.on('new_mail_created', (updatedMailboxes: string[]) => {
-		if (updatedMailboxes.includes(mailbox)) reloadThreads()
+		if (updatedMailboxes.includes(mailbox)) threadsResource.value.reload()
 	})
 
 	socket.on('mail_exchange_completed', (payload: { success: boolean; message: string }) =>
@@ -770,6 +772,7 @@ onMounted(() => {
 onUnmounted(() => {
 	window.removeEventListener('keydown', handleKeyDown)
 	window.removeEventListener('keyup', handleKeyUp)
+	if (reloadInterval.value) clearInterval(reloadInterval.value)
 })
 
 const loadMoreThreads = useDebounceFn((e) => {
