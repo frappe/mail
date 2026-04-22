@@ -12,7 +12,7 @@ class BlockedEmailAddress(Document):
 def get_blocked_email_addresses(user: str) -> list[str]:
 	"""Returns a list of blocked email addresses for the given user."""
 
-	return frappe.db.get_all("Blocked Email Address", filters={"user": user}, plucks="email")
+	return frappe.db.get_all("Blocked Email Address", filters={"user": user}, pluck="email")
 
 
 def on_doctype_update() -> None:
