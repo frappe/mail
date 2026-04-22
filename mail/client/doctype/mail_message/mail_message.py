@@ -29,11 +29,7 @@ from mail.jmap import get_email_service, get_jmap_connection, get_thread_service
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
 from mail.utils import (
-	convert_html_to_text,
 	enqueue_job,
-	ensure_html,
-	ensure_text,
-	extract_latest_email_body,
 	get_mail_config,
 	get_push_logger,
 	parse_filters,
@@ -1020,18 +1016,7 @@ def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 			if message.get(key)
 			else None
 		)
-
-		if value:
-			value = ensure_html(value) if key == "htmlBody" else ensure_text(value)
-
 		formatted_message[field] = value
-
-	if preview_html := extract_latest_email_body(formatted_message["html_body"]):
-		if preview_text := convert_html_to_text(preview_html)[:196]:
-			if len(preview_text) == 196 and not preview_text.endswith(" "):
-				preview_text += "...."
-
-			formatted_message["preview"] = preview_text
 
 	formatted_message["mailboxes"] = []
 	for mailbox_id, value in message["mailboxIds"].items():
