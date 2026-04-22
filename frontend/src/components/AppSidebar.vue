@@ -115,7 +115,7 @@ const { mailboxes } = userStore()
 const user = inject('$user')
 
 const apps = createResource({
-	url: 'mail.api.get_apps',
+	url: 'mail.api.get_permitted_apps',
 	cache: 'otherApps',
 	auto: true,
 	transform: (data) => data.filter((app) => app.name !== 'mail'),
@@ -145,7 +145,7 @@ const menuItems = computed(() => [
 				],
 			),
 		})),
-		condition: () => user.data.is_system_manager && !isMobile.value,
+		condition: () => !isMobile.value,
 	},
 	// todo: go to last open page
 	{

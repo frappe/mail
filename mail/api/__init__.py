@@ -1,7 +1,9 @@
 import frappe
-from frappe.apps import get_apps as get_permitted_apps
+from frappe.apps import get_apps
 from frappe.translate import get_all_translations
 from frappe.utils.caching import redis_cache
+
+from mail.utils.user import is_system_manager
 
 
 @frappe.whitelist(allow_guest=True)
@@ -47,15 +49,17 @@ def get_translations() -> dict:
 
 @frappe.whitelist()
 @redis_cache()
-def get_apps():
-	apps = get_permitted_apps()
+def get_permitted_apps():
+	apps = get_apps()
+	if not is_system_manager(frappe.session.user):
+		return apps
+
 	desk = {
 		"name": "frappe",
 		"logo": "/assets/mail/images/desk.png",
 		"title": "Desk",
 		"route": "/app",
 	}
-
-	apps.insert(0, desk)
+	apps.append(desk)
 
 	return apps
