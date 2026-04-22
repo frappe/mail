@@ -223,6 +223,7 @@ import {
 	ListView,
 	createDocumentResource,
 	createResource,
+	usePageMeta,
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
@@ -371,9 +372,15 @@ const removeAddressesOptions = computed(() => ({
 	],
 }))
 
+const contactDisplay = computed(
+	() => contact.doc?.full_name || contact.doc?.emails[0]?.address || contactName,
+)
+
+usePageMeta(() => ({ title: contactDisplay.value }))
+
 const breadcrumbs = computed(() => [
 	{ label: __('Contacts'), route: '/contacts' },
-	{ label: contact.doc?.full_name || contact.doc?.emails[0]?.address || contactName },
+	{ label: contactDisplay.value },
 ])
 
 const ADDRESS_BOOK_COLUMNS = [{ label: __('Name'), key: 'address_book_name' }]

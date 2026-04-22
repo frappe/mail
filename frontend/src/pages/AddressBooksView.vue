@@ -55,11 +55,14 @@ import {
 	ListRow,
 	ListRows,
 	ListView,
+	usePageMeta,
 } from 'frappe-ui'
 
 import { userStore } from '@/stores/user'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddAddressBookModal from '@/components/Modals/AddAddressBookModal.vue'
+
+usePageMeta(() => ({ title: __('Address Books') }))
 
 const { addressBooks } = userStore()
 

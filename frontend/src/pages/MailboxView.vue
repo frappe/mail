@@ -308,6 +308,7 @@ import {
 	Tooltip,
 	createResource,
 	toast,
+	usePageMeta,
 } from 'frappe-ui'
 
 import {
@@ -1124,6 +1125,18 @@ const noOfThreads = computed(() => {
 	if (mailbox === 'search')
 		return `${noOfSearchResults.value} ${noOfSearchResults.value == 1 ? __('result') : __('results')}`
 	return `${mailboxObj.value?.total_threads} ${mailboxObj.value?.total_threads == 1 ? __('thread') : __('threads')}`
+})
+const unreadThreadsPrefix = computed(() =>
+	mailboxObj.value?.unread_threads ? `(${mailboxObj.value.unread_threads})` : '',
+)
+
+const currentThread = computed(() =>
+	threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID),
+)
+
+usePageMeta(() => {
+	if (threadID) return { title: currentThread.value?.subject || __('[No Subject]') }
+	return { title: `${unreadThreadsPrefix.value} ${mailboxName.value}` }
 })
 
 const title = computed(() => {

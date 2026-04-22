@@ -26,12 +26,14 @@
 import { ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Mails, Users } from 'lucide-vue-next'
-import { Tabs } from 'frappe-ui'
+import { Tabs, usePageMeta } from 'frappe-ui'
 
 import InvitesView from '@/pages/dashboard/InvitesView.vue'
 import UsersView from '@/pages/dashboard/UsersView.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddMemberModal from '@/components/Modals/AddMemberModal.vue'
+
+usePageMeta(() => ({ title: __('Members') }))
 
 const route = useRoute()
 const router = useRouter()
