@@ -252,7 +252,7 @@ const updateFolder = createResource({
 })
 
 const createAutomationScript = createResource({
-	url: 'mail.api.sieve.create_automation_sieve_script',
+	url: 'mail.api.sieve.create_automation_script',
 	makeParams: () => ({ active: true }),
 	onSuccess: () => {
 		raiseToast(__('Folder Automation enabled.'))
