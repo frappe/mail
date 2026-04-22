@@ -337,3 +337,10 @@ export const getScriptName = (scriptName: string) => {
 
 export const isSystemScript = (scriptName: string) =>
 	['vacation', 'frappe_mail_automation'].includes(scriptName)
+
+export const hasHtmlContent = (content: string | null | undefined): boolean => {
+	if (!content) return false
+	return /<(html|head|body|div|p|span|table|td|tr|a|img|br|hr|h[1-6]|ul|ol|li|strong|em|b|i|font|style)[^>]*>/i.test(
+		content,
+	)
+}
