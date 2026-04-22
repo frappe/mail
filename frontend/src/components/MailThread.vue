@@ -219,6 +219,28 @@
 						<div v-show="isCollapsed(mail)" class="truncate">{{ mail.preview }}</div>
 
 						<div v-show="!isCollapsed(mail)">
+							<Alert
+								v-if="blockedAddresses.data.includes(mail.from_email)"
+								:title="__('This sender is blocked')"
+								:description="
+									__(
+										`{0} is currently on your block list. You won't receive new messages from this source until you unblock them.`,
+										[mail.from_name || mail.from_email],
+									)
+								"
+								class="mb-4"
+								:dismissable="false"
+							>
+								<template #footer>
+									<div class="col-span-full">
+										<Button
+											:label="__('Unblock')"
+											variant="outline"
+											@click="unblockEmailAddress.submit(mail.from_email)"
+										/>
+									</div>
+								</template>
+							</Alert>
 							<EmailContent
 								v-if="hasHtmlContent(mail.html_body)"
 								:content="mail.html_body"
@@ -318,7 +340,7 @@ import {
 	ReplyAll,
 	Trash2,
 } from 'lucide-vue-next'
-import { Avatar, Badge, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
+import { Alert, Avatar, Badge, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
 
 import {
 	extractQuotedContent,
@@ -327,6 +349,7 @@ import {
 	getGroupedRecipients,
 	getSystemTheme,
 	hasHtmlContent,
+	raiseToast,
 	shouldIgnoreKeypress,
 } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
@@ -364,7 +387,7 @@ const emit = defineEmits([
 const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const user = inject('$user')
-const { mailboxes, mailboxIds, identities } = userStore()
+const { mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -488,6 +511,15 @@ const threadActions = computed((): MailAction[] =>
 		},
 	].filter((action) => action.condition !== false),
 )
+
+const unblockEmailAddress = createResource({
+	url: 'mail.api.mail.unblock_email_addresses',
+	makeParams: (email) => ({ emails: [email] }),
+	onSuccess: () => {
+		raiseToast(__('Email address unblocked.'))
+		blockedAddresses.reload()
+	},
+})
 
 const handleStarred = (ids: string[], flagged: 0 | 1) =>
 	ids.forEach((id) => (thread.data.find((m: Mail) => m.id === id).flagged = flagged))
