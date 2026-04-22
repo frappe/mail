@@ -180,7 +180,8 @@
 									:is-selected="selections.includes(mail.thread_id)"
 									class="border-l-transparent transition-all sm:border-l"
 									:class="{
-										'!bg-surface-blue-1': mail.thread_id === threadID,
+										'!bg-surface-blue-1':
+											mail.thread_id === threadID && !isMobile,
 										'!border-l-blue-500': mail.thread_id === threadInFocus,
 									}"
 									@set-seen="

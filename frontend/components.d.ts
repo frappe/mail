@@ -63,8 +63,6 @@ declare module 'vue' {
     InstallPrompt: typeof import('./src/components/InstallPrompt.vue')['default']
     ListCard: typeof import('./src/components/ListCard.vue')['default']
     LoginLayout: typeof import('./src/components/LoginLayout.vue')['default']
-    LucideBadge: typeof import('~icons/lucide/badge')['default']
-    LucideUser: typeof import('~icons/lucide/user')['default']
     LucideX: typeof import('~icons/lucide/x')['default']
     MailActions: typeof import('./src/components/MailActions.vue')['default']
     MailDate: typeof import('./src/components/MailDate.vue')['default']

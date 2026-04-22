@@ -27,10 +27,10 @@
 			/>
 			<div
 				v-else-if="isSelected && isMobile"
-				class="bg-surface-gray-3 flex h-10 min-h-10 w-10 min-w-10 rounded-full"
+				class="bg-surface-gray-7 flex h-10 min-h-10 w-10 min-w-10 rounded-full"
 				@click.stop.prevent="emit('setSelected', false)"
 			>
-				<Check class="text-ink-gray-5 m-auto h-5 w-5" />
+				<Check class="text-ink-white m-auto h-5 w-5 stroke-[3px]" />
 			</div>
 			<Avatar
 				v-show="!isSelected && (!isHovered || isMobile)"
