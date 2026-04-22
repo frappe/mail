@@ -219,12 +219,15 @@
 						<div v-show="isCollapsed(mail)" class="truncate">{{ mail.preview }}</div>
 
 						<div v-show="!isCollapsed(mail)">
-							<EmailContent v-if="mail.html_body" :content="mail.html_body" />
+							<EmailContent
+								v-if="hasHtmlContent(mail.html_body)"
+								:content="mail.html_body"
+							/>
 							<pre
-								v-else-if="mail.text_body"
-								class="text-wrap pt-4 text-base !leading-5 sm:text-sm"
+								v-else
+								class="whitespace-pre-wrap break-words pt-4 text-base !leading-5 sm:text-sm"
 							>
-							{{ mail.text_body }}
+								{{ mail.html_body || mail.text_body }}
 							</pre
 							>
 
@@ -323,6 +326,7 @@ import {
 	getFormattedRecipients,
 	getGroupedRecipients,
 	getSystemTheme,
+	hasHtmlContent,
 	shouldIgnoreKeypress,
 } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
@@ -674,12 +678,17 @@ const getReplyAllRecipients = (mail: Mail) => {
 const isUserEmail = (email: string) =>
 	identities.data.map((i: Identity) => i.email).includes(email)
 
+const getBodyContent = (mail: Mail) => {
+	if (hasHtmlContent(mail.html_body)) return mail.html_body
+	return `<pre style="white-space: pre-wrap; word-break: break-word">${mail.html_body || mail.text_body || '&nbsp;'}</pre>`
+}
+
 const getQuotedContent = (mail: Mail) =>
 	`
 		<div class="frappe_mail_quote">
 			On ${dayjs(mail.received_at).format('DD MMM YYYY [at] h:mm A')}, ${mail.from_email} wrote:
 			<blockquote style="margin-left: 8px">
-				${mail.html_body || '&nbsp;'}
+				${getBodyContent(mail)}
 			</blockquote>
 		</div>
 	`
@@ -695,7 +704,7 @@ const getForwardedContent = (mail: Mail) =>
 			To: ${mail.groupedRecipients.to.join(', ')}<br>
 			${mail.groupedRecipients.cc.length ? `Cc: ${mail.groupedRecipients.cc.join(', ')}<br>` : ''}
 			<br><br>
-			${mail.html_body || '&nbsp;'}
+			${getBodyContent(mail)}
 		</div>
 	`
 </script>
