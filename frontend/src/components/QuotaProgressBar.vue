@@ -9,7 +9,7 @@
 					cy="70"
 					:r="RADIUS"
 					fill="none"
-					:stroke="activeTheme === 'Dark Mode' ? '#2B2B2B' : '#F3F3F3'"
+					:stroke="dataTheme === 'dark' ? '#2B2B2B' : '#F3F3F3'"
 					stroke-width="8"
 				/>
 				<!-- Used storage arc -->
@@ -18,7 +18,7 @@
 					cy="70"
 					:r="RADIUS"
 					fill="none"
-					:stroke="activeTheme === 'Dark Mode' ? '#D4D4D4' : '#383838'"
+					:stroke="dataTheme === 'dark' ? '#D4D4D4' : '#383838'"
 					stroke-width="8"
 					:stroke-dasharray="CIRCUMFERENCE"
 					:stroke-dashoffset="animate ? usedOffset : CIRCUMFERENCE"
@@ -65,17 +65,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
-import { getSystemTheme } from '@/utils'
+import { useTheme } from '@/utils/composables'
 
 const { quota, usedQuota } = defineProps<{ quota: number; usedQuota: number }>()
-
-const user = inject('$user')
-
-const activeTheme = computed(() =>
-	user.data.color_scheme === 'System Default' ? getSystemTheme() : user.data.color_scheme,
-)
+const { dataTheme } = useTheme()
 
 const animate = ref(false)
 

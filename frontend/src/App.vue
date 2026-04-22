@@ -7,24 +7,20 @@
 	</FrappeUIProvider>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { FrappeUIProvider } from 'frappe-ui'
 
-import { useScreenSize } from '@/utils/composables'
+import { useScreenSize, useTheme } from '@/utils/composables'
 import { showNotification } from '@/utils/push-notifications'
-import { userStore } from '@/stores/user'
 import DefaultLayout from '@/components/DefaultLayout.vue'
 import InstallPrompt from '@/components/InstallPrompt.vue'
 import LoginLayout from '@/components/LoginLayout.vue'
 
 import type { NotificationPayload } from '@/types'
 
-import { getDataTheme } from './utils'
-
-const { userResource } = userStore()
+const { dataTheme } = useTheme()
 const { isMobile } = useScreenSize()
-
 const route = useRoute()
 
 const Layout = computed(() => {
@@ -33,19 +29,11 @@ const Layout = computed(() => {
 	return DefaultLayout
 })
 
-const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-const setTheme = () =>
-	document.documentElement.setAttribute(
-		'data-theme',
-		getDataTheme(userResource.data.color_scheme),
-	)
+watchEffect(() => document.documentElement.setAttribute('data-theme', dataTheme.value))
 
-onMounted(() => {
+onMounted(() =>
 	window.frappePushNotification?.onMessage((payload: NotificationPayload) =>
 		showNotification(payload),
-	)
-	if (!document.documentElement.getAttribute('data-theme')) setTheme()
-	mediaQuery.addEventListener('change', setTheme)
-})
-onUnmounted(() => mediaQuery.removeEventListener('change', setTheme))
+	),
+)
 </script>

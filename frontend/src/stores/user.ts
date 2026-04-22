@@ -3,7 +3,6 @@ import { defineStore } from 'pinia'
 import { createResource } from 'frappe-ui'
 
 import router from '@/router'
-import { getDataTheme } from '@/utils'
 
 import type { UserResource } from '@/types'
 
@@ -13,11 +12,7 @@ export const userStore = defineStore('mail-users', () => {
 	const userResource: UserResource = createResource({
 		url: 'mail.api.account.get_user_info',
 		onSuccess: (data) => {
-			document.documentElement.setAttribute('data-theme', getDataTheme(data.color_scheme))
-
-			if (data?.is_mail_admin) {
-				domains.fetch()
-			}
+			if (data?.is_mail_admin) domains.fetch()
 
 			if (!data?.is_jmap_configured) return
 
