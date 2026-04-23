@@ -1,5 +1,7 @@
 export * from './doctypes'
 
+export type COLOR_SCHEME = 'System Default' | 'Light Mode' | 'Dark Mode'
+
 export interface User {
 	name: string
 	email: string
@@ -11,7 +13,7 @@ export interface User {
 	api_key: string | null
 	user_settings?: string
 	default_outgoing_email?: string
-	color_scheme?: 'System Default' | 'Light Mode' | 'Dark Mode'
+	color_scheme?: COLOR_SCHEME
 	group_messages_by?: 'None' | 'Day' | 'Month'
 	show_reading_pane?: 0 | 1
 
@@ -26,6 +28,7 @@ export interface User {
 export interface UserResource {
 	data: User
 	promise: Promise<User>
+	reload: () => void
 }
 
 export interface Recipient {

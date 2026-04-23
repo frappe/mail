@@ -328,7 +328,7 @@ import MailListItem from '@/components/MailListItem.vue'
 import MailThread from '@/components/MailThread.vue'
 import ShortcutsModal from '@/components/Modals/ShortcutsModal.vue'
 
-import type { Thread, UserResource } from '@/types'
+import type { COLOR_SCHEME, Thread, UserResource } from '@/types'
 
 const { mailbox, threadID } = defineProps<{ mailbox: string; threadID?: string }>()
 
@@ -473,6 +473,13 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	isShiftPressed.value = e.shiftKey
 	const key = e.key.toLowerCase()
 
+	// Handle Ctrl/Cmd+Shift+L (Cycle Theme)
+	if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === 'l') {
+		e.preventDefault()
+		if (!shouldIgnoreKeypress(e, true)) cycleTheme()
+		return
+	}
+
 	// Handle Ctrl/Cmd+A (Select All)
 	if ((e.metaKey || e.ctrlKey) && key === 'a' && !shouldIgnoreKeypress(e, true)) {
 		e.preventDefault()
@@ -543,6 +550,28 @@ const handleShowShortcuts = (e: KeyboardEvent) => {
 	e.preventDefault()
 	showShortcuts.value = true
 }
+
+const COLOR_SCHEME_CYCLE = ['System Default', 'Light Mode', 'Dark Mode'] as const
+
+const cycleTheme = () => {
+	const current = user.data.color_scheme
+	const idx = COLOR_SCHEME_CYCLE.indexOf(current as COLOR_SCHEME)
+	const next = COLOR_SCHEME_CYCLE[(idx + 1) % COLOR_SCHEME_CYCLE.length]
+	updateColorScheme.submit(next)
+}
+
+const updateColorScheme = createResource({
+	url: 'frappe.client.set_value',
+	makeParams: (color_scheme: COLOR_SCHEME) => ({
+		doctype: 'User Settings',
+		name: user.data.user_settings,
+		fieldname: { color_scheme },
+	}),
+	onSuccess: (data) => {
+		raiseToast(__('Color scheme updated to {0}.', [data.color_scheme]))
+		user.reload()
+	},
+})
 
 const handleEnter = (e: KeyboardEvent) => {
 	e.preventDefault()
