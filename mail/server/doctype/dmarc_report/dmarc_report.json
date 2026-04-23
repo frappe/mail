@@ -6,9 +6,8 @@
  "field_order": [
   "section_break_xmmn",
   "id",
-  "cluster",
-  "column_break_bgdm",
   "domain_name",
+  "column_break_bgdm",
   "report_begin",
   "report_end",
   "report_details_section",
@@ -120,14 +119,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "cluster",
-   "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "Cluster",
-   "options": "Mail Cluster",
-   "read_only": 1
-  },
-  {
    "fieldname": "report_begin",
    "fieldtype": "Datetime",
    "in_list_view": 1,
@@ -170,7 +161,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-11-27 17:07:36.853434",
+ "modified": "2026-04-23 12:08:19.068219",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "DMARC Report",

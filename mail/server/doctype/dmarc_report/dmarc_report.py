@@ -16,7 +16,7 @@ from mail.utils import extract_filter_values
 
 class DMARCReport(Document):
 	def autoname(self) -> None:
-		self.name = f"{self.cluster}|{self.id}"
+		self.name = self.id
 
 	def db_insert(self, *args, **kwargs) -> None:
 		self._create()
@@ -36,30 +36,25 @@ class DMARCReport(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = filters or []
-		cluster, text = None, None
+		text = None
 
 		if isinstance(filters, dict):
-			cluster = filters.get("cluster")
 			text = filters.get("text")
 		elif isinstance(filters, list):
-			cluster, text = extract_filter_values(filters, [{"cluster": "="}, {"text": "like"}])
+			text = extract_filter_values(filters, [{"text": "like"}])
 
-		if cluster:
-			reports = DMARCReport._get_all(cluster, limit=page_length, text=text)
-			if not reports:
-				frappe.msgprint(_("No DMARC reports found."), alert=True)
+		reports = DMARCReport._get_all(limit=page_length, text=text)
+		if not reports:
+			frappe.msgprint(_("No DMARC reports found."), alert=True)
 
-			return reports
-
-		frappe.msgprint(_("Please select a cluster to view DMARC reports."), alert=True)
-		return []
+		return reports
 
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
 		filters = filters or []
-		cluster, text = extract_filter_values(filters, [{"cluster": "="}, {"text": "like"}])
+		text = extract_filter_values(filters, [{"text": "like"}])
 
-		return frappe.cache.get_value(get_total_cache_key(cluster, text)) if cluster else 0
+		return frappe.cache.get_value(get_total_cache_key(text)) if text else 0
 
 	@staticmethod
 	def get_stats(**kwargs) -> dict:
@@ -71,22 +66,21 @@ class DMARCReport(Document):
 	def _get(self) -> None:
 		"""Returns DMARC report details from cache or backend."""
 
-		cluster, id = self.name.split("|")
-		if report := frappe.cache.hget("dmarc_reports", f"{cluster}|{id}"):
+		if report := frappe.cache.hget("dmarc_reports", self.name):
 			return report
 
 		backend_api = get_mail_backend_api()
-		response = backend_api.request(method="GET", endpoint=f"/api/reports/dmarc/{id}")
+		response = backend_api.request(method="GET", endpoint=f"/api/reports/dmarc/{self.name}")
 
 		report = response.json()["data"]
-		report["id"] = id
-		report = DMARCReport._format(report, cluster)
-		frappe.cache.hset("dmarc_reports", f"{cluster}|{id}", report)
+		report["id"] = self.name
+		report = DMARCReport._format(report)
+		frappe.cache.hset("dmarc_reports", self.name, report)
 
 		return report
 
 	@staticmethod
-	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
+	def _get_all(page: int = 1, limit: int = 10, text: str | None = None) -> list:
 		"""Returns list of DMARC reports from backend."""
 
 		backend_api = get_mail_backend_api()
@@ -97,20 +91,20 @@ class DMARCReport(Document):
 		)
 
 		data = response.json()["data"]
-		frappe.cache.set_value(get_total_cache_key(cluster, text), data["total"], expires_in_sec=600)
+		frappe.cache.set_value(get_total_cache_key(text), data["total"], expires_in_sec=600)
 
 		reports = []
 		for idx in range(min(len(data["items"]), limit)):
 			report_id = data["items"][idx]
-			if report := frappe.cache.hget("dmarc_reports", f"{cluster}|{report_id}"):
+			if report := frappe.cache.hget("dmarc_reports", report_id):
 				reports.append(report)
 				continue
 
 			response = backend_api.request(method="GET", endpoint=f"/api/reports/dmarc/{report_id}")
 			report = response.json()["data"]
 			report["id"] = report_id
-			report = DMARCReport._format(report, cluster)
-			frappe.cache.hset("dmarc_reports", f"{cluster}|{report_id}", report)
+			report = DMARCReport._format(report)
+			frappe.cache.hset("dmarc_reports", report_id, report)
 			reports.append(report)
 
 		return reports
@@ -121,12 +115,11 @@ class DMARCReport(Document):
 	def _delete(self) -> None:
 		"""Deletes DMARC report from backend and cache."""
 
-		cluster, id = self.name.split("|")
 		backend_api = get_mail_backend_api()
-		backend_api.request(method="DELETE", endpoint=f"/api/reports/dmarc/{id}")
+		backend_api.request(method="DELETE", endpoint=f"/api/reports/dmarc/{self.name}")
 
 	@staticmethod
-	def _format(report: dict, cluster: str) -> dict:
+	def _format(report: dict) -> dict:
 		"""Formats DMARC report data."""
 
 		report_begin = get_datetime_str(
@@ -144,8 +137,7 @@ class DMARCReport(Document):
 
 		formatted_report = {
 			"id": report["id"],
-			"cluster": cluster,
-			"name": f"{cluster}|{report['id']}",
+			"name": report["id"],
 			"report_id": report["report"]["report_metadata"]["report_id"],
 			"organization_name": report["report"]["report_metadata"]["org_name"],
 			"email": report["report"]["report_metadata"]["email"],
@@ -184,8 +176,8 @@ class DMARCReport(Document):
 		return formatted_report
 
 
-def get_total_cache_key(cluster: str, text: str | None = None) -> str:
+def get_total_cache_key(text: str | None = None) -> str:
 	"""Returns a cache key for total reports count."""
 
 	text = text or ""
-	return f"{cluster}:dmarc_reports:{text}:total"
+	return f"dmarc_reports:{text}:total"
