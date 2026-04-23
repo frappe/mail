@@ -474,10 +474,10 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	const key = e.key.toLowerCase()
 
 	// Handle Ctrl/Cmd+Shift+L (Cycle Theme)
-	if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === 'l') {
+	if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === 'l' && !shouldIgnoreKeypress(e, true)) {
 		e.preventDefault()
-		if (!shouldIgnoreKeypress(e, true)) cycleTheme()
-		return
+		isGPressed.value = false
+		return cycleTheme()
 	}
 
 	// Handle Ctrl/Cmd+A (Select All)

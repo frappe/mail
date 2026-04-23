@@ -248,9 +248,7 @@
 							<pre
 								v-else
 								class="whitespace-pre-wrap break-words pt-4 text-base !leading-5 sm:text-sm"
-							>
-								{{ mail.html_body || mail.text_body }}
-							</pre
+								>{{ mail.html_body || mail.text_body }}</pre
 							>
 
 							<div
