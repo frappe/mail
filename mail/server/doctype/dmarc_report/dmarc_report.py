@@ -41,7 +41,7 @@ class DMARCReport(Document):
 		if isinstance(filters, dict):
 			text = filters.get("text")
 		elif isinstance(filters, list):
-			text = extract_filter_values(filters, [{"text": "like"}])
+			text = extract_filter_values(filters, [{"text": "like"}])[0]
 
 		reports = DMARCReport._get_all(limit=page_length, text=text)
 		if not reports:
@@ -52,7 +52,7 @@ class DMARCReport(Document):
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
 		filters = filters or []
-		text = extract_filter_values(filters, [{"text": "like"}])
+		text = extract_filter_values(filters, [{"text": "like"}])[0]
 
 		return frappe.cache.get_value(get_total_cache_key(text)) if text else 0
 

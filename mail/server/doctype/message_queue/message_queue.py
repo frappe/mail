@@ -30,7 +30,7 @@ class MessageQueue(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = filters or []
-		text = extract_filter_values(filters, [{"text": "like"}])
+		text = extract_filter_values(filters, [{"text": "like"}])[0]
 
 		messages = MessageQueue._get_all(limit=page_length, text=text)
 		if not messages:
@@ -41,7 +41,7 @@ class MessageQueue(Document):
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
 		filters = filters or []
-		text = extract_filter_values(filters, [{"text": "like"}])
+		text = extract_filter_values(filters, [{"text": "like"}])[0]
 
 		return frappe.cache.get_value(get_total_cache_key(text)) if text else 0
 
@@ -72,11 +72,11 @@ class MessageQueue(Document):
 	def _create(self) -> None:
 		raise NotImplementedError
 
-	def _get(self) -> None:
+	def _get(self) -> dict:
 		"""Returns the message details from the server."""
 
 		backend_api = get_mail_backend_api()
-		response = backend_api.request(method="GET", endpoint=f"/api/queue/messages/{id}")
+		response = backend_api.request(method="GET", endpoint=f"/api/queue/messages/{self.name}")
 
 		message = response.json()["data"]
 		message = MessageQueue._format(message, extract_recipients=True)
@@ -110,11 +110,11 @@ class MessageQueue(Document):
 		return [MessageQueue._format(item) for item in data["items"]]
 
 	@staticmethod
-	def _update(id: str) -> None:
+	def _update(name: str) -> None:
 		"""Retries delivery of a message to all recipients."""
 
 		backend_api = get_mail_backend_api()
-		backend_api.request(method="PATCH", endpoint=f"/api/queue/messages/{id}")
+		backend_api.request(method="PATCH", endpoint=f"/api/queue/messages/{name}")
 
 	def _delete(self, recipient: str | None = None) -> None:
 		"""Deletes a message or cancels delivery to a specific recipient."""
@@ -183,7 +183,6 @@ class MessageQueue(Document):
 		message = rename_keys(
 			message,
 			{
-				"id": "queue_id",
 				"size": "message_size",
 				"created": "created_at",
 			},
@@ -191,9 +190,9 @@ class MessageQueue(Document):
 
 		message.update(
 			{
+				"name": str(message.pop("id")),
 				"creation": message["created_at"],
 				"modified": message["created_at"],
-				"name": message["queue_id"],
 				"domains": json.dumps(message.get("domains", []), indent=4),
 			}
 		)

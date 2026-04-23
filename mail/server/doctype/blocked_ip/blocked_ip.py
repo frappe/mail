@@ -42,21 +42,18 @@ class BlockedIP(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = filters or []
-		ip_address = extract_filter_values(filters, [{"ip_address": "like"}])
+		ip_address = extract_filter_values(filters, [{"ip_address": "like"}])[0]
 
-		if ip_address:
-			blocked_ips = BlockedIP._get_all(limit=page_length, text=ip_address)
-			if not blocked_ips:
-				frappe.msgprint(_("No blocked IPs found."), alert=True)
+		blocked_ips = BlockedIP._get_all(limit=page_length, text=ip_address)
+		if not blocked_ips:
+			frappe.msgprint(_("No blocked IPs found."), alert=True)
 
-			return blocked_ips
-
-		return []
+		return blocked_ips
 
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
 		filters = filters or []
-		ip_address = extract_filter_values(filters, [{"ip_address": "like"}])
+		ip_address = extract_filter_values(filters, [{"ip_address": "like"}])[0]
 
 		return frappe.cache.get_value(get_total_cache_key(ip_address)) if ip_address else 0
 
