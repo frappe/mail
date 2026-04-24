@@ -1064,7 +1064,7 @@ def format_message(user: str, mailbox_map: dict, message: dict) -> dict:
 				params += f"&filename={quote(filename)}"
 			attachment["url"] = f"/api/method/mail.api.mail.get_attachment?{params}"
 
-			if attachment["disposition"] == "inline" and attachment["cid"] and formatted_message["html_body"]:
+			if attachment["cid"] and formatted_message["html_body"]:
 				formatted_message["html_body"] = convert_img_src_from_cid_to_url(
 					formatted_message["html_body"],
 					attachment["cid"],
