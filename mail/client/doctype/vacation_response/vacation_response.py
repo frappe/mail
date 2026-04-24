@@ -52,7 +52,7 @@ class VacationResponse(Document):
 		self.reload()
 
 	def delete(self) -> None:
-		raise NotImplementedError
+		pass
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
