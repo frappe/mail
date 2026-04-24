@@ -10,8 +10,6 @@
   "return_path",
   "message_size",
   "column_break_0til",
-  "cluster",
-  "queue_id",
   "blob_hash",
   "section_break_nxzs",
   "text",
@@ -56,15 +54,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "cluster",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Cluster",
-   "options": "Mail Cluster",
-   "read_only": 1
-  },
-  {
    "fieldname": "recipients",
    "fieldtype": "Table",
    "label": "Recipients",
@@ -98,13 +87,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "queue_id",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Queue ID",
-   "read_only": 1
-  },
-  {
    "fieldname": "text",
    "fieldtype": "Data",
    "hidden": 1,
@@ -129,7 +111,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-07-16 13:17:16.580833",
+ "modified": "2026-04-23 14:38:38.553369",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Message Queue",

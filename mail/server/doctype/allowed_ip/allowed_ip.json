@@ -5,25 +5,14 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_f82v",
-  "cluster",
-  "column_break_3xet",
   "ip_address",
+  "column_break_3xet",
   "host"
  ],
  "fields": [
   {
    "fieldname": "section_break_f82v",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "cluster",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Cluster",
-   "options": "Mail Cluster",
-   "reqd": 1,
-   "set_only_once": 1
   },
   {
    "fieldname": "column_break_3xet",
@@ -50,7 +39,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-04-07 12:18:55.943293",
+ "modified": "2026-04-22 16:50:12.860057",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Allowed IP",

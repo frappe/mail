@@ -18,14 +18,4 @@ frappe.query_reports['DMARC Report Viewer'] = {
 
 		return value
 	},
-
-	filters: [
-		{
-			fieldname: 'cluster',
-			label: __('Cluster'),
-			fieldtype: 'Link',
-			options: 'Mail Cluster',
-			reqd: 1,
-		},
-	],
 }

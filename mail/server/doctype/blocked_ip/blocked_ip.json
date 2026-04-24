@@ -5,25 +5,14 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_nafl",
-  "cluster",
-  "column_break_zda5",
   "ip_address",
+  "column_break_zda5",
   "host"
  ],
  "fields": [
   {
    "fieldname": "section_break_nafl",
    "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "cluster",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Cluster",
-   "options": "Mail Cluster",
-   "reqd": 1,
-   "set_only_once": 1
   },
   {
    "fieldname": "ip_address",
@@ -50,7 +39,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2025-04-07 12:31:37.953437",
+ "modified": "2026-04-23 12:04:38.190171",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Blocked IP",

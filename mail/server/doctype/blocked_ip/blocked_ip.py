@@ -22,7 +22,7 @@ class BlockedIP(Document):
 			return get_host_by_ip(self.ip_address)
 
 	def autoname(self) -> None:
-		self.name = f"{self.cluster}|{self.ip_address}"
+		self.name = self.ip_address
 
 	def db_insert(self, *args, **kwargs) -> None:
 		self._create()
@@ -42,24 +42,20 @@ class BlockedIP(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = filters or []
-		cluster, ip_address = extract_filter_values(filters, [{"cluster": "="}, {"ip_address": "like"}])
+		ip_address = extract_filter_values(filters, [{"ip_address": "like"}])[0]
 
-		if cluster:
-			blocked_ips = BlockedIP._get_all(cluster, limit=page_length, text=ip_address)
-			if not blocked_ips:
-				frappe.msgprint(_("No blocked IPs found."), alert=True)
+		blocked_ips = BlockedIP._get_all(limit=page_length, text=ip_address)
+		if not blocked_ips:
+			frappe.msgprint(_("No blocked IPs found."), alert=True)
 
-			return blocked_ips
-
-		frappe.msgprint(_("Please select a cluster to view blocked IPs."), alert=True)
-		return []
+		return blocked_ips
 
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
 		filters = filters or []
-		cluster, ip_address = extract_filter_values(filters, [{"cluster": "="}, {"ip_address": "like"}])
+		ip_address = extract_filter_values(filters, [{"ip_address": "like"}])[0]
 
-		return frappe.cache.get_value(get_total_cache_key(cluster, ip_address)) if cluster else 0
+		return frappe.cache.get_value(get_total_cache_key(ip_address)) if ip_address else 0
 
 	@staticmethod
 	def get_stats(**kwargs) -> dict:
@@ -90,7 +86,7 @@ class BlockedIP(Document):
 	def _get(self) -> None:
 		"""Returns the blocked IP from the backend."""
 
-		cluster, ip_address = self.name.split("|")
+		ip_address = self.name
 		backend_api = get_mail_backend_api()
 		response = backend_api.request(
 			method="GET",
@@ -99,12 +95,11 @@ class BlockedIP(Document):
 		)
 
 		blocked_ip = response.json()["data"]["items"][0]
-		return BlockedIP._format(blocked_ip, cluster)
+		return BlockedIP._format(blocked_ip)
 
 	@staticmethod
-	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
-		"""Returns all blocked IPs for the given cluster."""
-
+	def _get_all(page: int = 1, limit: int = 10, text: str | None = None) -> list:
+		"""Returns all blocked IPs."""
 		backend_api = get_mail_backend_api()
 		response = backend_api.request(
 			method="GET",
@@ -113,9 +108,9 @@ class BlockedIP(Document):
 		)
 
 		data = response.json()["data"]
-		frappe.cache.set_value(get_total_cache_key(cluster, text), data["total"], expires_in_sec=600)
+		frappe.cache.set_value(get_total_cache_key(text), data["total"], expires_in_sec=600)
 
-		return [BlockedIP._format(item, cluster) for item in data["items"]]
+		return [BlockedIP._format(item) for item in data["items"]]
 
 	def _update(self) -> None:
 		raise NotImplementedError
@@ -136,20 +131,19 @@ class BlockedIP(Document):
 		)
 
 	@staticmethod
-	def _format(blocked_ip: dict, cluster: str) -> dict:
+	def _format(blocked_ip: dict) -> dict:
 		"""Formats the blocked IP data from the backend."""
 
 		return {
-			"cluster": cluster,
 			"ip_address": blocked_ip["_id"],
-			"name": f"{cluster}|{blocked_ip['_id']}",
+			"name": blocked_ip["_id"],
 			"creation": today(),
 			"modified": today(),
 		}
 
 
-def get_total_cache_key(cluster: str, text: str | None = None) -> str:
+def get_total_cache_key(text: str | None = None) -> str:
 	"""Returns a cache key for total blocked IP count."""
 
 	text = text or ""
-	return f"{cluster}:blocked-ip:{text}:total"
+	return f"blocked-ip:{text}:total"

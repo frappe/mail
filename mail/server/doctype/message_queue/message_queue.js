@@ -120,9 +120,7 @@ frappe.ui.form.on('Message Queue', {
 								data.recipients.length ==
 								dialog.fields_dict.recipients.df.data.length
 							) {
-								frappe.set_route('List', 'Message Queue', {
-									cluster: frm.doc.cluster,
-								})
+								frappe.set_route('List', 'Message Queue')
 							} else {
 								frm.reload_doc()
 							}
