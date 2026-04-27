@@ -14,7 +14,6 @@ from frappe.utils import cint
 from mail.client.doctype.calendar.calendar import validate_calendar_name_format
 from mail.jmap import get_calendar_event_service
 from mail.utils import parse_filters
-from mail.utils.cache import get_root_domain_name
 from mail.utils.dt import convert_to_utc, parse_iso_datetime, utcnow
 from mail.utils.validation import has_permission_for_user
 
@@ -298,7 +297,7 @@ def add_calendar_event(
 
 	has_permission_for_user(user)
 
-	uid = f"{uuid7().hex}@{get_root_domain_name()}"
+	uid = uuid7().hex
 	creation_id = str(uuid7())
 	event = {
 		"creation_id": creation_id,
