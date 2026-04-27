@@ -100,13 +100,13 @@ class BlobStore(BaseStore):
 		for subkey, value in items.items():
 			self.set(subkey, value)
 
-	def delete_many(self, keys: list[str]) -> None:
+	def delete_many(self, subkeys: list[str]) -> None:
 		"""Delete multiple blobs."""
 
-		if not keys:
+		if not subkeys:
 			return
 
-		for key in keys:
+		for key in subkeys:
 			self.delete(key)
 
 	def scan(self, prefix: str = "") -> dict[str, bytes]:

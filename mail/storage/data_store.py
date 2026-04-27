@@ -3,7 +3,7 @@ import hashlib
 import time
 from contextlib import contextmanager, suppress
 from threading import RLock
-from typing import Any
+from typing import Any, Literal
 
 import msgpack
 from rocksdict import DBCompressionType, Options, Rdict
@@ -114,38 +114,44 @@ class DataStore(BaseStore):
 
 		return msgpack.unpackb(value, raw=False)
 
-	def get(self, subkey: str, default: Any | None = None) -> Any | None:
+	def _make_key(self, entity: Literal["messages"], subkey: str) -> str:
+		"""Construct a full key by combining the entity type and subkey with the storage prefix."""
+
+		subkey = f"{entity}{self.SEPARATOR}{subkey}"
+		return super()._make_key(subkey)
+
+	def get(self, entity: Literal["messages"], subkey: str, default: Any | None = None) -> Any | None:
 		"""Retrieve a value by key, returning a default if the key does not exist."""
 
 		with self.db_context() as db:
-			value = db.get(self._make_key(subkey))
+			value = db.get(self._make_key(entity, subkey))
 			return self._deserialize(value) if value is not None else default
 
-	def set(self, subkey: str, value: Any) -> None:
+	def set(self, entity: Literal["messages"], subkey: str, value: Any) -> None:
 		"""Store a value by key, serializing it before saving."""
 
 		with self.db_context(write=True) as db:
-			db.put(self._make_key(subkey), self._serialize(value))
+			db.put(self._make_key(entity, subkey), self._serialize(value))
 
-	def delete(self, subkey: str) -> None:
+	def delete(self, entity: Literal["messages"], subkey: str) -> None:
 		"""Delete a value by key."""
 
 		with self.db_context(write=True) as db:
-			db.delete(self._make_key(subkey))
+			db.delete(self._make_key(entity, subkey))
 
-	def exists(self, subkey: str) -> bool:
+	def exists(self, entity: Literal["messages"], subkey: str) -> bool:
 		"""Check if a key exists in the storage."""
 
 		with self.db_context() as db:
-			return db.get(self._make_key(subkey)) is not None
+			return db.get(self._make_key(entity, subkey)) is not None
 
-	def get_many(self, subkeys: list[str]) -> dict[str, Any | None]:
+	def get_many(self, entity: Literal["messages"], subkeys: list[str]) -> dict[str, Any | None]:
 		"""Retrieve multiple values by a list of keys, returning a dictionary of key-value pairs."""
 
 		if not subkeys:
 			return {}
 
-		keys = [self._make_key(subkey) for subkey in subkeys]
+		keys = [self._make_key(entity, subkey) for subkey in subkeys]
 
 		with self.db_context() as db:
 			values = [db.get(k) for k in keys]
@@ -156,7 +162,7 @@ class DataStore(BaseStore):
 
 			return result
 
-	def set_many(self, items: dict[str, Any]) -> None:
+	def set_many(self, entity: Literal["messages"], items: dict[str, Any]) -> None:
 		"""Store multiple key-value pairs at once, serializing values before saving."""
 
 		if not items:
@@ -164,22 +170,22 @@ class DataStore(BaseStore):
 
 		with self.db_context(write=True) as db:
 			for subkey, value in items.items():
-				db.put(self._make_key(subkey), self._serialize(value))
+				db.put(self._make_key(entity, subkey), self._serialize(value))
 
-	def delete_many(self, keys: list[str]) -> None:
+	def delete_many(self, entity: Literal["messages"], subkeys: list[str]) -> None:
 		"""Delete multiple keys from the storage at once."""
 
-		if not keys:
+		if not subkeys:
 			return
 
 		with self.db_context(write=True) as db:
-			for key in keys:
-				db.delete(self._make_key(key))
+			for key in subkeys:
+				db.delete(self._make_key(entity, key))
 
-	def scan(self, prefix: str = "") -> dict[str, Any]:
+	def scan(self, entity: Literal["messages"], prefix: str = "") -> dict[str, Any]:
 		"""Scan for all key-value pairs that start with a given prefix, returning a dictionary of results."""
 
-		full_prefix = self._make_key(prefix)
+		full_prefix = self._make_key(entity, prefix)
 		result = {}
 
 		with self.db_context() as db:
