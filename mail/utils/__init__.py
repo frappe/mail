@@ -106,6 +106,7 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		"server_job_timeout": 1500,
 		"stalwart_cli_command_timeout": 3600,
 		"stalwart_version": "v0.15.4",
+		"storage_shard_count": 8,
 	}
 
 	config = frappe.conf.mail or {}

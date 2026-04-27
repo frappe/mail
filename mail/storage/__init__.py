@@ -1,0 +1,25 @@
+import os
+
+import frappe
+from frappe.utils import get_bench_path
+
+from mail.storage.store import DataStore
+from mail.utils import get_mail_config
+
+
+def get_data_store(user: str, account_id: str) -> DataStore:
+	"""Factory function to create a DataStore instance for the given user and account ID."""
+
+	base_path = os.path.join(get_bench_path(), "sites", frappe.local.site, "private", "data-store")
+	key = f"{user}{DataStore.SEPARATOR}{account_id}"
+	shard_count = get_mail_config("storage_shard_count")
+
+	return DataStore(
+		base_path=base_path,
+		key=key,
+		acquire_timeout=10,
+		lock_timeout=60,
+		max_retries=3,
+		retry_delay=0.1,
+		shard_count=shard_count,
+	)
