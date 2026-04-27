@@ -129,58 +129,34 @@ class AccountSettings(Document):
 	def clear_cached_blobs(self) -> None:
 		"""Clear all cached JMAP blobs for the current account."""
 
-		from mail.client.doctype.mail_message.mail_message import _get_blob_cache_key
-
 		if not self.has_clear_cache_permission():
 			return
 
-		list_key = f"jmap:blob:{self.account}:blob_ids"
-
-		blob_ids = frappe.cache.lrange(list_key, 0, -1) or []
-
-		for blob_id in blob_ids:
-			cache_key = _get_blob_cache_key(self.account, blob_id)
-			frappe.cache.delete_value(cache_key)
-
-		frappe.cache.delete_value(list_key)
+		user, account_id = parse_account(self.account)
+		store = get_blob_store(user, account_id)
+		store.delete_all()
 
 	@frappe.whitelist()
 	def clear_cached_mail_messages(self) -> None:
 		"""Clear all cached mail messages for the current account."""
 
-		from mail.client.doctype.mail_message.mail_message import _get_message_cache_key
-
 		if not self.has_clear_cache_permission():
 			return
 
-		list_key = f"jmap:message:{self.account}:ids"
-
-		message_ids = frappe.cache.lrange(list_key, 0, -1) or []
-
-		for msg_id in message_ids:
-			cache_key = _get_message_cache_key(self.account, msg_id)
-			frappe.cache.delete_value(cache_key)
-
-		frappe.cache.delete_value(list_key)
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		store.delete_all("messages")
 
 	@frappe.whitelist()
 	def clear_cached_contact_cards(self) -> None:
 		"""Clear all cached contact cards for the current account."""
 
-		from mail.client.doctype.contact_card.contact_card import _get_contact_card_cache_key
-
 		if not self.has_clear_cache_permission():
 			return
 
-		list_key = f"jmap:contact_card:{self.account}:ids"
-
-		contact_card_ids = frappe.cache.lrange(list_key, 0, -1) or []
-
-		for contact_id in contact_card_ids:
-			cache_key = _get_contact_card_cache_key(self.account, contact_id)
-			frappe.cache.delete_value(cache_key)
-
-		frappe.cache.delete_value(list_key)
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		store.delete_all("contact_cards")
 
 	def has_clear_cache_permission(self) -> bool:
 		"""Check if the user has permission to clear cache."""

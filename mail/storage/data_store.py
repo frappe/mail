@@ -228,3 +228,19 @@ class DataStore(BaseStore):
 				it.next()
 
 		return count
+
+	def delete_all(self, entity: Literal["messages", "contact_cards"]) -> None:
+		"""Delete all keys for a given entity type."""
+
+		with self.db_context(write=True) as db:
+			it = db.iter()
+			prefix = self._make_key(entity, "")
+			it.seek(prefix)
+
+			while it.valid():
+				key = it.key()
+				if not key.startswith(prefix):
+					break
+
+				db.delete(key)
+				it.next()

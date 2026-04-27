@@ -141,3 +141,12 @@ class BlobStore(BaseStore):
 					count += 1
 
 		return count
+
+	def delete_all(self) -> None:
+		"""Delete all blobs in the storage."""
+
+		with os.scandir(self.path) as entries:
+			for entry in entries:
+				if entry.is_file():
+					with suppress(FileNotFoundError):
+						os.remove(entry.path)

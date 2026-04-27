@@ -58,7 +58,7 @@ frappe.ui.form.on('Account Settings', {
 
 			frm.add_custom_button(
 				action.label,
-				() => frm.trigger('run_cache_clear_action', action),
+				() => frm.events.run_cache_clear_action(frm, action),
 				__('Clear Cache'),
 			)
 		})
