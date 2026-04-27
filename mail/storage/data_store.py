@@ -189,8 +189,38 @@ class DataStore(BaseStore):
 		result = {}
 
 		with self.db_context() as db:
-			for k, v in db.iter(full_prefix.encode()):
-				key = self._normalize_scan_key(k)
-				result[key] = self._deserialize(v)
+			it = db.iter()
+			it.seek(full_prefix)
+
+			while it.valid():
+				key = it.key()
+				if not key.startswith(full_prefix):
+					break
+
+				value = it.value()
+				subkey = self._normalize_scan_key(key)
+				result[subkey] = self._deserialize(value)
+
+				it.next()
 
 		return result
+
+	def count(self, entity: Literal["messages"], prefix: str = "") -> int:
+		"""Count the number of keys that start with a given prefix."""
+
+		full_prefix = self._make_key(entity, prefix)
+		count = 0
+
+		with self.db_context() as db:
+			it = db.iter()
+			it.seek(full_prefix)
+
+			while it.valid():
+				key = it.key()
+				if not key.startswith(full_prefix):
+					break
+
+				count += 1
+				it.next()
+
+		return count

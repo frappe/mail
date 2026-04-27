@@ -124,7 +124,20 @@ class BlobStore(BaseStore):
 				if value is None:
 					continue
 
-				key = self._normalize_scan_key(self._decode_key(entry.name))
-				result[key] = value
+				subkey = self._normalize_scan_key(self._decode_key(entry.name))
+				result[subkey] = value
 
 		return result
+
+	def count(self, prefix: str = "") -> int:
+		"""Count the number of blobs whose keys start with the given prefix."""
+
+		encoded_prefix = self._encode_key(self._make_key(prefix))
+		count = 0
+
+		with os.scandir(self.path) as entries:
+			for entry in entries:
+				if entry.is_file() and entry.name.startswith(encoded_prefix):
+					count += 1
+
+		return count

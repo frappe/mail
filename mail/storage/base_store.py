@@ -64,7 +64,7 @@ class BaseStore:
 
 		return f"{self._get_prefix()}{subkey}"
 
-	def _normalize_scan_key(self, subkey: str) -> str:
+	def _normalize_scan_key(self, key: str) -> str:
 		"""Normalize a key returned from a scan by removing the prefix."""
 
-		return subkey.removeprefix(self._get_prefix())
+		return key.removeprefix(self._get_prefix())
