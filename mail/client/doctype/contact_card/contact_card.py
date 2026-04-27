@@ -11,7 +11,8 @@ from frappe.utils import cint, today
 
 from mail.client.doctype.address_book.address_book import validate_address_book_name_format
 from mail.jmap import get_contact_card_service, parse_account
-from mail.utils import get_mail_config, parse_filters
+from mail.storage import get_data_store
+from mail.utils import parse_filters
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
 
@@ -301,25 +302,29 @@ def get_contact_cards(account: str, ids: list[str]) -> list[dict]:
 
 	has_permission_for_user(parse_account(account)[0])
 
+	cached_contact_cards = _get_cached_contact_cards(account, ids)
+
 	contact_cards = {}
 	ids_to_fetch = []
-
 	for id in ids:
-		if contact_card := _get_contact_card_from_cache(account, id):
-			contact_cards[id] = contact_card
+		if cached_contact_card := cached_contact_cards.get(id):
+			contact_cards[id] = cached_contact_card
 		else:
 			ids_to_fetch.append(id)
 
 	if ids_to_fetch:
 		service = get_contact_card_service(account)
 		cards = service.get(ids_to_fetch)
-
 		address_book_map = {ab["id"]: ab["name"] for ab in service.address_books}
 
+		contact_cards_to_cache = {}
 		for card in cards:
 			contact_card = format_contact_card(account, address_book_map, card)
-			_store_contact_card_in_cache(account, contact_card["id"], contact_card)
+			contact_cards_to_cache[contact_card["id"]] = contact_card
 			contact_cards[contact_card["id"]] = contact_card
+
+		if contact_cards_to_cache:
+			_cache_contact_cards(account, contact_cards_to_cache)
 
 	return [contact_cards[id] for id in ids if id in contact_cards]
 
@@ -359,7 +364,7 @@ def update_contact_card(
 		else:
 			frappe.throw(_(response["description"]), title=title)
 
-	_remove_contact_cards_from_cache(account, [id])
+	_remove_cached_contact_cards(account, [id])
 
 
 def contact_card_update_address_books(
@@ -393,7 +398,7 @@ def contact_card_update_address_books(
 		else:
 			frappe.throw(_(response["description"]), title=title)
 
-	_remove_contact_cards_from_cache(account, ids)
+	_remove_cached_contact_cards(account, ids)
 
 
 @frappe.whitelist()
@@ -447,13 +452,7 @@ def delete_contact_cards(account: str, ids: list[str]) -> None:
 
 	service = get_contact_card_service(account)
 	service.delete(ids)
-	_remove_contact_cards_from_cache(account, ids)
-
-
-def _get_contact_card_cache_key(account: str, id: str) -> str:
-	"""Returns cache key for contact card."""
-
-	return f"jmap:contact_card:{account}:{id}"
+	_remove_cached_contact_cards(account, ids)
 
 
 def _get_total_cache_key(account: str) -> str:
@@ -462,45 +461,28 @@ def _get_total_cache_key(account: str) -> str:
 	return f"{account}:contact_cards:total"
 
 
-def _get_contact_card_from_cache(account: str, id: str) -> dict | None:
-	"""Returns contact card from cache if available."""
+def _get_cached_contact_cards(account: str, ids: list[str]) -> dict[str, dict | None]:
+	"""Returns a dictionary of cached contact cards for the given account and IDs."""
 
-	cache_key = _get_contact_card_cache_key(account, id)
-	return frappe.cache.get_value(cache_key)
-
-
-def _remove_contact_cards_from_cache(account: str, ids: list[str]) -> None:
-	"""Remove a contact cards from cache."""
-
-	for id in ids:
-		cache_key = _get_contact_card_cache_key(account, id)
-		frappe.cache.delete_value(cache_key)
-
-	list_key = f"jmap:contact_card:{account}:ids"
-	for id in ids:
-		frappe.cache.lrem(list_key, 0, id)
-
-	if not frappe.cache.llen(list_key):
-		frappe.cache.delete_value(list_key)
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	return store.get_many(entity="contact_cards", subkeys=ids)
 
 
-def _store_contact_card_in_cache(account: str, id: str, contact_card: dict) -> None:
-	"""Store a contact card in cache with TTL and maintain per-account bucket size."""
+def _cache_contact_cards(account: str, contact_cards: dict[str, dict]) -> None:
+	"""Caches contact cards for the given account."""
 
-	cache_key = _get_contact_card_cache_key(account, id)
-	list_key = f"jmap:contact_card:{account}:ids"
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	store.set_many(entity="contact_cards", items=contact_cards)
 
-	bucket_size = cint(get_mail_config("contact_card_bucket_size"))
-	cache_ttl = cint(get_mail_config("contact_card_cache_ttl"))
 
-	frappe.cache.set_value(cache_key, contact_card, expires_in_sec=cache_ttl)
-	frappe.cache.lpush(list_key, id)
+def _remove_cached_contact_cards(account: str, ids: list[str]) -> None:
+	"""Removes cached contact cards for the given account and IDs."""
 
-	frappe.cache.ltrim(list_key, 0, bucket_size - 1)
-
-	while frappe.cache.llen(list_key) > bucket_size:
-		if oldest_id := frappe.cache.rpop(list_key):
-			frappe.cache.delete_key(_get_contact_card_cache_key(account, oldest_id))
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	store.delete_many(entity="contact_cards", subkeys=ids)
 
 
 def format_contact_card(account: str, address_book_map: dict, contact_card: dict) -> dict:

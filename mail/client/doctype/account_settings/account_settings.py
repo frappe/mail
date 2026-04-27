@@ -15,6 +15,7 @@ from mail.jmap import (
 	invalidate_jmap_mailboxes_cache,
 	parse_account,
 )
+from mail.storage import get_blob_store, get_data_store
 
 if TYPE_CHECKING:
 	from mail.jmap.services.core import CoreService
@@ -70,22 +71,25 @@ class AccountSettings(Document):
 	def total_cached_blobs(self) -> int:
 		"""Get the total number of cached blobs for the account."""
 
-		list_key = f"jmap:blob:{self.account}:blob_ids"
-		return len(frappe.cache.lrange(list_key, 0, -1) or [])
+		user, account_id = parse_account(self.account)
+		store = get_blob_store(user, account_id)
+		return store.count()
 
 	@property
 	def total_cached_mail_messages(self) -> int:
 		"""Get the total number of cached mail messages for the account."""
 
-		list_key = f"jmap:message:{self.account}:ids"
-		return len(frappe.cache.lrange(list_key, 0, -1) or [])
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		return store.count("messages")
 
 	@property
 	def total_cached_contact_cards(self) -> int:
 		"""Get the total number of cached contact cards for the account."""
 
-		list_key = f"jmap:contact_card:{self.account}:ids"
-		return len(frappe.cache.lrange(list_key, 0, -1) or [])
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		return store.count("contact_cards")
 
 	def before_insert(self) -> None:
 		self.user = parse_account(self.account)[0]
