@@ -1,6 +1,8 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+from functools import cached_property
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
@@ -8,11 +10,20 @@ from frappe.utils import cint, now
 
 from mail.server.doctype.dns_record.dns_provider import DNSProvider
 from mail.utils import enqueue_job, get_mail_config, password_or_none, user_context
-from mail.utils.cache import get_root_domain_name
 from mail.utils.dns import verify_dns_record
 
 
 class DNSRecord(Document):
+	@cached_property
+	def fqdn(self) -> str:
+		"""Returns the Fully Qualified Domain Name"""
+
+		root_domain_name = frappe.db.get_single_value("Mail Settings", "root_domain_name")
+		if not root_domain_name:
+			frappe.throw(_("Please set the Root Domain Name in Mail Settings."))
+
+		return f"{self.host}.{root_domain_name}"
+
 	def validate(self) -> None:
 		if self.is_new():
 			self.validate_duplicate_record()
@@ -87,29 +98,22 @@ class DNSRecord(Document):
 
 		dns_provider.delete_dns_record(type=self.type, host=self.host)
 
-	def get_fqdn(self) -> str:
-		"""Returns the Fully Qualified Domain Name"""
-
-		return f"{self.host}.{get_root_domain_name()}"
-
 	@frappe.whitelist()
 	def verify_dns_record(self, save: bool = False) -> None:
 		"""Verifies the DNS Record"""
 
 		self.is_verified = 0
 		self.last_checked_at = now()
-		if verify_dns_record(self.get_fqdn(), self.type, self.value):
+		if verify_dns_record(self.fqdn, self.type, self.value):
 			self.is_verified = 1
 			frappe.msgprint(
-				_("Verified {0}:{1} record.").format(frappe.bold(self.get_fqdn()), frappe.bold(self.type)),
+				_("Verified {0}:{1} record.").format(frappe.bold(self.fqdn), frappe.bold(self.type)),
 				indicator="green",
 				alert=True,
 			)
 		else:
 			frappe.msgprint(
-				_("Could not verify {0}:{1} record.").format(
-					frappe.bold(self.get_fqdn()), frappe.bold(self.type)
-				),
+				_("Could not verify {0}:{1} record.").format(frappe.bold(self.fqdn), frappe.bold(self.type)),
 				indicator="orange",
 				alert=True,
 			)

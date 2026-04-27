@@ -826,7 +826,7 @@ class Principal(Document):
 			return "-"
 
 		def is_mandatory(record: dict) -> bool:
-			"""Define which DNS records are required for proper email authentication."""
+			"""Define which DNS records are required."""
 
 			category = infer_category(record)
 			content = record["content"]

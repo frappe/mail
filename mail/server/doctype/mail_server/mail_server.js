@@ -10,12 +10,6 @@ frappe.ui.form.on('Mail Server', {
 		frm.trigger('add_actions')
 	},
 
-	outbound_only(frm) {
-		if (frm.doc.outbound_only) {
-			frm.set_value('include_in_mx_records', 0)
-		}
-	},
-
 	set_queries(frm) {
 		frm.set_query('cluster', () => ({
 			filters: {
