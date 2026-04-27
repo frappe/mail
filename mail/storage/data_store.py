@@ -1,24 +1,19 @@
 import base64
 import hashlib
-import os
 import time
 from contextlib import contextmanager, suppress
 from threading import RLock
-from typing import Any, ClassVar
+from typing import Any
 
 import msgpack
 from rocksdict import DBCompressionType, Options, Rdict
 
+from mail.storage.base_store import BaseStore
 from mail.utils.lock import acquire_lock, release_lock
 
 
-class DataStore:
+class DataStore(BaseStore):
 	"""A simple key-value storage using RocksDB with write locking for concurrency control."""
-
-	SEPARATOR: ClassVar[str] = ":"
-	SHARD_DIR_PREFIX: ClassVar[str] = "shard-"
-	_PROCESS_LOCKS: ClassVar[dict[str, RLock]] = {}
-	_PROCESS_LOCKS_GUARD: ClassVar[RLock] = RLock()
 
 	def __init__(
 		self,
@@ -32,33 +27,18 @@ class DataStore:
 	) -> None:
 		"""Initialize the storage with base path, key, and optional locking parameters."""
 
-		self.base_path = base_path
-		self.key = key
+		super().__init__(
+			base_path=base_path,
+			key=key,
+			shard_count=shard_count,
+		)
+
 		self.acquire_timeout = acquire_timeout
 		self.lock_timeout = lock_timeout
 		self.max_retries = max_retries
 		self.retry_delay = retry_delay
-		self.shard_count = max(1, shard_count)
 
-		self.path = self._get_storage_path()
-		os.makedirs(self.path, exist_ok=True)
 		self.hash = base64.b32encode(hashlib.sha256(self.path.encode()).digest()).decode("ascii").lower()[:20]
-
-		self._prefix = f"{self.key}{self.SEPARATOR}"
-
-	def _get_storage_path(self) -> str:
-		"""Return the shard path for this key, or the base path when sharding is disabled."""
-
-		if self.shard_count == 1:
-			return self.base_path
-
-		shard = self._get_shard_index()
-		return os.path.join(self.base_path, f"{self.SHARD_DIR_PREFIX}{shard:02d}")
-
-	def _get_shard_index(self) -> int:
-		"""Calculate the shard index for the current key based on its hash."""
-
-		return int(hashlib.sha256(self.key.encode()).hexdigest(), 16) % self.shard_count
 
 	@contextmanager
 	def db_context(self, *, write: bool = False) -> Any:
@@ -81,13 +61,7 @@ class DataStore:
 	def _get_process_lock(self) -> RLock:
 		"""Return a process-local lock shared by all storage instances for the same path."""
 
-		with self._PROCESS_LOCKS_GUARD:
-			lock = self._PROCESS_LOCKS.get(self.path)
-			if lock is None:
-				lock = RLock()
-				self._PROCESS_LOCKS[self.path] = lock
-
-			return lock
+		return super()._get_process_lock()
 
 	def _acquire_global_lock(self) -> str:
 		"""Acquire the cross-process lock that guards RocksDB connection creation and use."""
@@ -130,16 +104,6 @@ class DataStore:
 
 		return opts
 
-	def _get_prefix(self) -> str:
-		"""Return the prefix for keys in this storage instance."""
-
-		return self._prefix
-
-	def _make_key(self, subkey: str) -> str:
-		"""Construct the full key with prefix for storage."""
-
-		return f"{self._get_prefix()}{subkey}"
-
 	def _serialize(self, value: Any) -> bytes:
 		"""Serialize a value to bytes using msgpack."""
 
@@ -149,14 +113,6 @@ class DataStore:
 		"""Deserialize bytes back to a Python object using msgpack."""
 
 		return msgpack.unpackb(value, raw=False)
-
-	def _normalize_scan_key(self, subkey: str | bytes) -> str:
-		"""Normalize a key returned from a scan by removing the prefix and decoding if necessary."""
-
-		if isinstance(subkey, bytes):
-			subkey = subkey.decode()
-
-		return subkey.removeprefix(self._prefix)
 
 	def get(self, subkey: str, default: Any | None = None) -> Any | None:
 		"""Retrieve a value by key, returning a default if the key does not exist."""
