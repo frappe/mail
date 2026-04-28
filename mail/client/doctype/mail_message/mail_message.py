@@ -836,7 +836,7 @@ def set_seen_status(account: str, ids: list[str], seen: bool = True) -> None:
 		service.update(emails)
 
 		messages_to_cache = {}
-		for message in _get_cached_messages(account, ids):
+		for message_id, message in _get_cached_messages(account, ids).items():
 			if message:
 				keywords = json.loads(message["keywords"])
 				keywords["$seen"] = bool(seen)
@@ -844,7 +844,7 @@ def set_seen_status(account: str, ids: list[str], seen: bool = True) -> None:
 				message["seen"] = cint(seen)
 				message["keywords"] = json.dumps(keywords, indent=4)
 
-				messages_to_cache[message["id"]] = message
+				messages_to_cache[message_id] = message
 
 		if messages_to_cache:
 			_cache_messages(account, messages_to_cache)
@@ -871,7 +871,7 @@ def set_flagged_status(account: str, ids: list[str], flagged: bool = True) -> No
 		service.update(emails)
 
 		messages_to_cache = {}
-		for message in _get_cached_messages(account, ids):
+		for message_id, message in _get_cached_messages(account, ids).items():
 			if message:
 				keywords = json.loads(message["keywords"])
 				keywords["$flagged"] = bool(flagged)
@@ -879,7 +879,7 @@ def set_flagged_status(account: str, ids: list[str], flagged: bool = True) -> No
 				message["flagged"] = cint(flagged)
 				message["keywords"] = json.dumps(keywords, indent=4)
 
-				messages_to_cache[message["id"]] = message
+				messages_to_cache[message_id] = message
 
 		if messages_to_cache:
 			_cache_messages(account, messages_to_cache)
