@@ -6,6 +6,8 @@ from frappe.core.doctype.user.user import generate_keys
 from frappe.query_builder import Table
 from frappe.utils.caching import request_cache
 
+from mail.jmap.services.core import parse_account
+from mail.storage import get_data_store
 from mail.utils import reconnect_on_failure, user_context
 
 
@@ -228,7 +230,9 @@ def generate_user_keys(user: str) -> dict:
 def get_sync_state(account: str, type: Literal["email"]) -> str | None:
 	"""Returns the Sync State for the given account and type."""
 
-	value = frappe.db.get_value("Account Settings", {"account": account}, f"{type}_current_state")
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	value = store.get("states", f"{type}_current_state")
 
 	if not value and not frappe.db.exists("Account Settings", {"account": account}):
 		settings = frappe.new_doc("Account Settings")
@@ -242,16 +246,18 @@ def get_sync_state(account: str, type: Literal["email"]) -> str | None:
 def update_sync_state(account: str, type: Literal["email"], state: str) -> None:
 	"""Updates the Sync State for the given account and type."""
 
-	state_last_update = f"{type}_state_last_update"
-	previous_state = f"{type}_previous_state"
-	current_state = f"{type}_current_state"
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
 
+	current_state = store.get("states", f"{type}_current_state")
+	store.set("states", f"{type}_previous_state", current_state)
+	store.set("states", f"{type}_current_state", state)
+
+	state_last_update_field = f"{type}_state_last_update"
 	ACCOUNT_SETTINGS = frappe.qb.DocType("Account Settings")
 	(
 		frappe.qb.update(ACCOUNT_SETTINGS)
-		.set(getattr(ACCOUNT_SETTINGS, state_last_update), frappe.utils.now())
-		.set(getattr(ACCOUNT_SETTINGS, previous_state), getattr(ACCOUNT_SETTINGS, current_state))
-		.set(getattr(ACCOUNT_SETTINGS, current_state), state)
+		.set(getattr(ACCOUNT_SETTINGS, state_last_update_field), frappe.utils.now())
 		.where(ACCOUNT_SETTINGS.account == account)
 	).run()
 
@@ -260,6 +266,7 @@ def update_sync_state(account: str, type: Literal["email"], state: str) -> None:
 def clear_sync_state(account: str, type: Literal["email"]) -> None:
 	"""Clear the Sync State for the given account and type."""
 
-	frappe.db.set_value(
-		"Account Settings", {"account": account}, f"{type}_current_state", None, update_modified=False
-	)
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	store.delete("states", f"{type}_current_state")
+	store.delete("states", f"{type}_previous_state")

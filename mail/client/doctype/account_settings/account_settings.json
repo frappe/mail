@@ -8,11 +8,12 @@
   "user",
   "column_break_kjbb",
   "account",
-  "jmap_state_section",
-  "email_previous_state",
-  "email_current_state",
-  "column_break_vftu",
+  "jmap_states_section",
   "email_state_last_update",
+  "column_break_vftu",
+  "email_current_state",
+  "column_break_bkvs",
+  "email_previous_state",
   "cache_section",
   "has_cached_jmap_connection",
   "has_cached_jmap_identities",
@@ -42,15 +43,10 @@
    "set_only_once": 1
   },
   {
-   "depends_on": "eval: !doc.__islocal",
-   "fieldname": "jmap_state_section",
-   "fieldtype": "Section Break",
-   "label": "JMAP State"
-  },
-  {
    "fieldname": "email_previous_state",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "is_virtual": 1,
    "label": "Previous State (Email)",
    "no_copy": 1,
    "read_only": 1
@@ -59,6 +55,7 @@
    "fieldname": "email_current_state",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "is_virtual": 1,
    "label": "Current State (Email)",
    "no_copy": 1,
    "read_only": 1
@@ -168,12 +165,22 @@
   {
    "fieldname": "column_break_jaxh",
    "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "jmap_states_section",
+   "fieldtype": "Section Break",
+   "label": "JMAP States"
+  },
+  {
+   "fieldname": "column_break_bkvs",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-17 15:09:41.220227",
+ "modified": "2026-04-28 15:45:53.407004",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Account Settings",

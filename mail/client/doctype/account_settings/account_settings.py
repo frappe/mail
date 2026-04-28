@@ -42,6 +42,22 @@ class AccountSettings(Document):
 			return None
 
 	@property
+	def email_current_state(self) -> str:
+		"""Returns the current state of the email sync for the account, or an empty string if not set."""
+
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		return store.get("states", "email_current_state") or ""
+
+	@property
+	def email_previous_state(self) -> str:
+		"""Returns the previous state of the email sync for the account, or an empty string if not set."""
+
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		return store.get("states", "email_previous_state") or ""
+
+	@property
 	def has_cached_jmap_connection(self) -> int:
 		"""Check if there is a cached JMAP connection for the user."""
 

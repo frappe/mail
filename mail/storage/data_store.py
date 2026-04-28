@@ -188,14 +188,14 @@ class DataStore(BaseStore):
 
 		return msgpack.unpackb(value, raw=False)
 
-	def _make_key(self, entity: Literal["messages", "contact_cards"], subkey: str) -> str:
+	def _make_key(self, entity: Literal["states", "messages", "contact_cards"], subkey: str) -> str:
 		"""Construct a full key by combining the entity type and subkey with the storage prefix."""
 
 		subkey = f"{entity}{self.SEPARATOR}{subkey}"
 		return super()._make_key(subkey)
 
 	def get(
-		self, entity: Literal["messages", "contact_cards"], subkey: str, default: Any | None = None
+		self, entity: Literal["states", "messages", "contact_cards"], subkey: str, default: Any | None = None
 	) -> Any | None:
 		"""Retrieve a value by key, returning a default if the key does not exist."""
 
@@ -203,26 +203,26 @@ class DataStore(BaseStore):
 			value = db.get(self._make_key(entity, subkey))
 			return self._deserialize(value) if value is not None else default
 
-	def set(self, entity: Literal["messages", "contact_cards"], subkey: str, value: Any) -> None:
+	def set(self, entity: Literal["states", "messages", "contact_cards"], subkey: str, value: Any) -> None:
 		"""Store a value by key, serializing it before saving."""
 
 		with self.db_context(write=True) as db:
 			db.put(self._make_key(entity, subkey), self._serialize(value))
 
-	def delete(self, entity: Literal["messages", "contact_cards"], subkey: str) -> None:
+	def delete(self, entity: Literal["states", "messages", "contact_cards"], subkey: str) -> None:
 		"""Delete a value by key."""
 
 		with self.db_context(write=True) as db:
 			db.delete(self._make_key(entity, subkey))
 
-	def exists(self, entity: Literal["messages", "contact_cards"], subkey: str) -> bool:
+	def exists(self, entity: Literal["states", "messages", "contact_cards"], subkey: str) -> bool:
 		"""Check if a key exists in the storage."""
 
 		with self.db_context() as db:
 			return db.get(self._make_key(entity, subkey)) is not None
 
 	def get_many(
-		self, entity: Literal["messages", "contact_cards"], subkeys: list[str]
+		self, entity: Literal["states", "messages", "contact_cards"], subkeys: list[str]
 	) -> dict[str, Any | None]:
 		"""Retrieve multiple values by a list of keys, returning a dictionary of key-value pairs."""
 
@@ -240,7 +240,7 @@ class DataStore(BaseStore):
 
 			return result
 
-	def set_many(self, entity: Literal["messages", "contact_cards"], items: dict[str, Any]) -> None:
+	def set_many(self, entity: Literal["states", "messages", "contact_cards"], items: dict[str, Any]) -> None:
 		"""Store multiple key-value pairs at once, serializing values before saving."""
 
 		if not items:
@@ -250,7 +250,7 @@ class DataStore(BaseStore):
 			for subkey, value in items.items():
 				db.put(self._make_key(entity, subkey), self._serialize(value))
 
-	def delete_many(self, entity: Literal["messages", "contact_cards"], subkeys: list[str]) -> None:
+	def delete_many(self, entity: Literal["states", "messages", "contact_cards"], subkeys: list[str]) -> None:
 		"""Delete multiple keys from the storage at once."""
 
 		if not subkeys:
@@ -260,7 +260,9 @@ class DataStore(BaseStore):
 			for key in subkeys:
 				db.delete(self._make_key(entity, key))
 
-	def scan(self, entity: Literal["messages", "contact_cards"], prefix: str = "") -> dict[str, Any]:
+	def scan(
+		self, entity: Literal["states", "messages", "contact_cards"], prefix: str = ""
+	) -> dict[str, Any]:
 		"""Scan for all key-value pairs that start with a given prefix, returning a dictionary of results."""
 
 		full_prefix = self._make_key(entity, prefix)
@@ -283,7 +285,7 @@ class DataStore(BaseStore):
 
 		return result
 
-	def count(self, entity: Literal["messages", "contact_cards"], prefix: str = "") -> int:
+	def count(self, entity: Literal["states", "messages", "contact_cards"], prefix: str = "") -> int:
 		"""Count the number of keys that start with a given prefix."""
 
 		full_prefix = self._make_key(entity, prefix)
@@ -303,7 +305,7 @@ class DataStore(BaseStore):
 
 		return count
 
-	def delete_all(self, entity: Literal["messages", "contact_cards"]) -> None:
+	def delete_all(self, entity: Literal["states", "messages", "contact_cards"]) -> None:
 		"""Delete all keys for a given entity type."""
 
 		self.logger.info(

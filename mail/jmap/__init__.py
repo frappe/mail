@@ -25,7 +25,6 @@ from mail.jmap.services.sieve.sieve_script import SieveScriptService
 from mail.jmap.services.vacationresponse.vacation_response import VacationResponseService
 from mail.jmap.services.websocket.websocket import WebSocketService
 from mail.utils import get_mail_config
-from mail.utils.user import is_local_user
 from mail.utils.validation import has_permission_for_user
 
 
@@ -36,6 +35,8 @@ def get_jmap_connection(user: str, ignore_permissions: bool = False, cache: bool
 		settings = frappe.db.exists("User Settings", {"user": user, "username": ["!=", None]})
 		if not settings:
 			frappe.throw(_("User {0} does not have JMAP settings configured.").format(frappe.bold(user)))
+
+		from mail.utils.user import is_local_user
 
 		user_settings = frappe.get_lazy_doc("User Settings", settings)
 
