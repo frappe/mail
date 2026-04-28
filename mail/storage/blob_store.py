@@ -4,11 +4,29 @@ from contextlib import suppress
 from threading import RLock
 from urllib.parse import quote, unquote
 
+import frappe
+
 from mail.storage.base_store import BaseStore
 
 
 class BlobStore(BaseStore):
 	"""A simple blob storage backed by the local file system."""
+
+	def __init__(
+		self,
+		base_path: str,
+		key: str,
+		shard_count: int = 1,
+	) -> None:
+		"""Initialize the storage with base path, key, and optional sharding parameters."""
+
+		super().__init__(
+			base_path=base_path,
+			key=key,
+			shard_count=shard_count,
+		)
+
+		self.logger_context["store"] = "blob"
 
 	def _get_process_lock(self, path: str) -> RLock:
 		"""Return a process-local lock shared by all blob operations for the same path."""
@@ -144,6 +162,8 @@ class BlobStore(BaseStore):
 
 	def delete_all(self) -> None:
 		"""Delete all blobs in the storage."""
+
+		self.logger.info({**self.logger_context, "user": frappe.session.user, "event": "deleting-all-blobs"})
 
 		with os.scandir(self.path) as entries:
 			for entry in entries:

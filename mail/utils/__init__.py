@@ -100,6 +100,9 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		"server_job_timeout": 1500,
 		"stalwart_cli_command_timeout": 3600,
 		"stalwart_version": "v0.15.4",
+		"storage_log_file_count": 10,
+		"storage_log_level": "INFO",
+		"storage_log_max_size": 5_000_000,
 		"storage_shard_count": 8,
 	}
 
@@ -125,6 +128,21 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		return config[key]
 
 	return config
+
+
+def get_storage_logger() -> "Logger":
+	"""Returns a logger instance for mail storage operations."""
+
+	config = get_mail_config()
+
+	max_size = cint(config["push_log_max_size"])
+	file_count = cint(config["push_log_file_count"])
+	logger = frappe.logger("mail.storage", allow_site=True, max_size=max_size, file_count=file_count)
+
+	log_level = config["push_log_level"].upper()
+	logger.setLevel(log_level)
+
+	return logger
 
 
 def get_push_logger() -> "Logger":

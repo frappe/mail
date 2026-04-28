@@ -5,6 +5,7 @@ from contextlib import contextmanager, suppress
 from threading import RLock
 from typing import Any, Literal
 
+import frappe
 import msgpack
 from rocksdict import DBCompressionType, Options, Rdict
 
@@ -33,12 +34,15 @@ class DataStore(BaseStore):
 			shard_count=shard_count,
 		)
 
+		self.logger_context["store"] = "data"
+
 		self.acquire_timeout = acquire_timeout
 		self.lock_timeout = lock_timeout
 		self.max_retries = max_retries
 		self.retry_delay = retry_delay
 
 		self.hash = base64.b32encode(hashlib.sha256(self.path.encode()).digest()).decode("ascii").lower()[:20]
+		self._lock_key = f"rocksdict-lock-{self.hash}"
 
 	@contextmanager
 	def db_context(self, *, write: bool = False) -> Any:
@@ -52,11 +56,12 @@ class DataStore(BaseStore):
 			try:
 				db = self._open_db()
 				yield db
+
 			finally:
 				if db is not None:
-					with suppress(Exception):
-						db.close()
-				release_lock(self._lock_key(), identifier)
+					self._close_db(db)
+
+				self._release_global_lock(identifier)
 
 	def _get_process_lock(self) -> RLock:
 		"""Return a process-local lock shared by all storage instances for the same path."""
@@ -66,31 +71,76 @@ class DataStore(BaseStore):
 	def _acquire_global_lock(self) -> str:
 		"""Acquire the cross-process lock that guards RocksDB connection creation and use."""
 
-		lockname = self._lock_key()
 		identifier = None
 
 		for attempt in range(self.max_retries):
+			self.logger.debug(
+				{
+					**self.logger_context,
+					"event": "attempting-glock-acquire",
+					"lock_key": self._lock_key,
+					"attempt": attempt + 1,
+				}
+			)
+
 			identifier = acquire_lock(
-				lockname, acquire_timeout=self.acquire_timeout, lock_timeout=self.lock_timeout
+				self._lock_key, acquire_timeout=self.acquire_timeout, lock_timeout=self.lock_timeout
 			)
 			if identifier:
+				self.logger.debug(
+					{
+						**self.logger_context,
+						"event": "glock-acquired",
+						"lock_key": self._lock_key,
+						"identifier": identifier,
+					}
+				)
+
 				return identifier
+
+			self.logger.warning(
+				{
+					**self.logger_context,
+					"event": "glock-acquire-failed",
+					"lock_key": self._lock_key,
+					"attempt": attempt + 1,
+				}
+			)
 
 			time.sleep(self.retry_delay * (2**attempt))
 
 		raise TimeoutError(
-			f"Could not acquire lock '{lockname}' after {self.acquire_timeout} seconds and {self.max_retries} attempts."
+			f"Could not acquire lock '{self._lock_key}' after {self.acquire_timeout} seconds and {self.max_retries} attempts."
 		)
+
+	def _release_global_lock(self, identifier: str) -> None:
+		"""Release the cross-process lock that guards RocksDB connection creation and use."""
+
+		self.logger.debug(
+			{
+				**self.logger_context,
+				"event": "releasing-glock",
+				"lock_key": self._lock_key,
+				"identifier": identifier,
+			}
+		)
+
+		release_lock(self._lock_key, identifier)
 
 	def _open_db(self) -> Rdict:
 		"""Open a RocksDB handle for the current operation."""
 
+		self.logger.debug({**self.logger_context, "event": "opening-db", "path": self.path})
+
 		return Rdict(self.path, options=self._get_options())
 
-	def _lock_key(self) -> str:
-		"""Generate a unique lock key based on the storage path."""
+	def _close_db(self, db: Rdict) -> None:
+		"""Close the RocksDB handle, ensuring all resources are released."""
 
-		return f"rocksdict-{self.hash}"
+		self.logger.debug({**self.logger_context, "event": "closing-db", "path": self.path})
+
+		with suppress(Exception):
+			db.close()
 
 	def _get_options(self) -> Options:
 		"""Configure RocksDB options for performance and reliability."""
@@ -231,6 +281,15 @@ class DataStore(BaseStore):
 
 	def delete_all(self, entity: Literal["messages", "contact_cards"]) -> None:
 		"""Delete all keys for a given entity type."""
+
+		self.logger.info(
+			{
+				**self.logger_context,
+				"user": frappe.session.user,
+				"event": "deleting-all-keys",
+				"entity": entity,
+			}
+		)
 
 		with self.db_context(write=True) as db:
 			it = db.iter()
