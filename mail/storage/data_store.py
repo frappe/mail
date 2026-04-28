@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import os
 import time
 from contextlib import contextmanager, suppress
 from threading import RLock
@@ -7,7 +8,8 @@ from typing import Any, Literal
 
 import frappe
 import msgpack
-from rocksdict import DBCompressionType, Options, Rdict
+import psutil
+from rocksdict import BlockBasedOptions, Cache, DBCompressionType, Options, Rdict
 
 from mail.storage.base_store import BaseStore
 from mail.utils.lock import acquire_lock, release_lock
@@ -147,10 +149,32 @@ class DataStore(BaseStore):
 
 		opts = Options()
 		opts.create_if_missing(True)
-		opts.set_max_open_files(300)
-		opts.set_write_buffer_size(64 * 1024 * 1024)
-		opts.set_target_file_size_base(64 * 1024 * 1024)
+		opts.set_keep_log_file_num(5)
+
+		cpu_cores = os.cpu_count() or 2
+		parallelism = min(max(cpu_cores, 2), 16)
+		opts.increase_parallelism(parallelism)
+		opts.set_max_background_jobs(parallelism)
+
+		total_mem = psutil.virtual_memory().total or 4 * 1024 * 1024 * 1024
+		block_cache_size = int(total_mem * 0.1)
+		block_cache_size = max(64 * 1024 * 1024, min(block_cache_size, 2 * 1024 * 1024 * 1024))
+		write_buffer_size = int(total_mem * 0.05)
+		write_buffer_size = max(32 * 1024 * 1024, min(write_buffer_size, 256 * 1024 * 1024))
+
+		opts.set_max_open_files(-1)
+		opts.set_write_buffer_size(write_buffer_size)
+		opts.set_max_write_buffer_number(3)
+		opts.set_target_file_size_base(write_buffer_size)
+		opts.set_max_bytes_for_level_base(write_buffer_size * 4)
 		opts.set_compression_type(DBCompressionType.lz4())
+		opts.set_use_fsync(False)
+
+		table_opts = BlockBasedOptions()
+		table_opts.set_block_cache(Cache(block_cache_size))
+		table_opts.set_cache_index_and_filter_blocks(True)
+		table_opts.set_pin_l0_filter_and_index_blocks_in_cache(True)
+		opts.set_block_based_table_factory(table_opts)
 
 		return opts
 
