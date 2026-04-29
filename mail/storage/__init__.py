@@ -8,11 +8,11 @@ from mail.storage.data_store import DataStore
 from mail.utils import get_mail_config
 
 
-def get_data_store(user: str, account_id: str) -> DataStore:
+def get_data_store(user: str, account_id: str | None = None) -> DataStore:
 	"""Factory function to create a DataStore instance for the given user and account ID."""
 
 	base_path = os.path.join(get_bench_path(), "sites", frappe.local.site, "private", "data-store")
-	key = f"{user}{DataStore.SEPARATOR}{account_id}"
+	key = f"{user}{DataStore.SEPARATOR}{account_id}" if account_id else user
 	shard_count = get_mail_config("storage_shard_count")
 
 	return DataStore(
@@ -26,11 +26,11 @@ def get_data_store(user: str, account_id: str) -> DataStore:
 	)
 
 
-def get_blob_store(user: str, account_id: str) -> "BlobStore":
+def get_blob_store(user: str, account_id: str | None = None) -> "BlobStore":
 	"""Factory function to create a BlobStore instance for the given user and account ID."""
 
 	base_path = os.path.join(get_bench_path(), "sites", frappe.local.site, "private", "blob-store")
-	key = f"{user}{BlobStore.SEPARATOR}{account_id}"
+	key = f"{user}{BlobStore.SEPARATOR}{account_id}" if account_id else user
 	shard_count = get_mail_config("storage_shard_count")
 
 	return BlobStore(

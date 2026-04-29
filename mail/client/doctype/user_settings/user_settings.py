@@ -1,6 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+from datetime import UTC, datetime
 from uuid import uuid7
 
 import frappe
@@ -9,11 +10,30 @@ from frappe.model.document import Document
 
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
+from mail.storage import get_data_store
 from mail.utils import get_mail_config
+from mail.utils.dt import parse_iso_datetime
 from mail.utils.user import is_local_user, is_system_manager
 
 
 class UserSettings(Document):
+	@property
+	def session_state(self) -> str | None:
+		"""Returns the current JMAP session state for the user from the data store."""
+
+		store = get_data_store(self.user)
+		return store.get("states", "session_state")
+
+	@property
+	def session_last_update(self) -> str | None:
+		"""Returns the last update time of the JMAP session state for the user from the data store."""
+
+		store = get_data_store(self.user)
+		value = store.get("states", "session_last_update")
+
+		if value:
+			return parse_iso_datetime(value)
+
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -41,6 +61,16 @@ class UserSettings(Document):
 		try:
 			info = JMAPConnectionInfo(server_url, self.username, self.get_password("app_password"))
 			connection = JMAPConnection(info)
+
+			store = get_data_store(self.user)
+			store.set_many(
+				"states",
+				{
+					"session_state": connection.state,
+					"session_last_update": datetime.now(UTC).isoformat(),
+				},
+			)
+
 		except Exception as e:
 			if (
 				hasattr(e, "response")

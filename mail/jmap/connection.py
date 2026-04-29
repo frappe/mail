@@ -31,10 +31,11 @@ class JMAPConnection:
 		self.__info = info
 		self.__session = requests.Session()
 		self.__session.auth = (self.__info.username, self.__info.password)
-		self.__config = self._discover()
 
-	def _discover(self) -> dict:
-		"""Discovers the JMAP server configuration by making a GET request to the well-known JMAP endpoint."""
+		self._initialize_session()
+
+	def _initialize_session(self) -> dict:
+		"""Performs the JMAP session discovery by sending a GET request to the .well-known/jmap endpoint."""
 
 		url = urljoin(self.__info.url, "/.well-known/jmap")
 		response = self.__session.get(
@@ -42,55 +43,55 @@ class JMAPConnection:
 		)
 		raise_for_status(response)
 
-		return response.json()
+		self.session = response.json()
 
 	@property
 	def capabilities(self) -> dict:
 		"""Returns the capabilities of the JMAP server."""
 
-		return self.__config["capabilities"]
+		return self.session["capabilities"]
 
 	@property
 	def api_url(self) -> str:
 		"""Returns the API URL of the JMAP server."""
 
-		return self.__config["apiUrl"]
+		return self.session["apiUrl"]
 
 	@property
 	def accounts(self) -> dict:
 		"""Returns the accounts for the logged-in user."""
 
-		return self.__config["accounts"]
+		return self.session["accounts"]
 
 	@property
 	def primary_accounts(self) -> dict:
 		"""Returns the primary accounts for the logged-in user."""
 
-		return self.__config["primaryAccounts"]
+		return self.session["primaryAccounts"]
 
 	@property
 	def download_url(self) -> str:
 		"""Returns the download URL for the JMAP server."""
 
-		return self.__config["downloadUrl"]
+		return self.session["downloadUrl"]
 
 	@property
 	def upload_url(self) -> str:
 		"""Returns the upload URL for the JMAP server."""
 
-		return self.__config["uploadUrl"]
+		return self.session["uploadUrl"]
 
 	@property
 	def event_source_url(self) -> str:
 		"""Returns the event source URL for the JMAP server."""
 
-		return self.__config["eventSourceUrl"]
+		return self.session["eventSourceUrl"]
 
 	@property
-	def state(self) -> dict:
+	def state(self) -> str:
 		"""Returns the state of the JMAP server."""
 
-		return self.__config["state"]
+		return self.session["state"]
 
 	def request(
 		self,

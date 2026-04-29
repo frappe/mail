@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any
 
 import frappe
@@ -24,6 +25,7 @@ from mail.jmap.services.quota.quota import QuotaService
 from mail.jmap.services.sieve.sieve_script import SieveScriptService
 from mail.jmap.services.vacationresponse.vacation_response import VacationResponseService
 from mail.jmap.services.websocket.websocket import WebSocketService
+from mail.storage import get_data_store
 from mail.utils import get_mail_config
 from mail.utils.validation import has_permission_for_user
 
@@ -59,7 +61,18 @@ def get_jmap_connection(user: str, ignore_permissions: bool = False, cache: bool
 		info = JMAPConnectionInfo(
 			server_url, user_settings.username, user_settings.get_password("app_password")
 		)
-		return JMAPConnection(info)
+		connection = JMAPConnection(info)
+
+		store = get_data_store(user)
+		store.set_many(
+			"states",
+			{
+				"session_state": connection.state,
+				"session_last_update": datetime.now(UTC).isoformat(),
+			},
+		)
+
+		return connection
 
 	if not ignore_permissions:
 		if not has_permission_for_user(user, raise_exception=False):
