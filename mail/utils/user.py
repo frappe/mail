@@ -8,6 +8,7 @@ from frappe.utils.caching import request_cache
 
 from mail.jmap.services.core import parse_account
 from mail.storage import get_data_store
+from mail.storage.data_store import Entity
 from mail.utils import reconnect_on_failure, user_context
 
 
@@ -232,7 +233,7 @@ def get_sync_state(account: str, type: Literal["email"]) -> str | None:
 
 	user, account_id = parse_account(account)
 	store = get_data_store(user, account_id)
-	value = store.get("states", f"{type}_current_state")
+	value = store.get(Entity.STATE, f"{type}_current_state")
 
 	if not value and not frappe.db.exists("Account Settings", {"account": account}):
 		settings = frappe.new_doc("Account Settings")
@@ -249,9 +250,9 @@ def update_sync_state(account: str, type: Literal["email"], state: str) -> None:
 	user, account_id = parse_account(account)
 	store = get_data_store(user, account_id)
 
-	current_state = store.get("states", f"{type}_current_state")
-	store.set("states", f"{type}_previous_state", current_state)
-	store.set("states", f"{type}_current_state", state)
+	current_state = store.get(Entity.STATE, f"{type}_current_state")
+	store.set(Entity.STATE, f"{type}_previous_state", current_state)
+	store.set(Entity.STATE, f"{type}_current_state", state)
 
 	state_last_update_field = f"{type}_state_last_update"
 	ACCOUNT_SETTINGS = frappe.qb.DocType("Account Settings")
@@ -268,5 +269,5 @@ def clear_sync_state(account: str, type: Literal["email"]) -> None:
 
 	user, account_id = parse_account(account)
 	store = get_data_store(user, account_id)
-	store.delete("states", f"{type}_current_state")
-	store.delete("states", f"{type}_previous_state")
+	store.delete(Entity.STATE, f"{type}_current_state")
+	store.delete(Entity.STATE, f"{type}_previous_state")

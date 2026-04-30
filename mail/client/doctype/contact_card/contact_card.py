@@ -12,6 +12,7 @@ from frappe.utils import cint, today
 from mail.client.doctype.address_book.address_book import validate_address_book_name_format
 from mail.jmap import get_contact_card_service, parse_account
 from mail.storage import get_data_store
+from mail.storage.data_store import Entity
 from mail.utils import parse_filters
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
@@ -466,7 +467,7 @@ def _get_cached_contact_cards(account: str, ids: list[str]) -> dict[str, dict | 
 
 	user, account_id = parse_account(account)
 	store = get_data_store(user, account_id)
-	return store.get_many(entity="contact_cards", subkeys=ids)
+	return store.get_many(Entity.CONTACT_CARD, subkeys=ids)
 
 
 def _cache_contact_cards(account: str, contact_cards: dict[str, dict]) -> None:
@@ -474,7 +475,7 @@ def _cache_contact_cards(account: str, contact_cards: dict[str, dict]) -> None:
 
 	user, account_id = parse_account(account)
 	store = get_data_store(user, account_id)
-	store.set_many(entity="contact_cards", items=contact_cards)
+	store.set_many(Entity.CONTACT_CARD, items=contact_cards)
 
 
 def _remove_cached_contact_cards(account: str, ids: list[str]) -> None:
@@ -482,7 +483,7 @@ def _remove_cached_contact_cards(account: str, ids: list[str]) -> None:
 
 	user, account_id = parse_account(account)
 	store = get_data_store(user, account_id)
-	store.delete_many(entity="contact_cards", subkeys=ids)
+	store.delete_many(Entity.CONTACT_CARD, subkeys=ids)
 
 
 def format_contact_card(account: str, address_book_map: dict, contact_card: dict) -> dict:

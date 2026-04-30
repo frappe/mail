@@ -3,8 +3,9 @@ import hashlib
 import os
 import time
 from contextlib import contextmanager, suppress
+from enum import Enum
 from threading import RLock
-from typing import Any, Literal
+from typing import Any
 
 import frappe
 import msgpack
@@ -13,6 +14,23 @@ from rocksdict import BlockBasedOptions, Cache, DBCompressionType, Options, Rdic
 
 from mail.storage.base_store import BaseStore
 from mail.utils.lock import acquire_lock, release_lock
+
+
+class Entity(Enum):
+	"""Defines the different types of entities that can be stored in the DataStore."""
+
+	STATE = "state"
+
+	IDENTITY = "identity"
+	MAILBOX = "mailbox"
+	EMAIL = "email"
+
+	PARTICIPANT_IDENTITY = "participant_identity"
+	CALENDAR = "calendar"
+	EVENT = "event"
+
+	ADDRESS_BOOK = "address_book"
+	CONTACT_CARD = "contact_card"
 
 
 class DataStore(BaseStore):
@@ -47,7 +65,7 @@ class DataStore(BaseStore):
 		self._lock_key = f"rocksdict-lock-{self.hash}"
 
 	@contextmanager
-	def db_context(self, *, write: bool = False) -> Any:
+	def db_context(self) -> Any:
 		"""Context manager to handle serialized database access across threads and processes."""
 
 		process_lock = self._get_process_lock()
@@ -188,42 +206,38 @@ class DataStore(BaseStore):
 
 		return msgpack.unpackb(value, raw=False)
 
-	def _make_key(self, entity: Literal["states", "messages", "contact_cards"], subkey: str) -> str:
+	def _make_key(self, entity: Entity, subkey: str) -> str:
 		"""Construct a full key by combining the entity type and subkey with the storage prefix."""
 
-		subkey = f"{entity}{self.SEPARATOR}{subkey}"
+		subkey = f"{entity.value}{self.SEPARATOR}{subkey}"
 		return super()._make_key(subkey)
 
-	def get(
-		self, entity: Literal["states", "messages", "contact_cards"], subkey: str, default: Any | None = None
-	) -> Any | None:
+	def get(self, entity: Entity, subkey: str, default: Any | None = None) -> Any | None:
 		"""Retrieve a value by key, returning a default if the key does not exist."""
 
 		with self.db_context() as db:
 			value = db.get(self._make_key(entity, subkey))
 			return self._deserialize(value) if value is not None else default
 
-	def set(self, entity: Literal["states", "messages", "contact_cards"], subkey: str, value: Any) -> None:
+	def set(self, entity: Entity, subkey: str, value: Any) -> None:
 		"""Store a value by key, serializing it before saving."""
 
-		with self.db_context(write=True) as db:
+		with self.db_context() as db:
 			db.put(self._make_key(entity, subkey), self._serialize(value))
 
-	def delete(self, entity: Literal["states", "messages", "contact_cards"], subkey: str) -> None:
+	def delete(self, entity: Entity, subkey: str) -> None:
 		"""Delete a value by key."""
 
-		with self.db_context(write=True) as db:
+		with self.db_context() as db:
 			db.delete(self._make_key(entity, subkey))
 
-	def exists(self, entity: Literal["states", "messages", "contact_cards"], subkey: str) -> bool:
+	def exists(self, entity: Entity, subkey: str) -> bool:
 		"""Check if a key exists in the storage."""
 
 		with self.db_context() as db:
 			return db.get(self._make_key(entity, subkey)) is not None
 
-	def get_many(
-		self, entity: Literal["states", "messages", "contact_cards"], subkeys: list[str]
-	) -> dict[str, Any | None]:
+	def get_many(self, entity: Entity, subkeys: list[str]) -> dict[str, Any | None]:
 		"""Retrieve multiple values by a list of keys, returning a dictionary of key-value pairs."""
 
 		if not subkeys:
@@ -240,29 +254,27 @@ class DataStore(BaseStore):
 
 			return result
 
-	def set_many(self, entity: Literal["states", "messages", "contact_cards"], items: dict[str, Any]) -> None:
+	def set_many(self, entity: Entity, items: dict[str, Any]) -> None:
 		"""Store multiple key-value pairs at once, serializing values before saving."""
 
 		if not items:
 			return
 
-		with self.db_context(write=True) as db:
+		with self.db_context() as db:
 			for subkey, value in items.items():
 				db.put(self._make_key(entity, subkey), self._serialize(value))
 
-	def delete_many(self, entity: Literal["states", "messages", "contact_cards"], subkeys: list[str]) -> None:
+	def delete_many(self, entity: Entity, subkeys: list[str]) -> None:
 		"""Delete multiple keys from the storage at once."""
 
 		if not subkeys:
 			return
 
-		with self.db_context(write=True) as db:
+		with self.db_context() as db:
 			for key in subkeys:
 				db.delete(self._make_key(entity, key))
 
-	def scan(
-		self, entity: Literal["states", "messages", "contact_cards"], prefix: str = ""
-	) -> dict[str, Any]:
+	def scan(self, entity: Entity, prefix: str = "") -> dict[str, Any]:
 		"""Scan for all key-value pairs that start with a given prefix, returning a dictionary of results."""
 
 		full_prefix = self._make_key(entity, prefix)
@@ -285,7 +297,7 @@ class DataStore(BaseStore):
 
 		return result
 
-	def count(self, entity: Literal["states", "messages", "contact_cards"], prefix: str = "") -> int:
+	def count(self, entity: Entity, prefix: str = "") -> int:
 		"""Count the number of keys that start with a given prefix."""
 
 		full_prefix = self._make_key(entity, prefix)
@@ -305,7 +317,7 @@ class DataStore(BaseStore):
 
 		return count
 
-	def delete_all(self, entity: Literal["states", "messages", "contact_cards"]) -> None:
+	def delete_all(self, entity: Entity) -> None:
 		"""Delete all keys for a given entity type."""
 
 		self.logger.info(
@@ -313,11 +325,11 @@ class DataStore(BaseStore):
 				**self.logger_context,
 				"user": frappe.session.user,
 				"event": "deleting-all-keys",
-				"entity": entity,
+				"entity": entity.value,
 			}
 		)
 
-		with self.db_context(write=True) as db:
+		with self.db_context() as db:
 			it = db.iter()
 			prefix = self._make_key(entity, "")
 			it.seek(prefix)

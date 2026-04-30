@@ -29,6 +29,7 @@ from mail.jmap import get_email_service, get_jmap_connection, get_thread_service
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
 from mail.storage import get_blob_store, get_data_store
+from mail.storage.data_store import Entity
 from mail.utils import (
 	enqueue_job,
 	get_mail_config,
@@ -1110,7 +1111,7 @@ def _get_cached_messages(account: str, ids: list[str]) -> dict[str, dict | None]
 
 	user, account_id = parse_account(account)
 	store = get_data_store(user, account_id)
-	return store.get_many(entity="messages", subkeys=ids)
+	return store.get_many(Entity.EMAIL, subkeys=ids)
 
 
 def _cache_messages(account: str, messages: dict[str, dict]) -> None:
@@ -1118,7 +1119,7 @@ def _cache_messages(account: str, messages: dict[str, dict]) -> None:
 
 	user, account_id = parse_account(account)
 	store = get_data_store(user, account_id)
-	store.set_many(entity="messages", items=messages)
+	store.set_many(Entity.EMAIL, items=messages)
 
 
 def _remove_cached_messages(account: str, ids: list[str]) -> None:
@@ -1126,7 +1127,7 @@ def _remove_cached_messages(account: str, ids: list[str]) -> None:
 
 	user, account_id = parse_account(account)
 	store = get_data_store(user, account_id)
-	store.delete_many(entity="messages", subkeys=ids)
+	store.delete_many(Entity.EMAIL, subkeys=ids)
 
 
 def _get_cached_blobs(account: str, blob_ids: list[str]) -> dict[str, bytes | None]:

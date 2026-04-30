@@ -15,6 +15,7 @@ from mail.jmap import (
 	parse_account,
 )
 from mail.storage import get_blob_store, get_data_store
+from mail.storage.data_store import Entity
 
 if TYPE_CHECKING:
 	from mail.jmap.services.core import CoreService
@@ -46,7 +47,7 @@ class AccountSettings(Document):
 
 		user, account_id = parse_account(self.account)
 		store = get_data_store(user, account_id)
-		return store.get("states", "email_current_state") or ""
+		return store.get(Entity.STATE, "email_current_state") or ""
 
 	@property
 	def email_previous_state(self) -> str:
@@ -54,7 +55,7 @@ class AccountSettings(Document):
 
 		user, account_id = parse_account(self.account)
 		store = get_data_store(user, account_id)
-		return store.get("states", "email_previous_state") or ""
+		return store.get(Entity.STATE, "email_previous_state") or ""
 
 	@property
 	def has_cached_jmap_identities(self) -> int:
@@ -90,7 +91,7 @@ class AccountSettings(Document):
 
 		user, account_id = parse_account(self.account)
 		store = get_data_store(user, account_id)
-		return store.count("messages")
+		return store.count(Entity.EMAIL)
 
 	@property
 	def total_cached_contact_cards(self) -> int:
@@ -98,7 +99,7 @@ class AccountSettings(Document):
 
 		user, account_id = parse_account(self.account)
 		store = get_data_store(user, account_id)
-		return store.count("contact_cards")
+		return store.count(Entity.CONTACT_CARD)
 
 	def before_insert(self) -> None:
 		self.user = parse_account(self.account)[0]
@@ -147,7 +148,7 @@ class AccountSettings(Document):
 
 		user, account_id = parse_account(self.account)
 		store = get_data_store(user, account_id)
-		store.delete_all("messages")
+		store.delete_all(Entity.EMAIL)
 
 	@frappe.whitelist()
 	def clear_cached_contact_cards(self) -> None:
@@ -158,7 +159,7 @@ class AccountSettings(Document):
 
 		user, account_id = parse_account(self.account)
 		store = get_data_store(user, account_id)
-		store.delete_all("contact_cards")
+		store.delete_all(Entity.CONTACT_CARD)
 
 	def has_clear_cache_permission(self) -> bool:
 		"""Check if the user has permission to clear cache."""
