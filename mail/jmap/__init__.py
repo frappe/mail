@@ -24,6 +24,8 @@ from mail.jmap.services.quota.quota import QuotaService
 from mail.jmap.services.sieve.sieve_script import SieveScriptService
 from mail.jmap.services.vacationresponse.vacation_response import VacationResponseService
 from mail.jmap.services.websocket.websocket import WebSocketService
+from mail.storage import get_data_store
+from mail.storage.data_store import Entity
 from mail.utils import get_mail_config
 from mail.utils.validation import has_permission_for_user
 
@@ -265,24 +267,20 @@ def get_websocket_service(
 	return WebSocketService(account, connection)
 
 
-def invalidate_jmap_cache(account: str) -> None:
-	"""Invalidates all JMAP-related caches for the specified account."""
-
-	invalidate_jmap_identities_cache(account)
-	invalidate_jmap_mailboxes_cache(account)
-
-
 def invalidate_jmap_identities_cache(account: str) -> None:
 	"""Invalidates the JMAP identities cache for the specified account."""
 
-	IdentityService.invalidate_cache(account, key="identities")
-	frappe.cache.hdel(f"account|{account}", "emails")
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	store.delete_all(Entity.IDENTITY)
 
 
 def invalidate_jmap_mailboxes_cache(account: str) -> None:
 	"""Invalidates the JMAP mailboxes cache for the specified account."""
 
-	IdentityService.invalidate_cache(account, key="mailboxes")
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	store.delete_all(Entity.MAILBOX)
 
 
 def get_identities(account: str) -> list[dict]:

@@ -9,11 +9,9 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint, today
 
-from mail.backend import get_mail_backend_api
-from mail.client.doctype.user_account.user_account import get_user_personal_account_id
 from mail.jmap import get_identity_service, parse_account
 from mail.utils import parse_filters
-from mail.utils.user import is_administrator, is_mail_admin
+from mail.utils.user import is_mail_admin
 from mail.utils.validation import has_permission_for_user
 
 
@@ -111,63 +109,6 @@ def _get_total_cache_key(account: str) -> str:
 	"""Returns a cache key for total identities count for the given account."""
 
 	return f"{account}:identities:total"
-
-
-def _add_identity(
-	user: str,
-	email: str,
-	name: str | None = None,
-	reply_to: list[dict] | None = None,
-	bcc: list[dict] | None = None,
-	text_signature: str | None = None,
-	html_signature: str | None = None,
-) -> str:
-	"""Adds an identity for the given account with the specified parameters."""
-
-	if not is_administrator(frappe.session.user) and not is_mail_admin(frappe.session.user):
-		frappe.throw(
-			_("User {0} does not have permission to create identity for user {1}.").format(
-				frappe.bold(frappe.session.user), frappe.bold(user)
-			)
-		)
-
-	creation_id = str(uuid7())
-	payload = {
-		"using": ["urn:ietf:params:jmap:mail"],
-		"methodCalls": [
-			[
-				"Identity/set",
-				{
-					"accountId": get_user_personal_account_id(user, raise_exception=True),
-					"create": {
-						creation_id: {
-							"email": email,
-							"name": name or "",
-							"replyTo": reply_to or [],
-							"bcc": bcc or [],
-							"textSignature": text_signature or "",
-							"htmlSignature": html_signature or "",
-						}
-					},
-				},
-				"0",
-			]
-		],
-	}
-
-	backend = get_mail_backend_api()
-	response = backend.request("POST", "/jmap", json=payload)
-
-	title = _("Identity Creation Error")
-	response = response.json()["methodResponses"][0][1]
-	if response.get("created"):
-		return response["created"][creation_id]["id"]
-	elif response.get("notCreated"):
-		frappe.throw(_(response["notCreated"][creation_id]["description"]), title=title)
-	else:
-		frappe.throw(_(response["description"]), title=title)
-
-	frappe.throw(_("Identity creation request failed."), title=title)
 
 
 def has_permission_for_identity(user: str) -> bool:

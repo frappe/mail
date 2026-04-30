@@ -43,14 +43,6 @@ frappe.ui.form.on('Principal', {
 					},
 					__('Actions'),
 				)
-			} else if (frm.doc.type === 'Individual') {
-				frm.add_custom_button(
-					__('Sync JMAP Identities'),
-					() => {
-						frm.trigger('sync_jmap_identities')
-					},
-					__('Actions'),
-				)
 			}
 		}
 	},
@@ -105,21 +97,6 @@ frappe.ui.form.on('Principal', {
 			args: {},
 			freeze: true,
 			freeze_message: __('Rotating DKIM Keys...'),
-			callback: (r) => {
-				if (!r.exc) {
-					frm.refresh()
-				}
-			},
-		})
-	},
-
-	sync_jmap_identities(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: 'sync_jmap_identities',
-			args: {},
-			freeze: true,
-			freeze_message: __('Syncing JMAP Identities...'),
 			callback: (r) => {
 				if (!r.exc) {
 					frm.refresh()
