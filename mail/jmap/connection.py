@@ -1,4 +1,6 @@
+import time
 from dataclasses import dataclass
+from typing import Any
 from urllib.parse import urljoin
 
 import requests
@@ -22,20 +24,61 @@ class JMAPConnectionInfo:
 	timeout: tuple[float, float] = (30.0, 60.0)
 
 
+class JMAPSessionManager:
+	"""Manages the JMAP session information, allowing for retrieval, storage, and clearing of session data."""
+
+	def __init__(self, get_session: callable, set_session: callable, clear_session: callable) -> None:
+		"""Initializes the SessionManager with the provided functions for getting, setting, and clearing session data."""
+
+		if not callable(get_session) or not callable(set_session) or not callable(clear_session):
+			raise ValueError("All parameters must be callable functions.")
+
+		self._get_session = get_session
+		self._set_session = set_session
+		self._clear_session = clear_session
+
+	def get_session(self) -> Any | None:
+		"""Retrieves the current session data, if available."""
+
+		return self._get_session()
+
+	def set_session(self, session: dict) -> None:
+		"""Sets the session data."""
+
+		self._set_session(session)
+
+	def clear_session(self) -> None:
+		"""Clears the session data."""
+
+		self._clear_session()
+
+
 class JMAPConnection:
 	"""Manages the connection to a JMAP server, including discovery of server capabilities and sending requests."""
 
-	def __init__(self, info: JMAPConnectionInfo) -> None:
+	def __init__(self, info: JMAPConnectionInfo, session_manager: JMAPSessionManager | None = None) -> None:
 		"""Initializes the JMAPConnection with the provided connection information."""
 
 		self.__info = info
 		self.__session = requests.Session()
 		self.__session.auth = (self.__info.username, self.__info.password)
+		self.__session_manager = session_manager
 
 		self._initialize_session()
 
 	def _initialize_session(self) -> dict:
-		"""Performs the JMAP session discovery by sending a GET request to the .well-known/jmap endpoint."""
+		"""Initializes the session by attempting to retrieve it from the session manager or performing session discovery."""
+
+		if self.__session_manager:
+			session = self.__session_manager.get_session()
+			if session:
+				self.session = session
+				return
+
+		self._session_discovery()
+
+	def _session_discovery(self) -> None:
+		"""Performs session discovery by sending a GET request to the JMAP server's well-known URL and storing the session information."""
 
 		url = urljoin(self.__info.url, "/.well-known/jmap")
 		response = self.__session.get(
@@ -44,6 +87,10 @@ class JMAPConnection:
 		raise_for_status(response)
 
 		self.session = response.json()
+		self.session["timestamp"] = time.time()
+
+		if self.__session_manager:
+			self.__session_manager.set_session(self.session)
 
 	@property
 	def capabilities(self) -> dict:

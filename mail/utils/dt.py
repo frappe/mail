@@ -108,3 +108,16 @@ def add_iso_duration(
 	end = start + delta
 
 	return end.replace(tzinfo=None)
+
+
+def timestamp_to_datetime(
+	timestamp: float, to_timezone: str | None = None, as_str: bool = True
+) -> str | datetime:
+	"""Converts a timestamp to a datetime object in the given timezone."""
+
+	if not to_timezone:
+		to_timezone = get_system_timezone()
+
+	dt = datetime.fromtimestamp(timestamp, tz=UTC).astimezone(ZoneInfo(to_timezone))
+
+	return get_datetime_str(dt) if as_str else dt

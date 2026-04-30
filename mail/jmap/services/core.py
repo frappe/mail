@@ -288,7 +288,7 @@ class CoreService(CoreServiceHelper):
 
 		payload = {"using": capabilities, "methodCalls": method_calls}
 
-		return self.connection.request(
+		response = self.connection.request(
 			method="POST",
 			url=self.connection.api_url,
 			headers={"Content-Type": "application/json"},
@@ -296,6 +296,12 @@ class CoreService(CoreServiceHelper):
 			return_json=True,
 			**kwargs,
 		)
+
+		session_state = response["sessionState"]
+		if self.connection.state != session_state:
+			self.connection._session_discovery()
+
+		return response
 
 	def _exec(self, action: Literal["get", "set", "query", "changes", "upload", "lookup"], **payload) -> dict:
 		payload = {**{k: v for k, v in payload.items() if v is not None}}

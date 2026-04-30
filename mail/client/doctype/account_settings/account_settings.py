@@ -10,7 +10,6 @@ from frappe.utils import cint
 
 from mail.jmap import (
 	get_core_service,
-	invalidate_jmap_connection_cache,
 	invalidate_jmap_identities_cache,
 	invalidate_jmap_mailboxes_cache,
 	parse_account,
@@ -56,12 +55,6 @@ class AccountSettings(Document):
 		user, account_id = parse_account(self.account)
 		store = get_data_store(user, account_id)
 		return store.get("states", "email_previous_state") or ""
-
-	@property
-	def has_cached_jmap_connection(self) -> int:
-		"""Check if there is a cached JMAP connection for the user."""
-
-		return cint(bool(frappe.cache.hget("jmap:connection", self.user)))
 
 	@property
 	def has_cached_jmap_identities(self) -> int:
@@ -119,13 +112,6 @@ class AccountSettings(Document):
 		self.clear_cached_blobs()
 		self.clear_cached_mail_messages()
 		self.clear_cached_contact_cards()
-
-	@frappe.whitelist()
-	def clear_cached_jmap_connection(self) -> None:
-		"""Clear all cached JMAP connection for the current user."""
-
-		if self.has_clear_cache_permission():
-			invalidate_jmap_connection_cache(self.user)
 
 	@frappe.whitelist()
 	def clear_cached_jmap_identities(self) -> None:

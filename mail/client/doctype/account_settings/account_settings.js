@@ -16,12 +16,6 @@ frappe.ui.form.on('Account Settings', {
 
 		const actions = [
 			{
-				condition: frm.doc.has_cached_jmap_connection,
-				label: __('JMAP Connection'),
-				method: 'clear_cached_jmap_connection',
-				message: __('Clearing Cached JMAP Connection...'),
-			},
-			{
 				condition: frm.doc.has_cached_jmap_identities,
 				label: __('JMAP Identities'),
 				method: 'clear_cached_jmap_identities',

@@ -1,38 +1,48 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-from datetime import UTC, datetime
+import json
+from functools import cached_property
 from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from mail.jmap import get_jmap_session_manager
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
-from mail.storage import get_data_store
 from mail.utils import get_mail_config
-from mail.utils.dt import parse_iso_datetime
+from mail.utils.dt import timestamp_to_datetime
 from mail.utils.user import is_local_user, is_system_manager
 
 
 class UserSettings(Document):
+	@cached_property
+	def session(self) -> dict:
+		"""Returns the JMAP session for the user."""
+
+		return get_jmap_session_manager(self.user).get_session() or {}
+
 	@property
 	def session_state(self) -> str | None:
-		"""Returns the current JMAP session state for the user from the data store."""
+		"""Returns the state of the JMAP session for the user."""
 
-		store = get_data_store(self.user)
-		return store.get("states", "session_state")
+		return self.session.get("state")
 
 	@property
 	def session_last_update(self) -> str | None:
-		"""Returns the last update time of the JMAP session state for the user from the data store."""
+		"""Returns the last update timestamp of the JMAP session for the user in the user's timezone."""
 
-		store = get_data_store(self.user)
-		value = store.get("states", "session_last_update")
+		timestamp = self.session.get("timestamp")
+		if timestamp:
+			return timestamp_to_datetime(timestamp, as_str=True)
 
-		if value:
-			return parse_iso_datetime(value)
+	@property
+	def jmap_session(self) -> str:
+		"""Returns the JMAP session for the user as a JSON string."""
+
+		return json.dumps(self.session, indent=4)
 
 	def autoname(self) -> None:
 		self.name = str(uuid7())
@@ -59,18 +69,9 @@ class UserSettings(Document):
 			frappe.throw(_("Server URL and App Password are required to validate JMAP settings."))
 
 		try:
-			info = JMAPConnectionInfo(server_url, self.username, self.get_password("app_password"))
-			connection = JMAPConnection(info)
-
-			store = get_data_store(self.user)
-			store.set_many(
-				"states",
-				{
-					"session_state": connection.state,
-					"session_last_update": datetime.now(UTC).isoformat(),
-				},
+			connection = JMAPConnection(
+				JMAPConnectionInfo(server_url, self.username, self.get_password("app_password"))
 			)
-
 		except Exception as e:
 			if (
 				hasattr(e, "response")
@@ -142,6 +143,12 @@ class UserSettings(Document):
 					"Principal Settings for {0} does not exist. Please create Principal Settings with the principal name same as the JMAP username."
 				).format(frappe.bold(self.username))
 			)
+
+	@frappe.whitelist()
+	def clear_jmap_session(self) -> None:
+		"""Clears the JMAP session for the user."""
+
+		get_jmap_session_manager(self.user).clear_session()
 
 	@frappe.whitelist()
 	def show_app_password(self) -> str:

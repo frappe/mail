@@ -15,7 +15,6 @@
   "column_break_bkvs",
   "email_previous_state",
   "cache_section",
-  "has_cached_jmap_connection",
   "has_cached_jmap_identities",
   "has_cached_jmap_mailboxes",
   "column_break_brmt",
@@ -95,15 +94,6 @@
   },
   {
    "default": "0",
-   "fieldname": "has_cached_jmap_connection",
-   "fieldtype": "Check",
-   "is_virtual": 1,
-   "label": "Has Cached JMAP Connection",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "default": "0",
    "fieldname": "has_cached_jmap_identities",
    "fieldtype": "Check",
    "is_virtual": 1,
@@ -180,7 +170,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-28 15:45:53.407004",
+ "modified": "2026-04-30 11:13:57.163513",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Account Settings",
