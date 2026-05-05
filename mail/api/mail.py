@@ -50,7 +50,7 @@ def get_mailboxes(account: str) -> list[dict]:
 
 	mailbox_settings = frappe.db.get_all(
 		"Mailbox Settings",
-		filters={"user": user, "mailbox_id": ["in", [m["id"] for m in mailboxes]]},
+		filters={"account": account, "mailbox_id": ["in", [m["id"] for m in mailboxes]]},
 		fields=["mailbox_id", "icon", "color", "disable_push_notification"],
 	)
 
