@@ -891,4 +891,6 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if doc.doctype != "Mail Queue":
 		return False
 
-	return has_permission_for_user(doc.user, raise_exception=False)
+	user = doc.user or parse_account(doc.account)[0]
+
+	return has_permission_for_user(user, raise_exception=False)
