@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { Cloud } from 'lucide-vue-next'
 import { createResource } from 'frappe-ui'
 
@@ -31,14 +31,18 @@ import { userStore } from '@/stores/user'
 
 const { isCollapsed } = defineProps<{ isCollapsed: boolean }>()
 
-const { account } = userStore()
+const store = userStore()
 
 const quota = createResource({
 	url: 'mail.api.account.get_quota',
-	auto: true,
-	makeParams: () => ({ account }),
-	cache: ['quota', account],
+	makeParams: () => ({ account: store.account }),
+	cache: ['quota', store.account],
 })
+
+watch(
+	() => store.account,
+	() => quota.reload(),
+)
 
 const displayedQuota = computed(() => {
 	if (!quota.data) return ''

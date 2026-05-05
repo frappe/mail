@@ -63,6 +63,8 @@ import AddAddressBookModal from '@/components/Modals/AddAddressBookModal.vue'
 
 const { addressBooks } = userStore()
 
+const { accountId } = defineProps<{ accountId: string }>()
+
 const showAddAddressBook = ref(false)
 const search = ref('')
 
@@ -79,6 +81,9 @@ const LIST_OPTIONS = {
 	selectable: false,
 	showTooltip: false,
 	emptyState: { description: __('No address books found.') },
-	getRowRoute: (row) => ({ name: 'AddressBook', params: { addressBookName: row.id } }),
+	getRowRoute: (row) => ({
+		name: 'AddressBook',
+		params: { accountId, addressBookName: row.id },
+	}),
 }
 </script>

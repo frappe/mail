@@ -3,6 +3,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 
+import type { UserAccount } from './types'
+
+// Lightweight placeholder used by shortcut routes — the beforeEach guard
+// intercepts them and redirects before any component ever mounts.
+const ShortcutRedirect = { render: () => null }
+
 const routes = [
 	{
 		path: '/signup',
@@ -37,35 +43,37 @@ const routes = [
 		meta: { isLogin: true },
 	},
 	{
-		path: '/mailbox/:mailbox',
+		path: '/account/:accountId/mailbox/:mailbox',
 		name: 'Mailbox',
 		component: () => import('@/pages/MailboxView.vue'),
 		props: true,
 	},
 	{
-		path: '/mailbox/:mailbox/:threadID',
+		path: '/account/:accountId/mailbox/:mailbox/:threadID',
 		name: 'Mail',
 		component: () => import('@/pages/MailboxView.vue'),
 		props: true,
 	},
 	{
-		path: '/address-books/',
+		path: '/account/:accountId/address-books/',
 		name: 'AddressBooks',
 		component: () => import('@/pages/AddressBooksView.vue'),
+		props: true,
 	},
 	{
-		path: '/address-books/:addressBookName',
+		path: '/account/:accountId/address-books/:addressBookName',
 		name: 'AddressBook',
 		component: () => import('@/pages/AddressBookView.vue'),
 		props: true,
 	},
 	{
-		path: '/contacts/',
+		path: '/account/:accountId/contacts/',
 		name: 'Contacts',
 		component: () => import('@/pages/ContactsView.vue'),
+		props: true,
 	},
 	{
-		path: '/contacts/:contactName',
+		path: '/account/:accountId/contacts/:contactName',
 		name: 'Contact',
 		component: () => import('@/pages/ContactView.vue'),
 		props: true,
@@ -140,29 +148,175 @@ const routes = [
 		props: true,
 		meta: { isDashboard: true },
 	},
+	// Shortcut routes: short paths that resolve to their full account-scoped
+	// equivalents once the active accountId is known (resolved in beforeEach).
+	{
+		path: '/',
+		name: 'RootShortcut',
+		component: ShortcutRedirect,
+		meta: { shortcut: true },
+	},
+	{
+		path: '/account/:accountId?',
+		name: 'AccountShortcut',
+		component: ShortcutRedirect,
+		meta: { shortcut: true },
+	},
+	{
+		path: '/mailbox',
+		name: 'MailboxIndexShortcut',
+		component: ShortcutRedirect,
+		meta: { shortcut: true },
+	},
+	{
+		path: '/mailbox/:mailbox',
+		name: 'MailboxShortcut',
+		component: ShortcutRedirect,
+		meta: { shortcut: true },
+	},
+	{
+		path: '/mailbox/:mailbox/:threadID',
+		name: 'MailShortcut',
+		component: ShortcutRedirect,
+		meta: { shortcut: true },
+	},
+	{
+		path: '/address-books',
+		name: 'AddressBooksShortcut',
+		component: ShortcutRedirect,
+		meta: { shortcut: true },
+	},
+	{
+		path: '/address-books/:addressBookName',
+		name: 'AddressBookShortcut',
+		component: ShortcutRedirect,
+		meta: { shortcut: true },
+	},
+	{
+		path: '/contacts',
+		name: 'ContactsShortcut',
+		component: ShortcutRedirect,
+		meta: { shortcut: true },
+	},
+	{
+		path: '/contacts/:contactName',
+		name: 'ContactShortcut',
+		component: ShortcutRedirect,
+		meta: { shortcut: true },
+	},
 ]
 
 const router = createRouter({ history: createWebHistory('/mail'), routes })
 
-router.beforeEach(async (to, _, next) => {
-	if (document.referrer.includes('/app/setup-wizard')) window.location.replace('/app')
+// ---------------------------------------------------------------------------
+// Guard helpers
+// ---------------------------------------------------------------------------
 
+const handleSetupWizardEscape = () => {
+	if (document.referrer.includes('/app/setup-wizard')) window.location.replace('/app')
+}
+
+const getPersonalAccountId = (user: { accounts?: UserAccount[] }) =>
+	user.accounts?.find((a) => a.is_personal)?.id
+
+const resolveAccount = (
+	routeAccountId: string | undefined,
+	user: { accounts?: UserAccount[] },
+	storeAccountId: string,
+	setAccount: (id: string) => void,
+) => {
+	if (routeAccountId) {
+		const isValid = user.accounts?.some((a) => a.id === routeAccountId)
+		if (isValid) {
+			if (routeAccountId !== storeAccountId) setAccount(routeAccountId)
+			return
+		}
+	}
+
+	if (!storeAccountId) {
+		const personalId = getPersonalAccountId(user)
+		if (personalId) setAccount(personalId)
+	}
+}
+
+const buildDefaultRoute = (
+	accountId: string,
+	mailboxes: { data?: { id: string }[] },
+): { name: string; params: Record<string, string> } => {
+	const firstMailbox = mailboxes.data?.[0]?.id
+	if (firstMailbox) return { name: 'Mailbox', params: { accountId, mailbox: firstMailbox } }
+
+	return { name: 'AddressBooks', params: { accountId } }
+}
+
+const resolveShortcut = (
+	name: string | symbol | null | undefined,
+	params: Record<string, string | string[]>,
+	accountId: string,
+	defaultRoute: { name: string; params: Record<string, string> },
+) => {
+	switch (name) {
+		case 'MailShortcut':
+			return { name: 'Mail', params: { accountId, ...params } }
+		case 'MailboxShortcut':
+			return { name: 'Mailbox', params: { accountId, ...params } }
+		case 'AddressBookShortcut':
+			return { name: 'AddressBook', params: { accountId, ...params } }
+		case 'AddressBooksShortcut':
+			return { name: 'AddressBooks', params: { accountId } }
+		case 'ContactShortcut':
+			return { name: 'Contact', params: { accountId, ...params } }
+		case 'ContactsShortcut':
+			return { name: 'Contacts', params: { accountId } }
+		default:
+			return defaultRoute
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Navigation guard
+// ---------------------------------------------------------------------------
+
+router.beforeEach(async (to, _, next) => {
+	handleSetupWizardEscape()
+
+	// 1. Authentication check
 	const { isLoggedIn } = sessionStore()
 	if (!isLoggedIn) return to.meta.isLogin ? next() : next({ name: 'Login' })
 
-	const { userResource, mailboxes } = userStore()
+	// 2. Wait for user data
+	const { userResource, mailboxes, accountId: storeAccountId, setAccount } = userStore()
 	await userResource.promise
-	await mailboxes.promise
 	const user = userResource.data
-	const mailboxRoute = { name: 'Mailbox', params: { mailbox: mailboxes.data?.[0]?.id } }
 
+	// 3. Resolve active account
+	resolveAccount(to.params.accountId as string | undefined, user, storeAccountId, setAccount)
+
+	// Re-read accountId after resolveAccount may have updated it via setAccount
+	const accountId = userStore().accountId
+
+	// 4. Wait for mailbox list
+	await mailboxes.promise
+	const defaultRoute = buildDefaultRoute(accountId, mailboxes)
+
+	// 5. Validate mailbox param for mailbox routes
+	if (to.name === 'Mailbox' || to.name === 'Mail') {
+		const mailboxExists =
+			mailboxes.data?.some((m: { id: string }) => m.id === to.params.mailbox) ||
+			to.params.mailbox === 'starred'
+		if (!mailboxExists) return next(defaultRoute)
+	}
+
+	// 6. Expand shortcut routes to their full account-scoped equivalents
+	if (to.meta.shortcut) return next(resolveShortcut(to.name, to.params, accountId, defaultRoute))
+
+	// 7. Admin / dashboard access control
 	if (user.is_mail_admin) {
 		if (!user.is_jmap_configured && !to.meta.isDashboard) return next({ name: 'Domains' })
-	} else if (to.meta.isDashboard) return next(mailboxRoute)
+	} else if (to.meta.isDashboard) return next(defaultRoute)
 
-	if (['/', '/mailbox', '/mailbox/'].includes(to.path)) return next(mailboxRoute)
-
-	return to.meta.isLogin ? next(mailboxRoute) : next()
+	// 8. Login pages redirect already-authenticated users to their mailbox
+	return to.meta.isLogin ? next(defaultRoute) : next()
 })
 
 export default router

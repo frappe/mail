@@ -1,7 +1,5 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 
-export const account = ref('')
-
 export const useScreenSize = () => {
 	const size = reactive({ width: window.innerWidth, height: window.innerHeight })
 

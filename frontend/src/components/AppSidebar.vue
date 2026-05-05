@@ -78,7 +78,7 @@ import { Avatar, Button, Dropdown, Sidebar, SidebarItem, createResource } from '
 
 import { FOLDER_ICON_MAP } from '@/constants'
 import { toTitleCase } from '@/utils'
-import { account, useScreenSize, useSidebar } from '@/utils/composables'
+import { useScreenSize, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 import MailLogo from '@/components/Icons/MailLogo.vue'
@@ -111,7 +111,8 @@ const { isMobile } = useScreenSize()
 const { isSidebarOpen, closeSidebar } = useSidebar()
 const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)
 const { logout, branding } = sessionStore()
-const { setAccount, mailboxes } = userStore()
+const store = userStore()
+const { setAccount, mailboxes } = store
 
 const user = inject('$user')
 
@@ -154,22 +155,51 @@ const menuItems = computed(() => [
 				'div',
 				{
 					class: 'flex items-center gap-2 p-1.5 rounded hover:bg-surface-gray-2 cursor-pointer',
-					onClick: () => setAccount(a.name),
+					onClick: async () => {
+						setAccount(a.id)
+
+						if (['AddressBooks', 'AddressBook'].includes(route.name))
+							router.push({
+								name: 'AddressBooks',
+								params: { accountId: a.id },
+							})
+						else if (['Contacts', 'Contact'].includes(route.name))
+							router.push({ name: 'Contacts', params: { accountId: a.id } })
+						else {
+							await mailboxes.promise
+							router.push({
+								name: 'Mailbox',
+								params: { accountId: a.id, mailbox: mailboxes.data?.[0]?.id },
+							})
+						}
+					},
 				},
 				[
 					h(Avatar, { label: a._name, size: 'md' }),
 					h('span', { class: 'w-32 text-sm w-full truncate shrink-0' }, a._name),
-					account.value === a.name &&
+					a.id === store.accountId &&
 						h(Check, { label: a._name, class: 'h-4 shrink-0 stroke-1.5' }),
 				],
 			),
 		})),
-		condition: () => user.data.accounts?.length > 1,
+		condition: () => user.data.accounts?.length > 1 && !route.meta.isDashboard,
 	},
 	{
 		icon: Mailbox,
 		label: __('Mailbox'),
-		onClick: () => router.push('/mailbox'),
+		onClick: () => {
+			const mailbox = mailboxes.data?.[0]?.id
+			if (mailbox)
+				router.push({
+					name: 'Mailbox',
+					params: { accountId: store.accountId, mailbox },
+				})
+			else
+				router.push({
+					name: 'AddressBooks',
+					params: { accountId: store.accountId },
+				})
+		},
 		condition: () =>
 			user.data.is_mail_admin && user.data.is_jmap_configured && route.meta.isDashboard,
 	},
@@ -225,7 +255,10 @@ const mailboxItems = computed(
 		mailboxes.data?.map((mailbox: MailboxData) => ({
 			label: mailbox._name,
 			icon: h(Icon, { name: getIcon(mailbox), class: FOLDER_COLOR_MAP[mailbox.color] }),
-			to: { name: 'Mailbox', params: { mailbox: mailbox.id } },
+			to: {
+				name: 'Mailbox',
+				params: { accountId: store.accountId, mailbox: mailbox.id },
+			},
 			suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
 			activeFor: [mailbox.id],
 			menuOptions: [
@@ -259,7 +292,7 @@ const sidebarItems = computed(() => {
 	const starredItem = {
 		label: __('Starred'),
 		icon: Star,
-		to: { name: 'Mailbox', params: { mailbox: 'starred' } },
+		to: { name: 'Mailbox', params: { accountId: store.accountId, mailbox: 'starred' } },
 		activeFor: ['starred'],
 	}
 	const defaultItems = [...defaultMailboxes, starredItem]
@@ -281,13 +314,13 @@ const sidebarItems = computed(() => {
 		{
 			label: __('Address Books'),
 			icon: BookUser,
-			to: { name: 'AddressBooks' },
+			to: { name: 'AddressBooks', params: { accountId: store.accountId } },
 			activeFor: ['AddressBooks', 'AddressBook'],
 		},
 		{
 			label: __('Contacts'),
 			icon: ContactRound,
-			to: { name: 'Contacts' },
+			to: { name: 'Contacts', params: { accountId: store.accountId } },
 			activeFor: ['Contacts', 'Contact'],
 		},
 	]

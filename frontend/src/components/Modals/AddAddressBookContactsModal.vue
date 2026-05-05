@@ -37,7 +37,7 @@ import {
 import { extractNameFromEmail } from '@/utils'
 import { userStore } from '@/stores/user'
 
-const { account } = userStore()
+const store = userStore()
 
 const show = defineModel<boolean>()
 
@@ -67,7 +67,7 @@ const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
 	makeParams: () => ({
-		account,
+		account: store.account,
 		filter: { text: search.value },
 		limit: limit.value,
 	}),

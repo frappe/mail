@@ -236,7 +236,7 @@ import AddContactEmailModal from '@/components/Modals/AddContactEmailModal.vue'
 import AddContactPhoneModal from '@/components/Modals/AddContactPhoneModal.vue'
 import EditContactModal from '@/components/Modals/EditContactModal.vue'
 
-const { contactName } = defineProps<{ contactName: string }>()
+const { accountId, contactName } = defineProps<{ accountId: string; contactName: string }>()
 
 const user = inject('$user')
 const dayjs = inject('$dayjs')
@@ -254,12 +254,12 @@ const showRemovePhones = ref(false)
 const showRemoveAddresses = ref(false)
 const showDeleteContact = ref(false)
 
-const { account } = userStore()
+const store = userStore()
 
 const contact = createDocumentResource({
 	doctype: 'Contact Card',
-	name: `${account}|${contactName}`,
-	onError: () => router.replace({ name: 'Contacts' }),
+	name: `${store.account}|${contactName}`,
+	onError: () => router.replace({ name: 'Contacts', params: { accountId } }),
 	setValue: {
 		onSuccess: () => raiseToast(__('Contact updated.')),
 		onError: (error) => {
@@ -275,7 +275,7 @@ const deleteContact = createResource({
 	onSuccess: () => {
 		showDeleteContact.value = false
 		raiseToast(__('Contact deleted.'))
-		router.push({ name: 'Contacts' })
+		router.push({ name: 'Contacts', params: { accountId } })
 	},
 	onError: (error) => {
 		showDeleteContact.value = false
