@@ -1,88 +1,51 @@
 // Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-const STORES_PRESET = {
-	RocksDB: {
-		store_id: 'rocksdb',
-		path: '/opt/stalwart/data',
-		compression: 'LZ4',
-		min_blob_size: 16834,
-		write_buffer_size: 128,
-		purge_frequency: '0 3 * * *',
+const STORE_PRESET = {
+	RocksDb: {
+		store_path: '/var/lib/stalwart/rocksdb',
+		store_blob_size: 16834,
+		store_buffer_size: 134217728,
+		store_pool_workers: 0,
 	},
-	FoundationDB: {
-		store_id: 'foundationdb',
-		compression: 'LZ4',
-		purge_frequency: '0 3 * * *',
+	Sqlite: {
+		store_path: '/var/lib/stalwart/sqlite',
+		store_pool_workers: 0,
+		store_pool_max_connections: 10,
 	},
-	PostgreSQL: {
-		store_id: 'postgresql',
-		port: 5432,
-		database: 'frappemail',
-		timeout: 15,
-		user: 'frappemail',
-		compression: 'LZ4',
-		purge_frequency: '0 3 * * *',
-		pool_max_connections: 10,
+	FoundationDb: {
+		store_cluster_file: null,
+		store_datacenter_id: null,
+		store_machine_id: null,
+		store_transaction_retry_delay: null,
+		store_transaction_retry_limit: null,
+		store_transaction_timeout: null,
 	},
-	mySQL: {
-		store_id: 'mysql',
-		port: 3306,
-		database: 'frappemail',
-		timeout: 15,
-		user: 'frappemail',
-		compression: 'LZ4',
-		purge_frequency: '0 3 * * *',
-		pool_max_connections: 10,
-		pool_min_connections: 5,
+	PostgreSql: {
+		store_timeout: '15s',
+		store_use_tls: 0,
+		store_allow_invalid_certs: 0,
+		store_pool_max_connections: 10,
+		store_pool_recycling_method: 'fast',
+		store_host: null,
+		store_port: 5432,
+		store_database: 'frappe',
+		store_auth_username: null,
+		store_auth_secret: null,
+		store_options: null,
 	},
-	SQLite: {
-		store_id: 'sqlite',
-		path: '/var/lib/data/index.sqlite3',
-		compression: 'LZ4',
-		purge_frequency: '0 3 * * *',
-		pool_max_connections: 10,
-	},
-	'S3-compatible': {
-		store_id: 's3',
-		timeout: 15,
-		bucket: 'frappemail',
-		key_prefix: '/',
-		compression: 'LZ4',
-		max_retries: 3,
-		purge_frequency: '0 3 * * *',
-	},
-	'Redis/Memcached': {
-		store_id: 'redis',
-		redis_type: 'Redis Single Node',
-		urls: 'redis://127.0.0.1',
-		timeout: 15,
-		user: 'frappemail',
-		read_from_replicas: 1,
-	},
-	ElasticSearch: {
-		store_id: 'elasticsearch',
-		url: 'http://localhost:9200',
-		user: 'frappemail',
-		index_shards: 3,
-		index_replicas: 0,
-	},
-	'Azure Blob Storage': {
-		store_id: 'azure',
-		timeout: 15,
-		storage_account: 'frappe',
-		container: 'mail',
-		key_prefix: '/',
-		compression: 'LZ4',
-		max_retries: 3,
-		purge_frequency: '0 3 * * *',
-	},
-	Filesystem: {
-		store_id: 'filesystem',
-		path: '/var/lib/data/blobs',
-		compression: 'LZ4',
-		purge_frequency: '0 3 * * *',
-		depth: 2,
+	MySql: {
+		store_timeout: '15s',
+		store_max_allowed_packet: 0,
+		store_use_tls: 0,
+		store_allow_invalid_certs: 0,
+		store_pool_min_connections: 5,
+		store_pool_max_connections: 10,
+		store_host: null,
+		store_port: 3306,
+		store_database: 'frappe',
+		store_auth_username: null,
+		store_auth_secret: null,
 	},
 }
 
@@ -121,6 +84,13 @@ frappe.ui.form.on('Mail Cluster', {
 
 	refresh(frm) {
 		frm.trigger('add_actions')
+	},
+
+	store_type(frm) {
+		const defaults = STORE_PRESET[frm.doc.store_type]
+		if (defaults) {
+			Object.entries(defaults).forEach(([key, value]) => frm.set_value(key, value))
+		}
 	},
 
 	initialize_defaults(frm) {
@@ -187,27 +157,6 @@ frappe.ui.form.on('Mail Cluster', {
 				}
 			},
 		})
-	},
-})
-
-frappe.ui.form.on('Mail Cluster Store', {
-	type(frm, cdt, cdn) {
-		const row = locals[cdt][cdn]
-
-		if (row.type) {
-			const defaults = STORES_PRESET[row.type]
-			if (defaults) {
-				Object.entries(defaults).forEach(([key, value]) =>
-					frappe.model.set_value(cdt, cdn, key, value),
-				)
-			}
-		}
-
-		refresh_field('stores')
-	},
-
-	redis_type() {
-		refresh_field('stores')
 	},
 })
 

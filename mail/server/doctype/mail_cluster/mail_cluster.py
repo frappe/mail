@@ -3,57 +3,19 @@
 
 import base64
 import io
+import json
 
 import frappe
 import paramiko
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import random_string
+from frappe.utils import cint, random_string
 
 from mail.backend import MailBackendAPI, Principal
 from mail.jmap.connection import raise_for_status
 from mail.utils import generate_secret, hash_password
 from mail.utils.dns import get_dns_record
-from mail.utils.validation import is_valid_cron_expression
 
-DEFAULT_STORES = [
-	{
-		"type": "RocksDB",
-		"store_id": "rocksdb",
-		"path": "/opt/stalwart/data",
-		"compression": "LZ4",
-		"min_blob_size": 16834,
-		"write_buffer_size": 128,
-		"purge_frequency": "0 3 * * *",
-	}
-]
-DEFAULT_LISTENERS = [
-	{"protocol": "HTTP", "listener_id": "http", "bind": "[::]:8080", "tls_implicit": 0},
-	{"protocol": "HTTP", "listener_id": "https", "bind": "[::]:443", "tls_implicit": 1},
-	{"protocol": "IMAP4", "listener_id": "imap", "bind": "[::]:143", "tls_implicit": 0},
-	{"protocol": "IMAP4", "listener_id": "imaptls", "bind": "[::]:993", "tls_implicit": 1},
-	{"protocol": "POP3", "listener_id": "pop3", "bind": "[::]:110", "tls_implicit": 0},
-	{"protocol": "POP3", "listener_id": "pop3s", "bind": "[::]:995", "tls_implicit": 1},
-	{
-		"protocol": "ManageSieve",
-		"listener_id": "sieve",
-		"bind": "[::]:4190",
-		"tls_implicit": 0,
-	},
-	{"protocol": "SMTP", "listener_id": "smtp", "bind": "[::]:25", "tls_implicit": 0},
-	{
-		"protocol": "SMTP",
-		"listener_id": "submission",
-		"bind": "[::]:587\n[::]:8025",
-		"tls_implicit": 0,
-	},
-	{
-		"protocol": "SMTP",
-		"listener_id": "submissions",
-		"bind": "[::]:465\n[::]:2525",
-		"tls_implicit": 1,
-	},
-]
 DEFAULT_TRACES = [
 	{
 		"tracer_id": "log",
@@ -64,25 +26,85 @@ DEFAULT_TRACES = [
 		"rotate": "Daily",
 	}
 ]
-STORAGE_OPTIONS = {
-	"storage_directory": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite"],
-	"storage_data": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite"],
-	"storage_blob": [
-		"RocksDB",
-		"FoundationDB",
-		"PostgreSQL",
-		"mySQL",
-		"SQLite",
-		"S3-compatible",
-		"Azure Blob Storage",
-		"Filesystem",
-	],
-	"storage_fts": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite", "ElasticSearch"],
-	"storage_lookup": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite", "Redis/Memcached"],
-}
 
 
 class MailCluster(Document):
+	@property
+	def config(self) -> str:
+		"""Returns the configuration for the cluster."""
+
+		if not self.store_type:
+			return "{}"
+
+		config = {"@type": self.store_type}
+
+		if self.store_type == "RocksDb":
+			config.update(
+				{
+					"path": self.store_path,
+					"blobSize": cint(self.store_blob_size),
+					"bufferSize": cint(self.store_buffer_size),
+					"poolWorkers": cint(self.store_pool_workers),
+				}
+			)
+
+		elif self.store_type == "Sqlite":
+			config.update(
+				{
+					"path": self.store_path,
+					"poolWorkers": cint(self.store_pool_workers),
+					"poolMaxConnections": cint(self.store_pool_max_connections),
+				}
+			)
+
+		elif self.store_type == "FoundationDb":
+			config.update(
+				{
+					"clusterFile": self.store_cluster_file,
+					"datacenterId": self.store_datacenter_id,
+					"machineId": self.store_machine_id,
+					"transactionRetryDelay": cint(self.store_transaction_retry_delay),
+					"transactionRetryLimit": cint(self.store_transaction_retry_limit),
+					"transactionTimeout": cint(self.store_transaction_timeout),
+				}
+			)
+
+		elif self.store_type == "PostgreSql":
+			config.update(
+				{
+					"timeout": cint(self.store_timeout),
+					"useTls": cint(self.store_use_tls),
+					"allowInvalidCerts": cint(self.store_allow_invalid_certs),
+					"poolMaxConnections": cint(self.store_pool_max_connections),
+					"poolRecyclingMethod": self.store_pool_recycling_method,
+					"host": self.store_host,
+					"port": cint(self.store_port),
+					"database": self.store_database,
+					"authUsername": self.store_auth_username,
+					"authSecret": self.get_password("store_auth_secret") if self.store_auth_secret else None,
+					"options": self.store_options,
+				}
+			)
+
+		elif self.store_type == "MySql":
+			config.update(
+				{
+					"timeout": cint(self.store_timeout),
+					"useTls": cint(self.store_use_tls),
+					"allowInvalidCerts": cint(self.store_allow_invalid_certs),
+					"maxAllowedPacket": cint(self.store_max_allowed_packet),
+					"poolMaxConnections": cint(self.store_pool_max_connections),
+					"poolMinConnections": cint(self.store_pool_min_connections),
+					"host": self.store_host,
+					"port": cint(self.store_port),
+					"database": self.store_database,
+					"authUsername": self.store_auth_username,
+					"authSecret": self.get_password("store_auth_secret") if self.store_auth_secret else None,
+				}
+			)
+
+		return json.dumps(config, indent=4)
+
 	def autoname(self) -> None:
 		self.hostname = self.hostname.lower()
 		self.name = self.hostname
@@ -93,9 +115,6 @@ class MailCluster(Document):
 		self.validate_fallback_admin_password()
 		self.generate_fallback_admin_secret()
 		self.validate_base_url()
-		self.validate_stores()
-		self.validate_storage()
-		self.validate_listeners()
 		self.validate_traces()
 
 	def before_insert(self) -> None:
@@ -126,6 +145,8 @@ class MailCluster(Document):
 		self.ipv6_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "AAAA") or []])
 
 	def validate_fallback_admin_password(self) -> None:
+		"""Validates the fallback admin password."""
+
 		if self.fallback_admin_password:
 			if len(self.fallback_admin_password) < 16:
 				frappe.throw(_("Password must be at least 16 characters long."))
@@ -143,58 +164,6 @@ class MailCluster(Document):
 
 		if not self.base_url:
 			self.base_url = f"https://{self.hostname}/"
-
-	def validate_stores(self) -> None:
-		"""Validates the stores."""
-
-		store_ids = []
-		for store in self.stores:
-			if store.store_id in store_ids:
-				frappe.throw(
-					_("Row #{0}: Store ID {1} is duplicated.").format(store.idx, frappe.bold(store.store_id))
-				)
-
-			store_ids.append(store.store_id)
-
-			if store.purge_frequency:
-				is_valid_cron_expression(store.purge_frequency, raise_exception=True)
-
-	def validate_storage(self) -> None:
-		"""Validates the selected stores against the stores."""
-
-		stores = {store.store_id: store for store in self.stores}
-		storage_labels = get_storage_labels()
-
-		for key in STORAGE_OPTIONS.keys():
-			selected_storage = getattr(self, key)
-			if selected_storage not in stores:
-				frappe.throw(_("Store with Store ID {0} not found.").format(frappe.bold(selected_storage)))
-
-			store = stores[selected_storage]
-			if store.type not in STORAGE_OPTIONS[key]:
-				frappe.throw(
-					_("{0} has an invalid store type '{1}'. Allowed types are: {2}.").format(
-						frappe.bold(storage_labels[key]),
-						frappe.bold(store.type),
-						", ".join(STORAGE_OPTIONS[key]),
-					)
-				)
-
-		is_valid_cron_expression(self.account_purge_frequency, raise_exception=True)
-
-	def validate_listeners(self) -> None:
-		"""Validates the listeners."""
-
-		listener_ids = []
-		for listener in self.listeners:
-			if listener.listener_id in listener_ids:
-				frappe.throw(
-					_("Row #{0}: Listener ID {1} is duplicated.").format(
-						listener.idx, frappe.bold(listener.listener_id)
-					)
-				)
-
-			listener_ids.append(listener.listener_id)
 
 	def validate_traces(self) -> None:
 		"""Validates the traces."""
@@ -226,30 +195,18 @@ class MailCluster(Document):
 	def initialize_defaults(self) -> None:
 		"""Initializes the default values."""
 
-		self.initialize_default_stores()
-		self.initialize_default_listeners()
+		self.initialize_store()
 		self.initialize_default_traces()
 
-	def initialize_default_stores(self) -> None:
-		"""Initializes the default stores."""
+	def initialize_store(self) -> None:
+		"""Initializes the default store configuration."""
 
-		self.stores = []
-		for store in DEFAULT_STORES:
-			self.append("stores", store)
-
-		if len(self.stores) == 1:
-			primary_store = self.stores[0]
-
-			for field in STORAGE_OPTIONS.keys():
-				if primary_store.type in STORAGE_OPTIONS[field]:
-					setattr(self, field, primary_store.store_id)
-
-	def initialize_default_listeners(self) -> None:
-		"""Initializes the default listeners."""
-
-		self.listeners = []
-		for listener in DEFAULT_LISTENERS:
-			self.append("listeners", listener)
+		if not self.store_type:
+			self.store_type = "RocksDb"
+			self.store_path = "/var/lib/stalwart/rocksdb"
+			self.store_blob_size = 16834
+			self.store_buffer_size = 134217728
+			self.store_pool_workers = 0
 
 	def initialize_default_traces(self) -> None:
 		"""Initializes the default traces."""
