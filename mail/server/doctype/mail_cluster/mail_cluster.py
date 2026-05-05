@@ -16,17 +16,6 @@ from mail.jmap.connection import raise_for_status
 from mail.utils import generate_secret, hash_password
 from mail.utils.dns import get_dns_record
 
-DEFAULT_TRACES = [
-	{
-		"tracer_id": "log",
-		"type": "Log file",
-		"level": "Info",
-		"path": "/opt/stalwart/logs",
-		"prefix": "stalwart.log",
-		"rotate": "Daily",
-	}
-]
-
 
 class MailCluster(Document):
 	@property
@@ -115,7 +104,6 @@ class MailCluster(Document):
 		self.validate_fallback_admin_password()
 		self.generate_fallback_admin_secret()
 		self.validate_base_url()
-		self.validate_traces()
 
 	def before_insert(self) -> None:
 		self.generate_ssh_keypair()
@@ -165,20 +153,6 @@ class MailCluster(Document):
 		if not self.base_url:
 			self.base_url = f"https://{self.hostname}/"
 
-	def validate_traces(self) -> None:
-		"""Validates the traces."""
-
-		tracer_ids = []
-		for trace in self.traces:
-			if trace.tracer_id in tracer_ids:
-				frappe.throw(
-					_("Row #{0}: Tracer ID {1} is duplicated.").format(
-						trace.idx, frappe.bold(trace.tracer_id)
-					)
-				)
-
-			tracer_ids.append(trace.tracer_id)
-
 	def generate_ssh_keypair(self, save: bool = False) -> None:
 		"""Generates an SSH key pair for the cluster."""
 
@@ -196,7 +170,6 @@ class MailCluster(Document):
 		"""Initializes the default values."""
 
 		self.initialize_store()
-		self.initialize_default_traces()
 
 	def initialize_store(self) -> None:
 		"""Initializes the default store configuration."""
@@ -207,13 +180,6 @@ class MailCluster(Document):
 			self.store_blob_size = 16834
 			self.store_buffer_size = 134217728
 			self.store_pool_workers = 0
-
-	def initialize_default_traces(self) -> None:
-		"""Initializes the default traces."""
-
-		self.traces = []
-		for trace in DEFAULT_TRACES:
-			self.append("traces", trace)
 
 	@frappe.whitelist()
 	def get_fallback_admin_password(self) -> str:

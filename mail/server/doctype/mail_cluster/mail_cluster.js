@@ -49,34 +49,6 @@ const STORE_PRESET = {
 	},
 }
 
-const TRACES_PRESET = {
-	'Log file': {
-		tracer_id: 'log',
-		level: 'Info',
-		path: '/opt/stalwart/logs',
-		prefix: 'stalwart.log',
-		rotate: 'Daily',
-	},
-	Console: {
-		tracer_id: 'console',
-		level: 'Info',
-		buffer: true,
-	},
-	'Systemd Journal': {
-		tracer_id: 'journal',
-		level: 'Info',
-	},
-	'Open Telemetry': {
-		tracer_id: 'otel',
-		level: 'Info',
-		transport: 'HTTP',
-		timeout: 10,
-		throttle: 1000,
-		enable_log_exporter: true,
-		enable_span_exporter: true,
-	},
-}
-
 frappe.ui.form.on('Mail Cluster', {
 	setup(frm) {
 		frm.trigger('initialize_defaults')
@@ -157,22 +129,5 @@ frappe.ui.form.on('Mail Cluster', {
 				}
 			},
 		})
-	},
-})
-
-frappe.ui.form.on('Mail Cluster Trace', {
-	type(frm, cdt, cdn) {
-		const row = locals[cdt][cdn]
-
-		if (row.type) {
-			const defaults = TRACES_PRESET[row.type]
-			if (defaults) {
-				Object.entries(defaults).forEach(([key, value]) =>
-					frappe.model.set_value(cdt, cdn, key, value),
-				)
-			}
-		}
-
-		refresh_field('traces')
 	},
 })

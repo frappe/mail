@@ -56,20 +56,6 @@
   "store_auth_username",
   "store_auth_secret",
   "store_options",
-  "log_metrics_tab",
-  "section_break_rsr9",
-  "traces",
-  "opentelemetry_push_metrics_section",
-  "metrics_open_telemetry_transport",
-  "column_break_lkbk",
-  "metrics_open_telemetry_endpoint",
-  "metrics_open_telemetry_timeout",
-  "metrics_open_telemetry_interval",
-  "prometheus_pull_metrics_section",
-  "metrics_prometheus_enable",
-  "column_break_ozrd",
-  "metrics_prometheus_auth_username",
-  "metrics_prometheus_auth_secret",
   "config_tab",
   "config"
  ],
@@ -182,98 +168,6 @@
    "reqd": 1,
    "set_only_once": 1,
    "unique": 1
-  },
-  {
-   "fieldname": "log_metrics_tab",
-   "fieldtype": "Tab Break",
-   "label": "Log & Metrics"
-  },
-  {
-   "fieldname": "prometheus_pull_metrics_section",
-   "fieldtype": "Section Break",
-   "label": "Prometheus Pull Metrics"
-  },
-  {
-   "default": "0",
-   "description": "Enable the Prometheus metrics endpoint.",
-   "fieldname": "metrics_prometheus_enable",
-   "fieldtype": "Check",
-   "label": "Enable"
-  },
-  {
-   "fieldname": "column_break_ozrd",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "frappe",
-   "description": "The Prometheus endpoint's username for Basic authentication.",
-   "fieldname": "metrics_prometheus_auth_username",
-   "fieldtype": "Data",
-   "label": "Username",
-   "mandatory_depends_on": "eval: doc.metrics_prometheus_enable"
-  },
-  {
-   "description": "The Prometheus endpoint's secret for Basic authentication.",
-   "fieldname": "metrics_prometheus_auth_secret",
-   "fieldtype": "Password",
-   "label": "Secret",
-   "mandatory_depends_on": "eval: doc.metrics_prometheus_enable"
-  },
-  {
-   "fieldname": "opentelemetry_push_metrics_section",
-   "fieldtype": "Section Break",
-   "label": "OpenTelemetry Push Metrics"
-  },
-  {
-   "default": "Disabled",
-   "description": "The transport protocol for Open Telemetry.",
-   "fieldname": "metrics_open_telemetry_transport",
-   "fieldtype": "Select",
-   "label": "Transport",
-   "options": "Disabled\nHTTP\ngRPC",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_lkbk",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)",
-   "description": "The endpoint for Open Telemetry.",
-   "fieldname": "metrics_open_telemetry_endpoint",
-   "fieldtype": "Data",
-   "label": "Endpoint",
-   "mandatory_depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)",
-   "placeholder": "https://tracing.example.com/v1/otel"
-  },
-  {
-   "default": "10",
-   "depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)",
-   "description": "Maximum amount of time that Stalwart will wait for a response from the OpenTelemetry endpoint.",
-   "fieldname": "metrics_open_telemetry_timeout",
-   "fieldtype": "Int",
-   "label": "Timeout (Seconds)",
-   "mandatory_depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)"
-  },
-  {
-   "default": "30",
-   "depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)",
-   "description": "The minimum amount of time that must pass between each push request to the OpenTelemetry endpoint.",
-   "fieldname": "metrics_open_telemetry_interval",
-   "fieldtype": "Int",
-   "label": "Push Interval (Seconds)",
-   "mandatory_depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)"
-  },
-  {
-   "fieldname": "section_break_rsr9",
-   "fieldtype": "Section Break"
-  },
-  {
-   "description": "Manage logging and tracing methods.",
-   "fieldname": "traces",
-   "fieldtype": "Table",
-   "label": "Traces",
-   "options": "Mail Cluster Trace"
   },
   {
    "fieldname": "ssh_tab",
@@ -556,7 +450,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2026-05-05 14:39:04.316477",
+ "modified": "2026-05-05 15:23:51.010624",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster",
