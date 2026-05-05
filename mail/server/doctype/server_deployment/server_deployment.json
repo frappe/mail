@@ -19,8 +19,7 @@
   "started_after",
   "duration",
   "section_break_gicu",
-  "config",
-  "config_checksum",
+  "column_break_slvv",
   "column_break_qjvy",
   "install_redis",
   "section_break_mndp",
@@ -115,26 +114,8 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "config",
-   "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "Config",
-   "options": "Server Config",
-   "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "column_break_qjvy",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "config_checksum",
-   "fieldtype": "Small Text",
-   "hidden": 1,
-   "label": "Config Checksum",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "collapsible": 1,
@@ -201,6 +182,10 @@
    "label": "Services",
    "options": "Server Deployment Service",
    "set_only_once": 1
+  },
+  {
+   "fieldname": "column_break_slvv",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -212,7 +197,7 @@
    "link_fieldname": "deployment"
   }
  ],
- "modified": "2025-11-17 11:29:27.009137",
+ "modified": "2026-05-05 16:41:28.623245",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Server Deployment",
