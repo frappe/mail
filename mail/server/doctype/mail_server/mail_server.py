@@ -6,12 +6,12 @@ import io
 import json
 import os
 import socket
-from typing import TYPE_CHECKING
 
 import frappe
 import paramiko
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint
 
 from mail.utils.dns import get_dns_record
 
@@ -30,6 +30,7 @@ class MailServer(Document):
 	def validate(self) -> None:
 		self.validate_hostname()
 		self.validate_cluster()
+		self.set_bootstrap_ndjson()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
@@ -49,6 +50,60 @@ class MailServer(Document):
 
 		if not frappe.db.get_value("Mail Cluster", self.cluster, "enabled"):
 			frappe.throw(_("Mail Cluster {0} is disabled.").format(frappe.bold(self.cluster)))
+
+	def set_bootstrap_ndjson(self) -> None:
+		"""Sets the bootstrap NDJSON for the server."""
+
+		if not self.bootstrap_ndjson:
+			self.bootstrap_ndjson = self._generate_bootstrap_ndjson()
+
+	@frappe.whitelist()
+	def regenerate_bootstrap_ndjson(self) -> None:
+		"""Regenerates the bootstrap NDJSON for the server."""
+
+		frappe.only_for("System Manager")
+		self.bootstrap_ndjson = self._generate_bootstrap_ndjson()
+		self._db_set(bootstrap_ndjson=self.bootstrap_ndjson, notify=True)
+		frappe.msgprint(_("Bootstrap NDJSON regenerated."), indicator="green", alert=True)
+
+	def _generate_bootstrap_ndjson(self) -> str:
+		"""Generates the bootstrap NDJSON for the server."""
+
+		cluster = frappe.get_doc("Mail Cluster", self.cluster)
+
+		operations = [
+			{
+				"@type": "update",
+				"object": "Bootstrap",
+				"id": "singleton",
+				"value": {
+					# required
+					"serverHostname": self.hostname,
+					"defaultDomain": cluster.default_domain,
+					# optional
+					"requestTlsCertificate": True,
+					"generateDkimKeys": True,
+					"dataStore": json.loads(cluster.config),
+					"blobStore": {"@type": "Default"},
+					"searchStore": {"@type": "Default"},
+					"inMemoryStore": {"@type": "Default"},
+					"directory": {"@type": "Internal"},
+					"tracer": {
+						"@type": "Log",
+						"ansi": True,
+						"enable": True,
+						"eventsPolicy": "exclude",
+						"level": "info",
+						"prefix": "stalwart",
+						"rotate": "daily",
+						"path": "/etc/stalwart/logs",
+					},
+					"dnsServer": {"@type": "Manual"},
+				},
+			}
+		]
+
+		return "\n".join([json.dumps(op) for op in operations])
 
 	@frappe.whitelist()
 	def verify_ssh_connection(self) -> None:
@@ -151,26 +206,44 @@ class MailServer(Document):
 		self._install_stalwart()
 		frappe.msgprint(_("Install of Stalwart initiated."), indicator="green", alert=True)
 
-	def _install_stalwart(self, config: str | None = None) -> None:
+	def _install_stalwart(self) -> None:
 		"""Installs Stalwart on the Mail Server."""
-
-		config = config or frappe.db.get_value("Server Config", {"server": self.name})
-		if not config:
-			frappe.throw(_("Please generate the Server Config before installing Stalwart."))
-
-		install_redis = 0
-		cluster = frappe.get_doc("Mail Cluster", self.cluster)
-		for store in cluster.stores:
-			if store.type == "Redis/Memcached" and "redis://redis:6379" in store.urls:
-				install_redis = 1
-				break
 
 		deployment = frappe.new_doc("Server Deployment")
 		deployment.status = "Pending"
 		deployment.server = self.name
-		deployment.config = config
-		deployment.install_redis = install_redis
+		deployment.max_retries = 0
 		deployment.insert(ignore_permissions=True)
+
+	def _get_stalwart_env(
+		self,
+		recovery_mode: bool = False,
+		role: str | None = None,
+		push_shard: str | None = None,
+		as_dict: bool = False,
+	) -> str | dict:
+		"""Returns the environment variables for Stalwart."""
+
+		cluster = frappe.get_doc("Mail Cluster", self.cluster)
+		env = {
+			"STALWART_HOSTNAME": self.hostname,
+			"STALWART_RECOVERY_MODE": cint(recovery_mode),
+			"STALWART_RECOVERY_MODE_PORT": cint(self.recovery_http_port),
+			"STALWART_RECOVERY_MODE_LOG_LEVEL": "debug",
+			"STALWART_RECOVERY_ADMIN": f"{cluster.recovery_admin_user}:{cluster.get_password('recovery_admin_password')}",
+		}
+
+		if cluster.base_url:
+			env["STALWART_PUBLIC_URL"] = cluster.base_url
+		if role:
+			env["STALWART_ROLE"] = role
+		if push_shard:
+			env["STALWART_PUSH_SHARD"] = push_shard
+
+		if as_dict:
+			return env
+
+		return "\n".join([f"{key}={value}" for key, value in env.items()])
 
 	def _db_set(
 		self,

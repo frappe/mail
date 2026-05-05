@@ -9,10 +9,10 @@
   "enabled",
   "column_break_fkha",
   "hostname",
+  "default_domain",
   "authentication_section",
-  "fallback_admin_user",
-  "fallback_admin_password",
-  "fallback_admin_secret",
+  "recovery_admin_user",
+  "recovery_admin_password",
   "column_break_9jti",
   "base_url",
   "api_key",
@@ -132,29 +132,6 @@
   {
    "fieldname": "section_break_b7jt",
    "fieldtype": "Section Break"
-  },
-  {
-   "default": "frappe",
-   "description": "Username for administrative access to the cluster.",
-   "fieldname": "fallback_admin_user",
-   "fieldtype": "Data",
-   "label": "Username",
-   "reqd": 1
-  },
-  {
-   "description": "Password for administrative access to the cluster.",
-   "fieldname": "fallback_admin_password",
-   "fieldtype": "Password",
-   "label": "Password",
-   "no_copy": 1
-  },
-  {
-   "fieldname": "fallback_admin_secret",
-   "fieldtype": "Small Text",
-   "hidden": 1,
-   "label": "Password Secret",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "description": "FQDN of the proxy or load balancer forwarding requests to mail servers.",
@@ -439,6 +416,30 @@
    "fieldname": "store_tab",
    "fieldtype": "Tab Break",
    "label": "Store"
+  },
+  {
+   "default": "frappe",
+   "description": "Username for administrative access to the cluster.",
+   "fieldname": "recovery_admin_user",
+   "fieldtype": "Data",
+   "label": "Username",
+   "reqd": 1
+  },
+  {
+   "description": "Password for administrative access to the cluster.",
+   "fieldname": "recovery_admin_password",
+   "fieldtype": "Password",
+   "label": "Password",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "default_domain",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Default Domain",
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
@@ -450,7 +451,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2026-05-05 15:23:51.010624",
+ "modified": "2026-05-07 14:53:24.555320",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster",

@@ -13,7 +13,7 @@ from frappe.utils import cint, random_string
 
 from mail.backend import MailBackendAPI, Principal
 from mail.jmap.connection import raise_for_status
-from mail.utils import generate_secret, hash_password
+from mail.utils import generate_secret
 from mail.utils.dns import get_dns_record
 
 
@@ -101,8 +101,8 @@ class MailCluster(Document):
 	def validate(self) -> None:
 		self.validate_enabled()
 		self.validate_hostname()
-		self.validate_fallback_admin_password()
-		self.generate_fallback_admin_secret()
+		self.validate_default_domain()
+		self.validate_recovery_admin_password()
 		self.validate_base_url()
 
 	def before_insert(self) -> None:
@@ -132,20 +132,20 @@ class MailCluster(Document):
 		self.ipv4_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "A") or []])
 		self.ipv6_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "AAAA") or []])
 
-	def validate_fallback_admin_password(self) -> None:
-		"""Validates the fallback admin password."""
+	def validate_default_domain(self) -> None:
+		"""Validates the default domain of the cluster."""
 
-		if self.fallback_admin_password:
-			if len(self.fallback_admin_password) < 16:
+		if not self.default_domain:
+			self.default_domain = self.hostname
+
+	def validate_recovery_admin_password(self) -> None:
+		"""Validates the recovery admin password."""
+
+		if self.recovery_admin_password:
+			if len(self.recovery_admin_password) < 16:
 				frappe.throw(_("Password must be at least 16 characters long."))
 		else:
-			self.fallback_admin_password = random_string(length=20)
-
-	def generate_fallback_admin_secret(self) -> None:
-		"""Generates the fallback admin secret."""
-
-		if self.has_value_changed("fallback_admin_password"):
-			self.fallback_admin_secret = hash_password(self.get_password("fallback_admin_password"))
+			self.recovery_admin_password = random_string(length=20)
 
 	def validate_base_url(self) -> None:
 		"""Validates the base URL of the cluster."""
@@ -176,17 +176,17 @@ class MailCluster(Document):
 
 		if not self.store_type:
 			self.store_type = "RocksDb"
-			self.store_path = "/var/lib/stalwart/rocksdb"
+			self.store_path = "/etc/stalwart/data/rocksdb"
 			self.store_blob_size = 16834
 			self.store_buffer_size = 134217728
-			self.store_pool_workers = 0
+			self.store_pool_workers = 1
 
 	@frappe.whitelist()
-	def get_fallback_admin_password(self) -> str:
+	def get_recovery_admin_password(self) -> str:
 		"""Returns the admin password of the cluster."""
 
 		frappe.only_for("System Manager")
-		return self.get_password("fallback_admin_password")
+		return self.get_password("recovery_admin_password")
 
 	@frappe.whitelist()
 	def generate_api_key(self) -> None:
@@ -209,8 +209,8 @@ class MailCluster(Document):
 		)
 		backend_api = MailBackendAPI(
 			self.base_url,
-			username=self.fallback_admin_user,
-			password=self.get_password("fallback_admin_password"),
+			username=self.recovery_admin_user,
+			password=self.get_password("recovery_admin_password"),
 		)
 		response = backend_api.request(method="POST", endpoint="/api/principal", json=principal.__dict__)
 		raise_for_status(response)

@@ -3,14 +3,14 @@
 
 const STORE_PRESET = {
 	RocksDb: {
-		store_path: '/var/lib/stalwart/rocksdb',
+		store_path: '/etc/stalwart/data',
 		store_blob_size: 16834,
 		store_buffer_size: 134217728,
-		store_pool_workers: 0,
+		store_pool_workers: 1,
 	},
 	Sqlite: {
-		store_path: '/var/lib/stalwart/sqlite',
-		store_pool_workers: 0,
+		store_path: '/etc/stalwart/data',
+		store_pool_workers: 1,
 		store_pool_max_connections: 10,
 	},
 	FoundationDb: {
@@ -86,7 +86,7 @@ frappe.ui.form.on('Mail Cluster', {
 
 		if (!frappe.user_roles.includes('System Manager')) return
 
-		if (frm.doc.fallback_admin_password) {
+		if (frm.doc.recovery_admin_password) {
 			frm.add_custom_button(__('Show Password'), () => {
 				frm.trigger('show_password')
 			})
@@ -106,7 +106,7 @@ frappe.ui.form.on('Mail Cluster', {
 	show_password(frm) {
 		frappe.call({
 			doc: frm.doc,
-			method: 'get_fallback_admin_password',
+			method: 'get_recovery_admin_password',
 			freeze: true,
 			freeze_message: __('Getting Password...'),
 			callback: (r) => {

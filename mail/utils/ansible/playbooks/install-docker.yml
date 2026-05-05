@@ -2,7 +2,7 @@
 - name: Install Docker
   hosts: all
   become: true
-  gather_facts: yes
+  gather_facts: true
 
   vars:
     docker_arch_map:
@@ -45,6 +45,7 @@
           - docker-ce
           - docker-ce-cli
           - containerd.io
+          - docker-compose-plugin
         state: present
         update_cache: true
       when: ansible_os_family == "Debian"
@@ -76,6 +77,7 @@
           - docker-ce
           - docker-ce-cli
           - containerd.io
+          - docker-compose-plugin
         state: present
       when: ansible_os_family == "RedHat"
 
@@ -103,6 +105,7 @@
           - docker-ce
           - docker-ce-cli
           - containerd.io
+          - docker-compose-plugin
         state: present
       when: ansible_distribution == "Fedora"
 
@@ -120,7 +123,9 @@
 
     - name: Install Docker (Arch)
       pacman:
-        name: docker
+        name:
+          - docker
+          - docker-compose
         state: present
       when: ansible_os_family == "Archlinux"
 
@@ -133,16 +138,10 @@
         enabled: true
         state: started
 
-    - name: Install Docker Compose
-      get_url:
-        url: "https://github.com/docker/compose/releases/latest/download/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
-        dest: /usr/local/bin/docker-compose
-        mode: "0755"
-
     - name: Verify Docker installation
       command: docker --version
       changed_when: false
 
-    - name: Verify `docker-compose` installation
-      command: docker-compose --version
+    - name: Verify `docker compose` installation
+      command: docker compose version
       changed_when: false

@@ -11,7 +11,7 @@
   "column_break_0mtp",
   "cluster",
   "hostname",
-  "http_port",
+  "recovery_http_port",
   "network_settings_section",
   "ipv4_addresses",
   "column_break_3m4p",
@@ -24,7 +24,10 @@
   "ssh_user",
   "ssh_port",
   "ssh_key_section",
-  "ssh_public_key"
+  "ssh_public_key",
+  "bootstrap_tab",
+  "bootstrap_ndjson",
+  "regenerate_bootstrap_ndjson"
  ],
  "fields": [
   {
@@ -156,10 +159,25 @@
    "read_only": 1
   },
   {
+   "fieldname": "bootstrap_tab",
+   "fieldtype": "Tab Break",
+   "label": "Bootstrap"
+  },
+  {
+   "fieldname": "bootstrap_ndjson",
+   "fieldtype": "Code",
+   "label": "bootstrap.ndjson"
+  },
+  {
+   "fieldname": "regenerate_bootstrap_ndjson",
+   "fieldtype": "Button",
+   "label": "Regenerate"
+  },
+  {
    "default": "8080",
-   "fieldname": "http_port",
+   "fieldname": "recovery_http_port",
    "fieldtype": "Int",
-   "label": "HTTP Port",
+   "label": "Recovery HTTP Port",
    "non_negative": 1,
    "reqd": 1
   }
@@ -183,7 +201,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2026-05-05 16:13:52.084056",
+ "modified": "2026-05-07 14:39:23.127998",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Server",

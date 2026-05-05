@@ -10,6 +10,15 @@ frappe.ui.form.on('Mail Server', {
 		frm.trigger('add_actions')
 	},
 
+	regenerate_bootstrap_ndjson(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'regenerate_bootstrap_ndjson',
+			freeze: true,
+			freeze_message: __('Regenerating bootstrap.ndjson...'),
+		})
+	},
+
 	set_queries(frm) {
 		frm.set_query('cluster', () => ({
 			filters: {
