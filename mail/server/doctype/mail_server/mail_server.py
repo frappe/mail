@@ -12,16 +12,8 @@ import frappe
 import paramiko
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint
 
-from mail.mail.doctype.mail_settings.mail_settings import (
-	validate_mail_settings,
-)
-from mail.server.doctype.dns_record.dns_record import create_or_update_dns_record
-from mail.server.doctype.mail_cluster.mail_cluster import create_or_update_spf_dns_record_for_cluster
 from mail.server.doctype.server_config.server_config import create_server_config
-from mail.utils import get_mail_config, get_spf_host_for_cluster
-from mail.utils.cache import get_root_domain_name
 from mail.utils.dns import get_dns_record
 
 if TYPE_CHECKING:
@@ -40,14 +32,9 @@ class MailServer(Document):
 		self.name = self.hostname
 
 	def validate(self) -> None:
-		if self.is_new():
-			validate_mail_settings()
-
 		self.validate_hostname()
 		self.validate_cluster()
 		self.validate_base_url()
-		self.validate_outbound_only()
-		self.validate_priority()
 		self.validate_cluster_node_id()
 		self.validate_acme_providers()
 		self.validate_tls_certificates()
@@ -56,18 +43,9 @@ class MailServer(Document):
 	def after_insert(self) -> None:
 		self.generate_config()
 
-	def on_update(self) -> None:
-		if self.has_value_changed("enabled"):
-			create_or_update_spf_dns_record_for_cluster(self.cluster)
-			self.create_or_delete_spf_ehlo_dns_record()
-
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Mail Server."))
-
-		self.db_set("enabled", 0)
-		create_or_update_spf_dns_record_for_cluster(self.cluster)
-		self.create_or_delete_spf_ehlo_dns_record()
 
 	def validate_hostname(self) -> None:
 		"""Validates the server and fetches the IP addresses."""
@@ -89,31 +67,6 @@ class MailServer(Document):
 
 		if not self.base_url:
 			self.base_url = f"https://{self.hostname}/"
-
-	def validate_outbound_only(self) -> None:
-		"""Validates the outbound only setting."""
-
-		if self.outbound_only:
-			self.include_in_mx_records = 0
-
-	def validate_priority(self) -> None:
-		"""Validates the priority of the server."""
-
-		if not self.include_in_mx_records:
-			self.priority = 0
-		else:
-			if not self.priority or self.priority < 1:
-				frappe.throw(_("Priority must be greater than 0."))
-
-			if frappe.db.exists(
-				"Mail Server",
-				{"enabled": 1, "cluster": self.cluster, "priority": self.priority, "name": ["!=", self.name]},
-			):
-				frappe.throw(
-					_("Priority {0} is already assigned to another Mail Server.").format(
-						frappe.bold(self.priority)
-					)
-				)
 
 	def validate_cluster_node_id(self) -> None:
 		"""Validates the cluster node ID."""
@@ -203,29 +156,6 @@ class MailServer(Document):
 		"""Generates the Server Config."""
 
 		return create_server_config(self.name)
-
-	def create_or_delete_spf_ehlo_dns_record(self) -> None:
-		"""Creates or deletes the SPF EHLO DNS Record."""
-
-		root_domain_name = get_root_domain_name()
-
-		if not self.hostname.endswith(f".{root_domain_name}"):
-			return
-
-		host = self.hostname[: -len(root_domain_name) - 1]
-		spf_host = get_spf_host_for_cluster(self.cluster)
-		default_ttl = cint(get_mail_config("default_dns_ttl"))
-		if self.enabled:
-			create_or_update_dns_record(
-				host=host,
-				type="TXT",
-				value=f"v=spf1 include:{spf_host}.{root_domain_name} ~all",
-				ttl=default_ttl,
-				category="Server Record",
-			)
-		else:
-			if spf_ehlo_dns_record := frappe.db.exists("DNS Record", {"host": host, "type": "TXT"}):
-				frappe.delete_doc("DNS Record", spf_ehlo_dns_record, ignore_permissions=True)
 
 	@frappe.whitelist()
 	def verify_ssh_connection(self) -> None:

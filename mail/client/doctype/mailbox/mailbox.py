@@ -132,6 +132,7 @@ def add_mailbox(
 
 	title = _("Mailbox Creation Error")
 	if response.get("created"):
+		service.invalidate_cache(account, key="mailboxes")
 		return response["created"][creation_id]["id"]
 	elif response.get("notCreated"):
 		frappe.throw(_(response["notCreated"][creation_id]["description"]), title=title)
@@ -191,6 +192,8 @@ def update_mailbox(
 			frappe.throw(_(response["notUpdated"][id]["description"]), title=title)
 		else:
 			frappe.throw(_(response["description"]), title=title)
+
+	service.invalidate_cache(account, key="mailboxes")
 
 
 @frappe.whitelist()

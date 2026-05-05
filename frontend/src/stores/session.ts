@@ -11,9 +11,8 @@ export const sessionStore = defineStore('mail-session', () => {
 	const sessionUser = () => {
 		const cookies = new URLSearchParams(document.cookie.split('; ').join('&'))
 		let _sessionUser = cookies.get('user_id')
-		if (_sessionUser === 'Guest') {
-			_sessionUser = null
-		}
+		if (_sessionUser === 'Guest') _sessionUser = null
+
 		return _sessionUser
 	}
 
@@ -52,5 +51,5 @@ export const sessionStore = defineStore('mail-session', () => {
 		onSuccess: (data) => (document.querySelector("link[rel='icon']").href = data.favicon),
 	})
 
-	return { user, isLoggedIn, login, logout, branding }
+	return { isLoggedIn, login, logout, branding }
 })

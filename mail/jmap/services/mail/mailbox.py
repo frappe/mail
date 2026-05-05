@@ -143,3 +143,13 @@ class MailboxService(MailService):
 
 		if raise_exception:
 			raise ValueError(f"No mailbox found with ID '{id}'")
+
+	def get_mailbox_id_by_name(self, name: str, raise_exception: bool = False) -> str | None:
+		"""Returns the mailbox ID for the given name."""
+
+		for mailbox in self.mailboxes:
+			if name and mailbox["name"] == name:
+				return mailbox["id"]
+
+		if raise_exception:
+			raise ValueError(f"No mailbox found with name '{name}'")

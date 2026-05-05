@@ -1,7 +1,7 @@
 <template>
 	<DashboardLayout
 		v-if="addressBook?.doc"
-		:breadcrumbs="breadcrumbs"
+		:breadcrumbs
 		:badge-label="addressBook.doc?.default ? __('Default') : ''"
 		badge-theme="blue"
 	>
@@ -107,6 +107,7 @@ import {
 	ListView,
 	createDocumentResource,
 	createResource,
+	usePageMeta,
 } from 'frappe-ui'
 
 import { extractNameFromEmail, raiseToast } from '@/utils'
@@ -192,9 +193,13 @@ const loadMoreContacts = useDebounceFn((e) => {
 	}
 }, 500)
 
+const addressBookDisplay = computed(() => addressBook.doc?._name || addressBookName)
+
+usePageMeta(() => ({ title: addressBookDisplay.value }))
+
 const breadcrumbs = computed(() => [
 	{ label: __('Address Books'), route: '/address-books' },
-	{ label: addressBook.doc?._name || addressBookName },
+	{ label: addressBookDisplay.value },
 ])
 
 const deleteAddressBook = createResource({

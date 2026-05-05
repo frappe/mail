@@ -8,6 +8,8 @@ from frappe import _
 from frappe.utils import format_datetime, random_string
 
 from mail.api.contacts import create_contacts_if_not_exists
+from mail.api.sieve import update_sieve_script_for_mailbox
+from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
 	empty_mailbox,
@@ -26,6 +28,7 @@ from mail.client.doctype.mailbox.mailbox import add_mailbox, delete_mailboxes
 from mail.client.doctype.mailbox_settings.mailbox_settings import set_mailbox_settings
 from mail.jmap import get_email_service, get_mailbox_id_by_role
 from mail.utils import convert_html_to_text, get_mail_config
+from mail.utils.cache import get_user_emails
 from mail.utils.user import get_account_emails, is_jmap_configured
 from mail.utils.validation import has_permission_for_user
 
@@ -647,6 +650,7 @@ def create_mailbox(
 	icon: str | None = None,
 	color: str | None = None,
 	disable_push_notification: bool = False,
+	automation_rules: dict | None = None,
 ) -> str:
 	"""Creates a new mailbox and initializes its settings for the given account."""
 
@@ -660,17 +664,21 @@ def create_mailbox(
 		disable_push_notification=disable_push_notification,
 	)
 
+	update_sieve_script_for_mailbox(name, automation_rules)
+
 
 @frappe.whitelist()
 def update_mailbox(
 	account: str,
 	id: str,
-	name: str | None = None,
+	name: str,
+	old_name: str,
 	role: str | None = None,
 	parent: str | None = None,
 	icon: str | None = None,
 	color: str | None = None,
 	disable_push_notification: bool = False,
+	automation_rules: dict | None = None,
 ) -> None:
 	"""Updates Mailbox Settings for the given mailbox ID."""
 
@@ -685,10 +693,34 @@ def update_mailbox(
 		disable_push_notification=disable_push_notification,
 	)
 
+	update_sieve_script_for_mailbox(name, automation_rules, old_name)
 
-@frappe.whitelist()
-def delete_mailbox(account: str, id: str) -> None:
+
+def delete_mailbox(account: str, id: str, name: str) -> None:
 	"""Deletes the mailbox with the given mailbox ID, followed by its settings."""
 
 	delete_mailboxes(account, [id])
+	update_sieve_script_for_mailbox(name)
 	frappe.db.delete("Mailbox Settings", {"account": account, "mailbox_id": id})
+
+
+@frappe.whitelist()
+def get_blocked_addresses() -> list[dict]:
+	"""Returns the list of blocked email addresses for the current user."""
+
+	return get_blocked_email_addresses(frappe.session.user)
+
+
+@frappe.whitelist()
+def block_email_address(email: str) -> dict:
+	"""Blocks an email address for the current user."""
+
+	doc = frappe.get_doc({"doctype": "Blocked Email Address", "user": frappe.session.user, "email": email})
+	doc.insert()
+
+
+@frappe.whitelist()
+def unblock_email_addresses(emails: list[str]) -> None:
+	"""Unblocks email addresses by deleting Blocked Email Address records."""
+
+	frappe.db.delete("Blocked Email Address", {"user": frappe.session.user, "email": ["in", emails]})

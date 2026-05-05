@@ -2,21 +2,17 @@
 # For license information, please see license.txt
 
 import base64
-import hashlib
 import io
-import json
 
 import frappe
 import paramiko
 from frappe import _
 from frappe.model.document import Document
-from frappe.query_builder import Order
-from frappe.utils import cint, random_string
+from frappe.utils import random_string
 
 from mail.backend import MailBackendAPI, Principal
 from mail.jmap.connection import raise_for_status
-from mail.server.doctype.dns_record.dns_record import create_or_update_dns_record
-from mail.utils import generate_secret, get_mail_config, get_spf_host_for_cluster, hash_password
+from mail.utils import generate_secret, hash_password
 from mail.utils.dns import get_dns_record
 from mail.utils.validation import is_valid_cron_expression
 
@@ -93,9 +89,7 @@ class MailCluster(Document):
 
 	def validate(self) -> None:
 		self.validate_enabled()
-		self.validate_public()
 		self.validate_hostname()
-		self.validate_spf_identifier()
 		self.validate_fallback_admin_password()
 		self.generate_fallback_admin_secret()
 		self.validate_base_url()
@@ -107,16 +101,9 @@ class MailCluster(Document):
 	def before_insert(self) -> None:
 		self.generate_ssh_keypair()
 
-	def on_update(self) -> None:
-		if self.has_value_changed("enabled"):
-			create_or_update_spf_dns_record_for_cluster(self.name)
-
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Mail Cluster."))
-
-		self.db_set("enabled", 0)
-		create_or_update_spf_dns_record_for_cluster(self.name)
 
 	def validate_enabled(self) -> None:
 		"""Validates the enabled status of the cluster."""
@@ -129,18 +116,6 @@ class MailCluster(Document):
 				_("Mail Server {0} is enabled. Please disable it first.").format(frappe.bold(server))
 			)
 
-	def validate_public(self) -> None:
-		"""Validates the public status of the cluster."""
-
-		if not self.public and not bool(
-			frappe.db.count("Mail Cluster", {"enabled": 1, "public": 1, "name": ["!=", self.name]})
-		):
-			self.public = 1
-			frappe.msgprint(
-				_("At least one public cluster must be enabled. This cluster has been made public."),
-				alert=True,
-			)
-
 	def validate_hostname(self) -> None:
 		"""Validates the cluster and fetches the IP addresses."""
 
@@ -149,14 +124,6 @@ class MailCluster(Document):
 
 		self.ipv4_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "A") or []])
 		self.ipv6_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "AAAA") or []])
-
-	def validate_spf_identifier(self) -> None:
-		"""Validates the SPF identifier of the cluster."""
-
-		if not self.spf_identifier:
-			self.spf_identifier = (
-				base64.b32encode(hashlib.sha256(self.hostname.encode()).digest()).decode("ascii").lower()[:10]
-			)
 
 	def validate_fallback_admin_password(self) -> None:
 		if self.fallback_admin_password:
@@ -342,38 +309,3 @@ def get_storage_labels() -> dict:
 		"storage_fts": _("Full Text Index Storage"),
 		"storage_lookup": _("In-Memory Storage"),
 	}
-
-
-def create_or_update_spf_dns_record_for_cluster(cluster: str) -> None:
-	"""Creates or updates the SPF DNS record for the cluster."""
-
-	spf_host = get_spf_host_for_cluster(cluster)
-	default_ttl = cint(get_mail_config("default_dns_ttl"))
-
-	SERVER = frappe.qb.DocType("Mail Server")
-	CLUSTER = frappe.qb.DocType("Mail Cluster")
-	outbound_servers = (
-		frappe.qb.from_(CLUSTER)
-		.join(SERVER)
-		.on(CLUSTER.name == SERVER.cluster)
-		.select(SERVER.name)
-		.where(
-			(CLUSTER.enabled == 1)
-			& (CLUSTER.name == cluster)
-			& (SERVER.enabled == 1)
-			& (SERVER.include_in_spf_record == 1)
-		)
-		.orderby(SERVER.name, order=Order.asc)
-	).run(pluck="name")
-
-	if outbound_servers:
-		outbound_servers = [f"a:{outbound_server}" for outbound_server in outbound_servers]
-		create_or_update_dns_record(
-			host=spf_host,
-			type="TXT",
-			value=f"v=spf1 {' '.join(outbound_servers)} ~all",
-			ttl=default_ttl,
-			category="Server Record",
-		)
-	elif spf_dns_record := frappe.db.exists("DNS Record", {"host": spf_host, "type": "TXT"}):
-		frappe.delete_doc("DNS Record", spf_dns_record, ignore_permissions=True)

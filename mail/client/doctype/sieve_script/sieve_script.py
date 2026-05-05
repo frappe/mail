@@ -104,6 +104,9 @@ class SieveScript(Document):
 
 		has_permission_for_user(parse_account(account)[0])
 
+		if name == "frappe_mail_automation" and not frappe.flags.allow_automation_script_creation:
+			frappe.throw(_("Not allowed to create automation script."))
+
 		creation_id = str(uuid7())
 		service = get_sieve_script_service(account)
 		sieve_script = {

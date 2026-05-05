@@ -9,7 +9,6 @@
   "enabled",
   "column_break_fkha",
   "hostname",
-  "spf_identifier",
   "authentication_section",
   "fallback_admin_user",
   "fallback_admin_password",
@@ -790,15 +789,6 @@
    "label": "SSH Key"
   },
   {
-   "description": "Unique hash for the SPF record associated with this cluster.",
-   "fieldname": "spf_identifier",
-   "fieldtype": "Data",
-   "in_standard_filter": 1,
-   "label": "SPF Identifier",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "parsing_limits_section",
    "fieldtype": "Section Break",
    "label": "Parsing Limits"
@@ -899,7 +889,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2026-04-12 23:58:33.348728",
+ "modified": "2026-04-27 09:50:02.241468",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster",

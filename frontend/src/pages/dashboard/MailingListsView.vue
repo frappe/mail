@@ -53,11 +53,14 @@ import {
 	ListSelectBanner,
 	ListView,
 	createResource,
+	usePageMeta,
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddMailingListModal from '@/components/Modals/AddMailingListModal.vue'
+
+usePageMeta(() => ({ title: __('Mailing Lists') }))
 
 const listView = useTemplateRef('listView')
 

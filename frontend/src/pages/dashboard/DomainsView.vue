@@ -66,10 +66,13 @@ import {
 	ListRows,
 	ListView,
 	createResource,
+	usePageMeta,
 } from 'frappe-ui'
 
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddDomainModal from '@/components/Modals/AddDomainModal.vue'
+
+usePageMeta(() => ({ title: __('Domains') }))
 
 const showAddDomain = ref(false)
 const search = ref('')

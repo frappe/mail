@@ -1,14 +1,4 @@
 import frappe
-from frappe import _
-
-
-def get_root_domain_name() -> str | None:
-	"""Returns the root domain name."""
-
-	def generator() -> str | None:
-		return frappe.db.get_single_value("Mail Settings", "root_domain_name")
-
-	return frappe.cache.hget("mail-settings", "root_domain_name", generator)
 
 
 def get_signup_domains() -> list:

@@ -23,12 +23,14 @@
 <script lang="ts" setup>
 import { h, inject } from 'vue'
 import {
+	Ban,
 	CircleAlert,
 	CircleCheck,
 	Code,
 	Ellipsis,
 	ExternalLink,
 	Forward,
+	LockOpen,
 	Reply,
 	ReplyAll,
 	SquarePen,
@@ -41,7 +43,7 @@ import { raisePromiseToast } from '@/utils'
 import { useScreenSize, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
-import type { ComposeMailData, Mail } from '@/types'
+import type { ComposeMailData, Identity, Mail } from '@/types'
 
 const {
 	mailbox,
@@ -70,7 +72,7 @@ const {
 const emit = defineEmits(['starMails'])
 
 const { isMobile } = useScreenSize()
-const { account, mailboxes, mailboxIds } = userStore()
+const { account, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
 const { setUndoAction, undo } = useUndo()
 const user = inject('$user')
 
@@ -178,6 +180,25 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				condition: () => mailbox === mailboxIds.trash,
 			},
 			{
+				label: __('Block Sender'),
+				onClick: () => handleBlockAddress(true),
+				icon: Ban,
+				condition: () =>
+					!identities.data.some((i: Identity) => i.email === mail.from_email) &&
+					!blockedAddresses.data?.includes(mail.from_email),
+			},
+			{
+				label: __('Unblock Sender'),
+				onClick: () => handleBlockAddress(false),
+				icon: LockOpen,
+				condition: () => blockedAddresses.data?.includes(mail.from_email),
+			},
+		],
+	},
+	{
+		group: '',
+		items: [
+			{
 				label: __('See MIME Message'),
 				onClick: () => window.open(`/mail/mime-message/${mail.name}`, '_blank')?.focus(),
 				icon: Code,
@@ -261,4 +282,32 @@ const starMails = createResource({
 	onSuccess: ({ ids, flagged }: { ids: string[]; flagged: boolean }) =>
 		emit('starMails', ids, Number(flagged)),
 })
+
+const blockEmailAddress = createResource({
+	url: 'mail.api.mail.block_email_address',
+	makeParams: () => ({ email: mail.from_email }),
+})
+
+const unblockEmailAddress = createResource({
+	url: 'mail.api.mail.unblock_email_addresses',
+	makeParams: () => ({ emails: [mail.from_email] }),
+})
+
+const handleBlockAddress = (block: boolean, isUndo = false) => {
+	const action = () =>
+		(block ? blockEmailAddress : unblockEmailAddress)
+			.submit()
+			.then(() => blockedAddresses.reload())
+	const successMessage = block ? __('Email address blocked.') : __('Email address unblocked.')
+
+	if (isUndo) return raisePromiseToast(action, __('Undoing...'), successMessage)
+
+	setUndoAction(() => handleBlockAddress(!block, true))
+	raisePromiseToast(
+		action,
+		block ? __('Blocking email address...') : __('Unblocking email address...'),
+		successMessage,
+		undo,
+	)
+}
 </script>

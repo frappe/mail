@@ -65,7 +65,7 @@
 	<SettingsModal v-if="!isMobile" v-model="showSettings" />
 	<PWASettings v-else-if="showSettings" @close="showSettings = false" />
 	<FolderModal v-model="showFolderModal" :mailbox="selectedMailbox" />
-	<DeleteMailboxModal v-model="showDeleteMailbox" :mailbox="selectedMailbox" />
+	<DeleteFolderModal v-model="showDeleteMailbox" :mailbox="selectedMailbox" />
 </template>
 
 <script setup lang="ts">
@@ -82,7 +82,7 @@ import { useScreenSize, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 import MailLogo from '@/components/Icons/MailLogo.vue'
-import DeleteMailboxModal from '@/components/Modals/DeleteMailboxModal.vue'
+import DeleteFolderModal from '@/components/Modals/DeleteFolderModal.vue'
 import FolderModal from '@/components/Modals/FolderModal.vue'
 import SettingsModal from '@/components/Modals/SettingsModal.vue'
 import PWASettings from '@/components/PWASettings.vue'
@@ -117,7 +117,7 @@ const { setAccount, mailboxes } = store
 const user = inject('$user')
 
 const apps = createResource({
-	url: 'mail.api.get_apps',
+	url: 'mail.api.get_permitted_apps',
 	cache: 'otherApps',
 	auto: true,
 	transform: (data) => data.filter((app) => app.name !== 'mail'),
@@ -145,7 +145,7 @@ const menuItems = computed(() => [
 				],
 			),
 		})),
-		condition: () => user.data.is_system_manager && !isMobile.value,
+		condition: () => !isMobile.value,
 	},
 	{
 		icon: User,
@@ -358,11 +358,11 @@ const getIcon = (mailbox: MailboxData) => {
 }
 
 const FOLDER_COLOR_MAP = {
-	Blue: 'text-blue-500',
-	Green: 'text-green-500',
-	Amber: 'text-amber-500',
-	Red: 'text-red-500',
-	Purple: 'text-purple-500',
+	Blue: '!text-blue-500',
+	Green: '!text-green-500',
+	Amber: '!text-amber-500',
+	Red: '!text-red-500',
+	Purple: '!text-purple-500',
 }
 </script>
 

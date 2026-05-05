@@ -40,6 +40,7 @@
 <script setup lang="ts">
 import { computed, inject, markRaw, ref } from 'vue'
 import {
+	Ban,
 	Code,
 	Feather,
 	Fingerprint,
@@ -49,12 +50,15 @@ import {
 	Palette,
 	TreePalm,
 	User,
+	Zap,
 } from 'lucide-vue-next'
 import { Button, Dialog } from 'frappe-ui'
 
 import AccountSettings from '@/components/Settings/AccountSettings.vue'
 import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
 import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
+import AutomationSettings from '@/components/Settings/AutomationSettings.vue'
+import BlockListSettings from '@/components/Settings/BlockListSettings.vue'
 import ExportSettings from '@/components/Settings/ExportSettings.vue'
 import IdentitySettings from '@/components/Settings/IdentitySettings.vue'
 import ImportSettings from '@/components/Settings/ImportSettings.vue'
@@ -100,6 +104,18 @@ const tabs = computed(() => {
 			label: __('Vacation Response'),
 			icon: TreePalm,
 			component: markRaw(VacationResponseSettings),
+			condition: user.data.is_jmap_configured,
+		},
+		{
+			label: __('Automation'),
+			icon: Zap,
+			component: markRaw(AutomationSettings),
+			condition: user.data.is_jmap_configure,
+		},
+		{
+			label: __('Block List'),
+			icon: Ban,
+			component: markRaw(BlockListSettings),
 			condition: user.data.is_jmap_configured,
 		},
 		{

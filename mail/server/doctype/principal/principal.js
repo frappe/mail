@@ -60,7 +60,7 @@ frappe.ui.form.on('Principal', {
 			if (!frm.doc.is_verified) {
 				const bold_domain_name = `<b>${frm.doc._name}</b>`
 				const msg = __(
-					'DNS records for the domain {0} are not verified. Please ensure that the DNS records are correctly configured with your DNS provider to enable proper email authentication.',
+					'DNS records for the domain {0} are not verified. Please ensure that the DNS records are correctly configured with your DNS provider.',
 					[bold_domain_name],
 				)
 				frm.dashboard.add_comment(msg, 'yellow', true)

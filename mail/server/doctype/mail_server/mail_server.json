@@ -9,13 +9,10 @@
   "section_break_excr",
   "enabled",
   "outbound_only",
-  "include_in_spf_record",
-  "include_in_mx_records",
   "column_break_0mtp",
   "cluster",
   "hostname",
   "base_url",
-  "priority",
   "network_settings_section",
   "server_max_connections",
   "column_break_3m4p",
@@ -211,27 +208,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "1",
-   "description": "If checked, this server will be included in DNS MX records.",
-   "fieldname": "include_in_mx_records",
-   "fieldtype": "Check",
-   "label": "Include in MX Records",
-   "read_only_depends_on": "eval: doc.outbound_only",
-   "search_index": 1
-  },
-  {
-   "depends_on": "eval: doc.include_in_mx_records",
-   "description": "MX record priority for handling inbound mail. Lower values have higher priority.",
-   "fieldname": "priority",
-   "fieldtype": "Int",
-   "in_standard_filter": 1,
-   "label": "Priority",
-   "mandatory_depends_on": "eval: !doc.outbound_only && doc.include_in_mx_records",
-   "no_copy": 1,
-   "non_negative": 1,
-   "search_index": 1
-  },
-  {
    "description": "<p>This is the SSH public key generated for the Mail Cluster.</p>\n<p>Copy and add it to the <code>~/.ssh/authorized_keys</code> file of this Mail Server to allow Frappe Mail to securely provision and manage this server.</p>",
    "fieldname": "ssh_public_key",
    "fieldtype": "Code",
@@ -239,14 +215,6 @@
    "label": "Public Key",
    "no_copy": 1,
    "read_only": 1
-  },
-  {
-   "default": "1",
-   "description": "If checked, this server will be included in DNS SPF record.",
-   "fieldname": "include_in_spf_record",
-   "fieldtype": "Check",
-   "label": "Include in SPF Record",
-   "search_index": 1
   },
   {
    "description": "Public IPv4 address of this mail server (used for external communication).",
@@ -289,7 +257,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2025-12-01 18:06:09.917376",
+ "modified": "2026-04-27 10:22:56.594485",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Server",

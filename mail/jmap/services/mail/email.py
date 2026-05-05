@@ -65,6 +65,7 @@ class EmailService(MailService):
 			"htmlBody",
 			"textBody",
 			"bodyValues",
+			"preview",
 			"attachments",
 		]
 

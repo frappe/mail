@@ -32,6 +32,7 @@ export default defineConfig(({ mode }) => ({
 						'mail_signature',
 						'vacation_response',
 						'user_account',
+						'sieve_script',
 					],
 				},
 			},

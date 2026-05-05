@@ -3,7 +3,6 @@ import { defineStore } from 'pinia'
 import { createResource } from 'frappe-ui'
 
 import router from '@/router'
-import { getDataTheme } from '@/utils'
 
 import type { UserResource } from '@/types'
 
@@ -21,6 +20,8 @@ export const userStore = defineStore('mail-users', () => {
 		mailboxes.fetch()
 		addressBooks.fetch()
 		identities.fetch()
+		sieveScripts.fetch()
+		blockedAddresses.fetch()
 	}
 
 	const userResource: UserResource = createResource({
@@ -71,6 +72,10 @@ export const userStore = defineStore('mail-users', () => {
 
 	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
 
+	const sieveScripts = createResource({ url: 'mail.api.sieve.get_sieve_scripts' })
+
+	const blockedAddresses = createResource({ url: 'mail.api.mail.get_blocked_addresses' })
+
 	return {
 		accountId,
 		account,
@@ -81,5 +86,7 @@ export const userStore = defineStore('mail-users', () => {
 		addressBooks,
 		identities,
 		domains,
+		sieveScripts,
+		blockedAddresses,
 	}
 })

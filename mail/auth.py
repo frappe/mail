@@ -39,10 +39,16 @@ ALLOWED_PATHS = [
 	"/api/method/mail.client.doctype.contact_card.contact_card.contact_card_add_to_address_book",
 	"/api/method/mail.client.doctype.contact_card.contact_card.contact_card_remove_from_address_book",
 	"/api/method/mail.client.doctype.contact_card.contact_card.delete_contact_cards",
+	"/api/method/mail.client.doctype.calendar_event.calendar_event.add_calendar_event",
+	"/api/method/mail.client.doctype.calendar_event.calendar_event.update_calendar_event",
+	"/api/method/mail.client.doctype.calendar_event.calendar_event.delete_calendar_events",
+	"/api/method/mail.client.doctype.calendar_event.calendar_event.update_calendar_event_instance",
+	"/api/method/mail.client.doctype.calendar_event.calendar_event.delete_calendar_event_instance",
 ]
 
 ALLOWED_WILDCARD_PATHS = [
 	"/api/method/mail.api.",
+	"/api/method/calendar_app.api.",
 	"/api/method/frappe.client.",
 	"/api/method/wiki.",
 	"/api/method/frappe.integrations.oauth2_logins.",

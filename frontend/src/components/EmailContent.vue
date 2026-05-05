@@ -18,17 +18,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 // eslint-disable-next-line import/no-unresolved
 import IframeResizer from '@iframe-resizer/vue/sfc'
 import DOMPurify from 'dompurify'
 
-import { getDataTheme } from '@/utils'
+import { useTheme } from '@/utils/composables'
 
 const { content } = defineProps<{ content: string }>()
 
-const user = inject('$user')
-const activeTheme = computed(() => getDataTheme(user.data.color_scheme))
+const { dataTheme } = useTheme()
 
 const isIframeReady = ref(false)
 
@@ -91,7 +90,7 @@ const srcdoc = computed(() => {
 		<html>
 		<head>
 			<meta name="viewport" content="width=device-width, initial-scale=1">
-			<meta name="color-scheme" content="${activeTheme.value}">
+			<meta name="color-scheme" content="${dataTheme.value}">
 			<meta charset="UTF-8">
 			<style>
 				body {
@@ -184,7 +183,7 @@ const srcdoc = computed(() => {
 	`
 })
 
-const colors = computed(() => THEME_CONFIG[activeTheme.value])
+const colors = computed(() => THEME_CONFIG[dataTheme.value])
 
 const DOMPURIFY_CONFIG = {
 	ALLOWED_TAGS: [

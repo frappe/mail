@@ -20,8 +20,7 @@ class MessageQueue(Document):
 		return super(Document, self).__init__(message)
 
 	def db_update(self) -> None:
-		cluster, id = self.name.split("|")
-		MessageQueue._update(cluster, id)
+		MessageQueue._update(self.name)
 
 	def delete(self) -> None:
 		self._delete()
@@ -31,24 +30,20 @@ class MessageQueue(Document):
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = filters or []
-		cluster, text = extract_filter_values(filters, [{"cluster": "="}, {"text": "like"}])
+		text = extract_filter_values(filters, [{"text": "like"}])[0]
 
-		if cluster:
-			messages = MessageQueue._get_all(cluster, limit=page_length, text=text)
-			if not messages:
-				frappe.msgprint(_("No messages found."), alert=True)
+		messages = MessageQueue._get_all(limit=page_length, text=text)
+		if not messages:
+			frappe.msgprint(_("No messages found."), alert=True)
 
-			return messages
-
-		frappe.msgprint(_("Please select a cluster to view messages."), alert=True)
-		return []
+		return messages
 
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
 		filters = filters or []
-		cluster, text = extract_filter_values(filters, [{"cluster": "="}, {"text": "like"}])
+		text = extract_filter_values(filters, [{"text": "like"}])[0]
 
-		return frappe.cache.get_value(get_total_cache_key(cluster, text)) if cluster else 0
+		return frappe.cache.get_value(get_total_cache_key(text)) if text else 0
 
 	@staticmethod
 	def get_stats(**kwargs) -> dict:
@@ -59,8 +54,7 @@ class MessageQueue(Document):
 		"""Retries delivery of a message to all recipients."""
 
 		frappe.only_for("System Manager")
-		cluster, id = self.name.split("|")
-		MessageQueue._update(cluster, id)
+		MessageQueue._update(self.name)
 		frappe.msgprint(_("Delivery retried successfully."), alert=True)
 
 	@frappe.whitelist()
@@ -78,21 +72,20 @@ class MessageQueue(Document):
 	def _create(self) -> None:
 		raise NotImplementedError
 
-	def _get(self) -> None:
+	def _get(self) -> dict:
 		"""Returns the message details from the server."""
 
-		cluster, id = self.name.split("|")
 		backend_api = get_mail_backend_api()
-		response = backend_api.request(method="GET", endpoint=f"/api/queue/messages/{id}")
+		response = backend_api.request(method="GET", endpoint=f"/api/queue/messages/{self.name}")
 
 		message = response.json()["data"]
-		message = MessageQueue._format(message, cluster, extract_recipients=True)
-		message["message"] = MessageQueue._get_blob(cluster, message["blob_hash"])
+		message = MessageQueue._format(message, extract_recipients=True)
+		message["message"] = MessageQueue._get_blob(message["blob_hash"])
 
 		return message
 
 	@staticmethod
-	def _get_blob(cluster: str, blob_id: str) -> str:
+	def _get_blob(blob_id: str) -> str:
 		"""Returns the raw message blob from the server."""
 
 		backend_api = get_mail_backend_api()
@@ -100,7 +93,7 @@ class MessageQueue(Document):
 		return response.text.strip()
 
 	@staticmethod
-	def _get_all(cluster: str, page: int = 1, limit: int = 10, text: str | None = None) -> list:
+	def _get_all(page: int = 1, limit: int = 10, text: str | None = None) -> list:
 		"""Returns all messages from the server."""
 
 		backend_api = get_mail_backend_api()
@@ -111,29 +104,28 @@ class MessageQueue(Document):
 		)
 
 		data = response.json()["data"]
-		frappe.cache.set_value(get_status_cache_key(cluster), data["status"], expires_in_sec=600)
-		frappe.cache.set_value(get_total_cache_key(cluster, text), data["total"], expires_in_sec=600)
+		frappe.cache.set_value(get_status_cache_key(), data["status"], expires_in_sec=600)
+		frappe.cache.set_value(get_total_cache_key(text), data["total"], expires_in_sec=600)
 
-		return [MessageQueue._format(item, cluster) for item in data["items"]]
+		return [MessageQueue._format(item) for item in data["items"]]
 
 	@staticmethod
-	def _update(cluster: str, id: str) -> None:
+	def _update(name: str) -> None:
 		"""Retries delivery of a message to all recipients."""
 
 		backend_api = get_mail_backend_api()
-		backend_api.request(method="PATCH", endpoint=f"/api/queue/messages/{id}")
+		backend_api.request(method="PATCH", endpoint=f"/api/queue/messages/{name}")
 
 	def _delete(self, recipient: str | None = None) -> None:
 		"""Deletes a message or cancels delivery to a specific recipient."""
 
-		cluster, id = self.name.split("|")
 		backend_api = get_mail_backend_api()
 		backend_api.request(
-			method="DELETE", endpoint=f"/api/queue/messages/{id}", params={"filter": recipient}
+			method="DELETE", endpoint=f"/api/queue/messages/{self.name}", params={"filter": recipient}
 		)
 
 	@staticmethod
-	def _pause(cluster: str) -> None:
+	def _pause() -> None:
 		"""Pauses queue processing on the server."""
 
 		backend_api = get_mail_backend_api()
@@ -143,7 +135,7 @@ class MessageQueue(Document):
 		)
 
 	@staticmethod
-	def _resume(cluster: str) -> None:
+	def _resume() -> None:
 		"""Resumes queue processing on the server."""
 
 		backend_api = get_mail_backend_api()
@@ -153,7 +145,7 @@ class MessageQueue(Document):
 		)
 
 	@staticmethod
-	def _format(message: dict, cluster: str, extract_recipients: bool = False) -> dict:
+	def _format(message: dict, extract_recipients: bool = False) -> dict:
 		"""Formats the message details."""
 
 		if extract_recipients:
@@ -191,7 +183,6 @@ class MessageQueue(Document):
 		message = rename_keys(
 			message,
 			{
-				"id": "queue_id",
 				"size": "message_size",
 				"created": "created_at",
 			},
@@ -199,10 +190,9 @@ class MessageQueue(Document):
 
 		message.update(
 			{
-				"cluster": cluster,
+				"name": str(message.pop("id")),
 				"creation": message["created_at"],
 				"modified": message["created_at"],
-				"name": f"{cluster}|{message['queue_id']}",
 				"domains": json.dumps(message.get("domains", []), indent=4),
 			}
 		)
@@ -211,28 +201,28 @@ class MessageQueue(Document):
 
 
 @frappe.whitelist()
-def get_queue_status(cluster: str) -> bool:
-	"""Returns the status of the message queue for a given cluster."""
+def get_queue_status() -> bool:
+	"""Returns the status of the message queue."""
 
 	frappe.only_for("System Manager")
-	return bool(frappe.cache.get_value(get_status_cache_key(cluster)))
+	return bool(frappe.cache.get_value(get_status_cache_key()))
 
 
 @frappe.whitelist()
-def pause_queue(cluster: str) -> None:
+def pause_queue() -> None:
 	"""Pauses queue processing on the mail server."""
 
 	frappe.only_for("System Manager")
-	MessageQueue._pause(cluster)
+	MessageQueue._pause()
 	frappe.msgprint(_("Queue paused successfully."), alert=True)
 
 
 @frappe.whitelist()
-def resume_queue(cluster: str) -> None:
+def resume_queue() -> None:
 	"""Resumes queue processing on the mail server."""
 
 	frappe.only_for("System Manager")
-	MessageQueue._resume(cluster)
+	MessageQueue._resume()
 	frappe.msgprint(_("Queue resumed successfully."), alert=True)
 
 
@@ -246,20 +236,19 @@ def bulk_retry_delivery(names: str | list[str]) -> None:
 		names = json.loads(names)
 
 	for name in names:
-		cluster, id = name.split("|")
-		MessageQueue._update(cluster, id)
+		MessageQueue._update(name)
 
 	frappe.msgprint(_("Delivery retried successfully."), alert=True)
 
 
-def get_status_cache_key(cluster: str) -> str:
+def get_status_cache_key() -> str:
 	"""Returns a cache key for message status."""
 
-	return f"{cluster}:message-queue:status"
+	return "message-queue:status"
 
 
-def get_total_cache_key(cluster: str, text: str | None = None) -> str:
+def get_total_cache_key(text: str | None = None) -> str:
 	"""Returns a cache key for total message count."""
 
 	text = text or ""
-	return f"{cluster}:message-queue:{text}:total"
+	return f"message-queue:{text}:total"

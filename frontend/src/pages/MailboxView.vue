@@ -11,7 +11,10 @@
 					},
 				]"
 			>
-				<template v-if="mailbox !== 'starred'" #suffix>
+				<template
+					v-if="mailbox !== 'starred' && !mailboxes.loading && !searchResults.loading"
+					#suffix
+				>
 					<span class="text-ink-gray-5 ml-2 self-end pb-px text-xs">
 						{{ noOfThreads }}
 					</span>
@@ -182,7 +185,8 @@
 									:is-selected="selections.includes(mail.thread_id)"
 									class="border-l-transparent transition-all sm:border-l"
 									:class="{
-										'!bg-surface-blue-1': mail.thread_id === threadID,
+										'!bg-surface-blue-1':
+											mail.thread_id === threadID && !isMobile,
 										'!border-l-blue-500': mail.thread_id === threadInFocus,
 									}"
 									@set-seen="
@@ -310,6 +314,7 @@ import {
 	Tooltip,
 	createResource,
 	toast,
+	usePageMeta,
 } from 'frappe-ui'
 
 import {
@@ -328,7 +333,7 @@ import MailListItem from '@/components/MailListItem.vue'
 import MailThread from '@/components/MailThread.vue'
 import ShortcutsModal from '@/components/Modals/ShortcutsModal.vue'
 
-import type { Thread, UserResource } from '@/types'
+import type { COLOR_SCHEME, Thread, UserResource } from '@/types'
 
 const { accountId, mailbox, threadID } = defineProps<{
 	accountId: string
@@ -472,10 +477,18 @@ const modifier = computed(() => (isMac ? '⌘' : 'Ctrl'))
 const isShiftPressed = ref(false)
 const isGPressed = ref(false)
 const gPressTimeout = ref<ReturnType<typeof setTimeout>>()
+const reloadInterval = ref<ReturnType<typeof setInterval>>()
 
 const handleKeyDown = (e: KeyboardEvent) => {
 	isShiftPressed.value = e.shiftKey
 	const key = e.key.toLowerCase()
+
+	// Handle Ctrl/Cmd+Shift+L (Cycle Theme)
+	if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === 'l' && !shouldIgnoreKeypress(e, true)) {
+		e.preventDefault()
+		isGPressed.value = false
+		return cycleTheme()
+	}
 
 	// Handle Ctrl/Cmd+A (Select All)
 	if ((e.metaKey || e.ctrlKey) && key === 'a' && !shouldIgnoreKeypress(e, true)) {
@@ -547,6 +560,28 @@ const handleShowShortcuts = (e: KeyboardEvent) => {
 	e.preventDefault()
 	showShortcuts.value = true
 }
+
+const COLOR_SCHEME_CYCLE = ['System Default', 'Light Mode', 'Dark Mode'] as const
+
+const cycleTheme = () => {
+	const current = user.data.color_scheme
+	const idx = COLOR_SCHEME_CYCLE.indexOf(current as COLOR_SCHEME)
+	const next = COLOR_SCHEME_CYCLE[(idx + 1) % COLOR_SCHEME_CYCLE.length]
+	updateColorScheme.submit(next)
+}
+
+const updateColorScheme = createResource({
+	url: 'frappe.client.set_value',
+	makeParams: (color_scheme: COLOR_SCHEME) => ({
+		doctype: 'User Settings',
+		name: user.data.user_settings,
+		fieldname: { color_scheme },
+	}),
+	onSuccess: (data) => {
+		raiseToast(__('Color scheme updated to {0}.', [data.color_scheme]))
+		user.reload()
+	},
+})
 
 const handleEnter = (e: KeyboardEvent) => {
 	e.preventDefault()
@@ -769,9 +804,10 @@ watch(
 onMounted(() => {
 	window.addEventListener('keydown', handleKeyDown)
 	window.addEventListener('keyup', handleKeyUp)
+	reloadInterval.value = setInterval(() => threadsResource.value.reload(), 30000)
 
 	socket.on('new_mail_created', (updatedMailboxes: string[]) => {
-		if (updatedMailboxes.includes(mailbox)) reloadThreads()
+		if (updatedMailboxes.includes(mailbox)) threadsResource.value.reload()
 	})
 
 	socket.on('mail_exchange_completed', (payload: { success: boolean; message: string }) =>
@@ -782,6 +818,7 @@ onMounted(() => {
 onUnmounted(() => {
 	window.removeEventListener('keydown', handleKeyDown)
 	window.removeEventListener('keyup', handleKeyUp)
+	if (reloadInterval.value) clearInterval(reloadInterval.value)
 })
 
 const loadMoreThreads = useDebounceFn((e) => {
@@ -1139,6 +1176,18 @@ const noOfThreads = computed(() => {
 	if (mailbox === 'search')
 		return `${noOfSearchResults.value} ${noOfSearchResults.value == 1 ? __('result') : __('results')}`
 	return `${mailboxObj.value?.total_threads} ${mailboxObj.value?.total_threads == 1 ? __('thread') : __('threads')}`
+})
+const unreadThreadsPrefix = computed(() =>
+	mailboxObj.value?.unread_threads ? `(${mailboxObj.value.unread_threads})` : '',
+)
+
+const currentThread = computed(() =>
+	threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID),
+)
+
+usePageMeta(() => {
+	if (threadID) return { title: currentThread.value?.subject || __('[No Subject]') }
+	return { title: `${unreadThreadsPrefix.value} ${mailboxName.value}` }
 })
 
 const title = computed(() => {

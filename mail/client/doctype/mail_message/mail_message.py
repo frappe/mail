@@ -29,11 +29,7 @@ from mail.jmap import get_email_service, get_jmap_connection, get_thread_service
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
 from mail.utils import (
-	convert_html_to_text,
 	enqueue_job,
-	ensure_html,
-	ensure_text,
-	extract_latest_email_body,
 	get_mail_config,
 	get_push_logger,
 	parse_filters,
@@ -1023,18 +1019,7 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 			if message.get(key)
 			else None
 		)
-
-		if value:
-			value = ensure_html(value) if key == "htmlBody" else ensure_text(value)
-
 		formatted_message[field] = value
-
-	if preview_html := extract_latest_email_body(formatted_message["html_body"]):
-		if preview_text := convert_html_to_text(preview_html)[:196]:
-			if len(preview_text) == 196 and not preview_text.endswith(" "):
-				preview_text += "...."
-
-			formatted_message["preview"] = preview_text
 
 	formatted_message["mailboxes"] = []
 	for mailbox_id, value in message["mailboxIds"].items():
@@ -1082,7 +1067,7 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 				params += f"&filename={quote(filename)}"
 			attachment["url"] = f"/api/method/mail.api.mail.get_attachment?{params}"
 
-			if attachment["disposition"] == "inline" and attachment["cid"] and formatted_message["html_body"]:
+			if attachment["cid"] and formatted_message["html_body"]:
 				formatted_message["html_body"] = convert_img_src_from_cid_to_url(
 					formatted_message["html_body"],
 					attachment["cid"],
@@ -1220,10 +1205,12 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 						{"account": account, "disable_push_notification": 1},
 						pluck="mailbox_id",
 					)
-				)
+				) | {
+					m["id"]
+					for m in mailbox_service.mailboxes
+					if m["role"] in ["sent", "drafts", "junk", "trash"]
+				}
 				logger.debug({**ctx, "disabled_mailboxes_for_notification": disabled_mailboxes})
-
-				junk_mailbox_id = mailbox_service.get_mailbox_id_by_role("junk")
 
 				notify_candidates = []
 				mailboxes_to_reload = set()
@@ -1240,14 +1227,6 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 							continue
 
 						mailboxes_to_reload.add(mailbox["mailbox_id"])
-
-						if mailbox["mailbox_id"] == junk_mailbox_id:
-							if message["junk"]:
-								mailbox_id = None
-								is_candidate = False
-								break
-
-							continue
 
 						if not is_candidate and mailbox["mailbox_id"] not in disabled_mailboxes:
 							mailbox_id = mailbox["mailbox_id"]

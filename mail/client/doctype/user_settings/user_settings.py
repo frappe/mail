@@ -7,6 +7,13 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from mail.client.doctype.sieve_script.sieve_script import SieveScript
+from mail.jmap import (
+	get_core_service,
+	invalidate_jmap_connection_cache,
+	invalidate_jmap_identities_cache,
+	invalidate_jmap_mailboxes_cache,
+)
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
 from mail.utils import get_mail_config

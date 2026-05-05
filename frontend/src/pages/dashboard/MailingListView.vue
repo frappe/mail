@@ -172,6 +172,7 @@ import {
 	Tabs,
 	createDocumentResource,
 	createResource,
+	usePageMeta,
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
@@ -184,6 +185,8 @@ import AddMailingListExternalMemberModal from '@/components/Modals/AddMailingLis
 import AddMailingListInternalMembersModal from '@/components/Modals/AddMailingListInternalMembersModal.vue'
 
 const { listName } = defineProps<{ listName: string }>()
+
+usePageMeta(() => ({ title: listName }))
 
 const router = useRouter()
 const dayjs = inject('$dayjs')

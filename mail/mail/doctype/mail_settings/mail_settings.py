@@ -36,6 +36,9 @@ class MailSettings(Document):
 		if not self.dns_provider:
 			return
 
+		if not self.root_domain_name:
+			frappe.throw(_("Please set the Root Domain Name before configuring the DNS Provider."))
+
 		match self.dns_provider:
 			case "AmazonRoute53":
 				if not self.dns_provider_access_key or not self.dns_provider_access_secret:
@@ -187,7 +190,7 @@ class MailSettings(Document):
 		if self.has_value_changed("root_domain_name"):
 			dns_record_list_link = f'<a href="/app/dns-record">{_("DNS Records")}</a>'
 			frappe.msgprint(
-				_("Please verify the {0} for the new {1} to ensure proper email authentication.").format(
+				_("Please verify the {0} for the new {1}.").format(
 					dns_record_list_link, frappe.bold("Root Domain Name")
 				)
 			)
@@ -196,15 +199,3 @@ class MailSettings(Document):
 		"""Clears the Cache."""
 
 		frappe.cache.delete_value("mail-settings")
-
-
-def validate_mail_settings() -> None:
-	"""Validates the mandatory fields in the Mail Settings."""
-
-	mail_settings = frappe.get_doc("Mail Settings")
-	mandatory_fields = ["root_domain_name"]
-
-	for field in mandatory_fields:
-		if not mail_settings.get(field):
-			field_label = frappe.get_meta("Mail Settings").get_label(field)
-			frappe.throw(_("Please set the {0} in the Mail Settings.").format(frappe.bold(field_label)))

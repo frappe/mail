@@ -1,48 +1,52 @@
 {
  "actions": [],
- "creation": "2025-04-06 15:03:32.401911",
+ "creation": "2026-04-21 11:54:31.220491",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_nafl",
-  "ip_address",
-  "column_break_zda5",
-  "host"
+  "section_break_gl6l",
+  "user",
+  "column_break_20of",
+  "email"
  ],
  "fields": [
   {
-   "fieldname": "section_break_nafl",
+   "fieldname": "section_break_gl6l",
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "ip_address",
-   "fieldtype": "Data",
+   "fieldname": "user",
+   "fieldtype": "Link",
    "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "IP Address",
+   "label": "User",
+   "options": "User",
    "reqd": 1,
+   "search_index": 1,
    "set_only_once": 1
   },
   {
-   "fieldname": "column_break_zda5",
+   "fieldname": "column_break_20of",
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "host",
+   "fieldname": "email",
    "fieldtype": "Data",
-   "is_virtual": 1,
-   "label": "Host",
-   "read_only": 1
+   "in_list_view": 1,
+   "label": "Email",
+   "no_copy": 1,
+   "options": "Email",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "is_virtual": 1,
  "links": [],
- "modified": "2026-04-23 12:04:38.190171",
+ "modified": "2026-04-21 12:04:27.910424",
  "modified_by": "Administrator",
- "module": "Server",
- "name": "Blocked IP",
+ "module": "Client",
+ "name": "Blocked Email Address",
  "owner": "Administrator",
  "permissions": [
   {
@@ -56,9 +60,17 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "All",
+   "write": 1
   }
  ],
  "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

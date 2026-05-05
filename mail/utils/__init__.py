@@ -836,13 +836,6 @@ def get_stalwart_cli_path() -> str:
 	return cli_path
 
 
-def get_spf_host_for_cluster(cluster: str) -> str | None:
-	"""Returns the SPF host for the given cluster."""
-
-	if spf_identifier := frappe.db.get_value("Mail Cluster", cluster, "spf_identifier"):
-		return f"_spf.{spf_identifier}"
-
-
 def get_dkim_host(domain_name: str, type: Literal["rsa", "ed25519"]) -> str:
 	"""
 	Returns DKIM host.

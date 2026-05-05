@@ -94,13 +94,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Button, Dialog, Dropdown, createDocumentResource } from 'frappe-ui'
+import { Button, Dialog, Dropdown, createDocumentResource, usePageMeta } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import DNSRecords from '@/components/DNSRecords.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 
 const { domainName } = defineProps<{ domainName: string }>()
+
+usePageMeta(() => ({ title: domainName }))
 
 const router = useRouter()
 

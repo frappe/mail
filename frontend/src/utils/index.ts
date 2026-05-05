@@ -320,11 +320,18 @@ export const extractNameFromEmail = (email: string) =>
 		.replace(/[._-]/g, ' ')
 		.replace(/\b\w/g, (c) => c.toUpperCase())
 
-export const getSystemTheme = () =>
-	window.matchMedia('(prefers-color-scheme: dark)').matches ? 'Dark Mode' : 'Light Mode'
+export const getScriptName = (scriptName: string) => {
+	if (scriptName === 'vacation') return __('Vacation Response')
+	if (scriptName === 'frappe_mail_automation') return __('Folder Automation')
+	return `'${scriptName}'`
+}
 
-export const getDataTheme = (colorScheme?: 'Light Mode' | 'Dark Mode' | 'System Default') => {
-	const resolved =
-		!colorScheme || colorScheme === 'System Default' ? getSystemTheme() : colorScheme
-	return resolved === 'Dark Mode' ? 'dark' : 'light'
+export const isSystemScript = (scriptName: string) =>
+	['vacation', 'frappe_mail_automation'].includes(scriptName)
+
+export const hasHtmlContent = (content: string | null | undefined): boolean => {
+	if (!content) return false
+	return /<(html|head|body|div|p|span|table|td|tr|a|img|br|hr|h[1-6]|ul|ol|li|strong|em|b|i|font|style)[^>]*>/i.test(
+		content,
+	)
 }

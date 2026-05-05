@@ -195,6 +195,7 @@ import {
 	Switch,
 	createDocumentResource,
 	createResource,
+	usePageMeta,
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
@@ -206,6 +207,8 @@ import AddEmailModal from '@/components/Modals/AddEmailModal.vue'
 import QuotaProgressBar from '@/components/QuotaProgressBar.vue'
 
 const { memberName } = defineProps<{ memberName: string }>()
+
+usePageMeta(() => ({ title: memberName }))
 
 const dayjs = inject('$dayjs')
 const router = useRouter()

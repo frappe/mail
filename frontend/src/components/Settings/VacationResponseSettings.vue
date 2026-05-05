@@ -45,13 +45,19 @@
 			"
 			:loading="updateVacationResponse.loading"
 			class="min-h-7"
-			@click="() => updateVacationResponse.submit()"
+			@click="handleSave"
+		/>
+		<SetSieveScriptStateModal
+			v-if="vacationResponseScript"
+			v-model="showConfirmDialog"
+			:script="vacationResponseScript"
+			:action="updateVacationResponse.submit"
 		/>
 	</template>
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import { computed, inject, ref } from 'vue'
 import {
 	Button,
 	FormControl,
@@ -63,6 +69,7 @@ import {
 
 import { convertHtmlToText, raiseToast } from '@/utils'
 import { useTextEditorButtons } from '@/utils/composables'
+import { userStore } from '@/stores/user'
 
 import type { VacationResponse } from '@/types/doctypes'
 
@@ -70,6 +77,21 @@ const user = inject('$user')
 const dayjs = inject('$dayjs')
 
 const { buttons } = useTextEditorButtons()
+
+const showConfirmDialog = ref(false)
+
+const { sieveScripts } = userStore()
+const vacationResponseScript = computed(() =>
+	sieveScripts.data?.find((s) => s._name === 'vacation'),
+)
+const activeSieveScript = computed(
+	() => sieveScripts.data?.find((s) => s.active && s._name !== 'vacation')?._name,
+)
+
+const handleSave = () => {
+	if (activeSieveScript.value && vacationResponse.doc.enabled) showConfirmDialog.value = true
+	else updateVacationResponse.submit()
+}
 
 const vacationResponse = createDocumentResource({
 	doctype: 'Vacation Response',
@@ -94,8 +116,13 @@ const updateVacationResponse = createResource({
 	}),
 	onSuccess: () => {
 		vacationResponse.reload()
+		sieveScripts.reload()
 		raiseToast(__('Vacation response updated.'))
+		showConfirmDialog.value = false
 	},
-	onError: (error) => raiseToast(error.messages[0], 'error'),
+	onError: (error) => {
+		raiseToast(error.messages[0], 'error')
+		showConfirmDialog.value = false
+	},
 })
 </script>

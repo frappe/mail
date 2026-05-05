@@ -4,7 +4,6 @@ mail.patches.rename_mail_principal_binding_to_principal_settings
 [post_model_sync]
 mail.patches.rename_fields_based_on_config_toml
 mail.patches.generate_ssh_keypair_for_cluster
-mail.patches.set_cluster_spf_identifier
 mail.patches.create_user_settings
 mail.patches.create_push_subscriptions
 mail.patches.rename_user_settings

@@ -52,6 +52,7 @@ import {
 	ListSelectBanner,
 	ListView,
 	createResource,
+	usePageMeta,
 } from 'frappe-ui'
 
 import { extractNameFromEmail, raiseToast } from '@/utils'
@@ -60,6 +61,8 @@ import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddContactModal from '@/components/Modals/AddContactModal.vue'
 
 const { accountId } = defineProps<{ accountId: string }>()
+
+usePageMeta(() => ({ title: __('Contacts') }))
 
 const store = userStore()
 
