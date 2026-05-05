@@ -395,7 +395,7 @@ def get_mailbox_id_by_name(user: str, name: str, raise_exception: bool = False) 
 
 
 def get_default_address_book_id(account: str, raise_exception: bool = False) -> str | None:
-	"""Returns the ID of the default address book for the specified user, or None if not found."""
+	"""Returns the ID of the default address book for the specified account, or None if not found."""
 
 	connection = get_jmap_connection(parse_account(account)[0])
 	service = AddressBookService(account, connection)
