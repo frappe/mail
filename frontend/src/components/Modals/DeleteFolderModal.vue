@@ -8,7 +8,7 @@
 				[mailbox?._name],
 			),
 			icon: { name: 'alert-triangle', appearance: 'warning' },
-			actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteFolder.submit }],
+			actions: [{ label: __('Confirm'), theme: 'red', onClick: deleteFolder.submit }],
 		}"
 	/>
 </template>

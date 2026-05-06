@@ -122,11 +122,13 @@ export interface Thread {
 }
 
 export interface MailboxData {
+	name: string
 	id: string
 	role: string | null
 	total_threads: number
 	unread_threads: number
 	_name: string
+	subscribed: 0 | 1
 	icon?: string
 	color?: string
 	disable_push_notification?: 0 | 1

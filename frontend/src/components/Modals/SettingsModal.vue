@@ -44,6 +44,7 @@ import {
 	Code,
 	Feather,
 	Fingerprint,
+	Folders,
 	HardDriveDownload,
 	HardDriveUpload,
 	Mailbox,
@@ -60,6 +61,7 @@ import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
 import AutomationSettings from '@/components/Settings/AutomationSettings.vue'
 import BlockListSettings from '@/components/Settings/BlockListSettings.vue'
 import ExportSettings from '@/components/Settings/ExportSettings.vue'
+import FolderSettings from '@/components/Settings/FolderSettings.vue'
 import IdentitySettings from '@/components/Settings/IdentitySettings.vue'
 import ImportSettings from '@/components/Settings/ImportSettings.vue'
 import ProfileSettings from '@/components/Settings/ProfileSettings.vue'
@@ -95,7 +97,13 @@ const tabs = computed(() => {
 			component: markRaw(AppearanceSettings),
 		},
 		{
-			label: __('Signature'),
+			label: __('Folders'),
+			icon: Folders,
+			component: markRaw(FolderSettings),
+			condition: user.data.is_jmap_configured,
+		},
+		{
+			label: __('Signatures'),
 			icon: Feather,
 			component: markRaw(SignatureSettings),
 			condition: user.data.is_jmap_configured,

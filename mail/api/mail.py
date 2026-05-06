@@ -46,7 +46,7 @@ def get_mailboxes(account: str) -> list[dict]:
 	if not mailboxes:
 		return []
 
-	fields = ["id", "_name", "role", "total_threads", "unread_threads"]
+	fields = ["name", "id", "_name", "role", "total_threads", "unread_threads", "subscribed"]
 
 	mailbox_settings = frappe.db.get_all(
 		"Mailbox Settings",
@@ -65,10 +65,9 @@ def get_mailboxes(account: str) -> list[dict]:
 
 	result = []
 	for mailbox in mailboxes:
-		if mailbox["subscribed"] == 1:
-			mailbox_data = {field: mailbox[field] for field in fields}
-			mailbox_data.update(settings_map.get(mailbox["id"], {}))
-			result.append(mailbox_data)
+		mailbox_data = {field: mailbox[field] for field in fields}
+		mailbox_data.update(settings_map.get(mailbox["id"], {}))
+		result.append(mailbox_data)
 
 	return result
 

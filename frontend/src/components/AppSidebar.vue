@@ -76,8 +76,8 @@ import { Icon } from 'frappe-ui/icons'
 import { Check, User } from 'lucide-vue-next'
 import { Avatar, Button, Dropdown, Sidebar, SidebarItem, createResource } from 'frappe-ui'
 
-import { FOLDER_ICON_MAP } from '@/constants'
-import { toTitleCase } from '@/utils'
+import { FOLDER_ICON_COLOR_MAP } from '@/constants'
+import { getIcon, toTitleCase } from '@/utils'
 import { useScreenSize, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
@@ -252,35 +252,40 @@ const dashboardItems = [
 
 const mailboxItems = computed(
 	() =>
-		mailboxes.data?.map((mailbox: MailboxData) => ({
-			label: mailbox._name,
-			icon: h(Icon, { name: getIcon(mailbox), class: FOLDER_COLOR_MAP[mailbox.color] }),
-			to: {
-				name: 'Mailbox',
-				params: { accountId: store.accountId, mailbox: mailbox.id },
-			},
-			suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
-			activeFor: [mailbox.id],
-			menuOptions: [
-				{
-					label: __('Configure'),
-					icon: Settings,
-					onClick: () => {
-						selectedMailbox.value = mailbox
-						showFolderModal.value = true
-					},
+		mailboxes.data
+			?.filter((mailbox: MailboxData) => mailbox.subscribed)
+			?.map((mailbox: MailboxData) => ({
+				label: mailbox._name,
+				icon: h(Icon, {
+					name: getIcon(mailbox),
+					class: FOLDER_ICON_COLOR_MAP[mailbox.color],
+				}),
+				to: {
+					name: 'Mailbox',
+					params: { accountId: store.accountId, mailbox: mailbox.id },
 				},
-				{
-					label: __('Delete'),
-					theme: 'red',
-					icon: Trash2,
-					onClick: () => {
-						selectedMailbox.value = mailbox
-						showDeleteMailbox.value = true
+				suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
+				activeFor: [mailbox.id],
+				menuOptions: [
+					{
+						label: __('Configure'),
+						icon: Settings,
+						onClick: () => {
+							selectedMailbox.value = mailbox
+							showFolderModal.value = true
+						},
 					},
-				},
-			],
-		})) || [],
+					{
+						label: __('Delete'),
+						theme: 'red',
+						icon: Trash2,
+						onClick: () => {
+							selectedMailbox.value = mailbox
+							showDeleteMailbox.value = true
+						},
+					},
+				],
+			})) || [],
 )
 
 const sidebarItems = computed(() => {
@@ -350,20 +355,6 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
 onMounted(() => window.addEventListener('keydown', handleKeyDown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeyDown))
-
-const getIcon = (mailbox: MailboxData) => {
-	if (mailbox.icon) return mailbox.icon
-	if (mailbox.role && mailbox.role in FOLDER_ICON_MAP) return FOLDER_ICON_MAP[mailbox.role]
-	return 'folder'
-}
-
-const FOLDER_COLOR_MAP = {
-	Blue: '!text-blue-500',
-	Green: '!text-green-500',
-	Amber: '!text-amber-500',
-	Red: '!text-red-500',
-	Purple: '!text-purple-500',
-}
 </script>
 
 <style scoped>
