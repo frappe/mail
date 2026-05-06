@@ -662,7 +662,7 @@ def create_mailbox(
 		disable_push_notification=disable_push_notification,
 	)
 
-	update_sieve_script_for_mailbox(name, automation_rules)
+	update_sieve_script_for_mailbox(account, name, automation_rules)
 
 
 @frappe.whitelist()
@@ -691,14 +691,15 @@ def update_mailbox(
 		disable_push_notification=disable_push_notification,
 	)
 
-	update_sieve_script_for_mailbox(name, automation_rules, old_name)
+	update_sieve_script_for_mailbox(account, name, automation_rules, old_name)
 
 
+@frappe.whitelist()
 def delete_mailbox(account: str, id: str, name: str) -> None:
 	"""Deletes the mailbox with the given mailbox ID, followed by its settings."""
 
 	delete_mailboxes(account, [id])
-	update_sieve_script_for_mailbox(name)
+	update_sieve_script_for_mailbox(account, name)
 	frappe.db.delete("Mailbox Settings", {"account": account, "mailbox_id": id})
 
 

@@ -12,33 +12,32 @@ AUTOMATION_SCRIPT_REQUIRE = 'require ["fileinto", "imap4flags"];'
 
 
 @frappe.whitelist()
-def get_sieve_scripts() -> list[dict]:
+def get_sieve_scripts(account: str) -> list[dict]:
 	"""Return the sieve scripts for the user"""
 
-	user = frappe.session.user
-	ids = [d["id"] for d in SieveScript._fetch_sieve_scripts(user)[0]]
-	return SieveScript._get_sieve_scripts(user, ids, True)
+	ids = [d["id"] for d in SieveScript._fetch_sieve_scripts(account)[0]]
+	return SieveScript._get_sieve_scripts(account, ids, True)
 
 
 @frappe.whitelist()
-def create_sieve_script(_name: str, content: str, active: bool) -> None:
+def create_sieve_script(account: str, _name: str, content: str, active: bool) -> None:
 	"""Create a sieve script for the user"""
 
-	SieveScript._add_sieve_script(frappe.session.user, _name, content, active)
+	SieveScript._add_sieve_script(account, _name, content, active)
 
 
 @frappe.whitelist()
-def update_sieve_script(id: str, _name: str, content: str, active: bool = False) -> None:
+def update_sieve_script(account: str, id: str, _name: str, content: str, active: bool = False) -> None:
 	"""Update a sieve script for the user"""
 
-	SieveScript._update_sieve_script(frappe.session.user, id, _name, content, active)
+	SieveScript._update_sieve_script(account, id, _name, content, active)
 
 
 @frappe.whitelist()
-def delete_sieve_script(id: str) -> None:
+def delete_sieve_script(account: str, id: str) -> None:
 	"""Delete a sieve script for the user"""
 
-	SieveScript._delete_sieve_scripts(frappe.session.user, [id])
+	SieveScript._delete_sieve_scripts(account, [id])
 
 
 def rule_object_to_sieve(automation: dict, folder_path: str) -> str:
@@ -120,28 +119,28 @@ def remove_sieve_block(sieve_script: str, block_name: str) -> str:
 
 
 @frappe.whitelist()
-def create_automation_script(active: bool = False) -> str:
+def create_automation_script(account: str, active: bool = False) -> str:
 	"""Create the frappe_mail_automation sieve script for the user."""
 
 	frappe.flags.allow_automation_script_creation = True
 	return SieveScript._add_sieve_script(
-		user=frappe.session.user,
+		account=account,
 		name=AUTOMATION_SCRIPT_NAME,
 		content=AUTOMATION_SCRIPT_REQUIRE,
 		active=active,
 	)
 
 
-def get_automation_script_name(user: str) -> str:
+def get_automation_script_name(account: str) -> str:
 	"""Returns the name of the frappe_mail_automation sieve script for the user, creating it if it doesn't exist."""
 
-	scripts = SieveScript._fetch_sieve_scripts(user, filter={"name": AUTOMATION_SCRIPT_NAME})
+	scripts = SieveScript._fetch_sieve_scripts(account, filter={"name": AUTOMATION_SCRIPT_NAME})
 	if scripts and scripts[0]:
 		return scripts[0][0]["name"]
 
-	script_name = create_automation_script()
+	script_name = create_automation_script(account)
 
-	return f"{user}|{script_name}"
+	return f"{account}|{script_name}"
 
 
 def append_sieve_block(script: str, block_name: str, sieve_block: str) -> str:
@@ -197,11 +196,11 @@ def extract_rules_from_script(content: str, mailbox_name: str) -> dict | None:
 	return rules
 
 
-def get_child_mailbox_names(parent_name: str) -> list[str]:
+def get_child_mailbox_names(account: str, parent_name: str) -> list[str]:
 	"""Return the names of all direct child mailboxes for the given parent."""
 
 	parent_id = get_mailbox_id_by_name(frappe.session.user, parent_name)
-	mailboxes = get_mailboxes(frappe.session.user)
+	mailboxes = get_mailboxes(account)
 	return [mailbox["_name"] for mailbox in mailboxes if mailbox.get("parent_id") == parent_id]
 
 
@@ -234,15 +233,14 @@ def get_mailbox_folder_path(name: str, raise_exception: bool = False) -> str | N
 
 
 def update_sieve_script_for_mailbox(
-	name: str, automation_rules: dict | None = None, old_name: str | None = None
+	account: str, name: str, automation_rules: dict | None = None, old_name: str | None = None
 ) -> None:
 	"""Update the automation Sieve script for a mailbox and its direct children."""
 
-	user = frappe.session.user
-	automation_script_name = get_automation_script_name(user)
+	automation_script_name = get_automation_script_name(account)
 	doc = frappe.get_doc("Sieve Script", automation_script_name)
 
-	for child_name in set(get_child_mailbox_names(name)):
+	for child_name in set(get_child_mailbox_names(account, name)):
 		child_block_name = f"Mailbox: {child_name}"
 		child_rules = extract_rules_from_script(doc.content, child_name)
 		doc.content = remove_sieve_block(doc.content, child_block_name)
@@ -264,17 +262,17 @@ def update_sieve_script_for_mailbox(
 	doc.save()
 
 
-def update_sieve_script_for_blocked_emails(user: str) -> None:
+def update_sieve_script_for_blocked_emails(account: str) -> None:
 	"""Update sieve script to block emails from blocked email list at the top."""
 
-	automation_script_name = get_automation_script_name(user)
+	automation_script_name = get_automation_script_name(account)
 	doc = frappe.get_doc("Sieve Script", automation_script_name)
 	content = (doc.content or "").lstrip()
 
 	block_name = "Blocked Emails"
 	content = remove_sieve_block(content, block_name)
 
-	blocked_emails = get_blocked_email_addresses(user)
+	blocked_emails = get_blocked_email_addresses(frappe.session.user)
 	conditions = [f'address :is "from" "{e.strip()}"' for e in blocked_emails if e.strip()]
 
 	if not conditions:

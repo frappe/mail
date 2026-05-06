@@ -25,16 +25,16 @@ const show = defineModel<boolean>()
 
 const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 
-const { account, mailboxes, sieveScripts } = userStore()
+const store = userStore()
 
 const deleteFolder = createResource({
 	url: 'mail.api.mail.delete_mailbox',
-	makeParams: () => ({ account, id: mailbox.id, name: mailbox._name }),
+	makeParams: () => ({ account: store.account, id: mailbox.id, name: mailbox._name }),
 	onSuccess: () => {
 		raiseToast(__('Folder deleted.'))
 		show.value = false
-		mailboxes.reload()
-		sieveScripts.reload()
+		store.mailboxes.reload()
+		store.sieveScripts.reload()
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })

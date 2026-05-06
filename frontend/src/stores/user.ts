@@ -69,9 +69,13 @@ export const userStore = defineStore('mail-user', () => {
 		cache: ['identities', accountId.value],
 	})
 
-	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
+	const sieveScripts = createResource({
+		url: 'mail.api.sieve.get_sieve_scripts',
+		makeParams: () => ({ account: account.value }),
+		cache: ['sieveScripts', accountId.value],
+	})
 
-	const sieveScripts = createResource({ url: 'mail.api.sieve.get_sieve_scripts' })
+	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
 
 	const blockedAddresses = createResource({ url: 'mail.api.mail.get_blocked_addresses' })
 

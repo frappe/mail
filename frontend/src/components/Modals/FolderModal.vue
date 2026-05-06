@@ -167,7 +167,8 @@ const show = defineModel<boolean>()
 
 const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 
-const { account, mailboxes, sieveScripts } = userStore()
+const store = userStore()
+const { mailboxes, sieveScripts } = store
 
 const isNew = computed(() => !mailbox)
 const activeScript = computed(() => sieveScripts.data?.find((s) => s.active)?._name)
@@ -223,7 +224,7 @@ const isNotDirty = computed(() => {
 const createFolder = createResource({
 	url: 'mail.api.mail.create_mailbox',
 	makeParams: () => ({
-		account,
+		account: store.account,
 		...folder,
 		automation_rules: isDefaultAutomation.value ? null : automationRules,
 	}),
@@ -239,7 +240,7 @@ const createFolder = createResource({
 const updateFolder = createResource({
 	url: 'mail.api.mail.update_mailbox',
 	makeParams: () => ({
-		account,
+		account: store.account,
 		...folder,
 		old_name: original.name,
 		automation_rules: isDefaultAutomation.value ? null : automationRules,
@@ -255,7 +256,7 @@ const updateFolder = createResource({
 
 const createAutomationScript = createResource({
 	url: 'mail.api.sieve.create_automation_script',
-	makeParams: () => ({ active: true }),
+	makeParams: () => ({ account: store.account, active: true }),
 	onSuccess: () => {
 		raiseToast(__('Folder Automation enabled.'))
 		sieveScripts.reload()
