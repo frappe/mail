@@ -8,6 +8,7 @@ DOCTYPES = [
 	"Mail Queue",
 	"Mail Sync History",
 	"Mailbox Settings",
+	"Blocked Email Address",
 ]
 
 
