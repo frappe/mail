@@ -8,7 +8,6 @@ from frappe import _
 
 from mail.jmap.connection import raise_for_status
 from mail.utils import get_mail_config
-from mail.utils.user import is_jmap_configured, is_local_user, is_mail_admin, is_system_manager
 from mail.utils.validation import validate_mail_config
 
 
@@ -107,17 +106,6 @@ class MailBackendAPI:
 
 def get_mail_backend_api() -> MailBackendAPI:
 	"""Returns an authenticated BackendAPI instance."""
-
-	user = frappe.session.user
-	if is_mail_admin(user) and is_local_user(user) and not is_system_manager(user):
-		is_jmap_configured(user, raise_exception=True)
-
-		user_settings = frappe.get_doc("User Settings", {"user": user})
-		return MailBackendAPI(
-			get_mail_config("server_url"),
-			username=user_settings.username,
-			password=user_settings.get_password("app_password"),
-		)
 
 	validate_mail_config()
 	config = get_mail_config()
