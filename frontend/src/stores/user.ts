@@ -8,7 +8,7 @@ import type { UserResource } from '@/types'
 
 export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
 
-export const userStore = defineStore('mail-users', () => {
+export const userStore = defineStore('mail-user', () => {
 	const accountId = ref('')
 
 	const account = computed(
@@ -21,14 +21,13 @@ export const userStore = defineStore('mail-users', () => {
 		addressBooks.fetch()
 		identities.fetch()
 		sieveScripts.fetch()
-		blockedAddresses.fetch()
 	}
 
 	const userResource: UserResource = createResource({
 		url: 'mail.api.account.get_user_info',
 		onSuccess: (data) => {
-			document.documentElement.setAttribute('data-theme', getDataTheme(data.color_scheme))
 			if (data?.is_mail_admin) domains.fetch()
+			if (data?.is_jmap_configured) blockedAddresses.fetch()
 		},
 		onError: (error) => {
 			if (error && error.exc_type === 'AuthenticationError') router.push('/login')

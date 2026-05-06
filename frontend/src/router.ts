@@ -303,7 +303,7 @@ router.beforeEach(async (to, _, next) => {
 	if (to.name === 'Mailbox' || to.name === 'Mail') {
 		const mailboxExists =
 			mailboxes.data?.some((m: { id: string }) => m.id === to.params.mailbox) ||
-			to.params.mailbox === 'starred'
+			['starred', 'search'].includes(to.params.mailbox)
 		if (!mailboxExists) return next(defaultRoute)
 	}
 

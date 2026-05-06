@@ -457,6 +457,7 @@ const createMail = createResource({
 const updateDraft = createResource({
 	url: 'mail.api.mail.update_draft_mail',
 	makeParams: ({ submit }: { submit: boolean }) => ({
+		account,
 		...mail,
 		...processInlineImages(mail),
 		from_name: getIdentity(mail.from_email!)._name,
@@ -468,7 +469,7 @@ const updateDraft = createResource({
 
 const deleteMail = createResource({
 	url: 'mail.api.mail.delete_mail',
-	makeParams: () => ({ id: mail.id }),
+	makeParams: () => ({ account, id: mail.id }),
 	onSuccess: () => {
 		reloadMails()
 		raiseToast(__('Draft discarded.'))

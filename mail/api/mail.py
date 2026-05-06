@@ -306,7 +306,6 @@ def create_mail(
 	recipients += [{"type": "Bcc", "email": email} for email in bcc]
 
 	doc = MailQueue._create(
-		user=frappe.session.user,
 		account=account,
 		from_email=from_email,
 		from_name=from_name,
@@ -342,7 +341,7 @@ def update_draft_mail(
 ) -> dict:
 	"""Creates new mail queue from existing draft message."""
 
-	doc = frappe.get_doc("Mail Message", f"{frappe.session.user}|{id}")
+	doc = frappe.get_doc("Mail Message", f"{account}|{id}")
 	doc.check_permission(permtype="write")
 
 	doc.from_email = from_email
