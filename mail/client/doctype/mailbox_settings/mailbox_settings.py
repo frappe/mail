@@ -9,6 +9,7 @@ from frappe.model.document import Document
 
 from mail.jmap import parse_account
 from mail.utils.user import is_system_manager
+from mail.utils.validation import has_permission_for_user
 
 
 class MailboxSettings(Document):
@@ -113,9 +114,6 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if doc.doctype != "Mailbox Settings":
 		return False
 
-	user = user or frappe.session.user
+	user = doc.user or parse_account(doc.account)[0]
 
-	if is_system_manager(user):
-		return True
-
-	return doc.user == user
+	return has_permission_for_user(user, raise_exception=False)
