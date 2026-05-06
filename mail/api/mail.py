@@ -704,22 +704,22 @@ def delete_mailbox(account: str, id: str, name: str) -> None:
 
 
 @frappe.whitelist()
-def get_blocked_addresses() -> list[dict]:
-	"""Returns the list of blocked email addresses for the current user."""
+def get_blocked_addresses(account: str) -> list[dict]:
+	"""Returns the list of blocked email addresses for the given account."""
 
-	return get_blocked_email_addresses(frappe.session.user)
+	return get_blocked_email_addresses(account)
 
 
 @frappe.whitelist()
-def block_email_address(email: str) -> dict:
-	"""Blocks an email address for the current user."""
+def block_email_address(account: str, email: str) -> dict:
+	"""Blocks an email address for the given account."""
 
-	doc = frappe.get_doc({"doctype": "Blocked Email Address", "user": frappe.session.user, "email": email})
+	doc = frappe.get_doc({"doctype": "Blocked Email Address", "account": account, "email": email})
 	doc.insert()
 
 
 @frappe.whitelist()
-def unblock_email_addresses(emails: list[str]) -> None:
+def unblock_email_addresses(account: str, emails: list[str]) -> None:
 	"""Unblocks email addresses by deleting Blocked Email Address records."""
 
-	frappe.db.delete("Blocked Email Address", {"user": frappe.session.user, "email": ["in", emails]})
+	frappe.db.delete("Blocked Email Address", {"account": account, "email": ["in", emails]})

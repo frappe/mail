@@ -20,6 +20,7 @@ export const userStore = defineStore('mail-user', () => {
 		mailboxes.fetch()
 		addressBooks.fetch()
 		identities.fetch()
+		blockedAddresses.fetch()
 		sieveScripts.fetch()
 	}
 
@@ -27,7 +28,6 @@ export const userStore = defineStore('mail-user', () => {
 		url: 'mail.api.account.get_user_info',
 		onSuccess: (data) => {
 			if (data?.is_mail_admin) domains.fetch()
-			if (data?.is_jmap_configured) blockedAddresses.fetch()
 		},
 		onError: (error) => {
 			if (error && error.exc_type === 'AuthenticationError') router.push('/login')
@@ -69,6 +69,12 @@ export const userStore = defineStore('mail-user', () => {
 		cache: ['identities', accountId.value],
 	})
 
+	const blockedAddresses = createResource({
+		url: 'mail.api.mail.get_blocked_addresses',
+		makeParams: () => ({ account: account.value }),
+		cache: ['blockedAddresses', accountId.value],
+	})
+
 	const sieveScripts = createResource({
 		url: 'mail.api.sieve.get_sieve_scripts',
 		makeParams: () => ({ account: account.value }),
@@ -76,8 +82,6 @@ export const userStore = defineStore('mail-user', () => {
 	})
 
 	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
-
-	const blockedAddresses = createResource({ url: 'mail.api.mail.get_blocked_addresses' })
 
 	return {
 		accountId,

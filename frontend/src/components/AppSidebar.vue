@@ -154,7 +154,7 @@ const menuItems = computed(() => [
 			component: h(
 				'div',
 				{
-					class: 'flex items-center gap-2 p-1.5 rounded hover:bg-surface-gray-2 cursor-pointer',
+					class: 'flex items-center gap-2 p-1.5 rounded hover:bg-surface-gray-2 cursor-pointer w-48 shrink-0',
 					onClick: async () => {
 						setAccount(a.id)
 
@@ -176,7 +176,7 @@ const menuItems = computed(() => [
 				},
 				[
 					h(Avatar, { label: a._name, size: 'md' }),
-					h('span', { class: 'w-32 text-sm w-full truncate shrink-0' }, a._name),
+					h('span', { class: 'text-sm w-full truncate' }, a._name),
 					a.id === store.accountId &&
 						h(Check, { label: a._name, class: 'h-4 shrink-0 stroke-1.5' }),
 				],
