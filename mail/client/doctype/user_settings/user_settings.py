@@ -56,7 +56,15 @@ class UserSettings(Document):
 			)
 
 		if self.default_outgoing_email:
-			identity_service = IdentityService(self.user, connection)
+			personal_account_id = next(
+				(account_id for account_id, details in connection.accounts.items() if details["isPersonal"]),
+				None,
+			)
+
+			if not personal_account_id:
+				frappe.throw(_("No personal account found for the user on the JMAP server."))
+
+			identity_service = IdentityService(f"{self.user}:{personal_account_id}", connection)
 
 			if not identity_service.get_identity_id_by_email(self.default_outgoing_email):
 				frappe.throw(
