@@ -7,7 +7,7 @@ import frappe
 from frappe.core.api.file import create_new_folder
 
 from mail.mail.doctype.rate_limit.rate_limit import create_rate_limit
-from mail.utils import get_mail_app_path, get_stalwart_cli_path, get_stalwart_version
+from mail.utils import get_mail_app_path, get_stalwart_cli_path, get_stalwart_cli_version
 
 
 def after_install() -> None:
@@ -75,20 +75,30 @@ def install_stalwart_cli() -> str:
 	urllib.request.urlretrieve(url, tar_path)
 
 	if frappe.conf.developer_mode:
-		print(f"\tExtracting {filename}...")
+		print(f"\tExtracting stalwart-cli from {filename}...")
 
-	with tarfile.open(tar_path, "r:gz") as tar:
-		tar.extractall(path=install_dir)
+	with tarfile.open(tar_path, "r:xz") as tar:
+		member = next(
+			(m for m in tar.getmembers() if os.path.basename(m.name) == "stalwart-cli"),
+			None,
+		)
+
+		if not member:
+			raise FileNotFoundError("stalwart-cli not found in archive")
+
+		member.name = "stalwart-cli"
+		tar.extract(member, path=install_dir)
 
 	cli_path = get_stalwart_cli_path()
 	os.chmod(cli_path, 0o755)
 
 	if frappe.conf.developer_mode:
 		print(f"\tRemoving {tar_path}...")
+
 	os.remove(tar_path)
 
 	if frappe.conf.developer_mode:
-		print(f"\tStalwart CLI installed to: {cli_path}")
+		print(f"\tStalwart CLI installed at: {cli_path}")
 
 	return cli_path
 
@@ -96,11 +106,11 @@ def install_stalwart_cli() -> str:
 def _get_stalwart_cli_download_url() -> str:
 	"""Returns the download URL and filename for the Stalwart CLI tool."""
 
-	version = get_stalwart_version()
+	version = get_stalwart_cli_version()
 	github_release_base = (
-		"https://github.com/stalwartlabs/stalwart/releases/latest/download"
+		"https://github.com/stalwartlabs/cli/releases/latest/download"
 		if version == "latest"
-		else f"https://github.com/stalwartlabs/stalwart/releases/download/{version}"
+		else f"https://github.com/stalwartlabs/cli/releases/download/{version}"
 	)
 
 	system = platform.system().lower()
@@ -120,5 +130,5 @@ def _get_stalwart_cli_download_url() -> str:
 	else:
 		raise Exception(f"Unsupported operating system: {system}")
 
-	filename = f"stalwart-cli-{arch}-{os_id}.tar.gz"
+	filename = f"stalwart-cli-{arch}-{os_id}.tar.xz"
 	return f"{github_release_base}/{filename}", filename

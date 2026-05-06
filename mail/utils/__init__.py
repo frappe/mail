@@ -105,7 +105,8 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		"server_deployment_timeout": 1500,
 		"server_job_timeout": 1500,
 		"stalwart_cli_command_timeout": 3600,
-		"stalwart_version": "v0.15.4",
+		"stalwart_cli_version": "latest",
+		"stalwart_version": "v0.16.4",
 	}
 
 	config = frappe.conf.mail or {}
@@ -864,3 +865,9 @@ def get_stalwart_version() -> str:
 	"""Returns the Stalwart version from configuration or default."""
 
 	return get_mail_config("stalwart_version")
+
+
+def get_stalwart_cli_version() -> str:
+	"""Returns the Stalwart CLI version from configuration or default."""
+
+	return get_mail_config("stalwart_cli_version")
