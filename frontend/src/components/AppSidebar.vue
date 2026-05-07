@@ -11,11 +11,8 @@
 			id="sidebar"
 			v-model:collapsed="isSidebarCollapsed"
 			:header="{
-				title:
-					branding.data?.brand_name && branding.data?.brand_name != 'Frappe'
-						? branding.data.brand_name
-						: 'Mail',
-				subtitle: toTitleCase(user.data.full_name),
+				title,
+				subtitle,
 				menuItems,
 				logo: branding.data?.brand_html || MailLogo,
 			}"
@@ -130,6 +127,18 @@ const showFolderModal = ref(false)
 const selectedMailbox = ref()
 const showDeleteMailbox = ref(false)
 const showShortcuts = ref(false)
+
+const title = computed(() =>
+	branding.data?.brand_name && branding.data?.brand_name != 'Frappe'
+		? branding.data.brand_name
+		: 'Mail',
+)
+
+const subtitle = computed(() => {
+	const currentAccount = user.data.accounts.find((a) => a.name === store.account)
+	if (currentAccount.is_personal) return toTitleCase(user.data.full_name)
+	return currentAccount._name
+})
 
 const menuItems = computed(() => [
 	{

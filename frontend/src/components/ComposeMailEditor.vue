@@ -339,10 +339,21 @@ const editorHeight = useVisualViewport(
 
 const user = inject('$user') as UserResource
 
+const getDefaultFromEmail = () => {
+	const identityEmails = identities.data?.map((i: Identity) => i.email) ?? []
+
+	return (
+		identityEmails.find((e) => e === mailDetails?.from_email) ??
+		identityEmails.find((e) => e === user.data.default_outgoing_email) ??
+		identityEmails[0] ??
+		user.data.name
+	)
+}
+
 const mail = reactive<ComposeMailData>({
 	name: mailDetails?.name || '',
 	id: mailDetails?.id || '',
-	from_email: mailDetails?.from_email || user.data.default_outgoing_email || user.data.name,
+	from_email: getDefaultFromEmail(),
 	to: mailDetails?.to || [],
 	cc: mailDetails?.cc || [],
 	bcc: mailDetails?.bcc || [],

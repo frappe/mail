@@ -1181,7 +1181,7 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 		logger.info({**ctx, "event": "email-state-unchanged"})
 		return
 
-	user = parse_account(account)[0]
+	user, account_id = parse_account(account)
 
 	try:
 		logger.info({**ctx, "event": "fetching-changes-from-server"})
@@ -1253,7 +1253,7 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 							user,
 							message["from_name"] or message["from_email"],
 							message["subject"] or _("[No subject]"),
-							f"{url}/mail/mailbox/{mailbox_id}/{message['thread_id']}",
+							f"{url}/mail/account/{account_id}/mailbox/{mailbox_id}/{message['thread_id']}",
 							f"{url}/assets/mail/frontend/manifest/manifest-icon-192.maskable.png",
 						)
 				else:
