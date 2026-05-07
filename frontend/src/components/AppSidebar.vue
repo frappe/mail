@@ -66,6 +66,7 @@
 	<PWASettings v-else-if="showSettings" @close="showSettings = false" />
 	<FolderModal v-model="showFolderModal" :mailbox="selectedMailbox" />
 	<DeleteFolderModal v-model="showDeleteMailbox" :mailbox="selectedMailbox" />
+	<ShortcutsModal v-model="showShortcuts" />
 </template>
 
 <script setup lang="ts">
@@ -73,7 +74,7 @@ import { computed, h, inject, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStorage } from '@vueuse/core'
 import { Icon } from 'frappe-ui/icons'
-import { Check, User } from 'lucide-vue-next'
+import { Check, Keyboard, User } from 'lucide-vue-next'
 import { Avatar, Button, Dropdown, Sidebar, SidebarItem, createResource } from 'frappe-ui'
 
 import { FOLDER_ICON_COLOR_MAP } from '@/constants'
@@ -85,6 +86,7 @@ import MailLogo from '@/components/Icons/MailLogo.vue'
 import DeleteFolderModal from '@/components/Modals/DeleteFolderModal.vue'
 import FolderModal from '@/components/Modals/FolderModal.vue'
 import SettingsModal from '@/components/Modals/SettingsModal.vue'
+import ShortcutsModal from '@/components/Modals/ShortcutsModal.vue'
 import PWASettings from '@/components/PWASettings.vue'
 import QuotaBar from '@/components/QuotaBar.vue'
 
@@ -127,101 +129,127 @@ const showSettings = ref(false)
 const showFolderModal = ref(false)
 const selectedMailbox = ref()
 const showDeleteMailbox = ref(false)
+const showShortcuts = ref(false)
 
 const menuItems = computed(() => [
 	{
-		icon: LayoutGrid,
-		label: __('Apps'),
-		submenu: apps.data?.map?.((app) => ({
-			component: h(
-				'a',
-				{
-					class: 'flex items-center gap-2 p-1.5 rounded hover:bg-surface-gray-2',
-					href: app.route,
+		group: '',
+		items: [
+			{
+				icon: LayoutGrid,
+				label: __('Apps'),
+				submenu: apps.data?.map?.((app) => ({
+					component: h(
+						'a',
+						{
+							class: 'flex items-center gap-2 p-1.5 rounded hover:bg-surface-gray-2',
+							href: app.route,
+						},
+						[
+							h('img', { src: app.logo, class: 'size-6' }),
+							h('span', { class: 'max-w-18 text-sm w-full truncate' }, app.title),
+						],
+					),
+				})),
+				condition: () => !isMobile.value,
+			},
+			{
+				icon: Mailbox,
+				label: __('Mailbox'),
+				onClick: () => {
+					const mailbox = mailboxes.data?.[0]?.id
+					if (mailbox)
+						router.push({
+							name: 'Mailbox',
+							params: { accountId: store.accountId, mailbox },
+						})
+					else
+						router.push({
+							name: 'AddressBooks',
+							params: { accountId: store.accountId },
+						})
 				},
-				[
-					h('img', { src: app.logo, class: 'size-6' }),
-					h('span', { class: 'max-w-18 text-sm w-full truncate' }, app.title),
-				],
-			),
-		})),
-		condition: () => !isMobile.value,
+				condition: () =>
+					user.data.is_mail_admin &&
+					user.data.is_jmap_configured &&
+					route.meta.isDashboard,
+			},
+			{
+				icon: Crown,
+				label: __('Admin Dashboard'),
+				onClick: () => router.push('/dashboard'),
+				condition: () =>
+					user.data.is_jmap_configured &&
+					user.data.is_mail_admin &&
+					!route.meta.isDashboard &&
+					!isMobile.value,
+			},
+		],
 	},
 	{
-		icon: User,
-		label: __('Accounts'),
-		submenu: user.data.accounts.map?.((a) => ({
-			component: h(
-				'div',
-				{
-					class: 'flex items-center gap-2 p-1.5 rounded hover:bg-surface-gray-2 cursor-pointer w-48 shrink-0',
-					onClick: async () => {
-						setAccount(a.id)
+		group: '',
+		items: [
+			{
+				icon: Settings,
+				label: __('Settings'),
+				onClick: () => (showSettings.value = true),
+			},
+			{
+				icon: Keyboard,
+				label: __('Shortcuts'),
+				onClick: () => (showShortcuts.value = true),
+			},
+		],
+	},
+	{
+		group: '',
+		items: [
+			{
+				icon: User,
+				label: __('Accounts'),
+				submenu: user.data.accounts.map?.((a) => ({
+					component: h(
+						'div',
+						{
+							class: 'flex items-center gap-2 p-1.5 rounded hover:bg-surface-gray-2 cursor-pointer w-48 shrink-0',
+							onClick: async () => {
+								setAccount(a.id)
 
-						if (['AddressBooks', 'AddressBook'].includes(route.name))
-							router.push({
-								name: 'AddressBooks',
-								params: { accountId: a.id },
-							})
-						else if (['Contacts', 'Contact'].includes(route.name))
-							router.push({ name: 'Contacts', params: { accountId: a.id } })
-						else {
-							await mailboxes.promise
-							router.push({
-								name: 'Mailbox',
-								params: { accountId: a.id, mailbox: mailboxes.data?.[0]?.id },
-							})
-						}
-					},
-				},
-				[
-					h(Avatar, { label: a._name, size: 'md' }),
-					h('span', { class: 'text-sm w-full truncate' }, a._name),
-					a.id === store.accountId &&
-						h(Check, { label: a._name, class: 'h-4 shrink-0 stroke-1.5' }),
-				],
-			),
-		})),
-		condition: () => user.data.accounts?.length > 1 && !route.meta.isDashboard,
-	},
-	{
-		icon: Mailbox,
-		label: __('Mailbox'),
-		onClick: () => {
-			const mailbox = mailboxes.data?.[0]?.id
-			if (mailbox)
-				router.push({
-					name: 'Mailbox',
-					params: { accountId: store.accountId, mailbox },
-				})
-			else
-				router.push({
-					name: 'AddressBooks',
-					params: { accountId: store.accountId },
-				})
-		},
-		condition: () =>
-			user.data.is_mail_admin && user.data.is_jmap_configured && route.meta.isDashboard,
-	},
-	{
-		icon: Crown,
-		label: __('Admin Dashboard'),
-		onClick: () => router.push('/dashboard'),
-		condition: () =>
-			user.data.is_jmap_configured &&
-			user.data.is_mail_admin &&
-			!route.meta.isDashboard &&
-			!isMobile.value,
-	},
-	{
-		icon: Settings,
-		label: __('Settings'),
-		onClick: () => (showSettings.value = true),
-	},
-	{
-		icon: LogOut,
-		label: __('Log Out'),
-		onClick: logout.submit,
+								if (['AddressBooks', 'AddressBook'].includes(route.name))
+									router.push({
+										name: 'AddressBooks',
+										params: { accountId: a.id },
+									})
+								else if (['Contacts', 'Contact'].includes(route.name))
+									router.push({ name: 'Contacts', params: { accountId: a.id } })
+								else {
+									await mailboxes.promise
+									router.push({
+										name: 'Mailbox',
+										params: {
+											accountId: a.id,
+											mailbox: mailboxes.data?.[0]?.id,
+										},
+									})
+								}
+							},
+						},
+						[
+							h(Avatar, { label: a._name, size: 'md' }),
+							h('span', { class: 'text-sm w-full truncate' }, a._name),
+							a.id === store.accountId &&
+								h(Check, { label: a._name, class: 'h-4 shrink-0 stroke-1.5' }),
+						],
+					),
+				})),
+				condition: () => user.data.accounts?.length > 1 && !route.meta.isDashboard,
+			},
+			{
+				icon: LogOut,
+				label: __('Log Out'),
+				onClick: logout.submit,
+			},
+		],
 	},
 ])
 
