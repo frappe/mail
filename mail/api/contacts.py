@@ -58,7 +58,9 @@ def get_address_book_contact_count(account: str, address_book: str) -> int:
 def create_contacts_if_not_exists(account: str, recipients: list[dict] | str) -> None:
 	"""Creates contacts for the given recipients if they do not exist."""
 
-	if not frappe.db.get_value("User Settings", {"account": account}, "create_contacts_after_email_submit"):
+	if not frappe.db.get_value(
+		"User Settings", {"user": frappe.session.user}, "create_contacts_after_email_submit"
+	):
 		return
 
 	if isinstance(recipients, str):

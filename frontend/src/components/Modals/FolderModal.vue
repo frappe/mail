@@ -4,6 +4,7 @@
 		:options="{
 			title: isNew ? __('New Folder') : __('Folder Settings'),
 			size: 'xl',
+			paddingTop: '10%',
 			actions: [
 				{
 					label: __('Save'),
@@ -15,9 +16,9 @@
 		}"
 	>
 		<template #body-content>
-			<Tabs v-model="tab" :tabs="TABS">
+			<Tabs v-model="tab" :tabs="TABS" class="[&>[role=tablist]]:px-0">
 				<template #tab-panel>
-					<div class="h-96 shrink-0 space-y-4 pt-4 sm:pt-6">
+					<div class="space-y-4 pt-4 sm:pt-6">
 						<!-- General -->
 						<template v-if="tab === 0">
 							<FormControl v-model="folder.name" :label="__('Name')" required />

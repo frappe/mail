@@ -55,6 +55,7 @@ import {
 } from 'lucide-vue-next'
 import { Button, Dialog } from 'frappe-ui'
 
+import { userStore } from '@/stores/user'
 import AccountSettings from '@/components/Settings/AccountSettings.vue'
 import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
 import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
@@ -70,6 +71,7 @@ import VacationResponseSettings from '@/components/Settings/VacationResponseSett
 
 const show = defineModel<boolean>()
 
+const store = userStore()
 const user = inject('$user')
 
 const tabs = computed(() => {
@@ -83,7 +85,9 @@ const tabs = computed(() => {
 			label: __('Account'),
 			icon: Mailbox,
 			component: markRaw(AccountSettings),
-			condition: user.data.is_jmap_configured,
+			condition:
+				user.data.is_jmap_configured &&
+				store.account === user.data.accounts.find((a) => a.is_personal)?.name,
 		},
 		{
 			label: __('Identity'),
