@@ -136,7 +136,7 @@ const title = computed(() =>
 
 const subtitle = computed(() => {
 	const currentAccount = user.data.accounts.find((a) => a.name === store.account)
-	if (currentAccount.is_personal) return toTitleCase(user.data.full_name)
+	if (!currentAccount || currentAccount.is_personal) return toTitleCase(user.data.full_name)
 	return currentAccount._name
 })
 

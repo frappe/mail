@@ -8,15 +8,14 @@ import type { UserResource } from '@/types'
 
 export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
 
-export const userStore = defineStore('mail-user', () => {
-	const accountId = ref('')
+const ACCOUNT_STORAGE_KEY = 'mail-account-id'
 
-	const account = computed(
-		() => userResource.data?.accounts?.find((a) => a.id === accountId.value)?.name,
-	)
+export const userStore = defineStore('mail-user', () => {
+	const accountId = ref(localStorage.getItem(ACCOUNT_STORAGE_KEY) || '')
 
 	const setAccount = (id: string) => {
 		accountId.value = id
+		localStorage.setItem(ACCOUNT_STORAGE_KEY, id)
 		mailboxes.fetch()
 		addressBooks.fetch()
 		identities.fetch()
@@ -34,6 +33,10 @@ export const userStore = defineStore('mail-user', () => {
 		},
 		auto: true,
 	})
+
+	const account = computed(
+		() => userResource.data?.accounts?.find((a) => a.id === accountId.value)?.name,
+	)
 
 	const mailboxes = createResource({
 		url: 'mail.api.mail.get_mailboxes',

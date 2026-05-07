@@ -163,44 +163,20 @@ const routes = [
 		meta: { shortcut: true },
 	},
 	{
-		path: '/mailbox',
-		name: 'MailboxIndexShortcut',
-		component: ShortcutRedirect,
-		meta: { shortcut: true },
-	},
-	{
-		path: '/mailbox/:mailbox',
+		path: '/mailbox/:mailbox?/:threadID?',
 		name: 'MailboxShortcut',
 		component: ShortcutRedirect,
 		meta: { shortcut: true },
 	},
 	{
-		path: '/mailbox/:mailbox/:threadID',
-		name: 'MailShortcut',
-		component: ShortcutRedirect,
-		meta: { shortcut: true },
-	},
-	{
-		path: '/address-books',
+		path: '/address-books/:addressBookName?',
 		name: 'AddressBooksShortcut',
 		component: ShortcutRedirect,
 		meta: { shortcut: true },
 	},
 	{
-		path: '/address-books/:addressBookName',
-		name: 'AddressBookShortcut',
-		component: ShortcutRedirect,
-		meta: { shortcut: true },
-	},
-	{
-		path: '/contacts',
+		path: '/contacts/:contactName?',
 		name: 'ContactsShortcut',
-		component: ShortcutRedirect,
-		meta: { shortcut: true },
-	},
-	{
-		path: '/contacts/:contactName',
-		name: 'ContactShortcut',
 		component: ShortcutRedirect,
 		meta: { shortcut: true },
 	},
@@ -256,17 +232,16 @@ const resolveShortcut = (
 	defaultRoute: { name: string; params: Record<string, string> },
 ) => {
 	switch (name) {
-		case 'MailShortcut':
-			return { name: 'Mail', params: { accountId, ...params } }
 		case 'MailboxShortcut':
-			return { name: 'Mailbox', params: { accountId, ...params } }
-		case 'AddressBookShortcut':
-			return { name: 'AddressBook', params: { accountId, ...params } }
+			if (params.threadID) return { name: 'Mail', params: { accountId, ...params } }
+			if (params.mailbox) return { name: 'Mailbox', params: { accountId, ...params } }
+			return defaultRoute
 		case 'AddressBooksShortcut':
+			if (params.addressBookName)
+				return { name: 'AddressBook', params: { accountId, ...params } }
 			return { name: 'AddressBooks', params: { accountId } }
-		case 'ContactShortcut':
-			return { name: 'Contact', params: { accountId, ...params } }
 		case 'ContactsShortcut':
+			if (params.contactName) return { name: 'Contact', params: { accountId, ...params } }
 			return { name: 'Contacts', params: { accountId } }
 		default:
 			return defaultRoute
