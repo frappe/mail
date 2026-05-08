@@ -356,6 +356,7 @@ def format_identity(account: str, identity: dict) -> dict:
 		"may_delete": cint(identity["mayDelete"]),
 		"creation": today(),
 		"modified": today(),
+		"owner": parse_account(account)[0],
 	}
 
 
