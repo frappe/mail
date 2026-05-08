@@ -3,8 +3,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 
-import type { UserAccount } from './types'
-
 // Lightweight placeholder used by shortcut routes — the beforeEach guard
 // intercepts them and redirects before any component ever mounts.
 const ShortcutRedirect = { render: () => null }
@@ -192,29 +190,6 @@ const handleSetupWizardEscape = () => {
 	if (document.referrer.includes('/app/setup-wizard')) window.location.replace('/app')
 }
 
-const getPersonalAccountId = (user: { accounts?: UserAccount[] }) =>
-	user.accounts?.find((a) => a.is_personal)?.id
-
-const resolveAccount = (
-	routeAccountId: string | undefined,
-	user: { accounts?: UserAccount[] },
-	storeAccountId: string,
-	setAccount: (id: string) => void,
-) => {
-	if (routeAccountId) {
-		const isValid = user.accounts?.some((a) => a.id === routeAccountId)
-		if (isValid) {
-			if (routeAccountId !== storeAccountId) setAccount(routeAccountId)
-			return
-		}
-	}
-
-	if (!storeAccountId) {
-		const personalId = getPersonalAccountId(user)
-		if (personalId) setAccount(personalId)
-	}
-}
-
 const buildDefaultRoute = (
 	accountId: string,
 	mailboxes: { data?: { id: string }[] },
@@ -260,18 +235,15 @@ router.beforeEach(async (to, _, next) => {
 	if (!isLoggedIn) return to.meta.isLogin ? next() : next({ name: 'Login' })
 
 	// 2. Wait for user data
-	const { userResource, mailboxes, setAccount } = userStore()
+	const { userResource, mailboxes, resolveAccount } = userStore()
 	await userResource.promise
 	const user = userResource.data
 
-	// Re-read accountId after resolveAccount may have updated it via setAccount
+	// 3. Resolve active account
+	resolveAccount(user?.accounts, to.params.accountId as string | undefined)
 	const accountId = userStore().accountId
 
-	// 3. Resolve active account (use current store value, not the pre-await snapshot)
-	resolveAccount(to.params.accountId as string | undefined, user, accountId, setAccount)
-
-	// 4. Fetch and wait for mailbox list
-	if (!mailboxes.promise) mailboxes.fetch()
+	// 4. Wait for mailbox list
 	await mailboxes.promise
 	const defaultRoute = buildDefaultRoute(accountId, mailboxes)
 

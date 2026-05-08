@@ -35,6 +35,7 @@ const store = userStore()
 
 const quota = createResource({
 	url: 'mail.api.account.get_quota',
+	auto: true,
 	makeParams: () => ({ account: store.account }),
 	cache: ['quota', store.account],
 })

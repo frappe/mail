@@ -4,14 +4,36 @@ import { createResource } from 'frappe-ui'
 
 import router from '@/router'
 
-import type { UserResource } from '@/types'
+import type { UserAccount, UserResource } from '@/types'
 
 export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
 
 const ACCOUNT_STORAGE_KEY = 'mail-account-id'
 
 export const userStore = defineStore('mail-user', () => {
-	const accountId = ref(localStorage.getItem(ACCOUNT_STORAGE_KEY) || '')
+	const accountId = ref('')
+
+	const resolveAccount = (accounts?: UserAccount[], routeAccountId?: string) => {
+		if (!accounts?.length) return
+
+		// 1. Route param
+		if (routeAccountId && accounts.some((a) => a.id === routeAccountId)) {
+			if (routeAccountId !== accountId.value) setAccount(routeAccountId)
+			return
+		}
+
+		// 2. localStorage
+		const localId = localStorage.getItem(ACCOUNT_STORAGE_KEY)
+		if (localId && accounts.some((a) => a.id === localId)) {
+			if (localId !== accountId.value) setAccount(localId)
+			return
+		}
+
+		// 3. Personal account fallback
+		if (accountId.value) return
+		const personalId = accounts.find((a) => a.is_personal)?.id
+		if (personalId) setAccount(personalId)
+	}
 
 	const setAccount = (id: string) => {
 		accountId.value = id
@@ -27,6 +49,7 @@ export const userStore = defineStore('mail-user', () => {
 		url: 'mail.api.account.get_user_info',
 		onSuccess: (data) => {
 			if (data?.is_mail_admin) domains.fetch()
+			resolveAccount(data?.accounts)
 		},
 		onError: (error) => {
 			if (error && error.exc_type === 'AuthenticationError') router.push('/login')
@@ -89,7 +112,7 @@ export const userStore = defineStore('mail-user', () => {
 	return {
 		accountId,
 		account,
-		setAccount,
+		resolveAccount,
 		userResource,
 		mailboxes,
 		mailboxIds,

@@ -111,7 +111,7 @@ const { isSidebarOpen, closeSidebar } = useSidebar()
 const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)
 const { logout, branding } = sessionStore()
 const store = userStore()
-const { setAccount, mailboxes } = store
+const { mailboxes } = store
 
 const user = inject('$user')
 
@@ -222,25 +222,10 @@ const menuItems = computed(() => [
 						{
 							class: 'flex items-center gap-2 p-1.5 rounded hover:bg-surface-gray-2 cursor-pointer w-48 shrink-0',
 							onClick: async () => {
-								setAccount(a.id)
-
-								if (['AddressBooks', 'AddressBook'].includes(route.name))
-									router.push({
-										name: 'AddressBooks',
-										params: { accountId: a.id },
-									})
-								else if (['Contacts', 'Contact'].includes(route.name))
-									router.push({ name: 'Contacts', params: { accountId: a.id } })
-								else {
-									await mailboxes.promise
-									router.push({
-										name: 'Mailbox',
-										params: {
-											accountId: a.id,
-											mailbox: mailboxes.data?.[0]?.id,
-										},
-									})
-								}
+								router.push({
+									name: route.name,
+									params: { ...route.params, accountId: a.id },
+								})
 							},
 						},
 						[
