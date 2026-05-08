@@ -90,6 +90,16 @@ class AccountSettings(Document):
 	def before_insert(self) -> None:
 		self.user = parse_account(self.account)[0]
 
+	def after_delete(self) -> None:
+		"""Clear all caches related to the account when the settings are deleted."""
+
+		self.clear_cached_jmap_connection()
+		self.clear_cached_jmap_identities()
+		self.clear_cached_jmap_mailboxes()
+		self.clear_cached_blobs()
+		self.clear_cached_mail_messages()
+		self.clear_cached_contact_cards()
+
 	@frappe.whitelist()
 	def clear_cached_jmap_connection(self) -> None:
 		"""Clear all cached JMAP connection for the current user."""
