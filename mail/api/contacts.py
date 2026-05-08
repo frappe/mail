@@ -9,10 +9,10 @@ from mail.jmap import get_default_address_book_id
 
 
 @frappe.whitelist()
-def get_address_books() -> list[dict]:
-	"""Returns the address books for the current user."""
+def get_address_books(account: str) -> list[dict]:
+	"""Returns the address books for the given account."""
 
-	if not (address_books := fetch_address_books(frappe.session.user, 1, 50)):
+	if not (address_books := fetch_address_books(account, 1, 50)):
 		return []
 
 	fields = ["name", "id", "_name", "default"]
@@ -20,13 +20,13 @@ def get_address_books() -> list[dict]:
 
 
 @frappe.whitelist()
-def get_contact_cards(filter: dict | None = None, limit: int = 50) -> list[dict]:
-	"""Returns the contact cards for the current user."""
+def get_contact_cards(account: str, filter: dict | None = None, limit: int = 50) -> list[dict]:
+	"""Returns the contact cards for the given account."""
 
 	if filter:
 		filter = {k: v for k, v in filter.items() if v}
 
-	if not (contact_cards := fetch_contact_cards(frappe.session.user, filter, 0, limit)[0]):
+	if not (contact_cards := fetch_contact_cards(account, filter, 0, limit)[0]):
 		return []
 
 	fields = ["id", "full_name", "kind", "emails"]
@@ -34,11 +34,11 @@ def get_contact_cards(filter: dict | None = None, limit: int = 50) -> list[dict]
 
 
 @frappe.whitelist()
-def get_contacts(filter: dict | None = None, limit: int = 50) -> list[dict]:
-	"""Returns the emails contacts for the current user."""
+def get_contacts(account: str, filter: dict | None = None, limit: int = 50) -> list[dict]:
+	"""Returns the emails contacts for the given account."""
 
 	contacts = []
-	contact_cards = get_contact_cards(filter, limit)
+	contact_cards = get_contact_cards(account, filter, limit)
 
 	for card in contact_cards:
 		if emails := card.get("emails"):
@@ -49,17 +49,18 @@ def get_contacts(filter: dict | None = None, limit: int = 50) -> list[dict]:
 
 
 @frappe.whitelist()
-def get_address_book_contact_count(address_book) -> int:
-	"""Returns the total no. of contacts for the fiven address book."""
+def get_address_book_contact_count(account: str, address_book: str) -> int:
+	"""Returns the total no. of contacts for the given address book."""
 
-	return fetch_contact_cards(frappe.session.user, {"inAddressBook": address_book}, 0, 1)[1]
+	return fetch_contact_cards(account, {"inAddressBook": address_book}, 0, 1)[1]
 
 
-def create_contacts_if_not_exists(recipients: list[dict] | str) -> None:
+def create_contacts_if_not_exists(account: str, recipients: list[dict] | str) -> None:
 	"""Creates contacts for the given recipients if they do not exist."""
 
-	user = frappe.session.user
-	if not frappe.db.get_value("User Settings", {"user": user}, "create_contacts_after_email_submit"):
+	if not frappe.db.get_value(
+		"User Settings", {"user": frappe.session.user}, "create_contacts_after_email_submit"
+	):
 		return
 
 	if isinstance(recipients, str):
@@ -69,21 +70,21 @@ def create_contacts_if_not_exists(recipients: list[dict] | str) -> None:
 
 	new_emails = []
 	for email in emails:
-		if not (fetch_contact_cards(user, {"email": email}, 0, 1)[0]):
+		if not (fetch_contact_cards(account, {"email": email}, 0, 1)[0]):
 			new_emails.append(email)
 
 	contact_cards = []
 	for email in new_emails:
 		contact_card = {
-			"user": user,
-			"address_book_ids": [get_default_address_book_id(user)],
+			"account": account,
+			"address_book_ids": [get_default_address_book_id(account)],
 			"full_name": extract_name_from_email(email),
 			"kind": "Individual",
 			"emails": [{"address": email, "type": "Personal"}],
 		}
 		contact_cards.append(contact_card)
 
-	bulk_add_contact_cards(user, contact_cards)
+	bulk_add_contact_cards(account, contact_cards)
 
 
 def extract_name_from_email(email: str) -> str:

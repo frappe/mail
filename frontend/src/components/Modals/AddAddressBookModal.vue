@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, reactive, watch } from 'vue'
+import { reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog, FormControl, createResource } from 'frappe-ui'
 
@@ -46,12 +46,11 @@ import { userStore } from '@/stores/user'
 
 const show = defineModel<boolean>()
 
-const user = inject('$user')
-const { addressBooks } = userStore()
+const store = userStore()
 const router = useRouter()
 
 const defaultAddressBook = {
-	user: user.data.name,
+	account: store.account,
 	name: '',
 	description: '',
 	default: false,
@@ -65,7 +64,7 @@ const createAddressBook = createResource({
 	onSuccess: (data: string) => {
 		raiseToast(__('Address book created.'))
 		show.value = false
-		addressBooks.reload()
+		store.addressBooks.reload()
 		router.push({ name: 'AddressBook', params: { addressBookName: data } })
 	},
 	onError: (error) => raiseToast(error.message, 'error'),

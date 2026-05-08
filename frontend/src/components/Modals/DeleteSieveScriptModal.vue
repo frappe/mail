@@ -23,14 +23,14 @@ import type { SieveScript } from '@/types'
 const show = defineModel<boolean>()
 const { script } = defineProps<{ script: SieveScript }>()
 
-const { sieveScripts } = userStore()
+const store = userStore()
 
 const deleteScript = createResource({
 	url: 'mail.api.sieve.delete_sieve_script',
-	makeParams: () => ({ id: script.id }),
+	makeParams: () => ({ account: store.account, id: script.id }),
 	onSuccess: () => {
 		raiseToast(__('Sieve script deleted.'))
-		sieveScripts.reload()
+		store.sieveScripts.reload()
 		show.value = false
 	},
 	onError: (error) => raiseToast(error.message, 'error'),

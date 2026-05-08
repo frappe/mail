@@ -5,7 +5,12 @@ frappe.ui.form.on('Mail Exchange', {
 	refresh(frm) {
 		if (!frm.doc.__islocal) {
 			frm.trigger('add_actions')
+			frm.trigger('set_account_options')
 		}
+	},
+
+	user(frm) {
+		frm.trigger('set_account_options')
 	},
 
 	add_actions(frm) {
@@ -14,6 +19,26 @@ frappe.ui.form.on('Mail Exchange', {
 
 		if (['Failed'].includes(frm.doc.status)) {
 			frm.add_custom_button(__('Retry'), () => frm.trigger('retry'), __('Actions'))
+		}
+	},
+
+	set_account_options(frm) {
+		if (frm.doc.user) {
+			frappe.call({
+				method: 'mail.jmap.get_user_accounts',
+				args: {
+					user: frm.doc.user,
+				},
+				callback: (r) => {
+					if (r.message) {
+						frm.set_df_property('account', 'options', r.message)
+						frm.refresh_field('account')
+					}
+				},
+			})
+		} else {
+			frm.set_df_property('account', 'options', [])
+			frm.refresh_field('account')
 		}
 	},
 

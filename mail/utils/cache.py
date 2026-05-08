@@ -12,17 +12,6 @@ def get_signup_domains() -> list:
 	return frappe.cache.hget("mail-settings", "signup_domains", generator)
 
 
-def get_user_emails(user: str) -> list:
-	"""Returns the list of emails associated with the user."""
-
-	def generator() -> list:
-		from mail.jmap import get_identities
-
-		return [i["email"] for i in get_identities(user)]
-
-	return frappe.cache.hget(f"user|{user}", "emails", generator)
-
-
 def get_rate_limits(method_path: str) -> list:
 	"""Returns the rate limits for the method path."""
 

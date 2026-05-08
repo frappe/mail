@@ -4,7 +4,12 @@
 		<div class="flex items-center space-x-2">
 			<Button v-if="isMobile" icon="menu" variant="ghost" @click="openSidebar" />
 			<Breadcrumbs
-				:items="[{ label: mailboxName, route: { name: 'Mailbox', params: { mailbox } } }]"
+				:items="[
+					{
+						label: mailboxName,
+						route: { name: 'Mailbox', params: { accountId, mailbox } },
+					},
+				]"
 			>
 				<template
 					v-if="mailbox !== 'starred' && !mailboxes.loading && !searchResults.loading"
@@ -330,7 +335,11 @@ import ShortcutsModal from '@/components/Modals/ShortcutsModal.vue'
 
 import type { COLOR_SCHEME, Thread, UserResource } from '@/types'
 
-const { mailbox, threadID } = defineProps<{ mailbox: string; threadID?: string }>()
+const { accountId, mailbox, threadID } = defineProps<{
+	accountId: string
+	mailbox: string
+	threadID?: string
+}>()
 
 const route = useRoute()
 const router = useRouter()
@@ -342,7 +351,8 @@ const socket = inject('$socket')
 const user = inject('$user') as UserResource
 const dayjs = inject('$dayjs')
 
-const { mailboxes, mailboxIds } = userStore()
+const store = userStore()
+const { mailboxes, mailboxIds } = store
 
 // Appearance
 
@@ -542,7 +552,7 @@ const handleGMenuNavigation = (e: KeyboardEvent, key: string) => {
 	const mailboxId = navigationMap[key]
 	if (mailboxId) {
 		e.preventDefault()
-		router.push({ name: 'Mailbox', params: { mailbox: mailboxId } })
+		router.push({ name: 'Mailbox', params: { accountId, mailbox: mailboxId } })
 	}
 }
 
@@ -727,7 +737,7 @@ const noOfSearchResults = ref(0)
 
 const searchResults = createResource({
 	url: 'mail.api.mail.search_mails',
-	makeParams: () => ({ filter: route.query, limit: limit.value }),
+	makeParams: () => ({ account: store.account, filter: route.query, limit: limit.value }),
 	transform: (data: [Thread[], number]) => {
 		noOfSearchResults.value = data[1]
 		return data[0]
@@ -753,7 +763,12 @@ const filter = ref<string | null>(
 
 const threads = createResource({
 	url: 'mail.api.mail.get_threads',
-	makeParams: () => ({ mailbox, limit: limit.value, filter_by: filter.value }),
+	makeParams: () => ({
+		account: store.account,
+		mailbox,
+		limit: limit.value,
+		filter_by: filter.value,
+	}),
 })
 
 const threadsResource = computed(() => (mailbox === 'search' ? searchResults : threads))
@@ -774,7 +789,7 @@ const reloadThreads: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) =
 }
 
 watch(
-	() => mailbox,
+	() => [mailbox, accountId],
 	() => {
 		threadsResource.value.data = []
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
@@ -821,13 +836,15 @@ const loadMoreThreads = useDebounceFn((e) => {
 	}
 }, 500)
 
-const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
+const goToMailbox = () =>
+	router.push({ name: 'Mailbox', params: { accountId, mailbox }, query: route.query })
 
 const getThreadByOffset = (offset: number, currentThread: string = threadID!) =>
 	threadIDs.value[threadIDs.value.indexOf(currentThread) + offset]
 
 const goToThread = (threadID: string) => {
-	if (threadID) router.push({ name: 'Mail', params: { mailbox, threadID }, query: route.query })
+	if (threadID)
+		router.push({ name: 'Mail', params: { accountId, mailbox, threadID }, query: route.query })
 }
 
 const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
@@ -856,7 +873,11 @@ type SetSeenParams = {
 
 const setSeen = createResource({
 	url: 'mail.api.mail.set_seen',
-	makeParams: (thread_ids: SetSeenParams) => ({ thread_ids, mailbox }),
+	makeParams: (thread_ids: SetSeenParams) => ({
+		account: store.account,
+		thread_ids,
+		mailbox,
+	}),
 	onSuccess: (thread_ids: SetSeenParams) => {
 		mailboxes.reload()
 		for (const [seenStr, ids] of Object.entries(thread_ids)) {
@@ -879,7 +900,7 @@ type MoveThreadsParams = Record<string, string[]>
 
 const moveThreads = createResource({
 	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: (thread_ids: MoveThreadsParams) => ({ thread_ids }),
+	makeParams: (thread_ids: MoveThreadsParams) => ({ account: store.account, thread_ids }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
@@ -894,7 +915,7 @@ const moveToOptions = computed(() =>
 
 const setSpamStatus = createResource({
 	url: 'mail.api.mail.set_threads_spam_status',
-	makeParams: (thread_ids: SetSeenParams) => ({ thread_ids }),
+	makeParams: (thread_ids: SetSeenParams) => ({ account: store.account, thread_ids }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
@@ -946,7 +967,7 @@ const junkOrDeleteThreadsOptions = computed(() => ({
 
 const deleteThreads = createResource({
 	url: 'mail.api.mail.delete_threads',
-	makeParams: (thread_ids: string[]) => ({ thread_ids, mailbox }),
+	makeParams: (thread_ids: string[]) => ({ account: store.account, thread_ids, mailbox }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids, false),
 })
 
@@ -954,7 +975,7 @@ const showEmptyMailbox = ref(false)
 
 const emptyMailbox = createResource({
 	url: 'mail.api.mail.empty_user_mailbox',
-	makeParams: () => ({ mailbox }),
+	makeParams: () => ({ account: store.account, mailbox }),
 	onSuccess: () => {
 		threadsResource.value.data = []
 		raiseToast(__('{0} emptied.', [mailboxName.value]))

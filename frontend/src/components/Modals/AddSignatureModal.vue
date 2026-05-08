@@ -41,7 +41,7 @@ const emit = defineEmits(['reloadSignatures'])
 const { buttons } = useTextEditorButtons()
 
 const defaultSignature = reactive({
-	account: user.data.name,
+	user: user.data.name,
 	signature_name: '',
 	html_body: '',
 })

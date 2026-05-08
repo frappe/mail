@@ -8,7 +8,7 @@ from uuid import uuid7
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import today
+from frappe.utils import cint, today
 
 from mail.jmap import get_push_subscription_service
 from mail.utils import generate_uuid_style_hash, parse_filters
@@ -54,9 +54,9 @@ class PushSubscription(Document):
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
 		id = filters.get("id")
-		user = filters.get("user") or frappe.session.user
+		user = filters.get("user")
 
-		if not user or user in ("Guest", "Administrator"):
+		if not user:
 			frappe.msgprint(_("Please select a user to view push subscriptions."), alert=True)
 			return []
 
@@ -75,12 +75,12 @@ class PushSubscription(Document):
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
-		user = filters.get("user") or frappe.session.user
-		return (
-			frappe.cache.get_value(_get_total_cache_key(user))
-			if user and has_permission_for_user(user, raise_exception=False)
-			else 0
-		)
+		user = filters.get("user")
+
+		if user and has_permission_for_user(user, raise_exception=False):
+			return cint(frappe.cache.get_value(_get_total_cache_key(user)))
+
+		return 0
 
 	@staticmethod
 	def get_stats(**kwargs) -> dict:
@@ -178,7 +178,7 @@ def get_push_subscription(user: str, id: str, raise_exception: bool = True) -> d
 
 	if raise_exception:
 		frappe.throw(
-			_("Push Subscription with ID {0} not found in user {1}.").format(
+			_("Push Subscription with ID {0} not found for user {1}.").format(
 				frappe.bold(id), frappe.bold(user)
 			),
 			title=_("Push Subscription Not Found"),

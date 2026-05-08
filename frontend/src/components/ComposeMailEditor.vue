@@ -299,7 +299,7 @@ const {
 
 const emit = defineEmits(['discardMail', 'reply', 'replyAll', 'forward', 'popOut'])
 
-const { identities } = userStore()
+const { account, identities } = userStore()
 
 const getIdentity = (email: string) =>
 	identities.data?.find((identity: Identity) => identity.email === email)
@@ -339,10 +339,21 @@ const editorHeight = useVisualViewport(
 
 const user = inject('$user') as UserResource
 
+const getDefaultFromEmail = () => {
+	const identityEmails = identities.data?.map((i: Identity) => i.email) ?? []
+
+	return (
+		identityEmails.find((e) => e === mailDetails?.from_email) ??
+		identityEmails.find((e) => e === user.data.default_outgoing_email) ??
+		identityEmails[0] ??
+		user.data.name
+	)
+}
+
 const mail = reactive<ComposeMailData>({
 	name: mailDetails?.name || '',
 	id: mailDetails?.id || '',
-	from_email: mailDetails?.from_email || user.data.default_outgoing_email || user.data.name,
+	from_email: getDefaultFromEmail(),
 	to: mailDetails?.to || [],
 	cc: mailDetails?.cc || [],
 	bcc: mailDetails?.bcc || [],
@@ -444,6 +455,7 @@ const onMailUpdateSuccess = ({
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
 	makeParams: ({ save_as_draft }: { save_as_draft: boolean }) => ({
+		account,
 		...mail,
 		...processInlineImages(mail),
 		from_name: getIdentity(mail.from_email!)._name,
@@ -456,6 +468,7 @@ const createMail = createResource({
 const updateDraft = createResource({
 	url: 'mail.api.mail.update_draft_mail',
 	makeParams: ({ submit }: { submit: boolean }) => ({
+		account,
 		...mail,
 		...processInlineImages(mail),
 		from_name: getIdentity(mail.from_email!)._name,
@@ -467,7 +480,7 @@ const updateDraft = createResource({
 
 const deleteMail = createResource({
 	url: 'mail.api.mail.delete_mail',
-	makeParams: () => ({ id: mail.id }),
+	makeParams: () => ({ account, id: mail.id }),
 	onSuccess: () => {
 		reloadMails()
 		raiseToast(__('Draft discarded.'))

@@ -29,7 +29,7 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.jmap import get_email_service, get_identities, get_jmap_connection
+from mail.jmap import get_email_service, get_identities, get_jmap_connection, parse_account
 from mail.jmap.models import EmailAddress, EmailAttachment, EmailCreateModel, EmailHeader, EmailRecipient
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
@@ -90,7 +90,7 @@ class MailQueue(Document):
 		kwargs = frappe._dict(kwargs)
 
 		doc = frappe.new_doc("Mail Queue")
-		doc.user = kwargs.user
+		doc.account = kwargs.account
 		doc.from_name = kwargs.from_name
 		doc.from_email = kwargs.from_email
 		doc.subject = kwargs.subject
@@ -149,7 +149,7 @@ class MailQueue(Document):
 		identity = {}
 
 		if self.from_email:
-			for i in get_identities(self.user):
+			for i in get_identities(self.account):
 				if self.from_email.lower() == i.get("email").lower():
 					identity = i
 					break
@@ -209,7 +209,7 @@ class MailQueue(Document):
 
 		from mail.client.doctype.mail_message.mail_message import _get_blob_cache_key
 
-		cache_key = _get_blob_cache_key(self.user, self.blob_id)
+		cache_key = _get_blob_cache_key(self.account, self.blob_id)
 		if content := frappe.cache.get_value(cache_key):
 			return content.decode("utf-8")
 
@@ -265,6 +265,9 @@ class MailQueue(Document):
 			self.validate_priority()
 			self.validate_in_reply_to()
 			self.validate_in_reply_to_id()
+
+	def before_insert(self) -> None:
+		self.user = parse_account(self.account)[0]
 
 	def after_insert(self) -> None:
 		if self.delivery_mode == "Immediate":
@@ -337,8 +340,8 @@ class MailQueue(Document):
 			if not self.identity:
 				frappe.throw(
 					_(
-						"You cannot send email from {0} using user {1}. Please use the email address associated with the user."
-					).format(frappe.bold(self.from_email), frappe.bold(self.user))
+						"The From Email {0} is not a valid identity. Please add it as an identity or use a different email address."
+					).format(self.from_email)
 				)
 		else:
 			frappe.throw(_("From Email is required."))
@@ -459,7 +462,7 @@ class MailQueue(Document):
 	def validate_attachments(self) -> None:
 		"""Validates the attachments."""
 
-		user = self.user if frappe.session.user == "Administrator" else frappe.session.user
+		user = self.user if is_administrator(frappe.session.user) else frappe.session.user
 
 		normalized = []
 		seen_blob_ids = set()
@@ -551,7 +554,7 @@ class MailQueue(Document):
 
 		if self.in_reply_to and not self.in_reply_to_id:
 			try:
-				service = get_email_service(self.user)
+				service = get_email_service(self.account)
 				result = service.query({"header": ["Message-ID", self.in_reply_to]})
 				if ids := result["ids"]:
 					self.in_reply_to_id = ids[0]
@@ -579,7 +582,7 @@ class MailQueue(Document):
 
 		from mail.client.doctype.mail_message.mail_message import fetch_blob
 
-		return fetch_blob(self.user, self.blob_id).decode("utf-8")
+		return fetch_blob(self.account, self.blob_id).decode("utf-8")
 
 	def _process(self) -> None:
 		"""Create, Update or Submit the Email."""
@@ -588,8 +591,8 @@ class MailQueue(Document):
 
 		try:
 			connection = get_jmap_connection(self.user)
-			email_service = EmailService(self.user, connection)
-			mailbox_service = MailboxService(self.user, connection)
+			email_service = EmailService(self.account, connection)
+			mailbox_service = MailboxService(self.account, connection)
 
 			draft_mailbox_id = mailbox_service.get_mailbox_id_by_role(
 				"drafts", create_if_not_exists=True, raise_exception=True
@@ -888,4 +891,6 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if doc.doctype != "Mail Queue":
 		return False
 
-	return has_permission_for_user(doc.user, raise_exception=False)
+	user = doc.user or parse_account(doc.account)[0]
+
+	return has_permission_for_user(user, raise_exception=False)

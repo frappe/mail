@@ -72,7 +72,7 @@ const {
 const emit = defineEmits(['starMails'])
 
 const { isMobile } = useScreenSize()
-const { mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
+const { account, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
 const { setUndoAction, undo } = useUndo()
 const user = inject('$user')
 
@@ -216,7 +216,7 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 
 const markAsSpam = createResource({
 	url: 'mail.api.mail.set_mails_spam_status',
-	makeParams: ({ spam }: { spam: boolean }) => ({ ids: [mail.id], spam }),
+	makeParams: ({ spam }: { spam: boolean }) => ({ account, ids: [mail.id], spam }),
 })
 
 const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
@@ -236,7 +236,7 @@ const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
 
 const moveMail = createResource({
 	url: 'mail.api.mail.move_mails',
-	makeParams: (mailbox: string) => ({ ids: [mail.id], mailbox }),
+	makeParams: (mailbox: string) => ({ account, ids: [mail.id], mailbox }),
 })
 
 const handleMoveMail = (mailbox: string, isUndo = false) => {
@@ -275,6 +275,7 @@ const handleDeleteMail = () =>
 const starMails = createResource({
 	url: 'mail.api.mail.set_flagged',
 	makeParams: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => ({
+		account,
 		ids,
 		flagged,
 	}),

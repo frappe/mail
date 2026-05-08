@@ -7,6 +7,7 @@
  "field_order": [
   "section_break_fgkh",
   "user",
+  "account",
   "column_break_pjqh",
   "subscribed",
   "visible",
@@ -39,18 +40,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "description": "The user this calendar belongs to.",
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "no_copy": 1,
-   "options": "User",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
    "fieldname": "section_break_uaer",
    "fieldtype": "Section Break"
   },
@@ -58,7 +47,7 @@
    "description": "The ID of the calendar.",
    "fieldname": "id",
    "fieldtype": "Data",
-   "label": "ID",
+   "label": "Calendar ID",
    "no_copy": 1,
    "read_only": 1,
    "set_only_once": 1
@@ -239,6 +228,27 @@
    "label": "Share With",
    "options": "Calendar Rights",
    "read_only_depends_on": "eval: !doc.may_admin"
+  },
+  {
+   "description": "The account this calendar belongs to.",
+   "fieldname": "account",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "no_copy": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The user this calendar belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
@@ -250,7 +260,7 @@
    "link_fieldname": "calendar"
   }
  ],
- "modified": "2026-04-13 12:51:01.709330",
+ "modified": "2026-04-17 14:07:04.696313",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Calendar",

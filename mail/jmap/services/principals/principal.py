@@ -110,7 +110,7 @@ class PrincipalService(CalendarsService):
 		"""Public method to get principal availability, allowing for optional details and event properties to be specified."""
 
 		payload = {
-			"accountId": self.primary_account_id,
+			"accountId": self.account_id,
 			"id": principal_id,
 			"start": utc_start,
 			"end": utc_end,

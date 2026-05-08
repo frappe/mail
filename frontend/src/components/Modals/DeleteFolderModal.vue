@@ -8,7 +8,7 @@
 				[mailbox?._name],
 			),
 			icon: { name: 'alert-triangle', appearance: 'warning' },
-			actions: [{ label: __('Confirm'), variant: 'solid', onClick: deleteFolder.submit }],
+			actions: [{ label: __('Confirm'), theme: 'red', onClick: deleteFolder.submit }],
 		}"
 	/>
 </template>
@@ -25,16 +25,16 @@ const show = defineModel<boolean>()
 
 const { mailbox } = defineProps<{ mailbox?: MailboxData }>()
 
-const { mailboxes, sieveScripts } = userStore()
+const store = userStore()
 
 const deleteFolder = createResource({
 	url: 'mail.api.mail.delete_mailbox',
-	makeParams: () => ({ id: mailbox.id, name: mailbox._name }),
+	makeParams: () => ({ account: store.account, id: mailbox.id, name: mailbox._name }),
 	onSuccess: () => {
 		raiseToast(__('Folder deleted.'))
 		show.value = false
-		mailboxes.reload()
-		sieveScripts.reload()
+		store.mailboxes.reload()
+		store.sieveScripts.reload()
 	},
 	onError: (error) => raiseToast(error.message, 'error'),
 })

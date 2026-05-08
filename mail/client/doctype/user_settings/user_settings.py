@@ -6,78 +6,16 @@ from uuid import uuid7
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint
 
-from mail.client.doctype.sieve_script.sieve_script import SieveScript
-from mail.jmap import (
-	get_core_service,
-	invalidate_jmap_connection_cache,
-	invalidate_jmap_identities_cache,
-	invalidate_jmap_mailboxes_cache,
-)
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
 from mail.utils import get_mail_config
 from mail.utils.user import is_local_user, is_system_manager
-from mail.utils.validation import has_permission_for_user
 
 
 class UserSettings(Document):
 	def autoname(self) -> None:
 		self.name = str(uuid7())
-
-	@property
-	def has_cached_jmap_connection(self) -> int:
-		"""Check if there is a cached JMAP connection for the user."""
-
-		return cint(bool(frappe.cache.hget("jmap:connection", self.user)))
-
-	@property
-	def has_cached_jmap_identities(self) -> int:
-		"""Check if there are cached JMAP identities for the user."""
-
-		if not self.username or self.flags.in_delete:
-			return 0
-
-		try:
-			service = get_core_service(self.user)
-			return cint(bool(service.cache.get("identities")))
-		except Exception:
-			return 0
-
-	@property
-	def has_cached_jmap_mailboxes(self) -> int:
-		"""Check if there are cached JMAP mailboxes for the user."""
-
-		if not self.username or self.flags.in_delete:
-			return 0
-
-		try:
-			service = get_core_service(self.user)
-			return cint(bool(service.cache.get("mailboxes")))
-		except Exception:
-			return 0
-
-	@property
-	def total_cached_blobs(self) -> int:
-		"""Get the total number of cached blobs for the user."""
-
-		list_key = f"jmap:blob:{self.user}:blob_ids"
-		return len(frappe.cache.lrange(list_key, 0, -1) or [])
-
-	@property
-	def total_cached_mail_messages(self) -> int:
-		"""Get the total number of cached mail messages for the user."""
-
-		list_key = f"jmap:message:{self.user}:ids"
-		return len(frappe.cache.lrange(list_key, 0, -1) or [])
-
-	@property
-	def total_cached_contact_cards(self) -> int:
-		"""Get the total number of cached contact cards for the user."""
-
-		list_key = f"jmap:contact_card:{self.user}:ids"
-		return len(frappe.cache.lrange(list_key, 0, -1) or [])
 
 	def validate(self) -> None:
 		if not self.username or frappe.flags.in_migrate:
@@ -118,7 +56,15 @@ class UserSettings(Document):
 			)
 
 		if self.default_outgoing_email:
-			identity_service = IdentityService(self.user, connection)
+			personal_account_id = next(
+				(account_id for account_id, details in connection.accounts.items() if details["isPersonal"]),
+				None,
+			)
+
+			if not personal_account_id:
+				frappe.throw(_("No personal account found for the user on the JMAP server."))
+
+			identity_service = IdentityService(f"{self.user}:{personal_account_id}", connection)
 
 			if not identity_service.get_identity_id_by_email(self.default_outgoing_email):
 				frappe.throw(
@@ -126,6 +72,26 @@ class UserSettings(Document):
 						"Default Outgoing Email {0} is not found in the identities of the JMAP account."
 					).format(frappe.bold(self.default_outgoing_email))
 				)
+
+		existing_account_settings_map = {
+			s["account"]: s["name"]
+			for s in frappe.db.get_all("Account Settings", {"user": self.user}, ["name", "account"])
+		}
+		current_accounts = set([f"{self.user}:{account_id}" for account_id in connection.accounts.keys()])
+
+		accounts_to_delete = set(existing_account_settings_map.keys()) - current_accounts
+		accounts_to_add = current_accounts - set(existing_account_settings_map.keys())
+
+		for account in accounts_to_delete:
+			frappe.delete_doc(
+				"Account Settings", existing_account_settings_map[account], ignore_permissions=True
+			)
+
+		for account in accounts_to_add:
+			settings = frappe.new_doc("Account Settings")
+			settings.user = self.user
+			settings.account = account
+			settings.save(ignore_permissions=True)
 
 	def validate_local_user(self) -> None:
 		"""Validate that if the user is local, then the JMAP username must be the same as the User name and a Principal Settings must exist for the user."""
@@ -153,92 +119,6 @@ class UserSettings(Document):
 
 		frappe.only_for("Administrator")
 		return self.get_password("app_password")
-
-	@frappe.whitelist()
-	def clear_cached_jmap_connection(self) -> None:
-		"""Clear all cached JMAP connection for the current user."""
-
-		if self.has_clear_cache_permission():
-			invalidate_jmap_connection_cache(self.user)
-
-	@frappe.whitelist()
-	def clear_cached_jmap_identities(self) -> None:
-		"""Clear all cached JMAP identities for the current user."""
-
-		if self.has_clear_cache_permission():
-			invalidate_jmap_identities_cache(self.user)
-
-	@frappe.whitelist()
-	def clear_cached_jmap_mailboxes(self) -> None:
-		"""Clear all cached JMAP mailboxes for the current user."""
-
-		if self.has_clear_cache_permission():
-			invalidate_jmap_mailboxes_cache(self.user)
-
-	@frappe.whitelist()
-	def clear_cached_blobs(self) -> None:
-		"""Clear all cached JMAP blobs for the current user."""
-
-		from mail.client.doctype.mail_message.mail_message import _get_blob_cache_key
-
-		if not self.has_clear_cache_permission():
-			return
-
-		user = self.user
-		list_key = f"jmap:blob:{user}:blob_ids"
-
-		blob_ids = frappe.cache.lrange(list_key, 0, -1) or []
-
-		for blob_id in blob_ids:
-			cache_key = _get_blob_cache_key(user, blob_id)
-			frappe.cache.delete_value(cache_key)
-
-		frappe.cache.delete_value(list_key)
-
-	@frappe.whitelist()
-	def clear_cached_mail_messages(self) -> None:
-		"""Clear all cached mail messages for the current user."""
-
-		from mail.client.doctype.mail_message.mail_message import _get_message_cache_key
-
-		if not self.has_clear_cache_permission():
-			return
-
-		user = self.user
-		list_key = f"jmap:message:{user}:ids"
-
-		message_ids = frappe.cache.lrange(list_key, 0, -1) or []
-
-		for msg_id in message_ids:
-			cache_key = _get_message_cache_key(user, msg_id)
-			frappe.cache.delete_value(cache_key)
-
-		frappe.cache.delete_value(list_key)
-
-	@frappe.whitelist()
-	def clear_cached_contact_cards(self) -> None:
-		"""Clear all cached contact cards for the current user."""
-
-		from mail.client.doctype.contact_card.contact_card import _get_contact_card_cache_key
-
-		if not self.has_clear_cache_permission():
-			return
-
-		user = self.user
-		list_key = f"jmap:contact_card:{user}:ids"
-
-		contact_card_ids = frappe.cache.lrange(list_key, 0, -1) or []
-
-		for contact_id in contact_card_ids:
-			cache_key = _get_contact_card_cache_key(user, contact_id)
-			frappe.cache.delete_value(cache_key)
-
-		frappe.cache.delete_value(list_key)
-
-	def has_clear_cache_permission(self) -> bool:
-		"""Check if the user has permission to clear cache."""
-
-		return has_permission_for_user(self.user, raise_exception=True)
 
 	def _db_set(
 		self,

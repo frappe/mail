@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => ({
 						'identity',
 						'mail_signature',
 						'vacation_response',
+						'user_account',
 						'sieve_script',
 					],
 				},
@@ -107,7 +108,7 @@ export default defineConfig(({ mode }) => ({
 				? [{ find: /^frappe-ui$/, replacement: frappeUIPath }]
 				: []),
 		],
-		dedupe: ['vue', 'prosemirror-state', 'prosemirror-view'],
+		dedupe: ['vue', 'vue-router', 'prosemirror-state', 'prosemirror-view'],
 	},
 	optimizeDeps: {
 		include: [
