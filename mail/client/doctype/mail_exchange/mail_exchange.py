@@ -34,7 +34,7 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
-from mail.jmap import get_email_service
+from mail.jmap import get_email_service, parse_account
 from mail.jmap.services.mail.email import EmailService
 from mail.utils import (
 	compress_directory,
@@ -49,7 +49,6 @@ from mail.utils.dt import parse_iso_datetime
 from mail.utils.user import (
 	clear_sync_state,
 	get_user_email_address,
-	has_role,
 	is_administrator,
 	is_jmap_configured,
 	is_mail_admin,
@@ -530,12 +529,15 @@ class MailExchange(Document):
 
 	def validate(self) -> None:
 		if self.is_new():
-			self.validate_user()
+			self.validate_account()
 
 		if self.operation == "Import":
 			self.validate_import()
 		elif self.operation == "Export":
 			self.validate_export()
+
+	def before_insert(self) -> None:
+		self.user = parse_account(self.account)[0]
 
 	def before_submit(self) -> None:
 		self.status = "Queued"
@@ -547,8 +549,8 @@ class MailExchange(Document):
 	def before_cancel(self) -> None:
 		self.status = "Cancelled"
 
-	def validate_user(self) -> None:
-		"""Validate the user."""
+	def validate_account(self) -> None:
+		"""Validate the account."""
 
 		if not is_jmap_configured(self.user):
 			frappe.throw(
@@ -682,7 +684,7 @@ class MailExchange(Document):
 			else:
 				extract_compressed_file(import_file, base_dir)
 
-			service = get_email_service(self.user)
+			service = get_email_service(self.account)
 
 			mailbox_map = {}
 			if self.import_format == "maildir-nested":
@@ -698,7 +700,7 @@ class MailExchange(Document):
 				frappe.throw(_("Import limit exceeded."))
 
 			self._import_batches(service, base_dir, meta)
-			clear_sync_state(self.user, type="email")
+			clear_sync_state(self.account, type="email")
 
 			kwargs.update({"status": "Completed", "output": _("Import completed")})
 		except Exception:
@@ -723,7 +725,7 @@ class MailExchange(Document):
 
 		kwargs = {}
 		try:
-			service = get_email_service(self.user)
+			service = get_email_service(self.account)
 			total = service.query(self.export_filter_dict, limit=1)["total"]
 			limit = min(total, cint(self.export_limit or total))
 
@@ -810,7 +812,7 @@ class MailExchange(Document):
 				method_calls=[
 					[
 						f"{service.type}/import",
-						{"accountId": service.primary_account_id, "emails": emails},
+						{"accountId": service.account_id, "emails": emails},
 						"0",
 					]
 				],

@@ -1,44 +1,51 @@
 import frappe
 from frappe import _
 
-from mail.utils.cache import get_user_emails
-from mail.utils.user import has_role, is_jmap_configured, is_system_manager
+from mail.utils.rate_limiter import dynamic_rate_limit
+from mail.utils.user import (
+	get_account_emails,
+	get_user_personal_account,
+	is_jmap_configured,
+	is_system_manager,
+)
 
 
 def check_app_permission() -> bool:
-	"""Returns True if the user has permission to access the app."""
+	"""Returns True if the user has permission to access the app else False."""
 
 	user = frappe.session.user
 	return is_jmap_configured(user) or is_system_manager(user)
 
 
 @frappe.whitelist(methods=["POST"])
+@dynamic_rate_limit()
 def validate(email: str) -> None:
-	"""Validates if the user is allowed to send or receive emails."""
+	"""Validates if the email is associated with the user."""
 
 	validate_user()
 	validate_email_ownership(email)
 
 
 def validate_user() -> None:
-	"""Validates if the user is allowed to send or receive emails."""
+	"""Validates if the user has permission to access the app."""
 
-	user = frappe.session.user
-
-	if not is_jmap_configured(user):
-		frappe.throw(
-			_("User {0} does not have JMAP settings configured.").format(frappe.bold(user)),
-			frappe.PermissionError,
-		)
+	is_jmap_configured(frappe.session.user, raise_exception=True)
 
 
 def validate_email_ownership(email: str) -> None:
-	"""Validates if the email address is associated with the user."""
+	"""Validates if the email is associated with any account of the user."""
+
+	email = email.strip().lower()
+	if not email:
+		frappe.throw(_("Email address is required."), frappe.MandatoryError)
 
 	user = frappe.session.user
-	if email.lower() not in get_user_emails(user):
+	account = get_user_personal_account(user, raise_exception=True)
+
+	if email not in get_account_emails(account):
 		frappe.throw(
-			_("Email address {0} is not associated with the user {1}.").format(
-				frappe.bold(email), frappe.bold(user)
-			)
+			_("Email address '{0}' is not associated with any account of the user '{1}'.").format(
+				email, user
+			),
+			frappe.PermissionError,
 		)

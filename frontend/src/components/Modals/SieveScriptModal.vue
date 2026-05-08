@@ -74,8 +74,8 @@ import type { SieveScript } from '@/types'
 const show = defineModel<boolean>()
 const { selectedScript } = defineProps<{ selectedScript?: SieveScript }>()
 
-const { sieveScripts } = userStore()
-const activeScript = computed(() => sieveScripts.data?.find((s) => s.active)?._name)
+const store = userStore()
+const activeScript = computed(() => store.sieveScripts.data?.find((s) => s.active)?._name)
 
 const DEFAULT_SCRIPT = { _name: '', content: '', active: false }
 
@@ -91,10 +91,10 @@ const isNotDirty = computed(
 
 const createScript = createResource({
 	url: 'mail.api.sieve.create_sieve_script',
-	makeParams: () => script,
+	makeParams: () => ({ account: store.account, ...script }),
 	onSuccess: () => {
 		raiseToast(__('Sieve script created.'))
-		sieveScripts.reload()
+		store.sieveScripts.reload()
 		show.value = false
 	},
 	onError: (e) => raiseToast(e.messages[0], 'error'),
@@ -102,10 +102,10 @@ const createScript = createResource({
 
 const updateScript = createResource({
 	url: 'mail.api.sieve.update_sieve_script',
-	makeParams: () => ({ id: selectedScript!.id, ...script }),
+	makeParams: () => ({ account: store.account, id: selectedScript!.id, ...script }),
 	onSuccess: () => {
 		raiseToast(__('Sieve script updated.'))
-		sieveScripts.reload()
+		store.sieveScripts.reload()
 		show.value = false
 	},
 	onError: (e) => raiseToast(e.messages[0], 'error'),

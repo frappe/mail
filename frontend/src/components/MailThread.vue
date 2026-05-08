@@ -410,7 +410,8 @@ const emit = defineEmits([
 const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const user = inject('$user')
-const { mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
+const store = userStore()
+const { mailboxes, mailboxIds, identities, blockedAddresses } = store
 const { dataTheme } = useTheme()
 
 const route = useRoute()
@@ -447,7 +448,7 @@ const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, qu
 const thread = createResource({
 	url: 'mail.api.mail.get_thread',
 	auto: !!threadID,
-	makeParams: () => ({ thread_id: threadID }),
+	makeParams: () => ({ account: store.account, thread_id: threadID }),
 	transform: (data: Mail[]) =>
 		data
 			.filter((mail) => filterRelevantMails(mail))

@@ -63,7 +63,7 @@ import { Button, ErrorMessage, FileUploader, FormControl, createResource } from 
 
 import { userStore } from '@/stores/user'
 
-const { mailboxes } = userStore()
+const { account, mailboxes } = userStore()
 
 const user = inject('$user')
 const socket = inject('$socket')
@@ -105,7 +105,7 @@ watch(
 
 const createMailImport = createResource({
 	url: 'mail.api.account.create_mail_import',
-	makeParams: () => mailImport,
+	makeParams: () => ({ account, ...mailImport }),
 	onSuccess: () => ongoingImport.reload(),
 })
 

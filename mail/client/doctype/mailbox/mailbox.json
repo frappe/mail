@@ -6,6 +6,7 @@
  "field_order": [
   "section_break_nuoa",
   "user",
+  "account",
   "column_break_5a4x",
   "subscribed",
   "section_break_cbgf",
@@ -45,7 +46,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "ID",
+   "label": "Mailbox ID",
    "no_copy": 1,
    "read_only": 1,
    "set_only_once": 1
@@ -163,17 +164,6 @@
    "label": "Subscribed"
   },
   {
-   "description": "The user this mailbox belongs to.",
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_standard_filter": 1,
-   "label": "User",
-   "no_copy": 1,
-   "options": "User",
-   "reqd": 1,
-   "set_only_once": 1
-  },
-  {
    "collapsible": 1,
    "depends_on": "eval: !doc.__islocal",
    "fieldname": "rights_section",
@@ -264,13 +254,33 @@
   {
    "fieldname": "column_break_waws",
    "fieldtype": "Column Break"
+  },
+  {
+   "description": "The account this mailbox belongs to.",
+   "fieldname": "account",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Account",
+   "no_copy": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The user this mailbox belongs to.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-13 12:55:28.382075",
+ "modified": "2026-04-17 13:36:09.962762",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox",

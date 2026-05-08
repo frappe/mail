@@ -8,10 +8,11 @@ from frappe.utils.file_manager import save_file
 from werkzeug.datastructures.file_storage import FileStorage
 from werkzeug.utils import secure_filename
 
+from mail.api.auth import validate_user
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.utils import get_mail_config, get_messages_directory
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import is_jmap_configured
+from mail.utils.user import get_user_personal_account
 
 
 @frappe.whitelist(methods=["POST"])
@@ -20,12 +21,7 @@ def upload_attachment() -> dict:
 	"""Upload an attachment to the Frappe Mail folder."""
 
 	try:
-		user = frappe.session.user
-		if not is_jmap_configured(user):
-			frappe.throw(
-				_("User {0} does not have JMAP settings configured.").format(frappe.bold(user)),
-				frappe.PermissionError,
-			)
+		validate_user()
 
 		if file := frappe.request.files.get("file"):
 			if not isinstance(file, FileStorage):
@@ -73,9 +69,11 @@ def send(
 ) -> str:
 	"""Send Mail."""
 
+	account = get_user_personal_account(frappe.session.user, raise_exception=True)
+
 	from_name, from_email = parseaddr(from_)
 	doc = MailQueue._create(
-		user=frappe.session.user,
+		account=account,
 		from_name=from_name,
 		from_email=from_email,
 		subject=subject,
@@ -235,8 +233,10 @@ def _enqueue_mail(from_: str, to: str | list[str], raw_message: str, is_newslett
 	if not raw_message:
 		frappe.throw(_("The raw message is required."), frappe.MandatoryError)
 
+	account = get_user_personal_account(frappe.session.user, raise_exception=True)
+
 	doc = MailQueue._create(
-		user=frappe.session.user,
+		account=account,
 		from_name=from_name,
 		from_email=from_email,
 		recipients=format_recipients(to),

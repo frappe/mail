@@ -170,7 +170,7 @@ import type { Recipient } from '@/types'
 
 const show = defineModel<boolean>()
 
-const { mailboxes } = userStore()
+const { account, mailboxes } = userStore()
 
 const route = useRoute()
 const { isMobile } = useScreenSize()
@@ -221,7 +221,7 @@ const mailboxOptions = computed(() =>
 
 const results = createResource({
 	url: 'mail.api.mail.search_mails',
-	makeParams: () => ({ filter: filteredFilter.value }),
+	makeParams: () => ({ account, filter: filteredFilter.value }),
 })
 
 const noOfAttachments = (result) =>

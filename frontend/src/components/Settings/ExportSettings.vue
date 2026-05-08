@@ -17,7 +17,7 @@
 	<Switch
 		v-model="customSelection"
 		:label="__('Custom Selection')"
-		:description="__('Apply filters to select specific emails for export')"
+		:description="__('Apply filters to select specific emails for export.')"
 		class="hover:!bg-surface-white !cursor-default !p-0"
 	/>
 	<template v-if="customSelection">
@@ -94,7 +94,7 @@ import { Button, ErrorMessage, FormControl, Switch, createResource } from 'frapp
 import { getAttachmentOptions, getReadStatusOptions } from '@/constants'
 import { userStore } from '@/stores/user'
 
-const { mailboxes } = userStore()
+const { account, mailboxes } = userStore()
 
 const user = inject('$user')
 const socket = inject('$socket')
@@ -138,7 +138,7 @@ const createMailExport = createResource({
 				.map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
 				.filter(([, v]) => Boolean(v)),
 		)
-		return { ...mailExport, filter: cleanedFilter }
+		return { account, ...mailExport, filter: cleanedFilter }
 	},
 	onSuccess: () => ongoingExport.reload(),
 })

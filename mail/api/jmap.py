@@ -81,10 +81,11 @@ def push_notification() -> dict:
 		elif event_type == "StateChange":
 			logger.debug({**ctx, "type": event_type, "event": "state-change-received"})
 
-			changes = [c for c in request_data.get("changed", {}).values()]
+			for account_id, changes in request_data.get("changed", {}).items():
+				account = f"{user}:{account_id}"
+				ctx["account"] = account
 
-			for change in changes:
-				for entity, state in change.items():
+				for entity, state in changes.items():
 					if entity == "Email":
 						logger.info(
 							{
@@ -95,7 +96,7 @@ def push_notification() -> dict:
 								"event": "queueing-email-sync",
 							}
 						)
-						enqueue_fetch_changes(user, state, ctx=ctx)
+						enqueue_fetch_changes(account, state, ctx=ctx)
 
 					elif entity == "Mailbox":
 						logger.info(
@@ -107,7 +108,7 @@ def push_notification() -> dict:
 								"event": "invalidating-mailbox-cache",
 							}
 						)
-						invalidate_jmap_mailboxes_cache(user)
+						invalidate_jmap_mailboxes_cache(account)
 
 					elif entity == "Identity":
 						logger.info(
@@ -119,7 +120,7 @@ def push_notification() -> dict:
 								"event": "invalidating-identity-cache",
 							}
 						)
-						invalidate_jmap_identities_cache(user)
+						invalidate_jmap_identities_cache(account)
 
 					else:
 						logger.warning(
@@ -131,7 +132,7 @@ def push_notification() -> dict:
 							}
 						)
 
-			return {"status": "processed"}
+				return {"status": "processed"}
 
 		else:
 			logger.error({**ctx, "type": event_type, "event": "unknown-push-type"})

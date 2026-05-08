@@ -11,6 +11,7 @@ from frappe.utils import cint, today, validate_email_address
 
 from mail.backend import MailBackendAPI, get_mail_backend_api
 from mail.client.doctype.identity.identity import _add_identity as add_identity
+from mail.client.doctype.user_account.user_account import get_user_personal_account_id
 from mail.jmap import invalidate_jmap_cache
 from mail.server.doctype.principal_settings.principal_settings import (
 	create_principal_settings,
@@ -426,7 +427,8 @@ class Principal(Document):
 		):
 			return
 
-		identities = frappe.db.get_all("Identity", {"user": self.name})
+		account = f"{self.name}:{get_user_personal_account_id(self.name, raise_exception=True)}"
+		identities = frappe.db.get_all("Identity", {"account": account})
 		identities_emails_map = {identity["email"]: identity["name"] for identity in identities}
 		identities_emails = set(identities_emails_map.keys())
 
@@ -443,7 +445,7 @@ class Principal(Document):
 		for email in identities_to_add:
 			add_identity(self.name, email, principal.description)
 
-		invalidate_jmap_cache(self.name)
+		invalidate_jmap_cache(account)
 
 	@staticmethod
 	def _fetch(
@@ -644,7 +646,8 @@ class Principal(Document):
 		# If the principal is an Individual, delete the User
 		if principal.type == "Individual":
 			if is_local_user(self.name):
-				invalidate_jmap_cache(self.name)
+				account = f"{self.name}:{get_user_personal_account_id(self.name, raise_exception=True)}"
+				invalidate_jmap_cache(account)
 
 				if settings := frappe.db.exists("User Settings", {"user": self.name}):
 					frappe.delete_doc("User Settings", settings, ignore_permissions=True)

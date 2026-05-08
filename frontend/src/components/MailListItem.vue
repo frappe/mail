@@ -1,6 +1,10 @@
 <template>
 	<router-link
-		:to="{ name: 'Mail', params: { mailbox, threadID: mail.thread_id }, query: $route.query }"
+		:to="{
+			name: 'Mail',
+			params: { accountId: $route.params.accountId, mailbox, threadID: mail.thread_id },
+			query: $route.query,
+		}"
 		class="sm:hover:bg-surface-gray-1 group flex cursor-pointer select-none space-x-2.5 border-b px-3.5 py-2.5 sm:px-5"
 		:class="{
 			'!bg-surface-blue-1': isSelected || isTouching,

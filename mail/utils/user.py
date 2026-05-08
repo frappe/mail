@@ -1,5 +1,4 @@
 from typing import Literal
-from urllib.parse import urljoin
 
 import frappe
 from frappe import _
@@ -84,6 +83,44 @@ def get_jmap_username(user: str) -> str | None:
 	"""Returns the JMAP username of the user."""
 
 	return frappe.db.get_value("User Settings", {"user": user}, "username")
+
+
+def get_account_emails(account: str) -> list[str]:
+	"""Returns the list of email addresses associated with the account."""
+
+	from mail.jmap import get_identities
+
+	emails = []
+	for identity in get_identities(account):
+		emails.append(identity["email"])
+
+	return emails
+
+
+def get_user_personal_account(user: str, raise_exception: bool = False) -> str | None:
+	"""Returns the personal account of the user."""
+
+	from mail.client.doctype.user_account.user_account import fetch_user_accounts
+
+	for account in fetch_user_accounts(user, limit=None):
+		if account["is_personal"]:
+			return account["name"]
+
+	if raise_exception:
+		frappe.throw(_("User {0} does not have a personal account configured.").format(frappe.bold(user)))
+
+
+def get_user_emails(user: str) -> list[str]:
+	"""Returns the list of email addresses associated with the user."""
+
+	emails = []
+
+	from mail.client.doctype.user_account.user_account import fetch_user_accounts
+
+	for account in [a["name"] for a in fetch_user_accounts(user, limit=None)]:
+		emails.extend(get_account_emails(account))
+
+	return emails
 
 
 def get_user_hashed_password(user: str) -> str | None:
@@ -176,12 +213,6 @@ def get_local_emails(order_by: str = "creation desc") -> list[str]:
 	)
 
 
-def get_sync_state(user: str, type: Literal["email"]) -> str | None:
-	"""Returns the Sync State for the given user and type."""
-
-	return frappe.db.get_value("User Settings", {"user": user}, f"{type}_current_state")
-
-
 @frappe.whitelist(methods=["POST"])
 def generate_user_keys(user: str) -> dict:
 	"""Generates API and Secret keys for the user."""
@@ -194,25 +225,41 @@ def generate_user_keys(user: str) -> dict:
 	frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 
-def update_sync_state(user: str, type: Literal["email"], state: str) -> None:
-	"""Updates the Sync State for the given user and type."""
+def get_sync_state(account: str, type: Literal["email"]) -> str | None:
+	"""Returns the Sync State for the given account and type."""
+
+	value = frappe.db.get_value("Account Settings", {"account": account}, f"{type}_current_state")
+
+	if not value and not frappe.db.exists("Account Settings", {"account": account}):
+		settings = frappe.new_doc("Account Settings")
+		settings.account = account
+		settings.flags.ignore_links = True
+		settings.insert(ignore_permissions=True)
+
+	return value
+
+
+def update_sync_state(account: str, type: Literal["email"], state: str) -> None:
+	"""Updates the Sync State for the given account and type."""
 
 	state_last_update = f"{type}_state_last_update"
 	previous_state = f"{type}_previous_state"
 	current_state = f"{type}_current_state"
 
-	USER_SETTINGS = frappe.qb.DocType("User Settings")
+	ACCOUNT_SETTINGS = frappe.qb.DocType("Account Settings")
 	(
-		frappe.qb.update(USER_SETTINGS)
-		.set(getattr(USER_SETTINGS, state_last_update), frappe.utils.now())
-		.set(getattr(USER_SETTINGS, previous_state), getattr(USER_SETTINGS, current_state))
-		.set(getattr(USER_SETTINGS, current_state), state)
-		.where(USER_SETTINGS.user == user)
+		frappe.qb.update(ACCOUNT_SETTINGS)
+		.set(getattr(ACCOUNT_SETTINGS, state_last_update), frappe.utils.now())
+		.set(getattr(ACCOUNT_SETTINGS, previous_state), getattr(ACCOUNT_SETTINGS, current_state))
+		.set(getattr(ACCOUNT_SETTINGS, current_state), state)
+		.where(ACCOUNT_SETTINGS.account == account)
 	).run()
 
 
 @reconnect_on_failure()
-def clear_sync_state(user: str, type: Literal["email"]) -> None:
-	"""Clear the Sync State for the given user and type."""
+def clear_sync_state(account: str, type: Literal["email"]) -> None:
+	"""Clear the Sync State for the given account and type."""
 
-	frappe.db.set_value("User Settings", {"user": user}, f"{type}_current_state", None, update_modified=False)
+	frappe.db.set_value(
+		"Account Settings", {"account": account}, f"{type}_current_state", None, update_modified=False
+	)

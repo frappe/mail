@@ -2,13 +2,14 @@ import * as cheerio from 'cheerio'
 import { File, Paperclip } from 'lucide-vue-next'
 import { toast } from 'frappe-ui'
 
+import { FOLDER_ICON_MAP } from '@/constants'
 import dayjs from '@/utils/dayjs'
 import AudioIcon from '@/components/Icons/AudioIcon.vue'
 import ImageIcon from '@/components/Icons/ImageIcon.vue'
 import PDFIcon from '@/components/Icons/PDFIcon.vue'
 import VideoIcon from '@/components/Icons/VideoIcon.vue'
 
-import type { ComposeMailData, Recipient } from '@/types'
+import type { ComposeMailData, MailboxData, Recipient } from '@/types'
 
 export const toTitleCase = (str: string) =>
 	str
@@ -334,4 +335,10 @@ export const hasHtmlContent = (content: string | null | undefined): boolean => {
 	return /<(html|head|body|div|p|span|table|td|tr|a|img|br|hr|h[1-6]|ul|ol|li|strong|em|b|i|font|style)[^>]*>/i.test(
 		content,
 	)
+}
+
+export const getIcon = (mailbox: MailboxData) => {
+	if (mailbox.icon) return mailbox.icon
+	if (mailbox.role && mailbox.role in FOLDER_ICON_MAP) return FOLDER_ICON_MAP[mailbox.role]
+	return 'folder'
 }

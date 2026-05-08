@@ -49,10 +49,11 @@ class CoreService(CoreServiceHelper):
 
 	capabilities: ClassVar[list[str]] = ["urn:ietf:params:jmap:core"]
 
-	def __init__(self, user: str, connection: JMAPConnection) -> None:
-		"""Initializes the CoreService with the provided user and JMAP connection."""
+	def __init__(self, account: str, connection: JMAPConnection) -> None:
+		"""Initializes the CoreService with the provided account and JMAP connection."""
 
-		self.user = user
+		self.account = account
+		self.account_id = parse_account(account)[1]
 		self.connection = connection
 
 	def __post_init__(self) -> None:
@@ -63,22 +64,22 @@ class CoreService(CoreServiceHelper):
 
 	@classmethod
 	def invalidate_cache(
-		cls, user: str | None = None, key: Literal["identities", "mailboxes"] | None = None
+		cls, account: str | None = None, key: Literal["identities", "mailboxes"] | None = None
 	) -> None:
-		"""Invalidates the cache for a specific user and key, or for all users and keys if no parameters are provided."""
+		"""Invalidates the cache for a specific account and key, or for all accounts and keys if no parameters are provided."""
 
-		if user:
+		if account:
 			if key:
-				if user in cls._cache and key in cls._cache[user]:
-					del cls._cache[user][key]
+				if account in cls._cache and key in cls._cache[account]:
+					del cls._cache[account][key]  # Remove the specific key from the account's cache
 			else:
-				cls._cache.pop(user, None)
+				cls._cache.pop(account, None)  # Remove the entire cache for the specified account
 		else:
 			if key:
-				for user_cache in cls._cache.values():
-					user_cache.pop(key, None)
+				for account_cache in cls._cache.values():  # Remove the specific key from all account caches
+					account_cache.pop(key, None)
 			else:
-				cls._cache.clear()
+				cls._cache.clear()  # Clear the entire cache for all accounts and keys
 
 	@property
 	def _type(self) -> str:
@@ -93,14 +94,14 @@ class CoreService(CoreServiceHelper):
 
 	@property
 	def cache(self) -> dict:
-		"""Returns the cache for the current user, creating a new cache entry if it does not exist."""
+		"""Returns the cache for the current account, creating a new cache entry if it does not exist."""
 
-		if self.user in self._cache:
-			return self._cache[self.user]
+		if self.account in self._cache:
+			return self._cache[self.account]
 
-		self._cache[self.user] = {}
+		self._cache[self.account] = {}
 
-		return self._cache[self.user]
+		return self._cache[self.account]
 
 	@property
 	def core(self) -> dict:
@@ -169,56 +170,64 @@ class CoreService(CoreServiceHelper):
 		return self.connection.primary_accounts["urn:ietf:params:jmap:mail"]
 
 	@property
+	def personal_account_id(self) -> str | None:
+		"""Returns the personal account ID for the logged-in user, if any, or None if no personal account is found."""
+
+		for account_id, details in self.connection.accounts.items():
+			if details.get("isPersonal"):
+				return account_id
+
+	@property
 	def identities(self) -> list[dict]:
-		"""Returns the list of identities for the logged-in user, using caching to optimize performance."""
+		"""Returns the list of identities for the account, using caching to optimize performance."""
 
 		if identities := self.cache.get("identities"):
 			return identities
 
 		from mail.jmap.services.mail.identity import IdentityService
 
-		identities = IdentityService(self.user, self.connection).get()
+		identities = IdentityService(self.account, self.connection).get()
 		self.cache["identities"] = identities
 
 		return identities
 
 	@property
 	def mailboxes(self) -> list[dict]:
-		"""Returns the list of mailboxes for the logged-in user, using caching to optimize performance."""
+		"""Returns the list of mailboxes for the account, using caching to optimize performance."""
 
 		if mailboxes := self.cache.get("mailboxes"):
 			return mailboxes
 
 		from mail.jmap.services.mail.mailbox import MailboxService
 
-		mailboxes = MailboxService(self.user, self.connection).get()
+		mailboxes = MailboxService(self.account, self.connection).get()
 		self.cache["mailboxes"] = mailboxes
 
 		return mailboxes
 
 	@cached_property
 	def address_books(self) -> list[dict]:
-		"""Returns the list of address books for the logged-in user, using caching to optimize performance."""
+		"""Returns the list of address books for the account, using caching to optimize performance."""
 
 		from mail.jmap.services.contacts.address_book import AddressBookService
 
-		return AddressBookService(self.user, self.connection).get()
+		return AddressBookService(self.account, self.connection).get()
 
 	@cached_property
 	def calendars(self) -> list[dict]:
-		"""Returns the list of calendars for the logged-in user, using caching to optimize performance."""
+		"""Returns the list of calendars for the account, using caching to optimize performance."""
 
 		from mail.jmap.services.calendars.calendar import CalendarService
 
-		return CalendarService(self.user, self.connection).get()
+		return CalendarService(self.account, self.connection).get()
 
 	@cached_property
 	def participant_identities(self) -> list[dict]:
-		"""Returns the list of participant identities for the logged-in user, using caching to optimize performance."""
+		"""Returns the list of participant identities for the account, using caching to optimize performance."""
 
 		from mail.jmap.services.calendars.participant_identity import ParticipantIdentityService
 
-		return ParticipantIdentityService(self.user, self.connection).get()
+		return ParticipantIdentityService(self.account, self.connection).get()
 
 	def validate_capabilities(self, required_capabilities: list[str], raise_exception: bool = False) -> bool:
 		"""Validates that the required capabilities are supported by the JMAP server."""
@@ -289,10 +298,10 @@ class CoreService(CoreServiceHelper):
 		)
 
 	def _exec(self, action: Literal["get", "set", "query", "changes", "upload", "lookup"], **payload) -> dict:
-		payload = {
-			"accountId": self.primary_account_id,
-			**{k: v for k, v in payload.items() if v is not None},
-		}
+		payload = {**{k: v for k, v in payload.items() if v is not None}}
+
+		if self._type != "PushSubscription":
+			payload["accountId"] = self.account_id
 
 		return self._call(
 			capabilities=self.capabilities,
@@ -348,7 +357,7 @@ class CoreService(CoreServiceHelper):
 	def upload_blob(self, blob: bytes | str, content_type: str = "message/rfc822") -> dict:
 		"""Uploads a blob to the JMAP server using the upload URL, and returns the response containing the blob ID and other metadata."""
 
-		upload_url = self.connection.upload_url.format(accountId=self.primary_account_id)
+		upload_url = self.connection.upload_url.format(accountId=self.account_id)
 		return self.connection.request(
 			method="POST",
 			url=upload_url,
@@ -388,7 +397,7 @@ class CoreService(CoreServiceHelper):
 
 		name = name or "blob"
 		download_url = self.connection.download_url.format(
-			accountId=self.primary_account_id, blobId=blob_id, name=name, type="application/octet-stream"
+			accountId=self.account_id, blobId=blob_id, name=name, type="application/octet-stream"
 		)
 		return self.connection.request(method="GET", url=download_url, return_json=False)
 
@@ -407,3 +416,24 @@ class CoreService(CoreServiceHelper):
 				results[blob_id] = future.result()
 
 		return results
+
+
+def parse_account(account: str) -> tuple[str, str]:
+	"""Helper method to parse the account string into user and account ID components, validating the format and content of the account string."""
+
+	if not isinstance(account, str):
+		raise ValueError("Account must be a string.")
+
+	parts = account.split(":")
+	if len(parts) != 2:
+		raise ValueError("Account must be in the format 'user:account_id'.")
+
+	user = parts[0].strip()
+	account_id = parts[1].strip()
+
+	if not user:
+		raise ValueError("User part of the account cannot be empty.")
+	if not account_id:
+		raise ValueError("Account ID part of the account cannot be empty.")
+
+	return user, account_id

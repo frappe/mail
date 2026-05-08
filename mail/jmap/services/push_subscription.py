@@ -1,12 +1,22 @@
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from mail.jmap.services.mail.mail import MailService
+from mail.jmap.services.core import CoreService
+
+if TYPE_CHECKING:
+	from mail.jmap.connection import JMAPConnection
 
 
-class PushSubscriptionService(MailService):
+class PushSubscriptionService(CoreService):
 	"""Service for handling push subscription-related functionality based on the JMAP server capabilities."""
 
 	type: ClassVar[str] = "PushSubscription"
+
+	def __init__(self, user: str, connection: "JMAPConnection") -> None:
+		"""Initializes the PushSubscriptionService with the provided user and JMAP connection."""
+
+		self.connection = connection
+		self.account_id = self.primary_account_id
+		self.account = f"{user}:{self.account_id}"
 
 	def create(self, subscriptions: list[dict]) -> dict:
 		"""Public method to create push subscriptions, handling batching if the number of subscriptions exceeds the server's maximum allowed in a single 'set' call."""

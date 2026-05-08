@@ -5,21 +5,13 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "account",
+  "user",
   "column_break_yaxd",
   "signature_name",
   "section_break_tvbn",
   "html_body"
  ],
  "fields": [
-  {
-   "fieldname": "account",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Account",
-   "options": "User",
-   "reqd": 1
-  },
   {
    "fieldname": "column_break_yaxd",
    "fieldtype": "Column Break"
@@ -39,12 +31,20 @@
    "fieldname": "html_body",
    "fieldtype": "Code",
    "label": "HTML"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "User",
+   "options": "User",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-13 12:55:18.622092",
+ "modified": "2026-04-16 12:20:38.930196",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Signature",
