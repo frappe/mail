@@ -40,7 +40,7 @@ import {
 } from 'lucide-vue-next'
 import { Button, Dropdown, createResource, toast } from 'frappe-ui'
 
-import { raisePromiseToast } from '@/utils'
+import { raisePromiseToast, raiseToast } from '@/utils'
 import { useScreenSize, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
@@ -184,7 +184,7 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				label: thread.length === 1 ? __('Mark as Unread') : __('Mark Unread from Here'),
 				onClick: () => handleMarkUnreadFromHere(),
 				icon: MailOpen,
-				condition: () => !mail.draft,
+				condition: () => !mail.draft && mail.seen,
 			},
 			{
 				label: __('Block Sender'),
@@ -298,6 +298,7 @@ const setMailsSeen = createResource({
 	url: 'mail.api.mail.set_mails_seen',
 	makeParams: ({ ids }: { ids: string[] }) => ({ account, ids, seen: false }),
 	onSuccess: (ids: string[]) => {
+		raiseToast(__('{0} marked as unread.', [ids.length === 1 ? __('Mail') : __('Mails')]))
 		ids.forEach((id: string) => {
 			const m = thread.find((m: Mail) => m.id === id)
 			if (m) m.seen = 0
