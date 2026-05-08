@@ -90,7 +90,7 @@
 					</div>
 					<template v-for="mail in group.mails" :key="mail.name">
 						<div
-							v-if="isSomeSeen && mail.id == firstUnseenMail"
+							v-if="isSomeSeen && mail.id == firstUnseenMail && !isMobile"
 							ref="unseenMarker"
 							class="flex items-center gap-3 px-1"
 						>
