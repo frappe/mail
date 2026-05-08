@@ -44,6 +44,8 @@ ALLOWED_PATHS = [
 	"/api/method/mail.client.doctype.calendar_event.calendar_event.delete_calendar_events",
 	"/api/method/mail.client.doctype.calendar_event.calendar_event.update_calendar_event_instance",
 	"/api/method/mail.client.doctype.calendar_event.calendar_event.delete_calendar_event_instance",
+	"/api/method/mail.client.doctype.vacation_response.vacation_response.get_vacation_response",
+	"/api/method/mail.client.doctype.vacation_response.vacation_response.update_vacation_response",
 ]
 
 ALLOWED_WILDCARD_PATHS = [
