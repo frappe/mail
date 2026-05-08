@@ -260,17 +260,18 @@ router.beforeEach(async (to, _, next) => {
 	if (!isLoggedIn) return to.meta.isLogin ? next() : next({ name: 'Login' })
 
 	// 2. Wait for user data
-	const { userResource, mailboxes, accountId: storeAccountId, setAccount } = userStore()
+	const { userResource, mailboxes, setAccount } = userStore()
 	await userResource.promise
 	const user = userResource.data
-
-	// 3. Resolve active account
-	resolveAccount(to.params.accountId as string | undefined, user, storeAccountId, setAccount)
 
 	// Re-read accountId after resolveAccount may have updated it via setAccount
 	const accountId = userStore().accountId
 
-	// 4. Wait for mailbox list
+	// 3. Resolve active account (use current store value, not the pre-await snapshot)
+	resolveAccount(to.params.accountId as string | undefined, user, accountId, setAccount)
+
+	// 4. Fetch and wait for mailbox list
+	if (!mailboxes.promise) mailboxes.fetch()
 	await mailboxes.promise
 	const defaultRoute = buildDefaultRoute(accountId, mailboxes)
 
