@@ -107,7 +107,6 @@ class AccountSettings(Document):
 	def after_delete(self) -> None:
 		"""Clear all caches related to the account when the settings are deleted."""
 
-		self.clear_cached_jmap_connection()
 		self.clear_cached_jmap_identities()
 		self.clear_cached_jmap_mailboxes()
 		self.clear_cached_blobs()
