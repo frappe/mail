@@ -649,6 +649,9 @@ class Principal(Document):
 				account = f"{self.name}:{get_user_personal_account_id(self.name, raise_exception=True)}"
 				invalidate_jmap_cache(account)
 
+				if settings := frappe.db.exists("Account Settings", {"user": self.name}):
+					frappe.delete_doc("Account Settings", settings, ignore_permissions=True)
+
 				if settings := frappe.db.exists("User Settings", {"user": self.name}):
 					frappe.delete_doc("User Settings", settings, ignore_permissions=True)
 
