@@ -9,6 +9,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from mail.client.doctype.account_settings.account_settings import sync_account_settings
 from mail.jmap import get_jmap_session_manager
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
@@ -104,25 +105,7 @@ class UserSettings(Document):
 					).format(frappe.bold(self.default_outgoing_email))
 				)
 
-		existing_account_settings_map = {
-			s["account"]: s["name"]
-			for s in frappe.db.get_all("Account Settings", {"user": self.user}, ["name", "account"])
-		}
-		current_accounts = set([f"{self.user}:{account_id}" for account_id in connection.accounts.keys()])
-
-		accounts_to_delete = set(existing_account_settings_map.keys()) - current_accounts
-		accounts_to_add = current_accounts - set(existing_account_settings_map.keys())
-
-		for account in accounts_to_delete:
-			frappe.delete_doc(
-				"Account Settings", existing_account_settings_map[account], ignore_permissions=True
-			)
-
-		for account in accounts_to_add:
-			settings = frappe.new_doc("Account Settings")
-			settings.user = self.user
-			settings.account = account
-			settings.save(ignore_permissions=True)
+		sync_account_settings(self.user, connection.accounts)
 
 	def validate_local_user(self) -> None:
 		"""Validate that if the user is local, then the JMAP username must be the same as the User name and a Principal Settings must exist for the user."""

@@ -177,6 +177,28 @@ class AccountSettings(Document):
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
 
 
+def sync_account_settings(user: str, accounts: dict[str, dict]) -> None:
+	"""Sync the Account Settings doctype with the current accounts of the user."""
+
+	existing_account_settings_map = {
+		s["account"]: s["name"]
+		for s in frappe.db.get_all("Account Settings", {"user": user}, ["name", "account"])
+	}
+	current_accounts = set([f"{user}:{account_id}" for account_id in accounts.keys()])
+
+	accounts_to_delete = set(existing_account_settings_map.keys()) - current_accounts
+	accounts_to_add = current_accounts - set(existing_account_settings_map.keys())
+
+	for account in accounts_to_delete:
+		frappe.delete_doc("Account Settings", existing_account_settings_map[account], ignore_permissions=True)
+
+	for account in accounts_to_add:
+		settings = frappe.new_doc("Account Settings")
+		settings.user = user
+		settings.account = account
+		settings.save(ignore_permissions=True)
+
+
 def get_permission_query_condition(user: str | None = None) -> str:
 	user = user or frappe.session.user
 
