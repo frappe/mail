@@ -66,7 +66,7 @@
 				</div>
 			</template>
 		</div>
-		<div class="flex-1 overflow-y-auto">
+		<div ref="scrollContainer" class="flex-1 overflow-y-auto">
 			<div v-if="isMobile && !thread.loading" class="border-b px-3 py-3.5">
 				<h2 class="text-lg font-semibold leading-5">
 					{{ thread?.data?.[0].subject || __('[No subject]') }}
@@ -83,6 +83,7 @@
 				<div
 					v-for="mail in thread.data"
 					:key="mail.name"
+					ref="mails"
 					:class="{
 						'px-3 py-5': isMobile,
 						'max-sm:border-b sm:rounded-xl sm:p-5':
@@ -322,7 +323,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import {
+	computed,
+	inject,
+	nextTick,
+	onMounted,
+	onUnmounted,
+	reactive,
+	ref,
+	useTemplateRef,
+	watch,
+} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
 	ArrowLeft,
@@ -390,6 +401,19 @@ const { dataTheme } = useTheme()
 const route = useRoute()
 const router = useRouter()
 
+const scrollContainer = ref<HTMLElement>()
+const mailRefs = useTemplateRef('mails')
+const scrollToLatestMail = () => {
+	if (thread.data?.length > 1)
+		setTimeout(() => {
+			const el = mailRefs.value?.at(-1)
+			if (!el || !scrollContainer.value) return
+
+			const offset = isMobile.value ? 52 : 64
+			scrollContainer.value.scrollTo({ top: el.offsetTop - offset, behavior: 'smooth' })
+		}, 1000)
+}
+
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
 
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
@@ -429,6 +453,7 @@ const thread = createResource({
 				populateDraftMails(mail)
 			}
 		})
+		scrollToLatestMail()
 	},
 	onError: () => goToMailbox(),
 })

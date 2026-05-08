@@ -115,58 +115,50 @@ export interface SignupDomain extends ChildDocType {
 	principal: string
 }
 
-// Last updated: 2026-04-08 09:54:08.953300
+// Last updated: 2026-04-27 09:25:58.236007
 export interface MailSettings extends DocType {
-	/** Root Domain Name: Data */
-	root_domain_name: string
-	/** DNS Provider: Select */
-	dns_provider?:
-		| ''
-		| 'AmazonRoute53'
-		| 'DigitalOcean'
-		| 'Cloudflare'
-		| 'Hetzner'
-		| 'Linode'
-		| 'Namecheap'
-		| 'GoDaddy'
-	/** Token: Password */
-	dns_provider_token?: string
-	/** JMAP Push Key (P256DH): Data */
-	jmap_push_p256dh?: string
-	/** JMAP Push Private Key: Password */
-	jmap_push_private_key?: string
-	/** JMAP Push Auth Secret: Password */
-	jmap_push_auth?: string
-	/** Host: Data */
-	spamd_host?: string
-	/** Port: Int */
-	spamd_port?: number
-	/** Scanning Mode: Select */
-	spamd_scanning_mode?: 'Exclude Attachments' | 'Include Attachments' | 'Hybrid Approach'
-	/** Hybrid Scanning Threshold: Float */
-	spamd_hybrid_scanning_threshold?: number
-	/** Enable Spam Detection: Check */
-	enable_spamd: 0 | 1
-	/** Allow Signup: Check */
-	allow_signup: 0 | 1
-	/** Signup Domains: Table MultiSelect (Personal Signup Domain) */
-	signup_domains: SignupDomain[]
-	/** Username: Data */
-	dns_provider_username?: string
-	/** Zone ID: Data */
-	dns_provider_zone_id?: string
-	/** Key: Data */
-	dns_provider_key?: string
-	/** Secret: Password */
-	dns_provider_secret?: string
-	/** Client IP: Data */
-	dns_provider_client_ip?: string
-	/** Private Zone: Check */
-	dns_provider_private_zone: 0 | 1
-	/** Access Key: Data */
-	dns_provider_access_key?: string
-	/** Access Secret: Password */
-	dns_provider_access_secret?: string
+  /** Root Domain Name: Data */
+  root_domain_name?: string;
+  /** DNS Provider: Select */
+  dns_provider?: '' | 'AmazonRoute53' | 'DigitalOcean' | 'Cloudflare' | 'Hetzner' | 'Linode' | 'Namecheap' | 'GoDaddy';
+  /** Token: Password */
+  dns_provider_token?: string;
+  /** JMAP Push Key (P256DH): Data */
+  jmap_push_p256dh?: string;
+  /** JMAP Push Private Key: Password */
+  jmap_push_private_key?: string;
+  /** JMAP Push Auth Secret: Password */
+  jmap_push_auth?: string;
+  /** Host: Data */
+  spamd_host?: string;
+  /** Port: Int */
+  spamd_port?: number;
+  /** Scanning Mode: Select */
+  spamd_scanning_mode?: 'Exclude Attachments' | 'Include Attachments' | 'Hybrid Approach';
+  /** Hybrid Scanning Threshold: Float */
+  spamd_hybrid_scanning_threshold?: number;
+  /** Enable Spam Detection: Check */
+  enable_spamd: 0 | 1;
+  /** Allow Signup: Check */
+  allow_signup: 0 | 1;
+  /** Signup Domains: Table MultiSelect (Personal Signup Domain) */
+  signup_domains: PersonalSignupDomain[];
+  /** Username: Data */
+  dns_provider_username?: string;
+  /** Zone ID: Data */
+  dns_provider_zone_id?: string;
+  /** Key: Data */
+  dns_provider_key?: string;
+  /** Secret: Password */
+  dns_provider_secret?: string;
+  /** Client IP: Data */
+  dns_provider_client_ip?: string;
+  /** Private Zone: Check */
+  dns_provider_private_zone: 0 | 1;
+  /** Access Key: Data */
+  dns_provider_access_key?: string;
+  /** Access Secret: Password */
+  dns_provider_access_secret?: string;
 }
 
 // Last updated: 2025-08-14 19:12:30.003138
@@ -445,4 +437,10 @@ export interface SieveScript extends DocType {
   content: string;
   /** Read Only: Check */
   read_only: 0 | 1;
+}
+
+// Last updated: 2025-11-27 13:25:44.326974
+export interface PersonalSignupDomain extends ChildDocType {
+  /** Domain: Link (Principal Settings) */
+  principal: string;
 }
