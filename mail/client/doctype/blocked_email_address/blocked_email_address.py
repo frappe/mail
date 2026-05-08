@@ -6,10 +6,15 @@ from uuid import uuid7
 import frappe
 from frappe.model.document import Document
 
+from mail.jmap import parse_account
+
 
 class BlockedEmailAddress(Document):
 	def autoname(self) -> None:
 		self.name = str(uuid7())
+
+	def before_insert(self) -> None:
+		self.user = parse_account(self.account)[0]
 
 	def validate(self) -> None:
 		self.validate_duplicate_email()
