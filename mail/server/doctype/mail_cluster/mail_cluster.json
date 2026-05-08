@@ -24,40 +24,18 @@
   "ssh_key_section",
   "ssh_public_key",
   "ssh_private_key",
-  "store_tab",
-  "store_type",
-  "column_break_yhyn",
-  "store_path",
-  "store_blob_size",
-  "store_buffer_size",
-  "section_break_plrk",
-  "store_timeout",
-  "store_max_allowed_packet",
-  "store_use_tls",
-  "store_allow_invalid_certs",
-  "column_break_djvr",
-  "store_pool_workers",
-  "store_pool_min_connections",
-  "store_pool_max_connections",
-  "store_pool_recycling_method",
-  "section_break_bpyx",
-  "store_cluster_file",
-  "store_datacenter_id",
-  "store_machine_id",
-  "column_break_dsjl",
-  "store_transaction_retry_delay",
-  "store_transaction_retry_limit",
-  "store_transaction_timeout",
-  "section_break_ntwb",
-  "store_host",
-  "store_port",
-  "store_database",
-  "column_break_grwu",
-  "store_auth_username",
-  "store_auth_secret",
-  "store_options",
-  "config_tab",
-  "config"
+  "storage_tab",
+  "data_store",
+  "blob_store",
+  "column_break_vvzf",
+  "search_store",
+  "in_memory_store",
+  "configs_tab",
+  "data_store_config",
+  "blob_store_config",
+  "column_break_rxvx",
+  "search_store_config",
+  "in_memory_store_config"
  ],
  "fields": [
   {
@@ -175,249 +153,6 @@
    "label": "SSH Key"
   },
   {
-   "fieldname": "config_tab",
-   "fieldtype": "Tab Break",
-   "label": "Config"
-  },
-  {
-   "depends_on": "eval: !doc.__islocal && doc.config && doc.config != \"{}\"",
-   "fieldname": "config",
-   "fieldtype": "JSON",
-   "is_virtual": 1,
-   "label": "Config",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_bpyx",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_dsjl",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_plrk",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_djvr",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_ntwb",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "column_break_grwu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_yhyn",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: [\"PostgreSql\"].includes(doc.store_type)",
-   "description": "Additional connection options.",
-   "fieldname": "store_options",
-   "fieldtype": "Data",
-   "label": "Options"
-  },
-  {
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)",
-   "description": "Hostname of the database server.",
-   "fieldname": "store_host",
-   "fieldtype": "Data",
-   "label": "Host",
-   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)"
-  },
-  {
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)",
-   "description": "Port of the database server.",
-   "fieldname": "store_port",
-   "fieldtype": "Int",
-   "label": "Port",
-   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)"
-  },
-  {
-   "default": "frappe",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)",
-   "description": "Name of the database.",
-   "fieldname": "store_database",
-   "fieldtype": "Data",
-   "label": "Database",
-   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)"
-  },
-  {
-   "description": "Configures the primary data store backend.",
-   "fieldname": "store_type",
-   "fieldtype": "Select",
-   "label": "Type",
-   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql",
-   "reqd": 1
-  },
-  {
-   "depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.store_type)",
-   "description": "Path to the data directory",
-   "fieldname": "store_path",
-   "fieldtype": "Data",
-   "label": "Path",
-   "mandatory_depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.store_type)"
-  },
-  {
-   "default": "16834",
-   "depends_on": "eval: [\"RocksDb\"].includes(doc.store_type)",
-   "description": "Minimum size of a blob to store in the blob store, smaller blobs are stored in the metadata store.",
-   "fieldname": "store_blob_size",
-   "fieldtype": "Int",
-   "label": "Blob Size",
-   "mandatory_depends_on": "eval: [\"RocksDb\"].includes(doc.store_type)"
-  },
-  {
-   "default": "134217728",
-   "depends_on": "eval: [\"RocksDb\"].includes(doc.store_type)",
-   "description": "Size of the write buffer in bytes, used to batch writes to the store.",
-   "fieldname": "store_buffer_size",
-   "fieldtype": "Int",
-   "label": "Buffer Size",
-   "mandatory_depends_on": "eval: [\"RocksDb\"].includes(doc.store_type)"
-  },
-  {
-   "default": "15s",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)",
-   "description": "Connection timeout to the database.",
-   "fieldname": "store_timeout",
-   "fieldtype": "Data",
-   "label": "Timeout",
-   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)"
-  },
-  {
-   "depends_on": "eval: [\"MySql\"].includes(doc.store_type)",
-   "description": "Maximum size of a packet in bytes.",
-   "fieldname": "store_max_allowed_packet",
-   "fieldtype": "Int",
-   "label": "Max Allowed Packet",
-   "mandatory_depends_on": "eval: [\"MySql\"].includes(doc.store_type)"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)",
-   "description": "Use TLS to connect to the store.",
-   "fieldname": "store_use_tls",
-   "fieldtype": "Check",
-   "label": "Use TLS"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)",
-   "description": "Allow invalid TLS certificates when connecting to the store.",
-   "fieldname": "store_allow_invalid_certs",
-   "fieldtype": "Check",
-   "label": "Allow Invalid Certs"
-  },
-  {
-   "depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.store_type)",
-   "description": "Number of worker threads to use for the store, defaults to the number of cores.",
-   "fieldname": "store_pool_workers",
-   "fieldtype": "Int",
-   "label": "Pool Workers",
-   "mandatory_depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.store_type)"
-  },
-  {
-   "default": "5",
-   "depends_on": "eval: [\"MySql\"].includes(doc.store_type)",
-   "description": "Minimum number of connections to the store.",
-   "fieldname": "store_pool_min_connections",
-   "fieldtype": "Int",
-   "label": "Pool Min Connections",
-   "mandatory_depends_on": "eval: [\"MySql\"].includes(doc.store_type)"
-  },
-  {
-   "default": "10",
-   "depends_on": "eval: [\"Sqlite\", \"PostgreSql\", \"MySql\"].includes(doc.store_type)",
-   "description": "Maximum number of connections to the store.",
-   "fieldname": "store_pool_max_connections",
-   "fieldtype": "Int",
-   "label": "Pool Max Connections",
-   "mandatory_depends_on": "eval: [\"Sqlite\", \"PostgreSql\", \"MySql\"].includes(doc.store_type)"
-  },
-  {
-   "default": "fast",
-   "depends_on": "eval: [\"PostgreSql\"].includes(doc.store_type)",
-   "description": "Method to use when recycling connections in the pool.",
-   "fieldname": "store_pool_recycling_method",
-   "fieldtype": "Select",
-   "label": "Pool Recycling Method",
-   "mandatory_depends_on": "eval: [\"PostgreSql\"].includes(doc.store_type)",
-   "options": "fast\nverified\nclean"
-  },
-  {
-   "depends_on": "eval: [\"FoundationDb\"].includes(doc.store_type)",
-   "description": "Path to the cluster file for the FoundationDB cluster.",
-   "fieldname": "store_cluster_file",
-   "fieldtype": "Data",
-   "label": "Cluster File",
-   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.store_type)"
-  },
-  {
-   "depends_on": "eval: [\"FoundationDb\"].includes(doc.store_type)",
-   "description": "Data center ID.",
-   "fieldname": "store_datacenter_id",
-   "fieldtype": "Data",
-   "label": "Datacenter ID"
-  },
-  {
-   "depends_on": "eval: [\"FoundationDb\"].includes(doc.store_type)",
-   "description": "Machine ID in the FoundationDB cluster.",
-   "fieldname": "store_machine_id",
-   "fieldtype": "Data",
-   "label": "Machine ID"
-  },
-  {
-   "depends_on": "eval: [\"FoundationDb\"].includes(doc.store_type)",
-   "description": "Transaction maximum retry delay.",
-   "fieldname": "store_transaction_retry_delay",
-   "fieldtype": "Data",
-   "label": "Transaction Retry Delay",
-   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.store_type)"
-  },
-  {
-   "depends_on": "eval: [\"FoundationDb\"].includes(doc.store_type)",
-   "description": "Transaction retry limit.",
-   "fieldname": "store_transaction_retry_limit",
-   "fieldtype": "Int",
-   "label": "Transaction Retry Limit",
-   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.store_type)"
-  },
-  {
-   "depends_on": "eval: [\"FoundationDb\"].includes(doc.store_type)",
-   "description": "Transaction timeout.",
-   "fieldname": "store_transaction_timeout",
-   "fieldtype": "Data",
-   "label": "Transaction Timeout",
-   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.store_type)"
-  },
-  {
-   "default": "frappe",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)",
-   "description": "Username to connect to the store.",
-   "fieldname": "store_auth_username",
-   "fieldtype": "Data",
-   "label": "Auth Username"
-  },
-  {
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.store_type)",
-   "description": "Password to connect to the store.",
-   "fieldname": "store_auth_secret",
-   "fieldtype": "Password",
-   "label": "Auth Secret"
-  },
-  {
-   "fieldname": "store_tab",
-   "fieldtype": "Tab Break",
-   "label": "Store"
-  },
-  {
    "default": "frappe",
    "description": "Username for administrative access to the cluster.",
    "fieldname": "recovery_admin_user",
@@ -440,6 +175,88 @@
    "label": "Default Domain",
    "search_index": 1,
    "set_only_once": 1
+  },
+  {
+   "fieldname": "storage_tab",
+   "fieldtype": "Tab Break",
+   "label": "Storage"
+  },
+  {
+   "description": "Configures the primary data store backend.",
+   "fieldname": "data_store",
+   "fieldtype": "Link",
+   "label": "Data Store",
+   "options": "Mail Cluster Store"
+  },
+  {
+   "description": "Configures the blob store backend.",
+   "fieldname": "blob_store",
+   "fieldtype": "Link",
+   "label": "Blob Store",
+   "options": "Mail Cluster Store"
+  },
+  {
+   "fieldname": "column_break_vvzf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Configures the search store backend.",
+   "fieldname": "search_store",
+   "fieldtype": "Link",
+   "label": "Search Store",
+   "options": "Mail Cluster Store"
+  },
+  {
+   "description": "Configures the in-memory store backend.",
+   "fieldname": "in_memory_store",
+   "fieldtype": "Link",
+   "label": "In-Memory Store",
+   "options": "Mail Cluster Store"
+  },
+  {
+   "depends_on": "eval: !doc.__islocal && doc.data_store_config",
+   "fieldname": "data_store_config",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "Data Config",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "configs_tab",
+   "fieldtype": "Tab Break",
+   "label": "Configs"
+  },
+  {
+   "depends_on": "eval: !doc.__islocal && doc.blob_store_config",
+   "fieldname": "blob_store_config",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "Blob Config",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: !doc.__islocal && doc.search_store_config",
+   "fieldname": "search_store_config",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "Search Config",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: !doc.__islocal && doc.in_memory_store_config",
+   "fieldname": "in_memory_store_config",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "In-Memory Config",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_rxvx",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -451,7 +268,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2026-05-07 14:53:24.555320",
+ "modified": "2026-05-08 12:30:30.414245",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster",

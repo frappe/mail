@@ -1,0 +1,313 @@
+{
+ "actions": [],
+ "creation": "2026-05-08 11:05:47.343917",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "store_tab",
+  "type",
+  "description",
+  "column_break_yhyn",
+  "path",
+  "blob_size",
+  "buffer_size",
+  "section_break_plrk",
+  "timeout",
+  "max_allowed_packet",
+  "use_tls",
+  "allow_invalid_certs",
+  "column_break_djvr",
+  "pool_workers",
+  "pool_min_connections",
+  "pool_max_connections",
+  "pool_recycling_method",
+  "section_break_bpyx",
+  "cluster_file",
+  "datacenter_id",
+  "machine_id",
+  "column_break_dsjl",
+  "transaction_retry_delay",
+  "transaction_retry_limit",
+  "transaction_timeout",
+  "section_break_ntwb",
+  "host",
+  "port",
+  "database",
+  "column_break_grwu",
+  "auth_username",
+  "auth_secret",
+  "options"
+ ],
+ "fields": [
+  {
+   "fieldname": "store_tab",
+   "fieldtype": "Tab Break",
+   "label": "Store"
+  },
+  {
+   "fieldname": "column_break_yhyn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_plrk",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_djvr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_bpyx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dsjl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ntwb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_grwu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Description for the backend store.",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Description"
+  },
+  {
+   "description": "Type of the store backend.",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Type",
+   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.type)",
+   "description": "Path to the data directory",
+   "fieldname": "path",
+   "fieldtype": "Data",
+   "label": "Path",
+   "mandatory_depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.type)"
+  },
+  {
+   "default": "16834",
+   "depends_on": "eval: [\"RocksDb\"].includes(doc.type)",
+   "description": "Minimum size of a blob to store in the blob store, smaller blobs are stored in the metadata store.",
+   "fieldname": "blob_size",
+   "fieldtype": "Int",
+   "label": "Blob Size",
+   "mandatory_depends_on": "eval: [\"RocksDb\"].includes(doc.type)"
+  },
+  {
+   "default": "134217728",
+   "depends_on": "eval: [\"RocksDb\"].includes(doc.type)",
+   "description": "Size of the write buffer in bytes, used to batch writes to the store.",
+   "fieldname": "buffer_size",
+   "fieldtype": "Int",
+   "label": "Buffer Size",
+   "mandatory_depends_on": "eval: [\"RocksDb\"].includes(doc.type)"
+  },
+  {
+   "default": "15s",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Connection timeout to the database.",
+   "fieldname": "timeout",
+   "fieldtype": "Data",
+   "label": "Timeout",
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"MySql\"].includes(doc.type)",
+   "description": "Maximum size of a packet in bytes.",
+   "fieldname": "max_allowed_packet",
+   "fieldtype": "Int",
+   "label": "Max Allowed Packet",
+   "mandatory_depends_on": "eval: [\"MySql\"].includes(doc.type)"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Use TLS to connect to the store.",
+   "fieldname": "use_tls",
+   "fieldtype": "Check",
+   "label": "Use TLS"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Allow invalid TLS certificates when connecting to the store.",
+   "fieldname": "allow_invalid_certs",
+   "fieldtype": "Check",
+   "label": "Allow Invalid Certs"
+  },
+  {
+   "depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.type)",
+   "description": "Number of worker threads to use for the store, defaults to the number of cores.",
+   "fieldname": "pool_workers",
+   "fieldtype": "Int",
+   "label": "Pool Workers",
+   "mandatory_depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.type)"
+  },
+  {
+   "default": "5",
+   "depends_on": "eval: [\"MySql\"].includes(doc.type)",
+   "description": "Minimum number of connections to the store.",
+   "fieldname": "pool_min_connections",
+   "fieldtype": "Int",
+   "label": "Pool Min Connections",
+   "mandatory_depends_on": "eval: [\"MySql\"].includes(doc.type)"
+  },
+  {
+   "default": "10",
+   "depends_on": "eval: [\"Sqlite\", \"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Maximum number of connections to the store.",
+   "fieldname": "pool_max_connections",
+   "fieldtype": "Int",
+   "label": "Pool Max Connections",
+   "mandatory_depends_on": "eval: [\"Sqlite\", \"PostgreSql\", \"MySql\"].includes(doc.type)"
+  },
+  {
+   "default": "fast",
+   "depends_on": "eval: [\"PostgreSql\"].includes(doc.type)",
+   "description": "Method to use when recycling connections in the pool.",
+   "fieldname": "pool_recycling_method",
+   "fieldtype": "Select",
+   "label": "Pool Recycling Method",
+   "mandatory_depends_on": "eval: [\"PostgreSql\"].includes(doc.type)",
+   "options": "fast\nverified\nclean"
+  },
+  {
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "description": "Path to the cluster file for the FoundationDB cluster.",
+   "fieldname": "cluster_file",
+   "fieldtype": "Data",
+   "label": "Cluster File",
+   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "description": "Data center ID.",
+   "fieldname": "datacenter_id",
+   "fieldtype": "Data",
+   "label": "Datacenter ID"
+  },
+  {
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "description": "Machine ID in the FoundationDB cluster.",
+   "fieldname": "machine_id",
+   "fieldtype": "Data",
+   "label": "Machine ID"
+  },
+  {
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "description": "Transaction maximum retry delay.",
+   "fieldname": "transaction_retry_delay",
+   "fieldtype": "Data",
+   "label": "Transaction Retry Delay",
+   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "description": "Transaction retry limit.",
+   "fieldname": "transaction_retry_limit",
+   "fieldtype": "Int",
+   "label": "Transaction Retry Limit",
+   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "description": "Transaction timeout.",
+   "fieldname": "transaction_timeout",
+   "fieldtype": "Data",
+   "label": "Transaction Timeout",
+   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Hostname of the database server.",
+   "fieldname": "host",
+   "fieldtype": "Data",
+   "label": "Host",
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Port of the database server.",
+   "fieldname": "port",
+   "fieldtype": "Int",
+   "label": "Port",
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)"
+  },
+  {
+   "default": "frappe",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Name of the database.",
+   "fieldname": "database",
+   "fieldtype": "Data",
+   "label": "Database",
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)"
+  },
+  {
+   "default": "frappe",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Username to connect to the store.",
+   "fieldname": "auth_username",
+   "fieldtype": "Data",
+   "label": "Auth Username"
+  },
+  {
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Password to connect to the store.",
+   "fieldname": "auth_secret",
+   "fieldtype": "Password",
+   "label": "Auth Secret"
+  },
+  {
+   "depends_on": "eval: [\"PostgreSql\"].includes(doc.type)",
+   "description": "Additional connection options.",
+   "fieldname": "options",
+   "fieldtype": "Data",
+   "label": "Options"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-08 12:20:05.216537",
+ "modified_by": "Administrator",
+ "module": "Server",
+ "name": "Mail Cluster Store",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "description",
+ "track_changes": 1
+}

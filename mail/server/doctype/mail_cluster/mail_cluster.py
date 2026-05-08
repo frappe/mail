@@ -9,7 +9,7 @@ import frappe
 import paramiko
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, random_string
+from frappe.utils import random_string
 
 from mail.backend import MailBackendAPI, Principal
 from mail.jmap.connection import raise_for_status
@@ -19,84 +19,44 @@ from mail.utils.dns import get_dns_record
 
 class MailCluster(Document):
 	@property
-	def config(self) -> str:
-		"""Returns the configuration for the cluster."""
-
-		if not self.store_type:
+	def data_store_config(self) -> str:
+		if not self.data_store:
 			return "{}"
 
-		config = {"@type": self.store_type}
+		store = frappe.get_doc("Mail Cluster Store", self.data_store)
+		return json.dumps(store.config, indent=4)
 
-		if self.store_type == "RocksDb":
-			config.update(
-				{
-					"path": self.store_path,
-					"blobSize": cint(self.store_blob_size),
-					"bufferSize": cint(self.store_buffer_size),
-					"poolWorkers": cint(self.store_pool_workers),
-				}
-			)
+	@property
+	def blob_store_config(self) -> str:
+		if not self.blob_store:
+			return '{"@type": "Default"}'
 
-		elif self.store_type == "Sqlite":
-			config.update(
-				{
-					"path": self.store_path,
-					"poolWorkers": cint(self.store_pool_workers),
-					"poolMaxConnections": cint(self.store_pool_max_connections),
-				}
-			)
+		store = frappe.get_doc("Mail Cluster Store", self.blob_store)
+		return json.dumps(store.config, indent=4)
 
-		elif self.store_type == "FoundationDb":
-			config.update(
-				{
-					"clusterFile": self.store_cluster_file,
-					"datacenterId": self.store_datacenter_id,
-					"machineId": self.store_machine_id,
-					"transactionRetryDelay": cint(self.store_transaction_retry_delay),
-					"transactionRetryLimit": cint(self.store_transaction_retry_limit),
-					"transactionTimeout": cint(self.store_transaction_timeout),
-				}
-			)
+	@property
+	def search_store_config(self) -> str:
+		if not self.search_store:
+			return '{"@type": "Default"}'
 
-		elif self.store_type == "PostgreSql":
-			config.update(
-				{
-					"timeout": cint(self.store_timeout),
-					"useTls": cint(self.store_use_tls),
-					"allowInvalidCerts": cint(self.store_allow_invalid_certs),
-					"poolMaxConnections": cint(self.store_pool_max_connections),
-					"poolRecyclingMethod": self.store_pool_recycling_method,
-					"host": self.store_host,
-					"port": cint(self.store_port),
-					"database": self.store_database,
-					"authUsername": self.store_auth_username,
-					"authSecret": self.get_password("store_auth_secret") if self.store_auth_secret else None,
-					"options": self.store_options,
-				}
-			)
+		store = frappe.get_doc("Mail Cluster Store", self.search_store)
+		return json.dumps(store.config, indent=4)
 
-		elif self.store_type == "MySql":
-			config.update(
-				{
-					"timeout": cint(self.store_timeout),
-					"useTls": cint(self.store_use_tls),
-					"allowInvalidCerts": cint(self.store_allow_invalid_certs),
-					"maxAllowedPacket": cint(self.store_max_allowed_packet),
-					"poolMaxConnections": cint(self.store_pool_max_connections),
-					"poolMinConnections": cint(self.store_pool_min_connections),
-					"host": self.store_host,
-					"port": cint(self.store_port),
-					"database": self.store_database,
-					"authUsername": self.store_auth_username,
-					"authSecret": self.get_password("store_auth_secret") if self.store_auth_secret else None,
-				}
-			)
+	@property
+	def in_memory_store_config(self) -> str:
+		if not self.in_memory_store:
+			return '{"@type": "Default"}'
 
-		return json.dumps(config, indent=4)
+		store = frappe.get_doc("Mail Cluster Store", self.in_memory_store)
+		return json.dumps(store.config, indent=4)
 
 	def autoname(self) -> None:
 		self.hostname = self.hostname.lower()
 		self.name = self.hostname
+
+	def before_insert(self) -> None:
+		self.generate_ssh_keypair()
+		self.initialize_defaults()
 
 	def validate(self) -> None:
 		self.validate_enabled()
@@ -104,9 +64,7 @@ class MailCluster(Document):
 		self.validate_default_domain()
 		self.validate_recovery_admin_password()
 		self.validate_base_url()
-
-	def before_insert(self) -> None:
-		self.generate_ssh_keypair()
+		self.validate_stores()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
@@ -153,6 +111,16 @@ class MailCluster(Document):
 		if not self.base_url:
 			self.base_url = f"https://{self.hostname}/"
 
+	def validate_stores(self) -> None:
+		"""Validates the data stores of the cluster."""
+
+		if not self.data_store:
+			frappe.throw(_("Data Store is required."))
+
+		for store_field in ["blob_store", "search_store", "in_memory_store"]:
+			if self.get(store_field) == self.data_store:
+				setattr(self, store_field, None)
+
 	def generate_ssh_keypair(self, save: bool = False) -> None:
 		"""Generates an SSH key pair for the cluster."""
 
@@ -169,17 +137,21 @@ class MailCluster(Document):
 	def initialize_defaults(self) -> None:
 		"""Initializes the default values."""
 
-		self.initialize_store()
+		self.initialize_data_store()
 
-	def initialize_store(self) -> None:
-		"""Initializes the default store configuration."""
+	def initialize_data_store(self) -> None:
+		"""Initializes the data store for the cluster."""
 
-		if not self.store_type:
-			self.store_type = "RocksDb"
-			self.store_path = "/etc/stalwart/data/rocksdb"
-			self.store_blob_size = 16834
-			self.store_buffer_size = 134217728
-			self.store_pool_workers = 1
+		if not self.data_store:
+			store = frappe.new_doc("Mail Cluster Store")
+			store.type = "RocksDb"
+			store.path = "/etc/stalwart/data"
+			store.blob_size = 16834
+			store.buffer_size = 134217728
+			store.pool_workers = 1
+			store.insert()
+
+			self.data_store = store.name
 
 	@frappe.whitelist()
 	def get_recovery_admin_password(self) -> str:
@@ -220,6 +192,43 @@ class MailCluster(Document):
 			frappe.throw(error)
 
 		return f"api_{base64.b64encode(f'{name}:{secret}'.encode()).decode()}"
+
+	def get_bootstrap_operations(self, hostname: str = "{{ hostname }}") -> list[dict]:
+		"""Returns the bootstrap operations for the cluster."""
+
+		operations = [
+			{
+				"@type": "update",
+				"object": "Bootstrap",
+				"id": "singleton",
+				"value": {
+					# required
+					"serverHostname": hostname,
+					"defaultDomain": self.default_domain,
+					# optional
+					"requestTlsCertificate": True,
+					"generateDkimKeys": True,
+					"dataStore": json.loads(self.data_store_config),
+					"blobStore": json.loads(self.blob_store_config),
+					"searchStore": json.loads(self.search_store_config),
+					"inMemoryStore": json.loads(self.in_memory_store_config),
+					"directory": {"@type": "Internal"},
+					"tracer": {
+						"@type": "Log",
+						"ansi": True,
+						"enable": True,
+						"eventsPolicy": "exclude",
+						"level": "info",
+						"prefix": "stalwart",
+						"rotate": "daily",
+						"path": "/etc/stalwart/logs",
+					},
+					"dnsServer": {"@type": "Manual"},
+				},
+			}
+		]
+
+		return operations
 
 
 def get_storage_labels() -> dict:

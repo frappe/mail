@@ -70,38 +70,7 @@ class MailServer(Document):
 		"""Generates the bootstrap NDJSON for the server."""
 
 		cluster = frappe.get_doc("Mail Cluster", self.cluster)
-
-		operations = [
-			{
-				"@type": "update",
-				"object": "Bootstrap",
-				"id": "singleton",
-				"value": {
-					# required
-					"serverHostname": self.hostname,
-					"defaultDomain": cluster.default_domain,
-					# optional
-					"requestTlsCertificate": True,
-					"generateDkimKeys": True,
-					"dataStore": json.loads(cluster.config),
-					"blobStore": {"@type": "Default"},
-					"searchStore": {"@type": "Default"},
-					"inMemoryStore": {"@type": "Default"},
-					"directory": {"@type": "Internal"},
-					"tracer": {
-						"@type": "Log",
-						"ansi": True,
-						"enable": True,
-						"eventsPolicy": "exclude",
-						"level": "info",
-						"prefix": "stalwart",
-						"rotate": "daily",
-						"path": "/etc/stalwart/logs",
-					},
-					"dnsServer": {"@type": "Manual"},
-				},
-			}
-		]
+		operations = cluster.get_bootstrap_operations(self.hostname)
 
 		return "\n".join([json.dumps(op) for op in operations])
 
