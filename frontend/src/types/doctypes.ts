@@ -468,3 +468,9 @@ export interface PersonalSignupDomain extends ChildDocType {
   /** Domain: Link (Principal Settings) */
   principal: string;
 }
+
+// Last updated: 2025-11-27 13:25:44.326974
+export interface PersonalSignupDomain extends ChildDocType {
+  /** Domain: Link (Principal Settings) */
+  principal: string;
+}
