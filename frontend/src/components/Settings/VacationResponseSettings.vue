@@ -47,9 +47,8 @@
 			@click="handleSave"
 		/>
 		<SetSieveScriptStateModal
-			v-if="vacationResponseScript"
 			v-model="showConfirmDialog"
-			:script="vacationResponseScript"
+			:script="{ _name: 'vacation', active: 0 }"
 			:action="updateVacationResponse.submit"
 		/>
 	</template>
@@ -62,6 +61,7 @@ import { Button, FormControl, Switch, TextEditor, createResource } from 'frappe-
 import { convertHtmlToText, raiseToast } from '@/utils'
 import { useTextEditorButtons } from '@/utils/composables'
 import { userStore } from '@/stores/user'
+import SetSieveScriptStateModal from '@/components/Modals/SetSieveScriptStateModal.vue'
 
 import type { VacationResponse } from '@/types/doctypes'
 
@@ -72,9 +72,6 @@ const { buttons } = useTextEditorButtons()
 
 const showConfirmDialog = ref(false)
 
-const vacationResponseScript = computed(() =>
-	store.sieveScripts.data?.find((s) => s._name === 'vacation'),
-)
 const activeSieveScript = computed(
 	() => store.sieveScripts.data?.find((s) => s.active && s._name !== 'vacation')?._name,
 )
