@@ -143,7 +143,7 @@
 									:reply-all
 									:forward
 									:reload-mails="handleReload"
-									@star-mails="handleStarred"
+									:thread="thread.data"
 								/>
 							</div>
 							<div
@@ -214,7 +214,7 @@
 											:reply-all
 											:forward
 											:reload-mails="handleReload"
-											@star-mails="handleStarred"
+											:thread="thread.data"
 										/>
 									</div>
 								</div>
@@ -567,9 +567,6 @@ const unblockEmailAddress = createResource({
 		blockedAddresses.reload()
 	},
 })
-
-const handleStarred = (ids: string[], flagged: 0 | 1) =>
-	ids.forEach((id) => (thread.data.find((m: Mail) => m.id === id).flagged = flagged))
 
 const handleReload = (isUndo = false) => {
 	if (thread.data.length == 1) {
