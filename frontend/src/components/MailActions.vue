@@ -31,6 +31,7 @@ import {
 	ExternalLink,
 	Forward,
 	LockOpen,
+	MailOpen,
 	Reply,
 	ReplyAll,
 	SquarePen,
@@ -39,7 +40,7 @@ import {
 } from 'lucide-vue-next'
 import { Button, Dropdown, createResource, toast } from 'frappe-ui'
 
-import { raisePromiseToast } from '@/utils'
+import { raisePromiseToast, raiseToast } from '@/utils'
 import { useScreenSize, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
@@ -56,6 +57,7 @@ const {
 	replyAll,
 	forward,
 	reloadMails,
+	thread,
 } = defineProps<{
 	mailbox: string
 	mail: Mail
@@ -67,9 +69,8 @@ const {
 	replyAll: (mail: Mail) => void
 	forward: (mail: Mail) => void
 	reloadMails: (isUndo?: boolean) => void
+	thread: Mail[]
 }>()
-
-const emit = defineEmits(['starMails'])
 
 const { isMobile } = useScreenSize()
 const { account, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
@@ -180,6 +181,12 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				condition: () => mailbox === mailboxIds.trash,
 			},
 			{
+				label: thread.length === 1 ? __('Mark as Unread') : __('Mark Unread from Here'),
+				onClick: () => handleMarkUnreadFromHere(),
+				icon: MailOpen,
+				condition: () => !mail.draft && mail.seen,
+			},
+			{
 				label: __('Block Sender'),
 				onClick: () => handleBlockAddress(true),
 				icon: Ban,
@@ -279,18 +286,44 @@ const starMails = createResource({
 		ids,
 		flagged,
 	}),
-	onSuccess: ({ ids, flagged }: { ids: string[]; flagged: boolean }) =>
-		emit('starMails', ids, Number(flagged)),
+	onSuccess: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => {
+		ids.forEach((id: string) => {
+			const m = thread.find((m: Mail) => m.id === id)
+			if (m) m.flagged = flagged ? 1 : 0
+		})
+	},
 })
+
+const setMailsSeen = createResource({
+	url: 'mail.api.mail.set_mails_seen',
+	makeParams: ({ ids }: { ids: string[] }) => ({ account, ids, seen: false }),
+	onSuccess: (ids: string[]) => {
+		raiseToast(__('{0} marked as unread.', [ids.length === 1 ? __('Mail') : __('Mails')]))
+		ids.forEach((id: string) => {
+			const m = thread.find((m: Mail) => m.id === id)
+			if (m) m.seen = 0
+		})
+	},
+})
+
+const handleMarkUnreadFromHere = () => {
+	const idx = thread.indexOf(mail)
+	if (idx === -1) return
+	const ids = thread
+		.slice(idx)
+		.filter((m: Mail) => !m.draft && m.seen)
+		.map((m: Mail) => m.id)
+	if (ids.length) setMailsSeen.submit({ ids })
+}
 
 const blockEmailAddress = createResource({
 	url: 'mail.api.mail.block_email_address',
-	makeParams: () => ({ email: mail.from_email }),
+	makeParams: () => ({ account, email: mail.from_email }),
 })
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
-	makeParams: () => ({ emails: [mail.from_email] }),
+	makeParams: () => ({ account, emails: [mail.from_email] }),
 })
 
 const handleBlockAddress = (block: boolean, isUndo = false) => {

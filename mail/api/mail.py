@@ -479,6 +479,15 @@ def set_flagged(account: str, ids: list[str], flagged: bool) -> dict:
 
 
 @frappe.whitelist()
+def set_mails_seen(account: str, ids: list[str], seen: bool) -> list[str]:
+	"""Sets seen status for the given mails."""
+
+	set_seen_status(account, ids, seen)
+
+	return ids
+
+
+@frappe.whitelist()
 def move_mails(account: str, ids: list[str], mailbox: str) -> None:
 	"""Sets mailbox for mails."""
 

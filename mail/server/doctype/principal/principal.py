@@ -592,6 +592,9 @@ class Principal(Document):
 		# If the principal is an Individual, delete the User
 		if principal.type == "Individual":
 			if is_local_user(self.name):
+				if settings := frappe.db.exists("Account Settings", {"user": self.name}):
+					frappe.delete_doc("Account Settings", settings, ignore_permissions=True)
+
 				if settings := frappe.db.exists("User Settings", {"user": self.name}):
 					frappe.delete_doc("User Settings", settings, ignore_permissions=True)
 

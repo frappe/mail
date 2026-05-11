@@ -651,7 +651,7 @@ def fetch_threads(account: str, filter: dict | None = None, position: int = 0, l
 	return messages
 
 
-def fetch_thread(account: str, thread_id: str) -> list[dict]:
+def fetch_thread(account: str, thread_id: str, sort: Literal["asc", "desc"] = "asc") -> list[dict]:
 	"""Returns a list of messages in a thread based on the provided thread ID."""
 
 	has_permission_for_user(parse_account(account)[0])
@@ -661,7 +661,7 @@ def fetch_thread(account: str, thread_id: str) -> list[dict]:
 	ids = result.get(thread_id, [])
 	messages = get_messages(account, ids=ids)
 
-	return sorted(messages, key=lambda m: m["received_at"], reverse=False)
+	return sorted(messages, key=lambda m: m["received_at"], reverse=(sort == "desc"))
 
 
 def search_messages(

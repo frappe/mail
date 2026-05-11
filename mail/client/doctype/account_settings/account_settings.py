@@ -109,9 +109,9 @@ class AccountSettings(Document):
 
 		self.clear_cached_jmap_identities()
 		self.clear_cached_jmap_mailboxes()
-		self.clear_cached_blobs()
 		self.clear_cached_mail_messages()
 		self.clear_cached_contact_cards()
+		self.clear_cached_blobs()
 
 	@frappe.whitelist()
 	def clear_cached_jmap_identities(self) -> None:
