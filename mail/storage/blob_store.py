@@ -161,12 +161,14 @@ class BlobStore(BaseStore):
 		return count
 
 	def delete_all(self) -> None:
-		"""Delete all blobs in the storage."""
+		"""Delete all blobs in the storage for the current key prefix."""
 
 		self.logger.info({**self.logger_context, "user": frappe.session.user, "event": "deleting-all-blobs"})
 
+		encoded_prefix = self._encode_key(self._get_prefix())
+
 		with os.scandir(self.path) as entries:
 			for entry in entries:
-				if entry.is_file():
+				if entry.is_file() and entry.name.startswith(encoded_prefix):
 					with suppress(FileNotFoundError):
 						os.remove(entry.path)
