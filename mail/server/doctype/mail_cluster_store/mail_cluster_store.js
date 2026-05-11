@@ -41,6 +41,19 @@ const STORE_PRESET = {
 		path: '/etc/stalwart/blob',
 		depth: 2,
 	},
+	ElasticSearch: {
+		timeout: '30s',
+		num_replicas: 0,
+		num_shards: 3,
+		http_headers: '{}',
+	},
+	Meilisearch: {
+		timeout: '30s',
+		poll_interval: '500ms',
+		max_retries: 120,
+		fail_on_timeout: 1,
+		http_headers: '{}',
+	},
 }
 
 frappe.ui.form.on('Mail Cluster Store', {

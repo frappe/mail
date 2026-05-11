@@ -1,6 +1,7 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import json
 from uuid import uuid7
 
 import frappe
@@ -126,11 +127,39 @@ class MailClusterStore(Document):
 				}
 			)
 
+		elif self.type == "ElasticSearch":
+			http_auth = frappe.get_doc("Mail Cluster Store HTTP Auth", self.http_auth)
+			config.update(
+				{
+					"url": self.url,
+					"numReplicas": cint(self.num_replicas),
+					"numShards": cint(self.num_shards),
+					"includeSource": bool(self.include_source),
+					"timeout": cint(self.timeout),
+					"allowInvalidCerts": bool(self.allow_invalid_certs),
+					"httpAuth": http_auth.config,
+					"httpHeaders": json.loads(self.http_headers) if self.http_headers else {},
+				}
+			)
+
+		elif self.type == "Meilisearch":
+			http_auth = frappe.get_doc("Mail Cluster Store HTTP Auth", self.http_auth)
+			config.update(
+				{
+					"url": self.url,
+					"pollInterval": self.pool_interval,
+					"maxRetries": cint(self.max_retries),
+					"failOnTimeout": bool(self.fail_on_timeout),
+					"timeout": cint(self.timeout),
+					"allowInvalidCerts": bool(self.allow_invalid_certs),
+					"httpAuth": http_auth.config,
+					"httpHeaders": json.loads(self.http_headers) if self.http_headers else {},
+				}
+			)
+
 		return config
 
 	def validate(self) -> None:
-		"""Validates the cluster store configuration."""
-
 		if not self.description:
 			self.description = self.type
 

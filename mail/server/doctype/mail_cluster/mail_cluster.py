@@ -19,7 +19,7 @@ from mail.utils.dns import get_dns_record
 ALLOWED_STORE_TYPES = {
 	"data_store": ["RocksDb", "Sqlite", "FoundationDb", "PostgreSql", "MySql"],
 	"blob_store": ["Default", "RocksDb", "S3", "Azure", "FileSystem"],
-	"search_store": ["Default", "RocksDb"],
+	"search_store": ["Default", "RocksDb", "ElasticSearch", "Meilisearch"],
 	"in_memory_store": ["Default", "RocksDb"],
 }
 

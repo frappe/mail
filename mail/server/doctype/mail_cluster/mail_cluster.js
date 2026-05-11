@@ -25,7 +25,7 @@ frappe.ui.form.on('Mail Cluster', {
 			})),
 			frm.set_query('search_store', () => ({
 				filters: {
-					type: ['in', ['Default', 'RocksDb']],
+					type: ['in', ['Default', 'RocksDb', 'ElasticSearch', 'Meilisearch']],
 				},
 			})),
 			frm.set_query('in_memory_store', () => ({

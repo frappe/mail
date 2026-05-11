@@ -19,6 +19,7 @@
   "use_tls",
   "allow_invalid_certs",
   "verify_after_write",
+  "fail_on_timeout",
   "column_break_djvr",
   "pool_workers",
   "pool_min_connections",
@@ -53,7 +54,16 @@
   "secret_key",
   "security_token",
   "session_token",
-  "sas_token"
+  "sas_token",
+  "section_break_wmqb",
+  "url",
+  "poll_interval",
+  "num_replicas",
+  "num_shards",
+  "include_source",
+  "column_break_sefr",
+  "http_auth",
+  "http_headers"
  ],
  "fields": [
   {
@@ -104,8 +114,10 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Type",
-   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql\nDefault\nS3\nAzure\nFileSystem",
-   "reqd": 1
+   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql\nDefault\nS3\nAzure\nFileSystem\nElasticSearch\nMeilisearch",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   },
   {
    "depends_on": "eval: [\"RocksDb\", \"Sqlite\", \"FileSystem\"].includes(doc.type)",
@@ -135,12 +147,12 @@
   },
   {
    "default": "15s",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\"].includes(doc.type)",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
    "description": "Connection timeout to the store.",
    "fieldname": "timeout",
    "fieldtype": "Data",
    "label": "Timeout",
-   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\"].includes(doc.type)"
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\"].includes(doc.type)"
   },
   {
    "depends_on": "eval: [\"MySql\"].includes(doc.type)",
@@ -160,7 +172,7 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\"].includes(doc.type)",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
    "description": "Allow invalid TLS certificates when connecting to the store.",
    "fieldname": "allow_invalid_certs",
    "fieldtype": "Check",
@@ -336,12 +348,12 @@
   },
   {
    "default": "3",
-   "depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)",
+   "depends_on": "eval: [\"S3\", \"Azure\", \"Meilisearch\"].includes(doc.type)",
    "description": "The maximum number of times to retry failed requests. Set to 0 to disable retries.",
    "fieldname": "max_retries",
    "fieldtype": "Int",
    "label": "Max Retries",
-   "mandatory_depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)"
+   "mandatory_depends_on": "eval: [\"S3\", \"Azure\", \"Meilisearch\"].includes(doc.type)"
   },
   {
    "depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)",
@@ -414,12 +426,87 @@
    "fieldtype": "Int",
    "label": "Depth",
    "mandatory_depends_on": "eval: [\"FileSystem\"].includes(doc.type)"
+  },
+  {
+   "fieldname": "section_break_wmqb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
+   "description": "URL of the store.",
+   "fieldname": "url",
+   "fieldtype": "Data",
+   "label": "URL",
+   "mandatory_depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: [\"ElasticSearch\"].includes(doc.type)",
+   "description": "Whether to index the full source document.",
+   "fieldname": "include_source",
+   "fieldtype": "Check",
+   "label": "Include Source"
+  },
+  {
+   "fieldname": "column_break_sefr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
+   "description": "The HTTP authentication to use.",
+   "fieldname": "http_auth",
+   "fieldtype": "Link",
+   "label": "HTTP Auth",
+   "mandatory_depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
+   "options": "Mail Cluster Store HTTP Auth"
+  },
+  {
+   "default": "{}",
+   "depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
+   "description": "Additional headers to include in HTTP requests.",
+   "fieldname": "http_headers",
+   "fieldtype": "JSON",
+   "label": "HTTP Headers"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: [\"ElasticSearch\"].includes(doc.type)",
+   "description": "Number of replicas for the index",
+   "fieldname": "num_replicas",
+   "fieldtype": "Int",
+   "label": "No. of Replicas",
+   "mandatory_depends_on": "eval: [\"ElasticSearch\"].includes(doc.type)"
+  },
+  {
+   "default": "3",
+   "depends_on": "eval: [\"ElasticSearch\"].includes(doc.type)",
+   "description": "Number of shards for the index.",
+   "fieldname": "num_shards",
+   "fieldtype": "Int",
+   "label": "No. of Shards",
+   "mandatory_depends_on": "eval: [\"ElasticSearch\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"Meilisearch\"].includes(doc.type)",
+   "description": "Interval between polling for task status.",
+   "fieldname": "poll_interval",
+   "fieldtype": "Data",
+   "label": "Poll Interval",
+   "mandatory_depends_on": "eval: [\"Meilisearch\"].includes(doc.type)"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval: [\"Meilisearch\"].includes(doc.type)",
+   "description": "Whether to fail the operation if the task does not complete within the polling retries.",
+   "fieldname": "fail_on_timeout",
+   "fieldtype": "Check",
+   "label": "Fail On Timeout"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-11 11:54:05.920080",
+ "modified": "2026-05-11 12:42:04.254981",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster Store",
