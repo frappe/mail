@@ -10,6 +10,7 @@
   "description",
   "column_break_yhyn",
   "path",
+  "depth",
   "blob_size",
   "buffer_size",
   "section_break_plrk",
@@ -17,6 +18,7 @@
   "max_allowed_packet",
   "use_tls",
   "allow_invalid_certs",
+  "verify_after_write",
   "column_break_djvr",
   "pool_workers",
   "pool_min_connections",
@@ -37,7 +39,21 @@
   "column_break_grwu",
   "auth_username",
   "auth_secret",
-  "options"
+  "options",
+  "section_break_uxnr",
+  "region",
+  "bucket",
+  "profile",
+  "max_retries",
+  "key_prefix",
+  "storage_account",
+  "container",
+  "column_break_ncyb",
+  "access_key",
+  "secret_key",
+  "security_token",
+  "session_token",
+  "sas_token"
  ],
  "fields": [
   {
@@ -88,16 +104,16 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Type",
-   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql\nDefault\nSharded",
+   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql\nDefault\nS3\nAzure\nFileSystem",
    "reqd": 1
   },
   {
-   "depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.type)",
+   "depends_on": "eval: [\"RocksDb\", \"Sqlite\", \"FileSystem\"].includes(doc.type)",
    "description": "Path to the data directory",
    "fieldname": "path",
    "fieldtype": "Data",
    "label": "Path",
-   "mandatory_depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.type)"
+   "mandatory_depends_on": "eval: [\"RocksDb\", \"Sqlite\", \"FileSystem\"].includes(doc.type)"
   },
   {
    "default": "16834",
@@ -119,12 +135,12 @@
   },
   {
    "default": "15s",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
-   "description": "Connection timeout to the database.",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\"].includes(doc.type)",
+   "description": "Connection timeout to the store.",
    "fieldname": "timeout",
    "fieldtype": "Data",
    "label": "Timeout",
-   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)"
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\"].includes(doc.type)"
   },
   {
    "depends_on": "eval: [\"MySql\"].includes(doc.type)",
@@ -144,7 +160,7 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\"].includes(doc.type)",
    "description": "Allow invalid TLS certificates when connecting to the store.",
    "fieldname": "allow_invalid_certs",
    "fieldtype": "Check",
@@ -278,12 +294,132 @@
    "fieldname": "options",
    "fieldtype": "Data",
    "label": "Options"
+  },
+  {
+   "fieldname": "section_break_uxnr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "The S3 region where the bucket resides.",
+   "fieldname": "region",
+   "fieldtype": "Data",
+   "label": "Region",
+   "mandatory_depends_on": "eval: [\"S3\"].includes(doc.type)"
+  },
+  {
+   "fieldname": "column_break_ncyb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "After each successful write, verify the object is readable on the backend. Defends against the rare case where an S3-compatible backend returns success but does not actually persist the data. Adds one extra request per write.",
+   "fieldname": "verify_after_write",
+   "fieldtype": "Check",
+   "label": "Verify After Write"
+  },
+  {
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "The S3 bucket where blobs (e-mail messages, Sieve scripts, etc.) will be stored.",
+   "fieldname": "bucket",
+   "fieldtype": "Data",
+   "label": "Bucket",
+   "mandatory_depends_on": "eval: [\"S3\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "Used when retrieving credentials from a shared credentials file. If specified, the server will use the access key ID, secret access key, and session token (if available) associated with the given profile.",
+   "fieldname": "profile",
+   "fieldtype": "Data",
+   "label": "Profile"
+  },
+  {
+   "default": "3",
+   "depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)",
+   "description": "The maximum number of times to retry failed requests. Set to 0 to disable retries.",
+   "fieldname": "max_retries",
+   "fieldtype": "Int",
+   "label": "Max Retries",
+   "mandatory_depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)",
+   "description": "A prefix that will be added to the keys of all objects stored in the blob store.",
+   "fieldname": "key_prefix",
+   "fieldtype": "Data",
+   "label": "Key Prefix"
+  },
+  {
+   "depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)",
+   "description": "Identifies the store account.",
+   "fieldname": "access_key",
+   "fieldtype": "Data",
+   "label": "Access Key",
+   "mandatory_depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "The secret key for the S3 account.",
+   "fieldname": "secret_key",
+   "fieldtype": "Password",
+   "label": "Secret Key",
+   "mandatory_depends_on": "eval: [\"S3\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "Security token for temporary credentials.",
+   "fieldname": "security_token",
+   "fieldtype": "Password",
+   "label": "Security Token",
+   "mandatory_depends_on": "eval: [\"S3\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "Temporary session token for the S3 account.",
+   "fieldname": "session_token",
+   "fieldtype": "Password",
+   "label": "Session Token",
+   "mandatory_depends_on": "eval: [\"S3\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"Azure\"].includes(doc.type)",
+   "description": "SAS Token, when not using accessKey based authentication.",
+   "fieldname": "sas_token",
+   "fieldtype": "Password",
+   "label": "SAS Token",
+   "mandatory_depends_on": "eval: [\"Azure\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"Azure\"].includes(doc.type)",
+   "description": "The Azure Storage Account where blobs (e-mail messages, Sieve scripts, etc.) will be stored.",
+   "fieldname": "storage_account",
+   "fieldtype": "Data",
+   "label": "Storage Account",
+   "mandatory_depends_on": "eval: [\"Azure\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"Azure\"].includes(doc.type)",
+   "description": "The name of the container in the Storage Account.",
+   "fieldname": "container",
+   "fieldtype": "Data",
+   "label": "Container",
+   "mandatory_depends_on": "eval: [\"Azure\"].includes(doc.type)"
+  },
+  {
+   "default": "2",
+   "depends_on": "eval: [\"FileSystem\"].includes(doc.type)",
+   "description": "Maximum depth of nested directories.",
+   "fieldname": "depth",
+   "fieldtype": "Int",
+   "label": "Depth",
+   "mandatory_depends_on": "eval: [\"FileSystem\"].includes(doc.type)"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-11 10:45:44.453116",
+ "modified": "2026-05-11 11:54:05.920080",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster Store",

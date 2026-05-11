@@ -20,17 +20,17 @@ frappe.ui.form.on('Mail Cluster', {
 			}),
 			frm.set_query('blob_store', () => ({
 				filters: {
-					type: ['in', ['RocksDb', 'Default', 'Sharded']],
+					type: ['in', ['Default', 'RocksDb', 'S3', 'Azure', 'FileSystem']],
 				},
 			})),
 			frm.set_query('search_store', () => ({
 				filters: {
-					type: ['in', ['RocksDb', 'Default']],
+					type: ['in', ['Default', 'RocksDb']],
 				},
 			})),
 			frm.set_query('in_memory_store', () => ({
 				filters: {
-					type: ['in', ['RocksDb', 'Default']],
+					type: ['in', ['Default', 'RocksDb']],
 				},
 			})),
 		)

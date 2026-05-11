@@ -3,6 +3,8 @@
 
 from uuid import uuid7
 
+import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
@@ -54,9 +56,9 @@ class MailClusterStore(Document):
 		elif self.type == "PostgreSql":
 			config.update(
 				{
-					"timeout": cint(self.timeout),
-					"useTls": cint(self.use_tls),
-					"allowInvalidCerts": cint(self.allow_invalid_certs),
+					"timeout": self.timeout,
+					"useTls": bool(self.use_tls),
+					"allowInvalidCerts": bool(self.allow_invalid_certs),
 					"poolMaxConnections": cint(self.pool_max_connections),
 					"poolRecyclingMethod": self.pool_recycling_method,
 					"host": self.host,
@@ -71,9 +73,9 @@ class MailClusterStore(Document):
 		elif self.type == "MySql":
 			config.update(
 				{
-					"timeout": cint(self.timeout),
-					"useTls": cint(self.use_tls),
-					"allowInvalidCerts": cint(self.allow_invalid_certs),
+					"timeout": self.timeout,
+					"useTls": bool(self.use_tls),
+					"allowInvalidCerts": bool(self.allow_invalid_certs),
 					"maxAllowedPacket": cint(self.max_allowed_packet),
 					"poolMaxConnections": cint(self.pool_max_connections),
 					"poolMinConnections": cint(self.pool_min_connections),
@@ -85,6 +87,45 @@ class MailClusterStore(Document):
 				}
 			)
 
+		elif self.type == "S3":
+			config.update(
+				{
+					"region": self.region,
+					"bucket": self.bucket,
+					"accessKey": self.access_key,
+					"secretKey": self.get_password("secret_key") if self.secret_key else None,
+					"securityToken": self.get_password("security_token") if self.security_token else None,
+					"sessionToken": self.get_password("session_token") if self.session_token else None,
+					"profile": self.profile,
+					"timeout": self.timeout,
+					"maxRetries": cint(self.max_retries),
+					"keyPrefix": self.key_prefix,
+					"allowInvalidCerts": bool(self.allow_invalid_certs),
+					"verifyAfterWrite": bool(self.verify_after_write),
+				}
+			)
+
+		elif self.type == "Azure":
+			config.update(
+				{
+					"storageAccount": self.storage_account,
+					"container": self.container,
+					"accessKey": self.get_password("access_key") if self.access_key else None,
+					"sasToken": self.get_password("sas_token") if self.sas_token else None,
+					"timeout": self.timeout,
+					"maxRetries": cint(self.max_retries),
+					"keyPrefix": self.key_prefix,
+				}
+			)
+
+		elif self.type == "FileSystem":
+			config.update(
+				{
+					"path": self.path,
+					"depth": cint(self.depth),
+				}
+			)
+
 		return config
 
 	def validate(self) -> None:
@@ -92,3 +133,12 @@ class MailClusterStore(Document):
 
 		if not self.description:
 			self.description = self.type
+
+		self.validate_singleton_default()
+
+	def validate_singleton_default(self) -> None:
+		"""Validates that only one Default store exists."""
+
+		if self.type in ["Default"]:
+			if frappe.db.exists("Mail Cluster Store", {"type": self.type, "name": ["!=", self.name]}):
+				frappe.throw(_("Only one {0} store is allowed.").format(self.type))
