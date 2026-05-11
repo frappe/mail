@@ -6,7 +6,10 @@
 	>
 		<template #body>
 			<div class="bg-surface-white">
-				<div class="flex items-center border-b px-4 py-2">
+				<div
+					class="flex items-center px-4 py-2"
+					:class="{ 'border-b': showAdvancedFilters || results?.data?.length }"
+				>
 					<Button v-if="isMobile" variant="ghost" @click="show = false">
 						<template #icon>
 							<ChevronLeft class="text-ink-gray-5 h-4 w-4" />

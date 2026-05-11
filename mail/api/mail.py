@@ -169,7 +169,7 @@ def get_threads(account: str, mailbox: str, limit: int, filter_by: str | None = 
 
 	threads = [serialize_thread(t) for t in fetch_threads(account, filter, 0, limit)]
 
-	return add_user_images_to_emails(account, threads, is_thread=False)
+	return add_user_images_to_emails(account, threads, is_thread=False), mailbox
 
 
 @frappe.whitelist()

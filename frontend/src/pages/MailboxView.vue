@@ -47,13 +47,7 @@
 		"
 	>
 		<!-- Loading -->
-		<div
-			v-if="
-				(!threadsResource?.data?.length && threadsResource?.loading && limit === 50) ||
-				emptyMailbox.loading
-			"
-			class="flex w-full flex-col items-center justify-center"
-		>
+		<div v-if="isLoading" class="flex w-full flex-col items-center justify-center">
 			<div class="text-ink-gray-5 flex items-center space-x-2">
 				<LoaderCircle class="h-5 w-5 animate-spin" />
 				<span>{{ __('Loading...') }}</span>
@@ -742,6 +736,9 @@ const searchResults = createResource({
 		noOfSearchResults.value = data[1]
 		return data[0]
 	},
+	onSuccess: () => {
+		if (mailbox === 'search') isMailboxLoaded.value = true
+	},
 })
 
 watch(
@@ -760,6 +757,7 @@ const limit = ref(50)
 const filter = ref<string | null>(
 	localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null,
 )
+const isMailboxLoaded = ref(false)
 
 const threads = createResource({
 	url: 'mail.api.mail.get_threads',
@@ -769,9 +767,21 @@ const threads = createResource({
 		limit: limit.value,
 		filter_by: filter.value,
 	}),
+	transform: (data: [Thread[], string]) => data[0],
+	onSuccess: (data) => {
+		if (mailbox === data[1]) isMailboxLoaded.value = true
+	},
 })
 
 const threadsResource = computed(() => (mailbox === 'search' ? searchResults : threads))
+
+const isLoading = computed(() => {
+	if (!isMailboxLoaded.value) return true
+	if (emptyMailbox.loading) return true
+	return (
+		!threadsResource.value.data.length && threadsResource.value?.loading && limit.value === 50
+	)
+})
 
 const threadIDs = computed(
 	() => threadsResource.value.data?.map((thread: Thread) => thread.thread_id) || [],
@@ -791,6 +801,7 @@ const reloadThreads: (reloadMailboxes?: boolean, mailboxRoles?: MailboxRole[]) =
 watch(
 	() => [mailbox, accountId],
 	() => {
+		isMailboxLoaded.value = false
 		threadsResource.value.data = []
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
 		limit.value = 50
