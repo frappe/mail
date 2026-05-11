@@ -6,6 +6,8 @@
  "field_order": [
   "user",
   "column_break_klzk",
+  "session_state",
+  "session_last_update",
   "jmap_credentials_section",
   "server_url",
   "column_break_uxkb",
@@ -22,6 +24,8 @@
   "recovery_section",
   "backup_email",
   "column_break_gotn",
+  "session_section",
+  "jmap_session",
   "ui_tab",
   "appearance_section",
   "color_scheme",
@@ -207,12 +211,45 @@
    "fieldname": "create_contacts_after_email_submit",
    "fieldtype": "Check",
    "label": "Create Contacts After Email Submit"
+  },
+  {
+   "fieldname": "session_state",
+   "fieldtype": "Data",
+   "is_virtual": 1,
+   "label": "Session State",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "session_last_update",
+   "fieldtype": "Datetime",
+   "is_virtual": 1,
+   "label": "Session Last Update",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "session_section",
+   "fieldtype": "Section Break",
+   "label": "Session"
+  },
+  {
+   "depends_on": "eval: doc.jmap_session && doc.jmap_session != \"{}\"",
+   "fieldname": "jmap_session",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-18 15:51:02.397921",
+ "modified": "2026-04-30 10:55:12.995817",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",

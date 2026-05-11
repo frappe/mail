@@ -28,6 +28,8 @@ from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.jmap import get_email_service, get_jmap_connection, get_thread_service, parse_account
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
+from mail.storage import get_blob_store, get_data_store
+from mail.storage.data_store import Entity
 from mail.utils import (
 	enqueue_job,
 	get_mail_config,
@@ -137,7 +139,8 @@ class MailMessage(Document):
 	def message(self) -> str | None:
 		"""Returns the message content if available."""
 
-		if content := _get_blob_from_cache(self.account, self.blob_id):
+		cached_blobs = _get_cached_blobs(self.account, [self.blob_id])
+		if content := cached_blobs.get(self.blob_id):
 			return content.decode("utf-8")
 
 	@cached_property
@@ -694,25 +697,29 @@ def get_messages(account: str, ids: list[str]) -> list[dict]:
 
 	has_permission_for_user(parse_account(account)[0])
 
+	cached_messages = _get_cached_messages(account, ids)
+
 	messages = {}
 	ids_to_fetch = []
-
 	for id in ids:
-		if message := _get_message_from_cache(account, id):
-			messages[id] = message
+		if cached_message := cached_messages.get(id):
+			messages[id] = cached_message
 		else:
 			ids_to_fetch.append(id)
 
 	if ids_to_fetch:
 		service = get_email_service(account)
 		emails = service.get(ids_to_fetch)
-
 		mailbox_map = {mb["id"]: mb["name"] for mb in service.mailboxes}
 
+		messages_to_cache = {}
 		for email in emails:
 			message = format_message(account, mailbox_map, email)
-			_store_message_in_cache(account, message["id"], message)
+			messages_to_cache[message["id"]] = message
 			messages[message["id"]] = message
+
+		if messages_to_cache:
+			_cache_messages(account, messages_to_cache)
 
 	return [messages[id] for id in ids if id in messages]
 
@@ -758,7 +765,7 @@ def delete_messages(account: str, ids: list[str]) -> None:
 	try:
 		service = get_email_service(account)
 		service.delete(ids)
-		_remove_messages_from_cache(account, ids)
+		_remove_cached_messages(account, ids)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to delete mail(s)"),
@@ -786,7 +793,7 @@ def empty_mailbox(account: str, mailbox_id: str) -> None:
 				break
 
 			service.delete(ids)
-			_remove_messages_from_cache(account, ids)
+			_remove_cached_messages(account, ids)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to empty mailbox"),
@@ -807,7 +814,7 @@ def move_messages(account: str, ids: list[str], mailbox_id: str) -> None:
 		emails = [{"id": id, "mailbox_ids": {mailbox_id: True}} for id in ids]
 		service = get_email_service(account)
 		service.update(emails)
-		_remove_messages_from_cache(account, ids)
+		_remove_cached_messages(account, ids)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to move mail(s) to mailbox"),
@@ -829,15 +836,20 @@ def set_seen_status(account: str, ids: list[str], seen: bool = True) -> None:
 		service = get_email_service(account)
 		service.update(emails)
 
-		for id in ids:
-			if message := _get_message_from_cache(account, id):
+		messages_to_cache = {}
+		for message_id, message in _get_cached_messages(account, ids).items():
+			if message:
 				keywords = json.loads(message["keywords"])
 				keywords["$seen"] = bool(seen)
 
 				message["seen"] = cint(seen)
 				message["keywords"] = json.dumps(keywords, indent=4)
 
-				_store_message_in_cache(account, message["id"], message)
+				messages_to_cache[message_id] = message
+
+		if messages_to_cache:
+			_cache_messages(account, messages_to_cache)
+
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to set seen status for mail(s)"),
@@ -859,15 +871,20 @@ def set_flagged_status(account: str, ids: list[str], flagged: bool = True) -> No
 		service = get_email_service(account)
 		service.update(emails)
 
-		for id in ids:
-			if message := _get_message_from_cache(account, id):
+		messages_to_cache = {}
+		for message_id, message in _get_cached_messages(account, ids).items():
+			if message:
 				keywords = json.loads(message["keywords"])
 				keywords["$flagged"] = bool(flagged)
 
 				message["flagged"] = cint(flagged)
 				message["keywords"] = json.dumps(keywords, indent=4)
 
-				_store_message_in_cache(account, message["id"], message)
+				messages_to_cache[message_id] = message
+
+		if messages_to_cache:
+			_cache_messages(account, messages_to_cache)
+
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to set flagged status for mail(s)"),
@@ -899,7 +916,7 @@ def set_spam_status(account: str, ids: list[str], spam: bool = True) -> None:
 		]
 		email_service.update(emails)
 
-		_remove_messages_from_cache(account, ids)
+		_remove_cached_messages(account, ids)
 	except Exception:
 		frappe.log_error(
 			title=_("Failed to set spam status for mail(s)"),
@@ -925,13 +942,15 @@ def fetch_blobs(account: str, blobs: list[str] | list[tuple[str, str | None]]) -
 	if isinstance(blobs, list) and all(isinstance(b, str) for b in blobs):
 		blobs = [(blob_id, None) for blob_id in blobs]
 
+	cached_blobs = _get_cached_blobs(account, [blob_id for blob_id, _name in blobs])
+
 	result = {}
 	blobs_to_fetch = []
-	for blob_id, name in blobs:
-		if content := _get_blob_from_cache(account, blob_id):
-			result[blob_id] = content
+	for blob_id, _name in blobs:
+		if cached_content := cached_blobs.get(blob_id):
+			result[blob_id] = cached_content
 		else:
-			blobs_to_fetch.append((blob_id, name))
+			blobs_to_fetch.append((blob_id, _name))
 
 	if not blobs_to_fetch:
 		return result
@@ -940,9 +959,13 @@ def fetch_blobs(account: str, blobs: list[str] | list[tuple[str, str | None]]) -
 		service = get_email_service(account)
 		fetched_blobs = service.download_blobs_concurrently(blobs_to_fetch)
 
+		blobs_to_cache = {}
 		for blob_id, content in fetched_blobs.items():
-			_store_blob_in_cache(account, blob_id, content)
+			blobs_to_cache[blob_id] = content
 			result[blob_id] = content
+
+		if blobs_to_cache:
+			_cache_blobs(account, blobs_to_cache)
 
 		return result
 	except Exception:
@@ -1077,88 +1100,50 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 	return formatted_message
 
 
-def _get_message_cache_key(account: str, id: str) -> str:
-	"""Returns cache key for message."""
-
-	return f"jmap:message:{account}:{id}"
-
-
-def _get_blob_cache_key(account: str, blob_id: str) -> str:
-	"""Returns cache key for blob content."""
-
-	return f"jmap:blob:{account}:{blob_id}"
-
-
 def _get_total_cache_key(account: str) -> str:
 	"""Returns cache key for total messages."""
 
 	return f"jmap:message:{account}:total"
 
 
-def _get_message_from_cache(account: str, id: str) -> dict | None:
-	"""Returns a message from cache if it exists."""
+def _get_cached_messages(account: str, ids: list[str]) -> dict[str, dict | None]:
+	"""Returns a dictionary of cached messages for the provided IDs."""
 
-	cache_key = _get_message_cache_key(account, id)
-	return frappe.cache.get_value(cache_key)
-
-
-def _store_message_in_cache(account: str, id: str, message: dict) -> None:
-	"""Store a message in cache with TTL and maintain per-account bucket size."""
-
-	cache_key = _get_message_cache_key(account, id)
-	list_key = f"jmap:message:{account}:ids"
-	msg_bucket_size = cint(get_mail_config("msg_bucket_size"))
-
-	msg_cache_ttl = cint(get_mail_config("msg_cache_ttl"))
-	frappe.cache.set_value(cache_key, message, expires_in_sec=msg_cache_ttl)
-	frappe.cache.lpush(list_key, id)
-
-	frappe.cache.ltrim(list_key, 0, msg_bucket_size - 1)
-
-	while frappe.cache.llen(list_key) > msg_bucket_size:
-		if oldest_id := frappe.cache.rpop(list_key):
-			frappe.cache.delete_key(_get_message_cache_key(account, oldest_id))
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	return store.get_many(Entity.EMAIL, subkeys=ids)
 
 
-def _remove_messages_from_cache(account: str, ids: list[str]) -> None:
-	"""Remove a message from cache."""
+def _cache_messages(account: str, messages: dict[str, dict]) -> None:
+	"""Store messages in cache with the message ID as the subkey."""
 
-	for id in ids:
-		cache_key = _get_message_cache_key(account, id)
-		frappe.cache.delete_value(cache_key)
-
-	list_key = f"jmap:message:{account}:ids"
-	for id in ids:
-		frappe.cache.lrem(list_key, 0, id)
-
-	if not frappe.cache.llen(list_key):
-		frappe.cache.delete_value(list_key)
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	store.set_many(Entity.EMAIL, items=messages)
 
 
-def _get_blob_from_cache(account: str, blob_id: str) -> bytes | None:
-	"""Returns a blob from cache if it exists."""
+def _remove_cached_messages(account: str, ids: list[str]) -> None:
+	"""Remove messages from cache for the provided IDs."""
 
-	cache_key = _get_blob_cache_key(account, blob_id)
-	return frappe.cache.get_value(cache_key)
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	store.delete_many(Entity.EMAIL, subkeys=ids)
 
 
-def _store_blob_in_cache(account: str, blob_id: str, content: bytes) -> None:
-	"""Store a blob in cache with TTL and maintain per-account bucket size."""
+def _get_cached_blobs(account: str, blob_ids: list[str]) -> dict[str, bytes | None]:
+	"""Returns a dictionary of cached blobs for the provided blob IDs."""
 
-	cache_key = _get_blob_cache_key(account, blob_id)
-	list_key = f"jmap:blob:{account}:blob_ids"
+	user, account_id = parse_account(account)
+	store = get_blob_store(user, account_id)
+	return store.get_many(subkeys=blob_ids)
 
-	blob_bucket_size = cint(get_mail_config("blob_bucket_size"))
-	blob_cache_ttl = cint(get_mail_config("blob_cache_ttl"))
 
-	frappe.cache.set_value(cache_key, content, expires_in_sec=blob_cache_ttl)
-	frappe.cache.lpush(list_key, blob_id)
+def _cache_blobs(account: str, blobs: dict[str, bytes]) -> None:
+	"""Store blobs in cache with the blob ID as the subkey."""
 
-	frappe.cache.ltrim(list_key, 0, blob_bucket_size - 1)
-
-	while frappe.cache.llen(list_key) > blob_bucket_size:
-		if oldest_id := frappe.cache.rpop(list_key):
-			frappe.cache.delete_key(_get_blob_cache_key(account, oldest_id))
+	user, account_id = parse_account(account)
+	store = get_blob_store(user, account_id)
+	store.set_many(items=blobs)
 
 
 def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None = None) -> None:
@@ -1264,11 +1249,11 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 
 		if updated_ids := result["updated"]:
 			logger.info({**ctx, "event": "messages-updated", "count": len(updated_ids)})
-			_remove_messages_from_cache(account, updated_ids)
+			_remove_cached_messages(account, updated_ids)
 
 		if destroyed_ids := result["destroyed"]:
 			logger.info({**ctx, "event": "messages-deleted", "count": len(destroyed_ids)})
-			_remove_messages_from_cache(account, destroyed_ids)
+			_remove_cached_messages(account, destroyed_ids)
 
 		new_state = result["newState"]
 

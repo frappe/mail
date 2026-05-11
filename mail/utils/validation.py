@@ -1,7 +1,5 @@
-import ipaddress
 import os
 import re
-import socket
 
 import frappe
 from croniter import CroniterBadCronError, croniter
@@ -10,39 +8,6 @@ from frappe.utils import cint
 from frappe.utils.caching import request_cache
 
 from mail.utils import get_mail_config
-
-
-def is_valid_host(host: str) -> bool:
-	"""Returns True if the host is a valid hostname else False."""
-
-	return bool(re.compile(r"^[a-zA-Z0-9_-]+$").match(host))
-
-
-def is_valid_ip_address(ip_address: str, category: str | None = None) -> bool:
-	"""Returns True if the IP address is valid else False."""
-
-	try:
-		ip_obj = ipaddress.ip_address(ip_address)
-
-		if category:
-			if category == "private":
-				return ip_obj.is_private
-			elif category == "public":
-				return not ip_obj.is_private
-
-		return True
-	except ValueError:
-		return False
-
-
-def is_port_open(fqdn: str, port: int, timeout: int = 10) -> bool:
-	"""Returns True if the port is open else False."""
-
-	try:
-		with socket.create_connection((fqdn, port), timeout=timeout):
-			return True
-	except (TimeoutError, OSError):
-		return False
 
 
 def is_subaddressed_email(email: str, raise_exception: bool = False) -> bool:

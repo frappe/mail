@@ -10,11 +10,12 @@ from frappe.utils import cint
 
 from mail.jmap import (
 	get_core_service,
-	invalidate_jmap_connection_cache,
 	invalidate_jmap_identities_cache,
 	invalidate_jmap_mailboxes_cache,
 	parse_account,
 )
+from mail.storage import get_blob_store, get_data_store
+from mail.storage.data_store import Entity
 
 if TYPE_CHECKING:
 	from mail.jmap.services.core import CoreService
@@ -41,10 +42,20 @@ class AccountSettings(Document):
 			return None
 
 	@property
-	def has_cached_jmap_connection(self) -> int:
-		"""Check if there is a cached JMAP connection for the user."""
+	def email_current_state(self) -> str:
+		"""Returns the current state of the email sync for the account, or an empty string if not set."""
 
-		return cint(bool(frappe.cache.hget("jmap:connection", self.user)))
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		return store.get(Entity.STATE, "email_current_state") or ""
+
+	@property
+	def email_previous_state(self) -> str:
+		"""Returns the previous state of the email sync for the account, or an empty string if not set."""
+
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		return store.get(Entity.STATE, "email_previous_state") or ""
 
 	@property
 	def has_cached_jmap_identities(self) -> int:
@@ -70,22 +81,25 @@ class AccountSettings(Document):
 	def total_cached_blobs(self) -> int:
 		"""Get the total number of cached blobs for the account."""
 
-		list_key = f"jmap:blob:{self.account}:blob_ids"
-		return len(frappe.cache.lrange(list_key, 0, -1) or [])
+		user, account_id = parse_account(self.account)
+		store = get_blob_store(user, account_id)
+		return store.count()
 
 	@property
 	def total_cached_mail_messages(self) -> int:
 		"""Get the total number of cached mail messages for the account."""
 
-		list_key = f"jmap:message:{self.account}:ids"
-		return len(frappe.cache.lrange(list_key, 0, -1) or [])
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		return store.count(Entity.EMAIL)
 
 	@property
 	def total_cached_contact_cards(self) -> int:
 		"""Get the total number of cached contact cards for the account."""
 
-		list_key = f"jmap:contact_card:{self.account}:ids"
-		return len(frappe.cache.lrange(list_key, 0, -1) or [])
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		return store.count(Entity.CONTACT_CARD)
 
 	def before_insert(self) -> None:
 		self.user = parse_account(self.account)[0]
@@ -93,19 +107,11 @@ class AccountSettings(Document):
 	def after_delete(self) -> None:
 		"""Clear all caches related to the account when the settings are deleted."""
 
-		self.clear_cached_jmap_connection()
 		self.clear_cached_jmap_identities()
 		self.clear_cached_jmap_mailboxes()
-		self.clear_cached_blobs()
 		self.clear_cached_mail_messages()
 		self.clear_cached_contact_cards()
-
-	@frappe.whitelist()
-	def clear_cached_jmap_connection(self) -> None:
-		"""Clear all cached JMAP connection for the current user."""
-
-		if self.has_clear_cache_permission():
-			invalidate_jmap_connection_cache(self.user)
+		self.clear_cached_blobs()
 
 	@frappe.whitelist()
 	def clear_cached_jmap_identities(self) -> None:
@@ -125,58 +131,34 @@ class AccountSettings(Document):
 	def clear_cached_blobs(self) -> None:
 		"""Clear all cached JMAP blobs for the current account."""
 
-		from mail.client.doctype.mail_message.mail_message import _get_blob_cache_key
-
 		if not self.has_clear_cache_permission():
 			return
 
-		list_key = f"jmap:blob:{self.account}:blob_ids"
-
-		blob_ids = frappe.cache.lrange(list_key, 0, -1) or []
-
-		for blob_id in blob_ids:
-			cache_key = _get_blob_cache_key(self.account, blob_id)
-			frappe.cache.delete_value(cache_key)
-
-		frappe.cache.delete_value(list_key)
+		user, account_id = parse_account(self.account)
+		store = get_blob_store(user, account_id)
+		store.delete_all()
 
 	@frappe.whitelist()
 	def clear_cached_mail_messages(self) -> None:
 		"""Clear all cached mail messages for the current account."""
 
-		from mail.client.doctype.mail_message.mail_message import _get_message_cache_key
-
 		if not self.has_clear_cache_permission():
 			return
 
-		list_key = f"jmap:message:{self.account}:ids"
-
-		message_ids = frappe.cache.lrange(list_key, 0, -1) or []
-
-		for msg_id in message_ids:
-			cache_key = _get_message_cache_key(self.account, msg_id)
-			frappe.cache.delete_value(cache_key)
-
-		frappe.cache.delete_value(list_key)
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		store.delete_all(Entity.EMAIL)
 
 	@frappe.whitelist()
 	def clear_cached_contact_cards(self) -> None:
 		"""Clear all cached contact cards for the current account."""
 
-		from mail.client.doctype.contact_card.contact_card import _get_contact_card_cache_key
-
 		if not self.has_clear_cache_permission():
 			return
 
-		list_key = f"jmap:contact_card:{self.account}:ids"
-
-		contact_card_ids = frappe.cache.lrange(list_key, 0, -1) or []
-
-		for contact_id in contact_card_ids:
-			cache_key = _get_contact_card_cache_key(self.account, contact_id)
-			frappe.cache.delete_value(cache_key)
-
-		frappe.cache.delete_value(list_key)
+		user, account_id = parse_account(self.account)
+		store = get_data_store(user, account_id)
+		store.delete_all(Entity.CONTACT_CARD)
 
 	def has_clear_cache_permission(self) -> bool:
 		"""Check if the user has permission to clear cache."""
@@ -193,6 +175,28 @@ class AccountSettings(Document):
 		"""Updates the document with the given key-value pairs."""
 
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
+
+
+def sync_account_settings(user: str, accounts: dict[str, dict]) -> None:
+	"""Sync the Account Settings doctype with the current accounts of the user."""
+
+	existing_account_settings_map = {
+		s["account"]: s["name"]
+		for s in frappe.db.get_all("Account Settings", {"user": user}, ["name", "account"])
+	}
+	current_accounts = set([f"{user}:{account_id}" for account_id in accounts.keys()])
+
+	accounts_to_delete = set(existing_account_settings_map.keys()) - current_accounts
+	accounts_to_add = current_accounts - set(existing_account_settings_map.keys())
+
+	for account in accounts_to_delete:
+		frappe.delete_doc("Account Settings", existing_account_settings_map[account], ignore_permissions=True)
+
+	for account in accounts_to_add:
+		settings = frappe.new_doc("Account Settings")
+		settings.user = user
+		settings.account = account
+		settings.save(ignore_permissions=True)
 
 
 def get_permission_query_condition(user: str | None = None) -> str:

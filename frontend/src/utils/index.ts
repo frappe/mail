@@ -43,19 +43,6 @@ export function startResizing(event) {
 	document.addEventListener('mouseup', onMouseUp)
 }
 
-export const singularize = (word: string) => {
-	const endings = {
-		ves: 'fe',
-		ies: 'y',
-		i: 'us',
-		zes: 'ze',
-		ses: 's',
-		es: 'e',
-		s: '',
-	}
-	return word.replace(new RegExp(`(${Object.keys(endings).join('|')})$`), (r) => endings[r])
-}
-
 export const validateEmail = (email: string) => {
 	const regExp =
 		/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -104,12 +91,6 @@ export const raisePromiseToast = (
 
 	toast.promise(action(), { loading, success, error })
 }
-
-export const kebabToTitleCase = (str: string) =>
-	str
-		.split('-')
-		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-		.join(' ')
 
 export const copyToClipBoard = async (text: string) => {
 	try {

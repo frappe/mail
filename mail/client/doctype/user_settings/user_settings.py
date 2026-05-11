@@ -1,19 +1,50 @@
 # Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import json
+from functools import cached_property
 from uuid import uuid7
 
 import frappe
 from frappe import _
 from frappe.model.document import Document
 
+from mail.client.doctype.account_settings.account_settings import sync_account_settings
+from mail.jmap import get_jmap_session_manager
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
 from mail.utils import get_mail_config
+from mail.utils.dt import timestamp_to_datetime
 from mail.utils.user import is_local_user, is_system_manager
 
 
 class UserSettings(Document):
+	@cached_property
+	def session(self) -> dict:
+		"""Returns the JMAP session for the user."""
+
+		return get_jmap_session_manager(self.user).get_session() or {}
+
+	@property
+	def session_state(self) -> str | None:
+		"""Returns the state of the JMAP session for the user."""
+
+		return self.session.get("state")
+
+	@property
+	def session_last_update(self) -> str | None:
+		"""Returns the last update timestamp of the JMAP session for the user in the user's timezone."""
+
+		timestamp = self.session.get("timestamp")
+		if timestamp:
+			return timestamp_to_datetime(timestamp, as_str=True)
+
+	@property
+	def jmap_session(self) -> str:
+		"""Returns the JMAP session for the user as a JSON string."""
+
+		return json.dumps(self.session, indent=4)
+
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -39,8 +70,9 @@ class UserSettings(Document):
 			frappe.throw(_("Server URL and App Password are required to validate JMAP settings."))
 
 		try:
-			info = JMAPConnectionInfo(server_url, self.username, self.get_password("app_password"))
-			connection = JMAPConnection(info)
+			connection = JMAPConnection(
+				JMAPConnectionInfo(server_url, self.username, self.get_password("app_password"))
+			)
 		except Exception as e:
 			if (
 				hasattr(e, "response")
@@ -73,25 +105,7 @@ class UserSettings(Document):
 					).format(frappe.bold(self.default_outgoing_email))
 				)
 
-		existing_account_settings_map = {
-			s["account"]: s["name"]
-			for s in frappe.db.get_all("Account Settings", {"user": self.user}, ["name", "account"])
-		}
-		current_accounts = set([f"{self.user}:{account_id}" for account_id in connection.accounts.keys()])
-
-		accounts_to_delete = set(existing_account_settings_map.keys()) - current_accounts
-		accounts_to_add = current_accounts - set(existing_account_settings_map.keys())
-
-		for account in accounts_to_delete:
-			frappe.delete_doc(
-				"Account Settings", existing_account_settings_map[account], ignore_permissions=True
-			)
-
-		for account in accounts_to_add:
-			settings = frappe.new_doc("Account Settings")
-			settings.user = self.user
-			settings.account = account
-			settings.save(ignore_permissions=True)
+		sync_account_settings(self.user, connection.accounts)
 
 	def validate_local_user(self) -> None:
 		"""Validate that if the user is local, then the JMAP username must be the same as the User name and a Principal Settings must exist for the user."""
@@ -112,6 +126,12 @@ class UserSettings(Document):
 					"Principal Settings for {0} does not exist. Please create Principal Settings with the principal name same as the JMAP username."
 				).format(frappe.bold(self.username))
 			)
+
+	@frappe.whitelist()
+	def clear_jmap_session(self) -> None:
+		"""Clears the JMAP session for the user."""
+
+		get_jmap_session_manager(self.user).clear_session()
 
 	@frappe.whitelist()
 	def show_app_password(self) -> str:
