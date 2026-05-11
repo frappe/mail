@@ -88,7 +88,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Type",
-   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql",
+   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql\nDefault\nSharded",
    "reqd": 1
   },
   {
@@ -283,7 +283,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-08 12:20:05.216537",
+ "modified": "2026-05-11 10:45:44.453116",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster Store",

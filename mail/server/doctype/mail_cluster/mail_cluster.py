@@ -18,9 +18,9 @@ from mail.utils.dns import get_dns_record
 
 ALLOWED_STORE_TYPES = {
 	"data_store": ["RocksDb", "Sqlite", "FoundationDb", "PostgreSql", "MySql"],
-	"blob_store": ["RocksDb"],
-	"search_store": ["RocksDb"],
-	"in_memory_store": ["RocksDb"],
+	"blob_store": ["RocksDb", "Default", "Sharded"],
+	"search_store": ["RocksDb", "Default"],
+	"in_memory_store": ["RocksDb", "Default"],
 }
 
 
@@ -121,17 +121,21 @@ class MailCluster(Document):
 	def validate_stores(self) -> None:
 		"""Validates the data stores of the cluster."""
 
-		def validate_store(store_field: str, required: bool = False) -> None:
+		def validate_store(store_field: str) -> None:
 			store = self.get(store_field)
 
-			if required and not store:
-				frappe.throw(_("{0} is required.").format(self.meta.get_field(store_field).label))
+			if store_field == "data_store" and not store:
+				frappe.throw(_("Data Store is required."))
 
-			if not store:
-				return
+			if not store or (store_field != "data_store" and store == self.data_store):
+				default_store = frappe.db.get_value("Mail Cluster Store", {"type": "Default"}, "name")
+				if not default_store:
+					doc = frappe.new_doc("Mail Cluster Store")
+					doc.type = "Default"
+					doc.insert()
+					default_store = doc.name
 
-			if store_field != "data_store" and store == self.data_store:
-				self.set(store_field, None)
+				self.set(store_field, default_store)
 				return
 
 			store_type = frappe.db.get_value("Mail Cluster Store", store, "type")
@@ -145,7 +149,7 @@ class MailCluster(Document):
 					)
 				)
 
-		validate_store("data_store", required=True)
+		validate_store("data_store")
 
 		for field in ["blob_store", "search_store", "in_memory_store"]:
 			validate_store(field)
