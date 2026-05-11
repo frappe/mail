@@ -592,7 +592,7 @@ const threadActions = computed((): MailAction[] =>
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
-	makeParams: (email) => ({ emails: [email] }),
+	makeParams: (email) => ({ account: store.account, emails: [email] }),
 	onSuccess: () => {
 		raiseToast(__('Email address unblocked.'))
 		blockedAddresses.reload()

@@ -318,12 +318,12 @@ const handleMarkUnreadFromHere = () => {
 
 const blockEmailAddress = createResource({
 	url: 'mail.api.mail.block_email_address',
-	makeParams: () => ({ email: mail.from_email }),
+	makeParams: () => ({ account, email: mail.from_email }),
 })
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
-	makeParams: () => ({ emails: [mail.from_email] }),
+	makeParams: () => ({ account, emails: [mail.from_email] }),
 })
 
 const handleBlockAddress = (block: boolean, isUndo = false) => {
