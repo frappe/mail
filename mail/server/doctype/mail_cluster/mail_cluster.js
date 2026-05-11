@@ -2,8 +2,38 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Mail Cluster', {
+	setup(frm) {
+		frm.trigger('set_queries')
+	},
+
 	refresh(frm) {
 		frm.trigger('add_actions')
+	},
+
+	set_queries(frm) {
+		frm.set_query(
+			'data_store',
+			() => ({
+				filters: {
+					type: ['in', ['RocksDb', 'Sqlite', 'FoundationDb', 'PostgreSql', 'MySql']],
+				},
+			}),
+			frm.set_query('blob_store', () => ({
+				filters: {
+					type: ['in', ['RocksDb']],
+				},
+			})),
+			frm.set_query('search_store', () => ({
+				filters: {
+					type: ['in', ['RocksDb']],
+				},
+			})),
+			frm.set_query('in_memory_store', () => ({
+				filters: {
+					type: ['in', ['RocksDb']],
+				},
+			})),
+		)
 	},
 
 	add_actions(frm) {

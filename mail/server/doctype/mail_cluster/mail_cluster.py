@@ -16,6 +16,13 @@ from mail.jmap.connection import raise_for_status
 from mail.utils import generate_secret
 from mail.utils.dns import get_dns_record
 
+ALLOWED_STORE_TYPES = {
+	"data_store": ["RocksDb", "Sqlite", "FoundationDb", "PostgreSql", "MySql"],
+	"blob_store": ["RocksDb"],
+	"search_store": ["RocksDb"],
+	"in_memory_store": ["RocksDb"],
+}
+
 
 class MailCluster(Document):
 	@property
@@ -114,12 +121,34 @@ class MailCluster(Document):
 	def validate_stores(self) -> None:
 		"""Validates the data stores of the cluster."""
 
-		if not self.data_store:
-			frappe.throw(_("Data Store is required."))
+		def validate_store(store_field: str, required: bool = False) -> None:
+			store = self.get(store_field)
 
-		for store_field in ["blob_store", "search_store", "in_memory_store"]:
-			if self.get(store_field) == self.data_store:
-				setattr(self, store_field, None)
+			if required and not store:
+				frappe.throw(_("{0} is required.").format(self.meta.get_field(store_field).label))
+
+			if not store:
+				return
+
+			if store_field != "data_store" and store == self.data_store:
+				self.set(store_field, None)
+				return
+
+			store_type = frappe.db.get_value("Mail Cluster Store", store, "type")
+			allowed_types = ALLOWED_STORE_TYPES[store_field]
+
+			if store_type not in allowed_types:
+				frappe.throw(
+					_("{0} type must be one of {1}.").format(
+						self.meta.get_field(store_field).label,
+						", ".join(allowed_types),
+					)
+				)
+
+		validate_store("data_store", required=True)
+
+		for field in ["blob_store", "search_store", "in_memory_store"]:
+			validate_store(field)
 
 	def generate_ssh_keypair(self, save: bool = False) -> None:
 		"""Generates an SSH key pair for the cluster."""
