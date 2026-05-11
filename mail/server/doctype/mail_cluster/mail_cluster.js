@@ -30,7 +30,7 @@ frappe.ui.form.on('Mail Cluster', {
 			})),
 			frm.set_query('in_memory_store', () => ({
 				filters: {
-					type: ['in', ['Default', 'RocksDb']],
+					type: ['in', ['Default', 'RocksDb', 'Redis', 'RedisCluster']],
 				},
 			})),
 		)

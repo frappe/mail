@@ -54,6 +54,22 @@ const STORE_PRESET = {
 		fail_on_timeout: 1,
 		http_headers: '{}',
 	},
+	Redis: {
+		timeout: '10s',
+		pool_max_connections: 10,
+		pool_timeout_create: '30s',
+		pool_timeout_wait: '30s',
+		pool_timeout_recycle: '30s',
+	},
+	RedisCluster: {
+		timeout: '10s',
+		urls: '["redis://127.0.0.1"]',
+		read_from_replicas: 1,
+		pool_max_connections: 10,
+		pool_timeout_create: '30s',
+		pool_timeout_wait: '30s',
+		pool_timeout_recycle: '30s',
+	},
 }
 
 frappe.ui.form.on('Mail Cluster Store', {

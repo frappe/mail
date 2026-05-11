@@ -157,6 +157,37 @@ class MailClusterStore(Document):
 				}
 			)
 
+		elif self.type == "Redis":
+			config.update(
+				{
+					"url": self.url,
+					"timeout": cint(self.timeout),
+					"poolMaxConnections": cint(self.pool_max_connections),
+					"poolTimeoutCreate": self.pool_timeout_create,
+					"poolTimeoutWait": self.pool_timeout_wait,
+					"poolTimeoutRecycle": self.pool_timeout_recycle,
+				}
+			)
+
+		elif self.type == "RedisCluster":
+			config.update(
+				{
+					"urls": json.loads(self.urls) if self.urls else [],
+					"timeout": cint(self.timeout),
+					"authUsername": self.auth_username,
+					"authSecret": self.get_password("auth_secret") if self.auth_secret else None,
+					"maxRetryWait": self.max_retry_wait,
+					"minRetryWait": self.min_retry_wait,
+					"maxRetries": cint(self.max_retries),
+					"readFromReplicas": bool(self.read_from_replicas),
+					"protocolVersion": self.protocol_version,
+					"poolMaxConnections": cint(self.pool_max_connections),
+					"poolTimeoutCreate": self.pool_timeout_create,
+					"poolTimeoutWait": self.pool_timeout_wait,
+					"poolTimeoutRecycle": self.pool_timeout_recycle,
+				}
+			)
+
 		return config
 
 	def validate(self) -> None:

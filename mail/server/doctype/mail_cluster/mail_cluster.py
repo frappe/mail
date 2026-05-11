@@ -20,7 +20,7 @@ ALLOWED_STORE_TYPES = {
 	"data_store": ["RocksDb", "Sqlite", "FoundationDb", "PostgreSql", "MySql"],
 	"blob_store": ["Default", "RocksDb", "S3", "Azure", "FileSystem"],
 	"search_store": ["Default", "RocksDb", "ElasticSearch", "Meilisearch"],
-	"in_memory_store": ["Default", "RocksDb"],
+	"in_memory_store": ["Default", "RocksDb", "Redis", "RedisCluster"],
 }
 
 

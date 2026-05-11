@@ -7,25 +7,28 @@
  "field_order": [
   "store_tab",
   "type",
+  "column_break_ovdu",
   "description",
-  "column_break_yhyn",
+  "section_break_plrk",
   "path",
   "depth",
+  "column_break_yhyn",
   "blob_size",
   "buffer_size",
-  "section_break_plrk",
+  "section_break_bpyx",
   "timeout",
-  "max_allowed_packet",
   "use_tls",
   "allow_invalid_certs",
-  "verify_after_write",
-  "fail_on_timeout",
-  "column_break_djvr",
+  "max_allowed_packet",
   "pool_workers",
+  "column_break_djvr",
   "pool_min_connections",
   "pool_max_connections",
   "pool_recycling_method",
-  "section_break_bpyx",
+  "pool_timeout_create",
+  "pool_timeout_wait",
+  "pool_timeout_recycle",
+  "section_break_ntwb",
   "cluster_file",
   "datacenter_id",
   "machine_id",
@@ -33,23 +36,22 @@
   "transaction_retry_delay",
   "transaction_retry_limit",
   "transaction_timeout",
-  "section_break_ntwb",
+  "section_break_uxnr",
   "host",
   "port",
   "database",
+  "region",
+  "bucket",
+  "profile",
+  "key_prefix",
+  "max_retries",
+  "verify_after_write",
   "column_break_grwu",
   "auth_username",
   "auth_secret",
   "options",
-  "section_break_uxnr",
-  "region",
-  "bucket",
-  "profile",
-  "max_retries",
-  "key_prefix",
   "storage_account",
   "container",
-  "column_break_ncyb",
   "access_key",
   "secret_key",
   "security_token",
@@ -57,13 +59,19 @@
   "sas_token",
   "section_break_wmqb",
   "url",
-  "poll_interval",
+  "urls",
+  "protocol_version",
   "num_replicas",
   "num_shards",
   "include_source",
-  "column_break_sefr",
+  "read_from_replicas",
+  "column_break_ncyb",
+  "min_retry_wait",
+  "max_retry_wait",
   "http_auth",
-  "http_headers"
+  "http_headers",
+  "poll_interval",
+  "fail_on_timeout"
  ],
  "fields": [
   {
@@ -114,7 +122,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Type",
-   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql\nDefault\nS3\nAzure\nFileSystem\nElasticSearch\nMeilisearch",
+   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql\nDefault\nS3\nAzure\nFileSystem\nElasticSearch\nMeilisearch\nRedis\nRedisCluster",
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
@@ -147,12 +155,12 @@
   },
   {
    "default": "15s",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\", \"Redis\", \"RedisCluster\"].includes(doc.type)",
    "description": "Connection timeout to the store.",
    "fieldname": "timeout",
    "fieldtype": "Data",
    "label": "Timeout",
-   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\"].includes(doc.type)"
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\", \"Redis\", \"RedisCluster\"].includes(doc.type)"
   },
   {
    "depends_on": "eval: [\"MySql\"].includes(doc.type)",
@@ -197,12 +205,12 @@
   },
   {
    "default": "10",
-   "depends_on": "eval: [\"Sqlite\", \"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "depends_on": "eval: [\"Sqlite\", \"PostgreSql\", \"MySql\", \"Redis\", \"RedisCluster\"].includes(doc.type)",
    "description": "Maximum number of connections to the store.",
    "fieldname": "pool_max_connections",
    "fieldtype": "Int",
    "label": "Pool Max Connections",
-   "mandatory_depends_on": "eval: [\"Sqlite\", \"PostgreSql\", \"MySql\"].includes(doc.type)"
+   "mandatory_depends_on": "eval: [\"Sqlite\", \"PostgreSql\", \"MySql\", \"Redis\", \"RedisCluster\"].includes(doc.type)"
   },
   {
    "default": "fast",
@@ -287,14 +295,14 @@
   },
   {
    "default": "frappe",
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"RedisCluster\"].includes(doc.type)",
    "description": "Username to connect to the store.",
    "fieldname": "auth_username",
    "fieldtype": "Data",
    "label": "Auth Username"
   },
   {
-   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"RedisCluster\"].includes(doc.type)",
    "description": "Password to connect to the store.",
    "fieldname": "auth_secret",
    "fieldtype": "Password",
@@ -348,12 +356,12 @@
   },
   {
    "default": "3",
-   "depends_on": "eval: [\"S3\", \"Azure\", \"Meilisearch\"].includes(doc.type)",
+   "depends_on": "eval: [\"S3\", \"Azure\", \"Meilisearch\", \"RedisCluster\"].includes(doc.type)",
    "description": "The maximum number of times to retry failed requests. Set to 0 to disable retries.",
    "fieldname": "max_retries",
    "fieldtype": "Int",
    "label": "Max Retries",
-   "mandatory_depends_on": "eval: [\"S3\", \"Azure\", \"Meilisearch\"].includes(doc.type)"
+   "mandatory_depends_on": "eval: [\"S3\", \"Azure\", \"Meilisearch\", \"RedisCluster\"].includes(doc.type)"
   },
   {
    "depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)",
@@ -432,12 +440,12 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
+   "depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\", \"Redis\"].includes(doc.type)",
    "description": "URL of the store.",
    "fieldname": "url",
    "fieldtype": "Data",
    "label": "URL",
-   "mandatory_depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)"
+   "mandatory_depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\", \"Redis\"].includes(doc.type)"
   },
   {
    "default": "0",
@@ -446,10 +454,6 @@
    "fieldname": "include_source",
    "fieldtype": "Check",
    "label": "Include Source"
-  },
-  {
-   "fieldname": "column_break_sefr",
-   "fieldtype": "Column Break"
   },
   {
    "depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
@@ -501,12 +505,83 @@
    "fieldname": "fail_on_timeout",
    "fieldtype": "Check",
    "label": "Fail On Timeout"
+  },
+  {
+   "depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "description": "Timeout for creating a new connection.",
+   "fieldname": "pool_timeout_create",
+   "fieldtype": "Data",
+   "label": "Pool Timeout Create",
+   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "description": "Timeout for waiting for a connection from the pool.",
+   "fieldname": "pool_timeout_wait",
+   "fieldtype": "Data",
+   "label": "Pool Timeout Wait",
+   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "description": "Timeout for recycling a connection.",
+   "fieldname": "pool_timeout_recycle",
+   "fieldtype": "Data",
+   "label": "Pool Timeout Recycle",
+   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)"
+  },
+  {
+   "default": "[]",
+   "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "description": "URL(s) of the Redis server(s)",
+   "fieldname": "urls",
+   "fieldtype": "JSON",
+   "label": "URLs",
+   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "description": "Maximum time to wait between retries.",
+   "fieldname": "max_retry_wait",
+   "fieldtype": "Data",
+   "label": "Max Retry Wait",
+   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "description": "Minimum time to wait between retries.",
+   "fieldname": "min_retry_wait",
+   "fieldtype": "Data",
+   "label": "Min Retry Wait",
+   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "description": "Whether to read from replicas.",
+   "fieldname": "read_from_replicas",
+   "fieldtype": "Check",
+   "label": "Read From Replicas"
+  },
+  {
+   "default": "resp2",
+   "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "description": "Redis protocol version.",
+   "fieldname": "protocol_version",
+   "fieldtype": "Select",
+   "label": "Protocol Version",
+   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "options": "\nresp2\nresp3"
+  },
+  {
+   "fieldname": "column_break_ovdu",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-11 12:42:04.254981",
+ "modified": "2026-05-11 14:36:51.430174",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster Store",
