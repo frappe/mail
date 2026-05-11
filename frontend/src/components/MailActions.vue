@@ -98,7 +98,7 @@ const primaryActions = (mail: Mail): MailAction[] => [
 	},
 	{
 		label: __('Reply'),
-		onClick: () => reply(mail),
+		onClick: () => (showReplyAll ? replyAll(mail) : reply(mail)),
 		icon: Reply,
 		condition: !mail.draft && !isMobile.value,
 	},
@@ -122,19 +122,19 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 		items: [
 			{
 				label: __('Reply'),
-				onClick: () => reply(mail),
+				onClick: () => setTimeout(() => reply(mail), 300),
 				icon: Reply,
 				condition: () => !mail.draft,
 			},
 			{
 				label: __('Reply All'),
-				onClick: () => replyAll(mail),
+				onClick: () => setTimeout(() => replyAll(mail), 300),
 				icon: ReplyAll,
 				condition: () => showReplyAll,
 			},
 			{
 				label: __('Forward'),
-				onClick: () => forward(mail),
+				onClick: () => setTimeout(() => forward(mail), 300),
 				icon: Forward,
 				condition: () => !mail.draft,
 			},

@@ -66,7 +66,7 @@
 				</div>
 			</template>
 		</div>
-		<div ref="scrollContainer" class="flex-1 overflow-y-auto">
+		<div ref="threadContainer" class="flex-1 overflow-y-auto">
 			<div v-if="isMobile && !thread.loading" class="border-b px-3 py-3.5">
 				<h2 class="text-lg font-semibold leading-5">
 					{{ thread?.data?.[0].subject || __('[No subject]') }}
@@ -90,7 +90,7 @@
 					</div>
 					<template v-for="mail in group.mails" :key="mail.name">
 						<div
-							v-if="isSomeSeen && mail.id == firstUnseenMail && !isMobile"
+							v-if="shouldShowMarker(mail.id)"
 							ref="unseenMarker"
 							class="flex items-center gap-3 px-1"
 						>
@@ -107,6 +107,7 @@
 						</div>
 						<div
 							ref="mails"
+							:data-mail-name="mail.name"
 							:class="{
 								'px-3 py-5': isMobile,
 								'max-sm:border-b sm:rounded-xl sm:p-5':
@@ -442,19 +443,19 @@ const { dataTheme } = useTheme()
 const route = useRoute()
 const router = useRouter()
 
-const scrollContainer = ref<HTMLElement>()
+const threadContainerRef = useTemplateRef('threadContainer')
 const unseenMarkerRef = useTemplateRef('unseenMarker')
-const mailRefs = useTemplateRef('mails')
+const mailsRef = useTemplateRef('mails')
 const scrollToLatestMail = () => {
 	if (thread.data?.length > 1 && isSomeSeen.value)
 		setTimeout(() => {
 			const el =
-				unseenMarkerRef.value?.[0] || unseenMarkerRef.value || mailRefs.value?.at(-1)
-			if (!el || !scrollContainer.value) return
+				unseenMarkerRef.value?.[0] || unseenMarkerRef.value || mailsRef.value?.at(-1)
+			if (!el || !threadContainerRef.value) return
 
 			const offset = isMobile.value ? 52 : 64
-			scrollContainer.value.scrollTo({ top: el.offsetTop - offset, behavior: 'smooth' })
-		}, 1000)
+			threadContainerRef.value.scrollTo({ top: el.offsetTop - offset, behavior: 'smooth' })
+		}, 500)
 }
 
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
@@ -473,6 +474,9 @@ const mailsByDay = computed(() => {
 const isSomeSeen = computed(() => (thread.data || []).some((m) => m.seen))
 const unseenCount = computed(() => (thread.data || []).filter((m) => !m.seen && !m.draft).length)
 const firstUnseenMail = computed(() => thread.data?.find((m) => !m.seen && !m.draft)?.id)
+
+const shouldShowMarker = (id: string) =>
+	isSomeSeen.value && firstUnseenMail.value && id == firstUnseenMail.value && !isMobile.value
 
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
@@ -707,6 +711,12 @@ const createLocalDraft = (mail: Mail, draftDetails: ComposeMailData) => {
 		if (index !== -1 && !draft)
 			thread.data.splice(index + 1, 0, { ...draftMails[name], draft: 1, show: true })
 		if (isMobile.value) popOutDraft(draftMails[name])
+		else
+			setTimeout(() =>
+				threadContainerRef.value
+					?.querySelector(`[data-mail-name="${name}"]`)
+					?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+			)
 	})
 }
 
