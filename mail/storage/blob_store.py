@@ -1,4 +1,5 @@
 import os
+import stat
 import tempfile
 from contextlib import suppress
 from threading import RLock
@@ -28,6 +29,13 @@ class BlobStore(BaseStore):
 
 		self.logger_context["store"] = "blob"
 
+	def _is_within_storage_path(self, path: str) -> bool:
+		"""Return True when a path resolves within the configured storage directory."""
+
+		storage_root = os.path.realpath(self.path)
+		candidate = os.path.realpath(path)
+		return os.path.commonpath([storage_root, candidate]) == storage_root
+
 	def _get_process_lock(self, path: str) -> RLock:
 		"""Return a process-local lock shared by all blob operations for the same path."""
 
@@ -52,9 +60,20 @@ class BlobStore(BaseStore):
 		"""Read a blob from disk if it exists."""
 
 		try:
-			with open(path, "rb") as file:
+			if not self._is_within_storage_path(path):
+				return None
+
+			stat_result = os.lstat(path)
+			if not stat.S_ISREG(stat_result.st_mode):
+				return None
+
+			flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+			fd = os.open(path, flags)
+			with os.fdopen(fd, "rb") as file:
 				return file.read()
 		except FileNotFoundError:
+			return None
+		except OSError:
 			return None
 
 	def get(self, subkey: str, default: bytes | None = None) -> bytes | None:
@@ -67,6 +86,9 @@ class BlobStore(BaseStore):
 		"""Store a blob by key using an atomic file replacement."""
 
 		blob_path = self._get_blob_path(subkey)
+		if not self._is_within_storage_path(blob_path):
+			raise ValueError("Invalid blob path")
+
 		blob = bytes(value)
 		process_lock = self._get_process_lock(blob_path)
 
@@ -86,6 +108,9 @@ class BlobStore(BaseStore):
 		"""Delete a blob by key."""
 
 		blob_path = self._get_blob_path(subkey)
+		if not self._is_within_storage_path(blob_path):
+			return
+
 		process_lock = self._get_process_lock(blob_path)
 
 		with process_lock:
@@ -95,7 +120,14 @@ class BlobStore(BaseStore):
 	def exists(self, subkey: str) -> bool:
 		"""Check if a blob exists in the storage."""
 
-		return os.path.exists(self._get_blob_path(subkey))
+		blob_path = self._get_blob_path(subkey)
+		if not self._is_within_storage_path(blob_path):
+			return False
+
+		try:
+			return stat.S_ISREG(os.lstat(blob_path).st_mode)
+		except FileNotFoundError:
+			return False
 
 	def get_many(self, subkeys: list[str]) -> dict[str, bytes | None]:
 		"""Retrieve multiple blobs by key."""
@@ -135,7 +167,7 @@ class BlobStore(BaseStore):
 
 		with os.scandir(self.path) as entries:
 			for entry in entries:
-				if not entry.is_file() or not entry.name.startswith(encoded_prefix):
+				if not entry.is_file(follow_symlinks=False) or not entry.name.startswith(encoded_prefix):
 					continue
 
 				value = self._read_blob(entry.path)
@@ -155,7 +187,7 @@ class BlobStore(BaseStore):
 
 		with os.scandir(self.path) as entries:
 			for entry in entries:
-				if entry.is_file() and entry.name.startswith(encoded_prefix):
+				if entry.is_file(follow_symlinks=False) and entry.name.startswith(encoded_prefix):
 					count += 1
 
 		return count
@@ -169,6 +201,6 @@ class BlobStore(BaseStore):
 
 		with os.scandir(self.path) as entries:
 			for entry in entries:
-				if entry.is_file() and entry.name.startswith(encoded_prefix):
+				if entry.is_file(follow_symlinks=False) and entry.name.startswith(encoded_prefix):
 					with suppress(FileNotFoundError):
 						os.remove(entry.path)

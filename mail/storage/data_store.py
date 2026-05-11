@@ -36,6 +36,9 @@ class Entity(Enum):
 class DataStore(BaseStore):
 	"""A simple key-value storage using RocksDB with write locking for concurrency control."""
 
+	MAX_MSGPACK_BYTES = 25 * 1024 * 1024
+	MAX_MSGPACK_COLLECTION_LEN = 2_00_000
+
 	def __init__(
 		self,
 		base_path: str,
@@ -204,7 +207,18 @@ class DataStore(BaseStore):
 	def _deserialize(self, value: bytes) -> Any:
 		"""Deserialize bytes back to a Python object using msgpack."""
 
-		return msgpack.unpackb(value, raw=False)
+		if len(value) > self.MAX_MSGPACK_BYTES:
+			raise ValueError("Serialized value exceeds allowed size limit")
+
+		return msgpack.unpackb(
+			value,
+			raw=False,
+			max_bin_len=self.MAX_MSGPACK_BYTES,
+			max_str_len=self.MAX_MSGPACK_BYTES,
+			max_ext_len=self.MAX_MSGPACK_BYTES,
+			max_array_len=self.MAX_MSGPACK_COLLECTION_LEN,
+			max_map_len=self.MAX_MSGPACK_COLLECTION_LEN,
+		)
 
 	def _make_key(self, entity: Entity, subkey: str) -> str:
 		"""Construct a full key by combining the entity type and subkey with the storage prefix."""
