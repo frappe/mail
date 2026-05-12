@@ -290,6 +290,8 @@ ignore_links_on_delete = [
 	"Mail Account Request",
 	"Mail Data Exchange",
 	"Mail Domain Request",
+	"Server Ansible Play",
+	"Server Deployment",
 	# Client
 	"Mail Exchange",
 	"Mail Queue",
