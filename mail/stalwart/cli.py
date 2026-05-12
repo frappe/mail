@@ -6,6 +6,7 @@ import urllib.request
 from typing import TYPE_CHECKING
 
 import frappe
+from frappe import _
 
 from mail.utils import get_mail_app_path, get_mail_config, get_stalwart_cli_path, get_stalwart_cli_version
 
@@ -52,14 +53,14 @@ class StalwartCLI:
 		elif arch in ["arm64", "aarch64"]:
 			arch = "aarch64"
 		else:
-			frappe.throw(f"Unsupported architecture: {arch}")
+			frappe.throw(_("Unsupported architecture: {0}").format(arch))
 
 		if system == "linux":
 			os_id = "unknown-linux-gnu"
 		elif system == "darwin":
 			os_id = "apple-darwin"
 		else:
-			raise Exception(f"Unsupported operating system: {system}")
+			frappe.throw(_("Unsupported operating system: {0}").format(system))
 
 		filename = f"stalwart-cli-{arch}-{os_id}.tar.xz"
 		return f"{github_release_base}/{filename}", filename
@@ -112,7 +113,7 @@ class StalwartCLI:
 		mandatory_fields = ["server_url", "username", "password"]
 		for field in mandatory_fields:
 			if field not in credentials or not credentials[field]:
-				frappe.throw(f"Missing mandatory credential field: {field}")
+				frappe.throw(_("Missing mandatory credential field: {0}").format(field))
 
 	def _parse_process_result(self, result: "CompletedProcess") -> dict:
 		"""Parses the result of a subprocess execution and returns a dictionary with success status and output or error message."""

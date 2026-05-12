@@ -2,7 +2,7 @@ import frappe
 from frappe.core.api.file import create_new_folder
 
 from mail.mail.doctype.rate_limit.rate_limit import create_rate_limit
-from mail.stalwart import StalwartCLI
+from mail.stalwart.cli import StalwartCLI
 
 
 def after_install() -> None:
