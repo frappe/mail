@@ -353,8 +353,8 @@ const parsedAutomationRules = computed(() => {
 	else if (block.includes('anyof')) rules.match_if = 'any'
 
 	// Parse flags
-	rules.mark_as_read = block.includes('setflag "\\\\Seen"')
-	rules.add_star = block.includes('setflag "\\\\Flagged"')
+	rules.mark_as_read = block.includes('addflag "\\\\Seen"')
+	rules.add_star = block.includes('addflag "\\\\Flagged"')
 
 	return rules
 })

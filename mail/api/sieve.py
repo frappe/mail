@@ -93,14 +93,13 @@ def rule_object_to_sieve(automation: dict, folder_path: str) -> str:
 				script_parts.append(f"  {condition}")
 		script_parts.append(") {")
 
-	script_parts.append(f'  fileinto "{folder_path}";')
-
 	if automation.get("mark_as_read"):
-		script_parts.append('  setflag "\\\\Seen";')
+		script_parts.append('  addflag "\\\\Seen";')
 
 	if automation.get("add_star"):
-		script_parts.append('  setflag "\\\\Flagged";')
+		script_parts.append('  addflag "\\\\Flagged";')
 
+	script_parts.append(f'  fileinto "{folder_path}";')
 	script_parts.append("  stop;")
 	script_parts.append("}")
 
@@ -190,8 +189,8 @@ def extract_rules_from_script(content: str, mailbox_name: str) -> dict | None:
 	elif "anyof" in block:
 		rules["match_if"] = "any"
 
-	rules["mark_as_read"] = 'setflag "\\\\Seen"' in block
-	rules["add_star"] = 'setflag "\\\\Flagged"' in block
+	rules["mark_as_read"] = 'addflag "\\\\Seen"' in block
+	rules["add_star"] = 'addflag "\\\\Flagged"' in block
 
 	return rules
 
