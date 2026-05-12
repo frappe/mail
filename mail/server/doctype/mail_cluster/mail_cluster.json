@@ -11,11 +11,11 @@
   "hostname",
   "default_domain",
   "authentication_section",
+  "column_break_eyum",
   "recovery_admin_user",
   "recovery_admin_password",
   "column_break_9jti",
   "base_url",
-  "api_key",
   "networking_section",
   "ipv4_addresses",
   "column_break_uhc3",
@@ -62,13 +62,6 @@
    "fieldname": "authentication_section",
    "fieldtype": "Section Break",
    "label": "Authentication"
-  },
-  {
-   "description": "Key for authenticating HTTP requests. Generate one via <i>Actions &gt; Generate API Key</i>.",
-   "fieldname": "api_key",
-   "fieldtype": "Password",
-   "label": "API Key",
-   "no_copy": 1
   },
   {
    "fieldname": "column_break_9jti",
@@ -257,6 +250,10 @@
   {
    "fieldname": "column_break_rxvx",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_eyum",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -268,7 +265,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2026-05-08 12:30:30.414245",
+ "modified": "2026-05-12 13:37:24.340189",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster",

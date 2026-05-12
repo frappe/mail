@@ -46,16 +46,6 @@ frappe.ui.form.on('Mail Cluster', {
 				frm.trigger('show_password')
 			})
 		}
-
-		if (frm.doc.base_url) {
-			frm.add_custom_button(
-				__('Generate API Key'),
-				() => {
-					frm.trigger('generate_api_key')
-				},
-				__('Actions'),
-			)
-		}
 	},
 
 	show_password(frm) {
@@ -67,20 +57,6 @@ frappe.ui.form.on('Mail Cluster', {
 			callback: (r) => {
 				if (!r.exc) {
 					frappe.msgprint(r.message)
-				}
-			},
-		})
-	},
-
-	generate_api_key(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: 'generate_api_key',
-			freeze: true,
-			freeze_message: __('Generating API Key...'),
-			callback: (r) => {
-				if (!r.exc) {
-					frm.refresh()
 				}
 			},
 		})

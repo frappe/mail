@@ -1,7 +1,6 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import base64
 import io
 import json
 
@@ -11,9 +10,6 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import random_string
 
-from mail.backend import MailBackendAPI, Principal
-from mail.jmap.connection import raise_for_status
-from mail.utils import generate_secret
 from mail.utils.dns import get_dns_record
 
 ALLOWED_STORE_TYPES = {
@@ -192,39 +188,6 @@ class MailCluster(Document):
 
 		frappe.only_for("System Manager")
 		return self.get_password("recovery_admin_password")
-
-	@frappe.whitelist()
-	def generate_api_key(self) -> None:
-		"""Generates an API key for the cluster."""
-
-		frappe.only_for("System Manager")
-		self.api_key = self._generate_api_key()
-		self.save()
-
-	def _generate_api_key(self) -> str:
-		"""Generates an API key for the cluster."""
-
-		if not self.base_url:
-			frappe.throw(_("Base URL is required."))
-
-		name = f"{random_string(10)}-{self.hostname}".lower()
-		secret = generate_secret()
-		principal = Principal(
-			name=name, type="apiKey", secrets=secret, roles=["admin"], enabledPermissions=["authenticate"]
-		)
-		backend_api = MailBackendAPI(
-			self.base_url,
-			username=self.recovery_admin_user,
-			password=self.get_password("recovery_admin_password"),
-		)
-		response = backend_api.request(method="POST", endpoint="/api/principal", json=principal.__dict__)
-		raise_for_status(response)
-		response_json = response.json()
-
-		if error := response_json.get("error"):
-			frappe.throw(error)
-
-		return f"api_{base64.b64encode(f'{name}:{secret}'.encode()).decode()}"
 
 	def get_bootstrap_operations(self, hostname: str = "{{ hostname }}") -> list[dict]:
 		"""Returns the bootstrap operations for the cluster."""
