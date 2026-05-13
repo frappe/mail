@@ -70,6 +70,7 @@ declare module 'vue' {
     MailDetails: typeof import('./src/components/MailDetails.vue')['default']
     MailDetailsPopover: typeof import('./src/components/MailDetailsPopover.vue')['default']
     MailListItem: typeof import('./src/components/MailListItem.vue')['default']
+    MailListItemActions: typeof import('./src/components/MailListItemActions.vue')['default']
     MailLogo: typeof import('./src/components/Icons/MailLogo.vue')['default']
     MailThread: typeof import('./src/components/MailThread.vue')['default']
     MailThreadPlaceholder: typeof import('./src/components/MailThreadPlaceholder.vue')['default']
