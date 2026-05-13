@@ -22,18 +22,18 @@
 						/>
 					</div>
 					<ListView
-						v-if="mailDataExchanges.data"
+						v-if="mailExchanges.data"
 						:columns="listColumns"
-						:rows="mailDataExchanges.data"
+						:rows="mailExchanges.data"
 						:options="LIST_OPTIONS"
 						row-key="name"
 						class="flex-1"
 					>
 						<ListHeader />
 						<ListRows>
-							<template v-if="mailDataExchanges.data.length">
+							<template v-if="mailExchanges.data.length">
 								<ListRow
-									v-for="row in mailDataExchanges.data"
+									v-for="row in mailExchanges.data"
 									:key="row.name"
 									v-slot="{ item, column }"
 									:row="row"
@@ -50,10 +50,7 @@
 							<ListEmptyState v-else />
 						</ListRows>
 					</ListView>
-					<ErrorMessage
-						v-if="mailDataExchanges.error"
-						:message="mailDataExchanges.error"
-					/>
+					<ErrorMessage v-if="mailExchanges.error" :message="mailExchanges.error" />
 				</div>
 			</template>
 		</Tabs>
@@ -98,7 +95,7 @@ const STATUS_OPTIONS = [
 	{ label: __('Cancelled'), value: 'Cancelled' },
 ]
 
-const mailDataExchanges = useList({
+const mailExchanges = useList({
 	doctype: 'Mail Exchange',
 	fields: [
 		'name',

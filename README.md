@@ -531,7 +531,7 @@ Some of its features include:
 
 #### 8. Importing or exporting pre-existing mail data
 
-![Data exchange](docs/screenshots/ui/data-exchange.png)
+![Mail exchange](docs/screenshots/ui/mail-exchange.png)
 
 #### 9. Progressive Web App (PWA) support for a fast, app-like experience
 

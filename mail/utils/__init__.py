@@ -809,22 +809,6 @@ def get_messages_directory() -> str:
 	return directory
 
 
-def get_data_import_directory() -> str:
-	"""Returns the path to the data import directory for the current site."""
-
-	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "data-exchange", "import")
-	os.makedirs(directory, exist_ok=True)
-	return directory
-
-
-def get_data_export_directory() -> str:
-	"""Returns the path to the data export directory for the current site."""
-
-	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "data-exchange", "export")
-	os.makedirs(directory, exist_ok=True)
-	return directory
-
-
 def get_mail_import_directory() -> str:
 	"""Returns the path to the mail import directory for the current site."""
 

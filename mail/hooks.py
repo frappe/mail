@@ -160,7 +160,6 @@ after_migrate = "mail.install.after_migrate"
 permission_query_conditions = {
 	# Server
 	"Mail Account Request": "mail.server.doctype.mail_account_request.mail_account_request.get_permission_query_condition",
-	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.get_permission_query_condition",
 	"Mail Domain Request": "mail.server.doctype.mail_domain_request.mail_domain_request.get_permission_query_condition",
 	"Principal Settings": "mail.server.doctype.principal_settings.principal_settings.get_permission_query_condition",
 	# Client
@@ -174,7 +173,6 @@ permission_query_conditions = {
 has_permission = {
 	# Server
 	"Mail Account Request": "mail.server.doctype.mail_account_request.mail_account_request.has_permission",
-	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.has_permission",
 	"Mail Domain Request": "mail.server.doctype.mail_domain_request.mail_domain_request.has_permission",
 	"Principal": "mail.server.doctype.principal.principal.has_permission",
 	"Principal Settings": "mail.server.doctype.principal_settings.principal_settings.has_permission",
@@ -235,14 +233,12 @@ scheduler_events = {
 	# ],
 	"daily": [
 		"mail.client.doctype.mail_exchange.mail_exchange.clean_import_export_directories",
-		"mail.server.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
 	],
 	# "daily_long": [
 	#     "mail.tasks.daily_long"
 	# ],
 	"hourly": [
 		"mail.client.doctype.mail_exchange.mail_exchange.retry_stuck_mail_exchanges",
-		"mail.server.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",
 	],
 	"hourly_long": [
 		"mail.client.doctype.mail_message.mail_message.schedule_fetch_changes",
@@ -294,7 +290,6 @@ scheduler_events = {
 ignore_links_on_delete = [
 	# Server
 	"Mail Account Request",
-	"Mail Data Exchange",
 	"Mail Domain Request",
 	"Server Ansible Play",
 	"Server Deployment",
