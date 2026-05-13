@@ -37,6 +37,20 @@ frappe.ui.form.on('Mail Settings', {
 			() => frm.trigger('generate_jmap_push_keys'),
 			__('Actions'),
 		)
+
+		if (frappe.user.has_role('System Manager')) {
+			frm.add_custom_button(
+				__('Destroy Data Store'),
+				() => frm.trigger('destroy_data_store'),
+				__('Actions'),
+			)
+
+			frm.add_custom_button(
+				__('Destroy Blob Store'),
+				() => frm.trigger('destroy_blob_store'),
+				__('Actions'),
+			)
+		}
 	},
 
 	generate_jmap_push_keys(frm) {
@@ -52,6 +66,42 @@ frappe.ui.form.on('Mail Settings', {
 					freeze_message: __('Generating keys…'),
 					callback: (r) => {
 						if (!r.exc) frm.reload_doc()
+					},
+				})
+			},
+		)
+	},
+
+	destroy_data_store() {
+		frappe.confirm(
+			__(
+				'This will permanently delete all data in the Data Store. This action cannot be undone. Do you want to continue?',
+			),
+			() => {
+				frappe.call({
+					method: 'mail.storage.destroy_data_store',
+					freeze: true,
+					freeze_message: __('Destroying Data Store…'),
+					callback: (r) => {
+						if (!r.exc) frappe.msgprint(__('Data Store destroyed successfully.'))
+					},
+				})
+			},
+		)
+	},
+
+	destroy_blob_store() {
+		frappe.confirm(
+			__(
+				'This will permanently delete all data in the Blob Store. This action cannot be undone. Do you want to continue?',
+			),
+			() => {
+				frappe.call({
+					method: 'mail.storage.destroy_blob_store',
+					freeze: true,
+					freeze_message: __('Destroying Blob Store…'),
+					callback: (r) => {
+						if (!r.exc) frappe.msgprint(__('Blob Store destroyed successfully.'))
 					},
 				})
 			},
