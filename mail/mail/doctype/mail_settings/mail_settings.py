@@ -20,6 +20,7 @@ class MailSettings(Document):
 
 	def on_update(self) -> None:
 		self.clear_cache()
+		frappe.clear_document_cache(self.doctype)
 
 		if self.has_value_changed("root_domain_name"):
 			self.handle_root_domain_change()
