@@ -22,9 +22,9 @@ from mail.client.doctype.push_subscription.push_subscription import (
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,
+	get_config,
 	get_data_export_directory,
 	get_data_import_directory,
-	get_mail_config,
 	get_mbox_files,
 	get_stalwart_cli_path,
 	reconnect_on_failure,
@@ -107,7 +107,7 @@ class MailDataExchange(Document):
 				self.name,
 				"_import",
 				queue="long",
-				timeout=cint(get_mail_config("data_exchange_import_timeout")),
+				timeout=cint(get_config("data_exchange_import_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -119,7 +119,7 @@ class MailDataExchange(Document):
 				self.name,
 				"_export",
 				queue="long",
-				timeout=cint(get_mail_config("data_exchange_export_timeout")),
+				timeout=cint(get_config("data_exchange_export_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -262,7 +262,7 @@ class MailDataExchange(Document):
 		"""Returns the host and credentials for the user's cluster."""
 
 		validate_mail_config()
-		config = get_mail_config()
+		config = get_config()
 
 		return (config["server_url"], f"{config['username']}:{config['password']}")
 
@@ -354,7 +354,7 @@ def _run_stalwart_cli_command(command: str | list[str], _credentials: str, timeo
 	if isinstance(command, list):
 		command = " ".join(shlex.quote(arg) for arg in command)
 
-	timeout = timeout or cint(get_mail_config("stalwart_cli_command_timeout"))
+	timeout = timeout or cint(get_config("stalwart_cli_command_timeout"))
 	child = pexpect.spawn(command, encoding="utf-8", timeout=timeout)
 	child.expect("Enter administrator credentials or press \\[ENTER\\] to use OAuth:")
 	child.sendline(_credentials)

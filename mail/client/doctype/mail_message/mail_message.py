@@ -32,7 +32,7 @@ from mail.storage import get_blob_store, get_data_store
 from mail.storage.data_store import Entity
 from mail.utils import (
 	enqueue_job,
-	get_mail_config,
+	get_config,
 	get_push_logger,
 	parse_filters,
 	user_context,
@@ -1222,7 +1222,7 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 
 				logger.debug({**ctx, "notify_candidates_count": len(notify_candidates)})
 
-				max_push_notifications = cint(get_mail_config("max_push_notifications"))
+				max_push_notifications = cint(get_config("max_push_notifications"))
 				recent_messages = notify_candidates[:max_push_notifications]
 
 				logger.debug({**ctx, "recent_notify_candidates_count": len(recent_messages)})
@@ -1305,7 +1305,7 @@ def enqueue_fetch_changes(account: str, email_state: str | None = None, ctx: dic
 	logger.info({**ctx, "event": "enqueueing-fetch-changes"})
 
 	lockname = f"fetch_changes:{account}"
-	fetch_lock_timeout = cint(get_mail_config("fetch_lock_timeout"))
+	fetch_lock_timeout = cint(get_config("fetch_lock_timeout"))
 	identifier = acquire_lock(lockname, acquire_timeout=0, lock_timeout=fetch_lock_timeout)
 
 	if not identifier:

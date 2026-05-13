@@ -12,7 +12,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_to_date, get_datetime, now, time_diff_in_seconds
 
-from mail.utils import get_mail_config
+from mail.utils import get_config
 from mail.utils.dns import get_host_by_ip
 
 
@@ -44,7 +44,7 @@ class SpamCheckLog(Document):
 	def scan_message(self) -> None:
 		"""Scans the message for spam"""
 
-		config = get_mail_config()
+		config = get_config()
 		spamd_host = config.get("spamd_host")
 		spamd_port = config.get("spamd_port")
 
@@ -110,7 +110,7 @@ def scan_message(host: str, port: int, message: str) -> str:
 
 	try:
 		with socket.create_connection((host, port), timeout=60) as sock:
-			sock.settimeout(get_mail_config("scan_message_timeout"))
+			sock.settimeout(get_config("scan_message_timeout"))
 			command = "SYMBOLS SPAMC/1.5\r\n\r\n"
 			sock.sendall(command.encode("utf-8"))
 			sock.sendall(message.encode("utf-8"))

@@ -17,7 +17,7 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.utils import generate_random_phrase, get_mail_config
+from mail.utils import generate_random_phrase, get_config
 from mail.utils.user import is_mail_admin, is_system_manager
 from mail.utils.validation import (
 	is_email_assigned,

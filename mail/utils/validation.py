@@ -7,7 +7,7 @@ from frappe import _
 from frappe.utils import cint
 from frappe.utils.caching import request_cache
 
-from mail.utils import get_mail_config
+from mail.utils import get_config
 
 
 def is_subaddressed_email(email: str, raise_exception: bool = False) -> bool:
@@ -68,7 +68,7 @@ def validate_local_domain(domain_name: str) -> None:
 def validate_max_domains() -> None:
 	"""Validates if the maximum number of domains has been reached."""
 
-	max_domains = cint(get_mail_config("max_domains"))
+	max_domains = cint(get_config("max_domains"))
 	if max_domains <= 0:
 		return
 
@@ -81,7 +81,7 @@ def validate_max_domains() -> None:
 def validate_max_groups() -> None:
 	"""Validates if the maximum number of groups has been reached."""
 
-	max_groups = cint(get_mail_config("max_groups"))
+	max_groups = cint(get_config("max_groups"))
 	if max_groups <= 0:
 		return
 
@@ -94,7 +94,7 @@ def validate_max_groups() -> None:
 def validate_max_accounts() -> None:
 	"""Validates if the maximum number of accounts has been reached."""
 
-	max_accounts = cint(get_mail_config("max_accounts"))
+	max_accounts = cint(get_config("max_accounts"))
 	if max_accounts <= 0:
 		return
 
@@ -109,7 +109,7 @@ def validate_max_accounts() -> None:
 def validate_max_lists() -> None:
 	"""Validates if the maximum number of lists has been reached."""
 
-	max_lists = cint(get_mail_config("max_lists"))
+	max_lists = cint(get_config("max_lists"))
 	if max_lists <= 0:
 		return
 
@@ -305,7 +305,7 @@ def has_permission_for_user(user: str, raise_exception: bool = True) -> bool:
 def validate_mail_config() -> None:
 	"""Validates the mail configuration. Checks if the server URL is set and if the fallback admin credentials are set."""
 
-	config = get_mail_config()
+	config = get_config()
 	if not config:
 		frappe.throw(_("Mail configuration is not set."))
 

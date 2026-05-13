@@ -7,7 +7,7 @@ import requests
 from frappe import _
 
 from mail.jmap.connection import raise_for_status
-from mail.utils import get_mail_config
+from mail.utils import get_config
 from mail.utils.validation import validate_mail_config
 
 
@@ -108,7 +108,7 @@ def get_mail_backend_api() -> MailBackendAPI:
 	"""Returns an authenticated BackendAPI instance."""
 
 	validate_mail_config()
-	config = get_mail_config()
+	config = get_config()
 
 	return MailBackendAPI(
 		config["server_url"],

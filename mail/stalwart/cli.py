@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import frappe
 from frappe import _
 
-from mail.utils import get_mail_app_path, get_mail_config, get_stalwart_cli_path, get_stalwart_cli_version
+from mail.utils import get_config, get_mail_app_path, get_stalwart_cli_path, get_stalwart_cli_version
 
 if TYPE_CHECKING:
 	from subprocess import CompletedProcess
@@ -21,7 +21,7 @@ class StalwartCLI:
 			self._credentials = credentials
 
 		else:
-			config = get_mail_config()
+			config = get_config()
 			credentials = {
 				"server_url": config.get("server_url"),
 				"username": config.get("username"),

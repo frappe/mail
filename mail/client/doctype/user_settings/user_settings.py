@@ -13,7 +13,7 @@ from mail.client.doctype.account_settings.account_settings import sync_account_s
 from mail.jmap import get_jmap_session_manager
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
-from mail.utils import get_mail_config
+from mail.utils import get_config
 from mail.utils.dt import timestamp_to_datetime
 from mail.utils.user import is_local_user, is_system_manager
 
@@ -61,7 +61,7 @@ class UserSettings(Document):
 		if not self.username or self.flags.skip_jmap_validation:
 			return
 
-		server_url = self.server_url or get_mail_config("server_url")
+		server_url = self.server_url or get_config("server_url")
 
 		if not server_url or not self.get_password("app_password"):
 			frappe.throw(_("Server URL and App Password are required to validate JMAP settings."))

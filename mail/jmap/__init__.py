@@ -26,7 +26,7 @@ from mail.jmap.services.vacationresponse.vacation_response import VacationRespon
 from mail.jmap.services.websocket.websocket import WebSocketService
 from mail.storage import get_data_store
 from mail.storage.data_store import Entity
-from mail.utils import get_mail_config
+from mail.utils import get_config
 from mail.utils.validation import has_permission_for_user
 
 
@@ -54,7 +54,7 @@ def get_jmap_connection(
 
 	user_settings = frappe.get_cached_doc("User Settings", settings)
 
-	server_url = user_settings.server_url or get_mail_config("server_url")
+	server_url = user_settings.server_url or get_config("server_url")
 	if not server_url:
 		frappe.throw(
 			_("Server URL must be set in either the user's settings or the site configuration."),
