@@ -156,7 +156,7 @@ class SieveScriptService(CoreService):
 				[
 					f"{self.type}/validate",
 					{
-						"accountId": self.primary_account_id,
+						"accountId": self.account_id,
 						"blobId": blob["blobId"],
 					},
 					"0",

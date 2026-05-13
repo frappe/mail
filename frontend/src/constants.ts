@@ -20,6 +20,14 @@ export const FOLDER_ICON_MAP = {
 	important: 'bookmark',
 }
 
+export const FOLDER_ICON_COLOR_MAP = {
+	Blue: '!text-blue-500',
+	Green: '!text-green-500',
+	Amber: '!text-amber-500',
+	Red: '!text-red-500',
+	Purple: '!text-purple-500',
+}
+
 export const FOLDER_COLOR_MAP = {
 	Gray: 'bg-surface-gray-5',
 	Blue: 'bg-blue-500',

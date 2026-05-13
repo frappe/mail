@@ -58,7 +58,8 @@ import {
 import { isEmail, raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
-const { blockedAddresses } = userStore()
+const store = userStore()
+const { blockedAddresses } = store
 
 const email = ref('')
 const listViewRef = useTemplateRef('listView')
@@ -68,7 +69,7 @@ const rows = computed(() => blockedAddresses.data.map((address: string) => ({ na
 
 const blockEmailAddress = createResource({
 	url: 'mail.api.mail.block_email_address',
-	makeParams: () => ({ email: email.value }),
+	makeParams: () => ({ account: store.account, email: email.value }),
 	onSuccess: () => {
 		raiseToast(__('Email address blocked.'))
 		email.value = ''
@@ -78,7 +79,10 @@ const blockEmailAddress = createResource({
 
 const unblockEmailAddresses = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
-	makeParams: () => ({ emails: Array.from(listViewRef.value?.selections) }),
+	makeParams: () => ({
+		account: store.account,
+		emails: Array.from(listViewRef.value?.selections),
+	}),
 	onSuccess: () => {
 		raiseToast(__('Email addresses unblocked.'))
 		showUnblockModal.value = false

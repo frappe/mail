@@ -67,10 +67,6 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 
 	default_config = {
 		"ansible_play_timeout": 1500,
-		"blob_bucket_size": 1000,
-		"blob_cache_ttl": 12 * 60 * 60,  # 12 hours
-		"contact_card_bucket_size": 5000,
-		"contact_card_cache_ttl": 2 * 24 * 60 * 60,  # 2 days
 		"data_exchange_export_timeout": 3600,
 		"data_exchange_import_timeout": 3600,
 		"default_dns_ttl": 3600,
@@ -92,8 +88,6 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		"max_lists": 0,
 		"max_message_payload_size": 25 * 1024 * 1024,  # 25 MB
 		"max_push_notifications": 5,
-		"msg_bucket_size": 5_000,
-		"msg_cache_ttl": 2 * 24 * 60 * 60,  # 2 days
 		"process_pending_emails_batch_size": 2_500,
 		"process_pending_emails_max_batch_size": 25_000,
 		"process_pending_emails_timeout": 1500,
@@ -106,7 +100,11 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		"server_job_timeout": 1500,
 		"stalwart_cli_command_timeout": 3600,
 		"stalwart_cli_version": "latest",
+		"storage_log_file_count": 10,
+		"storage_log_level": "INFO",
+		"storage_log_max_size": 5_000_000,
 		"stalwart_version": "v0.16.4",
+		"storage_shard_count": 8,
 	}
 
 	config = frappe.conf.mail or {}
@@ -131,6 +129,21 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		return config[key]
 
 	return config
+
+
+def get_storage_logger() -> "Logger":
+	"""Returns a logger instance for mail storage operations."""
+
+	config = get_mail_config()
+
+	max_size = cint(config["push_log_max_size"])
+	file_count = cint(config["push_log_file_count"])
+	logger = frappe.logger("mail.storage", allow_site=True, max_size=max_size, file_count=file_count)
+
+	log_level = config["push_log_level"].upper()
+	logger.setLevel(log_level)
+
+	return logger
 
 
 def get_push_logger() -> "Logger":

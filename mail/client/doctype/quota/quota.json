@@ -6,6 +6,7 @@
  "field_order": [
   "section_break_i7qy",
   "user",
+  "account",
   "column_break_mzms",
   "resource_type",
   "section_break_onaw",
@@ -48,7 +49,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "ID",
+   "label": "Quota ID",
    "read_only": 1
   },
   {
@@ -124,15 +125,24 @@
    "read_only": 1
   },
   {
+   "description": "The account this quota belongs to.",
+   "fieldname": "account",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "no_copy": 1,
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
    "description": "The user this quota belongs to.",
    "fieldname": "user",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "User",
    "no_copy": 1,
    "options": "User",
-   "reqd": 1,
    "set_only_once": 1
   }
  ],
@@ -141,7 +151,7 @@
  "index_web_pages_for_search": 1,
  "is_virtual": 1,
  "links": [],
- "modified": "2026-04-13 12:55:59.186310",
+ "modified": "2026-04-17 13:57:59.059084",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Quota",

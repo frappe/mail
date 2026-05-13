@@ -34,16 +34,6 @@ ALLOWED_PATHS = [
 	"/api/method/mail.utils.user.generate_user_keys",
 	"/api/method/mail.www.mail.get_context_for_dev",
 	"/api/method/notification_relay.api.get_config",
-	"/api/method/mail.client.doctype.address_book.address_book.add_address_book",
-	"/api/method/mail.client.doctype.contact_card.contact_card.add_contact_card",
-	"/api/method/mail.client.doctype.contact_card.contact_card.contact_card_add_to_address_book",
-	"/api/method/mail.client.doctype.contact_card.contact_card.contact_card_remove_from_address_book",
-	"/api/method/mail.client.doctype.contact_card.contact_card.delete_contact_cards",
-	"/api/method/mail.client.doctype.calendar_event.calendar_event.add_calendar_event",
-	"/api/method/mail.client.doctype.calendar_event.calendar_event.update_calendar_event",
-	"/api/method/mail.client.doctype.calendar_event.calendar_event.delete_calendar_events",
-	"/api/method/mail.client.doctype.calendar_event.calendar_event.update_calendar_event_instance",
-	"/api/method/mail.client.doctype.calendar_event.calendar_event.delete_calendar_event_instance",
 ]
 
 ALLOWED_WILDCARD_PATHS = [
@@ -53,6 +43,10 @@ ALLOWED_WILDCARD_PATHS = [
 	"/api/method/wiki.",
 	"/api/method/frappe.integrations.oauth2_logins.",
 	"/api/v2/document/",
+	"/api/method/mail.client.doctype.address_book.address_book.",
+	"/api/method/mail.client.doctype.contact_card.contact_card.",
+	"/api/method/mail.client.doctype.calendar_event.calendar_event.",
+	"/api/method/mail.client.doctype.vacation_response.vacation_response.",
 ]
 
 DENIED_PATHS = ["/printview", "/printpreview"]

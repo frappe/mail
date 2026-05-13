@@ -1,8 +1,5 @@
-import fnmatch
-import ipaddress
 import os
 import re
-import socket
 
 import frappe
 from croniter import CroniterBadCronError, croniter
@@ -11,47 +8,6 @@ from frappe.utils import cint
 from frappe.utils.caching import request_cache
 
 from mail.utils import get_mail_config
-from mail.utils.user import (
-	get_local_groups,
-	get_local_mailing_lists,
-	is_administrator,
-	is_local_user,
-	is_mail_admin,
-	is_system_manager,
-)
-
-
-def is_valid_host(host: str) -> bool:
-	"""Returns True if the host is a valid hostname else False."""
-
-	return bool(re.compile(r"^[a-zA-Z0-9_-]+$").match(host))
-
-
-def is_valid_ip_address(ip_address: str, category: str | None = None) -> bool:
-	"""Returns True if the IP address is valid else False."""
-
-	try:
-		ip_obj = ipaddress.ip_address(ip_address)
-
-		if category:
-			if category == "private":
-				return ip_obj.is_private
-			elif category == "public":
-				return not ip_obj.is_private
-
-		return True
-	except ValueError:
-		return False
-
-
-def is_port_open(fqdn: str, port: int, timeout: int = 10) -> bool:
-	"""Returns True if the port is open else False."""
-
-	try:
-		with socket.create_connection((fqdn, port), timeout=timeout):
-			return True
-	except (TimeoutError, OSError):
-		return False
 
 
 def is_subaddressed_email(email: str, raise_exception: bool = False) -> bool:
@@ -335,6 +291,8 @@ def validate_nested_maildir_tree(base_dir: str, raise_exception: bool = False) -
 def has_permission_for_user(user: str, raise_exception: bool = True) -> bool:
 	"""Checks if the current user has permission to access the given user."""
 
+	from mail.utils.user import is_administrator
+
 	current_user = frappe.session.user
 	has_permission = user == current_user or is_administrator(current_user)
 
@@ -366,12 +324,16 @@ def validate_mail_config() -> None:
 def ensure_local_user(user: str) -> None:
 	"""Ensures that the user is a managed user."""
 
+	from mail.utils.user import is_local_user
+
 	if not is_local_user(user):
 		frappe.throw(_("User {0} is not a local user.").format(frappe.bold(user)))
 
 
 def ensure_access_to_backend() -> None:
 	"""Ensures that the current user has access to the mail backend."""
+
+	from mail.utils.user import is_mail_admin, is_system_manager
 
 	user = frappe.session.user
 	if not is_mail_admin(user) and not is_system_manager(user):

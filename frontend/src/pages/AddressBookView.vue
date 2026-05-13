@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDebounceFn, watchDebounced } from '@vueuse/core'
 import { Pin, Trash2 } from 'lucide-vue-next'
@@ -118,11 +118,13 @@ import InformationField from '@/components/InformationField.vue'
 import AddAddressBookContactsModal from '@/components/Modals/AddAddressBookContactsModal.vue'
 import EditAddressBookModal from '@/components/Modals/EditAddressBookModal.vue'
 
-const { addressBookName } = defineProps<{ addressBookName: string }>()
+const { accountId, addressBookName } = defineProps<{
+	accountId: string
+	addressBookName: string
+}>()
 
-const user = inject('$user')
 const router = useRouter()
-const { addressBooks } = userStore()
+const store = userStore()
 
 const showEditGeneral = ref(false)
 const showDeleteAddressBook = ref(false)
@@ -131,12 +133,12 @@ const showRemoveContacts = ref(false)
 
 const addressBook = createDocumentResource({
 	doctype: 'Address Book',
-	name: `${user.data.name}|${addressBookName}`,
-	onError: () => router.replace({ name: 'AddressBooks' }),
+	name: `${store.account}|${addressBookName}`,
+	onError: () => router.replace({ name: 'AddressBooks', params: { accountId } }),
 	setValue: {
 		onSuccess: () => {
 			raiseToast(__('Address book updated.'))
-			addressBooks.reload()
+			store.addressBooks.reload()
 		},
 		onError: (error) => {
 			raiseToast(error.messages[0], 'error')
@@ -152,6 +154,7 @@ const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
 	makeParams: () => ({
+		account: store.account,
 		filter: { inAddressBook: addressBookName, text: search.value },
 		limit: limit.value,
 	}),
@@ -172,7 +175,7 @@ const contacts = createResource({
 const totalContacts = createResource({
 	url: 'mail.api.contacts.get_address_book_contact_count',
 	auto: true,
-	makeParams: () => ({ address_book: addressBookName }),
+	makeParams: () => ({ account: store.account, address_book: addressBookName }),
 	cache: ['addressBookContactCount', addressBookName],
 })
 
@@ -201,12 +204,12 @@ const breadcrumbs = computed(() => [
 
 const deleteAddressBook = createResource({
 	url: 'mail.client.doctype.address_book.address_book.delete_address_books',
-	makeParams: () => ({ user: user.data.name, ids: [addressBookName] }),
+	makeParams: () => ({ account: store.account, ids: [addressBookName] }),
 	onSuccess: () => {
 		showDeleteAddressBook.value = false
 		raiseToast(__('Address book deleted.'))
-		addressBooks.reload()
-		router.push({ name: 'AddressBooks' })
+		store.addressBooks.reload()
+		router.push({ name: 'AddressBooks', params: { accountId } })
 	},
 	onError: (error) => {
 		showDeleteAddressBook.value = false
@@ -218,7 +221,7 @@ const listView = useTemplateRef('listView')
 
 const addContacts = createResource({
 	url: 'mail.client.doctype.contact_card.contact_card.contact_card_add_to_address_book',
-	makeParams: (ids) => ({ user: user.data.name, ids, address_book_id: addressBookName }),
+	makeParams: (ids) => ({ account: store.account, ids, address_book_id: addressBookName }),
 	onSuccess: () => {
 		raiseToast(__('Contacts added.'))
 		contacts.reload()
@@ -230,7 +233,7 @@ const addContacts = createResource({
 const removeContacts = createResource({
 	url: 'mail.client.doctype.contact_card.contact_card.contact_card_remove_from_address_book',
 	makeParams: () => ({
-		user: user.data.name,
+		account: store.account,
 		ids: Array.from(listView.value?.selections),
 		address_book_id: addressBookName,
 	}),
@@ -287,6 +290,6 @@ const LIST_COLUMNS = [
 const LIST_OPTIONS = {
 	showTooltip: false,
 	emptyState: { description: __('No contacts found.') },
-	getRowRoute: (row) => ({ name: 'Contact', params: { contactName: row.id } }),
+	getRowRoute: (row) => ({ name: 'Contact', params: { accountId, contactName: row.id } }),
 }
 </script>

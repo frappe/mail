@@ -53,6 +53,7 @@ declare module 'vue' {
     EmojiPicker: typeof import('./src/components/EmojiPicker.vue')['default']
     ExportSettings: typeof import('./src/components/Settings/ExportSettings.vue')['default']
     FolderModal: typeof import('./src/components/Modals/FolderModal.vue')['default']
+    FolderSettings: typeof import('./src/components/Settings/FolderSettings.vue')['default']
     FrappeLogo: typeof import('./src/components/Icons/FrappeLogo.vue')['default']
     HeaderActions: typeof import('./src/components/HeaderActions.vue')['default']
     IdentitySettings: typeof import('./src/components/Settings/IdentitySettings.vue')['default']

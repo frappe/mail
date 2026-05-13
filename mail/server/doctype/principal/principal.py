@@ -10,8 +10,6 @@ from frappe.model.document import Document
 from frappe.utils import cint, today, validate_email_address
 
 from mail.backend import MailBackendAPI, get_mail_backend_api
-from mail.client.doctype.identity.identity import _add_identity as add_identity
-from mail.jmap import invalidate_jmap_cache
 from mail.server.doctype.principal_settings.principal_settings import (
 	create_principal_settings,
 	delete_principal_settings,
@@ -291,13 +289,6 @@ class Principal(Document):
 
 		frappe.msgprint(_("DKIM Keys rotated successfully."), indicator="green", alert=True)
 
-	@frappe.whitelist()
-	def sync_jmap_identities(self) -> None:
-		"""Syncs JMAP identities for the principal."""
-
-		ensure_access_to_backend()
-		self._sync_jmap_identities()
-
 	def _create(self) -> None:
 		"""Creates the principal in the backend."""
 
@@ -410,40 +401,6 @@ class Principal(Document):
 				frappe.throw(message)
 			else:
 				frappe.msgprint(message, alert=True)
-
-	def _sync_jmap_identities(self) -> None:
-		"""Syncs JMAP identities for the principal."""
-
-		if self.type != "Individual":
-			frappe.throw(_("JMAP Identities can only be synced for Individual principals."))
-
-		ensure_access_to_backend()
-		validate_mail_config()
-
-		if not frappe.db.exists(
-			"Principal Settings",
-			{"principal_name": self.name, "principal_type": "Individual"},
-		):
-			return
-
-		identities = frappe.db.get_all("Identity", {"user": self.name})
-		identities_emails_map = {identity["email"]: identity["name"] for identity in identities}
-		identities_emails = set(identities_emails_map.keys())
-
-		principal = frappe.get_doc("Principal", self.name)
-		principal_emails = set([principal.name, *principal._emails])
-		explicit_emails = {email for email in principal_emails if not is_catch_all_address(email)}
-
-		identities_to_remove = identities_emails - explicit_emails
-		identities_to_add = explicit_emails - identities_emails
-
-		for email in identities_to_remove:
-			frappe.delete_doc("Identity", identities_emails_map[email])
-
-		for email in identities_to_add:
-			add_identity(self.name, email, principal.description)
-
-		invalidate_jmap_cache(self.name)
 
 	@staticmethod
 	def _fetch(
@@ -613,15 +570,6 @@ class Principal(Document):
 		if self.name != self._name or self.type != TYPE_MAP[existing_principal.type]:
 			update_principal_settings(self.name, principal_name=self._name, principal_type=self.type)
 
-		if self.type == "Individual":
-			try:
-				self._sync_jmap_identities()
-			except Exception:
-				frappe.log_error(
-					title=f"Failed to sync JMAP identities for principal {self.name}",
-					message=frappe.get_traceback(with_context=True),
-				)
-
 		self.name = self._name
 		self.password = None
 
@@ -644,7 +592,8 @@ class Principal(Document):
 		# If the principal is an Individual, delete the User
 		if principal.type == "Individual":
 			if is_local_user(self.name):
-				invalidate_jmap_cache(self.name)
+				if settings := frappe.db.exists("Account Settings", {"user": self.name}):
+					frappe.delete_doc("Account Settings", settings, ignore_permissions=True)
 
 				if settings := frappe.db.exists("User Settings", {"user": self.name}):
 					frappe.delete_doc("User Settings", settings, ignore_permissions=True)

@@ -167,7 +167,7 @@ const signatures = useList({
 	doctype: 'Mail Signature',
 	immediate: true,
 	fields: ['name', 'signature_name', 'html_body'],
-	filters: { account: user.data.name },
+	filters: { user: user.data.name },
 	cacheKey: ['mailSignatures', user.data.name],
 })
 

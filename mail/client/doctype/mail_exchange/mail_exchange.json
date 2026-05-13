@@ -9,6 +9,7 @@
   "section_break_vxtc",
   "column_break_frsy",
   "user",
+  "account",
   "operation",
   "import_format",
   "import_metadata",
@@ -82,16 +83,6 @@
   {
    "fieldname": "column_break_frsy",
    "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "options": "User",
-   "reqd": 1,
-   "search_index": 1
   },
   {
    "fieldname": "operation",
@@ -254,6 +245,25 @@
   {
    "fieldname": "column_break_julx",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "account",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "search_index": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
@@ -261,7 +271,7 @@
  "is_submittable": 1,
  "links": [],
  "max_attachments": 1,
- "modified": "2026-04-13 12:54:11.165567",
+ "modified": "2026-04-17 15:11:00.655669",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mail Exchange",

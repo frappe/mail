@@ -66,7 +66,7 @@
 				</div>
 			</template>
 		</div>
-		<div class="flex-1 overflow-y-auto">
+		<div ref="threadContainer" class="flex-1 overflow-y-auto">
 			<div v-if="isMobile && !thread.loading" class="border-b px-3 py-3.5">
 				<h2 class="text-lg font-semibold leading-5">
 					{{ thread?.data?.[0].subject || __('[No subject]') }}
@@ -80,123 +80,81 @@
 				class="sm:space-y-4 sm:px-5 sm:py-6"
 				:class="{ 'pb-16': isMobile && !thread.data?.at(-1)?.draft }"
 			>
-				<div
-					v-for="mail in thread.data"
-					:key="mail.name"
-					:class="{
-						'px-3 py-5': isMobile,
-						'max-sm:border-b sm:rounded-xl sm:p-5':
-							thread.data.length > 1 || mail.draft,
-						'sm:border':
-							(thread.data.length > 1 && !mail.draft) ||
-							(mail.draft && dataTheme === 'dark'),
-						'cursor-pointer': isCollapsed(mail),
-						'sm:shadow-elevation-light-md': mail.draft && dataTheme === 'light',
-					}"
-					@click="mail.collapsed = false"
-				>
-					<ComposeMailEditor
-						v-if="mail.draft && !isMobile"
-						v-model="mail.show"
-						:reload-mails="reload"
-						:mail-details="draftMails[mail.name]"
-						:is-in-thread="true"
-						@discard-mail="discardLocalDraft(mail.name)"
-						@reply="reply(getSourceMail(mail.name))"
-						@reply-all="replyAll(getSourceMail(mail.name))"
-						@forward="forward(getSourceMail(mail.name))"
-						@pop-out="(mailDetails: ComposeMailData) => popOutDraft(mailDetails)"
-					/>
-
-					<template v-else-if="!mail.name.startsWith('draft')">
+				<template v-for="group in mailsByDay" :key="group.date">
+					<div v-if="!isMobile && mailsByDay.length > 1" class="flex items-center px-1">
+						<div class="border-outline-gray-1 flex-1 border-t" />
+						<span class="text-ink-gray-5 rounded-full border px-2 py-1 text-xs">
+							{{ getFormattedDate(group.date || dayjs()) }}
+						</span>
+						<div class="border-outline-gray-1 flex-1 border-t" />
+					</div>
+					<template v-for="mail in group.mails" :key="mail.name">
 						<div
-							v-if="isMobile && !isCollapsed(mail)"
-							class="flex items-center justify-between pb-2"
-							@click.stop="mail.collapsed = !mail.collapsed"
+							v-if="shouldShowMarker(mail.id)"
+							ref="unseenMarker"
+							class="flex items-center gap-3 px-1"
 						>
-							<div class="flex items-center space-x-2">
-								<Badge
-									v-if="mail.draft"
-									:label="__('Draft')"
-									theme="red"
-									class="w-fit"
-								/>
-								<MailDate :datetime="mail.received_at" />
-							</div>
-							<MailActions
-								:mailbox
-								:mail
-								:draft-mail="draftMails[mail.name]"
-								:is-collapsed="isCollapsed(mail)"
-								:show-reply-all="showReplyAll(mail)"
-								:pop-out-draft
-								:reply
-								:reply-all
-								:forward
-								:reload-mails="handleReload"
-								@star-mails="handleStarred"
-							/>
+							<div class="bg-surface-blue-3 h-px flex-1" />
+							<span class="text-ink-blue-3 text-xs">
+								{{
+									__('{0} new {1}', [
+										unseenCount,
+										unseenCount === 1 ? __('mail') : __('mails'),
+									])
+								}}
+							</span>
+							<div class="bg-surface-blue-3 h-px flex-1" />
 						</div>
 						<div
-							class="flex items-center space-x-3"
+							ref="mails"
+							:data-mail-name="mail.name"
 							:class="{
-								'cursor-pointer': mail !== thread.data[thread.data.length - 1],
-								'pb-6': mail.preview,
+								'px-3 py-5': isMobile,
+								'max-sm:border-b sm:rounded-xl sm:p-5':
+									thread.data.length > 1 || mail.draft,
+								'sm:border':
+									(thread.data.length > 1 && !mail.draft) ||
+									(mail.draft && dataTheme === 'dark'),
+								'cursor-pointer': isCollapsed(mail),
+								'sm:shadow-elevation-light-md':
+									mail.draft && dataTheme === 'light',
 							}"
-							@click.stop="mail.collapsed = !mail.collapsed"
+							@click="mail.collapsed = false"
 						>
-							<Avatar
-								:label="
-									getFirstAlphabet(mail.from_name) ||
-									getFirstAlphabet(mail.from_email)
+							<ComposeMailEditor
+								v-if="mail.draft && !isMobile"
+								v-model="mail.show"
+								:reload-mails="reload"
+								:mail-details="draftMails[mail.name]"
+								:is-in-thread="true"
+								@discard-mail="discardLocalDraft(mail.name)"
+								@reply="reply(getSourceMail(mail.name))"
+								@reply-all="replyAll(getSourceMail(mail.name))"
+								@forward="forward(getSourceMail(mail.name))"
+								@pop-out="
+									(mailDetails: ComposeMailData) => popOutDraft(mailDetails)
 								"
-								:image="mail.user_image"
-								size="2xl"
 							/>
-							<div class="flex flex-1 justify-between truncate text-sm">
-								<div class="mr-3 flex flex-col space-y-1 truncate">
-									<div class="flex items-center space-x-1.5">
-										<span
-											class="truncate text-[15px] !font-semibold sm:text-base"
-										>
-											{{ mail.from_name || mail.from_email }}
-										</span>
-										<span
-											v-if="mail.from_name && !isMobile"
-											class="text-ink-gray-5 truncate"
-										>
-											{{ `<${mail.from_email}>` }}
-										</span>
-										<template v-if="!(isCollapsed(mail) || mail.draft)">
-											<ChevronDown
-												v-if="isMobile"
-												class="text-ink-gray-6 h-3.5 w-3.5 rounded-sm transition-transform duration-200"
-												:class="{
-													'rotate-180': showMailDetails === mail.name,
-												}"
-												@click.stop="
-													showMailDetails =
-														showMailDetails === mail.name
-															? undefined
-															: mail.name
-												"
-											/>
-											<MailDetailsPopover v-else :mail />
-										</template>
+
+							<template v-else-if="!mail.name.startsWith('draft')">
+								<div
+									v-if="isMobile && !isCollapsed(mail)"
+									class="flex items-center justify-between pb-2"
+									@click.stop="mail.collapsed = !mail.collapsed"
+								>
+									<div class="flex items-center space-x-2">
+										<Badge
+											v-if="mail.draft"
+											:label="__('Draft')"
+											theme="red"
+											class="w-fit"
+										/>
+										<MailDate :datetime="mail.received_at" />
 									</div>
-									<div class="truncate">
-										{{ getFormattedRecipients(mail.recipients) }}
-									</div>
-								</div>
-								<div class="flex items-center space-x-1 self-start">
-									<MailDate
-										v-if="!isMobile || isCollapsed(mail)"
-										:datetime="mail.received_at"
-									/>
 									<MailActions
-										v-if="!isMobile"
 										:mailbox
 										:mail
+										:draft-mail="draftMails[mail.name]"
 										:is-collapsed="isCollapsed(mail)"
 										:show-reply-all="showReplyAll(mail)"
 										:pop-out-draft
@@ -204,72 +162,155 @@
 										:reply-all
 										:forward
 										:reload-mails="handleReload"
-										@star-mails="handleStarred"
+										:thread="thread.data"
 									/>
 								</div>
-							</div>
-						</div>
+								<div
+									class="flex items-center space-x-3"
+									:class="{
+										'cursor-pointer':
+											mail !== thread.data[thread.data.length - 1],
+										'pb-6': mail.preview,
+									}"
+									@click.stop="mail.collapsed = !mail.collapsed"
+								>
+									<Avatar
+										:label="
+											getFirstAlphabet(mail.from_name) ||
+											getFirstAlphabet(mail.from_email)
+										"
+										:image="mail.user_image"
+										size="2xl"
+									/>
+									<div class="flex flex-1 justify-between truncate text-sm">
+										<div class="mr-3 flex flex-col space-y-1 truncate">
+											<div class="flex items-center space-x-1.5">
+												<span
+													class="truncate text-[15px] !font-semibold sm:text-base"
+												>
+													{{ mail.from_name || mail.from_email }}
+												</span>
+												<span
+													v-if="mail.from_name && !isMobile"
+													class="text-ink-gray-5 truncate"
+												>
+													{{ `<${mail.from_email}>` }}
+												</span>
+												<template
+													v-if="!(isCollapsed(mail) || mail.draft)"
+												>
+													<ChevronDown
+														v-if="isMobile"
+														class="text-ink-gray-6 h-3.5 w-3.5 rounded-sm transition-transform duration-200"
+														:class="{
+															'rotate-180':
+																showMailDetails === mail.name,
+														}"
+														@click.stop="
+															showMailDetails =
+																showMailDetails === mail.name
+																	? undefined
+																	: mail.name
+														"
+													/>
+													<MailDetailsPopover v-else :mail />
+												</template>
+											</div>
+											<div class="truncate">
+												{{ getFormattedRecipients(mail.recipients) }}
+											</div>
+										</div>
+										<div class="flex items-center space-x-1 self-start">
+											<MailDate
+												v-if="!isMobile || isCollapsed(mail)"
+												:datetime="mail.received_at"
+											/>
+											<MailActions
+												v-if="!isMobile"
+												:mailbox
+												:mail
+												:is-collapsed="isCollapsed(mail)"
+												:show-reply-all="showReplyAll(mail)"
+												:pop-out-draft
+												:reply
+												:reply-all
+												:forward
+												:reload-mails="handleReload"
+												:thread="thread.data"
+											/>
+										</div>
+									</div>
+								</div>
 
-						<MailDetails
-							v-if="!isCollapsed(mail) && showMailDetails === mail.name"
-							:mail
-							class="mb-4"
-						/>
+								<MailDetails
+									v-if="!isCollapsed(mail) && showMailDetails === mail.name"
+									:mail
+									class="mb-4"
+								/>
 
-						<div v-show="isCollapsed(mail)" class="truncate">{{ mail.preview }}</div>
+								<div v-show="isCollapsed(mail)" class="truncate">
+									{{ mail.preview }}
+								</div>
 
-						<div v-show="!isCollapsed(mail)">
-							<Alert
-								v-if="blockedAddresses.data.includes(mail.from_email)"
-								:title="__('This sender is blocked')"
-								:description="
-									__(
-										`{0} is currently on your block list. You won't receive new messages from this source until you unblock them.`,
-										[mail.from_name || mail.from_email],
-									)
-								"
-								class="mb-4"
-								:dismissable="false"
-							>
-								<template #footer>
-									<div class="col-span-full">
-										<Button
-											:label="__('Unblock')"
-											variant="outline"
-											@click="unblockEmailAddress.submit(mail.from_email)"
+								<div v-show="!isCollapsed(mail)">
+									<Alert
+										v-if="blockedAddresses.data.includes(mail.from_email)"
+										:title="__('This sender is blocked')"
+										:description="
+											__(
+												`{0} is currently on your block list. You won't receive new messages from this source until you unblock them.`,
+												[mail.from_name || mail.from_email],
+											)
+										"
+										class="mb-4"
+										:dismissable="false"
+									>
+										<template #footer>
+											<div class="col-span-full">
+												<Button
+													:label="__('Unblock')"
+													variant="outline"
+													@click="
+														unblockEmailAddress.submit(mail.from_email)
+													"
+												/>
+											</div>
+										</template>
+									</Alert>
+									<EmailContent
+										v-if="hasHtmlContent(mail.html_body)"
+										:content="mail.html_body"
+									/>
+									<pre
+										v-else
+										class="whitespace-pre-wrap break-words pt-4 text-base !leading-5 sm:text-sm"
+										>{{ mail.html_body || mail.text_body }}</pre
+									>
+
+									<div
+										v-if="filteredAttachments(mail).length"
+										class="mt-8 flex flex-wrap"
+									>
+										<AttachmentCapsule
+											v-for="(attachment, idx) in filteredAttachments(mail)"
+											:key="idx"
+											:file-name="attachment.filename"
+											:blob-i-d="attachment.blob_id"
+											:type="attachment.type"
+											class="mb-2 mr-2"
+											@click.stop.prevent="
+												openAttachment(
+													filteredAttachments(mail),
+													Number(idx),
+												)
+											"
 										/>
 									</div>
-								</template>
-							</Alert>
-							<EmailContent
-								v-if="hasHtmlContent(mail.html_body)"
-								:content="mail.html_body"
-							/>
-							<pre
-								v-else
-								class="whitespace-pre-wrap break-words pt-4 text-base !leading-5 sm:text-sm"
-								>{{ mail.html_body || mail.text_body }}</pre
-							>
-
-							<div
-								v-if="filteredAttachments(mail).length"
-								class="mt-8 flex flex-wrap"
-							>
-								<AttachmentCapsule
-									v-for="(attachment, idx) in filteredAttachments(mail)"
-									:key="idx"
-									:file-name="attachment.filename"
-									:blob-i-d="attachment.blob_id"
-									:type="attachment.type"
-									class="mb-2 mr-2"
-									@click.stop.prevent="
-										openAttachment(filteredAttachments(mail), Number(idx))
-									"
-								/>
-							</div>
+								</div>
+							</template>
 						</div>
 					</template>
-				</div>
+				</template>
 
 				<div
 					v-if="thread.data.length && !thread.data?.at(-1)?.draft"
@@ -322,7 +363,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import {
+	computed,
+	inject,
+	nextTick,
+	onMounted,
+	onUnmounted,
+	reactive,
+	ref,
+	useTemplateRef,
+	watch,
+} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
 	ArrowLeft,
@@ -343,6 +394,7 @@ import { Alert, Avatar, Badge, Button, Dropdown, Tooltip, createResource } from 
 import {
 	extractQuotedContent,
 	getFirstAlphabet,
+	getFormattedDate,
 	getFormattedRecipients,
 	getGroupedRecipients,
 	hasHtmlContent,
@@ -384,20 +436,54 @@ const emit = defineEmits([
 const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const user = inject('$user')
-const { mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
+const store = userStore()
+const { mailboxes, mailboxIds, identities, blockedAddresses } = store
 const { dataTheme } = useTheme()
 
 const route = useRoute()
 const router = useRouter()
 
+const threadContainerRef = useTemplateRef('threadContainer')
+const unseenMarkerRef = useTemplateRef('unseenMarker')
+const mailsRef = useTemplateRef('mails')
+const scrollToLatestMail = () => {
+	if (thread.data?.length > 1 && isSomeSeen.value)
+		setTimeout(() => {
+			const el =
+				unseenMarkerRef.value?.[0] || unseenMarkerRef.value || mailsRef.value?.at(-1)
+			if (!el || !threadContainerRef.value) return
+
+			const offset = isMobile.value ? 52 : 64
+			threadContainerRef.value.scrollTo({ top: el.offsetTop - offset, behavior: 'smooth' })
+		}, 500)
+}
+
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
+
+const mailsByDay = computed(() => {
+	const groups: { date: string; mails: Mail[] }[] = []
+	for (const mail of thread.data || []) {
+		const day = mail.received_at ? dayjs(mail.received_at).format('YYYY-MM-DD') : ''
+		const last = groups.at(-1)
+		if (last && last.date === day) last.mails.push(mail)
+		else groups.push({ date: day, mails: [mail] })
+	}
+	return groups
+})
+
+const isSomeSeen = computed(() => (thread.data || []).some((m) => m.seen))
+const unseenCount = computed(() => (thread.data || []).filter((m) => !m.seen && !m.draft).length)
+const firstUnseenMail = computed(() => thread.data?.find((m) => !m.seen && !m.draft)?.id)
+
+const shouldShowMarker = (id: string) =>
+	isSomeSeen.value && firstUnseenMail.value && id == firstUnseenMail.value && !isMobile.value
 
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
 const thread = createResource({
 	url: 'mail.api.mail.get_thread',
 	auto: !!threadID,
-	makeParams: () => ({ thread_id: threadID }),
+	makeParams: () => ({ account: store.account, thread_id: threadID }),
 	transform: (data: Mail[]) =>
 		data
 			.filter((mail) => filterRelevantMails(mail))
@@ -429,6 +515,7 @@ const thread = createResource({
 				populateDraftMails(mail)
 			}
 		})
+		scrollToLatestMail()
 	},
 	onError: () => goToMailbox(),
 })
@@ -509,15 +596,12 @@ const threadActions = computed((): MailAction[] =>
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
-	makeParams: (email) => ({ emails: [email] }),
+	makeParams: (email) => ({ account: store.account, emails: [email] }),
 	onSuccess: () => {
 		raiseToast(__('Email address unblocked.'))
 		blockedAddresses.reload()
 	},
 })
-
-const handleStarred = (ids: string[], flagged: 0 | 1) =>
-	ids.forEach((id) => (thread.data.find((m: Mail) => m.id === id).flagged = flagged))
 
 const handleReload = (isUndo = false) => {
 	if (thread.data.length == 1) {
@@ -627,6 +711,12 @@ const createLocalDraft = (mail: Mail, draftDetails: ComposeMailData) => {
 		if (index !== -1 && !draft)
 			thread.data.splice(index + 1, 0, { ...draftMails[name], draft: 1, show: true })
 		if (isMobile.value) popOutDraft(draftMails[name])
+		else
+			setTimeout(() =>
+				threadContainerRef.value
+					?.querySelector(`[data-mail-name="${name}"]`)
+					?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+			)
 	})
 }
 

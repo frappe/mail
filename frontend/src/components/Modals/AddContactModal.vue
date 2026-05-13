@@ -35,7 +35,10 @@
 					<MultiSelect
 						v-model="contact.address_book_ids"
 						:options="
-							addressBooks.data.map((ab) => ({ label: ab._name, value: ab.id }))
+							store.addressBooks.data.map((ab) => ({
+								label: ab._name,
+								value: ab.id,
+							}))
 						"
 					/>
 				</div>
@@ -45,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, reactive, watch } from 'vue'
+import { reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog, FormControl, MultiSelect, createResource } from 'frappe-ui'
 
@@ -54,14 +57,13 @@ import { userStore } from '@/stores/user'
 
 const show = defineModel<boolean>()
 
-const user = inject('$user')
-const { addressBooks } = userStore()
+const store = userStore()
 const router = useRouter()
 
-const defaultAddressBook = addressBooks.data.find((ab) => ab.default)?.id
+const defaultAddressBook = store.addressBooks.data.find((ab) => ab.default)?.id
 
 const defaultContact = {
-	user: user.data.name,
+	account: store.account,
 	address_book_ids: defaultAddressBook ? [defaultAddressBook] : [],
 	full_name: '',
 	kind: 'Individual',

@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, useTemplateRef } from 'vue'
+import { computed, ref, useTemplateRef, watch } from 'vue'
 import { useDebounceFn, watchDebounced } from '@vueuse/core'
 import {
 	Button,
@@ -56,12 +56,15 @@ import {
 } from 'frappe-ui'
 
 import { extractNameFromEmail, raiseToast } from '@/utils'
+import { userStore } from '@/stores/user'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddContactModal from '@/components/Modals/AddContactModal.vue'
 
+const { accountId } = defineProps<{ accountId: string }>()
+
 usePageMeta(() => ({ title: __('Contacts') }))
 
-const user = inject('$user')
+const store = userStore()
 
 const listView = useTemplateRef('listView')
 
@@ -73,7 +76,11 @@ const limit = ref(50)
 const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
-	makeParams: () => ({ filter: { text: search.value }, limit: limit.value }),
+	makeParams: () => ({
+		account: store.account,
+		filter: { text: search.value },
+		limit: limit.value,
+	}),
 	transform: (data) =>
 		data.map((c) => {
 			const full_name = c.full_name || extractNameFromEmail(c.emails[0]?.address || '')
@@ -86,6 +93,11 @@ const contacts = createResource({
 			return { ...c, full_name, email }
 		}),
 })
+
+watch(
+	() => store.account,
+	() => contacts.reload(),
+)
 
 watchDebounced(() => search.value, contacts.reload, { debounce: 300 })
 
@@ -103,7 +115,7 @@ const loadMoreContacts = useDebounceFn((e) => {
 
 const deleteContacts = createResource({
 	url: 'mail.client.doctype.contact_card.contact_card.delete_contact_cards',
-	makeParams: () => ({ user: user.data.name, ids: Array.from(listView.value?.selections) }),
+	makeParams: () => ({ account: store.account, ids: Array.from(listView.value?.selections) }),
 	onSuccess: () => {
 		contacts.reload()
 		showDeleteContacts.value = false
@@ -119,7 +131,10 @@ const deleteContacts = createResource({
 const listOptions = computed(() => ({
 	showTooltip: false,
 	emptyState: { description: contacts.loading ? __('Loading...') : __('No contacts found.') },
-	getRowRoute: (row) => ({ name: 'Contact', params: { contactName: row.id } }),
+	getRowRoute: (row) => ({
+		name: 'Contact',
+		params: { accountId, contactName: row.id },
+	}),
 }))
 
 const LIST_COLUMNS = [

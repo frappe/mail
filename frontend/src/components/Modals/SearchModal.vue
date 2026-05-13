@@ -6,7 +6,10 @@
 	>
 		<template #body>
 			<div class="bg-surface-white">
-				<div class="flex items-center border-b px-4 py-2">
+				<div
+					class="flex items-center px-4 py-2"
+					:class="{ 'border-b': showAdvancedFilters || results?.data?.length }"
+				>
 					<Button v-if="isMobile" variant="ghost" @click="show = false">
 						<template #icon>
 							<ChevronLeft class="text-ink-gray-5 h-4 w-4" />
@@ -170,7 +173,7 @@ import type { Recipient } from '@/types'
 
 const show = defineModel<boolean>()
 
-const { mailboxes } = userStore()
+const { account, mailboxes } = userStore()
 
 const route = useRoute()
 const { isMobile } = useScreenSize()
@@ -221,7 +224,7 @@ const mailboxOptions = computed(() =>
 
 const results = createResource({
 	url: 'mail.api.mail.search_mails',
-	makeParams: () => ({ filter: filteredFilter.value }),
+	makeParams: () => ({ account, filter: filteredFilter.value }),
 })
 
 const noOfAttachments = (result) =>

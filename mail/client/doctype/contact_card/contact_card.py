@@ -10,8 +10,10 @@ from frappe.model.document import Document
 from frappe.utils import cint, today
 
 from mail.client.doctype.address_book.address_book import validate_address_book_name_format
-from mail.jmap import get_contact_card_service
-from mail.utils import get_mail_config, parse_filters
+from mail.jmap import get_contact_card_service, parse_account
+from mail.storage import get_data_store
+from mail.storage.data_store import Entity
+from mail.utils import parse_filters
 from mail.utils.dt import parse_iso_datetime
 from mail.utils.validation import has_permission_for_user
 
@@ -87,7 +89,7 @@ class ContactCard(Document):
 
 	def db_insert(self, *args, **kwargs) -> None:
 		self.id = add_contact_card(
-			self.user,
+			self.account,
 			self.address_book_ids,
 			self.full_name,
 			self.formatted_emails,
@@ -95,21 +97,23 @@ class ContactCard(Document):
 			self.formatted_addresses,
 			self.kind,
 		)
-		self.name = f"{self.user}|{self.id}"
+		self.name = f"{self.account}|{self.id}"
 
 	def load_from_db(self) -> "ContactCard":
-		user, id = self.name.split("|")
-		if contact_cards := get_contact_cards(user, [id]):
+		account, id = self.name.split("|")
+		if contact_cards := get_contact_cards(account, [id]):
 			return super(Document, self).__init__(contact_cards[0])
 
 		frappe.throw(
-			_("Contact Card with ID {0} not found in user {1}.").format(frappe.bold(id), frappe.bold(user)),
+			_("Contact Card with ID {0} not found in account {1}.").format(
+				frappe.bold(id), frappe.bold(account)
+			),
 			title=_("Contact Card Not Found"),
 		)
 
 	def db_update(self) -> None:
 		update_contact_card(
-			self.user,
+			self.account,
 			self.id,
 			self.address_book_ids,
 			self.full_name,
@@ -121,22 +125,22 @@ class ContactCard(Document):
 		self.reload()
 
 	def delete(self) -> None:
-		user, id = self.name.split("|")
-		delete_contact_cards(user, [id])
+		account, id = self.name.split("|")
+		delete_contact_cards(account, [id])
 
 	@staticmethod
 	def get_list(filters=None, page_length=20, **kwargs) -> list:
 		filters = parse_filters(filters)
 
 		id = filters.get("id")
-		user = filters.get("user") or frappe.session.user
+		account = filters.get("account")
 
-		if not user or user in ("Guest", "Administrator"):
-			frappe.msgprint(_("Please select a user to view contact cards."), alert=True)
+		if not account:
+			frappe.msgprint(_("Please select an account to view contact cards."), alert=True)
 			return []
 
 		if id:
-			contact_cards = get_contact_cards(user, [id])
+			contact_cards = get_contact_cards(account, [id])
 			total = len(contact_cards)
 		else:
 			if address_book := filters.get("address_book"):
@@ -154,9 +158,9 @@ class ContactCard(Document):
 				if (value := filters.get(field))
 			}
 			limit = cint(kwargs.get("start")) + page_length
-			contact_cards, total = fetch_contact_cards(user, filter, limit=limit)
+			contact_cards, total = fetch_contact_cards(account, filter, limit=limit)
 
-		frappe.cache.set_value(_get_total_cache_key(user), total, expires_in_sec=600)
+		frappe.cache.set_value(_get_total_cache_key(account), total, expires_in_sec=600)
 
 		if not contact_cards:
 			frappe.msgprint(_("No contact card found."), alert=True)
@@ -166,12 +170,13 @@ class ContactCard(Document):
 	@staticmethod
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
-		user = filters.get("user") or frappe.session.user
-		return (
-			frappe.cache.get_value(_get_total_cache_key(user))
-			if user and has_permission_for_user(user, raise_exception=False)
-			else 0
-		)
+		account = filters.get("account")
+
+		if account:
+			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
+				return cint(frappe.cache.get_value(_get_total_cache_key(account)))
+
+		return 0
 
 	@staticmethod
 	def get_stats(**kwargs) -> dict:
@@ -188,7 +193,7 @@ class ContactCard(Document):
 
 		for ab in self.address_books:
 			validate_address_book_name_format(ab.address_book)
-			_user, address_book_id = ab.address_book.split("|")
+			_account, address_book_id = ab.address_book.split("|")
 			ab.address_book_id = address_book_id
 
 
@@ -199,20 +204,20 @@ def bulk_delete(names: str | list[str]) -> None:
 	if isinstance(names, str):
 		names = json.loads(names)
 
-	user_ids_map = {}
+	account_ids_map = {}
 	for name in names:
-		user, id = name.split("|")
-		user_ids_map.setdefault(user, []).append(id)
+		account, id = name.split("|")
+		account_ids_map.setdefault(account, []).append(id)
 
-	for user, ids in user_ids_map.items():
-		delete_contact_cards(user, ids)
+	for account, ids in account_ids_map.items():
+		delete_contact_cards(account, ids)
 
 	frappe.msgprint(_("Contact Cards deleted successfully."), alert=True)
 
 
 @frappe.whitelist()
 def add_contact_card(
-	user: str,
+	account: str,
 	address_book_ids: list[str],
 	full_name: str | None = None,
 	emails: list[dict] | None = None,
@@ -220,9 +225,9 @@ def add_contact_card(
 	addresses: list[dict] | None = None,
 	kind: str | None = None,
 ) -> str:
-	"""Adds a contact card for the given user with the specified parameters."""
+	"""Adds a contact card for the given account with the specified parameters."""
 
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	creation_id = str(uuid7())
 	contact_card = {
@@ -235,7 +240,7 @@ def add_contact_card(
 		"kind": kind or "individual",
 	}
 
-	service = get_contact_card_service(user)
+	service = get_contact_card_service(account)
 	response = service.create([contact_card])
 
 	title = _("Contact Card Creation Error")
@@ -248,12 +253,12 @@ def add_contact_card(
 
 
 @frappe.whitelist()
-def bulk_add_contact_cards(user: str, contact_cards: list[dict], raise_exception: bool = True) -> None:
-	"""Adds multiple contact cards for the given user and returns their IDs."""
+def bulk_add_contact_cards(account: str, contact_cards: list[dict], raise_exception: bool = True) -> None:
+	"""Adds multiple contact cards for the given account and returns their IDs."""
 
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
-	service = get_contact_card_service(user)
+	service = get_contact_card_service(account)
 
 	for card in contact_cards:
 		if not card.get("creation_id"):
@@ -269,7 +274,7 @@ def bulk_add_contact_cards(user: str, contact_cards: list[dict], raise_exception
 
 @frappe.whitelist()
 def fetch_contact_cards(
-	user: str,
+	account: str,
 	filter: dict | None = None,
 	position: int = 0,
 	limit: int = 50,
@@ -277,53 +282,57 @@ def fetch_contact_cards(
 ) -> tuple[list[dict], int]:
 	"""Returns a list of contact cards and total count based on the provided filter."""
 
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	contact_cards = []
 
-	service = get_contact_card_service(user)
+	service = get_contact_card_service(account)
 	data = service.query(filter, position, limit, sort)
 
 	ids = data.get("ids", [])
 	total = data.get("total", 0)
 
-	contact_cards.extend(get_contact_cards(user, ids))
+	contact_cards.extend(get_contact_cards(account, ids))
 
 	return contact_cards[:limit], total
 
 
 @frappe.whitelist()
-def get_contact_cards(user: str, ids: list[str]) -> list[dict]:
+def get_contact_cards(account: str, ids: list[str]) -> list[dict]:
 	"""Returns a list of contact cards for the provided IDs in the same order as ids."""
 
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
+
+	cached_contact_cards = _get_cached_contact_cards(account, ids)
 
 	contact_cards = {}
 	ids_to_fetch = []
-
 	for id in ids:
-		if contact_card := _get_contact_card_from_cache(user, id):
-			contact_cards[id] = contact_card
+		if cached_contact_card := cached_contact_cards.get(id):
+			contact_cards[id] = cached_contact_card
 		else:
 			ids_to_fetch.append(id)
 
 	if ids_to_fetch:
-		service = get_contact_card_service(user)
+		service = get_contact_card_service(account)
 		cards = service.get(ids_to_fetch)
-
 		address_book_map = {ab["id"]: ab["name"] for ab in service.address_books}
 
+		contact_cards_to_cache = {}
 		for card in cards:
-			contact_card = format_contact_card(user, address_book_map, card)
-			_store_contact_card_in_cache(user, contact_card["id"], contact_card)
+			contact_card = format_contact_card(account, address_book_map, card)
+			contact_cards_to_cache[contact_card["id"]] = contact_card
 			contact_cards[contact_card["id"]] = contact_card
+
+		if contact_cards_to_cache:
+			_cache_contact_cards(account, contact_cards_to_cache)
 
 	return [contact_cards[id] for id in ids if id in contact_cards]
 
 
 @frappe.whitelist()
 def update_contact_card(
-	user: str,
+	account: str,
 	id: str,
 	address_book_ids: list[str],
 	full_name: str | None = None,
@@ -334,7 +343,7 @@ def update_contact_card(
 ) -> None:
 	"""Updates an existing contact card with the given parameters."""
 
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
 	contact_card = {
 		"id": id,
@@ -346,7 +355,7 @@ def update_contact_card(
 		"kind": kind or "individual",
 	}
 
-	service = get_contact_card_service(user)
+	service = get_contact_card_service(account)
 	response = service.update([contact_card])
 
 	title = _("Contact Card Update Error")
@@ -356,11 +365,11 @@ def update_contact_card(
 		else:
 			frappe.throw(_(response["description"]), title=title)
 
-	_remove_contact_cards_from_cache(user, [id])
+	_remove_cached_contact_cards(account, [id])
 
 
 def contact_card_update_address_books(
-	user: str,
+	account: str,
 	ids: list[str],
 	add_address_book_id: str | None = None,
 	remove_address_book_id: str | None = None,
@@ -376,9 +385,9 @@ def contact_card_update_address_books(
 	- move_to_address_book_id: replaces addressBookIds entirely
 	"""
 
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
-	service = get_contact_card_service(user)
+	service = get_contact_card_service(account)
 	response = service.update_address_book_ids(
 		ids, add_address_book_id, remove_address_book_id, move_to_address_book_id
 	)
@@ -390,35 +399,35 @@ def contact_card_update_address_books(
 		else:
 			frappe.throw(_(response["description"]), title=title)
 
-	_remove_contact_cards_from_cache(user, ids)
+	_remove_cached_contact_cards(account, ids)
 
 
 @frappe.whitelist()
-def contact_card_add_to_address_book(user: str, ids: list[str], address_book_id: str) -> None:
+def contact_card_add_to_address_book(account: str, ids: list[str], address_book_id: str) -> None:
 	"""Adds the provided contact cards to an address book."""
 
-	return contact_card_update_address_books(user, ids, add_address_book_id=address_book_id)
+	return contact_card_update_address_books(account, ids, add_address_book_id=address_book_id)
 
 
 @frappe.whitelist()
 def contact_card_remove_from_address_book(
-	user: str,
+	account: str,
 	ids: list[str],
 	address_book_id: str,
 ) -> None:
 	"""Removes the provided contact cards from an address book."""
 
-	return contact_card_update_address_books(user, ids, remove_address_book_id=address_book_id)
+	return contact_card_update_address_books(account, ids, remove_address_book_id=address_book_id)
 
 
 @frappe.whitelist()
 def contact_card_move_between_address_books(
-	user: str, ids: list[str], from_address_book_id: str, to_address_book_id: str
+	account: str, ids: list[str], from_address_book_id: str, to_address_book_id: str
 ) -> None:
 	"""Moves contact cards from one address book to another."""
 
 	return contact_card_update_address_books(
-		user,
+		account,
 		ids,
 		add_address_book_id=to_address_book_id,
 		remove_address_book_id=from_address_book_id,
@@ -427,80 +436,57 @@ def contact_card_move_between_address_books(
 
 @frappe.whitelist()
 def contact_card_move_to_address_book(
-	user: str,
+	account: str,
 	ids: list[str],
 	address_book_id: str,
 ) -> None:
 	"""Moves contact cards to the given address book, replacing all others."""
 
-	return contact_card_update_address_books(user, ids, move_to_address_book_id=address_book_id)
+	return contact_card_update_address_books(account, ids, move_to_address_book_id=address_book_id)
 
 
 @frappe.whitelist()
-def delete_contact_cards(user: str, ids: list[str]) -> None:
-	"""Deletes contact cards for the given user by its IDs."""
+def delete_contact_cards(account: str, ids: list[str]) -> None:
+	"""Deletes contact cards for the given account by its IDs."""
 
-	has_permission_for_user(user)
+	has_permission_for_user(parse_account(account)[0])
 
-	service = get_contact_card_service(user)
+	service = get_contact_card_service(account)
 	service.delete(ids)
-	_remove_contact_cards_from_cache(user, ids)
+	_remove_cached_contact_cards(account, ids)
 
 
-def _get_contact_card_cache_key(user: str, id: str) -> str:
-	"""Returns cache key for contact card."""
+def _get_total_cache_key(account: str) -> str:
+	"""Returns a cache key for total contact cards count for the given account."""
 
-	return f"jmap:contact_card:{user}:{id}"
-
-
-def _get_total_cache_key(user: str) -> str:
-	"""Returns a cache key for total contact cards count for the given user."""
-
-	return f"{user}:contact_cards:total"
+	return f"{account}:contact_cards:total"
 
 
-def _get_contact_card_from_cache(user: str, id: str) -> dict | None:
-	"""Returns contact card from cache if available."""
+def _get_cached_contact_cards(account: str, ids: list[str]) -> dict[str, dict | None]:
+	"""Returns a dictionary of cached contact cards for the given account and IDs."""
 
-	cache_key = _get_contact_card_cache_key(user, id)
-	return frappe.cache.get_value(cache_key)
-
-
-def _remove_contact_cards_from_cache(user: str, ids: list[str]) -> None:
-	"""Remove a contact cards from cache."""
-
-	for id in ids:
-		cache_key = _get_contact_card_cache_key(user, id)
-		frappe.cache.delete_value(cache_key)
-
-	list_key = f"jmap:contact_card:{user}:ids"
-	for id in ids:
-		frappe.cache.lrem(list_key, 0, id)
-
-	if not frappe.cache.llen(list_key):
-		frappe.cache.delete_value(list_key)
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	return store.get_many(Entity.CONTACT_CARD, subkeys=ids)
 
 
-def _store_contact_card_in_cache(user: str, id: str, contact_card: dict) -> None:
-	"""Store a contact card in cache with TTL and maintain per-user bucket size."""
+def _cache_contact_cards(account: str, contact_cards: dict[str, dict]) -> None:
+	"""Caches contact cards for the given account."""
 
-	cache_key = _get_contact_card_cache_key(user, id)
-	list_key = f"jmap:contact_card:{user}:ids"
-
-	bucket_size = cint(get_mail_config("contact_card_bucket_size"))
-	cache_ttl = cint(get_mail_config("contact_card_cache_ttl"))
-
-	frappe.cache.set_value(cache_key, contact_card, expires_in_sec=cache_ttl)
-	frappe.cache.lpush(list_key, id)
-
-	frappe.cache.ltrim(list_key, 0, bucket_size - 1)
-
-	while frappe.cache.llen(list_key) > bucket_size:
-		if oldest_id := frappe.cache.rpop(list_key):
-			frappe.cache.delete_key(_get_contact_card_cache_key(user, oldest_id))
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	store.set_many(Entity.CONTACT_CARD, items=contact_cards)
 
 
-def format_contact_card(user: str, address_book_map: dict, contact_card: dict) -> dict:
+def _remove_cached_contact_cards(account: str, ids: list[str]) -> None:
+	"""Removes cached contact cards for the given account and IDs."""
+
+	user, account_id = parse_account(account)
+	store = get_data_store(user, account_id)
+	store.delete_many(Entity.CONTACT_CARD, subkeys=ids)
+
+
+def format_contact_card(account: str, address_book_map: dict, contact_card: dict) -> dict:
 	"""Formats contact card data for display."""
 
 	full_name = None
@@ -525,7 +511,7 @@ def format_contact_card(user: str, address_book_map: dict, contact_card: dict) -
 	for address_book_id in contact_card["addressBookIds"].keys():
 		address_books.append(
 			{
-				"address_book": f"{user}|{address_book_id}",
+				"address_book": f"{account}|{address_book_id}",
 				"address_book_id": address_book_id,
 				"address_book_name": address_book_map.get(address_book_id),
 			}
@@ -585,8 +571,8 @@ def format_contact_card(user: str, address_book_map: dict, contact_card: dict) -
 		modified = parse_iso_datetime(contact_card["updated"], as_str=True)
 
 	return {
-		"name": f"{user}|{contact_card['id']}",
-		"user": user,
+		"name": f"{account}|{contact_card['id']}",
+		"account": account,
 		"id": contact_card["id"],
 		"uid": contact_card.get("uid"),
 		"kind": contact_card.get("kind"),
@@ -607,4 +593,4 @@ def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool
 	if doc.doctype != "Contact Card":
 		return False
 
-	return has_permission_for_user(doc.user, raise_exception=False)
+	return has_permission_for_user(parse_account(doc.account)[0], raise_exception=False)

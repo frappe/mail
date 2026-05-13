@@ -50,7 +50,7 @@ const show = defineModel<boolean>()
 
 const emit = defineEmits(['insert'])
 
-const { addressBooks } = userStore()
+const { addressBooks, account } = userStore()
 
 const listView = useTemplateRef('listView')
 
@@ -102,7 +102,7 @@ const contacts = createResource({
 					? filters[0]
 					: { operator: 'AND', conditions: filters }
 
-		return { filter, limit: limit.value }
+		return { account, filter, limit: limit.value }
 	},
 	transform: (data) =>
 		data.map((c) => ({ ...c, full_name: c.full_name || extractNameFromEmail(c.email) })),

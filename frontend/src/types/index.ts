@@ -1,3 +1,5 @@
+import type { UserAccount } from './doctypes'
+
 export * from './doctypes'
 
 export type COLOR_SCHEME = 'System Default' | 'Light Mode' | 'Dark Mode'
@@ -23,6 +25,7 @@ export interface User {
 	is_jmap_configured: boolean
 
 	mailboxes: { id: string; name: string; role: string }[]
+	accounts: UserAccount[]
 }
 
 export interface UserResource {
@@ -119,11 +122,13 @@ export interface Thread {
 }
 
 export interface MailboxData {
+	name: string
 	id: string
 	role: string | null
 	total_threads: number
 	unread_threads: number
 	_name: string
+	subscribed: 0 | 1
 	icon?: string
 	color?: string
 	disable_push_notification?: 0 | 1

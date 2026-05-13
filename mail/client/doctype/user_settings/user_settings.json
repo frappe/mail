@@ -6,24 +6,13 @@
  "field_order": [
   "user",
   "column_break_klzk",
+  "session_state",
+  "session_last_update",
   "jmap_credentials_section",
   "server_url",
   "column_break_uxkb",
   "username",
   "app_password",
-  "jmap_state_section",
-  "email_previous_state",
-  "email_current_state",
-  "column_break_mylj",
-  "email_state_last_update",
-  "cache_section",
-  "has_cached_jmap_connection",
-  "has_cached_jmap_identities",
-  "has_cached_jmap_mailboxes",
-  "column_break_uuod",
-  "total_cached_blobs",
-  "total_cached_mail_messages",
-  "total_cached_contact_cards",
   "outgoing_section",
   "default_outgoing_email",
   "column_break_scmb",
@@ -32,12 +21,11 @@
   "inbound_section",
   "skip_schedule_fetch_changes",
   "column_break_nqwp",
-  "sieve_section",
-  "last_active_sieve_script_id",
-  "column_break_mgfr",
   "recovery_section",
   "backup_email",
   "column_break_gotn",
+  "session_section",
+  "jmap_session",
   "ui_tab",
   "appearance_section",
   "color_scheme",
@@ -81,31 +69,6 @@
    "no_copy": 1
   },
   {
-   "description": "Previously synced email state used to detect changes from the server.",
-   "fieldname": "email_previous_state",
-   "fieldtype": "Data",
-   "label": "Previous State (Email)",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "description": "Latest email state retrieved from the server for synchronization.",
-   "fieldname": "email_current_state",
-   "fieldtype": "Data",
-   "label": "Current State (Email)",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "description": "Timestamp of the last successful email state synchronization.",
-   "fieldname": "email_state_last_update",
-   "fieldtype": "Datetime",
-   "label": "State Last Update (Email)",
-   "no_copy": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
-  {
    "default": "0",
    "description": "Automatically deletes the email from your mailbox after it is sent.",
    "fieldname": "destroy_email_after_submit",
@@ -123,13 +86,6 @@
    "fieldname": "jmap_credentials_section",
    "fieldtype": "Section Break",
    "label": "JMAP Credentials"
-  },
-  {
-   "collapsible": 1,
-   "depends_on": "eval: doc.username",
-   "fieldname": "jmap_state_section",
-   "fieldtype": "Section Break",
-   "label": "JMAP State"
   },
   {
    "description": "Default email address used as the sender when composing new messages.",
@@ -226,10 +182,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "column_break_mylj",
-   "fieldtype": "Column Break"
-  },
-  {
    "depends_on": "eval: doc.username",
    "fieldname": "inbound_section",
    "fieldtype": "Section Break",
@@ -248,71 +200,6 @@
    "search_index": 1
   },
   {
-   "collapsible": 1,
-   "depends_on": "eval: doc.username",
-   "fieldname": "cache_section",
-   "fieldtype": "Section Break",
-   "label": "Cache"
-  },
-  {
-   "default": "0",
-   "fieldname": "has_cached_jmap_connection",
-   "fieldtype": "Check",
-   "is_virtual": 1,
-   "label": "Has Cached JMAP Connection",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "has_cached_jmap_identities",
-   "fieldtype": "Check",
-   "is_virtual": 1,
-   "label": "Has Cached JMAP Identities",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "has_cached_jmap_mailboxes",
-   "fieldtype": "Check",
-   "is_virtual": 1,
-   "label": "Has Cached JMAP Mailboxes",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_uuod",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "fieldname": "total_cached_mail_messages",
-   "fieldtype": "Int",
-   "is_virtual": 1,
-   "label": "Total Cached Mail Messages",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "total_cached_contact_cards",
-   "fieldtype": "Int",
-   "is_virtual": 1,
-   "label": "Total Cached Contact Cards",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "total_cached_blobs",
-   "fieldtype": "Int",
-   "is_virtual": 1,
-   "label": "Total Cached Blobs",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "contacts_section",
    "fieldtype": "Section Break",
    "label": "Contacts"
@@ -326,27 +213,43 @@
    "label": "Create Contacts After Email Submit"
   },
   {
-   "fieldname": "sieve_section",
-   "fieldtype": "Section Break",
-   "label": "Sieve"
-  },
-  {
-   "fieldname": "column_break_mgfr",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "last_active_sieve_script_id",
+   "fieldname": "session_state",
    "fieldtype": "Data",
-   "label": "Last Active Sieve Script ID",
+   "is_virtual": 1,
+   "label": "Session State",
    "no_copy": 1,
    "read_only": 1,
-   "search_index": 1
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "session_last_update",
+   "fieldtype": "Datetime",
+   "is_virtual": 1,
+   "label": "Session Last Update",
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "session_section",
+   "fieldtype": "Section Break",
+   "label": "Session"
+  },
+  {
+   "depends_on": "eval: doc.jmap_session && doc.jmap_session != \"{}\"",
+   "fieldname": "jmap_session",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "no_copy": 1,
+   "read_only": 1,
+   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-17 15:51:02.397921",
+ "modified": "2026-04-30 10:55:12.995817",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",

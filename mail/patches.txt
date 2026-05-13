@@ -9,3 +9,6 @@ mail.patches.create_push_subscriptions
 mail.patches.rename_user_settings
 mail.patches.remove_mail_admin_role
 mail.patches.remove_mail_user_role
+mail.patches.rename_account_to_user
+mail.patches.create_account_settings
+mail.patches.set_user_account
