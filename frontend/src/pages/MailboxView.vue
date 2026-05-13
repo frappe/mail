@@ -187,6 +187,11 @@
 										(seen: boolean) =>
 											handleSetSeen({ [Number(seen)]: [mail.thread_id] })
 									"
+									@archive-thread="
+										handleMoveThreads({
+											[mailboxIds.archive]: [mail.thread_id],
+										})
+									"
 									@trash-thread="
 										handleMoveThreads({ [mailboxIds.trash]: [mail.thread_id] })
 									"

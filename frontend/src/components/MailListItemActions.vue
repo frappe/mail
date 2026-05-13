@@ -9,7 +9,7 @@
 			</button>
 		</Tooltip>
 	</template>
-	<Tooltip :text="__('Star Thread')">
+	<Tooltip :text="mail.flagged ? __('Unstar Thread') : __('Star Thread')">
 		<button
 			class="text-ink-gray-4 hover:!text-ink-gray-8"
 			@click.stop.prevent="emit('setFlagged', !mail.flagged)"
@@ -34,7 +34,7 @@ import { userStore } from '@/stores/user'
 import type { Thread } from '@/types'
 
 const { isHovered, mail } = defineProps<{ isHovered: boolean; mail: Thread }>()
-const emit = defineEmits(['setSeen', 'trashThread', 'deleteThread', 'setFlagged'])
+const emit = defineEmits(['setSeen', 'archiveThread', 'trashThread', 'deleteThread', 'setFlagged'])
 
 const { mailboxIds } = userStore()
 
@@ -54,9 +54,9 @@ const actions = computed(() =>
 		},
 		{
 			label: __('Archive Thread'),
-			onClick: () => emit('trashThread'),
+			onClick: () => emit('archiveThread'),
 			icon: Archive,
-			condition: !mail.mailboxes.some((m) => m.mailbox_id === mailboxIds.trash),
+			condition: !mail.mailboxes.some((m) => m.mailbox_id === mailboxIds.archive),
 		},
 		{
 			label: __('Move to Trash'),

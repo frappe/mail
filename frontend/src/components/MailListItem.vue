@@ -91,6 +91,7 @@
 						:is-hovered
 						:mail
 						@set-seen="(seen: boolean) => emit('setSeen', seen)"
+						@archive-thread="emit('archiveThread')"
 						@trash-thread="emit('trashThread')"
 						@delete-thread="emit('deleteThread')"
 						@set-flagged="(flagged: boolean) => emit('setFlagged', flagged)"
@@ -193,6 +194,7 @@
 				:is-hovered
 				:mail
 				@set-seen="(seen: boolean) => emit('setSeen', seen)"
+				@archive-thread="emit('archiveThread')"
 				@trash-thread="emit('trashThread')"
 				@delete-thread="emit('deleteThread')"
 				@set-flagged="(flagged: boolean) => emit('setFlagged', flagged)"
@@ -228,7 +230,14 @@ const { mailbox, mail, isSelected } = defineProps<{
 	isSelected: boolean
 }>()
 
-const emit = defineEmits(['setSeen', 'trashThread', 'deleteThread', 'setFlagged', 'setSelected'])
+const emit = defineEmits([
+	'setSeen',
+	'archiveThread',
+	'trashThread',
+	'deleteThread',
+	'setFlagged',
+	'setSelected',
+])
 
 const user = inject('$user')
 const { isMobile } = useScreenSize()
