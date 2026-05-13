@@ -224,9 +224,3 @@ class MailServer(Document):
 		"""Updates the document with the given key-value pairs."""
 
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
-
-
-def on_doctype_update() -> None:
-	frappe.db.add_unique(
-		"Mail Server", ["cluster", "cluster_node_id"], constraint_name="unique_cluster_node_id"
-	)
