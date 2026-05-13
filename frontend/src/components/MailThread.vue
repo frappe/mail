@@ -364,7 +364,9 @@
 
 <script setup lang="ts">
 import {
+	type Component,
 	computed,
+	h,
 	inject,
 	nextTick,
 	onMounted,
@@ -376,6 +378,7 @@ import {
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
+	Archive,
 	ArrowLeft,
 	ArrowRight,
 	ChevronDown,
@@ -387,6 +390,7 @@ import {
 	Mail as MailIcon,
 	Reply,
 	ReplyAll,
+	Star,
 	Trash2,
 } from 'lucide-vue-next'
 import { Alert, Avatar, Badge, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
@@ -426,8 +430,10 @@ const { mailbox, threadID, threads } = defineProps<{
 const emit = defineEmits([
 	'reloadMails',
 	'setSpamStatus',
+	'archiveThread',
 	'deleteThread',
 	'setSeen',
+	'setFlagged',
 	'moveThread',
 	'prevThread',
 	'nextThread',
@@ -554,12 +560,35 @@ const moveToOptions = computed(() => {
 interface MailAction {
 	label: string
 	onClick: () => void
-	icon: typeof ArrowLeft
+	icon: typeof ArrowLeft | Component
 	condition?: boolean | (() => boolean)
 }
 
 const threadActions = computed((): MailAction[] =>
 	[
+		{
+			label: __('Star Thread (S)'),
+			onClick: () => emit('setFlagged', true),
+			icon: Star,
+			condition: thread.data.some((m) => !m.flagged),
+		},
+		{
+			label: __('Unstar Thread (Shift+S)'),
+			onClick: () => emit('setFlagged', false),
+			icon: h(Star, { class: 'fill-ink-amber-2 text-ink-amber-2 stroke-ink-amber-2' }),
+			condition: thread.data.every((m) => m.flagged),
+		},
+		{
+			label: __('Mark as Unread (U)'),
+			onClick: () => emit('setSeen', false),
+			icon: MailIcon,
+		},
+		{
+			label: __('Archive Thread (E)'),
+			onClick: () => emit('moveThread', mailboxIds.archive),
+			icon: Archive,
+			condition: !threadMailboxes.value.includes(mailboxIds.archive),
+		},
 		{
 			label: __('Mark as Junk (!)'),
 			onClick: () => emit('setSpamStatus', true),
@@ -585,11 +614,6 @@ const threadActions = computed((): MailAction[] =>
 			onClick: () => emit('deleteThread'),
 			icon: Trash2,
 			condition: threadMailboxes.value.includes(mailboxIds.trash),
-		},
-		{
-			label: __('Mark as Unread (U)'),
-			onClick: () => emit('setSeen', false),
-			icon: MailIcon,
 		},
 	].filter((action) => action.condition !== false),
 )

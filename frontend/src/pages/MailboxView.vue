@@ -11,10 +11,7 @@
 					},
 				]"
 			>
-				<template
-					v-if="mailbox !== 'starred' && !mailboxes.loading && !searchResults.loading"
-					#suffix
-				>
+				<template v-if="mailbox !== 'starred' && isMailboxLoaded" #suffix>
 					<span class="text-ink-gray-5 ml-2 self-end pb-px text-xs">
 						{{ noOfThreads }}
 					</span>
@@ -91,16 +88,41 @@
 						</Dropdown>
 
 						<Button
-							v-for="action in selectActions"
-							:key="action.label"
-							:tooltip="action.label"
+							v-if="!selections.length"
+							:tooltip="__('Refresh')"
 							variant="ghost"
-							@click="action.onClick"
+							@click="reloadThreads"
 						>
 							<template #icon>
-								<component :is="action.icon" class="text-ink-gray-7 h-4 w-4" />
+								<RefreshCw class="text-ink-gray-7 stroke-1.5 h-4 w-4" />
 							</template>
 						</Button>
+
+						<template v-else>
+							<Dropdown v-if="showReadingPane" :options="selectActions">
+								<Button variant="ghost" :tooltip="__('Actions')">
+									<template #icon>
+										<Ellipsis class="text-ink-gray-7 stroke-1.5 h-4 w-4" />
+									</template>
+								</Button>
+							</Dropdown>
+							<template v-else>
+								<Button
+									v-for="action in selectActions.filter((a) => a.condition())"
+									:key="action.label"
+									:tooltip="action.label"
+									variant="ghost"
+									@click="action.onClick"
+								>
+									<template #icon>
+										<component
+											:is="action.icon"
+											class="text-ink-gray-7 stroke-1.5 h-4 w-4"
+										/>
+									</template>
+								</Button>
+							</template>
+						</template>
 
 						<Dropdown
 							v-if="!!selections.length && !['search', 'starred'].includes(mailbox)"
@@ -108,7 +130,10 @@
 						>
 							<Button variant="ghost" :tooltip="__('Move To')">
 								<template #icon>
-									<component :is="FolderInput" class="text-ink-gray-7 h-4 w-4" />
+									<component
+										:is="FolderInput"
+										class="text-ink-gray-7 stroke-1.5 h-4 w-4"
+									/>
 								</template>
 							</Button>
 						</Dropdown>
@@ -256,6 +281,9 @@
 								? setSeen.submit({ 1: [threadID!] })
 								: handleSetSeen({ 0: [threadID!] })
 					"
+					@set-flagged="
+						(flagged: boolean) => handleSetFlagged({ [Number(flagged)]: [threadID!] })
+					"
 					@move-thread="
 						(moveToMailbox: string) =>
 							handleMoveThreads({ [moveToMailbox]: [threadID!] })
@@ -295,10 +323,12 @@ import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } 
 import { useRoute, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
 import {
+	Archive,
 	ChevronDown,
 	ChevronRight,
 	CircleAlert,
 	CircleCheck,
+	Ellipsis,
 	FolderInput,
 	ListFilter,
 	LoaderCircle,
@@ -308,6 +338,7 @@ import {
 	Paperclip,
 	RefreshCw,
 	Star,
+	StarOff,
 	Trash2,
 } from 'lucide-vue-next'
 import {
@@ -612,16 +643,28 @@ const handleThreadActions = (e: KeyboardEvent, key: string) => {
 		return handleMoveThreads({ [mailboxIds.trash]: thread_ids })
 	}
 
-	// Mark as junk (!)
-	if (key === '!') {
-		e.preventDefault()
-		return junkOrDeleteThreads(thread_ids, true)
-	}
-
 	// Mark as read/unread (u)
 	if (key === 'u') {
 		e.preventDefault()
 		return handleSetSeen({ [Number(e.shiftKey)]: thread_ids })
+	}
+
+	// Archive (e)
+	if (key === 'e') {
+		e.preventDefault()
+		return handleMoveThreads({ [mailboxIds.archive]: thread_ids })
+	}
+
+	// Star/Unstar (s)
+	if (key === 's') {
+		e.preventDefault()
+		return handleSetFlagged({ [Number(!e.shiftKey)]: thread_ids })
+	}
+
+	// Mark as junk (!)
+	if (key === '!') {
+		e.preventDefault()
+		return junkOrDeleteThreads(thread_ids, true)
 	}
 }
 
@@ -661,80 +704,96 @@ interface SelectAction {
 	label: string
 	onClick: () => void
 	icon: typeof RefreshCw
-	condition: boolean
+	condition: () => boolean
 }
 
-const selectActions = computed((): SelectAction[] =>
-	[
-		{
-			label: __('Mark as Junk (!)'),
-			onClick: () => junkOrDeleteThreads(selections.value, true),
-			icon: CircleAlert,
-			condition:
-				!!selections.value.length &&
-				mailbox !== mailboxIds.drafts &&
-				selections.value.some(
-					(threadID) =>
-						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
-							?.junk === 0,
-				),
-		},
-		{
-			label: __('Mark as Not Junk'),
-			onClick: () => handleSetSpamStatus({ 0: selections.value }),
-			icon: CircleCheck,
-			condition:
-				!!selections.value.length &&
-				selections.value.some(
-					(threadID) =>
-						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
-							?.junk === 1,
-				),
-		},
-		{
-			label: __('Move to Trash (Delete)'),
-			onClick: () => handleMoveThreads({ [mailboxIds.trash]: selections.value }),
-			icon: Trash2,
-			condition: !!selections.value.length && mailbox !== mailboxIds.trash,
-		},
-		{
-			label: __('Delete Threads (Shift+Delete)'),
-			onClick: () => junkOrDeleteThreads(selections.value, false),
-			icon: Trash2,
-			condition: !!selections.value.length && mailbox === mailboxIds.trash,
-		},
-		{
-			label: __('Mark as Read (Shift+U)'),
-			onClick: () => handleSetSeen({ 1: selections.value }),
-			icon: MailOpen,
-			condition:
-				!!selections.value.length &&
-				selections.value.some(
-					(threadID) =>
-						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
-							?.seen === 0,
-				),
-		},
-		{
-			label: __('Mark as Unread (U)'),
-			onClick: () => handleSetSeen({ 0: selections.value }),
-			icon: Mail,
-			condition:
-				!!selections.value.length &&
-				selections.value.some(
-					(threadID) =>
-						threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
-							?.seen === 1,
-				),
-		},
-		{
-			label: __('Refresh'),
-			onClick: () => reloadThreads(),
-			icon: RefreshCw,
-			condition: !selections.value.length,
-		},
-	].filter((action) => action.condition),
-)
+const selectActions = computed((): SelectAction[] => [
+	{
+		label: __('Star Threads (S)'),
+		onClick: () => handleSetFlagged({ 1: selections.value }),
+		icon: Star,
+		condition: () =>
+			selections.value.some(
+				(threadID) =>
+					threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+						?.flagged === 0,
+			),
+	},
+	{
+		label: __('Unstar Threads (Shift+S)'),
+		onClick: () => handleSetFlagged({ 0: selections.value }),
+		icon: StarOff,
+		condition: () =>
+			selections.value.some(
+				(threadID) =>
+					threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+						?.flagged === 1,
+			),
+	},
+	{
+		label: __('Mark as Read (Shift+U)'),
+		onClick: () => handleSetSeen({ 1: selections.value }),
+		icon: MailOpen,
+		condition: () =>
+			selections.value.some(
+				(threadID) =>
+					threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+						?.seen === 0,
+			),
+	},
+	{
+		label: __('Mark as Unread (U)'),
+		onClick: () => handleSetSeen({ 0: selections.value }),
+		icon: Mail,
+		condition: () =>
+			selections.value.some(
+				(threadID) =>
+					threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+						?.seen === 1,
+			),
+	},
+	{
+		label: __('Archive Threads (E)'),
+		onClick: () => handleMoveThreads({ [mailboxIds.archive]: selections.value }),
+		icon: Archive,
+		condition: () => mailbox !== mailboxIds.archive,
+	},
+	{
+		label: __('Mark as Junk (!)'),
+		onClick: () => junkOrDeleteThreads(selections.value, true),
+		icon: CircleAlert,
+		condition: () =>
+			mailbox !== mailboxIds.drafts &&
+			selections.value.some(
+				(threadID) =>
+					threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+						?.junk === 0,
+			),
+	},
+	{
+		label: __('Mark as Not Junk'),
+		onClick: () => handleSetSpamStatus({ 0: selections.value }),
+		icon: CircleCheck,
+		condition: () =>
+			selections.value.some(
+				(threadID) =>
+					threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+						?.junk === 1,
+			),
+	},
+	{
+		label: __('Move to Trash (Delete)'),
+		onClick: () => handleMoveThreads({ [mailboxIds.trash]: selections.value }),
+		icon: Trash2,
+		condition: () => mailbox !== mailboxIds.trash,
+	},
+	{
+		label: __('Delete Threads (Shift+Delete)'),
+		onClick: () => junkOrDeleteThreads(selections.value, false),
+		icon: Trash2,
+		condition: () => mailbox === mailboxIds.trash,
+	},
+])
 
 // Search
 

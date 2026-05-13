@@ -2,7 +2,7 @@
 	<template v-if="isHovered">
 		<Tooltip v-for="action in actions" :key="action.label" :text="action.label">
 			<button
-				class="text-ink-gray-4 hover:!text-ink-gray-8"
+				class="text-ink-gray-5 hover:!text-ink-gray-8"
 				@click.stop.prevent="action.onClick"
 			>
 				<component :is="action.icon" class="stroke-1.5 h-4 w-4" />
@@ -11,7 +11,7 @@
 	</template>
 	<Tooltip :text="mail.flagged ? __('Unstar Thread') : __('Star Thread')">
 		<button
-			class="text-ink-gray-4 hover:!text-ink-gray-8"
+			class="text-ink-gray-5 hover:!text-ink-gray-8"
 			@click.stop.prevent="emit('setFlagged', !mail.flagged)"
 		>
 			<Star

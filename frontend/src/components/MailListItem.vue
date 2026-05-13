@@ -86,7 +86,7 @@
 					{{ mail.preview || __('— No message body —') }}
 				</h5>
 
-				<div v-if="!isFullWidth" class="ml-3 flex space-x-3">
+				<div v-if="!isFullWidth" class="ml-4 flex space-x-4">
 					<MailListItemActions
 						:is-hovered
 						:mail
@@ -188,7 +188,7 @@
 				</div>
 			</template>
 		</div>
-		<div v-if="isFullWidth" class="flex w-32 shrink-0 items-center justify-end space-x-3">
+		<div v-if="isFullWidth" class="flex w-32 shrink-0 items-center justify-end space-x-4">
 			<MailDate v-if="!isHovered" :datetime="mail.received_at" :in-list="true" />
 			<MailListItemActions
 				:is-hovered
