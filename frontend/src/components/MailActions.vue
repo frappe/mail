@@ -280,7 +280,7 @@ const handleDeleteMail = () =>
 	})
 
 const starMails = createResource({
-	url: 'mail.api.mail.set_flagged',
+	url: 'mail.api.mail.set_mails_flagged',
 	makeParams: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => ({
 		account,
 		ids,

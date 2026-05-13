@@ -191,6 +191,12 @@
 										handleMoveThreads({ [mailboxIds.trash]: [mail.thread_id] })
 									"
 									@delete-thread="junkOrDeleteThreads([mail.thread_id], false)"
+									@set-flagged="
+										(flagged: boolean) =>
+											handleSetFlagged({
+												[Number(flagged)]: [mail.thread_id],
+											})
+									"
 									@set-selected="
 										(selected: boolean) =>
 											toggleSelect([mail.thread_id], selected)
@@ -884,11 +890,7 @@ type SetSeenParams = {
 
 const setSeen = createResource({
 	url: 'mail.api.mail.set_seen',
-	makeParams: (thread_ids: SetSeenParams) => ({
-		account: store.account,
-		thread_ids,
-		mailbox,
-	}),
+	makeParams: (thread_ids: SetSeenParams) => ({ account: store.account, thread_ids, mailbox }),
 	onSuccess: (thread_ids: SetSeenParams) => {
 		mailboxes.reload()
 		for (const [seenStr, ids] of Object.entries(thread_ids)) {
@@ -903,6 +905,20 @@ const setSeen = createResource({
 					!threadsResource.value.data.some((m: Thread) => ids.includes(m.thread_id)))
 			)
 				goToMailbox()
+		}
+	},
+})
+
+const setFlagged = createResource({
+	url: 'mail.api.mail.set_flagged',
+	makeParams: (thread_ids: SetSeenParams) => ({ account: store.account, thread_ids, mailbox }),
+	onSuccess: (thread_ids: SetSeenParams) => {
+		mailboxes.reload()
+		for (const [flaggedStr, ids] of Object.entries(thread_ids)) {
+			const flagged = flaggedStr === 'true'
+			threadsResource.value.data
+				.filter((thread: Thread) => ids.includes(thread.thread_id))
+				.forEach((thread: Thread) => (thread.flagged = flagged ? 1 : 0))
 		}
 	},
 })
@@ -1048,6 +1064,25 @@ const handleSetSeen = (threadIDs: SetSeenParams, isUndo = false) => {
 	raisePromiseToast(action, loading, success, undo)
 }
 
+const handleSetFlagged = (threadIDs: SetSeenParams, isUndo = false) => {
+	const selectedThreads = Object.values(threadIDs).flat()
+	const originalState = getOriginalState(selectedThreads, 'flagged')
+	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
+
+	const action = () => setFlagged.submit(threadIDs)
+	if (isUndo) return raisePromiseToast(action, __('Undoing...'), __('Star status restored.'))
+
+	setUndoAction(() => handleSetFlagged(originalState, true))
+	const flagged = Object.keys(threadIDs)[0] === '1'
+	const loading = flagged ? __('Starring...') : __('Unstarring...')
+	const success =
+		selectedThreads.length === 1
+			? __('Thread {0}.', [flagged ? __('starred') : __('unstarred')])
+			: __('Threads {0}.', [flagged ? __('starred') : __('unstarred')])
+
+	raisePromiseToast(action, loading, success, undo)
+}
+
 const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean = false) => {
 	const selectedThreads = Object.values(threadIDs).flat()
 	const mailboxMap: Record<string, string> = Object.fromEntries(
@@ -1117,7 +1152,7 @@ const handleDeleteThreads = (thread_ids: string[]) => {
 
 const getOriginalState = (
 	selectedThreads: string[],
-	propertyName: 'seen' | 'junk',
+	propertyName: 'seen' | 'junk' | 'flagged',
 ): SetSeenParams => {
 	const statusMap: Record<string, 0 | 1> = Object.fromEntries(
 		threadsResource.value.data.map((thread: Thread) => [

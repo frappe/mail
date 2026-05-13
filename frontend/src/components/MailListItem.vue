@@ -93,6 +93,7 @@
 						@set-seen="(seen: boolean) => emit('setSeen', seen)"
 						@trash-thread="emit('trashThread')"
 						@delete-thread="emit('deleteThread')"
+						@set-flagged="(flagged: boolean) => emit('setFlagged', flagged)"
 					/>
 				</div>
 			</div>
@@ -194,6 +195,7 @@
 				@set-seen="(seen: boolean) => emit('setSeen', seen)"
 				@trash-thread="emit('trashThread')"
 				@delete-thread="emit('deleteThread')"
+				@set-flagged="(flagged: boolean) => emit('setFlagged', flagged)"
 			/>
 		</div>
 		<AttachmentViewer
@@ -226,7 +228,7 @@ const { mailbox, mail, isSelected } = defineProps<{
 	isSelected: boolean
 }>()
 
-const emit = defineEmits(['setSeen', 'trashThread', 'deleteThread', 'setSelected'])
+const emit = defineEmits(['setSeen', 'trashThread', 'deleteThread', 'setFlagged', 'setSelected'])
 
 const user = inject('$user')
 const { isMobile } = useScreenSize()

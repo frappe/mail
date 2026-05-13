@@ -12,7 +12,7 @@
 	<Tooltip :text="__('Star Thread')">
 		<button
 			class="text-ink-gray-4 hover:!text-ink-gray-8"
-			@click.stop.prevent="console.log('star')"
+			@click.stop.prevent="emit('setFlagged', !mail.flagged)"
 		>
 			<Star
 				class="stroke-1.5 h-4 w-4"
@@ -34,7 +34,7 @@ import { userStore } from '@/stores/user'
 import type { Thread } from '@/types'
 
 const { isHovered, mail } = defineProps<{ isHovered: boolean; mail: Thread }>()
-const emit = defineEmits(['setSeen', 'trashThread', 'deleteThread'])
+const emit = defineEmits(['setSeen', 'trashThread', 'deleteThread', 'setFlagged'])
 
 const { mailboxIds } = userStore()
 
