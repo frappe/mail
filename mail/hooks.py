@@ -217,6 +217,9 @@ website_route_rules = [
 
 doc_events = {
 	"User": {
+		"after_insert": [
+			"mail.events.create_user_settings",
+		],
 		"on_update": [
 			"mail.events.update_account_password",
 		],

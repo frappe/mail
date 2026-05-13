@@ -15,6 +15,15 @@ from mail.utils.user import (
 from mail.utils.validation import validate_mail_config
 
 
+def create_user_settings(doc: Document, method: str | None = None) -> None:
+	"""Create User Settings for the new user if not already present."""
+
+	if not frappe.db.exists("User Settings", {"user": doc.name}):
+		settings = frappe.new_doc("User Settings")
+		settings.user = doc.name
+		settings.insert(ignore_permissions=True, ignore_mandatory=True)
+
+
 def update_account_password(doc: Document, method: str | None = None) -> None:
 	"""Update the password in the Principal when the User's password is changed, but ONLY if the hash is different from the backend stored hash."""
 

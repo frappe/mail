@@ -219,9 +219,8 @@ class MailAccountRequest(Document):
 
 		principal.insert(ignore_permissions=True)
 
-		# Create User Settings
-		user_settings = frappe.new_doc("User Settings")
-		user_settings.user = user
+		# Update User Settings
+		user_settings = frappe.get_doc("User Settings", {"user": user})
 		user_settings.username = self.account
 		user_settings.app_password = app_password
 		user_settings.backup_email = self.backup_email
