@@ -17,18 +17,23 @@ if TYPE_CHECKING:
 class StalwartCLI:
 	def __init__(self, credentials: dict[str, str] | None = None) -> None:
 		if credentials:
-			self._validate_credentials(credentials)
-			self._credentials = credentials
+			credentials = {
+				"server_url": credentials.get("server_url"),
+				"api_key": credentials.get("api_key"),
+				"username": credentials.get("username"),
+				"password": credentials.get("password"),
+			}
 
 		else:
 			config = get_config()
 			credentials = {
 				"server_url": config.get("server_url"),
+				"api_key": config.get("api_key"),
 				"username": config.get("username"),
 				"password": config.get("password"),
 			}
-			self._validate_credentials(credentials)
 
+		self._validate_credentials(credentials)
 		self._credentials = credentials
 		self.cli_path = get_stalwart_cli_path()
 
@@ -110,10 +115,14 @@ class StalwartCLI:
 		if frappe.flags.in_migrate:
 			return
 
-		mandatory_fields = ["server_url", "username", "password"]
-		for field in mandatory_fields:
-			if field not in credentials or not credentials[field]:
-				frappe.throw(_("Missing mandatory credential field: {0}").format(field))
+		if not credentials.get("server_url"):
+			frappe.throw(_("Server URL is required for Stalwart CLI operations."))
+		if not credentials.get("api_key") and (
+			not credentials.get("username") or not credentials.get("password")
+		):
+			frappe.throw(
+				_("Either API key or username and password are required for Stalwart CLI operations.")
+			)
 
 	def _parse_process_result(self, result: "CompletedProcess") -> dict:
 		"""Parses the result of a subprocess execution and returns a dictionary with success status and output or error message."""
@@ -126,16 +135,21 @@ class StalwartCLI:
 	def run(self, args: list[str]) -> dict:
 		"""Runs a Stalwart CLI command with the provided arguments and returns the result."""
 
-		cmd = [
-			self.cli_path,
-			"--url",
-			self._credentials["server_url"],
-			"--user",
-			self._credentials["username"],
-			"--password",
-			self._credentials["password"],
-			*args,
-		]
+		cmd = [self.cli_path, "--url", self._credentials["server_url"]]
+
+		if self._credentials.get("api_key"):
+			cmd.extend(["--api-key", self._credentials["api_key"]])
+		else:
+			cmd.extend(
+				[
+					"--user",
+					self._credentials["username"],
+					"--password",
+					self._credentials["password"],
+				]
+			)
+
+		cmd.extend(args)
 
 		result = subprocess.run(cmd, capture_output=True, text=True)
 		return self._parse_process_result(result)
