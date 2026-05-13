@@ -129,16 +129,6 @@ export interface MailSettings extends DocType {
   jmap_push_private_key?: string;
   /** JMAP Push Auth Secret: Password */
   jmap_push_auth?: string;
-  /** Host: Data */
-  spamd_host?: string;
-  /** Port: Int */
-  spamd_port?: number;
-  /** Scanning Mode: Select */
-  spamd_scanning_mode?: 'Exclude Attachments' | 'Include Attachments' | 'Hybrid Approach';
-  /** Hybrid Scanning Threshold: Float */
-  spamd_hybrid_scanning_threshold?: number;
-  /** Enable Spam Detection: Check */
-  enable_spamd: 0 | 1;
   /** Allow Signup: Check */
   allow_signup: 0 | 1;
   /** Signup Domains: Table MultiSelect (Personal Signup Domain) */

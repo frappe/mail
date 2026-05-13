@@ -44,15 +44,15 @@ class SpamCheckLog(Document):
 	def scan_message(self) -> None:
 		"""Scans the message for spam"""
 
-		mail_settings = frappe.get_cached_doc("Mail Settings")
+		config = get_mail_config()
+		spamd_host = config.get("spamd_host")
+		spamd_port = config.get("spamd_port")
 
-		if not mail_settings.enable_spamd:
-			frappe.throw(_("Spam Detection is disabled"))
+		if not all([spamd_host, spamd_port]):
+			frappe.throw(_("Configure SpamAssassin (spamd) host and port to enable spam detection."))
 
-		spamd_host = mail_settings.spamd_host
-		spamd_port = mail_settings.spamd_port
-		scanning_mode = mail_settings.spamd_scanning_mode
-		hybrid_scanning_threshold = mail_settings.spamd_hybrid_scanning_threshold
+		scanning_mode = config.get("spamd_scanning_mode", "Hybrid Approach")
+		hybrid_scanning_threshold = config.get("spamd_hybrid_scanning_threshold", 2.0)
 
 		response = None
 		self.started_at = now()

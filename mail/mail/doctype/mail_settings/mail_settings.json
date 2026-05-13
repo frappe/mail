@@ -4,6 +4,11 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "signup_tab",
+  "allow_signup",
+  "column_break_daqm",
+  "signup_domains",
+  "dns_tab",
   "section_break_hrww",
   "root_domain_name",
   "column_break_4ccc",
@@ -19,24 +24,12 @@
   "dns_provider_client_ip",
   "dns_provider_token",
   "dns_provider_private_zone",
+  "jmap_push_tab",
   "section_break_qvpk",
   "jmap_push_p256dh",
   "jmap_push_private_key",
   "column_break_wpvf",
-  "jmap_push_auth",
-  "signup_tab",
-  "allow_signup",
-  "column_break_daqm",
-  "signup_domains",
-  "spamassassin_tab",
-  "section_break_hgqa",
-  "enable_spamd",
-  "section_break_r530",
-  "spamd_host",
-  "spamd_port",
-  "column_break_c43x",
-  "spamd_scanning_mode",
-  "spamd_hybrid_scanning_threshold"
+  "jmap_push_auth"
  ],
  "fields": [
   {
@@ -73,8 +66,7 @@
   },
   {
    "fieldname": "section_break_qvpk",
-   "fieldtype": "Section Break",
-   "label": "JMAP Push"
+   "fieldtype": "Section Break"
   },
   {
    "description": "P-256 ECDH public key for JMAP PushSubscription encryption.",
@@ -100,70 +92,6 @@
    "fieldtype": "Password",
    "label": "JMAP Push Auth Secret",
    "read_only": 1
-  },
-  {
-   "fieldname": "spamassassin_tab",
-   "fieldtype": "Tab Break",
-   "label": "SpamAssassin",
-   "mandatory_depends_on": "eval: doc.enable_spam_detection",
-   "read_only_depends_on": "eval: !doc.enable_spam_detection"
-  },
-  {
-   "fieldname": "section_break_hgqa",
-   "fieldtype": "Section Break"
-  },
-  {
-   "description": "Hostname or IP of the SpamAssassin server.",
-   "fieldname": "spamd_host",
-   "fieldtype": "Data",
-   "label": "Host",
-   "mandatory_depends_on": "eval: doc.enable_spamd",
-   "placeholder": "spamd.frappemail.com",
-   "read_only_depends_on": "eval: !doc.enable_spamd"
-  },
-  {
-   "default": "783",
-   "description": "Port for connecting to the SpamAssassin server.",
-   "fieldname": "spamd_port",
-   "fieldtype": "Int",
-   "label": "Port",
-   "mandatory_depends_on": "eval: doc.enable_spamd",
-   "non_negative": 1,
-   "read_only_depends_on": "eval: !doc.enable_spamd"
-  },
-  {
-   "fieldname": "section_break_r530",
-   "fieldtype": "Section Break"
-  },
-  {
-   "default": "Hybrid Approach",
-   "fieldname": "spamd_scanning_mode",
-   "fieldtype": "Select",
-   "label": "Scanning Mode",
-   "mandatory_depends_on": "eval: doc.enable_spamd",
-   "options": "Exclude Attachments\nInclude Attachments\nHybrid Approach",
-   "read_only_depends_on": "eval: !doc.enable_spamd"
-  },
-  {
-   "default": "2",
-   "description": "Threshold for when to switch from scanning only the email body to scanning attachments selectively.",
-   "fieldname": "spamd_hybrid_scanning_threshold",
-   "fieldtype": "Float",
-   "label": "Hybrid Scanning Threshold",
-   "mandatory_depends_on": "eval: doc.spamd_scanning_mode == \"Hybrid Approach\"",
-   "precision": "1",
-   "read_only_depends_on": "eval: !doc.enable_spamd || doc.spamd_scanning_mode != \"Hybrid Approach\""
-  },
-  {
-   "fieldname": "column_break_c43x",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "description": "Check to enable spam detection.",
-   "fieldname": "enable_spamd",
-   "fieldtype": "Check",
-   "label": "Enable Spam Detection"
   },
   {
    "default": "0",
@@ -262,12 +190,22 @@
    "fieldname": "signup_tab",
    "fieldtype": "Tab Break",
    "label": "Signup"
+  },
+  {
+   "fieldname": "dns_tab",
+   "fieldtype": "Tab Break",
+   "label": "DNS"
+  },
+  {
+   "fieldname": "jmap_push_tab",
+   "fieldtype": "Tab Break",
+   "label": "JMAP Push"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-04-27 09:25:58.236007",
+ "modified": "2026-05-13 11:55:08.939903",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
