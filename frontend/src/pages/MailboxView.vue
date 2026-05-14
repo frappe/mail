@@ -220,9 +220,7 @@
 									@delete-thread="junkOrDeleteThreads([mail.thread_id], false)"
 									@set-flagged="
 										(flagged: boolean) =>
-											handleSetFlagged({
-												[Number(flagged)]: [mail.thread_id],
-											})
+											setFlaggedByThreadIDs([mail.thread_id], flagged)
 									"
 									@set-selected="
 										(selected: boolean) =>
@@ -280,9 +278,8 @@
 								: handleSetSeen({ 0: [threadID!] })
 					"
 					@set-flagged="
-						(flagged: boolean) => handleSetFlagged({ [Number(flagged)]: [threadID!] })
+						(ids: string[], flagged: boolean) => setFlagged.submit({ ids, flagged })
 					"
-					@sync-flagged="(flagged: boolean) => syncFlaggedWithThread(flagged)"
 					@move-thread="
 						(moveToMailbox: string) =>
 							handleMoveThreads({ [moveToMailbox]: [threadID!] })
@@ -655,12 +652,6 @@ const handleThreadActions = (e: KeyboardEvent, key: string) => {
 		return handleMoveThreads({ [mailboxIds.archive]: thread_ids })
 	}
 
-	// Star/Unstar (s)
-	if (key === 's') {
-		e.preventDefault()
-		return handleSetFlagged({ [Number(!e.shiftKey)]: thread_ids })
-	}
-
 	// Mark as junk (!)
 	if (key === '!') {
 		e.preventDefault()
@@ -709,8 +700,8 @@ interface SelectAction {
 
 const selectActions = computed((): SelectAction[] => [
 	{
-		label: __('Star Threads (S)'),
-		onClick: () => handleSetFlagged({ 1: selections.value }),
+		label: __('Star Mails'),
+		onClick: () => setFlaggedByThreadIDs(selections.value, true),
 		icon: Star,
 		condition: () =>
 			selections.value.some(
@@ -720,8 +711,8 @@ const selectActions = computed((): SelectAction[] => [
 			),
 	},
 	{
-		label: __('Unstar Threads (Shift+S)'),
-		onClick: () => handleSetFlagged({ 0: selections.value }),
+		label: __('Unstar Mails'),
+		onClick: () => setFlaggedByThreadIDs(selections.value, false),
 		icon: StarOff,
 		condition: () =>
 			selections.value.some(
@@ -969,24 +960,20 @@ const setSeen = createResource({
 
 const setFlagged = createResource({
 	url: 'mail.api.mail.set_flagged',
-	makeParams: (thread_ids: SetSeenParams) => ({ account: store.account, thread_ids, mailbox }),
-	onSuccess: (thread_ids: SetSeenParams) => {
-		mailboxes.reload()
-		for (const [flaggedStr, ids] of Object.entries(thread_ids)) {
-			const flagged = flaggedStr === 'true'
-			threadsResource.value.data
-				.filter((thread: Thread) => ids.includes(thread.thread_id))
-				.forEach((thread: Thread) => (thread.flagged = flagged ? 1 : 0))
-			if (threadID && ids.includes(threadID))
-				mailThreadRef.value?.syncFlaggedWithThreads(flagged)
-		}
+	makeParams: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => ({
+		account: store.account,
+		ids,
+		flagged,
+	}),
+	onSuccess: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => {
+		ids.forEach((id) => {
+			const thread = threadsResource.value.data?.find((t: Thread) => t.id === id)
+			if (thread) thread.flagged = flagged ? 1 : 0
+		})
+		if (threadID) mailThreadRef.value?.syncFlagged(ids, flagged)
 	},
+	onError: (error) => raiseToast(error.messages[0], 'error'),
 })
-
-const syncFlaggedWithThread = (flagged: boolean) => {
-	const thread = threadsResource.value.data?.find((t: Thread) => t.thread_id === threadID)
-	if (thread) thread.flagged = flagged ? 1 : 0
-}
 
 type MoveThreadsParams = Record<string, string[]>
 
@@ -1131,17 +1118,11 @@ const handleSetSeen = (threadIDs: SetSeenParams) => {
 	raisePromiseToast(() => setSeen.submit(threadIDs), loading, success)
 }
 
-const handleSetFlagged = (threadIDs: SetSeenParams) => {
-	const flagged = Object.keys(threadIDs)[0] === '1'
-	const selectedThreads = Object.values(threadIDs).flat()
-
-	const loading = flagged ? __('Starring...') : __('Unstarring...')
-	const success =
-		selectedThreads.length === 1
-			? __('Thread {0}.', [flagged ? __('starred') : __('unstarred')])
-			: __('Threads {0}.', [flagged ? __('starred') : __('unstarred')])
-
-	raisePromiseToast(() => setFlagged.submit(threadIDs), loading, success)
+const setFlaggedByThreadIDs = (threadIDs: string[], flagged: boolean) => {
+	const ids = threadsResource.value.data
+		.filter((t: Thread) => threadIDs.includes(t.thread_id))
+		.map((t: Thread) => t.id)
+	setFlagged.submit({ ids, flagged })
 }
 
 const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean = false) => {

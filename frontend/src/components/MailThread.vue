@@ -163,8 +163,9 @@
 										:forward
 										:reload-mails="handleReload"
 										:thread="thread.data"
-										@sync-flagged="
-											(flagged: boolean) => emit('syncFlagged', flagged)
+										@set-flagged="
+											(id: string, flagged: boolean) =>
+												emit('setFlagged', [id], flagged)
 										"
 									/>
 								</div>
@@ -240,9 +241,9 @@
 												:forward
 												:reload-mails="handleReload"
 												:thread="thread.data"
-												@sync-flagged="
-													(flagged: boolean) =>
-														emit('syncFlagged', flagged)
+												@set-flagged="
+													(id: string, flagged: boolean) =>
+														emit('setFlagged', [id], flagged)
 												"
 											/>
 										</div>
@@ -442,7 +443,6 @@ const emit = defineEmits([
 	'setSeen',
 	'setFlagged',
 	'moveThread',
-	'syncFlagged',
 	'prevThread',
 	'nextThread',
 ])
@@ -575,14 +575,24 @@ interface MailAction {
 const threadActions = computed((): MailAction[] =>
 	[
 		{
-			label: __('Star Thread (S)'),
-			onClick: () => emit('setFlagged', true),
+			label: __('Star Thread'),
+			onClick: () =>
+				emit(
+					'setFlagged',
+					thread.data.map((m) => m.id),
+					true,
+				),
 			icon: Star,
 			condition: thread.data.some((m) => !m.flagged),
 		},
 		{
-			label: __('Unstar Thread (Shift+S)'),
-			onClick: () => emit('setFlagged', false),
+			label: __('Unstar Thread'),
+			onClick: () =>
+				emit(
+					'setFlagged',
+					thread.data.map((m) => m.id),
+					false,
+				),
 			icon: h(Star, { class: 'fill-ink-amber-2 text-ink-amber-2 stroke-ink-amber-2' }),
 			condition: thread.data.every((m) => m.flagged),
 		},
@@ -784,10 +794,12 @@ const handleKeydown = (e: KeyboardEvent) => {
 onMounted(() => window.addEventListener('keydown', handleKeydown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 
-const syncFlaggedWithThreads = (flagged: boolean) =>
-	thread.data?.forEach((mail: Mail) => (mail.flagged = flagged ? 1 : 0))
+const syncFlagged = (ids: string[], flagged: boolean) =>
+	thread.data?.forEach((mail: Mail) => {
+		if (ids.includes(mail.id)) mail.flagged = flagged ? 1 : 0
+	})
 
-defineExpose({ syncFlaggedWithThreads })
+defineExpose({ syncFlagged })
 
 const focusedDraft = ref<string>()
 const showSendModal = ref(false)

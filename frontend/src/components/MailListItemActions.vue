@@ -6,7 +6,7 @@
 			</button>
 		</Tooltip>
 	</template>
-	<Tooltip :text="mail.flagged ? __('Unstar Thread') : __('Star Thread')">
+	<Tooltip :text="mail.flagged ? __('Unstar Mail') : __('Star Mail')">
 		<button class="action-btn" @click.stop.prevent="emit('setFlagged', !mail.flagged)">
 			<Star
 				class="icon text-ink-gray-5"

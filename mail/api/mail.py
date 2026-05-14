@@ -200,6 +200,7 @@ def serialize_thread(thread: dict) -> dict:
 	thread_fields = [
 		"name",
 		"account",
+		"id",
 		"thread_id",
 		"mailboxes",
 		"from_name",
@@ -470,18 +471,7 @@ def set_seen(account: str, thread_ids: dict[bool, list[str]], mailbox: str) -> d
 
 
 @frappe.whitelist()
-def set_flagged(account: str, thread_ids: dict[bool, list[str]], mailbox: str) -> dict:
-	"""Sets flagged for threads."""
-
-	for is_flagged, ids in thread_ids.items():
-		messages = get_filtered_message_ids(account, ids, mailbox)
-		set_flagged_status(account, messages, is_flagged)
-
-	return thread_ids
-
-
-@frappe.whitelist()
-def set_mails_flagged(account: str, ids: list[str], flagged: bool) -> dict:
+def set_flagged(account: str, ids: list[str], flagged: bool) -> dict:
 	"""Sets flagged for mails."""
 
 	set_flagged_status(account, ids, flagged)

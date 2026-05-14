@@ -102,6 +102,7 @@ export interface ComposeMailData {
 export interface Thread {
 	name: string
 	account: string
+	id: string
 	thread_id: string
 	from_name: string
 	from_email: string
