@@ -232,7 +232,7 @@ const menuItems = computed(() => [
 							h(Avatar, { label: a._name, size: 'md' }),
 							h('span', { class: 'text-sm w-full truncate' }, a._name),
 							a.id === store.accountId &&
-								h(Check, { label: a._name, class: 'h-4 shrink-0 stroke-1.5' }),
+								h(Check, { label: a._name, class: 'shrink-0 icon' }),
 						],
 					),
 				})),
