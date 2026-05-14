@@ -13,7 +13,7 @@ class DomainService(StalwartCLI):
 		if not isinstance(fields, list):
 			fields = ["id", "isEnabled", "name", "description"]
 
-		commands = ["get", "domain", id]
+		commands = ["get", "Domain", id]
 
 		if fields:
 			commands.extend(["--fields", ",".join(fields)])
@@ -37,7 +37,7 @@ class DomainService(StalwartCLI):
 		if not isinstance(fields, list):
 			fields = ["id", "isEnabled", "name", "description"]
 
-		commands = ["query", "domain"]
+		commands = ["query", "Domain"]
 
 		if filters:
 			allowed_filter_keys = {"text", "name"}

@@ -18,8 +18,14 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.stalwart import create_account, get_account_by_name, get_domain_by_name, get_roles
-from mail.utils import generate_random_phrase, get_config, is_stalwart_configured
+from mail.stalwart import (
+	create_account,
+	create_app_password,
+	get_account_by_name,
+	get_domain_by_name,
+	get_roles,
+)
+from mail.utils import get_config, is_stalwart_configured
 from mail.utils.user import is_mail_admin, is_system_manager
 from mail.utils.validation import is_subaddressed_email, is_valid_email_for_domain
 
@@ -205,9 +211,6 @@ class MailAccountRequest(Document):
 		self.validate_domain()
 		self.validate_account()
 
-		# Step - 0: Generate App Password
-		app_password = generate_random_phrase()
-
 		# Step - 1: Create Account
 		create_account(
 			name=self.account.split("@")[0],
@@ -221,19 +224,22 @@ class MailAccountRequest(Document):
 			timezone=None,
 		)
 
-		# Step - 2: Create User
+		# Step - 2: Create App Password
+		app_password = create_app_password(username=self.account, password=password)
+
+		# Step - 3: Create User
 		user = create_user(
 			self.account, first_name, last_name, password, ["Mail Admin"] if self.is_admin else []
 		)
 
-		# Step - 3: Update User Settings
+		# Step - 4: Update User Settings
 		user_settings = frappe.get_doc("User Settings", {"user": user})
 		user_settings.username = self.account
-		user_settings.app_password = password
+		user_settings.app_password = app_password
 		user_settings.backup_email = self.backup_email
 		user_settings.save(ignore_permissions=True)
 
-		# Step - 4: Create Push Subscription
+		# Step - 5: Create Push Subscription
 		if frappe.utils.get_url().startswith("https"):
 			ps = frappe.new_doc("Push Subscription")
 			ps.user = user

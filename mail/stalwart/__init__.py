@@ -16,8 +16,11 @@ from mail.stalwart.account import (
 	StorageQuota,
 	UserRoles,
 )
+from mail.stalwart.app_password import AppPassword, AppPasswordService
 from mail.stalwart.domain import DomainService
 from mail.stalwart.role import RoleService
+from mail.utils import get_config
+from mail.utils.dt import utcnow
 
 
 @redis_cache(ttl=3600)
@@ -145,3 +148,14 @@ def create_account(
 	)
 
 	AccountService().create(account)
+
+
+def create_app_password(username: str, password: str, description: str | None = None) -> str:
+	"""Creates an app password for the specified account on Stalwart and returns the secret."""
+
+	server_url = get_config("server_url")
+	description = description or f"App Password for {frappe.local.site} - {utcnow()}"
+
+	return AppPasswordService(
+		credentials={"server_url": server_url, "username": username, "password": password}
+	).create(AppPassword(description=description, permissions=Permissions(type=PermissionType.INHERIT)))

@@ -251,7 +251,7 @@ class AccountService(StalwartCLI):
 				"usedDiskQuota",
 			]
 
-		commands = commands = ["get", "account", id]
+		commands = commands = ["get", "Account", id]
 
 		if fields:
 			commands.extend(["--fields", ",".join(fields)])
@@ -288,7 +288,7 @@ class AccountService(StalwartCLI):
 				"usedDiskQuota",
 			]
 
-		commands = commands = ["query", "account"]
+		commands = commands = ["query", "Account"]
 
 		if filters:
 			allowed_filter_keys = {"text", "name", "domainId", "memberGroupIds"}
@@ -320,7 +320,7 @@ class AccountService(StalwartCLI):
 	def create(self, account: "Account") -> dict:
 		account_data = account.to_dict()
 		account_json = json.dumps(account_data)
-		response = self.run(["create", "account", "--json", account_json])
+		response = self.run(["create", "Account", "--json", account_json])
 
 		if not response["success"]:
 			frappe.throw(_("Failed to create account: {0}").format(response["error"]))
