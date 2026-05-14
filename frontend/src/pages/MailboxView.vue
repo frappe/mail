@@ -315,9 +315,10 @@
 	<ShortcutsModal v-model="showShortcuts" />
 </template>
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, h, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
+import { Icon } from 'frappe-ui/icons'
 import {
 	Archive,
 	ChevronDown,
@@ -349,8 +350,10 @@ import {
 	usePageMeta,
 } from 'frappe-ui'
 
+import { FOLDER_ICON_COLOR_MAP } from '@/constants'
 import {
 	getFormattedDate,
+	getIcon,
 	isMac,
 	raisePromiseToast,
 	raiseToast,
@@ -988,6 +991,7 @@ const moveToOptions = computed(() =>
 		?.filter((m) => ![mailbox, mailboxIds.sent, mailboxIds.drafts].includes(m.id))
 		.map((m) => ({
 			label: m._name,
+			icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
 			onClick: () => handleMoveThreads({ [m.id]: selections.value }),
 		})),
 )

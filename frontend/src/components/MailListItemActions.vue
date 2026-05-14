@@ -69,6 +69,10 @@ const actions = computed(() =>
 </script>
 
 <style scoped>
+.action-btn {
+	@apply relative after:absolute after:-inset-1 after:content-[''];
+}
+
 .action-btn:hover > * {
 	color: var(--ink-gray-8) !important;
 	stroke-width: 2 !important;

@@ -385,6 +385,7 @@ import {
 	watch,
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Icon } from 'frappe-ui/icons'
 import {
 	Archive,
 	ArrowLeft,
@@ -403,12 +404,14 @@ import {
 } from 'lucide-vue-next'
 import { Alert, Avatar, Badge, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
 
+import { FOLDER_ICON_COLOR_MAP } from '@/constants'
 import {
 	extractQuotedContent,
 	getFirstAlphabet,
 	getFormattedDate,
 	getFormattedRecipients,
 	getGroupedRecipients,
+	getIcon,
 	hasHtmlContent,
 	raiseToast,
 	shouldIgnoreKeypress,
@@ -534,7 +537,12 @@ const thread = createResource({
 	onError: () => goToMailbox(),
 })
 
-const threadMailboxes = computed(() => thread?.data?.[0]?.mailboxes.map((m) => m.mailbox_id) || [])
+const threadMailboxes = computed(() => {
+	if (!thread?.data?.length) return []
+	return thread.data
+		.map((mail: Mail) => mail.mailboxes.map((m) => m.mailbox_id))
+		.reduce((common, ids: string[]) => common.filter((id) => ids.includes(id)))
+})
 
 const filterRelevantMails = (mail: Mail) => {
 	if (mailbox === 'search') return true
@@ -562,7 +570,11 @@ const moveToOptions = computed(() => {
 	])
 	return mailboxes.data
 		?.filter((m) => !excludedMailboxes.has(m.id))
-		.map((m) => ({ label: m._name, onClick: () => emit('moveThread', m.id) }))
+		.map((m) => ({
+			label: m._name,
+			icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
+			onClick: () => emit('moveThread', m.id),
+		}))
 })
 
 interface MailAction {

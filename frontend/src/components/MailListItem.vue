@@ -86,7 +86,7 @@
 					{{ mail.preview || __('— No message body —') }}
 				</h5>
 
-				<div v-if="!isFullWidth" class="ml-4 flex space-x-4">
+				<div v-if="!isFullWidth" class="ml-3.5 flex space-x-3.5">
 					<MailListItemActions
 						:is-hovered
 						:mail
