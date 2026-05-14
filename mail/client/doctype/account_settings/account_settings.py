@@ -10,6 +10,7 @@ from frappe.utils import cint
 
 from mail.jmap import (
 	get_core_service,
+	get_mailbox_id_by_role,
 	invalidate_jmap_identities_cache,
 	invalidate_jmap_mailboxes_cache,
 	parse_account,
@@ -103,6 +104,9 @@ class AccountSettings(Document):
 
 	def before_insert(self) -> None:
 		self.user = parse_account(self.account)[0]
+
+	def after_insert(self) -> None:
+		create_archive_mailbox(self.account)
 
 	def after_delete(self) -> None:
 		"""Clear all caches related to the account when the settings are deleted."""
@@ -226,3 +230,16 @@ def on_doctype_update() -> None:
 		["account"],
 		constraint_name="unique_account_settings",
 	)
+
+
+def create_archive_mailbox(account: str) -> None:
+	"""Create the archive mailbox for the account if it does not already exist."""
+
+	try:
+		get_mailbox_id_by_role(account, "archive", create_if_not_exists=True)
+
+	except Exception:
+		frappe.log_error(
+			message=f"Failed to create archive mailbox for account {account}",
+			title="Archive Mailbox Creation Error",
+		)
