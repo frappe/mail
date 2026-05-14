@@ -23,6 +23,7 @@ from mail.utils import (
 	hash_password,
 	is_catch_all_address,
 	is_probable_hash,
+	is_stalwart_configured,
 	parse_filters,
 	parse_token,
 	snake_to_camel,
@@ -36,7 +37,6 @@ from mail.utils.user import (
 from mail.utils.validation import (
 	ensure_access_to_backend,
 	is_subaddressed_email,
-	validate_mail_config,
 	validate_max_accounts,
 	validate_max_domains,
 	validate_max_groups,
@@ -184,7 +184,7 @@ class Principal(Document):
 		if not bool(self.flags.ignore_permissions):
 			ensure_access_to_backend()
 
-		validate_mail_config()
+		is_stalwart_configured(raise_exception=True)
 
 		if self.type == "Domain":
 			if "." not in self._name:
@@ -436,7 +436,7 @@ class Principal(Document):
 		"""Returns the principal details."""
 
 		ensure_access_to_backend()
-		validate_mail_config()
+		is_stalwart_configured(raise_exception=True)
 
 		backend = get_mail_backend_api()
 		principal = Principal._fetch(

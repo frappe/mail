@@ -6,13 +6,12 @@ from frappe.model.document import Document
 
 from mail.backend import get_mail_backend_api
 from mail.server.doctype.principal.principal import PRINCIPAL_ENDPOINT, Principal
-from mail.utils import reformat_pbkdf2_hash
+from mail.utils import is_stalwart_configured, reformat_pbkdf2_hash
 from mail.utils.user import (
 	get_jmap_username,
 	get_user_hashed_password,
 	is_local_user,
 )
-from mail.utils.validation import validate_mail_config
 
 
 def create_user_settings(doc: Document, method: str | None = None) -> None:
@@ -30,7 +29,7 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 	if not (doc.enabled and is_local_user(doc.name)):
 		return
 
-	validate_mail_config()
+	is_stalwart_configured(raise_exception=True)
 
 	username = get_jmap_username(doc.name)
 

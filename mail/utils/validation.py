@@ -302,25 +302,6 @@ def has_permission_for_user(user: str, raise_exception: bool = True) -> bool:
 	return has_permission
 
 
-def validate_mail_config() -> None:
-	"""Validates the mail configuration. Checks if the server URL is set and if the fallback admin credentials are set."""
-
-	config = get_config()
-	if not config:
-		frappe.throw(_("Mail configuration is not set."))
-
-	if not config.get("server_url"):
-		frappe.throw(_("Mail server URL is not set in Mail Configuration."))
-
-	api_key = config.get("api_key")
-
-	username = config.get("username")
-	password = config.get("password")
-
-	if not api_key and not (username and password):
-		frappe.throw(_("Admin credentials are not set in Mail Configuration."))
-
-
 def ensure_local_user(user: str) -> None:
 	"""Ensures that the user is a managed user."""
 

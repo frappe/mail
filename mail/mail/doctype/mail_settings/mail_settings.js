@@ -2,21 +2,8 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Mail Settings', {
-	setup(frm) {
-		frm.trigger('set_queries')
-	},
-
 	refresh(frm) {
 		frm.trigger('add_actions')
-	},
-
-	set_queries(frm) {
-		frm.set_query('signup_domains', () => ({
-			filters: {
-				is_verified: 1,
-				principal_type: 'Domain',
-			},
-		}))
 	},
 
 	dns_provider(frm) {

@@ -9,6 +9,8 @@ from frappe import _
 from frappe.model.document import Document
 
 from mail.server.doctype.dns_record.dns_record import get_dns_provider
+from mail.stalwart import get_domain_by_name
+from mail.utils import is_stalwart_configured
 
 
 class MailSettings(Document):
@@ -16,7 +18,7 @@ class MailSettings(Document):
 		self.validate_root_domain_name()
 		self.validate_dns_provider()
 		self.validate_jmap_push_subscription_keys()
-		self.validate_signup_domains()
+		self.validate_signup()
 
 	def on_update(self) -> None:
 		self.clear_cache()
@@ -72,25 +74,31 @@ class MailSettings(Document):
 			dns_provider = get_dns_provider(self)
 			dns_provider.read_dns_records("MX")
 
-	def validate_signup_domains(self) -> None:
-		"""Validates the Signup Domains."""
+	def validate_signup(self) -> None:
+		"""Validates the Signup."""
+
+		if not self.allow_signup:
+			self.signup_domains = ""
+			return
+
+		is_stalwart_configured(raise_exception=True)
 
 		if not self.signup_domains:
-			return
+			frappe.throw(_("Please add at least one Signup Domain."))
 
-		principals = frappe.db.get_all(
-			"Principal Settings",
-			{"name": ["in", [d.principal for d in self.signup_domains]]},
-			["principal_name", "is_verified"],
-		)
+		signup_domains = self.signup_domains.split("\n")
 
-		if not principals:
-			self.signup_domains = []
-			return
+		if not signup_domains:
+			frappe.throw(_("Invalid Signup Domains format. Please provide one domain per line."))
 
-		for principal in principals:
-			if not principal.is_verified:
-				frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(principal.principal_name)))
+		valid_signup_domains = []
+		for domain in signup_domains:
+			domain = domain.strip().lower()
+			if domain:
+				get_domain_by_name(domain, raise_exception=True)
+				valid_signup_domains.append(domain)
+
+		self.signup_domains = "\n".join(valid_signup_domains)
 
 	def validate_jmap_push_subscription_keys(self) -> None:
 		"""Validates site-level JMAP push subscription encryption keys."""
@@ -200,3 +208,10 @@ class MailSettings(Document):
 		"""Clears the Cache."""
 
 		frappe.cache.delete_value("mail-settings")
+
+
+def get_signup_domains() -> list:
+	"""Returns the signup domains."""
+
+	settings = frappe.get_cached_doc("Mail Settings")
+	return settings.signup_domains.split("\n") if settings.signup_domains else []

@@ -131,8 +131,8 @@ export interface MailSettings extends DocType {
   jmap_push_auth?: string;
   /** Allow Signup: Check */
   allow_signup: 0 | 1;
-  /** Signup Domains: Table MultiSelect (Personal Signup Domain) */
-  signup_domains: PersonalSignupDomain[];
+  /** Signup Domains: Small Text */
+  signup_domains: string;
   /** Username: Data */
   dns_provider_username?: string;
   /** Zone ID: Data */
@@ -451,16 +451,4 @@ export interface UserAccount extends DocType {
   id: string;
   /** Capabilities: JSON */
   capabilities?: any;
-}
-
-// Last updated: 2025-11-27 13:25:44.326974
-export interface PersonalSignupDomain extends ChildDocType {
-  /** Domain: Link (Principal Settings) */
-  principal: string;
-}
-
-// Last updated: 2025-11-27 13:25:44.326974
-export interface PersonalSignupDomain extends ChildDocType {
-  /** Domain: Link (Principal Settings) */
-  principal: string;
 }

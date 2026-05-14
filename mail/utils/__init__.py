@@ -133,6 +133,25 @@ def get_config(key: str | None = None) -> dict[str, Any] | Any:
 	return config
 
 
+def is_stalwart_configured(raise_exception: bool = False) -> bool:
+	"""Checks if the Stalwart server is properly configured."""
+
+	config = get_config()
+
+	server_url = config.get("server_url")
+	api_key = config.get("api_key")
+	username = config.get("username")
+	password = config.get("password")
+
+	if server_url and (api_key or (username and password)):
+		return True
+
+	if raise_exception:
+		frappe.throw(_("Stalwart server is not properly configured. Please check your Mail Settings."))
+
+	return False
+
+
 def get_storage_logger() -> "Logger":
 	"""Returns a logger instance for mail storage operations."""
 

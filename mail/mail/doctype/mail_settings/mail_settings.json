@@ -165,10 +165,9 @@
    "depends_on": "eval: doc.allow_signup",
    "description": "Domains allowed for signup.",
    "fieldname": "signup_domains",
-   "fieldtype": "Table MultiSelect",
+   "fieldtype": "Small Text",
    "label": "Signup Domains",
-   "mandatory_depends_on": "eval: doc.allow_signup",
-   "options": "Personal Signup Domain"
+   "mandatory_depends_on": "eval: doc.allow_signup"
   },
   {
    "fieldname": "column_break_pntn",
@@ -623,7 +622,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-05-13 13:31:41.108765",
+ "modified": "2026-05-14 06:55:40.616432",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

@@ -7,8 +7,7 @@ import requests
 from frappe import _
 
 from mail.jmap.connection import raise_for_status
-from mail.utils import get_config
-from mail.utils.validation import validate_mail_config
+from mail.utils import get_config, is_stalwart_configured
 
 
 @dataclass
@@ -107,7 +106,7 @@ class MailBackendAPI:
 def get_mail_backend_api() -> MailBackendAPI:
 	"""Returns an authenticated BackendAPI instance."""
 
-	validate_mail_config()
+	is_stalwart_configured(raise_exception=True)
 	config = get_config()
 
 	return MailBackendAPI(

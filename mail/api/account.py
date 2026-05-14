@@ -9,9 +9,9 @@ from frappe.utils.data import sha256_hash
 from mail.api.admin import add_member
 from mail.api.mail import normalize_filter
 from mail.client.doctype.identity.identity import fetch_identities
+from mail.mail.doctype.mail_settings.mail_settings import get_signup_domains
 from mail.server.doctype.mail_account_request.mail_account_request import create_user
 from mail.utils import convert_html_to_text, user_context
-from mail.utils.cache import get_signup_domains
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import has_user_settings, is_jmap_configured, is_mail_admin, is_system_manager
 from mail.utils.validation import is_email_assigned
