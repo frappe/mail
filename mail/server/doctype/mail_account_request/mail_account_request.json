@@ -157,14 +157,13 @@
    "fieldtype": "Small Text",
    "label": "Roles",
    "no_copy": 1,
-   "reqd": 1,
    "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-13 10:27:23.941932",
+ "modified": "2026-05-14 09:11:50.332806",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Account Request",

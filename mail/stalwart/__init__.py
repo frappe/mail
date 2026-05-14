@@ -17,6 +17,7 @@ from mail.stalwart.account import (
 	UserRoles,
 )
 from mail.stalwart.domain import DomainService
+from mail.stalwart.role import RoleService
 
 
 @redis_cache(ttl=3600)
@@ -26,7 +27,7 @@ def get_domain_by_name(
 	"""Fetches a domain by name from the Stalwart server, selecting specific fields if provided."""
 
 	domain_service = DomainService()
-	if domains := domain_service.get_all({"name": name}, fields=fields):
+	if domains := domain_service.get_all({"name": name}, fields=fields or ["id"]):
 		return domains[0]
 
 	if raise_exception:
@@ -40,11 +41,38 @@ def get_account_by_name(
 	"""Fetches an account by name from the Stalwart server, selecting specific fields if provided."""
 
 	account_service = AccountService()
-	if accounts := account_service.get_all({"name": name}, fields=fields):
+	if accounts := account_service.get_all({"name": name}, fields=fields or ["id"]):
 		return accounts[0]
 
 	if raise_exception:
 		frappe.throw(_("Account {0} not found.").format(frappe.bold(name)))
+
+
+@redis_cache(ttl=3600)
+def get_role_by_description(
+	description: str, fields: list[dict] | None = None, raise_exception: bool = True
+) -> dict | None:
+	"""Fetches a role by description from the Stalwart server, selecting specific fields if provided."""
+
+	role_service = RoleService()
+	if roles := role_service.get_all({"description": description}, fields=fields or ["id"]):
+		# Assuming description is unique and returning the first match.
+		return roles[0]
+
+	if raise_exception:
+		frappe.throw(_("Role with description {0} not found.").format(frappe.bold(description)))
+
+
+@redis_cache(ttl=3600)
+def get_roles(description: str | None = None, fields: list[dict] | None = None) -> list[dict]:
+	"""Fetches roles from the Stalwart server, filtering by description if provided, and selecting specific fields if provided."""
+
+	filters = {}
+	if description:
+		filters["description"] = description
+
+	role_service = RoleService()
+	return role_service.get_all(filters, fields=fields or ["id", "description"])
 
 
 def create_account(
@@ -54,13 +82,14 @@ def create_account(
 	description: str | None = None,
 	aliases: list[str] | None = None,
 	groups: list[str] | None = None,
-	is_admin: bool = False,
+	roles: list[str] | None = None,
 	quota: int | None = None,
 	timezone: str | None = None,
 ) -> None:
 	"""Creates an account on the Stalwart server with the specified parameters."""
 
-	domain_id = get_domain_by_name(domain, fields=["id"], raise_exception=True)["id"]
+	domain_id = get_domain_by_name(domain, raise_exception=True)["id"]
+	password = password or random_string(12)
 
 	email_aliases = []
 	domain_ids_map = {domain: domain_id}
@@ -75,21 +104,31 @@ def create_account(
 
 			alias_domain_id = domain_ids_map.get(alias_domain)
 			if not alias_domain_id:
-				alias_domain_id = get_domain_by_name(alias_domain, fields=["id"], raise_exception=True)["id"]
+				alias_domain_id = get_domain_by_name(alias_domain, raise_exception=True)["id"]
 				domain_ids_map[alias_domain] = alias_domain_id
 
 			email_aliases.append(EmailAlias(name=alias_name, domain_id=alias_domain_id))
 
 	member_group_ids = []
 	for group in groups or []:
-		group_id = get_account_by_name(group, fields=["id"], raise_exception=False)["id"]
+		group_id = get_account_by_name(group, raise_exception=False)["id"]
 		member_group_ids.append(group_id)
 
-	password = password or random_string(12)
+	user_roles = UserRoles(type=RoleType.USER)
+	if roles:
+		role_ids = []
+		server_roles_map = {r["description"]: r["id"] for r in get_roles()}
 
-	roles = UserRoles(
-		type=RoleType.CUSTOM if is_admin else RoleType.USER, role_ids=["d"] if is_admin else None
-	)
+		for role in roles:
+			role_id = server_roles_map.get(role)
+			if not role_id:
+				frappe.throw(_("Role {0} does not exists on the server.").format(frappe.bold(role)))
+
+			role_ids.append(role_id)
+
+		if role_ids:
+			user_roles = UserRoles(type=RoleType.CUSTOM, role_ids=role_ids)
+
 	quotas = StorageQuota(max_disk_quota=quota) if quota else None
 
 	account = Account(
@@ -97,7 +136,7 @@ def create_account(
 		domain_id=domain_id,
 		credentials=[Credential(type=CredentialType.PASSWORD, password=PasswordCredential(secret=password))],
 		member_group_ids=member_group_ids,
-		roles=roles,
+		roles=user_roles,
 		permissions=Permissions(type=PermissionType.INHERIT),
 		quotas=quotas,
 		aliases=email_aliases,

@@ -159,7 +159,6 @@ after_migrate = "mail.install.after_migrate"
 
 permission_query_conditions = {
 	# Server
-	"Mail Account Request": "mail.server.doctype.mail_account_request.mail_account_request.get_permission_query_condition",
 	"Mail Domain Request": "mail.server.doctype.mail_domain_request.mail_domain_request.get_permission_query_condition",
 	"Principal Settings": "mail.server.doctype.principal_settings.principal_settings.get_permission_query_condition",
 	# Client
@@ -172,7 +171,6 @@ permission_query_conditions = {
 
 has_permission = {
 	# Server
-	"Mail Account Request": "mail.server.doctype.mail_account_request.mail_account_request.has_permission",
 	"Mail Domain Request": "mail.server.doctype.mail_domain_request.mail_domain_request.has_permission",
 	"Principal": "mail.server.doctype.principal.principal.has_permission",
 	"Principal Settings": "mail.server.doctype.principal_settings.principal_settings.has_permission",

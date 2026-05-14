@@ -8,7 +8,13 @@ from typing import TYPE_CHECKING
 import frappe
 from frappe import _
 
-from mail.utils import get_config, get_mail_app_path, get_stalwart_cli_path, get_stalwart_cli_version
+from mail.utils import (
+	get_config,
+	get_mail_app_path,
+	get_stalwart_cli_path,
+	get_stalwart_cli_version,
+	is_stalwart_configured,
+)
 
 if TYPE_CHECKING:
 	from subprocess import CompletedProcess
@@ -16,6 +22,8 @@ if TYPE_CHECKING:
 
 class StalwartCLI:
 	def __init__(self, credentials: dict[str, str] | None = None) -> None:
+		credentials = credentials or {}
+
 		if credentials:
 			credentials = {
 				"server_url": credentials.get("server_url"),
@@ -24,16 +32,26 @@ class StalwartCLI:
 				"password": credentials.get("password"),
 			}
 
-		else:
+			if not credentials.get("server_url"):
+				frappe.throw(_("Server URL is required for Stalwart CLI operations."))
+			if not credentials.get("api_key") and (
+				not credentials.get("username") or not credentials.get("password")
+			):
+				frappe.throw(
+					_("Either API key or username and password are required for Stalwart CLI operations.")
+				)
+
+		elif not frappe.flags.in_migrate:
+			is_stalwart_configured(raise_exception=True)
+
 			config = get_config()
 			credentials = {
-				"server_url": config.get("server_url"),
-				"api_key": config.get("api_key"),
-				"username": config.get("username"),
-				"password": config.get("password"),
+				"server_url": config["server_url"],
+				"api_key": config["api_key"],
+				"username": config["username"],
+				"password": config["password"],
 			}
 
-		self._validate_credentials(credentials)
 		self._credentials = credentials
 		self.cli_path = get_stalwart_cli_path()
 
@@ -108,21 +126,6 @@ class StalwartCLI:
 
 		if frappe.conf.developer_mode:
 			print(f"\tStalwart CLI installed at: {self.cli_path}")
-
-	def _validate_credentials(self, credentials: dict) -> None:
-		"""Validates that the provided credentials contain all mandatory fields."""
-
-		if frappe.flags.in_migrate:
-			return
-
-		if not credentials.get("server_url"):
-			frappe.throw(_("Server URL is required for Stalwart CLI operations."))
-		if not credentials.get("api_key") and (
-			not credentials.get("username") or not credentials.get("password")
-		):
-			frappe.throw(
-				_("Either API key or username and password are required for Stalwart CLI operations.")
-			)
 
 	def _parse_process_result(self, result: "CompletedProcess") -> dict:
 		"""Parses the result of a subprocess execution and returns a dictionary with success status and output or error message."""

@@ -4,10 +4,9 @@ from enum import Enum
 
 import frappe
 from frappe import _
-from frappe.utils import random_string
 
 from mail.stalwart.cli import StalwartCLI
-from mail.stalwart.domain import DomainService
+from mail.utils import snake_to_camel
 
 
 class CredentialType(Enum):
@@ -130,7 +129,7 @@ class StorageQuota:
 		quotas = {}
 		for field_name, value in self.__dict__.items():
 			if value:
-				quotas[field_name] = value
+				quotas[snake_to_camel(field_name)] = value
 
 		return quotas
 

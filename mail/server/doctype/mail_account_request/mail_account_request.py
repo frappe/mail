@@ -9,6 +9,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import (
 	add_to_date,
+	cint,
 	get_datetime,
 	get_url,
 	now,
@@ -17,16 +18,12 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.utils import generate_random_phrase, get_config
+from mail.stalwart import create_account, get_account_by_name, get_domain_by_name, get_roles
+from mail.utils import generate_random_phrase, get_config, is_stalwart_configured
 from mail.utils.user import is_mail_admin, is_system_manager
-from mail.utils.validation import (
-	is_email_assigned,
-	is_subaddressed_email,
-	is_valid_email_for_domain,
-	validate_domain_is_verified,
-	validate_local_domain,
-	validate_max_accounts,
-)
+from mail.utils.validation import is_subaddressed_email, is_valid_email_for_domain
+
+DEFAULT_ROLES = ["User"]
 
 
 class MailAccountRequest(Document):
@@ -37,29 +34,40 @@ class MailAccountRequest(Document):
 	def is_expired(self) -> bool:
 		return self.expires_at and get_datetime(self.expires_at) < now_datetime()
 
+	@property
+	def _roles(self) -> list[str]:
+		"""Returns the list of roles for the account request."""
+
+		roles = [r.strip() for r in self.roles.split("\n")] if self.roles else DEFAULT_ROLES
+		return list(set(roles))
+
+	@property
+	def is_admin(self) -> bool:
+		"""Returns True if the account request has admin role."""
+
+		for role in self._roles:
+			if "admin" in role.lower():
+				return True
+
+		return False
+
 	def before_insert(self) -> None:
+		is_stalwart_configured(raise_exception=True)
+		self.validate_backup_email()
 		self.set_request_key()
-
-	def validate(self) -> None:
-		self.validate_email()
-
-		if self.is_new():
-			self.set_expires_at()
-			self.set_ip_address()
-
-			validate_max_accounts()
-
-			self.validate_invited_by()
-			self.validate_domain()
-			self.validate_account()
-			self.validate_roles()
+		self.set_expires_at()
+		self.set_ip_address()
+		self.validate_invited_by()
+		self.validate_domain()
+		self.validate_account()
+		self.validate_roles()
 
 	def after_insert(self) -> None:
 		if self.send_invite:
 			self.send_verification_email()
 
-	def validate_email(self) -> None:
-		"""Validates email if needed."""
+	def validate_backup_email(self) -> None:
+		"""Validates the backup email."""
 
 		if not self.backup_email:
 			frappe.throw(_("Backup Email is required."))
@@ -67,8 +75,13 @@ class MailAccountRequest(Document):
 		self.backup_email = self.backup_email.strip().lower()
 		validate_email_address(self.backup_email, throw=True)
 
+	def set_request_key(self) -> None:
+		"""Sets a random key for the request."""
+
+		self.request_key = random_string(32)
+
 	def set_expires_at(self) -> None:
-		"""Sets the expiry date of the request."""
+		"""Sets the expiry date of the account request."""
 
 		if not self.expires_at:
 			self.expires_at = add_to_date(now(), days=1)
@@ -84,13 +97,9 @@ class MailAccountRequest(Document):
 		user = frappe.session.user
 
 		if is_system_manager(user):
-			if not self.invited_by:
-				frappe.throw(_("Invited By is required"))
+			self.invited_by = self.invited_by or user
 		else:
 			self.invited_by = user
-
-		if not is_mail_admin(self.invited_by):
-			frappe.throw(_("User {0} does not have permission to invite.").format(self.invited_by))
 
 	def validate_domain(self) -> None:
 		"""Validates the domain."""
@@ -98,8 +107,8 @@ class MailAccountRequest(Document):
 		if not self.domain_name:
 			frappe.throw(_("Domain is mandatory."))
 
-		validate_local_domain(self.domain_name)
-		validate_domain_is_verified(self.domain_name)
+		self.domain_name = self.domain_name.strip().lower()
+		get_domain_by_name(self.domain_name, raise_exception=True)
 
 	def validate_account(self) -> None:
 		"""Validates the account."""
@@ -107,7 +116,6 @@ class MailAccountRequest(Document):
 		self.account = self.account.strip().lower()
 		validate_email_address(self.account, throw=True)
 		is_subaddressed_email(self.account, raise_exception=True)
-		is_email_assigned(self.account, raise_exception=True)
 
 		if not is_valid_email_for_domain(self.account, self.domain_name):
 			frappe.throw(
@@ -117,14 +125,24 @@ class MailAccountRequest(Document):
 			)
 
 		if frappe.db.exists("User", {"email": self.account}):
-			frappe.throw(_("User {0} is already registered.").format(self.account))
+			frappe.throw(_("User with email {0} already exists.").format(frappe.bold(self.account)))
+
+		if get_account_by_name(self.account, raise_exception=False):
+			frappe.throw(
+				_("Account {0} already exists on Stalwart server.").format(frappe.bold(self.account))
+			)
 
 	def validate_roles(self) -> None:
 		"""Validates the roles."""
 
-		roles = set([r.strip().lower() for r in self.roles.split("\n")]) if self.roles else set()
-		roles.add("user")
-		self.roles = "\n".join(roles)
+		roles_to_assign = self._roles
+		server_roles_map = {r["description"]: r["id"] for r in get_roles()}
+
+		for role in roles_to_assign:
+			if role not in server_roles_map:
+				frappe.throw(_("Role {0} does not exists on the server.").format(frappe.bold(role)))
+
+		self.roles = "\n".join(roles_to_assign)
 
 	def validate_expired(self) -> None:
 		"""Forbids action if the request has expired."""
@@ -132,19 +150,12 @@ class MailAccountRequest(Document):
 		if self.is_expired:
 			frappe.throw(_("This request has expired. Please create a new one."))
 
-	def set_request_key(self) -> None:
-		"""Sets a random key for the request."""
-
-		self.request_key = random_string(32)
-
 	@frappe.whitelist()
 	def send_verification_email(self) -> None:
 		"""Send verification email to the user."""
 
-		if not self.backup_email:
-			frappe.throw(_("Email is required to send invite"))
-
 		self.validate_expired()
+		self.validate_backup_email()
 
 		if self.invited_by:
 			subject = _("You have been invited by {0} to join Frappe Mail").format(self.invited_by)
@@ -169,14 +180,12 @@ class MailAccountRequest(Document):
 	def force_verify_and_create_account(self, first_name: str, last_name: str, password: str) -> None:
 		"""Force verify and create account for invited user."""
 
-		self.validate_expired()
-
-		if self.is_verified:
-			frappe.throw(_("Account is already verified and created."))
-
 		user = frappe.session.user
 		if not is_system_manager(user) and not is_mail_admin(user):
 			frappe.throw(_("You are not authorized to perform this action."))
+
+		if self.is_verified:
+			frappe.throw(_("This account request is already verified."))
 
 		self.db_set("is_verified", 1)
 		self.create_account(first_name, last_name, password)
@@ -185,48 +194,46 @@ class MailAccountRequest(Document):
 		"""Create mail account for the user."""
 
 		if not self.is_verified:
-			frappe.throw(_("Please verify the email address first."))
+			frappe.throw(_("Account request is not verified. Please verify your email first."))
 
-		if frappe.db.exists("Principal Settings", {"principal_name": self.account}):
-			frappe.throw(_("Account {0} is already created.").format(self.account))
+		self.validate_expired()
 
 		if not password:
 			frappe.throw(_("Password is required to create account."))
 
-		if frappe.db.exists("User", {"email": self.account}):
-			frappe.throw(_("User with email {0} already exists.").format(frappe.bold(self.account)))
+		is_stalwart_configured(raise_exception=True)
+		self.validate_domain()
+		self.validate_account()
 
-		roles = set([r.lower() for r in self.roles.split("\n")]) if self.roles else set(["user"])
-		local_roles = ["Mail Admin"] if "admin" in roles or "tenant-admin" in roles else []
-
-		# Create User
-		user = create_user(self.account, first_name, last_name, password, local_roles)
-
-		# Generate App Password
+		# Step - 0: Generate App Password
 		app_password = generate_random_phrase()
 
-		# Create Principal
-		principal = frappe.new_doc("Principal")
-		principal.type = "Individual"
-		principal._name = self.account
-		principal.description = f"{first_name} {last_name}"
-		principal.password = password
-		principal.user = user
-		principal.append("app_passwords", {"identifier": frappe.local.site, "password": app_password})
+		# Step - 1: Create Account
+		create_account(
+			name=self.account.split("@")[0],
+			domain=self.domain_name,
+			password=password,
+			description=f"{first_name} {last_name}" if last_name else first_name,
+			aliases=[],
+			groups=[],
+			roles=self._roles,
+			quota=cint(get_config("default_disk_quota_gb")) * 1024**3,
+			timezone=None,
+		)
 
-		for role in roles:
-			principal.append("roles", {"role": role})
+		# Step - 2: Create User
+		user = create_user(
+			self.account, first_name, last_name, password, ["Mail Admin"] if self.is_admin else []
+		)
 
-		principal.insert(ignore_permissions=True)
-
-		# Update User Settings
+		# Step - 3: Update User Settings
 		user_settings = frappe.get_doc("User Settings", {"user": user})
 		user_settings.username = self.account
-		user_settings.app_password = app_password
+		user_settings.app_password = password
 		user_settings.backup_email = self.backup_email
 		user_settings.save(ignore_permissions=True)
 
-		# Create Push Subscription
+		# Step - 4: Create Push Subscription
 		if frappe.utils.get_url().startswith("https"):
 			ps = frappe.new_doc("Push Subscription")
 			ps.user = user
@@ -242,6 +249,9 @@ def create_user(
 ) -> str:
 	"""Creates a User document"""
 
+	if frappe.db.exists("User", {"email": email}):
+		frappe.throw(_("User with email {0} already exists.").format(frappe.bold(email)))
+
 	user = frappe.new_doc("User")
 	user.first_name = first_name
 	user.last_name = last_name
@@ -256,24 +266,3 @@ def create_user(
 	user.insert(ignore_permissions=True)
 
 	return user.name
-
-
-def has_permission(doc: "Document", ptype: str, user: str | None = None) -> bool:
-	if doc.doctype != "Mail Account Request":
-		return False
-
-	user = user or frappe.session.user
-
-	if is_system_manager(user) or is_mail_admin(user):
-		return True
-
-	return False
-
-
-def get_permission_query_condition(user: str | None = None) -> str:
-	user = user or frappe.session.user
-
-	if is_system_manager(user) or is_mail_admin(user):
-		return ""
-
-	return "1=0"
