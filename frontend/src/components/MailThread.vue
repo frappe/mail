@@ -81,7 +81,14 @@
 				:class="{ 'pb-16': isMobile && !thread.data?.at(-1)?.draft }"
 			>
 				<template v-for="group in mailsByDay" :key="group.date">
-					<div v-if="!isMobile && mailsByDay.length > 1" class="flex items-center px-1">
+					<div
+						v-if="
+							!isMobile &&
+							mailsByDay.length > 1 &&
+							user.data.group_messages_by === 'Day'
+						"
+						class="flex items-center px-1"
+					>
 						<div class="border-outline-gray-1 flex-1 border-t" />
 						<span class="text-ink-gray-5 rounded-full border px-2 py-1 text-xs">
 							{{ getFormattedDate(group.date || dayjs()) }}
