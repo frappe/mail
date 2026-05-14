@@ -1,5 +1,5 @@
 <template>
-	<template v-if="isHovered">
+	<template v-if="isHovered && !isMobile">
 		<Tooltip v-for="action in actions" :key="action.label" :text="action.label">
 			<button class="action-btn" @click.stop.prevent="action.onClick">
 				<component :is="action.icon" class="icon text-ink-gray-5" />
@@ -23,6 +23,7 @@ import { computed } from 'vue'
 import { Archive, Mail, MailOpen, Star, Trash2 } from 'lucide-vue-next'
 import { Tooltip } from 'frappe-ui'
 
+import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
 import type { Thread } from '@/types'
@@ -30,6 +31,7 @@ import type { Thread } from '@/types'
 const { isHovered, mail } = defineProps<{ isHovered: boolean; mail: Thread }>()
 const emit = defineEmits(['setSeen', 'archiveThread', 'trashThread', 'deleteThread', 'setFlagged'])
 
+const { isMobile } = useScreenSize()
 const { mailboxIds } = userStore()
 
 const actions = computed(() =>
@@ -70,7 +72,7 @@ const actions = computed(() =>
 
 <style scoped>
 .action-btn {
-	@apply relative after:absolute after:-inset-1 after:content-[''];
+	@apply relative after:absolute after:-inset-4 after:content-[''] sm:after:-inset-1.5;
 }
 
 .action-btn:hover > * {
