@@ -2,7 +2,7 @@
 	<div class="flex flex-col space-y-2 rounded p-2">
 		<div class="flex w-full">
 			<div class="flex items-center space-x-2">
-				<Cloud class="stroke-1.5 h-4 w-4" />
+				<Cloud class="icon" />
 				<span v-if="!isCollapsed" class="text-sm"> {{ __('Storage') }} </span>
 			</div>
 		</div>

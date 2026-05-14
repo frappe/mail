@@ -82,7 +82,7 @@
 						>
 							<Button variant="ghost" :tooltip="__('Filter')">
 								<template #icon>
-									<component :is="ListFilter" class="text-ink-gray-7 h-4 w-4" />
+									<component :is="ListFilter" class="text-ink-gray-7 icon" />
 								</template>
 							</Button>
 						</Dropdown>
@@ -94,7 +94,7 @@
 							@click="reloadThreads"
 						>
 							<template #icon>
-								<RefreshCw class="text-ink-gray-7 stroke-1.5 h-4 w-4" />
+								<RefreshCw class="text-ink-gray-7 icon" />
 							</template>
 						</Button>
 
@@ -102,7 +102,7 @@
 							<Dropdown v-if="showReadingPane" :options="selectActions">
 								<Button variant="ghost" :tooltip="__('Actions')">
 									<template #icon>
-										<Ellipsis class="text-ink-gray-7 stroke-1.5 h-4 w-4" />
+										<Ellipsis class="text-ink-gray-7 icon" />
 									</template>
 								</Button>
 							</Dropdown>
@@ -117,7 +117,7 @@
 									<template #icon>
 										<component
 											:is="action.icon"
-											class="text-ink-gray-7 stroke-1.5 h-4 w-4"
+											class="text-ink-gray-7 icon"
 										/>
 									</template>
 								</Button>
@@ -130,10 +130,7 @@
 						>
 							<Button variant="ghost" :tooltip="__('Move To')">
 								<template #icon>
-									<component
-										:is="FolderInput"
-										class="text-ink-gray-7 stroke-1.5 h-4 w-4"
-									/>
+									<component :is="FolderInput" class="text-ink-gray-7 icon" />
 								</template>
 							</Button>
 						</Dropdown>
