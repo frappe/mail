@@ -7,14 +7,14 @@
 		@click.stop="action.onClick"
 	>
 		<template #icon>
-			<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
+			<component :is="action.icon" class="text-ink-gray-5 stroke-1.5 h-4 w-4" />
 		</template>
 	</Button>
 
 	<Dropdown v-if="!mail.draft && !isCollapsed" :options="moreActions(mail)">
 		<Button variant="ghost" :tooltip="__('More')" @click.stop>
 			<template #icon>
-				<Ellipsis class="text-ink-gray-5 h-4 w-4" />
+				<Ellipsis class="text-ink-gray-5 stroke-1.5 h-4 w-4" />
 			</template>
 		</Button>
 	</Dropdown>

@@ -271,6 +271,7 @@
 				}"
 			>
 				<MailThread
+					ref="mailThread"
 					:mailbox
 					:thread-i-d
 					:threads="threadIDs"
@@ -445,7 +446,8 @@ watch(
 
 // Selection
 
-const mailItems = useTemplateRef('mailItems')
+const mailItemsRef = useTemplateRef('mailItems')
+const mailThreadRef = useTemplateRef('mailThread')
 
 const selections = ref<string[]>([])
 const lastSelected = ref<string[]>()
@@ -941,7 +943,7 @@ const focusOnThreadByOffset = (offset: number) =>
 	focusOnThread(getThreadByOffset(offset, threadInFocus.value))
 
 const scrollIntoView = (threadID: string) => {
-	const el = mailItems.value?.find((el) => el?.id === threadID)?.$el
+	const el = mailItemsRef.value?.find((el) => el?.id === threadID)?.$el
 	if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
@@ -962,13 +964,7 @@ const setSeen = createResource({
 			threadsResource.value.data
 				.filter((thread: Thread) => ids.includes(thread.thread_id))
 				.forEach((thread: Thread) => (thread.seen = seen ? 1 : 0))
-			if (
-				!seen &&
-				threadID &&
-				(ids.includes(threadID) ||
-					!threadsResource.value.data.some((m: Thread) => ids.includes(m.thread_id)))
-			)
-				goToMailbox()
+			if (!seen && threadID && ids.includes(threadID)) goToMailbox()
 		}
 	},
 })
@@ -983,6 +979,7 @@ const setFlagged = createResource({
 			threadsResource.value.data
 				.filter((thread: Thread) => ids.includes(thread.thread_id))
 				.forEach((thread: Thread) => (thread.flagged = flagged ? 1 : 0))
+			if (threadID && ids.includes(threadID)) mailThreadRef.value?.syncFlagged(flagged)
 		}
 	},
 })
@@ -1109,42 +1106,46 @@ const handleSuccessAndRemoveFromList = (
 
 // Action handlers
 
-const handleSetSeen = (threadIDs: SetSeenParams, isUndo = false) => {
-	const selectedThreads = Object.values(threadIDs).flat()
-	const originalState = getOriginalState(selectedThreads, 'seen')
-	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
-
-	const action = () => setSeen.submit(threadIDs)
-	if (isUndo) return raisePromiseToast(action, __('Undoing...'), __('Read status restored.'))
-
-	setUndoAction(() => handleSetSeen(originalState, true))
+const handleSetSeen = (threadIDs: SetSeenParams) => {
 	const seen = Object.keys(threadIDs)[0] === '1'
+	const selectedThreads = Object.values(threadIDs).flat()
+	if (
+		selectedThreads.every(
+			(thread_id) =>
+				threadsResource.value?.data?.find((t: Thread) => t.thread_id === thread_id)
+					?.seen === (seen ? 1 : 0),
+		)
+	)
+		return
+
 	const loading = seen ? __('Marking as read...') : __('Marking as unread...')
 	const success =
 		selectedThreads.length === 1
 			? __('Thread marked as {0}.', [seen ? __('read') : __('unread')])
 			: __('Threads marked as {0}.', [seen ? __('read') : __('unread')])
 
-	raisePromiseToast(action, loading, success, undo)
+	raisePromiseToast(() => setSeen.submit(threadIDs), loading, success)
 }
 
-const handleSetFlagged = (threadIDs: SetSeenParams, isUndo = false) => {
-	const selectedThreads = Object.values(threadIDs).flat()
-	const originalState = getOriginalState(selectedThreads, 'flagged')
-	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
-
-	const action = () => setFlagged.submit(threadIDs)
-	if (isUndo) return raisePromiseToast(action, __('Undoing...'), __('Star status restored.'))
-
-	setUndoAction(() => handleSetFlagged(originalState, true))
+const handleSetFlagged = (threadIDs: SetSeenParams) => {
 	const flagged = Object.keys(threadIDs)[0] === '1'
+	const selectedThreads = Object.values(threadIDs).flat()
+	if (
+		selectedThreads.every(
+			(thread_id) =>
+				threadsResource.value?.data?.find((t: Thread) => t.thread_id === thread_id)
+					?.flagged === (flagged ? 1 : 0),
+		)
+	)
+		return
+
 	const loading = flagged ? __('Starring...') : __('Unstarring...')
 	const success =
 		selectedThreads.length === 1
 			? __('Thread {0}.', [flagged ? __('starred') : __('unstarred')])
 			: __('Threads {0}.', [flagged ? __('starred') : __('unstarred')])
 
-	raisePromiseToast(action, loading, success, undo)
+	raisePromiseToast(() => setFlagged.submit(threadIDs), loading, success)
 }
 
 const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean = false) => {

@@ -28,14 +28,17 @@
 						@click="action.onClick"
 					>
 						<template #icon>
-							<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
+							<component
+								:is="action.icon"
+								class="text-ink-gray-5 stroke-1.5 h-4 w-4"
+							/>
 						</template>
 					</Button>
 
 					<Dropdown :options="moveToOptions">
 						<Button variant="ghost" :tooltip="__('Move To')">
 							<template #icon>
-								<FolderInput class="text-ink-gray-5 h-4 w-4" />
+								<FolderInput class="text-ink-gray-5 stroke-1.5 h-4 w-4" />
 							</template>
 						</Button>
 					</Dropdown>
@@ -48,7 +51,7 @@
 							@click="emit('prevThread')"
 						>
 							<template #icon>
-								<ArrowLeft class="text-ink-gray-5 h-4 w-4" />
+								<ArrowLeft class="text-ink-gray-5 stroke-1.5 h-4 w-4" />
 							</template>
 						</Button>
 
@@ -59,7 +62,7 @@
 							@click="emit('nextThread')"
 						>
 							<template #icon>
-								<ArrowRight class="text-ink-gray-5 h-4 w-4" />
+								<ArrowRight class="text-ink-gray-5 stroke-1.5 h-4 w-4" />
 							</template>
 						</Button>
 					</template>
@@ -775,6 +778,11 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 onMounted(() => window.addEventListener('keydown', handleKeydown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
+
+const syncFlagged = (flagged: boolean) =>
+	thread.data?.forEach((mail: Mail) => (mail.flagged = flagged ? 1 : 0))
+
+defineExpose({ syncFlagged })
 
 const focusedDraft = ref<string>()
 const showSendModal = ref(false)
