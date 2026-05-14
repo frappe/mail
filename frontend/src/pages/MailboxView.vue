@@ -282,6 +282,7 @@
 					@set-flagged="
 						(flagged: boolean) => handleSetFlagged({ [Number(flagged)]: [threadID!] })
 					"
+					@sync-flagged="(flagged: boolean) => syncFlaggedWithThread(flagged)"
 					@move-thread="
 						(moveToMailbox: string) =>
 							handleMoveThreads({ [moveToMailbox]: [threadID!] })
@@ -976,10 +977,16 @@ const setFlagged = createResource({
 			threadsResource.value.data
 				.filter((thread: Thread) => ids.includes(thread.thread_id))
 				.forEach((thread: Thread) => (thread.flagged = flagged ? 1 : 0))
-			if (threadID && ids.includes(threadID)) mailThreadRef.value?.syncFlagged(flagged)
+			if (threadID && ids.includes(threadID))
+				mailThreadRef.value?.syncFlaggedWithThreads(flagged)
 		}
 	},
 })
+
+const syncFlaggedWithThread = (flagged: boolean) => {
+	const thread = threadsResource.value.data?.find((t: Thread) => t.thread_id === threadID)
+	if (thread) thread.flagged = flagged ? 1 : 0
+}
 
 type MoveThreadsParams = Record<string, string[]>
 
@@ -1127,14 +1134,6 @@ const handleSetSeen = (threadIDs: SetSeenParams) => {
 const handleSetFlagged = (threadIDs: SetSeenParams) => {
 	const flagged = Object.keys(threadIDs)[0] === '1'
 	const selectedThreads = Object.values(threadIDs).flat()
-	if (
-		selectedThreads.every(
-			(thread_id) =>
-				threadsResource.value?.data?.find((t: Thread) => t.thread_id === thread_id)
-					?.flagged === (flagged ? 1 : 0),
-		)
-	)
-		return
 
 	const loading = flagged ? __('Starring...') : __('Unstarring...')
 	const success =

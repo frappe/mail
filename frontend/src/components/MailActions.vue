@@ -72,6 +72,8 @@ const {
 	thread: Mail[]
 }>()
 
+const emit = defineEmits(['syncFlagged'])
+
 const { isMobile } = useScreenSize()
 const { account, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
 const { setUndoAction, undo } = useUndo()
@@ -291,6 +293,7 @@ const starMails = createResource({
 			const m = thread.find((m: Mail) => m.id === id)
 			if (m) m.flagged = flagged ? 1 : 0
 		})
+		if (ids.includes(thread.at(-1)!.id)) emit('syncFlagged', flagged)
 	},
 })
 

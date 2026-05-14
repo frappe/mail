@@ -163,6 +163,9 @@
 										:forward
 										:reload-mails="handleReload"
 										:thread="thread.data"
+										@sync-flagged="
+											(flagged: boolean) => emit('syncFlagged', flagged)
+										"
 									/>
 								</div>
 								<div
@@ -237,6 +240,10 @@
 												:forward
 												:reload-mails="handleReload"
 												:thread="thread.data"
+												@sync-flagged="
+													(flagged: boolean) =>
+														emit('syncFlagged', flagged)
+												"
 											/>
 										</div>
 									</div>
@@ -435,6 +442,7 @@ const emit = defineEmits([
 	'setSeen',
 	'setFlagged',
 	'moveThread',
+	'syncFlagged',
 	'prevThread',
 	'nextThread',
 ])
@@ -776,10 +784,10 @@ const handleKeydown = (e: KeyboardEvent) => {
 onMounted(() => window.addEventListener('keydown', handleKeydown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 
-const syncFlagged = (flagged: boolean) =>
+const syncFlaggedWithThreads = (flagged: boolean) =>
 	thread.data?.forEach((mail: Mail) => (mail.flagged = flagged ? 1 : 0))
 
-defineExpose({ syncFlagged })
+defineExpose({ syncFlaggedWithThreads })
 
 const focusedDraft = ref<string>()
 const showSendModal = ref(false)
