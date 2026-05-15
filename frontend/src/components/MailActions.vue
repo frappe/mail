@@ -22,6 +22,7 @@
 
 <script lang="ts" setup>
 import { h, inject } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
 	Ban,
 	CircleAlert,
@@ -72,9 +73,11 @@ const {
 	thread: Mail[]
 }>()
 
-const emit = defineEmits(['setFlagged'])
+const emit = defineEmits(['setFlagged', 'syncUnseen'])
 
 const { isMobile } = useScreenSize()
+const route = useRoute()
+const router = useRouter()
 const { account, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
 const { setUndoAction, undo } = useUndo()
 const user = inject('$user')
@@ -286,10 +289,12 @@ const setMailsSeen = createResource({
 	makeParams: ({ ids }: { ids: string[] }) => ({ account, ids, seen: false }),
 	onSuccess: (ids: string[]) => {
 		raiseToast(__('{0} marked as unread.', [ids.length === 1 ? __('Mail') : __('Mails')]))
-		ids.forEach((id: string) => {
-			const m = thread.find((m: Mail) => m.id === id)
-			if (m) m.seen = 0
+		router.push({
+			name: 'Mailbox',
+			params: { accountId: route.params.accountId, mailbox },
+			query: route.query,
 		})
+		emit('syncUnseen', ids)
 	},
 })
 
@@ -298,7 +303,7 @@ const handleMarkUnreadFromHere = () => {
 	if (idx === -1) return
 	const ids = thread
 		.slice(idx)
-		.filter((m: Mail) => !m.draft && m.seen)
+		.filter((m: Mail) => !m.draft)
 		.map((m: Mail) => m.id)
 	if (ids.length) setMailsSeen.submit({ ids })
 }

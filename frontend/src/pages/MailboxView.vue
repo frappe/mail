@@ -277,6 +277,12 @@
 								? setSeen.submit({ 1: [threadID!] })
 								: handleSetSeen({ 0: [threadID!] })
 					"
+					@sync-unseen="
+						(ids: string[]) =>
+							threadsResource.data
+								.filter((thread: Thread) => ids.includes(thread.id))
+								.forEach((thread: Thread) => (thread.seen = 0))
+					"
 					@set-flagged="
 						(ids: string[], flagged: boolean) => setFlagged.submit({ ids, flagged })
 					"

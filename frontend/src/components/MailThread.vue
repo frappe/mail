@@ -7,9 +7,9 @@
 			@set-seen="(seen: boolean) => emit('setSeen', seen)"
 			@move-thread="(moveToMailbox: string) => emit('moveThread', moveToMailbox)"
 			@set-spam-status="(spam: boolean) => emit('setSpamStatus', spam)"
-			@delete-thread="() => emit('deleteThread')"
-			@prev-thread="() => emit('prevThread')"
-			@next-thread="() => emit('nextThread')"
+			@delete-thread="emit('deleteThread')"
+			@prev-thread="emit('prevThread')"
+			@next-thread="emit('nextThread')"
 		/>
 		<div ref="threadContainer" class="flex-1 overflow-y-auto">
 			<div v-if="isMobile && !thread.loading" class="border-b px-3 py-3.5">
@@ -30,35 +30,50 @@
 						v-if="
 							!isMobile &&
 							mailsByDay.length > 1 &&
-							user.data.group_messages_by === 'Day'
+							user.data.group_messages_by === 'Day' &&
+							!group.mails.every((m) => collapsedSeenMailNames.has(m.name))
 						"
 						class="flex items-center px-1"
 					>
 						<div class="border-outline-gray-1 flex-1 border-t" />
 						<span class="text-ink-gray-5 rounded-full border px-2 py-1 text-xs">
-							{{ getFormattedDate(group.date || dayjs()) }}
+							{{ getFormattedDate(group.date) }}
 						</span>
 						<div class="border-outline-gray-1 flex-1 border-t" />
 					</div>
 					<template v-for="mail in group.mails" :key="mail.name">
-						<div
-							v-if="shouldShowMarker(mail.id)"
-							ref="unseenMarker"
-							class="flex items-center gap-3 px-1"
-						>
+						<div v-if="shouldShowMarker(mail.id)" class="flex items-center gap-3 px-1">
 							<div class="bg-surface-blue-3 h-px flex-1" />
 							<span class="text-ink-blue-3 text-xs">
 								{{
 									__('{0} new {1}', [
 										unseenCount,
-										unseenCount === 1 ? __('mail') : __('mails'),
+										unseenCount === 1 ? __('message') : __('messages'),
 									])
 								}}
 							</span>
 							<div class="bg-surface-blue-3 h-px flex-1" />
 						</div>
+						<button
+							v-if="mail.name === collapsedGroupTriggerMailName"
+							class="text-ink-gray-5 hover:text-ink-gray-8 flex w-full cursor-pointer items-center px-1 py-1 transition-colors"
+							@click="seenGroupExpanded = true"
+						>
+							<div class="border-outline-gray-1 flex-1 border-t" />
+							<span class="rounded-full border px-2 py-1 text-xs">
+								{{
+									__('{0} more {1}', [
+										String(collapsedSeenMailNames.size),
+										collapsedSeenMailNames.size === 1
+											? __('message')
+											: __('messages'),
+									])
+								}}
+							</span>
+							<div class="border-outline-gray-1 flex-1 border-t" />
+						</button>
 						<div
-							ref="mails"
+							v-if="!collapsedSeenMailNames.has(mail.name)"
 							:data-mail-name="mail.name"
 							:class="{
 								'px-3 py-5': isMobile,
@@ -119,6 +134,7 @@
 											(id: string, flagged: boolean) =>
 												emit('setFlagged', [id], flagged)
 										"
+										@sync-unseen="(ids: string[]) => emit('syncUnseen', ids)"
 									/>
 								</div>
 								<div
@@ -196,6 +212,9 @@
 												@set-flagged="
 													(id: string, flagged: boolean) =>
 														emit('setFlagged', [id], flagged)
+												"
+												@sync-unseen="
+													(ids: string[]) => emit('syncUnseen', ids)
 												"
 											/>
 										</div>
@@ -381,6 +400,7 @@ const emit = defineEmits([
 	'moveThread',
 	'prevThread',
 	'nextThread',
+	'syncUnseen',
 ])
 
 const { isMobile } = useScreenSize()
@@ -394,31 +414,39 @@ const route = useRoute()
 const router = useRouter()
 
 const threadContainerRef = useTemplateRef('threadContainer')
-const unseenMarkerRef = useTemplateRef('unseenMarker')
-const mailsRef = useTemplateRef('mails')
-const scrollToLatestMail = () => {
-	if (thread.data?.length > 1 && isSomeSeen.value)
-		setTimeout(() => {
-			const el =
-				unseenMarkerRef.value?.[0] || unseenMarkerRef.value || mailsRef.value?.at(-1)
-			if (!el || !threadContainerRef.value) return
-
-			const offset = isMobile.value ? 52 : 64
-			threadContainerRef.value.scrollTo({ top: el.offsetTop - offset, behavior: 'smooth' })
-		}, 500)
-}
 
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
 
 const mailsByDay = computed(() => {
 	const groups: { date: string; mails: Mail[] }[] = []
 	for (const mail of thread.data || []) {
-		const day = mail.received_at ? dayjs(mail.received_at).format('YYYY-MM-DD') : ''
+		const day = dayjs(mail.received_at).format('YYYY-MM-DD')
 		const last = groups.at(-1)
 		if (last && last.date === day) last.mails.push(mail)
 		else groups.push({ date: day, mails: [mail] })
 	}
 	return groups
+})
+
+const seenGroupExpanded = ref(false)
+
+const collapsedSeenMailNames = computed(() => {
+	if (seenGroupExpanded.value) return new Set<string>()
+	const lastMailName = thread.data?.at(-1)?.name
+	const seenMails = (thread.data || []).filter(
+		(m) => m.seen && !m.name.startsWith('draft') && m.name !== lastMailName,
+	)
+	if (seenMails.length < 4) return new Set<string>()
+	return new Set(seenMails.slice(1, -1).map((m) => m.name))
+})
+
+const collapsedGroupTriggerMailName = computed(() => {
+	if (!collapsedSeenMailNames.value.size) return null
+	const lastMailName = thread.data?.at(-1)?.name
+	const seenMails = (thread.data || []).filter(
+		(m) => m.seen && !m.name.startsWith('draft') && m.name !== lastMailName,
+	)
+	return seenMails[1]?.name ?? null
 })
 
 const isSomeSeen = computed(() => (thread.data || []).some((m) => m.seen))
@@ -465,7 +493,6 @@ const thread = createResource({
 				populateDraftMails(mail)
 			}
 		})
-		scrollToLatestMail()
 	},
 	onError: () => goToMailbox(),
 })
@@ -486,7 +513,13 @@ const reload = () => {
 	if (threadID) thread.reload()
 }
 
-watch(() => threadID, reload)
+watch(
+	() => threadID,
+	() => {
+		seenGroupExpanded.value = false
+		reload()
+	},
+)
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
