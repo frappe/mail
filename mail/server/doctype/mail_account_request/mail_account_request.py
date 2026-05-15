@@ -5,7 +5,7 @@
 from uuid import uuid7
 
 import frappe
-from frappe import _
+from frappe import Any, _
 from frappe.model.document import Document
 from frappe.utils import (
 	add_to_date,
@@ -25,7 +25,7 @@ from mail.stalwart import (
 	get_domain_by_name,
 	get_roles,
 )
-from mail.utils import get_config, is_stalwart_configured
+from mail.utils import execute_with_logging, get_config, is_stalwart_configured
 from mail.utils.user import is_mail_admin, is_system_manager
 from mail.utils.validation import is_subaddressed_email, is_valid_email_for_domain
 
@@ -202,48 +202,77 @@ class MailAccountRequest(Document):
 		if not self.is_verified:
 			frappe.throw(_("Account request is not verified. Please verify your email first."))
 
-		self.validate_expired()
-
 		if not password:
 			frappe.throw(_("Password is required to create account."))
+
+		self.validate_expired()
 
 		is_stalwart_configured(raise_exception=True)
 		self.validate_domain()
 		self.validate_account()
 
-		# Step - 1: Create Account
-		create_account(
-			name=self.account.split("@")[0],
-			domain=self.domain_name,
-			password=password,
-			description=f"{first_name} {last_name}" if last_name else first_name,
-			aliases=[],
-			groups=[],
-			roles=self._roles,
-			quota=cint(get_config("default_disk_quota_gb")) * 1024**3,
-			timezone=None,
+		# Step - 1: Create Account on Stalwart
+		execute_with_logging(
+			func=lambda: create_account(
+				name=self.account.split("@")[0],
+				domain=self.domain_name,
+				password=password,
+				description=f"{first_name} {last_name}" if last_name else first_name,
+				aliases=[],
+				groups=[],
+				roles=self._roles,
+				quota=cint(get_config("default_disk_quota_gb")) * 1024**3,
+				timezone=None,
+			),
+			title="Failed to create account on Stalwart",
+			user_message=_("Failed to create account on the server, check error log for details."),
 		)
 
-		# Step - 2: Create App Password
-		app_password = create_app_password(username=self.account, password=password)
+		# Step - 2: Create App Password on Stalwart
+		app_password = execute_with_logging(
+			func=lambda: create_app_password(username=self.account, password=password),
+			title="Failed to create app password on Stalwart",
+			user_message=_("Failed to create app password on the server, check error log for details."),
+		)
 
 		# Step - 3: Create User
-		user = create_user(
-			self.account, first_name, last_name, password, ["Mail Admin"] if self.is_admin else []
+		user = execute_with_logging(
+			func=lambda: create_user(
+				self.account, first_name, last_name, password, ["Mail Admin"] if self.is_admin else []
+			),
+			title="Failed to create user",
+			user_message=_("Failed to create user, check error log for details."),
 		)
 
 		# Step - 4: Update User Settings
+		execute_with_logging(
+			func=lambda: self._update_user_settings(user, app_password),
+			title="Failed to update user settings",
+			user_message=_("Failed to update user settings, check error log for details."),
+		)
+
+		# Step - 5: Create Push Subscription
+		if frappe.utils.get_url().startswith("https"):
+			execute_with_logging(
+				func=lambda: self._create_push_subscription(user),
+				title="Failed to create push subscription",
+			)
+
+	def _update_user_settings(self, user: str, app_password: str) -> None:
+		"""Updates the user settings with the app password and backup email."""
+
 		user_settings = frappe.get_doc("User Settings", {"user": user})
 		user_settings.username = self.account
 		user_settings.app_password = app_password
 		user_settings.backup_email = self.backup_email
 		user_settings.save(ignore_permissions=True)
 
-		# Step - 5: Create Push Subscription
-		if frappe.utils.get_url().startswith("https"):
-			ps = frappe.new_doc("Push Subscription")
-			ps.user = user
-			ps.insert(ignore_permissions=True)
+	def _create_push_subscription(self, user: str) -> None:
+		"""Creates a push subscription for the user."""
+
+		ps = frappe.new_doc("Push Subscription")
+		ps.user = user
+		ps.insert(ignore_permissions=True)
 
 
 def create_user(

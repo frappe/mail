@@ -347,6 +347,22 @@ def reformat_pbkdf2_hash(passlib_hash: str, dklen: int | None = None) -> str:
 	return formatted_hash
 
 
+def execute_with_logging(
+	func: callable, title: str, user_message: str | None = None, with_context: bool = False, *args, **kwargs
+) -> Any | None:
+	"""Executes a function and logs any exceptions that occur, optionally throwing a user-friendly message."""
+
+	try:
+		return func(*args, **kwargs)
+	except Exception:
+		frappe.log_error(
+			title=title,
+			message=frappe.get_traceback(with_context=with_context),
+		)
+		if user_message:
+			frappe.throw(user_message)
+
+
 @contextmanager
 def user_context(user: str) -> Generator[None, None, None]:
 	"""Context manager to temporarily switch the user context."""
