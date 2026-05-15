@@ -19,6 +19,13 @@ from mail.utils.user import is_local_user, is_system_manager
 
 
 class UserSettings(Document):
+	@property
+	def server_url(self) -> str | None:
+		"""Returns the server URL from the configuration."""
+
+		config = get_config()
+		return config.get("server_url")
+
 	@cached_property
 	def session(self) -> dict:
 		"""Returns the JMAP session for the user."""
@@ -61,14 +68,12 @@ class UserSettings(Document):
 		if not self.username or self.flags.skip_jmap_validation:
 			return
 
-		server_url = self.server_url or get_config("server_url")
-
-		if not server_url or not self.get_password("app_password"):
-			frappe.throw(_("Server URL and App Password are required to validate JMAP settings."))
+		if not self.get_password("app_password"):
+			frappe.throw(_("App Password is required to validate JMAP settings."))
 
 		try:
 			connection = JMAPConnection(
-				JMAPConnectionInfo(server_url, self.username, self.get_password("app_password"))
+				JMAPConnectionInfo(get_config("server_url"), self.username, self.get_password("app_password"))
 			)
 		except Exception as e:
 			if (

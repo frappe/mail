@@ -54,15 +54,10 @@ def get_jmap_connection(
 
 	user_settings = frappe.get_cached_doc("User Settings", settings)
 
-	server_url = user_settings.server_url or get_config("server_url")
-	if not server_url:
-		frappe.throw(
-			_("Server URL must be set in either the user's settings or the site configuration."),
-			frappe.ValidationError,
-		)
-
 	return JMAPConnection(
-		JMAPConnectionInfo(server_url, user_settings.username, user_settings.get_password("app_password")),
+		JMAPConnectionInfo(
+			get_config("server_url"), user_settings.username, user_settings.get_password("app_password")
+		),
 		session_manager=get_jmap_session_manager(user),
 	)
 
