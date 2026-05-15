@@ -326,3 +326,22 @@ class AccountService(StalwartCLI):
 			frappe.throw(_("Failed to create account: {0}").format(response["error"]))
 
 		return response
+
+	def update_password(self, account_id: str, new_password: str) -> None:
+		"""Updates the password for the specified account on the Stalwart server."""
+
+		credentials = self.get(account_id, fields=["credentials"])["credentials"]
+
+		row_id = 0
+		if credentials:
+			for idx, credential in credentials.items():
+				if credential["@type"] == CredentialType.PASSWORD.value:
+					row_id = idx
+					break
+
+		response = self.run(
+			["update", "account", account_id, "--field", f"credentials/{row_id}/secret={new_password}"]
+		)
+
+		if not response["success"]:
+			frappe.throw(_("Failed to update password for account with ID {0}.").format(account_id))

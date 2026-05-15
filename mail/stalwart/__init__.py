@@ -21,6 +21,7 @@ from mail.stalwart.domain import DomainService
 from mail.stalwart.role import RoleService
 from mail.utils import get_config
 from mail.utils.dt import utcnow
+from mail.utils.user import get_user_personal_account
 
 
 @redis_cache(ttl=3600)
@@ -159,3 +160,15 @@ def create_app_password(username: str, password: str, description: str | None = 
 	return AppPasswordService(
 		credentials={"server_url": server_url, "username": username, "password": password}
 	).create(AppPassword(description=description, permissions=Permissions(type=PermissionType.INHERIT)))
+
+
+def update_password(user: str | None = None, new_password: str | None = None) -> None:
+	"""Updates the password for the specified user's personal account on the Stalwart server."""
+
+	if not user:
+		frappe.throw(_("User is required to update password on Stalwart server."))
+	if not new_password:
+		frappe.throw(_("New password is required to update password on Stalwart server."))
+
+	account_id = get_user_personal_account(user, "id", raise_exception=False)
+	AccountService().update_password(account_id, new_password)

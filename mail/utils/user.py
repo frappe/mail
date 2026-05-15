@@ -100,14 +100,16 @@ def get_account_emails(account: str) -> list[str]:
 	return emails
 
 
-def get_user_personal_account(user: str, raise_exception: bool = False) -> str | None:
+def get_user_personal_account(
+	user: str, property: str | None = None, raise_exception: bool = False
+) -> str | None:
 	"""Returns the personal account of the user."""
 
 	from mail.client.doctype.user_account.user_account import fetch_user_accounts
 
 	for account in fetch_user_accounts(user, limit=None):
 		if account["is_personal"]:
-			return account["name"]
+			return account[property or "name"]
 
 	if raise_exception:
 		frappe.throw(_("User {0} does not have a personal account configured.").format(frappe.bold(user)))
