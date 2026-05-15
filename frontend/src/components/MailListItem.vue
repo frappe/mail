@@ -31,7 +31,7 @@
 			/>
 			<div
 				v-else-if="isSelected && isMobile"
-				class="bg-surface-gray-7 flex h-10 min-h-10 w-10 min-w-10 rounded-full"
+				class="bg-surface-gray-7 hitbox flex h-10 min-h-10 w-10 min-w-10 rounded-full"
 				@click.stop.prevent="emit('setSelected', false)"
 			>
 				<Check class="text-ink-white m-auto h-5 w-5 stroke-[3px]" />
@@ -41,6 +41,7 @@
 				:label="getFirstAlphabet(mail.from_name) || getFirstAlphabet(mail.from_email)"
 				:image="mail.user_image"
 				:size="isFullWidth ? 'lg' : '2xl'"
+				class="hitbox"
 				@click.stop.prevent="emit('setSelected', true)"
 			/>
 		</div>
@@ -339,3 +340,9 @@ const onTouchMove = (e: TouchEvent) => {
 	}
 }
 </script>
+
+<style scoped>
+.hitbox {
+	@apply relative after:absolute after:-inset-2 after:content-[''];
+}
+</style>

@@ -156,7 +156,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "Day",
+   "default": "None",
    "depends_on": "eval: doc.username",
    "description": "Group email messages in the list by time period (e.g., day or month).",
    "fieldname": "group_messages_by",
