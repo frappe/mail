@@ -219,6 +219,10 @@ doc_events = {
 		"on_update": [
 			"mail.events.update_account_password",
 		],
+		"on_trash": [
+			"mail.events.delete_account",
+			"mail.events.delete_user_settings",
+		],
 	},
 }
 

@@ -45,8 +45,8 @@ def get_jmap_connection(
 				frappe.PermissionError,
 			)
 
-	if frappe.get_cached_value("User", user, "enabled") == 0:
-		frappe.throw(_("User {0} is disabled.").format(frappe.bold(user)))
+	if not frappe.get_cached_value("User", user, "enabled"):
+		frappe.throw(_("User {0} does not exist or is disabled.").format(frappe.bold(user)))
 
 	settings = frappe.db.exists("User Settings", {"user": user, "username": ["!=", None]})
 	if not settings:

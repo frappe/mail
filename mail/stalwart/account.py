@@ -327,10 +327,21 @@ class AccountService(StalwartCLI):
 
 		return response
 
-	def update_password(self, account_id: str, new_password: str) -> None:
+	def delete(self, ids: list[str]) -> None:
+		"""Deletes accounts with the specified IDs from the Stalwart server."""
+
+		if not ids:
+			frappe.throw(_("No account IDs provided for deletion."))
+
+		response = self.run(["delete", "Account", "--ids", ",".join(ids)])
+
+		if not response["success"]:
+			frappe.throw(_("Failed to delete accounts: {0}").format(response["error"]))
+
+	def update_password(self, id: str, new_password: str) -> None:
 		"""Updates the password for the specified account on the Stalwart server."""
 
-		credentials = self.get(account_id, fields=["credentials"])["credentials"]
+		credentials = self.get(id, fields=["credentials"])["credentials"]
 
 		row_id = 0
 		if credentials:
@@ -340,8 +351,8 @@ class AccountService(StalwartCLI):
 					break
 
 		response = self.run(
-			["update", "account", account_id, "--field", f"credentials/{row_id}/secret={new_password}"]
+			["update", "Account", id, "--field", f"credentials/{row_id}/secret={new_password}"]
 		)
 
 		if not response["success"]:
-			frappe.throw(_("Failed to update password for account with ID {0}.").format(account_id))
+			frappe.throw(_("Failed to update password for account with ID {0}.").format(id))

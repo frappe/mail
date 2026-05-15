@@ -62,6 +62,10 @@ class UserSettings(Document):
 		self.validate_jmap_settings()
 		self.validate_local_user()
 
+	def after_delete(self) -> None:
+		for settings in frappe.db.get_all("Account Settings", filters={"user": self.user}, pluck="name"):
+			frappe.delete_doc("Account Settings", settings, ignore_permissions=True, delete_permanently=True)
+
 	def validate_jmap_settings(self) -> None:
 		"""Validate the JMAP settings by connecting to the JMAP server and verifying the default outgoing email."""
 

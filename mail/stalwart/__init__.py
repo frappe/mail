@@ -172,3 +172,10 @@ def update_password(user: str | None = None, new_password: str | None = None) ->
 
 	account_id = get_user_personal_account(user, "id", raise_exception=False)
 	AccountService().update_password(account_id, new_password)
+
+
+def delete_account(user: str) -> None:
+	"""Deletes the personal account of the specified user from the Stalwart server."""
+
+	account_id = get_user_personal_account(user, "id", raise_exception=False)
+	AccountService().delete(account_id)
