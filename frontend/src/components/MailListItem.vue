@@ -31,7 +31,7 @@
 			/>
 			<div
 				v-else-if="isSelected && isMobile"
-				class="bg-surface-gray-7 flex h-10 min-h-10 w-10 min-w-10 rounded-full"
+				class="bg-surface-gray-7 hitbox flex h-10 min-h-10 w-10 min-w-10 rounded-full"
 				@click.stop.prevent="emit('setSelected', false)"
 			>
 				<Check class="text-ink-white m-auto h-5 w-5 stroke-[3px]" />
@@ -41,6 +41,7 @@
 				:label="getFirstAlphabet(mail.from_name) || getFirstAlphabet(mail.from_email)"
 				:image="mail.user_image"
 				:size="isFullWidth ? 'lg' : '2xl'"
+				class="hitbox"
 				@click.stop.prevent="emit('setSelected', true)"
 			/>
 		</div>
@@ -53,23 +54,17 @@
 				class="flex items-center"
 				:class="isFullWidth ? 'w-48 shrink-0' : 'justify-between'"
 			>
-				<h3 class="mr-1 mt-0.5 flex items-center truncate">
-					<span
-						v-if="!mail.seen"
-						class="mr-1.5 min-h-2 min-w-2 rounded-full bg-blue-500"
-					/>
-					<span
+				<div class="mr-2 mt-0.5 flex items-center space-x-1.5 truncate">
+					<span v-if="!mail.seen" class="min-h-2 min-w-2 rounded-full bg-blue-500" />
+					<h3
 						class="truncate text-[15px] sm:text-base"
 						:class="{ '!font-semibold': !mail.seen }"
 					>
 						{{ header }}
-					</span>
-				</h3>
-				<MailDate
-					v-if="!isFullWidth && !isHovered"
-					:datetime="mail.received_at"
-					:in-list="true"
-				/>
+					</h3>
+					<Badge v-if="mail.draft" size="sm" :label="__('Draft')" theme="red" />
+				</div>
+				<MailDate v-if="!isFullWidth" :datetime="mail.received_at" :in-list="true" />
 			</div>
 			<h4
 				class="truncate text-sm !leading-[1.5]"
@@ -81,12 +76,29 @@
 			>
 				{{ mail.subject || __('[No subject]') }}
 			</h4>
-			<h5
-				class="text-ink-gray-5 truncate text-sm !leading-[1.5]"
-				:class="{ italic: !mail.preview, 'min-w-0 flex-1 !text-base': isFullWidth }"
+			<div
+				class="flex items-center justify-between truncate"
+				:class="{ 'min-w-0 flex-1 !text-base': isFullWidth }"
 			>
-				{{ mail.preview || __('— No message body —') }}
-			</h5>
+				<h5
+					class="text-ink-gray-5 truncate text-sm !leading-[1.5]"
+					:class="{ italic: !mail.preview }"
+				>
+					{{ mail.preview || __('— No message body —') }}
+				</h5>
+
+				<div v-if="!isFullWidth" class="ml-3.5 flex space-x-3.5">
+					<MailListItemActions
+						:is-hovered
+						:mail
+						@set-seen="(seen: boolean) => emit('setSeen', seen)"
+						@archive-thread="emit('archiveThread')"
+						@trash-thread="emit('trashThread')"
+						@delete-thread="emit('deleteThread')"
+						@set-flagged="(flagged: boolean) => emit('setFlagged', flagged)"
+					/>
+				</div>
+			</div>
 			<div
 				v-if="attachments.length || mail.draft || ['starred', 'search'].includes(mailbox)"
 				class="flex items-center"
@@ -157,13 +169,6 @@
 						</div>
 					</template>
 				</Popover>
-				<Badge
-					v-if="mail.draft"
-					class="ml-auto"
-					:class="{ invisible: !isFullWidth && isHovered }"
-					:label="__('Draft')"
-					theme="red"
-				/>
 				<template v-if="isFullWidth && ['starred', 'search'].includes(mailbox)">
 					<div
 						v-for="m in mail.mailboxes"
@@ -173,9 +178,6 @@
 						{{ m.mailbox_name }}
 					</div>
 				</template>
-			</div>
-			<div v-if="isFullWidth && !isHovered" class="flex w-20 shrink-0 justify-end">
-				<MailDate :datetime="mail.received_at" :in-list="true" />
 			</div>
 			<template v-if="!isFullWidth && ['starred', 'search'].includes(mailbox)">
 				<div
@@ -187,22 +189,17 @@
 				</div>
 			</template>
 		</div>
-		<div
-			v-if="isHovered && !isMobile"
-			class="flex items-center justify-end space-x-2"
-			:class="{ 'w-[82px] shrink-0': isFullWidth }"
-		>
-			<Button
-				v-for="action in actions"
-				:key="action.label"
-				:tooltip="action.label"
-				variant="ghost"
-				@click.stop.prevent="action.onClick"
-			>
-				<template #icon>
-					<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
-				</template>
-			</Button>
+		<div v-if="isFullWidth" class="flex w-32 shrink-0 items-center justify-end space-x-4">
+			<MailDate v-if="!isHovered" :datetime="mail.received_at" :in-list="true" />
+			<MailListItemActions
+				:is-hovered
+				:mail
+				@set-seen="(seen: boolean) => emit('setSeen', seen)"
+				@archive-thread="emit('archiveThread')"
+				@trash-thread="emit('trashThread')"
+				@delete-thread="emit('deleteThread')"
+				@set-flagged="(flagged: boolean) => emit('setFlagged', flagged)"
+			/>
 		</div>
 		<AttachmentViewer
 			v-model="showAttachmentViewer"
@@ -214,8 +211,8 @@
 
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
-import { Check, Download, Loader, Mail, MailOpen, Trash2 } from 'lucide-vue-next'
-import { Avatar, Badge, Button, Checkbox, Popover, Tooltip } from 'frappe-ui'
+import { Check, Download, Loader } from 'lucide-vue-next'
+import { Avatar, Badge, Checkbox, Popover, Tooltip } from 'frappe-ui'
 
 import { getAttachmentUrl } from '@/resources'
 import { getFileIcon, getFirstAlphabet, getFormattedRecipients } from '@/utils'
@@ -224,6 +221,7 @@ import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
 import AttachmentViewer from '@/components/AttachmentViewer.vue'
 import MailDate from '@/components/MailDate.vue'
+import MailListItemActions from '@/components/MailListItemActions.vue'
 
 import type { Attachment, Thread } from '@/types'
 
@@ -233,7 +231,14 @@ const { mailbox, mail, isSelected } = defineProps<{
 	isSelected: boolean
 }>()
 
-const emit = defineEmits(['setSeen', 'trashThread', 'deleteThread', 'setSelected'])
+const emit = defineEmits([
+	'setSeen',
+	'archiveThread',
+	'trashThread',
+	'deleteThread',
+	'setFlagged',
+	'setSelected',
+])
 
 const user = inject('$user')
 const { isMobile } = useScreenSize()
@@ -267,35 +272,6 @@ const openAttachment = (idx: number) => {
 }
 
 defineExpose({ id: mail.thread_id })
-
-const actions = computed(() =>
-	[
-		{
-			label: __('Mark as Unread'),
-			onClick: () => emit('setSeen', false),
-			icon: Mail,
-			condition: mail.seen,
-		},
-		{
-			label: __('Mark as Read'),
-			onClick: () => emit('setSeen', true),
-			icon: MailOpen,
-			condition: !mail.seen,
-		},
-		{
-			label: __('Move to Trash'),
-			onClick: () => emit('trashThread'),
-			icon: Trash2,
-			condition: !mailboxes.value.includes(mailboxIds.trash),
-		},
-		{
-			label: __('Delete Thread'),
-			onClick: () => emit('deleteThread'),
-			icon: Trash2,
-			condition: mailboxes.value.includes(mailboxIds.trash),
-		},
-	].filter((action) => action.condition),
-)
 
 // attachment
 
@@ -364,3 +340,9 @@ const onTouchMove = (e: TouchEvent) => {
 	}
 }
 </script>
+
+<style scoped>
+.hitbox {
+	@apply relative after:absolute after:-inset-2 after:content-[''];
+}
+</style>

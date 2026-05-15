@@ -7,14 +7,14 @@
 		@click.stop="action.onClick"
 	>
 		<template #icon>
-			<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
+			<component :is="action.icon" class="text-ink-gray-5 icon" />
 		</template>
 	</Button>
 
 	<Dropdown v-if="!mail.draft && !isCollapsed" :options="moreActions(mail)">
 		<Button variant="ghost" :tooltip="__('More')" @click.stop>
 			<template #icon>
-				<Ellipsis class="text-ink-gray-5 h-4 w-4" />
+				<Ellipsis class="text-ink-gray-5 icon" />
 			</template>
 		</Button>
 	</Dropdown>
@@ -72,6 +72,8 @@ const {
 	thread: Mail[]
 }>()
 
+const emit = defineEmits(['setFlagged'])
+
 const { isMobile } = useScreenSize()
 const { account, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
 const { setUndoAction, undo } = useUndo()
@@ -80,13 +82,13 @@ const user = inject('$user')
 const primaryActions = (mail: Mail): MailAction[] => [
 	{
 		label: __('Unstar'),
-		onClick: () => starMails.submit({ ids: [mail.id], flagged: false }),
+		onClick: () => emit('setFlagged', mail.id, false),
 		icon: () => h(Star, { class: 'fill-ink-amber-2 text-ink-amber-2 stroke-ink-amber-2' }),
 		condition: !!mail.flagged && mailbox !== mailboxIds.trash && !isMobile.value,
 	},
 	{
 		label: __('Star'),
-		onClick: () => starMails.submit({ ids: [mail.id], flagged: true }),
+		onClick: () => emit('setFlagged', mail.id, true),
 		icon: Star,
 		condition: !mail.flagged && !mail.draft && mailbox !== mailboxIds.trash && !isMobile.value,
 	},
@@ -145,14 +147,14 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 		items: [
 			{
 				label: __('Unstar'),
-				onClick: () => starMails.submit({ ids: [mail.id], flagged: false }),
+				onClick: () => emit('setFlagged', mail.id, false),
 				icon: () =>
 					h(Star, { class: 'fill-ink-amber-2 text-ink-amber-2 stroke-ink-amber-2' }),
 				condition: () => !!mail.flagged && mailbox !== mailboxIds.trash,
 			},
 			{
 				label: __('Star'),
-				onClick: () => starMails.submit({ ids: [mail.id], flagged: true }),
+				onClick: () => emit('setFlagged', mail.id, true),
 				icon: Star,
 				condition: () => !mail.flagged && !mail.draft && mailbox !== mailboxIds.trash,
 			},
@@ -278,21 +280,6 @@ const handleDeleteMail = () =>
 		success: __('Mail deleted.'),
 		error: __('Action failed. Please try again in some time.'),
 	})
-
-const starMails = createResource({
-	url: 'mail.api.mail.set_flagged',
-	makeParams: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => ({
-		account,
-		ids,
-		flagged,
-	}),
-	onSuccess: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => {
-		ids.forEach((id: string) => {
-			const m = thread.find((m: Mail) => m.id === id)
-			if (m) m.flagged = flagged ? 1 : 0
-		})
-	},
-})
 
 const setMailsSeen = createResource({
 	url: 'mail.api.mail.set_mails_seen',

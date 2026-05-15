@@ -11,3 +11,7 @@ h1 {
 h2 {
 	@apply text-xl !font-medium sm:text-lg;
 }
+
+.icon {
+	@apply stroke-1.5 h-4 w-4;
+}

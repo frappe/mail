@@ -14,13 +14,13 @@
 				>
 					<Button variant="ghost" class="max-h-6 max-w-6" @click="togglePopover()">
 						<template #icon>
-							<Laugh class="stroke-1.5 h-4 w-4" />
+							<Laugh class="icon" />
 						</template>
 					</Button>
 				</EmojiPicker>
 				<Button variant="ghost" class="max-h-6 max-w-6" @click="fileInput?.click()">
 					<template #icon>
-						<Paperclip class="stroke-1.5 h-4 w-4" />
+						<Paperclip class="icon" />
 					</template>
 				</Button>
 				<input

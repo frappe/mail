@@ -13,7 +13,7 @@
 			<div class="flex items-center gap-2">
 				<Icon
 					:name="getIcon(mailbox)"
-					class="stroke-1.5 h-4 w-4 shrink-0"
+					class="icon shrink-0"
 					:class="FOLDER_ICON_COLOR_MAP[mailbox.color]"
 				/>
 				<span class="text-base">{{ mailbox._name }}</span>

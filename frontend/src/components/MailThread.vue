@@ -1,71 +1,16 @@
 <template>
 	<div v-if="threadID" class="relative flex h-full flex-col overflow-hidden">
-		<div class="bg-surface-white sticky top-0 flex items-center border-b p-2.5 sm:px-5">
-			<Button variant="ghost" class="mr-2 shrink-0" @click="goToMailbox">
-				<template #icon>
-					<ChevronLeft class="text-ink-gray-5 h-4 w-4" />
-				</template>
-			</Button>
-			<span
-				v-if="thread.loading"
-				class="bg-surface-gray-3 h-3.5 animate-pulse"
-				:style="{
-					width: `${Math.max(100, Math.random() * (isMobile ? 300 : 800))}px`,
-				}"
-			/>
-			<template v-else>
-				<Tooltip v-if="!isMobile" :text="thread?.data?.[0]?.subject">
-					<h2 class="mr-2 select-none truncate font-semibold leading-5">
-						{{ thread?.data?.[0]?.subject || __('[No subject]') }}
-					</h2>
-				</Tooltip>
-				<div class="ml-auto shrink-0 space-x-2">
-					<Button
-						v-for="action in threadActions"
-						:key="action.label"
-						:tooltip="action.label"
-						variant="ghost"
-						@click="action.onClick"
-					>
-						<template #icon>
-							<component :is="action.icon" class="text-ink-gray-5 h-4 w-4" />
-						</template>
-					</Button>
-
-					<Dropdown :options="moveToOptions">
-						<Button variant="ghost" :tooltip="__('Move To')">
-							<template #icon>
-								<FolderInput class="text-ink-gray-5 h-4 w-4" />
-							</template>
-						</Button>
-					</Dropdown>
-
-					<template v-if="threads.includes(threadID)">
-						<Button
-							variant="ghost"
-							:tooltip="__('Previous Thread (↑/K)')"
-							:disabled="threadID === threads[0]"
-							@click="emit('prevThread')"
-						>
-							<template #icon>
-								<ArrowLeft class="text-ink-gray-5 h-4 w-4" />
-							</template>
-						</Button>
-
-						<Button
-							variant="ghost"
-							:tooltip="__('Next Thread (↓/J)')"
-							:disabled="threadID === threads.at(-1)"
-							@click="emit('nextThread')"
-						>
-							<template #icon>
-								<ArrowRight class="text-ink-gray-5 h-4 w-4" />
-							</template>
-						</Button>
-					</template>
-				</div>
-			</template>
-		</div>
+		<ThreadHeader
+			:threads
+			:thread
+			@set-flagged="(ids: string[], flagged: boolean) => emit('setFlagged', ids, flagged)"
+			@set-seen="(seen: boolean) => emit('setSeen', seen)"
+			@move-thread="(moveToMailbox: string) => emit('moveThread', moveToMailbox)"
+			@set-spam-status="(spam: boolean) => emit('setSpamStatus', spam)"
+			@delete-thread="() => emit('deleteThread')"
+			@prev-thread="() => emit('prevThread')"
+			@next-thread="() => emit('nextThread')"
+		/>
 		<div ref="threadContainer" class="flex-1 overflow-y-auto">
 			<div v-if="isMobile && !thread.loading" class="border-b px-3 py-3.5">
 				<h2 class="text-lg font-semibold leading-5">
@@ -81,7 +26,14 @@
 				:class="{ 'pb-16': isMobile && !thread.data?.at(-1)?.draft }"
 			>
 				<template v-for="group in mailsByDay" :key="group.date">
-					<div v-if="!isMobile && mailsByDay.length > 1" class="flex items-center px-1">
+					<div
+						v-if="
+							!isMobile &&
+							mailsByDay.length > 1 &&
+							user.data.group_messages_by === 'Day'
+						"
+						class="flex items-center px-1"
+					>
 						<div class="border-outline-gray-1 flex-1 border-t" />
 						<span class="text-ink-gray-5 rounded-full border px-2 py-1 text-xs">
 							{{ getFormattedDate(group.date || dayjs()) }}
@@ -163,6 +115,10 @@
 										:forward
 										:reload-mails="handleReload"
 										:thread="thread.data"
+										@set-flagged="
+											(id: string, flagged: boolean) =>
+												emit('setFlagged', [id], flagged)
+										"
 									/>
 								</div>
 								<div
@@ -237,6 +193,10 @@
 												:forward
 												:reload-mails="handleReload"
 												:thread="thread.data"
+												@set-flagged="
+													(id: string, flagged: boolean) =>
+														emit('setFlagged', [id], flagged)
+												"
 											/>
 										</div>
 									</div>
@@ -375,21 +335,8 @@ import {
 	watch,
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-	ArrowLeft,
-	ArrowRight,
-	ChevronDown,
-	ChevronLeft,
-	CircleAlert,
-	CircleCheck,
-	FolderInput,
-	Forward,
-	Mail as MailIcon,
-	Reply,
-	ReplyAll,
-	Trash2,
-} from 'lucide-vue-next'
-import { Alert, Avatar, Badge, Button, Dropdown, Tooltip, createResource } from 'frappe-ui'
+import { ChevronDown, Forward, Reply, ReplyAll } from 'lucide-vue-next'
+import { Alert, Avatar, Badge, Button, createResource } from 'frappe-ui'
 
 import {
 	extractQuotedContent,
@@ -414,6 +361,7 @@ import MailDetails from '@/components/MailDetails.vue'
 import MailDetailsPopover from '@/components/MailDetailsPopover.vue'
 import MailThreadPlaceholder from '@/components/MailThreadPlaceholder.vue'
 import SendMail from '@/components/SendMail.vue'
+import ThreadHeader from '@/components/ThreadHeader.vue'
 
 import type { Attachment, ComposeMailData, Identity, Mail } from '@/types'
 
@@ -426,8 +374,10 @@ const { mailbox, threadID, threads } = defineProps<{
 const emit = defineEmits([
 	'reloadMails',
 	'setSpamStatus',
+	'archiveThread',
 	'deleteThread',
 	'setSeen',
+	'setFlagged',
 	'moveThread',
 	'prevThread',
 	'nextThread',
@@ -437,7 +387,7 @@ const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const user = inject('$user')
 const store = userStore()
-const { mailboxes, mailboxIds, identities, blockedAddresses } = store
+const { mailboxIds, identities, blockedAddresses } = store
 const { dataTheme } = useTheme()
 
 const route = useRoute()
@@ -520,8 +470,6 @@ const thread = createResource({
 	onError: () => goToMailbox(),
 })
 
-const threadMailboxes = computed(() => thread?.data?.[0]?.mailboxes.map((m) => m.mailbox_id) || [])
-
 const filterRelevantMails = (mail: Mail) => {
 	if (mailbox === 'search') return true
 
@@ -539,60 +487,6 @@ const reload = () => {
 }
 
 watch(() => threadID, reload)
-
-const moveToOptions = computed(() => {
-	const excludedMailboxes = new Set([
-		mailboxIds.sent,
-		mailboxIds.drafts,
-		...threadMailboxes.value,
-	])
-	return mailboxes.data
-		?.filter((m) => !excludedMailboxes.has(m.id))
-		.map((m) => ({ label: m._name, onClick: () => emit('moveThread', m.id) }))
-})
-
-interface MailAction {
-	label: string
-	onClick: () => void
-	icon: typeof ArrowLeft
-	condition?: boolean | (() => boolean)
-}
-
-const threadActions = computed((): MailAction[] =>
-	[
-		{
-			label: __('Mark as Junk (!)'),
-			onClick: () => emit('setSpamStatus', true),
-			icon: CircleAlert,
-			condition: !threadMailboxes.value.some((m: string) =>
-				[mailboxIds.junk, mailboxIds.drafts].includes(m),
-			),
-		},
-		{
-			label: __('Mark as Not Junk'),
-			onClick: () => emit('setSpamStatus', false),
-			icon: CircleCheck,
-			condition: threadMailboxes.value.includes(mailboxIds.junk),
-		},
-		{
-			label: __('Move to Trash (Delete)'),
-			onClick: () => emit('moveThread', mailboxIds.trash),
-			icon: Trash2,
-			condition: !threadMailboxes.value.includes(mailboxIds.trash),
-		},
-		{
-			label: __('Delete Thread (Shift+Delete)'),
-			onClick: () => emit('deleteThread'),
-			icon: Trash2,
-			condition: threadMailboxes.value.includes(mailboxIds.trash),
-		},
-		{
-			label: __('Mark as Unread (U)'),
-			onClick: () => emit('setSeen', false),
-			icon: MailIcon,
-		},
-	].filter((action) => action.condition !== false),
-)
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
@@ -751,6 +645,13 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 onMounted(() => window.addEventListener('keydown', handleKeydown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
+
+const syncFlagged = (ids: string[], flagged: boolean) =>
+	thread.data?.forEach((mail: Mail) => {
+		if (ids.includes(mail.id)) mail.flagged = flagged ? 1 : 0
+	})
+
+defineExpose({ syncFlagged })
 
 const focusedDraft = ref<string>()
 const showSendModal = ref(false)
