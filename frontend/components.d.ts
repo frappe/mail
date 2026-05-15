@@ -93,6 +93,7 @@ declare module 'vue' {
     ShortcutsModal: typeof import('./src/components/Modals/ShortcutsModal.vue')['default']
     SieveScriptModal: typeof import('./src/components/Modals/SieveScriptModal.vue')['default']
     SignatureSettings: typeof import('./src/components/Settings/SignatureSettings.vue')['default']
+    ThreadDivider: typeof import('./src/components/ThreadDivider.vue')['default']
     ThreadHeader: typeof import('./src/components/ThreadHeader.vue')['default']
     VacationResponseSettings: typeof import('./src/components/Settings/VacationResponseSettings.vue')['default']
     VideoIcon: typeof import('./src/components/Icons/VideoIcon.vue')['default']

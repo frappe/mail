@@ -26,54 +26,31 @@
 				:class="{ 'pb-16': isMobile && !thread.data?.at(-1)?.draft }"
 			>
 				<template v-for="group in mailsByDay" :key="group.date">
-					<div
-						v-if="
-							!isMobile &&
-							mailsByDay.length > 1 &&
-							user.data.group_messages_by === 'Day' &&
-							!group.mails.every((m) => collapsedSeenMailNames.has(m.name))
-						"
-						class="flex items-center px-1"
-					>
-						<div class="border-outline-gray-1 flex-1 border-t" />
-						<span class="text-ink-gray-5 rounded-full border px-2 py-1 text-xs">
-							{{ getFormattedDate(group.date) }}
-						</span>
-						<div class="border-outline-gray-1 flex-1 border-t" />
-					</div>
+					<ThreadDivider
+						v-if="shouldShowDateDivider(group.mails)"
+						:message="getFormattedDate(group.date)"
+					/>
 					<template v-for="mail in group.mails" :key="mail.name">
-						<div v-if="shouldShowMarker(mail.id)" class="flex items-center gap-3 px-1">
-							<div class="bg-surface-blue-3 h-px flex-1" />
-							<span class="text-ink-blue-3 text-xs">
-								{{
-									__('{0} new {1}', [
-										unseenCount,
-										unseenCount === 1 ? __('message') : __('messages'),
-									])
-								}}
-							</span>
-							<div class="bg-surface-blue-3 h-px flex-1" />
-						</div>
+						<ThreadDivider
+							v-if="shouldShowMarker(mail.id)"
+							class="!text-ink-blue-2 [&_.border-t]:border-[var(--outline-blue-1)] [&_span:not(.border-t)]:border-[var(--outline-blue-1)]"
+							:message="unseenMessage"
+						/>
+
 						<button
 							v-if="mail.name === collapsedGroupTriggerMailName"
-							class="text-ink-gray-5 hover:text-ink-gray-8 flex w-full cursor-pointer items-center px-1 py-1 transition-colors"
+							class="w-full cursor-pointer transition-colors"
 							@click="seenGroupExpanded = true"
 						>
-							<div class="border-outline-gray-1 flex-1 border-t" />
-							<span class="rounded-full border px-2 py-1 text-xs">
-								{{
-									__('{0} more {1}', [
-										String(collapsedSeenMailNames.size),
-										collapsedSeenMailNames.size === 1
-											? __('message')
-											: __('messages'),
-									])
-								}}
-							</span>
-							<div class="border-outline-gray-1 flex-1 border-t" />
+							<ThreadDivider
+								:message="
+									__('{0} more messages', [String(collapsedMailNames.size)])
+								"
+								class="hover:text-ink-gray-8"
+							/>
 						</button>
 						<div
-							v-if="!collapsedSeenMailNames.has(mail.name)"
+							v-if="!collapsedMailNames.has(mail.name)"
 							:data-mail-name="mail.name"
 							:class="{
 								'px-3 py-5': isMobile,
@@ -380,6 +357,7 @@ import MailDetails from '@/components/MailDetails.vue'
 import MailDetailsPopover from '@/components/MailDetailsPopover.vue'
 import MailThreadPlaceholder from '@/components/MailThreadPlaceholder.vue'
 import SendMail from '@/components/SendMail.vue'
+import ThreadDivider from '@/components/ThreadDivider.vue'
 import ThreadHeader from '@/components/ThreadHeader.vue'
 
 import type { Attachment, ComposeMailData, Identity, Mail } from '@/types'
@@ -428,9 +406,15 @@ const mailsByDay = computed(() => {
 	return groups
 })
 
+const shouldShowDateDivider = (mails: Mail[]) =>
+	!isMobile.value &&
+	mailsByDay.value.length > 1 &&
+	user.data.group_messages_by === 'Day' &&
+	!mails.every((m) => collapsedMailNames.value.has(m.name))
+
 const seenGroupExpanded = ref(false)
 
-const collapsedSeenMailNames = computed(() => {
+const collapsedMailNames = computed(() => {
 	if (seenGroupExpanded.value) return new Set<string>()
 	const lastMailName = thread.data?.at(-1)?.name
 	const seenMails = (thread.data || []).filter(
@@ -441,7 +425,7 @@ const collapsedSeenMailNames = computed(() => {
 })
 
 const collapsedGroupTriggerMailName = computed(() => {
-	if (!collapsedSeenMailNames.value.size) return null
+	if (!collapsedMailNames.value.size) return null
 	const lastMailName = thread.data?.at(-1)?.name
 	const seenMails = (thread.data || []).filter(
 		(m) => m.seen && !m.name.startsWith('draft') && m.name !== lastMailName,
@@ -452,6 +436,12 @@ const collapsedGroupTriggerMailName = computed(() => {
 const isSomeSeen = computed(() => (thread.data || []).some((m) => m.seen))
 const unseenCount = computed(() => (thread.data || []).filter((m) => !m.seen && !m.draft).length)
 const firstUnseenMail = computed(() => thread.data?.find((m) => !m.seen && !m.draft)?.id)
+
+const unseenMessage = computed(() =>
+	unseenCount.value === 1
+		? __('1 new message')
+		: __('{0} new messages', [String(unseenCount.value)]),
+)
 
 const shouldShowMarker = (id: string) =>
 	isSomeSeen.value && firstUnseenMail.value && id == firstUnseenMail.value && !isMobile.value
