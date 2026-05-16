@@ -32,15 +32,15 @@
 					/>
 					<template v-for="mail in group.mails" :key="mail.name">
 						<ThreadDivider
-							v-if="shouldShowMarker(mail.id)"
+							v-if="shouldShowUnseenMarker(mail.id)"
 							class="!text-ink-blue-2 [&_.border-t]:border-[var(--outline-blue-1)] [&_span:not(.border-t)]:border-[var(--outline-blue-1)]"
 							:message="unseenMessage"
 						/>
 
 						<button
-							v-if="mail.name === collapsedGroupTriggerMailName"
+							v-if="mail.name === firstMailOfCollapsedGroup"
 							class="w-full cursor-pointer transition-colors"
-							@click="seenGroupExpanded = true"
+							@click="resetCollapsedGroup"
 						>
 							<ThreadDivider
 								:message="
@@ -54,8 +54,11 @@
 							:data-mail-name="mail.name"
 							:class="{
 								'px-3 py-5': isMobile,
-								'max-sm:border-b sm:rounded-xl sm:p-5':
-									thread.data.length > 1 || mail.draft,
+								'max-sm:border-b':
+									(thread.data.length > 1 || mail.draft) &&
+									mail.name !== mailBeforeCollapsedGroup &&
+									mail.name !== mailBeforeUnseenMarker,
+								'sm:rounded-xl sm:p-5': thread.data.length > 1 || mail.draft,
 								'sm:border':
 									(thread.data.length > 1 && !mail.draft) ||
 									(mail.draft && dataTheme === 'dark'),
@@ -412,10 +415,8 @@ const shouldShowDateDivider = (mails: Mail[]) =>
 	user.data.group_messages_by === 'Day' &&
 	!mails.every((m) => collapsedMailNames.value.has(m.name))
 
-const seenGroupExpanded = ref(false)
-
 const collapsedMailNames = computed(() => {
-	if (seenGroupExpanded.value) return new Set<string>()
+	if (!firstMailOfCollapsedGroup.value) return new Set<string>()
 	const lastMailName = thread.data?.at(-1)?.name
 	const seenMails = (thread.data || []).filter(
 		(m) => m.seen && !m.name.startsWith('draft') && m.name !== lastMailName,
@@ -424,13 +425,11 @@ const collapsedMailNames = computed(() => {
 	return new Set(seenMails.slice(1, -1).map((m) => m.name))
 })
 
-const collapsedGroupTriggerMailName = computed(() => {
-	if (!collapsedMailNames.value.size) return null
-	const lastMailName = thread.data?.at(-1)?.name
-	const seenMails = (thread.data || []).filter(
-		(m) => m.seen && !m.name.startsWith('draft') && m.name !== lastMailName,
-	)
-	return seenMails[1]?.name ?? null
+const mailBeforeUnseenMarker = computed(() => {
+	if (!firstUnseenMail.value) return null
+	const data = thread.data || []
+	const idx = data.findIndex((m) => m.id === firstUnseenMail.value)
+	return idx > 0 ? data[idx - 1].name : null
 })
 
 const isSomeSeen = computed(() => (thread.data || []).some((m) => m.seen))
@@ -443,8 +442,8 @@ const unseenMessage = computed(() =>
 		: __('{0} new messages', [String(unseenCount.value)]),
 )
 
-const shouldShowMarker = (id: string) =>
-	isSomeSeen.value && firstUnseenMail.value && id == firstUnseenMail.value && !isMobile.value
+const shouldShowUnseenMarker = (id: string) =>
+	isSomeSeen.value && firstUnseenMail.value && id == firstUnseenMail.value
 
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
@@ -467,7 +466,7 @@ const thread = createResource({
 			emit('reloadMails')
 			return
 		}
-
+		setCollapsedGroup(data)
 		let unseen = true
 		data.forEach((mail) => {
 			if (unseen && !mail.seen) {
@@ -486,6 +485,27 @@ const thread = createResource({
 	},
 	onError: () => goToMailbox(),
 })
+
+const firstMailOfCollapsedGroup = ref<string | null>(null)
+const mailBeforeCollapsedGroup = ref<string | null>(null)
+
+const resetCollapsedGroup = () => {
+	firstMailOfCollapsedGroup.value = null
+	mailBeforeCollapsedGroup.value = null
+}
+
+const setCollapsedGroup = (data: Mail[]) => {
+	const lastMailName = data.at(-1)?.name
+	const seenMails = data.filter((m) => m.seen && m.name !== lastMailName)
+	if (seenMails.length < 4) {
+		resetCollapsedGroup()
+		return
+	}
+
+	firstMailOfCollapsedGroup.value = seenMails[1]?.name ?? null
+	const triggerIdx = data.findIndex((m) => m.name === firstMailOfCollapsedGroup.value)
+	mailBeforeCollapsedGroup.value = triggerIdx > 0 ? data[triggerIdx - 1].name : null
+}
 
 const filterRelevantMails = (mail: Mail) => {
 	if (mailbox === 'search') return true
@@ -506,7 +526,7 @@ const reload = () => {
 watch(
 	() => threadID,
 	() => {
-		seenGroupExpanded.value = false
+		resetCollapsedGroup()
 		reload()
 	},
 )
