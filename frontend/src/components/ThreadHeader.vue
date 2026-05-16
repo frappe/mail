@@ -118,6 +118,7 @@ const threadID = computed(() => route.params.threadID as string)
 const threadMailboxes = computed(() => {
 	if (!thread?.data?.length) return []
 	return thread.data
+		.filter((mail: Mail) => mail.id)
 		.map((mail: Mail) => mail.mailboxes.map((m) => m.mailbox_id))
 		.reduce((common, ids: string[]) => common.filter((id) => ids.includes(id)))
 })
