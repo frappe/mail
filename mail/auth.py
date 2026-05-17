@@ -40,6 +40,7 @@ ALLOWED_WILDCARD_PATHS = [
 	"/api/method/mail.api.",
 	"/api/method/calendar_app.api.",
 	"/api/method/frappe.client.",
+	"/api/method/meet.api.",
 	"/api/method/wiki.",
 	"/api/method/frappe.integrations.oauth2_logins.",
 	"/api/v2/document/",
