@@ -18,13 +18,7 @@ from frappe.utils import (
 	validate_email_address,
 )
 
-from mail.stalwart import (
-	create_account,
-	create_app_password,
-	get_account_by_name,
-	get_domain_by_name,
-	get_roles,
-)
+from mail.stalwart import create_account, create_app_password, get_roles
 from mail.utils import execute_with_logging, get_config, is_stalwart_configured
 from mail.utils.user import is_mail_admin, is_system_manager
 from mail.utils.validation import is_subaddressed_email, is_valid_email_for_domain
@@ -114,7 +108,6 @@ class MailAccountRequest(Document):
 			frappe.throw(_("Domain is mandatory."))
 
 		self.domain_name = self.domain_name.strip().lower()
-		get_domain_by_name(self.domain_name, raise_exception=True)
 
 	def validate_account(self) -> None:
 		"""Validates the account."""
@@ -132,11 +125,6 @@ class MailAccountRequest(Document):
 
 		if frappe.db.exists("User", {"email": self.account}):
 			frappe.throw(_("User with email {0} already exists.").format(frappe.bold(self.account)))
-
-		if get_account_by_name(self.account, raise_exception=False):
-			frappe.throw(
-				_("Account {0} already exists on Stalwart server.").format(frappe.bold(self.account))
-			)
 
 	def validate_roles(self) -> None:
 		"""Validates the roles."""
