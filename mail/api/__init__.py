@@ -48,7 +48,7 @@ def get_translations() -> dict:
 
 
 @frappe.whitelist()
-@redis_cache()
+@redis_cache(user=True)
 def get_permitted_apps():
 	apps = get_apps()
 	if not is_system_manager(frappe.session.user):
