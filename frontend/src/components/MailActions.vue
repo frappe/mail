@@ -102,9 +102,9 @@ const primaryActions = (mail: Mail): MailAction[] => [
 		condition: !!mail.draft && isMobile.value,
 	},
 	{
-		label: __('Reply'),
+		label: showReplyAll ? __('Reply All') : __('Reply'),
 		onClick: () => (showReplyAll ? replyAll(mail) : reply(mail)),
-		icon: Reply,
+		icon: showReplyAll ? ReplyAll : Reply,
 		condition: !mail.draft && !isMobile.value,
 	},
 ]
