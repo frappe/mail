@@ -91,6 +91,5 @@ def delete_account(doc: Document, method: str | None = None) -> None:
 	execute_with_logging(
 		lambda: delete_stalwart_account(user),
 		title="Failed to delete account on Stalwart server",
-		user_message=_("Failed to delete account on Stalwart server, check error log for details."),
 		with_context=False,
 	)

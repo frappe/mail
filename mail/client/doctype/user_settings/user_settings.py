@@ -52,6 +52,20 @@ class UserSettings(Document):
 
 		return json.dumps(self.session, indent=4)
 
+	@property
+	def connection(self) -> JMAPConnection | None:
+		"""Returns a JMAP connection for the user if the username and app password are set, otherwise returns None."""
+
+		if self.username and self.get_password("app_password"):
+			server_url = get_config("server_url")
+
+			try:
+				return JMAPConnection(
+					JMAPConnectionInfo(server_url, self.username, self.get_password("app_password"))
+				)
+			except Exception:
+				pass
+
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -61,6 +75,10 @@ class UserSettings(Document):
 
 		self.validate_jmap_settings()
 		self.validate_local_user()
+
+	def on_update(self) -> None:
+		if connection := self.connection:
+			sync_account_settings(self.user, connection.accounts)
 
 	def after_delete(self) -> None:
 		for settings in frappe.db.get_all("Account Settings", filters={"user": self.user}, pluck="name"):
@@ -75,21 +93,11 @@ class UserSettings(Document):
 		if not self.get_password("app_password"):
 			frappe.throw(_("App Password is required to validate JMAP settings."))
 
-		try:
-			connection = JMAPConnection(
-				JMAPConnectionInfo(get_config("server_url"), self.username, self.get_password("app_password"))
-			)
-		except Exception as e:
-			if (
-				hasattr(e, "response")
-				and hasattr(e.response, "status_code")
-				and e.response.status_code == 401
-			):
-				frappe.throw(_("Unable to connect to the JMAP server. Please check your credentials."))
-
+		connection = self.connection
+		if not connection:
 			frappe.throw(
 				_(
-					"Unable to connect to the JMAP server. Please check the server URL and your network connection."
+					"Unable to connect to the JMAP server with the provided username and app password. Please check your settings."
 				)
 			)
 
@@ -110,8 +118,6 @@ class UserSettings(Document):
 						"Default Outgoing Email {0} is not found in the identities of the JMAP account."
 					).format(frappe.bold(self.default_outgoing_email))
 				)
-
-		sync_account_settings(self.user, connection.accounts)
 
 	def validate_local_user(self) -> None:
 		"""Validate that if the user is local, then the JMAP username must be the same as the User name and a Principal Settings must exist for the user."""
