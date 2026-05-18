@@ -23,7 +23,8 @@ from mail.utils import execute_with_logging, get_config, is_stalwart_configured
 from mail.utils.user import is_mail_admin, is_system_manager
 from mail.utils.validation import is_subaddressed_email, is_valid_email_for_domain
 
-DEFAULT_ROLES = ["User"]
+STALWART_DEFAULT_USER_ROLES = ["User"]
+STALWART_DEFAULT_ADMIN_ROLES = ["User", "Tenant Administrator"]
 
 
 class MailAccountRequest(Document):
@@ -38,18 +39,18 @@ class MailAccountRequest(Document):
 	def _roles(self) -> list[str]:
 		"""Returns the list of roles for the account request."""
 
-		roles = [r.strip() for r in self.roles.split("\n")] if self.roles else DEFAULT_ROLES
+		roles = []
+
+		if self.roles:
+			roles = [r.strip() for r in self.roles.split("\n")]
+
+		else:
+			if self.is_admin:
+				roles = STALWART_DEFAULT_ADMIN_ROLES
+			else:
+				roles = STALWART_DEFAULT_USER_ROLES
+
 		return list(set(roles))
-
-	@property
-	def is_admin(self) -> bool:
-		"""Returns True if the account request has admin role."""
-
-		for role in self._roles:
-			if "admin" in role.lower():
-				return True
-
-		return False
 
 	def before_insert(self) -> None:
 		is_stalwart_configured(raise_exception=True)

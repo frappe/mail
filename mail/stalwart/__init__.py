@@ -26,7 +26,7 @@ from mail.utils.user import get_user_personal_account
 
 @redis_cache(ttl=3600)
 def get_domain_by_name(
-	name: str, fields: list[dict] | None = None, raise_exception: bool = True
+	name: str, fields: list[str] | None = None, raise_exception: bool = True
 ) -> dict | None:
 	"""Fetches a domain by name from the Stalwart server, selecting specific fields if provided."""
 
@@ -39,8 +39,16 @@ def get_domain_by_name(
 
 
 @redis_cache(ttl=3600)
+def get_domains(fields: list[str] | None = None) -> list[dict]:
+	"""Fetches all domains from the Stalwart server, selecting specific fields if provided."""
+
+	domain_service = DomainService()
+	return domain_service.get_all({}, fields=fields or ["id", "name"])
+
+
+@redis_cache(ttl=3600)
 def get_account_by_name(
-	name: str, fields: list[dict] | None = None, raise_exception: bool = True
+	name: str, fields: list[str] | None = None, raise_exception: bool = True
 ) -> dict | None:
 	"""Fetches an account by name from the Stalwart server, selecting specific fields if provided."""
 
@@ -54,7 +62,7 @@ def get_account_by_name(
 
 @redis_cache(ttl=3600)
 def get_role_by_description(
-	description: str, fields: list[dict] | None = None, raise_exception: bool = True
+	description: str, fields: list[str] | None = None, raise_exception: bool = True
 ) -> dict | None:
 	"""Fetches a role by description from the Stalwart server, selecting specific fields if provided."""
 
@@ -68,7 +76,7 @@ def get_role_by_description(
 
 
 @redis_cache(ttl=3600)
-def get_roles(description: str | None = None, fields: list[dict] | None = None) -> list[dict]:
+def get_roles(description: str | None = None, fields: list[str] | None = None) -> list[dict]:
 	"""Fetches roles from the Stalwart server, filtering by description if provided, and selecting specific fields if provided."""
 
 	filters = {}

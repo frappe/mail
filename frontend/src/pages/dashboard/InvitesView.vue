@@ -15,47 +15,35 @@
 	</div>
 
 	<ListView
-		v-if="invites?.data"
+		v-if="inviteRows"
 		ref="listView"
 		class="flex-1"
 		:columns="LIST_COLUMNS"
-		:rows="invites.data"
+		:rows="inviteRows"
 		:options="LIST_OPTIONS"
 		row-key="name"
 	>
 		<ListHeader />
 		<ListRows>
-			<template v-if="invites.data.length">
+			<template v-if="inviteRows.length">
 				<ListRow
-					v-for="row in invites.data"
+					v-for="row in inviteRows"
 					:key="row.name"
 					v-slot="{ column, item }"
 					:row="row"
 					class="hover:!bg-surface-gray-1"
 				>
 					<ListRowItem :item="item">
-						<template v-if="column.key === 'roles'">
-							<div class="flex flex-wrap gap-1">
-								<Badge
-									v-for="r in item"
-									:key="r"
-									:label="r"
-									:theme="
-										r === 'admin'
-											? 'red'
-											: r === 'tenant-admin'
-												? 'orange'
-												: r === 'user'
-													? 'blue'
-													: 'gray'
-									"
-								/>
-							</div>
+						<template v-if="column.key === 'role'">
+							<Badge
+								:label="row.is_admin ? __('Admin') : __('User')"
+								:theme="row.is_admin ? 'orange' : 'blue'"
+							/>
 						</template>
 						<Badge
-							v-else-if="column.key == 'status'"
+							v-else-if="column.key === 'status'"
 							:label="item"
-							:theme="getTheme(item)"
+							:theme="getTheme(item as InviteStatusLabel)"
 						/>
 					</ListRowItem>
 				</ListRow>
@@ -84,8 +72,8 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, useTemplateRef } from 'vue'
-import { useDebounce } from '@vueuse/core'
+import { computed, ref, useTemplateRef, watch } from 'vue'
+import { watchDebounced } from '@vueuse/core'
 import {
 	Badge,
 	Button,
@@ -100,81 +88,70 @@ import {
 	ListSelectBanner,
 	ListView,
 	createResource,
-	useList,
 } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import EditInviteModal from '@/components/Modals/EditInviteModal.vue'
 
-const dayjs = inject('$dayjs')
+type InviteStatus = 'All' | 'Pending' | 'Accepted' | 'Expired'
+type InviteStatusLabel = Exclude<InviteStatus, 'All'>
+type InviteRow = {
+	name: string
+	account: string
+	is_admin: boolean
+	backup_email: string
+	invited_by: string
+	is_verified: number | boolean
+	status: InviteStatusLabel
+}
 
 const search = ref('')
-const debouncedSearch = useDebounce(search, 500)
-
-const status = ref<'Pending' | 'Accepted' | 'Expired' | ''>('')
+const status = ref<InviteStatus>('All')
 const selectedInvite = ref('')
 const showEditInvite = ref(false)
 const showDeleteInvites = ref(false)
 
-const invites = useList({
-	doctype: 'Mail Account Request',
-	fields: [
-		'name',
-		'backup_email',
-		'account',
-		'roles',
-		'is_verified',
-		'expires_at',
-		'invited_by',
-	],
-	orderBy: 'creation desc',
-	filters: () => {
-		const filters: Record<string, string | string[] | number> = {
-			send_invite: 1,
-			account: ['like', debouncedSearch.value],
-		}
-
-		if (status.value) {
-			if (status.value === 'Accepted') filters.is_verified = 1
-			else {
-				filters.is_verified = 0
-				filters.expires_at = [status.value === 'Pending' ? '>=' : '<=', dayjs()]
-			}
-		}
-
-		return filters
-	},
-	transform: (data) =>
-		data.map((row) => ({
-			...row,
-			roles: row.roles ? row.roles.split('\n') : [],
-			status: row.is_verified
-				? 'Accepted'
-				: dayjs().isAfter(row.expires_at)
-					? 'Expired'
-					: 'Pending',
-		})),
-	limit: 100,
-	cacheKey: ['memberInvites', debouncedSearch.value, status.value],
+const invites = createResource({
+	url: 'mail.api.admin.get_invites',
+	makeParams: () => ({
+		search: search.value,
+		...(status.value !== 'All' ? { status: status.value } : {}),
+	}),
+	auto: true,
+	cache: ['memberInvites', search.value, status.value],
 })
+
+const inviteRows = computed<InviteRow[]>(() =>
+	((invites.data || []) as Omit<InviteRow, 'status'>[]).map((row) => ({
+		...row,
+		is_admin: Boolean(row.is_admin),
+		status: status.value !== 'All' ? status.value : row.is_verified ? 'Accepted' : 'Pending',
+	})),
+)
+
+watchDebounced(() => search.value, invites.reload, { debounce: 300 })
+watch(() => status.value, invites.reload)
 
 const reloadInvites = () => invites.reload()
 defineExpose({ reloadInvites })
 
-const listView = useTemplateRef('listView')
+const listView = useTemplateRef<{
+	selections?: Set<string>
+	toggleAllRows?: () => void
+}>('listView')
 
 const deleteInvites = createResource({
 	url: 'mail.api.admin.delete_account_requests',
-	makeParams: () => ({ names: Array.from(listView.value?.selections) }),
+	makeParams: () => ({ names: Array.from(listView.value?.selections || []) }),
 	onSuccess: () => {
 		invites.reload()
 		showDeleteInvites.value = false
 		raiseToast(__('Invites deleted.'))
-		listView.value?.toggleAllRows()
+		listView.value?.toggleAllRows?.()
 	},
-	onError: (error) => {
+	onError: (error: { messages?: string[] }) => {
 		showDeleteInvites.value = false
-		raiseToast(error.messages[0], 'error')
+		raiseToast(error.messages?.[0] || __('Failed to delete invites.'), 'error')
 	},
 })
 
@@ -188,7 +165,7 @@ const DELETE_INVITES_OPTIONS = {
 
 const LIST_COLUMNS = [
 	{ label: __('Assigned Email'), key: 'account' },
-	{ label: __('Roles'), key: 'roles' },
+	{ label: __('Role'), key: 'role' },
 	{ label: __('Backup Email'), key: 'backup_email' },
 	{ label: __('Invited By'), key: 'invited_by' },
 	{ label: __('Invitation Status'), key: 'status' },
@@ -198,19 +175,19 @@ const LIST_OPTIONS = {
 	showTooltip: false,
 	rowHeight: 50,
 	emptyState: { description: __('No invites found.') },
-	onRowClick: (row) => {
+	onRowClick: (row: InviteRow) => {
 		selectedInvite.value = row.name
 		showEditInvite.value = true
 	},
 }
 
 const STATUS_OPTIONS = [
-	{ label: '', value: '' },
+	{ label: __('All'), value: 'All' },
 	{ label: __('Pending'), value: 'Pending' },
 	{ label: __('Accepted'), value: 'Accepted' },
 	{ label: __('Expired'), value: 'Expired' },
 ]
 
-const getTheme = (status: 'Accepted' | 'Expired' | 'Pending') =>
+const getTheme = (status: InviteStatusLabel) =>
 	status === 'Accepted' ? 'green' : status === 'Expired' ? 'gray' : 'orange'
 </script>

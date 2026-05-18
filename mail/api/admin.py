@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import frappe
 from frappe import _
@@ -7,6 +7,7 @@ from frappe.utils import cint
 from pypika import Case, Order
 
 from mail.api.mail import get_avatar_url
+from mail.stalwart import get_domains as get_stalwart_domains
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import is_mail_admin
 
@@ -96,7 +97,7 @@ def get_members(search: str | None = None, is_admin: bool | None = None) -> list
 def add_member(
 	username: str,
 	domain: str,
-	roles: list[str],
+	is_admin: bool,
 	send_invite: bool,
 	backup_email: str,
 	first_name: str | None = None,
@@ -109,7 +110,7 @@ def add_member(
 	account_request = frappe.new_doc("Mail Account Request")
 	account_request.domain_name = domain
 	account_request.account = f"{username}@{domain}"
-	account_request.roles = "\n".join(roles)
+	account_request.is_admin = cint(is_admin)
 	account_request.invited_by = frappe.session.user
 	account_request.backup_email = backup_email
 	account_request.send_invite = cint(send_invite)
@@ -240,8 +241,39 @@ def get_eligible_members(search: str | None = None, exclude: list[str] | None = 
 def get_verified_domains() -> list[str]:
 	"""Returns the list of verified domains"""
 
-	return frappe.db.get_all(
-		"Principal Settings",
-		{"principal_type": "Domain", "is_verified": 1},
-		pluck="principal_name",
+	return list(set([d["name"] for d in get_stalwart_domains()]))
+
+
+@frappe.whitelist()
+def get_invites(
+	search: str | None = None, status: Literal["All", "Pending", "Accepted", "Expired"] = "All"
+) -> list[dict]:
+	"""Returns the list of account invites"""
+
+	ACC_REQ = frappe.qb.DocType("Mail Account Request")
+	query = (
+		frappe.qb.from_(ACC_REQ)
+		.select(
+			ACC_REQ.name,
+			ACC_REQ.account,
+			ACC_REQ.is_admin,
+			ACC_REQ.backup_email,
+			ACC_REQ.invited_by,
+			ACC_REQ.is_verified,
+		)
+		.orderby(ACC_REQ.creation, order=Order.desc)
 	)
+
+	if search:
+		query = query.where(ACC_REQ.account.like(f"%{search}%"))
+
+	if status == "Pending":
+		query = query.where((ACC_REQ.is_verified == 0) & (ACC_REQ.expires_at > frappe.utils.now()))
+	elif status == "Accepted":
+		query = query.where(ACC_REQ.is_verified == 1)
+	elif status == "Expired":
+		query = query.where((ACC_REQ.is_verified == 0) & (ACC_REQ.expires_at <= frappe.utils.now()))
+
+	invites = query.run(as_dict=True)
+
+	return invites
