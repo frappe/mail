@@ -2,7 +2,9 @@ from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
+from frappe.query_builder.functions import Max
 from frappe.utils import cint
+from pypika import Case, Order
 
 from mail.api.mail import get_avatar_url
 from mail.utils.rate_limiter import dynamic_rate_limit
@@ -40,46 +42,53 @@ def verify_dns_record(domain_request: str) -> bool:
 
 
 @frappe.whitelist()
-def get_members(search: str | None = None) -> list:
+def get_members(search: str | None = None, is_admin: bool | None = None) -> list:
 	user = frappe.session.user
+
 	if not is_mail_admin(user):
 		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
 
-	result = []
+	USER = frappe.qb.DocType("User")
+	HAS_ROLE = frappe.qb.DocType("Has Role")
+	USER_SETTINGS = frappe.qb.DocType("User Settings")
 
-	filters = {"type": "Individual"}
-	if search:
-		filters["text"] = search
+	admin_case = Case().when(HAS_ROLE.role == "Mail Admin", 1).else_(0)
+	is_admin_expr = Max(admin_case)
 
-	principals = frappe.db.get_all("Principal", filters=filters, page_length=1000)
-
-	for principal in principals:
-		result.append(
-			{
-				"name": principal["name"],
-				"full_name": principal["description"],
-				"email_count": len(principal["emails"]),
-				"quota_total": principal["quota"],
-				"quota_used": principal["used_quota"],
-				"quota_usage_percent": principal["used_percentage"],
-				"group_count": len(principal["member_of"]),
-				"list_count": len(principal["lists"]),
-				"assigned_roles": [r["role"] for r in principal["roles"]],
-			}
+	query = (
+		frappe.qb.from_(USER)
+		.left_join(HAS_ROLE)
+		.on(USER.name == HAS_ROLE.parent)
+		.left_join(USER_SETTINGS)
+		.on(USER.name == USER_SETTINGS.user)
+		.select(
+			USER.name,
+			USER.full_name,
+			USER.user_image,
+			USER.last_active,
+			is_admin_expr.as_("is_admin"),
 		)
-
-	user_extras = frappe.db.get_all(
-		"User", {"name": ["in", [p["name"] for p in principals]]}, ["name", "user_image", "last_active"]
+		.where((USER.enabled == 1) & (USER_SETTINGS.username.isnotnull()))
+		.groupby(USER.name)
 	)
-	user_extras_map = {
-		u["name"]: {"user_image": u["user_image"], "last_active": u["last_active"]} for u in user_extras
-	}
-	for r in result:
-		user_extra = user_extras_map.get(r["name"], {})
-		r["user_image"] = user_extra.get("user_image") or get_avatar_url(r["name"])
-		r["last_active"] = user_extra.get("last_active")
 
-	return result
+	if search:
+		query = query.where(USER.name.like(f"%{search}%") | USER.full_name.like(f"%{search}%"))
+
+	if is_admin is not None:
+		query = query.having(is_admin_expr == (1 if is_admin else 0))
+
+	users = (
+		query.orderby(is_admin_expr, order=Order.desc).orderby(USER.name, order=Order.asc).run(as_dict=True)
+	)
+
+	for user in users:
+		if not user.get("user_image"):
+			user["user_image"] = get_avatar_url(user["name"])
+
+		user["is_admin"] = bool(user.get("is_admin"))
+
+	return users
 
 
 @frappe.whitelist()
@@ -115,9 +124,13 @@ def add_member(
 def delete_members(names: list) -> None:
 	"""Delete Members (Principal docs)"""
 
+	user = frappe.session.user
+
+	if not is_mail_admin(user):
+		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
+
 	for d in names:
-		doc = frappe.get_doc("Principal", d)
-		doc.delete()
+		frappe.delete_doc("User", d, ignore_permissions=True)
 
 
 @frappe.whitelist()

@@ -121,13 +121,6 @@ const routes = [
 		meta: { isDashboard: true },
 	},
 	{
-		path: '/dashboard/members/:memberName',
-		name: 'Member',
-		component: () => import('@/pages/dashboard/MemberView.vue'),
-		props: true,
-		meta: { isDashboard: true },
-	},
-	{
 		path: '/dashboard/invites',
 		name: 'Invites',
 		component: () => import('@/pages/dashboard/MembersView.vue'),
