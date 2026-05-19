@@ -207,11 +207,12 @@ class MailQueue(Document):
 	def message(self) -> str | None:
 		"""Returns the message content if available."""
 
-		from mail.client.doctype.mail_message.mail_message import _get_blob_cache_key
+		from mail.client.doctype.mail_message.mail_message import _get_cached_blobs
 
-		cache_key = _get_blob_cache_key(self.account, self.blob_id)
-		if content := frappe.cache.get_value(cache_key):
-			return content.decode("utf-8")
+		if self.blob_id:
+			blobs = _get_cached_blobs(self.account, [self.blob_id])
+			if content := blobs.get(self.blob_id):
+				return content.decode("utf-8")
 
 	@property
 	def response(self) -> str | None:
