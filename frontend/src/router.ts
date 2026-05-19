@@ -126,19 +126,6 @@ const routes = [
 		component: () => import('@/pages/dashboard/MembersView.vue'),
 		meta: { isDashboard: true },
 	},
-	{
-		path: '/dashboard/mailing-lists',
-		name: 'MailingLists',
-		component: () => import('@/pages/dashboard/MailingListsView.vue'),
-		meta: { isDashboard: true },
-	},
-	{
-		path: '/dashboard/mailing-lists/:listName',
-		name: 'MailingList',
-		component: () => import('@/pages/dashboard/MailingListView.vue'),
-		props: true,
-		meta: { isDashboard: true },
-	},
 	// Shortcut routes: short paths that resolve to their full account-scoped
 	// equivalents once the active accountId is known (resolved in beforeEach).
 	{
