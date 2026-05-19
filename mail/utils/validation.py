@@ -21,17 +21,6 @@ def is_subaddressed_email(email: str, raise_exception: bool = False) -> bool:
 	return False
 
 
-def is_email_assigned(email: str, raise_exception: bool = False) -> bool:
-	"""Returns True if the email address is already assigned else False."""
-
-	if frappe.db.exists("Principal Settings", {"principal_name": email}):
-		if raise_exception:
-			frappe.throw(_("The email address {0} is already assigned.").format(frappe.bold(email)))
-		return True
-
-	return False
-
-
 def is_valid_email_for_domain(email: str, domain_name: str, raise_exception: bool = False) -> bool:
 	"""Returns True if the email domain matches with the given domain else False."""
 
@@ -47,76 +36,6 @@ def is_valid_email_for_domain(email: str, domain_name: str, raise_exception: boo
 
 		return False
 	return True
-
-
-@request_cache
-def validate_domain_is_verified(domain_name: str) -> None:
-	"""Validates if the domain is verified."""
-
-	if not frappe.db.exists("Principal Settings", {"principal_name": domain_name, "is_verified": 1}):
-		frappe.throw(_("Domain {0} is not verified.").format(frappe.bold(domain_name)))
-
-
-@request_cache
-def validate_local_domain(domain_name: str) -> None:
-	if not frappe.db.exists(
-		"Principal Settings", {"principal_type": "Domain", "principal_name": domain_name}
-	):
-		frappe.throw(_("Domain {0} not found.").format(frappe.bold(domain_name)))
-
-
-def validate_max_domains() -> None:
-	"""Validates if the maximum number of domains has been reached."""
-
-	max_domains = cint(get_config("max_domains"))
-	if max_domains <= 0:
-		return
-
-	total_domains = frappe.db.count("Principal Settings", {"principal_type": "Domain"})
-
-	if total_domains >= max_domains:
-		frappe.throw(_("You have reached the maximum limit of {0} domains.").format(frappe.bold(max_domains)))
-
-
-def validate_max_groups() -> None:
-	"""Validates if the maximum number of groups has been reached."""
-
-	max_groups = cint(get_config("max_groups"))
-	if max_groups <= 0:
-		return
-
-	total_groups = frappe.db.count("Principal Settings", {"principal_type": "Group"})
-
-	if total_groups >= max_groups:
-		frappe.throw(_("You have reached the maximum limit of {0} groups.").format(frappe.bold(max_groups)))
-
-
-def validate_max_accounts() -> None:
-	"""Validates if the maximum number of accounts has been reached."""
-
-	max_accounts = cint(get_config("max_accounts"))
-	if max_accounts <= 0:
-		return
-
-	total_accounts = frappe.db.count("Principal Settings", {"principal_type": "Individual"})
-
-	if total_accounts >= max_accounts:
-		frappe.throw(
-			_("You have reached the maximum limit of {0} accounts.").format(frappe.bold(max_accounts))
-		)
-
-
-def validate_max_lists() -> None:
-	"""Validates if the maximum number of lists has been reached."""
-
-	max_lists = cint(get_config("max_lists"))
-	if max_lists <= 0:
-		return
-
-	total_lists = frappe.db.count("Principal Settings", {"principal_type": "List"})
-
-	if total_lists >= max_lists:
-		frappe.throw(_("You have reached the maximum limit of {0} lists.").format(frappe.bold(max_lists)))
 
 
 def is_valid_cron_expression(expression: str, raise_exception: bool = False) -> bool:

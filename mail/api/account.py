@@ -13,7 +13,6 @@ from mail.mail.doctype.mail_settings.mail_settings import get_signup_domains
 from mail.utils import convert_html_to_text, user_context
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import has_user_settings, is_jmap_configured, is_mail_admin, is_system_manager
-from mail.utils.validation import is_email_assigned
 
 
 @frappe.whitelist(allow_guest=True)
@@ -21,7 +20,7 @@ from mail.utils.validation import is_email_assigned
 def validate_email_assigned(email: str) -> None:
 	"""Checks if email is already assigned"""
 
-	if is_email_assigned(email):
+	if frappe.db.exists("User", {"email": email}):
 		frappe.throw(_("Username already taken."))
 
 

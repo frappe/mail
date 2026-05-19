@@ -15,7 +15,7 @@ from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
 from mail.utils import get_config
 from mail.utils.dt import timestamp_to_datetime
-from mail.utils.user import is_local_user, is_system_manager
+from mail.utils.user import is_system_manager
 
 
 class UserSettings(Document):
@@ -74,7 +74,6 @@ class UserSettings(Document):
 			return
 
 		self.validate_jmap_settings()
-		self.validate_local_user()
 
 	def on_update(self) -> None:
 		if connection := self.connection:
@@ -118,26 +117,6 @@ class UserSettings(Document):
 						"Default Outgoing Email {0} is not found in the identities of the JMAP account."
 					).format(frappe.bold(self.default_outgoing_email))
 				)
-
-	def validate_local_user(self) -> None:
-		"""Validate that if the user is local, then the JMAP username must be the same as the User name and a Principal Settings must exist for the user."""
-
-		if not is_local_user(self.user):
-			return
-
-		if self.username != self.user:
-			frappe.throw(_("JMAP Username must be the same as the User name."))
-
-		if not frappe.db.exists(
-			"Principal Settings",
-			{"principal_name": self.username},
-			"principal_name",
-		):
-			frappe.throw(
-				_(
-					"Principal Settings for {0} does not exist. Please create Principal Settings with the principal name same as the JMAP username."
-				).format(frappe.bold(self.username))
-			)
 
 	@frappe.whitelist()
 	def clear_jmap_session(self) -> None:

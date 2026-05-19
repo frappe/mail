@@ -71,17 +71,6 @@ def is_jmap_configured(user: str, raise_exception: bool = False) -> bool:
 	return False
 
 
-def is_local_user(user: str) -> bool:
-	"""Returns True if the user is a local user else False."""
-
-	if has_user_settings(user) and frappe.db.exists(
-		"Principal Settings", {"principal_type": "Individual", "principal_name": user}
-	):
-		return True
-
-	return False
-
-
 def get_jmap_username(user: str) -> str | None:
 	"""Returns the JMAP username of the user."""
 
@@ -152,70 +141,6 @@ def get_user_email_address(user: str) -> str | None:
 	"""Returns the primary email address of the user."""
 
 	return frappe.db.get_value("User", user, "email")
-
-
-def _get_local_principals(principal_type: str, order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of principal names for the given principal type."""
-
-	return frappe.db.get_all(
-		"Principal Settings",
-		filters={"principal_type": principal_type},
-		order_by=order_by,
-		pluck="principal_name",
-	)
-
-
-def get_local_api_keys(order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of API Key principals."""
-
-	return _get_local_principals("API Key", order_by)
-
-
-def get_local_domains(order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of Domain principals."""
-
-	return _get_local_principals("Domain", order_by)
-
-
-def get_local_groups(order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of Group principals."""
-
-	return _get_local_principals("Group", order_by)
-
-
-def get_local_individuals(order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of Individual principals."""
-
-	return _get_local_principals("Individual", order_by)
-
-
-def get_local_mailing_lists(order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of List principals."""
-
-	return _get_local_principals("List", order_by)
-
-
-def get_local_oauth_clients(order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of OAuth Client principals."""
-
-	return _get_local_principals("OAuth Client", order_by)
-
-
-def get_local_roles(order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of Role principals."""
-
-	return _get_local_principals("Role", order_by)
-
-
-def get_local_emails(order_by: str = "creation desc") -> list[str]:
-	"""Returns a list of associated email addresses."""
-
-	return frappe.db.get_all(
-		"Principal Settings",
-		filters={"principal_type": ["in", ["Group", "Individual", "List"]]},
-		order_by=order_by,
-		pluck="principal_name",
-	)
 
 
 @frappe.whitelist(methods=["POST"])

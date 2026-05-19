@@ -1,4 +1,3 @@
-import re
 from typing import TYPE_CHECKING, Literal
 
 import frappe
@@ -14,27 +13,6 @@ from mail.utils import execute_with_logging, get_config
 from mail.utils.dns import parse_dns_zone_file
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import is_mail_admin
-
-if TYPE_CHECKING:
-	from mail.server.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
-
-
-@frappe.whitelist()
-def get_domain_request(domain_name: str) -> "MailDomainRequest":
-	"""Fetches Mail Domain Request for a given domain name if it exists, and creates a new one if not"""
-
-	if frappe.db.exists("Principal Settings", {"principal_name": domain_name}):
-		frappe.throw(_("Domain {0} has already been registered.").format(frappe.bold(domain_name)))
-
-	if name := frappe.db.exists("Mail Domain Request", {"domain_name": domain_name, "is_verified": 0}):
-		return frappe.get_doc("Mail Domain Request", name)
-
-	domain_request = frappe.new_doc("Mail Domain Request")
-	domain_request.domain_name = domain_name
-	domain_request.user = frappe.session.user
-	domain_request.insert()
-
-	return domain_request
 
 
 @frappe.whitelist()
@@ -126,28 +104,6 @@ def add_member(
 
 
 @frappe.whitelist()
-def delete_members(names: list) -> None:
-	"""Delete Members (Principal docs)"""
-
-	user = frappe.session.user
-
-	if not is_mail_admin(user):
-		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
-
-	for d in names:
-		frappe.delete_doc("User", d, ignore_permissions=True)
-
-
-@frappe.whitelist()
-def delete_mailing_lists(names: list) -> None:
-	"""Delete Mailing Lists"""
-
-	for d in names:
-		doc = frappe.get_doc("Principal", d)
-		doc.delete()
-
-
-@frappe.whitelist()
 def delete_account_requests(names: list) -> None:
 	"""Delete Mail Account Requests"""
 
@@ -185,58 +141,6 @@ def get_domains(txt: str | None = None, is_enabled: bool | None = None) -> list[
 		)
 
 	return result
-
-
-@frappe.whitelist()
-def get_mailing_lists(search: str | None = None) -> list:
-	"""Returns the list of mailing lists"""
-
-	user = frappe.session.user
-	if not is_mail_admin(user):
-		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
-
-	result = []
-
-	filters = {"type": "List"}
-	if search:
-		filters["text"] = search
-
-	lists = frappe.db.get_all("Principal", filters=filters, page_length=1000)
-
-	for l in lists:
-		result.append(
-			{
-				"name": l["name"],
-				"full_name": l["description"],
-				"email_count": len(l["emails"]),
-				"member_count": len(l["members"]),
-				"external_member_count": len(l["external_members"]),
-			}
-		)
-
-	return result
-
-
-@frappe.whitelist()
-def get_eligible_members(search: str | None = None, exclude: list[str] | None = None) -> list[dict]:
-	"""Returns Individual principals eligible to be added as mailing list members"""
-
-	user = frappe.session.user
-	if not is_mail_admin(user):
-		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
-
-	filters = {"type": "Individual"}
-	if search:
-		filters["text"] = search
-
-	principals = frappe.db.get_all("Principal", filters=filters, page_length=1000)
-
-	exclude_set = set(exclude or [])
-	return [
-		{"name": p["name"], "description": p.get("description", "")}
-		for p in principals
-		if p["name"] not in exclude_set
-	]
 
 
 @frappe.whitelist()

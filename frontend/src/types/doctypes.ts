@@ -109,12 +109,6 @@ export interface MailDomainRequest extends DocType {
   is_verified: 0 | 1;
 }
 
-// Last updated: 2025-11-27 13:25:44.326974
-export interface SignupDomain extends ChildDocType {
-	/** Domain: Link (Principal Settings) */
-	principal: string
-}
-
 // Last updated: 2026-04-27 09:25:58.236007
 export interface MailSettings extends DocType {
   /** Root Domain Name: Data */
