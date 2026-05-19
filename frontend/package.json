@@ -9,7 +9,8 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@iframe-resizer/vue": "5.4.6",
+    "@iframe-resizer/child": "5.5.9",
+    "@iframe-resizer/vue": "5.5.9",
     "@vueuse/core": "^10.4.1",
     "cheerio": "^1.2.0",
     "dayjs": "^1.11.11",

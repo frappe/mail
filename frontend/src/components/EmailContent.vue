@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import iframeResizerChildScript from '@iframe-resizer/child/index.umd.js?raw'
 // eslint-disable-next-line import/no-unresolved
 import IframeResizer from '@iframe-resizer/vue/sfc'
 import DOMPurify from 'dompurify'
@@ -143,10 +144,7 @@ const srcdoc = computed(() => {
                     }
                 }
 			</style>
-			<script
-			src="https://cdn.jsdelivr.net/npm/@iframe-resizer/child@5.4.6"
-			type="text/javascript"
-			><\/script>
+			<script> ${iframeResizerChildScript} <\/script>
 		</head>
 		<body>
 			${transformedContent}

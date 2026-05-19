@@ -7,9 +7,9 @@
 			@set-seen="(seen: boolean) => emit('setSeen', seen)"
 			@move-thread="(moveToMailbox: string) => emit('moveThread', moveToMailbox)"
 			@set-spam-status="(spam: boolean) => emit('setSpamStatus', spam)"
-			@delete-thread="() => emit('deleteThread')"
-			@prev-thread="() => emit('prevThread')"
-			@next-thread="() => emit('nextThread')"
+			@delete-thread="emit('deleteThread')"
+			@prev-thread="emit('prevThread')"
+			@next-thread="emit('nextThread')"
 		/>
 		<div ref="threadContainer" class="flex-1 overflow-y-auto">
 			<div v-if="isMobile && !thread.loading" class="border-b px-3 py-3.5">
@@ -26,44 +26,39 @@
 				:class="{ 'pb-16': isMobile && !thread.data?.at(-1)?.draft }"
 			>
 				<template v-for="group in mailsByDay" :key="group.date">
-					<div
-						v-if="
-							!isMobile &&
-							mailsByDay.length > 1 &&
-							user.data.group_messages_by === 'Day'
-						"
-						class="flex items-center px-1"
-					>
-						<div class="border-outline-gray-1 flex-1 border-t" />
-						<span class="text-ink-gray-5 rounded-full border px-2 py-1 text-xs">
-							{{ getFormattedDate(group.date || dayjs()) }}
-						</span>
-						<div class="border-outline-gray-1 flex-1 border-t" />
-					</div>
+					<ThreadDivider
+						v-if="shouldShowDateDivider(group.mails)"
+						:message="getFormattedDate(group.date)"
+					/>
 					<template v-for="mail in group.mails" :key="mail.name">
-						<div
-							v-if="shouldShowMarker(mail.id)"
-							ref="unseenMarker"
-							class="flex items-center gap-3 px-1"
+						<ThreadDivider
+							v-if="shouldShowUnseenMarker(mail.id)"
+							class="!text-ink-blue-2 [&_.border-t]:border-[var(--outline-blue-1)] [&_span:not(.border-t)]:border-[var(--outline-blue-1)]"
+							:message="unseenMessage"
+						/>
+
+						<button
+							v-if="mail.name === firstMailOfCollapsedGroup"
+							class="w-full cursor-pointer transition-colors"
+							@click="resetCollapsedGroup"
 						>
-							<div class="bg-surface-blue-3 h-px flex-1" />
-							<span class="text-ink-blue-3 text-xs">
-								{{
-									__('{0} new {1}', [
-										unseenCount,
-										unseenCount === 1 ? __('mail') : __('mails'),
-									])
-								}}
-							</span>
-							<div class="bg-surface-blue-3 h-px flex-1" />
-						</div>
+							<ThreadDivider
+								:message="
+									__('{0} more messages', [String(collapsedMailNames.size)])
+								"
+								class="hover:text-ink-gray-8"
+							/>
+						</button>
 						<div
-							ref="mails"
+							v-if="!collapsedMailNames.has(mail.name)"
 							:data-mail-name="mail.name"
 							:class="{
 								'px-3 py-5': isMobile,
-								'max-sm:border-b sm:rounded-xl sm:p-5':
-									thread.data.length > 1 || mail.draft,
+								'max-sm:border-b':
+									(thread.data.length > 1 || mail.draft) &&
+									mail.name !== mailBeforeCollapsedGroup &&
+									mail.name !== mailBeforeUnseenMarker,
+								'sm:rounded-xl sm:p-5': thread.data.length > 1 || mail.draft,
 								'sm:border':
 									(thread.data.length > 1 && !mail.draft) ||
 									(mail.draft && dataTheme === 'dark'),
@@ -119,6 +114,7 @@
 											(id: string, flagged: boolean) =>
 												emit('setFlagged', [id], flagged)
 										"
+										@sync-unseen="(ids: string[]) => emit('syncUnseen', ids)"
 									/>
 								</div>
 								<div
@@ -196,6 +192,9 @@
 												@set-flagged="
 													(id: string, flagged: boolean) =>
 														emit('setFlagged', [id], flagged)
+												"
+												@sync-unseen="
+													(ids: string[]) => emit('syncUnseen', ids)
 												"
 											/>
 										</div>
@@ -361,6 +360,7 @@ import MailDetails from '@/components/MailDetails.vue'
 import MailDetailsPopover from '@/components/MailDetailsPopover.vue'
 import MailThreadPlaceholder from '@/components/MailThreadPlaceholder.vue'
 import SendMail from '@/components/SendMail.vue'
+import ThreadDivider from '@/components/ThreadDivider.vue'
 import ThreadHeader from '@/components/ThreadHeader.vue'
 
 import type { Attachment, ComposeMailData, Identity, Mail } from '@/types'
@@ -381,6 +381,7 @@ const emit = defineEmits([
 	'moveThread',
 	'prevThread',
 	'nextThread',
+	'syncUnseen',
 ])
 
 const { isMobile } = useScreenSize()
@@ -394,26 +395,13 @@ const route = useRoute()
 const router = useRouter()
 
 const threadContainerRef = useTemplateRef('threadContainer')
-const unseenMarkerRef = useTemplateRef('unseenMarker')
-const mailsRef = useTemplateRef('mails')
-const scrollToLatestMail = () => {
-	if (thread.data?.length > 1 && isSomeSeen.value)
-		setTimeout(() => {
-			const el =
-				unseenMarkerRef.value?.[0] || unseenMarkerRef.value || mailsRef.value?.at(-1)
-			if (!el || !threadContainerRef.value) return
-
-			const offset = isMobile.value ? 52 : 64
-			threadContainerRef.value.scrollTo({ top: el.offsetTop - offset, behavior: 'smooth' })
-		}, 500)
-}
 
 const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
 
 const mailsByDay = computed(() => {
 	const groups: { date: string; mails: Mail[] }[] = []
 	for (const mail of thread.data || []) {
-		const day = mail.received_at ? dayjs(mail.received_at).format('YYYY-MM-DD') : ''
+		const day = dayjs(mail.received_at).format('YYYY-MM-DD')
 		const last = groups.at(-1)
 		if (last && last.date === day) last.mails.push(mail)
 		else groups.push({ date: day, mails: [mail] })
@@ -421,12 +409,41 @@ const mailsByDay = computed(() => {
 	return groups
 })
 
+const shouldShowDateDivider = (mails: Mail[]) =>
+	!isMobile.value &&
+	mailsByDay.value.length > 1 &&
+	user.data.group_messages_by === 'Day' &&
+	!mails.every((m) => collapsedMailNames.value.has(m.name))
+
+const collapsedMailNames = computed(() => {
+	if (!firstMailOfCollapsedGroup.value) return new Set<string>()
+	const lastMailName = thread.data?.at(-1)?.name
+	const seenMails = (thread.data || []).filter(
+		(m) => m.seen && !m.name.startsWith('draft') && m.name !== lastMailName,
+	)
+	if (seenMails.length < 4) return new Set<string>()
+	return new Set(seenMails.slice(1, -1).map((m) => m.name))
+})
+
+const mailBeforeUnseenMarker = computed(() => {
+	if (!firstUnseenMail.value) return null
+	const data = thread.data || []
+	const idx = data.findIndex((m) => m.id === firstUnseenMail.value)
+	return idx > 0 ? data[idx - 1].name : null
+})
+
 const isSomeSeen = computed(() => (thread.data || []).some((m) => m.seen))
 const unseenCount = computed(() => (thread.data || []).filter((m) => !m.seen && !m.draft).length)
 const firstUnseenMail = computed(() => thread.data?.find((m) => !m.seen && !m.draft)?.id)
 
-const shouldShowMarker = (id: string) =>
-	isSomeSeen.value && firstUnseenMail.value && id == firstUnseenMail.value && !isMobile.value
+const unseenMessage = computed(() =>
+	unseenCount.value === 1
+		? __('1 new message')
+		: __('{0} new messages', [String(unseenCount.value)]),
+)
+
+const shouldShowUnseenMarker = (id: string) =>
+	isSomeSeen.value && firstUnseenMail.value && id == firstUnseenMail.value
 
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
@@ -449,7 +466,7 @@ const thread = createResource({
 			emit('reloadMails')
 			return
 		}
-
+		setCollapsedGroup(data)
 		let unseen = true
 		data.forEach((mail) => {
 			if (unseen && !mail.seen) {
@@ -465,10 +482,30 @@ const thread = createResource({
 				populateDraftMails(mail)
 			}
 		})
-		scrollToLatestMail()
 	},
 	onError: () => goToMailbox(),
 })
+
+const firstMailOfCollapsedGroup = ref<string | null>(null)
+const mailBeforeCollapsedGroup = ref<string | null>(null)
+
+const resetCollapsedGroup = () => {
+	firstMailOfCollapsedGroup.value = null
+	mailBeforeCollapsedGroup.value = null
+}
+
+const setCollapsedGroup = (data: Mail[]) => {
+	const lastMailName = data.at(-1)?.name
+	const seenMails = data.filter((m) => m.seen && m.name !== lastMailName)
+	if (seenMails.length < 4) {
+		resetCollapsedGroup()
+		return
+	}
+
+	firstMailOfCollapsedGroup.value = seenMails[1]?.name ?? null
+	const triggerIdx = data.findIndex((m) => m.name === firstMailOfCollapsedGroup.value)
+	mailBeforeCollapsedGroup.value = triggerIdx > 0 ? data[triggerIdx - 1].name : null
+}
 
 const filterRelevantMails = (mail: Mail) => {
 	if (mailbox === 'search') return true
@@ -486,7 +523,13 @@ const reload = () => {
 	if (threadID) thread.reload()
 }
 
-watch(() => threadID, reload)
+watch(
+	() => threadID,
+	() => {
+		resetCollapsedGroup()
+		reload()
+	},
+)
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',

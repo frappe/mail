@@ -7,7 +7,7 @@ from frappe.utils import cint, get_datetime, get_url, now_datetime
 from frappe.utils.data import sha256_hash
 
 from mail.api.admin import add_member
-from mail.api.mail import normalize_filter
+from mail.api.mail import get_avatar_url, normalize_filter
 from mail.client.doctype.identity.identity import fetch_identities
 from mail.mail.doctype.mail_settings.mail_settings import get_signup_domains
 from mail.utils import convert_html_to_text, user_context
@@ -153,6 +153,7 @@ def get_user_info() -> dict | None:
 	data.is_system_manager = is_system_manager(user)
 	data.is_jmap_configured = is_jmap_configured(user)
 	data.accounts = frappe.get_all("User Account", filters={"user": user})
+	data.user_image = data.user_image or get_avatar_url(user)
 
 	return data
 

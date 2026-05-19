@@ -143,93 +143,84 @@
 					class="h-full overflow-y-auto overscroll-contain"
 					@scroll="loadMoreThreads"
 				>
-					<TransitionGroup name="mail-group" tag="div">
-						<div v-for="(group, key) in groupedThreads" :key="key">
-							<Tooltip
-								v-if="groupMessagesBy !== 'None'"
-								:text="
-									isLastGroup(key)
-										? ''
-										: __(collapsedGroups.includes(key) ? 'Expand' : 'Collapse')
-								"
+					<div v-for="(group, key) in groupedThreads" :key="key">
+						<Tooltip
+							v-if="groupMessagesBy !== 'None'"
+							:text="
+								isLastGroup(key)
+									? ''
+									: __(collapsedGroups.includes(key) ? 'Expand' : 'Collapse')
+							"
+						>
+							<div
+								class="text-ink-gray-6 group flex items-center border-b p-3.5 text-xs font-semibold sm:px-5"
+								:class="{ 'cursor-pointer': !isLastGroup(key) }"
+								@click="toggleGroupCollapse(key)"
 							>
-								<div
-									class="text-ink-gray-6 group flex items-center border-b p-3.5 text-xs font-semibold sm:px-5"
-									:class="{ 'cursor-pointer': !isLastGroup(key) }"
-									@click="toggleGroupCollapse(key)"
-								>
-									<Checkbox
-										:model-value="isGroupSelected(key)"
-										size="md"
-										class="ml-1.5 mr-[11px]"
-										@update:model-value="
-											toggleSelect(getGroupThreads(key), $event)
-										"
-										@click.stop
-									/>
-									<span class="select-none pt-[2px]">
-										{{
-											getFormattedDate(
-												key,
-												groupMessagesBy === 'Month',
-											).toUpperCase()
-										}}
-									</span>
-
-									<component
-										:is="
-											collapsedGroups.includes(key)
-												? ChevronRight
-												: ChevronDown
-										"
-										v-if="!isLastGroup(key)"
-										class="text-ink-gray-5 ml-auto h-4 w-4"
-									/>
-								</div>
-							</Tooltip>
-							<TransitionGroup
-								v-if="!collapsedGroups.includes(key)"
-								name="mail-item"
-								tag="div"
-							>
-								<MailListItem
-									v-for="mail in group"
-									ref="mailItems"
-									:key="mail.name"
-									:mailbox
-									:mail
-									:is-selected="selections.includes(mail.thread_id)"
-									class="border-l-transparent transition-all sm:border-l"
-									:class="{
-										'!bg-surface-blue-1':
-											mail.thread_id === threadID && !isMobile,
-										'!border-l-blue-500': mail.thread_id === threadInFocus,
-									}"
-									@set-seen="
-										(seen: boolean) =>
-											handleSetSeen({ [Number(seen)]: [mail.thread_id] })
+								<Checkbox
+									:model-value="isGroupSelected(key)"
+									size="md"
+									class="ml-1.5 mr-[11px]"
+									@update:model-value="
+										toggleSelect(getGroupThreads(key), $event)
 									"
-									@archive-thread="
-										handleMoveThreads({
-											[mailboxIds.archive]: [mail.thread_id],
-										})
-									"
-									@trash-thread="
-										handleMoveThreads({ [mailboxIds.trash]: [mail.thread_id] })
-									"
-									@delete-thread="junkOrDeleteThreads([mail.thread_id], false)"
-									@set-flagged="
-										(flagged: boolean) =>
-											setFlaggedByThreadIDs([mail.thread_id], flagged)
-									"
-									@set-selected="
-										(selected: boolean) =>
-											toggleSelect([mail.thread_id], selected)
-									"
+									@click.stop
 								/>
-							</TransitionGroup>
-						</div>
-					</TransitionGroup>
+								<span class="select-none pt-[2px]">
+									{{
+										getFormattedDate(
+											key,
+											groupMessagesBy === 'Month',
+										).toUpperCase()
+									}}
+								</span>
+
+								<component
+									:is="
+										collapsedGroups.includes(key) ? ChevronRight : ChevronDown
+									"
+									v-if="!isLastGroup(key)"
+									class="text-ink-gray-5 ml-auto h-4 w-4"
+								/>
+							</div>
+						</Tooltip>
+						<template v-if="!collapsedGroups.includes(key)">
+							<MailListItem
+								v-for="mail in group"
+								ref="mailItems"
+								:key="mail.name"
+								:mailbox
+								:mail
+								:is-selected="selections.includes(mail.thread_id)"
+								class="border-l-transparent sm:border-l"
+								:class="{
+									'!bg-surface-blue-1': mail.thread_id === threadID && !isMobile,
+									'!border-l-blue-500': mail.thread_id === threadInFocus,
+								}"
+								@set-seen="
+									(seen: boolean) =>
+										handleSetSeen({ [Number(seen)]: [mail.thread_id] })
+								"
+								@archive-thread="
+									handleMoveThreads({
+										[mailboxIds.archive]: [mail.thread_id],
+									})
+								"
+								@trash-thread="
+									handleMoveThreads({ [mailboxIds.trash]: [mail.thread_id] })
+								"
+								@delete-thread="junkOrDeleteThreads([mail.thread_id], false)"
+								@set-flagged="
+									(flagged: boolean) =>
+										setFlaggedByThreadIDs([mail.thread_id], flagged)
+								"
+								@set-selected="
+									(selected: boolean) => toggleSelect([mail.thread_id], selected)
+								"
+							/>
+						</template>
+					</div>
+
 					<div
 						v-if="
 							threadsResource.loading && threadsResource.data.length === limit - 50
@@ -276,6 +267,12 @@
 							seen
 								? setSeen.submit({ 1: [threadID!] })
 								: handleSetSeen({ 0: [threadID!] })
+					"
+					@sync-unseen="
+						(ids: string[]) =>
+							threadsResource.data
+								.filter((thread: Thread) => ids.includes(thread.id))
+								.forEach((thread: Thread) => (thread.seen = 0))
 					"
 					@set-flagged="
 						(ids: string[], flagged: boolean) => setFlagged.submit({ ids, flagged })
@@ -1300,39 +1297,3 @@ const title = computed(() => {
 	}
 })
 </script>
-
-<style scoped>
-/* Mail item animations */
-.mail-item-enter-active {
-	@apply transition-all delay-300 duration-300 ease-in-out;
-}
-.mail-item-enter-from {
-	@apply translate-x-5 opacity-0;
-}
-.mail-item-leave-active {
-	@apply transition-all duration-300 ease-in-out;
-}
-.mail-item-leave-to {
-	@apply -translate-x-5 opacity-0;
-}
-.mail-item-move {
-	@apply transition-transform duration-300 ease-in-out;
-}
-
-/* Group animations */
-.mail-group-enter-active {
-	@apply transition-all delay-300 duration-300 ease-in-out;
-}
-.mail-group-enter-from {
-	@apply translate-x-5 opacity-0;
-}
-.mail-group-leave-active {
-	@apply transition-all duration-300 ease-in-out;
-}
-.mail-group-leave-to {
-	@apply -translate-x-5 opacity-0;
-}
-.mail-group-move {
-	@apply transition-transform duration-300 ease-in-out;
-}
-</style>
