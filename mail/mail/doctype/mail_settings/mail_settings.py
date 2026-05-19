@@ -15,10 +15,11 @@ from mail.utils import is_stalwart_configured
 
 class MailSettings(Document):
 	def validate(self) -> None:
-		self.validate_root_domain_name()
-		self.validate_dns_provider()
-		self.validate_jmap_push_subscription_keys()
-		self.validate_signup()
+		if not frappe.flags.in_migrate:
+			self.validate_root_domain_name()
+			self.validate_dns_provider()
+			self.validate_jmap_push_subscription_keys()
+			self.validate_signup()
 
 	def on_update(self) -> None:
 		self.clear_cache()

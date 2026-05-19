@@ -12,3 +12,4 @@ mail.patches.rename_account_to_user
 mail.patches.create_account_settings
 mail.patches.set_user_account
 mail.patches.create_archive_mailbox
+mail.patches.configure_mail_settings
