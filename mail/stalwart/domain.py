@@ -25,9 +25,9 @@ class DomainService(StalwartCLI):
 			if response["output"]:
 				return json.loads(response["output"])
 			else:
-				frappe.throw(_("Domain with ID {0} not found.").format(id))
+				frappe.throw(title=_("Domain not found"), msg=_("Domain with ID {0} not found.").format(id))
 		else:
-			frappe.throw(_("Failed to fetch domain: {0}").format(response["error"]))
+			frappe.throw(title=_("Failed to fetch domain"), msg=response["output"] or response["error"])
 
 	def get_all(self, filters: dict[str, str] | None = None, fields: list[str] | None = None) -> list[dict]:
 		"""Fetches all domains from the Stalwart server, applying optional filters and selecting specific fields."""
@@ -64,4 +64,15 @@ class DomainService(StalwartCLI):
 
 			return []
 		else:
-			frappe.throw(_("Failed to fetch domains: {0}").format(response["error"]))
+			frappe.throw(title=_("Failed to fetch domains"), msg=response["output"] or response["error"])
+
+	def delete(self, ids: list[str]) -> None:
+		"""Deletes domains with the specified IDs from the Stalwart server."""
+
+		if not ids:
+			frappe.throw(title=_("No domain IDs provided"), msg=_("No domain IDs provided for deletion."))
+
+		response = self.run(["delete", "Domain", "--ids", ",".join(ids)])
+
+		if not response["success"]:
+			frappe.throw(title=_("Failed to delete domains"), msg=response["output"] or response["error"])

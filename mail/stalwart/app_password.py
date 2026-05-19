@@ -31,7 +31,9 @@ class AppPasswordService(StalwartCLI):
 		response = self.run(["create", "AppPassword", "--json", app_password_json])
 
 		if not response["success"]:
-			frappe.throw(_("Failed to create app password: {0}").format(response["error"]))
+			frappe.throw(
+				title=_("Failed to create app password"), msg=response["output"] or response["error"]
+			)
 
 		# TODO: Parse and return the generated app password from the response output (stalwart-cli v1.0.7)
 		return response["output"]

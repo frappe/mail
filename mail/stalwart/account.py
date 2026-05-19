@@ -263,9 +263,9 @@ class AccountService(StalwartCLI):
 			if response["output"]:
 				return json.loads(response["output"])
 			else:
-				frappe.throw(_("Account with ID {0} not found.").format(id))
+				frappe.throw(title=_("Account not found"), msg=_("Account with ID {0} not found.").format(id))
 		else:
-			frappe.throw(_("Failed to fetch account: {0}").format(response["error"]))
+			frappe.throw(title=_("Failed to fetch account"), msg=response["output"] or response["error"])
 
 	def get_all(self, filters: dict[str, str] | None = None, fields: list[str] | None = None) -> list[dict]:
 		"""Fetches all accounts from the Stalwart server, applying optional filters and selecting specific fields."""
@@ -315,7 +315,7 @@ class AccountService(StalwartCLI):
 
 			return []
 		else:
-			frappe.throw(_("Failed to fetch accounts: {0}").format(response["error"]))
+			frappe.throw(title=_("Failed to fetch accounts"), msg=response["output"] or response["error"])
 
 	def create(self, account: "Account") -> dict:
 		account_data = account.to_dict()
@@ -323,7 +323,7 @@ class AccountService(StalwartCLI):
 		response = self.run(["create", "Account", "--json", account_json])
 
 		if not response["success"]:
-			frappe.throw(_("Failed to create account: {0}").format(response["error"]))
+			frappe.throw(title=_("Failed to create account"), msg=response["output"] or response["error"])
 
 		return response
 
@@ -331,12 +331,12 @@ class AccountService(StalwartCLI):
 		"""Deletes accounts with the specified IDs from the Stalwart server."""
 
 		if not ids:
-			frappe.throw(_("No account IDs provided for deletion."))
+			frappe.throw(title=_("No account IDs provided"), msg=_("No account IDs provided for deletion."))
 
 		response = self.run(["delete", "Account", "--ids", ",".join(ids)])
 
 		if not response["success"]:
-			frappe.throw(_("Failed to delete accounts: {0}").format(response["error"]))
+			frappe.throw(title=_("Failed to delete accounts"), msg=response["output"] or response["error"])
 
 	def update_password(self, id: str, new_password: str) -> None:
 		"""Updates the password for the specified account on the Stalwart server."""
@@ -355,4 +355,7 @@ class AccountService(StalwartCLI):
 		)
 
 		if not response["success"]:
-			frappe.throw(_("Failed to update password for account with ID {0}.").format(id))
+			frappe.throw(
+				title=_("Failed to update password for account {0}").format(id),
+				msg=response["output"] or response["error"],
+			)

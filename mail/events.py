@@ -76,6 +76,9 @@ def update_account_password(doc: Document, method: str | None = None) -> None:
 	user = doc.name
 	new_password = doc._User__new_password
 
+	if not new_password:
+		return
+
 	execute_with_logging(
 		lambda: update_stalwart_password(user, new_password=new_password),
 		title="Failed to update password on Stalwart server",

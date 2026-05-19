@@ -1,3 +1,4 @@
+import re
 from typing import TYPE_CHECKING, Literal
 
 import frappe
@@ -7,7 +8,10 @@ from frappe.utils import cint
 from pypika import Case, Order
 
 from mail.api.mail import get_avatar_url
+from mail.stalwart import delete_domain as delete_stalwart_domain
 from mail.stalwart import get_domains as get_stalwart_domains
+from mail.utils import execute_with_logging, get_config
+from mail.utils.dns import parse_dns_zone_file
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import is_mail_admin
 
@@ -152,35 +156,33 @@ def delete_account_requests(names: list) -> None:
 
 
 @frappe.whitelist()
-def get_domains(txt: str | None = None, is_verified: int | None = None) -> list[dict]:
-	"""Returns the list of domains for user's with their verification status"""
+def get_domains(txt: str | None = None, is_enabled: bool | None = None) -> list[dict]:
+	"""Returns the list of domains configured in Stalwart, with optional filtering by name/description and enabled status"""
 
 	user = frappe.session.user
 	if not is_mail_admin(user):
 		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
 
 	result = []
-	domains = frappe.db.get_all("Principal", filters={"type": "Domain", "text": txt}, page_length=1000)
+	for domain in get_stalwart_domains():
+		if txt and (
+			txt.lower() not in domain["name"].lower()
+			and txt.lower() not in (domain.get("description") or "").lower()
+		):
+			continue
 
-	domain_extras = frappe.db.get_all(
-		"Principal Settings",
-		{"principal_type": "Domain", "principal_name": ["in", [d["name"] for d in domains]]},
-		["principal_name", "is_verified"],
-	)
-	domain_extras_map = {d["principal_name"]: d["is_verified"] for d in domain_extras}
+		if is_enabled is not None and domain["isEnabled"] != bool(is_enabled):
+			continue
 
-	for domain in domains:
-		domain["is_verified"] = domain_extras_map.get(domain["name"], 0)
 		result.append(
 			{
+				"id": domain["id"],
 				"name": domain["name"],
-				"is_verified": domain["is_verified"],
-				"total_members": domain["total_members"],
+				"description": domain.get("description", ""),
+				"is_enabled": domain["isEnabled"],
+				"created_at": domain["createdAt"],
 			}
 		)
-
-	if is_verified is not None:
-		result = [d for d in result if d["is_verified"] == is_verified]
 
 	return result
 
@@ -277,3 +279,106 @@ def get_invites(
 	invites = query.run(as_dict=True)
 
 	return invites
+
+
+@frappe.whitelist()
+def get_domain(domain_id: str) -> dict:
+	"""Returns the details of a domain, including its DNS records parsed from the zone file"""
+
+	def get_stalwart_domain(domain_id: str) -> dict:
+		domains = get_stalwart_domains()
+		domain = next((d for d in domains if d["id"] == domain_id), None)
+
+		if not domain:
+			frappe.throw(_("Domain not found"), frappe.DoesNotExistError)
+
+		return domain
+
+	def infer_category(record: dict) -> str:
+		"""Infers the category of the DNS record based on its type and name."""
+
+		t = record["type"]
+		name = record["name"]
+
+		if t == "MX":
+			return "Receiving"
+
+		if t == "TXT":
+			value = record["value"] or ""
+			if name.startswith("_dmarc"):
+				return "DMARC"
+			if "spf1" in value:
+				return "Sending"
+			if "domainkey" in name:
+				return "DKIM"
+			if name.startswith("_smtp._tls"):
+				return "TLS Reporting"
+			return "TXT"
+
+		if t == "CNAME":
+			if "autoconfig" in name:
+				return "Auto-config"
+			if "autodiscover" in name:
+				return "Auto-discover"
+			return "Alias"
+
+		if t == "SRV":
+			if "_imap" in name or "_pop3" in name:
+				return "Receiving"
+			if "_submission" in name or "_submissions" in name:
+				return "Sending"
+			return "Server"
+
+		return "Other"
+
+	def is_mandatory(record: dict) -> bool:
+		"""Define which DNS records are required."""
+
+		category = record["category"]
+		value = record["value"]
+
+		if category == "Sending" and "spf1" in value:
+			return True
+		if category == "DMARC":
+			return True
+		if category == "DKIM":
+			return True
+		if record["type"] == "MX":
+			return True
+
+		return False
+
+	domain = get_stalwart_domain(domain_id)
+
+	default_ttl = get_config("default_dns_ttl")
+	dns_records = parse_dns_zone_file(domain["dnsZoneFile"])
+	for record in dns_records:
+		if not record["ttl"]:
+			record["ttl"] = default_ttl
+		record["category"] = infer_category(record)
+		record["mandatory"] = is_mandatory(record)
+
+	return {
+		"id": domain["id"],
+		"name": domain["name"],
+		"description": domain.get("description", ""),
+		"is_enabled": domain["isEnabled"],
+		"created_at": domain["createdAt"],
+		"dns_records": dns_records,
+	}
+
+
+@frappe.whitelist()
+def delete_domain(domain_id: str) -> None:
+	"""Deletes a domain identified by Stalwart domain ID."""
+
+	user = frappe.session.user
+	if not is_mail_admin(user):
+		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
+
+	execute_with_logging(
+		func=lambda: delete_stalwart_domain(domain_id),
+		title=_("Failed to delete domain with ID {0}").format(domain_id),
+		user_message=_("An error occurred while deleting the domain, check error logs for more details."),
+		with_context=False,
+	)

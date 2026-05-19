@@ -16,7 +16,6 @@
 				class="w-40"
 				type="select"
 				:options="STATUS_OPTIONS"
-				@update:model-value="domains.reload()"
 			/>
 		</div>
 		<ListView
@@ -25,24 +24,27 @@
 			:columns="LIST_COLUMNS"
 			:rows="domains.data"
 			:options="LIST_OPTIONS"
-			row-key="name"
+			row-key="id"
 		>
 			<ListHeader />
 			<ListRows>
 				<template v-if="domains.data.length">
 					<ListRow
 						v-for="row in domains.data"
-						:key="row.name"
+						:key="row.id"
 						v-slot="{ column, item }"
 						:row="row"
 						class="hover:!bg-surface-gray-1"
 					>
-						<ListRowItem :item="String(item)">
+						<ListRowItem :item="item">
 							<Badge
-								v-if="column.key === 'is_verified'"
+								v-if="column.key === 'is_enabled'"
 								:theme="item ? 'green' : 'gray'"
-								:label="item ? __('Verified') : __('Not Verified')"
+								:label="item ? __('Enabled') : __('Disabled')"
 							/>
+							<span v-else-if="column.key === 'created_at'">{{
+								formatCreatedAt(item)
+							}}</span>
 						</ListRowItem>
 					</ListRow>
 				</template>
@@ -53,7 +55,7 @@
 	<AddDomainModal v-model="showAddDomain" @reload-domains="domains.reload()" />
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import {
 	Badge,
@@ -69,6 +71,7 @@ import {
 	usePageMeta,
 } from 'frappe-ui'
 
+import dayjs from '@/utils/dayjs'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import AddDomainModal from '@/components/Modals/AddDomainModal.vue'
 
@@ -76,36 +79,48 @@ usePageMeta(() => ({ title: __('Domains') }))
 
 const showAddDomain = ref(false)
 const search = ref('')
-const status = ref<'Verified' | 'Not Verified' | ''>('')
+const status = ref<'All' | 'Enabled' | 'Disabled'>('All')
 
 const domains = createResource({
 	url: 'mail.api.admin.get_domains',
 	auto: true,
 	makeParams: () => ({
 		txt: search.value,
-		is_verified: status.value === 'Verified' ? 1 : status.value === 'Not Verified' ? 0 : null,
+		...(status.value !== 'All' ? { is_enabled: status.value === 'Enabled' } : {}),
 	}),
 	cache: ['mailDomains', search.value, status.value],
 })
 
 watchDebounced(() => search.value, domains.reload, { debounce: 300 })
+watch(() => status.value, domains.reload)
+
+type DomainRow = {
+	id: string
+	name: string
+	description?: string
+	is_enabled: boolean
+	created_at?: string
+}
 
 const LIST_COLUMNS = [
 	{ label: __('Domain'), key: 'name' },
-	{ label: __('Status'), key: 'is_verified' },
-	{ label: __('Addresses'), key: 'total_members' },
+	{ label: __('Description'), key: 'description' },
+	{ label: __('Status'), key: 'is_enabled' },
+	{ label: __('Created At'), key: 'created_at' },
 ]
 
 const LIST_OPTIONS = {
 	selectable: false,
 	showTooltip: false,
 	emptyState: { description: __('No domains found.') },
-	getRowRoute: (row) => ({ name: 'Domain', params: { domainName: row.name } }),
+	getRowRoute: (row: DomainRow) => ({ name: 'Domain', params: { domainId: row.id } }),
 }
 
+const formatCreatedAt = (createdAt?: string) => (createdAt ? dayjs(createdAt).fromNow() : '-')
+
 const STATUS_OPTIONS = [
-	{ label: '', value: 'Both' },
-	{ label: __('Verified'), value: 'Verified' },
-	{ label: __('Not Verified'), value: 'Not Verified' },
+	{ label: __('All'), value: 'All' },
+	{ label: __('Enabled'), value: 'Enabled' },
+	{ label: __('Disabled'), value: 'Disabled' },
 ]
 </script>

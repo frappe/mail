@@ -1,44 +1,28 @@
 <template>
 	<DashboardLayout
-		v-if="domain?.doc"
+		v-if="domain?.data"
 		:breadcrumbs="BREADCRUMBS"
 		:badge-label="badge.label"
 		:badge-theme="badge.theme"
 	>
 		<template #actions>
 			<Dropdown :options="dropdownOptions" :button="{ icon: 'more-horizontal' }" />
-			<Button
-				v-if="!domain.doc.is_verified"
-				variant="solid"
-				:label="__('Verify')"
-				@click="domain.verifyDnsRecords.submit()"
-			/>
 		</template>
 		<template #default>
-			<transition name="expand">
-				<div v-if="!domain.doc.is_verified" class="bg-surface-blue-1 rounded-md border">
-					<div class="space-y-2 p-4">
-						<h3 class="font-medium">{{ BANNER.title }}</h3>
-						<p class="text-ink-gray-5 text-sm">{{ BANNER.message }}</p>
-					</div>
+			<div class="bg-surface-blue-1 rounded-md border">
+				<div class="space-y-2 p-4">
+					<h3 class="font-medium">{{ BANNER.title }}</h3>
+					<p class="text-ink-gray-5 text-sm">{{ BANNER.message }}</p>
 				</div>
-			</transition>
+			</div>
 			<div class="rounded-md border">
 				<h2 class="p-4">{{ __('DNS Records') }}</h2>
 				<DNSRecords
 					:title="__('Email Deliverability')"
 					:description="
-						__(
-							'Email authentication records that verify your domain and protect outgoing mail from spoofing.',
-						)
+						__('Email authentication records that protect your domain from spoofing.')
 					"
-					:records="
-						domain.doc.dns_records.filter(
-							(d) =>
-								d.type === 'TXT' &&
-								!(d.host.startsWith('_smtp') || d.host.startsWith('_mta')),
-						)
-					"
+					:records="emailDeliverabilityRecords"
 					:badge-label="__('Required')"
 					badge-theme="red"
 				/>
@@ -49,7 +33,7 @@
 							'Mail routing records that ensure messages sent to your domain are delivered to the correct mail server.',
 						)
 					"
-					:records="domain.doc.dns_records.filter((d) => d.type === 'MX')"
+					:records="inboundMailRoutingRecords"
 					:badge-label="__('Recommended')"
 					badge-theme="orange"
 				/>
@@ -60,7 +44,7 @@
 							'Service records that enable automatic mail setup and enforce secure transport for your domain.',
 						)
 					"
-					:records="domain.doc.dns_records.filter((d) => d.type === 'CNAME')"
+					:records="serviceConfigurationRecords"
 				/>
 				<DNSRecords
 					:title="__('Service Discovery Records')"
@@ -69,7 +53,7 @@
 							'Records that allow mail and sync apps to automatically locate and connect to your domain’s email, calendar, and contacts services.',
 						)
 					"
-					:records="domain.doc.dns_records.filter((d) => d.type === 'SRV')"
+					:records="serviceDiscoveryRecords"
 				/>
 				<DNSRecords
 					:title="__('Email Transport Security Records')"
@@ -78,13 +62,7 @@
 							'TXT records that enforce encrypted mail delivery and provide reporting on failed or insecure SMTP connections.',
 						)
 					"
-					:records="
-						domain.doc.dns_records.filter(
-							(d) =>
-								d.type === 'TXT' &&
-								(d.host.startsWith('_smtp') || d.host.startsWith('_mta')),
-						)
-					"
+					:records="transportSecurityRecords"
 				/>
 			</div>
 		</template>
@@ -94,120 +72,111 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Button, Dialog, Dropdown, createDocumentResource, usePageMeta } from 'frappe-ui'
+import { Dialog, Dropdown, createResource, usePageMeta } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import DNSRecords from '@/components/DNSRecords.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 
-const { domainName } = defineProps<{ domainName: string }>()
+type DNSRecord = Record<string, string>
 
-usePageMeta(() => ({ title: domainName }))
+type DomainData = {
+	id: string
+	name: string
+	description: string
+	is_enabled: boolean
+	created_at: string
+	dns_records: DNSRecord[]
+}
+
+type ResourceError = {
+	messages?: string[]
+	message?: string
+}
+
+const getErrorMessage = (error: ResourceError) =>
+	error.messages?.[0] || error.message || __('Request failed.')
+
+const { domainId } = defineProps<{ domainId: string }>()
+
+usePageMeta(() => ({ title: domain.data?.name || domainId }))
 
 const router = useRouter()
 
 const showConfirmDialog = ref(false)
 
-const domain = createDocumentResource({
-	doctype: 'Principal',
-	name: domainName,
-	setValue: {
-		onSuccess: () => {
-			if (showConfirmDialog.value) showConfirmDialog.value = false
-			raiseToast(__('Domain settings updated.'))
-		},
-		onError: (error) => {
-			raiseToast(error.messages[0], 'error')
-			domain.reload()
-		},
-	},
-	delete: {
-		onSuccess: () => {
-			router.push({ name: 'Domains' })
-			showConfirmDialog.value = false
-			raiseToast('Domain deleted.')
-		},
-		onError: (error) => raiseToast(error.messages[0], 'error'),
-	},
-	whitelistedMethods: {
-		verifyDnsRecords: {
-			method: 'verify_dns_records',
-			makeParams: () => ({ do_not_save: false }),
-			onSuccess: (data: boolean) => {
-				raiseToast(
-					data ? __('DNS records verified.') : __('DNS verification failed.'),
-					data ? 'success' : 'error',
-				)
-				domain.reload()
-			},
-			onError: (error) => {
-				raiseToast(error.messages[0], 'error')
-				domain.reload()
-			},
-		},
-		refreshDnsRecords: {
-			method: 'refresh_dns_records',
-			makeParams: () => ({ do_not_save: false }),
-			onSuccess: () => {
-				showConfirmDialog.value = false
-				raiseToast('DNS Records refreshed.')
-				domain.reload()
-			},
-			onError: (error) => {
-				raiseToast(error.messages[0], 'error')
-				domain.reload()
-			},
-		},
-		rotateDkimKeys: {
-			method: 'rotate_dkim_keys',
-			onSuccess: () => {
-				showConfirmDialog.value = false
-				raiseToast('DKIM Keys rotated.')
-				domain.reload()
-			},
-			onError: (error) => {
-				raiseToast(error.messages[0], 'error')
-				domain.reload()
-			},
-		},
-	},
+const domain = createResource({
+	url: 'mail.api.admin.get_domain',
+	auto: true,
+	makeParams: () => ({ domain_id: domainId }),
+	cache: ['mailDomain', domainId],
 	onError: () => router.replace({ name: 'Domains' }),
 })
 
-const BREADCRUMBS = [{ label: __('Domains'), route: '/dashboard/domains' }, { label: domainName }]
-
-const confirmDialogAction = ref<'refreshDnsRecords' | 'rotateDkimKeys' | 'deleteDomain'>(
-	'refreshDnsRecords',
+const domainRecords = computed<DNSRecord[]>(
+	() => (domain.data as DomainData | undefined)?.dns_records || [],
 )
 
-const badge = computed(() =>
-	domain.doc.is_verified
-		? { label: __('Verified'), theme: 'green' }
-		: { label: __('Not Verified'), theme: 'gray' },
+const emailDeliverabilityRecords = computed(() =>
+	domainRecords.value.filter(
+		(record) =>
+			record.type === 'TXT' &&
+			!(record.name.startsWith('_smtp') || record.name.startsWith('_mta')),
+	),
+)
+
+const inboundMailRoutingRecords = computed(() =>
+	domainRecords.value.filter((record) => record.type === 'MX'),
+)
+
+const serviceConfigurationRecords = computed(() =>
+	domainRecords.value.filter((record) => record.type === 'CNAME'),
+)
+
+const serviceDiscoveryRecords = computed(() =>
+	domainRecords.value.filter((record) => record.type === 'SRV'),
+)
+
+const transportSecurityRecords = computed(() =>
+	domainRecords.value.filter(
+		(record) =>
+			record.type === 'TXT' &&
+			(record.name.startsWith('_smtp') || record.name.startsWith('_mta')),
+	),
+)
+
+const deleteDomain = createResource({
+	url: 'mail.api.admin.delete_domain',
+	makeParams: () => ({ domain_id: domainId }),
+	onSuccess: () => {
+		router.push({ name: 'Domains' })
+		showConfirmDialog.value = false
+		raiseToast('Domain deleted.')
+	},
+	onError: (error: ResourceError) => raiseToast(getErrorMessage(error), 'error'),
+})
+
+const BREADCRUMBS = computed(() => [
+	{ label: __('Domains'), route: '/dashboard/domains' },
+	{ label: domain.data?.name || domainId },
+])
+
+const confirmDialogAction = ref<'deleteDomain'>('deleteDomain')
+
+const badge = computed<{ label: string; theme: 'green' | 'gray' }>(() =>
+	(domain.data as DomainData | undefined)?.is_enabled
+		? { label: __('Enabled'), theme: 'green' }
+		: { label: __('Disabled'), theme: 'gray' },
 )
 
 const confirmDialogOptions = computed(() => {
 	const config = {
-		refreshDnsRecords: {
-			title: __('Refresh DNS Records'),
-			message: __(
-				`Are you sure you want to refresh the DNS records? If there are any changes, you'll need to update the DNS settings with your DNS provider accordingly.`,
-			),
-			action: domain.refreshDnsRecords.submit,
-		},
-		rotateDkimKeys: {
-			title: __('Rotate DKIM Keys'),
-			message: __(
-				`Are you sure you want to rotate the DKIM keys? This will generate new keys for email signing and may take up to 10 minutes to propagate across DNS servers. Emails sent during this period may fail DKIM verification.`,
-			),
-			action: domain.rotateDkimKeys.submit,
-		},
 		deleteDomain: {
 			title: __('Delete Domain'),
 			message: __(
 				'Are you sure you want to delete this domain? This action cannot be undone.',
 			),
-			action: () => domain.delete.submit(),
+			action: deleteDomain.submit,
 		},
 	}[confirmDialogAction.value]
 
@@ -225,32 +194,6 @@ const dropdownOptions = computed(() => [
 		group: '',
 		items: [
 			{
-				label: __('Refresh DNS Records'),
-				icon: 'refresh-cw',
-				onClick: () => {
-					confirmDialogAction.value = 'refreshDnsRecords'
-					showConfirmDialog.value = true
-				},
-			},
-			{
-				label: __('Rotate DKIM Keys'),
-				icon: 'rotate-cw',
-				onClick: () => {
-					confirmDialogAction.value = 'rotateDkimKeys'
-					showConfirmDialog.value = true
-				},
-			},
-			{
-				label: __('View in Desk'),
-				icon: 'external-link',
-				onClick: () => window.open(`/desk/principal/${domainName}`, '_blank')?.focus(),
-			},
-		],
-	},
-	{
-		group: '',
-		items: [
-			{
 				label: __('Delete Domain'),
 				icon: 'trash-2',
 				onClick: () => {
@@ -263,10 +206,8 @@ const dropdownOptions = computed(() => [
 ])
 
 const BANNER = {
-	title: __('Verify your DNS Records'),
-	message: __(
-		"Add the following records to your domain's DNS settings. Then click on 'Verify' to complete your domain setup.",
-	),
+	title: __('Set Up Your Domain'),
+	message: __("Add the following records to your domain's DNS settings."),
 	subtitle: __('DNS changes may take up to 48 hours to propagate globally.'),
 }
 </script>

@@ -108,7 +108,7 @@ const routes = [
 		meta: { isDashboard: true },
 	},
 	{
-		path: '/dashboard/domains/:domainName',
+		path: '/dashboard/domains/:domainId',
 		name: 'Domain',
 		component: () => import('@/pages/dashboard/DomainView.vue'),
 		props: true,

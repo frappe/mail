@@ -35,15 +35,16 @@ def get_domain_by_name(
 		return domains[0]
 
 	if raise_exception:
-		frappe.throw(_("Domain {0} not found.").format(frappe.bold(name)))
+		frappe.throw(_("Domain {0} not found.").format(name))
 
 
-@redis_cache(ttl=3600)
-def get_domains(fields: list[str] | None = None) -> list[dict]:
+@redis_cache(ttl=60)
+def get_domains() -> list[dict]:
 	"""Fetches all domains from the Stalwart server, selecting specific fields if provided."""
 
-	domain_service = DomainService()
-	return domain_service.get_all({}, fields=fields or ["id", "name"])
+	return DomainService().get_all(
+		{}, fields=["id", "name", "description", "isEnabled", "createdAt", "dnsZoneFile"]
+	)
 
 
 @redis_cache(ttl=3600)
@@ -57,7 +58,7 @@ def get_account_by_name(
 		return accounts[0]
 
 	if raise_exception:
-		frappe.throw(_("Account {0} not found.").format(frappe.bold(name)))
+		frappe.throw(_("Account {0} not found.").format(name))
 
 
 @redis_cache(ttl=3600)
@@ -72,7 +73,7 @@ def get_role_by_description(
 		return roles[0]
 
 	if raise_exception:
-		frappe.throw(_("Role with description {0} not found.").format(frappe.bold(description)))
+		frappe.throw(_("Role with description {0} not found.").format(description))
 
 
 @redis_cache(ttl=3600)
@@ -85,6 +86,12 @@ def get_roles(description: str | None = None, fields: list[str] | None = None) -
 
 	role_service = RoleService()
 	return role_service.get_all(filters, fields=fields or ["id", "description"])
+
+
+def delete_domain(domain_id: str) -> None:
+	"""Deletes a domain from the Stalwart server by ID."""
+
+	DomainService().delete([domain_id])
 
 
 def create_account(
@@ -134,7 +141,7 @@ def create_account(
 		for role in roles:
 			role_id = server_roles_map.get(role)
 			if not role_id:
-				frappe.throw(_("Role {0} does not exists on the server.").format(frappe.bold(role)))
+				frappe.throw(_("Role {0} does not exists on the server.").format(role))
 
 			role_ids.append(role_id)
 
@@ -186,4 +193,4 @@ def delete_account(user: str) -> None:
 	"""Deletes the personal account of the specified user from the Stalwart server."""
 
 	account_id = get_user_personal_account(user, "id", raise_exception=False)
-	AccountService().delete(account_id)
+	AccountService().delete([account_id])

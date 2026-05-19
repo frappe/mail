@@ -360,7 +360,7 @@ def execute_with_logging(
 			message=frappe.get_traceback(with_context=with_context),
 		)
 		if user_message:
-			frappe.throw(user_message)
+			frappe.throw(title=title, msg=user_message)
 
 
 @contextmanager

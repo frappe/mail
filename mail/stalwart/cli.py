@@ -130,10 +130,10 @@ class StalwartCLI:
 	def _parse_process_result(self, result: "CompletedProcess") -> dict:
 		"""Parses the result of a subprocess execution and returns a dictionary with success status and output or error message."""
 
-		if result.returncode == 0:
-			return {"success": True, "output": result.stdout.strip()}
-		else:
-			return {"success": False, "error": result.stderr.strip()}
+		stdout = result.stdout.strip() if result.stdout else ""
+		stderr = result.stderr.strip() if result.stderr else ""
+
+		return {"success": result.returncode == 0, "output": stdout, "error": stderr}
 
 	def run(self, args: list[str]) -> dict:
 		"""Runs a Stalwart CLI command with the provided arguments and returns the result."""

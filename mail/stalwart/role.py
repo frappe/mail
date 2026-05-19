@@ -25,9 +25,9 @@ class RoleService(StalwartCLI):
 			if response["output"]:
 				return json.loads(response["output"])
 			else:
-				frappe.throw(_("Role with ID {0} not found.").format(id))
+				frappe.throw(title=_("Role not found"), msg=_("Role with ID {0} not found.").format(id))
 		else:
-			frappe.throw(_("Failed to fetch role: {0}").format(response["error"]))
+			frappe.throw(title=_("Failed to fetch role"), msg=response["output"] or response["error"])
 
 	def get_all(self, filters: dict[str, str] | None = None, fields: list[str] | None = None) -> list[dict]:
 		"""Fetches all roles from the Stalwart server, applying optional filters and selecting specific fields."""
@@ -64,4 +64,4 @@ class RoleService(StalwartCLI):
 
 			return []
 		else:
-			frappe.throw(_("Failed to fetch roles: {0}").format(response["error"]))
+			frappe.throw(title=_("Failed to fetch roles"), msg=response["output"] or response["error"])
