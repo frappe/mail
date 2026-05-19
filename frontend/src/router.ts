@@ -187,7 +187,7 @@ const router = createRouter({ history: createWebHistory('/mail'), routes })
 // ---------------------------------------------------------------------------
 
 const handleSetupWizardEscape = () => {
-	if (document.referrer.includes('/app/setup-wizard')) window.location.replace('/app')
+	if (document.referrer.includes('/desk/setup-wizard')) window.location.replace('/desk')
 }
 
 const buildDefaultRoute = (
@@ -239,15 +239,23 @@ router.beforeEach(async (to, _, next) => {
 	await userResource.promise
 	const user = userResource.data
 
-	// 3. Resolve active account
+	// 3. Admin / dashboard access control
+	if (!user.is_jmap_configured) {
+		if (!user.is_mail_admin) window.location.replace('/desk')
+		if (to.meta.isDashboard) next()
+		else next({ name: 'Domains' })
+		return
+	}
+
+	// 4. Resolve active account
 	resolveAccount(user?.accounts, to.params.accountId as string | undefined)
 	const accountId = userStore().accountId
 
-	// 4. Wait for mailbox list
+	// 5. Wait for mailbox list
 	await mailboxes.promise
 	const defaultRoute = buildDefaultRoute(accountId, mailboxes)
 
-	// 5. Validate mailbox param for mailbox routes
+	// 6. Validate mailbox param for mailbox routes
 	if (to.name === 'Mailbox' || to.name === 'Mail') {
 		const mailboxExists =
 			mailboxes.data?.some((m: { id: string }) => m.id === to.params.mailbox) ||
@@ -255,13 +263,8 @@ router.beforeEach(async (to, _, next) => {
 		if (!mailboxExists) return next(defaultRoute)
 	}
 
-	// 6. Expand shortcut routes to their full account-scoped equivalents
+	// 7. Expand shortcut routes to their full account-scoped equivalents
 	if (to.meta.shortcut) return next(resolveShortcut(to.name, to.params, accountId, defaultRoute))
-
-	// 7. Admin / dashboard access control
-	if (user.is_mail_admin) {
-		if (!user.is_jmap_configured && !to.meta.isDashboard) return next({ name: 'Domains' })
-	} else if (to.meta.isDashboard) return next(defaultRoute)
 
 	// 8. Login pages redirect already-authenticated users to their mailbox
 	return to.meta.isLogin ? next(defaultRoute) : next()
