@@ -1,8 +1,12 @@
 <template>
 	<div
 		ref="container"
-		class="flex w-full flex-1 flex-wrap items-center gap-2"
+		class="flex w-full flex-1 flex-wrap items-center gap-2 rounded transition-colors"
+		:class="{ 'ring-outline-gray-3 ring-2': isDragOver }"
 		@keydown.capture="handleContainerKeydown"
+		@dragover.prevent="isDragOver = true"
+		@dragleave="isDragOver = false"
+		@drop.prevent="handleDrop"
 	>
 		<button
 			v-for="(v, i) in selectedRecipients"
@@ -10,10 +14,13 @@
 			:key="v.email"
 			class="bg-surface-gray-2 flex min-h-7 items-center space-x-1.5 rounded px-2 text-base focus:outline-none"
 			:class="{ 'ring-outline-gray-3 ring-2': focusedTagIndex === i }"
+			:draggable="true"
 			@click="focusedTagIndex = i"
 			@focus="focusedTagIndex = i"
 			@blur="focusedTagIndex = -1"
 			@keydown.delete.stop="removeValueAt(i)"
+			@dragstart="handleDragStart($event, v)"
+			@dragend="handleDragEnd($event, v)"
 		>
 			<Avatar :image="v.image" :label="v.display_name || v.email" size="xs" />
 			<span>{{ v.display_name || v.email }}</span>
@@ -40,6 +47,10 @@
 		</Combobox>
 	</div>
 </template>
+
+<script lang="ts">
+let droppedOnTarget = false
+</script>
 
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
@@ -134,6 +145,29 @@ const addValue = (value: string) => {
 
 const removeValue = (value: string) =>
 	(selectedRecipients.value = selectedRecipients.value.filter((v) => v.email !== value))
+
+const isDragOver = ref(false)
+
+const handleDragStart = (e: DragEvent, recipient: DraftRecipient) => {
+	droppedOnTarget = false
+	e.dataTransfer?.setData('recipient', JSON.stringify(recipient))
+}
+
+const handleDragEnd = (e: DragEvent, recipient: DraftRecipient) => {
+	if (droppedOnTarget) removeValue(recipient.email)
+	isDragOver.value = false
+}
+
+const handleDrop = (e: DragEvent) => {
+	isDragOver.value = false
+	const data = e.dataTransfer?.getData('recipient')
+	if (!data) return
+	const recipient: DraftRecipient = JSON.parse(data)
+	if (selectedEmails.value.includes(recipient.email)) return
+
+	selectedRecipients.value.push(recipient)
+	droppedOnTarget = true
+}
 
 const mailContacts = createResource({
 	url: 'mail.api.contacts.get_contacts',
