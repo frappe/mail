@@ -4,7 +4,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint
 
-from mail.api.mail import get_avatar_url
+from mail.api.utils import get_avatar_url
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import is_mail_admin
 

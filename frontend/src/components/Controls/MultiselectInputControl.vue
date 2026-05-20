@@ -156,11 +156,15 @@ const mailContacts = createResource({
 		filter: { operator: 'OR', conditions: [{ text }, { email: text }] },
 	}),
 	transform: (data) =>
-		data.map((option) => ({ label: option.full_name || option.email, value: option.email })),
+		data.map((option) => ({
+			label: option.full_name || option.email,
+			image: option.user_image,
+			value: option.email,
+		})),
 	auto: false,
 })
 
-const debouncedSearch = useDebounceFn((text: string) => mailContacts.reload(text), 300)
+const debouncedSearch = useDebounceFn((text: string) => mailContacts.reload(text), 200)
 
 const options = computed<Option[]>(() => {
 	const searchedContacts =

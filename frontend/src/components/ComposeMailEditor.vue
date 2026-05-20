@@ -61,7 +61,8 @@
 									{{ __('To') }}
 								</span>
 							</Tooltip>
-							<MultiselectInputControl
+							<RecipientInput />
+							<!-- <MultiselectInputControl
 								ref="toInput"
 								v-model="mail.to"
 								class="flex-1 text-sm"
@@ -70,7 +71,7 @@
 									(value: string) =>
 										__(`'{0}' is an invalid email address`, [value])
 								"
-							/>
+							/> -->
 							<div class="flex gap-1.5">
 								<Button
 									v-if="!(mail.cc?.length || mail.bcc?.length)"
@@ -283,6 +284,7 @@ import MultiselectInputControl from '@/components/Controls/MultiselectInputContr
 
 import type { Attachment, ComposeMailData, File as FileDoc, Identity, UserResource } from '@/types'
 
+import RecipientInput from './Controls/RecipientInput.vue'
 import ContactsModal from './Modals/ContactsModal.vue'
 
 const show = defineModel<boolean>()

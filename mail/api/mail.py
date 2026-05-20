@@ -9,6 +9,7 @@ from frappe.utils import format_datetime, random_string
 
 from mail.api.contacts import create_contacts_if_not_exists
 from mail.api.sieve import update_sieve_script_for_mailbox
+from mail.api.utils import get_avatar_url
 from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
@@ -76,12 +77,6 @@ def get_user_mailboxes(account: str) -> list[dict]:
 	"""Returns the user's mailboxes."""
 
 	return frappe.get_all("Mailbox", filters={"account": account})
-
-
-def get_avatar_url(email: str) -> str:
-	"""Returns the avatar URL for the given email."""
-
-	return f"/api/method/mail.api.mail.get_avatar?email={email}"
 
 
 def add_user_images_to_emails(account: str, mails: list[dict], is_thread: bool = False) -> list[dict]:
