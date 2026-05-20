@@ -43,12 +43,6 @@ export function startResizing(event) {
 	document.addEventListener('mouseup', onMouseUp)
 }
 
-export const validateEmail = (email: string) => {
-	const regExp =
-		/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-	return regExp.test(email)
-}
-
 export const formatBytes = (bytes: number) => {
 	if (!+bytes) return '0 Bytes'
 
@@ -111,9 +105,9 @@ export const getGroupedRecipients = (
 	const bcc = []
 
 	for (const r of recipients) {
-		if (r.type === 'To') to.push(formatToString ? r : r.email)
-		else if (r.type === 'Cc') cc.push(formatToString ? r : r.email)
-		else if (r.type === 'Bcc') bcc.push(formatToString ? r : r.email)
+		if (r.type === 'To') to.push(formatToString ? r : { ...r })
+		else if (r.type === 'Cc') cc.push(formatToString ? r : { ...r })
+		else if (r.type === 'Bcc') bcc.push(formatToString ? r : { ...r })
 	}
 
 	if (!formatToString) return { to, cc, bcc }

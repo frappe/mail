@@ -267,9 +267,9 @@ def fetch_attachment(account: str, blob_id: str) -> bytes:
 def create_mail(
 	account: str,
 	from_email: str,
-	to: list[str],
-	cc: list[str],
-	bcc: list[str],
+	to: list[dict],
+	cc: list[dict],
+	bcc: list[dict],
 	subject: str | None,
 	html_body: str | None,
 	from_name: str = "",
@@ -296,9 +296,12 @@ def create_mail(
 			}
 		)
 
-	recipients = [{"type": "To", "email": email} for email in to]
-	recipients += [{"type": "Cc", "email": email} for email in cc]
-	recipients += [{"type": "Bcc", "email": email} for email in bcc]
+	recipients = []
+	for type, emails in [("To", to), ("Cc", cc), ("Bcc", bcc)]:
+		recipients += [
+			{"type": type, "email": email.get("email"), "display_name": email.get("display_name")}
+			for email in emails
+		]
 
 	doc = MailQueue._create(
 		account=account,
@@ -325,9 +328,9 @@ def update_draft_mail(
 	account: str,
 	id: str,
 	from_email: str,
-	to: list[str],
-	cc: list[str],
-	bcc: list[str],
+	to: list[dict],
+	cc: list[dict],
+	bcc: list[dict],
 	subject: str | None,
 	html_body: str | None,
 	from_name: str = "",
@@ -378,12 +381,12 @@ def update_draft_mail(
 	doc.text_body = convert_html_to_text(doc.html_body)
 
 	doc.recipients = []
-	for email in to:
-		doc.append("recipients", {"type": "To", "email": email})
-	for email in cc:
-		doc.append("recipients", {"type": "Cc", "email": email})
-	for email in bcc:
-		doc.append("recipients", {"type": "Bcc", "email": email})
+	for type, emails in [("To", to), ("Cc", cc), ("Bcc", bcc)]:
+		for email in emails:
+			doc.append(
+				"recipients",
+				{"type": type, "email": email.get("email"), "display_name": email.get("display_name")},
+			)
 
 	new_doc = doc.submit() if submit else doc.save_draft()
 

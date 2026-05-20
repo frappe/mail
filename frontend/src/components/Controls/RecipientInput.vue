@@ -15,8 +15,8 @@
 			@blur="focusedTagIndex = -1"
 			@keydown.delete.stop="removeValueAt(i)"
 		>
-			<Avatar :image="v.image" :label="v.label || v.email" size="xs" />
-			<span>{{ v.label || v.email }}</span>
+			<Avatar :image="v.image" :label="v.display_name || v.email" size="xs" />
+			<span>{{ v.display_name || v.email }}</span>
 			<X class="icon" @click.stop="removeValue(v.email)" />
 		</button>
 		<Combobox
@@ -31,10 +31,10 @@
 			@paste="handlePaste"
 		>
 			<template #item-prefix="{ item }">
-				<Avatar :image="item.image" :label="item.label" />
+				<Avatar :image="item.image" :label="item.display_name || item.email" />
 			</template>
 			<template #item-label="{ item }">
-				<div class="truncate">{{ item.label }}</div>
+				<div class="truncate">{{ item.display_name || item.email }}</div>
 				<div class="text-p-sm text-ink-gray-5 truncate">{{ item.email }}</div>
 			</template>
 		</Combobox>
@@ -47,8 +47,11 @@ import { useDebounceFn } from '@vueuse/core'
 import { X } from 'lucide-vue-next'
 import { Avatar, Combobox, createResource } from 'frappe-ui'
 
+import { type DraftRecipient } from '@/types'
 import { isEmail } from '@/utils'
 import { userStore } from '@/stores/user'
+
+const selectedRecipients = defineModel<DraftRecipient[]>({ default: () => [] })
 
 const store = userStore()
 
@@ -56,7 +59,6 @@ const containerRef = useTemplateRef('container')
 const tagsRef = useTemplateRef('tags')
 
 const input = ref('')
-const selectedRecipients = ref<SelectedItem[]>([])
 const focusedTagIndex = ref(-1)
 
 const selectedEmails = computed(() => selectedRecipients.value.map((v) => v.email))
@@ -75,6 +77,9 @@ const handlePaste = (e: ClipboardEvent) => {
 	if (pastedText) addValues(pastedText)
 	input.value = ''
 }
+
+const setFocus = () => containerRef.value?.querySelector('input')?.focus()
+defineExpose({ setFocus })
 
 const handleContainerKeydown = (e: KeyboardEvent) => {
 	const inputEl = containerRef.value?.querySelector('input') as HTMLInputElement | null
@@ -102,7 +107,7 @@ const handleContainerKeydown = (e: KeyboardEvent) => {
 const removeValueAt = (i: number) => {
 	selectedRecipients.value.splice(i, 1)
 	nextTick(() => {
-		if (!tagsRef.value?.length) containerRef.value?.querySelector('input')?.focus()
+		if (!tagsRef.value?.length) setFocus()
 		else tagsRef.value[Math.min(i, tagsRef.value.length - 1)]?.focus()
 	})
 }
@@ -141,6 +146,7 @@ const mailContacts = createResource({
 			label: option.full_name || option.email,
 			value: option.email,
 			email: option.email,
+			display_name: option.full_name,
 			image: option.user_image,
 		})),
 	auto: false,
@@ -150,11 +156,4 @@ const options = computed(
 	() =>
 		mailContacts.data?.filter((option) => !selectedEmails.value.includes(option.email)) || [],
 )
-
-interface SelectedItem {
-	label?: string
-	value?: string
-	email: string
-	image?: string
-}
 </script>
