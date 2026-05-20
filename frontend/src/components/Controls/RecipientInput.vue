@@ -7,14 +7,16 @@
 		@dragover.prevent="isDragOver = true"
 		@dragleave="isDragOver = false"
 		@drop.prevent="handleDrop"
-		@click="setFocus"
+		@click="handleClick"
 	>
 		<button
-			v-for="(v, i) in selectedRecipients"
+			v-for="(v, i) in displayedRecipients"
 			ref="tags"
 			:key="v.email"
 			class="bg-surface-gray-2 flex min-h-7 items-center space-x-1.5 rounded px-2 text-base focus:outline-none"
-			:class="{ 'ring-outline-gray-3 ring-2': focusedTagIndex === i }"
+			:class="{
+				'ring-outline-gray-3 ring-2': focusedTagIndex === i,
+			}"
 			:draggable="true"
 			@click.stop="focusedTagIndex = i"
 			@focus="focusedTagIndex = i"
@@ -24,20 +26,31 @@
 			@dragend="handleDragEnd($event, v)"
 		>
 			<Avatar :image="v.image" :label="v.display_name || v.email" size="xs" />
-			<span>{{ v.display_name || v.email }}</span>
-			<X class="icon" @click.stop="removeValue(v.email)" />
+			<span :class="{ 'max-w-32 truncate': isMobile && !isFocused }">
+				{{ v.display_name || v.email }}
+			</span>
+			<X v-if="!isMobile || isFocused" class="icon" @click.stop="removeValue(v.email)" />
 		</button>
+		<span
+			v-if="isMobile && !isFocused && selectedRecipients.length > 2"
+			class="text-ink-gray-6"
+		>
+			{{ `+${selectedRecipients.length - 2}` }}
+		</span>
 		<Combobox
 			v-model="input"
 			placeholder=""
 			:options
 			:open-on-click="false"
 			:allow-custom-value="true"
-			class="w-80 border-none !bg-inherit !ring-0"
+			class="border-none !bg-inherit !ring-0 sm:w-80"
 			@input="handleInput"
 			@keydown.delete.capture.stop="handleDelete($event.target.value)"
 			@paste="handlePaste"
+			@focusin="isSearchFocused = true"
+			@focusout="isSearchFocused = false"
 		>
+			<template #suffix> <span /> </template>
 			<template #item-prefix="{ item }">
 				<Avatar :image="item.image" :label="item.display_name || item.email" />
 			</template>
@@ -55,18 +68,28 @@ let droppedOnTarget = false
 
 <script setup lang="ts">
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
-import { useDebounceFn } from '@vueuse/core'
+import { onClickOutside, useDebounceFn } from '@vueuse/core'
 import { X } from 'lucide-vue-next'
 import { Avatar, Combobox, createResource } from 'frappe-ui'
 
 import { type DraftRecipient } from '@/types'
 import { isEmail } from '@/utils'
+import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
 const emit = defineEmits(['showCcBcc'])
 
 const selectedRecipients = defineModel<DraftRecipient[]>({ default: () => [] })
 
+const displayedRecipients = computed(() => {
+	if (!selectedRecipients.value?.length) return []
+	if (selectedRecipients.value.length <= 2 || !isMobile.value || isFocused.value)
+		return selectedRecipients.value
+
+	return selectedRecipients.value.slice(0, 2)
+})
+
+const { isMobile } = useScreenSize()
 const store = userStore()
 
 const containerRef = useTemplateRef('container')
@@ -74,6 +97,12 @@ const tagsRef = useTemplateRef('tags')
 
 const input = ref('')
 const focusedTagIndex = ref(-1)
+const isClicked = ref(false)
+const isSearchFocused = ref(false)
+
+const isFocused = computed(() => isClicked.value || isSearchFocused.value)
+
+onClickOutside(containerRef, () => (isClicked.value = false))
 
 const selectedEmails = computed(() => selectedRecipients.value.map((v) => v.email))
 
@@ -93,6 +122,10 @@ const handlePaste = (e: ClipboardEvent) => {
 }
 
 const setFocus = () => containerRef.value?.querySelector('input')?.focus()
+const handleClick = () => {
+	isClicked.value = true
+	nextTick(setFocus)
+}
 defineExpose({ setFocus })
 
 const handleContainerKeydown = (e: KeyboardEvent) => {
