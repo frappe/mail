@@ -61,7 +61,11 @@
 									{{ __('To') }}
 								</span>
 							</Tooltip>
-							<RecipientInput ref="toInput" v-model="mail.to" />
+							<RecipientInput
+								ref="toInput"
+								v-model="mail.to"
+								@show-cc-bcc="showCcBcc = true"
+							/>
 							<div class="flex gap-1.5">
 								<Button
 									v-if="!(mail.cc?.length || mail.bcc?.length)"

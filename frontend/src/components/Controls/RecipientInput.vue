@@ -1,12 +1,13 @@
 <template>
 	<div
 		ref="container"
-		class="flex w-full flex-1 flex-wrap items-center gap-2 rounded transition-colors"
-		:class="{ 'ring-outline-gray-3 ring-2': isDragOver }"
+		class="flex w-full flex-1 cursor-text flex-wrap items-center gap-2 rounded transition-colors"
+		:class="{ 'ring-outline-gray-3 ring-2': isDragOver && !isDragging }"
 		@keydown.capture="handleContainerKeydown"
 		@dragover.prevent="isDragOver = true"
 		@dragleave="isDragOver = false"
 		@drop.prevent="handleDrop"
+		@click="setFocus"
 	>
 		<button
 			v-for="(v, i) in selectedRecipients"
@@ -15,7 +16,7 @@
 			class="bg-surface-gray-2 flex min-h-7 items-center space-x-1.5 rounded px-2 text-base focus:outline-none"
 			:class="{ 'ring-outline-gray-3 ring-2': focusedTagIndex === i }"
 			:draggable="true"
-			@click="focusedTagIndex = i"
+			@click.stop="focusedTagIndex = i"
 			@focus="focusedTagIndex = i"
 			@blur="focusedTagIndex = -1"
 			@keydown.delete.stop="removeValueAt(i)"
@@ -32,7 +33,7 @@
 			:options
 			:open-on-click="false"
 			:allow-custom-value="true"
-			class="flex-1 border-none !bg-inherit !ring-0"
+			class="w-80 border-none !bg-inherit !ring-0"
 			@input="handleInput"
 			@keydown.delete.capture.stop="handleDelete($event.target.value)"
 			@paste="handlePaste"
@@ -61,6 +62,8 @@ import { Avatar, Combobox, createResource } from 'frappe-ui'
 import { type DraftRecipient } from '@/types'
 import { isEmail } from '@/utils'
 import { userStore } from '@/stores/user'
+
+const emit = defineEmits(['showCcBcc'])
 
 const selectedRecipients = defineModel<DraftRecipient[]>({ default: () => [] })
 
@@ -146,15 +149,19 @@ const addValue = (value: string) => {
 const removeValue = (value: string) =>
 	(selectedRecipients.value = selectedRecipients.value.filter((v) => v.email !== value))
 
+const isDragging = ref(false)
 const isDragOver = ref(false)
 
 const handleDragStart = (e: DragEvent, recipient: DraftRecipient) => {
+	emit('showCcBcc')
 	droppedOnTarget = false
+	isDragging.value = true
 	e.dataTransfer?.setData('recipient', JSON.stringify(recipient))
 }
 
-const handleDragEnd = (e: DragEvent, recipient: DraftRecipient) => {
+const handleDragEnd = (_: DragEvent, recipient: DraftRecipient) => {
 	if (droppedOnTarget) removeValue(recipient.email)
+	isDragging.value = false
 	isDragOver.value = false
 }
 
@@ -171,6 +178,7 @@ const handleDrop = (e: DragEvent) => {
 
 const mailContacts = createResource({
 	url: 'mail.api.contacts.get_contacts',
+	auto: false,
 	makeParams: (text: string) => ({
 		account: store.account,
 		filter: { operator: 'OR', conditions: [{ text }, { email: text }] },
@@ -183,7 +191,6 @@ const mailContacts = createResource({
 			display_name: option.full_name,
 			image: option.user_image,
 		})),
-	auto: false,
 })
 
 const options = computed(
