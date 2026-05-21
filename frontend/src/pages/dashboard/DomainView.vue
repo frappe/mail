@@ -156,6 +156,43 @@ const deleteDomain = createResource({
 	onError: (error: ResourceError) => raiseToast(getErrorMessage(error), 'error'),
 })
 
+const downloadFile = (content: string, extension: string, mimeType: string) => {
+	const domainName = (domain.data as DomainData | undefined)?.name || domainId
+	const fileName = `${domainName.replace(/[^a-zA-Z0-9.-]+/g, '_')}.${extension}`
+	const blob = new Blob([content], { type: mimeType })
+	const url = URL.createObjectURL(blob)
+
+	const link = document.createElement('a')
+	link.href = url
+	link.download = fileName
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+
+	URL.revokeObjectURL(url)
+}
+
+const downloadDNSZone = createResource({
+	url: 'mail.api.admin.get_domain_dns_zone',
+	makeParams: () => ({ domain_id: domainId }),
+	onSuccess: (zone: string) => downloadFile(zone, 'zone', 'text/plain;charset=utf-8'),
+	onError: (error: ResourceError) => raiseToast(getErrorMessage(error), 'error'),
+})
+
+const downloadDNSCsv = createResource({
+	url: 'mail.api.admin.get_domain_dns_csv',
+	makeParams: () => ({ domain_id: domainId }),
+	onSuccess: (csv: string) => downloadFile(csv, 'csv', 'text/csv;charset=utf-8'),
+	onError: (error: ResourceError) => raiseToast(getErrorMessage(error), 'error'),
+})
+
+const downloadDNSJson = createResource({
+	url: 'mail.api.admin.get_domain_dns_json',
+	makeParams: () => ({ domain_id: domainId }),
+	onSuccess: (json: string) => downloadFile(json, 'json', 'application/json;charset=utf-8'),
+	onError: (error: ResourceError) => raiseToast(getErrorMessage(error), 'error'),
+})
+
 const BREADCRUMBS = computed(() => [
 	{ label: __('Domains'), route: '/dashboard/domains' },
 	{ label: domain.data?.name || domainId },
@@ -193,6 +230,21 @@ const dropdownOptions = computed(() => [
 	{
 		group: '',
 		items: [
+			{
+				label: __('Export Zone File'),
+				icon: 'download',
+				onClick: downloadDNSZone.submit,
+			},
+			{
+				label: __('Export CSV'),
+				icon: 'download',
+				onClick: downloadDNSCsv.submit,
+			},
+			{
+				label: __('Export JSON'),
+				icon: 'download',
+				onClick: downloadDNSJson.submit,
+			},
 			{
 				label: __('Delete Domain'),
 				icon: 'trash-2',

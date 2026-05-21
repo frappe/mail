@@ -1,3 +1,6 @@
+import csv
+import io
+import json
 from typing import Literal
 
 import frappe
@@ -14,6 +17,18 @@ from mail.utils import execute_with_logging, get_config
 from mail.utils.dns import parse_dns_zone_file
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import is_mail_admin
+
+
+def _get_stalwart_domain(domain_id: str) -> dict:
+	"""Helper function to get a domain by ID from Stalwart, throwing a DoesNotExistError if not found."""
+
+	domains = get_stalwart_domains()
+	domain = next((d for d in domains if d["id"] == domain_id), None)
+
+	if not domain:
+		frappe.throw(_("Domain not found"), frappe.DoesNotExistError)
+
+	return domain
 
 
 @frappe.whitelist()
@@ -70,15 +85,6 @@ def get_domains(txt: str | None = None, is_enabled: bool | None = None) -> list[
 def get_domain(domain_id: str) -> dict:
 	"""Returns the details of a domain, including its DNS records parsed from the zone file"""
 
-	def get_stalwart_domain(domain_id: str) -> dict:
-		domains = get_stalwart_domains()
-		domain = next((d for d in domains if d["id"] == domain_id), None)
-
-		if not domain:
-			frappe.throw(_("Domain not found"), frappe.DoesNotExistError)
-
-		return domain
-
 	def infer_category(record: dict) -> str:
 		"""Infers the category of the DNS record based on its type and name."""
 
@@ -133,7 +139,7 @@ def get_domain(domain_id: str) -> dict:
 
 		return False
 
-	domain = get_stalwart_domain(domain_id)
+	domain = _get_stalwart_domain(domain_id)
 
 	default_ttl = get_config("default_dns_ttl")
 	dns_records = parse_dns_zone_file(domain["dnsZoneFile"])
@@ -174,6 +180,42 @@ def get_enabled_domains() -> list[str]:
 	"""Returns the list of enabled domains"""
 
 	return list(set([d["name"] for d in get_stalwart_domains() if d["isEnabled"]]))
+
+
+@frappe.whitelist()
+def get_domain_dns_zone(domain_id: str) -> str:
+	"""Returns the DNS zone file of the domain"""
+
+	domain = _get_stalwart_domain(domain_id)
+	return domain["dnsZoneFile"]
+
+
+@frappe.whitelist()
+def get_domain_dns_csv(domain_id: str) -> str:
+	"""Returns the DNS records of the domain as a CSV string"""
+
+	domain = _get_stalwart_domain(domain_id)
+	dns_records = parse_dns_zone_file(domain["dnsZoneFile"])
+
+	fieldnames = ["name", "ttl", "class", "type", "value"]
+
+	output = io.StringIO()
+	writer = csv.DictWriter(output, fieldnames=fieldnames)
+	writer.writeheader()
+
+	for record in dns_records:
+		writer.writerow(record)
+
+	return output.getvalue()
+
+
+@frappe.whitelist()
+def get_domain_dns_json(domain_id: str) -> str:
+	"""Returns the DNS records of the domain as a JSON object"""
+
+	domain = _get_stalwart_domain(domain_id)
+	dns_records = parse_dns_zone_file(domain["dnsZoneFile"])
+	return json.dumps(dns_records, indent=4)
 
 
 @frappe.whitelist()
