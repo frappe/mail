@@ -26,6 +26,10 @@ class AppPasswordService(StalwartCLI):
 	def create(self, app_password: AppPassword) -> str:
 		"""Creates an app password on Stalwart and returns the generated secret."""
 
+		def _parse_secret(output: str) -> str | None:
+			match = re.search(r"Secret:\s*(\S+)", output)
+			return match.group(1) if match else None
+
 		app_password_data = app_password.to_dict()
 		app_password_json = json.dumps(app_password_data)
 		response = self.run(["create", "AppPassword", "--json", app_password_json])
@@ -35,5 +39,11 @@ class AppPasswordService(StalwartCLI):
 				title=_("Failed to create app password"), msg=response["output"] or response["error"]
 			)
 
-		# TODO: Parse and return the generated app password from the response output (stalwart-cli v1.0.7)
-		return response["output"]
+		secret = _parse_secret(response["output"])
+		if not secret:
+			frappe.throw(
+				title=_("Failed to parse app password secret"),
+				msg=_("Could not extract the generated app password secret from the response."),
+			)
+
+		return secret
