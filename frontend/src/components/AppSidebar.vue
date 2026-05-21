@@ -207,6 +207,7 @@ const menuItems = computed(() => [
 				icon: Keyboard,
 				label: __('Shortcuts'),
 				onClick: () => (showShortcuts.value = true),
+				condition: () => !isMobile.value,
 			},
 		],
 	},

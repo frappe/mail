@@ -215,7 +215,7 @@ import { Check, Download, Loader } from 'lucide-vue-next'
 import { Avatar, Badge, Checkbox, Popover, Tooltip } from 'frappe-ui'
 
 import { getAttachmentUrl } from '@/resources'
-import { getFileIcon, getFirstAlphabet, getFormattedRecipients } from '@/utils'
+import { downloadUrlAsFile, getFileIcon, getFirstAlphabet, getFormattedRecipients } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
@@ -287,13 +287,7 @@ const downloadAttachment = async (attachment: Attachment) => {
 		return
 	}
 
-	const link = document.createElement('a')
-	link.href = url
-	link.download = attachment.filename || 'attachment'
-	document.body.appendChild(link)
-	link.click()
-	document.body.removeChild(link)
-	URL.revokeObjectURL(url)
+	downloadUrlAsFile(url, attachment.filename || 'attachment')
 	currentlyDownloading.value = currentlyDownloading.value.filter(
 		(id) => id !== attachment.blob_id,
 	)

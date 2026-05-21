@@ -264,6 +264,19 @@ def fetch_attachment(account: str, blob_id: str) -> bytes:
 
 
 @frappe.whitelist()
+def fetch_mail_as_eml(name: str) -> bytes:
+	"""Returns the MIME message content of the mail as bytes for EML download."""
+
+	doc = frappe.get_doc("Mail Message", name)
+	doc.check_permission(permtype="read")
+
+	content = doc.message or doc.get_mime_message()
+	if isinstance(content, str):
+		return content.encode("utf-8")
+	return content
+
+
+@frappe.whitelist()
 def create_mail(
 	account: str,
 	from_email: str,

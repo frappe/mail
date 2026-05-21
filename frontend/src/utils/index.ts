@@ -317,3 +317,13 @@ export const getIcon = (mailbox: MailboxData) => {
 	if (mailbox.role && mailbox.role in FOLDER_ICON_MAP) return FOLDER_ICON_MAP[mailbox.role]
 	return 'folder'
 }
+
+export const downloadUrlAsFile = (url: string, filename: string) => {
+	const link = document.createElement('a')
+	link.href = url
+	link.download = filename
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+	URL.revokeObjectURL(url)
+}
