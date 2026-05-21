@@ -49,6 +49,7 @@
 			@paste="handlePaste"
 			@focusin="isSearchFocused = true"
 			@focusout="isSearchFocused = false"
+			@update:selected-option="nextTick(setFocus)"
 		>
 			<template #suffix> <span /> </template>
 			<template #item-prefix="{ item }">
@@ -164,12 +165,13 @@ watch(input, (val) => addValues(val))
 const addValues = (values: string) => {
 	if (!values) return
 
-	values
+	const validValues = values
 		.split(/[\n,]+/)
 		.map((v) => v.trim())
 		.filter((v) => isEmail(v) && !selectedEmails.value.includes(v))
-		.forEach(addValue)
+	if (!validValues.length) return
 
+	validValues.forEach(addValue)
 	input.value = ''
 }
 
