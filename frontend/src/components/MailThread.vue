@@ -474,11 +474,7 @@ const thread = createResource({
 				unseen = false
 			}
 			if (mail.draft) {
-				mail.groupedRecipients = getGroupedRecipients(mail.recipients, false) as {
-					to: string[]
-					cc: string[]
-					bcc: string[]
-				}
+				mail.groupedRecipients = getGroupedRecipients(mail.recipients, false)
 				populateDraftMails(mail)
 			}
 		})

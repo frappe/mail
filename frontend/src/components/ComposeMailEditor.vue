@@ -61,15 +61,10 @@
 									{{ __('To') }}
 								</span>
 							</Tooltip>
-							<MultiselectInputControl
+							<RecipientInput
 								ref="toInput"
 								v-model="mail.to"
-								class="flex-1 text-sm"
-								:validate="validateEmail"
-								:error-message="
-									(value: string) =>
-										__(`'{0}' is an invalid email address`, [value])
-								"
+								@show-cc-bcc="showCcBcc = true"
 							/>
 							<div class="flex gap-1.5">
 								<Button
@@ -96,16 +91,7 @@
 										{{ __('Cc') }}
 									</span>
 								</Tooltip>
-								<MultiselectInputControl
-									ref="ccInput"
-									v-model="mail.cc"
-									class="flex-1 text-sm"
-									:validate="validateEmail"
-									:error-message="
-										(value: string) =>
-											__(`'{0}' is an invalid email address`, [value])
-									"
-								/>
+								<RecipientInput ref="ccInput" v-model="mail.cc" />
 							</div>
 							<div class="flex gap-2">
 								<Tooltip :text="__('Select from contacts')">
@@ -116,15 +102,7 @@
 										{{ __('Bcc') }}
 									</span>
 								</Tooltip>
-								<MultiselectInputControl
-									v-model="mail.bcc"
-									class="flex-1 text-sm"
-									:validate="validateEmail"
-									:error-message="
-										(value: string) =>
-											__(`'{0}' is an invalid email address`, [value])
-									"
-								/>
+								<RecipientInput v-model="mail.bcc" />
 							</div>
 						</template>
 					</div>
@@ -273,16 +251,15 @@ import {
 	processInlineImages,
 	raiseToast,
 	randomString,
-	validateEmail,
 } from '@/utils'
 import { useScreenSize, useVisualViewport } from '@/utils/composables'
 import { CustomParagraphExtension } from '@/utils/text-editor'
 import { userStore } from '@/stores/user'
 import ComposeMailToolbar from '@/components/ComposeMailToolbar.vue'
-import MultiselectInputControl from '@/components/Controls/MultiselectInputControl.vue'
 
 import type { Attachment, ComposeMailData, File as FileDoc, Identity, UserResource } from '@/types'
 
+import RecipientInput from './Controls/RecipientInput.vue'
 import ContactsModal from './Modals/ContactsModal.vue'
 
 const show = defineModel<boolean>()

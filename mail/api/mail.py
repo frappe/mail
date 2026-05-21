@@ -9,6 +9,7 @@ from frappe.utils import format_datetime, random_string
 
 from mail.api.contacts import create_contacts_if_not_exists
 from mail.api.sieve import update_sieve_script_for_mailbox
+from mail.api.utils import get_avatar_url
 from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
 from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
@@ -76,12 +77,6 @@ def get_user_mailboxes(account: str) -> list[dict]:
 	"""Returns the user's mailboxes."""
 
 	return frappe.get_all("Mailbox", filters={"account": account})
-
-
-def get_avatar_url(email: str) -> str:
-	"""Returns the avatar URL for the given email."""
-
-	return f"/api/method/mail.api.mail.get_avatar?email={email}"
 
 
 def add_user_images_to_emails(account: str, mails: list[dict], is_thread: bool = False) -> list[dict]:
@@ -272,9 +267,9 @@ def fetch_attachment(account: str, blob_id: str) -> bytes:
 def create_mail(
 	account: str,
 	from_email: str,
-	to: list[str],
-	cc: list[str],
-	bcc: list[str],
+	to: list[dict],
+	cc: list[dict],
+	bcc: list[dict],
 	subject: str | None,
 	html_body: str | None,
 	from_name: str = "",
@@ -301,9 +296,12 @@ def create_mail(
 			}
 		)
 
-	recipients = [{"type": "To", "email": email} for email in to]
-	recipients += [{"type": "Cc", "email": email} for email in cc]
-	recipients += [{"type": "Bcc", "email": email} for email in bcc]
+	recipients = []
+	for type, emails in [("To", to), ("Cc", cc), ("Bcc", bcc)]:
+		recipients += [
+			{"type": type, "email": email.get("email"), "display_name": email.get("display_name")}
+			for email in emails
+		]
 
 	doc = MailQueue._create(
 		account=account,
@@ -330,9 +328,9 @@ def update_draft_mail(
 	account: str,
 	id: str,
 	from_email: str,
-	to: list[str],
-	cc: list[str],
-	bcc: list[str],
+	to: list[dict],
+	cc: list[dict],
+	bcc: list[dict],
 	subject: str | None,
 	html_body: str | None,
 	from_name: str = "",
@@ -383,12 +381,12 @@ def update_draft_mail(
 	doc.text_body = convert_html_to_text(doc.html_body)
 
 	doc.recipients = []
-	for email in to:
-		doc.append("recipients", {"type": "To", "email": email})
-	for email in cc:
-		doc.append("recipients", {"type": "Cc", "email": email})
-	for email in bcc:
-		doc.append("recipients", {"type": "Bcc", "email": email})
+	for type, emails in [("To", to), ("Cc", cc), ("Bcc", bcc)]:
+		for email in emails:
+			doc.append(
+				"recipients",
+				{"type": type, "email": email.get("email"), "display_name": email.get("display_name")},
+			)
 
 	new_doc = doc.submit() if submit else doc.save_draft()
 
