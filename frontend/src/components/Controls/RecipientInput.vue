@@ -42,7 +42,6 @@
 			placeholder=""
 			:options
 			:open-on-click="false"
-			:allow-custom-value="true"
 			class="border-none !bg-inherit !ring-0 sm:w-80"
 			@input="handleInput"
 			@keydown.delete.capture.stop="handleDelete($event.target.value)"
@@ -52,13 +51,14 @@
 			@update:selected-option="nextTick(setFocus)"
 		>
 			<template #suffix> <span /> </template>
-			<template #item-prefix="{ item }">
-				<Avatar :image="item.image" :label="item.display_name || item.email" />
+			<template #item-prefix="{ item, query }">
+				<Avatar :image="item.image" :label="item.display_name || item.email || query" />
 			</template>
 			<template #item-label="{ item }">
 				<div class="truncate">{{ item.display_name || item.email }}</div>
 				<div class="text-p-sm text-ink-gray-5 truncate">{{ item.email }}</div>
 			</template>
+			<template #item-create="{ query }"> {{ query }} </template>
 		</Combobox>
 	</div>
 </template>
@@ -228,8 +228,13 @@ const mailContacts = createResource({
 		})),
 })
 
-const options = computed(
-	() =>
-		mailContacts.data?.filter((option) => !selectedEmails.value.includes(option.email)) || [],
-)
+const options = computed(() => [
+	...(mailContacts.data?.filter((option) => !selectedEmails.value.includes(option.email)) || []),
+	{
+		type: 'custom',
+		slot: 'create',
+		condition: () => !mailContacts?.data?.length,
+		onClick: ({ query }: { query: string }) => addValues(query),
+	},
+])
 </script>
