@@ -1,9 +1,10 @@
 import os
 import platform
+import shutil
 import subprocess
 import tarfile
 import urllib.request
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import frappe
 from frappe import _
@@ -21,36 +22,42 @@ if TYPE_CHECKING:
 
 
 class StalwartCLI:
-	def __init__(self, credentials: dict[str, str] | None = None) -> None:
+	CREDENTIAL_KEYS: ClassVar[tuple[str, ...]] = ("server_url", "api_key", "username", "password")
+
+	@classmethod
+	def _normalize_credentials(cls, credentials: dict[str, str] | None) -> dict[str, str]:
 		credentials = credentials or {}
+		return {key: credentials.get(key) for key in cls.CREDENTIAL_KEYS}
 
-		if credentials:
-			credentials = {
-				"server_url": credentials.get("server_url"),
-				"api_key": credentials.get("api_key"),
-				"username": credentials.get("username"),
-				"password": credentials.get("password"),
-			}
+	@staticmethod
+	def _validate_credentials(credentials: dict[str, str]) -> None:
+		if not credentials.get("server_url"):
+			frappe.throw(_("Server URL is required for Stalwart CLI operations."))
 
-			if not credentials.get("server_url"):
-				frappe.throw(_("Server URL is required for Stalwart CLI operations."))
-			if not credentials.get("api_key") and (
-				not credentials.get("username") or not credentials.get("password")
-			):
-				frappe.throw(
-					_("Either API key or username and password are required for Stalwart CLI operations.")
-				)
+		has_api_key = bool(credentials.get("api_key"))
+		has_user_password = bool(credentials.get("username") and credentials.get("password"))
+		if not has_api_key and not has_user_password:
+			frappe.throw(
+				_("Either API key or username and password are required for Stalwart CLI operations.")
+			)
 
-		elif not frappe.flags.in_migrate:
+	@staticmethod
+	def _build_auth_args(credentials: dict[str, str]) -> list[str]:
+		if credentials.get("api_key"):
+			return ["--api-key", credentials["api_key"]]
+
+		return ["--user", credentials["username"], "--password", credentials["password"]]
+
+	def __init__(self, credentials: dict[str, str] | None = None) -> None:
+		credentials = self._normalize_credentials(credentials)
+
+		if any(credentials.values()):
+			self._validate_credentials(credentials)
+		elif not getattr(frappe.flags, "in_migrate", False):
 			is_stalwart_configured(raise_exception=True)
 
-			config = get_config()
-			credentials = {
-				"server_url": config["server_url"],
-				"api_key": config["api_key"],
-				"username": config["username"],
-				"password": config["password"],
-			}
+			credentials = self._normalize_credentials(get_config())
+			self._validate_credentials(credentials)
 
 		self._credentials = credentials
 		self.cli_path = get_stalwart_cli_path()
@@ -111,11 +118,15 @@ class StalwartCLI:
 				None,
 			)
 
-			if not member:
+			if not member or not member.isfile():
 				raise FileNotFoundError("stalwart-cli not found in archive")
 
-			member.name = "stalwart-cli"
-			tar.extract(member, path=install_dir)
+			extracted = tar.extractfile(member)
+			if not extracted:
+				raise FileNotFoundError("Failed to extract stalwart-cli from archive")
+
+			with open(self.cli_path, "wb") as binary:
+				shutil.copyfileobj(extracted, binary)
 
 		os.chmod(self.cli_path, 0o755)
 
@@ -138,19 +149,11 @@ class StalwartCLI:
 	def run(self, args: list[str]) -> dict:
 		"""Runs a Stalwart CLI command with the provided arguments and returns the result."""
 
-		cmd = [self.cli_path, "--url", self._credentials["server_url"]]
+		if not self._credentials.get("server_url"):
+			frappe.throw(_("Stalwart credentials are not configured."))
 
-		if self._credentials.get("api_key"):
-			cmd.extend(["--api-key", self._credentials["api_key"]])
-		else:
-			cmd.extend(
-				[
-					"--user",
-					self._credentials["username"],
-					"--password",
-					self._credentials["password"],
-				]
-			)
+		cmd = [self.cli_path, "--url", self._credentials["server_url"]]
+		cmd.extend(self._build_auth_args(self._credentials))
 
 		cmd.extend(args)
 

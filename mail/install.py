@@ -28,7 +28,7 @@ def add_rate_limits() -> None:
 		{"method_path": "mail.api.account.send_reset_password_link", "limit": 5, "seconds": 60 * 60},
 		{"method_path": "mail.api.account.validate_email_assigned", "limit": 10, "seconds": 60 * 60},
 		# mail.api.admin
-		{"method_path": "mail.api.admin.verify_dns_record", "limit": 10, "seconds": 60 * 60},
+		{"method_path": "mail.api.admin.add_domain", "limit": 10, "seconds": 24 * 60 * 60},
 		{"method_path": "mail.api.admin.add_member", "limit": 10, "seconds": 60 * 60},
 		# mail.api.inbound
 		{"method_path": "mail.api.inbound.fetch_blob", "limit": 60, "seconds": 60},

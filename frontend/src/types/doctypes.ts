@@ -97,18 +97,6 @@ export interface MailDomain extends DocType {
 	default_disk_quota?: number
 }
 
-// Last updated: 2026-04-12 23:51:49.709930
-export interface MailDomainRequest extends DocType {
-  /** Domain Name: Data */
-  domain_name: string;
-  /** User: Link (User) */
-  user: string;
-  /** Verification Key: Data */
-  verification_key?: string;
-  /** Is Verified: Check */
-  is_verified: 0 | 1;
-}
-
 // Last updated: 2026-04-27 09:25:58.236007
 export interface MailSettings extends DocType {
   /** Root Domain Name: Data */

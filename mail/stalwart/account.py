@@ -1,9 +1,11 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
+from typing import ClassVar
 
 import frappe
 from frappe import _
+from frappe.utils import random_string
 
 from mail.stalwart.cli import StalwartCLI
 from mail.utils import snake_to_camel
@@ -18,10 +20,18 @@ class PasswordCredential:
 	secret: str
 
 
+def _default_password_credential() -> PasswordCredential:
+	return PasswordCredential(secret=random_string(20))
+
+
+def _default_credentials() -> list["Credential"]:
+	return [Credential()]
+
+
 @dataclass
 class Credential:
-	type: CredentialType
-	password: PasswordCredential
+	type: CredentialType = CredentialType.PASSWORD
+	password: PasswordCredential = field(default_factory=_default_password_credential)
 
 	def to_dict(self) -> dict:
 		if self.type == CredentialType.PASSWORD:
@@ -40,20 +50,25 @@ class RoleType(Enum):
 
 
 @dataclass
+class CustomRoles:
+	role_ids: list[str] = field(default_factory=list)
+
+
+@dataclass
 class UserRoles:
-	type: RoleType
-	role_ids: list[str] | None = None
+	type: RoleType = RoleType.USER
+	roles: CustomRoles | None = None
 
 	def __post_init__(self) -> None:
-		if self.type == RoleType.CUSTOM and not self.role_ids:
-			raise ValueError("Custom role type requires role_ids to be provided.")
+		if self.type == RoleType.CUSTOM and not self.roles:
+			raise ValueError("Custom role type requires roles to be defined.")
 
-		if self.type != RoleType.CUSTOM and self.role_ids:
-			raise ValueError("Only custom role type can have role_ids defined.")
+		if self.type != RoleType.CUSTOM and self.roles:
+			raise ValueError("Only custom role type can have roles defined.")
 
 	def to_dict(self) -> dict:
 		if self.type == RoleType.CUSTOM:
-			return {"@type": self.type.value, "roleIds": {role_id: True for role_id in self.role_ids}}
+			return {"@type": self.type.value, "roleIds": {role_id: True for role_id in self.roles.role_ids}}
 		else:
 			return {"@type": self.type.value}
 
@@ -65,19 +80,28 @@ class PermissionType(Enum):
 
 
 @dataclass
-class Permissions:
-	type: PermissionType
+class PermissionsList:
 	enabled_permissions: list[str] | None = None
 	disabled_permissions: list[str] | None = None
 
+
+@dataclass
+class Permissions:
+	type: PermissionType = PermissionType.INHERIT
+	permissions: PermissionsList | None = None
+
 	def __post_init__(self) -> None:
-		if self.type == PermissionType.INHERIT and (self.enabled_permissions or self.disabled_permissions):
+		if self.type == PermissionType.INHERIT and (
+			self.permissions
+			and (self.permissions.enabled_permissions or self.permissions.disabled_permissions)
+		):
 			raise ValueError(
 				"Inherit permission type should not have enabled or disabled permissions defined."
 			)
 
 		if self.type != PermissionType.INHERIT and not (
-			self.enabled_permissions or self.disabled_permissions
+			self.permissions
+			and (self.permissions.enabled_permissions or self.permissions.disabled_permissions)
 		):
 			raise ValueError(
 				"Merge or Replace permission type requires at least one of enabled or disabled permissions to be defined."
@@ -89,11 +113,11 @@ class Permissions:
 		else:
 			return {
 				"@type": self.type.value,
-				"enabledPermissions": {perm: True for perm in self.enabled_permissions}
-				if self.enabled_permissions
+				"enabledPermissions": {perm: True for perm in self.permissions.enabled_permissions}
+				if self.permissions and self.permissions.enabled_permissions
 				else {},
-				"disabledPermissions": {perm: True for perm in self.disabled_permissions}
-				if self.disabled_permissions
+				"disabledPermissions": {perm: True for perm in self.permissions.disabled_permissions}
+				if self.permissions and self.permissions.disabled_permissions
 				else {},
 			}
 
@@ -128,7 +152,7 @@ class StorageQuota:
 	def to_dict(self) -> dict:
 		quotas = {}
 		for field_name, value in self.__dict__.items():
-			if value:
+			if value is not None:
 				quotas[snake_to_camel(field_name)] = value
 
 		return quotas
@@ -172,7 +196,7 @@ class EncryptionSettings:
 
 @dataclass
 class EncryptionAtRest:
-	type: EncryptionType
+	type: EncryptionType = EncryptionType.DISABLED
 	settings: EncryptionSettings | None = None
 
 	def __post_init__(self) -> None:
@@ -193,16 +217,16 @@ class EncryptionAtRest:
 class Account:
 	name: str
 	domain_id: str
-	credentials: list[Credential] | None = None
+	credentials: list[Credential] = field(default_factory=_default_credentials)
 	member_group_ids: list[str] | None = None
-	roles: UserRoles | None = None
-	permissions: Permissions | None = None
-	quotas: StorageQuota | None = None
+	roles: UserRoles = field(default_factory=UserRoles)
+	permissions: Permissions = field(default_factory=Permissions)
+	quotas: StorageQuota = field(default_factory=StorageQuota)
 	aliases: list[EmailAlias] | None = None
 	description: str | None = None
 	locale: str = "en_US"
 	timezone: str | None = None
-	encryption_at_rest: EncryptionAtRest | None = None
+	encryption_at_rest: EncryptionAtRest = field(default_factory=EncryptionAtRest)
 
 	def __post_init__(self) -> None:
 		self.encryption_at_rest = self.encryption_at_rest or EncryptionAtRest(type=EncryptionType.DISABLED)
@@ -232,26 +256,51 @@ class Account:
 
 
 class AccountService(StalwartCLI):
+	DEFAULT_FIELDS: ClassVar[list[str]] = [
+		"@type",
+		"id",
+		"name",
+		"description",
+		"emailAddress",
+		"aliases",
+		"domainId",
+		"memberGroupIds",
+		"quotas",
+		"roles",
+		"timeZone",
+		"usedDiskQuota",
+	]
+	ALLOWED_FILTER_KEYS: ClassVar[set[str]] = {"text", "name", "domainId", "memberGroupIds"}
+
+	@classmethod
+	def _resolved_fields(cls, fields: list[str] | None) -> list[str]:
+		return fields if isinstance(fields, list) else cls.DEFAULT_FIELDS
+
+	@classmethod
+	def _append_filters(cls, commands: list[str], filters: dict[str, str]) -> None:
+		for key, value in filters.items():
+			if key in cls.ALLOWED_FILTER_KEYS:
+				commands.extend(["--where", f"{key}={value}"])
+			else:
+				frappe.throw(
+					_("Invalid filter key: {0}. Allowed keys are: {1}").format(
+						key, ", ".join(cls.ALLOWED_FILTER_KEYS)
+					)
+				)
+
+	@staticmethod
+	def _parse_query_output(output: str) -> list[dict]:
+		if not output:
+			return []
+
+		return [json.loads(account) for account in output.splitlines()]
+
 	def get(self, id: str, fields: list[str] | None = None) -> dict:
 		"""Fetches an account by ID from the Stalwart server, selecting specific fields if provided."""
 
-		if not isinstance(fields, list):
-			fields = [
-				"@type",
-				"id",
-				"name",
-				"description",
-				"emailAddress",
-				"aliases",
-				"domainId",
-				"memberGroupIds",
-				"quotas",
-				"roles",
-				"timeZone",
-				"usedDiskQuota",
-			]
+		fields = self._resolved_fields(fields)
 
-		commands = commands = ["get", "Account", id]
+		commands = ["get", "Account", id]
 
 		if fields:
 			commands.extend(["--fields", ",".join(fields)])
@@ -271,36 +320,12 @@ class AccountService(StalwartCLI):
 		"""Fetches all accounts from the Stalwart server, applying optional filters and selecting specific fields."""
 
 		filters = filters or {}
+		fields = self._resolved_fields(fields)
 
-		if not isinstance(fields, list):
-			fields = [
-				"@type",
-				"id",
-				"name",
-				"description",
-				"emailAddress",
-				"aliases",
-				"domainId",
-				"memberGroupIds",
-				"quotas",
-				"roles",
-				"timeZone",
-				"usedDiskQuota",
-			]
-
-		commands = commands = ["query", "Account"]
+		commands = ["query", "Account"]
 
 		if filters:
-			allowed_filter_keys = {"text", "name", "domainId", "memberGroupIds"}
-			for key, value in filters.items():
-				if key in allowed_filter_keys:
-					commands.extend(["--where", f"{key}={value}"])
-				else:
-					frappe.throw(
-						_("Invalid filter key: {0}. Allowed keys are: {1}").format(
-							key, ", ".join(allowed_filter_keys)
-						)
-					)
+			self._append_filters(commands, filters)
 
 		if fields:
 			commands.extend(["--fields", ",".join(fields)])
@@ -309,23 +334,19 @@ class AccountService(StalwartCLI):
 		response = self.run(commands)
 
 		if response["success"]:
-			if response["output"]:
-				accounts = response["output"].splitlines()
-				return [json.loads(account) for account in accounts]
-
-			return []
+			return self._parse_query_output(response["output"])
 		else:
 			frappe.throw(title=_("Failed to fetch accounts"), msg=response["output"] or response["error"])
 
-	def create(self, account: "Account") -> dict:
+	def create(self, account: "Account") -> None:
+		"""Creates a new account on the Stalwart server with the provided account data."""
+
 		account_data = account.to_dict()
 		account_json = json.dumps(account_data)
 		response = self.run(["create", "Account", "--json", account_json])
 
 		if not response["success"]:
 			frappe.throw(title=_("Failed to create account"), msg=response["output"] or response["error"])
-
-		return response
 
 	def delete(self, ids: list[str]) -> None:
 		"""Deletes accounts with the specified IDs from the Stalwart server."""
@@ -341,13 +362,16 @@ class AccountService(StalwartCLI):
 	def update_password(self, id: str, new_password: str) -> None:
 		"""Updates the password for the specified account on the Stalwart server."""
 
-		credentials = self.get(id, fields=["credentials"])["credentials"]
+		if not new_password:
+			frappe.throw(title=_("Invalid password"), msg=_("New password cannot be empty."))
 
-		row_id = 0
+		credentials = self.get(id, fields=["credentials"]).get("credentials", {})
+
+		row_id = "0"
 		if credentials:
 			for idx, credential in credentials.items():
 				if credential["@type"] == CredentialType.PASSWORD.value:
-					row_id = idx
+					row_id = str(idx)
 					break
 
 		response = self.run(

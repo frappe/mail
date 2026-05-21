@@ -112,7 +112,7 @@ const showEditInvite = ref(false)
 const showDeleteInvites = ref(false)
 
 const invites = createResource({
-	url: 'mail.api.admin.get_invites',
+	url: 'mail.api.admin.get_account_requests',
 	makeParams: () => ({
 		search: search.value,
 		...(status.value !== 'All' ? { status: status.value } : {}),

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import frappe
 from frappe import _
@@ -7,6 +7,7 @@ from frappe.utils import cint
 from pypika import Case, Order
 
 from mail.api.mail import get_avatar_url
+from mail.stalwart import create_domain as create_stalwart_domain
 from mail.stalwart import delete_domain as delete_stalwart_domain
 from mail.stalwart import get_domains as get_stalwart_domains
 from mail.utils import execute_with_logging, get_config
@@ -17,98 +18,20 @@ from mail.utils.user import is_mail_admin
 
 @frappe.whitelist()
 @dynamic_rate_limit()
-def verify_dns_record(domain_request: str) -> bool:
-	"""Verify the domain request key"""
+def add_domain(name: str, description: str | None = None) -> str:
+	"""Adds a new domain to Stalwart with the specified name and description, returning the new domain's ID."""
 
-	doc = frappe.get_doc("Mail Domain Request", domain_request)
-	return doc.verify_and_create_domain(save=True)
+	for domain in get_stalwart_domains():
+		if domain["name"].lower() == name.lower():
+			frappe.throw(_("Domain {0} already exists.").format(name))
 
-
-@frappe.whitelist()
-def get_members(search: str | None = None, is_admin: bool | None = None) -> list:
-	user = frappe.session.user
-
-	if not is_mail_admin(user):
-		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
-
-	USER = frappe.qb.DocType("User")
-	HAS_ROLE = frappe.qb.DocType("Has Role")
-	USER_SETTINGS = frappe.qb.DocType("User Settings")
-
-	admin_case = Case().when(HAS_ROLE.role == "Mail Admin", 1).else_(0)
-	is_admin_expr = Max(admin_case)
-
-	query = (
-		frappe.qb.from_(USER)
-		.left_join(HAS_ROLE)
-		.on(USER.name == HAS_ROLE.parent)
-		.left_join(USER_SETTINGS)
-		.on(USER.name == USER_SETTINGS.user)
-		.select(
-			USER.name,
-			USER.full_name,
-			USER.user_image,
-			USER.last_active,
-			is_admin_expr.as_("is_admin"),
-		)
-		.where((USER.enabled == 1) & (USER_SETTINGS.username.isnotnull()))
-		.groupby(USER.name)
+	domain_id = execute_with_logging(
+		func=lambda: create_stalwart_domain(name, description),
+		title=_("Failed to add domain {0}").format(name),
+		user_message=_("An error occurred while adding the domain, check error logs for more details."),
+		with_context=False,
 	)
-
-	if search:
-		query = query.where(USER.name.like(f"%{search}%") | USER.full_name.like(f"%{search}%"))
-
-	if is_admin is not None:
-		query = query.having(is_admin_expr == (1 if is_admin else 0))
-
-	users = (
-		query.orderby(is_admin_expr, order=Order.desc).orderby(USER.name, order=Order.asc).run(as_dict=True)
-	)
-
-	for user in users:
-		if not user.get("user_image"):
-			user["user_image"] = get_avatar_url(user["name"])
-
-		user["is_admin"] = bool(user.get("is_admin"))
-
-	return users
-
-
-@frappe.whitelist()
-@dynamic_rate_limit()
-def add_member(
-	username: str,
-	domain: str,
-	is_admin: bool,
-	send_invite: bool,
-	backup_email: str,
-	first_name: str | None = None,
-	last_name: str | None = None,
-	password: str | None = None,
-	expires_at: str | None = None,
-) -> None:
-	"""Create a new Mail Account Request for adding a member"""
-
-	account_request = frappe.new_doc("Mail Account Request")
-	account_request.domain_name = domain
-	account_request.account = f"{username}@{domain}"
-	account_request.is_admin = cint(is_admin)
-	account_request.invited_by = frappe.session.user
-	account_request.backup_email = backup_email
-	account_request.send_invite = cint(send_invite)
-	account_request.expires_at = expires_at
-	account_request.insert()
-
-	if not send_invite:
-		account_request.force_verify_and_create_account(first_name, last_name, password)
-
-
-@frappe.whitelist()
-def delete_account_requests(names: list) -> None:
-	"""Delete Mail Account Requests"""
-
-	for d in names:
-		frappe.delete_doc("Mail Account Request", d)
+	return domain_id
 
 
 @frappe.whitelist()
@@ -141,48 +64,6 @@ def get_domains(txt: str | None = None, is_enabled: bool | None = None) -> list[
 		)
 
 	return result
-
-
-@frappe.whitelist()
-def get_verified_domains() -> list[str]:
-	"""Returns the list of verified domains"""
-
-	return list(set([d["name"] for d in get_stalwart_domains()]))
-
-
-@frappe.whitelist()
-def get_invites(
-	search: str | None = None, status: Literal["All", "Pending", "Accepted", "Expired"] = "All"
-) -> list[dict]:
-	"""Returns the list of account invites"""
-
-	ACC_REQ = frappe.qb.DocType("Mail Account Request")
-	query = (
-		frappe.qb.from_(ACC_REQ)
-		.select(
-			ACC_REQ.name,
-			ACC_REQ.account,
-			ACC_REQ.is_admin,
-			ACC_REQ.backup_email,
-			ACC_REQ.invited_by,
-			ACC_REQ.is_verified,
-		)
-		.orderby(ACC_REQ.creation, order=Order.desc)
-	)
-
-	if search:
-		query = query.where(ACC_REQ.account.like(f"%{search}%"))
-
-	if status == "Pending":
-		query = query.where((ACC_REQ.is_verified == 0) & (ACC_REQ.expires_at > frappe.utils.now()))
-	elif status == "Accepted":
-		query = query.where(ACC_REQ.is_verified == 1)
-	elif status == "Expired":
-		query = query.where((ACC_REQ.is_verified == 0) & (ACC_REQ.expires_at <= frappe.utils.now()))
-
-	invites = query.run(as_dict=True)
-
-	return invites
 
 
 @frappe.whitelist()
@@ -286,3 +167,132 @@ def delete_domain(domain_id: str) -> None:
 		user_message=_("An error occurred while deleting the domain, check error logs for more details."),
 		with_context=False,
 	)
+
+
+@frappe.whitelist()
+def get_enabled_domains() -> list[str]:
+	"""Returns the list of enabled domains"""
+
+	return list(set([d["name"] for d in get_stalwart_domains() if d["isEnabled"]]))
+
+
+@frappe.whitelist()
+@dynamic_rate_limit()
+def add_member(
+	username: str,
+	domain: str,
+	is_admin: bool,
+	send_invite: bool,
+	backup_email: str,
+	first_name: str | None = None,
+	last_name: str | None = None,
+	password: str | None = None,
+	expires_at: str | None = None,
+) -> None:
+	"""Create a new Mail Account Request for adding a member"""
+
+	account_request = frappe.new_doc("Mail Account Request")
+	account_request.domain_name = domain
+	account_request.account = f"{username}@{domain}"
+	account_request.is_admin = cint(is_admin)
+	account_request.invited_by = frappe.session.user
+	account_request.backup_email = backup_email
+	account_request.send_invite = cint(send_invite)
+	account_request.expires_at = expires_at
+	account_request.insert()
+
+	if not send_invite:
+		account_request.force_verify_and_create_account(first_name, last_name, password)
+
+
+@frappe.whitelist()
+def get_members(search: str | None = None, is_admin: bool | None = None) -> list:
+	user = frappe.session.user
+
+	if not is_mail_admin(user):
+		frappe.throw(_("User {0} does not have Mail Admin role.").format(frappe.bold(user)))
+
+	USER = frappe.qb.DocType("User")
+	HAS_ROLE = frappe.qb.DocType("Has Role")
+	USER_SETTINGS = frappe.qb.DocType("User Settings")
+
+	admin_case = Case().when(HAS_ROLE.role == "Mail Admin", 1).else_(0)
+	is_admin_expr = Max(admin_case)
+
+	query = (
+		frappe.qb.from_(USER)
+		.left_join(HAS_ROLE)
+		.on(USER.name == HAS_ROLE.parent)
+		.left_join(USER_SETTINGS)
+		.on(USER.name == USER_SETTINGS.user)
+		.select(
+			USER.name,
+			USER.full_name,
+			USER.user_image,
+			USER.last_active,
+			is_admin_expr.as_("is_admin"),
+		)
+		.where((USER.enabled == 1) & (USER_SETTINGS.username.isnotnull()))
+		.groupby(USER.name)
+	)
+
+	if search:
+		query = query.where(USER.name.like(f"%{search}%") | USER.full_name.like(f"%{search}%"))
+
+	if is_admin is not None:
+		query = query.having(is_admin_expr == (1 if is_admin else 0))
+
+	users = (
+		query.orderby(is_admin_expr, order=Order.desc).orderby(USER.name, order=Order.asc).run(as_dict=True)
+	)
+
+	for user in users:
+		if not user.get("user_image"):
+			user["user_image"] = get_avatar_url(user["name"])
+
+		user["is_admin"] = bool(user.get("is_admin"))
+
+	return users
+
+
+@frappe.whitelist()
+def get_account_requests(
+	search: str | None = None, status: Literal["All", "Pending", "Accepted", "Expired"] = "All"
+) -> list[dict]:
+	"""Returns the list of account invites"""
+
+	ACC_REQ = frappe.qb.DocType("Mail Account Request")
+	query = (
+		frappe.qb.from_(ACC_REQ)
+		.select(
+			ACC_REQ.name,
+			ACC_REQ.account,
+			ACC_REQ.is_admin,
+			ACC_REQ.backup_email,
+			ACC_REQ.invited_by,
+			ACC_REQ.is_verified,
+		)
+		.orderby(ACC_REQ.creation, order=Order.desc)
+	)
+
+	if search:
+		query = query.where(ACC_REQ.account.like(f"%{search}%"))
+
+	if status == "Pending":
+		query = query.where((ACC_REQ.is_verified == 0) & (ACC_REQ.expires_at > frappe.utils.now()))
+	elif status == "Accepted":
+		query = query.where(ACC_REQ.is_verified == 1)
+	elif status == "Expired":
+		query = query.where((ACC_REQ.is_verified == 0) & (ACC_REQ.expires_at <= frappe.utils.now()))
+
+	invites = query.run(as_dict=True)
+
+	return invites
+
+
+@frappe.whitelist()
+def delete_account_requests(names: list) -> None:
+	"""Delete Mail Account Requests"""
+
+	for d in names:
+		frappe.delete_doc("Mail Account Request", d)

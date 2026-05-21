@@ -1,21 +1,21 @@
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import ClassVar
 
 import frappe
 from frappe import _
 
-from mail.stalwart.account import Permissions, PermissionType
+from mail.stalwart.account import Permissions
 from mail.stalwart.cli import StalwartCLI
 
 
 @dataclass
 class AppPassword:
 	description: str
-	permissions: Permissions | None = None
+	permissions: Permissions = field(default_factory=Permissions)
 
 	def to_dict(self) -> dict:
-		self.permissions = self.permissions or Permissions(type=PermissionType.INHERIT)
 		return {
 			"description": self.description,
 			"permissions": self.permissions.to_dict(),
@@ -23,12 +23,15 @@ class AppPassword:
 
 
 class AppPasswordService(StalwartCLI):
+	SECRET_PATTERN: ClassVar[re.Pattern] = re.compile(r"Secret:\s*(\S+)")
+
+	@classmethod
+	def _parse_secret(cls, output: str) -> str | None:
+		match = cls.SECRET_PATTERN.search(output)
+		return match.group(1) if match else None
+
 	def create(self, app_password: AppPassword) -> str:
 		"""Creates an app password on Stalwart and returns the generated secret."""
-
-		def _parse_secret(output: str) -> str | None:
-			match = re.search(r"Secret:\s*(\S+)", output)
-			return match.group(1) if match else None
 
 		app_password_data = app_password.to_dict()
 		app_password_json = json.dumps(app_password_data)
@@ -39,7 +42,7 @@ class AppPasswordService(StalwartCLI):
 				title=_("Failed to create app password"), msg=response["output"] or response["error"]
 			)
 
-		secret = _parse_secret(response["output"])
+		secret = self._parse_secret(response["output"])
 		if not secret:
 			frappe.throw(
 				title=_("Failed to parse app password secret"),
