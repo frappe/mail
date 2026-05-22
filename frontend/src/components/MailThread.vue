@@ -132,7 +132,7 @@
 											getFirstAlphabet(mail.from_email)
 										"
 										:image="mail.user_image"
-										size="2xl"
+										size="xl"
 									/>
 									<div class="flex flex-1 justify-between truncate text-sm">
 										<div class="mr-3 flex flex-col space-y-1 truncate">

@@ -5,7 +5,7 @@
 			params: { accountId: $route.params.accountId, mailbox, threadID: mail.thread_id },
 			query: $route.query,
 		}"
-		class="sm:hover:bg-surface-gray-1 group flex cursor-pointer select-none space-x-2.5 border-b px-3.5 py-2.5 sm:px-5"
+		class="sm:hover:bg-surface-gray-1 group flex cursor-default select-none space-x-2.5 border-b px-3.5 py-2.5 sm:space-x-5 sm:px-5"
 		:class="{
 			'!bg-surface-blue-1': isSelected || isTouching,
 			'!py-2': isFullWidth,
@@ -18,29 +18,28 @@
 		@touchcancel="clearTouchTimer"
 	>
 		<div
-			class="flex w-10 shrink-0 items-center justify-center"
-			:class="isFullWidth ? 'h-8' : 'h-10'"
+			class="flex shrink-0 items-center justify-center max-sm:w-10"
+			:class="isFullWidth ? 'h-8' : 'h-10 sm:-mt-1.5'"
 		>
-			<Checkbox
-				v-if="(isHovered || isSelected) && !isMobile"
-				:model-value="isSelected"
-				size="md"
-				class="-ml-[1px]"
-				@update:model-value="emit('setSelected', $event)"
-				@click.stop
-			/>
 			<div
-				v-else-if="isSelected && isMobile"
-				class="bg-surface-gray-7 hitbox flex h-10 min-h-10 w-10 min-w-10 rounded-full"
+				v-if="!isMobile"
+				class="checkbox-hitbox -m-3 cursor-pointer p-3"
+				@click.stop.prevent="emit('setSelected', !isSelected)"
+			>
+				<Checkbox :model-value="isSelected" size="md" class="pointer-events-none" />
+			</div>
+			<div
+				v-else-if="isSelected"
+				class="bg-surface-gray-7 hitbox flex h-8 w-8 shrink-0 rounded-full"
 				@click.stop.prevent="emit('setSelected', false)"
 			>
 				<Check class="text-ink-white m-auto h-5 w-5 stroke-[3px]" />
 			</div>
 			<Avatar
-				v-show="!isSelected && (!isHovered || isMobile)"
+				v-show="!isSelected && isMobile"
 				:label="getFirstAlphabet(mail.from_name) || getFirstAlphabet(mail.from_email)"
 				:image="mail.user_image"
-				:size="isFullWidth ? 'lg' : 'xl'"
+				size="xl"
 				class="hitbox"
 				@click.stop.prevent="emit('setSelected', true)"
 			/>
@@ -338,5 +337,9 @@ const onTouchMove = (e: TouchEvent) => {
 <style scoped>
 .hitbox {
 	@apply relative after:absolute after:-inset-2 after:content-[''];
+}
+
+.checkbox-hitbox:hover :deep(input[type='checkbox']) {
+	@apply border-outline-gray-5 shadow-sm;
 }
 </style>

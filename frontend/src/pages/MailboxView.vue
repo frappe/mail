@@ -59,7 +59,7 @@
 			>
 				<!-- Toolbar/Actions -->
 				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
-					<div class="sm:mr-5.5 ml-3 mr-5">
+					<div class="mr-5 max-sm:ml-3">
 						<Tooltip
 							:text="
 								isAllSelected
@@ -67,11 +67,16 @@
 									: __('Select All ({0}+A)', [modifier])
 							"
 						>
-							<Checkbox
-								:model-value="isAllSelected"
-								size="md"
-								@update:model-value="toggleSelectAll"
-							/>
+							<div
+								class="checkbox-hitbox -m-3 cursor-pointer p-3"
+								@click.stop.prevent="toggleSelectAll(!isAllSelected)"
+							>
+								<Checkbox
+									:model-value="isAllSelected"
+									size="md"
+									class="pointer-events-none"
+								/>
+							</div>
 						</Tooltip>
 					</div>
 					<p class="mr-auto pb-[2px]">{{ title }}</p>
@@ -154,18 +159,21 @@
 						>
 							<div
 								class="text-ink-gray-6 group flex items-center border-b p-3.5 text-xs font-semibold sm:px-5"
-								:class="{ 'cursor-pointer': !isLastGroup(key) }"
 								@click="toggleGroupCollapse(key)"
 							>
-								<Checkbox
-									:model-value="isGroupSelected(key)"
-									size="md"
-									class="ml-1.5 mr-[11px]"
-									@update:model-value="
-										toggleSelect(getGroupThreads(key), $event)
+								<div
+									class="pr-7.5 checkbox-hitbox -m-3 cursor-pointer py-3 pl-6 sm:pl-3"
+									@click.stop.prevent="
+										toggleSelect(getGroupThreads(key), !isGroupSelected(key))
 									"
-									@click.stop
-								/>
+								>
+									<Checkbox
+										:model-value="isGroupSelected(key)"
+										size="md"
+										class="pointer-events-none"
+									/>
+								</div>
+
 								<span class="select-none pt-[2px]">
 									{{
 										getFormattedDate(
@@ -192,7 +200,6 @@
 								:mailbox
 								:mail
 								:is-selected="selections.includes(mail.thread_id)"
-								class="border-l-transparent sm:border-l"
 								:class="{
 									'!bg-surface-blue-1': mail.thread_id === threadID && !isMobile,
 									'!border-l-blue-500': mail.thread_id === threadInFocus,
@@ -1297,3 +1304,9 @@ const title = computed(() => {
 	}
 })
 </script>
+
+<style scoped>
+.checkbox-hitbox:hover :deep(input[type='checkbox']) {
+	@apply border-outline-gray-5 shadow-sm;
+}
+</style>
