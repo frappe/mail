@@ -18,6 +18,7 @@ def execute() -> None:
 				if password := doc.get_password("fallback_admin_password"):
 					doc.recovery_admin_password = password
 
+		doc._initialize_data_store()
 		doc.save()
 
 	for cluster in frappe.db.get_all("Mail Cluster", {}, pluck="name"):

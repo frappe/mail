@@ -73,6 +73,24 @@ class MailCluster(Document):
 		if frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Mail Cluster."))
 
+	def generate_ssh_keypair(self, save: bool = False) -> None:
+		"""Generates an SSH key pair for the cluster."""
+
+		key = paramiko.RSAKey.generate(4096)
+		private_io = io.StringIO()
+		key.write_private_key(private_io)
+		self.ssh_private_key = private_io.getvalue()
+		self.ssh_public_key = f"{key.get_name()} {key.get_base64()} frappe-mail-cluster"
+
+		if save:
+			self.save()
+
+	@frappe.whitelist()
+	def initialize_defaults(self) -> None:
+		"""Initializes the default values."""
+
+		self._initialize_data_store()
+
 	def validate_enabled(self) -> None:
 		"""Validates the enabled status of the cluster."""
 
@@ -150,25 +168,7 @@ class MailCluster(Document):
 		for field in ["blob_store", "search_store", "in_memory_store"]:
 			validate_store(field)
 
-	def generate_ssh_keypair(self, save: bool = False) -> None:
-		"""Generates an SSH key pair for the cluster."""
-
-		key = paramiko.RSAKey.generate(4096)
-		private_io = io.StringIO()
-		key.write_private_key(private_io)
-		self.ssh_private_key = private_io.getvalue()
-		self.ssh_public_key = f"{key.get_name()} {key.get_base64()} frappe-mail-cluster"
-
-		if save:
-			self.save()
-
-	@frappe.whitelist()
-	def initialize_defaults(self) -> None:
-		"""Initializes the default values."""
-
-		self.initialize_data_store()
-
-	def initialize_data_store(self) -> None:
+	def _initialize_data_store(self) -> None:
 		"""Initializes the data store for the cluster."""
 
 		if not self.data_store:
