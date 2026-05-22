@@ -72,9 +72,9 @@ export interface Mail {
 	mailboxes: Mailbox[]
 	recipients: Recipient[]
 	groupedRecipients: {
-		to: string[]
-		cc: string[]
-		bcc: string[]
+		to: Recipient[]
+		cc: Recipient[]
+		bcc: Recipient[]
 	}
 	reply_to: { display_name: string; email: string }[]
 	attachments: Attachment[]
@@ -82,13 +82,19 @@ export interface Mail {
 	collapsed?: boolean
 }
 
+export interface DraftRecipient {
+	email: string
+	display_name?: string
+	image?: string
+}
+
 export interface ComposeMailData {
 	name?: string
 	id?: string
 	from_email?: string
-	to?: string[]
-	cc?: string[]
-	bcc?: string[]
+	to?: DraftRecipient[]
+	cc?: DraftRecipient[]
+	bcc?: DraftRecipient[]
 	subject?: string
 	quoted_content?: string
 	html_body?: string

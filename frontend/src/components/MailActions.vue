@@ -28,6 +28,7 @@ import {
 	CircleAlert,
 	CircleCheck,
 	Code,
+	Download,
 	Ellipsis,
 	ExternalLink,
 	Forward,
@@ -41,7 +42,7 @@ import {
 } from 'lucide-vue-next'
 import { Button, Dropdown, createResource, toast } from 'frappe-ui'
 
-import { raisePromiseToast, raiseToast } from '@/utils'
+import { downloadUrlAsFile, raisePromiseToast, raiseToast } from '@/utils'
 import { useScreenSize, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
@@ -211,6 +212,12 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 		group: '',
 		items: [
 			{
+				label: __('Download Email'),
+				onClick: () => downloadEmail.submit(),
+				icon: Download,
+				condition: () => !mail.draft,
+			},
+			{
 				label: __('See MIME Message'),
 				onClick: () => window.open(`/mail/mime-message/${mail.name}`, '_blank')?.focus(),
 				icon: Code,
@@ -225,6 +232,18 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 		],
 	},
 ]
+
+const downloadEmail = createResource({
+	url: 'mail.api.mail.fetch_mail_as_eml',
+	makeParams: () => ({ name: mail.name }),
+	onSuccess: (content: string) => {
+		const byteArray = new Uint8Array(content)
+		const blob = new Blob([byteArray], { type: 'message/rfc822' })
+		const url = URL.createObjectURL(blob)
+		downloadUrlAsFile(url, `${mail.subject || mail.name}.eml`)
+	},
+	onError: (error) => raiseToast(error.message, 'error'),
+})
 
 const markAsSpam = createResource({
 	url: 'mail.api.mail.set_mails_spam_status',

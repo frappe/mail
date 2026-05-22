@@ -77,6 +77,7 @@ declare module 'vue' {
     PWASettings: typeof import('./src/components/PWASettings.vue')['default']
     QuotaBar: typeof import('./src/components/QuotaBar.vue')['default']
     QuotaProgressBar: typeof import('./src/components/QuotaProgressBar.vue')['default']
+    RecipientInput: typeof import('./src/components/Controls/RecipientInput.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SearchMobileLayout: typeof import('./src/components/SearchMobileLayout.vue')['default']

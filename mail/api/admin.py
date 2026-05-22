@@ -9,7 +9,7 @@ from frappe.query_builder.functions import Max
 from frappe.utils import cint
 from pypika import Case, Order
 
-from mail.api.mail import get_avatar_url
+from mail.api.utils import get_avatar_url
 from mail.stalwart import create_domain as create_stalwart_domain
 from mail.stalwart import delete_domain as delete_stalwart_domain
 from mail.stalwart import get_domains as get_stalwart_domains

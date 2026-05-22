@@ -40,7 +40,7 @@
 				v-show="!isSelected && (!isHovered || isMobile)"
 				:label="getFirstAlphabet(mail.from_name) || getFirstAlphabet(mail.from_email)"
 				:image="mail.user_image"
-				:size="isFullWidth ? 'lg' : '2xl'"
+				:size="isFullWidth ? 'lg' : 'xl'"
 				class="hitbox"
 				@click.stop.prevent="emit('setSelected', true)"
 			/>
@@ -57,7 +57,7 @@
 				<div class="mr-2 mt-0.5 flex items-center space-x-1.5 truncate">
 					<span v-if="!mail.seen" class="min-h-2 min-w-2 rounded-full bg-blue-500" />
 					<h3
-						class="truncate text-[15px] sm:text-base"
+						class="truncate text-[15px] !font-medium sm:text-base"
 						:class="{ '!font-semibold': !mail.seen }"
 					>
 						{{ header }}
@@ -215,7 +215,7 @@ import { Check, Download, Loader } from 'lucide-vue-next'
 import { Avatar, Badge, Checkbox, Popover, Tooltip } from 'frappe-ui'
 
 import { getAttachmentUrl } from '@/resources'
-import { getFileIcon, getFirstAlphabet, getFormattedRecipients } from '@/utils'
+import { downloadUrlAsFile, getFileIcon, getFirstAlphabet, getFormattedRecipients } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
@@ -287,13 +287,7 @@ const downloadAttachment = async (attachment: Attachment) => {
 		return
 	}
 
-	const link = document.createElement('a')
-	link.href = url
-	link.download = attachment.filename || 'attachment'
-	document.body.appendChild(link)
-	link.click()
-	document.body.removeChild(link)
-	URL.revokeObjectURL(url)
+	downloadUrlAsFile(url, attachment.filename || 'attachment')
 	currentlyDownloading.value = currentlyDownloading.value.filter(
 		(id) => id !== attachment.blob_id,
 	)

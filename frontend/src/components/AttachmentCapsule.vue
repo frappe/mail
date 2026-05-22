@@ -28,7 +28,7 @@ import { ref } from 'vue'
 import { Download, Loader } from 'lucide-vue-next'
 
 import { getAttachmentUrl } from '@/resources'
-import { getFileIcon } from '@/utils'
+import { downloadUrlAsFile, getFileIcon } from '@/utils'
 
 const { fileName, blobID, type } = defineProps<{
 	fileName: string
@@ -43,13 +43,7 @@ const downloadAttachment = async () => {
 
 	isDownloading.value = true
 	const url = await getAttachmentUrl(blobID, type)
-	const link = document.createElement('a')
-	link.href = url
-	link.download = fileName || 'attachment'
-	document.body.appendChild(link)
-	link.click()
-	document.body.removeChild(link)
-	URL.revokeObjectURL(url)
+	downloadUrlAsFile(url, fileName || 'attachment')
 	isDownloading.value = false
 }
 </script>

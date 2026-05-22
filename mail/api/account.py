@@ -7,7 +7,8 @@ from frappe.utils import cint, get_datetime, get_url, now_datetime
 from frappe.utils.data import sha256_hash
 
 from mail.api.admin import add_member
-from mail.api.mail import get_avatar_url, normalize_filter
+from mail.api.mail import normalize_filter
+from mail.api.utils import get_avatar_url
 from mail.client.doctype.identity.identity import fetch_identities
 from mail.mail.doctype.mail_settings.mail_settings import get_signup_domains
 from mail.utils import convert_html_to_text, user_context

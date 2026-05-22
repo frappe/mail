@@ -3,6 +3,7 @@ import re
 
 import frappe
 
+from mail.api.utils import get_avatar_url
 from mail.client.doctype.address_book.address_book import fetch_address_books
 from mail.client.doctype.contact_card.contact_card import bulk_add_contact_cards, fetch_contact_cards
 from mail.jmap import get_default_address_book_id
@@ -45,7 +46,26 @@ def get_contacts(account: str, filter: dict | None = None, limit: int = 50) -> l
 			for email in emails:
 				contacts.append({"full_name": card.get("full_name"), "email": email.get("address")})
 
+	enrich_contacts_with_user_images(contacts)
+
 	return contacts
+
+
+def enrich_contacts_with_user_images(contacts: list[dict]) -> list[dict]:
+	"""Enriches the given contacts with user images."""
+
+	unique_emails = set(contact.get("email") for contact in contacts if contact.get("email"))
+
+	user_image_map = {}
+	if unique_emails:
+		user_data = frappe.get_all(
+			"User", filters={"name": ["in", list(unique_emails)]}, fields=["name", "user_image"]
+		)
+		user_image_map = {u.name: u.user_image for u in user_data if u.user_image}
+
+	for contact in contacts:
+		email = contact.get("email")
+		contact["user_image"] = user_image_map.get(email) or get_avatar_url(email) if email else None
 
 
 @frappe.whitelist()
