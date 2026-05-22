@@ -419,6 +419,7 @@
    "reqd": 1
   },
   {
+   "default": "v1.0.7",
    "fieldname": "stalwart_cli_version",
    "fieldtype": "Data",
    "label": "Stalwart CLI Version",
@@ -622,7 +623,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-05-14 11:49:08.615702",
+ "modified": "2026-05-22 11:49:08.615702",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

@@ -52,10 +52,15 @@ CONFIG_KEY_FIELD_MAP = {
 def execute() -> None:
 	mail_conf = frappe.conf.mail or {}
 
-	if mail_conf:
-		settings = frappe.get_doc("Mail Settings")
-		for key, field in CONFIG_KEY_FIELD_MAP.items():
-			value = mail_conf.get(key)
-			if value is not None:
-				setattr(settings, field or key, value)
-		settings.save()
+	meta = frappe.get_meta("Mail Settings")
+	settings = frappe.get_doc("Mail Settings")
+
+	for key, field in CONFIG_KEY_FIELD_MAP.items():
+		value = mail_conf.get(key) or meta.get_field(field or key).default
+		if value is not None:
+			if key == "default_mail_quota":
+				value = int(int(value) // 1024**3)
+
+			setattr(settings, field or key, value)
+
+	settings.save()

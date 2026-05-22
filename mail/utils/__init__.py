@@ -860,11 +860,11 @@ def get_mail_export_directory() -> str:
 	return directory
 
 
-def get_stalwart_cli_path() -> str:
+def get_stalwart_cli_path(raise_exception: bool = False) -> str:
 	"""Returns the path to the Stalwart CLI tool, raising an error if not found."""
 
 	cli_path = os.path.join(get_mail_app_path(), "stalwart-cli")
-	if not os.path.exists(cli_path):
+	if not os.path.exists(cli_path) and raise_exception:
 		relpath = os.path.relpath(cli_path, get_bench_path())
 		frappe.throw(_("Stalwart CLI not found at {0}.").format(relpath))
 
