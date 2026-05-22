@@ -135,7 +135,7 @@ def get_domain(domain_id: str) -> dict:
 		if category == "DKIM":
 			return True
 		if record["type"] == "MX":
-			return True
+			return False
 
 		return False
 
