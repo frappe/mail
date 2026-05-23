@@ -19,7 +19,7 @@ class ServerAnsiblePlayTask(Document):
 		"""Validates that the task is unique within the play."""
 
 		if frappe.db.exists(
-			"Server Ansible Play Task", {"play": self.name, "task": self.task, "name": ["!=", self.name]}
+			"Server Ansible Play Task", {"play": self.play, "task": self.task, "name": ["!=", self.name]}
 		):
 			frappe.throw(
 				_("Task {0} already exists in play {1}").format(self.task, self.play),

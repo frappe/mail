@@ -75,10 +75,11 @@ class ServerAnsiblePlay(Document):
 				self._db_set(retries=cint(self.retries) + 1, notify=True)
 
 		except Exception:
+			error_log = frappe.get_traceback(with_context=True)
 			kwargs = {
 				"status": "Failed",
 				"retries": cint(self.retries) + 1,
-				"error_log": frappe.get_traceback(with_context=True),
+				"error_log": error_log,
 			}
 
 			if self.started_at:
@@ -91,6 +92,7 @@ class ServerAnsiblePlay(Document):
 				)
 
 			self._db_set(notify=True, **kwargs)
+			self._mark_pending_tasks_as_failed(error_log)
 
 	@frappe.whitelist()
 	def retry(self) -> None:
@@ -158,6 +160,29 @@ class ServerAnsiblePlay(Document):
 		"""Updates the document with the given key-value pairs."""
 
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
+
+	def _mark_pending_tasks_as_failed(self, error_log: str) -> None:
+		"""Marks unresolved task rows as failed when play-level execution aborts."""
+
+		for task in frappe.get_all(
+			"Server Ansible Play Task",
+			filters={"play": self.name, "status": ["in", ["Pending", "Running"]]},
+			fields=["name", "started_at"],
+		):
+			ended_at = now()
+			started_at = task.started_at or ended_at
+			frappe.db.set_value(
+				"Server Ansible Play Task",
+				task.name,
+				{
+					"status": "Failed",
+					"started_at": started_at,
+					"ended_at": ended_at,
+					"duration": time_diff_in_seconds(ended_at, started_at),
+					"exception": error_log,
+				},
+				update_modified=True,
+			)
 
 
 def retry_failed_ansible_plays() -> None:
