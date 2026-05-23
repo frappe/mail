@@ -592,7 +592,7 @@ const showReplyAll = (mail: Mail) =>
 	!mail.draft &&
 	mail.groupedRecipients.to
 		?.concat(mail.groupedRecipients.cc)
-		.filter((m) => m !== user.data.email).length > 0
+		.filter((m) => !isUserEmail(m.email)).length > 0
 
 const populateDraftMails = (mail: Mail) =>
 	(draftMails[mail.name] = {
@@ -716,8 +716,8 @@ const getReplyRecipients = (mail: Mail) => ({
 	to: isUserEmail(mail.from_email)
 		? mail.groupedRecipients.to
 		: mail.reply_to.length
-			? mail.reply_to.map((r) => r.email)
-			: [mail.from_email],
+			? mail.reply_to
+			: [{ email: mail.from_email }],
 })
 
 const getReplyAllRecipients = (mail: Mail) => {
@@ -725,9 +725,9 @@ const getReplyAllRecipients = (mail: Mail) => {
 		return { to: mail.groupedRecipients.to, cc: mail.groupedRecipients.cc }
 	else
 		return {
-			to: mail.reply_to.length ? mail.reply_to.map((r) => r.email) : [mail.from_email],
+			to: mail.reply_to.length ? mail.reply_to : [{ email: mail.from_email }],
 			cc: [...mail.groupedRecipients.to, ...mail.groupedRecipients.cc].filter(
-				(r) => !isUserEmail(r),
+				(r) => !isUserEmail(r.email),
 			),
 		}
 }
