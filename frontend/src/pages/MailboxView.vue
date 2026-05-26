@@ -986,7 +986,11 @@ type MoveThreadsParams = Record<string, string[]>
 
 const moveThreads = createResource({
 	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: (thread_ids: MoveThreadsParams) => ({ account: store.account, thread_ids }),
+	makeParams: (thread_ids: MoveThreadsParams) => ({
+		account: store.account,
+		thread_ids,
+		clear_junk: mailboxObj.value?.role === 'junk',
+	}),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
@@ -1096,8 +1100,8 @@ const handleSuccessAndRemoveFromList = (
 	if (excludeCommonMailboxes && ['search', 'starred'].includes(mailbox)) return
 	if (!Array.isArray(thread_ids)) thread_ids = Object.values(thread_ids).flat()
 	if (threadID && thread_ids.includes(threadID))
-		if (thread_ids.length === 1) goToThreadByOffset(1)
-		else goToMailbox()
+		if (threadID === threadIDs.value.at(-1)) goToMailbox()
+		else goToThreadByOffset(1)
 	threadsResource.value.data = threadsResource.value.data?.filter(
 		(thread: Thread) => !thread_ids.includes(thread.thread_id),
 	)

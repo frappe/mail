@@ -500,18 +500,26 @@ def set_mails_seen(account: str, ids: list[str], seen: bool) -> list[str]:
 
 
 @frappe.whitelist()
-def move_mails(account: str, ids: list[str], mailbox: str) -> None:
+def move_mails(account: str, ids: list[str], mailbox: str, clear_junk: bool = False) -> None:
 	"""Sets mailbox for mails."""
 
+	if clear_junk:
+		set_spam_status(account, ids, spam=False)
 	move_messages(account, ids, mailbox)
 
 
 @frappe.whitelist()
-def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]]) -> dict:
+def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]], clear_junk: bool = False) -> dict:
 	"""Sets mailbox for threads."""
 
 	for move_to_mailbox, ids in thread_ids.items():
 		messages = get_filtered_message_ids(account, ids)
+		if move_to_mailbox == get_mailbox_id_by_role(account, "junk"):
+			set_spam_status(account, messages, spam=True)
+			continue
+
+		if clear_junk:
+			set_spam_status(account, messages, spam=False)
 		move_messages(account, messages, move_to_mailbox)
 
 	return thread_ids
