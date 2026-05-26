@@ -310,6 +310,14 @@ class MailMessage(Document):
 		self.reload()
 
 	@frappe.whitelist()
+	def add_to_mailbox(self, mailbox_id: str) -> None:
+		"""Add the Mail Message to a specified mailbox."""
+
+		self.validate_draft()
+		add_messages_to_mailbox(self.account, [self.id], mailbox_id)
+		self.reload()
+
+	@frappe.whitelist()
 	def set_seen(self, seen: bool) -> None:
 		"""Set the Mail Message as seen or unseen."""
 
@@ -813,7 +821,7 @@ def move_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> N
 	try:
 		emails = [{"id": id, "mailbox_ids": {mailbox_id: True}} for id in ids]
 		service = get_email_service(account)
-		service.update(emails)
+		service.update(emails, replace_mailboxes=True)
 		_remove_cached_messages(account, ids)
 	except Exception:
 		frappe.log_error(
@@ -821,6 +829,27 @@ def move_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> N
 			message=frappe.get_traceback(with_context=True),
 		)
 		frappe.throw(_("Failed to move mail(s) to mailbox."))
+
+
+def add_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> None:
+	"""Add messages to a mailbox without removing them from existing mailboxes."""
+
+	if not account or not ids or not mailbox_id:
+		frappe.throw(_("Accounts, Mail IDs, and Mailbox ID are required."))
+
+	has_permission_for_user(parse_account(account)[0])
+
+	try:
+		emails = [{"id": id, "mailbox_ids": {mailbox_id: True}} for id in ids]
+		service = get_email_service(account)
+		service.update(emails, replace_mailboxes=False)
+		_remove_cached_messages(account, ids)
+	except Exception:
+		frappe.log_error(
+			title=_("Failed to add mail(s) to mailbox"),
+			message=frappe.get_traceback(with_context=True),
+		)
+		frappe.throw(_("Failed to add mail(s) to mailbox."))
 
 
 def set_seen_status(account: str, ids: list[str], seen: bool = True) -> None:
@@ -834,7 +863,7 @@ def set_seen_status(account: str, ids: list[str], seen: bool = True) -> None:
 	try:
 		emails = [{"id": id, "keywords": {"$seen": seen}} for id in ids]
 		service = get_email_service(account)
-		service.update(emails)
+		service.update(emails, replace_keywords=False)
 
 		messages_to_cache = {}
 		for message_id, message in _get_cached_messages(account, ids).items():
@@ -869,7 +898,7 @@ def set_flagged_status(account: str, ids: list[str], flagged: bool = True) -> No
 	try:
 		emails = [{"id": id, "keywords": {"$flagged": flagged}} for id in ids]
 		service = get_email_service(account)
-		service.update(emails)
+		service.update(emails, replace_keywords=False)
 
 		messages_to_cache = {}
 		for message_id, message in _get_cached_messages(account, ids).items():
@@ -914,7 +943,7 @@ def set_spam_status(account: str, ids: list[str], spam: bool = True) -> None:
 			{"id": id, "mailbox_ids": {mailbox_id: True}, "keywords": {"$junk": spam, "$notjunk": not spam}}
 			for id in ids
 		]
-		email_service.update(emails)
+		email_service.update(emails, replace_keywords=False, replace_mailboxes=False)
 
 		_remove_cached_messages(account, ids)
 	except Exception:
