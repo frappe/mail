@@ -359,13 +359,13 @@ class AccountService(StalwartCLI):
 		if not response["success"]:
 			frappe.throw(title=_("Failed to delete accounts"), msg=response["output"] or response["error"])
 
-	def update_password(self, id: str, new_password: str) -> None:
+	def update_password(self, account_id: str, new_password: str) -> None:
 		"""Updates the password for the specified account on the Stalwart server."""
 
 		if not new_password:
 			frappe.throw(title=_("Invalid password"), msg=_("New password cannot be empty."))
 
-		credentials = self.get(id, fields=["credentials"]).get("credentials", {})
+		credentials = self.get(account_id, fields=["credentials"]).get("credentials", {})
 
 		row_id = "0"
 		if credentials:
@@ -375,11 +375,11 @@ class AccountService(StalwartCLI):
 					break
 
 		response = self.run(
-			["update", "Account", id, "--field", f"credentials/{row_id}/secret={new_password}"]
+			["update", "Account", account_id, "--field", f"credentials/{row_id}/secret={new_password}"]
 		)
 
 		if not response["success"]:
 			frappe.throw(
-				title=_("Failed to update password for account {0}").format(id),
+				title=_("Failed to update password for account {0}").format(account_id),
 				msg=response["output"] or response["error"],
 			)

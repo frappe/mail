@@ -219,7 +219,7 @@ class MailAccountRequest(Document):
 
 		# Step - 2: Create App Password on Stalwart
 		app_password = execute_with_logging(
-			func=lambda: create_app_password(username=self.account, password=password),
+			func=lambda: create_app_password(self.account),
 			title="Failed to create app password on Stalwart",
 			user_message=_("Failed to create app password on the server, check error log for details."),
 		)
