@@ -751,3 +751,110 @@ def unblock_email_addresses(account: str, emails: list[str]) -> None:
 	"""Unblocks email addresses by deleting Blocked Email Address records."""
 
 	frappe.db.delete("Blocked Email Address", {"account": account, "email": ["in", emails]})
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def upload_file():
+	from mimetypes import guess_type
+	from pathlib import Path
+
+	from frappe import is_whitelisted
+	from frappe.core.doctype.file.utils import get_safe_file_name
+	from frappe.handler import ALLOWED_MIMETYPES, check_write_permission
+	from frappe.utils import cint, get_files_path
+	from frappe.utils.image import optimize_image
+
+	if frappe.session.user == "Guest":
+		if frappe.get_system_settings("allow_guests_to_upload_files"):
+			ignore_permissions = True
+		else:
+			raise frappe.PermissionError
+	else:
+		ignore_permissions = False
+
+	files = frappe.request.files
+	is_private = frappe.form_dict.is_private
+	doctype = frappe.form_dict.doctype
+	docname = frappe.form_dict.docname
+	fieldname = frappe.form_dict.fieldname
+	file_url = frappe.form_dict.file_url
+	folder = frappe.form_dict.folder or "Home"
+	method = frappe.form_dict.method
+	filename = frappe.form_dict.file_name
+	optimize = frappe.form_dict.optimize
+	content = None
+
+	if library_file := frappe.form_dict.get("library_file_name"):
+		frappe.has_permission("File", doc=library_file, throw=True)
+		doc = frappe.get_value(
+			"File",
+			frappe.form_dict.library_file_name,
+			["is_private", "file_url", "file_name"],
+			as_dict=True,
+		)
+		is_private = doc.is_private
+		file_url = doc.file_url
+		filename = doc.file_name
+
+	if not ignore_permissions:
+		check_write_permission(doctype, docname)
+
+	if "file" in files:
+		file = files["file"]
+		filename = file.filename
+
+		if frappe.form_dict.get("chunk_index") is not None:
+			current_chunk = int(frappe.form_dict.chunk_index)
+			total_chunks = int(frappe.form_dict.total_chunk_count)
+			offset = int(frappe.form_dict.chunk_byte_offset)
+		else:
+			offset = 0
+			current_chunk = 0
+			total_chunks = 1
+
+		temp_path = Path(get_files_path(".temp-" + get_safe_file_name(filename), is_private=is_private))
+		with temp_path.open("ab" if current_chunk > 0 else "wb") as f:
+			total_file_size = frappe.form_dict.total_file_size or 0
+			f.seek(offset)
+			f.write(file.stream.read())
+			if not f.tell() >= int(total_file_size) or current_chunk != total_chunks - 1:
+				return
+
+		content = temp_path.read_bytes()
+		temp_path.unlink()
+		content_type = guess_type(filename)[0]
+		if optimize and content_type and content_type.startswith("image/"):
+			args = {"content": content, "content_type": content_type}
+			if frappe.form_dict.max_width:
+				args["max_width"] = int(frappe.form_dict.max_width)
+			if frappe.form_dict.max_height:
+				args["max_height"] = int(frappe.form_dict.max_height)
+			content = optimize_image(**args)
+
+	frappe.local.uploaded_file_url = file_url
+	frappe.local.uploaded_file = content
+	frappe.local.uploaded_filename = filename
+
+	if content is not None and (frappe.session.user == "Guest"):
+		filetype = guess_type(filename)[0]
+		if filetype not in ALLOWED_MIMETYPES:
+			frappe.throw(_("You can only upload JPG, PNG, GIF, PDF, TXT, CSV or Microsoft documents."))
+
+	if method:
+		method = frappe.get_attr(method)
+		is_whitelisted(method)
+		return method()
+	else:
+		return frappe.get_doc(
+			{
+				"doctype": "File",
+				"attached_to_doctype": doctype,
+				"attached_to_name": docname,
+				"attached_to_field": fieldname,
+				"folder": folder,
+				"file_name": filename,
+				"file_url": file_url,
+				"is_private": cint(is_private),
+				"content": content,
+			}
+		).save(ignore_permissions=ignore_permissions)
