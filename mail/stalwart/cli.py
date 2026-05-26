@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class StalwartCLI:
-	CREDENTIAL_KEYS: ClassVar[tuple[str, ...]] = ("server_url", "api_key", "username", "password")
+	CREDENTIAL_KEYS: ClassVar[tuple[str, ...]] = ("server_url", "username", "password")
 
 	@classmethod
 	def _normalize_credentials(cls, credentials: dict[str, str] | None) -> dict[str, str]:
@@ -34,18 +34,12 @@ class StalwartCLI:
 		if not credentials.get("server_url"):
 			frappe.throw(_("Server URL is required for Stalwart CLI operations."))
 
-		has_api_key = bool(credentials.get("api_key"))
 		has_user_password = bool(credentials.get("username") and credentials.get("password"))
-		if not has_api_key and not has_user_password:
-			frappe.throw(
-				_("Either API key or username and password are required for Stalwart CLI operations.")
-			)
+		if not has_user_password:
+			frappe.throw(_("Username and password are required for Stalwart CLI operations."))
 
 	@staticmethod
 	def _build_auth_args(credentials: dict[str, str]) -> list[str]:
-		if credentials.get("api_key"):
-			return ["--api-key", credentials["api_key"]]
-
 		return ["--user", credentials["username"], "--password", credentials["password"]]
 
 	def __init__(self, credentials: dict[str, str] | None = None) -> None:

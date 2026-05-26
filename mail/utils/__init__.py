@@ -42,7 +42,6 @@ INVISIBLE_CHARS = (
 CONFIG_KEYS = [
 	# JMAP
 	"server_url",
-	"api_key",
 	"username",
 	"password",
 	# SpamAssassin
@@ -119,7 +118,7 @@ def get_config(key: str | None = None) -> dict[str, Any] | Any:
 
 	config = {}
 	for field in CONFIG_KEYS:
-		if field in ["api_key", "password"]:
+		if field == "password":
 			config[field] = password_or_none(settings, field) or mail_conf.get(field)
 		else:
 			config[field] = settings.get(field) or mail_conf.get(field)
@@ -139,11 +138,10 @@ def is_stalwart_configured(raise_exception: bool = False) -> bool:
 	config = get_config()
 
 	server_url = config.get("server_url")
-	api_key = config.get("api_key")
 	username = config.get("username")
 	password = config.get("password")
 
-	if server_url and (api_key or (username and password)):
+	if server_url and (username and password):
 		return True
 
 	if raise_exception:

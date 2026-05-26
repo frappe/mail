@@ -3,7 +3,6 @@ import frappe
 CONFIG_KEY_FIELD_MAP = {
 	# JMAP
 	"server_url": None,
-	"api_key": None,
 	"username": None,
 	"password": None,
 	# SpamAssassin

@@ -231,17 +231,6 @@ Ensure the following keys are properly configured in your `site_config.json` for
 {
   "mail": {
     "server_url": "https://mail.example.com",
-    "api_key": "your-stalwart-api-key"
-  }
-}
-```
-
-Alternatively, you can use username/password authentication:
-
-```json
-{
-  "mail": {
-    "server_url": "https://mail.example.com",
     "username": "admin",
     "password": "your-password"
   }

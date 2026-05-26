@@ -8,8 +8,6 @@
   "jmap_section",
   "server_url",
   "column_break_xvlo",
-  "api_key",
-  "column_break_auqm",
   "username",
   "password",
   "spamassassin_section",
@@ -289,15 +287,6 @@
    "fieldtype": "Password",
    "label": "Password",
    "mandatory_depends_on": "eval: doc.username"
-  },
-  {
-   "fieldname": "column_break_auqm",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "api_key",
-   "fieldtype": "Password",
-   "label": "API Key"
   },
   {
    "default": "1500",
@@ -623,7 +612,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-05-22 11:49:08.615702",
+ "modified": "2026-05-26 14:09:11.693098",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
