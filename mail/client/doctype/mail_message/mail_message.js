@@ -14,6 +14,7 @@ frappe.ui.form.on('Mail Message', {
 				frm.trigger('add_reply_forward_buttons')
 				frm.trigger('add_move_buttons')
 				frm.trigger('add_to_buttons')
+				frm.trigger('add_remove_from_buttons')
 			} else {
 				frm.trigger('add_draft_submit_buttons')
 			}
@@ -188,6 +189,21 @@ frappe.ui.form.on('Mail Message', {
 		})
 	},
 
+	add_remove_from_buttons(frm) {
+		const current_mailboxes = frm.doc.mailboxes || []
+		if (current_mailboxes.length <= 1) return
+
+		current_mailboxes.forEach((mailbox) => {
+			if (mailbox.role === 'drafts') return
+
+			frm.add_custom_button(
+				__('Remove from ' + mailbox.mailbox_name),
+				() => frm.events.remove_from_mailbox(frm, mailbox.mailbox_id),
+				__('Remove'),
+			)
+		})
+	},
+
 	add_draft_submit_buttons(frm) {
 		const add_button = (label, method, freeze_message) => {
 			frm.add_custom_button(__(label), () => {
@@ -250,6 +266,23 @@ frappe.ui.form.on('Mail Message', {
 			method: 'add_to_mailbox',
 			freeze: true,
 			freeze_message: __('Adding to Mailbox...'),
+			args: {
+				mailbox_id: mailbox_id,
+			},
+			callback: (r) => {
+				if (!r.exc) {
+					frm.refresh()
+				}
+			},
+		})
+	},
+
+	remove_from_mailbox(frm, mailbox_id) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'remove_from_mailbox',
+			freeze: true,
+			freeze_message: __('Removing from Mailbox...'),
 			args: {
 				mailbox_id: mailbox_id,
 			},
