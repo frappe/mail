@@ -136,14 +136,8 @@ frappe.ui.form.on('Mail Message', {
 					const mailboxes = r.message || []
 					if (mailboxes.length === 0) return
 
-					const current_mailboxes = frm.doc.mailboxes || []
-
 					mailboxes.forEach((mailbox) => {
-						const exists_in_current = current_mailboxes.some(
-							(m) => m.mailbox_id === mailbox.id,
-						)
-
-						if (exists_in_current || mailbox.role === 'drafts') return
+						if (mailbox.role === 'drafts') return
 
 						frm.add_custom_button(
 							__('Move to ' + mailbox._name),
