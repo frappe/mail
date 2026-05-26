@@ -560,7 +560,11 @@ const openAttachment = async (blob_id?: string, type?: string) => {
 
 const uploadFunction = async (file: File) => {
 	const fileUpload = useFileUpload()
-	return fileUpload.upload(file, { private: true, folder: 'Home/Frappe Mail' })
+	return fileUpload.upload(file, {
+		private: true,
+		folder: 'Home/Frappe Mail',
+		upload_endpoint: '/api/method/mail.api.mail.upload_file',
+	})
 }
 
 const CustomImageExtension = ImageExtension.extend({
@@ -669,6 +673,7 @@ const uploadFile = async (file: File) => {
 	const doc = (await fileUpload.upload(file, {
 		private: true,
 		folder: 'Home/Frappe Mail',
+		upload_endpoint: '/api/method/mail.api.mail.upload_file',
 	})) as FileDoc
 
 	attachDoc(doc)
