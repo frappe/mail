@@ -18,7 +18,7 @@ from mail.client.doctype.mail_message.mail_message import (
 	fetch_thread,
 	fetch_threads,
 	get_message_ids,
-	move_messages,
+	move_messages_to_mailbox,
 	search_messages,
 	set_flagged_status,
 	set_seen_status,
@@ -505,7 +505,7 @@ def move_mails(account: str, ids: list[str], mailbox: str, clear_junk: bool = Fa
 
 	if clear_junk:
 		set_spam_status(account, ids, spam=False)
-	move_messages(account, ids, mailbox)
+	move_messages_to_mailbox(account, ids, mailbox)
 
 
 @frappe.whitelist()
@@ -520,7 +520,7 @@ def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]], clear_ju
 
 		if clear_junk:
 			set_spam_status(account, messages, spam=False)
-		move_messages(account, messages, move_to_mailbox)
+		move_messages_to_mailbox(account, messages, move_to_mailbox)
 
 	return thread_ids
 

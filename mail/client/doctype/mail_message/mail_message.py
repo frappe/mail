@@ -306,7 +306,7 @@ class MailMessage(Document):
 		"""Move the Mail Message to a specified mailbox."""
 
 		self.validate_draft()
-		move_messages(self.account, [self.id], mailbox_id)
+		move_messages_to_mailbox(self.account, [self.id], mailbox_id)
 		self.reload()
 
 	@frappe.whitelist()
@@ -802,7 +802,7 @@ def empty_mailbox(account: str, mailbox_id: str) -> None:
 		frappe.throw(_("Failed to empty mailbox."))
 
 
-def move_messages(account: str, ids: list[str], mailbox_id: str) -> None:
+def move_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> None:
 	"""Move messages to a different mailbox."""
 
 	if not account or not ids or not mailbox_id:
