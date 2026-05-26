@@ -318,6 +318,14 @@ class MailMessage(Document):
 		self.reload()
 
 	@frappe.whitelist()
+	def remove_from_mailbox(self, mailbox_id: str) -> None:
+		"""Remove the Mail Message from a specified mailbox."""
+
+		self.validate_draft()
+		remove_messages_from_mailbox(self.account, [self.id], mailbox_id)
+		self.reload()
+
+	@frappe.whitelist()
 	def set_seen(self, seen: bool) -> None:
 		"""Set the Mail Message as seen or unseen."""
 
@@ -850,6 +858,27 @@ def add_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> No
 			message=frappe.get_traceback(with_context=True),
 		)
 		frappe.throw(_("Failed to add mail(s) to mailbox."))
+
+
+def remove_messages_from_mailbox(account: str, ids: list[str], mailbox_id: str) -> None:
+	"""Remove messages from a mailbox without deleting them."""
+
+	if not account or not ids or not mailbox_id:
+		frappe.throw(_("Accounts, Mail IDs, and Mailbox ID are required."))
+
+	has_permission_for_user(parse_account(account)[0])
+
+	try:
+		emails = [{"id": id, "mailbox_ids": {mailbox_id: False}} for id in ids]
+		service = get_email_service(account)
+		service.update(emails, replace_mailboxes=False)
+		_remove_cached_messages(account, ids)
+	except Exception:
+		frappe.log_error(
+			title=_("Failed to remove mail(s) from mailbox"),
+			message=frappe.get_traceback(with_context=True),
+		)
+		frappe.throw(_("Failed to remove mail(s) from mailbox."))
 
 
 def set_seen_status(account: str, ids: list[str], seen: bool = True) -> None:
