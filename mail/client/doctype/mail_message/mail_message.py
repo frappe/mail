@@ -972,7 +972,7 @@ def set_spam_status(account: str, ids: list[str], spam: bool = True) -> None:
 			{"id": id, "mailbox_ids": {mailbox_id: True}, "keywords": {"$junk": spam, "$notjunk": not spam}}
 			for id in ids
 		]
-		email_service.update(emails, replace_keywords=False, replace_mailboxes=False)
+		email_service.update(emails, replace_keywords=False, replace_mailboxes=True)
 
 		_remove_cached_messages(account, ids)
 	except Exception:
