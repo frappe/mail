@@ -13,6 +13,7 @@ frappe.ui.form.on('Mail Message', {
 			if (!frm.doc.draft) {
 				frm.trigger('add_reply_forward_buttons')
 				frm.trigger('add_move_buttons')
+				frm.trigger('add_to_buttons')
 			} else {
 				frm.trigger('add_draft_submit_buttons')
 			}
@@ -154,6 +155,39 @@ frappe.ui.form.on('Mail Message', {
 		})
 	},
 
+	add_to_buttons(frm) {
+		frappe.call({
+			method: 'mail.jmap.get_mailboxes_for_account',
+			args: {
+				account: frm.doc.account,
+			},
+			freeze: true,
+			freeze_message: __('Loading Mailboxes...'),
+			callback: (r) => {
+				if (!r.exc) {
+					const mailboxes = r.message || []
+					if (mailboxes.length === 0) return
+
+					const current_mailboxes = frm.doc.mailboxes || []
+
+					mailboxes.forEach((mailbox) => {
+						const exists_in_current = current_mailboxes.some(
+							(m) => m.mailbox_id === mailbox.id,
+						)
+
+						if (exists_in_current || mailbox.role === 'drafts') return
+
+						frm.add_custom_button(
+							__('Add to ' + mailbox._name),
+							() => frm.events.add_to_mailbox(frm, mailbox.id),
+							__('Add'),
+						)
+					})
+				}
+			},
+		})
+	},
+
 	add_draft_submit_buttons(frm) {
 		const add_button = (label, method, freeze_message) => {
 			frm.add_custom_button(__(label), () => {
@@ -199,6 +233,23 @@ frappe.ui.form.on('Mail Message', {
 			method: 'move_to_mailbox',
 			freeze: true,
 			freeze_message: __('Moving to Mailbox...'),
+			args: {
+				mailbox_id: mailbox_id,
+			},
+			callback: (r) => {
+				if (!r.exc) {
+					frm.refresh()
+				}
+			},
+		})
+	},
+
+	add_to_mailbox(frm, mailbox_id) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'add_to_mailbox',
+			freeze: true,
+			freeze_message: __('Adding to Mailbox...'),
 			args: {
 				mailbox_id: mailbox_id,
 			},
