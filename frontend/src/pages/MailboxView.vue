@@ -58,7 +58,9 @@
 				:class="!isMobile && showReadingPane ? 'w-1/3' : 'w-full'"
 			>
 				<!-- Toolbar/Actions -->
-				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
+				<div
+					class="flex items-center border-b border-l-transparent px-3.5 py-2.5 sm:border-l sm:px-5"
+				>
 					<div class="mr-5 max-sm:ml-3">
 						<Tooltip
 							:text="
@@ -158,7 +160,7 @@
 							"
 						>
 							<div
-								class="text-ink-gray-6 group flex items-center border-b p-3.5 text-xs font-semibold sm:px-5"
+								class="text-ink-gray-6 group flex items-center border-b border-l-transparent p-3.5 text-xs font-semibold sm:border-l sm:px-5"
 								@click="toggleGroupCollapse(key)"
 							>
 								<div
@@ -200,6 +202,7 @@
 								:mailbox
 								:mail
 								:is-selected="selections.includes(mail.thread_id)"
+								class="border-l-transparent sm:border-l"
 								:class="{
 									'!bg-surface-blue-1': mail.thread_id === threadID && !isMobile,
 									'!border-l-blue-500': mail.thread_id === threadInFocus,
