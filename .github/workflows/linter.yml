@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: '3.14'
           cache: pip
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@v2.2.0
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
