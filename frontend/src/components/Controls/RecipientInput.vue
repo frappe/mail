@@ -1,6 +1,7 @@
 <template>
 	<div
 		ref="container"
+		data-recipient-input
 		class="flex w-full flex-1 cursor-text flex-wrap items-center gap-2 rounded transition-colors"
 		:class="{ 'ring-outline-gray-3 ring-2': isDragOver && !isDragging }"
 		@keydown.capture="handleContainerKeydown"
@@ -42,7 +43,7 @@
 			placeholder=""
 			:options
 			:open-on-click="false"
-			class="border-none !bg-inherit !ring-0 sm:w-80"
+			class="recipient-combobox border-none !bg-inherit !ring-0"
 			@input="handleInput"
 			@keydown.delete.capture.stop="handleDelete($event.target.value)"
 			@paste="handlePaste"
@@ -238,3 +239,15 @@ const options = computed(() => [
 	},
 ])
 </script>
+
+<style>
+[data-recipient-input] input[data-slot='input'] {
+	flex: 0 0 auto !important;
+	field-sizing: content;
+	min-width: 2px;
+}
+
+body:has(.recipient-combobox[data-state='open']) [data-slot='content'][data-selection] {
+	@apply min-w-80;
+}
+</style>
