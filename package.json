@@ -2,6 +2,10 @@
   "name": "mail",
   "version": "1.0.0",
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "mobile"
+  ],
   "scripts": {
     "check-bun": "chmod +x ./scripts/install-bun.sh && ./scripts/install-bun.sh",
     "postinstall": "npm run check-bun && cd frontend && bun install",
