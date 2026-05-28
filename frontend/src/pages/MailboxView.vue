@@ -131,6 +131,20 @@
 							</template>
 						</template>
 
+						<Dropdown v-if="showAddTo" :options="addToOptions">
+							<Button variant="ghost" :tooltip="__('Add To')">
+								<template #icon>
+									<component :is="FolderPlus" class="text-ink-gray-7 icon" />
+								</template>
+							</Button>
+						</Dropdown>
+						<Dropdown v-if="showRemoveFrom" :options="removeFromOptions">
+							<Button variant="ghost" :tooltip="__('Remove From')">
+								<template #icon>
+									<component :is="FolderMinus" class="text-ink-gray-7 icon" />
+								</template>
+							</Button>
+						</Dropdown>
 						<Dropdown
 							v-if="!!selections.length && !['search', 'starred'].includes(mailbox)"
 							:options="moveToOptions"
@@ -291,6 +305,13 @@
 						(moveToMailbox: string) =>
 							handleMoveThreads({ [moveToMailbox]: [threadID!] })
 					"
+					@add-thread-to-mailbox="
+						(mailboxId: string) => handleAddThreadsToMailbox(mailboxId, [threadID!])
+					"
+					@remove-thread-from-mailbox="
+						(mailboxId: string) =>
+							handleRemoveThreadsFromMailbox(mailboxId, [threadID!])
+					"
 					@set-spam-status="
 						(spam: boolean) =>
 							spam
@@ -334,6 +355,8 @@ import {
 	CircleCheck,
 	Ellipsis,
 	FolderInput,
+	FolderMinus,
+	FolderPlus,
 	ListFilter,
 	LoaderCircle,
 	Mail,
@@ -1007,6 +1030,134 @@ const moveToOptions = computed(() =>
 		})),
 )
 
+const addThreadsToMailbox = createResource({
+	url: 'mail.api.mail.add_threads_to_mailbox',
+	makeParams: ({ mailbox_id, thread_ids }: { mailbox_id: string; thread_ids: string[] }) => ({
+		account: store.account,
+		mailbox_id,
+		thread_ids,
+	}),
+	onSuccess: () => reloadThreads(),
+})
+
+const removeThreadsFromMailbox = createResource({
+	url: 'mail.api.mail.remove_threads_from_mailbox',
+	makeParams: ({ mailbox_id, thread_ids }: { mailbox_id: string; thread_ids: string[] }) => ({
+		account: store.account,
+		mailbox_id,
+		thread_ids,
+	}),
+	onSuccess: () => reloadThreads(),
+})
+
+const showAddTo = computed(
+	() =>
+		!!selections.value.length &&
+		!['search', 'starred', mailboxIds.junk, mailboxIds.trash].includes(mailbox),
+)
+
+const showRemoveFrom = computed(
+	() =>
+		threadsResource.value.data
+			?.filter((t: Thread) => selections.value.includes(t.thread_id))
+			.some((t: Thread) => t.mailboxes.length > 1) && showAddTo.value,
+)
+
+const addToOptions = computed(() =>
+	mailboxes.data
+		?.filter((m) => !m.role || m.role === 'inbox')
+		.filter((m) => {
+			const selected = threadsResource.value.data?.filter((t: Thread) =>
+				selections.value.includes(t.thread_id),
+			)
+			return !selected?.every((t: Thread) =>
+				t.mailboxes.some((mb) => mb.mailbox_id === m.id),
+			)
+		})
+		.map((m) => ({
+			label: m._name,
+			icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
+			onClick: () => handleAddThreadsToMailbox(m.id, selections.value),
+		})),
+)
+
+const handleAddThreadsToMailbox = (mailboxId: string, threadIds: string[], isUndo = false) => {
+	const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
+	const action = async () => {
+		await addThreadsToMailbox.submit({ mailbox_id: mailboxId, thread_ids: threadIds })
+		if (threadID && threadIds.includes(threadID))
+			mailThreadRef.value?.syncMailboxMembership(mailboxId, true)
+	}
+
+	if (isUndo) {
+		const success =
+			threadIds.length === 1 ? __('Thread added back.') : __('Threads added back.')
+		return raisePromiseToast(action, __('Undoing...'), success)
+	}
+
+	setUndoAction(() => handleRemoveThreadsFromMailbox(mailboxId, threadIds, true))
+	const loading = __('Adding to {0}...', [mailboxName])
+	const success =
+		threadIds.length === 1
+			? __('Thread added to {0}.', [mailboxName])
+			: __('Threads added to {0}.', [mailboxName])
+	raisePromiseToast(action, loading, success, undo)
+}
+
+const removeFromOptions = computed(() => {
+	const selected = threadsResource.value.data?.filter((t: Thread) =>
+		selections.value.includes(t.thread_id),
+	)
+	const unionMailboxIds = selected
+		.map((t: Thread) => new Set(t.mailboxes.map((mb) => mb.mailbox_id)))
+		.reduce(
+			(union: Set<string>, set: Set<string>) => new Set([...union, ...set]),
+			new Set<string>(),
+		)
+	return mailboxes.data
+		?.filter(
+			(m) =>
+				unionMailboxIds.has(m.id) && ![mailboxIds.sent, mailboxIds.drafts].includes(m.id),
+		)
+		.map((m) => ({
+			label: m._name,
+			icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
+			onClick: () => handleRemoveThreadsFromMailbox(m.id, selections.value),
+		}))
+})
+
+const handleRemoveThreadsFromMailbox = (
+	mailboxId: string,
+	threadIds: string[],
+	isUndo = false,
+) => {
+	const threadIdsToBeUpdated = threadIds.filter((threadId) => {
+		const thread = threadsResource.value.data?.find((t: Thread) => t.thread_id === threadId)
+		return thread?.mailboxes.some((mb) => mb.mailbox_id === mailboxId)
+	})
+
+	const action = async () => {
+		await removeThreadsFromMailbox.submit({
+			mailbox_id: mailboxId,
+			thread_ids: threadIdsToBeUpdated,
+		})
+		if (threadID && threadIdsToBeUpdated.includes(threadID))
+			mailThreadRef.value?.syncMailboxMembership(mailboxId, false)
+	}
+
+	const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
+	const success =
+		threadIdsToBeUpdated.length === 1
+			? __('Thread removed from {0}.', [mailboxName])
+			: __('Threads removed from {0}.', [mailboxName])
+
+	if (isUndo) return raisePromiseToast(action, __('Undoing...'), success)
+
+	setUndoAction(() => handleAddThreadsToMailbox(mailboxId, threadIdsToBeUpdated, true))
+	const loading = __('Removing from {0}...', [mailboxName])
+	raisePromiseToast(action, loading, success, undo)
+}
+
 const setSpamStatus = createResource({
 	url: 'mail.api.mail.set_threads_spam_status',
 	makeParams: (thread_ids: SetSeenParams) => ({ account: store.account, thread_ids }),
@@ -1134,6 +1285,7 @@ const handleSetSeen = (threadIDs: SetSeenParams) => {
 }
 
 const setFlaggedByThreadIDs = (threadIDs: string[], flagged: boolean) => {
+	setUndoAction(undefined)
 	const ids = threadsResource.value.data
 		.filter((t: Thread) => threadIDs.includes(t.thread_id))
 		.map((t: Thread) => t.id)

@@ -6,6 +6,10 @@
 			@set-flagged="(ids: string[], flagged: boolean) => emit('setFlagged', ids, flagged)"
 			@set-seen="(seen: boolean) => emit('setSeen', seen)"
 			@move-thread="(moveToMailbox: string) => emit('moveThread', moveToMailbox)"
+			@add-thread-to-mailbox="(mailboxId: string) => emit('addThreadToMailbox', mailboxId)"
+			@remove-thread-from-mailbox="
+				(mailboxId: string) => emit('removeThreadFromMailbox', mailboxId)
+			"
 			@set-spam-status="(spam: boolean) => emit('setSpamStatus', spam)"
 			@delete-thread="emit('deleteThread')"
 			@prev-thread="emit('prevThread')"
@@ -363,7 +367,7 @@ import SendMail from '@/components/SendMail.vue'
 import ThreadDivider from '@/components/ThreadDivider.vue'
 import ThreadHeader from '@/components/ThreadHeader.vue'
 
-import type { Attachment, ComposeMailData, Identity, Mail } from '@/types'
+import type { Attachment, ComposeMailData, Identity, Mail, Mailbox } from '@/types'
 
 const { mailbox, threadID, threads } = defineProps<{
 	mailbox: string
@@ -379,6 +383,8 @@ const emit = defineEmits([
 	'setSeen',
 	'setFlagged',
 	'moveThread',
+	'addThreadToMailbox',
+	'removeThreadFromMailbox',
 	'prevThread',
 	'nextThread',
 	'syncUnseen',
@@ -388,7 +394,7 @@ const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const user = inject('$user')
 const store = userStore()
-const { mailboxIds, identities, blockedAddresses } = store
+const { mailboxes, mailboxIds, identities, blockedAddresses } = store
 const { dataTheme } = useTheme()
 
 const route = useRoute()
@@ -690,7 +696,22 @@ const syncFlagged = (ids: string[], flagged: boolean) =>
 		if (ids.includes(mail.id)) mail.flagged = flagged ? 1 : 0
 	})
 
-defineExpose({ syncFlagged })
+const syncMailboxMembership = (mailboxId: string, add: boolean) => {
+	if (add) {
+		const mb = mailboxes.data?.find((m) => m.id === mailboxId)
+		if (!mb) return
+		const entry: Mailbox = { mailbox: mb.name, mailbox_id: mb.id, mailbox_name: mb._name }
+		thread.data?.forEach((mail: Mail) => {
+			if (!mail.mailboxes.some((m) => m.mailbox_id === mailboxId)) mail.mailboxes.push(entry)
+		})
+	} else if (thread.data?.every((mail: Mail) => mail.mailboxes.length > 1))
+		thread.data?.forEach(
+			(mail: Mail) =>
+				(mail.mailboxes = mail.mailboxes.filter((m) => m.mailbox_id !== mailboxId)),
+		)
+}
+
+defineExpose({ syncFlagged, syncMailboxMembership })
 
 const focusedDraft = ref<string>()
 const showSendModal = ref(false)

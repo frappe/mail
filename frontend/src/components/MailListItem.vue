@@ -168,21 +168,21 @@
 						</div>
 					</template>
 				</Popover>
-				<template v-if="isFullWidth && ['starred', 'search'].includes(mailbox)">
+				<template v-if="isFullWidth && mailboxesToShow.length">
 					<div
-						v-for="m in mail.mailboxes"
+						v-for="m in mailboxesToShow"
 						:key="m.mailbox_id"
-						class="bg-surface-gray-2 group-hover:bg-surface-gray-3 inline-flex rounded p-1.5 text-xs"
+						class="bg-surface-gray-3 inline-flex rounded p-1.5 text-xs"
 					>
 						{{ m.mailbox_name }}
 					</div>
 				</template>
 			</div>
-			<template v-if="!isFullWidth && ['starred', 'search'].includes(mailbox)">
+			<template v-if="!isFullWidth && mailboxesToShow.length">
 				<div
-					v-for="m in mail.mailboxes"
+					v-for="m in mailboxesToShow"
 					:key="m.mailbox_id"
-					class="bg-surface-gray-2 group-hover:bg-surface-gray-3 mr-1.5 inline-flex rounded p-1.5 text-xs"
+					class="bg-surface-gray-3 mr-1.5 inline-flex rounded p-1.5 text-xs"
 				>
 					{{ m.mailbox_name }}
 				</div>
@@ -244,6 +244,8 @@ const { isMobile } = useScreenSize()
 const { mailboxIds } = userStore()
 
 const mailboxes = computed(() => mail.mailboxes.map((m) => m.mailbox_id))
+
+const mailboxesToShow = computed(() => mail.mailboxes.filter((m) => m.mailbox_id !== mailbox))
 
 const attachments = computed(
 	() => mail.attachments.filter((m) => m.filename && m.disposition === 'attachment') || [],

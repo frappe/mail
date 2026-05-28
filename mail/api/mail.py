@@ -12,6 +12,7 @@ from mail.api.sieve import update_sieve_script_for_mailbox
 from mail.api.utils import get_avatar_url
 from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
 from mail.client.doctype.mail_message.mail_message import (
+	add_messages_to_mailbox,
 	delete_messages,
 	empty_mailbox,
 	fetch_blob,
@@ -19,6 +20,7 @@ from mail.client.doctype.mail_message.mail_message import (
 	fetch_threads,
 	get_message_ids,
 	move_messages_to_mailbox,
+	remove_messages_from_mailbox,
 	search_messages,
 	set_flagged_status,
 	set_seen_status,
@@ -523,6 +525,22 @@ def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]], clear_ju
 		move_messages_to_mailbox(account, messages, move_to_mailbox)
 
 	return thread_ids
+
+
+@frappe.whitelist()
+def add_threads_to_mailbox(account: str, thread_ids: list[str], mailbox_id: str) -> None:
+	"""Adds threads to a mailbox without removing from existing mailboxes."""
+
+	ids = get_message_ids(account, thread_ids)
+	add_messages_to_mailbox(account, ids, mailbox_id)
+
+
+@frappe.whitelist()
+def remove_threads_from_mailbox(account: str, thread_ids: list[str], mailbox_id: str) -> None:
+	"""Removes threads from a mailbox without deleting them."""
+
+	ids = get_message_ids(account, thread_ids)
+	remove_messages_from_mailbox(account, ids, mailbox_id)
 
 
 @frappe.whitelist()
