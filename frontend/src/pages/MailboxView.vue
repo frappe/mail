@@ -1053,15 +1053,17 @@ const removeThreadsFromMailbox = createResource({
 
 const showAddTo = computed(
 	() =>
-		!!selections.value.length &&
+		selections.value.length &&
+		addToOptions.value.length &&
 		!['search', 'starred', mailboxIds.junk, mailboxIds.trash].includes(mailbox),
 )
 
 const showRemoveFrom = computed(
 	() =>
+		showAddTo.value &&
 		threadsResource.value.data
 			?.filter((t: Thread) => selections.value.includes(t.thread_id))
-			.some((t: Thread) => t.mailboxes.length > 1) && showAddTo.value,
+			.some((t: Thread) => t.mailboxes.length > 1),
 )
 
 const addToOptions = computed(() =>

@@ -16,7 +16,7 @@
     "dayjs": "^1.11.11",
     "dompurify": "^3.2.6",
     "firebase": "^12.2.1",
-    "frappe-ui": "github:frappe/frappe-ui#8c583fb64980d1d6af9e42d7134f4e45a2bdd8ff",
+    "frappe-ui": "github:frappe/frappe-ui#21e081816b59bf3b04472760888a7a81fcc30ebd",
     "gemoji": "^8.1.0",
     "lucide-vue-next": "^0.383.0",
     "pinia": "^2.1.7",
