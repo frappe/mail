@@ -511,7 +511,7 @@ def move_mails(account: str, ids: list[str], mailbox: str, clear_junk: bool = Fa
 
 
 @frappe.whitelist()
-def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]], clear_junk: bool = False) -> dict:
+def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]]) -> dict:
 	"""Sets mailbox for threads."""
 
 	for move_to_mailbox, ids in thread_ids.items():
@@ -520,8 +520,7 @@ def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]], clear_ju
 			set_spam_status(account, messages, spam=True)
 			continue
 
-		if clear_junk:
-			set_spam_status(account, messages, spam=False)
+		set_spam_status(account, messages, spam=False)
 		move_messages_to_mailbox(account, messages, move_to_mailbox)
 
 	return thread_ids

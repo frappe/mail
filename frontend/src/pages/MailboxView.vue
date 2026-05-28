@@ -954,6 +954,13 @@ const goToThread = (threadID: string) => {
 
 const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
 
+const goToNextThreadOrMailbox = (excludedThreads: string[] = []) => {
+	const idx = threadIDs.value.indexOf(threadID)
+	const next = threadIDs.value.slice(idx + 1).find((id) => !excludedThreads.includes(id))
+	if (next) goToThread(next)
+	else goToMailbox()
+}
+
 const focusOnThread = (threadID: string) => {
 	if (!threadID) return
 
@@ -1008,15 +1015,9 @@ const setFlagged = createResource({
 	onError: (error) => raiseToast(error.messages[0], 'error'),
 })
 
-type MoveThreadsParams = Record<string, string[]>
-
 const moveThreads = createResource({
 	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: (thread_ids: MoveThreadsParams) => ({
-		account: store.account,
-		thread_ids,
-		clear_junk: mailboxObj.value?.role === 'junk',
-	}),
+	makeParams: (thread_ids) => ({ account: store.account, thread_ids }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
@@ -1141,8 +1142,10 @@ const handleRemoveThreadsFromMailbox = (
 			mailbox_id: mailboxId,
 			thread_ids: threadIdsToBeUpdated,
 		})
-		if (threadID && threadIdsToBeUpdated.includes(threadID))
-			mailThreadRef.value?.syncMailboxMembership(mailboxId, false)
+		if (threadID && threadIdsToBeUpdated.includes(threadID)) {
+			if (mailboxId === mailbox) goToNextThreadOrMailbox(threadIdsToBeUpdated)
+			else mailThreadRef.value?.syncMailboxMembership(mailboxId, false)
+		}
 	}
 
 	const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
@@ -1253,9 +1256,7 @@ const handleSuccessAndRemoveFromList = (
 
 	if (excludeCommonMailboxes && ['search', 'starred'].includes(mailbox)) return
 	if (!Array.isArray(thread_ids)) thread_ids = Object.values(thread_ids).flat()
-	if (threadID && thread_ids.includes(threadID))
-		if (threadID === threadIDs.value.at(-1)) goToMailbox()
-		else goToThreadByOffset(1)
+	if (threadID && thread_ids.includes(threadID)) goToNextThreadOrMailbox(thread_ids)
 	threadsResource.value.data = threadsResource.value.data?.filter(
 		(thread: Thread) => !thread_ids.includes(thread.thread_id),
 	)
