@@ -1,0 +1,5 @@
+// iOS build settings merged into the generated Xcode project by NativeScript.
+
+// Tell actool which asset-catalog set is the app icon, so AppIcon.appiconset
+// is compiled as the icon (otherwise iOS ships with a blank icon).
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon

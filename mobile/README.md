@@ -76,4 +76,4 @@ Types shared between this app and the web frontend live in `packages/types/`. Th
 `App_Resources/` contains the native manifests and launcher assets.
 
 - Android: launcher icon is an adaptive icon (`res/drawable/ic_launcher_{background,foreground}.xml` + `res/drawable-anydpi-v26/`), so it needs no per-density PNGs; `minSdkVersion` is 26.
-- iOS: app icon assets and a `LaunchScreen.storyboard` still need to be added to `App_Resources/iOS/`.
+- iOS: launcher icon is a single-size 1024×1024 app icon in `Assets.xcassets/AppIcon.appiconset` (opaque, no alpha — iOS rounds the corners; modern Xcode derives the smaller sizes). The launch screen is `LaunchScreen.storyboard` + the `LaunchScreen.AppIconBackground`/`LaunchScreen.Center` image sets (white background, centered blue-circle icon to match Android's splash), wired via `UILaunchStoryboardName` in `Info.plist`.
