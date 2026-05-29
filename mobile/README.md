@@ -14,18 +14,15 @@ For Android: Android Studio + `ns doctor android`
 ## Setup
 
 ```bash
-# From repo root — installs all workspaces including mobile/ and packages/types/
-bun install
-
-# Or from mobile/ directly
-cd mobile && bun install
+# From repo root — yarn workspaces install mobile/ and packages/types/ together
+yarn install
 ```
 
 ## Running
 
 ```bash
-ns run android    # or: bun run dev:android
-ns run ios        # or: bun run dev:ios
+ns run android    # or: yarn dev:android
+ns run ios        # or: yarn dev:ios
 ```
 
 ## Building
@@ -38,8 +35,8 @@ ns build ios --release
 ## Linting
 
 ```bash
-bun run lint
-bun run typecheck
+yarn lint
+yarn typecheck
 ```
 
 ## Architecture
@@ -50,7 +47,6 @@ app/
   App.vue         Root Frame component
   app.css         Tailwind utilities (@tailwind utilities only — no base/components)
   pages/          Full-screen Page components
-  components/     Reusable NativeScript-Vue components
   stores/
     site.ts       Saved sites + active site (ApplicationSettings)
     session.ts    OAuth tokens per site (ApplicationSettings — secure storage in #486)
@@ -75,8 +71,7 @@ Types shared between this app and the web frontend live in `packages/types/`. Th
 
 ## Platform resources
 
-`App_Resources/` contains the minimum required manifest files. Before building:
-- Android: add launcher icons to `App_Resources/Android/src/main/res/`
-- iOS: add app icon assets and a `LaunchScreen.storyboard` to `App_Resources/iOS/`
+`App_Resources/` contains the native manifests and launcher assets.
 
-Run `ns resources generate icons <path-to-icon.png>` to auto-generate icon sizes.
+- Android: launcher icon is an adaptive icon (`res/drawable/ic_launcher_{background,foreground}.xml` + `res/drawable-anydpi-v26/`), so it needs no per-density PNGs; `minSdkVersion` is 26.
+- iOS: app icon assets and a `LaunchScreen.storyboard` still need to be added to `App_Resources/iOS/`.

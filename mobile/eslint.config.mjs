@@ -27,6 +27,8 @@ export default [
 		rules: {
 			'prettier/prettier': 'error',
 			'vue/multi-word-component-names': 'off',
+			// NativeScript view props are camelCase (e.g. flexDirection), unlike HTML attributes.
+			'vue/attribute-hyphenation': 'off',
 			'@typescript-eslint/no-explicit-any': 'warn',
 		},
 	},

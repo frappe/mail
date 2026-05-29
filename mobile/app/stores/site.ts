@@ -20,7 +20,9 @@ export const siteStore = defineStore('mail-site', () => {
 	const sites = ref<SiteInfo[]>(loadSites())
 	const activeSiteUrl = ref<string>(ApplicationSettings.getString(ACTIVE_SITE_KEY, ''))
 
-	const activeSite = computed(() => sites.value.find((s) => s.url === activeSiteUrl.value) ?? null)
+	const activeSite = computed(
+		() => sites.value.find((s) => s.url === activeSiteUrl.value) ?? null,
+	)
 
 	function addSite(info: SiteInfo) {
 		if (!sites.value.some((s) => s.url === info.url)) {

@@ -62,7 +62,10 @@ export function useApi() {
 		const json = await res.json().catch(() => ({}))
 
 		if (!res.ok) {
-			throw { message: json?.message ?? `HTTP ${res.status}`, status: res.status } as ApiError
+			throw {
+				message: json?.message ?? `HTTP ${res.status}`,
+				status: res.status,
+			} as ApiError
 		}
 
 		return json.message as T
