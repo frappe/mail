@@ -39,6 +39,7 @@ export default config(
         parser: {
           ts: parser,
         },
+        tsconfigRootDir: import.meta.dirname,
       },
       globals: {
         ...globals.browser,
@@ -206,6 +207,38 @@ export default config(
           'newlines-between': 'always',
         },
       ],
+    },
+  },
+  {
+    // The mobile workspace is NativeScript, not browser: its own @/ alias points
+    // at mobile/app and it pulls in @mail/types, so the resolver and a couple of
+    // rules differ from the frontend defaults above.
+    files: ['mobile/**/*.{ts,vue}'],
+    settings: {
+      'import/resolver': {
+        typescript: {
+          project: './mobile/tsconfig.json',
+        },
+        alias: {
+          map: [
+            ['@', './mobile/app'],
+            ['@mail/types', './packages/types/src'],
+          ],
+          extensions: ['.js', '.ts', '.vue'],
+        },
+      },
+    },
+    rules: {
+      // NativeScript view props are camelCase (e.g. flexDirection), unlike HTML attributes.
+      'vue/attribute-hyphenation': 'off',
+    },
+  },
+  {
+    // Mobile build configs (postcss/tailwind/webpack) are CommonJS by necessity —
+    // their loaders require require()/module.exports.
+    files: ['mobile/*.{js,cjs}'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
   {

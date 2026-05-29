@@ -1,0 +1,161 @@
+import type { UserAccount } from './doctypes'
+
+export * from './doctypes'
+
+export type COLOR_SCHEME = 'System Default' | 'Light Mode' | 'Dark Mode'
+
+export interface User {
+	name: string
+	email: string
+	full_name: string
+	user_type: string
+
+	username: string | null
+	user_image: string | null
+	api_key: string | null
+	user_settings?: string
+	default_outgoing_email?: string
+	color_scheme?: COLOR_SCHEME
+	group_messages_by?: 'None' | 'Day' | 'Month'
+	show_reading_pane?: 0 | 1
+
+	enabled: boolean
+	is_mail_admin: boolean
+	is_system_manager: boolean
+	is_jmap_configured: boolean
+
+	mailboxes: { id: string; name: string; role: string }[]
+	accounts: UserAccount[]
+}
+
+export interface UserResource {
+	data: User
+	promise: Promise<User>
+	reload: () => void
+}
+
+export interface Recipient {
+	type: 'To' | 'Cc' | 'Bcc'
+	email: string
+	display_name: string | null
+}
+
+export interface Mailbox {
+	mailbox: string
+	mailbox_id: string
+	mailbox_name: string
+}
+
+export interface Attachment {
+	filename: string
+	blob_id: string
+	type: string
+	size: string
+	file_url: string | null
+	disposition: string
+	cid?: string
+}
+
+export interface Mail {
+	name: string
+	message_id: string
+	id: string
+	from_name: string
+	from_email: string
+	subject: string
+	html_body: string
+	text_body: string
+	received_at: string
+	draft: 0 | 1
+	flagged: 0 | 1
+	seen: 0 | 1
+	junk: 0 | 1
+	mailboxes: Mailbox[]
+	recipients: Recipient[]
+	groupedRecipients: {
+		to: Recipient[]
+		cc: Recipient[]
+		bcc: Recipient[]
+	}
+	reply_to: { display_name: string; email: string }[]
+	attachments: Attachment[]
+	user_image?: string
+	collapsed?: boolean
+}
+
+export interface DraftRecipient {
+	email: string
+	display_name?: string
+	image?: string
+}
+
+export interface ComposeMailData {
+	name?: string
+	id?: string
+	from_email?: string
+	to?: DraftRecipient[]
+	cc?: DraftRecipient[]
+	bcc?: DraftRecipient[]
+	subject?: string
+	quoted_content?: string
+	html_body?: string
+	text_body?: string
+	attachments?: Attachment[]
+	in_reply_to?: string
+	in_reply_to_id?: string
+	forwarded_from_id?: string
+	type?: 'reply' | 'replyAll' | 'forward'
+}
+
+export interface Thread {
+	name: string
+	account: string
+	id: string
+	thread_id: string
+	from_name: string
+	from_email: string
+	subject: string | null
+	preview: string | null
+	has_attachment: 0 | 1
+	received_at: string
+	mailboxes: Mailbox[]
+	recipients: Recipient[]
+	seen: 0 | 1
+	draft: 0 | 1
+	junk: 0 | 1
+	flagged: 0 | 1
+	answered: 0 | 1
+	forwarded: 0 | 1
+	attachments: Attachment[]
+	user_image?: string
+}
+
+export interface MailboxData {
+	name: string
+	id: string
+	role: string | null
+	total_threads: number
+	unread_threads: number
+	_name: string
+	subscribed: 0 | 1
+	icon?: string
+	color?: string
+	disable_push_notification?: 0 | 1
+}
+
+export interface NotificationPayload {
+	data?: {
+		title?: string
+		body?: string
+		notification_icon?: string
+		click_action?: string
+	}
+}
+
+export interface SiteInfo {
+	url: string
+	sitename: string
+	client_id: string
+	app_name: string
+	logo: string
+}
