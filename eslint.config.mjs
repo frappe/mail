@@ -234,6 +234,14 @@ export default config(
     },
   },
   {
+    // Mobile build configs (postcss/tailwind/webpack) are CommonJS by necessity —
+    // their loaders require require()/module.exports.
+    files: ['mobile/*.{js,cjs}'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
     linterOptions: {
       reportUnusedDisableDirectives: 'off',
     },
