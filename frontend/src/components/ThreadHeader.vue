@@ -184,7 +184,11 @@ const threadActions = computed((): Action[] => [
 	},
 	{
 		label: __('Archive Thread (E)'),
-		onClick: () => emit('moveThread', mailboxIds.archive),
+		onClick: () =>
+			emit(
+				mailbox.value === mailboxIds.sent ? 'addThreadToMailbox' : 'moveThread',
+				mailboxIds.archive,
+			),
 		icon: Archive,
 		condition: () => !threadMailboxes.value.includes(mailboxIds.archive),
 	},
@@ -221,11 +225,15 @@ const showAddTo = computed(() =>
 	threadMailboxes.value.every((m) => ![mailboxIds.junk, mailboxIds.trash].includes(m)),
 )
 
-const addToOptions = computed(() => {
-	return mailboxes.data
-		?.filter((m) => (!m.role || m.role === 'inbox') && !threadMailboxes.value.includes(m.id))
-		.map((m) => getMailboxOption(m, 'addThreadToMailbox'))
-})
+const addToOptions = computed(() =>
+	mailboxes.data
+		?.filter(
+			(m) =>
+				(!m.role || ['inbox', 'archive'].includes(m.role)) &&
+				!threadMailboxes.value.includes(m.id),
+		)
+		.map((m) => getMailboxOption(m, 'addThreadToMailbox')),
+)
 
 const removeFromOptions = computed(() =>
 	mailboxes.data

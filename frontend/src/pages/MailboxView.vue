@@ -226,9 +226,13 @@
 										handleSetSeen({ [Number(seen)]: [mail.thread_id] })
 								"
 								@archive-thread="
-									handleMoveThreads({
-										[mailboxIds.archive]: [mail.thread_id],
-									})
+									mailbox === mailboxIds.sent
+										? handleAddThreadsToMailbox(mailboxIds.archive, [
+												mail.thread_id,
+											])
+										: handleMoveThreads({
+												[mailboxIds.archive]: [mail.thread_id],
+											})
 								"
 								@trash-thread="
 									handleMoveThreads({ [mailboxIds.trash]: [mail.thread_id] })
@@ -682,7 +686,9 @@ const handleThreadActions = (e: KeyboardEvent, key: string) => {
 	// Archive (e)
 	if (key === 'e') {
 		e.preventDefault()
-		return handleMoveThreads({ [mailboxIds.archive]: thread_ids })
+		return mailbox === mailboxIds.sent
+			? handleAddThreadsToMailbox(mailboxIds.archive, thread_ids)
+			: handleMoveThreads({ [mailboxIds.archive]: thread_ids })
 	}
 
 	// Mark as junk (!)
@@ -778,7 +784,10 @@ const selectActions = computed((): SelectAction[] => [
 	},
 	{
 		label: __('Archive Threads (E)'),
-		onClick: () => handleMoveThreads({ [mailboxIds.archive]: selections.value }),
+		onClick: () =>
+			mailbox === mailboxIds.sent
+				? handleAddThreadsToMailbox(mailboxIds.archive, selections.value)
+				: handleMoveThreads({ [mailboxIds.archive]: selections.value }),
 		icon: Archive,
 		condition: () => mailbox !== mailboxIds.archive,
 	},
@@ -1068,7 +1077,7 @@ const showRemoveFrom = computed(
 
 const addToOptions = computed(() =>
 	mailboxes.data
-		?.filter((m) => !m.role || m.role === 'inbox')
+		?.filter((m) => !m.role || ['inbox', 'archive'].includes(m.role))
 		.filter((m) => {
 			const selected = threadsResource.value.data?.filter((t: Thread) =>
 				selections.value.includes(t.thread_id),
