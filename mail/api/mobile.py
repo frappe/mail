@@ -22,13 +22,8 @@ def get_client_id() -> dict:
 			frappe.DoesNotExistError,
 		)
 
-	app_name = (
-		frappe.db.get_single_value("Website Settings", "app_name") or "Frappe Mail"
-	)
-	logo = (
-		frappe.db.get_single_value("Website Settings", "favicon")
-		or "/assets/mail/images/mail-logo.svg"
-	)
+	app_name = frappe.db.get_single_value("Website Settings", "app_name") or "Frappe Mail"
+	logo = frappe.db.get_single_value("Website Settings", "favicon") or "/assets/mail/images/mail-logo.svg"
 
 	return {
 		"client_id": client_id,
@@ -46,7 +41,9 @@ def create_oauth_client() -> dict:
 	Mail Settings so that get_client_id() can return it to the mobile app.
 	"""
 	if not frappe.has_permission("Mail Settings", "write"):
-		frappe.throw(_("You do not have permission to configure mobile OAuth settings."), frappe.PermissionError)
+		frappe.throw(
+			_("You do not have permission to configure mobile OAuth settings."), frappe.PermissionError
+		)
 
 	existing_client_id = frappe.db.get_single_value("Mail Settings", "mobile_oauth_client")
 
