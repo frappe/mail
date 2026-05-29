@@ -1,6 +1,6 @@
-import { ref, computed } from 'vue'
-import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 import { ApplicationSettings } from '@nativescript/core'
+import { defineStore } from 'pinia'
 
 import type { SiteInfo } from '@mail/types'
 

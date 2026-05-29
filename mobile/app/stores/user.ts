@@ -1,9 +1,10 @@
-import { ref, computed } from 'vue'
-import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 import { ApplicationSettings } from '@nativescript/core'
+import { defineStore } from 'pinia'
 
 import { useApi } from '@/utils/api'
-import type { User, UserAccount, MailboxData } from '@mail/types'
+
+import type { MailboxData, User, UserAccount } from '@mail/types'
 
 // Mirrors the shape of frontend/src/stores/user.ts — kept in sync intentionally.
 export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'

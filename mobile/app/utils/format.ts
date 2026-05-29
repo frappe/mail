@@ -2,9 +2,9 @@
 // Mirrors helpers from frontend/src/utils/index.ts and frontend/src/utils/dayjs.ts.
 
 import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
 import isToday from 'dayjs/plugin/isToday'
+import localizedFormat from 'dayjs/plugin/localizedFormat'
+import relativeTime from 'dayjs/plugin/relativeTime'
 
 dayjs.extend(relativeTime)
 dayjs.extend(localizedFormat)

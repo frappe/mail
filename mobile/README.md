@@ -39,6 +39,8 @@ yarn lint
 yarn typecheck
 ```
 
+ESLint and Prettier are configured once at the repo root (`eslint.config.mjs`, `.prettierrc`); the root config has a `mobile/**` override for the NativeScript-specific bits (resolver alias, camelCase view props).
+
 ## Architecture
 
 ```
