@@ -5,12 +5,10 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import isToday from 'dayjs/plugin/isToday'
-import isThisYear from 'dayjs/plugin/isThisYear'
 
 dayjs.extend(relativeTime)
 dayjs.extend(localizedFormat)
 dayjs.extend(isToday)
-dayjs.extend(isThisYear)
 
 export function toTitleCase(str: string): string {
 	return (
@@ -33,7 +31,7 @@ export function formatBytes(bytes: number): string {
 export function formatDate(date: string | Date): string {
 	const d = dayjs(date)
 	if (d.isToday()) return d.format('h:mm A')
-	if (d.isThisYear()) return d.format('MMM D')
+	if (d.year() === dayjs().year()) return d.format('MMM D')
 	return d.format('MMM D, YYYY')
 }
 

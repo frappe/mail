@@ -2,6 +2,7 @@
   "name": "@mail/mobile",
   "private": true,
   "version": "0.0.1",
+  "main": "app/app.ts",
   "scripts": {
     "dev:android": "ns run android",
     "dev:ios": "ns run ios",

@@ -1,0 +1,8 @@
+// App-level Gradle configuration merged into the generated build.gradle.
+android {
+	defaultConfig {
+		// Adaptive launcher icons (drawable-anydpi-v26) require API 26+, and the
+		// app ships no legacy raster icons, so 26 is the floor.
+		minSdkVersion 26
+	}
+}
