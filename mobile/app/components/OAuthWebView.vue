@@ -4,11 +4,11 @@
 			<GridLayout row="0" columns="*, auto" class="px-4 py-3">
 				<Label
 					col="0"
-					text="Sign in"
+					:text="__('Sign in')"
 					verticalAlignment="center"
 					class="text-ink-gray-9 text-lg font-semibold"
 				/>
-				<Button col="1" text="Cancel" class="text-ink-blue-3" @tap="cancel" />
+				<Button col="1" :text="__('Cancel')" class="text-ink-blue-3" @tap="cancel" />
 			</GridLayout>
 			<WebView row="1" :src="authorizeUrl" @loadStarted="onLoad" @loadFinished="onLoad" />
 		</GridLayout>

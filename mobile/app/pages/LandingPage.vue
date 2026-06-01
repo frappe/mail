@@ -1,15 +1,15 @@
 <template>
 	<Page>
-		<ActionBar title="Frappe Mail" />
+		<ActionBar :title="__('Frappe Mail')" />
 		<ScrollView>
 			<StackLayout class="p-6">
 				<Label
-					text="Sign in to a Frappe Mail server"
+					:text="__('Sign in to a Frappe Mail server')"
 					class="text-ink-gray-9 mb-1 text-2xl font-bold"
 					textWrap="true"
 				/>
 				<Label
-					text="Enter your server URL to get started."
+					:text="__('Enter your server URL to get started.')"
 					class="text-ink-gray-5 mb-5 text-base"
 					textWrap="true"
 				/>
@@ -28,7 +28,7 @@
 					/>
 					<Button
 						col="1"
-						text="Add"
+						:text="__('Add')"
 						:isEnabled="!busy"
 						class="bg-surface-blue-3 ml-2 rounded-lg px-4 text-white"
 						@tap="addSite"
@@ -44,7 +44,7 @@
 				<!-- Saved sites -->
 				<Label
 					v-if="site.sites.length"
-					text="YOUR SITES"
+					:text="__('YOUR SITES')"
 					class="text-ink-gray-5 mb-2 mt-5 text-sm font-semibold"
 				/>
 				<StackLayout
@@ -80,6 +80,7 @@
 import { ref } from 'vue'
 
 import { useApi } from '@/utils/api'
+import { loadTranslations } from '@/utils/translation'
 import { sessionStore } from '@/stores/session'
 import { siteStore } from '@/stores/site'
 
@@ -124,9 +125,10 @@ async function addSite() {
 		}
 		site.addSite(siteInfo)
 		siteInput.value = ''
+		await loadTranslations()
 		await selectAndLogin(url, info.client_id)
 	} catch (e) {
-		error.value = messageOf(e, 'Could not reach that server')
+		error.value = messageOf(e, __('Could not reach that server'))
 	} finally {
 		busy.value = false
 	}
@@ -138,8 +140,9 @@ async function selectAndLogin(url: string, clientId: string) {
 	busy.value = true
 	try {
 		await session.login(url, clientId)
+		await loadTranslations()
 	} catch (e) {
-		error.value = messageOf(e, 'Login failed')
+		error.value = messageOf(e, __('Login failed'))
 	} finally {
 		busy.value = false
 	}
