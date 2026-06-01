@@ -28,6 +28,9 @@
   "allow_signup",
   "column_break_daqm",
   "signup_domains",
+  "mobile_tab",
+  "section_break_mobile",
+  "mobile_oauth_client",
   "spamassassin_tab",
   "section_break_hgqa",
   "enable_spamd",
@@ -262,12 +265,28 @@
    "fieldname": "signup_tab",
    "fieldtype": "Tab Break",
    "label": "Signup"
+  },
+  {
+   "fieldname": "mobile_tab",
+   "fieldtype": "Tab Break",
+   "label": "Mobile"
+  },
+  {
+   "fieldname": "section_break_mobile",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "OAuth 2.0 client used by the Frappe Mail mobile app. Use the 'Setup Mobile OAuth Client' button to create one automatically.",
+   "fieldname": "mobile_oauth_client",
+   "fieldtype": "Link",
+   "label": "Mobile OAuth Client",
+   "options": "OAuth Client"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-04-27 09:25:58.236007",
+ "modified": "2026-05-27 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
