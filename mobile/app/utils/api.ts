@@ -8,29 +8,32 @@ export interface ApiError {
 }
 
 // Wraps a Frappe API call: POST /api/method/<method> with JSON params.
-// Handles Authorization header injection and surfaces Frappe error shapes.
+// Injects a valid Bearer token (refreshing if expired) and retries once on 401.
 export function useApi() {
 	async function call<T>(method: string, params?: Record<string, unknown>): Promise<T> {
 		const site = siteStore()
 		const session = sessionStore()
 
 		if (!site.activeSite) throw new Error('No active site')
+		const { url: siteUrl, client_id } = site.activeSite
 
-		const url = `${site.activeSite.url}/api/method/${method}`
+		const url = `${siteUrl}/api/method/${method}`
+		const body = params ? JSON.stringify(params) : undefined
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json',
 			Accept: 'application/json',
 		}
 
-		if (session.tokens?.access_token) {
-			headers['Authorization'] = `Bearer ${session.tokens.access_token}`
-		}
+		const token = await session.getValidAccessToken(siteUrl, client_id)
+		if (token) headers['Authorization'] = `Bearer ${token}`
 
-		const res = await fetch(url, {
-			method: 'POST',
-			headers,
-			body: params ? JSON.stringify(params) : undefined,
-		})
+		let res = await fetch(url, { method: 'POST', headers, body })
+
+		// The token may have been revoked server-side; refresh once and retry.
+		if (res.status === 401 && (await session.refresh(siteUrl, client_id))) {
+			headers['Authorization'] = `Bearer ${session.tokens?.access_token}`
+			res = await fetch(url, { method: 'POST', headers, body })
+		}
 
 		const json = await res.json().catch(() => ({}))
 

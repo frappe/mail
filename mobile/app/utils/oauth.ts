@@ -16,6 +16,13 @@ export interface OAuthTokens {
 	expires_at: number // unix ms
 }
 
+// Parsed query params from the redirect back to REDIRECT_URI.
+export interface RedirectResult {
+	code?: string
+	state?: string
+	error?: string
+}
+
 function formEncode(params: Record<string, string>): string {
 	return Object.keys(params)
 		.map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)

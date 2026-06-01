@@ -229,8 +229,10 @@ export default config(
       },
     },
     rules: {
-      // NativeScript view props are camelCase (e.g. flexDirection), unlike HTML attributes.
+      // NativeScript view props and native events are camelCase (e.g. flexDirection,
+      // loadStarted), unlike HTML attributes/events.
       'vue/attribute-hyphenation': 'off',
+      'vue/v-on-event-hyphenation': 'off',
     },
   },
   {
