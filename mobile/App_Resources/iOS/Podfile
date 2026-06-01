@@ -1,0 +1,14 @@
+# Merged into the generated CocoaPods Podfile by NativeScript.
+#
+# @nativescript/secure-storage pulls in the SAMKeychain pod, which declares a
+# minimum deployment target of iOS 8.0. Xcode 16 removed the legacy ARC runtime
+# shim (libarclite) used by anything below iOS 12, so SAMKeychain fails to link
+# with: "SDK does not contain 'libarclite' ...". Bump every pod's deployment
+# target to 12.0 so the modern toolchain can build them.
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+    end
+  end
+end

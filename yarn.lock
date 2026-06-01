@@ -417,6 +417,11 @@
   resolved "https://registry.yarnpkg.com/@nativescript/ios/-/ios-8.9.5.tgz#f71a24f3a0f39e20f70f3ad3e2fa14e2b5a4a469"
   integrity sha512-emh3Gz6pBf/5zsdLgx7djcMSsDn/bxBcCp7h3KTmkSQH2ehmGKRZdwb1VjtUZbOMpQWiTN7OreRn9xV5vhOoGQ==
 
+"@nativescript/secure-storage@^4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@nativescript/secure-storage/-/secure-storage-4.0.1.tgz#fd80b4ea167efca27241ac902b3b6799e9713e37"
+  integrity sha512-TY+ZoSTPJ5AcnoTTFAr1Hc2lqQ3R2JOlZ272pKcxXfxuD+2vBwlIsplqmhIMFAz6loPxi3SdcFGigt9aGTWrBA==
+
 "@nativescript/tailwind@^2.0.0":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@nativescript/tailwind/-/tailwind-2.1.1.tgz#934121b901a3c1c80515b960d9917763466d7cc5"
@@ -3706,6 +3711,11 @@ napi-postinstall@^0.3.0:
   version "0.3.4"
   resolved "https://registry.yarnpkg.com/napi-postinstall/-/napi-postinstall-0.3.4.tgz#7af256d6588b5f8e952b9190965d6b019653bbb9"
   integrity sha512-PHI5f1O0EP5xJ9gQmFGMS6IZcrVvTjpXjz7Na41gTE7eE2hK11lg04CECCYEEjdc17EV4DO+fkGEtt7TpTaTiQ==
+
+nativescript-inappbrowser@3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/nativescript-inappbrowser/-/nativescript-inappbrowser-3.2.0.tgz#3b3a99fc33c1d72821bc6b622cde4e7e74a596fe"
+  integrity sha512-oR+toIASkr6vTQw98vprw4MT2mNn4MfMuAgAzeEC0BSj1xPAXRdNca2zSYSN9vVPwOTWw70TyFwy4F18aqpunQ==
 
 nativescript-vue@^3.0.0:
   version "3.0.2"
