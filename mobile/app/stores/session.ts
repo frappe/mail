@@ -1,41 +1,60 @@
 import { computed, ref } from 'vue'
-import { ApplicationSettings } from '@nativescript/core'
 import { defineStore } from 'pinia'
 
-const sessionKey = (siteUrl: string) => `mail-session:${siteUrl}`
+import { loginWithOAuth } from '@/utils/authFlow'
+import { type OAuthTokens, refreshTokens } from '@/utils/oauth'
+import { clearTokens, loadTokens, saveTokens } from '@/utils/secureStorage'
 
+export type { OAuthTokens }
+
+// Tokens are persisted per site in the platform keystore (see utils/secureStorage).
 export const sessionStore = defineStore('mail-session', () => {
-	const loggedIn = ref(false)
+	const tokens = ref<OAuthTokens | null>(null)
 
-	const isLoggedIn = computed(() => loggedIn.value)
+	const isLoggedIn = computed(() => !!tokens.value?.access_token)
 
-	function loadSession(siteUrl: string) {
-		loggedIn.value = ApplicationSettings.getBoolean(sessionKey(siteUrl), false)
+	// Load the stored tokens for a site (e.g. on app start / site switch).
+	function load(siteUrl: string) {
+		tokens.value = loadTokens(siteUrl)
 	}
 
-	async function login(siteUrl: string, usr: string, pwd: string): Promise<void> {
-		const res = await fetch(`${siteUrl}/api/method/login`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-			body: JSON.stringify({ usr, pwd }),
-		})
-		const json = await res.json().catch(() => ({}))
-		if (!res.ok || json.message === 'Failed') {
-			throw new Error(json.message || 'Login failed')
-		}
-		loggedIn.value = true
-		ApplicationSettings.setBoolean(sessionKey(siteUrl), true)
+	function isExpired(): boolean {
+		if (!tokens.value) return true
+		return Date.now() >= tokens.value.expires_at - 60_000 // 1 min buffer
 	}
 
-	async function logout(siteUrl: string): Promise<void> {
+	// Run the full PKCE login for a site and persist the resulting tokens.
+	async function login(siteUrl: string, clientId: string) {
+		const t = await loginWithOAuth(siteUrl, clientId)
+		tokens.value = t
+		saveTokens(siteUrl, t)
+	}
+
+	// Silently refresh the access token. On failure, clears the session.
+	async function refresh(siteUrl: string, clientId: string): Promise<boolean> {
+		if (!tokens.value?.refresh_token) return false
 		try {
-			await fetch(`${siteUrl}/api/method/logout`, { method: 'POST' })
+			const t = await refreshTokens(siteUrl, clientId, tokens.value.refresh_token)
+			tokens.value = t
+			saveTokens(siteUrl, t)
+			return true
 		} catch {
-			// ignore network errors on logout
+			logout(siteUrl)
+			return false
 		}
-		loggedIn.value = false
-		ApplicationSettings.setBoolean(sessionKey(siteUrl), false)
 	}
 
-	return { isLoggedIn, loadSession, login, logout }
+	function logout(siteUrl: string) {
+		tokens.value = null
+		clearTokens(siteUrl)
+	}
+
+	// Returns a usable access token, refreshing first if it is expired.
+	async function getValidAccessToken(siteUrl: string, clientId: string): Promise<string | null> {
+		if (!tokens.value) return null
+		if (isExpired() && !(await refresh(siteUrl, clientId))) return null
+		return tokens.value?.access_token ?? null
+	}
+
+	return { tokens, isLoggedIn, load, isExpired, login, refresh, logout, getValidAccessToken }
 })

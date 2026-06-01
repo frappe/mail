@@ -14,11 +14,11 @@ const app = createApp(App)
 app.use(pinia)
 app.use(translationPlugin)
 
-// Restore the active site's session before the first render so the app starts
+// Restore the active site's tokens before the first render so the app starts
 // on the right screen (app shell when already logged in, landing otherwise).
 const site = siteStore(pinia)
 const session = sessionStore(pinia)
-if (site.activeSite) session.loadSession(site.activeSite.url)
+if (site.activeSite) session.load(site.activeSite.url)
 void loadTranslations()
 
 app.start()
