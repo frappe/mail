@@ -190,7 +190,6 @@
 		</template>
 		<template #bottom>
 			<ComposeMailToolbar
-				:is-saving-draft
 				:is-recipients-empty
 				class="border-t"
 				:class="{ 'border-transparent': isDragging }"

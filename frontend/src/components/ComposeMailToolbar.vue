@@ -34,9 +34,6 @@
 
 			<!-- Send & Discard -->
 			<div v-if="!isMobile" class="ml-auto flex items-center space-x-2">
-				<span v-if="isSavingDraft" class="text-ink-gray-5 text-base italic">
-					{{ __('Saving Draft...') }}
-				</span>
 				<Button
 					:label="__('Discard')"
 					:tooltip="__('Discard ({0}+D)', [modifier])"
@@ -64,8 +61,7 @@ import { isMac } from '@/utils'
 import { useScreenSize, useTextEditorButtons, useVisualViewport } from '@/utils/composables'
 import EmojiPicker from '@/components/EmojiPicker.vue'
 
-const { isSavingDraft, isRecipientsEmpty } = defineProps<{
-	isSavingDraft: boolean
+const { isRecipientsEmpty } = defineProps<{
 	isRecipientsEmpty: boolean
 }>()
 
