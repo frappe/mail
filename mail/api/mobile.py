@@ -5,7 +5,9 @@ from frappe import _
 MOBILE_REDIRECT_URI = "com.frappe.mail://oauth"
 
 
-@frappe.whitelist(allow_guest=True)
+# Guest access is intentional: the mobile app fetches the public OAuth client_id
+# before login to begin the auth flow. Only non-sensitive public config is returned.
+@frappe.whitelist(allow_guest=True)  # nosemgrep: frappe-semgrep-rules.rules.security.guest-whitelisted-method
 def get_client_id() -> dict:
 	"""Returns the OAuth2 client ID and site metadata needed by the mobile app.
 
