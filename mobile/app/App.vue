@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { $navigateTo } from 'nativescript-vue'
 
 import { sessionStore } from '@/stores/session'
@@ -12,35 +12,21 @@ import LandingPage from '@/pages/LandingPage.vue'
 
 const session = sessionStore()
 
-// Template ref to the root Frame — navigating against this explicit frame avoids
-// Frame.topmost(), which resolves to the wrong frame while a modal is dismissing
-// (the cause of the post-login white screen / getExitTransition crash).
+// Template ref to the root Frame — navigating against this explicit frame is
+// only needed for the initial route. Login/logout transitions are driven
+// explicitly from the page handlers (see LandingPage / AppShell), which
+// navigate their own frame at a settled point in the flow. Driving navigation
+// from a reactive watch during the async OAuth flow was the cause of the
+// post-login white screen.
 const rootFrame = ref()
-
 let mounted = false
 
-function go(loggedIn: boolean) {
-	$navigateTo(loggedIn ? AppShell : LandingPage, {
+function onFrameLoaded() {
+	if (mounted) return
+	mounted = true
+	$navigateTo(session.isLoggedIn ? AppShell : LandingPage, {
 		frame: rootFrame.value,
 		clearHistory: true,
 	})
 }
-
-// The Frame's `loaded` event guarantees the native frame exists, so the initial
-// navigation can't fail with "Failed to resolve frame".
-function onFrameLoaded() {
-	if (mounted) return
-	mounted = true
-	go(session.isLoggedIn)
-}
-
-// React to login/logout once the frame is up. Defer to the next macrotask so any
-// in-flight modal (the OAuth WebView) finishes tearing down before we navigate —
-// navigating mid-dismissal leaves a blank frame.
-watch(
-	() => session.isLoggedIn,
-	(loggedIn) => {
-		if (mounted) setTimeout(() => go(loggedIn), 0)
-	},
-)
 </script>

@@ -3712,6 +3712,11 @@ napi-postinstall@^0.3.0:
   resolved "https://registry.yarnpkg.com/napi-postinstall/-/napi-postinstall-0.3.4.tgz#7af256d6588b5f8e952b9190965d6b019653bbb9"
   integrity sha512-PHI5f1O0EP5xJ9gQmFGMS6IZcrVvTjpXjz7Na41gTE7eE2hK11lg04CECCYEEjdc17EV4DO+fkGEtt7TpTaTiQ==
 
+nativescript-inappbrowser@3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/nativescript-inappbrowser/-/nativescript-inappbrowser-3.2.0.tgz#3b3a99fc33c1d72821bc6b622cde4e7e74a596fe"
+  integrity sha512-oR+toIASkr6vTQw98vprw4MT2mNn4MfMuAgAzeEC0BSj1xPAXRdNca2zSYSN9vVPwOTWw70TyFwy4F18aqpunQ==
+
 nativescript-vue@^3.0.0:
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/nativescript-vue/-/nativescript-vue-3.0.2.tgz#ab9654e590e11177b16bf66dd08c0358122c2e88"

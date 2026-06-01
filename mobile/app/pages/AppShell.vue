@@ -1,6 +1,5 @@
 <template>
-	<Page>
-		<ActionBar :title="title" />
+	<Page actionBarHidden="true">
 		<StackLayout class="p-6">
 			<Label
 				:text="__(`You're signed in`)"
@@ -21,20 +20,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { $navigateTo } from 'nativescript-vue'
 
 import { loadTranslations } from '@/utils/translation'
 import { sessionStore } from '@/stores/session'
 import { siteStore } from '@/stores/site'
+import LandingPage from '@/pages/LandingPage.vue'
 
 const site = siteStore()
 const session = sessionStore()
-
-const title = computed(() => site.activeSite?.app_name || 'Frappe Mail')
 
 function logout() {
 	if (!site.activeSite) return
 	session.logout(site.activeSite.url)
 	void loadTranslations()
+	$navigateTo(LandingPage, { clearHistory: true })
 }
 </script>

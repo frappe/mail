@@ -18,6 +18,7 @@
             android:name="com.tns.NativeScriptActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleTask"
             android:configChanges="keyboard|keyboardHidden|screenSize|smallestScreenSize|screenLayout|orientation|uiMode"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>

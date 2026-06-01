@@ -23,7 +23,7 @@ export const sessionStore = defineStore('mail-session', () => {
 		return Date.now() >= tokens.value.expires_at - 60_000 // 1 min buffer
 	}
 
-	// Run the full PKCE login for a site and persist the resulting tokens.
+	// Run the system-browser PKCE login for a site and persist the resulting tokens.
 	async function login(siteUrl: string, clientId: string) {
 		const t = await loginWithOAuth(siteUrl, clientId)
 		tokens.value = t
