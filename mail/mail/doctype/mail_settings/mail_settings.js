@@ -50,6 +50,25 @@ frappe.ui.form.on('Mail Settings', {
 			() => frm.trigger('generate_jmap_push_keys'),
 			__('Actions'),
 		)
+		frm.add_custom_button(
+			__('Setup Mobile OAuth Client'),
+			() => frm.trigger('setup_mobile_oauth_client'),
+			__('Actions'),
+		)
+	},
+
+	setup_mobile_oauth_client(frm) {
+		frappe.call({
+			method: 'mail.api.mobile.create_oauth_client',
+			freeze: true,
+			freeze_message: __('Setting up mobile OAuth client…'),
+			callback: (r) => {
+				if (!r.exc) {
+					frappe.show_alert({ message: r.message.message, indicator: 'green' })
+					frm.reload_doc()
+				}
+			},
+		})
 	},
 
 	generate_jmap_push_keys(frm) {
