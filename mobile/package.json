@@ -15,7 +15,6 @@
   "dependencies": {
     "@mail/types": "*",
     "@nativescript/core": "~8.9.0",
-    "@nativescript/secure-storage": "^4.0.1",
     "dayjs": "^1.11.11",
     "nativescript-vue": "^3.0.0",
     "pinia": "^2.1.7",

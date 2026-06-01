@@ -154,8 +154,5 @@ export interface NotificationPayload {
 
 export interface SiteInfo {
 	url: string
-	sitename: string
-	client_id: string
-	app_name: string
-	logo: string
+	app_name?: string
 }
