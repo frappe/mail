@@ -771,18 +771,20 @@ const getQuotedContent = (mail: Mail) =>
 		</div>
 	`
 
-const getForwardedContent = (mail: Mail) =>
-	`
+const getForwardedContent = (mail: Mail) => {
+	const recipients = getGroupedRecipients(mail.recipients, true, true)
+	return `
 		<div class="frappe_mail_fwd">
 			<br><br>
 			---------- Forwarded message ---------<br>
 			From: ${mail.from_name} < ${mail.from_email} ><br>
 			Date: ${dayjs(mail.received_at).format('ddd, MMM D, YYYY [at] h:mm A')}<br>
 			Subject: ${mail.subject || ''}<br>
-			To: ${mail.groupedRecipients.to.join(', ')}<br>
-			${mail.groupedRecipients.cc.length ? `Cc: ${mail.groupedRecipients.cc.join(', ')}<br>` : ''}
+			To: ${recipients.to}<br>
+			${recipients.cc ? `Cc: ${recipients.cc}<br>` : ''}
 			<br><br>
 			${getBodyContent(mail)}
 		</div>
 	`
+}
 </script>
