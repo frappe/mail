@@ -1221,7 +1221,9 @@ const junkOrDeleteThreadsOptions = computed(() => ({
 	title: junkOrDeleteTitle.value,
 	message: junkOrDeleteMessage.value,
 	icon: { name: 'alert-triangle', appearance: 'warning' },
-	actions: [{ label: __('Confirm'), variant: 'solid', onClick: handleJunkOrDelete }],
+	actions: [
+		{ label: __('Confirm'), variant: 'solid', autofocus: true, onClick: handleJunkOrDelete },
+	],
 }))
 
 const deleteThreads = createResource({
