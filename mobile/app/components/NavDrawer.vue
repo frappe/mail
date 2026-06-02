@@ -13,92 +13,166 @@
 			width="300"
 			horizontalAlignment="left"
 			rows="auto, *, auto"
-			class="bg-surface-white"
+			:backgroundColor="C.surface"
 		>
-			<!-- Header: brand + current account -->
-			<StackLayout row="0" class="border-b p-4">
-				<Label :text="title" class="text-ink-gray-9 text-xl font-bold" textWrap="true" />
-				<Label
-					v-if="subtitle"
-					:text="subtitle"
-					class="text-ink-gray-5 mt-0.5 text-sm"
-					textWrap="true"
-				/>
+			<!-- Account header -->
+			<StackLayout row="0" :marginTop="safeTop">
+				<GridLayout columns="auto, *, auto" padding="14 16" verticalAlignment="center">
+					<GridLayout
+						col="0"
+						width="42"
+						height="42"
+						borderRadius="12"
+						:backgroundColor="C.accent"
+					>
+						<Label
+							:text="brandInitial"
+							color="#FFFFFF"
+							:fontSize="20"
+							fontWeight="700"
+							horizontalAlignment="center"
+							verticalAlignment="center"
+						/>
+					</GridLayout>
+					<StackLayout col="1" marginLeft="12" verticalAlignment="center">
+						<Label :text="title" :color="C.text" :fontSize="16.5" fontWeight="700" />
+						<Label
+							v-if="subtitle"
+							:text="subtitle"
+							:color="C.text3"
+							:fontSize="13.5"
+							textWrap="false"
+						/>
+					</StackLayout>
+					<GridLayout
+						col="2"
+						width="34"
+						height="34"
+						borderRadius="34"
+						:backgroundColor="C.surface3"
+						@tap="toggleMenu"
+					>
+						<Label
+							:text="showMenu ? '▴' : '▾'"
+							:color="C.text2"
+							:fontSize="16"
+							horizontalAlignment="center"
+							verticalAlignment="center"
+						/>
+					</GridLayout>
+				</GridLayout>
+
+				<!-- Account / settings / logout menu (revealed by the chevron) -->
+				<StackLayout v-if="showMenu" padding="0 8 6">
+					<GridLayout
+						v-for="a in accounts"
+						:key="a.id"
+						columns="*, auto"
+						padding="11 14"
+						borderRadius="13"
+						@tap="switchAccount(a)"
+					>
+						<Label col="0" :text="a._name" :color="C.text" :fontSize="15.5" />
+						<Label
+							v-if="a.id === store.accountId"
+							col="1"
+							text="✓"
+							:color="C.accent"
+							:fontSize="15.5"
+						/>
+					</GridLayout>
+					<StackLayout padding="11 14" borderRadius="13" @tap="openSettings">
+						<Label :text="__('Settings')" :color="C.text" :fontSize="15.5" />
+					</StackLayout>
+					<StackLayout padding="11 14" borderRadius="13" @tap="$emit('logout')">
+						<Label :text="__('Log out')" color="#E03636" :fontSize="15.5" />
+					</StackLayout>
+				</StackLayout>
 			</StackLayout>
 
-			<!-- Scrollable sections -->
+			<!-- Folder sections -->
 			<ScrollView row="1">
-				<StackLayout class="p-2">
+				<StackLayout padding="0 8">
 					<template v-for="section in sections" :key="section.label">
 						<Label
 							:text="section.label"
-							class="text-ink-gray-5 mb-1 mt-3 px-2 text-xs font-semibold uppercase"
+							:color="C.text4"
+							:fontSize="12"
+							fontWeight="600"
+							textTransform="uppercase"
+							padding="16 16 7"
 						/>
 						<GridLayout
 							v-for="item in section.items"
 							:key="item.label"
 							columns="*, auto"
-							class="rounded-lg px-2 py-3"
-							:class="item.label === activeLabel ? 'bg-surface-gray-3' : ''"
+							padding="11 14"
+							borderRadius="13"
+							:backgroundColor="item.label === activeLabel ? C.sel : 'transparent'"
 							@tap="item.onTap"
 						>
 							<Label
 								col="0"
 								:text="item.label"
-								class="text-ink-gray-8 text-base"
-								textWrap="true"
+								:color="C.text"
+								:fontSize="15.5"
+								:fontWeight="item.label === activeLabel ? '700' : '500'"
 							/>
 							<Label
 								v-if="item.suffix"
 								col="1"
 								:text="item.suffix"
-								class="text-ink-gray-5 text-sm"
+								:color="C.text3"
+								:fontSize="13"
+								fontWeight="500"
+								verticalAlignment="center"
 							/>
 						</GridLayout>
+
+						<!-- New Folder action under the Custom section -->
+						<StackLayout
+							v-if="section.label === customLabel"
+							padding="11 14"
+							borderRadius="13"
+							@tap="$emit('select', customLabel)"
+						>
+							<Label
+								:text="__('New Folder')"
+								:color="C.text3"
+								:fontSize="15.5"
+								fontWeight="500"
+							/>
+						</StackLayout>
 					</template>
+					<StackLayout height="12" />
 				</StackLayout>
 			</ScrollView>
 
-			<!-- Footer: account switcher (multi-account), settings, logout -->
-			<StackLayout row="2" class="border-t p-2">
-				<template v-if="accounts.length > 1">
-					<StackLayout v-if="showAccounts">
-						<GridLayout
-							v-for="a in accounts"
-							:key="a.id"
-							columns="*, auto"
-							class="rounded-lg px-2 py-3"
-							@tap="switchAccount(a)"
-						>
-							<Label col="0" :text="a._name" class="text-ink-gray-8 text-base" />
-							<Label
-								v-if="a.id === store.accountId"
-								col="1"
-								text="✓"
-								class="text-ink-blue-3 text-base"
-							/>
-						</GridLayout>
-					</StackLayout>
-					<GridLayout
-						columns="*, auto"
-						class="rounded-lg px-2 py-3"
-						@tap="toggleAccounts"
-					>
-						<Label
-							col="0"
-							:text="__('Switch account')"
-							class="text-ink-gray-8 text-base"
-						/>
-						<Label col="1" :text="showAccounts ? '▴' : '▾'" class="text-ink-gray-5" />
-					</GridLayout>
-				</template>
-
-				<StackLayout class="rounded-lg px-2 py-3" @tap="openSettings">
-					<Label :text="__('Settings')" class="text-ink-gray-8 text-base" />
-				</StackLayout>
-				<StackLayout class="rounded-lg px-2 py-3" @tap="$emit('logout')">
-					<Label :text="__('Log out')" class="text-ink-red-3 text-base" />
-				</StackLayout>
+			<!-- Storage meter -->
+			<StackLayout
+				row="2"
+				:marginBottom="safeBottom"
+				padding="14 18 18"
+				borderTopWidth="1"
+				:borderTopColor="C.border"
+			>
+				<Label
+					:text="__('Storage')"
+					:color="C.text"
+					:fontSize="15"
+					fontWeight="600"
+					marginBottom="10"
+				/>
+				<GridLayout height="6" borderRadius="6" :backgroundColor="C.surface3">
+					<StackLayout
+						:width="storagePercent + '%'"
+						height="6"
+						borderRadius="6"
+						horizontalAlignment="left"
+						:backgroundColor="C.accent"
+					/>
+				</GridLayout>
+				<Label :text="storageLabel" :color="C.text3" :fontSize="12.5" marginTop="8" />
 			</StackLayout>
 		</GridLayout>
 	</GridLayout>
@@ -108,6 +182,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { CoreTypes } from '@nativescript/core'
 
+import { safeAreaBottom, safeAreaTop } from '@/utils/safeArea'
 import { siteStore } from '@/stores/site'
 import { userStore } from '@/stores/user'
 
@@ -120,33 +195,53 @@ const emit = defineEmits<{ close: []; select: [label: string]; logout: [] }>()
 const site = siteStore()
 const store = userStore()
 
+// Design tokens (espresso, light theme) — see the Claude Design handoff.
+const C = {
+	text: '#171717',
+	text2: '#525252',
+	text3: '#7C7C7C',
+	text4: '#A3A3A3',
+	border: '#EDEDED',
+	surface: '#FFFFFF',
+	surface3: '#F1F1F1',
+	accent: '#0466DC',
+	sel: 'rgba(0, 0, 0, 0.05)',
+}
+
 const PANEL_WIDTH = 300
+const customLabel = __('Custom')
 
 const visible = ref(false)
-const showAccounts = ref(false)
+const showMenu = ref(false)
+const safeTop = safeAreaTop()
+const safeBottom = safeAreaBottom()
 
 // Native views captured on @loaded so we can animate the slide/fade directly.
 let panelView: View | null = null
 let backdropView: View | null = null
 
 const title = computed(() => site.activeSite?.app_name || 'Mail')
+const brandInitial = computed(() => (title.value[0] || 'M').toUpperCase())
+const accounts = computed<UserAccount[]>(() => store.user?.accounts ?? [])
 const subtitle = computed(() => {
 	const current = accounts.value.find((a) => a.id === store.accountId)
 	return current?._name || store.user?.full_name || ''
 })
-const accounts = computed<UserAccount[]>(() => store.user?.accounts ?? [])
+
+// Storage meter — placeholder until a mobile storage API is wired.
+const storagePercent = 4.63
+const storageLabel = computed(() => `${storagePercent}% ${__('of 10 GB used')}`)
 
 const subscribed = computed(() => store.mailboxes.filter((m) => m.subscribed))
-const mailboxLabel = (m: MailboxData) => m._name
-const mailboxSuffix = (m: MailboxData) => (m.unread_threads ? String(m.unread_threads) : '')
+const mailboxSuffix = (m: MailboxData) =>
+	m.unread_threads ? m.unread_threads.toLocaleString() : ''
 
-// Section model mirrors the web AppSidebar: Default (role mailboxes + Starred),
-// Custom (user folders), People (address books / contacts).
+// Default (role mailboxes + Starred), Custom (user folders), People.
 const sections = computed(() => {
 	const toItem = (m: MailboxData) => ({
-		label: mailboxLabel(m),
+		label: m._name,
 		suffix: mailboxSuffix(m),
-		onTap: () => select(mailboxLabel(m)),
+		onTap: () => select(m._name),
 	})
 	const defaultItems = [
 		...subscribed.value.filter((m) => m.role).map(toItem),
@@ -158,10 +253,11 @@ const sections = computed(() => {
 		{ label: __('Contacts'), suffix: '', onTap: () => select(__('Contacts')) },
 	]
 
-	const out = [{ label: __('Default'), items: defaultItems }]
-	if (customItems.length) out.push({ label: __('Custom'), items: customItems })
-	out.push({ label: __('People'), items: peopleItems })
-	return out
+	return [
+		{ label: __('Default'), items: defaultItems },
+		{ label: customLabel, items: customItems },
+		{ label: __('People'), items: peopleItems },
+	]
 })
 
 function select(label: string) {
@@ -174,13 +270,13 @@ function openSettings() {
 	emit('close')
 }
 
-function toggleAccounts() {
-	showAccounts.value = !showAccounts.value
+function toggleMenu() {
+	showMenu.value = !showMenu.value
 }
 
 function switchAccount(a: UserAccount) {
 	store.setAccount(a.id)
-	showAccounts.value = false
+	showMenu.value = false
 	emit('close')
 }
 

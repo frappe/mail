@@ -3,8 +3,13 @@
 		<!-- Root single-cell grid so the drawer overlays the whole screen. -->
 		<GridLayout>
 			<GridLayout rows="auto, *">
-				<!-- Top bar -->
-				<GridLayout row="0" columns="auto, *" class="border-b px-2 py-3">
+				<!-- Top bar (pushed below the Android status bar / camera cutout) -->
+				<GridLayout
+					row="0"
+					:marginTop="safeTop"
+					columns="auto, *"
+					class="border-b px-2 py-3"
+				>
 					<Label
 						col="0"
 						text="☰"
@@ -54,6 +59,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { $navigateTo } from 'nativescript-vue'
 
+import { safeAreaTop } from '@/utils/safeArea'
 import { loadTranslations } from '@/utils/translation'
 import { sessionStore } from '@/stores/session'
 import { siteStore } from '@/stores/site'
@@ -67,6 +73,7 @@ const store = userStore()
 
 const drawerOpen = ref(false)
 const currentView = ref('')
+const safeTop = safeAreaTop()
 
 const title = computed(() => site.activeSite?.app_name || 'Mail')
 
