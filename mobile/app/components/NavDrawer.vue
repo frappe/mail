@@ -2,129 +2,100 @@
 	<!-- Full-screen overlay. Single-cell GridLayout: backdrop fills it, panel sits
 	     on the left on top. Collapsed entirely when closed so it intercepts no taps. -->
 	<GridLayout :visibility="visible ? 'visible' : 'collapse'">
-		<StackLayout
-			@loaded="onBackdropLoaded"
-			backgroundColor="rgba(0, 0, 0, 0.5)"
-			@tap="$emit('close')"
-		/>
+		<StackLayout @loaded="onBackdropLoaded" class="nd-backdrop" @tap="$emit('close')" />
 
+		<!-- Styling lives in <style> (CSS classes) rather than inline attributes:
+		     iOS does not reliably honour inline padding / GridLayout sizing here,
+		     whereas CSS is applied consistently on both platforms. -->
 		<GridLayout
 			@loaded="onPanelLoaded"
 			width="300"
 			horizontalAlignment="left"
-			rows="auto, *, auto"
-			:backgroundColor="C.surface"
+			rows="auto, auto, *, auto"
+			class="nd-panel"
 		>
-			<!-- Account header -->
-			<StackLayout row="0" :marginTop="safeTop">
-				<GridLayout columns="auto, *, auto" padding="14 16" verticalAlignment="center">
-					<GridLayout
-						col="0"
-						width="42"
-						height="42"
-						borderRadius="12"
-						:backgroundColor="C.accent"
-					>
-						<Label
-							:text="brandInitial"
-							color="#FFFFFF"
-							:fontSize="20"
-							fontWeight="700"
-							horizontalAlignment="center"
-							verticalAlignment="center"
-						/>
-					</GridLayout>
-					<StackLayout col="1" marginLeft="12" verticalAlignment="center">
-						<Label :text="title" :color="C.text" :fontSize="16.5" fontWeight="700" />
-						<Label
-							v-if="subtitle"
-							:text="subtitle"
-							:color="C.text3"
-							:fontSize="13.5"
-							textWrap="false"
-						/>
-					</StackLayout>
-					<GridLayout
-						col="2"
-						width="34"
-						height="34"
-						borderRadius="34"
-						:backgroundColor="C.surface3"
-						@tap="toggleMenu"
-					>
-						<Label
-							:text="showMenu ? '▴' : '▾'"
-							:color="C.text2"
-							:fontSize="16"
-							horizontalAlignment="center"
-							verticalAlignment="center"
-						/>
-					</GridLayout>
+			<!-- Account header (direct grid child so its columns lay out on iOS) -->
+			<GridLayout row="0" columns="42, *, 34" class="nd-header" :marginTop="safeTop">
+				<GridLayout col="0" class="nd-square" verticalAlignment="center">
+					<Label
+						:text="lucide('mail-open')"
+						class="nd-square-label"
+						horizontalAlignment="center"
+						verticalAlignment="center"
+					/>
 				</GridLayout>
+				<StackLayout col="1" class="nd-name" verticalAlignment="center">
+					<Label :text="title" class="nd-title" />
+					<Label v-if="subtitle" :text="subtitle" class="nd-sub" textWrap="false" />
+				</StackLayout>
+				<GridLayout
+					col="2"
+					class="nd-chevron"
+					verticalAlignment="center"
+					@tap="toggleMenu"
+				>
+					<Label
+						:text="lucide('chevron-down')"
+						class="nd-chevron-label"
+						horizontalAlignment="center"
+						verticalAlignment="center"
+					/>
+				</GridLayout>
+			</GridLayout>
 
-				<!-- Account / settings / logout menu (revealed by the chevron) -->
-				<StackLayout v-if="showMenu" padding="0 8 6">
-					<GridLayout
-						v-for="a in accounts"
-						:key="a.id"
-						columns="*, auto"
-						padding="11 14"
-						borderRadius="13"
-						@tap="switchAccount(a)"
-					>
-						<Label col="0" :text="a._name" :color="C.text" :fontSize="15.5" />
-						<Label
-							v-if="a.id === store.accountId"
-							col="1"
-							text="✓"
-							:color="C.accent"
-							:fontSize="15.5"
-						/>
-					</GridLayout>
-					<StackLayout padding="11 14" borderRadius="13" @tap="openSettings">
-						<Label :text="__('Settings')" :color="C.text" :fontSize="15.5" />
-					</StackLayout>
-					<StackLayout padding="11 14" borderRadius="13" @tap="$emit('logout')">
-						<Label :text="__('Log out')" color="#E03636" :fontSize="15.5" />
-					</StackLayout>
+			<!-- Account / settings / logout menu (revealed by the chevron) -->
+			<StackLayout v-if="showMenu" row="1">
+				<GridLayout
+					v-for="a in accounts"
+					:key="a.id"
+					columns="*, auto"
+					class="nd-menu-row"
+					@tap="switchAccount(a)"
+				>
+					<Label col="0" :text="a._name" class="nd-menu-label" />
+					<Label v-if="a.id === store.accountId" col="1" text="✓" class="nd-check" />
+				</GridLayout>
+				<StackLayout class="nd-menu-row" @tap="openSettings">
+					<Label :text="__('Settings')" class="nd-menu-label" />
+				</StackLayout>
+				<StackLayout class="nd-menu-row" @tap="$emit('logout')">
+					<Label :text="__('Log out')" class="nd-logout" />
 				</StackLayout>
 			</StackLayout>
 
 			<!-- Folder sections -->
-			<ScrollView row="1">
-				<StackLayout padding="0 8">
+			<ScrollView row="2">
+				<StackLayout>
 					<template v-for="section in sections" :key="section.label">
-						<Label
-							:text="section.label"
-							:color="C.text4"
-							:fontSize="12"
-							fontWeight="600"
-							textTransform="uppercase"
-							padding="16 16 7"
-						/>
+						<Label :text="section.label" class="nd-section" textWrap="false" />
 						<GridLayout
 							v-for="item in section.items"
 							:key="item.label"
-							columns="*, auto"
-							padding="11 14"
-							borderRadius="13"
-							:backgroundColor="item.label === activeLabel ? C.sel : 'transparent'"
+							columns="auto, *, auto"
+							:class="item.label === activeLabel ? 'nd-row nd-row-active' : 'nd-row'"
 							@tap="item.onTap"
 						>
 							<Label
 								col="0"
+								:text="lucide(item.icon)"
+								:class="['nd-row-icon', item.colorClass]"
+								verticalAlignment="center"
+							/>
+							<Label
+								col="1"
 								:text="item.label"
-								:color="C.text"
-								:fontSize="15.5"
-								:fontWeight="item.label === activeLabel ? '700' : '500'"
+								:class="
+									item.label === activeLabel
+										? 'nd-label nd-label-active'
+										: 'nd-label'
+								"
+								verticalAlignment="center"
 							/>
 							<Label
 								v-if="item.suffix"
-								col="1"
+								col="2"
 								:text="item.suffix"
-								:color="C.text3"
-								:fontSize="13"
-								fontWeight="500"
+								class="nd-count"
 								verticalAlignment="center"
 							/>
 						</GridLayout>
@@ -132,15 +103,19 @@
 						<!-- New Folder action under the Custom section -->
 						<StackLayout
 							v-if="section.label === customLabel"
-							padding="11 14"
-							borderRadius="13"
+							orientation="horizontal"
+							class="nd-newfolder"
 							@tap="$emit('select', customLabel)"
 						>
 							<Label
+								:text="lucide('folder-plus')"
+								class="nd-row-icon nd-newfolder-icon"
+								verticalAlignment="center"
+							/>
+							<Label
 								:text="__('New Folder')"
-								:color="C.text3"
-								:fontSize="15.5"
-								fontWeight="500"
+								class="nd-newfolder-label"
+								verticalAlignment="center"
 							/>
 						</StackLayout>
 					</template>
@@ -149,30 +124,27 @@
 			</ScrollView>
 
 			<!-- Storage meter -->
-			<StackLayout
-				row="2"
-				:marginBottom="safeBottom"
-				padding="14 18 18"
-				borderTopWidth="1"
-				:borderTopColor="C.border"
-			>
-				<Label
-					:text="__('Storage')"
-					:color="C.text"
-					:fontSize="15"
-					fontWeight="600"
-					marginBottom="10"
-				/>
-				<GridLayout height="6" borderRadius="6" :backgroundColor="C.surface3">
+			<StackLayout row="3" class="nd-storage" :marginBottom="safeBottom">
+				<StackLayout orientation="horizontal" class="nd-storage-head">
+					<Label
+						:text="lucide('cloud')"
+						class="nd-storage-icon"
+						verticalAlignment="center"
+					/>
+					<Label
+						:text="__('Storage')"
+						class="nd-storage-title"
+						verticalAlignment="center"
+					/>
+				</StackLayout>
+				<GridLayout class="nd-track">
 					<StackLayout
+						class="nd-fill"
 						:width="storagePercent + '%'"
-						height="6"
-						borderRadius="6"
 						horizontalAlignment="left"
-						:backgroundColor="C.accent"
 					/>
 				</GridLayout>
-				<Label :text="storageLabel" :color="C.text3" :fontSize="12.5" marginTop="8" />
+				<Label :text="storageLabel" class="nd-storage-sub" />
 			</StackLayout>
 		</GridLayout>
 	</GridLayout>
@@ -182,6 +154,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { CoreTypes } from '@nativescript/core'
 
+import { folderColorClass, lucide, mailboxIcon } from '@/utils/lucide'
 import { safeAreaBottom, safeAreaTop } from '@/utils/safeArea'
 import { siteStore } from '@/stores/site'
 import { userStore } from '@/stores/user'
@@ -194,19 +167,6 @@ const emit = defineEmits<{ close: []; select: [label: string]; logout: [] }>()
 
 const site = siteStore()
 const store = userStore()
-
-// Design tokens (espresso, light theme) — see the Claude Design handoff.
-const C = {
-	text: '#171717',
-	text2: '#525252',
-	text3: '#7C7C7C',
-	text4: '#A3A3A3',
-	border: '#EDEDED',
-	surface: '#FFFFFF',
-	surface3: '#F1F1F1',
-	accent: '#0466DC',
-	sel: 'rgba(0, 0, 0, 0.05)',
-}
 
 const PANEL_WIDTH = 300
 const customLabel = __('Custom')
@@ -221,7 +181,6 @@ let panelView: View | null = null
 let backdropView: View | null = null
 
 const title = computed(() => site.activeSite?.app_name || 'Mail')
-const brandInitial = computed(() => (title.value[0] || 'M').toUpperCase())
 const accounts = computed<UserAccount[]>(() => store.user?.accounts ?? [])
 const subtitle = computed(() => {
 	const current = accounts.value.find((a) => a.id === store.accountId)
@@ -241,16 +200,36 @@ const sections = computed(() => {
 	const toItem = (m: MailboxData) => ({
 		label: m._name,
 		suffix: mailboxSuffix(m),
+		icon: mailboxIcon(m),
+		colorClass: folderColorClass(m.color),
 		onTap: () => select(m._name),
 	})
 	const defaultItems = [
 		...subscribed.value.filter((m) => m.role).map(toItem),
-		{ label: __('Starred'), suffix: '', onTap: () => select(__('Starred')) },
+		{
+			label: __('Starred'),
+			suffix: '',
+			icon: 'star',
+			colorClass: '',
+			onTap: () => select(__('Starred')),
+		},
 	]
 	const customItems = subscribed.value.filter((m) => !m.role).map(toItem)
 	const peopleItems = [
-		{ label: __('Address Books'), suffix: '', onTap: () => select(__('Address Books')) },
-		{ label: __('Contacts'), suffix: '', onTap: () => select(__('Contacts')) },
+		{
+			label: __('Address Books'),
+			suffix: '',
+			icon: 'book-user',
+			colorClass: '',
+			onTap: () => select(__('Address Books')),
+		},
+		{
+			label: __('Contacts'),
+			suffix: '',
+			icon: 'contact-round',
+			colorClass: '',
+			onTap: () => select(__('Contacts')),
+		},
 	]
 
 	return [
@@ -327,3 +306,172 @@ function closeDrawer() {
 		.finally(() => (visible.value = false))
 }
 </script>
+
+<!-- Design tokens (espresso, light theme) from the Claude Design handoff. CSS is
+     used instead of inline attributes because iOS applies it reliably. Icons use
+     the bundled Lucide font (app/fonts/lucide.ttf, family "lucide"). -->
+<style scoped>
+.nd-backdrop {
+	background-color: rgba(0, 0, 0, 0.5);
+}
+.nd-panel {
+	background-color: #ffffff;
+}
+
+.nd-header {
+	padding: 14 16;
+}
+.nd-square {
+	width: 42;
+	height: 42;
+	border-radius: 12;
+	background-color: #0466dc;
+}
+.nd-square-label {
+	font-family: 'lucide';
+	color: #ffffff;
+	font-size: 22;
+}
+.nd-name {
+	margin-left: 12;
+}
+.nd-title {
+	color: #171717;
+	font-size: 16.5;
+	font-weight: 700;
+}
+.nd-sub {
+	color: #7c7c7c;
+	font-size: 13.5;
+}
+.nd-chevron {
+	width: 34;
+	height: 34;
+	border-radius: 34;
+	background-color: #f1f1f1;
+}
+.nd-chevron-label {
+	font-family: 'lucide';
+	color: #525252;
+	font-size: 18;
+}
+
+.nd-section {
+	color: #a3a3a3;
+	font-size: 12;
+	font-weight: 600;
+	text-transform: uppercase;
+	padding: 16 16 7;
+}
+
+.nd-row {
+	padding: 11 14;
+	margin-left: 8;
+	margin-right: 8;
+	border-radius: 13;
+	background-color: transparent;
+}
+.nd-row-active {
+	background-color: rgba(0, 0, 0, 0.05);
+}
+.nd-row-icon {
+	font-family: 'lucide';
+	color: #525252;
+	font-size: 21;
+}
+.nd-ic-blue {
+	color: #3b82f6;
+}
+.nd-ic-green {
+	color: #22c55e;
+}
+.nd-ic-amber {
+	color: #f59e0b;
+}
+.nd-ic-red {
+	color: #ef4444;
+}
+.nd-ic-purple {
+	color: #a855f7;
+}
+.nd-label {
+	color: #171717;
+	font-size: 15.5;
+	font-weight: 500;
+	margin-left: 14;
+}
+.nd-label-active {
+	font-weight: 700;
+}
+.nd-count {
+	color: #7c7c7c;
+	font-size: 13;
+	font-weight: 500;
+}
+
+.nd-newfolder {
+	padding: 11 14;
+	margin-left: 8;
+	margin-right: 8;
+}
+.nd-newfolder-icon {
+	color: #7c7c7c;
+}
+.nd-newfolder-label {
+	color: #7c7c7c;
+	font-size: 15.5;
+	font-weight: 500;
+	margin-left: 14;
+}
+
+.nd-menu-row {
+	padding: 11 16;
+}
+.nd-menu-label {
+	color: #171717;
+	font-size: 15.5;
+}
+.nd-check {
+	color: #0466dc;
+	font-size: 15.5;
+}
+.nd-logout {
+	color: #e03636;
+	font-size: 15.5;
+}
+
+.nd-storage {
+	padding: 14 18 18;
+	border-top-width: 1;
+	border-top-color: #ededed;
+}
+.nd-storage-head {
+	margin-bottom: 10;
+}
+.nd-storage-icon {
+	font-family: 'lucide';
+	color: #171717;
+	font-size: 20;
+}
+.nd-storage-title {
+	color: #171717;
+	font-size: 15;
+	font-weight: 600;
+	margin-left: 10;
+}
+.nd-track {
+	height: 6;
+	border-radius: 6;
+	background-color: #f1f1f1;
+}
+.nd-fill {
+	height: 6;
+	border-radius: 6;
+	background-color: #0466dc;
+}
+.nd-storage-sub {
+	color: #7c7c7c;
+	font-size: 12.5;
+	margin-top: 8;
+}
+</style>
