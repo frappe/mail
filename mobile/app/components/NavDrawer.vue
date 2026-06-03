@@ -2,20 +2,16 @@
 	<!-- Full-screen overlay. Single-cell GridLayout: backdrop fills it, panel sits
 	     on the left on top. Collapsed entirely when closed so it intercepts no taps. -->
 	<GridLayout :visibility="visible ? 'visible' : 'collapse'">
-		<StackLayout
-			class="nd-backdrop bg-surface-gray-7"
-			@loaded="onBackdropLoaded"
-			@tap="$emit('close')"
-		/>
+		<StackLayout class="bg-surface-gray-7" @loaded="onBackdropLoaded" @tap="$emit('close')" />
 
-		<!-- Styling lives in <style> (CSS classes) rather than inline attributes:
+		<!-- Styling lives in Tailwind classes rather than inline attributes:
 		     iOS does not reliably honour inline padding / GridLayout sizing here,
 		     whereas CSS is applied consistently on both platforms. -->
 		<GridLayout
 			width="300"
 			horizontalAlignment="left"
 			rows="auto, *, auto"
-			class="nd-panel bg-surface-white"
+			class="bg-surface-white"
 			@loaded="onPanelLoaded"
 		>
 			<!-- Account header — tap opens the account sheet (switch account/site,
@@ -23,26 +19,26 @@
 			<GridLayout
 				row="0"
 				columns="42, *, 34"
-				class="nd-header"
+				class="px-4 py-3.5"
 				:marginTop="safeTop"
 				@tap="$emit('open-account')"
 			>
-				<GridLayout col="0" class="nd-logobox" verticalAlignment="center">
-					<Image :src="logoSrc" stretch="aspectFit" class="nd-logo-img" />
+				<GridLayout col="0" class="h-11 w-11" verticalAlignment="center">
+					<Image :src="logoSrc" stretch="aspectFit" class="h-11 w-11 rounded-xl" />
 				</GridLayout>
-				<StackLayout col="1" class="nd-name" verticalAlignment="center">
-					<Label :text="title" class="nd-title font-bold" />
+				<StackLayout col="1" class="ml-3" verticalAlignment="center">
+					<Label :text="title" class="text-base font-bold" />
 					<Label
 						v-if="subtitle"
 						:text="subtitle"
-						class="nd-sub text-ink-gray-5"
+						class="text-ink-gray-5 text-sm"
 						textWrap="false"
 					/>
 				</StackLayout>
-				<GridLayout col="2" class="nd-chevron" verticalAlignment="center">
+				<GridLayout col="2" class="h-9 w-9 rounded-full" verticalAlignment="center">
 					<Label
 						:text="lucide('chevron-down')"
-						class="nd-chevron-label text-ink-gray-6"
+						class="font-lucide text-ink-gray-6 text-lg"
 						horizontalAlignment="center"
 						verticalAlignment="center"
 					/>
@@ -55,22 +51,21 @@
 					<template v-for="section in sections" :key="section.label">
 						<Label
 							:text="section.label"
-							class="nd-section text-ink-gray-4 text-xs font-semibold uppercase"
+							class="text-ink-gray-4 pb-2 pl-6 pr-4 pt-4 text-xs font-semibold uppercase"
 							textWrap="false"
 						/>
 						<GridLayout
 							v-for="item in section.items"
 							:key="item.label"
 							columns="auto, *, auto"
-							:class="
-								item.label === activeLabel ? 'nd-row bg-surface-gray-2' : 'nd-row'
-							"
+							class="mx-2 rounded-xl px-3.5 py-3"
+							:class="{ 'bg-surface-gray-2': item.label === activeLabel }"
 							@tap="item.onTap"
 						>
 							<Label
 								col="0"
 								:text="lucide(item.icon)"
-								class="nd-row-icon text-[21px]"
+								class="font-lucide text-xl"
 								:class="item.colorClass ? item.colorClass : 'text-ink-gray-6'"
 								verticalAlignment="center"
 							/>
@@ -79,8 +74,8 @@
 								:text="item.label"
 								:class="
 									item.label === activeLabel
-										? 'nd-label ml-3.5 font-bold'
-										: 'nd-label ml-3.5 font-medium'
+										? 'ml-3.5 font-bold'
+										: 'ml-3.5 font-medium'
 								"
 								verticalAlignment="center"
 							/>
@@ -88,7 +83,7 @@
 								v-if="item.suffix"
 								col="2"
 								:text="item.suffix"
-								class="nd-count text-ink-gray-5 text-sm font-medium"
+								class="text-ink-gray-5 text-sm font-medium"
 								verticalAlignment="center"
 							/>
 						</GridLayout>
@@ -101,30 +96,30 @@
 			<StackLayout
 				v-if="showStorage"
 				row="2"
-				class="nd-storage border-outline-gray-1 border-t"
+				class="border-outline-gray-1 border-t px-5 pb-5 pt-3.5"
 				:marginBottom="safeBottom"
 			>
-				<StackLayout orientation="horizontal" class="nd-storage-head">
+				<StackLayout orientation="horizontal" class="mb-2.5">
 					<Label
 						:text="lucide('cloud')"
-						class="nd-storage-icon text-2xl"
+						class="font-lucide text-xl"
 						verticalAlignment="center"
 					/>
 					<Label
 						:text="__('Storage')"
-						class="nd-storage-title ml-2.5 font-semibold"
+						class="ml-2.5 font-semibold"
 						verticalAlignment="center"
 					/>
 				</StackLayout>
-				<GridLayout class="nd-track bg-surface-gray-2 h-1.5 rounded-full">
+				<GridLayout class="bg-surface-gray-2 h-1.5 rounded-full">
 					<StackLayout
-						class="nd-fill h-1.5 rounded-full"
+						class="h-1.5 rounded-full"
 						:class="storageOverLimit ? 'bg-surface-red-6' : 'bg-surface-gray-7'"
 						:width="storagePercent + '%'"
 						horizontalAlignment="left"
 					/>
 				</GridLayout>
-				<Label :text="storageLabel" class="nd-storage-sub text-ink-gray-5 mt-2" />
+				<Label :text="storageLabel" class="text-ink-gray-5 mt-2 text-xs" />
 			</StackLayout>
 		</GridLayout>
 	</GridLayout>
@@ -299,68 +294,3 @@ function closeDrawer() {
 		.finally(() => (visible.value = false))
 }
 </script>
-
-<!-- Design tokens (espresso, light theme) from the Claude Design handoff. CSS is
-     used instead of inline attributes because iOS applies it reliably. Icons use
-     the bundled Lucide font (app/fonts/lucide.ttf, family "lucide"). -->
-<style scoped>
-.nd-header {
-	padding: 14 16;
-}
-.nd-logobox {
-	width: 42;
-	height: 42;
-}
-.nd-logo-img {
-	width: 42;
-	height: 42;
-	border-radius: 12;
-}
-.nd-name {
-	margin-left: 12;
-}
-.nd-title {
-	font-size: 16.5;
-}
-.nd-sub {
-	font-size: 13.5;
-}
-.nd-chevron {
-	width: 34;
-	height: 34;
-	border-radius: 34;
-}
-.nd-chevron-label {
-	font-family: 'lucide';
-	font-size: 18;
-}
-
-.nd-section {
-	/* left padding aligns the label with the row icon column
-	   (row margin-left 8 + row padding-left 14) */
-	padding: 16 16 7 22;
-}
-
-.nd-row {
-	padding: 11 14;
-	margin-left: 8;
-	margin-right: 8;
-	border-radius: 13;
-}
-.nd-row-icon {
-	font-family: 'lucide';
-}
-
-.nd-storage {
-	padding: 14 18 18;
-}
-.nd-storage-head {
-	margin-bottom: 10;
-}
-.nd-storage-icon {
-	font-family: 'lucide';
-}
-.nd-storage-sub {
-	font-size: 12.5;
-}
-</style>
