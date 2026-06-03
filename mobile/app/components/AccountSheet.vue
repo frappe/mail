@@ -39,7 +39,7 @@
 						/>
 					</GridLayout>
 					<StackLayout col="1" class="as-gap" verticalAlignment="center">
-						<Label :text="current.name" class="as-id-name text-ink-gray-9 font-bold" />
+						<Label :text="current.name" class="as-id-name font-bold" />
 						<Label
 							:text="current.email"
 							class="as-id-email text-ink-gray-5"
@@ -86,7 +86,7 @@
 						/>
 						<Label
 							:text="currentSiteName"
-							class="as-site-name text-ink-gray-9 font-semibold"
+							class="as-site-name font-semibold"
 							textWrap="false"
 						/>
 					</StackLayout>
@@ -123,7 +123,7 @@
 						/>
 					</GridLayout>
 					<StackLayout col="1" class="as-gap" verticalAlignment="center">
-						<Label :text="a.name" class="as-acct-name text-ink-gray-9 font-semibold" />
+						<Label :text="a.name" class="as-acct-name font-semibold" />
 						<Label
 							:text="a.subtitle"
 							class="as-acct-email text-ink-gray-5"
@@ -134,7 +134,7 @@
 						v-if="a.active"
 						col="2"
 						:text="lucide('check')"
-						class="as-check text-ink-gray-9"
+						class="as-check"
 						verticalAlignment="center"
 					/>
 				</GridLayout>
@@ -149,7 +149,7 @@
 					/>
 					<Label
 						:text="__('Settings')"
-						class="as-row-label text-ink-gray-9 font-semibold"
+						class="as-row-label font-semibold"
 						verticalAlignment="center"
 					/>
 				</StackLayout>
@@ -186,7 +186,7 @@
 					<Label
 						col="1"
 						:text="__('Switch site')"
-						class="as-sites-title text-ink-gray-9 font-bold"
+						class="as-sites-title font-bold"
 						verticalAlignment="center"
 					/>
 				</GridLayout>
@@ -199,18 +199,18 @@
 				>
 					<GridLayout
 						col="0"
-						class="as-site-sq bg-surface-gray-5 h-10 w-10 rounded-xl"
+						class="as-site-sq bg-surface-gray-2 h-10 w-10 rounded-xl"
 						verticalAlignment="center"
 					>
 						<Label
 							:text="lucide('globe')"
-							class="as-site-sq-glyph text-2xl text-white"
+							class="as-site-sq-glyph text-ink-gray-6 text-2xl"
 							horizontalAlignment="center"
 							verticalAlignment="center"
 						/>
 					</GridLayout>
 					<StackLayout col="1" class="as-gap" verticalAlignment="center">
-						<Label :text="s.name" class="as-acct-name text-ink-gray-9 font-semibold" />
+						<Label :text="s.name" class="as-acct-name font-semibold" />
 						<Label
 							:text="s.sub"
 							class="as-acct-email text-ink-gray-5"
@@ -221,7 +221,7 @@
 						v-if="s.active"
 						col="2"
 						:text="lucide('check')"
-						class="as-check text-ink-gray-9"
+						class="as-check"
 						verticalAlignment="center"
 					/>
 				</GridLayout>
@@ -236,7 +236,7 @@
 					/>
 					<Label
 						:text="__('Add site')"
-						class="as-row-label text-ink-gray-9 font-semibold"
+						class="as-row-label font-semibold"
 						verticalAlignment="center"
 					/>
 				</StackLayout>

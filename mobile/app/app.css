@@ -1,1 +1,9 @@
 @tailwind utilities;
+
+Page,
+Label,
+Button,
+TextField,
+TextView {
+	@apply text-ink-gray-8;
+}

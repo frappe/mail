@@ -10,17 +10,12 @@
 					columns="auto, *"
 					class="border-b px-2 py-3"
 				>
-					<Label
-						col="0"
-						text="☰"
-						class="text-ink-gray-9 px-3 text-2xl"
-						@tap="drawerOpen = true"
-					/>
+					<Label col="0" text="☰" class="px-3 text-2xl" @tap="drawerOpen = true" />
 					<Label
 						col="1"
 						:text="currentView || title"
 						verticalAlignment="center"
-						class="text-ink-gray-9 text-lg font-semibold"
+						class="text-lg font-semibold"
 					/>
 				</GridLayout>
 
@@ -33,7 +28,7 @@
 				>
 					<Label
 						:text="currentView || __('Loading…')"
-						class="text-ink-gray-9 mb-1 text-2xl font-bold"
+						class="mb-1 text-2xl font-bold"
 						textAlignment="center"
 					/>
 					<Label

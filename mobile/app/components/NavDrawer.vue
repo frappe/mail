@@ -31,7 +31,7 @@
 					<Image :src="logoSrc" stretch="aspectFit" class="nd-logo-img" />
 				</GridLayout>
 				<StackLayout col="1" class="nd-name" verticalAlignment="center">
-					<Label :text="title" class="nd-title text-ink-gray-9 font-bold" />
+					<Label :text="title" class="nd-title font-bold" />
 					<Label
 						v-if="subtitle"
 						:text="subtitle"
@@ -70,10 +70,8 @@
 							<Label
 								col="0"
 								:text="lucide(item.icon)"
-								:class="[
-									'nd-row-icon text-ink-gray-6 text-[21px]',
-									item.colorClass,
-								]"
+								class="nd-row-icon text-[21px]"
+								:class="item.colorClass ? item.colorClass : 'text-ink-gray-6'"
 								verticalAlignment="center"
 							/>
 							<Label
@@ -81,8 +79,8 @@
 								:text="item.label"
 								:class="
 									item.label === activeLabel
-										? 'nd-label text-ink-gray-9 ml-3.5 font-bold'
-										: 'nd-label text-ink-gray-9 ml-3.5 font-medium'
+										? 'nd-label ml-3.5 font-bold'
+										: 'nd-label ml-3.5 font-medium'
 								"
 								verticalAlignment="center"
 							/>
@@ -108,12 +106,12 @@
 				<StackLayout orientation="horizontal" class="nd-storage-head">
 					<Label
 						:text="lucide('cloud')"
-						class="nd-storage-icon text-ink-gray-9 text-2xl"
+						class="nd-storage-icon text-2xl"
 						verticalAlignment="center"
 					/>
 					<Label
 						:text="__('Storage')"
-						class="nd-storage-title text-ink-gray-9 ml-2.5 font-semibold"
+						class="nd-storage-title ml-2.5 font-semibold"
 						verticalAlignment="center"
 					/>
 				</StackLayout>
