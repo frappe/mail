@@ -99,6 +99,7 @@
 
 			<!-- Storage meter -->
 			<StackLayout
+				v-if="showStorage"
 				row="2"
 				class="nd-storage border-outline-gray-1 border-t"
 				:marginBottom="safeBottom"
@@ -117,7 +118,8 @@
 				</StackLayout>
 				<GridLayout class="nd-track bg-surface-gray-2 h-1.5 rounded-full">
 					<StackLayout
-						class="nd-fill bg-surface-gray-7 h-1.5 rounded-full"
+						class="nd-fill h-1.5 rounded-full"
+						:class="storageOverLimit ? 'bg-surface-red-6' : 'bg-surface-gray-7'"
 						:width="storagePercent + '%'"
 						horizontalAlignment="left"
 					/>
@@ -132,6 +134,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { CoreTypes } from '@nativescript/core'
 
+import { formatBytes } from '@/utils/format'
 import { folderColorClass, lucide, mailboxIcon } from '@/utils/lucide'
 import { safeAreaBottom, safeAreaTop } from '@/utils/safeArea'
 import { siteStore } from '@/stores/site'
@@ -183,9 +186,18 @@ const subtitle = computed(() => {
 	return current._name
 })
 
-// Storage meter — placeholder until a mobile storage API is wired.
-const storagePercent = 4.63
-const storageLabel = computed(() => `${storagePercent}% ${__('of 10 GB used')}`)
+// Storage meter — mirrors the web QuotaBar. The bar fill is capped at 100% and
+// turns red past 80% usage; the label shows usage out of the disk quota, or the
+// raw amount used when the quota is unlimited (disk_quota <= 0).
+const showStorage = computed(() => store.user?.is_jmap_configured && store.quota)
+const storagePercent = computed(() => Math.min(store.quota?.used_percentage ?? 0, 100))
+const storageOverLimit = computed(() => (store.quota?.used_percentage ?? 0) > 80)
+const storageLabel = computed(() => {
+	const q = store.quota
+	if (!q) return ''
+	if (q.disk_quota <= 0) return __('Unlimited ({0} used)', [formatBytes(q.used_quota)])
+	return __('{0}% of {1} used', [q.used_percentage.toFixed(2), formatBytes(q.disk_quota)])
+})
 
 const subscribed = computed(() => store.mailboxes.filter((m) => m.subscribed))
 const mailboxSuffix = (m: MailboxData) =>

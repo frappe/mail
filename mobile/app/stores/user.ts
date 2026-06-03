@@ -11,12 +11,20 @@ export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'arch
 
 const ACCOUNT_STORAGE_KEY = 'mail-account-id'
 
+// Mirrors the return shape of mail.api.account.get_quota.
+export interface Quota {
+	disk_quota: number
+	used_quota: number
+	used_percentage: number
+}
+
 export const userStore = defineStore('mail-user', () => {
 	const api = useApi()
 
 	const user = ref<User | null>(null)
 	const accountId = ref<string>(ApplicationSettings.getString(ACCOUNT_STORAGE_KEY, ''))
 	const mailboxes = ref<MailboxData[]>([])
+	const quota = ref<Quota | null>(null)
 	const isLoading = ref(false)
 	const error = ref<string | null>(null)
 
@@ -66,6 +74,17 @@ export const userStore = defineStore('mail-user', () => {
 		}
 	}
 
+	async function fetchQuota() {
+		if (!account.value) return
+		try {
+			quota.value = await api.call<Quota>('mail.api.account.get_quota', {
+				account: account.value,
+			})
+		} catch {
+			quota.value = null
+		}
+	}
+
 	function resolveAccount(accounts?: UserAccount[]) {
 		if (!accounts?.length) return
 
@@ -83,12 +102,14 @@ export const userStore = defineStore('mail-user', () => {
 		accountId.value = id
 		ApplicationSettings.setString(ACCOUNT_STORAGE_KEY, id)
 		fetchMailboxes()
+		fetchQuota()
 	}
 
 	function reset() {
 		user.value = null
 		accountId.value = ''
 		mailboxes.value = []
+		quota.value = null
 		ApplicationSettings.remove(ACCOUNT_STORAGE_KEY)
 	}
 
@@ -97,11 +118,13 @@ export const userStore = defineStore('mail-user', () => {
 		accountId,
 		account,
 		mailboxes,
+		quota,
 		mailboxIds,
 		isLoading,
 		error,
 		fetchUser,
 		fetchMailboxes,
+		fetchQuota,
 		setAccount,
 		reset,
 	}
