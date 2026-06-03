@@ -430,7 +430,7 @@ function closeDrawer() {
 .nd-fill {
 	height: 6;
 	border-radius: 6;
-	background-color: #0466dc;
+	background-color: #171717;
 }
 .nd-storage-sub {
 	color: #7c7c7c;

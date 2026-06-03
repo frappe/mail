@@ -59,7 +59,6 @@
 				@logout="logout"
 				@switch-site="onSwitchSite"
 				@add-site="onAddSite"
-				@add-account="onAddAccount"
 			/>
 		</GridLayout>
 	</Page>
@@ -142,10 +141,5 @@ function onAddSite() {
 	sheetOpen.value = false
 	drawerOpen.value = false
 	$navigateTo(LandingPage, { clearHistory: true })
-}
-
-// Adding another account on the current site isn't wired yet.
-function onAddAccount() {
-	sheetOpen.value = false
 }
 </script>

@@ -5,14 +5,21 @@
 		<StackLayout rowSpan="2" class="as-scrim" @loaded="onScrimLoaded" @tap="$emit('close')" />
 
 		<StackLayout row="1" class="as-sheet" @loaded="onSheetLoaded">
-			<StackLayout class="as-handle" />
+			<StackLayout class="as-handle" horizontalAlignment="center" />
 
 			<!-- ── main ── -->
 			<StackLayout v-if="view === 'main'">
 				<!-- identity -->
 				<GridLayout columns="auto, *, auto" class="as-identity">
 					<GridLayout col="0" class="as-avatar-lg" verticalAlignment="center">
+						<Image
+							v-if="current.image"
+							:src="current.image"
+							stretch="aspectFill"
+							class="as-avatar-img-lg"
+						/>
 						<Label
+							v-else
 							:text="current.initials"
 							class="as-avatar-label-lg"
 							horizontalAlignment="center"
@@ -42,7 +49,7 @@
 				<GridLayout columns="auto, *, auto" class="as-site-pill" @tap="view = 'sites'">
 					<GridLayout col="0" class="as-site-badge" verticalAlignment="center">
 						<Label
-							:text="lucide('cloud')"
+							:text="lucide('globe')"
 							class="as-site-badge-glyph"
 							horizontalAlignment="center"
 							verticalAlignment="center"
@@ -66,7 +73,7 @@
 					v-for="a in accountList"
 					:key="a.id"
 					columns="auto, *, auto"
-					:class="a.active ? 'as-acct as-acct-active' : 'as-acct'"
+					class="as-acct"
 					@tap="onSwitchAccount(a)"
 				>
 					<GridLayout col="0" class="as-avatar" verticalAlignment="center">
@@ -79,7 +86,7 @@
 					</GridLayout>
 					<StackLayout col="1" class="as-gap" verticalAlignment="center">
 						<Label :text="a.name" class="as-acct-name" />
-						<Label :text="a.email" class="as-acct-email" textWrap="false" />
+						<Label :text="a.subtitle" class="as-acct-email" textWrap="false" />
 					</StackLayout>
 					<Label
 						v-if="a.active"
@@ -89,19 +96,6 @@
 						verticalAlignment="center"
 					/>
 				</GridLayout>
-
-				<StackLayout orientation="horizontal" class="as-row" @tap="$emit('add-account')">
-					<Label
-						:text="lucide('plus')"
-						class="as-row-icon as-accent"
-						verticalAlignment="center"
-					/>
-					<Label
-						:text="__('Add another account')"
-						class="as-row-label"
-						verticalAlignment="center"
-					/>
-				</StackLayout>
 
 				<StackLayout class="as-divider" />
 
@@ -163,7 +157,7 @@
 				>
 					<GridLayout col="0" class="as-site-sq" verticalAlignment="center">
 						<Label
-							:text="lucide('cloud')"
+							:text="lucide('globe')"
 							class="as-site-sq-glyph"
 							horizontalAlignment="center"
 							verticalAlignment="center"
@@ -222,7 +216,6 @@ const emit = defineEmits<{
 	logout: []
 	'switch-site': [url: string]
 	'add-site': []
-	'add-account': []
 }>()
 
 const site = siteStore()
@@ -247,21 +240,31 @@ function initials(name: string): string {
 	)
 }
 
+function resolveImage(image?: string | null): string {
+	if (!image) return ''
+	if (/^(https?:|data:|file:|~\/)/i.test(image)) return image
+	if (image.startsWith('/')) return `${site.activeSite?.url ?? ''}${image}`
+	return image
+}
+
 const accounts = computed<UserAccount[]>(() => store.user?.accounts ?? [])
 
-// The active account, falling back to the signed-in user.
 const current = computed(() => {
-	const a = accounts.value.find((x) => x.id === store.accountId)
-	const name = a?._name || store.user?.full_name || ''
-	const email = a?.id || store.user?.email || ''
-	return { name, email, initials: initials(name) }
+	const name = store.user?.full_name || store.user?.name || ''
+	const email = store.user?.email || ''
+	return {
+		name,
+		email,
+		image: resolveImage(store.user?.user_image),
+		initials: initials(name || email),
+	}
 })
 
 const accountList = computed(() =>
 	accounts.value.map((a) => ({
 		id: a.id,
 		name: a._name,
-		email: a.id,
+		subtitle: a.is_personal ? __('Personal') : __('Group'),
 		initials: initials(a._name),
 		active: a.id === store.accountId,
 	})),
@@ -358,7 +361,6 @@ function closeSheet() {
 	border-radius: 5;
 	background-color: #dadada;
 	margin: 10 0 4 0;
-	horizontal-align: center;
 }
 
 /* identity */
@@ -380,20 +382,18 @@ function closeSheet() {
 .as-close {
 	width: 32;
 	height: 32;
-	border-radius: 32;
-	background-color: #f1f1f1;
 }
 .as-close-icon {
 	font-family: 'lucide';
 	color: #525252;
-	font-size: 17;
+	font-size: 19;
 }
 
 /* avatars */
 .as-avatar,
 .as-avatar-lg {
 	border-radius: 52;
-	background-color: #e7f0ff;
+	background-color: #f1f1f1;
 }
 .as-avatar {
 	width: 40;
@@ -403,13 +403,18 @@ function closeSheet() {
 	width: 52;
 	height: 52;
 }
+.as-avatar-img-lg {
+	width: 52;
+	height: 52;
+	border-radius: 52;
+}
 .as-avatar-label {
-	color: #0466dc;
+	color: #525252;
 	font-size: 14;
 	font-weight: 600;
 }
 .as-avatar-label-lg {
-	color: #0466dc;
+	color: #525252;
 	font-size: 18;
 	font-weight: 600;
 }
@@ -427,12 +432,12 @@ function closeSheet() {
 	width: 34;
 	height: 34;
 	border-radius: 10;
-	background-color: #0466dc;
+	background-color: #525252;
 }
 .as-site-badge-glyph {
 	font-family: 'lucide';
 	color: #ffffff;
-	font-size: 18;
+	font-size: 20;
 }
 .as-site-kicker {
 	color: #a3a3a3;
@@ -463,9 +468,6 @@ function closeSheet() {
 	padding: 11 20;
 	background-color: transparent;
 }
-.as-acct-active {
-	background-color: rgba(4, 102, 220, 0.05);
-}
 .as-acct-name {
 	color: #171717;
 	font-size: 15.5;
@@ -477,8 +479,8 @@ function closeSheet() {
 }
 .as-check {
 	font-family: 'lucide';
-	color: #0466dc;
-	font-size: 20;
+	color: #171717;
+	font-size: 18;
 }
 
 /* generic action rows */
@@ -497,7 +499,7 @@ function closeSheet() {
 	margin-left: 14;
 }
 .as-accent {
-	color: #0466dc;
+	color: #525252;
 }
 .as-danger {
 	color: #e03636;
