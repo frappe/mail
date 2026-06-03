@@ -2,27 +2,22 @@
 	<!-- Full-screen overlay. Single-cell GridLayout: backdrop fills it, panel sits
 	     on the left on top. Collapsed entirely when closed so it intercepts no taps. -->
 	<GridLayout :visibility="visible ? 'visible' : 'collapse'">
-		<StackLayout @loaded="onBackdropLoaded" class="nd-backdrop" @tap="$emit('close')" />
+		<StackLayout class="nd-backdrop" @loaded="onBackdropLoaded" @tap="$emit('close')" />
 
 		<!-- Styling lives in <style> (CSS classes) rather than inline attributes:
 		     iOS does not reliably honour inline padding / GridLayout sizing here,
 		     whereas CSS is applied consistently on both platforms. -->
 		<GridLayout
-			@loaded="onPanelLoaded"
 			width="300"
 			horizontalAlignment="left"
 			rows="auto, auto, *, auto"
 			class="nd-panel"
+			@loaded="onPanelLoaded"
 		>
 			<!-- Account header (direct grid child so its columns lay out on iOS) -->
 			<GridLayout row="0" columns="42, *, 34" class="nd-header" :marginTop="safeTop">
-				<GridLayout col="0" class="nd-square" verticalAlignment="center">
-					<Label
-						:text="lucide('mail-open')"
-						class="nd-square-label"
-						horizontalAlignment="center"
-						verticalAlignment="center"
-					/>
+				<GridLayout col="0" class="nd-logobox" verticalAlignment="center">
+					<Image :src="logoSrc" stretch="aspectFit" class="nd-logo-img" />
 				</GridLayout>
 				<StackLayout col="1" class="nd-name" verticalAlignment="center">
 					<Label :text="title" class="nd-title" />
@@ -180,11 +175,30 @@ const safeBottom = safeAreaBottom()
 let panelView: View | null = null
 let backdropView: View | null = null
 
-const title = computed(() => site.activeSite?.app_name || 'Mail')
+// Mirrors AppSidebar: the brand name, or 'Mail' for the default Frappe branding.
+const title = computed(() => {
+	const name = site.activeSite?.app_name
+	return name && name !== 'Frappe' && name !== 'Frappe Mail' ? name : 'Mail'
+})
+
+// The site logo when it's a raster the native Image can render (NativeScript can't
+// render SVG/ICO without a plugin); otherwise the bundled Frappe Mail logo.
+const logoSrc = computed(() => {
+	const logo = site.activeSite?.logo
+	if (logo && /\.(png|jpe?g|gif|webp)$/i.test(logo)) {
+		return logo.startsWith('http') ? logo : `${site.activeSite?.url ?? ''}${logo}`
+	}
+	return '~/images/mail-logo.png'
+})
+
 const accounts = computed<UserAccount[]>(() => store.user?.accounts ?? [])
+
+// Mirrors AppSidebar: the active account's name, or the user's full name for a
+// personal account / when no account is resolved.
 const subtitle = computed(() => {
 	const current = accounts.value.find((a) => a.id === store.accountId)
-	return current?._name || store.user?.full_name || ''
+	if (!current || current.is_personal) return store.user?.full_name || ''
+	return current._name
 })
 
 // Storage meter — placeholder until a mobile storage API is wired.
@@ -321,16 +335,14 @@ function closeDrawer() {
 .nd-header {
 	padding: 14 16;
 }
-.nd-square {
+.nd-logobox {
+	width: 42;
+	height: 42;
+}
+.nd-logo-img {
 	width: 42;
 	height: 42;
 	border-radius: 12;
-	background-color: #0466dc;
-}
-.nd-square-label {
-	font-family: 'lucide';
-	color: #ffffff;
-	font-size: 22;
 }
 .nd-name {
 	margin-left: 12;
@@ -348,7 +360,6 @@ function closeDrawer() {
 	width: 34;
 	height: 34;
 	border-radius: 34;
-	background-color: #f1f1f1;
 }
 .nd-chevron-label {
 	font-family: 'lucide';
