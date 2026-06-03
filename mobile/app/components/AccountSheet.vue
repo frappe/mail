@@ -2,16 +2,28 @@
 	<!-- Bottom sheet: scrim + a sheet that slides up. Collapsed when closed so it
 	     intercepts no taps. Styling is CSS (iOS ignores inline layout attributes). -->
 	<GridLayout :visibility="visible ? 'visible' : 'collapse'" rows="*, auto">
-		<StackLayout rowSpan="2" class="as-scrim" @loaded="onScrimLoaded" @tap="$emit('close')" />
+		<StackLayout
+			rowSpan="2"
+			class="as-scrim bg-surface-gray-7"
+			@loaded="onScrimLoaded"
+			@tap="$emit('close')"
+		/>
 
-		<StackLayout row="1" class="as-sheet" @loaded="onSheetLoaded">
-			<StackLayout class="as-handle" horizontalAlignment="center" />
+		<StackLayout row="1" class="as-sheet bg-surface-white" @loaded="onSheetLoaded">
+			<StackLayout
+				class="as-handle bg-surface-gray-3 w-9.5 rounded-full"
+				horizontalAlignment="center"
+			/>
 
 			<!-- ── main ── -->
 			<StackLayout v-if="view === 'main'">
 				<!-- identity -->
 				<GridLayout columns="auto, *, auto" class="as-identity">
-					<GridLayout col="0" class="as-avatar-lg" verticalAlignment="center">
+					<GridLayout
+						col="0"
+						class="as-avatar-lg bg-surface-gray-2"
+						verticalAlignment="center"
+					>
 						<Image
 							v-if="current.image"
 							:src="current.image"
@@ -21,24 +33,28 @@
 						<Label
 							v-else
 							:text="current.initials"
-							class="as-avatar-label-lg"
+							class="as-avatar-label-lg text-ink-gray-6 text-xl font-semibold"
 							horizontalAlignment="center"
 							verticalAlignment="center"
 						/>
 					</GridLayout>
 					<StackLayout col="1" class="as-gap" verticalAlignment="center">
-						<Label :text="current.name" class="as-id-name" />
-						<Label :text="current.email" class="as-id-email" textWrap="false" />
+						<Label :text="current.name" class="as-id-name text-ink-gray-9 font-bold" />
+						<Label
+							:text="current.email"
+							class="as-id-email text-ink-gray-5"
+							textWrap="false"
+						/>
 					</StackLayout>
 					<GridLayout
 						col="2"
-						class="as-close"
+						class="as-close h-8 w-8"
 						verticalAlignment="center"
 						@tap="$emit('close')"
 					>
 						<Label
 							:text="lucide('x')"
-							class="as-close-icon"
+							class="as-close-icon text-ink-gray-6"
 							horizontalAlignment="center"
 							verticalAlignment="center"
 						/>
@@ -46,29 +62,47 @@
 				</GridLayout>
 
 				<!-- current site -->
-				<GridLayout columns="auto, *, auto" class="as-site-pill" @tap="view = 'sites'">
-					<GridLayout col="0" class="as-site-badge" verticalAlignment="center">
+				<GridLayout
+					columns="auto, *, auto"
+					class="as-site-pill border-outline-gray-1 bg-surface-gray-1 border"
+					@tap="view = 'sites'"
+				>
+					<GridLayout
+						col="0"
+						class="as-site-badge bg-surface-gray-5 w-8.5 h-8.5"
+						verticalAlignment="center"
+					>
 						<Label
 							:text="lucide('globe')"
-							class="as-site-badge-glyph"
+							class="as-site-badge-glyph text-2xl text-white"
 							horizontalAlignment="center"
 							verticalAlignment="center"
 						/>
 					</GridLayout>
 					<StackLayout col="1" class="as-gap" verticalAlignment="center">
-						<Label :text="__('SITE')" class="as-site-kicker" />
-						<Label :text="currentSiteName" class="as-site-name" textWrap="false" />
+						<Label
+							:text="__('SITE')"
+							class="as-site-kicker text-ink-gray-4 font-semibold uppercase"
+						/>
+						<Label
+							:text="currentSiteName"
+							class="as-site-name text-ink-gray-9 font-semibold"
+							textWrap="false"
+						/>
 					</StackLayout>
 					<Label
 						col="2"
 						:text="lucide('chevron-right')"
-						class="as-chev"
+						class="as-chev text-ink-gray-5 text-xl"
 						verticalAlignment="center"
 					/>
 				</GridLayout>
 
 				<!-- accounts -->
-				<Label :text="__('Accounts')" class="as-section" />
+				<Label
+					:text="__('Accounts')"
+					class="as-section text-ink-gray-4 font-semibold uppercase"
+				/>
 				<GridLayout
 					v-for="a in accountList"
 					:key="a.id"
@@ -76,50 +110,58 @@
 					class="as-acct"
 					@tap="onSwitchAccount(a)"
 				>
-					<GridLayout col="0" class="as-avatar" verticalAlignment="center">
+					<GridLayout
+						col="0"
+						class="as-avatar bg-surface-gray-2"
+						verticalAlignment="center"
+					>
 						<Label
 							:text="a.initials"
-							class="as-avatar-label"
+							class="as-avatar-label text-ink-gray-6 text-base font-semibold"
 							horizontalAlignment="center"
 							verticalAlignment="center"
 						/>
 					</GridLayout>
 					<StackLayout col="1" class="as-gap" verticalAlignment="center">
-						<Label :text="a.name" class="as-acct-name" />
-						<Label :text="a.subtitle" class="as-acct-email" textWrap="false" />
+						<Label :text="a.name" class="as-acct-name text-ink-gray-9 font-semibold" />
+						<Label
+							:text="a.subtitle"
+							class="as-acct-email text-ink-gray-5"
+							textWrap="false"
+						/>
 					</StackLayout>
 					<Label
 						v-if="a.active"
 						col="2"
 						:text="lucide('check')"
-						class="as-check"
+						class="as-check text-ink-gray-9"
 						verticalAlignment="center"
 					/>
 				</GridLayout>
 
-				<StackLayout class="as-divider" />
+				<StackLayout class="as-divider bg-surface-gray-3" />
 
 				<StackLayout orientation="horizontal" class="as-row" @tap="onSettings">
 					<Label
 						:text="lucide('settings')"
-						class="as-row-icon"
+						class="as-row-icon text-ink-gray-6"
 						verticalAlignment="center"
 					/>
 					<Label
 						:text="__('Settings')"
-						class="as-row-label"
+						class="as-row-label text-ink-gray-9 font-semibold"
 						verticalAlignment="center"
 					/>
 				</StackLayout>
 				<StackLayout orientation="horizontal" class="as-row" @tap="$emit('logout')">
 					<Label
 						:text="lucide('log-out')"
-						class="as-row-icon as-danger"
+						class="as-row-icon text-ink-red-3"
 						verticalAlignment="center"
 					/>
 					<Label
 						:text="__('Sign out')"
-						class="as-row-label as-danger"
+						class="as-row-label text-ink-red-3 font-semibold"
 						verticalAlignment="center"
 					/>
 				</StackLayout>
@@ -130,13 +172,13 @@
 				<GridLayout columns="auto, *" class="as-sites-head">
 					<GridLayout
 						col="0"
-						class="as-back"
+						class="as-back h-9 w-9"
 						verticalAlignment="center"
 						@tap="view = 'main'"
 					>
 						<Label
 							:text="lucide('chevron-left')"
-							class="as-back-icon"
+							class="as-back-icon text-ink-gray-6"
 							horizontalAlignment="center"
 							verticalAlignment="center"
 						/>
@@ -144,7 +186,7 @@
 					<Label
 						col="1"
 						:text="__('Switch site')"
-						class="as-sites-title"
+						class="as-sites-title text-ink-gray-9 font-bold"
 						verticalAlignment="center"
 					/>
 				</GridLayout>
@@ -155,38 +197,46 @@
 					class="as-siterow"
 					@tap="$emit('switch-site', s.url)"
 				>
-					<GridLayout col="0" class="as-site-sq" verticalAlignment="center">
+					<GridLayout
+						col="0"
+						class="as-site-sq bg-surface-gray-5 h-10 w-10 rounded-xl"
+						verticalAlignment="center"
+					>
 						<Label
 							:text="lucide('globe')"
-							class="as-site-sq-glyph"
+							class="as-site-sq-glyph text-2xl text-white"
 							horizontalAlignment="center"
 							verticalAlignment="center"
 						/>
 					</GridLayout>
 					<StackLayout col="1" class="as-gap" verticalAlignment="center">
-						<Label :text="s.name" class="as-acct-name" />
-						<Label :text="s.sub" class="as-acct-email" textWrap="false" />
+						<Label :text="s.name" class="as-acct-name text-ink-gray-9 font-semibold" />
+						<Label
+							:text="s.sub"
+							class="as-acct-email text-ink-gray-5"
+							textWrap="false"
+						/>
 					</StackLayout>
 					<Label
 						v-if="s.active"
 						col="2"
 						:text="lucide('check')"
-						class="as-check"
+						class="as-check text-ink-gray-9"
 						verticalAlignment="center"
 					/>
 				</GridLayout>
 
-				<StackLayout class="as-divider" />
+				<StackLayout class="as-divider bg-surface-gray-3" />
 
 				<StackLayout orientation="horizontal" class="as-row" @tap="$emit('add-site')">
 					<Label
 						:text="lucide('plus')"
-						class="as-row-icon as-accent"
+						class="as-row-icon text-ink-gray-6"
 						verticalAlignment="center"
 					/>
 					<Label
 						:text="__('Add site')"
-						class="as-row-label"
+						class="as-row-label text-ink-gray-9 font-semibold"
 						verticalAlignment="center"
 					/>
 				</StackLayout>
@@ -322,7 +372,7 @@ function openSheet() {
 			duration: 300,
 			curve: CoreTypes.AnimationCurve.cubicBezier(0.22, 1, 0.36, 1),
 		})
-		scrimView.animate({ opacity: 1, duration: 260 })
+		scrimView.animate({ opacity: 0.4, duration: 260 })
 	})
 }
 
@@ -346,20 +396,13 @@ function closeSheet() {
 
 <!-- Design tokens (espresso, light) from the Claude Design account-sheet handoff. -->
 <style scoped>
-.as-scrim {
-	background-color: rgba(0, 0, 0, 0.4);
-}
 .as-sheet {
-	background-color: #ffffff;
 	border-top-left-radius: 24;
 	border-top-right-radius: 24;
 	padding-bottom: 30;
 }
 .as-handle {
-	width: 38;
 	height: 5;
-	border-radius: 5;
-	background-color: #dadada;
 	margin: 10 0 4 0;
 }
 
@@ -371,52 +414,37 @@ function closeSheet() {
 	margin-left: 14;
 }
 .as-id-name {
-	color: #171717;
 	font-size: 17;
-	font-weight: 700;
 }
 .as-id-email {
-	color: #7c7c7c;
 	font-size: 13.5;
-}
-.as-close {
-	width: 32;
-	height: 32;
 }
 .as-close-icon {
 	font-family: 'lucide';
-	color: #525252;
 	font-size: 19;
 }
 
 /* avatars */
-.as-avatar,
-.as-avatar-lg {
-	border-radius: 52;
-	background-color: #f1f1f1;
-}
 .as-avatar {
 	width: 40;
 	height: 40;
+	border-radius: 40;
 }
 .as-avatar-lg {
-	width: 52;
-	height: 52;
-}
-.as-avatar-img-lg {
 	width: 52;
 	height: 52;
 	border-radius: 52;
 }
 .as-avatar-label {
-	color: #525252;
 	font-size: 14;
-	font-weight: 600;
 }
 .as-avatar-label-lg {
-	color: #525252;
 	font-size: 18;
-	font-weight: 600;
+}
+.as-avatar-img-lg {
+	width: 52;
+	height: 52;
+	border-radius: 52;
 }
 
 /* site pill */
@@ -424,62 +452,39 @@ function closeSheet() {
 	margin: 0 20 8 20;
 	padding: 12 14;
 	border-radius: 14;
-	border-width: 1;
-	border-color: #ededed;
-	background-color: #f8f8f8;
 }
 .as-site-badge {
-	width: 34;
-	height: 34;
 	border-radius: 10;
-	background-color: #525252;
 }
 .as-site-badge-glyph {
 	font-family: 'lucide';
-	color: #ffffff;
-	font-size: 20;
 }
 .as-site-kicker {
-	color: #a3a3a3;
 	font-size: 11.5;
-	font-weight: 600;
-	text-transform: uppercase;
 }
 .as-site-name {
-	color: #171717;
 	font-size: 15;
-	font-weight: 600;
 }
 .as-chev {
 	font-family: 'lucide';
-	color: #7c7c7c;
-	font-size: 18;
 }
 
 /* section + account rows */
 .as-section {
-	color: #a3a3a3;
 	font-size: 12;
-	font-weight: 600;
-	text-transform: uppercase;
 	padding: 14 20 4;
 }
 .as-acct {
 	padding: 11 20;
-	background-color: transparent;
 }
 .as-acct-name {
-	color: #171717;
 	font-size: 15.5;
-	font-weight: 600;
 }
 .as-acct-email {
-	color: #7c7c7c;
 	font-size: 13;
 }
 .as-check {
 	font-family: 'lucide';
-	color: #171717;
 	font-size: 18;
 }
 
@@ -489,24 +494,14 @@ function closeSheet() {
 }
 .as-row-icon {
 	font-family: 'lucide';
-	color: #525252;
 	font-size: 21;
 }
 .as-row-label {
-	color: #171717;
 	font-size: 15.5;
-	font-weight: 600;
 	margin-left: 14;
-}
-.as-accent {
-	color: #525252;
-}
-.as-danger {
-	color: #e03636;
 }
 .as-divider {
 	height: 1;
-	background-color: #ededed;
 	margin: 8 20;
 }
 
@@ -514,33 +509,17 @@ function closeSheet() {
 .as-sites-head {
 	padding: 6 14 10;
 }
-.as-back {
-	width: 36;
-	height: 36;
-	border-radius: 36;
-}
 .as-back-icon {
 	font-family: 'lucide';
-	color: #525252;
 	font-size: 22;
 }
 .as-sites-title {
-	color: #171717;
 	font-size: 17;
-	font-weight: 700;
 }
 .as-siterow {
 	padding: 13 20;
 }
-.as-site-sq {
-	width: 40;
-	height: 40;
-	border-radius: 12;
-	background-color: #f1f1f1;
-}
 .as-site-sq-glyph {
 	font-family: 'lucide';
-	color: #525252;
-	font-size: 20;
 }
 </style>

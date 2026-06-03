@@ -2,7 +2,11 @@
 	<!-- Full-screen overlay. Single-cell GridLayout: backdrop fills it, panel sits
 	     on the left on top. Collapsed entirely when closed so it intercepts no taps. -->
 	<GridLayout :visibility="visible ? 'visible' : 'collapse'">
-		<StackLayout class="nd-backdrop" @loaded="onBackdropLoaded" @tap="$emit('close')" />
+		<StackLayout
+			class="nd-backdrop bg-surface-gray-7"
+			@loaded="onBackdropLoaded"
+			@tap="$emit('close')"
+		/>
 
 		<!-- Styling lives in <style> (CSS classes) rather than inline attributes:
 		     iOS does not reliably honour inline padding / GridLayout sizing here,
@@ -11,7 +15,7 @@
 			width="300"
 			horizontalAlignment="left"
 			rows="auto, *, auto"
-			class="nd-panel"
+			class="nd-panel bg-surface-white"
 			@loaded="onPanelLoaded"
 		>
 			<!-- Account header — tap opens the account sheet (switch account/site,
@@ -27,13 +31,18 @@
 					<Image :src="logoSrc" stretch="aspectFit" class="nd-logo-img" />
 				</GridLayout>
 				<StackLayout col="1" class="nd-name" verticalAlignment="center">
-					<Label :text="title" class="nd-title" />
-					<Label v-if="subtitle" :text="subtitle" class="nd-sub" textWrap="false" />
+					<Label :text="title" class="nd-title text-ink-gray-9 font-bold" />
+					<Label
+						v-if="subtitle"
+						:text="subtitle"
+						class="nd-sub text-ink-gray-5"
+						textWrap="false"
+					/>
 				</StackLayout>
 				<GridLayout col="2" class="nd-chevron" verticalAlignment="center">
 					<Label
 						:text="lucide('chevron-down')"
-						class="nd-chevron-label"
+						class="nd-chevron-label text-ink-gray-6"
 						horizontalAlignment="center"
 						verticalAlignment="center"
 					/>
@@ -44,18 +53,27 @@
 			<ScrollView row="1">
 				<StackLayout>
 					<template v-for="section in sections" :key="section.label">
-						<Label :text="section.label" class="nd-section" textWrap="false" />
+						<Label
+							:text="section.label"
+							class="nd-section text-ink-gray-4 text-xs font-semibold uppercase"
+							textWrap="false"
+						/>
 						<GridLayout
 							v-for="item in section.items"
 							:key="item.label"
 							columns="auto, *, auto"
-							:class="item.label === activeLabel ? 'nd-row nd-row-active' : 'nd-row'"
+							:class="
+								item.label === activeLabel ? 'nd-row bg-surface-gray-2' : 'nd-row'
+							"
 							@tap="item.onTap"
 						>
 							<Label
 								col="0"
 								:text="lucide(item.icon)"
-								:class="['nd-row-icon', item.colorClass]"
+								:class="[
+									'nd-row-icon text-ink-gray-6 text-[21px]',
+									item.colorClass,
+								]"
 								verticalAlignment="center"
 							/>
 							<Label
@@ -63,8 +81,8 @@
 								:text="item.label"
 								:class="
 									item.label === activeLabel
-										? 'nd-label nd-label-active'
-										: 'nd-label'
+										? 'nd-label text-ink-gray-9 ml-3.5 font-bold'
+										: 'nd-label text-ink-gray-9 ml-3.5 font-medium'
 								"
 								verticalAlignment="center"
 							/>
@@ -72,56 +90,41 @@
 								v-if="item.suffix"
 								col="2"
 								:text="item.suffix"
-								class="nd-count"
+								class="nd-count text-ink-gray-5 text-sm font-medium"
 								verticalAlignment="center"
 							/>
 						</GridLayout>
-
-						<!-- New Folder action under the Custom section -->
-						<StackLayout
-							v-if="section.label === customLabel"
-							orientation="horizontal"
-							class="nd-newfolder"
-							@tap="$emit('select', customLabel)"
-						>
-							<Label
-								:text="lucide('folder-plus')"
-								class="nd-row-icon nd-newfolder-icon"
-								verticalAlignment="center"
-							/>
-							<Label
-								:text="__('New Folder')"
-								class="nd-newfolder-label"
-								verticalAlignment="center"
-							/>
-						</StackLayout>
 					</template>
 					<StackLayout height="12" />
 				</StackLayout>
 			</ScrollView>
 
 			<!-- Storage meter -->
-			<StackLayout row="2" class="nd-storage" :marginBottom="safeBottom">
+			<StackLayout
+				row="2"
+				class="nd-storage border-outline-gray-1 border-t"
+				:marginBottom="safeBottom"
+			>
 				<StackLayout orientation="horizontal" class="nd-storage-head">
 					<Label
 						:text="lucide('cloud')"
-						class="nd-storage-icon"
+						class="nd-storage-icon text-ink-gray-9 text-2xl"
 						verticalAlignment="center"
 					/>
 					<Label
 						:text="__('Storage')"
-						class="nd-storage-title"
+						class="nd-storage-title text-ink-gray-9 ml-2.5 font-semibold"
 						verticalAlignment="center"
 					/>
 				</StackLayout>
-				<GridLayout class="nd-track">
+				<GridLayout class="nd-track bg-surface-gray-2 h-1.5 rounded-full">
 					<StackLayout
-						class="nd-fill"
+						class="nd-fill bg-surface-gray-7 h-1.5 rounded-full"
 						:width="storagePercent + '%'"
 						horizontalAlignment="left"
 					/>
 				</GridLayout>
-				<Label :text="storageLabel" class="nd-storage-sub" />
+				<Label :text="storageLabel" class="nd-storage-sub text-ink-gray-5 mt-2" />
 			</StackLayout>
 		</GridLayout>
 	</GridLayout>
@@ -265,7 +268,7 @@ function openDrawer() {
 			duration: 220,
 			curve: CoreTypes.AnimationCurve.easeOut,
 		})
-		backdropView.animate({ opacity: 1, duration: 220 })
+		backdropView.animate({ opacity: 0.5, duration: 220 })
 	})
 }
 
@@ -291,13 +294,6 @@ function closeDrawer() {
      used instead of inline attributes because iOS applies it reliably. Icons use
      the bundled Lucide font (app/fonts/lucide.ttf, family "lucide"). -->
 <style scoped>
-.nd-backdrop {
-	background-color: rgba(0, 0, 0, 0.5);
-}
-.nd-panel {
-	background-color: #ffffff;
-}
-
 .nd-header {
 	padding: 14 16;
 }
@@ -314,12 +310,9 @@ function closeDrawer() {
 	margin-left: 12;
 }
 .nd-title {
-	color: #171717;
 	font-size: 16.5;
-	font-weight: 700;
 }
 .nd-sub {
-	color: #7c7c7c;
 	font-size: 13.5;
 }
 .nd-chevron {
@@ -329,15 +322,10 @@ function closeDrawer() {
 }
 .nd-chevron-label {
 	font-family: 'lucide';
-	color: #525252;
 	font-size: 18;
 }
 
 .nd-section {
-	color: #a3a3a3;
-	font-size: 12;
-	font-weight: 600;
-	text-transform: uppercase;
 	/* left padding aligns the label with the row icon column
 	   (row margin-left 8 + row padding-left 14) */
 	padding: 16 16 7 22;
@@ -348,93 +336,21 @@ function closeDrawer() {
 	margin-left: 8;
 	margin-right: 8;
 	border-radius: 13;
-	background-color: transparent;
-}
-.nd-row-active {
-	background-color: rgba(0, 0, 0, 0.05);
 }
 .nd-row-icon {
 	font-family: 'lucide';
-	color: #525252;
-	font-size: 21;
-}
-.nd-ic-blue {
-	color: #3b82f6;
-}
-.nd-ic-green {
-	color: #22c55e;
-}
-.nd-ic-amber {
-	color: #f59e0b;
-}
-.nd-ic-red {
-	color: #ef4444;
-}
-.nd-ic-purple {
-	color: #a855f7;
-}
-.nd-label {
-	color: #171717;
-	font-size: 15.5;
-	font-weight: 500;
-	margin-left: 14;
-}
-.nd-label-active {
-	font-weight: 700;
-}
-.nd-count {
-	color: #7c7c7c;
-	font-size: 13;
-	font-weight: 500;
-}
-
-.nd-newfolder {
-	padding: 11 14;
-	margin-left: 8;
-	margin-right: 8;
-}
-.nd-newfolder-icon {
-	color: #7c7c7c;
-}
-.nd-newfolder-label {
-	color: #7c7c7c;
-	font-size: 15.5;
-	font-weight: 500;
-	margin-left: 14;
 }
 
 .nd-storage {
 	padding: 14 18 18;
-	border-top-width: 1;
-	border-top-color: #ededed;
 }
 .nd-storage-head {
 	margin-bottom: 10;
 }
 .nd-storage-icon {
 	font-family: 'lucide';
-	color: #171717;
-	font-size: 20;
-}
-.nd-storage-title {
-	color: #171717;
-	font-size: 15;
-	font-weight: 600;
-	margin-left: 10;
-}
-.nd-track {
-	height: 6;
-	border-radius: 6;
-	background-color: #f1f1f1;
-}
-.nd-fill {
-	height: 6;
-	border-radius: 6;
-	background-color: #171717;
 }
 .nd-storage-sub {
-	color: #7c7c7c;
 	font-size: 12.5;
-	margin-top: 8;
 }
 </style>

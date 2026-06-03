@@ -29,13 +29,13 @@ export function mailboxIcon(mailbox: { icon?: string; role?: string | null }): s
 	return 'folder'
 }
 
-// Mirrors frontend FOLDER_ICON_COLOR_MAP — maps a folder colour to an icon class.
+// Mirrors frontend FOLDER_ICON_COLOR_MAP in frontend/src/constants.ts.
 const COLOR_CLASS: Record<string, string> = {
-	Blue: 'nd-ic-blue',
-	Green: 'nd-ic-green',
-	Amber: 'nd-ic-amber',
-	Red: 'nd-ic-red',
-	Purple: 'nd-ic-purple',
+	Blue: '!text-blue-500',
+	Green: '!text-green-500',
+	Amber: '!text-amber-500',
+	Red: '!text-red-500',
+	Purple: '!text-purple-500',
 }
 
 export function folderColorClass(color?: string | null): string {
