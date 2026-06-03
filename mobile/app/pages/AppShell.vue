@@ -49,7 +49,17 @@
 				:active-label="currentView"
 				@close="drawerOpen = false"
 				@select="onSelect"
+				@open-account="sheetOpen = true"
+			/>
+
+			<AccountSheet
+				:open="sheetOpen"
+				@close="sheetOpen = false"
+				@settings="onSettings"
 				@logout="logout"
+				@switch-site="onSwitchSite"
+				@add-site="onAddSite"
+				@add-account="onAddAccount"
 			/>
 		</GridLayout>
 	</Page>
@@ -65,6 +75,7 @@ import { sessionStore } from '@/stores/session'
 import { siteStore } from '@/stores/site'
 import { userStore } from '@/stores/user'
 import LandingPage from '@/pages/LandingPage.vue'
+import AccountSheet from '@/components/AccountSheet.vue'
 import NavDrawer from '@/components/NavDrawer.vue'
 
 const site = siteStore()
@@ -72,6 +83,7 @@ const session = sessionStore()
 const store = userStore()
 
 const drawerOpen = ref(false)
+const sheetOpen = ref(false)
 const currentView = ref('')
 const safeTop = safeAreaTop()
 
@@ -96,11 +108,44 @@ function onSelect(label: string) {
 	currentView.value = label
 }
 
+function onSettings() {
+	drawerOpen.value = false
+	currentView.value = __('Settings')
+}
+
 function logout() {
 	if (!site.activeSite) return
 	session.logout(site.activeSite.url)
 	store.reset()
 	void loadTranslations()
 	$navigateTo(LandingPage, { clearHistory: true })
+}
+
+// Switch the active site: load its stored session and reload user data, or fall
+// back to the landing page when that site isn't signed in.
+function onSwitchSite(url: string) {
+	sheetOpen.value = false
+	drawerOpen.value = false
+	site.setActiveSite(url)
+	session.load(url)
+	if (session.isLoggedIn) {
+		store.reset()
+		currentView.value = ''
+		void store.fetchUser()
+		void loadTranslations()
+	} else {
+		$navigateTo(LandingPage, { clearHistory: true })
+	}
+}
+
+function onAddSite() {
+	sheetOpen.value = false
+	drawerOpen.value = false
+	$navigateTo(LandingPage, { clearHistory: true })
+}
+
+// Adding another account on the current site isn't wired yet.
+function onAddAccount() {
+	sheetOpen.value = false
 }
 </script>

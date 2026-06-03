@@ -10,12 +10,19 @@
 		<GridLayout
 			width="300"
 			horizontalAlignment="left"
-			rows="auto, auto, *, auto"
+			rows="auto, *, auto"
 			class="nd-panel"
 			@loaded="onPanelLoaded"
 		>
-			<!-- Account header (direct grid child so its columns lay out on iOS) -->
-			<GridLayout row="0" columns="42, *, 34" class="nd-header" :marginTop="safeTop">
+			<!-- Account header — tap opens the account sheet (switch account/site,
+			     settings, sign out). Direct grid child so columns lay out on iOS. -->
+			<GridLayout
+				row="0"
+				columns="42, *, 34"
+				class="nd-header"
+				:marginTop="safeTop"
+				@tap="$emit('open-account')"
+			>
 				<GridLayout col="0" class="nd-logobox" verticalAlignment="center">
 					<Image :src="logoSrc" stretch="aspectFit" class="nd-logo-img" />
 				</GridLayout>
@@ -23,12 +30,7 @@
 					<Label :text="title" class="nd-title" />
 					<Label v-if="subtitle" :text="subtitle" class="nd-sub" textWrap="false" />
 				</StackLayout>
-				<GridLayout
-					col="2"
-					class="nd-chevron"
-					verticalAlignment="center"
-					@tap="toggleMenu"
-				>
+				<GridLayout col="2" class="nd-chevron" verticalAlignment="center">
 					<Label
 						:text="lucide('chevron-down')"
 						class="nd-chevron-label"
@@ -38,28 +40,8 @@
 				</GridLayout>
 			</GridLayout>
 
-			<!-- Account / settings / logout menu (revealed by the chevron) -->
-			<StackLayout v-if="showMenu" row="1">
-				<GridLayout
-					v-for="a in accounts"
-					:key="a.id"
-					columns="*, auto"
-					class="nd-menu-row"
-					@tap="switchAccount(a)"
-				>
-					<Label col="0" :text="a._name" class="nd-menu-label" />
-					<Label v-if="a.id === store.accountId" col="1" text="✓" class="nd-check" />
-				</GridLayout>
-				<StackLayout class="nd-menu-row" @tap="openSettings">
-					<Label :text="__('Settings')" class="nd-menu-label" />
-				</StackLayout>
-				<StackLayout class="nd-menu-row" @tap="$emit('logout')">
-					<Label :text="__('Log out')" class="nd-logout" />
-				</StackLayout>
-			</StackLayout>
-
 			<!-- Folder sections -->
-			<ScrollView row="2">
+			<ScrollView row="1">
 				<StackLayout>
 					<template v-for="section in sections" :key="section.label">
 						<Label :text="section.label" class="nd-section" textWrap="false" />
@@ -119,7 +101,7 @@
 			</ScrollView>
 
 			<!-- Storage meter -->
-			<StackLayout row="3" class="nd-storage" :marginBottom="safeBottom">
+			<StackLayout row="2" class="nd-storage" :marginBottom="safeBottom">
 				<StackLayout orientation="horizontal" class="nd-storage-head">
 					<Label
 						:text="lucide('cloud')"
@@ -158,7 +140,7 @@ import type { MailboxData, UserAccount } from '@mail/types'
 import type { EventData, View } from '@nativescript/core'
 
 const props = defineProps<{ open: boolean; activeLabel: string }>()
-const emit = defineEmits<{ close: []; select: [label: string]; logout: [] }>()
+const emit = defineEmits<{ close: []; select: [label: string]; 'open-account': [] }>()
 
 const site = siteStore()
 const store = userStore()
@@ -167,7 +149,6 @@ const PANEL_WIDTH = 300
 const customLabel = __('Custom')
 
 const visible = ref(false)
-const showMenu = ref(false)
 const safeTop = safeAreaTop()
 const safeBottom = safeAreaBottom()
 
@@ -255,21 +236,6 @@ const sections = computed(() => {
 
 function select(label: string) {
 	emit('select', label)
-	emit('close')
-}
-
-function openSettings() {
-	emit('select', __('Settings'))
-	emit('close')
-}
-
-function toggleMenu() {
-	showMenu.value = !showMenu.value
-}
-
-function switchAccount(a: UserAccount) {
-	store.setAccount(a.id)
-	showMenu.value = false
 	emit('close')
 }
 
@@ -372,7 +338,9 @@ function closeDrawer() {
 	font-size: 12;
 	font-weight: 600;
 	text-transform: uppercase;
-	padding: 16 16 7;
+	/* left padding aligns the label with the row icon column
+	   (row margin-left 8 + row padding-left 14) */
+	padding: 16 16 7 22;
 }
 
 .nd-row {
@@ -433,22 +401,6 @@ function closeDrawer() {
 	font-size: 15.5;
 	font-weight: 500;
 	margin-left: 14;
-}
-
-.nd-menu-row {
-	padding: 11 16;
-}
-.nd-menu-label {
-	color: #171717;
-	font-size: 15.5;
-}
-.nd-check {
-	color: #0466dc;
-	font-size: 15.5;
-}
-.nd-logout {
-	color: #e03636;
-	font-size: 15.5;
 }
 
 .nd-storage {
