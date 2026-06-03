@@ -13,6 +13,7 @@
 			rows="auto, *, auto"
 			class="bg-surface-white"
 			@loaded="onPanelLoaded"
+			@tap="() => {}"
 		>
 			<!-- Account header — tap opens the account sheet (switch account/site,
 			     settings, sign out). Direct grid child so columns lay out on iOS. -->

@@ -9,7 +9,15 @@
 			@tap="$emit('close')"
 		/>
 
-		<StackLayout row="1" class="bg-surface-white rounded-t-3xl pb-8" @loaded="onSheetLoaded">
+		<!-- @tap absorbs taps on the sheet's blank areas so they don't fall through to
+		     the scrim (which closes it); NativeScript routes a tap to the front-most
+		     view that has a tap handler. -->
+		<StackLayout
+			row="1"
+			class="bg-surface-white rounded-t-3xl pb-8"
+			@loaded="onSheetLoaded"
+			@tap="() => {}"
+		>
 			<StackLayout
 				class="bg-surface-gray-3 mb-1 mt-2.5 h-1.5 w-10 rounded-full"
 				horizontalAlignment="center"
