@@ -1,13 +1,9 @@
 <template>
-	<!-- One thread list row. Tap opens the thread; the star is its own tap target
-	     (NativeScript routes a tap to the front-most handler, so tapping the star
-	     does not also trigger the row's open). Horizontal insets are margins on
-	     grid children, not container padding, per the iOS spacing constraints. -->
-	<GridLayout
-		columns="auto, *, auto"
-		class="border-outline-gray-1 border-b py-3"
-		@tap="$emit('open')"
-	>
+	<!-- One thread list row. The avatar + content open the thread; the star is a
+	     separate sibling tap target. The outer row has no tap handler so the star
+	     tap can't also bubble up and open the thread. Horizontal insets are margins
+	     on grid children, not container padding, per the iOS spacing constraints. -->
+	<GridLayout columns="auto, *, auto" class="border-outline-gray-1 border-b py-3">
 		<!-- avatar: sender image, else monochrome initials -->
 		<UserAvatar
 			col="0"
@@ -15,10 +11,11 @@
 			:name="senderName"
 			:image="thread.user_image"
 			verticalAlignment="top"
+			@tap="$emit('open')"
 		/>
 
 		<!-- content -->
-		<StackLayout col="1" class="ml-3" verticalAlignment="center">
+		<StackLayout col="1" class="ml-3" verticalAlignment="center" @tap="$emit('open')">
 			<!-- line 1: unread dot + sender + time -->
 			<GridLayout columns="auto, *, auto">
 				<StackLayout
@@ -63,27 +60,38 @@
 			/>
 
 			<!-- attachment chip -->
-			<StackLayout
+			<GridLayout
 				v-if="firstAttachment"
-				orientation="horizontal"
+				columns="auto, auto"
 				class="border-outline-gray-2 mt-2 rounded-lg border px-2.5 py-1.5"
 				horizontalAlignment="left"
 			>
-				<Label
-					:text="lucide('paperclip')"
-					class="font-lucide text-ink-gray-5 text-sm"
+				<Image
+					v-if="attachmentIcon"
+					col="0"
+					:src="attachmentIcon"
+					stretch="aspectFit"
+					class="h-4 w-4"
 					verticalAlignment="center"
 				/>
 				<Label
-					:text="firstAttachment.filename"
-					class="text-ink-gray-6 ml-1.5 text-sm"
+					v-else
+					col="0"
+					:text="lucide('file')"
+					class="font-lucide text-ink-gray-5 text-base"
+					verticalAlignment="center"
+				/>
+				<Label
+					col="1"
+					:text="attachmentName"
+					class="text-ink-gray-6 ml-2 text-sm"
 					textWrap="false"
 					verticalAlignment="center"
 				/>
-			</StackLayout>
+			</GridLayout>
 		</StackLayout>
 
-		<!-- trailing: star toggle -->
+		<!-- trailing: star toggle — amber when flagged, gray otherwise -->
 		<GridLayout col="2" class="ml-1 mr-3 h-9 w-9" verticalAlignment="top" @tap="$emit('star')">
 			<Label
 				:text="lucide('star')"
@@ -130,4 +138,28 @@ const previewText = computed(() => props.thread.preview || __('— No message bo
 const firstAttachment = computed(() =>
 	props.thread.attachments?.find((a) => a.filename && a.disposition === 'attachment'),
 )
+
+// Colored file-type badge (bundled PNGs of the web's AttachmentCapsule icons)
+// for media types; other types fall back to the lucide file glyph.
+function attachmentImage(type?: string): string {
+	if (!type) return ''
+	if (type.startsWith('image/')) return '~/images/file-icons/image.png'
+	if (type === 'application/pdf') return '~/images/file-icons/pdf.png'
+	if (type.startsWith('video/')) return '~/images/file-icons/video.png'
+	if (type.startsWith('audio/')) return '~/images/file-icons/audio.png'
+	return ''
+}
+
+const attachmentIcon = computed(() => attachmentImage(firstAttachment.value?.type))
+
+// Truncate long filenames (keeping the extension) so the chip can't overflow.
+function truncateFilename(name: string, max = 28): string {
+	if (name.length <= max) return name
+	const dot = name.lastIndexOf('.')
+	const ext = dot > 0 ? name.slice(dot) : ''
+	const keep = Math.max(1, max - ext.length - 1)
+	return `${name.slice(0, keep)}…${ext}`
+}
+
+const attachmentName = computed(() => truncateFilename(firstAttachment.value?.filename ?? ''))
 </script>

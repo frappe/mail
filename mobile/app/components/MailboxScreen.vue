@@ -3,13 +3,25 @@
 	<GridLayout class="bg-surface-white">
 		<GridLayout rows="auto, auto, *">
 			<!-- ── Header ── -->
-			<GridLayout row="0" columns="auto, *, auto" class="px-1 py-2" :marginTop="safeTop">
-				<GridLayout col="0" class="h-10 w-10" @tap="$emit('open-drawer')">
+			<GridLayout
+				row="0"
+				columns="auto, *, auto"
+				height="52"
+				class="px-1"
+				:marginTop="safeTop"
+			>
+				<GridLayout
+					col="0"
+					class="h-10 w-10"
+					verticalAlignment="center"
+					@tap="$emit('open-drawer')"
+				>
 					<Label
 						:text="lucide('menu')"
 						class="font-lucide text-ink-gray-7 text-2xl"
 						horizontalAlignment="center"
 						verticalAlignment="center"
+						marginTop="2"
 					/>
 				</GridLayout>
 				<StackLayout col="1" orientation="horizontal" verticalAlignment="center">
@@ -27,12 +39,18 @@
 						textWrap="false"
 					/>
 				</StackLayout>
-				<GridLayout col="2" class="h-10 w-10" @tap="flash(__('Search coming soon'))">
+				<GridLayout
+					col="2"
+					class="h-10 w-10"
+					verticalAlignment="center"
+					@tap="flash(__('Search coming soon'))"
+				>
 					<Label
 						:text="lucide('search')"
 						class="font-lucide text-ink-gray-7 text-xl"
 						horizontalAlignment="center"
 						verticalAlignment="center"
+						marginTop="2"
 					/>
 				</GridLayout>
 			</GridLayout>
@@ -198,6 +216,7 @@
 <script setup lang="ts">
 import { computed, inject, ref, watch } from 'vue'
 
+import { selectedThread, selectedThreadMailbox } from '@/state/selectedThread'
 import { useApi } from '@/utils/api'
 import { lucide } from '@/utils/lucide'
 import { safeAreaBottom, safeAreaTop } from '@/utils/safeArea'
@@ -209,7 +228,7 @@ import type { Thread } from '@mail/types'
 import type { ScrollEventData } from '@nativescript/core'
 
 const props = defineProps<{ mailbox: ActiveMailbox }>()
-const emit = defineEmits<{ 'open-drawer': []; 'open-thread': [thread: Thread] }>()
+const emit = defineEmits<{ 'open-drawer': []; 'open-thread': [] }>()
 
 const store = userStore()
 const api = useApi()
@@ -282,16 +301,12 @@ function onScroll(args: ScrollEventData) {
 	if (view.scrollableHeight - args.scrollY < 600) loadMore()
 }
 
+// Hand the thread (and the mailbox it was opened from) to the detail page, which
+// marks it seen on open — so it happens however the user reaches the mail.
 function openThread(thread: Thread) {
-	if (!thread.seen) {
-		thread.seen = 1
-		api.call('mail.api.mail.set_seen', {
-			account: store.account,
-			thread_ids: { true: [thread.thread_id] },
-			mailbox: props.mailbox.id,
-		}).catch(() => (thread.seen = 0))
-	}
-	emit('open-thread', thread)
+	selectedThread.value = thread
+	selectedThreadMailbox.value = props.mailbox.id
+	emit('open-thread')
 }
 
 function toggleStar(thread: Thread) {

@@ -95,7 +95,7 @@ import MailboxScreen from '@/components/MailboxScreen.vue'
 import NavDrawer from '@/components/NavDrawer.vue'
 
 import type { ActiveMailbox, NavSelection } from '@/types/navigation'
-import type { MailboxData, Thread } from '@mail/types'
+import type { MailboxData } from '@mail/types'
 
 const site = siteStore()
 const session = sessionStore()
@@ -157,8 +157,8 @@ function onSelect(selection: NavSelection) {
 	}
 }
 
-function openThread(thread: Thread) {
-	$navigateTo(ThreadView, { props: { thread } })
+function openThread() {
+	$navigateTo(ThreadView)
 }
 
 function onSettings() {
