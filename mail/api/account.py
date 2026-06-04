@@ -156,7 +156,11 @@ def get_user_info() -> dict | None:
 	data.is_mail_admin = is_mail_admin(user)
 	data.is_system_manager = is_system_manager(user)
 	data.is_jmap_configured = is_jmap_configured(user)
-	data.accounts = frappe.get_all("User Account", filters={"user": user})
+	data.accounts = frappe.get_all(
+		"User Account",
+		filters={"user": user},
+		fields=["name", "_name", "id", "is_personal"],
+	)
 	data.user_image = data.user_image or get_avatar_url(user)
 
 	return data

@@ -4,7 +4,7 @@
 			<StackLayout class="p-6">
 				<Label
 					:text="__('Sign in to a Frappe Mail server')"
-					class="text-ink-gray-9 mb-1 text-2xl font-bold"
+					class="mb-1 text-2xl font-bold"
 					textWrap="true"
 				/>
 				<Label
@@ -22,7 +22,7 @@
 						autocapitalizationType="none"
 						autocorrect="false"
 						keyboardType="url"
-						class="bg-surface-gray-2 text-ink-gray-9 rounded-lg p-3"
+						class="bg-surface-gray-2 rounded-lg p-3"
 						@returnPress="addSite"
 					/>
 					<Button
@@ -55,10 +55,7 @@
 					<!-- Tap target is only the content column, so tapping ✕ doesn't
 					     bubble up into a login (NativeScript tap gestures propagate). -->
 					<StackLayout col="0" @tap="selectAndLogin(s.url, s.client_id)">
-						<Label
-							:text="s.app_name || s.sitename"
-							class="text-ink-gray-9 text-base font-semibold"
-						/>
+						<Label :text="s.app_name || s.sitename" class="text-base font-semibold" />
 						<Label :text="s.url" class="text-ink-gray-5 text-sm" textWrap="true" />
 					</StackLayout>
 					<Label
