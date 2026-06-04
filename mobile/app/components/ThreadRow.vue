@@ -46,7 +46,7 @@
 				class="mt-0.5 text-sm"
 				:class="[
 					thread.seen ? 'text-ink-gray-7' : 'text-ink-gray-9 font-semibold',
-					thread.subject ? '' : 'italic',
+					hasSubject ? '' : 'italic',
 				]"
 				textWrap="false"
 			/>
@@ -55,7 +55,7 @@
 			<Label
 				:text="previewText"
 				class="text-ink-gray-5 mt-0.5 text-sm"
-				:class="thread.preview ? '' : 'italic'"
+				:class="hasPreview ? '' : 'italic'"
 				textWrap="false"
 			/>
 
@@ -132,8 +132,20 @@ const header = computed(() =>
 )
 
 const time = computed(() => formatListDate(props.thread.received_at))
-const subjectText = computed(() => props.thread.subject || __('[No subject]'))
-const previewText = computed(() => props.thread.preview || __('— No message body —'))
+
+// Collapse runs of whitespace/newlines to single spaces and trim — some mails
+// have whitespace-only or multi-line subjects/previews, which iOS renders as
+// odd blank lines (Android collapses them). Whitespace-only falls back below.
+const clean = (s?: string | null) => (s ?? '').replace(/\s+/g, ' ').trim()
+
+const hasSubject = computed(() => clean(props.thread.subject).length > 0)
+const hasPreview = computed(() => clean(props.thread.preview).length > 0)
+const subjectText = computed(() =>
+	hasSubject.value ? clean(props.thread.subject) : __('[No subject]'),
+)
+const previewText = computed(() =>
+	hasPreview.value ? clean(props.thread.preview) : __('— No message body —'),
+)
 
 const firstAttachment = computed(() =>
 	props.thread.attachments?.find((a) => a.filename && a.disposition === 'attachment'),
