@@ -1,25 +1,33 @@
 <template>
 	<Page actionBarHidden="true">
-		<!-- Root single-cell grid so the drawer overlays the whole screen. -->
+		<!-- Root single-cell grid so the drawer / sheet / toast overlay everything. -->
 		<GridLayout>
-			<GridLayout rows="auto, *">
-				<!-- Top bar (pushed below the Android status bar / camera cutout) -->
-				<GridLayout
-					row="0"
-					:marginTop="safeTop"
-					columns="auto, *"
-					class="border-b px-2 py-3"
-				>
-					<Label col="0" text="☰" class="px-3 text-2xl" @tap="drawerOpen = true" />
+			<!-- Thread list for the selected mailbox … -->
+			<MailboxScreen
+				v-if="activeMailbox"
+				:mailbox="activeMailbox"
+				@open-drawer="drawerOpen = true"
+				@open-thread="openThread"
+			/>
+
+			<!-- … or a placeholder for non-mailbox views (Settings, Address Books, Contacts). -->
+			<GridLayout v-else rows="auto, *" class="bg-surface-white">
+				<GridLayout row="0" columns="auto, *" class="px-1 py-2" :marginTop="safeTop">
+					<GridLayout col="0" class="h-10 w-10" @tap="drawerOpen = true">
+						<Label
+							:text="lucide('menu')"
+							class="font-lucide text-ink-gray-7 text-2xl"
+							horizontalAlignment="center"
+							verticalAlignment="center"
+						/>
+					</GridLayout>
 					<Label
 						col="1"
 						:text="currentView || title"
+						class="text-ink-gray-9 ml-1 text-2xl font-bold"
 						verticalAlignment="center"
-						class="text-lg font-semibold"
 					/>
 				</GridLayout>
-
-				<!-- Placeholder content area (real thread list lands in a later issue) -->
 				<StackLayout
 					row="1"
 					verticalAlignment="center"
@@ -28,11 +36,11 @@
 				>
 					<Label
 						:text="currentView || __('Loading…')"
-						class="mb-1 text-2xl font-bold"
+						class="text-ink-gray-8 mb-1 text-2xl font-bold"
 						textAlignment="center"
 					/>
 					<Label
-						:text="__('Thread list coming soon')"
+						:text="__('Coming soon')"
 						class="text-ink-gray-5 text-base"
 						textAlignment="center"
 					/>
@@ -55,22 +63,39 @@
 				@switch-site="onSwitchSite"
 				@add-site="onAddSite"
 			/>
+
+			<!-- Toast: brief feedback for placeholder actions (search/compose/filter). -->
+			<Label
+				v-if="toast"
+				:text="toast"
+				class="bg-surface-gray-7 rounded-full px-5 py-3 text-base font-semibold text-white"
+				horizontalAlignment="center"
+				verticalAlignment="bottom"
+				marginBottom="120"
+				textWrap="false"
+			/>
 		</GridLayout>
 	</Page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, provide, ref, watch } from 'vue'
 import { $navigateTo } from 'nativescript-vue'
 
+import { lucide } from '@/utils/lucide'
 import { safeAreaTop } from '@/utils/safeArea'
 import { loadTranslations } from '@/utils/translation'
 import { sessionStore } from '@/stores/session'
 import { siteStore } from '@/stores/site'
 import { userStore } from '@/stores/user'
 import LandingPage from '@/pages/LandingPage.vue'
+import ThreadView from '@/pages/ThreadView.vue'
 import AccountSheet from '@/components/AccountSheet.vue'
+import MailboxScreen from '@/components/MailboxScreen.vue'
 import NavDrawer from '@/components/NavDrawer.vue'
+
+import type { ActiveMailbox, NavSelection } from '@/types/navigation'
+import type { MailboxData, Thread } from '@mail/types'
 
 const site = siteStore()
 const session = sessionStore()
@@ -79,12 +104,30 @@ const store = userStore()
 const drawerOpen = ref(false)
 const sheetOpen = ref(false)
 const currentView = ref('')
+const activeMailbox = ref<ActiveMailbox | null>(null)
 const safeTop = safeAreaTop()
 
 const title = computed(() => site.activeSite?.app_name || 'Mail')
 
+// Toast (provided to descendants as `flash`) — see MailboxScreen placeholders.
+const toast = ref<string | null>(null)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+function flash(msg: string) {
+	toast.value = msg
+	if (toastTimer) clearTimeout(toastTimer)
+	toastTimer = setTimeout(() => (toast.value = null), 1800)
+}
+provide('flash', flash)
+
 onMounted(() => {
 	void store.fetchUser()
+})
+
+const toActiveMailbox = (m: MailboxData): ActiveMailbox => ({
+	id: m.id,
+	label: m._name,
+	role: m.role,
+	total: m.total_threads,
 })
 
 // Default the content to the Inbox (or first role mailbox) once mailboxes load.
@@ -93,17 +136,34 @@ watch(
 	(mailboxes) => {
 		if (currentView.value || !mailboxes.length) return
 		const inbox = mailboxes.find((m) => m.role === 'inbox') ?? mailboxes.find((m) => m.role)
-		if (inbox) currentView.value = inbox._name
+		if (inbox) {
+			activeMailbox.value = toActiveMailbox(inbox)
+			currentView.value = inbox._name
+		}
 	},
 	{ immediate: true },
 )
 
-function onSelect(label: string) {
-	currentView.value = label
+function onSelect(selection: NavSelection) {
+	if (selection.kind === 'mailbox') {
+		activeMailbox.value = toActiveMailbox(selection.mailbox)
+		currentView.value = selection.mailbox._name
+	} else if (selection.kind === 'starred') {
+		activeMailbox.value = { id: 'starred', label: __('Starred'), role: 'starred', total: null }
+		currentView.value = __('Starred')
+	} else {
+		activeMailbox.value = null
+		currentView.value = selection.label
+	}
+}
+
+function openThread(thread: Thread) {
+	$navigateTo(ThreadView, { props: { thread } })
 }
 
 function onSettings() {
 	drawerOpen.value = false
+	activeMailbox.value = null
 	currentView.value = __('Settings')
 }
 
@@ -125,6 +185,7 @@ function onSwitchSite(url: string) {
 	if (session.isLoggedIn) {
 		store.reset()
 		currentView.value = ''
+		activeMailbox.value = null
 		void store.fetchUser()
 		void loadTranslations()
 	} else {

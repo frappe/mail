@@ -27,25 +27,13 @@
 			<StackLayout v-if="view === 'main'">
 				<!-- identity -->
 				<GridLayout columns="auto, *, auto" class="px-5 pb-4 pt-3.5">
-					<GridLayout
+					<UserAvatar
 						col="0"
-						class="bg-surface-gray-2 h-12 w-12 rounded-full"
+						:size="48"
+						:name="current.name || current.email"
+						:image="store.user?.user_image ?? ''"
 						verticalAlignment="center"
-					>
-						<Image
-							v-if="current.image"
-							:src="current.image"
-							stretch="aspectFill"
-							class="h-12 w-12 rounded-full"
-						/>
-						<Label
-							v-else
-							:text="current.initials"
-							class="text-ink-gray-6 text-lg font-semibold"
-							horizontalAlignment="center"
-							verticalAlignment="center"
-						/>
-					</GridLayout>
+					/>
 					<StackLayout col="1" class="ml-3.5" verticalAlignment="center">
 						<Label :text="current.name" class="text-lg font-bold" />
 						<Label
@@ -118,18 +106,7 @@
 					class="px-5 py-3"
 					@tap="onSwitchAccount(a)"
 				>
-					<GridLayout
-						col="0"
-						class="bg-surface-gray-2 h-10 w-10 rounded-full"
-						verticalAlignment="center"
-					>
-						<Label
-							:text="a.initials"
-							class="text-ink-gray-6 text-sm font-semibold"
-							horizontalAlignment="center"
-							verticalAlignment="center"
-						/>
-					</GridLayout>
+					<UserAvatar col="0" :size="40" :name="a.name" verticalAlignment="center" />
 					<StackLayout col="1" class="ml-3.5" verticalAlignment="center">
 						<Label :text="a.name" class="text-base font-semibold" />
 						<Label
@@ -259,6 +236,7 @@ import { lucide } from '@/utils/lucide'
 import { safeAreaBottom } from '@/utils/safeArea'
 import { siteStore } from '@/stores/site'
 import { userStore } from '@/stores/user'
+import UserAvatar from '@/components/UserAvatar.vue'
 
 import type { UserAccount } from '@mail/types'
 import type { EventData, View } from '@nativescript/core'
@@ -283,43 +261,18 @@ const view = ref<'main' | 'sites'>('main')
 let sheetView: View | null = null
 let scrimView: View | null = null
 
-function initials(name: string): string {
-	return (
-		name
-			.split(/\s+/)
-			.map((w) => w[0])
-			.slice(0, 2)
-			.join('')
-			.toUpperCase() || '?'
-	)
-}
-
-function resolveImage(image?: string | null): string {
-	if (!image) return ''
-	if (/^(https?:|data:|file:|~\/)/i.test(image)) return image
-	if (image.startsWith('/')) return `${site.activeSite?.url ?? ''}${image}`
-	return image
-}
-
 const accounts = computed<UserAccount[]>(() => store.user?.accounts ?? [])
 
-const current = computed(() => {
-	const name = store.user?.full_name || store.user?.name || ''
-	const email = store.user?.email || ''
-	return {
-		name,
-		email,
-		image: resolveImage(store.user?.user_image),
-		initials: initials(name || email),
-	}
-})
+const current = computed(() => ({
+	name: store.user?.full_name || store.user?.name || '',
+	email: store.user?.email || '',
+}))
 
 const accountList = computed(() =>
 	accounts.value.map((a) => ({
 		id: a.id,
 		name: a._name,
 		subtitle: a.is_personal ? __('Personal') : __('Group'),
-		initials: initials(a._name),
 		active: a.id === store.accountId,
 	})),
 )

@@ -3,12 +3,16 @@
 
 import dayjs from 'dayjs'
 import isToday from 'dayjs/plugin/isToday'
+import isYesterday from 'dayjs/plugin/isYesterday'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import relativeTime from 'dayjs/plugin/relativeTime'
+
+import type { Recipient } from '@mail/types'
 
 dayjs.extend(relativeTime)
 dayjs.extend(localizedFormat)
 dayjs.extend(isToday)
+dayjs.extend(isYesterday)
 
 export function toTitleCase(str: string): string {
 	return (
@@ -37,4 +41,23 @@ export function formatDate(date: string | Date): string {
 
 export function formatRelative(date: string | Date): string {
 	return dayjs(date).fromNow()
+}
+
+// Compact timestamp for thread list rows (mirrors the Mail Mobile design):
+// today → time, yesterday → "Yesterday", this year → "MMM D", else "MMM D, YYYY".
+export function formatListDate(date: string | Date): string {
+	const d = dayjs(date)
+	if (d.isToday()) return d.format('h:mm A')
+	if (d.isYesterday()) return __('Yesterday')
+	if (d.year() === dayjs().year()) return d.format('MMM D')
+	return d.format('MMM D, YYYY')
+}
+
+// "To: <names>" header used for outgoing threads (sent/drafts), mirroring the
+// web getFormattedRecipients. Falls back to all recipients when none are "To".
+export function formatRecipients(recipients: Recipient[]): string {
+	if (!recipients?.length) return __('To:')
+	const to = recipients.filter((r) => r.type === 'To')
+	const list = (to.length ? to : recipients).map((r) => r.display_name || r.email)
+	return `${__('To:')} ${list.join(', ')}`
 }

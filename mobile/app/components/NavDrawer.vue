@@ -29,7 +29,7 @@
 				:marginTop="safeTop"
 				@tap="$emit('open-account')"
 			>
-				<GridLayout col="0" class="ml-10 h-11 w-11" verticalAlignment="center">
+				<GridLayout col="0" class="ml-11 h-11 w-11" verticalAlignment="center">
 					<Image :src="logoSrc" stretch="aspectFit" class="h-11 w-11 rounded-xl" />
 				</GridLayout>
 				<StackLayout col="1" class="ml-7" verticalAlignment="center">
@@ -147,11 +147,12 @@ import { safeAreaBottom, safeAreaTop } from '@/utils/safeArea'
 import { siteStore } from '@/stores/site'
 import { userStore } from '@/stores/user'
 
+import type { NavSelection } from '@/types/navigation'
 import type { MailboxData, UserAccount } from '@mail/types'
 import type { EventData, View } from '@nativescript/core'
 
 const props = defineProps<{ open: boolean; activeLabel: string }>()
-const emit = defineEmits<{ close: []; select: [label: string]; 'open-account': [] }>()
+const emit = defineEmits<{ close: []; select: [selection: NavSelection]; 'open-account': [] }>()
 
 const site = siteStore()
 const store = userStore()
@@ -221,7 +222,7 @@ const sections = computed(() => {
 		suffix: mailboxSuffix(m),
 		icon: mailboxIcon(m),
 		colorClass: folderColorClass(m.color),
-		onTap: () => select(m._name),
+		onTap: () => select({ kind: 'mailbox', mailbox: m }),
 	})
 	const defaultItems = [
 		...subscribed.value.filter((m) => m.role).map(toItem),
@@ -230,7 +231,7 @@ const sections = computed(() => {
 			suffix: '',
 			icon: 'star',
 			colorClass: '',
-			onTap: () => select(__('Starred')),
+			onTap: () => select({ kind: 'starred' }),
 		},
 	]
 	const customItems = subscribed.value.filter((m) => !m.role).map(toItem)
@@ -240,14 +241,14 @@ const sections = computed(() => {
 			suffix: '',
 			icon: 'book-user',
 			colorClass: '',
-			onTap: () => select(__('Address Books')),
+			onTap: () => select({ kind: 'view', label: __('Address Books') }),
 		},
 		{
 			label: __('Contacts'),
 			suffix: '',
 			icon: 'contact-round',
 			colorClass: '',
-			onTap: () => select(__('Contacts')),
+			onTap: () => select({ kind: 'view', label: __('Contacts') }),
 		},
 	]
 
@@ -258,8 +259,8 @@ const sections = computed(() => {
 	]
 })
 
-function select(label: string) {
-	emit('select', label)
+function select(selection: NavSelection) {
+	emit('select', selection)
 	emit('close')
 }
 
