@@ -1,12 +1,17 @@
 <template>
 	<!-- Full-screen overlay. Single-cell GridLayout: backdrop fills it, panel sits
-	     on the left on top. Collapsed entirely when closed so it intercepts no taps. -->
-	<GridLayout :visibility="visible ? 'visible' : 'collapse'">
+	     on the left on top. Android collapses it when closed (removed from layout and
+	     hit-testing). iOS instead keeps it laid out but non-interactive, because iOS
+	     drops the panel's child margins if its first layout runs off-screen/collapsed;
+	     see onPanelLoaded. -->
+	<GridLayout :visibility="overlayVisibility" :isUserInteractionEnabled="visible">
 		<StackLayout class="bg-surface-gray-7" @loaded="onBackdropLoaded" @tap="$emit('close')" />
 
 		<!-- Styling lives in Tailwind classes rather than inline attributes:
-		     iOS does not reliably honour inline padding / GridLayout sizing here,
-		     whereas CSS is applied consistently on both platforms. -->
+		     iOS does not reliably honour inline padding / GridLayout sizing here.
+		     Horizontal insets are expressed as margins on child views rather than
+		     padding on the container, because iOS ignores horizontal padding on
+		     layout containers (GridLayout/StackLayout) while honouring margins. -->
 		<GridLayout
 			width="300"
 			horizontalAlignment="left"
@@ -19,16 +24,16 @@
 			     settings, sign out). Direct grid child so columns lay out on iOS. -->
 			<GridLayout
 				row="0"
-				columns="42, *, 34"
-				class="px-4 py-3.5"
+				columns="42, *, 42"
+				class="py-3.5"
 				:marginTop="safeTop"
 				@tap="$emit('open-account')"
 			>
-				<GridLayout col="0" class="h-11 w-11" verticalAlignment="center">
+				<GridLayout col="0" class="ml-10 h-11 w-11" verticalAlignment="center">
 					<Image :src="logoSrc" stretch="aspectFit" class="h-11 w-11 rounded-xl" />
 				</GridLayout>
-				<StackLayout col="1" class="ml-3" verticalAlignment="center">
-					<Label :text="title" class="text-base font-bold" />
+				<StackLayout col="1" class="ml-7" verticalAlignment="center">
+					<Label :text="title" class="mb-0.5 text-base font-bold" />
 					<Label
 						v-if="subtitle"
 						:text="subtitle"
@@ -36,11 +41,11 @@
 						textWrap="false"
 					/>
 				</StackLayout>
-				<GridLayout col="2" class="h-9 w-9 rounded-full" verticalAlignment="center">
+				<GridLayout col="2" class="mr-8 h-9 w-9 rounded-full" verticalAlignment="center">
 					<Label
 						:text="lucide('chevron-down')"
 						class="font-lucide text-ink-gray-6 text-lg"
-						horizontalAlignment="center"
+						horizontalAlignment="right"
 						verticalAlignment="center"
 					/>
 				</GridLayout>
@@ -52,21 +57,21 @@
 					<template v-for="section in sections" :key="section.label">
 						<Label
 							:text="section.label"
-							class="text-ink-gray-4 pb-2 pl-6 pr-4 pt-4 text-xs font-semibold uppercase"
+							class="text-ink-gray-4 ml-6 mr-4 pb-2 pt-4 text-xs font-semibold uppercase"
 							textWrap="false"
 						/>
 						<GridLayout
 							v-for="item in section.items"
 							:key="item.label"
 							columns="auto, *, auto"
-							class="mx-2 rounded-xl px-3.5 py-3"
+							class="mx-2 rounded-xl py-3"
 							:class="{ 'bg-surface-gray-2': item.label === activeLabel }"
 							@tap="item.onTap"
 						>
 							<Label
 								col="0"
 								:text="lucide(item.icon)"
-								class="font-lucide text-xl"
+								class="font-lucide ml-3.5 text-xl"
 								:class="item.colorClass ? item.colorClass : 'text-ink-gray-6'"
 								verticalAlignment="center"
 							/>
@@ -84,7 +89,7 @@
 								v-if="item.suffix"
 								col="2"
 								:text="item.suffix"
-								class="text-ink-gray-5 text-sm font-medium"
+								class="text-ink-gray-5 mr-3.5 text-sm font-medium"
 								verticalAlignment="center"
 							/>
 						</GridLayout>
@@ -97,30 +102,36 @@
 			<StackLayout
 				v-if="showStorage"
 				row="2"
-				class="border-outline-gray-1 border-t px-5 pb-5 pt-3.5"
+				class="border-outline-gray-1 border-t pb-5 pt-3.5"
 				:marginBottom="safeBottom"
 			>
-				<StackLayout orientation="horizontal" class="mb-2.5">
-					<Label
-						:text="lucide('cloud')"
-						class="font-lucide text-xl"
-						verticalAlignment="center"
-					/>
-					<Label
-						:text="__('Storage')"
-						class="ml-2.5 font-semibold"
-						verticalAlignment="center"
-					/>
-				</StackLayout>
-				<GridLayout class="bg-surface-gray-2 h-1.5 rounded-full">
-					<StackLayout
-						class="h-1.5 rounded-full"
-						:class="storageOverLimit ? 'bg-surface-red-6' : 'bg-surface-gray-7'"
-						:width="storagePercent + '%'"
-						horizontalAlignment="left"
-					/>
+				<!-- Inner wrapper carries the horizontal inset as a margin. It must be a
+				     GridLayout, not a StackLayout: on iOS, horizontal margins are honoured
+				     on GridLayout but ignored on StackLayout (and padding is ignored on
+				     both). -->
+				<GridLayout rows="auto, auto, auto" class="mx-5">
+					<StackLayout row="0" orientation="horizontal" class="mb-2.5">
+						<Label
+							:text="lucide('cloud')"
+							class="font-lucide text-xl"
+							verticalAlignment="center"
+						/>
+						<Label
+							:text="__('Storage')"
+							class="ml-2.5 font-semibold"
+							verticalAlignment="center"
+						/>
+					</StackLayout>
+					<GridLayout row="1" class="bg-surface-gray-2 h-1.5 rounded-full">
+						<StackLayout
+							class="h-1.5 rounded-full"
+							:class="storageOverLimit ? 'bg-surface-red-6' : 'bg-surface-gray-7'"
+							:width="storagePercent + '%'"
+							horizontalAlignment="left"
+						/>
+					</GridLayout>
+					<Label row="2" :text="storageLabel" class="text-ink-gray-5 mt-2 text-xs" />
 				</GridLayout>
-				<Label :text="storageLabel" class="text-ink-gray-5 mt-2 text-xs" />
 			</StackLayout>
 		</GridLayout>
 	</GridLayout>
@@ -128,7 +139,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { CoreTypes } from '@nativescript/core'
+import { CoreTypes, isIOS } from '@nativescript/core'
 
 import { formatBytes } from '@/utils/format'
 import { folderColorClass, lucide, mailboxIcon } from '@/utils/lucide'
@@ -151,6 +162,10 @@ const customLabel = __('Custom')
 const visible = ref(false)
 const safeTop = safeAreaTop()
 const safeBottom = safeAreaBottom()
+
+// Android removes the overlay from layout + hit-testing when closed; iOS keeps it
+// laid out (hidden via opacity, non-interactive) so the panel's margins survive.
+const overlayVisibility = computed(() => (isIOS || visible.value ? 'visible' : 'collapse'))
 
 // Native views captured on @loaded so we can animate the slide/fade directly.
 let panelView: View | null = null
@@ -248,9 +263,21 @@ function select(label: string) {
 	emit('close')
 }
 
+// iOS only: the panel's *resting* (closed) position must be translateX:0 — on-screen
+// — hidden with opacity rather than a transform. On iOS the panel's child margins are
+// dropped if its decisive layout pass runs while it is shifted off the left edge (the
+// GridLayout safe-area inset math keys off the window position), and translateX does
+// not trigger a re-layout, so it can never recover. Keeping it laid out at x:0 means
+// margins are always computed correctly; the slide is a transient transform only.
+// Android has no such bug and is collapsed when closed, so it rests off-screen.
 function onPanelLoaded(args: EventData) {
 	panelView = args.object as View
-	panelView.translateX = -PANEL_WIDTH
+	if (isIOS) {
+		panelView.translateX = 0
+		panelView.opacity = 0
+	} else {
+		panelView.translateX = -PANEL_WIDTH
+	}
 }
 
 function onBackdropLoaded(args: EventData) {
@@ -267,8 +294,8 @@ function openDrawer() {
 	visible.value = true
 	nextTick(() => {
 		if (!panelView || !backdropView) return
+		panelView.opacity = 1
 		panelView.translateX = -PANEL_WIDTH
-		backdropView.opacity = 0
 		panelView.animate({
 			translate: { x: 0, y: 0 },
 			duration: 220,
@@ -292,6 +319,15 @@ function closeDrawer() {
 		backdropView.animate({ opacity: 0, duration: 200 }),
 	])
 		.catch(() => {})
-		.finally(() => (visible.value = false))
+		.finally(() => {
+			// iOS: return to the on-screen resting position (hidden via opacity) so a
+			// future layout pass keeps the child margins. Android: leave it off-screen;
+			// it gets collapsed out of layout below.
+			if (panelView && isIOS) {
+				panelView.translateX = 0
+				panelView.opacity = 0
+			}
+			visible.value = false
+		})
 }
 </script>
