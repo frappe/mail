@@ -600,28 +600,36 @@ def parse_date_to_utc_iso(date_str: str) -> str:
 	return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=UTC).isoformat()
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
-	"""Fetch and return avatar for the given email."""
+	"""Fetch and return avatar for the given email.
+
+	Guest-accessible so clients that can't send the session/bearer token (e.g. the
+	mobile app's <Image>) can load avatars. Only returns a Gravatar/identicon keyed
+	by the email hash — public information.
+	"""
 
 	if not email:
 		frappe.throw(_("Email is required to fetch avatar."))
 
+	strict = frappe.utils.sbool(strict)
 	email = email.strip().lower()
 	email_hash = hashlib.md5(email.encode()).hexdigest()
 
-	cache_key = f"avatar:{email_hash}:{size}"
+	# Strict and non-strict results differ (404 vs identicon fallback), so key them apart.
+	cache_key = f"avatar:{email_hash}:{size}:{int(strict)}"
 
-	# 1. Try cache
+	# 1. Try cache (an empty value is a cached "no real gravatar" for strict requests).
 	avatar = frappe.cache.get_value(cache_key)
 
-	if not avatar:
-		# 2. Try Gravatar
-		default = get_mail_config("gravatar_default_avatar")
+	if avatar is None:
+		# 2. Try Gravatar. With strict, d=404 makes Gravatar return 404 (rather than a
+		# default image) when the email has no real avatar, so callers can fall back.
+		avatar = b""
 		try:
 			res = requests.get(
 				f"https://secure.gravatar.com/avatar/{email_hash}",
-				params={"d": default, "s": size},
+				params={"d": "404" if strict else get_mail_config("gravatar_default_avatar"), "s": size},
 				timeout=3,
 			)
 			if res.ok:
@@ -629,11 +637,8 @@ def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 		except requests.RequestException:
 			pass
 
-		# 3. Handle missing gravatar
-		if not avatar:
-			if strict:
-				frappe.throw(_("Avatar not found."), frappe.DoesNotExistError)
-
+		# 3. Non-strict requests fall back to an identicon so they always return an image.
+		if not avatar and not strict:
 			generator = pydenticon.Generator(
 				5,
 				5,
@@ -648,8 +653,11 @@ def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 			)
 			avatar = generator.generate(email_hash, size, size, output_format="png")
 
-		# Cache the avatar for future requests
+		# Cache the result (empty for strict misses, to avoid re-hitting Gravatar).
 		frappe.cache.set_value(cache_key, avatar, expires_in_sec=AVATAR_CACHE_TTL)
+
+	if not avatar:
+		frappe.throw(_("Avatar not found."), frappe.DoesNotExistError)
 
 	frappe.local.response.filename = f"{email_hash}.png"
 	frappe.local.response.filecontent = avatar

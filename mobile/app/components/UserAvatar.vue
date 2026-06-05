@@ -1,7 +1,16 @@
 <template>
-	<!-- Circular avatar: sender/account image when available, else monochrome
-	     initials. Layout attrs (col, class, alignment) fall through to the root. -->
+	<!-- Circular avatar. The initials are the base layer; the image sits on top, so
+	     when there's no real avatar (get_avatar returns 404 in strict mode) the image
+	     fails to load and the initials show through. Layout attrs (col, class,
+	     alignment) fall through to the root. -->
 	<GridLayout class="bg-surface-gray-2 rounded-full" :width="size" :height="size">
+		<Label
+			:text="initialsText"
+			:fontSize="fontSize"
+			class="text-ink-gray-6 font-semibold"
+			horizontalAlignment="center"
+			verticalAlignment="center"
+		/>
 		<Image
 			v-if="src"
 			:src="src"
@@ -9,14 +18,6 @@
 			class="rounded-full"
 			:width="size"
 			:height="size"
-		/>
-		<Label
-			v-else
-			:text="initialsText"
-			:fontSize="fontSize"
-			class="text-ink-gray-6 font-semibold"
-			horizontalAlignment="center"
-			verticalAlignment="center"
 		/>
 	</GridLayout>
 </template>
@@ -43,15 +44,21 @@ function initials(name: string): string {
 	return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-// Resolves a raw user_image to an absolute, loadable URL, or '' to fall back to
-// initials. The backend's get_avatar API URL (gravatar / identicon — no file
-// extension, needs auth) is intentionally skipped: an <Image> can't carry the
-// OAuth bearer token, and the monochrome initials are the design default.
-// Real uploaded photos (/files/…) are resolved against the active site.
+// Resolves a raw user_image to an absolute, loadable URL (or '' to fall back to
+// initials). Relative URLs — the get_avatar API endpoint or an uploaded /files
+// photo — are resolved against the active site. get_avatar is guest-accessible
+// (see mail.api.mail.get_avatar) so the <Image> loads without the bearer token.
+// For the gravatar proxy we add strict=1 so a missing avatar 404s (→ initials)
+// rather than returning a default identicon.
 function resolveSrc(image: string): string {
-	if (!image || !/\.(png|jpe?g|gif|webp)$/i.test(image)) return ''
-	if (/^https?:\/\//i.test(image)) return image
-	return `${site.activeSite?.url ?? ''}${image.startsWith('/') ? '' : '/'}${image}`
+	if (!image) return ''
+	const abs = /^https?:\/\//i.test(image)
+		? image
+		: `${site.activeSite?.url ?? ''}${image.startsWith('/') ? '' : '/'}${image}`
+	if (abs.includes('mail.api.mail.get_avatar')) {
+		return `${abs}${abs.includes('?') ? '&' : '?'}strict=1`
+	}
+	return abs
 }
 
 const src = computed(() => resolveSrc(props.image))
