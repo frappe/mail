@@ -1,8 +1,7 @@
 <template>
 	<!-- Circular avatar. The initials are the base layer; the image sits on top, so
-	     when there's no real avatar (get_avatar returns 404 in strict mode) the image
-	     fails to load and the initials show through. Layout attrs (col, class,
-	     alignment) fall through to the root. -->
+	     when there's no real avatar (Gravatar 404s) the image fails to load and the
+	     initials show through. Layout attrs (col, class, alignment) fall through. -->
 	<GridLayout class="bg-surface-gray-2 rounded-full" :width="size" :height="size">
 		<Label
 			:text="initialsText"
@@ -25,6 +24,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { emailFromAvatarUrl, gravatarUrl } from '@/utils/gravatar'
 import { siteStore } from '@/stores/site'
 
 const props = withDefaults(defineProps<{ name: string; image?: string; size?: number }>(), {
@@ -44,21 +44,19 @@ function initials(name: string): string {
 	return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-// Resolves a raw user_image to an absolute, loadable URL (or '' to fall back to
-// initials). Relative URLs — the get_avatar API endpoint or an uploaded /files
-// photo — are resolved against the active site. get_avatar is guest-accessible
-// (see mail.api.mail.get_avatar) so the <Image> loads without the bearer token.
-// For the gravatar proxy we add strict=1 so a missing avatar 404s (→ initials)
-// rather than returning a default identicon.
+// Resolves a raw user_image to a loadable URL (or '' to fall back to initials).
+// The backend hands us either an uploaded photo (/files/…) or its get_avatar
+// proxy URL. For the proxy (which needs auth and returns a default image), we
+// instead hit Gravatar directly with d=404 — no real avatar → 404 → initials.
+// Uploaded photos / absolute URLs are resolved against the active site as-is.
 function resolveSrc(image: string): string {
 	if (!image) return ''
-	const abs = /^https?:\/\//i.test(image)
-		? image
-		: `${site.activeSite?.url ?? ''}${image.startsWith('/') ? '' : '/'}${image}`
-	if (abs.includes('mail.api.mail.get_avatar')) {
-		return `${abs}${abs.includes('?') ? '&' : '?'}strict=1`
+	if (image.includes('mail.api.mail.get_avatar')) {
+		const email = emailFromAvatarUrl(image)
+		return email ? gravatarUrl(email, 256) : ''
 	}
-	return abs
+	if (/^https?:\/\//i.test(image)) return image
+	return `${site.activeSite?.url ?? ''}${image.startsWith('/') ? '' : '/'}${image}`
 }
 
 const src = computed(() => resolveSrc(props.image))
