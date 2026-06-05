@@ -175,22 +175,34 @@ function logout() {
 	$navigateTo(LandingPage, { clearHistory: true })
 }
 
-// Switch the active site: load its stored session and reload user data, or fall
-// back to the landing page when that site isn't signed in.
-function onSwitchSite(url: string) {
+// Switch the active site: load its data directly. If there's no stored session
+// for it, run the OAuth login for that site (rather than bouncing to the landing
+// page), and only fall back to the landing page if we can't.
+async function onSwitchSite(url: string) {
 	sheetOpen.value = false
 	drawerOpen.value = false
 	site.setActiveSite(url)
 	session.load(url)
-	if (session.isLoggedIn) {
-		store.reset()
-		currentView.value = ''
-		activeMailbox.value = null
-		void store.fetchUser()
-		void loadTranslations()
-	} else {
-		$navigateTo(LandingPage, { clearHistory: true })
+
+	if (!session.isLoggedIn) {
+		const clientId = site.sites.find((s) => s.url === url)?.client_id
+		if (!clientId) {
+			$navigateTo(LandingPage, { clearHistory: true })
+			return
+		}
+		try {
+			await session.login(url, clientId)
+		} catch {
+			$navigateTo(LandingPage, { clearHistory: true })
+			return
+		}
 	}
+
+	store.reset()
+	currentView.value = ''
+	activeMailbox.value = null
+	void store.fetchUser()
+	void loadTranslations()
 }
 
 function onAddSite() {
