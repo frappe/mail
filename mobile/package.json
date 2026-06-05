@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@mail/types": "*",
+    "@nativescript-community/ui-pulltorefresh": "^2.5.11",
     "@nativescript/core": "~8.9.0",
     "@nativescript/secure-storage": "^4.0.1",
     "dayjs": "^1.11.11",

@@ -1,4 +1,4 @@
-import { createApp } from 'nativescript-vue'
+import { createApp, registerElement } from 'nativescript-vue'
 import { createPinia } from 'pinia'
 
 import translationPlugin, { loadTranslations } from '@/utils/translation'
@@ -7,6 +7,13 @@ import { siteStore } from '@/stores/site'
 
 import App from './App.vue'
 import './app.css'
+
+// Pull-to-refresh element (used by the thread list).
+registerElement(
+	'PullToRefresh',
+	// eslint-disable-next-line @typescript-eslint/no-require-imports
+	() => require('@nativescript-community/ui-pulltorefresh').PullToRefresh,
+)
 
 const pinia = createPinia()
 

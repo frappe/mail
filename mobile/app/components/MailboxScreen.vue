@@ -1,7 +1,7 @@
 <template>
 	<!-- Single-cell root so the Compose FAB can overlay the list. -->
 	<GridLayout class="bg-surface-white">
-		<GridLayout rows="auto, auto, *">
+		<GridLayout rows="auto, *">
 			<!-- ── Header ── -->
 			<GridLayout
 				row="0"
@@ -55,75 +55,33 @@
 				</GridLayout>
 			</GridLayout>
 
-			<!-- ── Toolbar ── -->
-			<GridLayout
-				row="1"
-				columns="auto, *, auto, auto"
-				class="border-outline-gray-1 border-b px-4 py-2.5"
-			>
-				<StackLayout
-					col="0"
-					orientation="horizontal"
-					@tap="flash(__('Filters coming soon'))"
-				>
-					<Label
-						:text="__('All Mails')"
-						class="text-ink-gray-9 text-sm font-semibold"
-						verticalAlignment="center"
-					/>
-					<Label
-						:text="lucide('chevron-down')"
-						class="font-lucide text-ink-gray-6 ml-1.5 text-base"
-						verticalAlignment="center"
-					/>
-				</StackLayout>
-				<GridLayout
-					col="2"
-					class="bg-surface-gray-2 mr-2 h-9 w-9 rounded-lg"
-					@tap="flash(__('Filter & sort coming soon'))"
-				>
-					<Label
-						:text="lucide('list-filter')"
-						class="font-lucide text-ink-gray-6 text-lg"
-						horizontalAlignment="center"
-						verticalAlignment="center"
-					/>
-				</GridLayout>
-				<GridLayout col="3" class="bg-surface-gray-2 h-9 w-9 rounded-lg" @tap="refresh">
-					<Label
-						:text="lucide('refresh-cw')"
-						class="font-lucide text-ink-gray-6 text-lg"
-						horizontalAlignment="center"
-						verticalAlignment="center"
-					/>
-				</GridLayout>
-			</GridLayout>
-
 			<!-- ── List / states ── -->
-			<GridLayout row="2">
-				<ScrollView v-if="threads.length" @scroll="onScroll">
-					<StackLayout>
-						<ThreadRow
-							v-for="thread in threads"
-							:key="thread.thread_id"
-							:thread="thread"
-							:mailbox-ids="store.mailboxIds"
-							@open="openThread(thread)"
-							@star="toggleStar(thread)"
-						/>
-						<!-- footer: loading more / end-of-list hint -->
-						<StackLayout class="py-5">
-							<ActivityIndicator v-if="loadingMore" busy="true" />
-							<Label
-								v-else
-								:text="reachedEnd ? __('No more messages') : __('Pull to refresh')"
-								class="text-ink-gray-4 text-xs"
-								textAlignment="center"
+			<GridLayout row="1">
+				<PullToRefresh v-if="threads.length" @refresh="onPullRefresh">
+					<ScrollView @scroll="onScroll">
+						<StackLayout>
+							<ThreadRow
+								v-for="thread in threads"
+								:key="thread.thread_id"
+								:thread="thread"
+								:mailbox-ids="store.mailboxIds"
+								@open="openThread(thread)"
+								@star="toggleStar(thread)"
 							/>
+							<!-- footer: loading more / end-of-list hint -->
+							<StackLayout class="py-5">
+								<ActivityIndicator v-if="loadingMore" busy="true" />
+								<Label
+									v-else-if="reachedEnd"
+									:text="__('No more messages')"
+									class="text-ink-gray-4 text-xs"
+									textAlignment="center"
+								/>
+							</StackLayout>
+							<StackLayout :height="safeBottom + 80" />
 						</StackLayout>
-						<StackLayout :height="safeBottom + 80" />
-					</StackLayout>
-				</ScrollView>
+					</ScrollView>
+				</PullToRefresh>
 
 				<!-- initial loading -->
 				<StackLayout
@@ -287,6 +245,12 @@ async function load(initial: boolean) {
 
 function refresh() {
 	load(true)
+}
+
+// Pull-to-refresh: reload, then stop the spinner.
+function onPullRefresh(args: { object: { refreshing: boolean } }) {
+	const ptr = args.object
+	load(true).finally(() => (ptr.refreshing = false))
 }
 
 function loadMore() {
