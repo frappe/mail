@@ -15,9 +15,9 @@
 		/>
 
 		<!-- content -->
-		<StackLayout col="1" class="ml-3" verticalAlignment="center" @tap="$emit('open')">
-			<!-- line 1: unread dot + sender + time -->
-			<GridLayout columns="auto, *, auto">
+		<StackLayout col="1" class="ml-3" verticalAlignment="top" @tap="$emit('open')">
+			<!-- line 1: unread dot + sender -->
+			<GridLayout columns="auto, *">
 				<StackLayout
 					v-if="!thread.seen"
 					col="0"
@@ -30,12 +30,6 @@
 					class="text-ink-gray-9 mr-2 text-base"
 					:class="thread.seen ? 'font-medium' : 'font-bold'"
 					textWrap="false"
-					verticalAlignment="center"
-				/>
-				<Label
-					col="2"
-					:text="time"
-					class="text-ink-gray-5 text-sm"
 					verticalAlignment="center"
 				/>
 			</GridLayout>
@@ -91,14 +85,28 @@
 			</GridLayout>
 		</StackLayout>
 
-		<!-- trailing: star toggle — amber when flagged, gray otherwise -->
-		<GridLayout col="2" class="ml-1 mr-3 h-9 w-9" verticalAlignment="top" @tap="$emit('star')">
+		<!-- trailing column: timestamp pinned top, star pinned bottom. Both live in
+		     the same cell with top/bottom alignment so they use the full row height. -->
+		<Label
+			col="2"
+			:text="time"
+			class="text-ink-gray-5 ml-2 mr-3 text-sm"
+			horizontalAlignment="right"
+			verticalAlignment="top"
+		/>
+		<GridLayout
+			col="2"
+			class="mr-1 h-7 w-9"
+			verticalAlignment="bottom"
+			horizontalAlignment="right"
+			@tap="$emit('star')"
+		>
 			<Label
 				:text="lucide('star')"
 				class="font-lucide text-xl"
 				:class="thread.flagged ? 'text-ink-amber-2' : 'text-ink-gray-4'"
 				horizontalAlignment="center"
-				verticalAlignment="center"
+				verticalAlignment="bottom"
 			/>
 		</GridLayout>
 	</GridLayout>

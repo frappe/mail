@@ -18,7 +18,7 @@
 				>
 					<Label
 						:text="lucide('menu')"
-						class="font-lucide text-ink-gray-7 text-2xl"
+						class="font-lucide text-ink-gray-7 text-xl"
 						horizontalAlignment="center"
 						verticalAlignment="center"
 						marginTop="2"
@@ -29,13 +29,6 @@
 						:text="mailbox.label"
 						class="text-ink-gray-9 ml-1 text-2xl font-bold"
 						verticalAlignment="center"
-						textWrap="false"
-					/>
-					<Label
-						v-if="countLabel"
-						:text="countLabel"
-						class="text-ink-gray-5 ml-2 text-sm"
-						verticalAlignment="bottom"
 						textWrap="false"
 					/>
 				</StackLayout>
@@ -172,7 +165,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue'
+import { inject, ref, watch } from 'vue'
 
 import { selectedThread, selectedThreadMailbox } from '@/state/selectedThread'
 import { useApi } from '@/utils/api'
@@ -206,10 +199,6 @@ const error = ref<string | null>(null)
 let limit = PAGE_SIZE
 // Guards against a slow response for a previous mailbox overwriting the current.
 let loadToken = 0
-
-const countLabel = computed(() =>
-	props.mailbox.total != null ? __('{0} threads', [props.mailbox.total.toLocaleString()]) : '',
-)
 
 async function load(initial: boolean) {
 	if (!store.account) return
