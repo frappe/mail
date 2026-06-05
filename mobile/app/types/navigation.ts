@@ -17,3 +17,6 @@ export type NavSelection =
 	| { kind: 'mailbox'; mailbox: MailboxData }
 	| { kind: 'starred' }
 	| { kind: 'view'; label: string }
+
+// Thread list filter (maps to get_threads' filter_by); null = All Mails.
+export type ThreadFilter = null | 'unread' | 'starred' | 'has_attachments'

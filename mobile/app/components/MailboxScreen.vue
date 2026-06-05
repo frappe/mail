@@ -1,7 +1,7 @@
 <template>
 	<!-- Single-cell root so the Compose FAB can overlay the list. -->
 	<GridLayout class="bg-surface-white">
-		<GridLayout rows="auto, *">
+		<GridLayout rows="auto, auto, *">
 			<!-- ── Header ── -->
 			<GridLayout
 				row="0"
@@ -48,8 +48,24 @@
 				</GridLayout>
 			</GridLayout>
 
+			<!-- ── Filter bar ── -->
+			<GridLayout row="1" columns="auto, *" class="border-outline-gray-1 border-b p-4 pt-6">
+				<StackLayout col="0" orientation="horizontal" @tap="filterOpen = true">
+					<Label
+						:text="filterLabel"
+						class="text-ink-gray-9 text-base font-semibold"
+						verticalAlignment="center"
+					/>
+					<Label
+						:text="lucide('chevron-down')"
+						class="font-lucide text-ink-gray-6 ml-1.5 text-base"
+						verticalAlignment="center"
+					/>
+				</StackLayout>
+			</GridLayout>
+
 			<!-- ── List / states ── -->
-			<GridLayout row="1">
+			<GridLayout row="2">
 				<PullToRefresh v-if="threads.length" @refresh="onPullRefresh">
 					<ScrollView @scroll="onScroll">
 						<StackLayout>
@@ -161,20 +177,30 @@
 				verticalAlignment="center"
 			/>
 		</StackLayout>
+
+		<!-- Filter bottom sheet -->
+		<FilterSheet
+			:open="filterOpen"
+			:current="filter"
+			:show-starred="showStarred"
+			@close="filterOpen = false"
+			@select="onSelectFilter"
+		/>
 	</GridLayout>
 </template>
 
 <script setup lang="ts">
-import { inject, ref, watch } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 
 import { selectedThread, selectedThreadMailbox } from '@/state/selectedThread'
 import { useApi } from '@/utils/api'
 import { lucide } from '@/utils/lucide'
 import { safeAreaBottom, safeAreaTop } from '@/utils/safeArea'
 import { userStore } from '@/stores/user'
+import FilterSheet from '@/components/FilterSheet.vue'
 import ThreadRow from '@/components/ThreadRow.vue'
 
-import type { ActiveMailbox } from '@/types/navigation'
+import type { ActiveMailbox, ThreadFilter } from '@/types/navigation'
 import type { Thread } from '@mail/types'
 import type { ScrollEventData } from '@nativescript/core'
 
@@ -195,6 +221,7 @@ const loading = ref(false)
 const loadingMore = ref(false)
 const reachedEnd = ref(false)
 const error = ref<string | null>(null)
+const filter = ref<ThreadFilter>(null)
 
 let limit = PAGE_SIZE
 // Guards against a slow response for a previous mailbox overwriting the current.
@@ -216,6 +243,7 @@ async function load(initial: boolean) {
 			account: store.account,
 			mailbox: props.mailbox.id,
 			limit,
+			filter_by: filter.value,
 		})
 		if (token !== loadToken) return
 		const list = data?.[0] ?? []
@@ -233,6 +261,26 @@ async function load(initial: boolean) {
 }
 
 function refresh() {
+	load(true)
+}
+
+// ── Filter (mirrors the web FILTER_OPTIONS) ──
+const FILTER_LABELS: Record<string, string> = {
+	unread: __('Unread'),
+	starred: __('Starred'),
+	has_attachments: __('Has attachments'),
+}
+const filterLabel = computed(() => (filter.value ? FILTER_LABELS[filter.value] : __('All Mails')))
+// Starred is hidden in the trash and the Starred view (as on web).
+const showStarred = computed(
+	() => props.mailbox.id !== 'starred' && props.mailbox.role !== 'trash',
+)
+
+const filterOpen = ref(false)
+
+function onSelectFilter(value: ThreadFilter) {
+	if (value === filter.value) return
+	filter.value = value
 	load(true)
 }
 
@@ -277,6 +325,7 @@ watch(
 	() => props.mailbox.id,
 	() => {
 		threads.value = []
+		filter.value = null
 		load(true)
 	},
 	{ immediate: true },
