@@ -1,9 +1,13 @@
 <template>
-	<!-- One thread list row. The avatar + content open the thread; the star is a
-	     separate sibling tap target. The outer row has no tap handler so the star
-	     tap can't also bubble up and open the thread. Horizontal insets are margins
+	<!-- One thread list row. A full-row overlay opens the thread; the star is layered
+	     on top as its own tap target. NativeScript routes a tap to the front-most view
+	     with a handler, so the star wins in its area and the overlay (open) everywhere
+	     else — tapping anywhere but the star navigates. Horizontal insets are margins
 	     on grid children, not container padding, per the iOS spacing constraints. -->
 	<GridLayout columns="auto, *, auto" class="border-outline-gray-1 border-b py-3">
+		<!-- full-row tap target: open the thread (behind everything, no background) -->
+		<GridLayout col="0" colSpan="3" @tap="$emit('open')" />
+
 		<!-- avatar: sender image, else monochrome initials -->
 		<UserAvatar
 			col="0"
@@ -11,11 +15,10 @@
 			:name="senderName"
 			:image="thread.user_image"
 			verticalAlignment="top"
-			@tap="$emit('open')"
 		/>
 
 		<!-- content -->
-		<StackLayout col="1" class="ml-3" verticalAlignment="top" @tap="$emit('open')">
+		<StackLayout col="1" class="ml-3" verticalAlignment="top">
 			<!-- line 1: unread dot + sender -->
 			<GridLayout columns="auto, *">
 				<StackLayout
