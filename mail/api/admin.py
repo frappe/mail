@@ -6,7 +6,7 @@ from frappe.utils import cint
 
 from mail.api.utils import get_avatar_url
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import is_mail_admin
+from mail.utils.user import is_mail_admin, is_system_manager
 
 if TYPE_CHECKING:
 	from mail.server.doctype.mail_domain_request.mail_domain_request import MailDomainRequest
@@ -115,26 +115,40 @@ def add_member(
 def delete_members(names: list) -> None:
 	"""Delete Members (Principal docs)"""
 
+	user = frappe.session.user
+	if not is_mail_admin(user) and not is_system_manager(user):
+		frappe.throw(_("User {0} does not have permission to delete members.").format(frappe.bold(user)))
+
 	for d in names:
-		doc = frappe.get_doc("Principal", d)
-		doc.delete()
+		frappe.delete_doc("Principal", d, ignore_permissions=True)
 
 
 @frappe.whitelist()
 def delete_mailing_lists(names: list) -> None:
 	"""Delete Mailing Lists"""
 
+	user = frappe.session.user
+	if not is_mail_admin(user) and not is_system_manager(user):
+		frappe.throw(
+			_("User {0} does not have permission to delete mailing lists.").format(frappe.bold(user))
+		)
+
 	for d in names:
-		doc = frappe.get_doc("Principal", d)
-		doc.delete()
+		frappe.delete_doc("Principal", d, ignore_permissions=True)
 
 
 @frappe.whitelist()
 def delete_account_requests(names: list) -> None:
 	"""Delete Mail Account Requests"""
 
+	user = frappe.session.user
+	if not is_mail_admin(user) and not is_system_manager(user):
+		frappe.throw(
+			_("User {0} does not have permission to delete account requests.").format(frappe.bold(user))
+		)
+
 	for d in names:
-		frappe.delete_doc("Mail Account Request", d)
+		frappe.delete_doc("Mail Account Request", d, ignore_permissions=True)
 
 
 @frappe.whitelist()
