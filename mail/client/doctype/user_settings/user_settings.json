@@ -218,8 +218,7 @@
    "is_virtual": 1,
    "label": "Session State",
    "no_copy": 1,
-   "read_only": 1,
-   "set_only_once": 1
+   "read_only": 1
   },
   {
    "fieldname": "session_last_update",
@@ -227,8 +226,7 @@
    "is_virtual": 1,
    "label": "Session Last Update",
    "no_copy": 1,
-   "read_only": 1,
-   "set_only_once": 1
+   "read_only": 1
   },
   {
    "collapsible": 1,
@@ -242,14 +240,13 @@
    "fieldtype": "JSON",
    "is_virtual": 1,
    "no_copy": 1,
-   "read_only": 1,
-   "set_only_once": 1
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-30 10:55:12.995817",
+ "modified": "2026-06-06 19:49:33.456329",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "User Settings",
