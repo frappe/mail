@@ -512,7 +512,7 @@ class Principal(Document):
 		if self.type == "Individual":
 			updates["locale"] = self.locale or ""
 			updates["roles"] = self._roles
-			if self.password:
+			if hasattr(self, "password") and self.password:
 				password = self.password
 				hashed_password = password if is_probable_hash(password) else hash_password(password)
 				updates["secrets"].append(hashed_password)
