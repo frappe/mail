@@ -6,6 +6,10 @@
 			@set-flagged="(ids: string[], flagged: boolean) => emit('setFlagged', ids, flagged)"
 			@set-seen="(seen: boolean) => emit('setSeen', seen)"
 			@move-thread="(moveToMailbox: string) => emit('moveThread', moveToMailbox)"
+			@add-thread-to-mailbox="(mailboxId: string) => emit('addThreadToMailbox', mailboxId)"
+			@remove-thread-from-mailbox="
+				(mailboxId: string) => emit('removeThreadFromMailbox', mailboxId)
+			"
 			@set-spam-status="(spam: boolean) => emit('setSpamStatus', spam)"
 			@delete-thread="emit('deleteThread')"
 			@prev-thread="emit('prevThread')"
@@ -132,7 +136,7 @@
 											getFirstAlphabet(mail.from_email)
 										"
 										:image="mail.user_image"
-										size="2xl"
+										size="xl"
 									/>
 									<div class="flex flex-1 justify-between truncate text-sm">
 										<div class="mr-3 flex flex-col space-y-1 truncate">
@@ -363,7 +367,7 @@ import SendMail from '@/components/SendMail.vue'
 import ThreadDivider from '@/components/ThreadDivider.vue'
 import ThreadHeader from '@/components/ThreadHeader.vue'
 
-import type { Attachment, ComposeMailData, Identity, Mail } from '@/types'
+import type { Attachment, ComposeMailData, Identity, Mail, Mailbox } from '@/types'
 
 const { mailbox, threadID, threads } = defineProps<{
 	mailbox: string
@@ -379,6 +383,8 @@ const emit = defineEmits([
 	'setSeen',
 	'setFlagged',
 	'moveThread',
+	'addThreadToMailbox',
+	'removeThreadFromMailbox',
 	'prevThread',
 	'nextThread',
 	'syncUnseen',
@@ -388,7 +394,7 @@ const { isMobile } = useScreenSize()
 const dayjs = inject('$dayjs')
 const user = inject('$user')
 const store = userStore()
-const { mailboxIds, identities, blockedAddresses } = store
+const { mailboxes, mailboxIds, identities, blockedAddresses } = store
 const { dataTheme } = useTheme()
 
 const route = useRoute()
@@ -592,7 +598,7 @@ const showReplyAll = (mail: Mail) =>
 	!mail.draft &&
 	mail.groupedRecipients.to
 		?.concat(mail.groupedRecipients.cc)
-		.filter((m) => m !== user.data.email).length > 0
+		.filter((m) => !isUserEmail(m.email)).length > 0
 
 const populateDraftMails = (mail: Mail) =>
 	(draftMails[mail.name] = {
@@ -690,7 +696,22 @@ const syncFlagged = (ids: string[], flagged: boolean) =>
 		if (ids.includes(mail.id)) mail.flagged = flagged ? 1 : 0
 	})
 
-defineExpose({ syncFlagged })
+const syncMailboxMembership = (mailboxId: string, add: boolean) => {
+	if (add) {
+		const mb = mailboxes.data?.find((m) => m.id === mailboxId)
+		if (!mb) return
+		const entry: Mailbox = { mailbox: mb.name, mailbox_id: mb.id, mailbox_name: mb._name }
+		thread.data?.forEach((mail: Mail) => {
+			if (!mail.mailboxes.some((m) => m.mailbox_id === mailboxId)) mail.mailboxes.push(entry)
+		})
+	} else if (thread.data?.every((mail: Mail) => mail.mailboxes.length > 1))
+		thread.data?.forEach(
+			(mail: Mail) =>
+				(mail.mailboxes = mail.mailboxes.filter((m) => m.mailbox_id !== mailboxId)),
+		)
+}
+
+defineExpose({ syncFlagged, syncMailboxMembership })
 
 const focusedDraft = ref<string>()
 const showSendModal = ref(false)
@@ -716,8 +737,8 @@ const getReplyRecipients = (mail: Mail) => ({
 	to: isUserEmail(mail.from_email)
 		? mail.groupedRecipients.to
 		: mail.reply_to.length
-			? mail.reply_to.map((r) => r.email)
-			: [mail.from_email],
+			? mail.reply_to
+			: [{ email: mail.from_email }],
 })
 
 const getReplyAllRecipients = (mail: Mail) => {
@@ -725,9 +746,9 @@ const getReplyAllRecipients = (mail: Mail) => {
 		return { to: mail.groupedRecipients.to, cc: mail.groupedRecipients.cc }
 	else
 		return {
-			to: mail.reply_to.length ? mail.reply_to.map((r) => r.email) : [mail.from_email],
+			to: mail.reply_to.length ? mail.reply_to : [{ email: mail.from_email }],
 			cc: [...mail.groupedRecipients.to, ...mail.groupedRecipients.cc].filter(
-				(r) => !isUserEmail(r),
+				(r) => !isUserEmail(r.email),
 			),
 		}
 }
@@ -750,18 +771,20 @@ const getQuotedContent = (mail: Mail) =>
 		</div>
 	`
 
-const getForwardedContent = (mail: Mail) =>
-	`
+const getForwardedContent = (mail: Mail) => {
+	const recipients = getGroupedRecipients(mail.recipients, true, true)
+	return `
 		<div class="frappe_mail_fwd">
 			<br><br>
 			---------- Forwarded message ---------<br>
 			From: ${mail.from_name} < ${mail.from_email} ><br>
 			Date: ${dayjs(mail.received_at).format('ddd, MMM D, YYYY [at] h:mm A')}<br>
 			Subject: ${mail.subject || ''}<br>
-			To: ${mail.groupedRecipients.to.join(', ')}<br>
-			${mail.groupedRecipients.cc.length ? `Cc: ${mail.groupedRecipients.cc.join(', ')}<br>` : ''}
+			To: ${recipients.to}<br>
+			${recipients.cc ? `Cc: ${recipients.cc}<br>` : ''}
 			<br><br>
 			${getBodyContent(mail)}
 		</div>
 	`
+}
 </script>

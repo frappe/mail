@@ -190,7 +190,6 @@
 		</template>
 		<template #bottom>
 			<ComposeMailToolbar
-				:is-saving-draft
 				:is-recipients-empty
 				class="border-t"
 				:class="{ 'border-transparent': isDragging }"
@@ -503,14 +502,6 @@ const localDraftActions = computed(() => [
 
 const isRecipientsEmpty = computed(() => [mail.to, mail.cc, mail.bcc].every((d) => !d.length))
 
-const isOnlySignature = computed(() => {
-	if (!mail.html_body) return false
-
-	const trimmed = mail.html_body.trim()
-	const pattern = /^<div\s+class="frappe_mail_signature">[\s\S]*<\/div>$/
-	return pattern.test(trimmed)
-})
-
 const isBodyEmpty = computed(() => {
 	if (!mail.html_body) return true
 
@@ -533,7 +524,7 @@ const isMailEmpty = computed(() => {
 		isQuotedContentEmpty &&
 		isRecipientsEmpty.value &&
 		isAttachmentsEmpty &&
-		(isBodyEmpty.value || isOnlySignature.value)
+		isBodyEmpty.value
 	)
 })
 
@@ -545,10 +536,10 @@ const openQuotedContent = () => {
 watch(
 	() => mail.from_email,
 	(val) => {
-		if (isBodyEmpty.value || isOnlySignature.value) {
+		if (isBodyEmpty.value) {
 			const identity = getIdentity(val!)
-			mail.html_body = identity?.html_signature
-				? `<div class="frappe_mail_signature"><br>${identity.html_signature}</div>`
+			mail.html_body = identity?.text_signature
+				? `<div><br></div><div><br></div>${identity.html_signature}`
 				: ''
 		}
 	},
@@ -568,7 +559,11 @@ const openAttachment = async (blob_id?: string, type?: string) => {
 
 const uploadFunction = async (file: File) => {
 	const fileUpload = useFileUpload()
-	return fileUpload.upload(file, { private: true, folder: 'Home/Frappe Mail' })
+	return fileUpload.upload(file, {
+		private: true,
+		folder: 'Home/Frappe Mail',
+		upload_endpoint: '/api/method/mail.api.mail.upload_file',
+	})
 }
 
 const CustomImageExtension = ImageExtension.extend({
@@ -624,8 +619,8 @@ const handleDiscardShortcut = (e: KeyboardEvent) => {
 	}
 }
 
-onMounted(() => window.addEventListener('keydown', handleKeydown))
-onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
+onMounted(() => window.addEventListener('keydown', handleKeydown, true))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown, true))
 
 // Drag and drop file upload
 
@@ -677,6 +672,7 @@ const uploadFile = async (file: File) => {
 	const doc = (await fileUpload.upload(file, {
 		private: true,
 		folder: 'Home/Frappe Mail',
+		upload_endpoint: '/api/method/mail.api.mail.upload_file',
 	})) as FileDoc
 
 	attachDoc(doc)

@@ -137,7 +137,7 @@ export interface MailboxData {
 	_name: string
 	subscribed: 0 | 1
 	icon?: string
-	color?: string
+	color?: 'Blue' | 'Green' | 'Amber' | 'Red' | 'Purple'
 	disable_push_notification?: 0 | 1
 }
 

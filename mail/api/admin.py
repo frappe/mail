@@ -16,7 +16,7 @@ from mail.stalwart import get_domains as get_stalwart_domains
 from mail.utils import execute_with_logging, get_config
 from mail.utils.dns import parse_dns_zone_file
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import is_mail_admin
+from mail.utils.user import is_mail_admin, is_system_manager
 
 
 def _get_stalwart_domain(domain_id: str) -> dict:
@@ -335,6 +335,12 @@ def get_account_requests(
 @frappe.whitelist()
 def delete_account_requests(names: list) -> None:
 	"""Delete Mail Account Requests"""
+
+	user = frappe.session.user
+	if not is_mail_admin(user) and not is_system_manager(user):
+		frappe.throw(
+			_("User {0} does not have permission to delete account requests.").format(frappe.bold(user))
+		)
 
 	for d in names:
 		frappe.delete_doc("Mail Account Request", d)

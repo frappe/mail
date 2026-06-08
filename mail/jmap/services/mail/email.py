@@ -83,7 +83,9 @@ class EmailService(MailService):
 
 		return results
 
-	def update(self, emails: list[dict]) -> dict:
+	def update(
+		self, emails: list[dict], replace_keywords: bool = False, replace_mailboxes: bool = False
+	) -> dict:
 		"""Public method to update emails, handling batching if the number of emails exceeds the server's maximum allowed in a single 'set' call. Allows updating of keywords and mailboxIds."""
 
 		result = {"updated": [], "notUpdated": {}}
@@ -93,9 +95,16 @@ class EmailService(MailService):
 				payload[email["id"]] = {}
 
 				if keywords := email.get("keywords", {}):
-					payload[email["id"]].update({f"keywords/{k}": v for k, v in keywords.items()})
+					if replace_keywords:
+						payload[email["id"]]["keywords"] = keywords
+					else:
+						payload[email["id"]].update({f"keywords/{k}": v for k, v in keywords.items()})
+
 				if mailbox_ids := email.get("mailbox_ids", {}):
-					payload[email["id"]]["mailboxIds"] = mailbox_ids
+					if replace_mailboxes:
+						payload[email["id"]]["mailboxIds"] = mailbox_ids
+					else:
+						payload[email["id"]].update({f"mailboxIds/{k}": v for k, v in mailbox_ids.items()})
 
 				if not payload[email["id"]]:
 					raise ValueError(

@@ -2,7 +2,7 @@
 	<Dialog
 		v-model="show"
 		:options="{
-			title: __('Delete Folder'),
+			title: __('Delete {0}', [mailbox?._name]),
 			message: __(
 				`Are you sure you want to delete '{0}'? Mails in this folder will be permanently removed.`,
 				[mailbox?._name],

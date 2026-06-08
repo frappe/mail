@@ -267,7 +267,12 @@ const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
 
 const moveMail = createResource({
 	url: 'mail.api.mail.move_mails',
-	makeParams: (mailbox: string) => ({ account, ids: [mail.id], mailbox }),
+	makeParams: (mailbox: string) => ({
+		account,
+		ids: [mail.id],
+		mailbox,
+		clear_junk: mail.junk === 1 && mailbox !== mailboxIds.junk,
+	}),
 })
 
 const handleMoveMail = (mailbox: string, isUndo = false) => {

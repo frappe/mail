@@ -58,8 +58,10 @@
 				:class="!isMobile && showReadingPane ? 'w-1/3' : 'w-full'"
 			>
 				<!-- Toolbar/Actions -->
-				<div class="flex items-center border-b px-3.5 py-2.5 sm:px-5">
-					<div class="sm:mr-5.5 ml-3 mr-5">
+				<div
+					class="flex items-center border-b border-l-transparent px-3.5 py-2.5 sm:border-l sm:px-5"
+				>
+					<div class="mr-5 max-sm:ml-3">
 						<Tooltip
 							:text="
 								isAllSelected
@@ -67,11 +69,16 @@
 									: __('Select All ({0}+A)', [modifier])
 							"
 						>
-							<Checkbox
-								:model-value="isAllSelected"
-								size="md"
-								@update:model-value="toggleSelectAll"
-							/>
+							<div
+								class="checkbox-hitbox -m-3 cursor-pointer p-3"
+								@click.stop.prevent="toggleSelectAll(!isAllSelected)"
+							>
+								<Checkbox
+									:model-value="isAllSelected"
+									size="md"
+									class="pointer-events-none"
+								/>
+							</div>
 						</Tooltip>
 					</div>
 					<p class="mr-auto pb-[2px]">{{ title }}</p>
@@ -124,6 +131,20 @@
 							</template>
 						</template>
 
+						<Dropdown v-if="showAddTo" :options="addToOptions">
+							<Button variant="ghost" :tooltip="__('Add To')">
+								<template #icon>
+									<component :is="FolderPlus" class="text-ink-gray-7 icon" />
+								</template>
+							</Button>
+						</Dropdown>
+						<Dropdown v-if="showRemoveFrom" :options="removeFromOptions">
+							<Button variant="ghost" :tooltip="__('Remove From')">
+								<template #icon>
+									<component :is="FolderMinus" class="text-ink-gray-7 icon" />
+								</template>
+							</Button>
+						</Dropdown>
 						<Dropdown
 							v-if="!!selections.length && !['search', 'starred'].includes(mailbox)"
 							:options="moveToOptions"
@@ -153,19 +174,22 @@
 							"
 						>
 							<div
-								class="text-ink-gray-6 group flex items-center border-b p-3.5 text-xs font-semibold sm:px-5"
-								:class="{ 'cursor-pointer': !isLastGroup(key) }"
+								class="text-ink-gray-6 group flex items-center border-b border-l-transparent p-3.5 text-xs font-semibold sm:border-l sm:px-5"
 								@click="toggleGroupCollapse(key)"
 							>
-								<Checkbox
-									:model-value="isGroupSelected(key)"
-									size="md"
-									class="ml-1.5 mr-[11px]"
-									@update:model-value="
-										toggleSelect(getGroupThreads(key), $event)
+								<div
+									class="pr-7.5 checkbox-hitbox -m-3 cursor-pointer py-3 pl-6 sm:pl-3"
+									@click.stop.prevent="
+										toggleSelect(getGroupThreads(key), !isGroupSelected(key))
 									"
-									@click.stop
-								/>
+								>
+									<Checkbox
+										:model-value="isGroupSelected(key)"
+										size="md"
+										class="pointer-events-none"
+									/>
+								</div>
+
 								<span class="select-none pt-[2px]">
 									{{
 										getFormattedDate(
@@ -202,9 +226,13 @@
 										handleSetSeen({ [Number(seen)]: [mail.thread_id] })
 								"
 								@archive-thread="
-									handleMoveThreads({
-										[mailboxIds.archive]: [mail.thread_id],
-									})
+									mailbox === mailboxIds.sent
+										? handleAddThreadsToMailbox(mailboxIds.archive, [
+												mail.thread_id,
+											])
+										: handleMoveThreads({
+												[mailboxIds.archive]: [mail.thread_id],
+											})
 								"
 								@trash-thread="
 									handleMoveThreads({ [mailboxIds.trash]: [mail.thread_id] })
@@ -281,6 +309,13 @@
 						(moveToMailbox: string) =>
 							handleMoveThreads({ [moveToMailbox]: [threadID!] })
 					"
+					@add-thread-to-mailbox="
+						(mailboxId: string) => handleAddThreadsToMailbox(mailboxId, [threadID!])
+					"
+					@remove-thread-from-mailbox="
+						(mailboxId: string) =>
+							handleRemoveThreadsFromMailbox(mailboxId, [threadID!])
+					"
 					@set-spam-status="
 						(spam: boolean) =>
 							spam
@@ -324,6 +359,8 @@ import {
 	CircleCheck,
 	Ellipsis,
 	FolderInput,
+	FolderMinus,
+	FolderPlus,
 	ListFilter,
 	LoaderCircle,
 	Mail,
@@ -649,7 +686,9 @@ const handleThreadActions = (e: KeyboardEvent, key: string) => {
 	// Archive (e)
 	if (key === 'e') {
 		e.preventDefault()
-		return handleMoveThreads({ [mailboxIds.archive]: thread_ids })
+		return mailbox === mailboxIds.sent
+			? handleAddThreadsToMailbox(mailboxIds.archive, thread_ids)
+			: handleMoveThreads({ [mailboxIds.archive]: thread_ids })
 	}
 
 	// Mark as junk (!)
@@ -745,7 +784,10 @@ const selectActions = computed((): SelectAction[] => [
 	},
 	{
 		label: __('Archive Threads (E)'),
-		onClick: () => handleMoveThreads({ [mailboxIds.archive]: selections.value }),
+		onClick: () =>
+			mailbox === mailboxIds.sent
+				? handleAddThreadsToMailbox(mailboxIds.archive, selections.value)
+				: handleMoveThreads({ [mailboxIds.archive]: selections.value }),
 		icon: Archive,
 		condition: () => mailbox !== mailboxIds.archive,
 	},
@@ -921,6 +963,13 @@ const goToThread = (threadID: string) => {
 
 const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
 
+const goToNextThreadOrMailbox = (excludedThreads: string[] = []) => {
+	const idx = threadIDs.value.indexOf(threadID)
+	const next = threadIDs.value.slice(idx + 1).find((id) => !excludedThreads.includes(id))
+	if (next) goToThread(next)
+	else goToMailbox()
+}
+
 const focusOnThread = (threadID: string) => {
 	if (!threadID) return
 
@@ -975,11 +1024,9 @@ const setFlagged = createResource({
 	onError: (error) => raiseToast(error.messages[0], 'error'),
 })
 
-type MoveThreadsParams = Record<string, string[]>
-
 const moveThreads = createResource({
 	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: (thread_ids: MoveThreadsParams) => ({ account: store.account, thread_ids }),
+	makeParams: (thread_ids) => ({ account: store.account, thread_ids }),
 	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
 })
 
@@ -992,6 +1039,138 @@ const moveToOptions = computed(() =>
 			onClick: () => handleMoveThreads({ [m.id]: selections.value }),
 		})),
 )
+
+const addThreadsToMailbox = createResource({
+	url: 'mail.api.mail.add_threads_to_mailbox',
+	makeParams: ({ mailbox_id, thread_ids }: { mailbox_id: string; thread_ids: string[] }) => ({
+		account: store.account,
+		mailbox_id,
+		thread_ids,
+	}),
+	onSuccess: () => reloadThreads(),
+})
+
+const removeThreadsFromMailbox = createResource({
+	url: 'mail.api.mail.remove_threads_from_mailbox',
+	makeParams: ({ mailbox_id, thread_ids }: { mailbox_id: string; thread_ids: string[] }) => ({
+		account: store.account,
+		mailbox_id,
+		thread_ids,
+	}),
+	onSuccess: () => reloadThreads(),
+})
+
+const showAddTo = computed(
+	() =>
+		selections.value.length &&
+		addToOptions.value.length &&
+		!['search', 'starred', mailboxIds.junk, mailboxIds.trash].includes(mailbox),
+)
+
+const showRemoveFrom = computed(
+	() =>
+		showAddTo.value &&
+		threadsResource.value.data
+			?.filter((t: Thread) => selections.value.includes(t.thread_id))
+			.some((t: Thread) => t.mailboxes.length > 1),
+)
+
+const addToOptions = computed(() =>
+	mailboxes.data
+		?.filter((m) => !m.role || ['inbox', 'archive'].includes(m.role))
+		.filter((m) => {
+			const selected = threadsResource.value.data?.filter((t: Thread) =>
+				selections.value.includes(t.thread_id),
+			)
+			return !selected?.every((t: Thread) =>
+				t.mailboxes.some((mb) => mb.mailbox_id === m.id),
+			)
+		})
+		.map((m) => ({
+			label: m._name,
+			icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
+			onClick: () => handleAddThreadsToMailbox(m.id, selections.value),
+		})),
+)
+
+const handleAddThreadsToMailbox = (mailboxId: string, threadIds: string[], isUndo = false) => {
+	const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
+	const action = async () => {
+		await addThreadsToMailbox.submit({ mailbox_id: mailboxId, thread_ids: threadIds })
+		if (threadID && threadIds.includes(threadID))
+			mailThreadRef.value?.syncMailboxMembership(mailboxId, true)
+	}
+
+	if (isUndo) {
+		const success =
+			threadIds.length === 1 ? __('Thread added back.') : __('Threads added back.')
+		return raisePromiseToast(action, __('Undoing...'), success)
+	}
+
+	setUndoAction(() => handleRemoveThreadsFromMailbox(mailboxId, threadIds, true))
+	const loading = __('Adding to {0}...', [mailboxName])
+	const success =
+		threadIds.length === 1
+			? __('Thread added to {0}.', [mailboxName])
+			: __('Threads added to {0}.', [mailboxName])
+	raisePromiseToast(action, loading, success, undo)
+}
+
+const removeFromOptions = computed(() => {
+	const selected = threadsResource.value.data?.filter((t: Thread) =>
+		selections.value.includes(t.thread_id),
+	)
+	const unionMailboxIds = selected
+		.map((t: Thread) => new Set(t.mailboxes.map((mb) => mb.mailbox_id)))
+		.reduce(
+			(union: Set<string>, set: Set<string>) => new Set([...union, ...set]),
+			new Set<string>(),
+		)
+	return mailboxes.data
+		?.filter(
+			(m) =>
+				unionMailboxIds.has(m.id) && ![mailboxIds.sent, mailboxIds.drafts].includes(m.id),
+		)
+		.map((m) => ({
+			label: m._name,
+			icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
+			onClick: () => handleRemoveThreadsFromMailbox(m.id, selections.value),
+		}))
+})
+
+const handleRemoveThreadsFromMailbox = (
+	mailboxId: string,
+	threadIds: string[],
+	isUndo = false,
+) => {
+	const threadIdsToBeUpdated = threadIds.filter((threadId) => {
+		const thread = threadsResource.value.data?.find((t: Thread) => t.thread_id === threadId)
+		return thread?.mailboxes.some((mb) => mb.mailbox_id === mailboxId)
+	})
+
+	const action = async () => {
+		await removeThreadsFromMailbox.submit({
+			mailbox_id: mailboxId,
+			thread_ids: threadIdsToBeUpdated,
+		})
+		if (threadID && threadIdsToBeUpdated.includes(threadID)) {
+			if (mailboxId === mailbox) goToNextThreadOrMailbox(threadIdsToBeUpdated)
+			else mailThreadRef.value?.syncMailboxMembership(mailboxId, false)
+		}
+	}
+
+	const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
+	const success =
+		threadIdsToBeUpdated.length === 1
+			? __('Thread removed from {0}.', [mailboxName])
+			: __('Threads removed from {0}.', [mailboxName])
+
+	if (isUndo) return raisePromiseToast(action, __('Undoing...'), success)
+
+	setUndoAction(() => handleAddThreadsToMailbox(mailboxId, threadIdsToBeUpdated, true))
+	const loading = __('Removing from {0}...', [mailboxName])
+	raisePromiseToast(action, loading, success, undo)
+}
 
 const setSpamStatus = createResource({
 	url: 'mail.api.mail.set_threads_spam_status',
@@ -1042,7 +1221,9 @@ const junkOrDeleteThreadsOptions = computed(() => ({
 	title: junkOrDeleteTitle.value,
 	message: junkOrDeleteMessage.value,
 	icon: { name: 'alert-triangle', appearance: 'warning' },
-	actions: [{ label: __('Confirm'), variant: 'solid', onClick: handleJunkOrDelete }],
+	actions: [
+		{ label: __('Confirm'), variant: 'solid', autofocus: true, onClick: handleJunkOrDelete },
+	],
 }))
 
 const deleteThreads = createResource({
@@ -1088,9 +1269,7 @@ const handleSuccessAndRemoveFromList = (
 
 	if (excludeCommonMailboxes && ['search', 'starred'].includes(mailbox)) return
 	if (!Array.isArray(thread_ids)) thread_ids = Object.values(thread_ids).flat()
-	if (threadID && thread_ids.includes(threadID))
-		if (thread_ids.length === 1) goToThreadByOffset(1)
-		else goToMailbox()
+	if (threadID && thread_ids.includes(threadID)) goToNextThreadOrMailbox(thread_ids)
 	threadsResource.value.data = threadsResource.value.data?.filter(
 		(thread: Thread) => !thread_ids.includes(thread.thread_id),
 	)
@@ -1120,6 +1299,7 @@ const handleSetSeen = (threadIDs: SetSeenParams) => {
 }
 
 const setFlaggedByThreadIDs = (threadIDs: string[], flagged: boolean) => {
+	setUndoAction(undefined)
 	const ids = threadsResource.value.data
 		.filter((t: Thread) => threadIDs.includes(t.thread_id))
 		.map((t: Thread) => t.id)
@@ -1297,3 +1477,9 @@ const title = computed(() => {
 	}
 })
 </script>
+
+<style scoped>
+.checkbox-hitbox:hover :deep(input[type='checkbox']) {
+	@apply border-outline-gray-5 shadow-sm;
+}
+</style>
