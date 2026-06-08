@@ -87,16 +87,16 @@
 					</StackLayout>
 				</GridLayout>
 
-				<!-- bottom action bar (reply/forward → compose, #490) -->
+				<!-- bottom action bar (reply / reply-all / forward → compose, #490) -->
 				<GridLayout
 					row="2"
-					columns="*, *"
+					:columns="showReplyAll ? '*, *, *' : '*, *'"
 					class="border-outline-gray-1 border-t px-4 pb-7 pt-3"
 					:marginBottom="safeBottom"
 				>
 					<GridLayout
 						col="0"
-						class="border-outline-gray-2 mr-2 rounded-xl border py-3"
+						class="border-outline-gray-2 mr-1.5 rounded-xl border py-3"
 						@tap="flash(__('Reply coming soon'))"
 					>
 						<StackLayout orientation="horizontal" horizontalAlignment="center">
@@ -107,14 +107,33 @@
 							/>
 							<Label
 								:text="__('Reply')"
-								class="text-ink-gray-8 ml-2 font-semibold"
+								class="text-ink-gray-8 ml-1.5 font-semibold"
 								verticalAlignment="center"
 							/>
 						</StackLayout>
 					</GridLayout>
 					<GridLayout
+						v-if="showReplyAll"
 						col="1"
-						class="border-outline-gray-2 ml-2 rounded-xl border py-3"
+						class="border-outline-gray-2 mx-1.5 rounded-xl border py-3"
+						@tap="flash(__('Reply all coming soon'))"
+					>
+						<StackLayout orientation="horizontal" horizontalAlignment="center">
+							<Label
+								:text="lucide('reply-all')"
+								class="font-lucide text-ink-gray-8 text-lg"
+								verticalAlignment="center"
+							/>
+							<Label
+								:text="__('Reply all')"
+								class="text-ink-gray-8 ml-1.5 font-semibold"
+								verticalAlignment="center"
+							/>
+						</StackLayout>
+					</GridLayout>
+					<GridLayout
+						:col="showReplyAll ? 2 : 1"
+						class="border-outline-gray-2 ml-1.5 rounded-xl border py-3"
 						@tap="flash(__('Forward coming soon'))"
 					>
 						<StackLayout orientation="horizontal" horizontalAlignment="center">
@@ -125,7 +144,7 @@
 							/>
 							<Label
 								:text="__('Forward')"
-								class="text-ink-gray-8 ml-2 font-semibold"
+								class="text-ink-gray-8 ml-1.5 font-semibold"
 								verticalAlignment="center"
 							/>
 						</StackLayout>
@@ -148,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Utils, isAndroid } from '@nativescript/core'
 import { $navigateBack } from 'nativescript-vue'
 
@@ -170,6 +189,15 @@ const safeBottom = safeAreaBottom()
 const html = ref('')
 const loading = ref(false)
 const error = ref<string | null>(null)
+const mails = ref<Mail[]>([])
+
+// Reply-all is offered when the (last) message has recipients besides you —
+// mirrors the web MailThread showReplyAll.
+const showReplyAll = computed(() => {
+	const last = mails.value[mails.value.length - 1]
+	if (!last) return false
+	return (last.recipients || []).filter((r) => r.type === 'To' || r.type === 'Cc').length > 1
+})
 
 const toast = ref<string | null>(null)
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -188,11 +216,13 @@ async function load() {
 	loading.value = true
 	error.value = null
 	try {
-		const mails = await api.call<Mail[]>('mail.api.mail.get_thread', {
+		const data = await api.call<Mail[]>('mail.api.mail.get_thread', {
 			account: store.account,
 			thread_id: t.thread_id,
 		})
-		html.value = buildThreadDocument(mails ?? [], t.subject ?? '')
+		mails.value = data ?? []
+		// Use the first message's subject (the original), not the thread's latest.
+		html.value = buildThreadDocument(mails.value, mails.value[0]?.subject || t.subject || '')
 	} catch (e) {
 		error.value = (e as { message?: string })?.message ?? __('Failed to load this thread')
 	} finally {

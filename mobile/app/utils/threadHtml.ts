@@ -103,7 +103,7 @@ function messageHtml(mail: Mail, index: number, isLast: boolean): string {
 	const preview = `<div class="preview">${escapeHtml(mail.preview || '')}</div>`
 	const body = hasHtmlContent(mail.html_body)
 		? `<div class="body">${sanitizeBody(mail.html_body)}</div>`
-		: `<div class="body"><pre>${escapeHtml(mail.html_body || mail.text_body || '')}</pre></div>`
+		: `<div class="body"><pre class="plaintext">${escapeHtml(mail.html_body || mail.text_body || '')}</pre></div>`
 	// Seen messages start collapsed (preview only); the last message and unseen
 	// messages stay expanded — mirrors the web MailThread isCollapsed logic.
 	const collapsible = !isLast
@@ -292,6 +292,8 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 	blockquote { margin: 8px 0; padding-left: 12px; border-left: 2px solid #ededed; color: #525252; }
 	pre, code { font-family: ui-monospace, Menlo, Courier, monospace; white-space: pre-wrap;
 		overflow-wrap: anywhere; }
+	/* text/plain bodies: keep newlines but render in the regular (sans-serif) font. */
+	.plaintext { font-family: inherit; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 	.quote-hidden { display: none; }
 	.email-pixel { display: none !important; width: 0 !important; height: 0 !important; }
 	.divider { border: none; border-top: 1px solid #ededed; margin: 0 -16px; }
