@@ -26,32 +26,44 @@ class MailCluster(Document):
 		if not self.data_store:
 			return "{}"
 
-		store = frappe.get_doc("Mail Cluster Store", self.data_store)
-		return json.dumps(store.config, indent=4)
+		try:
+			store = frappe.get_doc("Mail Cluster Store", self.data_store)
+			return json.dumps(store.config, indent=4)
+		except Exception:
+			return "{}"
 
 	@property
 	def blob_store_config(self) -> str:
 		if not self.blob_store:
 			return '{"@type": "Default"}'
 
-		store = frappe.get_doc("Mail Cluster Store", self.blob_store)
-		return json.dumps(store.config, indent=4)
+		try:
+			store = frappe.get_doc("Mail Cluster Store", self.blob_store)
+			return json.dumps(store.config, indent=4)
+		except Exception:
+			return '{"@type": "Default"}'
 
 	@property
 	def search_store_config(self) -> str:
 		if not self.search_store:
 			return '{"@type": "Default"}'
 
-		store = frappe.get_doc("Mail Cluster Store", self.search_store)
-		return json.dumps(store.config, indent=4)
+		try:
+			store = frappe.get_doc("Mail Cluster Store", self.search_store)
+			return json.dumps(store.config, indent=4)
+		except Exception:
+			return '{"@type": "Default"}'
 
 	@property
 	def in_memory_store_config(self) -> str:
 		if not self.in_memory_store:
 			return '{"@type": "Default"}'
 
-		store = frappe.get_doc("Mail Cluster Store", self.in_memory_store)
-		return json.dumps(store.config, indent=4)
+		try:
+			store = frappe.get_doc("Mail Cluster Store", self.in_memory_store)
+			return json.dumps(store.config, indent=4)
+		except Exception:
+			return '{"@type": "Default"}'
 
 	def autoname(self) -> None:
 		self.hostname = self.hostname.lower()
