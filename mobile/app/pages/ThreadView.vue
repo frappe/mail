@@ -200,13 +200,18 @@ async function load() {
 	}
 }
 
-// Hide Android's on-screen zoom (-/+) widget while keeping pinch-to-zoom.
 function onWebViewLoaded(args: EventData) {
 	if (!isAndroid) return
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const settings = (args.object as any).android?.getSettings?.()
+	const native = (args.object as any).android
+	// Hide Android's on-screen zoom (-/+) widget while keeping pinch-to-zoom.
+	const settings = native?.getSettings?.()
 	settings?.setBuiltInZoomControls(true)
 	settings?.setDisplayZoomControls(false)
+	// Render on a software layer so the WebView can be captured in the page
+	// transition bitmap — otherwise Android flashes white (then redraws) when
+	// navigating back. (1 = android.view.View.LAYER_TYPE_SOFTWARE)
+	native?.setLayerType?.(1, null)
 }
 
 // Links navigate to an `x-open:` scheme we intercept here, so taps open in the

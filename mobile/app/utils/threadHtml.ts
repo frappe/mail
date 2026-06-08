@@ -90,7 +90,7 @@ function attachmentChips(mail: Mail): string {
 	return `<div class="atts">${chips}</div>`
 }
 
-function messageHtml(mail: Mail, index: number): string {
+function messageHtml(mail: Mail, index: number, isLast: boolean): string {
 	const name = mail.from_name || mail.from_email || '?'
 	const avatar =
 		`<div class="avatar"><span>${escapeHtml(initials(name))}</span>` +
@@ -100,16 +100,78 @@ function messageHtml(mail: Mail, index: number): string {
 		`<span class="date">${escapeHtml(formatTimeAgo(mail.received_at))}</span></div>` +
 		`<div class="to">${escapeHtml(formatRecipients(mail.recipients || []))}</div></div>`
 	const more = `<span class="more" data-i="${index}">&#8942;</span>`
+	const preview = `<div class="preview">${escapeHtml(mail.preview || '')}</div>`
 	const body = hasHtmlContent(mail.html_body)
 		? `<div class="body">${sanitizeBody(mail.html_body)}</div>`
 		: `<div class="body"><pre>${escapeHtml(mail.html_body || mail.text_body || '')}</pre></div>`
-	return `<div class="msg"><div class="mhead">${avatar}${meta}${more}</div>${body}${attachmentChips(mail)}</div>`
+	// Seen messages start collapsed (preview only); the last message and unseen
+	// messages stay expanded — mirrors the web MailThread isCollapsed logic.
+	const collapsible = !isLast
+	const collapsed = collapsible && !!mail.seen
+	const cls = ['msg', collapsible && 'collapsible', collapsed && 'collapsed']
+		.filter(Boolean)
+		.join(' ')
+	return `<div class="${cls}"><div class="mhead">${avatar}${meta}${more}</div>${preview}${body}${attachmentChips(mail)}</div>`
 }
 
 export function buildThreadDocument(mails: Mail[], subject: string): string {
 	// Per-load nonce so only our own inline script is allowed by the CSP.
 	const nonce = Math.random().toString(36).slice(2)
-	const messages = mails.map((m, i) => messageHtml(m, i)).join('<hr class="divider">')
+
+	const lastIndex = mails.length - 1
+	const lastName = mails[lastIndex]?.name
+
+	// "N new messages" divider above the first unseen message (mirrors the web).
+	const firstUnseen = mails.findIndex((m) => !m.seen && !m.draft)
+	const unseenCount = mails.filter((m) => !m.seen && !m.draft).length
+	const unseenMessage =
+		unseenCount === 1 ? __('1 new message') : __('{0} new messages', [String(unseenCount)])
+
+	// Collapsed group: hide the middle seen messages behind a "N more messages"
+	// divider when there are >= 4 seen, non-last messages (mirrors the web
+	// setCollapsedGroup / collapsedMailNames). Tapping it reveals them.
+	const seenMails = mails.filter((m) => m.seen && !m.draft && m.name !== lastName)
+	const hiddenNames =
+		seenMails.length >= 4
+			? new Set(seenMails.slice(1, -1).map((m) => m.name))
+			: new Set<string>()
+	const firstGroupName = hiddenNames.size ? (seenMails[1]?.name ?? null) : null
+	const groupMessage = __('{0} more messages', [String(hiddenNames.size)])
+
+	const parts: string[] = []
+	let prevHidden = false
+	mails.forEach((m, i) => {
+		const isHidden = hiddenNames.has(m.name)
+		const isFirstHidden = m.name === firstGroupName
+		// Separator that precedes this message.
+		let sep = ''
+		if (unseenCount > 0 && i === firstUnseen) {
+			sep = `<div class="unseen-marker"><span class="pill">${escapeHtml(unseenMessage)}</span></div>`
+		} else if (i > 0) {
+			sep = '<hr class="divider">'
+		}
+		// The group divider stands in for the separator at the first hidden message.
+		if (isFirstHidden) {
+			parts.push(
+				`<div class="group-divider"><span class="pill">${escapeHtml(groupMessage)}</span></div>`,
+			)
+		}
+		const msg = messageHtml(m, i, i === lastIndex)
+		if (isHidden) {
+			// Wrap the message and its separator so they hide/reveal together. The
+			// first one keeps its separator too (hidden now, shown on expand) — the
+			// group divider stands in for it while collapsed.
+			parts.push(`<div class="group-hidden">${sep}${msg}</div>`)
+		} else {
+			// The first message after the group: its separator would double up under
+			// the group divider (the hidden group has no height), so hide it while
+			// collapsed — it reveals with the group.
+			if (sep) parts.push(prevHidden ? `<div class="group-hidden">${sep}</div>` : sep)
+			parts.push(msg)
+		}
+		prevHidden = isHidden
+	})
+	const messages = parts.join('')
 
 	const csp =
 		"default-src 'none'; img-src http: https: data: cid:; style-src 'unsafe-inline'; " +
@@ -136,7 +198,31 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 			document.querySelectorAll('.more').forEach(function (el) {
 				el.addEventListener('click', function (e) {
 					e.preventDefault();
+					e.stopPropagation();
 					location.href = 'x-more:' + (el.getAttribute('data-i') || '');
+				});
+			});
+			// Tap the "N more messages" divider to reveal the hidden middle messages.
+			var gd = document.querySelector('.group-divider');
+			if (gd) {
+				gd.addEventListener('click', function () {
+					document.querySelectorAll('.group-hidden').forEach(function (el) {
+						el.classList.remove('group-hidden');
+					});
+					gd.remove();
+				});
+			}
+			// Tap anywhere on a collapsed message to expand it; tap the header to
+			// collapse it again (body taps are left alone so links/selection work).
+			document.querySelectorAll('.msg.collapsible').forEach(function (msg) {
+				msg.addEventListener('click', function (e) {
+					var t = e.target;
+					if (t && t.closest && t.closest('.more')) return;
+					if (msg.classList.contains('collapsed')) {
+						msg.classList.remove('collapsed');
+					} else if (t && t.closest && t.closest('.mhead')) {
+						msg.classList.add('collapsed');
+					}
 				});
 			});
 			document.addEventListener('click', function (e) {
@@ -156,7 +242,7 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 <style>
-	* { box-sizing: border-box; }
+	* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 	/* Guard our chrome from a message's own <style> (e.g. body{background}/body{color}),
 	   which targets this single document's body since we render the thread in one doc. */
 	html body { background-color: #ffffff !important; }
@@ -164,8 +250,8 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 		line-height: 1.5; color: #171717; margin: 0; padding: 16px 16px 96px;
 		-webkit-text-size-adjust: 100%; overflow-wrap: anywhere; }
 	.subject { color: #171717; font-size: 22px; font-weight: 700; line-height: 1.3; margin: 4px 0 18px; }
-	.msg { padding: 2px 0; }
-	.mhead { display: flex; gap: 12px; align-items: center; margin: 14px 0 12px; }
+	.msg { padding: 18px 0; }
+	.mhead { display: flex; gap: 12px; align-items: center; }
 	.avatar { position: relative; width: 40px; height: 40px; border-radius: 40px;
 		background: #F3F3F3; flex-shrink: 0; overflow: hidden; }
 	.avatar span { position: absolute; inset: 0; display: flex; align-items: center;
@@ -181,7 +267,26 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 	.more { flex-shrink: 0; align-self: flex-start; width: 24px; height: 24px; margin-left: 2px;
 		display: flex; align-items: center; justify-content: center; color: #7c7c7c;
 		font-size: 17px; line-height: 1; border-radius: 24px; }
-	.body { font-size: 15px; line-height: 1.6; color: #383838; }
+	.msg.collapsed { cursor: pointer; }
+	.msg.collapsible:not(.collapsed) > .mhead { cursor: pointer; }
+	.preview { display: none; font-size: 14px; color: #7c7c7c; margin: 10px 0 0;
+		overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.msg.collapsed .preview { display: block; }
+	.msg.collapsed .body, .msg.collapsed .atts, .msg.collapsed .more { display: none; }
+	.unseen-marker { display: flex; align-items: center; gap: 0; margin: 0 -16px;
+		color: #0289f7; font-size: 14px; }
+	.unseen-marker::before, .unseen-marker::after { content: ''; flex: 1; height: 1px;
+		background: #a7d7fd; }
+	.unseen-marker .pill { flex-shrink: 0; border: 1px solid #a7d7fd; border-radius: 40px;
+		padding: 4px 12px; }
+	.group-divider { display: flex; align-items: center; gap: 0; margin: 0 -16px;
+		color: #7c7c7c; font-size: 13px; cursor: pointer; }
+	.group-divider::before, .group-divider::after { content: ''; flex: 1; height: 1px;
+		background: #ededed; }
+	.group-divider .pill { flex-shrink: 0; border: 1px solid #e2e2e2; border-radius: 40px;
+		padding: 5px 14px; }
+	.group-hidden { display: none; }
+	.body { font-size: 15px; line-height: 1.6; color: #383838; margin-top: 14px; }
 	.body img { max-width: 100%; height: auto; }
 	.body table { max-width: 100%; }
 	blockquote { margin: 8px 0; padding-left: 12px; border-left: 2px solid #ededed; color: #525252; }
@@ -189,7 +294,7 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 		overflow-wrap: anywhere; }
 	.quote-hidden { display: none; }
 	.email-pixel { display: none !important; width: 0 !important; height: 0 !important; }
-	.divider { border: none; border-top: 1px solid #ededed; margin: 22px 0; }
+	.divider { border: none; border-top: 1px solid #ededed; margin: 0 -16px; }
 	.atts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 	.chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e2e2;
 		border-radius: 10px; padding: 7px 11px; font-size: 13px; color: #525252; max-width: 100%; }
