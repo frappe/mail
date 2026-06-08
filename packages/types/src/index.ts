@@ -65,6 +65,7 @@ export interface Mail {
 	subject: string
 	html_body: string
 	text_body: string
+	preview: string | null
 	received_at: string
 	draft: 0 | 1
 	flagged: 0 | 1

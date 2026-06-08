@@ -39,6 +39,13 @@ export function formatDate(date: string | Date): string {
 	return d.format('MMM D, YYYY')
 }
 
+// Relative "x hours ago" for the thread detail message header, capitalized to
+// match the web MailDate.vue (which uses useTimeAgo in the non-list view).
+export function formatTimeAgo(date: string | Date): string {
+	const s = dayjs(date).fromNow()
+	return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 export function formatRelative(date: string | Date): string {
 	return dayjs(date).fromNow()
 }

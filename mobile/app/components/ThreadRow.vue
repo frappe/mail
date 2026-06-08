@@ -1,13 +1,11 @@
 <template>
-	<!-- One thread list row. A full-row overlay opens the thread; the star is layered
-	     on top as its own tap target. NativeScript routes a tap to the front-most view
-	     with a handler, so the star wins in its area and the overlay (open) everywhere
-	     else — tapping anywhere but the star navigates. Horizontal insets are margins
-	     on grid children, not container padding, per the iOS spacing constraints. -->
+	<!-- One thread list row. A full-row transparent overlay opens the thread; the star
+	     sits on top of it as its own tap target. The overlay is layered ABOVE the avatar/
+	     content (so iOS hit-testing — which returns the top-most view, not the first with a
+	     handler — routes those taps to it) but BELOW the star (so the star still wins in its
+	     area). Tapping anywhere but the star navigates. Horizontal insets are margins on grid
+	     children, not container padding, per the iOS spacing constraints. -->
 	<GridLayout columns="auto, *, auto" class="border-outline-gray-1 border-b py-3">
-		<!-- full-row tap target: open the thread (behind everything, no background) -->
-		<GridLayout col="0" colSpan="3" @tap="$emit('open')" />
-
 		<!-- avatar: sender image, else monochrome initials -->
 		<UserAvatar
 			col="0"
@@ -97,6 +95,10 @@
 			horizontalAlignment="right"
 			verticalAlignment="top"
 		/>
+
+		<!-- full-row tap target: open the thread (transparent, above content, below star) -->
+		<GridLayout col="0" colSpan="3" @tap="$emit('open')" />
+
 		<GridLayout
 			col="2"
 			class="mr-1 h-7 w-9"
