@@ -223,9 +223,9 @@ After installation completes:
 
 ![Stalwart Login Page](docs/screenshots/stalwart-login.png)
 
-##### Step 3: Configure `site_config.json`
+##### Step 3: Configure Stalwart Credentials
 
-Ensure the following keys are properly configured in your `site_config.json` for Stalwart API communication:
+Ensure Stalwart credentials are configured in either **Mail Settings** (recommended) or your `site_config.json` under `mail`:
 
 ```json
 {
@@ -237,55 +237,41 @@ Ensure the following keys are properly configured in your `site_config.json` for
 }
 ```
 
-##### Step 4: Adding Domains (Desk)
+`stalwart-cli` is auto-downloaded after migrate. You can optionally pin the CLI version with `mail.stalwart_cli_version` in `site_config.json`.
 
-**4.1 Create a Mail Domain Request**
+##### Step 4: Adding Domains (Admin Dashboard)
 
-- Go to **Mail Domain Request → New**.
-- After saving, a **Verification Key (TXT record)** is generated.
-- Add this TXT record to your domain's DNS settings.
-- If the domain matches the **Root Domain** and your DNS provider is integrated, you can auto‑create this record via a **DNS Record** document.
+**4.1 Add a Domain**
 
-![Mail Domain Request](docs/screenshots/domain-request.png)
+- Go to **Dashboard → Domains**.
+- Click **Add Domain** and provide your domain name.
+- Open the newly created domain to view generated DNS records.
 
-**4.2 Verify and Create Domain**
+![Domain](docs/screenshots/ui/domain.png)
 
-- Once the DNS TXT record is applied, click **Actions → Verify and Create Domain**.
-- Upon successful verification:
+**4.2 Configure DNS Records**
 
-  **1. The domain is created on the Stalwart Mail Server.**
-  You will now see the required DNS records (SPF, DKIM, DMARC, MX, etc.) that must be added to your DNS provider to ensure proper email deliverability and prevent spoofing.
+- Add the shown DNS records to your DNS provider.
+- You can export records as **Zone**, **CSV**, or **JSON** from the Domain actions menu.
+- Key records include SPF, DKIM, DMARC, MX, and service discovery records.
 
-  ![Domain Principal](docs/screenshots/domain.png)
+**4.3 Verify Propagation**
 
-  **2. A Principal Settings record is created.**
-  This links the domain for management and provisioning.
+- Wait for DNS propagation and verify records from your provider or using DNS lookup tools.
+- Repeat the above process for each additional domain.
 
-**4.3 Development Mode (Optional)**
+##### Step 5: Adding Members (Admin Dashboard)
 
-If you're working in a **development environment** and cannot verify DNS records, you may manually check the **Verified** checkbox and save the document to bypass verification.
+- Go to **Dashboard → Members** and click **Add Member**.
+- Enter username, domain, role, and backup email.
+- Choose one of the following:
+  - **Send Invite:** sends an onboarding link to the backup email.
+  - **Add Member directly:** set name and password to create immediately.
 
-Repeat the above process to add additional domains.
+![Member](docs/screenshots/ui/member.png)
 
-##### Step 5: Adding Accounts (Desk)
+Member invites are managed from **Dashboard → Invites**, where you can track pending, accepted, and expired invitations.
 
-- Create a **Mail Account Request**.
-
-  ![Mail Account Request](docs/screenshots/account-request.png)
-
-- **Backup Email**: Used for invitations and password resets.
-- **Account**: The mailbox address; used to create the User document and login to the Mail UI.
-- Enable **Send Invite** if you want to send an onboarding email.
-  Ensure you have a **default Email Account** configured for outbound mail.
-
-  ![Email Account](docs/screenshots/email-account.png)
-
-After saving:
-
-- The user receives a verification link, **or**
-- You may use **Force Verify** to immediately create the account.
-
-![Account Principal](docs/screenshots/account.png)
 
 ## APIs
 
@@ -518,7 +504,7 @@ Some of its features include:
 
 ![Vacation response](docs/screenshots/ui/vacation-response.png)
 
-#### 8. Importing or exporting pre-existing mail data
+#### 8. Importing or exporting mailbox data with Mail Exchange
 
 ![Mail exchange](docs/screenshots/ui/mail-exchange.png)
 
