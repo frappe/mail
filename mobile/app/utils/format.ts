@@ -39,6 +39,11 @@ export function formatDate(date: string | Date): string {
 	return d.format('MMM D, YYYY')
 }
 
+// Full date + time for the thread detail message header.
+export function formatFullDate(date: string | Date): string {
+	return dayjs(date).format('MMM D, YYYY, h:mm A')
+}
+
 export function formatRelative(date: string | Date): string {
 	return dayjs(date).fromNow()
 }
