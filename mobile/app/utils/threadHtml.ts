@@ -5,7 +5,7 @@
 // we additionally strip those with regex as a backstop. Only our nonce'd helper
 // script (quote-collapse + external link handling) is allowed to run.
 
-import { formatFullDate, formatRecipients } from '@/utils/format'
+import { formatRecipients, formatTimeAgo } from '@/utils/format'
 import { gravatarUrl } from '@/utils/gravatar'
 
 import type { Mail } from '@mail/types'
@@ -90,27 +90,26 @@ function attachmentChips(mail: Mail): string {
 	return `<div class="atts">${chips}</div>`
 }
 
-function messageHtml(mail: Mail): string {
+function messageHtml(mail: Mail, index: number): string {
 	const name = mail.from_name || mail.from_email || '?'
 	const avatar =
 		`<div class="avatar"><span>${escapeHtml(initials(name))}</span>` +
 		`<img src="${escapeHtml(gravatarUrl(mail.from_email || ''))}" alt=""></div>`
-	const emailTag = mail.from_email
-		? ` <span class="email">&lt;${escapeHtml(mail.from_email)}&gt;</span>`
-		: ''
 	const meta =
-		`<div class="meta"><div class="from">${escapeHtml(name)}${emailTag}</div>` +
-		`<div class="to">${escapeHtml(formatRecipients(mail.recipients || []))} &middot; ${escapeHtml(formatFullDate(mail.received_at))}</div></div>`
+		`<div class="meta"><div class="from"><span class="from-name">${escapeHtml(name)}</span>` +
+		`<span class="date">${escapeHtml(formatTimeAgo(mail.received_at))}</span></div>` +
+		`<div class="to">${escapeHtml(formatRecipients(mail.recipients || []))}</div></div>`
+	const more = `<span class="more" data-i="${index}">&#8942;</span>`
 	const body = hasHtmlContent(mail.html_body)
 		? `<div class="body">${sanitizeBody(mail.html_body)}</div>`
 		: `<div class="body"><pre>${escapeHtml(mail.html_body || mail.text_body || '')}</pre></div>`
-	return `<div class="msg"><div class="mhead">${avatar}${meta}</div>${body}${attachmentChips(mail)}</div>`
+	return `<div class="msg"><div class="mhead">${avatar}${meta}${more}</div>${body}${attachmentChips(mail)}</div>`
 }
 
 export function buildThreadDocument(mails: Mail[], subject: string): string {
 	// Per-load nonce so only our own inline script is allowed by the CSP.
 	const nonce = Math.random().toString(36).slice(2)
-	const messages = mails.map(messageHtml).join('<hr class="divider">')
+	const messages = mails.map((m, i) => messageHtml(m, i)).join('<hr class="divider">')
 
 	const csp =
 		"default-src 'none'; img-src http: https: data: cid:; style-src 'unsafe-inline'; " +
@@ -118,6 +117,12 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 
 	const script = `
 		(function () {
+			// Reveal avatar images only once they load — a broken/404 gravatar stays
+			// hidden so the initials underneath show (we can't use onerror under CSP).
+			document.querySelectorAll('.avatar img').forEach(function (img) {
+				function show() { if (img.naturalWidth > 0) img.style.display = 'block'; }
+				if (img.complete) show(); else img.addEventListener('load', show);
+			});
 			document.querySelectorAll('.gmail_quote, .frappe_mail_quote').forEach(function (q) {
 				q.classList.add('quote-hidden');
 				var b = document.createElement('button');
@@ -127,6 +132,12 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 			});
 			document.querySelectorAll('img[width="1"], img[height="1"]').forEach(function (i) {
 				i.className += ' email-pixel';
+			});
+			document.querySelectorAll('.more').forEach(function (el) {
+				el.addEventListener('click', function (e) {
+					e.preventDefault();
+					location.href = 'x-more:' + (el.getAttribute('data-i') || '');
+				});
 			});
 			document.addEventListener('click', function (e) {
 				var a = e.target && e.target.closest && e.target.closest('a');
@@ -146,21 +157,30 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 <style>
 	* { box-sizing: border-box; }
+	/* Guard our chrome from a message's own <style> (e.g. body{background}/body{color}),
+	   which targets this single document's body since we render the thread in one doc. */
+	html body { background-color: #ffffff !important; }
 	body { font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; font-size: 15px;
 		line-height: 1.5; color: #171717; margin: 0; padding: 16px 16px 96px;
 		-webkit-text-size-adjust: 100%; overflow-wrap: anywhere; }
-	.subject { font-size: 22px; font-weight: 700; line-height: 1.3; margin: 4px 0 18px; }
+	.subject { color: #171717; font-size: 22px; font-weight: 700; line-height: 1.3; margin: 4px 0 18px; }
 	.msg { padding: 2px 0; }
 	.mhead { display: flex; gap: 12px; align-items: center; margin: 14px 0 12px; }
 	.avatar { position: relative; width: 40px; height: 40px; border-radius: 40px;
 		background: #F3F3F3; flex-shrink: 0; overflow: hidden; }
 	.avatar span { position: absolute; inset: 0; display: flex; align-items: center;
 		justify-content: center; font-size: 14px; font-weight: 600; color: #525252; }
-	.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+	.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+		display: none; }
 	.meta { min-width: 0; flex: 1; }
-	.from { font-size: 15px; font-weight: 600; color: #171717; }
-	.from .email { font-weight: 400; color: #7c7c7c; }
+	.from { display: flex; align-items: baseline; gap: 8px; }
+	.from-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; color: #171717;
+		overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.date { flex-shrink: 0; font-size: 13px; font-weight: 400; color: #7c7c7c; }
 	.to { font-size: 13px; color: #7c7c7c; margin-top: 2px; word-break: break-word; }
+	.more { flex-shrink: 0; align-self: flex-start; width: 24px; height: 24px; margin-left: 2px;
+		display: flex; align-items: center; justify-content: center; color: #7c7c7c;
+		font-size: 17px; line-height: 1; border-radius: 24px; }
 	.body { font-size: 15px; line-height: 1.6; color: #383838; }
 	.body img { max-width: 100%; height: auto; }
 	.body table { max-width: 100%; }

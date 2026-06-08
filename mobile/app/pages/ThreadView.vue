@@ -45,7 +45,12 @@
 
 				<!-- thread body -->
 				<GridLayout row="1">
-					<WebView v-if="html" :src="html" @loadStarted="onLoadStarted" />
+					<WebView
+						v-if="html"
+						:src="html"
+						@loaded="onWebViewLoaded"
+						@loadStarted="onLoadStarted"
+					/>
 
 					<StackLayout
 						v-else-if="loading"
@@ -144,7 +149,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { Utils } from '@nativescript/core'
+import { Utils, isAndroid } from '@nativescript/core'
 import { $navigateBack } from 'nativescript-vue'
 
 import { selectedThread as thread, selectedThreadMailbox } from '@/state/selectedThread'
@@ -155,7 +160,7 @@ import { buildThreadDocument } from '@/utils/threadHtml'
 import { userStore } from '@/stores/user'
 
 import type { Mail } from '@mail/types'
-import type { LoadEventData } from '@nativescript/core'
+import type { EventData, LoadEventData } from '@nativescript/core'
 
 const store = userStore()
 const api = useApi()
@@ -195,15 +200,29 @@ async function load() {
 	}
 }
 
+// Hide Android's on-screen zoom (-/+) widget while keeping pinch-to-zoom.
+function onWebViewLoaded(args: EventData) {
+	if (!isAndroid) return
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const settings = (args.object as any).android?.getSettings?.()
+	settings?.setBuiltInZoomControls(true)
+	settings?.setDisplayZoomControls(false)
+}
+
 // Links navigate to an `x-open:` scheme we intercept here, so taps open in the
 // system browser instead of inside the sandboxed WebView.
 function onLoadStarted(args: LoadEventData) {
 	const url = args.url ?? ''
-	if (!url.startsWith('x-open:')) return
 	const view = args.object as unknown as { stopLoading?: () => void }
-	view.stopLoading?.()
-	const target = decodeURIComponent(url.slice('x-open:'.length))
-	if (target) Utils.openUrl(target)
+	if (url.startsWith('x-open:')) {
+		view.stopLoading?.()
+		const target = decodeURIComponent(url.slice('x-open:'.length))
+		if (target) Utils.openUrl(target)
+	} else if (url.startsWith('x-more:')) {
+		// Per-message "more" button — actions land in #490.
+		view.stopLoading?.()
+		flash(__('More coming soon'))
+	}
 }
 
 // Mark the thread seen when the detail view opens (path-independent), mutating
