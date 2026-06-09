@@ -126,6 +126,7 @@ export interface Thread {
 	forwarded: 0 | 1
 	attachments: Attachment[]
 	user_image?: string
+	messages: Mail[]
 }
 
 export interface MailboxData {

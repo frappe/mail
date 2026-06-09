@@ -9,17 +9,10 @@
 				<ChevronLeft class="text-ink-gray-7 h-4 w-4" />
 			</template>
 		</Button>
-		<span
-			v-if="thread.loading"
-			class="bg-surface-gray-3 h-3.5 animate-pulse"
-			:style="{
-				width: `${Math.max(100, Math.random() * (isMobile ? 300 : 800))}px`,
-			}"
-		/>
-		<template v-else>
-			<Tooltip v-if="!isMobile" :text="thread?.data?.[0]?.subject">
+		<template v-if="thread?.length">
+			<Tooltip v-if="!isMobile" :text="thread?.[0]?.subject">
 				<h2 class="mr-2 select-none truncate font-semibold leading-5">
-					{{ thread?.data?.[0]?.subject || __('[No subject]') }}
+					{{ thread?.[0]?.subject || __('[No subject]') }}
 				</h2>
 			</Tooltip>
 			<div class="ml-auto shrink-0 space-x-2">
@@ -114,7 +107,6 @@ import {
 	Trash2,
 } from 'lucide-vue-next'
 import { Button, Dropdown, Tooltip } from 'frappe-ui'
-import type { createResource } from 'frappe-ui'
 
 import { FOLDER_ICON_COLOR_MAP } from '@/constants'
 import { getIcon } from '@/utils'
@@ -123,7 +115,7 @@ import { userStore } from '@/stores/user'
 
 import type { Mail, MailboxData } from '@/types'
 
-const { thread, threads } = defineProps<{ thread: typeof createResource; threads: string[] }>()
+const { thread, threads } = defineProps<{ thread: Mail[]; threads: string[] }>()
 const emit = defineEmits([
 	'setFlagged',
 	'setSeen',
@@ -146,8 +138,8 @@ const mailbox = computed(() => route.params.mailbox as string)
 const threadID = computed(() => route.params.threadID as string)
 
 const threadMailboxes = computed(() => {
-	if (!thread?.data?.length) return []
-	return thread.data
+	if (!thread?.length) return []
+	return thread
 		.filter((mail: Mail) => mail.id)
 		.map((mail: Mail) => mail.mailboxes.map((m) => m.mailbox_id))
 		.reduce((common, ids: string[]) => common.filter((id) => ids.includes(id)))
@@ -159,22 +151,22 @@ const threadActions = computed((): Action[] => [
 		onClick: () =>
 			emit(
 				'setFlagged',
-				thread.data.map((m) => m.id),
+				thread.map((m) => m.id),
 				true,
 			),
 		icon: Star,
-		condition: () => thread.data.some((m) => !m.flagged),
+		condition: () => thread.some((m) => !m.flagged),
 	},
 	{
 		label: __('Unstar Thread'),
 		onClick: () =>
 			emit(
 				'setFlagged',
-				thread.data.map((m) => m.id),
+				thread.map((m) => m.id),
 				false,
 			),
 		icon: h(Star, { class: 'fill-ink-amber-2 text-ink-amber-2 stroke-ink-amber-2' }),
-		condition: () => thread.data.every((m) => m.flagged),
+		condition: () => thread.every((m) => m.flagged),
 	},
 	{
 		label: __('Mark as Unread (U)'),

@@ -16,18 +16,15 @@
 			@next-thread="emit('nextThread')"
 		/>
 		<div ref="threadContainer" class="flex-1 overflow-y-auto">
-			<div v-if="isMobile && !thread.loading" class="border-b px-3 py-3.5">
+			<div v-if="isMobile && thread?.length" class="border-b px-3 py-3.5">
 				<h2 class="text-lg font-semibold leading-5">
-					{{ thread?.data?.[0].subject || __('[No subject]') }}
+					{{ thread[0].subject || __('[No subject]') }}
 				</h2>
 			</div>
 
-			<MailThreadPlaceholder v-if="thread.loading" />
-
 			<div
-				v-else
 				class="sm:space-y-4 sm:px-5 sm:py-6"
-				:class="{ 'pb-16': isMobile && !thread.data?.at(-1)?.draft }"
+				:class="{ 'pb-16': isMobile && !thread?.at(-1)?.draft }"
 			>
 				<template v-for="group in mailsByDay" :key="group.date">
 					<ThreadDivider
@@ -59,12 +56,12 @@
 							:class="{
 								'px-3 py-5': isMobile,
 								'max-sm:border-b':
-									(thread.data.length > 1 || mail.draft) &&
+									(thread.length > 1 || mail.draft) &&
 									mail.name !== mailBeforeCollapsedGroup &&
 									mail.name !== mailBeforeUnseenMarker,
-								'sm:rounded-xl sm:p-5': thread.data.length > 1 || mail.draft,
+								'sm:rounded-xl sm:p-5': thread.length > 1 || mail.draft,
 								'sm:border':
-									(thread.data.length > 1 && !mail.draft) ||
+									(thread.length > 1 && !mail.draft) ||
 									(mail.draft && dataTheme === 'dark'),
 								'cursor-pointer': isCollapsed(mail),
 								'sm:shadow-elevation-light-md':
@@ -113,7 +110,7 @@
 										:reply-all
 										:forward
 										:reload-mails="handleReload"
-										:thread="thread.data"
+										:thread="thread"
 										@set-flagged="
 											(id: string, flagged: boolean) =>
 												emit('setFlagged', [id], flagged)
@@ -124,8 +121,7 @@
 								<div
 									class="flex items-center space-x-3"
 									:class="{
-										'cursor-pointer':
-											mail !== thread.data[thread.data.length - 1],
+										'cursor-pointer': mail !== thread[thread.length - 1],
 										'pb-6': mail.preview,
 									}"
 									@click.stop="mail.collapsed = !mail.collapsed"
@@ -192,7 +188,7 @@
 												:reply-all
 												:forward
 												:reload-mails="handleReload"
-												:thread="thread.data"
+												:thread="thread"
 												@set-flagged="
 													(id: string, flagged: boolean) =>
 														emit('setFlagged', [id], flagged)
@@ -246,7 +242,7 @@
 									/>
 									<pre
 										v-else
-										class="whitespace-pre-wrap break-words pt-4 text-base !leading-5 sm:text-sm"
+										class="whitespace-pre-wrap break-words pt-4 font-sans text-base !leading-5 sm:text-sm"
 										>{{ mail.html_body || mail.text_body }}</pre
 									>
 
@@ -276,7 +272,7 @@
 				</template>
 
 				<div
-					v-if="thread.data.length && !thread.data?.at(-1)?.draft"
+					v-if="thread.length && !thread?.at(-1)?.draft"
 					class="flex"
 					:class="
 						isMobile
@@ -362,17 +358,17 @@ import MailActions from '@/components/MailActions.vue'
 import MailDate from '@/components/MailDate.vue'
 import MailDetails from '@/components/MailDetails.vue'
 import MailDetailsPopover from '@/components/MailDetailsPopover.vue'
-import MailThreadPlaceholder from '@/components/MailThreadPlaceholder.vue'
 import SendMail from '@/components/SendMail.vue'
 import ThreadDivider from '@/components/ThreadDivider.vue'
 import ThreadHeader from '@/components/ThreadHeader.vue'
 
 import type { Attachment, ComposeMailData, Identity, Mail, Mailbox } from '@/types'
 
-const { mailbox, threadID, threads } = defineProps<{
+const { mailbox, threadID, threads, messages } = defineProps<{
 	mailbox: string
 	threadID?: string
 	threads: string[]
+	messages?: Mail[]
 }>()
 
 const emit = defineEmits([
@@ -406,7 +402,7 @@ const draftMails = reactive<{ [key: string]: ComposeMailData }>({})
 
 const mailsByDay = computed(() => {
 	const groups: { date: string; mails: Mail[] }[] = []
-	for (const mail of thread.data || []) {
+	for (const mail of thread.value || []) {
 		const day = dayjs(mail.received_at).format('YYYY-MM-DD')
 		const last = groups.at(-1)
 		if (last && last.date === day) last.mails.push(mail)
@@ -423,8 +419,8 @@ const shouldShowDateDivider = (mails: Mail[]) =>
 
 const collapsedMailNames = computed(() => {
 	if (!firstMailOfCollapsedGroup.value) return new Set<string>()
-	const lastMailName = thread.data?.at(-1)?.name
-	const seenMails = (thread.data || []).filter(
+	const lastMailName = thread.value?.at(-1)?.name
+	const seenMails = (thread.value || []).filter(
 		(m) => m.seen && !m.name.startsWith('draft') && m.name !== lastMailName,
 	)
 	if (seenMails.length < 4) return new Set<string>()
@@ -433,14 +429,14 @@ const collapsedMailNames = computed(() => {
 
 const mailBeforeUnseenMarker = computed(() => {
 	if (!firstUnseenMail.value) return null
-	const data = thread.data || []
+	const data = thread.value || []
 	const idx = data.findIndex((m) => m.id === firstUnseenMail.value)
 	return idx > 0 ? data[idx - 1].name : null
 })
 
-const isSomeSeen = computed(() => (thread.data || []).some((m) => m.seen))
-const unseenCount = computed(() => (thread.data || []).filter((m) => !m.seen && !m.draft).length)
-const firstUnseenMail = computed(() => thread.data?.find((m) => !m.seen && !m.draft)?.id)
+const isSomeSeen = computed(() => (thread.value || []).some((m) => m.seen))
+const unseenCount = computed(() => (thread.value || []).filter((m) => !m.seen && !m.draft).length)
+const firstUnseenMail = computed(() => thread.value?.find((m) => !m.seen && !m.draft)?.id)
 
 const unseenMessage = computed(() =>
 	unseenCount.value === 1
@@ -453,40 +449,46 @@ const shouldShowUnseenMarker = (id: string) =>
 
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
-const thread = createResource({
-	url: 'mail.api.mail.get_thread',
-	auto: !!threadID,
-	makeParams: () => ({ account: store.account, thread_id: threadID }),
-	transform: (data: Mail[]) =>
-		data
-			.filter((mail) => filterRelevantMails(mail))
-			.map((mail) => ({
-				...mail,
-				groupedRecipients: getGroupedRecipients(mail.recipients, false),
-				collapsed: !!mail.seen,
-				show: true,
-			})),
-	onSuccess: (data: Mail[]) => {
-		if (!data.filter((mail) => filterRelevantMails(mail)).length) {
-			goToMailbox()
-			emit('reloadMails')
-			return
+// The thread's messages now arrive from the parent (loaded via `get_threads`) instead of a separate
+// `get_thread` fetch. `loadThread` derives the display list from the `messages` prop.
+const thread = ref<Mail[]>([])
+
+const transformThreadMails = (mails: Mail[]) =>
+	mails
+		.filter((mail) => filterRelevantMails(mail))
+		.map((mail) => ({
+			...mail,
+			groupedRecipients: getGroupedRecipients(mail.recipients, false),
+			collapsed: !!mail.seen,
+			show: true,
+		}))
+
+const loadThread = () => {
+	if (!threadID || !messages) return
+
+	const data = transformThreadMails(messages)
+
+	if (!data.length) {
+		goToMailbox()
+		emit('reloadMails')
+		return
+	}
+
+	thread.value = data
+	setCollapsedGroup(data)
+
+	let unseen = true
+	data.forEach((mail) => {
+		if (unseen && !mail.seen) {
+			emit('setSeen', true)
+			unseen = false
 		}
-		setCollapsedGroup(data)
-		let unseen = true
-		data.forEach((mail) => {
-			if (unseen && !mail.seen) {
-				emit('setSeen', true)
-				unseen = false
-			}
-			if (mail.draft) {
-				mail.groupedRecipients = getGroupedRecipients(mail.recipients, false)
-				populateDraftMails(mail)
-			}
-		})
-	},
-	onError: () => goToMailbox(),
-})
+		if (mail.draft) {
+			mail.groupedRecipients = getGroupedRecipients(mail.recipients, false)
+			populateDraftMails(mail)
+		}
+	})
+}
 
 const firstMailOfCollapsedGroup = ref<string | null>(null)
 const mailBeforeCollapsedGroup = ref<string | null>(null)
@@ -521,17 +523,37 @@ const filterRelevantMails = (mail: Mail) => {
 	return !mailboxes.includes(trash) && !mail.junk
 }
 
+// Explicit refresh: ask the parent to reload `get_threads`, then re-derive once the `messages` prop
+// updates (tracked by `forceReload`). Background list reloads must NOT re-derive so that unsaved
+// inline drafts survive — they only re-derive when the open thread has no data yet.
+let forceReload = false
+
 const reload = () => {
-	if (threadID) thread.reload()
+	if (!threadID) return
+	forceReload = true
+	emit('reloadMails')
 }
 
 watch(
 	() => threadID,
 	() => {
 		resetCollapsedGroup()
-		reload()
+		thread.value = []
+		loadThread()
 	},
 )
+
+watch(
+	() => messages,
+	() => {
+		if (forceReload || !thread.value.length) {
+			forceReload = false
+			loadThread()
+		}
+	},
+)
+
+onMounted(() => loadThread())
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
@@ -543,7 +565,7 @@ const unblockEmailAddress = createResource({
 })
 
 const handleReload = (isUndo = false) => {
-	if (thread.data.length == 1) {
+	if (thread.value.length == 1) {
 		emit('reloadMails')
 		if (!isUndo) return goToMailbox()
 	}
@@ -555,20 +577,20 @@ const replyForwardActions = computed(() =>
 		{
 			label: __('Reply'),
 			tooltip: __('Reply (R)'),
-			onClick: () => reply(thread.data.at(-1)),
+			onClick: () => reply(thread.value.at(-1)),
 			icon: Reply,
 		},
 		{
 			label: __('Reply All'),
 			tooltip: __('Reply All (Shift+R)'),
-			onClick: () => replyAll(thread.data.at(-1)),
+			onClick: () => replyAll(thread.value.at(-1)),
 			icon: ReplyAll,
-			condition: showReplyAll(thread.data.at(-1)),
+			condition: showReplyAll(thread.value.at(-1)),
 		},
 		{
 			label: __('Forward'),
 			tooltip: __('Forward (F)'),
-			onClick: () => forward(thread.data.at(-1)),
+			onClick: () => forward(thread.value.at(-1)),
 			icon: Forward,
 		},
 	].filter((action) => action.condition !== false),
@@ -592,7 +614,7 @@ const openAttachment = (mailAttachments: Attachment[], idx: number) => {
 }
 
 const isCollapsed = (mail: Mail) =>
-	!!(mail.collapsed && mail !== thread.data[thread.data.length - 1])
+	!!(mail.collapsed && mail !== thread.value[thread.value.length - 1])
 
 const showReplyAll = (mail: Mail) =>
 	!mail.draft &&
@@ -645,10 +667,10 @@ const createLocalDraft = (mail: Mail, draftDetails: ComposeMailData) => {
 
 	nextTick(() => {
 		draftMails[name] = { name, ...draftDetails }
-		const index = thread.data.indexOf(mail)
-		const draft = thread.data.find((m: Mail) => m.name === name)
+		const index = thread.value.indexOf(mail)
+		const draft = thread.value.find((m: Mail) => m.name === name)
 		if (index !== -1 && !draft)
-			thread.data.splice(index + 1, 0, { ...draftMails[name], draft: 1, show: true })
+			thread.value.splice(index + 1, 0, { ...draftMails[name], draft: 1, show: true })
 		if (isMobile.value) popOutDraft(draftMails[name])
 		else
 			setTimeout(() =>
@@ -661,7 +683,7 @@ const createLocalDraft = (mail: Mail, draftDetails: ComposeMailData) => {
 
 const discardLocalDraft = (mail: string) => {
 	delete draftMails[mail]
-	thread.data = thread.data.filter((m: Mail) => m.name !== mail)
+	thread.value = thread.value.filter((m: Mail) => m.name !== mail)
 }
 
 // Shortcuts
@@ -670,7 +692,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 	if (shouldIgnoreKeypress(e)) return
 
 	const key = e.key.toLowerCase()
-	const lastMail = thread.data?.at(-1)
+	const lastMail = thread.value?.at(-1)
 	if (!lastMail || lastMail.draft) return
 
 	// Reply/Reply All shortcut
@@ -692,7 +714,7 @@ onMounted(() => window.addEventListener('keydown', handleKeydown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 
 const syncFlagged = (ids: string[], flagged: boolean) =>
-	thread.data?.forEach((mail: Mail) => {
+	thread.value?.forEach((mail: Mail) => {
 		if (ids.includes(mail.id)) mail.flagged = flagged ? 1 : 0
 	})
 
@@ -701,11 +723,11 @@ const syncMailboxMembership = (mailboxId: string, add: boolean) => {
 		const mb = mailboxes.data?.find((m) => m.id === mailboxId)
 		if (!mb) return
 		const entry: Mailbox = { mailbox: mb.name, mailbox_id: mb.id, mailbox_name: mb._name }
-		thread.data?.forEach((mail: Mail) => {
+		thread.value?.forEach((mail: Mail) => {
 			if (!mail.mailboxes.some((m) => m.mailbox_id === mailboxId)) mail.mailboxes.push(entry)
 		})
-	} else if (thread.data?.every((mail: Mail) => mail.mailboxes.length > 1))
-		thread.data?.forEach(
+	} else if (thread.value?.every((mail: Mail) => mail.mailboxes.length > 1))
+		thread.value?.forEach(
 			(mail: Mail) =>
 				(mail.mailboxes = mail.mailboxes.filter((m) => m.mailbox_id !== mailboxId)),
 		)
@@ -723,7 +745,7 @@ const popOutDraft = (mail: ComposeMailData) => {
 }
 
 const getSourceMail = (mail: string) =>
-	thread.data.find((m: Mail) => m.name === mail.split(':')[1])
+	thread.value.find((m: Mail) => m.name === mail.split(':')[1])
 
 const getReplyDetails = (mail: Mail) => ({
 	subject: mail.subject?.startsWith('Re: ') ? mail.subject : `Re: ${mail.subject}`,

@@ -658,17 +658,27 @@ def fetch_messages(
 def fetch_threads(
 	account: str, filter: dict | None = None, position: int = 0, limit: int = 50
 ) -> dict[str, list[dict]]:
-	"""Returns a dictionary of thread IDs and their corresponding list of messages based on the provided filter."""
+	"""Returns a dictionary mapping each thread ID matching the filter to the full list of messages
+	in that thread (the entire conversation across all mailboxes), ordered oldest to newest."""
 
 	has_permission_for_user(parse_account(account)[0])
 
+	# Thread IDs matching the filter (ordered) — only IDs are fetched here, not message bodies.
 	service = get_email_service(account)
-	threads: dict[str, list[str]] = service.query_thread(filter, position, limit, fetch_all=True)
-	messages = get_messages(account, ids=[id for ids in threads.values() for id in ids])
+	thread_ids = service.query_thread(filter, position, limit, fetch_all=False)
+	if not thread_ids:
+		return {}
 
+	# Each thread's full conversation, fetched once and grouped by thread.
+	threads: dict[str, list[dict]] = {thread_id: [] for thread_id in thread_ids}
+	for message in get_messages(account, get_message_ids(account, thread_ids)):
+		if message["thread_id"] in threads:
+			threads[message["thread_id"]].append(message)
+
+	# Order each conversation oldest to newest so callers don't have to re-sort.
 	return {
-		thread_id: [message for message in messages if message["id"] in ids]
-		for thread_id, ids in threads.items()
+		thread_id: sorted(messages, key=lambda message: message["received_at"])
+		for thread_id, messages in threads.items()
 	}
 
 

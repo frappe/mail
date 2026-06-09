@@ -289,6 +289,7 @@
 					:mailbox
 					:thread-i-d
 					:threads="threadIDs"
+					:messages="currentThread?.messages"
 					@reload-mails="reloadThreads"
 					@set-seen="
 						(seen: boolean) =>
@@ -296,12 +297,7 @@
 								? setSeen.submit({ 1: [threadID!] })
 								: handleSetSeen({ 0: [threadID!] })
 					"
-					@sync-unseen="
-						(ids: string[]) =>
-							threadsResource.data
-								.filter((thread: Thread) => ids.includes(thread.id))
-								.forEach((thread: Thread) => (thread.seen = 0))
-					"
+					@sync-unseen="handleSyncUnseen"
 					@set-flagged="
 						(ids: string[], flagged: boolean) => setFlagged.submit({ ids, flagged })
 					"
@@ -1001,8 +997,10 @@ const setSeen = createResource({
 			const seen = seenStr === 'true'
 			threadsResource.value.data
 				.filter((thread: Thread) => ids.includes(thread.thread_id))
-				.forEach((thread: Thread) => (thread.seen = seen ? 1 : 0))
-			if (!seen && threadID && ids.includes(threadID)) goToMailbox()
+				.forEach((thread: Thread) => {
+					thread.seen = seen ? 1 : 0
+					thread.messages?.forEach((message) => (message.seen = seen ? 1 : 0))
+				})
 		}
 	},
 })
@@ -1289,6 +1287,16 @@ const handleSetSeen = (threadIDs: SetSeenParams) => {
 	)
 		return
 
+	// Apply optimistically so a quick reopen sees the new seen state immediately — waiting for the
+	// server round-trip would leave the thread's messages stale (no auto mark-as-read / unseen marker).
+	threadsResource.value.data
+		?.filter((t: Thread) => selectedThreads.includes(t.thread_id))
+		.forEach((t: Thread) => {
+			t.seen = seen ? 1 : 0
+			t.messages?.forEach((message) => (message.seen = seen ? 1 : 0))
+		})
+	if (!seen && threadID && selectedThreads.includes(threadID)) goToMailbox()
+
 	const loading = seen ? __('Marking as read...') : __('Marking as unread...')
 	const success =
 		selectedThreads.length === 1
@@ -1296,6 +1304,21 @@ const handleSetSeen = (threadIDs: SetSeenParams) => {
 			: __('Threads marked as {0}.', [seen ? __('read') : __('unread')])
 
 	raisePromiseToast(() => setSeen.submit(threadIDs), loading, success)
+}
+
+// "Mark Unread from Here" (set_mails_seen) marks individual messages unread. Sync those message ids
+// onto each thread's nested messages so reopening reads the fresh state without a full reload.
+const handleSyncUnseen = (ids: string[]) => {
+	threadsResource.value.data?.forEach((thread: Thread) => {
+		let changed = false
+		thread.messages?.forEach((message) => {
+			if (ids.includes(message.id)) {
+				message.seen = 0
+				changed = true
+			}
+		})
+		if (changed) thread.seen = 0
+	})
 }
 
 const setFlaggedByThreadIDs = (threadIDs: string[], flagged: boolean) => {
