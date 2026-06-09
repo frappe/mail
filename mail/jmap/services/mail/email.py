@@ -220,7 +220,7 @@ class EmailService(MailService):
 
 	def query_thread(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
-	) -> list[str] | dict[str, list]:
+	) -> list[str] | dict[str, list[str]]:
 		"""Public method to query email threads based on a filter."""
 
 		threads: dict[str, list[str]] = {}
