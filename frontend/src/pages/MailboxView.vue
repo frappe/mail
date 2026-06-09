@@ -87,7 +87,7 @@
 						</button>
 					</Dropdown>
 					<p v-else class="pb-[2px]">{{ title }}</p>
-					<div class="ml-auto flex items-center space-x-1.5 sm:space-x-3">
+					<div class="-mr-1.5 ml-auto flex items-center space-x-1.5 sm:space-x-3">
 						<div
 							v-if="!selections.length && total"
 							class="text-ink-gray-6 flex items-center gap-1"
@@ -102,18 +102,17 @@
 								@click="goToPage(false)"
 							>
 								<template #icon>
-									<ChevronLeft class="text-ink-gray-7 icon" />
+									<ChevronLeft class="icon" />
 								</template>
 							</Button>
 							<Button
 								:tooltip="__('Next Page')"
 								variant="ghost"
 								:disabled="!canGoNext"
-								class="-mx-2"
 								@click="goToPage(true)"
 							>
 								<template #icon>
-									<ChevronRight class="text-ink-gray-7 icon" />
+									<ChevronRight class="icon" />
 								</template>
 							</Button>
 						</div>
@@ -122,7 +121,7 @@
 							<Dropdown v-if="showReadingPane" :options="selectActions">
 								<Button variant="ghost" :tooltip="__('Actions')">
 									<template #icon>
-										<Ellipsis class="text-ink-gray-7 icon" />
+										<Ellipsis class="icon" />
 									</template>
 								</Button>
 							</Dropdown>
@@ -135,10 +134,7 @@
 									@click="action.onClick"
 								>
 									<template #icon>
-										<component
-											:is="action.icon"
-											class="text-ink-gray-7 icon"
-										/>
+										<component :is="action.icon" class="icon" />
 									</template>
 								</Button>
 							</template>
@@ -147,14 +143,14 @@
 						<Dropdown v-if="showAddTo" :options="addToOptions">
 							<Button variant="ghost" :tooltip="__('Add To')">
 								<template #icon>
-									<component :is="FolderPlus" class="text-ink-gray-7 icon" />
+									<component :is="FolderPlus" class="icon" />
 								</template>
 							</Button>
 						</Dropdown>
 						<Dropdown v-if="showRemoveFrom" :options="removeFromOptions">
 							<Button variant="ghost" :tooltip="__('Remove From')">
 								<template #icon>
-									<component :is="FolderMinus" class="text-ink-gray-7 icon" />
+									<component :is="FolderMinus" class="icon" />
 								</template>
 							</Button>
 						</Dropdown>
@@ -164,7 +160,7 @@
 						>
 							<Button variant="ghost" :tooltip="__('Move To')">
 								<template #icon>
-									<component :is="FolderInput" class="text-ink-gray-7 icon" />
+									<component :is="FolderInput" class="icon" />
 								</template>
 							</Button>
 						</Dropdown>
@@ -217,7 +213,7 @@
 										collapsedGroups.includes(key) ? ChevronRight : ChevronDown
 									"
 									v-if="!isLastGroup(key)"
-									class="text-ink-gray-5 ml-auto h-4 w-4"
+									class="icon ml-auto"
 								/>
 							</div>
 						</Tooltip>
@@ -291,6 +287,8 @@
 					:thread-i-d
 					:threads="threadIDs"
 					:messages="currentThread?.messages"
+					:can-go-prev="canGoPrev"
+					:can-go-next="canGoNext"
 					@reload-mails="reloadThreads"
 					@set-seen="
 						(seen: boolean) =>

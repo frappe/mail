@@ -3,6 +3,8 @@
 		<ThreadHeader
 			:threads
 			:thread
+			:can-go-prev="canGoPrev"
+			:can-go-next="canGoNext"
 			@set-flagged="(ids: string[], flagged: boolean) => emit('setFlagged', ids, flagged)"
 			@set-seen="(seen: boolean) => emit('setSeen', seen)"
 			@move-thread="(moveToMailbox: string) => emit('moveThread', moveToMailbox)"
@@ -364,11 +366,13 @@ import ThreadHeader from '@/components/ThreadHeader.vue'
 
 import type { Attachment, ComposeMailData, Identity, Mail, Mailbox } from '@/types'
 
-const { mailbox, threadID, threads, messages } = defineProps<{
+const { mailbox, threadID, threads, messages, canGoPrev, canGoNext } = defineProps<{
 	mailbox: string
 	threadID?: string
 	threads: string[]
 	messages?: Mail[]
+	canGoPrev?: boolean
+	canGoNext?: boolean
 }>()
 
 const emit = defineEmits([

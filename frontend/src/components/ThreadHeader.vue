@@ -6,7 +6,7 @@
 			@click="$router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })"
 		>
 			<template #icon>
-				<ChevronLeft class="text-ink-gray-7 h-4 w-4" />
+				<ChevronLeft class="text-ink-gray-7 icon" />
 			</template>
 		</Button>
 		<template v-if="thread?.length">
@@ -19,7 +19,7 @@
 				<Dropdown v-if="user.data?.show_reading_pane" :options="threadActions">
 					<Button variant="ghost" :tooltip="__('Actions')">
 						<template #icon>
-							<Ellipsis class="text-ink-gray-7 icon" />
+							<Ellipsis class="icon" />
 						</template>
 					</Button>
 				</Dropdown>
@@ -32,7 +32,7 @@
 						@click="action.onClick"
 					>
 						<template #icon>
-							<component :is="action.icon" class="text-ink-gray-7 icon" />
+							<component :is="action.icon" class="icon" />
 						</template>
 					</Button>
 				</template>
@@ -40,21 +40,21 @@
 				<Dropdown v-if="showAddTo" :options="addToOptions">
 					<Button variant="ghost" :tooltip="__('Add To')">
 						<template #icon>
-							<FolderPlus class="text-ink-gray-7 icon" />
+							<FolderPlus class="icon" />
 						</template>
 					</Button>
 				</Dropdown>
 				<Dropdown v-if="threadMailboxes.length > 1" :options="removeFromOptions">
 					<Button variant="ghost" :tooltip="__('Remove From')">
 						<template #icon>
-							<FolderMinus class="text-ink-gray-7 icon" />
+							<FolderMinus class="icon" />
 						</template>
 					</Button>
 				</Dropdown>
 				<Dropdown :options="moveToOptions">
 					<Button variant="ghost" :tooltip="__('Move To')">
 						<template #icon>
-							<FolderInput class="text-ink-gray-7 icon" />
+							<FolderInput class="icon" />
 						</template>
 					</Button>
 				</Dropdown>
@@ -63,22 +63,22 @@
 					<Button
 						variant="ghost"
 						:tooltip="__('Previous Thread (↑/K)')"
-						:disabled="threadID === threads[0]"
+						:disabled="threadID === threads[0] && !canGoPrev"
 						@click="emit('prevThread')"
 					>
 						<template #icon>
-							<ArrowLeft class="text-ink-gray-7 icon" />
+							<ArrowLeft class="icon" />
 						</template>
 					</Button>
 
 					<Button
 						variant="ghost"
 						:tooltip="__('Next Thread (↓/J)')"
-						:disabled="threadID === threads.at(-1)"
+						:disabled="threadID === threads.at(-1) && !canGoNext"
 						@click="emit('nextThread')"
 					>
 						<template #icon>
-							<ArrowRight class="text-ink-gray-7 icon" />
+							<ArrowRight class="icon" />
 						</template>
 					</Button>
 				</template>
@@ -115,7 +115,12 @@ import { userStore } from '@/stores/user'
 
 import type { Mail, MailboxData } from '@/types'
 
-const { thread, threads } = defineProps<{ thread: Mail[]; threads: string[] }>()
+const { thread, threads, canGoPrev, canGoNext } = defineProps<{
+	thread: Mail[]
+	threads: string[]
+	canGoPrev?: boolean
+	canGoNext?: boolean
+}>()
 const emit = defineEmits([
 	'setFlagged',
 	'setSeen',
