@@ -16,7 +16,6 @@ from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
 	empty_mailbox,
 	fetch_blob,
-	fetch_thread,
 	fetch_threads,
 	get_message_ids,
 	move_messages_to_mailbox,
@@ -164,17 +163,23 @@ def get_threads(account: str, mailbox: str, limit: int, filter_by: str | None = 
 	else:
 		filter = {"operator": "AND", "conditions": conditions}
 
-	threads = [serialize_thread(t) for t in fetch_threads(account, filter, 0, limit)]
+	threads = []
+	for conversation in fetch_threads(account, filter, 0, limit).values():
+		if not conversation:
+			continue
 
-	return add_user_images_to_emails(account, threads, is_thread=False), mailbox
+		# The summary row is derived from the thread's messages in the current mailbox (falling back
+		# to the whole conversation for cross-mailbox views like "starred").
+		in_mailbox = [
+			m for m in conversation if any(mb["mailbox_id"] == mailbox for mb in m["mailboxes"])
+		] or conversation
+		threads.append(serialize_thread(in_mailbox, conversation))
 
+	# Avatars for the list-view summary rows, and for each message in the nested threads.
+	add_user_images_to_emails(account, threads, is_thread=False)
+	add_user_images_to_emails(account, [m for thread in threads for m in thread["messages"]], is_thread=True)
 
-@frappe.whitelist()
-def get_thread(account: str, thread_id: str) -> list[dict]:
-	"""Returns mails for the given thread id."""
-
-	mails = [serialize_mail(m) for m in fetch_thread(account, thread_id)]
-	return add_user_images_to_emails(account, mails, is_thread=True)
+	return threads, mailbox
 
 
 @frappe.whitelist()
@@ -191,8 +196,18 @@ def get_attachment(account: str, blob_id: str, filename: str | None = None) -> N
 	frappe.local.response.type = "download"
 
 
-def serialize_thread(thread: dict) -> dict:
-	"""Serializes thread for response."""
+def serialize_thread(messages: list[dict], thread_messages: list[dict]) -> dict:
+	"""Serializes a thread for response.
+
+	Both `messages` (the thread's messages within the current mailbox) and `thread_messages` (the full
+	conversation across all mailboxes) are expected ordered oldest to newest. The list-view summary
+	fields are derived from `messages` — the latest message, except `subject` which comes from the
+	first message (the thread's original subject) — and the full conversation is serialized under
+	`messages` so the whole thread can be rendered without a separate fetch.
+	"""
+
+	first = messages[0]
+	latest = messages[-1]
 
 	thread_fields = [
 		"name",
@@ -202,7 +217,6 @@ def serialize_thread(thread: dict) -> dict:
 		"mailboxes",
 		"from_name",
 		"from_email",
-		"subject",
 		"received_at",
 		"recipients",
 		"seen",
@@ -212,8 +226,10 @@ def serialize_thread(thread: dict) -> dict:
 		"preview",
 	]
 	return {
-		**{field: thread[field] for field in thread_fields},
-		"attachments": serialize_attachments(thread.get("attachments", [])),
+		**{field: latest[field] for field in thread_fields},
+		"subject": first["subject"],
+		"attachments": serialize_attachments(latest.get("attachments", [])),
+		"messages": [serialize_mail(message) for message in thread_messages],
 	}
 
 

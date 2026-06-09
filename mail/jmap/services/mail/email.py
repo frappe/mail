@@ -221,7 +221,11 @@ class EmailService(MailService):
 	def query_thread(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
 	) -> list[str] | dict[str, list[str]]:
-		"""Public method to query email threads based on a filter."""
+		"""Public method to query email threads based on a filter.
+
+		Returns the list of matching thread IDs, or — when `fetch_all` is True — a dict mapping each
+		thread ID to its matching (in-mailbox) email IDs.
+		"""
 
 		threads: dict[str, list[str]] = {}
 		fetched = position
@@ -271,7 +275,7 @@ class EmailService(MailService):
 
 			fetched += batch_size
 
-		return threads if fetch_all else [ids[0] for ids in threads.values()]
+		return threads if fetch_all else list(threads.keys())
 
 	def get_email_suggestions(self, text: str, limit: int = 5, separate_requests: bool = False) -> list[str]:
 		"""
