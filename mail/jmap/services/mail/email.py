@@ -218,64 +218,53 @@ class EmailService(MailService):
 
 		return ids[:limit]
 
-	def query_thread(
-		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
-	) -> list[str] | dict[str, list[str]]:
-		"""Public method to query email threads based on a filter.
+	def query_thread(self, filter: dict | None = None, position: int = 0, limit: int = 50) -> dict:
+		"""Public method to query a single page of email threads based on a filter.
 
-		Returns the list of matching thread IDs, or — when `fetch_all` is True — a dict mapping each
-		thread ID to its matching (in-mailbox) email IDs.
+		Uses JMAP's `collapseThreads` so that `position`, `limit` and the total operate at the thread
+		level (one representative email per thread), giving stable page boundaries. Returns a dict with
+		`thread_ids` (the matching thread IDs on this page) and `total` (the number of matching threads).
 		"""
 
-		threads: dict[str, list[str]] = {}
-		fetched = position
-		batch_size = self.max_objects_in_get
-		filter = filter or {}
-
-		while len(threads) < limit:
-			response = self._call(
-				self.capabilities,
-				method_calls=[
-					[
-						f"{self.type}/query",
-						{
-							"accountId": self.account_id,
-							"filter": filter,
-							"sort": [{"property": "receivedAt", "isAscending": False}],
-							"position": fetched,
-							"limit": batch_size,
-						},
-						"0",
-					],
-					[
-						f"{self.type}/get",
-						{
-							"accountId": self.account_id,
-							"#ids": {"resultOf": "0", "name": f"{self.type}/query", "path": "/ids"},
-							"properties": ["id", "threadId"],
-						},
-						"1",
-					],
+		response = self._call(
+			self.capabilities,
+			method_calls=[
+				[
+					f"{self.type}/query",
+					{
+						"accountId": self.account_id,
+						"filter": filter or {},
+						"sort": [{"property": "receivedAt", "isAscending": False}],
+						"position": position,
+						"limit": limit,
+						"collapseThreads": True,
+						"calculateTotal": True,
+					},
+					"0",
 				],
-			)
+				[
+					f"{self.type}/get",
+					{
+						"accountId": self.account_id,
+						"#ids": {"resultOf": "0", "name": f"{self.type}/query", "path": "/ids"},
+						"properties": ["id", "threadId"],
+					},
+					"1",
+				],
+			],
+		)
 
-			emails = response.get("methodResponses", [None, [None, {"list": []}]])[1][1].get("list", [])
+		if method_responses := response.get("methodResponses"):
+			query_result = method_responses[0][1]
+			thread_by_email = {email["id"]: email["threadId"] for email in method_responses[1][1].get("list", [])}
+			thread_ids = [
+				thread_by_email[email_id]
+				for email_id in query_result.get("ids", [])
+				if email_id in thread_by_email
+			]
+			return {"thread_ids": thread_ids, "total": query_result.get("total", 0)}
 
-			if not emails:
-				break
-
-			for email in emails:
-				email_id = email["id"]
-				thread_id = email["threadId"]
-
-				threads.setdefault(thread_id, []).append(email_id)
-
-				if len(threads) >= limit:
-					break
-
-			fetched += batch_size
-
-		return threads if fetch_all else list(threads.keys())
+		return {"thread_ids": [], "total": 0}
 
 	def get_email_suggestions(self, text: str, limit: int = 5, separate_requests: bool = False) -> list[str]:
 		"""
