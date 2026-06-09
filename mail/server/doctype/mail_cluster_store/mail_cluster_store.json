@@ -374,40 +374,35 @@
    "description": "Identifies the store account.",
    "fieldname": "access_key",
    "fieldtype": "Data",
-   "label": "Access Key",
-   "mandatory_depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)"
+   "label": "Access Key"
   },
   {
    "depends_on": "eval: [\"S3\"].includes(doc.type)",
    "description": "The secret key for the S3 account.",
    "fieldname": "secret_key",
    "fieldtype": "Password",
-   "label": "Secret Key",
-   "mandatory_depends_on": "eval: [\"S3\"].includes(doc.type)"
+   "label": "Secret Key"
   },
   {
    "depends_on": "eval: [\"S3\"].includes(doc.type)",
    "description": "Security token for temporary credentials.",
    "fieldname": "security_token",
    "fieldtype": "Password",
-   "label": "Security Token",
-   "mandatory_depends_on": "eval: [\"S3\"].includes(doc.type)"
+   "label": "Security Token"
   },
   {
    "depends_on": "eval: [\"S3\"].includes(doc.type)",
    "description": "Temporary session token for the S3 account.",
    "fieldname": "session_token",
    "fieldtype": "Password",
-   "label": "Session Token",
-   "mandatory_depends_on": "eval: [\"S3\"].includes(doc.type)"
+   "label": "Session Token"
   },
   {
    "depends_on": "eval: [\"Azure\"].includes(doc.type)",
    "description": "SAS Token, when not using accessKey based authentication.",
    "fieldname": "sas_token",
    "fieldtype": "Password",
-   "label": "SAS Token",
-   "mandatory_depends_on": "eval: [\"Azure\"].includes(doc.type)"
+   "label": "SAS Token"
   },
   {
    "depends_on": "eval: [\"Azure\"].includes(doc.type)",
@@ -580,7 +575,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-09 16:13:59.041663",
+ "modified": "2026-06-09 17:04:33.734492",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster Store",
