@@ -1,0 +1,13 @@
+pull_request_rules:
+  - name: Explain backport command on merged develop PRs
+    conditions:
+      - merged
+      - base=develop
+    actions:
+      comment:
+        message: |
+          Backport this PR with Mergify by adding one of these comments:
+          - `@Mergifyio backport v0`
+          - `@Mergifyio backport v1`
+
+          You can run both commands on the same PR when the fix must be backported to both release lines.
