@@ -655,16 +655,21 @@ def fetch_messages(
 	return messages[:limit], total
 
 
-def fetch_threads(account: str, filter: dict | None = None, position: int = 0, limit: int = 50) -> list[dict]:
-	"""Returns a list of threads based on the provided filter."""
+def fetch_threads(
+	account: str, filter: dict | None = None, position: int = 0, limit: int = 50
+) -> dict[str, list[dict]]:
+	"""Returns a dictionary of thread IDs and their corresponding list of messages based on the provided filter."""
 
 	has_permission_for_user(parse_account(account)[0])
 
 	service = get_email_service(account)
-	ids = service.query_thread(filter, position, limit, fetch_all=False)
-	messages = get_messages(account, ids=ids)
+	threads: dict[str, list[str]] = service.query_thread(filter, position, limit, fetch_all=True)
+	messages = get_messages(account, ids=[id for ids in threads.values() for id in ids])
 
-	return messages
+	return {
+		thread_id: [message for message in messages if message["id"] in ids]
+		for thread_id, ids in threads.items()
+	}
 
 
 def fetch_thread(account: str, thread_id: str, sort: Literal["asc", "desc"] = "asc") -> list[dict]:
