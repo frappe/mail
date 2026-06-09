@@ -134,8 +134,8 @@ def add_user_images_to_emails(account: str, mails: list[dict], is_thread: bool =
 
 
 @frappe.whitelist()
-def get_threads(account: str, mailbox: str, limit: int, filter_by: str | None = None) -> list:
-	"""Returns threads from the selected mailbox for the given account."""
+def get_threads(account: str, mailbox: str, limit: int, start: int = 0, filter_by: str | None = None) -> list:
+	"""Returns a page of threads (and the total count) from the selected mailbox for the account."""
 
 	if mailbox == "starred":
 		conditions = [
@@ -163,8 +163,10 @@ def get_threads(account: str, mailbox: str, limit: int, filter_by: str | None = 
 	else:
 		filter = {"operator": "AND", "conditions": conditions}
 
+	conversations, total = fetch_threads(account, filter, start, limit)
+
 	threads = []
-	for conversation in fetch_threads(account, filter, 0, limit).values():
+	for conversation in conversations.values():
 		if not conversation:
 			continue
 
@@ -179,7 +181,7 @@ def get_threads(account: str, mailbox: str, limit: int, filter_by: str | None = 
 	add_user_images_to_emails(account, threads, is_thread=False)
 	add_user_images_to_emails(account, [m for thread in threads for m in thread["messages"]], is_thread=True)
 
-	return threads, mailbox
+	return threads, mailbox, total
 
 
 @frappe.whitelist()
@@ -596,14 +598,16 @@ def empty_user_mailbox(account: str, mailbox: str) -> None:
 
 
 @frappe.whitelist()
-def search_mails(account: str, filter: dict | None = None, limit: int = 5) -> tuple[list[dict], int]:
+def search_mails(
+	account: str, filter: dict | None = None, limit: int = 5, start: int = 0
+) -> tuple[list[dict], int]:
 	"""Returns search results for the given query."""
 
 	if not filter:
 		return ([], 0)
 
 	normalized_filter = normalize_filter(filter)
-	mails, total = search_messages(account, normalized_filter, limit=limit)
+	mails, total = search_messages(account, normalized_filter, position=start, limit=limit)
 
 	return add_user_images_to_emails(account, mails), total
 

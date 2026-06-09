@@ -10,13 +10,7 @@
 						route: { name: 'Mailbox', params: { accountId, mailbox } },
 					},
 				]"
-			>
-				<template v-if="mailbox !== 'starred' && isMailboxLoaded" #suffix>
-					<span class="text-ink-gray-5 ml-2 self-end pb-px text-xs">
-						{{ noOfThreads }}
-					</span>
-				</template>
-			</Breadcrumbs>
+			/>
 		</div>
 		<HeaderActions @reload-mails="reloadThreads(true, ['drafts', 'sent'])" />
 	</header>
@@ -81,29 +75,48 @@
 							</div>
 						</Tooltip>
 					</div>
-					<p class="mr-auto pb-[2px]">{{ title }}</p>
-					<div class="flex items-center space-x-1.5 sm:space-x-3">
-						<Dropdown
-							v-if="!selections.length && mailbox !== 'search'"
-							:options="FILTER_OPTIONS"
+					<Dropdown
+						v-if="!selections.length && mailbox !== 'search'"
+						:options="FILTER_OPTIONS"
+					>
+						<button
+							class="text-ink-gray-8 hover:bg-surface-gray-2 -ml-2 flex items-center gap-1 rounded px-2 py-1"
 						>
-							<Button variant="ghost" :tooltip="__('Filter')">
+							{{ title }}
+							<ChevronDown class="text-ink-gray-5 icon" />
+						</button>
+					</Dropdown>
+					<p v-else class="pb-[2px]">{{ title }}</p>
+					<div class="ml-auto flex items-center space-x-1.5 sm:space-x-3">
+						<div
+							v-if="!selections.length && total"
+							class="text-ink-gray-6 flex items-center gap-1"
+						>
+							<span class="whitespace-nowrap text-sm tabular-nums">
+								{{ range }} {{ __('of') }} {{ total }}
+							</span>
+							<Button
+								:tooltip="__('Previous Page')"
+								variant="ghost"
+								:disabled="!canGoPrev"
+								@click="goToPage(false)"
+							>
 								<template #icon>
-									<component :is="ListFilter" class="text-ink-gray-7 icon" />
+									<ChevronLeft class="text-ink-gray-7 icon" />
 								</template>
 							</Button>
-						</Dropdown>
-
-						<Button
-							v-if="!selections.length"
-							:tooltip="__('Refresh')"
-							variant="ghost"
-							@click="reloadThreads"
-						>
-							<template #icon>
-								<RefreshCw class="text-ink-gray-7 icon" />
-							</template>
-						</Button>
+							<Button
+								:tooltip="__('Next Page')"
+								variant="ghost"
+								:disabled="!canGoNext"
+								class="-mx-2"
+								@click="goToPage(true)"
+							>
+								<template #icon>
+									<ChevronRight class="text-ink-gray-7 icon" />
+								</template>
+							</Button>
+						</div>
 
 						<template v-else>
 							<Dropdown v-if="showReadingPane" :options="selectActions">
@@ -161,8 +174,8 @@
 				<!-- Mail list -->
 				<div
 					v-if="threadsResource?.data?.length"
+					ref="mailList"
 					class="h-full overflow-y-auto overscroll-contain"
-					@scroll="loadMoreThreads"
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
 						<Tooltip
@@ -247,18 +260,6 @@
 								"
 							/>
 						</template>
-					</div>
-
-					<div
-						v-if="
-							threadsResource.loading && threadsResource.data.length === limit - 50
-						"
-						class="flex items-center justify-center py-4"
-					>
-						<div class="text-ink-gray-5 flex items-center space-x-2">
-							<LoaderCircle class="h-4 w-4 animate-spin" />
-							<span class="text-sm">{{ __('Loading more mails...') }}</span>
-						</div>
 					</div>
 				</div>
 				<div v-else class="flex h-full items-center justify-center">
@@ -345,11 +346,11 @@
 <script setup lang="ts">
 import { computed, h, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useDebounceFn } from '@vueuse/core'
 import { Icon } from 'frappe-ui/icons'
 import {
 	Archive,
 	ChevronDown,
+	ChevronLeft,
 	ChevronRight,
 	CircleAlert,
 	CircleCheck,
@@ -357,7 +358,6 @@ import {
 	FolderInput,
 	FolderMinus,
 	FolderPlus,
-	ListFilter,
 	LoaderCircle,
 	Mail,
 	MailOpen,
@@ -476,6 +476,7 @@ watch(
 
 const mailItemsRef = useTemplateRef('mailItems')
 const mailThreadRef = useTemplateRef('mailThread')
+const mailListRef = useTemplateRef('mailList')
 
 const selections = ref<string[]>([])
 const lastSelected = ref<string[]>()
@@ -826,16 +827,26 @@ const selectActions = computed((): SelectAction[] => [
 
 // Search
 
-const noOfSearchResults = ref(0)
+// Pagination state (shared by the threads and search resources — only one is active at a time)
+const PAGE_LENGTH = 50
+const page = ref(0) // current 0-based page of threads
+const total = ref(0) // total number of threads matching the current view
 
 const searchResults = createResource({
 	url: 'mail.api.mail.search_mails',
-	makeParams: () => ({ account: store.account, filter: route.query, limit: limit.value }),
+	makeParams: () => ({
+		account: store.account,
+		filter: route.query,
+		limit: PAGE_LENGTH,
+		start: page.value * PAGE_LENGTH,
+	}),
 	transform: (data: [Thread[], number]) => {
-		noOfSearchResults.value = data[1]
+		total.value = data[1]
 		return data[0]
 	},
-	onSuccess: () => {
+	onSuccess: (data: [Thread[], number]) => {
+		correctPageOverflow(data[0])
+		openPendingEdgeThread()
 		if (mailbox === 'search') isMailboxLoaded.value = true
 	},
 })
@@ -844,7 +855,7 @@ watch(
 	() => JSON.stringify(route.query),
 	() => {
 		if (mailbox === 'search') {
-			limit.value = 50
+			page.value = 0
 			searchResults.reload()
 		}
 	},
@@ -852,7 +863,6 @@ watch(
 
 // Main data
 
-const limit = ref(50)
 const filter = ref<string | null>(
 	localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null,
 )
@@ -863,23 +873,55 @@ const threads = createResource({
 	makeParams: () => ({
 		account: store.account,
 		mailbox,
-		limit: limit.value,
+		limit: PAGE_LENGTH,
+		start: page.value * PAGE_LENGTH,
 		filter_by: filter.value,
 	}),
-	transform: (data: [Thread[], string]) => data[0],
-	onSuccess: (data) => {
+	transform: (data: [Thread[], string, number]) => {
+		total.value = data[2]
+		return data[0]
+	},
+	onSuccess: (data: [Thread[], string, number]) => {
+		correctPageOverflow(data[0])
+		openPendingEdgeThread()
 		if (mailbox === data[1]) isMailboxLoaded.value = true
 	},
 })
 
 const threadsResource = computed(() => (mailbox === 'search' ? searchResults : threads))
 
+// If a page ends up empty because threads were removed (e.g. deleted/moved), step back a page.
+// Decrementing one at a time is bounded by 0, so it can't loop even if `total` is stale.
+const correctPageOverflow = (pageData: Thread[]) => {
+	if (pageData.length || page.value === 0) return
+	page.value -= 1
+	threadsResource.value.reload()
+}
+
+const pageCount = computed(() => Math.ceil(total.value / PAGE_LENGTH))
+const rangeStart = computed(() => (total.value === 0 ? 0 : page.value * PAGE_LENGTH + 1))
+const rangeEnd = computed(() => Math.min((page.value + 1) * PAGE_LENGTH, total.value))
+// Collapse to a single number when the page holds one thread (e.g. "1" instead of "1–1").
+const range = computed(() =>
+	rangeStart.value === rangeEnd.value
+		? `${rangeStart.value}`
+		: `${rangeStart.value}–${rangeEnd.value}`,
+)
+const canGoPrev = computed(() => page.value > 0)
+const canGoNext = computed(() => page.value + 1 < pageCount.value)
+
+const goToPage = (next: boolean) => {
+	if (next ? !canGoNext.value : !canGoPrev.value) return
+	page.value += next ? 1 : -1
+	resetSelections()
+	threadsResource.value.reload()
+	mailListRef.value?.scrollTo({ top: 0 })
+}
+
 const isLoading = computed(() => {
 	if (!isMailboxLoaded.value) return true
 	if (emptyMailbox.loading) return true
-	return (
-		!threadsResource.value.data.length && threadsResource.value?.loading && limit.value === 50
-	)
+	return !threadsResource.value.data.length && threadsResource.value?.loading
 })
 
 const threadIDs = computed(
@@ -903,7 +945,7 @@ watch(
 		isMailboxLoaded.value = false
 		threadsResource.value.data = []
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
-		limit.value = 50
+		page.value = 0
 		threadInFocus.value = undefined
 		collapsedGroups.value = []
 		reloadThreads(false)
@@ -931,21 +973,6 @@ onUnmounted(() => {
 	if (reloadInterval.value) clearInterval(reloadInterval.value)
 })
 
-const loadMoreThreads = useDebounceFn((e) => {
-	const { scrollTop, scrollHeight, clientHeight } = e.target
-	if (
-		scrollTop + clientHeight >= scrollHeight - 10 &&
-		threadsResource.value?.data?.length === limit.value
-	) {
-		limit.value += 50
-		threadsResource.value.reload()
-		setTimeout(
-			() => e.target.scrollTo({ top: e.target.scrollHeight, behavior: 'smooth' }),
-			100,
-		)
-	}
-}, 500)
-
 const goToMailbox = () =>
 	router.push({ name: 'Mailbox', params: { accountId, mailbox }, query: route.query })
 
@@ -957,7 +984,30 @@ const goToThread = (threadID: string) => {
 		router.push({ name: 'Mail', params: { accountId, mailbox, threadID }, query: route.query })
 }
 
-const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
+// When stepping past the first/last thread of a page, move to the adjacent page (if any) and open
+// its edge thread once the new page has loaded (`openPendingEdgeThread`, called from onSuccess).
+let pendingEdgeThread: 'first' | 'last' | null = null
+
+const goToThreadByOffset = (offset: number) => {
+	const next = getThreadByOffset(offset)
+	if (next) return goToThread(next)
+
+	if (offset > 0 && canGoNext.value) {
+		pendingEdgeThread = 'first'
+		goToPage(true)
+	} else if (offset < 0 && canGoPrev.value) {
+		pendingEdgeThread = 'last'
+		goToPage(false)
+	}
+}
+
+const openPendingEdgeThread = () => {
+	if (!pendingEdgeThread) return
+	const id = pendingEdgeThread === 'first' ? threadIDs.value[0] : threadIDs.value.at(-1)
+	if (!id) return // keep the flag if the page is still empty (e.g. after overflow correction)
+	pendingEdgeThread = null
+	goToThread(id)
+}
 
 const goToNextThreadOrMailbox = (excludedThreads: string[] = []) => {
 	const idx = threadIDs.value.indexOf(threadID)
@@ -1447,6 +1497,7 @@ const FILTER_OPTIONS = [
 const setFilter = (value: string | null) => {
 	filter.value = value
 	localStorage.setItem(`user:${user.data.name}:filter:${mailbox}`, value ?? '')
+	page.value = 0
 	threads.reload()
 	resetSelections()
 }
@@ -1463,11 +1514,6 @@ const mailboxName = computed(() => {
 		default:
 			return mailboxObj.value?._name
 	}
-})
-const noOfThreads = computed(() => {
-	if (mailbox === 'search')
-		return `${noOfSearchResults.value} ${noOfSearchResults.value == 1 ? __('result') : __('results')}`
-	return `${mailboxObj.value?.total_threads} ${mailboxObj.value?.total_threads == 1 ? __('thread') : __('threads')}`
 })
 const unreadThreadsPrefix = computed(() =>
 	mailboxObj.value?.unread_threads ? `(${mailboxObj.value.unread_threads})` : '',
@@ -1494,7 +1540,7 @@ const title = computed(() => {
 		case 'starred':
 			return __('Starred Mails')
 		case 'has_attachments':
-			return __('Mails With Attachments')
+			return __('With Attachments')
 		default:
 			return __('All Mails')
 	}
