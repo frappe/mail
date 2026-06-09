@@ -256,7 +256,9 @@ class EmailService(MailService):
 
 		if method_responses := response.get("methodResponses"):
 			query_result = method_responses[0][1]
-			thread_by_email = {email["id"]: email["threadId"] for email in method_responses[1][1].get("list", [])}
+			thread_by_email = {
+				email["id"]: email["threadId"] for email in method_responses[1][1].get("list", [])
+			}
 			thread_ids = [
 				thread_by_email[email_id]
 				for email_id in query_result.get("ids", [])
