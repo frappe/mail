@@ -167,8 +167,7 @@
    "description": "Maximum size of a packet in bytes.",
    "fieldname": "max_allowed_packet",
    "fieldtype": "Int",
-   "label": "Max Allowed Packet",
-   "mandatory_depends_on": "eval: [\"MySql\"].includes(doc.type)"
+   "label": "Max Allowed Packet"
   },
   {
    "default": "0",
@@ -581,7 +580,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-11 14:36:51.430174",
+ "modified": "2026-06-09 16:13:59.041663",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster Store",

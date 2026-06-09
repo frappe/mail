@@ -77,7 +77,7 @@ class MailClusterStore(Document):
 					"timeout": self.timeout,
 					"useTls": bool(self.use_tls),
 					"allowInvalidCerts": bool(self.allow_invalid_certs),
-					"maxAllowedPacket": cint(self.max_allowed_packet),
+					"maxAllowedPacket": cint(self.max_allowed_packet) if self.max_allowed_packet else None,
 					"poolMaxConnections": cint(self.pool_max_connections),
 					"poolMinConnections": cint(self.pool_min_connections),
 					"host": self.host,
