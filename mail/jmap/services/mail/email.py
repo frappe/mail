@@ -220,58 +220,69 @@ class EmailService(MailService):
 
 	def query_thread(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
-	) -> list[str] | dict[str, list]:
-		"""Public method to query email threads based on a filter."""
+	) -> list[str] | dict[str, list[str]]:
+		"""Public method to query email threads based on the given filter, with options for pagination and fetching all email IDs within the threads. If 'fetch_all' is False, returns a list of thread IDs. If 'fetch_all' is True, returns a dictionary mapping thread IDs to lists of email IDs within those threads."""
 
-		threads: dict[str, list[str]] = {}
-		fetched = position
-		batch_size = self.max_objects_in_get
-		filter = filter or {}
+		method_calls = [
+			[
+				"Email/query",
+				{
+					"accountId": self.account_id,
+					"filter": filter or {},
+					"sort": [{"property": "receivedAt", "isAscending": False}],
+					"collapseThreads": True,
+					"position": position,
+					"limit": limit,
+				},
+				"0",
+			],
+		]
 
-		while len(threads) < limit:
-			response = self._call(
-				self.capabilities,
-				method_calls=[
+		if fetch_all:
+			method_calls.extend(
+				[
 					[
-						f"{self.type}/query",
+						"Email/get",
 						{
 							"accountId": self.account_id,
-							"filter": filter,
-							"sort": [{"property": "receivedAt", "isAscending": False}],
-							"position": fetched,
-							"limit": batch_size,
-						},
-						"0",
-					],
-					[
-						f"{self.type}/get",
-						{
-							"accountId": self.account_id,
-							"#ids": {"resultOf": "0", "name": f"{self.type}/query", "path": "/ids"},
-							"properties": ["id", "threadId"],
+							"#ids": {
+								"resultOf": "0",
+								"name": "Email/query",
+								"path": "/ids",
+							},
+							"properties": ["threadId"],
 						},
 						"1",
 					],
-				],
+					[
+						"Thread/get",
+						{
+							"accountId": self.account_id,
+							"#ids": {
+								"resultOf": "1",
+								"name": "Email/get",
+								"path": "/list/*/threadId",
+							},
+							"properties": ["id", "emailIds"],
+						},
+						"2",
+					],
+				]
 			)
 
-			emails = response.get("methodResponses", [None, [None, {"list": []}]])[1][1].get("list", [])
+		response = self._call(self.capabilities, method_calls=method_calls)
+		method_responses = response.get("methodResponses", [])
 
-			if not emails:
-				break
+		if not fetch_all:
+			if not method_responses:
+				return []
 
-			for email in emails:
-				email_id = email["id"]
-				thread_id = email["threadId"]
+			return method_responses[0][1].get("ids", [])
 
-				threads.setdefault(thread_id, []).append(email_id)
+		if len(method_responses) < 3:
+			return {}
 
-				if len(threads) >= limit:
-					break
-
-			fetched += batch_size
-
-		return threads if fetch_all else [ids[0] for ids in threads.values()]
+		return {thread["id"]: thread.get("emailIds", []) for thread in method_responses[2][1].get("list", [])}
 
 	def get_email_suggestions(self, text: str, limit: int = 5, separate_requests: bool = False) -> list[str]:
 		"""
