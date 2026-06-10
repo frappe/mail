@@ -80,10 +80,10 @@
 						:options="FILTER_OPTIONS"
 					>
 						<button
-							class="text-ink-gray-8 hover:bg-surface-gray-2 -ml-2 flex items-center gap-1 rounded px-2 py-1"
+							class="text-ink-gray-8 hover:bg-surface-gray-2 -ml-2 flex min-w-0 items-center gap-1 rounded px-2 py-1"
 						>
-							{{ title }}
-							<ChevronDown class="text-ink-gray-5 icon" />
+							<span class="truncate">{{ title }}</span>
+							<ChevronDown class="text-ink-gray-5 icon shrink-0" />
 						</button>
 					</Dropdown>
 					<p v-else class="pb-[2px]">{{ title }}</p>
@@ -117,7 +117,7 @@
 							</Button>
 						</div>
 
-						<template v-else>
+						<template v-else-if="selections.length">
 							<Dropdown v-if="showReadingPane" :options="selectActions">
 								<Button variant="ghost" :tooltip="__('Actions')">
 									<template #icon>
