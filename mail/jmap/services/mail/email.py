@@ -285,47 +285,37 @@ class EmailService(MailService):
 		return {thread["id"]: thread.get("emailIds", []) for thread in method_responses[2][1].get("list", [])}
 
 	def count_threads(self, filter: dict | None = None) -> int:
-		"""Returns the number of threads matching the given filter.
+		"""Returns an *estimate* of the number of threads matching the given filter, in one request.
 
-		Stalwart's `calculateTotal` counts matching emails before threads are collapsed, so the
-		collapsed thread IDs are paged through and counted instead.
+		Counting threads exactly means paging through every collapsed thread ID (one request per
+		`max_objects_in_get`), which is prohibitive for large mailboxes — roughly 2000 requests for a
+		million emails. Instead this returns Stalwart's `calculateTotal`, the number of matching emails
+		before threads are collapsed, which is an upper bound on the thread count. The client shows it
+		as an estimate ("~N") and resolves the exact total once it pages to the end.
 		"""
 
-		count = 0
-		position = 0
-		batch_size = self.max_objects_in_get
-
-		while True:
-			response = self._call(
-				self.capabilities,
-				method_calls=[
-					[
-						"Email/query",
-						{
-							"accountId": self.account_id,
-							"filter": filter or {},
-							"collapseThreads": True,
-							"position": position,
-							"limit": batch_size,
-						},
-						"0",
-					],
+		response = self._call(
+			self.capabilities,
+			method_calls=[
+				[
+					"Email/query",
+					{
+						"accountId": self.account_id,
+						"filter": filter or {},
+						"collapseThreads": True,
+						"calculateTotal": True,
+						"limit": 0,
+					},
+					"0",
 				],
-			)
+			],
+		)
 
-			method_responses = response.get("methodResponses", [])
-			if not method_responses:
-				break
+		method_responses = response.get("methodResponses", [])
+		if not method_responses:
+			return 0
 
-			ids = method_responses[0][1].get("ids", [])
-			count += len(ids)
-
-			if len(ids) < batch_size:
-				break
-
-			position += batch_size
-
-		return count
+		return method_responses[0][1].get("total", 0)
 
 	def get_email_suggestions(self, text: str, limit: int = 5, separate_requests: bool = False) -> list[str]:
 		"""
