@@ -453,9 +453,25 @@ const shouldShowUnseenMarker = (id: string) =>
 
 const goToMailbox = () => router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })
 
-// The thread's messages now arrive from the parent (loaded via `get_threads`) instead of a separate
-// `get_thread` fetch. `loadThread` derives the display list from the `messages` prop.
+// The thread's messages normally arrive from the parent (loaded via `get_threads`). When the open
+// thread isn't in that list (e.g. a search result, or one on another page), fall back to fetching it
+// directly via `get_thread`.
 const thread = ref<Mail[]>([])
+
+const threadFallback = createResource({
+	url: 'mail.api.mail.get_thread',
+	makeParams: () => ({ account: store.account, thread_id: threadID }),
+	onSuccess: (mails: Mail[]) => {
+		// Thread no longer exists (e.g. deleted) — bail to the mailbox instead of a blank page.
+		if (!mails?.length) {
+			goToMailbox()
+			emit('reloadMails')
+			return
+		}
+		loadThread()
+	},
+	onError: () => goToMailbox(),
+})
 
 const transformThreadMails = (mails: Mail[]) =>
 	mails
@@ -467,10 +483,25 @@ const transformThreadMails = (mails: Mail[]) =>
 			show: true,
 		}))
 
-const loadThread = () => {
-	if (!threadID || !messages) return
+// Messages from the list when present, otherwise the directly-fetched fallback (matched to the
+// current thread so a stale fetch from a previously opened thread is ignored).
+const sourceMessages = (): Mail[] | undefined => {
+	if (messages?.length) return messages
+	const fetched = threadFallback.data as Mail[] | undefined
+	return fetched?.[0]?.thread_id === threadID ? fetched : undefined
+}
 
-	const data = transformThreadMails(messages)
+const loadThread = () => {
+	if (!threadID) return
+
+	const source = sourceMessages()
+	if (!source?.length) {
+		// Not in the list — fetch the thread directly.
+		if (!messages?.length && !threadFallback.loading) threadFallback.reload()
+		return
+	}
+
+	const data = transformThreadMails(source)
 
 	if (!data.length) {
 		goToMailbox()
@@ -534,6 +565,8 @@ let forceReload = false
 
 const reload = () => {
 	if (!threadID) return
+	// A directly-fetched thread isn't in the list, so refresh it in place.
+	if (!messages?.length) return threadFallback.reload()
 	forceReload = true
 	emit('reloadMails')
 }

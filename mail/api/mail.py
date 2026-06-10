@@ -16,6 +16,7 @@ from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
 	empty_mailbox,
 	fetch_blob,
+	fetch_thread,
 	fetch_threads,
 	get_message_ids,
 	move_messages_to_mailbox,
@@ -185,6 +186,15 @@ def get_threads(account: str, mailbox: str, limit: int, start: int = 0, filter_b
 
 
 @frappe.whitelist()
+def get_thread(account: str, thread_id: str) -> list[dict]:
+	"""Returns the full list of messages in a thread, for threads not present in the mailbox list
+	(e.g. search results or a thread on another page)."""
+
+	mails = [serialize_mail(m) for m in fetch_thread(account, thread_id)]
+	return add_user_images_to_emails(account, mails, is_thread=True)
+
+
+@frappe.whitelist()
 def get_attachment(account: str, blob_id: str, filename: str | None = None) -> None:
 	"""Fetches and returns the attachment."""
 
@@ -242,6 +252,7 @@ def serialize_mail(mail: dict) -> dict:
 		"name",
 		"message_id",
 		"id",
+		"thread_id",
 		"from_name",
 		"from_email",
 		"subject",

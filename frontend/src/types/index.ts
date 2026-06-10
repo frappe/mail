@@ -59,6 +59,7 @@ export interface Mail {
 	name: string
 	message_id: string
 	id: string
+	thread_id: string
 	from_name: string
 	from_email: string
 	subject: string
