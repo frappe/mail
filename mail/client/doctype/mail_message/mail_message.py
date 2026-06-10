@@ -859,6 +859,36 @@ def move_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> N
 		frappe.throw(_("Failed to move mail(s) to mailbox."))
 
 
+def set_messages_mailboxes(account: str, mails: list[dict]) -> None:
+	"""Restore each message to an exact mailbox membership and junk status (used to undo a move)."""
+
+	if not account or not mails:
+		frappe.throw(_("Account and Mails are required."))
+
+	has_permission_for_user(parse_account(account)[0])
+
+	try:
+		emails = []
+		for mail in mails:
+			junk = bool(mail.get("junk"))
+			emails.append(
+				{
+					"id": mail["id"],
+					"mailbox_ids": {mailbox_id: True for mailbox_id in mail["mailbox_ids"]},
+					"keywords": {"$junk": junk, "$notjunk": not junk},
+				}
+			)
+		service = get_email_service(account)
+		service.update(emails, replace_keywords=False, replace_mailboxes=True)
+		_remove_cached_messages(account, [mail["id"] for mail in mails])
+	except Exception:
+		frappe.log_error(
+			title=_("Failed to restore mailbox membership for mail(s)"),
+			message=frappe.get_traceback(with_context=True),
+		)
+		frappe.throw(_("Failed to restore mailbox membership for mail(s)."))
+
+
 def add_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> None:
 	"""Add messages to a mailbox without removing them from existing mailboxes."""
 

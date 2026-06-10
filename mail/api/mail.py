@@ -22,6 +22,7 @@ from mail.client.doctype.mail_message.mail_message import (
 	remove_messages_from_mailbox,
 	search_messages,
 	set_flagged_status,
+	set_messages_mailboxes,
 	set_seen_status,
 	set_spam_status,
 )
@@ -533,6 +534,13 @@ def remove_mails_from_mailbox(account: str, ids: list[str], mailbox_id: str) -> 
 	"""Removes mails from a mailbox without deleting them."""
 
 	remove_messages_from_mailbox(account, ids, mailbox_id)
+
+
+@frappe.whitelist()
+def set_mails_mailboxes(account: str, mails: list[dict]) -> None:
+	"""Restores each mail's exact mailbox membership and junk status (used to undo a move)."""
+
+	set_messages_mailboxes(account, mails)
 
 
 @frappe.whitelist()

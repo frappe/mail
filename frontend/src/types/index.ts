@@ -63,6 +63,7 @@ export interface Mail {
 	from_name: string
 	from_email: string
 	subject: string
+	preview: string
 	html_body: string
 	text_body: string
 	received_at: string
