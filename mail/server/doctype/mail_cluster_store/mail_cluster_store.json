@@ -1,573 +1,623 @@
 {
  "actions": [],
- "autoname": "hash",
- "creation": "2025-03-02 10:31:58.549698",
+ "creation": "2026-05-08 11:05:47.343917",
+ "default_view": "List",
  "doctype": "DocType",
- "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_break_oc18",
+  "store_tab",
   "type",
-  "region",
-  "endpoint",
-  "column_break_uo3q",
-  "store_id",
+  "column_break_ovdu",
+  "description",
+  "section_break_plrk",
   "path",
-  "profile",
+  "depth",
+  "column_break_yhyn",
+  "blob_size",
+  "buffer_size",
+  "section_break_bpyx",
+  "timeout",
+  "use_tls",
+  "allow_invalid_certs",
+  "max_allowed_packet",
+  "pool_workers",
+  "column_break_djvr",
+  "pool_min_connections",
+  "pool_max_connections",
+  "pool_recycling_method",
+  "pool_timeout_create",
+  "pool_timeout_wait",
+  "pool_timeout_recycle",
+  "section_break_ntwb",
   "cluster_file",
-  "url",
-  "configuration_section",
+  "datacenter_id",
+  "machine_id",
+  "column_break_dsjl",
+  "transaction_retry_delay",
+  "transaction_timeout",
+  "transaction_retry_limit",
+  "section_break_uxnr",
   "host",
   "port",
   "database",
-  "redis_type",
-  "urls",
-  "column_break_offi",
-  "max_allowed_packet",
-  "timeout",
-  "bucket_storage_account_section",
+  "region",
   "bucket",
+  "profile",
+  "key_prefix",
+  "max_retries",
+  "verify_after_write",
+  "column_break_grwu",
+  "auth_username",
+  "auth_secret",
+  "options",
   "storage_account",
   "container",
-  "column_break_o8ml",
-  "key_prefix",
-  "authentication_section",
-  "user",
   "access_key",
   "secret_key",
-  "azure_access_key",
-  "column_break_r24o",
-  "password",
   "security_token",
+  "session_token",
   "sas_token",
-  "storage_settings_section",
-  "compression",
-  "min_blob_size",
-  "write_buffer_size",
-  "max_retries",
-  "depth",
-  "column_break_bsqd",
-  "purge_frequency",
-  "cluster_ids_section",
-  "machine",
-  "column_break_gg5z",
-  "datacenter",
-  "cluster_settings_section",
-  "retry_total",
-  "retry_max_wait",
-  "retry_min_wait",
-  "column_break_roov",
+  "section_break_wmqb",
+  "url",
+  "urls",
+  "protocol_version",
+  "num_replicas",
+  "num_shards",
+  "include_source",
   "read_from_replicas",
-  "transaction_settings_section",
-  "transaction_timeout",
-  "transaction_max_retry_delay",
-  "column_break_q4si",
-  "transaction_retry_limit",
-  "tls_section",
-  "tls_enable",
-  "tls_allow_invalid_certs",
-  "pools_section",
-  "workers",
-  "pool_max_connections",
-  "column_break_n71b",
-  "pool_min_connections",
-  "index_section",
-  "index_shards",
-  "column_break_5nye",
-  "index_replicas"
+  "column_break_ncyb",
+  "min_retry_wait",
+  "max_retry_wait",
+  "http_auth",
+  "http_headers",
+  "poll_interval",
+  "fail_on_timeout"
  ],
  "fields": [
   {
-   "fieldname": "section_break_oc18",
+   "fieldname": "store_tab",
+   "fieldtype": "Tab Break",
+   "label": "Store"
+  },
+  {
+   "fieldname": "column_break_yhyn",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_plrk",
    "fieldtype": "Section Break"
   },
   {
-   "description": "Unique identifier for the store.",
-   "fieldname": "store_id",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "Store ID",
-   "reqd": 1
+   "fieldname": "column_break_djvr",
+   "fieldtype": "Column Break"
   },
   {
-   "description": "Storage backend type.",
+   "fieldname": "section_break_bpyx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_dsjl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ntwb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_grwu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Description for the backend store.",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Description"
+  },
+  {
+   "description": "Type of the store backend.",
    "fieldname": "type",
    "fieldtype": "Select",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Type",
-   "options": "\nRocksDB\nFoundationDB\nPostgreSQL\nmySQL\nSQLite\nS3-compatible\nRedis/Memcached\nElasticSearch\nAzure Blob Storage\nFilesystem",
-   "reqd": 1
+   "options": "\nRocksDb\nSqlite\nFoundationDb\nPostgreSql\nMySql\nDefault\nS3\nAzure\nFileSystem\nElasticSearch\nMeilisearch\nRedis\nRedisCluster",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   },
   {
-   "fieldname": "storage_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Storage Settings"
-  },
-  {
-   "depends_on": "eval: [\"RocksDB\", \"FoundationDB\", \"PostgreSQL\", \"mySQL\", \"SQLite\", \"S3-compatible\", \"Azure Blob Storage\", \"Filesystem\"].includes(doc.type)",
-   "description": "Algorithm to use to compress large binary objects.",
-   "fieldname": "compression",
-   "fieldtype": "Select",
-   "label": "Compression",
-   "options": "\nLZ4"
-  },
-  {
-   "fieldname": "pools_section",
-   "fieldtype": "Section Break",
-   "label": "Pools"
-  },
-  {
-   "depends_on": "eval: [\"RocksDB\", \"SQLite\", \"Filesystem\"].includes(doc.type)",
-   "description": "Where to store the data in the server's filesystem.",
+   "depends_on": "eval: [\"RocksDb\", \"Sqlite\", \"FileSystem\"].includes(doc.type)",
+   "description": "Path to the data directory",
    "fieldname": "path",
    "fieldtype": "Data",
    "label": "Path",
-   "mandatory_depends_on": "eval: [\"RocksDB\", \"SQLite\", \"Filesystem\"].includes(doc.type)"
+   "mandatory_depends_on": "eval: [\"RocksDb\", \"Sqlite\", \"FileSystem\"].includes(doc.type)"
   },
   {
-   "fieldname": "column_break_uo3q",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_bsqd",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
-   "description": "Port of the database server.",
-   "fieldname": "port",
+   "default": "16834",
+   "depends_on": "eval: [\"RocksDb\"].includes(doc.type)",
+   "description": "Minimum size of a blob to store in the blob store, smaller blobs are stored in the metadata store.",
+   "fieldname": "blob_size",
    "fieldtype": "Int",
-   "label": "Port",
-   "mandatory_depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
-   "non_negative": 1
+   "label": "Blob Size",
+   "mandatory_depends_on": "eval: [\"RocksDb\"].includes(doc.type)"
   },
   {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
-   "description": "Name of the database.",
-   "fieldname": "database",
-   "fieldtype": "Data",
-   "label": "Database",
-   "mandatory_depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)"
+   "default": "134217728",
+   "depends_on": "eval: [\"RocksDb\"].includes(doc.type)",
+   "description": "Size of the write buffer in bytes, used to batch writes to the store.",
+   "fieldname": "buffer_size",
+   "fieldtype": "Int",
+   "label": "Buffer Size",
+   "mandatory_depends_on": "eval: [\"RocksDb\"].includes(doc.type)"
   },
   {
-   "fieldname": "column_break_offi",
-   "fieldtype": "Column Break"
+   "default": "15",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\", \"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "description": "Connection timeout to the store.",
+   "fieldname": "timeout",
+   "fieldtype": "Float",
+   "label": "Timeout (Seconds)",
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\", \"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
-   "fieldname": "configuration_section",
-   "fieldtype": "Section Break",
-   "label": "Configuration"
+   "depends_on": "eval: [\"MySql\"].includes(doc.type)",
+   "description": "Maximum size of a packet in bytes.",
+   "fieldname": "max_allowed_packet",
+   "fieldtype": "Int",
+   "label": "Max Allowed Packet"
   },
   {
-   "fieldname": "authentication_section",
-   "fieldtype": "Section Break",
-   "label": "Authentication"
+   "default": "0",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Use TLS to connect to the store.",
+   "fieldname": "use_tls",
+   "fieldtype": "Check",
+   "label": "Use TLS"
   },
   {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"ElasticSearch\"].includes(doc.type) || (doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\")",
-   "description": "Password to connect to the database.",
-   "fieldname": "password",
-   "fieldtype": "Password",
-   "label": "Password"
+   "default": "0",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
+   "description": "Allow invalid TLS certificates when connecting to the store.",
+   "fieldname": "allow_invalid_certs",
+   "fieldtype": "Check",
+   "label": "Allow Invalid Certs"
   },
   {
-   "fieldname": "tls_section",
-   "fieldtype": "Section Break",
-   "label": "TLS"
+   "depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.type)",
+   "description": "Number of worker threads to use for the store, defaults to the number of cores.",
+   "fieldname": "pool_workers",
+   "fieldtype": "Int",
+   "label": "Pool Workers",
+   "mandatory_depends_on": "eval: [\"RocksDb\", \"Sqlite\"].includes(doc.type)"
   },
   {
-   "fieldname": "column_break_n71b",
-   "fieldtype": "Column Break"
+   "default": "5",
+   "depends_on": "eval: [\"MySql\"].includes(doc.type)",
+   "description": "Minimum number of connections to the store.",
+   "fieldname": "pool_min_connections",
+   "fieldtype": "Int",
+   "label": "Pool Min Connections",
+   "mandatory_depends_on": "eval: [\"MySql\"].includes(doc.type)"
   },
   {
-   "fieldname": "column_break_r24o",
-   "fieldtype": "Column Break"
+   "default": "10",
+   "depends_on": "eval: [\"Sqlite\", \"PostgreSql\", \"MySql\", \"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "description": "Maximum number of connections to the store.",
+   "fieldname": "pool_max_connections",
+   "fieldtype": "Int",
+   "label": "Pool Max Connections",
+   "mandatory_depends_on": "eval: [\"Sqlite\", \"PostgreSql\", \"MySql\", \"Redis\", \"RedisCluster\"].includes(doc.type)"
   },
   {
-   "depends_on": "eval: doc.type == \"FoundationDB\"",
+   "default": "fast",
+   "depends_on": "eval: [\"PostgreSql\"].includes(doc.type)",
+   "description": "Method to use when recycling connections in the pool.",
+   "fieldname": "pool_recycling_method",
+   "fieldtype": "Select",
+   "label": "Pool Recycling Method",
+   "mandatory_depends_on": "eval: [\"PostgreSql\"].includes(doc.type)",
+   "options": "fast\nverified\nclean"
+  },
+  {
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
    "description": "Path to the cluster file for the FoundationDB cluster.",
    "fieldname": "cluster_file",
    "fieldtype": "Data",
    "label": "Cluster File",
-   "placeholder": "/etc/foundationdb/fdb.cluster"
+   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)"
   },
   {
-   "fieldname": "cluster_ids_section",
-   "fieldtype": "Section Break",
-   "label": "Cluster IDs"
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "description": "Data center ID.",
+   "fieldname": "datacenter_id",
+   "fieldtype": "Data",
+   "label": "Datacenter ID"
   },
   {
-   "fieldname": "column_break_gg5z",
-   "fieldtype": "Column Break"
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "description": "Machine ID in the FoundationDB cluster.",
+   "fieldname": "machine_id",
+   "fieldtype": "Data",
+   "label": "Machine ID"
   },
   {
-   "fieldname": "transaction_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Transaction Settings"
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "description": "Transaction maximum retry delay.",
+   "fieldname": "transaction_retry_delay",
+   "fieldtype": "Float",
+   "label": "Transaction Retry Delay (Seconds)",
+   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
-   "depends_on": "eval: doc.type == \"FoundationDB\"",
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
    "description": "Transaction retry limit.",
    "fieldname": "transaction_retry_limit",
    "fieldtype": "Int",
-   "label": "Retry Limit",
+   "label": "Transaction Retry Limit",
+   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "description": "Transaction timeout.",
+   "fieldname": "transaction_timeout",
+   "fieldtype": "Float",
+   "label": "Transaction Timeout (Seconds)",
+   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
    "non_negative": 1,
-   "placeholder": "10"
+   "precision": "1"
   },
   {
-   "fieldname": "column_break_q4si",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "cluster_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Cluster Settings"
-  },
-  {
-   "fieldname": "column_break_roov",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: doc.type == \"ElasticSearch\"",
-   "description": "URL of the store.",
-   "fieldname": "url",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Hostname of the database server.",
+   "fieldname": "host",
    "fieldtype": "Data",
-   "label": "URL",
-   "mandatory_depends_on": "eval: doc.type == \"ElasticSearch\""
+   "label": "Host",
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)"
   },
   {
-   "fieldname": "index_section",
-   "fieldtype": "Section Break",
-   "label": "Index"
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Port of the database server.",
+   "fieldname": "port",
+   "fieldtype": "Int",
+   "label": "Port",
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)"
   },
   {
-   "fieldname": "column_break_5nye",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: doc.type == \"Azure Blob Storage\"",
-   "description": "The name of the container in the Storage Account.",
-   "fieldname": "container",
+   "default": "frappe",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
+   "description": "Name of the database.",
+   "fieldname": "database",
    "fieldtype": "Data",
-   "label": "Container",
-   "mandatory_depends_on": "eval: doc.type == \"Azure Blob Storage\""
+   "label": "Database",
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)"
   },
   {
-   "depends_on": "eval: [\"S3-compatible\", \"Azure Blob Storage\"].includes(doc.type)",
-   "description": "A prefix that will be added to the keys of all objects stored in the blob store.",
-   "fieldname": "key_prefix",
+   "default": "frappe",
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"RedisCluster\"].includes(doc.type)",
+   "description": "Username to connect to the store.",
+   "fieldname": "auth_username",
    "fieldtype": "Data",
-   "label": "Key Prefix"
+   "label": "Auth Username"
   },
   {
-   "fieldname": "column_break_o8ml",
-   "fieldtype": "Column Break"
+   "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"RedisCluster\"].includes(doc.type)",
+   "description": "Password to connect to the store.",
+   "fieldname": "auth_secret",
+   "fieldtype": "Password",
+   "label": "Auth Secret"
   },
   {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
-   "description": "The geographical region where the bucket resides.",
+   "depends_on": "eval: [\"PostgreSql\"].includes(doc.type)",
+   "description": "Additional connection options.",
+   "fieldname": "options",
+   "fieldtype": "Data",
+   "label": "Options"
+  },
+  {
+   "fieldname": "section_break_uxnr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "The S3 region where the bucket resides.",
    "fieldname": "region",
    "fieldtype": "Data",
    "label": "Region",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\"",
-   "placeholder": "us-east-1"
+   "mandatory_depends_on": "eval: [\"S3\"].includes(doc.type)"
   },
   {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
-   "description": "The network address (hostname and optionally a port) of the S3 service. For S3-compatible services, you will need to specify the endpoint explicitly.",
-   "fieldname": "endpoint",
+   "fieldname": "column_break_ncyb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "After each successful write, verify the object is readable on the backend. Defends against the rare case where an S3-compatible backend returns success but does not actually persist the data. Adds one extra request per write.",
+   "fieldname": "verify_after_write",
+   "fieldtype": "Check",
+   "label": "Verify After Write"
+  },
+  {
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "The S3 bucket where blobs (e-mail messages, Sieve scripts, etc.) will be stored.",
+   "fieldname": "bucket",
    "fieldtype": "Data",
-   "label": "Endpoint",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
+   "label": "Bucket",
+   "mandatory_depends_on": "eval: [\"S3\"].includes(doc.type)"
   },
   {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
    "description": "Used when retrieving credentials from a shared credentials file. If specified, the server will use the access key ID, secret access key, and session token (if available) associated with the given profile.",
    "fieldname": "profile",
    "fieldtype": "Data",
    "label": "Profile"
   },
   {
-   "fieldname": "bucket_storage_account_section",
-   "fieldtype": "Section Break",
-   "label": "Bucket / Storage Account"
+   "default": "3",
+   "depends_on": "eval: [\"S3\", \"Azure\", \"Meilisearch\", \"RedisCluster\"].includes(doc.type)",
+   "description": "The maximum number of times to retry failed requests. Set to 0 to disable retries.",
+   "fieldname": "max_retries",
+   "fieldtype": "Int",
+   "label": "Max Retries",
+   "mandatory_depends_on": "eval: [\"S3\", \"Azure\", \"Meilisearch\", \"RedisCluster\"].includes(doc.type)"
   },
   {
-   "depends_on": "eval: doc.type == \"Azure Blob Storage\"",
-   "description": "The access key for the Azure Storage Account.",
-   "fieldname": "azure_access_key",
-   "fieldtype": "Password",
+   "depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)",
+   "description": "A prefix that will be added to the keys of all objects stored in the blob store.",
+   "fieldname": "key_prefix",
+   "fieldtype": "Data",
+   "label": "Key Prefix"
+  },
+  {
+   "depends_on": "eval: [\"S3\", \"Azure\"].includes(doc.type)",
+   "description": "Identifies the store account.",
+   "fieldname": "access_key",
+   "fieldtype": "Data",
    "label": "Access Key"
   },
   {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
-   "description": "Hostname of the database server.",
-   "fieldname": "host",
-   "fieldtype": "Data",
-   "label": "Hostname",
-   "mandatory_depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)"
-  },
-  {
-   "depends_on": "eval: doc.type == \"mySQL\"",
-   "description": "Maximum size of a packet in bytes.",
-   "fieldname": "max_allowed_packet",
-   "fieldtype": "Int",
-   "label": "Max Allowed Packet (Bytes)",
-   "non_negative": 1
-  },
-  {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"S3-compatible\", \"Redis/Memcached\", \"Azure Blob Storage\"].includes(doc.type)",
-   "description": "Connection timeout to the database.",
-   "fieldname": "timeout",
-   "fieldtype": "Int",
-   "label": "Timeout (Seconds)",
-   "non_negative": 1
-  },
-  {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\"",
-   "description": "Type of Redis server.",
-   "fieldname": "redis_type",
-   "fieldtype": "Select",
-   "label": "Server Type",
-   "mandatory_depends_on": "eval: doc.type == \"Redis/Memcached\"",
-   "options": "\nRedis Single Node\nRedis Cluster"
-  },
-  {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\"",
-   "description": "URL(s) of the Redis server(s).",
-   "fieldname": "urls",
-   "fieldtype": "Small Text",
-   "label": "Redis URL(s)",
-   "mandatory_depends_on": "eval: doc.type == \"Redis/Memcached\""
-  },
-  {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
-   "description": "The S3 bucket where blobs (e-mail messages, Sieve scripts, etc.) will be stored.",
-   "fieldname": "bucket",
-   "fieldtype": "Data",
-   "label": "Bucket",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
-  },
-  {
-   "depends_on": "eval: doc.type == \"Azure Blob Storage\"",
-   "description": "The Azure Storage Account where blobs (e-mail messages, Sieve scripts, etc.) will be stored.",
-   "fieldname": "storage_account",
-   "fieldtype": "Data",
-   "label": "Storage Account Name",
-   "mandatory_depends_on": "eval: doc.type == \"Azure Blob Storage\""
-  },
-  {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"ElasticSearch\"].includes(doc.type) || (doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\")",
-   "description": "Username to connect to the database.",
-   "fieldname": "user",
-   "fieldtype": "Data",
-   "label": "Username"
-  },
-  {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
-   "description": "Identifies the S3 account.",
-   "fieldname": "access_key",
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "The secret key for the S3 account.",
+   "fieldname": "secret_key",
    "fieldtype": "Password",
-   "label": "Access Key",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
+   "label": "Secret Key"
   },
   {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
-   "description": "The security token for the S3 account.",
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "Security token for temporary credentials.",
    "fieldname": "security_token",
    "fieldtype": "Password",
    "label": "Security Token"
   },
   {
-   "depends_on": "eval: doc.type == \"S3-compatible\"",
-   "description": "The secret key for the S3 account.",
-   "fieldname": "secret_key",
+   "depends_on": "eval: [\"S3\"].includes(doc.type)",
+   "description": "Temporary session token for the S3 account.",
+   "fieldname": "session_token",
    "fieldtype": "Password",
-   "label": "Secret Key",
-   "mandatory_depends_on": "eval: doc.type == \"S3-compatible\""
+   "label": "Session Token"
   },
   {
-   "depends_on": "eval: doc.type == \"Azure Blob Storage\"",
-   "description": "SAS Token, when not using access-key based authentication.",
+   "depends_on": "eval: [\"Azure\"].includes(doc.type)",
+   "description": "SAS Token, when not using accessKey based authentication.",
    "fieldname": "sas_token",
    "fieldtype": "Password",
    "label": "SAS Token"
   },
   {
-   "depends_on": "eval: [\"RocksDB\", \"FoundationDB\", \"PostgreSQL\", \"mySQL\", \"SQLite\", \"S3-compatible\", \"Azure Blob Storage\", \"Filesystem\"].includes(doc.type)",
-   "description": "How often to purge the database. Expects a cron expression.\n\n<br>\n<br>\n\n<pre>*  *  *  *  *\n\u252c  \u252c  \u252c  \u252c  \u252c\n\u2502  \u2502  \u2502  \u2502  \u2502\n\u2502  \u2502  \u2502  \u2502  \u2514 day of week (0 - 6) (0 is Sunday)\n\u2502  \u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500 month (1 - 12)\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 day of month (1 - 31)\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 hour (0 - 23)\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 minute (0 - 59)\n\n---\n\n* - Any value\n/ - Step values\n</pre>",
-   "fieldname": "purge_frequency",
+   "depends_on": "eval: [\"Azure\"].includes(doc.type)",
+   "description": "The Azure Storage Account where blobs (e-mail messages, Sieve scripts, etc.) will be stored.",
+   "fieldname": "storage_account",
    "fieldtype": "Data",
-   "label": "Purge Frequency (Cron)",
-   "not_nullable": 1,
-   "placeholder": "0 3 * * *"
+   "label": "Storage Account",
+   "mandatory_depends_on": "eval: [\"Azure\"].includes(doc.type)"
   },
   {
-   "depends_on": "eval: doc.type == \"RocksDB\"",
-   "description": "Minimum size of a blob to store in the blob store, smaller blobs are stored in the metadata store.",
-   "fieldname": "min_blob_size",
-   "fieldtype": "Int",
-   "label": "Min Blob Size (Bytes)",
-   "non_negative": 1
+   "depends_on": "eval: [\"Azure\"].includes(doc.type)",
+   "description": "The name of the container in the Storage Account.",
+   "fieldname": "container",
+   "fieldtype": "Data",
+   "label": "Container",
+   "mandatory_depends_on": "eval: [\"Azure\"].includes(doc.type)"
   },
   {
-   "depends_on": "eval: doc.type == \"RocksDB\"",
-   "description": "Size of the write buffer in bytes, used to batch writes to the store.",
-   "fieldname": "write_buffer_size",
-   "fieldtype": "Int",
-   "label": "Write Buffer Size (MB)",
-   "non_negative": 1
-  },
-  {
-   "depends_on": "eval: [\"S3-compatible\", \"Azure Blob Storage\"].includes(doc.type)",
-   "description": "The maximum number of times to retry failed requests. Set to 0 to disable retries.",
-   "fieldname": "max_retries",
-   "fieldtype": "Int",
-   "label": "Retry Limit"
-  },
-  {
-   "depends_on": "eval: doc.type == \"Filesystem\"",
+   "default": "2",
+   "depends_on": "eval: [\"FileSystem\"].includes(doc.type)",
    "description": "Maximum depth of nested directories.",
    "fieldname": "depth",
    "fieldtype": "Int",
-   "label": "Nested Depth",
-   "non_negative": 1
+   "label": "Depth",
+   "mandatory_depends_on": "eval: [\"FileSystem\"].includes(doc.type)"
   },
   {
-   "depends_on": "eval: doc.type == \"FoundationDB\"",
-   "description": "Machine ID in the FoundationDB cluster.",
-   "fieldname": "machine",
+   "fieldname": "section_break_wmqb",
+   "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\", \"Redis\"].includes(doc.type)",
+   "description": "URL of the store.",
+   "fieldname": "url",
    "fieldtype": "Data",
-   "label": "Machine ID"
-  },
-  {
-   "depends_on": "eval: doc.type == \"FoundationDB\"",
-   "description": "Data center ID of the FoundationDB cluster.",
-   "fieldname": "datacenter",
-   "fieldtype": "Data",
-   "label": "Data Center ID"
-  },
-  {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
-   "description": "Number of retries to connect to the Redis cluster.",
-   "fieldname": "retry_total",
-   "fieldtype": "Int",
-   "label": "Retries",
-   "non_negative": 1,
-   "placeholder": "3"
+   "label": "URL",
+   "mandatory_depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\", \"Redis\"].includes(doc.type)"
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
+   "depends_on": "eval: [\"ElasticSearch\"].includes(doc.type)",
+   "description": "Whether to index the full source document.",
+   "fieldname": "include_source",
+   "fieldtype": "Check",
+   "label": "Include Source"
+  },
+  {
+   "depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
+   "description": "The HTTP authentication to use.",
+   "fieldname": "http_auth",
+   "fieldtype": "Link",
+   "label": "HTTP Auth",
+   "mandatory_depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
+   "options": "Mail Cluster Store HTTP Auth"
+  },
+  {
+   "default": "{}",
+   "depends_on": "eval: [\"ElasticSearch\", \"Meilisearch\"].includes(doc.type)",
+   "description": "Additional headers to include in HTTP requests.",
+   "fieldname": "http_headers",
+   "fieldtype": "JSON",
+   "label": "HTTP Headers"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: [\"ElasticSearch\"].includes(doc.type)",
+   "description": "Number of replicas for the index",
+   "fieldname": "num_replicas",
+   "fieldtype": "Int",
+   "label": "No. of Replicas",
+   "mandatory_depends_on": "eval: [\"ElasticSearch\"].includes(doc.type)"
+  },
+  {
+   "default": "3",
+   "depends_on": "eval: [\"ElasticSearch\"].includes(doc.type)",
+   "description": "Number of shards for the index.",
+   "fieldname": "num_shards",
+   "fieldtype": "Int",
+   "label": "No. of Shards",
+   "mandatory_depends_on": "eval: [\"ElasticSearch\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"Meilisearch\"].includes(doc.type)",
+   "description": "Interval between polling for task status.",
+   "fieldname": "poll_interval",
+   "fieldtype": "Float",
+   "label": "Poll Interval (Seconds)",
+   "mandatory_depends_on": "eval: [\"Meilisearch\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval: [\"Meilisearch\"].includes(doc.type)",
+   "description": "Whether to fail the operation if the task does not complete within the polling retries.",
+   "fieldname": "fail_on_timeout",
+   "fieldtype": "Check",
+   "label": "Fail On Timeout"
+  },
+  {
+   "depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "description": "Timeout for creating a new connection.",
+   "fieldname": "pool_timeout_create",
+   "fieldtype": "Float",
+   "label": "Pool Timeout Create (Seconds)",
+   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
+  },
+  {
+   "depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "description": "Timeout for waiting for a connection from the pool.",
+   "fieldname": "pool_timeout_wait",
+   "fieldtype": "Float",
+   "label": "Pool Timeout Wait (Seconds)",
+   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
+  },
+  {
+   "depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "description": "Timeout for recycling a connection.",
+   "fieldname": "pool_timeout_recycle",
+   "fieldtype": "Float",
+   "label": "Pool Timeout Recycle (Seconds)",
+   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
+  },
+  {
+   "default": "[]",
+   "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "description": "URL(s) of the Redis server(s)",
+   "fieldname": "urls",
+   "fieldtype": "JSON",
+   "label": "URLs",
+   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "description": "Maximum time to wait between retries.",
+   "fieldname": "max_retry_wait",
+   "fieldtype": "Float",
+   "label": "Max Retry Wait (Seconds)",
+   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
+  },
+  {
+   "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "description": "Minimum time to wait between retries.",
+   "fieldname": "min_retry_wait",
+   "fieldtype": "Float",
+   "label": "Min Retry Wait (Seconds)",
+   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
+  },
+  {
+   "default": "1",
+   "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
    "description": "Whether to read from replicas.",
    "fieldname": "read_from_replicas",
    "fieldtype": "Check",
    "label": "Read From Replicas"
   },
   {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
-   "description": "Maximum time to wait between retries.",
-   "fieldname": "retry_max_wait",
-   "fieldtype": "Int",
-   "label": "Max Wait (Milliseconds)",
-   "non_negative": 1
+   "default": "resp2",
+   "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "description": "Redis protocol version.",
+   "fieldname": "protocol_version",
+   "fieldtype": "Select",
+   "label": "Protocol Version",
+   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "options": "\nresp2\nresp3"
   },
   {
-   "depends_on": "eval: doc.type == \"Redis/Memcached\" && doc.redis_type == \"Redis Cluster\"",
-   "description": "Minimum time to wait between retries.",
-   "fieldname": "retry_min_wait",
-   "fieldtype": "Int",
-   "label": "Min Wait (Milliseconds)",
-   "non_negative": 1
-  },
-  {
-   "depends_on": "eval: doc.type == \"FoundationDB\"",
-   "description": "Transaction timeout.",
-   "fieldname": "transaction_timeout",
-   "fieldtype": "Int",
-   "label": "Timeout (Seconds)",
-   "non_negative": 1
-  },
-  {
-   "depends_on": "eval: doc.type == \"FoundationDB\"",
-   "description": "Transaction maximum retry delay.",
-   "fieldname": "transaction_max_retry_delay",
-   "fieldtype": "Int",
-   "label": "Max Retry Delay (Seconds)",
-   "non_negative": 1
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\"].includes(doc.type)",
-   "description": "Use TLS to connect to the store.",
-   "fieldname": "tls_enable",
-   "fieldtype": "Check",
-   "label": "Enable TLS"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"ElasticSearch\"].includes(doc.type)",
-   "description": "Allow invalid TLS certificates when connecting to the store.",
-   "fieldname": "tls_allow_invalid_certs",
-   "fieldtype": "Check",
-   "label": "Allow Invalid Certs"
-  },
-  {
-   "depends_on": "eval: [\"RocksDB\", \"SQLite\"].includes(doc.type)",
-   "description": "Number of worker threads to use for the store, defaults to the number of cores.",
-   "fieldname": "workers",
-   "fieldtype": "Int",
-   "label": "Thread Pool Size",
-   "placeholder": "8"
-  },
-  {
-   "depends_on": "eval: doc.type == \"mySQL\"",
-   "description": "Minimum number of connections to the store.",
-   "fieldname": "pool_min_connections",
-   "fieldtype": "Int",
-   "label": "Min Connections",
-   "non_negative": 1
-  },
-  {
-   "depends_on": "eval: [\"PostgreSQL\", \"mySQL\", \"SQLite\"].includes(doc.type)",
-   "description": "Maximum number of connections to the store.",
-   "fieldname": "pool_max_connections",
-   "fieldtype": "Int",
-   "label": "Max Connections",
-   "non_negative": 1
-  },
-  {
-   "depends_on": "eval: doc.type == \"ElasticSearch\"",
-   "description": "Number of shards for the index.",
-   "fieldname": "index_shards",
-   "fieldtype": "Int",
-   "label": "Number of Shards",
-   "non_negative": 1
-  },
-  {
-   "depends_on": "eval: doc.type == \"ElasticSearch\"",
-   "description": "Number of replicas for the index.",
-   "fieldname": "index_replicas",
-   "fieldtype": "Int",
-   "label": "Number of Replicas",
-   "non_negative": 1
+   "fieldname": "column_break_ovdu",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "istable": 1,
  "links": [],
- "modified": "2026-01-12 14:37:41.129244",
+ "modified": "2026-06-10 12:48:34.243730",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster Store",
- "naming_rule": "Random",
+ "naming_rule": "Set by user",
  "owner": "Administrator",
- "permissions": [],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
  "row_format": "Dynamic",
  "show_title_field_in_link": 1,
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "store_id"
+ "title_field": "description",
+ "track_changes": 1
 }

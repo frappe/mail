@@ -39,7 +39,7 @@ from mail.jmap.services.mail.email import EmailService
 from mail.utils import (
 	compress_directory,
 	extract_compressed_file,
-	get_mail_config,
+	get_config,
 	get_mail_export_directory,
 	get_mail_import_directory,
 	get_mbox_files,
@@ -481,13 +481,13 @@ class MailExchange(Document):
 	def max_import(self) -> int:
 		"""Returns the maximum number of emails allowed for import."""
 
-		return cint(get_mail_config("exchange_max_import"))
+		return cint(get_config("exchange_max_import"))
 
 	@property
 	def max_export(self) -> int:
 		"""Returns the maximum number of emails allowed for export."""
 
-		return cint(get_mail_config("exchange_max_export"))
+		return cint(get_config("exchange_max_export"))
 
 	@property
 	def export_filter_dict(self) -> dict:
@@ -616,7 +616,7 @@ class MailExchange(Document):
 				self.name,
 				"_import",
 				queue="long",
-				timeout=cint(get_mail_config("exchange_import_timeout")),
+				timeout=cint(get_config("exchange_import_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -628,7 +628,7 @@ class MailExchange(Document):
 				self.name,
 				"_export",
 				queue="long",
-				timeout=cint(get_mail_config("exchange_export_timeout")),
+				timeout=cint(get_config("exchange_export_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -826,7 +826,7 @@ class MailExchange(Document):
 		if self.export_format == "jmap":
 			ExportWriter.write_meta(emails, out_dir)
 
-		batch_size = cint(get_mail_config("exchange_export_batch_size"))
+		batch_size = cint(get_config("exchange_export_batch_size"))
 		for batch in create_batch(emails, batch_size):
 			blobs = [(e["blobId"], None) for e in batch if e.get("blobId")]
 			data = service.download_blobs_concurrently(blobs)

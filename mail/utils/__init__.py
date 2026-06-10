@@ -39,6 +39,54 @@ INVISIBLE_CHARS = (
 )
 
 
+CONFIG_KEYS = [
+	# JMAP
+	"server_url",
+	"username",
+	"password",
+	# SpamAssassin
+	"spamd_host",
+	"spamd_port",
+	"spamd_scanning_mode",
+	"spamd_hybrid_scanning_threshold",
+	# Defaults
+	"default_dns_ttl",
+	"default_disk_quota_gb",
+	"default_gravatar",
+	"stalwart_version",
+	"stalwart_cli_version",
+	"storage_shard_count",
+	# Logs
+	"push_log_file_count",
+	"push_log_level",
+	"push_log_max_file_size",
+	"storage_log_file_count",
+	"storage_log_level",
+	"storage_log_max_file_size",
+	# Limits
+	"exchange_max_export",
+	"exchange_max_import",
+	"exchange_export_batch_size",
+	"max_email_sync",
+	"max_message_payload_size_mb",
+	"max_push_notifications",
+	"process_pending_emails_batch_size",
+	"process_pending_emails_max_batch_size",
+	# Timeouts
+	"ansible_play_timeout",
+	"server_job_timeout",
+	"server_deployment_timeout",
+	"scan_message_timeout",
+	"process_pending_emails_timeout",
+	"stalwart_cli_command_timeout",
+	"exchange_export_timeout",
+	"exchange_import_timeout",
+	"fetch_lock_timeout",
+	"lock_acquire_timeout",
+	"lock_timeout",
+]
+
+
 def reconnect_on_failure(max_retries: int = 3) -> callable:
 	"""Decorator to reconnect to the database if a connection error occurs."""
 
@@ -62,84 +110,56 @@ def reconnect_on_failure(max_retries: int = 3) -> callable:
 	return wrapper
 
 
-def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
-	"""Returns the mail configuration from frappe.conf, or an empty dict if not set."""
+def get_config(key: str | None = None) -> dict[str, Any] | Any:
+	"""Fetches configuration values, prioritizing Mail Settings over global config."""
 
-	default_config = {
-		"ansible_play_timeout": 1500,
-		"data_exchange_export_timeout": 3600,
-		"data_exchange_import_timeout": 3600,
-		"default_dns_ttl": 3600,
-		"default_mail_quota": 1024**3,  # 1 GB
-		"enable_ed25519_dkim": False,
-		"exchange_export_batch_size": 500,
-		"exchange_export_timeout": 3600,
-		"exchange_import_timeout": 3600,
-		"exchange_max_export": 1_000,
-		"exchange_max_import": 1_000,
-		"fetch_lock_timeout": 300,
-		"gravatar_default_avatar": "404",
-		"lock_acquire_timeout": 0,
-		"lock_timeout": 10,
-		"max_accounts": 0,
-		"max_domains": 0,
-		"max_email_sync": 100,
-		"max_groups": 0,
-		"max_lists": 0,
-		"max_message_payload_size": 25 * 1024 * 1024,  # 25 MB
-		"max_push_notifications": 5,
-		"process_pending_emails_batch_size": 2_500,
-		"process_pending_emails_max_batch_size": 25_000,
-		"process_pending_emails_timeout": 1500,
-		"push_log_file_count": 10,
-		"push_log_level": "INFO",
-		"push_log_max_size": 5_000_000,
-		"rsa_key_size": 2048,
-		"scan_message_timeout": 2 * 60,  # 2 minutes
-		"server_deployment_timeout": 1500,
-		"server_job_timeout": 1500,
-		"stalwart_cli_command_timeout": 3600,
-		"stalwart_version": "v0.15.4",
-		"storage_log_file_count": 10,
-		"storage_log_level": "INFO",
-		"storage_log_max_size": 5_000_000,
-		"storage_shard_count": 8,
-	}
+	mail_conf = frappe.conf.mail or {}
+	settings = frappe.get_cached_doc("Mail Settings")
 
-	config = frappe.conf.mail or {}
-	config = {**default_config, **config}
-
-	for k, v in config.items():
-		if k in default_config and not isinstance(v, type(default_config[k])):
-			frappe.throw(
-				_("Mail config key '{0}' has invalid type. Expected {1}.").format(
-					k, type(default_config[k]).__name__
-				)
-			)
+	config = {}
+	for field in CONFIG_KEYS:
+		if field == "password":
+			config[field] = password_or_none(settings, field) or mail_conf.get(field)
+		else:
+			config[field] = settings.get(field) or mail_conf.get(field)
 
 	if key:
 		if key not in config:
 			frappe.throw(_("Mail config key '{0}' not found").format(key))
-
-		value = config[key]
-		if not value and type(value) not in (int, float, bool):
-			frappe.throw(_("Mail config key '{0}' is not set").format(key))
 
 		return config[key]
 
 	return config
 
 
+def is_stalwart_configured(raise_exception: bool = False) -> bool:
+	"""Checks if the Stalwart server is properly configured."""
+
+	config = get_config()
+
+	server_url = config.get("server_url")
+	username = config.get("username")
+	password = config.get("password")
+
+	if server_url and (username and password):
+		return True
+
+	if raise_exception:
+		frappe.throw(_("Stalwart server is not properly configured. Please check your Mail Settings."))
+
+	return False
+
+
 def get_storage_logger() -> "Logger":
 	"""Returns a logger instance for mail storage operations."""
 
-	config = get_mail_config()
+	config = get_config()
 
-	max_size = cint(config["push_log_max_size"])
-	file_count = cint(config["push_log_file_count"])
+	max_size = cint(config["storage_log_max_file_size"])
+	file_count = cint(config["storage_log_file_count"])
 	logger = frappe.logger("mail.storage", allow_site=True, max_size=max_size, file_count=file_count)
 
-	log_level = config["push_log_level"].upper()
+	log_level = config["storage_log_level"].upper()
 	logger.setLevel(log_level)
 
 	return logger
@@ -148,9 +168,9 @@ def get_storage_logger() -> "Logger":
 def get_push_logger() -> "Logger":
 	"""Returns a logger instance for mail push notifications."""
 
-	config = get_mail_config()
+	config = get_config()
 
-	max_size = cint(config["push_log_max_size"])
+	max_size = cint(config["push_log_max_file_size"])
 	file_count = cint(config["push_log_file_count"])
 	logger = frappe.logger("mail.push", allow_site=True, max_size=max_size, file_count=file_count)
 
@@ -323,6 +343,22 @@ def reformat_pbkdf2_hash(passlib_hash: str, dklen: int | None = None) -> str:
 
 	formatted_hash = f"${prefix}$i={iterations},l={dklen}${salt_b64}${hash_clean}"
 	return formatted_hash
+
+
+def execute_with_logging(
+	func: callable, title: str, user_message: str | None = None, with_context: bool = False, *args, **kwargs
+) -> Any | None:
+	"""Executes a function and logs any exceptions that occur, optionally throwing a user-friendly message."""
+
+	try:
+		return func(*args, **kwargs)
+	except Exception:
+		frappe.log_error(
+			title=title,
+			message=frappe.get_traceback(with_context=with_context),
+		)
+		if user_message:
+			frappe.throw(title=title, msg=user_message)
 
 
 @contextmanager
@@ -806,22 +842,6 @@ def get_messages_directory() -> str:
 	return directory
 
 
-def get_data_import_directory() -> str:
-	"""Returns the path to the data import directory for the current site."""
-
-	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "data-exchange", "import")
-	os.makedirs(directory, exist_ok=True)
-	return directory
-
-
-def get_data_export_directory() -> str:
-	"""Returns the path to the data export directory for the current site."""
-
-	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "data-exchange", "export")
-	os.makedirs(directory, exist_ok=True)
-	return directory
-
-
 def get_mail_import_directory() -> str:
 	"""Returns the path to the mail import directory for the current site."""
 
@@ -838,11 +858,11 @@ def get_mail_export_directory() -> str:
 	return directory
 
 
-def get_stalwart_cli_path() -> str:
+def get_stalwart_cli_path(raise_exception: bool = False) -> str:
 	"""Returns the path to the Stalwart CLI tool, raising an error if not found."""
 
 	cli_path = os.path.join(get_mail_app_path(), "stalwart-cli")
-	if not os.path.exists(cli_path):
+	if not os.path.exists(cli_path) and raise_exception:
 		relpath = os.path.relpath(cli_path, get_bench_path())
 		frappe.throw(_("Stalwart CLI not found at {0}.").format(relpath))
 
@@ -876,4 +896,10 @@ def is_catch_all_address(address: str) -> bool:
 def get_stalwart_version() -> str:
 	"""Returns the Stalwart version from configuration or default."""
 
-	return get_mail_config("stalwart_version")
+	return get_config("stalwart_version")
+
+
+def get_stalwart_cli_version() -> str:
+	"""Returns the Stalwart CLI version from configuration or default."""
+
+	return get_config("stalwart_cli_version")

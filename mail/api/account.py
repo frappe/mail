@@ -10,12 +10,10 @@ from mail.api.admin import add_member
 from mail.api.mail import normalize_filter
 from mail.api.utils import get_avatar_url
 from mail.client.doctype.identity.identity import fetch_identities
-from mail.server.doctype.mail_account_request.mail_account_request import create_user
+from mail.mail.doctype.mail_settings.mail_settings import get_signup_domains
 from mail.utils import convert_html_to_text, user_context
-from mail.utils.cache import get_signup_domains
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import has_user_settings, is_jmap_configured, is_mail_admin, is_system_manager
-from mail.utils.validation import is_email_assigned
 
 
 @frappe.whitelist(allow_guest=True)
@@ -23,7 +21,7 @@ from mail.utils.validation import is_email_assigned
 def validate_email_assigned(email: str) -> None:
 	"""Checks if email is already assigned"""
 
-	if is_email_assigned(email):
+	if frappe.db.exists("User", {"email": email}):
 		frappe.throw(_("Username already taken."))
 
 
@@ -104,8 +102,6 @@ def create_account(request_key: str, first_name: str, last_name: str, password: 
 
 	if account_request.account:
 		account_request.create_account(first_name, last_name, password)
-	else:
-		create_user(account_request.backup_email, first_name, last_name, password, ["Mail Admin"])
 
 
 @frappe.whitelist(allow_guest=True)

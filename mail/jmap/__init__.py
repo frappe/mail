@@ -26,7 +26,7 @@ from mail.jmap.services.vacationresponse.vacation_response import VacationRespon
 from mail.jmap.services.websocket.websocket import WebSocketService
 from mail.storage import get_data_store
 from mail.storage.data_store import Entity
-from mail.utils import get_mail_config
+from mail.utils import get_config
 from mail.utils.validation import has_permission_for_user
 
 
@@ -45,8 +45,8 @@ def get_jmap_connection(
 				frappe.PermissionError,
 			)
 
-	if frappe.get_cached_value("User", user, "enabled") == 0:
-		frappe.throw(_("User {0} is disabled.").format(frappe.bold(user)))
+	if not frappe.get_cached_value("User", user, "enabled"):
+		frappe.throw(_("User {0} does not exist or is disabled.").format(frappe.bold(user)))
 
 	settings = frappe.db.exists("User Settings", {"user": user, "username": ["!=", None]})
 	if not settings:
@@ -54,15 +54,10 @@ def get_jmap_connection(
 
 	user_settings = frappe.get_cached_doc("User Settings", settings)
 
-	server_url = user_settings.server_url or get_mail_config("server_url")
-	if not server_url:
-		frappe.throw(
-			_("Server URL must be set in either the user's settings or the site configuration."),
-			frappe.ValidationError,
-		)
-
 	return JMAPConnection(
-		JMAPConnectionInfo(server_url, user_settings.username, user_settings.get_password("app_password")),
+		JMAPConnectionInfo(
+			get_config("server_url"), user_settings.username, user_settings.get_password("app_password")
+		),
 		session_manager=get_jmap_session_manager(user),
 	)
 

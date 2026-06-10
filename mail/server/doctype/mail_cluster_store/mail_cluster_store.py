@@ -1,17 +1,220 @@
-# Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
+# Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+import json
+from uuid import uuid7
+
 import frappe
+from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint, flt
 
 
 class MailClusterStore(Document):
-	pass
+	def autoname(self) -> None:
+		self.name = str(uuid7())
 
+	@property
+	def config(self) -> dict:
+		"""Returns the configuration for the cluster store."""
 
-def on_doctype_update() -> None:
-	frappe.db.add_unique(
-		"Mail Cluster Store",
-		["parenttype", "parent", "store_id"],
-		constraint_name="unique_parent_store_id",
-	)
+		if not self.type:
+			return {}
+
+		config = {"@type": self.type}
+
+		if self.type == "RocksDb":
+			config.update(
+				{
+					"path": self.path,
+					"blobSize": cint(self.blob_size),
+					"bufferSize": cint(self.buffer_size),
+					"poolWorkers": cint(self.pool_workers),
+				}
+			)
+
+		elif self.type == "Sqlite":
+			config.update(
+				{
+					"path": self.path,
+					"poolWorkers": cint(self.pool_workers),
+					"poolMaxConnections": cint(self.pool_max_connections),
+				}
+			)
+
+		elif self.type == "FoundationDb":
+			config.update(
+				{
+					"clusterFile": self.cluster_file,
+					"datacenterId": self.datacenter_id,
+					"machineId": self.machine_id,
+					"transactionRetryDelay": cint(flt(self.transaction_retry_delay, 1) * 1000),
+					"transactionTimeout": cint(flt(self.transaction_timeout, 1) * 1000),
+					"transactionRetryLimit": cint(self.transaction_retry_limit),
+				}
+			)
+
+		elif self.type == "PostgreSql":
+			config.update(
+				{
+					"timeout": cint(flt(self.timeout, 1) * 1000),
+					"useTls": bool(self.use_tls),
+					"allowInvalidCerts": bool(self.allow_invalid_certs),
+					"poolMaxConnections": cint(self.pool_max_connections),
+					"poolRecyclingMethod": self.pool_recycling_method,
+					"host": self.host,
+					"port": cint(self.port),
+					"database": self.database,
+					"authUsername": self.auth_username,
+					"authSecret": {"@type": "Value", "secret": self.get_password("auth_secret")}
+					if self.auth_secret
+					else None,
+					"options": self.options,
+				}
+			)
+
+		elif self.type == "MySql":
+			config.update(
+				{
+					"timeout": cint(flt(self.timeout, 1) * 1000),
+					"useTls": bool(self.use_tls),
+					"allowInvalidCerts": bool(self.allow_invalid_certs),
+					"maxAllowedPacket": cint(self.max_allowed_packet) if self.max_allowed_packet else None,
+					"poolMaxConnections": cint(self.pool_max_connections),
+					"poolMinConnections": cint(self.pool_min_connections),
+					"host": self.host,
+					"port": cint(self.port),
+					"database": self.database,
+					"authUsername": self.auth_username,
+					"authSecret": {"@type": "Value", "secret": self.get_password("auth_secret")}
+					if self.auth_secret
+					else None,
+				}
+			)
+
+		elif self.type == "S3":
+			config.update(
+				{
+					"region": self.region,
+					"bucket": self.bucket,
+					"accessKey": self.access_key,
+					"secretKey": {"@type": "Value", "secret": self.get_password("secret_key")}
+					if self.secret_key
+					else None,
+					"securityToken": {"@type": "Value", "secret": self.get_password("security_token")}
+					if self.security_token
+					else None,
+					"sessionToken": {"@type": "Value", "secret": self.get_password("session_token")}
+					if self.session_token
+					else None,
+					"profile": self.profile,
+					"timeout": cint(flt(self.timeout, 1) * 1000),
+					"maxRetries": cint(self.max_retries),
+					"keyPrefix": self.key_prefix,
+					"allowInvalidCerts": bool(self.allow_invalid_certs),
+					"verifyAfterWrite": bool(self.verify_after_write),
+				}
+			)
+
+		elif self.type == "Azure":
+			config.update(
+				{
+					"storageAccount": self.storage_account,
+					"container": self.container,
+					"accessKey": {"@type": "Value", "secret": self.get_password("access_key")}
+					if self.access_key
+					else None,
+					"sasToken": {"@type": "Value", "secret": self.get_password("sas_token")}
+					if self.sas_token
+					else None,
+					"timeout": cint(flt(self.timeout, 1) * 1000),
+					"maxRetries": cint(self.max_retries),
+					"keyPrefix": self.key_prefix,
+				}
+			)
+
+		elif self.type == "FileSystem":
+			config.update(
+				{
+					"path": self.path,
+					"depth": cint(self.depth),
+				}
+			)
+
+		elif self.type == "ElasticSearch":
+			http_auth = frappe.get_doc("Mail Cluster Store HTTP Auth", self.http_auth)
+			config.update(
+				{
+					"url": self.url,
+					"numReplicas": cint(self.num_replicas),
+					"numShards": cint(self.num_shards),
+					"includeSource": bool(self.include_source),
+					"timeout": cint(flt(self.timeout, 1) * 1000),
+					"allowInvalidCerts": bool(self.allow_invalid_certs),
+					"httpAuth": http_auth.config,
+					"httpHeaders": json.loads(self.http_headers) if self.http_headers else {},
+				}
+			)
+
+		elif self.type == "Meilisearch":
+			http_auth = frappe.get_doc("Mail Cluster Store HTTP Auth", self.http_auth)
+			config.update(
+				{
+					"url": self.url,
+					"pollInterval": cint(flt(self.poll_interval, 1) * 1000),
+					"maxRetries": cint(self.max_retries),
+					"failOnTimeout": bool(self.fail_on_timeout),
+					"timeout": cint(flt(self.timeout, 1) * 1000),
+					"allowInvalidCerts": bool(self.allow_invalid_certs),
+					"httpAuth": http_auth.config,
+					"httpHeaders": json.loads(self.http_headers) if self.http_headers else {},
+				}
+			)
+
+		elif self.type == "Redis":
+			config.update(
+				{
+					"url": self.url,
+					"timeout": cint(flt(self.timeout, 1) * 1000),
+					"poolMaxConnections": cint(self.pool_max_connections),
+					"poolTimeoutCreate": cint(flt(self.pool_timeout_create, 1) * 1000),
+					"poolTimeoutWait": cint(flt(self.pool_timeout_wait, 1) * 1000),
+					"poolTimeoutRecycle": cint(flt(self.pool_timeout_recycle, 1) * 1000),
+				}
+			)
+
+		elif self.type == "RedisCluster":
+			config.update(
+				{
+					"urls": json.loads(self.urls) if self.urls else [],
+					"timeout": cint(flt(self.timeout, 1) * 1000),
+					"authUsername": self.auth_username,
+					"authSecret": {"@type": "Value", "secret": self.get_password("auth_secret")}
+					if self.auth_secret
+					else None,
+					"maxRetryWait": cint(flt(self.max_retry_wait, 1) * 1000),
+					"minRetryWait": cint(flt(self.min_retry_wait, 1) * 1000),
+					"maxRetries": cint(self.max_retries),
+					"readFromReplicas": bool(self.read_from_replicas),
+					"protocolVersion": self.protocol_version,
+					"poolMaxConnections": cint(self.pool_max_connections),
+					"poolTimeoutCreate": cint(flt(self.pool_timeout_create, 1) * 1000),
+					"poolTimeoutWait": cint(flt(self.pool_timeout_wait, 1) * 1000),
+					"poolTimeoutRecycle": cint(flt(self.pool_timeout_recycle, 1) * 1000),
+				}
+			)
+
+		return config
+
+	def validate(self) -> None:
+		if not self.description:
+			self.description = self.type
+
+		self.validate_singleton_default()
+
+	def validate_singleton_default(self) -> None:
+		"""Validates that only one Default store exists."""
+
+		if self.type in ["Default"]:
+			if frappe.db.exists("Mail Cluster Store", {"type": self.type, "name": ["!=", self.name]}):
+				frappe.throw(_("Only one {0} store is allowed.").format(self.type))

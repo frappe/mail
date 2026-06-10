@@ -1,10 +1,8 @@
 # Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import hashlib
 import json
 import os
-import urllib.parse
 from uuid import uuid7
 
 import frappe
@@ -13,17 +11,10 @@ from frappe.model.document import Document
 from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 
-from mail.utils import get_mail_config, get_stalwart_version
+from mail.utils import get_config, get_stalwart_version
 
 
 class ServerDeployment(Document):
-	@property
-	def config_toml(self) -> str | None:
-		"""Returns the config.toml content."""
-
-		if self.config:
-			return frappe.get_doc("Server Config", self.config).config
-
 	@property
 	def docker_compose(self) -> str | None:
 		"""Returns the docker-compose.yml content."""
@@ -36,6 +27,10 @@ class ServerDeployment(Document):
 				docker_compose += f"    container_name: {service.container}\n"
 				docker_compose += f"    restart: {service.restart}\n"
 				docker_compose += f"    network_mode: {service.network_mode}\n"
+
+				if service.service == "stalwart":
+					docker_compose += "    env_file:\n"
+					docker_compose += "      - ./stalwart.env\n"
 
 				depends_on = json.loads(service.depends_on) if service.depends_on else []
 				if depends_on:
@@ -57,42 +52,12 @@ class ServerDeployment(Document):
 
 			return docker_compose
 
-	@property
-	def http_port(self) -> int:
-		"""Returns the HTTP port from the server or cluster listeners."""
-
-		server = frappe.get_doc("Mail Server", self.server)
-		cluster = frappe.get_doc("Mail Cluster", server.cluster)
-		for listener in server.listeners or cluster.listeners:
-			if listener.protocol == "HTTP" and not listener.tls_implicit:
-				parsed = urllib.parse.urlparse(f"//{listener.bind}")
-				if port := parsed.port:
-					return port
-
-		return 8080
-
-	@property
-	def https_port(self) -> int:
-		"""Returns the HTTPS port from the server or cluster listeners."""
-
-		server = frappe.get_doc("Mail Server", self.server)
-		cluster = frappe.get_doc("Mail Cluster", server.cluster)
-		for listener in server.listeners or cluster.listeners:
-			if listener.protocol == "HTTP" and listener.tls_implicit:
-				parsed = urllib.parse.urlparse(f"//{listener.bind}")
-				if port := parsed.port:
-					return port
-
-		return 443
-
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
 	def validate(self) -> None:
 		self.validate_status()
 		self.validate_server()
-		self.validate_config()
-		self.validate_config_checksum()
 		self.validate_services()
 
 	def after_insert(self) -> None:
@@ -104,7 +69,7 @@ class ServerDeployment(Document):
 				self.name,
 				"execute",
 				queue="long",
-				timeout=cint(get_mail_config("server_deployment_timeout")),
+				timeout=cint(get_config("server_deployment_timeout")),
 				enqueue_after_commit=True,
 			)
 
@@ -122,22 +87,6 @@ class ServerDeployment(Document):
 		elif not frappe.db.get_value("Mail Server", self.server, "ssh_verified"):
 			frappe.throw(_("Please verify SSH connection for Mail Server {0}").format(self.server))
 
-	def validate_config(self) -> None:
-		"""Validates if the config belongs to the selected server."""
-
-		if not self.config:
-			frappe.throw(_("Config is required."))
-
-		config_server = frappe.db.get_value("Server Config", self.config, "server")
-		if config_server != self.server:
-			frappe.throw(_("Config does not belong to the selected server."))
-
-	def validate_config_checksum(self) -> None:
-		"""Sets the config checksum if not set."""
-
-		if not self.config_checksum:
-			self.config_checksum = hashlib.sha256(self.config_toml.encode("utf-8")).hexdigest()
-
 	def validate_services(self) -> None:
 		"""Validates and prepares the services for deployment."""
 
@@ -148,22 +97,11 @@ class ServerDeployment(Document):
 				"container": f"stalwart_{server_hostname}",
 				"restart": "unless-stopped",
 				"network_mode": "host",
-				"depends_on": json.dumps(["redis"] if self.install_redis else [], indent=4),
-				"ports": json.dumps([], indent=4),
-				"volumes": json.dumps(["{{ stalwart_root }}:/opt/stalwart"], indent=4),
-			}
-		}
-
-		if self.install_redis:
-			services["redis"] = {
-				"image": "redis:7-alpine",
-				"container": f"redis_{server_hostname}",
-				"restart": "unless-stopped",
-				"network_mode": "host",
 				"depends_on": json.dumps([], indent=4),
 				"ports": json.dumps([], indent=4),
-				"volumes": json.dumps(["{{ stalwart_root }}/redis:/opt/stalwart/redis"], indent=4),
+				"volumes": json.dumps(["{{ stalwart_root }}:/etc/stalwart"], indent=4),
 			}
+		}
 
 		for service in self.services:
 			services[service.service] = {
@@ -199,13 +137,16 @@ class ServerDeployment(Document):
 
 		try:
 			self.validate_server()
+			server = frappe.get_doc("Mail Server", self.server)
+			cluster = frappe.get_doc("Mail Cluster", server.cluster)
 
 			variables = {
-				"server_hostname": frappe.db.get_value("Mail Server", self.server, "hostname"),
-				"config_toml": self.config_toml,
+				"server_hostname": server.hostname,
+				"stalwart_env": server._get_stalwart_env(recovery_mode=False, as_dict=False),
+				"stalwart_bootstrap_plan": server.bootstrap_ndjson,
+				"recovery_admin_user": cluster.recovery_admin_user,
+				"recovery_admin_password": cluster.get_password("recovery_admin_password"),
 				"docker_compose": self.docker_compose,
-				"install_redis": cint(self.install_redis),
-				"http_port": self.http_port,
 			}
 			play = frappe.new_doc("Server Ansible Play")
 			play.status = "Pending"
@@ -323,7 +264,7 @@ class ServerDeployment(Document):
 			self.name,
 			"execute",
 			queue="long",
-			timeout=cint(get_mail_config("server_deployment_timeout")),
+			timeout=cint(get_config("server_deployment_timeout")),
 			enqueue_after_commit=True,
 		)
 

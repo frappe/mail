@@ -1,7 +1,8 @@
 from enum import Enum
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
-from lexicon.client import Client
+if TYPE_CHECKING:
+	from lexicon.client import Client
 
 
 class DNSProviderEnum(str, Enum):
@@ -70,8 +71,10 @@ class DNSProvider:
 		self.zone_id = zone_id
 		self.private_zone = private_zone
 
-	def get_client(self, config: dict) -> Client:
+	def get_client(self, config: dict) -> "Client":
 		"""Internal helper to return a configured Lexicon client."""
+
+		from lexicon.client import Client
 
 		config.update(
 			{

@@ -19,7 +19,7 @@ def get_signup_settings() -> dict:
 def get_signup_domains() -> list:
 	"""Returns signup domains."""
 
-	from mail.utils.cache import get_signup_domains as _get_signup_domains
+	from mail.mail.doctype.mail_settings.mail_settings import get_signup_domains as _get_signup_domains
 
 	return _get_signup_domains()
 

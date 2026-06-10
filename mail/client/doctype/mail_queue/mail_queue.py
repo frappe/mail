@@ -33,9 +33,9 @@ from mail.jmap import get_email_service, get_identities, get_jmap_connection, pa
 from mail.jmap.models import EmailAddress, EmailAttachment, EmailCreateModel, EmailHeader, EmailRecipient
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
-from mail.utils import get_mail_config
+from mail.utils import get_config
 from mail.utils.dt import parsedate_to_datetime
-from mail.utils.user import is_administrator, is_local_user
+from mail.utils.user import is_administrator
 from mail.utils.validation import has_permission_for_user
 
 
@@ -253,7 +253,6 @@ class MailQueue(Document):
 			self.validate_raw_message()
 			self.validate_from_email()
 			self.validate_from_name()
-			self.validate_from_domain()
 			self.validate_destroy_after_submit()
 			self.validate_delivery_mode()
 			self.validate_reply_to()
@@ -351,21 +350,6 @@ class MailQueue(Document):
 		"""Validates the from name."""
 
 		self.from_name = self.from_name or self.identity["_name"]
-
-	def validate_from_domain(self) -> None:
-		"""Validates the from domain."""
-
-		if not is_local_user(self.user):
-			return
-
-		from_domain = self.from_email.split("@")[-1]
-
-		if not frappe.db.exists("Principal Settings", {"principal_name": from_domain, "is_verified": 1}):
-			frappe.throw(
-				_(
-					"The domain {0} is not verified. Please verify the domain or use an email address with a verified domain."
-				).format(frappe.bold(from_domain))
-			)
 
 	def validate_destroy_after_submit(self) -> None:
 		"""Validates the destroy after submit setting."""
@@ -817,8 +801,8 @@ def process_pending_emails(mails: list[str]) -> None:
 def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size: int | None = None) -> None:
 	"""Enqueue process pending emails."""
 
-	batch_size = batch_size or cint(get_mail_config("process_pending_emails_batch_size"))
-	max_batch_size = max_batch_size or cint(get_mail_config("process_pending_emails_max_batch_size"))
+	batch_size = batch_size or cint(get_config("process_pending_emails_batch_size"))
+	max_batch_size = max_batch_size or cint(get_config("process_pending_emails_max_batch_size"))
 
 	if batch_size > max_batch_size:
 		batch_size = max_batch_size
@@ -863,7 +847,7 @@ def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size
 			frappe.enqueue(
 				process_pending_emails,
 				queue="long",
-				timeout=cint(get_mail_config("process_pending_emails_timeout")),
+				timeout=cint(get_config("process_pending_emails_timeout")),
 				job_name=f"process_pending_emails_{i}_{len(batch)}",
 				enqueue_after_commit=False,
 				mails=batch,

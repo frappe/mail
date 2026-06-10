@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "creation": "2026-05-11 12:10:41.078576",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_rkcx",
+  "type",
+  "username",
+  "secret",
+  "bearer_token",
+  "column_break_okoa",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_rkcx",
+   "fieldtype": "Section Break"
+  },
+  {
+   "description": "Description for the HTTP auth.",
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Description"
+  },
+  {
+   "description": "Type of the HTTP authentication method.",
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Type",
+   "options": "\nUnauthenticated\nBasic\nBearer",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_okoa",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: [\"Basic\"].includes(doc.type)",
+   "description": "Username for HTTP Basic Authentication.",
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "label": "Username",
+   "mandatory_depends_on": "eval: [\"Basic\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"Basic\"].includes(doc.type)",
+   "description": "Password or secret value.",
+   "fieldname": "secret",
+   "fieldtype": "Password",
+   "label": "Secret",
+   "mandatory_depends_on": "eval: [\"Basic\"].includes(doc.type)"
+  },
+  {
+   "depends_on": "eval: [\"Bearer\"].includes(doc.type)",
+   "description": "Bearer token for HTTP Bearer Authentication.",
+   "fieldname": "bearer_token",
+   "fieldtype": "Password",
+   "label": "Bearer Token",
+   "mandatory_depends_on": "eval: [\"Bearer\"].includes(doc.type)"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-05-11 12:26:45.666253",
+ "modified_by": "Administrator",
+ "module": "Server",
+ "name": "Mail Cluster Store HTTP Auth",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "description",
+ "track_changes": 1
+}

@@ -97,24 +97,6 @@ export interface MailDomain extends DocType {
 	default_disk_quota?: number
 }
 
-// Last updated: 2026-04-12 23:51:49.709930
-export interface MailDomainRequest extends DocType {
-  /** Domain Name: Data */
-  domain_name: string;
-  /** User: Link (User) */
-  user: string;
-  /** Verification Key: Data */
-  verification_key?: string;
-  /** Is Verified: Check */
-  is_verified: 0 | 1;
-}
-
-// Last updated: 2025-11-27 13:25:44.326974
-export interface SignupDomain extends ChildDocType {
-	/** Domain: Link (Principal Settings) */
-	principal: string
-}
-
 // Last updated: 2026-04-27 09:25:58.236007
 export interface MailSettings extends DocType {
   /** Root Domain Name: Data */
@@ -129,20 +111,10 @@ export interface MailSettings extends DocType {
   jmap_push_private_key?: string;
   /** JMAP Push Auth Secret: Password */
   jmap_push_auth?: string;
-  /** Host: Data */
-  spamd_host?: string;
-  /** Port: Int */
-  spamd_port?: number;
-  /** Scanning Mode: Select */
-  spamd_scanning_mode?: 'Exclude Attachments' | 'Include Attachments' | 'Hybrid Approach';
-  /** Hybrid Scanning Threshold: Float */
-  spamd_hybrid_scanning_threshold?: number;
-  /** Enable Spam Detection: Check */
-  enable_spamd: 0 | 1;
   /** Allow Signup: Check */
   allow_signup: 0 | 1;
-  /** Signup Domains: Table MultiSelect (Personal Signup Domain) */
-  signup_domains: PersonalSignupDomain[];
+  /** Signup Domains: Small Text */
+  signup_domains: string;
   /** Username: Data */
   dns_provider_username?: string;
   /** Zone ID: Data */
@@ -461,16 +433,4 @@ export interface UserAccount extends DocType {
   id: string;
   /** Capabilities: JSON */
   capabilities?: any;
-}
-
-// Last updated: 2025-11-27 13:25:44.326974
-export interface PersonalSignupDomain extends ChildDocType {
-  /** Domain: Link (Principal Settings) */
-  principal: string;
-}
-
-// Last updated: 2025-11-27 13:25:44.326974
-export interface PersonalSignupDomain extends ChildDocType {
-  /** Domain: Link (Principal Settings) */
-  principal: string;
 }
