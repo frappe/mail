@@ -371,9 +371,9 @@ export function useThreadActions(deps: {
 			})
 		if (!seen && threadID.value && selectedThreads.includes(threadID.value)) goToMailbox()
 
-		// Prefer the open thread's mail ids passed from the reading pane (works for fallback threads that
-		// aren't in the list); otherwise derive them from the list.
-		const ids = mailIds ?? currentMailboxMails(selectedThreads).map((m) => m.id)
+		// Seen applies to the whole conversation (every mailbox) so the state stays consistent. Prefer
+		// the open thread's mail ids from the reading pane (covers fallback threads not in the list).
+		const ids = mailIds ?? allMailIds(selectedThreads)
 
 		// The auto mark-as-read on opening a thread is silent (no toast).
 		if (silent) return void setSeen.submit({ ids, seen })

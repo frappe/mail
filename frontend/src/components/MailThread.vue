@@ -6,13 +6,7 @@
 			:can-go-prev="canGoPrev"
 			:can-go-next="canGoNext"
 			@set-flagged="(ids: string[], flagged: boolean) => emit('setFlagged', ids, flagged)"
-			@set-seen="
-				(seen: boolean) =>
-					setThreadSeen(
-						seen,
-						thread.map((mail) => mail.id),
-					)
-			"
+			@set-seen="setThreadSeen"
 			@move-thread="(moveToMailbox: string) => emit('moveThread', moveToMailbox)"
 			@add-thread-to-mailbox="(mailboxId: string) => emit('addThreadToMailbox', mailboxId)"
 			@remove-thread-from-mailbox="
@@ -525,17 +519,17 @@ const loadThread = () => {
 
 	// Opening a thread marks every message in the whole conversation read — including copies in other
 	// mailboxes (e.g. Sent) that aren't shown in this view.
-	if (source.some((mail) => !mail.seen))
-		setThreadSeen(
-			true,
-			source.map((mail) => mail.id),
-		)
+	if (source.some((mail) => !mail.seen)) setThreadSeen(true)
 }
 
-// Persists the seen change via the parent (list + server) WITHOUT mutating the displayed messages,
-// so the "unread from here" marker (and the at-open unseen state) survive reopening the thread — the
-// auto mark-as-read shouldn't erase the marker. Works for list and get_thread-fallback threads alike.
-const setThreadSeen = (seen: boolean, ids: string[]) => emit('setSeen', seen, ids)
+// Mark the whole conversation seen/unseen — every message across all mailboxes, not just the ones
+// shown in this view — so the seen state stays consistent (opening reads all; Mark as Unread unreads
+// all). Persisted via the parent (list + server) WITHOUT mutating the displayed messages, so the
+// "unread from here" marker survives reopening. Works for list and get_thread-fallback threads alike.
+const setThreadSeen = (seen: boolean) => {
+	const ids = (sourceMessages() ?? thread.value).map((mail) => mail.id)
+	emit('setSeen', seen, ids)
+}
 
 // "Mark Unread from Here": mark the given messages unseen in the displayed list and the fallback
 // cache, so the unread-from-here marker appears immediately and survives reopening a fallback thread
