@@ -34,8 +34,8 @@
   "machine_id",
   "column_break_dsjl",
   "transaction_retry_delay",
-  "transaction_retry_limit",
   "transaction_timeout",
+  "transaction_retry_limit",
   "section_break_uxnr",
   "host",
   "port",
@@ -154,13 +154,15 @@
    "mandatory_depends_on": "eval: [\"RocksDb\"].includes(doc.type)"
   },
   {
-   "default": "15s",
+   "default": "15",
    "depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\", \"Redis\", \"RedisCluster\"].includes(doc.type)",
    "description": "Connection timeout to the store.",
    "fieldname": "timeout",
-   "fieldtype": "Data",
-   "label": "Timeout",
-   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\", \"Redis\", \"RedisCluster\"].includes(doc.type)"
+   "fieldtype": "Float",
+   "label": "Timeout (Seconds)",
+   "mandatory_depends_on": "eval: [\"PostgreSql\", \"MySql\", \"S3\", \"Azure\", \"ElasticSearch\", \"Meilisearch\", \"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
    "depends_on": "eval: [\"MySql\"].includes(doc.type)",
@@ -247,9 +249,11 @@
    "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
    "description": "Transaction maximum retry delay.",
    "fieldname": "transaction_retry_delay",
-   "fieldtype": "Data",
-   "label": "Transaction Retry Delay",
-   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)"
+   "fieldtype": "Float",
+   "label": "Transaction Retry Delay (Seconds)",
+   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
    "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
@@ -263,9 +267,11 @@
    "depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
    "description": "Transaction timeout.",
    "fieldname": "transaction_timeout",
-   "fieldtype": "Data",
-   "label": "Transaction Timeout",
-   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)"
+   "fieldtype": "Float",
+   "label": "Transaction Timeout (Seconds)",
+   "mandatory_depends_on": "eval: [\"FoundationDb\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
    "depends_on": "eval: [\"PostgreSql\", \"MySql\"].includes(doc.type)",
@@ -488,9 +494,11 @@
    "depends_on": "eval: [\"Meilisearch\"].includes(doc.type)",
    "description": "Interval between polling for task status.",
    "fieldname": "poll_interval",
-   "fieldtype": "Data",
-   "label": "Poll Interval",
-   "mandatory_depends_on": "eval: [\"Meilisearch\"].includes(doc.type)"
+   "fieldtype": "Float",
+   "label": "Poll Interval (Seconds)",
+   "mandatory_depends_on": "eval: [\"Meilisearch\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
    "default": "1",
@@ -504,25 +512,31 @@
    "depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
    "description": "Timeout for creating a new connection.",
    "fieldname": "pool_timeout_create",
-   "fieldtype": "Data",
-   "label": "Pool Timeout Create",
-   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)"
+   "fieldtype": "Float",
+   "label": "Pool Timeout Create (Seconds)",
+   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
    "depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
    "description": "Timeout for waiting for a connection from the pool.",
    "fieldname": "pool_timeout_wait",
-   "fieldtype": "Data",
-   "label": "Pool Timeout Wait",
-   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)"
+   "fieldtype": "Float",
+   "label": "Pool Timeout Wait (Seconds)",
+   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
    "depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
    "description": "Timeout for recycling a connection.",
    "fieldname": "pool_timeout_recycle",
-   "fieldtype": "Data",
-   "label": "Pool Timeout Recycle",
-   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)"
+   "fieldtype": "Float",
+   "label": "Pool Timeout Recycle (Seconds)",
+   "mandatory_depends_on": "eval: [\"Redis\", \"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
    "default": "[]",
@@ -537,17 +551,21 @@
    "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
    "description": "Maximum time to wait between retries.",
    "fieldname": "max_retry_wait",
-   "fieldtype": "Data",
-   "label": "Max Retry Wait",
-   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)"
+   "fieldtype": "Float",
+   "label": "Max Retry Wait (Seconds)",
+   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
    "depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
    "description": "Minimum time to wait between retries.",
    "fieldname": "min_retry_wait",
-   "fieldtype": "Data",
-   "label": "Min Retry Wait",
-   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)"
+   "fieldtype": "Float",
+   "label": "Min Retry Wait (Seconds)",
+   "mandatory_depends_on": "eval: [\"RedisCluster\"].includes(doc.type)",
+   "non_negative": 1,
+   "precision": "1"
   },
   {
    "default": "1",
@@ -575,7 +593,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-09 17:04:33.734492",
+ "modified": "2026-06-10 12:48:34.243730",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster Store",

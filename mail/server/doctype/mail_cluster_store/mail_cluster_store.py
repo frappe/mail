@@ -7,7 +7,7 @@ from uuid import uuid7
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint
+from frappe.utils import cint, flt
 
 
 class MailClusterStore(Document):
@@ -48,16 +48,16 @@ class MailClusterStore(Document):
 					"clusterFile": self.cluster_file,
 					"datacenterId": self.datacenter_id,
 					"machineId": self.machine_id,
-					"transactionRetryDelay": cint(self.transaction_retry_delay),
+					"transactionRetryDelay": cint(flt(self.transaction_retry_delay, 1) * 1000),
+					"transactionTimeout": cint(flt(self.transaction_timeout, 1) * 1000),
 					"transactionRetryLimit": cint(self.transaction_retry_limit),
-					"transactionTimeout": cint(self.transaction_timeout),
 				}
 			)
 
 		elif self.type == "PostgreSql":
 			config.update(
 				{
-					"timeout": self.timeout,
+					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"useTls": bool(self.use_tls),
 					"allowInvalidCerts": bool(self.allow_invalid_certs),
 					"poolMaxConnections": cint(self.pool_max_connections),
@@ -74,7 +74,7 @@ class MailClusterStore(Document):
 		elif self.type == "MySql":
 			config.update(
 				{
-					"timeout": self.timeout,
+					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"useTls": bool(self.use_tls),
 					"allowInvalidCerts": bool(self.allow_invalid_certs),
 					"maxAllowedPacket": cint(self.max_allowed_packet) if self.max_allowed_packet else None,
@@ -98,7 +98,7 @@ class MailClusterStore(Document):
 					"securityToken": self.get_password("security_token") if self.security_token else None,
 					"sessionToken": self.get_password("session_token") if self.session_token else None,
 					"profile": self.profile,
-					"timeout": self.timeout,
+					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"maxRetries": cint(self.max_retries),
 					"keyPrefix": self.key_prefix,
 					"allowInvalidCerts": bool(self.allow_invalid_certs),
@@ -113,7 +113,7 @@ class MailClusterStore(Document):
 					"container": self.container,
 					"accessKey": self.get_password("access_key") if self.access_key else None,
 					"sasToken": self.get_password("sas_token") if self.sas_token else None,
-					"timeout": self.timeout,
+					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"maxRetries": cint(self.max_retries),
 					"keyPrefix": self.key_prefix,
 				}
@@ -135,7 +135,7 @@ class MailClusterStore(Document):
 					"numReplicas": cint(self.num_replicas),
 					"numShards": cint(self.num_shards),
 					"includeSource": bool(self.include_source),
-					"timeout": cint(self.timeout),
+					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"allowInvalidCerts": bool(self.allow_invalid_certs),
 					"httpAuth": http_auth.config,
 					"httpHeaders": json.loads(self.http_headers) if self.http_headers else {},
@@ -147,10 +147,10 @@ class MailClusterStore(Document):
 			config.update(
 				{
 					"url": self.url,
-					"pollInterval": self.pool_interval,
+					"pollInterval": cint(flt(self.poll_interval, 1) * 1000),
 					"maxRetries": cint(self.max_retries),
 					"failOnTimeout": bool(self.fail_on_timeout),
-					"timeout": cint(self.timeout),
+					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"allowInvalidCerts": bool(self.allow_invalid_certs),
 					"httpAuth": http_auth.config,
 					"httpHeaders": json.loads(self.http_headers) if self.http_headers else {},
@@ -161,11 +161,11 @@ class MailClusterStore(Document):
 			config.update(
 				{
 					"url": self.url,
-					"timeout": cint(self.timeout),
+					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"poolMaxConnections": cint(self.pool_max_connections),
-					"poolTimeoutCreate": self.pool_timeout_create,
-					"poolTimeoutWait": self.pool_timeout_wait,
-					"poolTimeoutRecycle": self.pool_timeout_recycle,
+					"poolTimeoutCreate": cint(flt(self.pool_timeout_create, 1) * 1000),
+					"poolTimeoutWait": cint(flt(self.pool_timeout_wait, 1) * 1000),
+					"poolTimeoutRecycle": cint(flt(self.pool_timeout_recycle, 1) * 1000),
 				}
 			)
 
@@ -173,18 +173,18 @@ class MailClusterStore(Document):
 			config.update(
 				{
 					"urls": json.loads(self.urls) if self.urls else [],
-					"timeout": cint(self.timeout),
+					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"authUsername": self.auth_username,
 					"authSecret": self.get_password("auth_secret") if self.auth_secret else None,
-					"maxRetryWait": self.max_retry_wait,
-					"minRetryWait": self.min_retry_wait,
+					"maxRetryWait": cint(flt(self.max_retry_wait, 1) * 1000),
+					"minRetryWait": cint(flt(self.min_retry_wait, 1) * 1000),
 					"maxRetries": cint(self.max_retries),
 					"readFromReplicas": bool(self.read_from_replicas),
 					"protocolVersion": self.protocol_version,
 					"poolMaxConnections": cint(self.pool_max_connections),
-					"poolTimeoutCreate": self.pool_timeout_create,
-					"poolTimeoutWait": self.pool_timeout_wait,
-					"poolTimeoutRecycle": self.pool_timeout_recycle,
+					"poolTimeoutCreate": cint(flt(self.pool_timeout_create, 1) * 1000),
+					"poolTimeoutWait": cint(flt(self.pool_timeout_wait, 1) * 1000),
+					"poolTimeoutRecycle": cint(flt(self.pool_timeout_recycle, 1) * 1000),
 				}
 			)
 
