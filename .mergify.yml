@@ -11,3 +11,27 @@ pull_request_rules:
           - `@Mergifyio backport v1`
 
           You can run both commands on the same PR when the fix must be backported to both release lines.
+
+  - name: backport to v0
+    conditions:
+      - merged
+      - base=develop
+      - label="backport v0"
+    actions:
+      backport:
+        branches:
+          - v0
+        assignees:
+          - "{{ author }}"
+
+  - name: backport to v1
+    conditions:
+      - merged
+      - base=develop
+      - label="backport v1"
+    actions:
+      backport:
+        branches:
+          - v1
+        assignees:
+          - "{{ author }}"
