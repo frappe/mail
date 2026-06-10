@@ -17,8 +17,6 @@ declare module 'vue' {
     AddContactModal: typeof import('./src/components/Modals/AddContactModal.vue')['default']
     AddContactPhoneModal: typeof import('./src/components/Modals/AddContactPhoneModal.vue')['default']
     AddDomainModal: typeof import('./src/components/Modals/AddDomainModal.vue')['default']
-    AddMailingListExternalMemberModal: typeof import('./src/components/Modals/AddMailingListExternalMemberModal.vue')['default']
-    AddMailingListInternalMembersModal: typeof import('./src/components/Modals/AddMailingListInternalMembersModal.vue')['default']
     AddMemberModal: typeof import('./src/components/Modals/AddMemberModal.vue')['default']
     AddSignatureModal: typeof import('./src/components/Modals/AddSignatureModal.vue')['default']
     AdvancedSettings: typeof import('./src/components/Settings/AdvancedSettings.vue')['default']
