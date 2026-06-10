@@ -35,3 +35,13 @@ pull_request_rules:
           - v1
         assignees:
           - "{{ author }}"
+
+commands_restrictions:
+  # By default Mergify only lets users with write access run `@Mergifyio backport`, so a PR
+  # author commenting the backport command on their own merged PR is silently ignored. Allow the
+  # author to backport their own PR in addition to maintainers.
+  backport:
+    conditions:
+      - or:
+          - sender-permission>=write
+          - sender={{ author }}
