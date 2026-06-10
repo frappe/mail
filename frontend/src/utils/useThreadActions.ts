@@ -508,23 +508,28 @@ export function useThreadActions(deps: {
 		raisePromiseToast(action, loading, success, undo)
 	}
 
-	const handleSetSpamStatus = (threadIDs: SetSeenParams, isUndo = false) => {
+	const handleSetSpamStatus = (threadIDs: SetSeenParams) => {
 		const selectedThreads = Object.values(threadIDs).flat()
 		const originalState = getOriginalState(selectedThreads, 'junk')
 		if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
 
 		const spam = Object.keys(threadIDs)[0] === '1'
-		// Capture the mail ids now; the threads leave the list on success, so undo can't recompute them.
-		const ids = allMailIds(selectedThreads)
+		// Snapshot exact state now (threads leave the list on success) so undo restores the original
+		// mailbox + junk, rather than set_spam_status's blanket move to Inbox.
+		const snapshot = threadMails(selectedThreads).map((m) => ({
+			id: m.id,
+			mailbox_ids: m.mailboxes.map((mb) => mb.mailbox_id),
+			junk: m.junk,
+		}))
+		const ids = snapshot.map((m) => m.id)
 		const action = async () => {
 			await setMailsSpam.submit({ ids, spam })
 			handleSuccessAndRemoveFromList(threadIDs)
 		}
-		if (isUndo) return raisePromiseToast(action, __('Undoing...'), __('Junk status restored.'))
 
 		setUndoAction(() => {
 			const undoAction = async () => {
-				await setMailsSpam.submit({ ids, spam: !spam })
+				await setMailsMailboxes.submit({ mails: snapshot })
 				reloadThreads()
 			}
 			raisePromiseToast(undoAction, __('Undoing...'), __('Junk status restored.'))
