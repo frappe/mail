@@ -218,55 +218,96 @@ class EmailService(MailService):
 
 		return ids[:limit]
 
-	def query_thread(self, filter: dict | None = None, position: int = 0, limit: int = 50) -> dict:
-		"""Public method to query a single page of email threads based on a filter.
+	def query_thread(
+		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
+	) -> list[str] | dict[str, list[str]]:
+		"""Public method to query email threads based on the given filter, with options for pagination and fetching all email IDs within the threads. If 'fetch_all' is False, returns a list of thread IDs. If 'fetch_all' is True, returns a dictionary mapping thread IDs to lists of email IDs within those threads."""
 
-		Uses JMAP's `collapseThreads` so that `position`, `limit` and the total operate at the thread
-		level (one representative email per thread), giving stable page boundaries. Returns a dict with
-		`thread_ids` (the matching thread IDs on this page) and `total` (the number of matching threads).
-		"""
+		method_calls = [
+			[
+				"Email/query",
+				{
+					"accountId": self.account_id,
+					"filter": filter or {},
+					"sort": [{"property": "receivedAt", "isAscending": False}],
+					"collapseThreads": True,
+					"position": position,
+					"limit": limit,
+				},
+				"0",
+			],
+		]
+
+		if fetch_all:
+			method_calls.extend(
+				[
+					[
+						"Email/get",
+						{
+							"accountId": self.account_id,
+							"#ids": {
+								"resultOf": "0",
+								"name": "Email/query",
+								"path": "/ids",
+							},
+							"properties": ["threadId"],
+						},
+						"1",
+					],
+					[
+						"Thread/get",
+						{
+							"accountId": self.account_id,
+							"#ids": {
+								"resultOf": "1",
+								"name": "Email/get",
+								"path": "/list/*/threadId",
+							},
+							"properties": ["id", "emailIds"],
+						},
+						"2",
+					],
+				]
+			)
+
+		response = self._call(self.capabilities, method_calls=method_calls)
+		method_responses = response.get("methodResponses", [])
+
+		if not fetch_all:
+			if not method_responses:
+				return []
+
+			return method_responses[0][1].get("ids", [])
+
+		if len(method_responses) < 3:
+			return {}
+
+		return {thread["id"]: thread.get("emailIds", []) for thread in method_responses[2][1].get("list", [])}
+
+	def count_threads(self, filter: dict | None = None) -> int:
+		"""Returns the total number of threads matching the given filter."""
 
 		response = self._call(
 			self.capabilities,
 			method_calls=[
 				[
-					f"{self.type}/query",
+					"Email/query",
 					{
 						"accountId": self.account_id,
 						"filter": filter or {},
-						"sort": [{"property": "receivedAt", "isAscending": False}],
-						"position": position,
-						"limit": limit,
 						"collapseThreads": True,
 						"calculateTotal": True,
+						"limit": 1,
 					},
 					"0",
-				],
-				[
-					f"{self.type}/get",
-					{
-						"accountId": self.account_id,
-						"#ids": {"resultOf": "0", "name": f"{self.type}/query", "path": "/ids"},
-						"properties": ["id", "threadId"],
-					},
-					"1",
 				],
 			],
 		)
 
 		if method_responses := response.get("methodResponses"):
-			query_result = method_responses[0][1]
-			thread_by_email = {
-				email["id"]: email["threadId"] for email in method_responses[1][1].get("list", [])
-			}
-			thread_ids = [
-				thread_by_email[email_id]
-				for email_id in query_result.get("ids", [])
-				if email_id in thread_by_email
-			]
-			return {"thread_ids": thread_ids, "total": query_result.get("total", 0)}
+			return method_responses[0][1].get("total", 0)
 
-		return {"thread_ids": [], "total": 0}
+		return 0
 
 	def get_email_suggestions(self, text: str, limit: int = 5, separate_requests: bool = False) -> list[str]:
 		"""
