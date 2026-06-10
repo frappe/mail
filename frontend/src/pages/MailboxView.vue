@@ -89,11 +89,11 @@
 					<p v-else class="pb-[2px]">{{ title }}</p>
 					<div class="-mr-1.5 ml-auto flex items-center space-x-1.5 sm:space-x-3">
 						<div
-							v-if="!selections.length && total"
+							v-if="!selections.length && displayTotal"
 							class="text-ink-gray-6 flex items-center gap-1"
 						>
 							<span class="whitespace-nowrap text-sm tabular-nums">
-								{{ range }} {{ __('of') }} {{ total }}
+								{{ range }} {{ __('of') }} {{ totalLabel }}
 							</span>
 							<Button
 								:tooltip="__('Previous Page')"
@@ -884,17 +884,28 @@ const correctPageOverflow = (pageData: Thread[]) => {
 	threadsResource.value.reload()
 }
 
+const threadsOnPage = computed(() => threadsResource.value.data?.length ?? 0)
+// A short page means we've reached the end and know the exact total. Before that, `total` for a
+// mailbox is only an estimate (the backend counts matching emails — an upper bound on threads — in a
+// single request instead of paging through every collapsed thread). Search totals are always exact.
+const isLastPage = computed(() => threadsOnPage.value < PAGE_LENGTH)
+
 const pageCount = computed(() => Math.ceil(total.value / PAGE_LENGTH))
-const rangeStart = computed(() => (total.value === 0 ? 0 : page.value * PAGE_LENGTH + 1))
-const rangeEnd = computed(() => Math.min((page.value + 1) * PAGE_LENGTH, total.value))
+const rangeEnd = computed(() => page.value * PAGE_LENGTH + threadsOnPage.value)
+const rangeStart = computed(() => (rangeEnd.value === 0 ? 0 : page.value * PAGE_LENGTH + 1))
 // Collapse to a single number when the page holds one thread (e.g. "1" instead of "1–1").
 const range = computed(() =>
 	rangeStart.value === rangeEnd.value
 		? `${rangeStart.value}`
 		: `${rangeStart.value}–${rangeEnd.value}`,
 )
+// On the last page the range end is the exact total; before that, show the estimate (mailbox only).
+const displayTotal = computed(() => (isLastPage.value ? rangeEnd.value : total.value))
+const isEstimate = computed(() => mailbox !== 'search' && !isLastPage.value)
+const totalLabel = computed(() => `${isEstimate.value ? '~' : ''}${displayTotal.value}`)
+
 const canGoPrev = computed(() => page.value > 0)
-const canGoNext = computed(() => page.value + 1 < pageCount.value)
+const canGoNext = computed(() => !isLastPage.value && page.value + 1 < pageCount.value)
 
 const goToPage = (next: boolean) => {
 	if (next ? !canGoNext.value : !canGoPrev.value) return
