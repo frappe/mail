@@ -146,6 +146,13 @@ export function useThreadActions(deps: {
 		}),
 	})
 
+	// Restores each mail to an exact snapshot (mailbox set + junk) — used to undo a move precisely.
+	type MailSnapshot = { id: string; mailbox_ids: string[]; junk: 0 | 1 }
+	const setMailsMailboxes = createResource({
+		url: 'mail.api.mail.set_mails_mailboxes',
+		makeParams: ({ mails }: { mails: MailSnapshot[] }) => ({ account: store.account, mails }),
+	})
+
 	const showAddTo = computed(
 		() =>
 			selections.value.length &&
@@ -153,12 +160,11 @@ export function useThreadActions(deps: {
 			!['search', 'starred', mailboxIds.junk, mailboxIds.trash].includes(mailbox.value),
 	)
 
+	// Removable when any selected mail is in more than one mailbox (so removing one keeps it elsewhere).
 	const showRemoveFrom = computed(
 		() =>
-			showAddTo.value &&
-			threadsResource.value.data
-				?.filter((t: Thread) => selections.value.includes(t.thread_id))
-				.some((t: Thread) => t.mailboxes.length > 1),
+			!!selections.value.length &&
+			threadMails(selections.value).some((m) => m.mailboxes.length > 1),
 	)
 
 	const addToOptions = computed(() =>
@@ -204,19 +210,13 @@ export function useThreadActions(deps: {
 	}
 
 	const removeFromOptions = computed(() => {
-		const selected = threadsResource.value.data?.filter((t: Thread) =>
-			selections.value.includes(t.thread_id),
+		const mailboxIdsInUse = new Set(
+			threadMails(selections.value).flatMap((m) => m.mailboxes.map((mb) => mb.mailbox_id)),
 		)
-		const unionMailboxIds = selected
-			.map((t: Thread) => new Set(t.mailboxes.map((mb) => mb.mailbox_id)))
-			.reduce(
-				(union: Set<string>, set: Set<string>) => new Set([...union, ...set]),
-				new Set<string>(),
-			)
 		return mailboxes.data
 			?.filter(
 				(m) =>
-					unionMailboxIds.has(m.id) &&
+					mailboxIdsInUse.has(m.id) &&
 					![mailboxIds.sent, mailboxIds.drafts].includes(m.id),
 			)
 			.map((m) => ({
@@ -231,16 +231,17 @@ export function useThreadActions(deps: {
 		threadIds: string[],
 		isUndo = false,
 	) => {
-		const threadIdsToBeUpdated = threadIds.filter((threadId) => {
-			const thread = threadsResource.value.data?.find(
-				(t: Thread) => t.thread_id === threadId,
-			)
-			return thread?.mailboxes.some((mb) => mb.mailbox_id === mailboxId)
-		})
+		// Only remove mails that are in this mailbox AND at least one other — never orphan a mail.
+		const isRemovable = (m: Mail) =>
+			m.mailboxes.length > 1 && m.mailboxes.some((mb) => mb.mailbox_id === mailboxId)
+
+		const threadIdsToBeUpdated = threadIds.filter((threadId) =>
+			threadMails([threadId]).some(isRemovable),
+		)
 
 		const action = async () => {
 			const ids = threadMails(threadIdsToBeUpdated)
-				.filter((m) => m.mailboxes.some((mb) => mb.mailbox_id === mailboxId))
+				.filter(isRemovable)
 				.map((m) => m.id)
 			await removeMails.submit({ ids, mailbox_id: mailboxId })
 			reloadThreads()
@@ -415,8 +416,8 @@ export function useThreadActions(deps: {
 		setFlagged.submit({ ids, flagged })
 	}
 
-	// Moving keeps Sent copies in place: non-sent mails are moved, sent mails are only added to the
-	// target — except for junk/trash, which move everything.
+	// Moving: non-sent mails move to the target; sent mails keep only Sent + the target (other
+	// memberships dropped) — except for junk/trash, which move everything.
 	const handleMoveThreads = (threadIDs: Record<string, string[]>) => {
 		const selectedThreads = Object.values(threadIDs).flat()
 		if (!selectedThreads.length) return
@@ -437,60 +438,41 @@ export function useThreadActions(deps: {
 
 		const movesAll = (t: string) => [mailboxIds.junk, mailboxIds.trash].includes(t)
 
-		// Plan the forward + reverse mail operations now, while the threads are still in the list.
-		const forward: Array<() => Promise<unknown>> = []
-		const reverse: Array<() => Promise<unknown>> = []
+		// Snapshot each affected mail's exact state now (while the threads are still loaded), so undo
+		// restores every mail to its precise mailbox set + junk status — even mails in several mailboxes.
+		const snapshot = threadMails(selectedThreads).map((m) => ({
+			id: m.id,
+			mailbox_ids: m.mailboxes.map((mb) => mb.mailbox_id),
+			junk: m.junk,
+		}))
 
+		const forward: Array<() => Promise<unknown>> = []
 		for (const [target, tids] of Object.entries(threadIDs)) {
 			const mails = threadMails(tids)
 			const ids = mails.map((m) => m.id)
-			const sentIds = mails.filter(isSentMail).map((m) => m.id)
-			const nonSentIds = mails.filter((m) => !isSentMail(m)).map((m) => m.id)
-
-			const nonSentByOrigin: Record<string, string[]> = {}
-			tids.forEach((tid) => {
-				const origin = originOf(tid)
-				if (!origin) return
-				const tidNonSent = threadMails([tid])
-					.filter((m) => !isSentMail(m))
-					.map((m) => m.id)
-				if (tidNonSent.length) (nonSentByOrigin[origin] ??= []).push(...tidNonSent)
-			})
-			const restoreNonSent = () =>
-				Promise.all(
-					Object.entries(nonSentByOrigin).map(([origin, oids]) =>
-						moveMails.submit({ ids: oids, mailbox: origin }),
-					),
-				)
-
 			if (target === mailboxIds.junk) {
 				forward.push(() => setMailsSpam.submit({ ids, spam: true }))
-				reverse.push(async () => {
-					await setMailsSpam.submit({ ids, spam: false })
-					await restoreNonSent()
-				})
 			} else if (target === mailboxIds.trash) {
 				forward.push(() => moveMails.submit({ ids, mailbox: target, clear_junk: true }))
-				reverse.push(async () => {
-					await restoreNonSent()
-					if (sentIds.length)
-						await moveMails.submit({ ids: sentIds, mailbox: mailboxIds.sent })
-				})
 			} else {
+				const sentIds = mails.filter(isSentMail).map((m) => m.id)
+				const nonSentIds = mails.filter((m) => !isSentMail(m)).map((m) => m.id)
 				if (nonSentIds.length)
 					forward.push(() =>
 						moveMails.submit({ ids: nonSentIds, mailbox: target, clear_junk: true }),
 					)
-				if (sentIds.length)
-					forward.push(() => addMails.submit({ ids: sentIds, mailbox_id: target }))
-				reverse.push(async () => {
-					await removeMails.submit({ ids, mailbox_id: target })
-					await restoreNonSent()
-				})
+				// A sent mail keeps only Sent + the target: replace its mailboxes with the target
+				// (dropping the rest), then re-add Sent.
+				if (sentIds.length) {
+					forward.push(() => moveMails.submit({ ids: sentIds, mailbox: target }))
+					forward.push(() =>
+						addMails.submit({ ids: sentIds, mailbox_id: mailboxIds.sent }),
+					)
+				}
 			}
 		}
 
-		// In Sent, a non-junk/trash move only adds the (sent) copies elsewhere, so the threads stay here.
+		// In Sent, a non-junk/trash move leaves the sent copies in Sent, so the threads stay here.
 		const keptInList =
 			mailbox.value === mailboxIds.sent && Object.keys(threadIDs).every((t) => !movesAll(t))
 
@@ -502,7 +484,7 @@ export function useThreadActions(deps: {
 
 		setUndoAction(() => {
 			const undoAction = async () => {
-				for (const op of reverse) await op()
+				await setMailsMailboxes.submit({ mails: snapshot })
 				reloadThreads()
 			}
 			raisePromiseToast(

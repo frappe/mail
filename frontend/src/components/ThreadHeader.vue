@@ -44,7 +44,7 @@
 						</template>
 					</Button>
 				</Dropdown>
-				<Dropdown v-if="threadMailboxes.length > 1" :options="removeFromOptions">
+				<Dropdown v-if="canRemoveFrom" :options="removeFromOptions">
 					<Button variant="ghost" :tooltip="__('Remove From')">
 						<template #icon>
 							<FolderMinus class="icon" />
@@ -150,6 +150,15 @@ const threadMailboxes = computed(() => {
 		.reduce((common, ids: string[]) => common.filter((id) => ids.includes(id)))
 })
 
+// Every mailbox the thread's mails touch (union), and whether any mail is in more than one — used by
+// Remove From, which is only offered when removing won't orphan a mail.
+const threadMailboxesUnion = computed(() => [
+	...new Set((thread ?? []).flatMap((mail: Mail) => mail.mailboxes.map((m) => m.mailbox_id))),
+])
+const canRemoveFrom = computed(() =>
+	(thread ?? []).some((mail: Mail) => mail.mailboxes.length > 1),
+)
+
 const threadActions = computed((): Action[] => [
 	{
 		label: __('Star Thread'),
@@ -234,7 +243,11 @@ const addToOptions = computed(() =>
 
 const removeFromOptions = computed(() =>
 	mailboxes.data
-		?.filter((m) => threadMailboxes.value.includes(m.id))
+		?.filter(
+			(m) =>
+				threadMailboxesUnion.value.includes(m.id) &&
+				![mailboxIds.sent, mailboxIds.drafts].includes(m.id),
+		)
 		.map((m) => getMailboxOption(m, 'removeThreadFromMailbox')),
 )
 

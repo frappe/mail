@@ -546,9 +546,19 @@ const handleSyncUnseen = (ids: string[]) => {
 // A reply that arrives while the thread is open (picked up by a background list reload) is appended
 // in place. Re-deriving would clobber unsaved inline drafts, so only the genuinely new messages are
 // added — before any trailing draft so the in-progress reply stays at the bottom.
-const appendNewMessages = () => {
+const syncWithSource = () => {
 	const source = sourceMessages()
 	if (!source?.length) return
+
+	// Refresh existing mails' mailbox membership from the list (e.g. after a move/undo), in place so
+	// unsaved inline drafts and collapse state survive.
+	const sourceById = new Map(source.map((mail) => [mail.id, mail]))
+	thread.value.forEach((mail) => {
+		const fresh = sourceById.get(mail.id)
+		if (fresh) mail.mailboxes = fresh.mailboxes
+	})
+
+	// Append any newly-arrived messages, before a trailing draft.
 	const existing = new Set(thread.value.map((mail) => mail.id))
 	const additions = transformThreadMails(source).filter((mail) => !existing.has(mail.id))
 	if (!additions.length) return
@@ -622,8 +632,8 @@ watch(
 			loadThread()
 			return
 		}
-		// Otherwise keep unsaved drafts but pull in any newly-arrived messages.
-		appendNewMessages()
+		// Otherwise keep unsaved drafts but sync existing mails and pull in any newly-arrived ones.
+		syncWithSource()
 	},
 )
 
