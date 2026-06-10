@@ -66,7 +66,9 @@ class MailClusterStore(Document):
 					"port": cint(self.port),
 					"database": self.database,
 					"authUsername": self.auth_username,
-					"authSecret": self.get_password("auth_secret") if self.auth_secret else None,
+					"authSecret": {"@type": "Value", "secret": self.get_password("auth_secret")}
+					if self.auth_secret
+					else None,
 					"options": self.options,
 				}
 			)
@@ -84,7 +86,9 @@ class MailClusterStore(Document):
 					"port": cint(self.port),
 					"database": self.database,
 					"authUsername": self.auth_username,
-					"authSecret": self.get_password("auth_secret") if self.auth_secret else None,
+					"authSecret": {"@type": "Value", "secret": self.get_password("auth_secret")}
+					if self.auth_secret
+					else None,
 				}
 			)
 
@@ -94,9 +98,15 @@ class MailClusterStore(Document):
 					"region": self.region,
 					"bucket": self.bucket,
 					"accessKey": self.access_key,
-					"secretKey": self.get_password("secret_key") if self.secret_key else None,
-					"securityToken": self.get_password("security_token") if self.security_token else None,
-					"sessionToken": self.get_password("session_token") if self.session_token else None,
+					"secretKey": {"@type": "Value", "secret": self.get_password("secret_key")}
+					if self.secret_key
+					else None,
+					"securityToken": {"@type": "Value", "secret": self.get_password("security_token")}
+					if self.security_token
+					else None,
+					"sessionToken": {"@type": "Value", "secret": self.get_password("session_token")}
+					if self.session_token
+					else None,
 					"profile": self.profile,
 					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"maxRetries": cint(self.max_retries),
@@ -111,8 +121,12 @@ class MailClusterStore(Document):
 				{
 					"storageAccount": self.storage_account,
 					"container": self.container,
-					"accessKey": self.get_password("access_key") if self.access_key else None,
-					"sasToken": self.get_password("sas_token") if self.sas_token else None,
+					"accessKey": {"@type": "Value", "secret": self.get_password("access_key")}
+					if self.access_key
+					else None,
+					"sasToken": {"@type": "Value", "secret": self.get_password("sas_token")}
+					if self.sas_token
+					else None,
 					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"maxRetries": cint(self.max_retries),
 					"keyPrefix": self.key_prefix,
@@ -175,7 +189,9 @@ class MailClusterStore(Document):
 					"urls": json.loads(self.urls) if self.urls else [],
 					"timeout": cint(flt(self.timeout, 1) * 1000),
 					"authUsername": self.auth_username,
-					"authSecret": self.get_password("auth_secret") if self.auth_secret else None,
+					"authSecret": {"@type": "Value", "secret": self.get_password("auth_secret")}
+					if self.auth_secret
+					else None,
 					"maxRetryWait": cint(flt(self.max_retry_wait, 1) * 1000),
 					"minRetryWait": cint(flt(self.min_retry_wait, 1) * 1000),
 					"maxRetries": cint(self.max_retries),
