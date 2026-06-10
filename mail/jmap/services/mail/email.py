@@ -285,29 +285,47 @@ class EmailService(MailService):
 		return {thread["id"]: thread.get("emailIds", []) for thread in method_responses[2][1].get("list", [])}
 
 	def count_threads(self, filter: dict | None = None) -> int:
-		"""Returns the total number of threads matching the given filter."""
+		"""Returns the number of threads matching the given filter.
 
-		response = self._call(
-			self.capabilities,
-			method_calls=[
-				[
-					"Email/query",
-					{
-						"accountId": self.account_id,
-						"filter": filter or {},
-						"collapseThreads": True,
-						"calculateTotal": True,
-						"limit": 1,
-					},
-					"0",
+		Stalwart's `calculateTotal` counts matching emails before threads are collapsed, so the
+		collapsed thread IDs are paged through and counted instead.
+		"""
+
+		count = 0
+		position = 0
+		batch_size = self.max_objects_in_get
+
+		while True:
+			response = self._call(
+				self.capabilities,
+				method_calls=[
+					[
+						"Email/query",
+						{
+							"accountId": self.account_id,
+							"filter": filter or {},
+							"collapseThreads": True,
+							"position": position,
+							"limit": batch_size,
+						},
+						"0",
+					],
 				],
-			],
-		)
+			)
 
-		if method_responses := response.get("methodResponses"):
-			return method_responses[0][1].get("total", 0)
+			method_responses = response.get("methodResponses", [])
+			if not method_responses:
+				break
 
-		return 0
+			ids = method_responses[0][1].get("ids", [])
+			count += len(ids)
+
+			if len(ids) < batch_size:
+				break
+
+			position += batch_size
+
+		return count
 
 	def get_email_suggestions(self, text: str, limit: int = 5, separate_requests: bool = False) -> list[str]:
 		"""
