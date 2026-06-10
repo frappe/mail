@@ -291,10 +291,8 @@
 					:can-go-next="canGoNext"
 					@reload-mails="reloadThreads"
 					@set-seen="
-						(seen: boolean) =>
-							seen
-								? setSeen.submit({ 1: [threadID!] })
-								: handleSetSeen({ 0: [threadID!] })
+						(seen: boolean, ids: string[]) =>
+							handleSetSeen({ [Number(seen)]: [threadID!] }, seen, ids)
 					"
 					@sync-unseen="handleSyncUnseen"
 					@set-flagged="
@@ -357,7 +355,7 @@ import {
 	FolderMinus,
 	FolderPlus,
 	LoaderCircle,
-	Mail,
+	Mail as MailIcon,
 	MailOpen,
 	Mails,
 	Paperclip,
@@ -396,7 +394,7 @@ import MailListItem from '@/components/MailListItem.vue'
 import MailThread from '@/components/MailThread.vue'
 import ShortcutsModal from '@/components/Modals/ShortcutsModal.vue'
 
-import type { COLOR_SCHEME, Thread, UserResource } from '@/types'
+import type { COLOR_SCHEME, Mail, Thread, UserResource } from '@/types'
 
 const { accountId, mailbox, threadID } = defineProps<{
 	accountId: string
@@ -769,7 +767,7 @@ const selectActions = computed((): SelectAction[] => [
 	{
 		label: __('Mark as Unread (U)'),
 		onClick: () => handleSetSeen({ 0: selections.value }),
-		icon: Mail,
+		icon: MailIcon,
 		condition: () =>
 			selections.value.some(
 				(threadID) =>
@@ -1036,21 +1034,41 @@ type SetSeenParams = {
 	1?: string[]
 }
 
+// Now that full threads are loaded, actions are performed directly on the threads' mails instead of
+// resolving thread ids to mail ids on the server.
+const threadMails = (threadIds: string[]): Mail[] => {
+	const items = (threadsResource.value.data ?? []).filter((t: Thread) =>
+		threadIds.includes(t.thread_id),
+	)
+	// In search, each result is itself a mail with no nested conversation.
+	if (mailbox === 'search') return items as unknown as Mail[]
+	return items.flatMap((t: Thread) => t.messages ?? [])
+}
+
+const isSentMail = (m: Mail) => m.mailboxes.some((mb) => mb.mailbox_id === mailboxIds.sent)
+
+const allMailIds = (threadIds: string[]): string[] => threadMails(threadIds).map((m) => m.id)
+
+// Mails of the threads that live in the current view's mailbox(es) — mirrors the old
+// get_filtered_message_ids (starred → all non-trash, search → all).
+const currentMailboxMails = (threadIds: string[]): Mail[] => {
+	const mails = threadMails(threadIds)
+	if (mailbox === 'search') return mails
+	const ids =
+		mailbox === 'starred'
+			? (mailboxes.data ?? []).filter((m) => m.role !== 'trash').map((m) => m.id)
+			: [mailbox]
+	return mails.filter((m) => m.mailboxes.some((mb) => ids.includes(mb.mailbox_id)))
+}
+
 const setSeen = createResource({
-	url: 'mail.api.mail.set_seen',
-	makeParams: (thread_ids: SetSeenParams) => ({ account: store.account, thread_ids, mailbox }),
-	onSuccess: (thread_ids: SetSeenParams) => {
-		mailboxes.reload()
-		for (const [seenStr, ids] of Object.entries(thread_ids)) {
-			const seen = seenStr === 'true'
-			threadsResource.value.data
-				.filter((thread: Thread) => ids.includes(thread.thread_id))
-				.forEach((thread: Thread) => {
-					thread.seen = seen ? 1 : 0
-					thread.messages?.forEach((message) => (message.seen = seen ? 1 : 0))
-				})
-		}
-	},
+	url: 'mail.api.mail.set_mails_seen',
+	makeParams: ({ ids, seen }: { ids: string[]; seen: boolean }) => ({
+		account: store.account,
+		ids,
+		seen,
+	}),
+	onSuccess: () => mailboxes.reload(),
 })
 
 const setFlagged = createResource({
@@ -1070,10 +1088,17 @@ const setFlagged = createResource({
 	onError: (error) => raiseToast(error.messages[0], 'error'),
 })
 
-const moveThreads = createResource({
-	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: (thread_ids) => ({ account: store.account, thread_ids }),
-	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
+const moveMails = createResource({
+	url: 'mail.api.mail.move_mails',
+	makeParams: ({
+		ids,
+		mailbox: target,
+		clear_junk,
+	}: {
+		ids: string[]
+		mailbox: string
+		clear_junk?: boolean
+	}) => ({ account: store.account, ids, mailbox: target, clear_junk }),
 })
 
 const moveToOptions = computed(() =>
@@ -1086,24 +1111,22 @@ const moveToOptions = computed(() =>
 		})),
 )
 
-const addThreadsToMailbox = createResource({
-	url: 'mail.api.mail.add_threads_to_mailbox',
-	makeParams: ({ mailbox_id, thread_ids }: { mailbox_id: string; thread_ids: string[] }) => ({
+const addMails = createResource({
+	url: 'mail.api.mail.add_mails_to_mailbox',
+	makeParams: ({ ids, mailbox_id }: { ids: string[]; mailbox_id: string }) => ({
 		account: store.account,
+		ids,
 		mailbox_id,
-		thread_ids,
 	}),
-	onSuccess: () => reloadThreads(),
 })
 
-const removeThreadsFromMailbox = createResource({
-	url: 'mail.api.mail.remove_threads_from_mailbox',
-	makeParams: ({ mailbox_id, thread_ids }: { mailbox_id: string; thread_ids: string[] }) => ({
+const removeMails = createResource({
+	url: 'mail.api.mail.remove_mails_from_mailbox',
+	makeParams: ({ ids, mailbox_id }: { ids: string[]; mailbox_id: string }) => ({
 		account: store.account,
+		ids,
 		mailbox_id,
-		thread_ids,
 	}),
-	onSuccess: () => reloadThreads(),
 })
 
 const showAddTo = computed(
@@ -1142,7 +1165,8 @@ const addToOptions = computed(() =>
 const handleAddThreadsToMailbox = (mailboxId: string, threadIds: string[], isUndo = false) => {
 	const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
 	const action = async () => {
-		await addThreadsToMailbox.submit({ mailbox_id: mailboxId, thread_ids: threadIds })
+		await addMails.submit({ ids: allMailIds(threadIds), mailbox_id: mailboxId })
+		reloadThreads()
 		if (threadID && threadIds.includes(threadID))
 			mailThreadRef.value?.syncMailboxMembership(mailboxId, true)
 	}
@@ -1195,10 +1219,11 @@ const handleRemoveThreadsFromMailbox = (
 	})
 
 	const action = async () => {
-		await removeThreadsFromMailbox.submit({
-			mailbox_id: mailboxId,
-			thread_ids: threadIdsToBeUpdated,
-		})
+		const ids = threadMails(threadIdsToBeUpdated)
+			.filter((m) => m.mailboxes.some((mb) => mb.mailbox_id === mailboxId))
+			.map((m) => m.id)
+		await removeMails.submit({ ids, mailbox_id: mailboxId })
+		reloadThreads()
 		if (threadID && threadIdsToBeUpdated.includes(threadID)) {
 			if (mailboxId === mailbox) goToNextThreadOrMailbox(threadIdsToBeUpdated)
 			else mailThreadRef.value?.syncMailboxMembership(mailboxId, false)
@@ -1218,10 +1243,13 @@ const handleRemoveThreadsFromMailbox = (
 	raisePromiseToast(action, loading, success, undo)
 }
 
-const setSpamStatus = createResource({
-	url: 'mail.api.mail.set_threads_spam_status',
-	makeParams: (thread_ids: SetSeenParams) => ({ account: store.account, thread_ids }),
-	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
+const setMailsSpam = createResource({
+	url: 'mail.api.mail.set_mails_spam_status',
+	makeParams: ({ ids, spam }: { ids: string[]; spam: boolean }) => ({
+		account: store.account,
+		ids,
+		spam,
+	}),
 })
 
 const showJunkOrDeleteThreads = ref(false)
@@ -1272,10 +1300,9 @@ const junkOrDeleteThreadsOptions = computed(() => ({
 	],
 }))
 
-const deleteThreads = createResource({
-	url: 'mail.api.mail.delete_threads',
-	makeParams: (thread_ids: string[]) => ({ account: store.account, thread_ids, mailbox }),
-	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids, false),
+const bulkDelete = createResource({
+	url: 'mail.client.doctype.mail_message.mail_message.bulk_delete',
+	makeParams: ({ names }: { names: string[] }) => ({ names }),
 })
 
 const showEmptyMailbox = ref(false)
@@ -1323,10 +1350,13 @@ const handleSuccessAndRemoveFromList = (
 
 // Action handlers
 
-const handleSetSeen = (threadIDs: SetSeenParams) => {
+const handleSetSeen = (threadIDs: SetSeenParams, silent = false, mailIds?: string[]) => {
 	const seen = Object.keys(threadIDs)[0] === '1'
 	const selectedThreads = Object.values(threadIDs).flat()
+	// The reading pane passes explicit ids and has already decided a change is needed; the thread-level
+	// `seen` flag only reflects the current mailbox, so it can't gate a whole-conversation update.
 	if (
+		!mailIds &&
 		selectedThreads.every(
 			(thread_id) =>
 				threadsResource.value?.data?.find((t: Thread) => t.thread_id === thread_id)
@@ -1337,6 +1367,7 @@ const handleSetSeen = (threadIDs: SetSeenParams) => {
 
 	// Apply optimistically so a quick reopen sees the new seen state immediately — waiting for the
 	// server round-trip would leave the thread's messages stale (no auto mark-as-read / unseen marker).
+	// (No-op for threads not in the list, e.g. ones opened via the get_thread fallback.)
 	threadsResource.value.data
 		?.filter((t: Thread) => selectedThreads.includes(t.thread_id))
 		.forEach((t: Thread) => {
@@ -1345,21 +1376,33 @@ const handleSetSeen = (threadIDs: SetSeenParams) => {
 		})
 	if (!seen && threadID && selectedThreads.includes(threadID)) goToMailbox()
 
+	// Prefer the open thread's mail ids passed from the reading pane (works for fallback threads that
+	// aren't in the list); otherwise derive them from the list.
+	const ids = mailIds ?? currentMailboxMails(selectedThreads).map((m) => m.id)
+
+	// The auto mark-as-read on opening a thread is silent (no toast).
+	if (silent) return void setSeen.submit({ ids, seen })
+
 	const loading = seen ? __('Marking as read...') : __('Marking as unread...')
 	const success =
 		selectedThreads.length === 1
 			? __('Thread marked as {0}.', [seen ? __('read') : __('unread')])
 			: __('Threads marked as {0}.', [seen ? __('read') : __('unread')])
 
-	raisePromiseToast(() => setSeen.submit(threadIDs), loading, success)
+	raisePromiseToast(() => setSeen.submit({ ids, seen }), loading, success)
 }
 
 // "Mark Unread from Here" (set_mails_seen) marks individual messages unread. Sync those message ids
 // onto each thread's nested messages so reopening reads the fresh state without a full reload.
 const handleSyncUnseen = (ids: string[]) => {
 	threadsResource.value.data?.forEach((thread: Thread) => {
+		// Search results are flat mails with no nested messages — match on the result's own id.
+		if (!thread.messages?.length) {
+			if (ids.includes(thread.id)) thread.seen = 0
+			return
+		}
 		let changed = false
-		thread.messages?.forEach((message) => {
+		thread.messages.forEach((message) => {
 			if (ids.includes(message.id)) {
 				message.seen = 0
 				changed = true
@@ -1377,35 +1420,106 @@ const setFlaggedByThreadIDs = (threadIDs: string[], flagged: boolean) => {
 	setFlagged.submit({ ids, flagged })
 }
 
-const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean = false) => {
+// Moving keeps Sent copies in place: non-sent mails are moved, sent mails are only added to the
+// target — except for junk/trash, which move everything.
+const handleMoveThreads = (threadIDs: Record<string, string[]>) => {
 	const selectedThreads = Object.values(threadIDs).flat()
-	const mailboxMap: Record<string, string> = Object.fromEntries(
-		threadsResource.value.data.map((thread: Thread) => [
-			thread.thread_id,
-			thread['mailboxes'][0].mailbox_id,
-		]),
-	)
+	if (!selectedThreads.length) return
+
+	const originOf = (tid: string): string | undefined =>
+		threadsResource.value.data?.find((t: Thread) => t.thread_id === tid)?.mailboxes[0]
+			?.mailbox_id
+
 	const originalState: Record<string, string[]> = selectedThreads.reduce(
-		(acc: Record<string, string[]>, thread_id: string) => {
-			const key = mailboxMap[thread_id]
-			if (!acc[key]) acc[key] = []
-			acc[key].push(thread_id)
+		(acc: Record<string, string[]>, tid: string) => {
+			const key = originOf(tid)
+			if (key) (acc[key] ??= []).push(tid)
 			return acc
 		},
-		{},
+		{} as Record<string, string[]>,
 	)
 	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
 
-	const action = () => moveThreads.submit(threadIDs)
+	const movesAll = (t: string) => [mailboxIds.junk, mailboxIds.trash].includes(t)
 
-	if (isUndo) {
-		const success =
-			selectedThreads.length === 1 ? __('Thread moved back.') : __('Threads moved back.')
-		return raisePromiseToast(action, __('Undoing...'), success)
+	// Plan the forward + reverse mail operations now, while the threads are still in the list.
+	const forward: Array<() => Promise<unknown>> = []
+	const reverse: Array<() => Promise<unknown>> = []
+
+	for (const [target, tids] of Object.entries(threadIDs)) {
+		const mails = threadMails(tids)
+		const ids = mails.map((m) => m.id)
+		const sentIds = mails.filter(isSentMail).map((m) => m.id)
+		const nonSentIds = mails.filter((m) => !isSentMail(m)).map((m) => m.id)
+
+		const nonSentByOrigin: Record<string, string[]> = {}
+		tids.forEach((tid) => {
+			const origin = originOf(tid)
+			if (!origin) return
+			const tidNonSent = threadMails([tid])
+				.filter((m) => !isSentMail(m))
+				.map((m) => m.id)
+			if (tidNonSent.length) (nonSentByOrigin[origin] ??= []).push(...tidNonSent)
+		})
+		const restoreNonSent = () =>
+			Promise.all(
+				Object.entries(nonSentByOrigin).map(([origin, oids]) =>
+					moveMails.submit({ ids: oids, mailbox: origin }),
+				),
+			)
+
+		if (target === mailboxIds.junk) {
+			forward.push(() => setMailsSpam.submit({ ids, spam: true }))
+			reverse.push(async () => {
+				await setMailsSpam.submit({ ids, spam: false })
+				await restoreNonSent()
+			})
+		} else if (target === mailboxIds.trash) {
+			forward.push(() => moveMails.submit({ ids, mailbox: target, clear_junk: true }))
+			reverse.push(async () => {
+				await restoreNonSent()
+				if (sentIds.length)
+					await moveMails.submit({ ids: sentIds, mailbox: mailboxIds.sent })
+			})
+		} else {
+			if (nonSentIds.length)
+				forward.push(() =>
+					moveMails.submit({ ids: nonSentIds, mailbox: target, clear_junk: true }),
+				)
+			if (sentIds.length)
+				forward.push(() => addMails.submit({ ids: sentIds, mailbox_id: target }))
+			reverse.push(async () => {
+				await removeMails.submit({ ids, mailbox_id: target })
+				await restoreNonSent()
+			})
+		}
 	}
 
-	setUndoAction(() => handleMoveThreads(originalState, true))
-	const moveToMailboxName = mailboxes.data?.find((m) => m.id === Object.keys(threadIDs)[0])._name
+	// In Sent, a non-junk/trash move only adds the (sent) copies elsewhere, so the threads stay here.
+	const keptInList =
+		mailbox === mailboxIds.sent && Object.keys(threadIDs).every((t) => !movesAll(t))
+
+	const action = async () => {
+		for (const op of forward) await op()
+		if (keptInList) reloadThreads()
+		else handleSuccessAndRemoveFromList(threadIDs)
+	}
+
+	setUndoAction(() => {
+		const undoAction = async () => {
+			for (const op of reverse) await op()
+			reloadThreads()
+		}
+		raisePromiseToast(
+			undoAction,
+			__('Undoing...'),
+			selectedThreads.length === 1 ? __('Thread moved back.') : __('Threads moved back.'),
+		)
+	})
+
+	const moveToMailboxName = mailboxes.data?.find(
+		(m) => m.id === Object.keys(threadIDs)[0],
+	)?._name
 	const loading = __('Moving to {0}...', [moveToMailboxName])
 	const success =
 		selectedThreads.length === 1
@@ -1420,11 +1534,22 @@ const handleSetSpamStatus = (threadIDs: SetSeenParams, isUndo = false) => {
 	const originalState = getOriginalState(selectedThreads, 'junk')
 	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
 
-	const action = () => setSpamStatus.submit(threadIDs)
+	const spam = Object.keys(threadIDs)[0] === '1'
+	// Capture the mail ids now; the threads leave the list on success, so undo can't recompute them.
+	const ids = allMailIds(selectedThreads)
+	const action = async () => {
+		await setMailsSpam.submit({ ids, spam })
+		handleSuccessAndRemoveFromList(threadIDs)
+	}
 	if (isUndo) return raisePromiseToast(action, __('Undoing...'), __('Junk status restored.'))
 
-	setUndoAction(() => handleSetSpamStatus(originalState, true))
-	const spam = Object.keys(threadIDs)[0] === '1'
+	setUndoAction(() => {
+		const undoAction = async () => {
+			await setMailsSpam.submit({ ids, spam: !spam })
+			reloadThreads()
+		}
+		raisePromiseToast(undoAction, __('Undoing...'), __('Junk status restored.'))
+	})
 	const loading = spam ? __('Marking as Junk...') : __('Marking as Not Junk...')
 	const success =
 		selectedThreads.length === 1
@@ -1437,11 +1562,15 @@ const handleSetSpamStatus = (threadIDs: SetSeenParams, isUndo = false) => {
 const handleDeleteThreads = (thread_ids: string[]) => {
 	if (!thread_ids?.length) return
 
-	toast.promise(deleteThreads.submit(thread_ids), {
-		loading: __('Deleting...'),
-		success: thread_ids.length === 1 ? __('Thread deleted.') : __('Threads deleted.'),
-		error: __('Action failed. Please try again in some time.'),
-	})
+	const names = currentMailboxMails(thread_ids).map((m) => m.name)
+	toast.promise(
+		bulkDelete.submit({ names }).then(() => handleSuccessAndRemoveFromList(thread_ids, false)),
+		{
+			loading: __('Deleting...'),
+			success: thread_ids.length === 1 ? __('Thread deleted.') : __('Threads deleted.'),
+			error: __('Action failed. Please try again in some time.'),
+		},
+	)
 }
 
 const getOriginalState = (
@@ -1476,7 +1605,7 @@ const FILTER_OPTIONS = [
 	},
 	{
 		label: __('Unread'),
-		icon: Mail,
+		icon: MailIcon,
 		onClick: () => setFilter('unread'),
 	},
 	{

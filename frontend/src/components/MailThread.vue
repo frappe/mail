@@ -6,7 +6,13 @@
 			:can-go-prev="canGoPrev"
 			:can-go-next="canGoNext"
 			@set-flagged="(ids: string[], flagged: boolean) => emit('setFlagged', ids, flagged)"
-			@set-seen="(seen: boolean) => emit('setSeen', seen)"
+			@set-seen="
+				(seen: boolean) =>
+					setThreadSeen(
+						seen,
+						thread.map((mail) => mail.id),
+					)
+			"
 			@move-thread="(moveToMailbox: string) => emit('moveThread', moveToMailbox)"
 			@add-thread-to-mailbox="(mailboxId: string) => emit('addThreadToMailbox', mailboxId)"
 			@remove-thread-from-mailbox="
@@ -117,7 +123,7 @@
 											(id: string, flagged: boolean) =>
 												emit('setFlagged', [id], flagged)
 										"
-										@sync-unseen="(ids: string[]) => emit('syncUnseen', ids)"
+										@sync-unseen="handleSyncUnseen"
 									/>
 								</div>
 								<div
@@ -195,9 +201,7 @@
 													(id: string, flagged: boolean) =>
 														emit('setFlagged', [id], flagged)
 												"
-												@sync-unseen="
-													(ids: string[]) => emit('syncUnseen', ids)
-												"
+												@sync-unseen="handleSyncUnseen"
 											/>
 										</div>
 									</div>
@@ -512,17 +516,53 @@ const loadThread = () => {
 	thread.value = data
 	setCollapsedGroup(data)
 
-	let unseen = true
 	data.forEach((mail) => {
-		if (unseen && !mail.seen) {
-			emit('setSeen', true)
-			unseen = false
-		}
 		if (mail.draft) {
 			mail.groupedRecipients = getGroupedRecipients(mail.recipients, false)
 			populateDraftMails(mail)
 		}
 	})
+
+	// Opening a thread marks every message in the whole conversation read — including copies in other
+	// mailboxes (e.g. Sent) that aren't shown in this view.
+	if (source.some((mail) => !mail.seen))
+		setThreadSeen(
+			true,
+			source.map((mail) => mail.id),
+		)
+}
+
+// Persists the seen change via the parent (list + server) WITHOUT mutating the displayed messages,
+// so the "unread from here" marker (and the at-open unseen state) survive reopening the thread — the
+// auto mark-as-read shouldn't erase the marker. Works for list and get_thread-fallback threads alike.
+const setThreadSeen = (seen: boolean, ids: string[]) => emit('setSeen', seen, ids)
+
+// "Mark Unread from Here": mark the given messages unseen in the displayed list and the fallback
+// cache, so the unread-from-here marker appears immediately and survives reopening a fallback thread
+// (whose source is the cache, not the parent's list data).
+const handleSyncUnseen = (ids: string[]) => {
+	const markUnseen = (mail: Mail) => {
+		if (ids.includes(mail.id)) mail.seen = 0
+	}
+	thread.value.forEach(markUnseen)
+	;(threadFallback.data as Mail[] | undefined)?.forEach(markUnseen)
+	emit('syncUnseen', ids)
+}
+
+// A reply that arrives while the thread is open (picked up by a background list reload) is appended
+// in place. Re-deriving would clobber unsaved inline drafts, so only the genuinely new messages are
+// added — before any trailing draft so the in-progress reply stays at the bottom.
+const appendNewMessages = () => {
+	const source = sourceMessages()
+	if (!source?.length) return
+	const existing = new Set(thread.value.map((mail) => mail.id))
+	const additions = transformThreadMails(source).filter((mail) => !existing.has(mail.id))
+	if (!additions.length) return
+
+	const draftIndex = thread.value.findIndex((mail) => mail.draft)
+	if (draftIndex === -1) thread.value.push(...additions)
+	else thread.value.splice(draftIndex, 0, ...additions)
+	setCollapsedGroup(thread.value)
 }
 
 const firstMailOfCollapsedGroup = ref<string | null>(null)
@@ -586,7 +626,10 @@ watch(
 		if (forceReload || !thread.value.length) {
 			forceReload = false
 			loadThread()
+			return
 		}
+		// Otherwise keep unsaved drafts but pull in any newly-arrived messages.
+		appendNewMessages()
 	},
 )
 
