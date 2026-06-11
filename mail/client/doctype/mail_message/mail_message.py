@@ -672,6 +672,12 @@ def fetch_threads(
 	if not thread_email_ids:
 		return {}, estimate_total
 
+	if position:
+		estimate_total_based_on_page = position + len(thread_email_ids)
+		estimate_total = max(estimate_total, estimate_total_based_on_page)
+	else:
+		estimate_total = max(estimate_total, len(thread_email_ids))
+
 	# Fetch every message in the page's threads once, then group them back by thread.
 	threads: dict[str, list[dict]] = {thread_id: [] for thread_id in thread_email_ids}
 	email_ids = [email_id for ids in thread_email_ids.values() for email_id in ids]
