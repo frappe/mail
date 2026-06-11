@@ -6,27 +6,20 @@
 			@click="$router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })"
 		>
 			<template #icon>
-				<ChevronLeft class="text-ink-gray-7 h-4 w-4" />
+				<ChevronLeft class="text-ink-gray-7 icon" />
 			</template>
 		</Button>
-		<span
-			v-if="thread.loading"
-			class="bg-surface-gray-3 h-3.5 animate-pulse"
-			:style="{
-				width: `${Math.max(100, Math.random() * (isMobile ? 300 : 800))}px`,
-			}"
-		/>
-		<template v-else>
-			<Tooltip v-if="!isMobile" :text="thread?.data?.[0]?.subject">
+		<template v-if="thread?.length">
+			<Tooltip v-if="!isMobile" :text="thread?.[0]?.subject">
 				<h2 class="mr-2 select-none truncate font-semibold leading-5">
-					{{ thread?.data?.[0]?.subject || __('[No subject]') }}
+					{{ thread?.[0]?.subject || __('[No subject]') }}
 				</h2>
 			</Tooltip>
 			<div class="ml-auto shrink-0 space-x-2">
 				<Dropdown v-if="user.data?.show_reading_pane" :options="threadActions">
 					<Button variant="ghost" :tooltip="__('Actions')">
 						<template #icon>
-							<Ellipsis class="text-ink-gray-7 icon" />
+							<Ellipsis class="icon" />
 						</template>
 					</Button>
 				</Dropdown>
@@ -39,7 +32,7 @@
 						@click="action.onClick"
 					>
 						<template #icon>
-							<component :is="action.icon" class="text-ink-gray-7 icon" />
+							<component :is="action.icon" class="icon" />
 						</template>
 					</Button>
 				</template>
@@ -47,21 +40,21 @@
 				<Dropdown v-if="showAddTo" :options="addToOptions">
 					<Button variant="ghost" :tooltip="__('Add To')">
 						<template #icon>
-							<FolderPlus class="text-ink-gray-7 icon" />
+							<FolderPlus class="icon" />
 						</template>
 					</Button>
 				</Dropdown>
-				<Dropdown v-if="threadMailboxes.length > 1" :options="removeFromOptions">
+				<Dropdown v-if="canRemoveFrom" :options="removeFromOptions">
 					<Button variant="ghost" :tooltip="__('Remove From')">
 						<template #icon>
-							<FolderMinus class="text-ink-gray-7 icon" />
+							<FolderMinus class="icon" />
 						</template>
 					</Button>
 				</Dropdown>
 				<Dropdown :options="moveToOptions">
 					<Button variant="ghost" :tooltip="__('Move To')">
 						<template #icon>
-							<FolderInput class="text-ink-gray-7 icon" />
+							<FolderInput class="icon" />
 						</template>
 					</Button>
 				</Dropdown>
@@ -70,22 +63,22 @@
 					<Button
 						variant="ghost"
 						:tooltip="__('Previous Thread (↑/K)')"
-						:disabled="threadID === threads[0]"
+						:disabled="threadID === threads[0] && !canGoPrev"
 						@click="emit('prevThread')"
 					>
 						<template #icon>
-							<ArrowLeft class="text-ink-gray-7 icon" />
+							<ArrowLeft class="icon" />
 						</template>
 					</Button>
 
 					<Button
 						variant="ghost"
 						:tooltip="__('Next Thread (↓/J)')"
-						:disabled="threadID === threads.at(-1)"
+						:disabled="threadID === threads.at(-1) && !canGoNext"
 						@click="emit('nextThread')"
 					>
 						<template #icon>
-							<ArrowRight class="text-ink-gray-7 icon" />
+							<ArrowRight class="icon" />
 						</template>
 					</Button>
 				</template>
@@ -114,7 +107,6 @@ import {
 	Trash2,
 } from 'lucide-vue-next'
 import { Button, Dropdown, Tooltip } from 'frappe-ui'
-import type { createResource } from 'frappe-ui'
 
 import { FOLDER_ICON_COLOR_MAP } from '@/constants'
 import { getIcon } from '@/utils'
@@ -123,7 +115,12 @@ import { userStore } from '@/stores/user'
 
 import type { Mail, MailboxData } from '@/types'
 
-const { thread, threads } = defineProps<{ thread: typeof createResource; threads: string[] }>()
+const { thread, threads, canGoPrev, canGoNext } = defineProps<{
+	thread: Mail[]
+	threads: string[]
+	canGoPrev?: boolean
+	canGoNext?: boolean
+}>()
 const emit = defineEmits([
 	'setFlagged',
 	'setSeen',
@@ -146,12 +143,21 @@ const mailbox = computed(() => route.params.mailbox as string)
 const threadID = computed(() => route.params.threadID as string)
 
 const threadMailboxes = computed(() => {
-	if (!thread?.data?.length) return []
-	return thread.data
+	if (!thread?.length) return []
+	return thread
 		.filter((mail: Mail) => mail.id)
 		.map((mail: Mail) => mail.mailboxes.map((m) => m.mailbox_id))
 		.reduce((common, ids: string[]) => common.filter((id) => ids.includes(id)))
 })
+
+// Every mailbox the thread's mails touch (union), and whether any mail is in more than one — used by
+// Remove From, which is only offered when removing won't orphan a mail.
+const threadMailboxesUnion = computed(() => [
+	...new Set((thread ?? []).flatMap((mail: Mail) => mail.mailboxes.map((m) => m.mailbox_id))),
+])
+const canRemoveFrom = computed(() =>
+	(thread ?? []).some((mail: Mail) => mail.mailboxes.length > 1),
+)
 
 const threadActions = computed((): Action[] => [
 	{
@@ -159,22 +165,22 @@ const threadActions = computed((): Action[] => [
 		onClick: () =>
 			emit(
 				'setFlagged',
-				thread.data.map((m) => m.id),
+				thread.map((m) => m.id),
 				true,
 			),
 		icon: Star,
-		condition: () => thread.data.some((m) => !m.flagged),
+		condition: () => thread.some((m) => !m.flagged),
 	},
 	{
 		label: __('Unstar Thread'),
 		onClick: () =>
 			emit(
 				'setFlagged',
-				thread.data.map((m) => m.id),
+				thread.map((m) => m.id),
 				false,
 			),
 		icon: h(Star, { class: 'fill-ink-amber-2 text-ink-amber-2 stroke-ink-amber-2' }),
-		condition: () => thread.data.every((m) => m.flagged),
+		condition: () => thread.every((m) => m.flagged),
 	},
 	{
 		label: __('Mark as Unread (U)'),
@@ -237,7 +243,11 @@ const addToOptions = computed(() =>
 
 const removeFromOptions = computed(() =>
 	mailboxes.data
-		?.filter((m) => threadMailboxes.value.includes(m.id))
+		?.filter(
+			(m) =>
+				threadMailboxesUnion.value.includes(m.id) &&
+				![mailboxIds.sent, mailboxIds.drafts].includes(m.id),
+		)
 		.map((m) => getMailboxOption(m, 'removeThreadFromMailbox')),
 )
 

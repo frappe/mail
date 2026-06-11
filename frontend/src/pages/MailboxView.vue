@@ -10,13 +10,7 @@
 						route: { name: 'Mailbox', params: { accountId, mailbox } },
 					},
 				]"
-			>
-				<template v-if="mailbox !== 'starred' && isMailboxLoaded" #suffix>
-					<span class="text-ink-gray-5 ml-2 self-end pb-px text-xs">
-						{{ noOfThreads }}
-					</span>
-				</template>
-			</Breadcrumbs>
+			/>
 		</div>
 		<HeaderActions @reload-mails="reloadThreads(true, ['drafts', 'sent'])" />
 	</header>
@@ -59,7 +53,7 @@
 			>
 				<!-- Toolbar/Actions -->
 				<div
-					class="flex items-center border-b border-l-transparent px-3.5 py-2.5 sm:border-l sm:px-5"
+					class="relative flex items-center border-b border-l-transparent px-3.5 py-2.5 sm:border-l sm:px-5"
 				>
 					<div class="mr-5 max-sm:ml-3">
 						<Tooltip
@@ -81,35 +75,53 @@
 							</div>
 						</Tooltip>
 					</div>
-					<p class="mr-auto pb-[2px]">{{ title }}</p>
-					<div class="flex items-center space-x-1.5 sm:space-x-3">
-						<Dropdown
-							v-if="!selections.length && mailbox !== 'search'"
-							:options="FILTER_OPTIONS"
+					<Dropdown
+						v-if="!selections.length && mailbox !== 'search'"
+						:options="FILTER_OPTIONS"
+					>
+						<button
+							class="text-ink-gray-8 hover:bg-surface-gray-2 -ml-2 flex min-w-0 items-center gap-1 rounded px-2 py-1"
 						>
-							<Button variant="ghost" :tooltip="__('Filter')">
+							<span class="truncate">{{ title }}</span>
+							<ChevronDown class="text-ink-gray-5 icon shrink-0" />
+						</button>
+					</Dropdown>
+					<p v-else class="pb-[2px]">{{ title }}</p>
+					<div class="-mr-1.5 ml-auto flex items-center space-x-1.5 sm:space-x-3">
+						<div
+							v-if="!selections.length && displayTotal"
+							class="text-ink-gray-6 flex items-center gap-1"
+						>
+							<span class="whitespace-nowrap text-sm tabular-nums">
+								{{ range }} {{ __('of') }} {{ totalLabel }}
+							</span>
+							<Button
+								:tooltip="__('Previous Page')"
+								variant="ghost"
+								:disabled="!canGoPrev"
+								@click="goToPage(false)"
+							>
 								<template #icon>
-									<component :is="ListFilter" class="text-ink-gray-7 icon" />
+									<ChevronLeft class="icon" />
 								</template>
 							</Button>
-						</Dropdown>
+							<Button
+								:tooltip="__('Next Page')"
+								variant="ghost"
+								:disabled="!canGoNext"
+								@click="goToPage(true)"
+							>
+								<template #icon>
+									<ChevronRight class="icon" />
+								</template>
+							</Button>
+						</div>
 
-						<Button
-							v-if="!selections.length"
-							:tooltip="__('Refresh')"
-							variant="ghost"
-							@click="reloadThreads"
-						>
-							<template #icon>
-								<RefreshCw class="text-ink-gray-7 icon" />
-							</template>
-						</Button>
-
-						<template v-else>
+						<template v-else-if="selections.length">
 							<Dropdown v-if="showReadingPane" :options="selectActions">
 								<Button variant="ghost" :tooltip="__('Actions')">
 									<template #icon>
-										<Ellipsis class="text-ink-gray-7 icon" />
+										<Ellipsis class="icon" />
 									</template>
 								</Button>
 							</Dropdown>
@@ -122,10 +134,7 @@
 									@click="action.onClick"
 								>
 									<template #icon>
-										<component
-											:is="action.icon"
-											class="text-ink-gray-7 icon"
-										/>
+										<component :is="action.icon" class="icon" />
 									</template>
 								</Button>
 							</template>
@@ -134,14 +143,14 @@
 						<Dropdown v-if="showAddTo" :options="addToOptions">
 							<Button variant="ghost" :tooltip="__('Add To')">
 								<template #icon>
-									<component :is="FolderPlus" class="text-ink-gray-7 icon" />
+									<component :is="FolderPlus" class="icon" />
 								</template>
 							</Button>
 						</Dropdown>
 						<Dropdown v-if="showRemoveFrom" :options="removeFromOptions">
 							<Button variant="ghost" :tooltip="__('Remove From')">
 								<template #icon>
-									<component :is="FolderMinus" class="text-ink-gray-7 icon" />
+									<component :is="FolderMinus" class="icon" />
 								</template>
 							</Button>
 						</Dropdown>
@@ -151,18 +160,29 @@
 						>
 							<Button variant="ghost" :tooltip="__('Move To')">
 								<template #icon>
-									<component :is="FolderInput" class="text-ink-gray-7 icon" />
+									<component :is="FolderInput" class="icon" />
 								</template>
 							</Button>
 						</Dropdown>
+					</div>
+					<!-- Subtle loading bar: a segment sliding across the bottom outline (no layout shift) -->
+					<div
+						v-if="threadsResource?.loading"
+						class="loading-bar pointer-events-none absolute bottom-[-1px] left-[-1px] right-0 h-0.5 overflow-hidden"
+						role="progressbar"
+						aria-busy="true"
+					>
+						<div
+							class="loading-bar__fill via-ink-gray-3 absolute inset-y-0 left-0 w-[30%] bg-gradient-to-r from-transparent to-transparent"
+						/>
 					</div>
 				</div>
 
 				<!-- Mail list -->
 				<div
 					v-if="threadsResource?.data?.length"
+					ref="mailList"
 					class="h-full overflow-y-auto overscroll-contain"
-					@scroll="loadMoreThreads"
 				>
 					<div v-for="(group, key) in groupedThreads" :key="key">
 						<Tooltip
@@ -204,7 +224,7 @@
 										collapsedGroups.includes(key) ? ChevronRight : ChevronDown
 									"
 									v-if="!isLastGroup(key)"
-									class="text-ink-gray-5 ml-auto h-4 w-4"
+									class="icon ml-auto"
 								/>
 							</div>
 						</Tooltip>
@@ -248,18 +268,6 @@
 							/>
 						</template>
 					</div>
-
-					<div
-						v-if="
-							threadsResource.loading && threadsResource.data.length === limit - 50
-						"
-						class="flex items-center justify-center py-4"
-					>
-						<div class="text-ink-gray-5 flex items-center space-x-2">
-							<LoaderCircle class="h-4 w-4 animate-spin" />
-							<span class="text-sm">{{ __('Loading more mails...') }}</span>
-						</div>
-					</div>
 				</div>
 				<div v-else class="flex h-full items-center justify-center">
 					<p class="text-ink-gray-5">
@@ -289,19 +297,15 @@
 					:mailbox
 					:thread-i-d
 					:threads="threadIDs"
+					:messages="currentThread?.messages"
+					:can-go-prev="canGoPrev"
+					:can-go-next="canGoNext"
 					@reload-mails="reloadThreads"
 					@set-seen="
-						(seen: boolean) =>
-							seen
-								? setSeen.submit({ 1: [threadID!] })
-								: handleSetSeen({ 0: [threadID!] })
+						(seen: boolean, ids: string[]) =>
+							handleSetSeen({ [Number(seen)]: [threadID!] }, seen, ids)
 					"
-					@sync-unseen="
-						(ids: string[]) =>
-							threadsResource.data
-								.filter((thread: Thread) => ids.includes(thread.id))
-								.forEach((thread: Thread) => (thread.seen = 0))
-					"
+					@sync-unseen="handleSyncUnseen"
 					@set-flagged="
 						(ids: string[], flagged: boolean) => setFlagged.submit({ ids, flagged })
 					"
@@ -347,13 +351,13 @@
 	<ShortcutsModal v-model="showShortcuts" />
 </template>
 <script setup lang="ts">
-import { computed, h, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDebounceFn } from '@vueuse/core'
-import { Icon } from 'frappe-ui/icons'
 import {
 	Archive,
 	ChevronDown,
+	ChevronLeft,
 	ChevronRight,
 	CircleAlert,
 	CircleCheck,
@@ -361,9 +365,8 @@ import {
 	FolderInput,
 	FolderMinus,
 	FolderPlus,
-	ListFilter,
 	LoaderCircle,
-	Mail,
+	Mail as MailIcon,
 	MailOpen,
 	Mails,
 	Paperclip,
@@ -380,21 +383,12 @@ import {
 	Dropdown,
 	Tooltip,
 	createResource,
-	toast,
 	usePageMeta,
 } from 'frappe-ui'
 
-import { FOLDER_ICON_COLOR_MAP } from '@/constants'
-import {
-	getFormattedDate,
-	getIcon,
-	isMac,
-	raisePromiseToast,
-	raiseToast,
-	shouldIgnoreKeypress,
-	startResizing,
-} from '@/utils'
+import { getFormattedDate, isMac, raiseToast, shouldIgnoreKeypress, startResizing } from '@/utils'
 import { useScreenSize, useSidebar, useUndo } from '@/utils/composables'
+import { useThreadActions } from '@/utils/useThreadActions'
 import { type MailboxRole, userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
@@ -414,7 +408,7 @@ const route = useRoute()
 const router = useRouter()
 const { isMobile } = useScreenSize()
 const { openSidebar } = useSidebar()
-const { setUndoAction, undo } = useUndo()
+const { undo } = useUndo()
 
 const socket = inject('$socket')
 const user = inject('$user') as UserResource
@@ -480,6 +474,7 @@ watch(
 
 const mailItemsRef = useTemplateRef('mailItems')
 const mailThreadRef = useTemplateRef('mailThread')
+const mailListRef = useTemplateRef('mailList')
 
 const selections = ref<string[]>([])
 const lastSelected = ref<string[]>()
@@ -774,7 +769,7 @@ const selectActions = computed((): SelectAction[] => [
 	{
 		label: __('Mark as Unread (U)'),
 		onClick: () => handleSetSeen({ 0: selections.value }),
-		icon: Mail,
+		icon: MailIcon,
 		condition: () =>
 			selections.value.some(
 				(threadID) =>
@@ -830,16 +825,40 @@ const selectActions = computed((): SelectAction[] => [
 
 // Search
 
-const noOfSearchResults = ref(0)
+// Pagination state (shared by the threads and search resources — only one is active at a time)
+const PAGE_LENGTH = 25
+const page = ref(0) // navigation target: the page being fetched
+const displayedPage = ref(0) // the page currently shown; lags `page` until its data loads
+const total = ref(0) // exact total matching the current view (search only)
+const hasMore = ref(false) // lookahead: an extra row was returned, so a next page exists
+// Current mailbox's record (carries total_threads/unread_threads). Declared here because the threads
+// resource's makeParams reads it during setup (via the immediate watch), before its later UI uses.
+const mailboxObj = computed(() => mailboxes.data?.find((m) => m.id === mailbox))
+
+// Called once a page's data has loaded: reveal it (range + list update together) and scroll to top.
+// No-op for same-page reloads (e.g. the periodic refresh) so those don't yank the scroll position.
+const syncDisplayedPage = () => {
+	if (displayedPage.value === page.value) return
+	displayedPage.value = page.value
+	mailListRef.value?.scrollTo({ top: 0 })
+}
 
 const searchResults = createResource({
 	url: 'mail.api.mail.search_mails',
-	makeParams: () => ({ account: store.account, filter: route.query, limit: limit.value }),
+	makeParams: () => ({
+		account: store.account,
+		filter: route.query,
+		limit: PAGE_LENGTH,
+		start: page.value * PAGE_LENGTH,
+	}),
 	transform: (data: [Thread[], number]) => {
-		noOfSearchResults.value = data[1]
+		total.value = data[1]
 		return data[0]
 	},
-	onSuccess: () => {
+	onSuccess: (data: [Thread[], number]) => {
+		correctPageOverflow(data[0])
+		openPendingEdgeThread()
+		syncDisplayedPage()
 		if (mailbox === 'search') isMailboxLoaded.value = true
 	},
 })
@@ -848,7 +867,7 @@ watch(
 	() => JSON.stringify(route.query),
 	() => {
 		if (mailbox === 'search') {
-			limit.value = 50
+			page.value = 0
 			searchResults.reload()
 		}
 	},
@@ -856,7 +875,6 @@ watch(
 
 // Main data
 
-const limit = ref(50)
 const filter = ref<string | null>(
 	localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null,
 )
@@ -867,23 +885,127 @@ const threads = createResource({
 	makeParams: () => ({
 		account: store.account,
 		mailbox,
-		limit: limit.value,
+		limit: threadsLimit.value,
+		start: page.value * PAGE_LENGTH,
 		filter_by: filter.value,
 	}),
-	transform: (data: [Thread[], string]) => data[0],
-	onSuccess: (data) => {
+	transform: (data: [Thread[], string]) => {
+		const rows = data[0]
+		// The extra (PAGE_LENGTH + 1)th row only signals a next page — drop it from the display.
+		if (countMode.value === 'lookahead') {
+			hasMore.value = rows.length > PAGE_LENGTH
+			return rows.slice(0, PAGE_LENGTH)
+		}
+		hasMore.value = false
+		return rows
+	},
+	onSuccess: (data: [Thread[], string]) => {
+		correctPageOverflow(data[0])
+		openPendingEdgeThread()
+		syncDisplayedPage()
 		if (mailbox === data[1]) isMailboxLoaded.value = true
 	},
 })
 
 const threadsResource = computed(() => (mailbox === 'search' ? searchResults : threads))
 
+// If a page ends up empty because threads were removed (e.g. deleted/moved), step back a page.
+// Decrementing one at a time is bounded by 0, so it can't loop even if `total` is stale.
+const correctPageOverflow = (pageData: Thread[]) => {
+	if (pageData.length || page.value === 0) return
+	page.value -= 1
+	threadsResource.value.reload()
+}
+
+const threadsOnPage = computed(() => threadsResource.value.data?.length ?? 0)
+
+// How the total count and "next page" are resolved:
+// - 'exact'     (search): the backend returns the exact total.
+// - 'mailbox'   (a plain mailbox, no filter): use the mailbox's stored thread count.
+// - 'lookahead' (a filtered mailbox, or the cross-mailbox "starred" view): no cheap total exists, so
+//   we fetch one extra row (PAGE_LENGTH + 1). The extra row means a next page exists; we show the
+//   running count with a "+" suffix and only enable Next while it's present.
+const countMode = computed<'exact' | 'mailbox' | 'lookahead'>(() => {
+	if (mailbox === 'search') return 'exact'
+	if (mailbox === 'starred' || filter.value) return 'lookahead'
+	return 'mailbox'
+})
+const mailboxTotal = computed(() => mailboxObj.value?.total_threads ?? 0)
+
+// Rows to request for the current page. In 'lookahead' mode fetch one extra row to detect a next
+// page; in 'mailbox' mode never fetch past the known total, so the last page returns only the
+// remainder (avoids overshooting, e.g. "26–50 of 41"). Falls back to a full page until the total loads.
+const threadsLimit = computed(() => {
+	if (countMode.value === 'lookahead') return PAGE_LENGTH + 1
+	if (countMode.value === 'mailbox' && mailboxTotal.value > 0) {
+		return Math.min(PAGE_LENGTH, Math.max(0, mailboxTotal.value - page.value * PAGE_LENGTH))
+	}
+	return PAGE_LENGTH
+})
+
+// The fixed total for the current view, if known (null in lookahead mode, where we only know a lower
+// bound). Used to clamp the displayed range so it never overshoots — during a page change the previous
+// page's rows linger until the new page loads, which would otherwise read as "26–50 of 41".
+const knownTotal = computed<number | null>(() => {
+	if (countMode.value === 'exact') return total.value
+	if (countMode.value === 'mailbox') return mailboxTotal.value
+	return null
+})
+
+const rangeEnd = computed(() => {
+	// Based on the displayed (loaded) page, not the navigation target, so the range only moves once the
+	// new page's data arrives. For a known total, derive the end from the page bounds (clamped to the
+	// total) rather than the row count; the fetch is clamped to the same bound, so it matches the loaded
+	// page while staying stable during a page change, when the previous page's rows still linger.
+	if (knownTotal.value && knownTotal.value > 0) {
+		return Math.min((displayedPage.value + 1) * PAGE_LENGTH, knownTotal.value)
+	}
+	return displayedPage.value * PAGE_LENGTH + threadsOnPage.value
+})
+const rangeStart = computed(() =>
+	rangeEnd.value === 0 ? 0 : displayedPage.value * PAGE_LENGTH + 1,
+)
+// Collapse to a single number when the page holds one thread (e.g. "1" instead of "1–1").
+const range = computed(() =>
+	rangeStart.value === rangeEnd.value
+		? `${rangeStart.value}`
+		: `${rangeStart.value}–${rangeEnd.value}`,
+)
+const displayTotal = computed(() =>
+	countMode.value === 'lookahead' ? rangeEnd.value : (knownTotal.value ?? 0),
+)
+// In lookahead mode the count is a lower bound — show "n+" while a next page exists, else "n".
+const totalLabel = computed(() =>
+	countMode.value === 'lookahead'
+		? `${rangeEnd.value}${hasMore.value ? '+' : ''}`
+		: `${displayTotal.value}`,
+)
+
+// Prev/Next are bounded by the navigation target (`page`), not the displayed page, so presses can be
+// queued while a page is still loading. Lookahead only knows one page ahead exists, so it can't queue
+// past the loaded page.
+const canGoPrev = computed(() => page.value > 0)
+const canGoNext = computed(() =>
+	countMode.value === 'lookahead'
+		? hasMore.value && page.value === displayedPage.value
+		: (page.value + 1) * PAGE_LENGTH < (knownTotal.value ?? 0),
+)
+
+// Coalesce rapid Prev/Next presses: only the final target page is fetched, and the displayed page
+// (range + list) updates once it loads — intermediate pages are never shown.
+const navigate = useDebounceFn(() => threadsResource.value.reload(), 250)
+
+const goToPage = (next: boolean) => {
+	if (next ? !canGoNext.value : !canGoPrev.value) return
+	page.value += next ? 1 : -1
+	resetSelections()
+	navigate()
+}
+
 const isLoading = computed(() => {
 	if (!isMailboxLoaded.value) return true
 	if (emptyMailbox.loading) return true
-	return (
-		!threadsResource.value.data.length && threadsResource.value?.loading && limit.value === 50
-	)
+	return !threadsResource.value.data.length && threadsResource.value?.loading
 })
 
 const threadIDs = computed(
@@ -907,7 +1029,7 @@ watch(
 		isMailboxLoaded.value = false
 		threadsResource.value.data = []
 		filter.value = localStorage.getItem(`user:${user.data.name}:filter:${mailbox}`) || null
-		limit.value = 50
+		page.value = 0
 		threadInFocus.value = undefined
 		collapsedGroups.value = []
 		reloadThreads(false)
@@ -935,21 +1057,6 @@ onUnmounted(() => {
 	if (reloadInterval.value) clearInterval(reloadInterval.value)
 })
 
-const loadMoreThreads = useDebounceFn((e) => {
-	const { scrollTop, scrollHeight, clientHeight } = e.target
-	if (
-		scrollTop + clientHeight >= scrollHeight - 10 &&
-		threadsResource.value?.data?.length === limit.value
-	) {
-		limit.value += 50
-		threadsResource.value.reload()
-		setTimeout(
-			() => e.target.scrollTo({ top: e.target.scrollHeight, behavior: 'smooth' }),
-			100,
-		)
-	}
-}, 500)
-
 const goToMailbox = () =>
 	router.push({ name: 'Mailbox', params: { accountId, mailbox }, query: route.query })
 
@@ -961,7 +1068,30 @@ const goToThread = (threadID: string) => {
 		router.push({ name: 'Mail', params: { accountId, mailbox, threadID }, query: route.query })
 }
 
-const goToThreadByOffset = (offset: number) => goToThread(getThreadByOffset(offset))
+// When stepping past the first/last thread of a page, move to the adjacent page (if any) and open
+// its edge thread once the new page has loaded (`openPendingEdgeThread`, called from onSuccess).
+let pendingEdgeThread: 'first' | 'last' | null = null
+
+const goToThreadByOffset = (offset: number) => {
+	const next = getThreadByOffset(offset)
+	if (next) return goToThread(next)
+
+	if (offset > 0 && canGoNext.value) {
+		pendingEdgeThread = 'first'
+		goToPage(true)
+	} else if (offset < 0 && canGoPrev.value) {
+		pendingEdgeThread = 'last'
+		goToPage(false)
+	}
+}
+
+const openPendingEdgeThread = () => {
+	if (!pendingEdgeThread) return
+	const id = pendingEdgeThread === 'first' ? threadIDs.value[0] : threadIDs.value.at(-1)
+	if (!id) return // keep the flag if the page is still empty (e.g. after overflow correction)
+	pendingEdgeThread = null
+	goToThread(id)
+}
 
 const goToNextThreadOrMailbox = (excludedThreads: string[] = []) => {
 	const idx = threadIDs.value.indexOf(threadID)
@@ -987,249 +1117,32 @@ const scrollIntoView = (threadID: string) => {
 
 // Actions
 
-type SetSeenParams = {
-	0?: string[]
-	1?: string[]
-}
-
-const setSeen = createResource({
-	url: 'mail.api.mail.set_seen',
-	makeParams: (thread_ids: SetSeenParams) => ({ account: store.account, thread_ids, mailbox }),
-	onSuccess: (thread_ids: SetSeenParams) => {
-		mailboxes.reload()
-		for (const [seenStr, ids] of Object.entries(thread_ids)) {
-			const seen = seenStr === 'true'
-			threadsResource.value.data
-				.filter((thread: Thread) => ids.includes(thread.thread_id))
-				.forEach((thread: Thread) => (thread.seen = seen ? 1 : 0))
-			if (!seen && threadID && ids.includes(threadID)) goToMailbox()
-		}
-	},
-})
-
-const setFlagged = createResource({
-	url: 'mail.api.mail.set_flagged',
-	makeParams: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => ({
-		account: store.account,
-		ids,
-		flagged,
-	}),
-	onSuccess: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => {
-		ids.forEach((id) => {
-			const thread = threadsResource.value.data?.find((t: Thread) => t.id === id)
-			if (thread) thread.flagged = flagged ? 1 : 0
-		})
-		if (threadID) mailThreadRef.value?.syncFlagged(ids, flagged)
-	},
-	onError: (error) => raiseToast(error.messages[0], 'error'),
-})
-
-const moveThreads = createResource({
-	url: 'mail.api.mail.set_threads_mailbox',
-	makeParams: (thread_ids) => ({ account: store.account, thread_ids }),
-	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
-})
-
-const moveToOptions = computed(() =>
-	mailboxes.data
-		?.filter((m) => ![mailbox, mailboxIds.sent, mailboxIds.drafts].includes(m.id))
-		.map((m) => ({
-			label: m._name,
-			icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
-			onClick: () => handleMoveThreads({ [m.id]: selections.value }),
-		})),
-)
-
-const addThreadsToMailbox = createResource({
-	url: 'mail.api.mail.add_threads_to_mailbox',
-	makeParams: ({ mailbox_id, thread_ids }: { mailbox_id: string; thread_ids: string[] }) => ({
-		account: store.account,
-		mailbox_id,
-		thread_ids,
-	}),
-	onSuccess: () => reloadThreads(),
-})
-
-const removeThreadsFromMailbox = createResource({
-	url: 'mail.api.mail.remove_threads_from_mailbox',
-	makeParams: ({ mailbox_id, thread_ids }: { mailbox_id: string; thread_ids: string[] }) => ({
-		account: store.account,
-		mailbox_id,
-		thread_ids,
-	}),
-	onSuccess: () => reloadThreads(),
-})
-
-const showAddTo = computed(
-	() =>
-		selections.value.length &&
-		addToOptions.value.length &&
-		!['search', 'starred', mailboxIds.junk, mailboxIds.trash].includes(mailbox),
-)
-
-const showRemoveFrom = computed(
-	() =>
-		showAddTo.value &&
-		threadsResource.value.data
-			?.filter((t: Thread) => selections.value.includes(t.thread_id))
-			.some((t: Thread) => t.mailboxes.length > 1),
-)
-
-const addToOptions = computed(() =>
-	mailboxes.data
-		?.filter((m) => !m.role || ['inbox', 'archive'].includes(m.role))
-		.filter((m) => {
-			const selected = threadsResource.value.data?.filter((t: Thread) =>
-				selections.value.includes(t.thread_id),
-			)
-			return !selected?.every((t: Thread) =>
-				t.mailboxes.some((mb) => mb.mailbox_id === m.id),
-			)
-		})
-		.map((m) => ({
-			label: m._name,
-			icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
-			onClick: () => handleAddThreadsToMailbox(m.id, selections.value),
-		})),
-)
-
-const handleAddThreadsToMailbox = (mailboxId: string, threadIds: string[], isUndo = false) => {
-	const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
-	const action = async () => {
-		await addThreadsToMailbox.submit({ mailbox_id: mailboxId, thread_ids: threadIds })
-		if (threadID && threadIds.includes(threadID))
-			mailThreadRef.value?.syncMailboxMembership(mailboxId, true)
-	}
-
-	if (isUndo) {
-		const success =
-			threadIds.length === 1 ? __('Thread added back.') : __('Threads added back.')
-		return raisePromiseToast(action, __('Undoing...'), success)
-	}
-
-	setUndoAction(() => handleRemoveThreadsFromMailbox(mailboxId, threadIds, true))
-	const loading = __('Adding to {0}...', [mailboxName])
-	const success =
-		threadIds.length === 1
-			? __('Thread added to {0}.', [mailboxName])
-			: __('Threads added to {0}.', [mailboxName])
-	raisePromiseToast(action, loading, success, undo)
-}
-
-const removeFromOptions = computed(() => {
-	const selected = threadsResource.value.data?.filter((t: Thread) =>
-		selections.value.includes(t.thread_id),
-	)
-	const unionMailboxIds = selected
-		.map((t: Thread) => new Set(t.mailboxes.map((mb) => mb.mailbox_id)))
-		.reduce(
-			(union: Set<string>, set: Set<string>) => new Set([...union, ...set]),
-			new Set<string>(),
-		)
-	return mailboxes.data
-		?.filter(
-			(m) =>
-				unionMailboxIds.has(m.id) && ![mailboxIds.sent, mailboxIds.drafts].includes(m.id),
-		)
-		.map((m) => ({
-			label: m._name,
-			icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
-			onClick: () => handleRemoveThreadsFromMailbox(m.id, selections.value),
-		}))
-})
-
-const handleRemoveThreadsFromMailbox = (
-	mailboxId: string,
-	threadIds: string[],
-	isUndo = false,
-) => {
-	const threadIdsToBeUpdated = threadIds.filter((threadId) => {
-		const thread = threadsResource.value.data?.find((t: Thread) => t.thread_id === threadId)
-		return thread?.mailboxes.some((mb) => mb.mailbox_id === mailboxId)
-	})
-
-	const action = async () => {
-		await removeThreadsFromMailbox.submit({
-			mailbox_id: mailboxId,
-			thread_ids: threadIdsToBeUpdated,
-		})
-		if (threadID && threadIdsToBeUpdated.includes(threadID)) {
-			if (mailboxId === mailbox) goToNextThreadOrMailbox(threadIdsToBeUpdated)
-			else mailThreadRef.value?.syncMailboxMembership(mailboxId, false)
-		}
-	}
-
-	const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
-	const success =
-		threadIdsToBeUpdated.length === 1
-			? __('Thread removed from {0}.', [mailboxName])
-			: __('Threads removed from {0}.', [mailboxName])
-
-	if (isUndo) return raisePromiseToast(action, __('Undoing...'), success)
-
-	setUndoAction(() => handleAddThreadsToMailbox(mailboxId, threadIdsToBeUpdated, true))
-	const loading = __('Removing from {0}...', [mailboxName])
-	raisePromiseToast(action, loading, success, undo)
-}
-
-const setSpamStatus = createResource({
-	url: 'mail.api.mail.set_threads_spam_status',
-	makeParams: (thread_ids: SetSeenParams) => ({ account: store.account, thread_ids }),
-	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids),
-})
-
-const showJunkOrDeleteThreads = ref(false)
-const threadsToBeJunkedOrDeleted = ref<string[]>([])
-const isJunkAction = ref(false)
-
-const junkOrDeleteThreads = (threadIDs: string[], isJunk: boolean) => {
-	if (!threadIDs?.length) return
-
-	threadsToBeJunkedOrDeleted.value = threadIDs
-	isJunkAction.value = isJunk
-	showJunkOrDeleteThreads.value = true
-}
-
-const junkOrDeleteThreadCount = computed(() => threadsToBeJunkedOrDeleted.value.length)
-
-const junkOrDeleteTitle = computed(() => {
-	const count =
-		junkOrDeleteThreadCount.value === 1 ? '' : junkOrDeleteThreadCount.value.toString()
-	const noun = junkOrDeleteThreadCount.value > 1 ? __('Threads') : __('Thread')
-
-	return isJunkAction.value
-		? __('Mark {0} {1} as Junk', [count, noun])
-		: __('Delete {0} {1}', [count, noun])
-})
-
-const junkOrDeleteMessage = computed(() => {
-	const noun = junkOrDeleteThreadCount.value > 1 ? __('threads') : __('thread')
-
-	return isJunkAction.value
-		? __('Are you sure you want to mark the selected {0} as junk?', [noun])
-		: __('Are you sure you want to permanently delete the selected {0}?', [noun])
-})
-
-const handleJunkOrDelete = () => {
-	if (isJunkAction.value) handleSetSpamStatus({ 1: threadsToBeJunkedOrDeleted.value })
-	else handleDeleteThreads(threadsToBeJunkedOrDeleted.value)
-
-	showJunkOrDeleteThreads.value = false
-}
-
-const junkOrDeleteThreadsOptions = computed(() => ({
-	title: junkOrDeleteTitle.value,
-	message: junkOrDeleteMessage.value,
-	icon: { name: 'alert-triangle', appearance: 'warning' },
-	actions: [
-		{ label: __('Confirm'), variant: 'solid', autofocus: true, onClick: handleJunkOrDelete },
-	],
-}))
-
-const deleteThreads = createResource({
-	url: 'mail.api.mail.delete_threads',
-	makeParams: (thread_ids: string[]) => ({ account: store.account, thread_ids, mailbox }),
-	onSuccess: (thread_ids: string[]) => handleSuccessAndRemoveFromList(thread_ids, false),
+const {
+	handleSetSeen,
+	handleSyncUnseen,
+	setFlaggedByThreadIDs,
+	handleMoveThreads,
+	handleSetSpamStatus,
+	handleAddThreadsToMailbox,
+	handleRemoveThreadsFromMailbox,
+	junkOrDeleteThreads,
+	setFlagged,
+	moveToOptions,
+	addToOptions,
+	removeFromOptions,
+	showAddTo,
+	showRemoveFrom,
+	showJunkOrDeleteThreads,
+	junkOrDeleteThreadsOptions,
+} = useThreadActions({
+	threadsResource,
+	mailbox: computed(() => mailbox),
+	threadID: computed(() => threadID),
+	selections,
+	mailThreadRef,
+	reloadThreads,
+	goToMailbox,
+	goToNextThreadOrMailbox,
 })
 
 const showEmptyMailbox = ref(false)
@@ -1261,140 +1174,6 @@ const emptyMailboxOptions = computed(() => ({
 	],
 }))
 
-const handleSuccessAndRemoveFromList = (
-	thread_ids: string[] | SetSeenParams,
-	excludeCommonMailboxes: boolean = true,
-) => {
-	reloadThreads()
-
-	if (excludeCommonMailboxes && ['search', 'starred'].includes(mailbox)) return
-	if (!Array.isArray(thread_ids)) thread_ids = Object.values(thread_ids).flat()
-	if (threadID && thread_ids.includes(threadID)) goToNextThreadOrMailbox(thread_ids)
-	threadsResource.value.data = threadsResource.value.data?.filter(
-		(thread: Thread) => !thread_ids.includes(thread.thread_id),
-	)
-}
-
-// Action handlers
-
-const handleSetSeen = (threadIDs: SetSeenParams) => {
-	const seen = Object.keys(threadIDs)[0] === '1'
-	const selectedThreads = Object.values(threadIDs).flat()
-	if (
-		selectedThreads.every(
-			(thread_id) =>
-				threadsResource.value?.data?.find((t: Thread) => t.thread_id === thread_id)
-					?.seen === (seen ? 1 : 0),
-		)
-	)
-		return
-
-	const loading = seen ? __('Marking as read...') : __('Marking as unread...')
-	const success =
-		selectedThreads.length === 1
-			? __('Thread marked as {0}.', [seen ? __('read') : __('unread')])
-			: __('Threads marked as {0}.', [seen ? __('read') : __('unread')])
-
-	raisePromiseToast(() => setSeen.submit(threadIDs), loading, success)
-}
-
-const setFlaggedByThreadIDs = (threadIDs: string[], flagged: boolean) => {
-	setUndoAction(undefined)
-	const ids = threadsResource.value.data
-		.filter((t: Thread) => threadIDs.includes(t.thread_id))
-		.map((t: Thread) => t.id)
-	setFlagged.submit({ ids, flagged })
-}
-
-const handleMoveThreads = (threadIDs: Record<string, string[]>, isUndo: boolean = false) => {
-	const selectedThreads = Object.values(threadIDs).flat()
-	const mailboxMap: Record<string, string> = Object.fromEntries(
-		threadsResource.value.data.map((thread: Thread) => [
-			thread.thread_id,
-			thread['mailboxes'][0].mailbox_id,
-		]),
-	)
-	const originalState: Record<string, string[]> = selectedThreads.reduce(
-		(acc: Record<string, string[]>, thread_id: string) => {
-			const key = mailboxMap[thread_id]
-			if (!acc[key]) acc[key] = []
-			acc[key].push(thread_id)
-			return acc
-		},
-		{},
-	)
-	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
-
-	const action = () => moveThreads.submit(threadIDs)
-
-	if (isUndo) {
-		const success =
-			selectedThreads.length === 1 ? __('Thread moved back.') : __('Threads moved back.')
-		return raisePromiseToast(action, __('Undoing...'), success)
-	}
-
-	setUndoAction(() => handleMoveThreads(originalState, true))
-	const moveToMailboxName = mailboxes.data?.find((m) => m.id === Object.keys(threadIDs)[0])._name
-	const loading = __('Moving to {0}...', [moveToMailboxName])
-	const success =
-		selectedThreads.length === 1
-			? __('Thread moved to {0}.', [moveToMailboxName])
-			: __('Threads moved to {0}.', [moveToMailboxName])
-
-	raisePromiseToast(action, loading, success, undo)
-}
-
-const handleSetSpamStatus = (threadIDs: SetSeenParams, isUndo = false) => {
-	const selectedThreads = Object.values(threadIDs).flat()
-	const originalState = getOriginalState(selectedThreads, 'junk')
-	if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
-
-	const action = () => setSpamStatus.submit(threadIDs)
-	if (isUndo) return raisePromiseToast(action, __('Undoing...'), __('Junk status restored.'))
-
-	setUndoAction(() => handleSetSpamStatus(originalState, true))
-	const spam = Object.keys(threadIDs)[0] === '1'
-	const loading = spam ? __('Marking as Junk...') : __('Marking as Not Junk...')
-	const success =
-		selectedThreads.length === 1
-			? __('Thread marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
-			: __('Threads marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
-
-	raisePromiseToast(action, loading, success, undo)
-}
-
-const handleDeleteThreads = (thread_ids: string[]) => {
-	if (!thread_ids?.length) return
-
-	toast.promise(deleteThreads.submit(thread_ids), {
-		loading: __('Deleting...'),
-		success: thread_ids.length === 1 ? __('Thread deleted.') : __('Threads deleted.'),
-		error: __('Action failed. Please try again in some time.'),
-	})
-}
-
-const getOriginalState = (
-	selectedThreads: string[],
-	propertyName: 'seen' | 'junk' | 'flagged',
-): SetSeenParams => {
-	const statusMap: Record<string, 0 | 1> = Object.fromEntries(
-		threadsResource.value.data.map((thread: Thread) => [
-			thread.thread_id,
-			thread[propertyName],
-		]),
-	)
-	const originalState: SetSeenParams = selectedThreads.reduce(
-		(acc: SetSeenParams, thread_id: string) => {
-			const key = statusMap[thread_id]
-			if (!acc[key]) acc[key] = []
-			acc[key].push(thread_id)
-			return acc
-		},
-		{},
-	)
-	return originalState
-}
-
 // Filter
 
 const FILTER_OPTIONS = [
@@ -1405,7 +1184,7 @@ const FILTER_OPTIONS = [
 	},
 	{
 		label: __('Unread'),
-		icon: Mail,
+		icon: MailIcon,
 		onClick: () => setFilter('unread'),
 	},
 	{
@@ -1424,13 +1203,13 @@ const FILTER_OPTIONS = [
 const setFilter = (value: string | null) => {
 	filter.value = value
 	localStorage.setItem(`user:${user.data.name}:filter:${mailbox}`, value ?? '')
+	page.value = 0
 	threads.reload()
 	resetSelections()
 }
 
 // UI formatting
 
-const mailboxObj = computed(() => mailboxes.data?.find((m) => m.id === mailbox))
 const mailboxName = computed(() => {
 	switch (mailbox) {
 		case 'starred':
@@ -1440,11 +1219,6 @@ const mailboxName = computed(() => {
 		default:
 			return mailboxObj.value?._name
 	}
-})
-const noOfThreads = computed(() => {
-	if (mailbox === 'search')
-		return `${noOfSearchResults.value} ${noOfSearchResults.value == 1 ? __('result') : __('results')}`
-	return `${mailboxObj.value?.total_threads} ${mailboxObj.value?.total_threads == 1 ? __('thread') : __('threads')}`
 })
 const unreadThreadsPrefix = computed(() =>
 	mailboxObj.value?.unread_threads ? `(${mailboxObj.value.unread_threads})` : '',
@@ -1471,7 +1245,7 @@ const title = computed(() => {
 		case 'starred':
 			return __('Starred Mails')
 		case 'has_attachments':
-			return __('Mails With Attachments')
+			return __('With Attachments')
 		default:
 			return __('All Mails')
 	}
@@ -1481,5 +1255,18 @@ const title = computed(() => {
 <style scoped>
 .checkbox-hitbox:hover :deep(input[type='checkbox']) {
 	@apply border-outline-gray-5 shadow-sm;
+}
+
+.loading-bar__fill {
+	animation: loading-bar-slide 1.2s linear infinite;
+}
+
+@keyframes loading-bar-slide {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(333%);
+	}
 }
 </style>

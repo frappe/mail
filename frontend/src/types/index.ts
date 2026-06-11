@@ -59,9 +59,11 @@ export interface Mail {
 	name: string
 	message_id: string
 	id: string
+	thread_id: string
 	from_name: string
 	from_email: string
 	subject: string
+	preview: string
 	html_body: string
 	text_body: string
 	received_at: string
@@ -126,6 +128,7 @@ export interface Thread {
 	forwarded: 0 | 1
 	attachments: Attachment[]
 	user_image?: string
+	messages: Mail[]
 }
 
 export interface MailboxData {
