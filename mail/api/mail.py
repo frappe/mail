@@ -18,11 +18,11 @@ from mail.client.doctype.mail_message.mail_message import (
 	fetch_blob,
 	fetch_thread,
 	fetch_threads,
-	get_message_ids,
 	move_messages_to_mailbox,
 	remove_messages_from_mailbox,
 	search_messages,
 	set_flagged_status,
+	set_messages_mailboxes,
 	set_seen_status,
 	set_spam_status,
 )
@@ -135,8 +135,8 @@ def add_user_images_to_emails(account: str, mails: list[dict], is_thread: bool =
 
 
 @frappe.whitelist()
-def get_threads(account: str, mailbox: str, limit: int, filter_by: str | None = None) -> list:
-	"""Returns threads from the selected mailbox for the given account."""
+def get_threads(account: str, mailbox: str, limit: int, start: int = 0, filter_by: str | None = None) -> list:
+	"""Returns a page of threads from the selected mailbox for the account."""
 
 	if mailbox == "starred":
 		conditions = [
@@ -164,14 +164,37 @@ def get_threads(account: str, mailbox: str, limit: int, filter_by: str | None = 
 	else:
 		filter = {"operator": "AND", "conditions": conditions}
 
-	threads = [serialize_thread(t) for t in fetch_threads(account, filter, 0, limit)]
+	conversations = fetch_threads(account, filter, start, limit)
 
-	return add_user_images_to_emails(account, threads, is_thread=False), mailbox
+	sent_mailbox = get_mailbox_id_by_role(account, "sent")
+
+	threads = []
+	for conversation in conversations.values():
+		if not conversation:
+			continue
+
+		# The summary row is derived from the thread's messages in the current mailbox (falling back
+		# to the whole conversation for cross-mailbox views like "starred").
+		in_mailbox = [
+			m for m in conversation if any(mb["mailbox_id"] == mailbox for mb in m["mailboxes"])
+		] or conversation
+
+		# The preview/date reflect the latest message in the whole conversation (the most recent
+		# activity) everywhere except Sent, where the latest sent message is shown.
+		latest = in_mailbox[-1] if mailbox == sent_mailbox else conversation[-1]
+		threads.append(serialize_thread(in_mailbox, conversation, latest))
+
+	# Avatars for the list-view summary rows, and for each message in the nested threads.
+	add_user_images_to_emails(account, threads, is_thread=False)
+	add_user_images_to_emails(account, [m for thread in threads for m in thread["messages"]], is_thread=True)
+
+	return threads, mailbox
 
 
 @frappe.whitelist()
 def get_thread(account: str, thread_id: str) -> list[dict]:
-	"""Returns mails for the given thread id."""
+	"""Returns the full list of messages in a thread, for threads not present in the mailbox list
+	(e.g. search results or a thread on another page)."""
 
 	mails = [serialize_mail(m) for m in fetch_thread(account, thread_id)]
 	return add_user_images_to_emails(account, mails, is_thread=True)
@@ -191,8 +214,18 @@ def get_attachment(account: str, blob_id: str, filename: str | None = None) -> N
 	frappe.local.response.type = "download"
 
 
-def serialize_thread(thread: dict) -> dict:
-	"""Serializes thread for response."""
+def serialize_thread(messages: list[dict], thread_messages: list[dict], latest: dict | None = None) -> dict:
+	"""Serializes a thread for response.
+
+	Both `messages` (the thread's messages within the current mailbox) and `thread_messages` (the full
+	conversation across all mailboxes) are expected ordered oldest to newest. The list-view summary
+	fields are derived from `latest` (defaulting to the latest of `messages`), except `subject` which
+	comes from the conversation's first message (the thread's original subject); the full conversation
+	is serialized under `messages` so the whole thread can be rendered without a separate fetch.
+	"""
+
+	first = thread_messages[0]
+	latest = latest or messages[-1]
 
 	thread_fields = [
 		"name",
@@ -202,7 +235,6 @@ def serialize_thread(thread: dict) -> dict:
 		"mailboxes",
 		"from_name",
 		"from_email",
-		"subject",
 		"received_at",
 		"recipients",
 		"seen",
@@ -212,8 +244,10 @@ def serialize_thread(thread: dict) -> dict:
 		"preview",
 	]
 	return {
-		**{field: thread[field] for field in thread_fields},
-		"attachments": serialize_attachments(thread.get("attachments", [])),
+		**{field: latest[field] for field in thread_fields},
+		"subject": first["subject"],
+		"attachments": serialize_attachments(latest.get("attachments", [])),
+		"messages": [serialize_mail(message) for message in thread_messages],
 	}
 
 
@@ -224,6 +258,7 @@ def serialize_mail(mail: dict) -> dict:
 		"name",
 		"message_id",
 		"id",
+		"thread_id",
 		"from_name",
 		"from_email",
 		"subject",
@@ -460,29 +495,6 @@ def get_mime_message(name: str) -> dict:
 	return result
 
 
-def get_filtered_message_ids(
-	account: str, thread_ids: list[str], mailbox: str | None = None
-) -> tuple[str, list[str]]:
-	"""Gets filtered message IDs for the given mailbox."""
-
-	if mailbox == "starred":
-		mailbox = [d["id"] for d in get_user_mailboxes(account) if d["role"] != "trash"]
-	elif mailbox == "search":
-		mailbox = None
-	return get_message_ids(account, thread_ids, mailbox)
-
-
-@frappe.whitelist()
-def set_seen(account: str, thread_ids: dict[bool, list[str]], mailbox: str) -> dict:
-	"""Sets seen for threads."""
-
-	for is_seen, ids in thread_ids.items():
-		messages = get_filtered_message_ids(account, ids, mailbox)
-		set_seen_status(account, messages, is_seen)
-
-	return thread_ids
-
-
 @frappe.whitelist()
 def set_flagged(account: str, ids: list[str], flagged: bool) -> dict:
 	"""Sets flagged for mails."""
@@ -511,35 +523,24 @@ def move_mails(account: str, ids: list[str], mailbox: str, clear_junk: bool = Fa
 
 
 @frappe.whitelist()
-def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]]) -> dict:
-	"""Sets mailbox for threads."""
+def add_mails_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> None:
+	"""Adds mails to a mailbox without removing them from their existing mailboxes."""
 
-	for move_to_mailbox, ids in thread_ids.items():
-		messages = get_filtered_message_ids(account, ids)
-		if move_to_mailbox == get_mailbox_id_by_role(account, "junk"):
-			set_spam_status(account, messages, spam=True)
-			continue
-
-		set_spam_status(account, messages, spam=False)
-		move_messages_to_mailbox(account, messages, move_to_mailbox)
-
-	return thread_ids
-
-
-@frappe.whitelist()
-def add_threads_to_mailbox(account: str, thread_ids: list[str], mailbox_id: str) -> None:
-	"""Adds threads to a mailbox without removing from existing mailboxes."""
-
-	ids = get_message_ids(account, thread_ids)
 	add_messages_to_mailbox(account, ids, mailbox_id)
 
 
 @frappe.whitelist()
-def remove_threads_from_mailbox(account: str, thread_ids: list[str], mailbox_id: str) -> None:
-	"""Removes threads from a mailbox without deleting them."""
+def remove_mails_from_mailbox(account: str, ids: list[str], mailbox_id: str) -> None:
+	"""Removes mails from a mailbox without deleting them."""
 
-	ids = get_message_ids(account, thread_ids)
 	remove_messages_from_mailbox(account, ids, mailbox_id)
+
+
+@frappe.whitelist()
+def set_mails_mailboxes(account: str, mails: list[dict]) -> None:
+	"""Restores each mail's exact mailbox membership and junk status (used to undo a move)."""
+
+	set_messages_mailboxes(account, mails)
 
 
 @frappe.whitelist()
@@ -552,27 +553,6 @@ def set_mails_spam_status(account: str, ids: list[str], spam: bool) -> list[str]
 
 
 @frappe.whitelist()
-def set_threads_spam_status(account: str, thread_ids: dict[bool, list[str]]) -> dict:
-	"""Sets spam status for the mails belonging to the given threads."""
-
-	for is_spam, ids in thread_ids.items():
-		messages = get_filtered_message_ids(account, ids)
-		set_spam_status(account, messages, is_spam)
-
-	return thread_ids
-
-
-@frappe.whitelist()
-def delete_threads(account: str, thread_ids: list[str], mailbox: str) -> list[str]:
-	"""Deletes mails belonging to the given threads."""
-
-	messages = get_filtered_message_ids(account, thread_ids, mailbox)
-	delete_messages(account, messages)
-
-	return thread_ids
-
-
-@frappe.whitelist()
 def empty_user_mailbox(account: str, mailbox: str) -> None:
 	"""Empties the given mailbox."""
 
@@ -580,14 +560,16 @@ def empty_user_mailbox(account: str, mailbox: str) -> None:
 
 
 @frappe.whitelist()
-def search_mails(account: str, filter: dict | None = None, limit: int = 5) -> tuple[list[dict], int]:
+def search_mails(
+	account: str, filter: dict | None = None, limit: int = 5, start: int = 0
+) -> tuple[list[dict], int]:
 	"""Returns search results for the given query."""
 
 	if not filter:
 		return ([], 0)
 
 	normalized_filter = normalize_filter(filter)
-	mails, total = search_messages(account, normalized_filter, limit=limit)
+	mails, total = search_messages(account, normalized_filter, position=start, limit=limit)
 
 	return add_user_images_to_emails(account, mails), total
 

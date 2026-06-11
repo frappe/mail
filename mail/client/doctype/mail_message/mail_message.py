@@ -655,16 +655,35 @@ def fetch_messages(
 	return messages[:limit], total
 
 
-def fetch_threads(account: str, filter: dict | None = None, position: int = 0, limit: int = 50) -> list[dict]:
-	"""Returns a list of threads based on the provided filter."""
+def fetch_threads(
+	account: str, filter: dict | None = None, position: int = 0, limit: int = 50
+) -> dict[str, list[dict]]:
+	"""Returns a page of threads matching the filter.
+
+	Each thread ID is mapped to the full list of messages in that thread (the entire conversation
+	across all mailboxes), ordered oldest to newest.
+	"""
 
 	has_permission_for_user(parse_account(account)[0])
 
+	# Page of threads (each mapped to all of its email IDs across mailboxes).
 	service = get_email_service(account)
-	ids = service.query_thread(filter, position, limit, fetch_all=False)
-	messages = get_messages(account, ids=ids)
+	thread_email_ids = service.query_thread(filter, position, limit, fetch_all=True)
+	if not thread_email_ids:
+		return {}
 
-	return messages
+	# Fetch every message in the page's threads once, then group them back by thread.
+	threads: dict[str, list[dict]] = {thread_id: [] for thread_id in thread_email_ids}
+	email_ids = [email_id for ids in thread_email_ids.values() for email_id in ids]
+	for message in get_messages(account, email_ids):
+		if message["thread_id"] in threads:
+			threads[message["thread_id"]].append(message)
+
+	# Order each conversation oldest to newest so callers don't have to re-sort.
+	return {
+		thread_id: sorted(messages, key=lambda message: message["received_at"])
+		for thread_id, messages in threads.items()
+	}
 
 
 def fetch_thread(account: str, thread_id: str, sort: Literal["asc", "desc"] = "asc") -> list[dict]:
@@ -837,6 +856,36 @@ def move_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> N
 			message=frappe.get_traceback(with_context=True),
 		)
 		frappe.throw(_("Failed to move mail(s) to mailbox."))
+
+
+def set_messages_mailboxes(account: str, mails: list[dict]) -> None:
+	"""Restore each message to an exact mailbox membership and junk status (used to undo a move)."""
+
+	if not account or not mails:
+		frappe.throw(_("Account and Mails are required."))
+
+	has_permission_for_user(parse_account(account)[0])
+
+	try:
+		emails = []
+		for mail in mails:
+			junk = bool(mail.get("junk"))
+			emails.append(
+				{
+					"id": mail["id"],
+					"mailbox_ids": {mailbox_id: True for mailbox_id in mail["mailbox_ids"]},
+					"keywords": {"$junk": junk, "$notjunk": not junk},
+				}
+			)
+		service = get_email_service(account)
+		service.update(emails, replace_keywords=False, replace_mailboxes=True)
+		_remove_cached_messages(account, [mail["id"] for mail in mails])
+	except Exception:
+		frappe.log_error(
+			title=_("Failed to restore mailbox membership for mail(s)"),
+			message=frappe.get_traceback(with_context=True),
+		)
+		frappe.throw(_("Failed to restore mailbox membership for mail(s)."))
 
 
 def add_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> None:

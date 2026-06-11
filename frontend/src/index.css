@@ -13,5 +13,5 @@ h2 {
 }
 
 .icon {
-	@apply stroke-1.5 h-4 w-4;
+	@apply stroke-1.5 text-ink-gray-7 h-4 w-4;
 }
