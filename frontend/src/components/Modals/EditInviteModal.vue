@@ -8,8 +8,8 @@
 				{
 					label: __('Save'),
 					variant: 'solid',
-					disabled: !accountRequest.isDirty,
-					onClick: accountRequest.save.submit,
+					disabled: !isEditableInvite || !accountRequest.isDirty,
+					onClick: saveInvite,
 				},
 			],
 		}"
@@ -21,25 +21,13 @@
 					:value="accountRequest.doc.account"
 					disabled
 				/>
-				<div class="space-y-1.5">
-					<label class="text-ink-gray-5 block text-xs">{{ __('Roles') }}</label>
-					<div class="flex flex-wrap gap-1">
-						<Badge
-							v-for="r in (accountRequest.doc.roles || '').split('\n')"
-							:key="r"
-							:label="r"
-							:theme="
-								r === 'admin'
-									? 'red'
-									: r === 'tenant-admin'
-										? 'orange'
-										: r === 'user'
-											? 'blue'
-											: 'gray'
-							"
-						/>
-					</div>
-				</div>
+				<FormControl
+					v-model="inviteRole"
+					type="select"
+					:label="__('Role')"
+					:options="ROLE_OPTIONS"
+					:disabled="!isEditableInvite"
+				/>
 				<FormControl
 					:label="__('Backup Email')"
 					:value="accountRequest.doc.backup_email"
@@ -54,6 +42,7 @@
 					v-model="accountRequest.doc.expires_at"
 					type="datetime-local"
 					:label="__('Expires At')"
+					:disabled="!isEditableInvite"
 				/>
 			</div>
 		</template>
@@ -61,8 +50,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { Badge, Dialog, FormControl, createDocumentResource } from 'frappe-ui'
+import { computed, ref, watch } from 'vue'
+import { Dialog, FormControl, createDocumentResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 
@@ -72,7 +61,47 @@ const { inviteID } = defineProps<{ inviteID: string }>()
 
 const emit = defineEmits(['reloadInvites'])
 
-const accountRequest = ref()
+type InviteDoc = {
+	account: string
+	is_admin: boolean | 0 | 1
+	backup_email: string
+	invited_by: string
+	expires_at?: string
+	is_verified: boolean | 0 | 1
+}
+
+type AccountRequestResource = {
+	doc?: InviteDoc
+	isDirty: boolean
+	save?: { submit?: () => void }
+	reload?: () => void
+}
+
+const accountRequest = ref<AccountRequestResource>()
+
+const ROLE_OPTIONS = [
+	{ label: __('User'), value: 'user' },
+	{ label: __('Admin'), value: 'admin' },
+]
+
+const inviteRole = computed<'user' | 'admin'>({
+	get: () => (accountRequest.value?.doc?.is_admin ? 'admin' : 'user'),
+	set: (value) => {
+		if (!accountRequest.value?.doc) return
+		accountRequest.value.doc.is_admin = value === 'admin'
+	},
+})
+
+const isEditableInvite = computed(() => {
+	const doc = accountRequest.value?.doc
+	if (!doc) return false
+	return !doc.is_verified
+})
+
+const saveInvite = () => {
+	if (!isEditableInvite.value) return
+	accountRequest.value?.save?.submit?.()
+}
 
 const getMailAccountRequest = () =>
 	createDocumentResource({
@@ -84,9 +113,9 @@ const getMailAccountRequest = () =>
 				raiseToast(__('Invite updated.'))
 				emit('reloadInvites')
 			},
-			onError: (error) => {
-				raiseToast(error.messages[0], 'error')
-				accountRequest.value.reload()
+			onError: (error: { messages?: string[] }) => {
+				raiseToast(error.messages?.[0] || __('Failed to update invite.'), 'error')
+				accountRequest.value?.reload?.()
 			},
 		},
 	})

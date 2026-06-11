@@ -107,7 +107,7 @@ export const userStore = defineStore('mail-user', () => {
 		cache: ['sieveScripts', accountId.value],
 	})
 
-	const domains = createResource({ url: 'mail.api.admin.get_verified_domains' })
+	const domains = createResource({ url: 'mail.api.admin.get_enabled_domains' })
 
 	return {
 		accountId,

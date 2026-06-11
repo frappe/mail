@@ -3,30 +3,44 @@
   hosts: all
   become: true
   vars:
-    stalwart_root: "/opt/stalwart/{{ server_hostname }}"
-    stalwart_config_dir: "{{ stalwart_root }}/etc"
-    stalwart_config_content: "{{ config_toml }}"
+    stalwart_root: "/etc/stalwart/{{ server_hostname }}"
+    stalwart_env_content: "{{ stalwart_env }}"
+    stalwart_bootstrap_plan_content: "{{ stalwart_bootstrap_plan }}"
+    recovery_admin_user_value: "{{ recovery_admin_user }}"
+    recovery_admin_password_value: "{{ recovery_admin_password }}"
     docker_compose_content: "{{ docker_compose }}"
 
   tasks:
     # -------------------------------------------------------------------------
     # Directories and Configuration
     # -------------------------------------------------------------------------
-    - name: Ensure Stalwart root directories exist
+    - name: Ensure Stalwart configuration & application directories exist
       file:
         path: "{{ item }}"
         state: directory
-        mode: "0755"
+        owner: "2000"
+        group: "2000"
+        mode: "0750"
       loop:
         - "{{ stalwart_root }}"
-        - "{{ stalwart_config_dir }}"
+        - "{{ stalwart_root }}/data"
         - "{{ stalwart_root }}/logs"
 
-    - name: Copy `config.toml`
+    - name: Copy `stalwart.env`
       copy:
-        content: "{{ stalwart_config_content }}"
-        dest: "{{ stalwart_config_dir }}/config.toml"
-        mode: "0644"
+        content: "{{ stalwart_env_content }}"
+        dest: "{{ stalwart_root }}/stalwart.env"
+        owner: "2000"
+        group: "2000"
+        mode: "0640"
+
+    - name: Copy `bootstrap.ndjson`
+      copy:
+        content: "{{ stalwart_bootstrap_plan_content }}"
+        dest: "{{ stalwart_root }}/bootstrap.ndjson"
+        owner: "2000"
+        group: "2000"
+        mode: "0640"
 
     - name: Copy `docker-compose.yml`
       copy:
@@ -34,35 +48,27 @@
         dest: "{{ stalwart_root }}/docker-compose.yml"
         mode: "0644"
 
+    - name: Validate `docker-compose.yml`
+      command: docker compose config -q
+      args:
+        chdir: "{{ stalwart_root }}"
+
     # -------------------------------------------------------------------------
-    # Docker Image and Container Management
+    # Initial Startup in Bootstrap Mode
     # -------------------------------------------------------------------------
+
     - name: Pull images (optional)
       command: docker compose pull
       args:
         chdir: "{{ stalwart_root }}"
       register: pull_result
-      ignore_errors: yes
+      ignore_errors: true
 
-    - name: Stop any existing Stalwart container
-      command: docker compose down
+    - name: Start stack in bootstrap mode
+      command: docker compose up -d --remove-orphans
       args:
         chdir: "{{ stalwart_root }}"
-      ignore_errors: yes
-
-    - name: Remove Redis container if not required
-      command: docker rm -f redis_{{ server_hostname }}
-      ignore_errors: yes
-      when: not install_redis
-
-    # -------------------------------------------------------------------------
-    # Start stack
-    # -------------------------------------------------------------------------
-    - name: Start docker stack
-      command: docker compose up -d
-      args:
-        chdir: "{{ stalwart_root }}"
-      register: compose_up
+      register: compose_up_bootstrap
 
     # -------------------------------------------------------------------------
     # Health Checks
@@ -70,17 +76,69 @@
     - name: Wait for HTTP port to be ready
       wait_for:
         host: 127.0.0.1
-        port: "{{ http_port | int }}"
-        timeout: 90
+        port: 8080
+        timeout: 180
       register: wait_result
-      ignore_errors: yes
+      failed_when: wait_result is failed
+
+    - name: Copy local `stalwart-cli` binary to remote host
+      copy:
+        src: "{{ playbook_dir }}/../../../../stalwart-cli"
+        dest: "{{ stalwart_root }}/stalwart-cli"
+        mode: "0755"
+
+    - name: Check if bootstrap has already been completed
+      stat:
+        path: "{{ stalwart_root }}/config.json"
+      register: bootstrap_config
+
+    - name: Apply bootstrap plan through `stalwart-cli`
+      command: >
+        {{ stalwart_root }}/stalwart-cli apply --file {{ stalwart_root }}/bootstrap.ndjson --json
+      environment:
+        STALWART_URL: "http://127.0.0.1:8080"
+        STALWART_USER: "{{ recovery_admin_user_value }}"
+        STALWART_PASSWORD: "{{ recovery_admin_password_value }}"
+      register: apply_result
+      changed_when: apply_result.rc == 0 and ('"created"' in apply_result.stdout or '"updated"' in apply_result.stdout)
+      failed_when: false
+      when: not bootstrap_config.stat.exists
+
+    - name: Fail deployment if bootstrap apply failed for reasons other than already-bootstrapped server
+      fail:
+        msg: "{{ apply_result.stdout | default(apply_result.stderr, true) }}"
+      when:
+        - not bootstrap_config.stat.exists
+        - apply_result.rc != 0
+        - "'This operation is only allowed bootstrap mode' not in (apply_result.stdout | default(''))"
+        - "'This operation is only allowed bootstrap mode' not in (apply_result.stderr | default(''))"
+
+    - name: Restart the Stalwart
+      command: docker compose restart stalwart
+      args:
+        chdir: "{{ stalwart_root }}"
+      register: restart_stalwart
+
+    - name: Ensure full stack is up
+      command: docker compose up -d --remove-orphans
+      args:
+        chdir: "{{ stalwart_root }}"
+      register: compose_up
+
+    - name: Wait for HTTP port to be ready after normal restart
+      wait_for:
+        host: 127.0.0.1
+        port: 8080
+        timeout: 180
+      register: wait_result_normal
+      failed_when: wait_result_normal is failed
 
     - name: Check container health via `docker compose ps`
       command: docker compose ps
       args:
         chdir: "{{ stalwart_root }}"
       register: ps_result
-      ignore_errors: yes
+      ignore_errors: true
 
     # -------------------------------------------------------------------------
     # Debug Info
@@ -88,3 +146,8 @@
     - name: Display container status
       debug:
         var: ps_result.stdout_lines
+
+    - name: Display bootstrap apply summary
+      debug:
+        var: apply_result.stdout_lines
+      when: apply_result is defined

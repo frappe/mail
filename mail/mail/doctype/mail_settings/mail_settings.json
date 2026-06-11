@@ -4,6 +4,66 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "config_tab",
+  "jmap_section",
+  "server_url",
+  "column_break_xvlo",
+  "username",
+  "password",
+  "spamassassin_section",
+  "spamd_host",
+  "spamd_port",
+  "column_break_njvq",
+  "spamd_scanning_mode",
+  "spamd_hybrid_scanning_threshold",
+  "defaults_section",
+  "default_dns_ttl",
+  "default_disk_quota_gb",
+  "default_gravatar",
+  "column_break_cuxv",
+  "stalwart_version",
+  "stalwart_cli_version",
+  "storage_shard_count",
+  "logs_section",
+  "push_log_file_count",
+  "push_log_level",
+  "push_log_max_file_size",
+  "column_break_ztzv",
+  "storage_log_file_count",
+  "storage_log_level",
+  "storage_log_max_file_size",
+  "limits_section",
+  "exchange_max_export",
+  "exchange_max_import",
+  "exchange_export_batch_size",
+  "column_break_rvxs",
+  "max_email_sync",
+  "max_message_payload_size_mb",
+  "max_push_notifications",
+  "column_break_cazi",
+  "process_pending_emails_batch_size",
+  "process_pending_emails_max_batch_size",
+  "timeouts_seconds_section",
+  "column_break_rtlq",
+  "ansible_play_timeout",
+  "server_job_timeout",
+  "server_deployment_timeout",
+  "column_break_ahml",
+  "scan_message_timeout",
+  "process_pending_emails_timeout",
+  "stalwart_cli_command_timeout",
+  "column_break_wvdy",
+  "exchange_export_timeout",
+  "exchange_import_timeout",
+  "column_break_jotg",
+  "fetch_lock_timeout",
+  "lock_acquire_timeout",
+  "lock_timeout",
+  "signup_tab",
+  "allow_signup",
+  "column_break_daqm",
+  "signup_domains",
+  "dns_tab",
   "section_break_hrww",
   "root_domain_name",
   "column_break_4ccc",
@@ -19,24 +79,12 @@
   "dns_provider_client_ip",
   "dns_provider_token",
   "dns_provider_private_zone",
+  "jmap_push_tab",
   "section_break_qvpk",
   "jmap_push_p256dh",
   "jmap_push_private_key",
   "column_break_wpvf",
-  "jmap_push_auth",
-  "signup_tab",
-  "allow_signup",
-  "column_break_daqm",
-  "signup_domains",
-  "spamassassin_tab",
-  "section_break_hgqa",
-  "enable_spamd",
-  "section_break_r530",
-  "spamd_host",
-  "spamd_port",
-  "column_break_c43x",
-  "spamd_scanning_mode",
-  "spamd_hybrid_scanning_threshold"
+  "jmap_push_auth"
  ],
  "fields": [
   {
@@ -73,8 +121,7 @@
   },
   {
    "fieldname": "section_break_qvpk",
-   "fieldtype": "Section Break",
-   "label": "JMAP Push"
+   "fieldtype": "Section Break"
   },
   {
    "description": "P-256 ECDH public key for JMAP PushSubscription encryption.",
@@ -102,70 +149,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "spamassassin_tab",
-   "fieldtype": "Tab Break",
-   "label": "SpamAssassin",
-   "mandatory_depends_on": "eval: doc.enable_spam_detection",
-   "read_only_depends_on": "eval: !doc.enable_spam_detection"
-  },
-  {
-   "fieldname": "section_break_hgqa",
-   "fieldtype": "Section Break"
-  },
-  {
-   "description": "Hostname or IP of the SpamAssassin server.",
-   "fieldname": "spamd_host",
-   "fieldtype": "Data",
-   "label": "Host",
-   "mandatory_depends_on": "eval: doc.enable_spamd",
-   "placeholder": "spamd.frappemail.com",
-   "read_only_depends_on": "eval: !doc.enable_spamd"
-  },
-  {
-   "default": "783",
-   "description": "Port for connecting to the SpamAssassin server.",
-   "fieldname": "spamd_port",
-   "fieldtype": "Int",
-   "label": "Port",
-   "mandatory_depends_on": "eval: doc.enable_spamd",
-   "non_negative": 1,
-   "read_only_depends_on": "eval: !doc.enable_spamd"
-  },
-  {
-   "fieldname": "section_break_r530",
-   "fieldtype": "Section Break"
-  },
-  {
-   "default": "Hybrid Approach",
-   "fieldname": "spamd_scanning_mode",
-   "fieldtype": "Select",
-   "label": "Scanning Mode",
-   "mandatory_depends_on": "eval: doc.enable_spamd",
-   "options": "Exclude Attachments\nInclude Attachments\nHybrid Approach",
-   "read_only_depends_on": "eval: !doc.enable_spamd"
-  },
-  {
-   "default": "2",
-   "description": "Threshold for when to switch from scanning only the email body to scanning attachments selectively.",
-   "fieldname": "spamd_hybrid_scanning_threshold",
-   "fieldtype": "Float",
-   "label": "Hybrid Scanning Threshold",
-   "mandatory_depends_on": "eval: doc.spamd_scanning_mode == \"Hybrid Approach\"",
-   "precision": "1",
-   "read_only_depends_on": "eval: !doc.enable_spamd || doc.spamd_scanning_mode != \"Hybrid Approach\""
-  },
-  {
-   "fieldname": "column_break_c43x",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "description": "Check to enable spam detection.",
-   "fieldname": "enable_spamd",
-   "fieldtype": "Check",
-   "label": "Enable Spam Detection"
-  },
-  {
    "default": "0",
    "description": "Allows users to sign up and select a preferred username.",
    "fieldname": "allow_signup",
@@ -180,10 +163,9 @@
    "depends_on": "eval: doc.allow_signup",
    "description": "Domains allowed for signup.",
    "fieldname": "signup_domains",
-   "fieldtype": "Table MultiSelect",
+   "fieldtype": "Small Text",
    "label": "Signup Domains",
-   "mandatory_depends_on": "eval: doc.allow_signup",
-   "options": "Personal Signup Domain"
+   "mandatory_depends_on": "eval: doc.allow_signup"
   },
   {
    "fieldname": "column_break_pntn",
@@ -262,12 +244,375 @@
    "fieldname": "signup_tab",
    "fieldtype": "Tab Break",
    "label": "Signup"
+  },
+  {
+   "fieldname": "dns_tab",
+   "fieldtype": "Tab Break",
+   "label": "DNS"
+  },
+  {
+   "fieldname": "jmap_push_tab",
+   "fieldtype": "Tab Break",
+   "label": "JMAP Push"
+  },
+  {
+   "fieldname": "server_url",
+   "fieldtype": "Data",
+   "label": "Server URL",
+   "options": "URL",
+   "placeholder": "https://mail.frappemail.com"
+  },
+  {
+   "fieldname": "config_tab",
+   "fieldtype": "Tab Break",
+   "label": "Config"
+  },
+  {
+   "fieldname": "jmap_section",
+   "fieldtype": "Section Break",
+   "label": "Stalwart/JMAP"
+  },
+  {
+   "fieldname": "column_break_xvlo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "label": "Username",
+   "mandatory_depends_on": "eval: doc.password"
+  },
+  {
+   "fieldname": "password",
+   "fieldtype": "Password",
+   "label": "Password",
+   "mandatory_depends_on": "eval: doc.username"
+  },
+  {
+   "default": "1500",
+   "fieldname": "ansible_play_timeout",
+   "fieldtype": "Int",
+   "label": "Ansible Play Timeout",
+   "reqd": 1
+  },
+  {
+   "default": "3600",
+   "fieldname": "exchange_export_timeout",
+   "fieldtype": "Int",
+   "label": "Mail Exchange Export Timeout",
+   "reqd": 1
+  },
+  {
+   "default": "3600",
+   "fieldname": "exchange_import_timeout",
+   "fieldtype": "Int",
+   "label": "Mail Exchange Import Timeout",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_jotg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "300",
+   "fieldname": "fetch_lock_timeout",
+   "fieldtype": "Int",
+   "label": "Fetch Lock Timeout",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "lock_acquire_timeout",
+   "fieldtype": "Int",
+   "label": "Lock Acquire Timeout",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_rtlq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "10",
+   "fieldname": "lock_timeout",
+   "fieldtype": "Int",
+   "label": "Lock Timeout",
+   "reqd": 1
+  },
+  {
+   "default": "120",
+   "fieldname": "scan_message_timeout",
+   "fieldtype": "Int",
+   "label": "Scan Message Timeout",
+   "reqd": 1
+  },
+  {
+   "default": "1500",
+   "fieldname": "server_deployment_timeout",
+   "fieldtype": "Int",
+   "label": "Server Deployment Timeout",
+   "reqd": 1
+  },
+  {
+   "default": "1500",
+   "fieldname": "process_pending_emails_timeout",
+   "fieldtype": "Int",
+   "label": "Process Pending Emails Timeout",
+   "reqd": 1
+  },
+  {
+   "default": "1500",
+   "fieldname": "server_job_timeout",
+   "fieldtype": "Int",
+   "label": "Server Job Timeout",
+   "reqd": 1
+  },
+  {
+   "default": "3600",
+   "fieldname": "stalwart_cli_command_timeout",
+   "fieldtype": "Int",
+   "label": "Stalwart CLI Command Timeout",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_wvdy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_ahml",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "3600",
+   "fieldname": "default_dns_ttl",
+   "fieldtype": "Int",
+   "label": "Default DNS TTL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_cuxv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "default_disk_quota_gb",
+   "fieldtype": "Int",
+   "label": "Default Disk Quota (GB)",
+   "reqd": 1
+  },
+  {
+   "default": "404",
+   "fieldname": "default_gravatar",
+   "fieldtype": "Select",
+   "label": "Default Gravatar",
+   "options": "404",
+   "reqd": 1
+  },
+  {
+   "default": "v1.0.8",
+   "fieldname": "stalwart_cli_version",
+   "fieldtype": "Data",
+   "label": "Stalwart CLI Version",
+   "reqd": 1
+  },
+  {
+   "default": "v0.16.8",
+   "fieldname": "stalwart_version",
+   "fieldtype": "Data",
+   "label": "Stalwart Version",
+   "reqd": 1
+  },
+  {
+   "default": "8",
+   "fieldname": "storage_shard_count",
+   "fieldtype": "Int",
+   "label": "Storage Shard Count",
+   "reqd": 1
+  },
+  {
+   "default": "10",
+   "fieldname": "push_log_file_count",
+   "fieldtype": "Int",
+   "label": "Push Log File Count",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_ztzv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "INFO",
+   "fieldname": "push_log_level",
+   "fieldtype": "Select",
+   "label": "Push Log Level",
+   "options": "ERROR\nWARNING\nINFO\nDEBUG",
+   "reqd": 1
+  },
+  {
+   "default": "5000000",
+   "fieldname": "push_log_max_file_size",
+   "fieldtype": "Int",
+   "label": "Push Log Max File Size",
+   "reqd": 1
+  },
+  {
+   "default": "10",
+   "fieldname": "storage_log_file_count",
+   "fieldtype": "Int",
+   "label": "Storage Log File Count",
+   "reqd": 1
+  },
+  {
+   "default": "INFO",
+   "fieldname": "storage_log_level",
+   "fieldtype": "Select",
+   "label": "Storage Log Level",
+   "options": "ERROR\nWARNING\nINFO\nDEBUG",
+   "reqd": 1
+  },
+  {
+   "default": "5000000",
+   "fieldname": "storage_log_max_file_size",
+   "fieldtype": "Int",
+   "label": "Storage Log Max File Size",
+   "reqd": 1
+  },
+  {
+   "default": "1000",
+   "fieldname": "exchange_max_export",
+   "fieldtype": "Int",
+   "label": "Exchange Max Export",
+   "reqd": 1
+  },
+  {
+   "default": "1000",
+   "fieldname": "exchange_max_import",
+   "fieldtype": "Int",
+   "label": "Exchange Max Import",
+   "reqd": 1
+  },
+  {
+   "default": "500",
+   "fieldname": "exchange_export_batch_size",
+   "fieldtype": "Int",
+   "label": "Exchange Export Batch Size",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_rvxs",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "100",
+   "fieldname": "max_email_sync",
+   "fieldtype": "Int",
+   "label": "Max Email Sync",
+   "reqd": 1
+  },
+  {
+   "default": "25",
+   "fieldname": "max_message_payload_size_mb",
+   "fieldtype": "Int",
+   "label": "Max Message Payload Size (MB)",
+   "reqd": 1
+  },
+  {
+   "default": "5",
+   "fieldname": "max_push_notifications",
+   "fieldtype": "Int",
+   "label": "Max Push Notifications",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_cazi",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "2500",
+   "fieldname": "process_pending_emails_batch_size",
+   "fieldtype": "Int",
+   "label": "Process Pending Emails Batch Size",
+   "reqd": 1
+  },
+  {
+   "default": "25000",
+   "fieldname": "process_pending_emails_max_batch_size",
+   "fieldtype": "Int",
+   "label": "Process Pending Emails Max Batch Size",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
+   "fieldname": "spamassassin_section",
+   "fieldtype": "Section Break",
+   "label": "SpamAssassin"
+  },
+  {
+   "fieldname": "spamd_host",
+   "fieldtype": "Data",
+   "label": "Host",
+   "placeholder": "spamd.example.com"
+  },
+  {
+   "default": "783",
+   "fieldname": "spamd_port",
+   "fieldtype": "Int",
+   "label": "Port"
+  },
+  {
+   "fieldname": "column_break_njvq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Hybrid Approach",
+   "fieldname": "spamd_scanning_mode",
+   "fieldtype": "Select",
+   "label": "Scanning Mode",
+   "options": "Exclude Attachments\nInclude Attachments\nHybrid Approach",
+   "reqd": 1
+  },
+  {
+   "default": "2",
+   "fieldname": "spamd_hybrid_scanning_threshold",
+   "fieldtype": "Float",
+   "label": "Hybrid Scanning Threshold",
+   "mandatory_depends_on": "eval: doc.spamd_scanning_mode == \"Hybrid Approach\"",
+   "precision": "1",
+   "read_only_depends_on": "eval: doc.spamd_scanning_mode != \"Hybrid Approach\""
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
+   "fieldname": "defaults_section",
+   "fieldtype": "Section Break",
+   "label": "Defaults"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
+   "fieldname": "logs_section",
+   "fieldtype": "Section Break",
+   "label": "Logs"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
+   "fieldname": "timeouts_seconds_section",
+   "fieldtype": "Section Break",
+   "label": "Timeouts (Seconds)"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: true",
+   "fieldname": "limits_section",
+   "fieldtype": "Section Break",
+   "label": "Limits"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-04-27 09:25:58.236007",
+ "modified": "2026-06-08 22:01:00.877073",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

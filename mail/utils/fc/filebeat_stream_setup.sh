@@ -12,7 +12,8 @@ sudo bash -c "cat > $FILEBEAT_INPUT_PATH" <<EOF
   enabled: true
   pipeline: "stalwart-log"
   paths:
-    - /opt/stalwart/$SERVER/logs/stalwart.log.*
+    - /etc/stalwart/$SERVER/logs/stalwart.*
+
 EOF
 
 echo "Restarting Filebeat service..."

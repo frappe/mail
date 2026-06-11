@@ -12,7 +12,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import add_to_date, get_datetime, now, time_diff_in_seconds
 
-from mail.utils import get_mail_config
+from mail.utils import get_config
 from mail.utils.dns import get_host_by_ip
 
 
@@ -44,15 +44,15 @@ class SpamCheckLog(Document):
 	def scan_message(self) -> None:
 		"""Scans the message for spam"""
 
-		mail_settings = frappe.get_cached_doc("Mail Settings")
+		config = get_config()
+		spamd_host = config.get("spamd_host")
+		spamd_port = config.get("spamd_port")
 
-		if not mail_settings.enable_spamd:
-			frappe.throw(_("Spam Detection is disabled"))
+		if not all([spamd_host, spamd_port]):
+			frappe.throw(_("Configure SpamAssassin (spamd) host and port to enable spam detection."))
 
-		spamd_host = mail_settings.spamd_host
-		spamd_port = mail_settings.spamd_port
-		scanning_mode = mail_settings.spamd_scanning_mode
-		hybrid_scanning_threshold = mail_settings.spamd_hybrid_scanning_threshold
+		scanning_mode = config.get("spamd_scanning_mode", "Hybrid Approach")
+		hybrid_scanning_threshold = config.get("spamd_hybrid_scanning_threshold", 2.0)
 
 		response = None
 		self.started_at = now()
@@ -110,7 +110,7 @@ def scan_message(host: str, port: int, message: str) -> str:
 
 	try:
 		with socket.create_connection((host, port), timeout=60) as sock:
-			sock.settimeout(get_mail_config("scan_message_timeout"))
+			sock.settimeout(get_config("scan_message_timeout"))
 			command = "SYMBOLS SPAMC/1.5\r\n\r\n"
 			sock.sendall(command.encode("utf-8"))
 			sock.sendall(message.encode("utf-8"))

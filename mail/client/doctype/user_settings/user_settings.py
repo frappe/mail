@@ -13,12 +13,19 @@ from mail.client.doctype.account_settings.account_settings import sync_account_s
 from mail.jmap import get_jmap_session_manager
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
 from mail.jmap.services.mail.identity import IdentityService
-from mail.utils import get_mail_config
+from mail.utils import get_config
 from mail.utils.dt import timestamp_to_datetime
-from mail.utils.user import is_local_user, is_system_manager
+from mail.utils.user import is_system_manager
 
 
 class UserSettings(Document):
+	@property
+	def server_url(self) -> str | None:
+		"""Returns the server URL from the configuration."""
+
+		config = get_config()
+		return config.get("server_url")
+
 	@cached_property
 	def session(self) -> dict:
 		"""Returns the JMAP session for the user."""
@@ -45,6 +52,20 @@ class UserSettings(Document):
 
 		return json.dumps(self.session, indent=4)
 
+	@property
+	def connection(self) -> JMAPConnection | None:
+		"""Returns a JMAP connection for the user if the username and app password are set, otherwise returns None."""
+
+		if self.username and self.get_password("app_password"):
+			server_url = get_config("server_url")
+
+			try:
+				return JMAPConnection(
+					JMAPConnectionInfo(server_url, self.username, self.get_password("app_password"))
+				)
+			except Exception:
+				pass
+
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -53,37 +74,29 @@ class UserSettings(Document):
 			return
 
 		self.validate_jmap_settings()
-		self.validate_local_user()
+
+	def on_update(self) -> None:
+		if connection := self.connection:
+			sync_account_settings(self.user, connection.accounts)
+
+	def after_delete(self) -> None:
+		for settings in frappe.db.get_all("Account Settings", filters={"user": self.user}, pluck="name"):
+			frappe.delete_doc("Account Settings", settings, ignore_permissions=True, delete_permanently=True)
 
 	def validate_jmap_settings(self) -> None:
 		"""Validate the JMAP settings by connecting to the JMAP server and verifying the default outgoing email."""
 
-		if self.flags.skip_jmap_validation:
+		if not self.username or self.flags.skip_jmap_validation:
 			return
 
-		if not self.username:
-			return
+		if not self.get_password("app_password"):
+			frappe.throw(_("App Password is required to validate JMAP settings."))
 
-		server_url = self.server_url or get_mail_config("server_url")
-
-		if not server_url or not self.get_password("app_password"):
-			frappe.throw(_("Server URL and App Password are required to validate JMAP settings."))
-
-		try:
-			connection = JMAPConnection(
-				JMAPConnectionInfo(server_url, self.username, self.get_password("app_password"))
-			)
-		except Exception as e:
-			if (
-				hasattr(e, "response")
-				and hasattr(e.response, "status_code")
-				and e.response.status_code == 401
-			):
-				frappe.throw(_("Unable to connect to the JMAP server. Please check your credentials."))
-
+		connection = self.connection
+		if not connection:
 			frappe.throw(
 				_(
-					"Unable to connect to the JMAP server. Please check the server URL and your network connection."
+					"Unable to connect to the JMAP server with the provided username and app password. Please check your settings."
 				)
 			)
 
@@ -104,28 +117,6 @@ class UserSettings(Document):
 						"Default Outgoing Email {0} is not found in the identities of the JMAP account."
 					).format(frappe.bold(self.default_outgoing_email))
 				)
-
-		sync_account_settings(self.user, connection.accounts)
-
-	def validate_local_user(self) -> None:
-		"""Validate that if the user is local, then the JMAP username must be the same as the User name and a Principal Settings must exist for the user."""
-
-		if not is_local_user(self.user):
-			return
-
-		if self.username != self.user:
-			frappe.throw(_("JMAP Username must be the same as the User name."))
-
-		if not frappe.db.exists(
-			"Principal Settings",
-			{"principal_name": self.username},
-			"principal_name",
-		):
-			frappe.throw(
-				_(
-					"Principal Settings for {0} does not exist. Please create Principal Settings with the principal name same as the JMAP username."
-				).format(frappe.bold(self.username))
-			)
 
 	@frappe.whitelist()
 	def clear_jmap_session(self) -> None:

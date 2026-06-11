@@ -46,10 +46,9 @@ const { title, description, records } = defineProps<{
 }>()
 
 const LIST_COLUMNS = [
-	{ label: __('Type'), key: 'type', width: '10%' },
-	{ label: __('Host'), key: 'host', width: '20%' },
-	{ label: __('Priority'), key: 'priority', width: '10%' },
-	{ label: __('TTL (Recommended)'), key: 'ttl', width: '10%' },
+	{ label: __('Type'), key: 'type', width: '12%' },
+	{ label: __('Hostname'), key: 'name', width: '24%' },
+	{ label: __('TTL (Recommended)'), key: 'ttl', width: '14%' },
 	{ label: __('Value'), key: 'value', width: '50%' },
 ]
 </script>

@@ -6,18 +6,14 @@ import io
 import json
 import os
 import socket
-from typing import TYPE_CHECKING
 
 import frappe
 import paramiko
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint
 
-from mail.server.doctype.server_config.server_config import create_server_config
 from mail.utils.dns import get_dns_record
-
-if TYPE_CHECKING:
-	from mail.server.doctype.server_config.server_config import ServerConfig
 
 
 class MailServer(Document):
@@ -34,14 +30,7 @@ class MailServer(Document):
 	def validate(self) -> None:
 		self.validate_hostname()
 		self.validate_cluster()
-		self.validate_base_url()
-		self.validate_cluster_node_id()
-		self.validate_acme_providers()
-		self.validate_tls_certificates()
-		self.validate_listeners()
-
-	def after_insert(self) -> None:
-		self.generate_config()
+		self.set_bootstrap_ndjson()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
@@ -62,100 +51,28 @@ class MailServer(Document):
 		if not frappe.db.get_value("Mail Cluster", self.cluster, "enabled"):
 			frappe.throw(_("Mail Cluster {0} is disabled.").format(frappe.bold(self.cluster)))
 
-	def validate_base_url(self) -> None:
-		"""Validates the base URL of the server."""
+	def set_bootstrap_ndjson(self) -> None:
+		"""Sets the bootstrap NDJSON for the server."""
 
-		if not self.base_url:
-			self.base_url = f"https://{self.hostname}/"
-
-	def validate_cluster_node_id(self) -> None:
-		"""Validates the cluster node ID."""
-
-		if frappe.db.exists(
-			"Mail Server",
-			{
-				"cluster": self.cluster,
-				"cluster_node_id": self.cluster_node_id,
-				"name": ["!=", self.name],
-			},
-		):
-			frappe.throw(
-				_("Node ID {0} already assigned to another Mail Server.").format(
-					frappe.bold(self.cluster_node_id)
-				)
-			)
-
-	def validate_acme_providers(self) -> None:
-		"""Validates the ACME Providers."""
-
-		default_count = 0
-		directory_ids = []
-		for acme in self.acme_providers:
-			if acme.default:
-				default_count += 1
-
-			if acme.directory_id in directory_ids:
-				frappe.throw(
-					_("Row #{0}: Directory ID {1} is duplicated.").format(
-						acme.idx, frappe.bold(acme.directory_id)
-					)
-				)
-			directory_ids.append(acme.directory_id)
-
-		if default_count > 1:
-			frappe.throw(_("Only one ACME Provider can be default."))
-
-	def validate_tls_certificates(self) -> None:
-		"""Validates the TLS Certificates."""
-
-		default_count = 0
-		certificate_ids = []
-		for tls in self.tls_certificates:
-			if tls.default:
-				default_count += 1
-
-			if tls.certificate_id in certificate_ids:
-				frappe.throw(
-					_("Row #{0}: Certificate ID {1} is duplicated.").format(
-						tls.idx, frappe.bold(tls.certificate_id)
-					)
-				)
-			certificate_ids.append(tls.certificate_id)
-
-			if not tls.cert and not tls.cert_path:
-				frappe.throw(_("Row #{0}: Certificate or Certificate Path is required.").format(tls.idx))
-			if not tls.private_key and not tls.private_key_path:
-				frappe.throw(_("Row #{0}: Private Key or Private Key Path is required.").format(tls.idx))
-
-		if default_count > 1:
-			frappe.throw(_("Only one TLS Certificate can be default."))
-
-	def validate_listeners(self) -> None:
-		"""Validates the listeners."""
-
-		listener_ids = []
-		for listener in self.listeners:
-			if listener.listener_id in listener_ids:
-				frappe.throw(
-					_("Row #{0}: Listener ID {1} is duplicated.").format(
-						listener.idx, frappe.bold(listener.listener_id)
-					)
-				)
-
-			listener_ids.append(listener.listener_id)
+		if not self.bootstrap_ndjson:
+			self.bootstrap_ndjson = self._generate_bootstrap_ndjson()
 
 	@frappe.whitelist()
-	def generate_config(self) -> None:
-		"""Generates the Server Config."""
+	def regenerate_bootstrap_ndjson(self) -> None:
+		"""Regenerates the bootstrap NDJSON for the server."""
 
 		frappe.only_for("System Manager")
-		self._generate_config()
-		frappe.msgprint(_("Server Config created."), indicator="green", alert=True)
+		self.bootstrap_ndjson = self._generate_bootstrap_ndjson()
+		self._db_set(bootstrap_ndjson=self.bootstrap_ndjson, notify=True)
+		frappe.msgprint(_("Bootstrap NDJSON regenerated."), indicator="green", alert=True)
 
-	def _generate_config(self) -> "ServerConfig":
-		"""Generates the Server Config."""
+	def _generate_bootstrap_ndjson(self) -> str:
+		"""Generates the bootstrap NDJSON for the server."""
 
-		return create_server_config(self.name)
+		cluster = frappe.get_doc("Mail Cluster", self.cluster)
+		operations = cluster.get_bootstrap_operations(self.hostname)
+
+		return "\n".join([json.dumps(op) for op in operations])
 
 	@frappe.whitelist()
 	def verify_ssh_connection(self) -> None:
@@ -258,26 +175,44 @@ class MailServer(Document):
 		self._install_stalwart()
 		frappe.msgprint(_("Install of Stalwart initiated."), indicator="green", alert=True)
 
-	def _install_stalwart(self, config: str | None = None) -> None:
+	def _install_stalwart(self) -> None:
 		"""Installs Stalwart on the Mail Server."""
-
-		config = config or frappe.db.get_value("Server Config", {"server": self.name})
-		if not config:
-			frappe.throw(_("Please generate the Server Config before installing Stalwart."))
-
-		install_redis = 0
-		cluster = frappe.get_doc("Mail Cluster", self.cluster)
-		for store in cluster.stores:
-			if store.type == "Redis/Memcached" and "redis://redis:6379" in store.urls:
-				install_redis = 1
-				break
 
 		deployment = frappe.new_doc("Server Deployment")
 		deployment.status = "Pending"
 		deployment.server = self.name
-		deployment.config = config
-		deployment.install_redis = install_redis
+		deployment.max_retries = 0
 		deployment.insert(ignore_permissions=True)
+
+	def _get_stalwart_env(
+		self,
+		recovery_mode: bool = False,
+		role: str | None = None,
+		push_shard: str | None = None,
+		as_dict: bool = False,
+	) -> str | dict:
+		"""Returns the environment variables for Stalwart."""
+
+		cluster = frappe.get_doc("Mail Cluster", self.cluster)
+		env = {
+			"STALWART_HOSTNAME": self.hostname,
+			"STALWART_RECOVERY_MODE": cint(recovery_mode),
+			"STALWART_RECOVERY_MODE_PORT": cint(self.recovery_http_port),
+			"STALWART_RECOVERY_MODE_LOG_LEVEL": "debug",
+			"STALWART_RECOVERY_ADMIN": f"{cluster.recovery_admin_user}:{cluster.get_password('recovery_admin_password')}",
+		}
+
+		if cluster.base_url:
+			env["STALWART_PUBLIC_URL"] = cluster.base_url
+		if role:
+			env["STALWART_ROLE"] = role
+		if push_shard:
+			env["STALWART_PUSH_SHARD"] = push_shard
+
+		if as_dict:
+			return env
+
+		return "\n".join([f"{key}={value}" for key, value in env.items()])
 
 	def _db_set(
 		self,
@@ -289,9 +224,3 @@ class MailServer(Document):
 		"""Updates the document with the given key-value pairs."""
 
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
-
-
-def on_doctype_update() -> None:
-	frappe.db.add_unique(
-		"Mail Server", ["cluster", "cluster_node_id"], constraint_name="unique_cluster_node_id"
-	)

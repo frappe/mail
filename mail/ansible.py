@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any
 
 import ansible_runner
@@ -140,17 +141,99 @@ class Ansible:
 			f"ansible_ssh_private_key_file={private_key_file.name}"
 		)
 
-		ansible_runner.run(
-			playbook=self.playbook_path,
-			inventory=inventory,
-			extravars=self.variables,
-			event_handler=self.event_handler,
-			quiet=quiet,
-		)
+		runner = None
+		try:
+			runner = ansible_runner.run(
+				playbook=self.playbook_path,
+				inventory=inventory,
+				extravars=self.variables,
+				event_handler=self.event_handler,
+				quiet=quiet,
+			)
+		finally:
+			if os.path.exists(private_key_file.name):
+				os.remove(private_key_file.name)
 
-		os.remove(private_key_file.name)
+		pdoc = frappe.get_doc("Server Ansible Play", self.play)
+		if pdoc.status in ("Pending", "Running"):
+			self._fail_play_and_pending_tasks(self._get_runner_error_log(runner))
 
 		return frappe.get_doc("Server Ansible Play", self.play)
+
+	def _get_runner_error_log(self, runner: Any | None) -> str:
+		"""Builds a readable error log when ansible-runner exits before final task events."""
+
+		details: list[str] = [
+			"Ansible play ended before completing task execution.",
+			"No terminal play status event was received from ansible-runner.",
+		]
+
+		if not runner:
+			return "\n".join(details)
+
+		status = getattr(runner, "status", None)
+		rc = getattr(runner, "rc", None)
+		if status is not None:
+			details.append(f"runner_status: {status}")
+		if rc is not None:
+			details.append(f"runner_rc: {rc}")
+
+		for attr, label in (("stderr", "stderr"), ("stdout", "stdout"), ("errored", "errored")):
+			value = getattr(runner, attr, None)
+			if value:
+				details.append(f"{label}: {self._stringify_runner_value(value)}")
+
+		return "\n".join(details)
+
+	def _stringify_runner_value(self, value: Any) -> str:
+		"""Converts ansible-runner values to readable text for error logs."""
+
+		if isinstance(value, str):
+			return value.strip() or "<empty>"
+		if isinstance(value, bytes):
+			return value.decode(errors="replace").strip() or "<empty>"
+		if isinstance(value, Iterable) and not isinstance(value, dict):
+			return "\n".join(str(v) for v in value)
+		return str(value)
+
+	@reconnect_on_failure()
+	def _fail_play_and_pending_tasks(self, error_log: str) -> None:
+		"""Marks the play and any non-finished tasks as failed with a common error log."""
+
+		ended_at = now()
+		pdoc = frappe.get_doc("Server Ansible Play", self.play)
+		started_at = pdoc.started_at or ended_at
+		started_after = pdoc.started_after
+		if not pdoc.started_at:
+			started_after = time_diff_in_seconds(started_at, pdoc.creation)
+
+		duration = time_diff_in_seconds(ended_at, started_at)
+		pdoc._db_set(
+			status="Failed",
+			started_at=started_at,
+			started_after=started_after,
+			ended_at=ended_at,
+			duration=duration,
+			error_log=error_log,
+			commit=True,
+			notify=True,
+		)
+
+		for task_name in self.tasks.values():
+			tdoc = frappe.get_doc("Server Ansible Play Task", task_name)
+			if tdoc.status in ("Success", "Failed", "Unreachable", "Skipped"):
+				continue
+
+			task_started_at = tdoc.started_at or started_at
+			tdoc._db_set(
+				status="Failed",
+				started_at=task_started_at,
+				ended_at=ended_at,
+				duration=time_diff_in_seconds(ended_at, task_started_at),
+				exception=error_log,
+				commit=True,
+				notify=True,
+			)
 
 	def event_handler(self, event: dict) -> None:
 		"""Handle events from ansible-runner and update the play and task records accordingly."""

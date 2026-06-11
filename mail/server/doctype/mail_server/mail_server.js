@@ -10,6 +10,15 @@ frappe.ui.form.on('Mail Server', {
 		frm.trigger('add_actions')
 	},
 
+	regenerate_bootstrap_ndjson(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'regenerate_bootstrap_ndjson',
+			freeze: true,
+			freeze_message: __('Regenerating bootstrap.ndjson...'),
+		})
+	},
+
 	set_queries(frm) {
 		frm.set_query('cluster', () => ({
 			filters: {
@@ -22,14 +31,6 @@ frappe.ui.form.on('Mail Server', {
 		if (frm.doc.__islocal) return
 
 		if (!frappe.user_roles.includes('System Manager')) return
-
-		frm.add_custom_button(
-			__('Generate Config'),
-			() => {
-				frm.trigger('generate_config')
-			},
-			__('Actions'),
-		)
 
 		frm.add_custom_button(
 			__('Verify SSH Connection'),
@@ -66,20 +67,6 @@ frappe.ui.form.on('Mail Server', {
 				__('Actions'),
 			)
 		}
-	},
-
-	generate_config(frm) {
-		frappe.call({
-			doc: frm.doc,
-			method: 'generate_config',
-			freeze: true,
-			freeze_message: __('Generating Config...'),
-			callback: (r) => {
-				if (!r.exc) {
-					frm.refresh()
-				}
-			},
-		})
 	},
 
 	verify_ssh_connection(frm) {
@@ -131,24 +118,5 @@ frappe.ui.form.on('Mail Server', {
 				}
 			},
 		})
-	},
-})
-
-frappe.ui.form.on('Mail Server ACME Provider', {
-	acme_providers_add(frm, cdt, cdn) {
-		const row = locals[cdt][cdn]
-
-		if (frm.doc.hostname) {
-			row.directory_id = frm.doc.hostname.replaceAll('.', '-')
-			row.domains = frm.doc.hostname
-			row.contact = 'postmaster@' + frm.doc.hostname
-		}
-		if (frm.doc.acme_providers.length < 2) {
-			row.default = 1
-		}
-		row.challenge = 'TLS-ALPN-01'
-		row.directory = 'https://acme-v02.api.letsencrypt.org/directory'
-		row.renew_before = 30
-		refresh_field('acme_providers')
 	},
 })
