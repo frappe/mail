@@ -221,7 +221,7 @@ class EmailService(MailService):
 	def query_thread(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
 	) -> list[str] | dict[str, list[str]]:
-		"""Public method to query email threads based on the given filter, with options for pagination and fetching all email IDs within the threads. If 'fetch_all' is False, returns a list of thread IDs. If 'fetch_all' is True, returns a dictionary mapping thread IDs to lists of email IDs within those threads."""
+		"""Public method to query email threads, returning either a list of thread IDs or a mapping of thread IDs to email IDs of threads matching the filter."""
 
 		method_calls = [
 			[
@@ -235,7 +235,7 @@ class EmailService(MailService):
 					"limit": limit,
 				},
 				"0",
-			],
+			]
 		]
 
 		if fetch_all:
