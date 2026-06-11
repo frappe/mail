@@ -220,8 +220,8 @@ class EmailService(MailService):
 
 	def query_thread(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
-	) -> list[str] | dict[str, list[str]]:
-		"""Public method to query email threads based on the given filter, with options for pagination and fetching all email IDs within the threads. If 'fetch_all' is False, returns a list of thread IDs. If 'fetch_all' is True, returns a dictionary mapping thread IDs to lists of email IDs within those threads."""
+	) -> tuple[list[str], int] | tuple[dict[str, list[str]], int]:
+		"""Public method to query email threads, returning either a list of thread IDs or a mapping of thread IDs to email IDs, along with the estimated total number of threads matching the filter."""
 
 		method_calls = [
 			[
@@ -235,6 +235,16 @@ class EmailService(MailService):
 					"limit": limit,
 				},
 				"0",
+			],
+			[
+				"Email/query",
+				{
+					"accountId": self.account_id,
+					"filter": filter or {},
+					"collapseThreads": True,
+					"position": 0,
+				},
+				"1",
 			],
 		]
 
@@ -252,20 +262,20 @@ class EmailService(MailService):
 							},
 							"properties": ["threadId"],
 						},
-						"1",
+						"2",
 					],
 					[
 						"Thread/get",
 						{
 							"accountId": self.account_id,
 							"#ids": {
-								"resultOf": "1",
+								"resultOf": "2",
 								"name": "Email/get",
 								"path": "/list/*/threadId",
 							},
 							"properties": ["id", "emailIds"],
 						},
-						"2",
+						"3",
 					],
 				]
 			)
@@ -275,47 +285,16 @@ class EmailService(MailService):
 
 		if not fetch_all:
 			if not method_responses:
-				return []
+				return [], 0
 
-			return method_responses[0][1].get("ids", [])
+			return method_responses[0][1].get("ids", []), len(method_responses[1][1].get("ids", []))
 
-		if len(method_responses) < 3:
-			return {}
+		if len(method_responses) < 4:
+			return {}, 0
 
-		return {thread["id"]: thread.get("emailIds", []) for thread in method_responses[2][1].get("list", [])}
-
-	def count_threads(self, filter: dict | None = None) -> int:
-		"""Returns an *estimate* of the number of threads matching the given filter, in one request.
-
-		Counting threads exactly means paging through every collapsed thread ID (one request per
-		`max_objects_in_get`), which is prohibitive for large mailboxes — roughly 2000 requests for a
-		million emails. Instead this returns Stalwart's `calculateTotal`, the number of matching emails
-		before threads are collapsed, which is an upper bound on the thread count. The client shows it
-		as an estimate ("~N") and resolves the exact total once it pages to the end.
-		"""
-
-		response = self._call(
-			self.capabilities,
-			method_calls=[
-				[
-					"Email/query",
-					{
-						"accountId": self.account_id,
-						"filter": filter or {},
-						"collapseThreads": True,
-						"calculateTotal": True,
-						"limit": 0,
-					},
-					"0",
-				],
-			],
-		)
-
-		method_responses = response.get("methodResponses", [])
-		if not method_responses:
-			return 0
-
-		return method_responses[0][1].get("total", 0)
+		return {
+			thread["id"]: thread.get("emailIds", []) for thread in method_responses[3][1].get("list", [])
+		}, len(method_responses[1][1].get("ids", []))
 
 	def get_email_suggestions(self, text: str, limit: int = 5, separate_requests: bool = False) -> list[str]:
 		"""
