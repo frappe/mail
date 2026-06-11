@@ -657,8 +657,8 @@ def fetch_messages(
 
 def fetch_threads(
 	account: str, filter: dict | None = None, position: int = 0, limit: int = 50
-) -> tuple[dict[str, list[dict]], int]:
-	"""Returns a page of threads and the total thread count matching the filter.
+) -> dict[str, list[dict]]:
+	"""Returns a page of threads matching the filter.
 
 	Each thread ID is mapped to the full list of messages in that thread (the entire conversation
 	across all mailboxes), ordered oldest to newest.
@@ -670,7 +670,7 @@ def fetch_threads(
 	service = get_email_service(account)
 	thread_email_ids = service.query_thread(filter, position, limit, fetch_all=True)
 	if not thread_email_ids:
-		return {}, 0
+		return {}
 
 	# Fetch every message in the page's threads once, then group them back by thread.
 	threads: dict[str, list[dict]] = {thread_id: [] for thread_id in thread_email_ids}
@@ -683,7 +683,7 @@ def fetch_threads(
 	return {
 		thread_id: sorted(messages, key=lambda message: message["received_at"])
 		for thread_id, messages in threads.items()
-	}, len(thread_email_ids)
+	}
 
 
 def fetch_thread(account: str, thread_id: str, sort: Literal["asc", "desc"] = "asc") -> list[dict]:

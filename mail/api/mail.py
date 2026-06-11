@@ -136,7 +136,7 @@ def add_user_images_to_emails(account: str, mails: list[dict], is_thread: bool =
 
 @frappe.whitelist()
 def get_threads(account: str, mailbox: str, limit: int, start: int = 0, filter_by: str | None = None) -> list:
-	"""Returns a page of threads (and the total count) from the selected mailbox for the account."""
+	"""Returns a page of threads from the selected mailbox for the account."""
 
 	if mailbox == "starred":
 		conditions = [
@@ -164,7 +164,7 @@ def get_threads(account: str, mailbox: str, limit: int, start: int = 0, filter_b
 	else:
 		filter = {"operator": "AND", "conditions": conditions}
 
-	conversations, total = fetch_threads(account, filter, start, limit)
+	conversations = fetch_threads(account, filter, start, limit)
 
 	sent_mailbox = get_mailbox_id_by_role(account, "sent")
 
@@ -188,7 +188,7 @@ def get_threads(account: str, mailbox: str, limit: int, start: int = 0, filter_b
 	add_user_images_to_emails(account, threads, is_thread=False)
 	add_user_images_to_emails(account, [m for thread in threads for m in thread["messages"]], is_thread=True)
 
-	return threads, mailbox, total
+	return threads, mailbox
 
 
 @frappe.whitelist()

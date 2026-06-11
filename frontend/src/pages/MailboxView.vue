@@ -53,7 +53,7 @@
 			>
 				<!-- Toolbar/Actions -->
 				<div
-					class="flex items-center border-b border-l-transparent px-3.5 py-2.5 sm:border-l sm:px-5"
+					class="relative flex items-center border-b border-l-transparent px-3.5 py-2.5 sm:border-l sm:px-5"
 				>
 					<div class="mr-5 max-sm:ml-3">
 						<Tooltip
@@ -164,6 +164,17 @@
 								</template>
 							</Button>
 						</Dropdown>
+					</div>
+					<!-- Subtle loading bar: a segment sliding across the bottom outline (no layout shift) -->
+					<div
+						v-if="threadsResource?.loading"
+						class="loading-bar pointer-events-none absolute bottom-[-1px] left-[-1px] right-0 h-0.5 overflow-hidden"
+						role="progressbar"
+						aria-busy="true"
+					>
+						<div
+							class="loading-bar__fill via-ink-gray-3 absolute inset-y-0 left-0 w-[30%] bg-gradient-to-r from-transparent to-transparent"
+						/>
 					</div>
 				</div>
 
@@ -342,6 +353,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useDebounceFn } from '@vueuse/core'
 import {
 	Archive,
 	ChevronDown,
@@ -814,9 +826,22 @@ const selectActions = computed((): SelectAction[] => [
 // Search
 
 // Pagination state (shared by the threads and search resources — only one is active at a time)
-const PAGE_LENGTH = 50
-const page = ref(0) // current 0-based page of threads
-const total = ref(0) // total number of threads matching the current view
+const PAGE_LENGTH = 25
+const page = ref(0) // navigation target: the page being fetched
+const displayedPage = ref(0) // the page currently shown; lags `page` until its data loads
+const total = ref(0) // exact total matching the current view (search only)
+const hasMore = ref(false) // lookahead: an extra row was returned, so a next page exists
+// Current mailbox's record (carries total_threads/unread_threads). Declared here because the threads
+// resource's makeParams reads it during setup (via the immediate watch), before its later UI uses.
+const mailboxObj = computed(() => mailboxes.data?.find((m) => m.id === mailbox))
+
+// Called once a page's data has loaded: reveal it (range + list update together) and scroll to top.
+// No-op for same-page reloads (e.g. the periodic refresh) so those don't yank the scroll position.
+const syncDisplayedPage = () => {
+	if (displayedPage.value === page.value) return
+	displayedPage.value = page.value
+	mailListRef.value?.scrollTo({ top: 0 })
+}
 
 const searchResults = createResource({
 	url: 'mail.api.mail.search_mails',
@@ -833,6 +858,7 @@ const searchResults = createResource({
 	onSuccess: (data: [Thread[], number]) => {
 		correctPageOverflow(data[0])
 		openPendingEdgeThread()
+		syncDisplayedPage()
 		if (mailbox === 'search') isMailboxLoaded.value = true
 	},
 })
@@ -859,17 +885,24 @@ const threads = createResource({
 	makeParams: () => ({
 		account: store.account,
 		mailbox,
-		limit: PAGE_LENGTH,
+		limit: threadsLimit.value,
 		start: page.value * PAGE_LENGTH,
 		filter_by: filter.value,
 	}),
-	transform: (data: [Thread[], string, number]) => {
-		total.value = data[2]
-		return data[0]
+	transform: (data: [Thread[], string]) => {
+		const rows = data[0]
+		// The extra (PAGE_LENGTH + 1)th row only signals a next page — drop it from the display.
+		if (countMode.value === 'lookahead') {
+			hasMore.value = rows.length > PAGE_LENGTH
+			return rows.slice(0, PAGE_LENGTH)
+		}
+		hasMore.value = false
+		return rows
 	},
-	onSuccess: (data: [Thread[], string, number]) => {
+	onSuccess: (data: [Thread[], string]) => {
 		correctPageOverflow(data[0])
 		openPendingEdgeThread()
+		syncDisplayedPage()
 		if (mailbox === data[1]) isMailboxLoaded.value = true
 	},
 })
@@ -885,34 +918,88 @@ const correctPageOverflow = (pageData: Thread[]) => {
 }
 
 const threadsOnPage = computed(() => threadsResource.value.data?.length ?? 0)
-// A short page means we've reached the end and know the exact total. Before that, `total` for a
-// mailbox is only an estimate (the backend counts matching emails — an upper bound on threads — in a
-// single request instead of paging through every collapsed thread). Search totals are always exact.
-const isLastPage = computed(() => threadsOnPage.value < PAGE_LENGTH)
 
-const pageCount = computed(() => Math.ceil(total.value / PAGE_LENGTH))
-const rangeEnd = computed(() => page.value * PAGE_LENGTH + threadsOnPage.value)
-const rangeStart = computed(() => (rangeEnd.value === 0 ? 0 : page.value * PAGE_LENGTH + 1))
+// How the total count and "next page" are resolved:
+// - 'exact'     (search): the backend returns the exact total.
+// - 'mailbox'   (a plain mailbox, no filter): use the mailbox's stored thread count.
+// - 'lookahead' (a filtered mailbox, or the cross-mailbox "starred" view): no cheap total exists, so
+//   we fetch one extra row (PAGE_LENGTH + 1). The extra row means a next page exists; we show the
+//   running count with a "+" suffix and only enable Next while it's present.
+const countMode = computed<'exact' | 'mailbox' | 'lookahead'>(() => {
+	if (mailbox === 'search') return 'exact'
+	if (mailbox === 'starred' || filter.value) return 'lookahead'
+	return 'mailbox'
+})
+const mailboxTotal = computed(() => mailboxObj.value?.total_threads ?? 0)
+
+// Rows to request for the current page. In 'lookahead' mode fetch one extra row to detect a next
+// page; in 'mailbox' mode never fetch past the known total, so the last page returns only the
+// remainder (avoids overshooting, e.g. "26–50 of 41"). Falls back to a full page until the total loads.
+const threadsLimit = computed(() => {
+	if (countMode.value === 'lookahead') return PAGE_LENGTH + 1
+	if (countMode.value === 'mailbox' && mailboxTotal.value > 0) {
+		return Math.min(PAGE_LENGTH, Math.max(0, mailboxTotal.value - page.value * PAGE_LENGTH))
+	}
+	return PAGE_LENGTH
+})
+
+// The fixed total for the current view, if known (null in lookahead mode, where we only know a lower
+// bound). Used to clamp the displayed range so it never overshoots — during a page change the previous
+// page's rows linger until the new page loads, which would otherwise read as "26–50 of 41".
+const knownTotal = computed<number | null>(() => {
+	if (countMode.value === 'exact') return total.value
+	if (countMode.value === 'mailbox') return mailboxTotal.value
+	return null
+})
+
+const rangeEnd = computed(() => {
+	// Based on the displayed (loaded) page, not the navigation target, so the range only moves once the
+	// new page's data arrives. For a known total, derive the end from the page bounds (clamped to the
+	// total) rather than the row count; the fetch is clamped to the same bound, so it matches the loaded
+	// page while staying stable during a page change, when the previous page's rows still linger.
+	if (knownTotal.value && knownTotal.value > 0) {
+		return Math.min((displayedPage.value + 1) * PAGE_LENGTH, knownTotal.value)
+	}
+	return displayedPage.value * PAGE_LENGTH + threadsOnPage.value
+})
+const rangeStart = computed(() =>
+	rangeEnd.value === 0 ? 0 : displayedPage.value * PAGE_LENGTH + 1,
+)
 // Collapse to a single number when the page holds one thread (e.g. "1" instead of "1–1").
 const range = computed(() =>
 	rangeStart.value === rangeEnd.value
 		? `${rangeStart.value}`
 		: `${rangeStart.value}–${rangeEnd.value}`,
 )
-// On the last page the range end is the exact total; before that, show the estimate (mailbox only).
-const displayTotal = computed(() => (isLastPage.value ? rangeEnd.value : total.value))
-const isEstimate = computed(() => mailbox !== 'search' && !isLastPage.value)
-const totalLabel = computed(() => `${isEstimate.value ? '~' : ''}${displayTotal.value}`)
+const displayTotal = computed(() =>
+	countMode.value === 'lookahead' ? rangeEnd.value : (knownTotal.value ?? 0),
+)
+// In lookahead mode the count is a lower bound — show "n+" while a next page exists, else "n".
+const totalLabel = computed(() =>
+	countMode.value === 'lookahead'
+		? `${rangeEnd.value}${hasMore.value ? '+' : ''}`
+		: `${displayTotal.value}`,
+)
 
+// Prev/Next are bounded by the navigation target (`page`), not the displayed page, so presses can be
+// queued while a page is still loading. Lookahead only knows one page ahead exists, so it can't queue
+// past the loaded page.
 const canGoPrev = computed(() => page.value > 0)
-const canGoNext = computed(() => !isLastPage.value && page.value + 1 < pageCount.value)
+const canGoNext = computed(() =>
+	countMode.value === 'lookahead'
+		? hasMore.value && page.value === displayedPage.value
+		: (page.value + 1) * PAGE_LENGTH < (knownTotal.value ?? 0),
+)
+
+// Coalesce rapid Prev/Next presses: only the final target page is fetched, and the displayed page
+// (range + list) updates once it loads — intermediate pages are never shown.
+const navigate = useDebounceFn(() => threadsResource.value.reload(), 250)
 
 const goToPage = (next: boolean) => {
 	if (next ? !canGoNext.value : !canGoPrev.value) return
 	page.value += next ? 1 : -1
 	resetSelections()
-	threadsResource.value.reload()
-	mailListRef.value?.scrollTo({ top: 0 })
+	navigate()
 }
 
 const isLoading = computed(() => {
@@ -1123,7 +1210,6 @@ const setFilter = (value: string | null) => {
 
 // UI formatting
 
-const mailboxObj = computed(() => mailboxes.data?.find((m) => m.id === mailbox))
 const mailboxName = computed(() => {
 	switch (mailbox) {
 		case 'starred':
@@ -1169,5 +1255,18 @@ const title = computed(() => {
 <style scoped>
 .checkbox-hitbox:hover :deep(input[type='checkbox']) {
 	@apply border-outline-gray-5 shadow-sm;
+}
+
+.loading-bar__fill {
+	animation: loading-bar-slide 1.2s linear infinite;
+}
+
+@keyframes loading-bar-slide {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(333%);
+	}
 }
 </style>
