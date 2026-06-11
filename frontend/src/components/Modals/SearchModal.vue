@@ -107,7 +107,7 @@
 						v-for="(result, idx) in results.data[0]"
 						:key="idx"
 						class="hover:bg-surface-gray-1 group flex rounded p-2 hover:cursor-pointer"
-						@click="openThread(result.mailboxes[0].mailbox_id, result.thread_id)"
+						@click="openThread(result.thread_id)"
 					>
 						<div class="mr-2 space-y-1 truncate">
 							<p class="truncate text-base font-semibold">
@@ -246,8 +246,12 @@ const openSearchPage = () => {
 
 const router = useRouter()
 
-const openThread = (mailbox: string, threadID: string) => {
-	router.push({ name: 'Mail', params: { mailbox, threadID } })
+const openThread = (threadID: string) => {
+	router.push({
+		name: 'Mail',
+		params: { mailbox: 'search', threadID },
+		query: filteredFilter.value,
+	})
 	show.value = false
 }
 

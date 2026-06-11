@@ -190,7 +190,7 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				label: thread.length === 1 ? __('Mark as Unread') : __('Mark Unread from Here'),
 				onClick: () => handleMarkUnreadFromHere(),
 				icon: MailOpen,
-				condition: () => !mail.draft && mail.seen,
+				condition: () => !mail.draft,
 			},
 			{
 				label: __('Block Sender'),
