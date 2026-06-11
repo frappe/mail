@@ -220,8 +220,8 @@ class EmailService(MailService):
 
 	def query_thread(
 		self, filter: dict | None = None, position: int = 0, limit: int = 50, fetch_all: bool = False
-	) -> tuple[list[str], int] | tuple[dict[str, list[str]], int]:
-		"""Public method to query email threads, returning either a list of thread IDs or a mapping of thread IDs to email IDs, along with the estimated total number of threads matching the filter."""
+	) -> list[str] | dict[str, list[str]]:
+		"""Public method to query email threads, returning either a list of thread IDs or a mapping of thread IDs to email IDs of threads matching the filter."""
 
 		method_calls = [
 			[
@@ -235,17 +235,7 @@ class EmailService(MailService):
 					"limit": limit,
 				},
 				"0",
-			],
-			[
-				"Email/query",
-				{
-					"accountId": self.account_id,
-					"filter": filter or {},
-					"collapseThreads": True,
-					"position": 0,
-				},
-				"1",
-			],
+			]
 		]
 
 		if fetch_all:
@@ -262,20 +252,20 @@ class EmailService(MailService):
 							},
 							"properties": ["threadId"],
 						},
-						"2",
+						"1",
 					],
 					[
 						"Thread/get",
 						{
 							"accountId": self.account_id,
 							"#ids": {
-								"resultOf": "2",
+								"resultOf": "1",
 								"name": "Email/get",
 								"path": "/list/*/threadId",
 							},
 							"properties": ["id", "emailIds"],
 						},
-						"3",
+						"2",
 					],
 				]
 			)
@@ -285,16 +275,14 @@ class EmailService(MailService):
 
 		if not fetch_all:
 			if not method_responses:
-				return [], 0
+				return []
 
-			return method_responses[0][1].get("ids", []), len(method_responses[1][1].get("ids", []))
+			return method_responses[0][1].get("ids", [])
 
-		if len(method_responses) < 4:
-			return {}, 0
+		if len(method_responses) < 3:
+			return {}
 
-		return {
-			thread["id"]: thread.get("emailIds", []) for thread in method_responses[3][1].get("list", [])
-		}, len(method_responses[1][1].get("ids", []))
+		return {thread["id"]: thread.get("emailIds", []) for thread in method_responses[2][1].get("list", [])}
 
 	def get_email_suggestions(self, text: str, limit: int = 5, separate_requests: bool = False) -> list[str]:
 		"""
