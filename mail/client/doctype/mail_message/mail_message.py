@@ -666,17 +666,19 @@ def fetch_threads(
 
 	has_permission_for_user(parse_account(account)[0])
 
-	# Page of thread IDs matching the filter, plus the total — only IDs are fetched here, not bodies.
+	# Page of threads (each mapped to all of its email IDs across mailboxes).
 	service = get_email_service(account)
-	result = service.query_thread(filter, position, limit)
-	thread_ids = result["thread_ids"]
-	total = result["total"]
-	if not thread_ids:
-		return {}, total
+	thread_email_ids = service.query_thread(filter, position, limit, fetch_all=True)
+	if not thread_email_ids:
+		return {}, 0
 
-	# Each thread's full conversation, fetched once and grouped by thread.
-	threads: dict[str, list[dict]] = {thread_id: [] for thread_id in thread_ids}
-	for message in get_messages(account, get_message_ids(account, thread_ids)):
+	# Fetch the total count of threads only if the `thread_email_ids` is not empty.
+	total = service.count_threads(filter)
+
+	# Fetch every message in the page's threads once, then group them back by thread.
+	threads: dict[str, list[dict]] = {thread_id: [] for thread_id in thread_email_ids}
+	email_ids = [email_id for ids in thread_email_ids.values() for email_id in ids]
+	for message in get_messages(account, email_ids):
 		if message["thread_id"] in threads:
 			threads[message["thread_id"]].append(message)
 
