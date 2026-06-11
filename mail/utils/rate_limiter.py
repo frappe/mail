@@ -4,7 +4,7 @@ import frappe
 from frappe import _
 from frappe.rate_limiter import rate_limit
 
-from mail.utils.cache import get_rate_limits
+from mail.mail.doctype.rate_limit.rate_limit import get_rate_limits
 
 
 def dynamic_rate_limit() -> callable:

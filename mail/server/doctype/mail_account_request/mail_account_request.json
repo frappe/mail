@@ -15,6 +15,7 @@
   "invited_by",
   "domain_name",
   "account",
+  "is_admin",
   "verification_details_section",
   "send_invite",
   "is_verified",
@@ -152,19 +153,25 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "User",
    "fieldname": "roles",
    "fieldtype": "Small Text",
    "label": "Roles",
    "no_copy": 1,
-   "reqd": 1,
-   "set_only_once": 1
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_admin",
+   "fieldtype": "Check",
+   "label": "Is Admin",
+   "no_copy": 1,
+   "search_index": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-13 10:27:23.941932",
+ "modified": "2026-05-18 15:08:26.869368",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Account Request",

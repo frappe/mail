@@ -9,16 +9,13 @@
   "enabled",
   "column_break_fkha",
   "hostname",
+  "default_domain",
   "authentication_section",
-  "fallback_admin_user",
-  "fallback_admin_password",
-  "fallback_admin_secret",
+  "column_break_eyum",
+  "recovery_admin_user",
+  "recovery_admin_password",
   "column_break_9jti",
   "base_url",
-  "api_key",
-  "proxy_section",
-  "server_proxy_trusted_networks",
-  "column_break_egzt",
   "networking_section",
   "ipv4_addresses",
   "column_break_uhc3",
@@ -27,96 +24,18 @@
   "ssh_key_section",
   "ssh_public_key",
   "ssh_private_key",
-  "section_break_r4np",
-  "stores_section",
-  "stores",
-  "directory_storage_section",
-  "storage_directory",
-  "data_storage_section",
-  "storage_data",
-  "column_break_iwwx",
-  "email_encryption_enable",
-  "email_encryption_append",
-  "blob_storage_section",
-  "storage_blob",
-  "column_break_xupm",
-  "storage_undelete_retention",
-  "search_store_section",
-  "storage_fts",
-  "storage_search_index_default_language",
-  "storage_search_index_batch_size",
-  "column_break_a9m0",
-  "storage_search_index_email_enable",
-  "storage_search_index_contacts_enable",
-  "storage_search_index_calendar_enable",
-  "storage_search_index_tracing_enable",
-  "in_memory_storage_section",
-  "storage_lookup",
-  "cleanup_section",
-  "account_purge_frequency",
-  "column_break_ld4b",
-  "changes_max_history",
-  "email_auto_expunge",
-  "listeners_tab",
-  "listeners",
-  "jmap_tab",
-  "push_subscription_section",
-  "jmap_push_throttle",
-  "jmap_push_retry_interval",
-  "column_break_0q0i",
-  "jmap_push_attempts_max",
-  "jmap_push_attempts_interval",
-  "push_timeouts_section",
-  "jmap_push_timeout_request",
-  "column_break_68lj",
-  "jmap_push_timeout_verify",
-  "request_limits_section",
-  "jmap_protocol_request_max_concurrent",
-  "column_break_rc7k",
-  "jmap_protocol_request_max_size",
-  "jmap_protocol_request_max_calls",
-  "max_objects_section",
-  "jmap_protocol_get_max_objects",
-  "column_break_rpmh",
-  "jmap_protocol_set_max_objects",
-  "max_results_section",
-  "jmap_protocol_query_max_results",
-  "column_break_ebem",
-  "jmap_protocol_changes_max_results",
-  "upload_limits_section",
-  "jmap_protocol_upload_max_size",
-  "jmap_protocol_upload_max_concurrent",
-  "jmap_protocol_upload_ttl",
-  "column_break_iqbf",
-  "jmap_protocol_upload_quota_files",
-  "jmap_protocol_upload_quota_size",
-  "mailbox_limits_section",
-  "jmap_mailbox_max_depth",
-  "column_break_dxmn",
-  "jmap_mailbox_max_name_length",
-  "email_limits_section",
-  "jmap_email_max_attachment_size",
-  "column_break_wuz8",
-  "jmap_email_max_size",
-  "parsing_limits_section",
-  "jmap_email_parse_max_items",
-  "column_break_cccs",
-  "jmap_calendar_parse_max_items",
-  "jmap_contact_parse_max_items",
-  "log_metrics_tab",
-  "section_break_rsr9",
-  "traces",
-  "opentelemetry_push_metrics_section",
-  "metrics_open_telemetry_transport",
-  "column_break_lkbk",
-  "metrics_open_telemetry_endpoint",
-  "metrics_open_telemetry_timeout",
-  "metrics_open_telemetry_interval",
-  "prometheus_pull_metrics_section",
-  "metrics_prometheus_enable",
-  "column_break_ozrd",
-  "metrics_prometheus_auth_username",
-  "metrics_prometheus_auth_secret"
+  "storage_tab",
+  "data_store",
+  "blob_store",
+  "column_break_vvzf",
+  "search_store",
+  "in_memory_store",
+  "configs_tab",
+  "data_store_config",
+  "blob_store_config",
+  "column_break_rxvx",
+  "search_store_config",
+  "in_memory_store_config"
  ],
  "fields": [
   {
@@ -135,23 +54,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "section_break_r4np",
-   "fieldtype": "Tab Break",
-   "label": "Storage"
-  },
-  {
-   "fieldname": "column_break_iwwx",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_a9m0",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_ld4b",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "details_tab",
    "fieldtype": "Tab Break",
    "label": "Details"
@@ -160,13 +62,6 @@
    "fieldname": "authentication_section",
    "fieldtype": "Section Break",
    "label": "Authentication"
-  },
-  {
-   "description": "Key for authenticating HTTP requests. Generate one via <i>Actions &gt; Generate API Key</i>.",
-   "fieldname": "api_key",
-   "fieldtype": "Password",
-   "label": "API Key",
-   "no_copy": 1
   },
   {
    "fieldname": "column_break_9jti",
@@ -179,20 +74,6 @@
    "label": "Base URL",
    "no_copy": 1,
    "placeholder": "https://mail.frappemail.com/"
-  },
-  {
-   "fieldname": "stores_section",
-   "fieldtype": "Section Break",
-   "label": "Stores"
-  },
-  {
-   "description": "Manage data, blob, full-text, and lookup stores.",
-   "fieldname": "stores",
-   "fieldtype": "Table",
-   "label": "Stores",
-   "no_copy": 1,
-   "options": "Mail Cluster Store",
-   "reqd": 1
   },
   {
    "fieldname": "networking_section",
@@ -220,190 +101,8 @@
    "read_only": 1
   },
   {
-   "description": "Manage SMTP, IMAP, HTTP, and other listeners.",
-   "fieldname": "listeners",
-   "fieldtype": "Table",
-   "label": "Listeners",
-   "options": "Mail Server Listener",
-   "reqd": 1
-  },
-  {
-   "fieldname": "listeners_tab",
-   "fieldtype": "Tab Break",
-   "label": "Listeners"
-  },
-  {
    "fieldname": "section_break_b7jt",
    "fieldtype": "Section Break"
-  },
-  {
-   "description": "Stores user accounts, passwords, email addresses, and settings. Used for authentication, email validation, and account management.",
-   "fieldname": "directory_storage_section",
-   "fieldtype": "Section Break",
-   "label": "Directory Storage"
-  },
-  {
-   "description": "Core storage unit where email metadata, folders, and various settings are stored. Essentially, it contains all the data except for large binary objects (blobs).",
-   "fieldname": "data_storage_section",
-   "fieldtype": "Section Break",
-   "label": "Data Storage"
-  },
-  {
-   "description": "Used for storing large binary objects such as emails, sieve scripts, and other files.",
-   "fieldname": "blob_storage_section",
-   "fieldtype": "Section Break",
-   "label": "Blob Storage"
-  },
-  {
-   "description": "Key-value storage used primarily by the SMTP server and anti-spam components.",
-   "fieldname": "in_memory_storage_section",
-   "fieldtype": "Section Break",
-   "label": "In-Memory Storage"
-  },
-  {
-   "fieldname": "proxy_section",
-   "fieldtype": "Section Break",
-   "label": "Proxy"
-  },
-  {
-   "fieldname": "column_break_egzt",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "jmap_tab",
-   "fieldtype": "Tab Break",
-   "label": "JMAP"
-  },
-  {
-   "fieldname": "push_subscription_section",
-   "fieldtype": "Section Break",
-   "label": "Push Subscription"
-  },
-  {
-   "fieldname": "push_timeouts_section",
-   "fieldtype": "Section Break",
-   "label": "Push Timeouts"
-  },
-  {
-   "default": "1000",
-   "description": "Time to wait between retry attempts.",
-   "fieldname": "jmap_push_retry_interval",
-   "fieldtype": "Int",
-   "label": "Retry Interval (Milliseconds)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_0q0i",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_68lj",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "1000",
-   "description": "Time to wait before sending a new request to the push service.",
-   "fieldname": "jmap_push_throttle",
-   "fieldtype": "Int",
-   "label": "Throttle (Milliseconds)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "3",
-   "description": "Maximum number of push attempts before a notification is discarded.",
-   "fieldname": "jmap_push_attempts_max",
-   "fieldtype": "Int",
-   "label": "Max Attempts",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "60000",
-   "description": "Time to wait between push attempts.",
-   "fieldname": "jmap_push_attempts_interval",
-   "fieldtype": "Int",
-   "label": "Attempt Interval (Milliseconds)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "10000",
-   "description": "Time before a connection with a push service URL times out.",
-   "fieldname": "jmap_push_timeout_request",
-   "fieldtype": "Int",
-   "label": "Request Timeout (Milliseconds)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "60000",
-   "description": "Time to wait for the push service to verify a subscription.",
-   "fieldname": "jmap_push_timeout_verify",
-   "fieldtype": "Int",
-   "label": "Verification Timeout (Milliseconds)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "description": "Enable proxy protocol for connections from these networks.",
-   "fieldname": "server_proxy_trusted_networks",
-   "fieldtype": "Small Text",
-   "label": "Trusted Networks"
-  },
-  {
-   "fieldname": "storage_directory",
-   "fieldtype": "Data",
-   "label": "Storage",
-   "reqd": 1
-  },
-  {
-   "fieldname": "storage_data",
-   "fieldtype": "Data",
-   "label": "Storage",
-   "reqd": 1
-  },
-  {
-   "fieldname": "storage_blob",
-   "fieldtype": "Data",
-   "label": "Storage",
-   "reqd": 1
-  },
-  {
-   "fieldname": "storage_fts",
-   "fieldtype": "Data",
-   "label": "Storage",
-   "reqd": 1
-  },
-  {
-   "fieldname": "storage_lookup",
-   "fieldtype": "Data",
-   "label": "Storage",
-   "reqd": 1
-  },
-  {
-   "default": "frappe",
-   "description": "Username for administrative access to the cluster.",
-   "fieldname": "fallback_admin_user",
-   "fieldtype": "Data",
-   "label": "Username",
-   "reqd": 1
-  },
-  {
-   "description": "Password for administrative access to the cluster.",
-   "fieldname": "fallback_admin_password",
-   "fieldtype": "Password",
-   "label": "Password",
-   "no_copy": 1
-  },
-  {
-   "fieldname": "fallback_admin_secret",
-   "fieldtype": "Small Text",
-   "hidden": 1,
-   "label": "Password Secret",
-   "no_copy": 1,
-   "read_only": 1
   },
   {
    "description": "FQDN of the proxy or load balancer forwarding requests to mail servers.",
@@ -417,348 +116,6 @@
    "reqd": 1,
    "set_only_once": 1,
    "unique": 1
-  },
-  {
-   "fieldname": "request_limits_section",
-   "fieldtype": "Section Break",
-   "label": "Request Limits"
-  },
-  {
-   "fieldname": "column_break_rc7k",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "max_objects_section",
-   "fieldtype": "Section Break",
-   "label": "Max Objects"
-  },
-  {
-   "fieldname": "column_break_rpmh",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "max_results_section",
-   "fieldtype": "Section Break",
-   "label": "Max Results"
-  },
-  {
-   "fieldname": "column_break_ebem",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "upload_limits_section",
-   "fieldtype": "Section Break",
-   "label": "Upload Limits"
-  },
-  {
-   "fieldname": "column_break_iqbf",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "mailbox_limits_section",
-   "fieldtype": "Section Break",
-   "label": "Mailbox Limits"
-  },
-  {
-   "fieldname": "column_break_dxmn",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "email_limits_section",
-   "fieldtype": "Section Break",
-   "label": "Email Limits"
-  },
-  {
-   "fieldname": "column_break_wuz8",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "40",
-   "description": "Restricts the number of concurrent requests a user can make to the JMAP server.",
-   "fieldname": "jmap_protocol_request_max_concurrent",
-   "fieldtype": "Int",
-   "label": "Concurrent",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "10000000",
-   "description": "Defines the maximum size of a single request, in bytes, that the server will accept.",
-   "fieldname": "jmap_protocol_request_max_size",
-   "fieldtype": "Int",
-   "label": "Size (Bytes)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "16",
-   "description": "Limits the maximum number of method calls that can be included in a single request.",
-   "fieldname": "jmap_protocol_request_max_calls",
-   "fieldtype": "Int",
-   "label": "Method Calls",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "500",
-   "description": "Determines the maximum number of objects that can be fetched in a single method call.",
-   "fieldname": "jmap_protocol_get_max_objects",
-   "fieldtype": "Int",
-   "label": "Get",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "500",
-   "description": "Establishes the maximum number of objects that can be modified in a single method call.",
-   "fieldname": "jmap_protocol_set_max_objects",
-   "fieldtype": "Int",
-   "label": "Set",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "5000",
-   "description": "Sets the maximum number of results that a Query method can return.",
-   "fieldname": "jmap_protocol_query_max_results",
-   "fieldtype": "Int",
-   "label": "Query",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "5000",
-   "description": "Determines the maximum number of change objects that a Changes method can return.",
-   "fieldname": "jmap_protocol_changes_max_results",
-   "fieldtype": "Int",
-   "label": "Changes",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "50000000",
-   "description": "Defines the maximum file size for file uploads to the server.",
-   "fieldname": "jmap_protocol_upload_max_size",
-   "fieldtype": "Int",
-   "label": "Max Size (Bytes)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "40",
-   "description": "Restricts the number of concurrent file uploads a user can perform.",
-   "fieldname": "jmap_protocol_upload_max_concurrent",
-   "fieldtype": "Int",
-   "label": "Max Concurrent",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "1",
-   "description": "Specifies the Time-To-Live (TTL) for each uploaded file, after which the file is deleted from temporary storage.",
-   "fieldname": "jmap_protocol_upload_ttl",
-   "fieldtype": "Int",
-   "label": "Expire After (Hours)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "144000",
-   "description": "Specifies the maximum number of files that a user can upload within a certain period.",
-   "fieldname": "jmap_protocol_upload_quota_files",
-   "fieldtype": "Int",
-   "label": "Total Files",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "5120",
-   "description": "Defines the total size of files that a user can upload within a certain period.",
-   "fieldname": "jmap_protocol_upload_quota_size",
-   "fieldtype": "Int",
-   "label": "Total Size (MB)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "10",
-   "description": "Restricts the maximum depth of nested mailboxes a user can create.",
-   "fieldname": "jmap_mailbox_max_depth",
-   "fieldtype": "Int",
-   "label": "Max Depth",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "255",
-   "description": "Establishes the maximum length of a mailbox name.",
-   "fieldname": "jmap_mailbox_max_name_length",
-   "fieldtype": "Int",
-   "label": "Name Length",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "50000000",
-   "description": "Specifies the maximum size for an email attachment.",
-   "fieldname": "jmap_email_max_attachment_size",
-   "fieldtype": "Int",
-   "label": "Attachment Size (Bytes)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "75000000",
-   "description": "Determines the maximum size for an email message.",
-   "fieldname": "jmap_email_max_size",
-   "fieldtype": "Int",
-   "label": "E-mail Size (Bytes)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "10",
-   "description": "Limits the maximum number of e-mail message that can be parsed in a single request.",
-   "fieldname": "jmap_email_parse_max_items",
-   "fieldtype": "Int",
-   "label": "Emails",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "0 0 * * *",
-   "description": "Specifies how often tombstoned messages are deleted from the database.\n\n<br>\n<br>\n\n<pre>*  *  *  *  *\n\u252c  \u252c  \u252c  \u252c  \u252c\n\u2502  \u2502  \u2502  \u2502  \u2502\n\u2502  \u2502  \u2502  \u2502  \u2514 day of week (0 - 6) (0 is Sunday)\n\u2502  \u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500 month (1 - 12)\n\u2502  \u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 day of month (1 - 31)\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 hour (0 - 23)\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 minute (0 - 59)\n\n---\n\n* - Any value\n/ - Step values\n</pre>\n",
-   "fieldname": "account_purge_frequency",
-   "fieldtype": "Data",
-   "label": "Frequency (Cron)",
-   "reqd": 1
-  },
-  {
-   "default": "30",
-   "description": "How long to keep messages in the Trash and Junk Mail folders before auto-expunging.",
-   "fieldname": "email_auto_expunge",
-   "fieldtype": "Int",
-   "label": "Trash Auto-Expunge (Days)",
-   "non_negative": 1
-  },
-  {
-   "default": "10000",
-   "description": "How many changes to keep in the history for each account. This is used to determine the changes that have occurred since the last time the client requested changes.",
-   "fieldname": "changes_max_history",
-   "fieldtype": "Int",
-   "label": "Changes History",
-   "non_negative": 1
-  },
-  {
-   "default": "1",
-   "description": "Allow users to configure encryption at rest for their data.",
-   "fieldname": "email_encryption_enable",
-   "fieldtype": "Check",
-   "label": "Enable encryption at rest"
-  },
-  {
-   "default": "0",
-   "description": "Encrypt messages that are manually appended by the user using JMAP or IMAP.",
-   "fieldname": "email_encryption_append",
-   "fieldtype": "Check",
-   "label": "Encrypt on append"
-  },
-  {
-   "fieldname": "cleanup_section",
-   "fieldtype": "Section Break",
-   "label": "Cleanup"
-  },
-  {
-   "fieldname": "log_metrics_tab",
-   "fieldtype": "Tab Break",
-   "label": "Log & Metrics"
-  },
-  {
-   "fieldname": "prometheus_pull_metrics_section",
-   "fieldtype": "Section Break",
-   "label": "Prometheus Pull Metrics"
-  },
-  {
-   "default": "0",
-   "description": "Enable the Prometheus metrics endpoint.",
-   "fieldname": "metrics_prometheus_enable",
-   "fieldtype": "Check",
-   "label": "Enable"
-  },
-  {
-   "fieldname": "column_break_ozrd",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "frappe",
-   "description": "The Prometheus endpoint's username for Basic authentication.",
-   "fieldname": "metrics_prometheus_auth_username",
-   "fieldtype": "Data",
-   "label": "Username",
-   "mandatory_depends_on": "eval: doc.metrics_prometheus_enable"
-  },
-  {
-   "description": "The Prometheus endpoint's secret for Basic authentication.",
-   "fieldname": "metrics_prometheus_auth_secret",
-   "fieldtype": "Password",
-   "label": "Secret",
-   "mandatory_depends_on": "eval: doc.metrics_prometheus_enable"
-  },
-  {
-   "fieldname": "opentelemetry_push_metrics_section",
-   "fieldtype": "Section Break",
-   "label": "OpenTelemetry Push Metrics"
-  },
-  {
-   "default": "Disabled",
-   "description": "The transport protocol for Open Telemetry.",
-   "fieldname": "metrics_open_telemetry_transport",
-   "fieldtype": "Select",
-   "label": "Transport",
-   "options": "Disabled\nHTTP\ngRPC",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_lkbk",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)",
-   "description": "The endpoint for Open Telemetry.",
-   "fieldname": "metrics_open_telemetry_endpoint",
-   "fieldtype": "Data",
-   "label": "Endpoint",
-   "mandatory_depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)",
-   "placeholder": "https://tracing.example.com/v1/otel"
-  },
-  {
-   "default": "10",
-   "depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)",
-   "description": "Maximum amount of time that Stalwart will wait for a response from the OpenTelemetry endpoint.",
-   "fieldname": "metrics_open_telemetry_timeout",
-   "fieldtype": "Int",
-   "label": "Timeout (Seconds)",
-   "mandatory_depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)"
-  },
-  {
-   "default": "30",
-   "depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)",
-   "description": "The minimum amount of time that must pass between each push request to the OpenTelemetry endpoint.",
-   "fieldname": "metrics_open_telemetry_interval",
-   "fieldtype": "Int",
-   "label": "Push Interval (Seconds)",
-   "mandatory_depends_on": "eval: [\"HTTP\", \"gRPC\"].includes(doc.metrics_open_telemetry_transport)"
-  },
-  {
-   "fieldname": "section_break_rsr9",
-   "fieldtype": "Section Break"
-  },
-  {
-   "description": "Manage logging and tracing methods.",
-   "fieldname": "traces",
-   "fieldtype": "Table",
-   "label": "Traces",
-   "options": "Mail Cluster Trace"
   },
   {
    "fieldname": "ssh_tab",
@@ -789,95 +146,114 @@
    "label": "SSH Key"
   },
   {
-   "fieldname": "parsing_limits_section",
-   "fieldtype": "Section Break",
-   "label": "Parsing Limits"
-  },
-  {
-   "fieldname": "column_break_cccs",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "10",
-   "description": "Limits the maximum number of vCard items that can be parsed in a single request.",
-   "fieldname": "jmap_contact_parse_max_items",
-   "fieldtype": "Int",
-   "label": "Contacts",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "default": "10",
-   "description": "Limits the maximum number of iCalendar items that can be parsed in a single request.",
-   "fieldname": "jmap_calendar_parse_max_items",
-   "fieldtype": "Int",
-   "label": "Calendars",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_xupm",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "description": "How long to keep deleted emails before they are permanently removed from the system.",
-   "fieldname": "storage_undelete_retention",
-   "fieldtype": "Int",
-   "label": "Un-delete Period (Days)",
-   "non_negative": 1,
-   "reqd": 1
-  },
-  {
-   "description": "Dedicated to indexing for full-text search, enhancing the speed and efficiency of text-based queries.",
-   "fieldname": "search_store_section",
-   "fieldtype": "Section Break",
-   "label": "Search Store"
-  },
-  {
-   "default": "en",
-   "description": "Default language to use when language detection is not possible.",
-   "fieldname": "storage_search_index_default_language",
+   "default": "frappe",
+   "description": "Username for administrative access to the cluster.",
+   "fieldname": "recovery_admin_user",
    "fieldtype": "Data",
-   "label": "Default Language",
+   "label": "Username",
    "reqd": 1
   },
   {
-   "default": "1",
-   "description": "Enable full-text search indexing for email content and metadata.",
-   "fieldname": "storage_search_index_email_enable",
-   "fieldtype": "Check",
-   "label": "Enable Email Searching"
+   "description": "Password for administrative access to the cluster.",
+   "fieldname": "recovery_admin_password",
+   "fieldtype": "Password",
+   "label": "Password",
+   "no_copy": 1
   },
   {
-   "default": "1",
-   "description": "Enable full-text search indexing for calendar data.",
-   "fieldname": "storage_search_index_contacts_enable",
-   "fieldtype": "Check",
-   "label": "Enable Calendar Searching"
+   "fieldname": "default_domain",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Default Domain",
+   "search_index": 1,
+   "set_only_once": 1
   },
   {
-   "default": "1",
-   "description": "Enable full-text search indexing for contacts data.",
-   "fieldname": "storage_search_index_calendar_enable",
-   "fieldtype": "Check",
-   "label": "Enable Contacts Searching"
+   "fieldname": "storage_tab",
+   "fieldtype": "Tab Break",
+   "label": "Storage"
   },
   {
-   "default": "1",
-   "description": "Enable full-text search indexing for tracing data.",
-   "fieldname": "storage_search_index_tracing_enable",
-   "fieldtype": "Check",
-   "label": "Enable Tracing Searching"
+   "description": "Configures the primary data store backend.",
+   "fieldname": "data_store",
+   "fieldtype": "Link",
+   "label": "Data Store",
+   "options": "Mail Cluster Store"
   },
   {
-   "default": "100",
-   "description": "Number of items to process in each batch during indexing operations.",
-   "fieldname": "storage_search_index_batch_size",
-   "fieldtype": "Int",
-   "label": "Indexing Batch Size",
-   "non_negative": 1,
-   "reqd": 1
+   "description": "Configures the blob store backend.",
+   "fieldname": "blob_store",
+   "fieldtype": "Link",
+   "label": "Blob Store",
+   "options": "Mail Cluster Store"
+  },
+  {
+   "fieldname": "column_break_vvzf",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Configures the search store backend.",
+   "fieldname": "search_store",
+   "fieldtype": "Link",
+   "label": "Search Store",
+   "options": "Mail Cluster Store"
+  },
+  {
+   "description": "Configures the in-memory store backend.",
+   "fieldname": "in_memory_store",
+   "fieldtype": "Link",
+   "label": "In-Memory Store",
+   "options": "Mail Cluster Store"
+  },
+  {
+   "depends_on": "eval: !doc.__islocal && doc.data_store_config",
+   "fieldname": "data_store_config",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "Data Config",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "configs_tab",
+   "fieldtype": "Tab Break",
+   "label": "Configs"
+  },
+  {
+   "depends_on": "eval: !doc.__islocal && doc.blob_store_config",
+   "fieldname": "blob_store_config",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "Blob Config",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: !doc.__islocal && doc.search_store_config",
+   "fieldname": "search_store_config",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "Search Config",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: !doc.__islocal && doc.in_memory_store_config",
+   "fieldname": "in_memory_store_config",
+   "fieldtype": "JSON",
+   "is_virtual": 1,
+   "label": "In-Memory Config",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_rxvx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_eyum",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -889,7 +265,7 @@
    "link_fieldname": "cluster"
   }
  ],
- "modified": "2026-04-27 09:50:02.241468",
+ "modified": "2026-05-12 13:37:24.340189",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Cluster",

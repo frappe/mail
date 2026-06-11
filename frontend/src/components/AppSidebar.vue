@@ -97,7 +97,6 @@ import Globe from '~icons/lucide/globe'
 import LayoutGrid from '~icons/lucide/layout-grid'
 import LogOut from '~icons/lucide/log-out'
 import Mailbox from '~icons/lucide/mailbox'
-import Mails from '~icons/lucide/mails'
 import Plus from '~icons/lucide/plus'
 import Settings from '~icons/lucide/settings'
 import Star from '~icons/lucide/star'
@@ -262,12 +261,6 @@ const dashboardItems = [
 				icon: Users,
 				to: { name: 'Members' },
 				activeFor: ['Members', 'Invites', 'Member'],
-			},
-			{
-				label: __('Mailing Lists'),
-				icon: Mails,
-				to: { name: 'MailingLists' },
-				activeFor: ['MailingLists', 'MailingList'],
 			},
 		],
 	},

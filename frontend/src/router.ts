@@ -108,7 +108,7 @@ const routes = [
 		meta: { isDashboard: true },
 	},
 	{
-		path: '/dashboard/domains/:domainName',
+		path: '/dashboard/domains/:domainId',
 		name: 'Domain',
 		component: () => import('@/pages/dashboard/DomainView.vue'),
 		props: true,
@@ -121,29 +121,9 @@ const routes = [
 		meta: { isDashboard: true },
 	},
 	{
-		path: '/dashboard/members/:memberName',
-		name: 'Member',
-		component: () => import('@/pages/dashboard/MemberView.vue'),
-		props: true,
-		meta: { isDashboard: true },
-	},
-	{
 		path: '/dashboard/invites',
 		name: 'Invites',
 		component: () => import('@/pages/dashboard/MembersView.vue'),
-		meta: { isDashboard: true },
-	},
-	{
-		path: '/dashboard/mailing-lists',
-		name: 'MailingLists',
-		component: () => import('@/pages/dashboard/MailingListsView.vue'),
-		meta: { isDashboard: true },
-	},
-	{
-		path: '/dashboard/mailing-lists/:listName',
-		name: 'MailingList',
-		component: () => import('@/pages/dashboard/MailingListView.vue'),
-		props: true,
 		meta: { isDashboard: true },
 	},
 	// Shortcut routes: short paths that resolve to their full account-scoped

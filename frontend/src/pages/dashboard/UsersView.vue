@@ -5,21 +5,28 @@
 				<FeatherIcon name="search" class="text-ink-gray-5 w-4" />
 			</template>
 		</FormControl>
+		<FormControl
+			v-model="roleFilter"
+			:placeholder="__('Role')"
+			class="w-40"
+			type="select"
+			:options="ROLE_FILTER_OPTIONS"
+		/>
 	</div>
 	<ListView
-		v-if="members?.data"
+		v-if="normalizedMembers"
 		ref="listView"
 		class="flex-1"
 		:columns="LIST_COLUMNS"
-		:rows="members.data"
+		:rows="normalizedMembers"
 		:options="LIST_OPTIONS"
 		row-key="name"
 	>
 		<ListHeader />
 		<ListRows>
-			<template v-if="members.data.length">
+			<template v-if="normalizedMembers.length">
 				<ListRow
-					v-for="row in members.data"
+					v-for="row in normalizedMembers"
 					:key="row.name"
 					v-slot="{ column, item }"
 					:row="row"
@@ -35,49 +42,16 @@
 								</div>
 							</div>
 						</template>
-						<template v-else-if="column.key === 'roles'">
-							<div class="flex flex-wrap gap-1">
-								<Badge
-									v-for="role in row.assigned_roles"
-									:key="role"
-									:label="role"
-									:theme="
-										role === 'admin'
-											? 'red'
-											: role === 'tenant-admin'
-												? 'orange'
-												: role === 'user'
-													? 'blue'
-													: 'gray'
-									"
-								/>
-							</div>
-						</template>
-						<template v-else-if="column.key === 'quota'">
-							<div class="flex items-center space-x-2">
-								<div class="bg-surface-gray-4 h-1.5 w-16 rounded-full">
-									<div
-										class="h-1.5 rounded-full"
-										:class="
-											row.quota_usage_percent > 80
-												? 'bg-surface-red-6'
-												: 'bg-surface-gray-7'
-										"
-										:style="{
-											width: `${row.quota_usage_percent || 0}%`,
-											maxWidth: '100%',
-										}"
-									/>
-								</div>
-								<span class="text-ink-gray-5 text-sm">
-									{{ row.quota_usage_percent }}%
-								</span>
-							</div>
+						<template v-else-if="column.key === 'role'">
+							<Badge
+								:label="row.is_admin ? __('Admin') : __('User')"
+								:theme="row.is_admin ? 'orange' : 'blue'"
+							/>
 						</template>
 						<template v-else-if="column.key === 'last_active'">
 							<span class="text-ink-gray-5 text-sm">
 								{{
-									row.last_active
+									row.last_active && dayjs
 										? dayjs(row.last_active).fromNow()
 										: __('Never')
 								}}
@@ -103,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, useTemplateRef } from 'vue'
+import { computed, inject, ref, useTemplateRef, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import {
 	Avatar,
@@ -124,55 +98,88 @@ import {
 
 import { raiseToast } from '@/utils'
 
-const dayjs = inject('$dayjs')
+type DayjsFn = (value?: string | Date | null) => { fromNow: () => string }
+type MemberRow = {
+	name: string
+	full_name: string
+	user_image?: string
+	last_active?: string | null
+	is_admin: boolean
+}
+
+const dayjs = inject<DayjsFn>('$dayjs')
 
 const search = ref('')
+const roleFilter = ref<'all' | 'admin' | 'user'>('all')
 const showDeleteMembers = ref(false)
-const listView = useTemplateRef('listView')
+const listView = useTemplateRef<{
+	selections?: Set<string>
+	toggleAllRows?: () => void
+}>('listView')
 
 const members = createResource({
 	url: 'mail.api.admin.get_members',
-	makeParams: () => ({
-		search: search.value,
-	}),
+	makeParams: () => {
+		const params: { search: string; is_admin?: boolean } = {
+			search: search.value,
+		}
+
+		if (roleFilter.value !== 'all') {
+			params.is_admin = roleFilter.value === 'admin'
+		}
+
+		return params
+	},
 	auto: true,
-	cache: ['mailMembers', search.value],
+	cache: ['mailMembers', search.value, roleFilter.value],
+})
+
+const normalizedMembers = computed<MemberRow[]>(() => {
+	const map = new Map<string, MemberRow>()
+
+	for (const row of (members.data || []) as MemberRow[]) {
+		if (!map.has(row.name)) map.set(row.name, row)
+	}
+
+	return Array.from(map.values())
 })
 
 watchDebounced(() => search.value, members.reload, { debounce: 300 })
+watch(() => roleFilter.value, members.reload)
 
 const reloadMembers = () => members.reload()
 defineExpose({ reloadMembers })
 
 const LIST_COLUMNS = [
 	{ label: __('User'), key: 'user' },
-	{ label: __('Roles'), key: 'roles' },
-	{ label: __('Emails'), key: 'email_count' },
-	{ label: __('Groups'), key: 'group_count' },
-	{ label: __('Lists'), key: 'list_count' },
-	{ label: __('Quota'), key: 'quota' },
+	{ label: __('Role'), key: 'role' },
 	{ label: __('Last Active'), key: 'last_active' },
+]
+
+const ROLE_FILTER_OPTIONS = [
+	{ label: __('All'), value: 'all' },
+	{ label: __('Admin'), value: 'admin' },
+	{ label: __('User'), value: 'user' },
 ]
 
 const LIST_OPTIONS = {
 	showTooltip: false,
 	rowHeight: 50,
 	emptyState: { description: __('No members found.') },
-	getRowRoute: (row) => ({ name: 'Member', params: { memberName: row.name } }),
 }
 
 const deleteMembers = createResource({
 	url: 'mail.api.admin.delete_members',
-	makeParams: () => ({ names: Array.from(listView.value?.selections) }),
+	makeParams: () => ({ names: Array.from(listView.value?.selections || []) }),
 	onSuccess: () => {
 		members.reload()
 		showDeleteMembers.value = false
 		raiseToast(__('Members deleted.'))
-		listView.value?.toggleAllRows()
+		listView.value?.toggleAllRows?.()
 	},
-	onError: (error) => {
+	onError: (error: { messages?: string[] }) => {
 		showDeleteMembers.value = false
-		raiseToast(error.messages[0], 'error')
+		raiseToast(error.messages?.[0] || __('Failed to delete members.'), 'error')
 	},
 })
 

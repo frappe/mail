@@ -4,6 +4,21 @@ on:
   schedule:
     - cron: "0 9 * * 2"
   workflow_dispatch:
+    inputs:
+      release_branch:
+        description: "Target release branch to release"
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - v0
+          - v1
+      dry_run:
+        description: "Run semantic-release in dry-run mode"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -11,14 +26,19 @@ permissions:
   pull-requests: write
 
 jobs:
-  release:
-    name: Release
+  release-v0:
+    name: Release (v0)
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'schedule' || github.event.inputs.release_branch == 'all' || github.event.inputs.release_branch == 'v0' }}
+    concurrency:
+      group: release-v0
+      cancel-in-progress: false
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
+          ref: v0
           fetch-depth: 0
           persist-credentials: false
 
@@ -32,6 +52,50 @@ jobs:
           npm install @semantic-release/git @semantic-release/exec --no-save
 
       - name: Create Release
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
+
+      - name: Create Release (Dry Run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release --dry-run
+
+  release-v1:
+    name: Release (v1)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'schedule' || github.event.inputs.release_branch == 'all' || github.event.inputs.release_branch == 'v1' }}
+    concurrency:
+      group: release-v1
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: v1
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install semantic-release dependencies
+        run: |
+          npm install @semantic-release/git @semantic-release/exec --no-save
+
+      - name: Create Release
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
+
+      - name: Create Release (Dry Run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release --dry-run

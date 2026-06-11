@@ -1,8 +1,8 @@
 # Copyright (c) 2024, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-import base64
 import io
+import json
 
 import frappe
 import paramiko
@@ -10,100 +10,98 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import random_string
 
-from mail.backend import MailBackendAPI, Principal
-from mail.jmap.connection import raise_for_status
-from mail.utils import generate_secret, hash_password
 from mail.utils.dns import get_dns_record
-from mail.utils.validation import is_valid_cron_expression
 
-DEFAULT_STORES = [
-	{
-		"type": "RocksDB",
-		"store_id": "rocksdb",
-		"path": "/opt/stalwart/data",
-		"compression": "LZ4",
-		"min_blob_size": 16834,
-		"write_buffer_size": 128,
-		"purge_frequency": "0 3 * * *",
-	}
-]
-DEFAULT_LISTENERS = [
-	{"protocol": "HTTP", "listener_id": "http", "bind": "[::]:8080", "tls_implicit": 0},
-	{"protocol": "HTTP", "listener_id": "https", "bind": "[::]:443", "tls_implicit": 1},
-	{"protocol": "IMAP4", "listener_id": "imap", "bind": "[::]:143", "tls_implicit": 0},
-	{"protocol": "IMAP4", "listener_id": "imaptls", "bind": "[::]:993", "tls_implicit": 1},
-	{"protocol": "POP3", "listener_id": "pop3", "bind": "[::]:110", "tls_implicit": 0},
-	{"protocol": "POP3", "listener_id": "pop3s", "bind": "[::]:995", "tls_implicit": 1},
-	{
-		"protocol": "ManageSieve",
-		"listener_id": "sieve",
-		"bind": "[::]:4190",
-		"tls_implicit": 0,
-	},
-	{"protocol": "SMTP", "listener_id": "smtp", "bind": "[::]:25", "tls_implicit": 0},
-	{
-		"protocol": "SMTP",
-		"listener_id": "submission",
-		"bind": "[::]:587\n[::]:8025",
-		"tls_implicit": 0,
-	},
-	{
-		"protocol": "SMTP",
-		"listener_id": "submissions",
-		"bind": "[::]:465\n[::]:2525",
-		"tls_implicit": 1,
-	},
-]
-DEFAULT_TRACES = [
-	{
-		"tracer_id": "log",
-		"type": "Log file",
-		"level": "Info",
-		"path": "/opt/stalwart/logs",
-		"prefix": "stalwart.log",
-		"rotate": "Daily",
-	}
-]
-STORAGE_OPTIONS = {
-	"storage_directory": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite"],
-	"storage_data": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite"],
-	"storage_blob": [
-		"RocksDB",
-		"FoundationDB",
-		"PostgreSQL",
-		"mySQL",
-		"SQLite",
-		"S3-compatible",
-		"Azure Blob Storage",
-		"Filesystem",
-	],
-	"storage_fts": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite", "ElasticSearch"],
-	"storage_lookup": ["RocksDB", "FoundationDB", "PostgreSQL", "mySQL", "SQLite", "Redis/Memcached"],
+ALLOWED_STORE_TYPES = {
+	"data_store": ["RocksDb", "Sqlite", "FoundationDb", "PostgreSql", "MySql"],
+	"blob_store": ["Default", "RocksDb", "S3", "Azure", "FileSystem"],
+	"search_store": ["Default", "RocksDb", "ElasticSearch", "Meilisearch"],
+	"in_memory_store": ["Default", "RocksDb", "Redis", "RedisCluster"],
 }
 
 
 class MailCluster(Document):
+	@property
+	def data_store_config(self) -> str:
+		if not self.data_store:
+			return "{}"
+
+		try:
+			store = frappe.get_doc("Mail Cluster Store", self.data_store)
+			return json.dumps(store.config, indent=4)
+		except Exception:
+			return "{}"
+
+	@property
+	def blob_store_config(self) -> str:
+		if not self.blob_store:
+			return '{"@type": "Default"}'
+
+		try:
+			store = frappe.get_doc("Mail Cluster Store", self.blob_store)
+			return json.dumps(store.config, indent=4)
+		except Exception:
+			return '{"@type": "Default"}'
+
+	@property
+	def search_store_config(self) -> str:
+		if not self.search_store:
+			return '{"@type": "Default"}'
+
+		try:
+			store = frappe.get_doc("Mail Cluster Store", self.search_store)
+			return json.dumps(store.config, indent=4)
+		except Exception:
+			return '{"@type": "Default"}'
+
+	@property
+	def in_memory_store_config(self) -> str:
+		if not self.in_memory_store:
+			return '{"@type": "Default"}'
+
+		try:
+			store = frappe.get_doc("Mail Cluster Store", self.in_memory_store)
+			return json.dumps(store.config, indent=4)
+		except Exception:
+			return '{"@type": "Default"}'
+
 	def autoname(self) -> None:
 		self.hostname = self.hostname.lower()
 		self.name = self.hostname
 
+	def before_insert(self) -> None:
+		self.generate_ssh_keypair()
+		self.initialize_defaults()
+
 	def validate(self) -> None:
 		self.validate_enabled()
 		self.validate_hostname()
-		self.validate_fallback_admin_password()
-		self.generate_fallback_admin_secret()
+		self.validate_default_domain()
+		self.validate_recovery_admin_password()
 		self.validate_base_url()
 		self.validate_stores()
-		self.validate_storage()
-		self.validate_listeners()
-		self.validate_traces()
-
-	def before_insert(self) -> None:
-		self.generate_ssh_keypair()
 
 	def on_trash(self) -> None:
 		if frappe.session.user != "Administrator":
 			frappe.throw(_("Only Administrator can delete Mail Cluster."))
+
+	def generate_ssh_keypair(self, save: bool = False) -> None:
+		"""Generates an SSH key pair for the cluster."""
+
+		key = paramiko.RSAKey.generate(4096)
+		private_io = io.StringIO()
+		key.write_private_key(private_io)
+		self.ssh_private_key = private_io.getvalue()
+		self.ssh_public_key = f"{key.get_name()} {key.get_base64()} frappe-mail-cluster"
+
+		if save:
+			self.save()
+
+	@frappe.whitelist()
+	def initialize_defaults(self) -> None:
+		"""Initializes the default values."""
+
+		self._initialize_data_store()
 
 	def validate_enabled(self) -> None:
 		"""Validates the enabled status of the cluster."""
@@ -125,18 +123,20 @@ class MailCluster(Document):
 		self.ipv4_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "A") or []])
 		self.ipv6_addresses = "\n".join([r.address for r in get_dns_record(self.hostname, "AAAA") or []])
 
-	def validate_fallback_admin_password(self) -> None:
-		if self.fallback_admin_password:
-			if len(self.fallback_admin_password) < 16:
+	def validate_default_domain(self) -> None:
+		"""Validates the default domain of the cluster."""
+
+		if not self.default_domain:
+			self.default_domain = self.hostname
+
+	def validate_recovery_admin_password(self) -> None:
+		"""Validates the recovery admin password."""
+
+		if self.recovery_admin_password:
+			if len(self.recovery_admin_password) < 16:
 				frappe.throw(_("Password must be at least 16 characters long."))
 		else:
-			self.fallback_admin_password = random_string(length=20)
-
-	def generate_fallback_admin_secret(self) -> None:
-		"""Generates the fallback admin secret."""
-
-		if self.has_value_changed("fallback_admin_password"):
-			self.fallback_admin_secret = hash_password(self.get_password("fallback_admin_password"))
+			self.recovery_admin_password = random_string(length=20)
 
 	def validate_base_url(self) -> None:
 		"""Validates the base URL of the cluster."""
@@ -145,158 +145,98 @@ class MailCluster(Document):
 			self.base_url = f"https://{self.hostname}/"
 
 	def validate_stores(self) -> None:
-		"""Validates the stores."""
+		"""Validates the data stores of the cluster."""
 
-		store_ids = []
-		for store in self.stores:
-			if store.store_id in store_ids:
+		def validate_store(store_field: str) -> None:
+			store = self.get(store_field)
+
+			if store_field == "data_store" and not store:
+				frappe.throw(_("Data Store is required."))
+
+			if not store or (store_field != "data_store" and store == self.data_store):
+				default_store = frappe.db.get_value("Mail Cluster Store", {"type": "Default"}, "name")
+				if not default_store:
+					doc = frappe.new_doc("Mail Cluster Store")
+					doc.type = "Default"
+					doc.insert()
+					default_store = doc.name
+
+				self.set(store_field, default_store)
+				return
+
+			store_type = frappe.db.get_value("Mail Cluster Store", store, "type")
+			allowed_types = ALLOWED_STORE_TYPES[store_field]
+
+			if store_type not in allowed_types:
 				frappe.throw(
-					_("Row #{0}: Store ID {1} is duplicated.").format(store.idx, frappe.bold(store.store_id))
-				)
-
-			store_ids.append(store.store_id)
-
-			if store.purge_frequency:
-				is_valid_cron_expression(store.purge_frequency, raise_exception=True)
-
-	def validate_storage(self) -> None:
-		"""Validates the selected stores against the stores."""
-
-		stores = {store.store_id: store for store in self.stores}
-		storage_labels = get_storage_labels()
-
-		for key in STORAGE_OPTIONS.keys():
-			selected_storage = getattr(self, key)
-			if selected_storage not in stores:
-				frappe.throw(_("Store with Store ID {0} not found.").format(frappe.bold(selected_storage)))
-
-			store = stores[selected_storage]
-			if store.type not in STORAGE_OPTIONS[key]:
-				frappe.throw(
-					_("{0} has an invalid store type '{1}'. Allowed types are: {2}.").format(
-						frappe.bold(storage_labels[key]),
-						frappe.bold(store.type),
-						", ".join(STORAGE_OPTIONS[key]),
+					_("{0} type must be one of {1}.").format(
+						self.meta.get_field(store_field).label,
+						", ".join(allowed_types),
 					)
 				)
 
-		is_valid_cron_expression(self.account_purge_frequency, raise_exception=True)
+		validate_store("data_store")
 
-	def validate_listeners(self) -> None:
-		"""Validates the listeners."""
+		for field in ["blob_store", "search_store", "in_memory_store"]:
+			validate_store(field)
 
-		listener_ids = []
-		for listener in self.listeners:
-			if listener.listener_id in listener_ids:
-				frappe.throw(
-					_("Row #{0}: Listener ID {1} is duplicated.").format(
-						listener.idx, frappe.bold(listener.listener_id)
-					)
-				)
+	def _initialize_data_store(self) -> None:
+		"""Initializes the data store for the cluster."""
 
-			listener_ids.append(listener.listener_id)
+		if not self.data_store:
+			store = frappe.new_doc("Mail Cluster Store")
+			store.type = "RocksDb"
+			store.path = "/etc/stalwart/data"
+			store.blob_size = 16834
+			store.buffer_size = 134217728
+			store.pool_workers = 1
+			store.insert()
 
-	def validate_traces(self) -> None:
-		"""Validates the traces."""
-
-		tracer_ids = []
-		for trace in self.traces:
-			if trace.tracer_id in tracer_ids:
-				frappe.throw(
-					_("Row #{0}: Tracer ID {1} is duplicated.").format(
-						trace.idx, frappe.bold(trace.tracer_id)
-					)
-				)
-
-			tracer_ids.append(trace.tracer_id)
-
-	def generate_ssh_keypair(self, save: bool = False) -> None:
-		"""Generates an SSH key pair for the cluster."""
-
-		key = paramiko.RSAKey.generate(4096)
-		private_io = io.StringIO()
-		key.write_private_key(private_io)
-		self.ssh_private_key = private_io.getvalue()
-		self.ssh_public_key = f"{key.get_name()} {key.get_base64()} frappe-mail-cluster"
-
-		if save:
-			self.save()
+			self.data_store = store.name
 
 	@frappe.whitelist()
-	def initialize_defaults(self) -> None:
-		"""Initializes the default values."""
-
-		self.initialize_default_stores()
-		self.initialize_default_listeners()
-		self.initialize_default_traces()
-
-	def initialize_default_stores(self) -> None:
-		"""Initializes the default stores."""
-
-		self.stores = []
-		for store in DEFAULT_STORES:
-			self.append("stores", store)
-
-		if len(self.stores) == 1:
-			primary_store = self.stores[0]
-
-			for field in STORAGE_OPTIONS.keys():
-				if primary_store.type in STORAGE_OPTIONS[field]:
-					setattr(self, field, primary_store.store_id)
-
-	def initialize_default_listeners(self) -> None:
-		"""Initializes the default listeners."""
-
-		self.listeners = []
-		for listener in DEFAULT_LISTENERS:
-			self.append("listeners", listener)
-
-	def initialize_default_traces(self) -> None:
-		"""Initializes the default traces."""
-
-		self.traces = []
-		for trace in DEFAULT_TRACES:
-			self.append("traces", trace)
-
-	@frappe.whitelist()
-	def get_fallback_admin_password(self) -> str:
+	def get_recovery_admin_password(self) -> str:
 		"""Returns the admin password of the cluster."""
 
 		frappe.only_for("System Manager")
-		return self.get_password("fallback_admin_password")
+		return self.get_password("recovery_admin_password")
 
-	@frappe.whitelist()
-	def generate_api_key(self) -> None:
-		"""Generates an API key for the cluster."""
+	def get_bootstrap_operations(self, hostname: str = "{{ hostname }}") -> list[dict]:
+		"""Returns the bootstrap operations for the cluster."""
 
-		frappe.only_for("System Manager")
-		self.api_key = self._generate_api_key()
-		self.save()
+		operations = [
+			{
+				"@type": "update",
+				"object": "Bootstrap",
+				"id": "singleton",
+				"value": {
+					# required
+					"serverHostname": hostname,
+					"defaultDomain": self.default_domain,
+					# optional
+					"requestTlsCertificate": True,
+					"generateDkimKeys": True,
+					"dataStore": json.loads(self.data_store_config),
+					"blobStore": json.loads(self.blob_store_config),
+					"searchStore": json.loads(self.search_store_config),
+					"inMemoryStore": json.loads(self.in_memory_store_config),
+					"directory": {"@type": "Internal"},
+					"tracer": {
+						"@type": "Log",
+						"ansi": True,
+						"enable": True,
+						"eventsPolicy": "exclude",
+						"level": "info",
+						"prefix": "stalwart",
+						"rotate": "daily",
+						"path": "/etc/stalwart/logs",
+					},
+					"dnsServer": {"@type": "Manual"},
+				},
+			}
+		]
 
-	def _generate_api_key(self) -> str:
-		"""Generates an API key for the cluster."""
-
-		if not self.base_url:
-			frappe.throw(_("Base URL is required."))
-
-		name = f"{random_string(10)}-{self.hostname}".lower()
-		secret = generate_secret()
-		principal = Principal(
-			name=name, type="apiKey", secrets=secret, roles=["admin"], enabledPermissions=["authenticate"]
-		)
-		backend_api = MailBackendAPI(
-			self.base_url,
-			username=self.fallback_admin_user,
-			password=self.get_password("fallback_admin_password"),
-		)
-		response = backend_api.request(method="POST", endpoint="/api/principal", json=principal.__dict__)
-		raise_for_status(response)
-		response_json = response.json()
-
-		if error := response_json.get("error"):
-			frappe.throw(error)
-
-		return f"api_{base64.b64encode(f'{name}:{secret}'.encode()).decode()}"
+		return operations
 
 
 def get_storage_labels() -> dict:

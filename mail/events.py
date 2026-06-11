@@ -1,67 +1,98 @@
-import json
+from typing import Any
 
 import frappe
 from frappe import _
+from frappe.core.doctype.user.user import _get_user_for_update_password
+from frappe.core.doctype.user.user import update_password as update_frappe_password
 from frappe.model.document import Document
 
-from mail.backend import get_mail_backend_api
-from mail.server.doctype.principal.principal import PRINCIPAL_ENDPOINT, Principal
-from mail.utils import reformat_pbkdf2_hash
-from mail.utils.user import (
-	get_jmap_username,
-	get_user_hashed_password,
-	is_local_user,
-)
-from mail.utils.validation import validate_mail_config
+from mail.stalwart import delete_account as delete_stalwart_account
+from mail.stalwart import update_password as update_stalwart_password
+from mail.utils import execute_with_logging, is_stalwart_configured
+from mail.utils.user import is_jmap_configured
+
+
+def create_user_settings(doc: Document, method: str | None = None) -> None:
+	"""Create User Settings for the new user if not already present."""
+
+	if not frappe.db.exists("User Settings", {"user": doc.name}):
+		settings = frappe.new_doc("User Settings")
+		settings.user = doc.name
+		settings.insert(ignore_permissions=True, ignore_mandatory=True)
+
+
+def delete_user_settings(doc: Document, method: str | None = None) -> None:
+	"""Delete User Settings when the user is deleted."""
+
+	for settings in frappe.db.get_all("User Settings", filters={"user": doc.name}, pluck="name"):
+		frappe.delete_doc("User Settings", settings, ignore_permissions=True, delete_permanently=True)
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def update_password(
+	new_password: str, logout_all_sessions: int = 0, key: str | None = None, old_password: str | None = None
+) -> Any:
+	"""Override the default update_password whitelisted method to update the password on Stalwart server when the user updates their password."""
+
+	frappe.flags.in_update_password = True
+
+	if not is_stalwart_configured(raise_exception=False):
+		return update_frappe_password(
+			new_password=new_password,
+			logout_all_sessions=logout_all_sessions,
+			key=key,
+			old_password=old_password,
+		)
+
+	result = _get_user_for_update_password(key, old_password)
+	user = result.get("user")
+
+	result = update_frappe_password(
+		new_password=new_password, logout_all_sessions=logout_all_sessions, key=key, old_password=old_password
+	)
+
+	if user and is_jmap_configured(user):
+		execute_with_logging(
+			lambda: update_stalwart_password(user, new_password=new_password),
+			title="Failed to update password on Stalwart server",
+			with_context=False,
+		)
+
+	return result
 
 
 def update_account_password(doc: Document, method: str | None = None) -> None:
-	"""Update the password in the Principal when the User's password is changed, but ONLY if the hash is different from the backend stored hash."""
+	"""Updates the password on Stalwart server when the user updates their password."""
 
-	if not (doc.enabled and is_local_user(doc.name)):
+	if (
+		frappe.flags.in_update_password
+		or doc.flags.in_insert
+		or not doc.enabled
+		or not is_stalwart_configured(raise_exception=False)
+		or not is_jmap_configured(doc.name)
+	):
 		return
 
-	validate_mail_config()
+	user = doc.name
+	new_password = doc._User__new_password
 
-	username = get_jmap_username(doc.name)
-
-	backend = get_mail_backend_api()
-	principal = Principal._fetch(backend, username, ignore_not_found=False)
-
-	backend_secrets = principal.get("secrets", [])
-	backend_hash = next((s for s in backend_secrets if not s.startswith("$app$")), None)
-
-	user_hash = get_user_hashed_password(doc.name)
-	reformatted_user_hash = reformat_pbkdf2_hash(user_hash) if user_hash else None
-
-	if not reformatted_user_hash or reformatted_user_hash == backend_hash:
+	if not new_password:
 		return
 
-	# Remove all non-app secrets
-	actions = [
-		{"action": "removeItem", "field": "secrets", "value": secret}
-		for secret in backend_secrets
-		if not secret.startswith("$app$")
-	]
-
-	# Add new password hash
-	actions.append(
-		{
-			"action": "addItem",
-			"field": "secrets",
-			"value": reformatted_user_hash,
-		}
+	execute_with_logging(
+		lambda: update_stalwart_password(user, new_password=new_password),
+		title="Failed to update password on Stalwart server",
+		with_context=False,
 	)
 
-	response = backend.request(
-		"PATCH",
-		f"{PRINCIPAL_ENDPOINT}/{username}",
-		data=json.dumps(actions),
-	)
 
-	if response.json().get("error"):
-		frappe.throw(
-			_("Failed to update password for Principal {0}. Response: {1}").format(
-				frappe.bold(username), frappe.bold(response.text)
-			)
-		)
+def delete_account(doc: Document, method: str | None = None) -> None:
+	if not is_stalwart_configured(raise_exception=False) or not is_jmap_configured(doc.name):
+		return
+
+	user = doc.name
+	execute_with_logging(
+		lambda: delete_stalwart_account(user),
+		title="Failed to delete account on Stalwart server",
+		with_context=False,
+	)

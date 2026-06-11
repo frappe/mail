@@ -12,6 +12,7 @@ from mail.api.sieve import update_sieve_script_for_mailbox
 from mail.api.utils import get_avatar_url
 from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
 from mail.client.doctype.mail_message.mail_message import (
+	add_messages_to_mailbox,
 	delete_messages,
 	empty_mailbox,
 	fetch_blob,
@@ -19,6 +20,7 @@ from mail.client.doctype.mail_message.mail_message import (
 	fetch_threads,
 	get_message_ids,
 	move_messages_to_mailbox,
+	remove_messages_from_mailbox,
 	search_messages,
 	set_flagged_status,
 	set_seen_status,
@@ -28,7 +30,7 @@ from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.client.doctype.mailbox.mailbox import add_mailbox, delete_mailboxes
 from mail.client.doctype.mailbox_settings.mailbox_settings import set_mailbox_settings
 from mail.jmap import get_email_service, get_mailbox_id_by_role
-from mail.utils import convert_html_to_text, get_mail_config
+from mail.utils import convert_html_to_text, get_config
 from mail.utils.user import get_account_emails, is_jmap_configured
 from mail.utils.validation import has_permission_for_user
 
@@ -509,7 +511,7 @@ def move_mails(account: str, ids: list[str], mailbox: str, clear_junk: bool = Fa
 
 
 @frappe.whitelist()
-def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]], clear_junk: bool = False) -> dict:
+def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]]) -> dict:
 	"""Sets mailbox for threads."""
 
 	for move_to_mailbox, ids in thread_ids.items():
@@ -518,11 +520,26 @@ def set_threads_mailbox(account: str, thread_ids: dict[str, list[str]], clear_ju
 			set_spam_status(account, messages, spam=True)
 			continue
 
-		if clear_junk:
-			set_spam_status(account, messages, spam=False)
+		set_spam_status(account, messages, spam=False)
 		move_messages_to_mailbox(account, messages, move_to_mailbox)
 
 	return thread_ids
+
+
+@frappe.whitelist()
+def add_threads_to_mailbox(account: str, thread_ids: list[str], mailbox_id: str) -> None:
+	"""Adds threads to a mailbox without removing from existing mailboxes."""
+
+	ids = get_message_ids(account, thread_ids)
+	add_messages_to_mailbox(account, ids, mailbox_id)
+
+
+@frappe.whitelist()
+def remove_threads_from_mailbox(account: str, thread_ids: list[str], mailbox_id: str) -> None:
+	"""Removes threads from a mailbox without deleting them."""
+
+	ids = get_message_ids(account, thread_ids)
+	remove_messages_from_mailbox(account, ids, mailbox_id)
 
 
 @frappe.whitelist()
@@ -617,7 +634,7 @@ def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 
 	if not avatar:
 		# 2. Try Gravatar
-		default = get_mail_config("gravatar_default_avatar")
+		default = get_config("default_gravatar")
 		try:
 			res = requests.get(
 				f"https://secure.gravatar.com/avatar/{email_hash}",

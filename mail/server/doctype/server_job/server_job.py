@@ -11,7 +11,7 @@ from frappe.model.document import Document
 from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 
-from mail.utils import get_mail_config
+from mail.utils import get_config
 
 
 class ServerJob(Document):
@@ -32,7 +32,7 @@ class ServerJob(Document):
 				self.name,
 				"execute",
 				queue="long",
-				timeout=cint(get_mail_config("server_job_timeout")),
+				timeout=cint(get_config("server_job_timeout")),
 				enqueue_after_commit=True,
 			)
 
@@ -168,7 +168,7 @@ class ServerJob(Document):
 			self.name,
 			"execute",
 			queue="long",
-			timeout=cint(get_mail_config("server_job_timeout")),
+			timeout=cint(get_config("server_job_timeout")),
 			enqueue_after_commit=True,
 		)
 

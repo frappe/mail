@@ -66,7 +66,7 @@ sudo nginx -t && sudo bash -c "$NGINX_RELOAD_CMD"
 # Step 4: Restart Docker stack
 # -------------------------------
 echo "Restarting Docker stack..."
-cd "/opt/stalwart/$SERVER"
+cd "/etc/stalwart/$SERVER"
 sudo docker-compose down
 sudo docker-compose up -d
 

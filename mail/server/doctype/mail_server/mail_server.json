@@ -8,18 +8,14 @@
   "details_tab",
   "section_break_excr",
   "enabled",
-  "outbound_only",
   "column_break_0mtp",
   "cluster",
   "hostname",
-  "base_url",
+  "recovery_http_port",
   "network_settings_section",
-  "server_max_connections",
-  "column_break_3m4p",
   "ipv4_addresses",
+  "column_break_3m4p",
   "ipv6_addresses",
-  "cluster_settings_section",
-  "cluster_node_id",
   "ssh_tab",
   "section_break_rmju",
   "column_break_mwtr",
@@ -29,11 +25,9 @@
   "ssh_port",
   "ssh_key_section",
   "ssh_public_key",
-  "tls_tab",
-  "acme_providers",
-  "tls_certificates",
-  "listeners_tab",
-  "listeners"
+  "bootstrap_tab",
+  "bootstrap_ndjson",
+  "regenerate_bootstrap_ndjson"
  ],
  "fields": [
   {
@@ -50,29 +44,6 @@
    "label": "Network Settings"
   },
   {
-   "fieldname": "cluster_settings_section",
-   "fieldtype": "Section Break",
-   "label": "Cluster Settings"
-  },
-  {
-   "default": "8192",
-   "description": "The maximum number of concurrent connections the server will accept.",
-   "fieldname": "server_max_connections",
-   "fieldtype": "Int",
-   "label": "Max Connections",
-   "reqd": 1
-  },
-  {
-   "description": "Unique identifier for this node in the cluster.",
-   "fieldname": "cluster_node_id",
-   "fieldtype": "Int",
-   "label": "Node ID",
-   "no_copy": 1,
-   "non_negative": 1,
-   "placeholder": "1",
-   "reqd": 1
-  },
-  {
    "default": "1",
    "depends_on": "eval: !doc.__islocal",
    "description": "Disable to stop this mail server from sending or receiving emails.",
@@ -87,21 +58,9 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "listeners_tab",
-   "fieldtype": "Tab Break",
-   "label": "Listeners"
-  },
-  {
    "fieldname": "details_tab",
    "fieldtype": "Tab Break",
    "label": "Details"
-  },
-  {
-   "description": "Define custom listeners for this mail server. If not set, the cluster\u2019s listeners will be used.",
-   "fieldname": "listeners",
-   "fieldtype": "Table",
-   "label": "Listeners",
-   "options": "Mail Server Listener"
   },
   {
    "description": "The mail cluster this server belongs to.",
@@ -114,39 +73,6 @@
    "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
-  },
-  {
-   "default": "0",
-   "description": "Disable email delivery to local domains and perform an MX lookup to route emails externally.",
-   "fieldname": "outbound_only",
-   "fieldtype": "Check",
-   "label": "Outbound Only",
-   "search_index": 1
-  },
-  {
-   "fieldname": "tls_tab",
-   "fieldtype": "Tab Break",
-   "label": "TLS"
-  },
-  {
-   "description": "Manage TLS certificates.",
-   "fieldname": "tls_certificates",
-   "fieldtype": "Table",
-   "label": "TLS Certificates",
-   "options": "Mail Server TLS Certificate"
-  },
-  {
-   "description": "Manage ACME TLS certificate providers.",
-   "fieldname": "acme_providers",
-   "fieldtype": "Table",
-   "label": "ACME Providers",
-   "options": "Mail Server ACME Provider"
-  },
-  {
-   "description": "URL where HTTP requests are sent.",
-   "fieldname": "base_url",
-   "fieldtype": "Data",
-   "label": "Base URL"
   },
   {
    "description": "Hostname of the mail server.",
@@ -231,16 +157,34 @@
    "label": "Public IPv6",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "bootstrap_tab",
+   "fieldtype": "Tab Break",
+   "label": "Bootstrap"
+  },
+  {
+   "fieldname": "bootstrap_ndjson",
+   "fieldtype": "Code",
+   "label": "bootstrap.ndjson"
+  },
+  {
+   "fieldname": "regenerate_bootstrap_ndjson",
+   "fieldtype": "Button",
+   "label": "Regenerate"
+  },
+  {
+   "default": "8080",
+   "fieldname": "recovery_http_port",
+   "fieldtype": "Int",
+   "label": "Recovery HTTP Port",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [
-  {
-   "group": "Reference",
-   "link_doctype": "Server Config",
-   "link_fieldname": "server"
-  },
   {
    "group": "Deployment",
    "link_doctype": "Server Job",
@@ -257,7 +201,7 @@
    "link_fieldname": "server"
   }
  ],
- "modified": "2026-04-27 10:22:56.594485",
+ "modified": "2026-05-07 14:39:23.127998",
  "modified_by": "Administrator",
  "module": "Server",
  "name": "Mail Server",

@@ -156,11 +156,6 @@ after_migrate = "mail.install.after_migrate"
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-	# Server
-	"Mail Account Request": "mail.server.doctype.mail_account_request.mail_account_request.get_permission_query_condition",
-	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.get_permission_query_condition",
-	"Mail Domain Request": "mail.server.doctype.mail_domain_request.mail_domain_request.get_permission_query_condition",
-	"Principal Settings": "mail.server.doctype.principal_settings.principal_settings.get_permission_query_condition",
 	# Client
 	"Account Settings": "mail.client.doctype.account_settings.account_settings.get_permission_query_condition",
 	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.get_permission_query_condition",
@@ -170,12 +165,6 @@ permission_query_conditions = {
 }
 
 has_permission = {
-	# Server
-	"Mail Account Request": "mail.server.doctype.mail_account_request.mail_account_request.has_permission",
-	"Mail Data Exchange": "mail.server.doctype.mail_data_exchange.mail_data_exchange.has_permission",
-	"Mail Domain Request": "mail.server.doctype.mail_domain_request.mail_domain_request.has_permission",
-	"Principal": "mail.server.doctype.principal.principal.has_permission",
-	"Principal Settings": "mail.server.doctype.principal_settings.principal_settings.has_permission",
 	# Client
 	"Account Settings": "mail.client.doctype.account_settings.account_settings.has_permission",
 	"Address Book": "mail.client.doctype.address_book.address_book.has_permission",
@@ -215,8 +204,15 @@ website_route_rules = [
 
 doc_events = {
 	"User": {
+		"after_insert": [
+			"mail.events.create_user_settings",
+		],
 		"on_update": [
 			"mail.events.update_account_password",
+		],
+		"on_trash": [
+			"mail.events.delete_account",
+			"mail.events.delete_user_settings",
 		],
 	},
 }
@@ -230,14 +226,12 @@ scheduler_events = {
 	# ],
 	"daily": [
 		"mail.client.doctype.mail_exchange.mail_exchange.clean_import_export_directories",
-		"mail.server.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
 	],
 	# "daily_long": [
 	#     "mail.tasks.daily_long"
 	# ],
 	"hourly": [
 		"mail.client.doctype.mail_exchange.mail_exchange.retry_stuck_mail_exchanges",
-		"mail.server.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",
 	],
 	"hourly_long": [
 		"mail.client.doctype.mail_message.mail_message.schedule_fetch_changes",
@@ -268,9 +262,9 @@ scheduler_events = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "mail.event.get_events"
-# }
+override_whitelisted_methods = {
+	"frappe.core.doctype.user.user.update_password": "mail.events.update_password",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
@@ -289,10 +283,13 @@ scheduler_events = {
 ignore_links_on_delete = [
 	# Server
 	"Mail Account Request",
-	"Mail Data Exchange",
 	"Mail Domain Request",
+	"Server Job",
+	"Server Ansible Play",
+	"Server Deployment",
 	# Client
 	"Account Settings",
+	"Blocked Email Address",
 	"Mail Exchange",
 	"Mail Queue",
 	"Mail Signature",

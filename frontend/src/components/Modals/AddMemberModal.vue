@@ -35,10 +35,12 @@
 						:open-on-click="true"
 					/>
 				</div>
-				<div class="space-y-1.5">
-					<label class="text-ink-gray-5 block text-xs">{{ __('Roles') }}</label>
-					<MultiSelect v-model="accountRequest.roles" :options="ROLE_OPTIONS" />
-				</div>
+				<FormControl
+					v-model="accountRequest.role"
+					type="select"
+					:label="__('Role')"
+					:options="ROLE_OPTIONS"
+				/>
 				<FormControl
 					v-model="accountRequest.backup_email"
 					type="email"
@@ -84,36 +86,32 @@
 
 <script setup lang="ts">
 import { inject, reactive, watch } from 'vue'
-import {
-	Dialog,
-	ErrorMessage,
-	FeatherIcon,
-	FormControl,
-	MultiSelect,
-	Switch,
-	createResource,
-} from 'frappe-ui'
+import { Dialog, ErrorMessage, FeatherIcon, FormControl, Switch, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
 const show = defineModel<boolean>()
 
-const dayjs = inject('$dayjs')
+type DayjsFn = () => {
+	add: (value: number, unit: string) => { format: (fmt: string) => string }
+}
+
+const dayjs = inject<DayjsFn>('$dayjs')
 
 const { domains } = userStore()
 
 const ROLE_OPTIONS = [
-	{ label: __('user'), value: 'user' },
-	{ label: __('tenant-admin'), value: 'tenant-admin' },
+	{ label: __('User'), value: 'user' },
+	{ label: __('Admin'), value: 'admin' },
 ]
 
 const defaultAccountRequest = {
 	username: '',
 	domain: '',
-	roles: ['user'] as string[],
+	role: 'user',
 	send_invite: true,
-	expires_at: dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm'),
+	expires_at: dayjs?.().add(1, 'day').format('YYYY-MM-DDTHH:mm') || '',
 	backup_email: '',
 	first_name: '',
 	last_name: '',
@@ -130,17 +128,17 @@ watch(
 )
 watch(show, () => {
 	if (show.value) {
-		Object.assign(accountRequest, {
-			...defaultAccountRequest,
-			roles: [...defaultAccountRequest.roles],
-		})
+		Object.assign(accountRequest, defaultAccountRequest)
 		addMember.reset()
 	}
 })
 
 const addMember = createResource({
 	url: 'mail.api.admin.add_member',
-	makeParams: () => ({ ...accountRequest }),
+	makeParams: () => ({
+		...accountRequest,
+		is_admin: accountRequest.role === 'admin',
+	}),
 	onSuccess: () => {
 		raiseToast(accountRequest.send_invite ? __('Member invited.') : __('Member added.'))
 		emit('reload')

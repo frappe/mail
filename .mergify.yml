@@ -1,0 +1,47 @@
+pull_request_rules:
+  - name: Explain backport command on merged develop PRs
+    conditions:
+      - merged
+      - base=develop
+    actions:
+      comment:
+        message: |
+          Backport this PR with Mergify by adding one of these comments:
+          - `@Mergifyio backport v0`
+          - `@Mergifyio backport v1`
+
+          You can run both commands on the same PR when the fix must be backported to both release lines.
+
+  - name: backport to v0
+    conditions:
+      - merged
+      - base=develop
+      - label="backport v0"
+    actions:
+      backport:
+        branches:
+          - v0
+        assignees:
+          - "{{ author }}"
+
+  - name: backport to v1
+    conditions:
+      - merged
+      - base=develop
+      - label="backport v1"
+    actions:
+      backport:
+        branches:
+          - v1
+        assignees:
+          - "{{ author }}"
+
+commands_restrictions:
+  # By default Mergify only lets users with write access run `@Mergifyio backport`, so a PR
+  # author commenting the backport command on their own merged PR is silently ignored. Allow the
+  # author to backport their own PR in addition to maintainers.
+  backport:
+    conditions:
+      - or:
+          - sender-permission>=write
+          - sender={{ author }}

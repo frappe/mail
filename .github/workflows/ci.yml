@@ -63,7 +63,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@v2.2.0
 
       - name: Install MariaDB Client
         run: |
