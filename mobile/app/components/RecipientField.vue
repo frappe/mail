@@ -1,10 +1,18 @@
 <template>
-	<StackLayout class="border-outline-gray-1 border-b" @tap="expand">
+	<StackLayout class="border-outline-gray-1 border-b">
 		<!-- chips wrap in col 0; the trailing slot (Cc/Bcc toggle) is pinned to the
 		     top-right in col 1 so it stays put as chips wrap to new rows -->
 		<GridLayout columns="*, auto">
-			<!-- label + chips + input, wrapping like the web RecipientField -->
-			<FlexboxLayout col="0" flexWrap="wrap" alignItems="center" class="py-1.5 pl-4">
+			<!-- label + chips + input, wrapping like the web RecipientField. The tap
+			     to expand lives here (col 0), not on the row, so the col-1 chevron
+			     toggles Cc/Bcc without also focusing this field. -->
+			<FlexboxLayout
+				col="0"
+				flexWrap="wrap"
+				alignItems="center"
+				class="py-1.5 pl-4"
+				@tap="expand"
+			>
 				<Label
 					:text="label"
 					class="text-ink-gray-5 my-1 w-12 text-base"

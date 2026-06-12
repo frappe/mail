@@ -109,7 +109,7 @@
 			</StackLayout>
 
 			<!-- Body (rich text) -->
-			<RichTextEditor v-model="body" row="2" />
+			<RichTextEditor ref="editor" v-model="body" row="2" />
 
 			<!-- From picker -->
 			<ComposeSheet row="0" rowSpan="3" :open="sheet === 'from'" @close="sheet = null">
@@ -143,28 +143,8 @@
 
 			<!-- More menu -->
 			<ComposeSheet row="0" rowSpan="3" :open="sheet === 'more'" @close="sheet = null">
-				<ComposeSheetRow
-					icon="file-text"
-					:label="__('Save draft')"
-					:sub="__('Finish this message later')"
-					@tap="saveAndClose"
-				/>
+				<ComposeSheetRow icon="save" :label="__('Save draft')" @tap="saveAndClose" />
 				<ComposeSheetRow icon="trash-2" :label="__('Discard')" danger @tap="discard" />
-			</ComposeSheet>
-
-			<!-- Discard confirm -->
-			<ComposeSheet row="0" rowSpan="3" :open="sheet === 'discard'" @close="sheet = null">
-				<Label
-					:text="__('This message hasn’t been sent.')"
-					class="text-ink-gray-5 px-5 pb-2 pt-1 text-sm"
-				/>
-				<ComposeSheetRow icon="file-text" :label="__('Save draft')" @tap="saveAndClose" />
-				<ComposeSheetRow icon="trash-2" :label="__('Discard')" danger @tap="discard" />
-				<ComposeSheetRow
-					icon="pencil-line"
-					:label="__('Keep editing')"
-					@tap="sheet = null"
-				/>
 			</ComposeSheet>
 
 			<!-- toast -->
@@ -260,7 +240,8 @@ const ccOpen = ref(false)
 const subject = ref(ctx?.subject ?? '')
 const body = ref(ctx?.html_body ?? ctx?.quoted_content ?? '')
 
-const sheet = ref<'from' | 'more' | 'discard' | null>(null)
+const sheet = ref<'from' | 'more' | null>(null)
+const editor = ref<{ getHtml: () => Promise<string | null> } | null>(null)
 const ccVisible = computed(() => ccOpen.value || cc.value.length > 0 || bcc.value.length > 0)
 
 function selectFrom(a: { accountName: string }) {
@@ -327,6 +308,14 @@ async function saveDraft() {
 	}
 }
 
+// The editor's HTML is pulled (not pushed): refresh `body` from the WebView
+// right before anything that persists it, so the very last keystrokes are
+// included even if the 2s poll hasn't run yet.
+async function pullBody() {
+	const html = await editor.value?.getHtml()
+	if (typeof html === 'string') body.value = html
+}
+
 async function send() {
 	if (sending) return
 	if (isRecipientsEmpty() && !/\S+@\S+/.test(toPending.value)) {
@@ -334,6 +323,7 @@ async function send() {
 		return
 	}
 
+	await pullBody()
 	sending = true
 	try {
 		if (draftId.value) {
@@ -353,15 +343,18 @@ async function send() {
 	}
 }
 
-function requestClose() {
-	if (snapshot() !== savedSnapshot && !isEmpty()) sheet.value = 'discard'
-	else $navigateBack()
+// Closing keeps the draft — the unmount autosave persists any changes (skipping
+// empty drafts). Discarding is the explicit opt-out via the ⋯ menu.
+async function requestClose() {
+	await pullBody() // unmount autosave should see the final body
+	$navigateBack()
 }
 
+// Explicit "Save draft" from the ⋯ menu: persist, then leave.
 async function saveAndClose() {
 	sheet.value = null
+	await pullBody()
 	await saveDraft()
-	flash(__('Saved to Drafts'))
 	$navigateBack()
 }
 

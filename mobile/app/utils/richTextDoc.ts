@@ -65,54 +65,44 @@ export function buildEditorDocument(initialHtml: string, placeholder: string): s
 		(function () {
 			var e = document.getElementById('e');
 			var timer = null;
-			// Post messages to native through a hidden iframe, NOT a top-level
-			// location change: navigating the main frame blurs the contenteditable
-			// (dismissing the keyboard) and blanks the document. The iframe's
-			// navigation is intercepted natively while the editor keeps focus.
-			var bridge = document.createElement('iframe');
-			bridge.setAttribute('aria-hidden', 'true');
-			bridge.style.cssText = 'position:absolute;left:-9999px;width:0;height:0;border:0';
-			document.body.appendChild(bridge);
-			function sync() {
-				try { bridge.src = 'x-rt-sync:' + encodeURIComponent(e.innerHTML); } catch (_) {}
-			}
+			// NO navigation-based messaging: NativeScript's Android WebView tries to
+			// start an Activity for ANY custom-scheme navigation (top-level or iframe)
+			// — "Failed to start activity for handling URL" — and the aborted
+			// navigation kills the document (dead caret, dead toolbar, dead input).
+			// Native PULLS the content instead via evaluateJavascript (RichTextEditor).
 			// Tracks whether the keyboard is up *for this editor* — set only on real
 			// focus/blur, never on resize, so layout reflows can't toggle it.
 			var kbOpen = false;
 			e.addEventListener('input', function () {
 				if (timer) clearTimeout(timer);
-				timer = setTimeout(function () { sync(); refresh(); }, 300);
+				timer = setTimeout(refresh, 300);
 			});
 			e.addEventListener('focus', function () { kbOpen = true; placeToolbar(); });
 			e.addEventListener('blur', function () {
 				kbOpen = false;
 				if (timer) { clearTimeout(timer); timer = null; }
-				sync();
 				placeToolbar();
 			});
 			document.addEventListener('selectionchange', refresh);
 
-			// Coming from a native field, the first tap on the WebView only dismisses
-			// that field's keyboard and leaves the editor unfocused (needing a second
-			// tap). Re-assert focus across the whole gesture: touchstart is too early
-			// (the WebView isn't first responder yet), so focus again on touchend —
-			// by then the tap has made the WebView first responder and the keyboard
-			// comes up the first time.
+			// Cross-field handoff: a native field's keyboard is up and the user taps
+			// the body. Tapping won't reliably move focus into the contenteditable, so
+			// grab it — but only when the tap comes from OUTSIDE the editor, so tapping
+			// an already-focused editor never re-focuses (which can dismiss its kbd).
 			function inToolbar(ev) {
 				return ev.target && ev.target.closest && ev.target.closest('.toolbar');
 			}
+			var touchFromOutside = false;
 			document.addEventListener('touchstart', function (ev) {
-				if (inToolbar(ev)) return;
-				if (document.activeElement !== e) e.focus();
+				if (inToolbar(ev)) { touchFromOutside = false; return; }
+				touchFromOutside = document.activeElement !== e;
+				if (touchFromOutside) e.focus();
 			}, true);
 			document.addEventListener('touchend', function (ev) {
-				if (inToolbar(ev)) return;
+				if (inToolbar(ev) || !touchFromOutside) return;
 				e.focus();
+				touchFromOutside = false;
 			}, false);
-			document.addEventListener('mousedown', function (ev) {
-				if (inToolbar(ev)) return;
-				if (document.activeElement !== e) e.focus();
-			}, true);
 
 			// Keep the toolbar docked just above the soft keyboard. NativeScript
 			// doesn't resize the WebView for the keyboard, but iOS/Android shrink
@@ -120,11 +110,10 @@ export function buildEditorDocument(initialHtml: string, placeholder: string): s
 			var toolbar = document.querySelector('.toolbar');
 			var vv = window.visualViewport;
 			function placeToolbar() {
-				// Only lift the toolbar while the keyboard is up for this editor. The
+				// Lift the toolbar only while the keyboard is up for this editor. The
 				// kbOpen flag flips only on real focus/blur, so a layout reflow (e.g.
-				// toggling Cc/Bcc, which resizes the WebView and fires a resize with
-				// innerHeight/visualViewport briefly out of sync) can't produce the
-				// transient inset that flickered the toolbar up and down.
+				// toggling Cc/Bcc resizes the WebView and fires a transient resize)
+				// can't flicker the toolbar.
 				var inset = 0;
 				if (vv && kbOpen) {
 					inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
