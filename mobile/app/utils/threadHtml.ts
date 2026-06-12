@@ -352,6 +352,11 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 	.body { font-size: 15px; line-height: 1.6; color: #383838; margin-top: 14px; }
 	.body img { max-width: 100%; height: auto; }
 	.body table { max-width: 100%; }
+	/* Responsive emails (HubSpot/Mailchimp/…) add side padding to their body
+	   wrapper on mobile, which stacks on our 16px chrome padding and over-indents
+	   the body vs the subject/sender. Zero horizontal padding on wrapper elements
+	   so our 16px is the single, consistent inset. */
+	.body [class*="wrapper"] { padding-left: 0 !important; padding-right: 0 !important; }
 	blockquote { margin: 8px 0; padding-left: 12px; border-left: 2px solid #ededed; color: #525252; }
 	pre, code { font-family: ui-monospace, Menlo, Courier, monospace; white-space: pre-wrap;
 		overflow-wrap: anywhere; }
