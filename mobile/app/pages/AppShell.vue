@@ -8,6 +8,7 @@
 				:mailbox="activeMailbox"
 				@open-drawer="drawerOpen = true"
 				@open-thread="openThread"
+				@open-compose="openCompose"
 			/>
 
 			<!-- … or a placeholder for non-mailbox views (Settings, Address Books, Contacts). -->
@@ -82,12 +83,14 @@
 import { computed, onMounted, provide, ref, watch } from 'vue'
 import { $navigateTo } from 'nativescript-vue'
 
+import { composeContext } from '@/state/composeDraft'
 import { lucide } from '@/utils/lucide'
 import { safeAreaTop } from '@/utils/safeArea'
 import { loadTranslations } from '@/utils/translation'
 import { sessionStore } from '@/stores/session'
 import { siteStore } from '@/stores/site'
 import { userStore } from '@/stores/user'
+import ComposeView from '@/pages/ComposeView.vue'
 import LandingPage from '@/pages/LandingPage.vue'
 import ThreadView from '@/pages/ThreadView.vue'
 import AccountSheet from '@/components/AccountSheet.vue'
@@ -159,6 +162,11 @@ function onSelect(selection: NavSelection) {
 
 function openThread() {
 	$navigateTo(ThreadView)
+}
+
+function openCompose() {
+	composeContext.value = null
+	$navigateTo(ComposeView)
 }
 
 function onSettings() {

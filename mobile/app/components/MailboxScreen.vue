@@ -164,7 +164,7 @@
 			verticalAlignment="bottom"
 			marginRight="18"
 			:marginBottom="safeBottom + 18"
-			@tap="flash(__('Compose coming soon'))"
+			@tap="$emit('open-compose')"
 		>
 			<Label
 				:text="lucide('square-pen')"
@@ -205,7 +205,7 @@ import type { Thread } from '@mail/types'
 import type { ScrollEventData } from '@nativescript/core'
 
 const props = defineProps<{ mailbox: ActiveMailbox }>()
-const emit = defineEmits<{ 'open-drawer': []; 'open-thread': [] }>()
+const emit = defineEmits<{ 'open-drawer': []; 'open-thread': []; 'open-compose': [] }>()
 
 const store = userStore()
 const api = useApi()

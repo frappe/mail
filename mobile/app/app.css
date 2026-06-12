@@ -7,3 +7,9 @@ TextField,
 TextView {
 	@apply text-ink-gray-8;
 }
+
+/* Match field placeholders to the gray field labels (ink-gray-5). */
+TextField,
+TextView {
+	placeholder-color: #7c7c7c;
+}
