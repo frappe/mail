@@ -5,7 +5,12 @@
 // we additionally strip those with regex as a backstop. Only our nonce'd helper
 // script (quote-collapse + external link handling) is allowed to run.
 
-import { formatRecipients, formatTimeAgo } from '@/utils/format'
+import {
+	formatFullDateTime,
+	formatRecipients,
+	formatTimeAgo,
+	groupRecipients,
+} from '@/utils/format'
 import { gravatarUrl } from '@/utils/gravatar'
 
 import type { Mail } from '@mail/types'
@@ -90,6 +95,37 @@ function attachmentChips(mail: Mail): string {
 	return `<div class="atts">${chips}</div>`
 }
 
+// Chevron-toggled details panel (From / Reply-To / To / Cc / Bcc / Date /
+// Subject with full emails), mirroring the web MailDetails.vue.
+function mailDetailsHtml(mail: Mail): string {
+	const grouped = groupRecipients(mail.recipients || [])
+	const rows: [string, string][] = [
+		[
+			__('From:'),
+			mail.from_name ? `${mail.from_name} <${mail.from_email}>` : mail.from_email || '?',
+		],
+	]
+	if (mail.reply_to?.length)
+		rows.push([__('Reply To:'), mail.reply_to.map((r) => r.email).join(', ')])
+	if (grouped.to) rows.push([__('To:'), grouped.to])
+	if (grouped.cc) rows.push([__('Cc:'), grouped.cc])
+	if (grouped.bcc) rows.push([__('Bcc:'), grouped.bcc])
+	rows.push([__('Date:'), formatFullDateTime(mail.received_at)])
+	if (mail.subject) rows.push([__('Subject:'), mail.subject])
+	const cells = rows
+		.map(
+			([label, value]) =>
+				`<span class="mdlabel">${escapeHtml(label)}</span><span class="mdval">${escapeHtml(value)}</span>`,
+		)
+		.join('')
+	return `<div class="mdetails">${cells}</div>`
+}
+
+// Downward chevron (rotates when the details panel is open).
+const CHEVRON =
+	'<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+	'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'
+
 function messageHtml(mail: Mail, index: number, isLast: boolean): string {
 	const name = mail.from_name || mail.from_email || '?'
 	const avatar =
@@ -98,7 +134,9 @@ function messageHtml(mail: Mail, index: number, isLast: boolean): string {
 	const meta =
 		`<div class="meta"><div class="from"><span class="from-name">${escapeHtml(name)}</span>` +
 		`<span class="date">${escapeHtml(formatTimeAgo(mail.received_at))}</span></div>` +
-		`<div class="to">${escapeHtml(formatRecipients(mail.recipients || []))}</div></div>`
+		`<div class="to"><span class="to-text">${escapeHtml(formatRecipients(mail.recipients || []))}</span>` +
+		`<span class="to-toggle">${CHEVRON}</span></div></div>`
+	const details = mailDetailsHtml(mail)
 	const more = `<span class="more" data-i="${index}">&#8942;</span>`
 	const preview = `<div class="preview">${escapeHtml(mail.preview || '')}</div>`
 	const body = hasHtmlContent(mail.html_body)
@@ -111,7 +149,7 @@ function messageHtml(mail: Mail, index: number, isLast: boolean): string {
 	const cls = ['msg', collapsible && 'collapsible', collapsed && 'collapsed']
 		.filter(Boolean)
 		.join(' ')
-	return `<div class="${cls}"><div class="mhead">${avatar}${meta}${more}</div>${preview}${body}${attachmentChips(mail)}</div>`
+	return `<div class="${cls}"><div class="mhead">${avatar}${meta}${more}</div>${details}${preview}${body}${attachmentChips(mail)}</div>`
 }
 
 export function buildThreadDocument(mails: Mail[], subject: string): string {
@@ -122,8 +160,9 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 	const lastName = mails[lastIndex]?.name
 
 	// "N new messages" divider above the first unseen message (mirrors the web).
-	const firstUnseen = mails.findIndex((m) => !m.seen && !m.draft)
-	const unseenCount = mails.filter((m) => !m.seen && !m.draft).length
+	// Skip it for single-message threads — there's nothing "new" to distinguish.
+	const firstUnseen = mails.length > 1 ? mails.findIndex((m) => !m.seen && !m.draft) : -1
+	const unseenCount = mails.length > 1 ? mails.filter((m) => !m.seen && !m.draft).length : 0
 	const unseenMessage =
 		unseenCount === 1 ? __('1 new message') : __('{0} new messages', [String(unseenCount)])
 
@@ -202,6 +241,15 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 					location.href = 'x-more:' + (el.getAttribute('data-i') || '');
 				});
 			});
+			// Chevron toggles the per-message mail-details panel.
+			document.querySelectorAll('.to-toggle').forEach(function (el) {
+				el.addEventListener('click', function (e) {
+					e.preventDefault();
+					e.stopPropagation();
+					var msg = el.closest('.msg');
+					if (msg) msg.classList.toggle('details-open');
+				});
+			});
 			// Tap the "N more messages" divider to reveal the hidden middle messages.
 			var gd = document.querySelector('.group-divider');
 			if (gd) {
@@ -217,7 +265,7 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 			document.querySelectorAll('.msg.collapsible').forEach(function (msg) {
 				msg.addEventListener('click', function (e) {
 					var t = e.target;
-					if (t && t.closest && t.closest('.more')) return;
+					if (t && t.closest && (t.closest('.more') || t.closest('.to-toggle'))) return;
 					if (msg.classList.contains('collapsed')) {
 						msg.classList.remove('collapsed');
 					} else if (t && t.closest && t.closest('.mhead')) {
@@ -243,9 +291,11 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 <meta http-equiv="Content-Security-Policy" content="${csp}">
 <style>
 	* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-	/* Guard our chrome from a message's own <style> (e.g. body{background}/body{color}),
-	   which targets this single document's body since we render the thread in one doc. */
-	html body { background-color: #ffffff !important; }
+	/* Guard our chrome from a message's own <style> (e.g. Hetzner's body{margin:0;padding:0}
+	   or body{background}/body{color}), which targets this single document's body since we
+	   render the whole thread in one doc — otherwise it zeroes out our padding. */
+	html body { background-color: #ffffff !important; margin: 0 !important;
+		padding: 16px 16px 96px !important; }
 	body { font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; font-size: 15px;
 		line-height: 1.5; color: #171717; margin: 0; padding: 16px 16px 96px;
 		-webkit-text-size-adjust: 100%; overflow-wrap: anywhere; }
@@ -263,7 +313,20 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 	.from-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; color: #171717;
 		overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 	.date { flex-shrink: 0; font-size: 13px; font-weight: 400; color: #7c7c7c; }
-	.to { font-size: 13px; color: #7c7c7c; margin-top: 2px; word-break: break-word; }
+	.to { display: flex; align-items: center; gap: 5px; font-size: 13px; color: #7c7c7c; margin-top: 2px; }
+	.to-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.to-toggle { flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+		width: 18px; height: 18px; }
+	.to-toggle .chev { transition: transform 0.2s; }
+	.msg.details-open .to-toggle .chev { transform: rotate(180deg); }
+	.mdetails { display: none; grid-template-columns: auto 1fr; gap: 6px 12px;
+		margin: 12px 0 0; padding: 12px 14px; border: 1px solid #e2e2e2; border-radius: 10px;
+		font-size: 13px; line-height: 1.45; }
+	.msg.details-open .mdetails { display: grid; }
+	.mdlabel { color: #7c7c7c; white-space: nowrap; }
+	.mdval { color: #383838; overflow-wrap: anywhere; }
+	/* Details belong to an expanded message only (mirrors the web). */
+	.msg.collapsed .to-toggle, .msg.collapsed .mdetails { display: none; }
 	.more { flex-shrink: 0; align-self: flex-start; width: 24px; height: 24px; margin-left: 2px;
 		display: flex; align-items: center; justify-content: center; color: #7c7c7c;
 		font-size: 17px; line-height: 1; border-radius: 24px; }

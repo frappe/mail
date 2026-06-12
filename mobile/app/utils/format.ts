@@ -68,3 +68,19 @@ export function formatRecipients(recipients: Recipient[]): string {
 	const list = (to.length ? to : recipients).map((r) => r.display_name || r.email)
 	return `${__('To:')} ${list.join(', ')}`
 }
+
+// Groups recipients by type into "Name <email>" strings (mirrors the web
+// getGroupedRecipients with showEmail). Empty types return ''.
+export function groupRecipients(recipients: Recipient[]): { to: string; cc: string; bcc: string } {
+	const fmt = (type: Recipient['type']) =>
+		(recipients || [])
+			.filter((r) => r.type === type)
+			.map((r) => (r.display_name ? `${r.display_name} <${r.email}>` : r.email))
+			.join(', ')
+	return { to: fmt('To'), cc: fmt('Cc'), bcc: fmt('Bcc') }
+}
+
+// Full timestamp for the expanded mail-details panel (mirrors the web MailDetails).
+export function formatFullDateTime(date: string | Date): string {
+	return dayjs(date).format('MMM D, YYYY, h:mm A')
+}
