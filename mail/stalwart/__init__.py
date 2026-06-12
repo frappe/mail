@@ -132,60 +132,61 @@ def create_domain(name: str, description: str | None = None) -> str:
 
 
 def _delete_linked_dkim_signatures(domain_id: str) -> None:
-        """Deletes DKIM signatures linked to a domain before domain deletion."""
+	"""Deletes DKIM signatures linked to a domain before domain deletion."""
 
-        domain_service = DomainService()
-        response = domain_service.run(
-                [
-                        "query",
-                        "DkimSignature",
-                        "--where",
-                        f"domainId={domain_id}",
-                        "--fields",
-                        "id",
-                        "--json",
-                ]
-        )
+	domain_service = DomainService()
+	response = domain_service.run(
+		[
+			"query",
+			"DkimSignature",
+			"--where",
+			f"domainId={domain_id}",
+			"--fields",
+			"id",
+			"--json",
+		]
+	)
 
-        if not response["success"]:
-                frappe.throw(
-                        title=_("Failed to fetch DKIM signatures"),
-                        msg=response["output"] or response["error"],
-                )
+	if not response["success"]:
+		frappe.throw(
+			title=_("Failed to fetch DKIM signatures"),
+			msg=response["output"] or response["error"],
+		)
 
-        dkim_ids = []
-        for row in (response["output"] or "").splitlines():
-                row = row.strip()
-                if not row:
-                        continue
+	dkim_ids = []
+	for row in (response["output"] or "").splitlines():
+		row = row.strip()
+		if not row:
+			continue
 
-                try:
-                        dkim = json.loads(row)
-                except json.JSONDecodeError:
-                        continue
+		try:
+			dkim = json.loads(row)
+		except json.JSONDecodeError:
+			continue
 
-                dkim_id = dkim.get("id")
-                if dkim_id:
-                        dkim_ids.append(dkim_id)
+		dkim_id = dkim.get("id")
+		if dkim_id:
+			dkim_ids.append(dkim_id)
 
-        if not dkim_ids:
-                return
+	if not dkim_ids:
+		return
 
-        delete_response = domain_service.run(["delete", "DkimSignature", "--ids", ",".join(dkim_ids)])
-        if not delete_response["success"]:
-                frappe.throw(
-                        title=_("Failed to delete linked DKIM signatures"),
-                        msg=delete_response["output"] or delete_response["error"],
-                )
+	delete_response = domain_service.run(["delete", "DkimSignature", "--ids", ",".join(dkim_ids)])
+	if not delete_response["success"]:
+		frappe.throw(
+			title=_("Failed to delete linked DKIM signatures"),
+			msg=delete_response["output"] or delete_response["error"],
+		)
 
 
 def delete_domain(domain_id: str) -> None:
-        """Deletes a domain from the Stalwart server by ID."""
+	"""Deletes a domain from the Stalwart server by ID."""
 
-        _delete_linked_dkim_signatures(domain_id)
-        DomainService().delete([domain_id])
-        get_domain_by_name.clear_cache()
-        get_domains.clear_cache()
+	_delete_linked_dkim_signatures(domain_id)
+	DomainService().delete([domain_id])
+	get_domain_by_name.clear_cache()
+	get_domains.clear_cache()
+
 
 def create_account(
 	name: str,
@@ -253,40 +254,41 @@ def create_account(
 
 
 def create_app_password(account: str, description: str | None = None) -> str:
-        """Creates an app password for the specified account on the Stalwart server and returns the generated secret."""
+	"""Creates an app password for the specified account on the Stalwart server and returns the generated secret."""
 
-        description = description or f"App Password for {frappe.local.site} - {utcnow()}"
+	description = description or f"App Password for {frappe.local.site} - {utcnow()}"
 
-        config = get_config()
-        server_url = config["server_url"]
-        password = config["password"]
-        admin_username = config["username"]
+	config = get_config()
+	server_url = config["server_url"]
+	password = config["password"]
+	admin_username = config["username"]
 
-        principal_candidates = [admin_username]
-        delegated_principal = f"{account}%{admin_username}"
-        if delegated_principal not in principal_candidates:
-                principal_candidates.append(delegated_principal)
+	principal_candidates = [admin_username]
+	delegated_principal = f"{account}%{admin_username}"
+	if delegated_principal not in principal_candidates:
+		principal_candidates.append(delegated_principal)
 
-        app_password = AppPassword(description=description)
-        errors = []
-        for principal in principal_candidates:
-                try:
-                        return AppPasswordService(
-                                credentials={
-                                        "server_url": server_url,
-                                        "username": principal,
-                                        "password": password,
-                                }
-                        ).create(app_password)
-                except frappe.ValidationError as exc:
-                        errors.append(f"{principal}: {exc}")
+	app_password = AppPassword(description=description)
+	errors = []
+	for principal in principal_candidates:
+		try:
+			return AppPasswordService(
+				credentials={
+					"server_url": server_url,
+					"username": principal,
+					"password": password,
+				}
+			).create(app_password)
+		except frappe.ValidationError as exc:
+			errors.append(f"{principal}: {exc}")
 
-        frappe.throw(
-                title=_("Failed to create app password"),
-                msg=_("Could not create app password for account {0}. Errors: {1}").format(
-                        account, " | ".join(errors) or _("unknown authentication error")
-                ),
-        )
+	frappe.throw(
+		title=_("Failed to create app password"),
+		msg=_("Could not create app password for account {0}. Errors: {1}").format(
+			account, " | ".join(errors) or _("unknown authentication error")
+		),
+	)
+
 
 def update_password(user: str | None = None, new_password: str | None = None) -> None:
 	"""Updates the password for the specified user's personal account on the Stalwart server."""
