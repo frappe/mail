@@ -8,6 +8,11 @@ module.exports = {
 			colors: {
 				...light,
 			},
+			// Default border color, matching frappe-ui's webmail (its plugin sets
+			// borderColor.DEFAULT = var(--outline-gray-1)).
+			borderColor: {
+				DEFAULT: light['outline-gray-1'],
+			},
 			fontFamily: {
 				lucide: ['lucide'],
 			},
