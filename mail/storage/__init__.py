@@ -2,7 +2,7 @@ import os
 import shutil
 
 import frappe
-from frappe.utils import get_bench_path
+from frappe.utils import cint, get_bench_path
 
 from mail.storage.blob_store import BlobStore
 from mail.storage.data_store import DataStore
@@ -26,7 +26,7 @@ def get_data_store(user: str, account_id: str | None = None) -> DataStore:
 
 	base_path = _get_data_base_path()
 	key = f"{user}{DataStore.SEPARATOR}{account_id}" if account_id else user
-	shard_count = get_config("storage_shard_count")
+	shard_count = cint(get_config("storage_shard_count"))
 
 	return DataStore(
 		base_path=base_path,
@@ -56,7 +56,7 @@ def get_blob_store(user: str, account_id: str | None = None) -> "BlobStore":
 
 	base_path = _get_blob_base_path()
 	key = f"{user}{BlobStore.SEPARATOR}{account_id}" if account_id else user
-	shard_count = get_config("storage_shard_count")
+	shard_count = cint(get_config("storage_shard_count"))
 
 	return BlobStore(
 		base_path=base_path,
