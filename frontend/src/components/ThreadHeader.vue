@@ -153,10 +153,14 @@ const threadMailboxes = computed(() => {
 // Every mailbox the thread's mails touch (union), and whether any mail is in more than one — used by
 // Remove From, which is only offered when removing won't orphan a mail.
 const threadMailboxesUnion = computed(() => [
-	...new Set((thread ?? []).flatMap((mail: Mail) => mail.mailboxes.map((m) => m.mailbox_id))),
+	...new Set(
+		(thread ?? [])
+			.filter((mail: Mail) => mail.id)
+			.flatMap((mail: Mail) => mail.mailboxes.map((m) => m.mailbox_id)),
+	),
 ])
 const canRemoveFrom = computed(() =>
-	(thread ?? []).some((mail: Mail) => mail.mailboxes.length > 1),
+	(thread ?? []).some((mail: Mail) => mail.id && mail.mailboxes.length > 1),
 )
 
 const threadActions = computed((): Action[] => [
