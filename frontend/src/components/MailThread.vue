@@ -558,9 +558,14 @@ const syncWithSource = () => {
 		if (fresh) mail.mailboxes = fresh.mailboxes
 	})
 
-	// Append any newly-arrived messages, before a trailing draft.
+	// Append any newly-arrived messages, before a trailing draft. Drafts are excluded: the only draft
+	// that belongs in an open thread is the one being composed locally (tracked as a `draft:` item whose
+	// saved id isn't known here), so a draft returning from a background reload would otherwise be
+	// mistaken for a new message and spawn a duplicate, blank compose editor.
 	const existing = new Set(thread.value.map((mail) => mail.id))
-	const additions = transformThreadMails(source).filter((mail) => !existing.has(mail.id))
+	const additions = transformThreadMails(source).filter(
+		(mail) => !existing.has(mail.id) && !mail.draft,
+	)
 	if (!additions.length) return
 
 	const draftIndex = thread.value.findIndex((mail) => mail.draft)
