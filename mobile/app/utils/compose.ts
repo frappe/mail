@@ -99,6 +99,21 @@ export function buildReplyAll(mail: Mail, userEmails: string[]): ComposeMailData
 	return { ...replyDetails(mail), ...replyAllRecipients(mail, userEmails), type: 'replyAll' }
 }
 
+// Open an existing draft for editing: prefill from the saved message and carry its
+// `id` so ComposeView updates the draft (update_draft_mail) instead of creating one.
+// The whole html_body goes into the body (the saved draft already merged any quote).
+export function buildDraftEdit(mail: Mail): ComposeMailData {
+	return {
+		id: mail.id,
+		from_email: mail.from_email,
+		to: pick(mail.recipients, 'To'),
+		cc: pick(mail.recipients, 'Cc'),
+		bcc: pick(mail.recipients, 'Bcc'),
+		subject: mail.subject ?? '',
+		html_body: mail.html_body ?? '',
+	}
+}
+
 export function buildForward(mail: Mail): ComposeMailData {
 	return {
 		subject: mail.subject?.startsWith('Fwd: ') ? mail.subject : `Fwd: ${mail.subject ?? ''}`,

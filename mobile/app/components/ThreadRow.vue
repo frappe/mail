@@ -17,23 +17,28 @@
 
 		<!-- content -->
 		<StackLayout col="1" class="ml-3" verticalAlignment="top">
-			<!-- line 1: unread dot + sender -->
-			<GridLayout columns="auto, *">
+			<!-- line 1: unread dot + sender + draft badge. Flexbox so the name shrinks
+			     (truncating) and the badge sits right after it, not right-aligned. -->
+			<FlexboxLayout flexDirection="row" alignItems="center">
 				<StackLayout
 					v-if="!thread.seen"
-					col="0"
 					class="mr-1.5 h-2 w-2 rounded-full bg-blue-500"
-					verticalAlignment="center"
+					flexShrink="0"
 				/>
 				<Label
-					col="1"
 					:text="header"
 					class="text-ink-gray-9 mr-2 text-base"
 					:class="thread.seen ? 'font-medium' : 'font-bold'"
 					textWrap="false"
-					verticalAlignment="center"
+					flexShrink="1"
 				/>
-			</GridLayout>
+				<Label
+					v-if="thread.draft"
+					:text="__('Draft')"
+					class="bg-surface-red-1 text-ink-red-3 rounded px-1.5 py-0.5 text-xs font-bold"
+					flexShrink="0"
+				/>
+			</FlexboxLayout>
 
 			<!-- line 2: subject -->
 			<Label

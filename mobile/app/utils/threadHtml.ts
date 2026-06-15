@@ -126,30 +126,46 @@ const CHEVRON =
 	'<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
 	'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>'
 
+// Edit (lucide square-pen) — shown on drafts in place of the ⋯ menu, like the web.
+const EDIT_ICON =
+	'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+	'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+	'<path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>' +
+	'<path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"></path></svg>'
+
 function messageHtml(mail: Mail, index: number, isLast: boolean): string {
 	const name = mail.from_name || mail.from_email || '?'
 	const avatar =
 		`<div class="avatar"><span>${escapeHtml(initials(name))}</span>` +
 		`<img src="${escapeHtml(gravatarUrl(mail.from_email || ''))}" alt=""></div>`
+	const draftBadge = mail.draft
+		? `<span class="draft-badge">${escapeHtml(__('Draft'))}</span>`
+		: ''
+	// Drafts have no details panel, so skip the chevron toggle for them.
+	const toToggle = mail.draft ? '' : `<span class="to-toggle">${CHEVRON}</span>`
 	const meta =
 		`<div class="meta"><div class="from"><span class="from-name">${escapeHtml(name)}</span>` +
-		`<span class="date">${escapeHtml(formatTimeAgo(mail.received_at))}</span></div>` +
+		`${draftBadge}<span class="date">${escapeHtml(formatTimeAgo(mail.received_at))}</span></div>` +
 		`<div class="to"><span class="to-text">${escapeHtml(formatRecipients(mail.recipients || []))}</span>` +
-		`<span class="to-toggle">${CHEVRON}</span></div></div>`
+		`${toToggle}</div></div>`
 	const details = mailDetailsHtml(mail)
-	const more = `<span class="more" data-i="${index}">&#8942;</span>`
+	// Drafts show an edit icon (opens the compose screen via x-edit) in place of the
+	// ⋯ menu — mirrors the web, which hides the menu for drafts.
+	const action = mail.draft
+		? `<span class="edit-draft" data-i="${index}">${EDIT_ICON}</span>`
+		: `<span class="more" data-i="${index}">&#8942;</span>`
 	const preview = `<div class="preview">${escapeHtml(mail.preview || '')}</div>`
 	const body = hasHtmlContent(mail.html_body)
 		? `<div class="body">${sanitizeBody(mail.html_body)}</div>`
 		: `<div class="body"><pre class="plaintext">${escapeHtml(mail.html_body || mail.text_body || '')}</pre></div>`
-	// Seen messages start collapsed (preview only); the last message and unseen
-	// messages stay expanded — mirrors the web MailThread isCollapsed logic.
+	// Seen messages start collapsed (preview only); the last message, unseen messages,
+	// and drafts stay expanded — mirrors the web MailThread isCollapsed logic.
 	const collapsible = !isLast
-	const collapsed = collapsible && !!mail.seen
+	const collapsed = collapsible && !!mail.seen && !mail.draft
 	const cls = ['msg', collapsible && 'collapsible', collapsed && 'collapsed']
 		.filter(Boolean)
 		.join(' ')
-	return `<div class="${cls}"><div class="mhead">${avatar}${meta}${more}</div>${details}${preview}${body}${attachmentChips(mail)}</div>`
+	return `<div class="${cls}"><div class="mhead">${avatar}${meta}${action}</div>${details}${preview}${body}${attachmentChips(mail)}</div>`
 }
 
 export function buildThreadDocument(mails: Mail[], subject: string): string {
@@ -241,6 +257,13 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 					location.href = 'x-more:' + (el.getAttribute('data-i') || '');
 				});
 			});
+			document.querySelectorAll('.edit-draft').forEach(function (el) {
+				el.addEventListener('click', function (e) {
+					e.preventDefault();
+					e.stopPropagation();
+					location.href = 'x-edit:' + (el.getAttribute('data-i') || '');
+				});
+			});
 			// Chevron toggles the per-message mail-details panel.
 			document.querySelectorAll('.to-toggle').forEach(function (el) {
 				el.addEventListener('click', function (e) {
@@ -309,10 +332,14 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 	.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
 		display: none; }
 	.meta { min-width: 0; flex: 1; }
-	.from { display: flex; align-items: baseline; gap: 8px; }
-	.from-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; color: #171717;
+	.from { display: flex; align-items: center; gap: 8px; }
+	/* Name sizes to its content (truncating when long) so the draft badge sits right
+	   after it; the date is pushed to the right with an auto margin. */
+	.from-name { flex: 0 1 auto; min-width: 0; font-size: 15px; font-weight: 600; color: #171717;
 		overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-	.date { flex-shrink: 0; font-size: 13px; font-weight: 400; color: #7c7c7c; }
+	.date { flex-shrink: 0; margin-left: auto; font-size: 13px; font-weight: 400; color: #7c7c7c; }
+	.draft-badge { flex-shrink: 0; padding: 1px 7px; border-radius: 6px; background: #fde2e2;
+		color: #b52828; font-size: 11px; font-weight: 600; line-height: 1.5; }
 	.to { display: flex; align-items: center; gap: 5px; font-size: 13px; color: #7c7c7c; margin-top: 2px; }
 	.to-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 	.to-toggle { flex-shrink: 0; display: flex; align-items: center; justify-content: center;
@@ -330,6 +357,9 @@ export function buildThreadDocument(mails: Mail[], subject: string): string {
 	.more { flex-shrink: 0; align-self: flex-start; width: 24px; height: 24px; margin-left: 2px;
 		display: flex; align-items: center; justify-content: center; color: #7c7c7c;
 		font-size: 17px; line-height: 1; border-radius: 24px; }
+	.edit-draft { flex-shrink: 0; align-self: flex-start; width: 24px; height: 24px; margin-left: 2px;
+		display: flex; align-items: center; justify-content: center; color: #7c7c7c; border-radius: 24px; }
+	.msg.collapsed .edit-draft { display: none; }
 	.msg.collapsed { cursor: pointer; }
 	.msg.collapsible:not(.collapsed) > .mhead { cursor: pointer; }
 	.preview { display: none; font-size: 14px; color: #7c7c7c; margin: 10px 0 0;

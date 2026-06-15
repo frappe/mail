@@ -87,8 +87,10 @@
 					</StackLayout>
 				</GridLayout>
 
-				<!-- bottom action bar (reply / reply-all / forward → compose, #490) -->
+				<!-- bottom action bar (reply / reply-all / forward → compose, #490). Hidden
+				     when the last message is a draft (it's already being composed). -->
 				<GridLayout
+					v-if="!lastIsDraft"
 					row="2"
 					:columns="showReplyAll ? '*, *, *' : '*, *'"
 					class="border-outline-gray-1 border-t px-4 pb-7 pt-3"
@@ -174,7 +176,7 @@ import { $navigateBack, $navigateTo } from 'nativescript-vue'
 import { composeContext } from '@/state/composeDraft'
 import { selectedThread as thread, selectedThreadMailbox } from '@/state/selectedThread'
 import { useApi } from '@/utils/api'
-import { buildForward, buildReply, buildReplyAll } from '@/utils/compose'
+import { buildDraftEdit, buildForward, buildReply, buildReplyAll } from '@/utils/compose'
 import { lucide } from '@/utils/lucide'
 import { safeAreaBottom, safeAreaTop } from '@/utils/safeArea'
 import { buildThreadDocument } from '@/utils/threadHtml'
@@ -201,6 +203,10 @@ const showReplyAll = computed(() => {
 	if (!last) return false
 	return (last.recipients || []).filter((r) => r.type === 'To' || r.type === 'Cc').length > 1
 })
+
+// Hide the reply/forward bar when the last message is a draft — the user is already
+// composing it (mirrors the web MailThread).
+const lastIsDraft = computed(() => !!mails.value.at(-1)?.draft)
 
 // The user's own send-as addresses, used by the reply/reply-all recipient logic.
 const userEmails = computed(() => (store.user?.accounts ?? []).map((a) => a._name || a.name))
@@ -278,6 +284,11 @@ function onLoadStarted(args: LoadEventData) {
 		view.stopLoading?.()
 		const target = decodeURIComponent(url.slice('x-open:'.length))
 		if (target) Utils.openUrl(target)
+	} else if (url.startsWith('x-edit:')) {
+		// "Edit draft" button — open the draft message in the compose screen.
+		view.stopLoading?.()
+		const mail = mails.value[Number(url.slice('x-edit:'.length))]
+		if (mail) openCompose(buildDraftEdit(mail))
 	} else if (url.startsWith('x-more:')) {
 		// Per-message "more" button — actions land in #490.
 		view.stopLoading?.()
