@@ -75,6 +75,7 @@
 
 				<!-- To (+ Cc/Bcc reveal) -->
 				<RecipientField
+					ref="toField"
 					v-model="to"
 					:label="__('To')"
 					:account="fromAccount"
@@ -108,8 +109,9 @@
 				</GridLayout>
 			</StackLayout>
 
-			<!-- Body (rich text) -->
-			<RichTextEditor ref="editor" v-model="body" row="2" />
+			<!-- Body (rich text). Reply quoted content rides inside the editor: shown
+			     collapsed behind a ··· toggle, but always part of the sent html_body. -->
+			<RichTextEditor ref="editor" v-model="body" :quoted="quoted" row="2" />
 
 			<!-- From picker -->
 			<ComposeSheet row="0" rowSpan="3" :open="sheet === 'from'" @close="sheet = null">
@@ -238,10 +240,14 @@ const bcc = ref<DraftRecipient[]>(ctx?.bcc ?? [])
 const toPending = ref('')
 const ccOpen = ref(false)
 const subject = ref(ctx?.subject ?? '')
-const body = ref(ctx?.html_body ?? ctx?.quoted_content ?? '')
+const body = ref(ctx?.html_body ?? '')
+// Reply/forward quoted content, rendered (collapsed) inside the editor. getHtml
+// returns the body with the quote included, so it needs no separate payload field.
+const quoted = ctx?.quoted_content ?? ''
 
 const sheet = ref<'from' | 'more' | null>(null)
-const editor = ref<{ getHtml: () => Promise<string | null> } | null>(null)
+const editor = ref<{ getHtml: () => Promise<string | null>; focus: () => void } | null>(null)
+const toField = ref<{ focus: () => void } | null>(null)
 const ccVisible = computed(() => ccOpen.value || cc.value.length > 0 || bcc.value.length > 0)
 
 function selectFrom(a: { accountName: string }) {
@@ -391,6 +397,11 @@ function flash(msg: string) {
 
 onMounted(() => {
 	;[to, cc, bcc, subject, body].forEach((field) => watch(field, scheduleSave, { deep: true }))
+	// Replies have recipients filled, so start in the body; forward and a blank compose
+	// start in the empty To. The delay lets the page transition settle so the keyboard
+	// actually comes up.
+	const focusBody = ctx?.type === 'reply' || ctx?.type === 'replyAll'
+	setTimeout(() => (focusBody ? editor.value?.focus() : toField.value?.focus()), 100)
 })
 
 onUnmounted(() => {

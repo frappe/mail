@@ -11,7 +11,7 @@ import { buildEditorDocument } from '@/utils/richTextDoc'
 
 import type { EventData, LoadEventData } from '@nativescript/core'
 
-const props = defineProps<{ modelValue: string; placeholder?: string }>()
+const props = defineProps<{ modelValue: string; placeholder?: string; quoted?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [html: string] }>()
 
 // Built once with the initial content baked in. We deliberately do NOT rebind
@@ -21,10 +21,16 @@ const emit = defineEmits<{ 'update:modelValue': [html: string] }>()
 // getHtml) — navigation-based messaging is unusable here: NativeScript's
 // Android WebView tries to start an Activity for any custom-scheme navigation
 // and the aborted navigation kills the document.
-const doc = ref(buildEditorDocument(props.modelValue || '', props.placeholder || ''))
+const doc = ref(
+	buildEditorDocument(props.modelValue || '', props.placeholder || '', props.quoted || ''),
+)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let webView: any = null
+// `focus()` may be called (by ComposeView) before the WebView's document is ready;
+// defer it until onLoaded in that case.
+let loaded = false
+let pendingFocus = false
 
 function onLoadStarted(args: LoadEventData) {
 	const url = args.url ?? ''
@@ -39,7 +45,13 @@ function onLoadStarted(args: LoadEventData) {
 // editor isn't ready (callers skip the update rather than wiping content).
 function getHtml(): Promise<string | null> {
 	return new Promise((resolve) => {
-		const js = "document.getElementById('e') ? document.getElementById('e').innerHTML : null"
+		// Clone and drop the in-body quote toggle (.qt-wrap) so it never lands in the
+		// sent HTML; the quoted text itself stays.
+		const js =
+			"(function(){var e=document.getElementById('e');if(!e)return null;" +
+			"var c=e.cloneNode(true);var n=c.querySelectorAll('.qt-wrap');" +
+			'for(var i=0;i<n.length;i++)n[i].parentNode.removeChild(n[i]);' +
+			'return c.innerHTML;})()'
 		// Don't let a missing callback hang callers (e.g. while navigating away).
 		const bail = setTimeout(() => resolve(null), 400)
 		const done = (value: string | null) => {
@@ -71,7 +83,31 @@ function getHtml(): Promise<string | null> {
 	})
 }
 
-defineExpose({ getHtml })
+// Focus the contenteditable and drop the caret at the start (above any quote), then
+// force the Android soft keyboard. Best-effort on iOS: WKWebView may not raise the
+// keyboard for a programmatic focus.
+function focusEditor() {
+	if (!webView || !loaded) {
+		pendingFocus = true
+		return
+	}
+	const js =
+		"(function(){var e=document.getElementById('e');if(!e)return;e.focus();" +
+		'try{var r=document.createRange();r.selectNodeContents(e);r.collapse(true);' +
+		'var s=getSelection();s.removeAllRanges();s.addRange(r);}catch(_){}})()'
+	try {
+		if (isAndroid) {
+			webView.android?.evaluateJavascript(js, null)
+			forceAndroidKeyboard(webView.android)
+		} else {
+			webView.ios?.evaluateJavaScriptCompletionHandler(js, () => {})
+		}
+	} catch {
+		// best-effort
+	}
+}
+
+defineExpose({ getHtml, focus: focusEditor })
 
 // Keep v-model loosely in sync for autosave: poll the editor and emit when the
 // content changed. (Exact-on-demand reads go through getHtml before save/send.)
@@ -117,6 +153,12 @@ function forceAndroidKeyboard(wv: any) {
 
 function onLoaded(args: EventData) {
 	webView = args.object
+	loaded = true
+	// A focus requested before load can now run (give the document a tick to parse).
+	if (pendingFocus) {
+		pendingFocus = false
+		setTimeout(focusEditor, 50)
+	}
 	if (!isAndroid) return
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const native = (args.object as any).android

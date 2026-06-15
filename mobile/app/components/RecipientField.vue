@@ -219,6 +219,9 @@ function expand() {
 	nextTick(() => fieldView?.focus())
 }
 
+// Let parents focus this field (e.g. ComposeView focusing To when forwarding).
+defineExpose({ focus: expand })
+
 function onTextChange(args: PropertyChangeData) {
 	const value = (args.value ?? '') as string
 	// Commit on comma/space/newline; valid tokens become chips, anything invalid

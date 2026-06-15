@@ -42,7 +42,11 @@ function btn(name: string, cmd: string, arg = '', toggle = true): string {
 	)
 }
 
-export function buildEditorDocument(initialHtml: string, placeholder: string): string {
+export function buildEditorDocument(
+	initialHtml: string,
+	placeholder: string,
+	quotedHtml = '',
+): string {
 	const nonce = Math.random().toString(36).slice(2)
 	const csp =
 		"default-src 'none'; img-src http: https: data: cid:; style-src 'unsafe-inline'; " +
@@ -59,6 +63,17 @@ export function buildEditorDocument(initialHtml: string, placeholder: string): s
 		`<span class="sep"></span>` +
 		btn('clear', 'removeFormat', '', false) +
 		`</div>`
+
+	// Reply/forward quoted text lives inside the editable area (so getHtml includes
+	// it in the sent body) but starts collapsed behind an in-body ··· toggle. The
+	// toggle is wrapped in a non-editable, getHtml-stripped element (.qt-wrap) so it
+	// never leaks into the sent HTML. An empty line precedes it so there's room to
+	// type above the quote.
+	const editorBody = quotedHtml
+		? `${initialHtml || '<div><br></div>'}` +
+			`<div class="qt-wrap" contenteditable="false"><button class="qt" type="button">&middot;&middot;&middot;</button></div>` +
+			quotedHtml
+		: initialHtml
 
 	const script = `
 		(function () {
@@ -151,6 +166,18 @@ export function buildEditorDocument(initialHtml: string, placeholder: string): s
 					refresh();
 				});
 			});
+
+			// Quoted-text toggle: show/hide the quote in place (it stays in the DOM,
+			// so it's always part of the sent body — collapsing is display-only).
+			var qt = document.querySelector('.qt');
+			if (qt) {
+				qt.addEventListener('pointerdown', function (ev) { ev.preventDefault(); });
+				qt.addEventListener('click', function (ev) {
+					ev.preventDefault();
+					var collapsed = e.classList.toggle('quote-collapsed');
+					qt.classList.toggle('on', !collapsed);
+				});
+			}
 		})();
 	`
 
@@ -174,6 +201,14 @@ export function buildEditorDocument(initialHtml: string, placeholder: string): s
 	#e h2 { font-size: 19px; font-weight: 700; margin: 12px 0 6px; }
 	#e ul, #e ol { padding-left: 24px; margin: 8px 0; }
 	#e blockquote { margin: 8px 0; padding-left: 12px; border-left: 2px solid #ededed; color: #525252; }
+	#e .frappe_mail_quote, #e .frappe_mail_fwd { color: #525252; }
+	#e.quote-collapsed .frappe_mail_quote, #e.quote-collapsed .frappe_mail_fwd { display: none; }
+	/* In-body quoted-text toggle (a small pill on its own line). */
+	.qt-wrap { margin: 6px 0; }
+	.qt { display: inline-flex; align-items: center; justify-content: center; height: 24px; padding: 0 12px;
+		border: none; border-radius: 12px; background: #f3f3f3; color: #7c7c7c;
+		font-size: 16px; line-height: 1; letter-spacing: 1px; }
+	.qt.on { color: #171717; }
 	/* Pinned to the bottom; JS lifts it above the keyboard via the visual viewport. */
 	.toolbar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center;
 		gap: 2px; padding: 6px 10px; border-top: 1px solid #ededed; background: #f8f8f8;
@@ -185,7 +220,7 @@ export function buildEditorDocument(initialHtml: string, placeholder: string): s
 </style>
 </head>
 <body>
-	<div id="e" contenteditable="true" data-ph="${escapeAttr(placeholder)}">${initialHtml}</div>
+	<div id="e" contenteditable="true"${quotedHtml ? ' class="quote-collapsed"' : ''} data-ph="${escapeAttr(placeholder)}">${editorBody}</div>
 	${toolbar}
 	<script nonce="${nonce}">${script}</script>
 </body>

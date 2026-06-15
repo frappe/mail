@@ -97,7 +97,7 @@
 					<GridLayout
 						col="0"
 						class="border-outline-gray-2 mr-1.5 rounded-xl border py-3"
-						@tap="flash(__('Reply coming soon'))"
+						@tap="onReply"
 					>
 						<StackLayout orientation="horizontal" horizontalAlignment="center">
 							<Label
@@ -116,7 +116,7 @@
 						v-if="showReplyAll"
 						col="1"
 						class="border-outline-gray-2 mx-1.5 rounded-xl border py-3"
-						@tap="flash(__('Reply all coming soon'))"
+						@tap="onReplyAll"
 					>
 						<StackLayout orientation="horizontal" horizontalAlignment="center">
 							<Label
@@ -134,7 +134,7 @@
 					<GridLayout
 						:col="showReplyAll ? 2 : 1"
 						class="border-outline-gray-2 ml-1.5 rounded-xl border py-3"
-						@tap="flash(__('Forward coming soon'))"
+						@tap="onForward"
 					>
 						<StackLayout orientation="horizontal" horizontalAlignment="center">
 							<Label
@@ -169,16 +169,19 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { Utils, isAndroid } from '@nativescript/core'
-import { $navigateBack } from 'nativescript-vue'
+import { $navigateBack, $navigateTo } from 'nativescript-vue'
 
+import { composeContext } from '@/state/composeDraft'
 import { selectedThread as thread, selectedThreadMailbox } from '@/state/selectedThread'
 import { useApi } from '@/utils/api'
+import { buildForward, buildReply, buildReplyAll } from '@/utils/compose'
 import { lucide } from '@/utils/lucide'
 import { safeAreaBottom, safeAreaTop } from '@/utils/safeArea'
 import { buildThreadDocument } from '@/utils/threadHtml'
 import { userStore } from '@/stores/user'
+import ComposeView from '@/pages/ComposeView.vue'
 
-import type { Mail } from '@mail/types'
+import type { ComposeMailData, Mail } from '@mail/types'
 import type { EventData, LoadEventData } from '@nativescript/core'
 
 const store = userStore()
@@ -198,6 +201,28 @@ const showReplyAll = computed(() => {
 	if (!last) return false
 	return (last.recipients || []).filter((r) => r.type === 'To' || r.type === 'Cc').length > 1
 })
+
+// The user's own send-as addresses, used by the reply/reply-all recipient logic.
+const userEmails = computed(() => (store.user?.accounts ?? []).map((a) => a._name || a.name))
+
+// Reply/forward act on the latest message in the thread (mirrors the web), building
+// the compose pre-fill and handing off to ComposeView via composeContext.
+function openCompose(ctx: ComposeMailData) {
+	composeContext.value = ctx
+	$navigateTo(ComposeView)
+}
+function onReply() {
+	const last = mails.value.at(-1)
+	if (last) openCompose(buildReply(last, userEmails.value))
+}
+function onReplyAll() {
+	const last = mails.value.at(-1)
+	if (last) openCompose(buildReplyAll(last, userEmails.value))
+}
+function onForward() {
+	const last = mails.value.at(-1)
+	if (last) openCompose(buildForward(last))
+}
 
 const toast = ref<string | null>(null)
 let toastTimer: ReturnType<typeof setTimeout> | null = null
