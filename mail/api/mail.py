@@ -297,7 +297,7 @@ def create_mail(
 	"""Creates new mail queue."""
 
 	doc_attachments = []
-	for d in attachments:
+	for d in attachments or []:
 		cid = d.get("cid") or random_string(10)
 		doc_attachments.append(
 			{

@@ -14,16 +14,16 @@ function escapeAttr(s: string): string {
 		.replace(/>/g, '&gt;')
 }
 
-// Toolbar icons — mirror the design's compose.jsx FmtIcons (stroke 1.75 line set).
+// Toolbar icons — exact lucide path data (lucide-static v1.18.0), rendered at the
+// wrapper's stroke 1.75 to match the rest of the app's lucide icon set. Names map to
+// the lucide icons bold / italic / underline / list / list-ordered / remove-formatting.
 const ICON: Record<string, string> = {
-	bold: '<path d="M8 5h5a3.25 3.25 0 0 1 0 6.5H8zM8 11.5h6a3.25 3.25 0 0 1 0 6.5H8z" stroke-width="2.1"/><path d="M8 5v13" stroke-width="2.1"/>',
-	italic: '<path d="M11 5h7M6 19h7M14.5 5l-5 14"/>',
-	highlight:
-		'<path d="m13.5 6.5 4 4L9 19H5v-4z"/><path d="m11.5 8.5 4 4"/><path d="M16 4l4 4"/>',
-	h2: '<path d="M3 6v12M10 6v12M3 12h7"/><path d="M14 11a2.6 2.6 0 0 1 5 1c0 2.2-5 3.5-5 6h5" stroke-width="1.6"/>',
-	ul: '<path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1" fill="currentColor" stroke="none"/>',
-	ol: '<path d="M10 6h11M10 12h11M10 18h11"/><path d="M4 5l1.5-1v4M3.8 10.8a1.4 1.4 0 0 1 2.7.5c0 1.1-2.6 1.7-2.6 2.7h2.8M3.8 16.4h2a1.1 1.1 0 0 1 0 2.2h-.9a1.1 1.1 0 0 1 .1 2.2H3.7" stroke-width="1.3"/>',
-	link: '<path d="M10.5 13.5a4.2 4.2 0 0 0 6 0l2.6-2.6a4.24 4.24 0 1 0-6-6l-1.3 1.3"/><path d="M13.5 10.5a4.2 4.2 0 0 0-6 0l-2.6 2.6a4.24 4.24 0 1 0 6 6l1.3-1.3"/>',
+	bold: '<path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"/>',
+	italic: '<line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/>',
+	underline: '<path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/>',
+	ul: '<path d="M3 5h.01"/><path d="M3 12h.01"/><path d="M3 19h.01"/><path d="M8 5h13"/><path d="M8 12h13"/><path d="M8 19h13"/>',
+	ol: '<path d="M11 5h10"/><path d="M11 12h10"/><path d="M11 19h10"/><path d="M4 4h1v5"/><path d="M4 9h2"/><path d="M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"/>',
+	clear: '<path d="M4 7V4h16v3"/><path d="M5 20h6"/><path d="M13 4 8 20"/><path d="m15 15 5 5"/><path d="m20 15-5 5"/>',
 }
 
 function svg(name: string): string {
@@ -52,13 +52,12 @@ export function buildEditorDocument(initialHtml: string, placeholder: string): s
 		`<div class="toolbar">` +
 		btn('bold', 'bold') +
 		btn('italic', 'italic') +
-		btn('highlight', 'hiliteColor', '#fde68a', true) +
+		btn('underline', 'underline') +
 		`<span class="sep"></span>` +
-		btn('h2', 'formatBlock', 'H2', false) +
 		btn('ul', 'insertUnorderedList') +
 		btn('ol', 'insertOrderedList') +
 		`<span class="sep"></span>` +
-		btn('link', 'createLink', '', false) +
+		btn('clear', 'removeFormat', '', false) +
 		`</div>`
 
 	const script = `
@@ -147,14 +146,8 @@ export function buildEditorDocument(initialHtml: string, placeholder: string): s
 					var cmd = b.getAttribute('data-cmd');
 					var arg = b.getAttribute('data-arg') || null;
 					e.focus();
-					if (cmd === 'createLink') {
-						var url = window.prompt('Link URL', 'https://');
-						if (!url) return;
-						arg = url;
-					}
 					try { document.execCommand('styleWithCSS', false, true); } catch (_) {}
 					document.execCommand(cmd, false, arg);
-					sync();
 					refresh();
 				});
 			});

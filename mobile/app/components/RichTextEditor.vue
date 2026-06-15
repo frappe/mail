@@ -121,11 +121,12 @@ function onLoaded(args: EventData) {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const native = (args.object as any).android
 	// Make the WebView focusable so tapping the contenteditable brings up the
-	// soft keyboard, and render on a software layer to avoid the Android white
-	// flash during the page transition (mirrors ThreadView).
+	// soft keyboard. Deliberately NOT on a software layer (unlike the read-only
+	// ThreadView): a software-layered WebView caches its bitmap and doesn't
+	// reliably re-rasterize as editable content changes — typed text lands in
+	// the DOM but never paints.
 	native?.setFocusable?.(true)
 	native?.setFocusableInTouchMode?.(true)
-	native?.setLayerType?.(1, null)
 
 	// When the WebView gains focus (e.g. tapping the body while a native field's
 	// keyboard is up), force the soft keyboard — the field's IME-hide otherwise
