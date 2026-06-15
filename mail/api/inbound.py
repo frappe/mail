@@ -4,13 +4,13 @@ from typing import TYPE_CHECKING
 
 import frappe
 from frappe import _
-from frappe.utils import cint, convert_utc_to_system_timezone, create_batch, now
+from frappe.utils import cint, convert_utc_to_system_timezone, create_batch, now, random_string
 
 from mail.api.auth import validate_user
 from mail.client.doctype.mail_message.mail_message import fetch_blobs, fetch_messages
 from mail.client.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
 from mail.jmap import get_mailbox_id_by_role
-from mail.utils import get_config
+from mail.utils import get_config, get_inbound_logger
 from mail.utils.dt import convert_to_utc
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import get_user_personal_account
@@ -24,13 +24,27 @@ if TYPE_CHECKING:
 def fetch_blob(blob_id: str, as_bytes: bool = False) -> str | bytes:
 	"""Fetches the blob for the given blob_id."""
 
+	logger = get_inbound_logger()
+	ctx = {
+		"req_id": random_string(10),
+		"ip": frappe.request.remote_addr,
+	}
+
+	logger.debug({**ctx, "event": "fetch-blob-started", "blob_id": blob_id})
+
 	validate_user()
-	account = get_user_personal_account(frappe.session.user, raise_exception=True)
 
-	from mail.client.doctype.mail_message.mail_message import fetch_blob as _fetch_blob
+	try:
+		account = get_user_personal_account(frappe.session.user, raise_exception=True)
 
-	blob = _fetch_blob(account, blob_id)
-	return blob if as_bytes else base64.b64encode(blob).decode("utf-8")
+		from mail.client.doctype.mail_message.mail_message import fetch_blob as _fetch_blob
+
+		blob = _fetch_blob(account, blob_id)
+		return blob if as_bytes else base64.b64encode(blob).decode("utf-8")
+
+	except Exception:
+		logger.error({**ctx, "event": "fetch-blob-failed", "error": frappe.get_traceback()})
+		frappe.throw(_("Failed to fetch blob. Please check the error logs for details."))
 
 
 @frappe.whitelist(methods=["GET"])
@@ -40,20 +54,41 @@ def pull(
 ) -> dict[str, list[dict] | str]:
 	"""Returns the emails for the given mailbox."""
 
+	logger = get_inbound_logger()
+	ctx = {
+		"req_id": random_string(10),
+		"ip": frappe.request.remote_addr,
+	}
+
+	logger.debug(
+		{
+			**ctx,
+			"event": "pull-raw-started",
+			"mailbox": mailbox,
+			"limit": limit,
+			"last_received_at": last_received_at,
+		}
+	)
+
 	validate_user()
 	validate_max_sync_limit(limit)
 
-	result = []
-	source = get_source()
-	mailbox = mailbox or "inbox"
-	last_received_at = convert_to_system_timezone(last_received_at)
-	account = get_user_personal_account(frappe.session.user, raise_exception=True)
-	sync_history = get_mail_sync_history(account, source)
-	result = get_mails(account, mailbox, limit, last_received_at or sync_history.last_received_at)
-	update_mail_sync_history(sync_history, result["last_received_at"], result["last_received_mail"])
-	result["last_received_at"] = convert_to_utc(result["last_received_at"])
+	try:
+		result = []
+		source = get_source()
+		mailbox = mailbox or "inbox"
+		last_received_at = convert_to_system_timezone(last_received_at)
+		account = get_user_personal_account(frappe.session.user, raise_exception=True)
+		sync_history = get_mail_sync_history(account, source)
+		result = get_mails(account, mailbox, limit, last_received_at or sync_history.last_received_at)
+		update_mail_sync_history(sync_history, result["last_received_at"], result["last_received_mail"])
+		result["last_received_at"] = convert_to_utc(result["last_received_at"])
 
-	return result
+		return result
+
+	except Exception:
+		logger.error({**ctx, "event": "pull-failed", "error": frappe.get_traceback()})
+		frappe.throw(_("Failed to fetch emails. Please check the error logs for details."))
 
 
 @frappe.whitelist(methods=["GET"])
@@ -63,20 +98,41 @@ def pull_raw(
 ) -> dict[str, list[str] | str]:
 	"""Returns the raw emails for the given mailbox."""
 
+	logger = get_inbound_logger()
+	ctx = {
+		"req_id": random_string(10),
+		"ip": frappe.request.remote_addr,
+	}
+
+	logger.debug(
+		{
+			**ctx,
+			"event": "pull-raw-started",
+			"mailbox": mailbox,
+			"limit": limit,
+			"last_received_at": last_received_at,
+		}
+	)
+
 	validate_user()
 	validate_max_sync_limit(limit)
 
-	result = []
-	source = get_source()
-	mailbox = mailbox or "inbox"
-	last_received_at = convert_to_system_timezone(last_received_at)
-	account = get_user_personal_account(frappe.session.user, raise_exception=True)
-	sync_history = get_mail_sync_history(account, source)
-	result = get_raw_mails(account, mailbox, limit, last_received_at or sync_history.last_received_at)
-	update_mail_sync_history(sync_history, result["last_received_at"], result["last_received_mail"])
-	result["last_received_at"] = convert_to_utc(result["last_received_at"])
+	try:
+		result = []
+		source = get_source()
+		mailbox = mailbox or "inbox"
+		last_received_at = convert_to_system_timezone(last_received_at)
+		account = get_user_personal_account(frappe.session.user, raise_exception=True)
+		sync_history = get_mail_sync_history(account, source)
+		result = get_raw_mails(account, mailbox, limit, last_received_at or sync_history.last_received_at)
+		update_mail_sync_history(sync_history, result["last_received_at"], result["last_received_mail"])
+		result["last_received_at"] = convert_to_utc(result["last_received_at"])
 
-	return result
+		return result
+
+	except Exception:
+		logger.error({**ctx, "event": "pull-raw-failed", "error": frappe.get_traceback()})
+		frappe.throw(_("Failed to fetch raw emails. Please check the error logs for details."))
 
 
 def validate_max_sync_limit(limit: int) -> None:

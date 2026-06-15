@@ -180,6 +180,36 @@ def get_push_logger() -> "Logger":
 	return logger
 
 
+def get_outbound_logger() -> "Logger":
+	"""Returns a logger instance for outbound mail operations."""
+
+	config = get_config()
+
+	max_size = cint(config["outbound_log_max_file_size"])
+	file_count = cint(config["outbound_log_file_count"])
+	logger = frappe.logger("mail.outbound", allow_site=True, max_size=max_size, file_count=file_count)
+
+	log_level = config["outbound_log_level"].upper()
+	logger.setLevel(log_level)
+
+	return logger
+
+
+def get_inbound_logger() -> "Logger":
+	"""Returns a logger instance for inbound mail operations."""
+
+	config = get_config()
+
+	max_size = cint(config["inbound_log_max_file_size"])
+	file_count = cint(config["inbound_log_file_count"])
+	logger = frappe.logger("mail.inbound", allow_site=True, max_size=max_size, file_count=file_count)
+
+	log_level = config["inbound_log_level"].upper()
+	logger.setLevel(log_level)
+
+	return logger
+
+
 def is_probable_hash(s: str) -> bool:
 	"""Return True if string looks like a known password hash."""
 

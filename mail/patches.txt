@@ -12,3 +12,4 @@ mail.patches.create_archive_mailbox
 mail.patches.configure_mail_settings
 mail.patches.configure_mail_cluster
 mail.patches.configure_mail_server
+mail.patches.configure_inbound_outbound_log
