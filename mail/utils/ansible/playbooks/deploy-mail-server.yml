@@ -4,11 +4,11 @@
   become: true
   vars:
     stalwart_root: "/etc/stalwart/{{ server_hostname }}"
-    stalwart_env_content: "{{ stalwart_env }}"
-    stalwart_bootstrap_plan_content: "{{ stalwart_bootstrap_plan }}"
-    recovery_admin_user_value: "{{ recovery_admin_user }}"
-    recovery_admin_password_value: "{{ recovery_admin_password }}"
-    docker_compose_content: "{{ docker_compose }}"
+    stalwart_cli_arch_map:
+      x86_64: x86_64
+      amd64: x86_64
+      aarch64: aarch64
+      arm64: aarch64
 
   tasks:
     # -------------------------------------------------------------------------
@@ -28,7 +28,7 @@
 
     - name: Copy `stalwart.env`
       copy:
-        content: "{{ stalwart_env_content }}"
+        content: "{{ stalwart_env }}"
         dest: "{{ stalwart_root }}/stalwart.env"
         owner: "2000"
         group: "2000"
@@ -36,7 +36,7 @@
 
     - name: Copy `bootstrap.ndjson`
       copy:
-        content: "{{ stalwart_bootstrap_plan_content }}"
+        content: "{{ stalwart_bootstrap_plan }}"
         dest: "{{ stalwart_root }}/bootstrap.ndjson"
         owner: "2000"
         group: "2000"
@@ -44,7 +44,7 @@
 
     - name: Copy `docker-compose.yml`
       copy:
-        content: "{{ docker_compose_content }}"
+        content: "{{ docker_compose }}"
         dest: "{{ stalwart_root }}/docker-compose.yml"
         mode: "0644"
 
@@ -81,24 +81,198 @@
       register: wait_result
       failed_when: wait_result is failed
 
-    - name: Copy local `stalwart-cli` binary to remote host
-      copy:
-        src: "{{ playbook_dir }}/../../../../stalwart-cli"
-        dest: "{{ stalwart_root }}/stalwart-cli"
-        mode: "0755"
-
     - name: Check if bootstrap has already been completed
       stat:
         path: "{{ stalwart_root }}/config.json"
       register: bootstrap_config
+
+    - name: Validate target architecture for Stalwart CLI release
+      fail:
+        msg: "Unsupported architecture '{{ ansible_architecture }}' for Stalwart CLI download."
+      when:
+        - not bootstrap_config.stat.exists
+        - ansible_architecture not in stalwart_cli_arch_map
+
+    - name: Set Stalwart CLI download values
+      set_fact:
+        stalwart_cli_arch: "{{ stalwart_cli_arch_map[ansible_architecture] }}"
+        stalwart_cli_os_id: "{{ 'unknown-linux-gnu' if ansible_system == 'Linux' else 'apple-darwin' if ansible_system == 'Darwin' else '' }}"
+        stalwart_cli_fallback_os_id: "{{ 'unknown-linux-musl' if ansible_system == 'Linux' else '' }}"
+        stalwart_cli_release_base: "{{ 'https://github.com/stalwartlabs/cli/releases/latest/download' if (stalwart_cli_version | default('latest', true)) == 'latest' else 'https://github.com/stalwartlabs/cli/releases/download/' ~ (stalwart_cli_version | default('latest', true)) }}"
+      when: not bootstrap_config.stat.exists
+
+    - name: Validate target operating system for Stalwart CLI release
+      fail:
+        msg: "Unsupported operating system '{{ ansible_system }}' for Stalwart CLI download."
+      when:
+        - not bootstrap_config.stat.exists
+        - not stalwart_cli_os_id
+
+    - name: Set Stalwart CLI package details
+      set_fact:
+        stalwart_cli_filename: "stalwart-cli-{{ stalwart_cli_arch }}-{{ stalwart_cli_os_id }}.tar.xz"
+        stalwart_cli_download_url: "{{ stalwart_cli_release_base }}/stalwart-cli-{{ stalwart_cli_arch }}-{{ stalwart_cli_os_id }}.tar.xz"
+        stalwart_cli_fallback_filename: "stalwart-cli-{{ stalwart_cli_arch }}-{{ stalwart_cli_fallback_os_id }}.tar.xz"
+        stalwart_cli_fallback_download_url: "{{ stalwart_cli_release_base }}/stalwart-cli-{{ stalwart_cli_arch }}-{{ stalwart_cli_fallback_os_id }}.tar.xz"
+      when: not bootstrap_config.stat.exists
+
+    - name: Create temporary directory for Stalwart CLI extraction
+      tempfile:
+        state: directory
+        suffix: stalwart-cli
+      register: stalwart_cli_tempdir
+      when: not bootstrap_config.stat.exists
+
+    - name: Download Stalwart CLI release archive on remote host
+      get_url:
+        url: "{{ stalwart_cli_download_url }}"
+        dest: "{{ stalwart_cli_tempdir.path }}/{{ stalwart_cli_filename }}"
+        mode: "0644"
+      when: not bootstrap_config.stat.exists
+
+    - name: Extract Stalwart CLI archive on remote host
+      unarchive:
+        src: "{{ stalwart_cli_tempdir.path }}/{{ stalwart_cli_filename }}"
+        dest: "{{ stalwart_cli_tempdir.path }}"
+        remote_src: true
+      when: not bootstrap_config.stat.exists
+
+    - name: Find extracted Stalwart CLI binary
+      find:
+        paths: "{{ stalwart_cli_tempdir.path }}"
+        file_type: file
+        patterns: "stalwart-cli"
+        recurse: true
+      register: extracted_stalwart_cli
+      when: not bootstrap_config.stat.exists
+
+    - name: Fail if extracted archive does not contain Stalwart CLI binary
+      fail:
+        msg: "Downloaded archive {{ stalwart_cli_filename }} does not contain a 'stalwart-cli' binary."
+      when:
+        - not bootstrap_config.stat.exists
+        - extracted_stalwart_cli.matched | int == 0
+
+    - name: Install Stalwart CLI binary into deployment directory
+      copy:
+        src: "{{ extracted_stalwart_cli.files[0].path }}"
+        dest: "{{ stalwart_root }}/stalwart-cli"
+        mode: "0755"
+        remote_src: true
+      when: not bootstrap_config.stat.exists
+
+    - name: Verify Stalwart CLI starts
+      command: "{{ stalwart_root }}/stalwart-cli --help"
+      register: stalwart_cli_check
+      changed_when: false
+      failed_when: false
+      when: not bootstrap_config.stat.exists
+
+    - name: Download fallback musl Stalwart CLI archive on glibc mismatch
+      get_url:
+        url: "{{ stalwart_cli_fallback_download_url }}"
+        dest: "{{ stalwart_cli_tempdir.path }}/{{ stalwart_cli_fallback_filename }}"
+        mode: "0644"
+      register: fallback_download_result
+      when:
+        - not bootstrap_config.stat.exists
+        - ansible_system == 'Linux'
+        - stalwart_cli_fallback_os_id
+        - stalwart_cli_fallback_os_id != stalwart_cli_os_id
+        - stalwart_cli_check.rc != 0
+        - "'GLIBC_' in (stalwart_cli_check.stderr | default(''))"
+
+    - name: Create fallback extraction directory
+      file:
+        path: "{{ stalwart_cli_tempdir.path }}/fallback"
+        state: directory
+        mode: "0755"
+      when:
+        - not bootstrap_config.stat.exists
+        - fallback_download_result is defined
+        - fallback_download_result is succeeded
+
+    - name: Extract fallback musl Stalwart CLI archive
+      unarchive:
+        src: "{{ stalwart_cli_tempdir.path }}/{{ stalwart_cli_fallback_filename }}"
+        dest: "{{ stalwart_cli_tempdir.path }}/fallback"
+        remote_src: true
+      when:
+        - not bootstrap_config.stat.exists
+        - fallback_download_result is defined
+        - fallback_download_result is succeeded
+
+    - name: Find extracted fallback Stalwart CLI binary
+      find:
+        paths: "{{ stalwart_cli_tempdir.path }}/fallback"
+        file_type: file
+        patterns: "stalwart-cli"
+        recurse: true
+      register: extracted_fallback_stalwart_cli
+      when:
+        - not bootstrap_config.stat.exists
+        - fallback_download_result is defined
+        - fallback_download_result is succeeded
+
+    - name: Install fallback Stalwart CLI binary into deployment directory
+      copy:
+        src: "{{ extracted_fallback_stalwart_cli.files[0].path }}"
+        dest: "{{ stalwart_root }}/stalwart-cli"
+        mode: "0755"
+        remote_src: true
+      when:
+        - not bootstrap_config.stat.exists
+        - fallback_download_result is defined
+        - fallback_download_result is succeeded
+        - extracted_fallback_stalwart_cli.matched | int > 0
+
+    - name: Re-verify Stalwart CLI after fallback install
+      command: "{{ stalwart_root }}/stalwart-cli --help"
+      register: stalwart_cli_check_after_fallback
+      changed_when: false
+      failed_when: false
+      when:
+        - not bootstrap_config.stat.exists
+        - fallback_download_result is defined
+        - fallback_download_result is succeeded
+
+    - name: Ensure Stalwart CLI is executable before bootstrap apply
+      fail:
+        msg: >-
+          {{
+            (
+              (stalwart_cli_check_after_fallback if (stalwart_cli_check_after_fallback is defined) else stalwart_cli_check)
+              .get('stderr')
+            )
+            or
+            (
+              (stalwart_cli_check_after_fallback if (stalwart_cli_check_after_fallback is defined) else stalwart_cli_check)
+              .get('stdout')
+            )
+            or 'Stalwart CLI could not be executed on target host.'
+          }}
+      when:
+        - not bootstrap_config.stat.exists
+        - (
+            (stalwart_cli_check_after_fallback if (stalwart_cli_check_after_fallback is defined) else stalwart_cli_check)
+            .get('rc', 1)
+          ) != 0
+
+    - name: Remove temporary Stalwart CLI extraction directory
+      file:
+        path: "{{ stalwart_cli_tempdir.path }}"
+        state: absent
+      when:
+        - not bootstrap_config.stat.exists
+        - stalwart_cli_tempdir is defined
 
     - name: Apply bootstrap plan through `stalwart-cli`
       command: >
         {{ stalwart_root }}/stalwart-cli apply --file {{ stalwart_root }}/bootstrap.ndjson --json
       environment:
         STALWART_URL: "http://127.0.0.1:8080"
-        STALWART_USER: "{{ recovery_admin_user_value }}"
-        STALWART_PASSWORD: "{{ recovery_admin_password_value }}"
+        STALWART_USER: "{{ recovery_admin_user }}"
+        STALWART_PASSWORD: "{{ recovery_admin_password }}"
       register: apply_result
       changed_when: apply_result.rc == 0 and ('"created"' in apply_result.stdout or '"updated"' in apply_result.stdout)
       failed_when: false
@@ -106,12 +280,13 @@
 
     - name: Fail deployment if bootstrap apply failed for reasons other than already-bootstrapped server
       fail:
-        msg: "{{ apply_result.stdout | default(apply_result.stderr, true) }}"
+        msg: "{{ apply_result.get('stdout') or apply_result.get('stderr') or 'Bootstrap apply failed with no output.' }}"
       when:
         - not bootstrap_config.stat.exists
-        - apply_result.rc != 0
-        - "'This operation is only allowed bootstrap mode' not in (apply_result.stdout | default(''))"
-        - "'This operation is only allowed bootstrap mode' not in (apply_result.stderr | default(''))"
+        - apply_result is defined
+        - apply_result.get('rc', 1) != 0
+        - "'This operation is only allowed bootstrap mode' not in (apply_result.get('stdout', ''))"
+        - "'This operation is only allowed bootstrap mode' not in (apply_result.get('stderr', ''))"
 
     - name: Restart the Stalwart
       command: docker compose restart stalwart

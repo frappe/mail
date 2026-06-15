@@ -214,7 +214,7 @@ const flash = inject<(msg: string) => void>('flash', () => {})
 const safeTop = safeAreaTop()
 const safeBottom = safeAreaBottom()
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 25
 
 const threads = ref<Thread[]>([])
 const loading = ref(false)
@@ -223,16 +223,18 @@ const reachedEnd = ref(false)
 const error = ref<string | null>(null)
 const filter = ref<ThreadFilter>(null)
 
-let limit = PAGE_SIZE
 // Guards against a slow response for a previous mailbox overwriting the current.
 let loadToken = 0
 
+// Infinite scroll over the paginated backend (#506): each call fetches ONE page at
+// `start` and appends it, rather than re-fetching a growing window — important now that
+// get_threads returns the full conversation per thread.
 async function load(initial: boolean) {
 	if (!store.account) return
 	const token = ++loadToken
+	const start = initial ? 0 : threads.value.length
 	if (initial) {
 		loading.value = true
-		limit = PAGE_SIZE
 		reachedEnd.value = false
 	} else {
 		loadingMore.value = true
@@ -242,13 +244,21 @@ async function load(initial: boolean) {
 		const data = await api.call<[Thread[], string]>('mail.api.mail.get_threads', {
 			account: store.account,
 			mailbox: props.mailbox.id,
-			limit,
+			limit: PAGE_SIZE,
+			start,
 			filter_by: filter.value,
 		})
 		if (token !== loadToken) return
 		const list = data?.[0] ?? []
-		threads.value = list
-		reachedEnd.value = list.length < limit
+		if (initial) {
+			threads.value = list
+		} else {
+			// Dedupe by thread_id so a thread that shifted across the page boundary
+			// (e.g. a new arrival) can't produce a duplicate row / key clash.
+			const seen = new Set(threads.value.map((t) => t.thread_id))
+			threads.value = [...threads.value, ...list.filter((t) => !seen.has(t.thread_id))]
+		}
+		reachedEnd.value = list.length < PAGE_SIZE
 	} catch (e) {
 		if (token !== loadToken) return
 		error.value = (e as { message?: string })?.message ?? __('Failed to load messages')
@@ -292,7 +302,6 @@ function onPullRefresh(args: { object: { refreshing: boolean } }) {
 
 function loadMore() {
 	if (loading.value || loadingMore.value || reachedEnd.value) return
-	limit += PAGE_SIZE
 	load(false)
 }
 

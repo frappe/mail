@@ -128,6 +128,9 @@ export interface Thread {
 	answered: 0 | 1
 	forwarded: 0 | 1
 	attachments: Attachment[]
+	// Full conversation embedded by get_threads (#506) — the thread view renders from
+	// this instead of a separate get_thread call.
+	messages: Mail[]
 	user_image?: string
 }
 

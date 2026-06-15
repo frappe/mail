@@ -174,7 +174,7 @@ import { Utils, isAndroid } from '@nativescript/core'
 import { $navigateBack, $navigateTo } from 'nativescript-vue'
 
 import { composeContext } from '@/state/composeDraft'
-import { selectedThread as thread, selectedThreadMailbox } from '@/state/selectedThread'
+import { selectedThread as thread } from '@/state/selectedThread'
 import { useApi } from '@/utils/api'
 import { buildDraftEdit, buildForward, buildReply, buildReplyAll } from '@/utils/compose'
 import { lucide } from '@/utils/lucide'
@@ -183,7 +183,7 @@ import { buildThreadDocument } from '@/utils/threadHtml'
 import { userStore } from '@/stores/user'
 import ComposeView from '@/pages/ComposeView.vue'
 
-import type { ComposeMailData, Mail } from '@mail/types'
+import type { ComposeMailData, Mail, Thread } from '@mail/types'
 import type { EventData, LoadEventData } from '@nativescript/core'
 
 const store = userStore()
@@ -238,27 +238,60 @@ function flash(msg: string) {
 	toastTimer = setTimeout(() => (toast.value = null), 1800)
 }
 
+// Render from the conversation embedded by get_threads (#506); the subject comes from
+// the first message (the original), not the thread's latest.
+function render(t: Thread) {
+	html.value = buildThreadDocument(mails.value, mails.value[0]?.subject || t.subject || '')
+	markThreadSeen()
+}
+
 async function load() {
 	const t = thread.value
 	if (!t) {
 		error.value = __('No thread selected')
 		return
 	}
-	loading.value = true
 	error.value = null
+	// Prefer the messages already loaded with the list (mirrors the web MailThread).
+	if (t.messages?.length) {
+		mails.value = t.messages
+		render(t)
+		return
+	}
+	// Fallback: a thread not present in the list (e.g. future search) — fetch it.
+	loading.value = true
 	try {
 		const data = await api.call<Mail[]>('mail.api.mail.get_thread', {
 			account: store.account,
 			thread_id: t.thread_id,
 		})
 		mails.value = data ?? []
-		// Use the first message's subject (the original), not the thread's latest.
-		html.value = buildThreadDocument(mails.value, mails.value[0]?.subject || t.subject || '')
+		render(t)
 	} catch (e) {
 		error.value = (e as { message?: string })?.message ?? __('Failed to load this thread')
 	} finally {
 		loading.value = false
 	}
+}
+
+// Mark the whole conversation seen once loaded (mirrors the web set_mails_seen, which
+// marks every message across mailboxes — #506 replaced the old thread/mailbox set_seen).
+// html is already built from the pre-seen state, so the "new messages" divider still
+// shows on this open and is gone on the next. Optimistic; reverts on failure.
+function markThreadSeen() {
+	const unseen = mails.value.filter((m) => !m.draft && !m.seen)
+	if (!unseen.length) return
+	const t = thread.value
+	if (t) t.seen = 1
+	unseen.forEach((m) => (m.seen = 1))
+	api.call('mail.api.mail.set_mails_seen', {
+		account: store.account,
+		ids: unseen.map((m) => m.id),
+		seen: true,
+	}).catch(() => {
+		if (t) t.seen = 0
+		unseen.forEach((m) => (m.seen = 0))
+	})
 }
 
 function onWebViewLoaded(args: EventData) {
@@ -296,20 +329,8 @@ function onLoadStarted(args: LoadEventData) {
 	}
 }
 
-// Mark the thread seen when the detail view opens (path-independent), mutating
-// the shared thread object so the list row updates too.
-onMounted(() => {
-	const t = thread.value
-	if (t && !t.seen) {
-		t.seen = 1
-		api.call('mail.api.mail.set_seen', {
-			account: store.account,
-			thread_ids: { true: [t.thread_id] },
-			mailbox: selectedThreadMailbox.value,
-		}).catch(() => (t.seen = 0))
-	}
-	load()
-})
+// Load the thread; markThreadSeen (in load) marks it read once the messages are in.
+onMounted(load)
 
 function goBack() {
 	$navigateBack()

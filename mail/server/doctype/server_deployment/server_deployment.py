@@ -11,7 +11,7 @@ from frappe.model.document import Document
 from frappe.query_builder import Order
 from frappe.utils import cint, now, time_diff_in_seconds
 
-from mail.utils import get_config, get_stalwart_version
+from mail.utils import get_config, get_stalwart_cli_version, get_stalwart_version
 
 
 class ServerDeployment(Document):
@@ -144,6 +144,7 @@ class ServerDeployment(Document):
 				"server_hostname": server.hostname,
 				"stalwart_env": server._get_stalwart_env(recovery_mode=False, as_dict=False),
 				"stalwart_bootstrap_plan": server.bootstrap_ndjson,
+				"stalwart_cli_version": get_stalwart_cli_version(),
 				"recovery_admin_user": cluster.recovery_admin_user,
 				"recovery_admin_password": cluster.get_password("recovery_admin_password"),
 				"docker_compose": self.docker_compose,
