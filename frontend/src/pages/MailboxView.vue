@@ -704,13 +704,18 @@ const handleArrowNavigation = (e: KeyboardEvent, key: string) => {
 
 	let newThread = undefined
 
+	// Step across the page boundary at the first/last thread, like the ThreadHeader arrows.
+	// newThread stays the in-page target (undefined at an edge), so shift-select skips a
+	// cross-page move — the new page resolves asynchronously and goToPage resets selections.
 	if (threadID) {
-		newThread = getThreadByOffset(offset) || threadInFocus.value
-		goToThread(newThread)
+		newThread = getThreadByOffset(offset)
+		goToThreadByOffset(offset)
+	} else if (!threadIDs.value.includes(threadInFocus.value)) {
+		focusOnThread(threadIDs.value[0])
+		newThread = threadIDs.value[0]
 	} else {
-		if (threadIDs.value.includes(threadInFocus.value)) focusOnThreadByOffset(offset)
-		else focusOnThread(threadIDs.value[0])
-		newThread = threadInFocus.value
+		newThread = getThreadByOffset(offset, threadInFocus.value)
+		focusOnThreadByOffset(offset)
 	}
 
 	// Handle shift+arrow selection
@@ -1069,28 +1074,34 @@ const goToThread = (threadID: string) => {
 }
 
 // When stepping past the first/last thread of a page, move to the adjacent page (if any) and open
-// its edge thread once the new page has loaded (`openPendingEdgeThread`, called from onSuccess).
-let pendingEdgeThread: 'first' | 'last' | null = null
+// or focus its edge thread once the new page has loaded (`openPendingEdgeThread`, called from
+// onSuccess). `action` distinguishes the reading view (open) from list keyboard focus (focus).
+let pendingEdgeThread: { edge: 'first' | 'last'; action: 'open' | 'focus' } | null = null
 
-const goToThreadByOffset = (offset: number) => {
-	const next = getThreadByOffset(offset)
-	if (next) return goToThread(next)
-
+const crossPageByOffset = (offset: number, action: 'open' | 'focus') => {
 	if (offset > 0 && canGoNext.value) {
-		pendingEdgeThread = 'first'
+		pendingEdgeThread = { edge: 'first', action }
 		goToPage(true)
 	} else if (offset < 0 && canGoPrev.value) {
-		pendingEdgeThread = 'last'
+		pendingEdgeThread = { edge: 'last', action }
 		goToPage(false)
 	}
 }
 
+const goToThreadByOffset = (offset: number) => {
+	const next = getThreadByOffset(offset)
+	if (next) return goToThread(next)
+	crossPageByOffset(offset, 'open')
+}
+
 const openPendingEdgeThread = () => {
 	if (!pendingEdgeThread) return
-	const id = pendingEdgeThread === 'first' ? threadIDs.value[0] : threadIDs.value.at(-1)
+	const id = pendingEdgeThread.edge === 'first' ? threadIDs.value[0] : threadIDs.value.at(-1)
 	if (!id) return // keep the flag if the page is still empty (e.g. after overflow correction)
+	const { action } = pendingEdgeThread
 	pendingEdgeThread = null
-	goToThread(id)
+	if (action === 'open') goToThread(id)
+	else focusOnThread(id)
 }
 
 const goToNextThreadOrMailbox = (excludedThreads: string[] = []) => {
@@ -1107,8 +1118,11 @@ const focusOnThread = (threadID: string) => {
 	scrollIntoView(threadID)
 }
 
-const focusOnThreadByOffset = (offset: number) =>
-	focusOnThread(getThreadByOffset(offset, threadInFocus.value))
+const focusOnThreadByOffset = (offset: number) => {
+	const next = getThreadByOffset(offset, threadInFocus.value)
+	if (next) return focusOnThread(next)
+	crossPageByOffset(offset, 'focus')
+}
 
 const scrollIntoView = (threadID: string) => {
 	const el = mailItemsRef.value?.find((el) => el?.id === threadID)?.$el
