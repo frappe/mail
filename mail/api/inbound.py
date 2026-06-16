@@ -42,6 +42,9 @@ def fetch_blob(blob_id: str, as_bytes: bool = False) -> str | bytes:
 		blob = _fetch_blob(account, blob_id)
 		return blob if as_bytes else base64.b64encode(blob).decode("utf-8")
 
+	except frappe.exceptions.ValidationError:
+		raise
+
 	except Exception:
 		logger.error({**ctx, "event": "fetch-blob-failed", "error": frappe.get_traceback()})
 		frappe.throw(_("Failed to fetch blob. Please check the error logs for details."))
@@ -63,7 +66,7 @@ def pull(
 	logger.debug(
 		{
 			**ctx,
-			"event": "pull-raw-started",
+			"event": "pull-started",
 			"mailbox": mailbox,
 			"limit": limit,
 			"last_received_at": last_received_at,
@@ -85,6 +88,9 @@ def pull(
 		result["last_received_at"] = convert_to_utc(result["last_received_at"])
 
 		return result
+
+	except frappe.exceptions.ValidationError:
+		raise
 
 	except Exception:
 		logger.error({**ctx, "event": "pull-failed", "error": frappe.get_traceback()})
@@ -129,6 +135,9 @@ def pull_raw(
 		result["last_received_at"] = convert_to_utc(result["last_received_at"])
 
 		return result
+
+	except frappe.exceptions.ValidationError:
+		raise
 
 	except Exception:
 		logger.error({**ctx, "event": "pull-raw-failed", "error": frappe.get_traceback()})

@@ -51,6 +51,9 @@ def upload_attachment() -> dict:
 				"file_url": doc.file_url,
 			}
 
+	except frappe.exceptions.ValidationError:
+		raise
+
 	except Exception:
 		logger.error({**ctx, "event": "upload-attachment-failed", "error": frappe.get_traceback()})
 		frappe.throw(_("Failed to upload attachment. Please check the error logs for details."))
@@ -164,6 +167,9 @@ def send_raw(
 			)
 
 		return _enqueue_mail(from_, to, raw_message, is_newsletter)
+
+	except frappe.exceptions.ValidationError:
+		raise
 
 	except Exception:
 		logger.error({**ctx, "event": "send-raw-failed", "error": frappe.get_traceback()})

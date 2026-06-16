@@ -21,4 +21,5 @@ def execute() -> None:
 		if value is not None:
 			setattr(settings, field or key, value)
 
+	settings.flags.ignore_mandatory = 1
 	settings.save()
