@@ -63,6 +63,12 @@ CONFIG_KEYS = [
 	"storage_log_file_count",
 	"storage_log_level",
 	"storage_log_max_file_size",
+	"inbound_log_file_count",
+	"inbound_log_level",
+	"inbound_log_max_file_size",
+	"outbound_log_file_count",
+	"outbound_log_level",
+	"outbound_log_max_file_size",
 	# Limits
 	"exchange_max_export",
 	"exchange_max_import",
