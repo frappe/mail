@@ -83,7 +83,9 @@ def send(
 		"ip": frappe.request.remote_addr,
 	}
 
-	logger.debug({**ctx, "event": "send-started", "subject": subject, "to": to, "cc": cc, "bcc": bcc})
+	logger.debug(
+		{**ctx, "event": "send-started", "is_newsletter": is_newsletter, "save_as_draft": save_as_draft}
+	)
 	account = get_user_personal_account(frappe.session.user, raise_exception=True)
 
 	try:
@@ -131,7 +133,12 @@ def send_raw(
 	}
 
 	logger.debug(
-		{**ctx, "event": "send-raw-started", "from": from_, "to": to, "is_newsletter": is_newsletter}
+		{
+			**ctx,
+			"event": "send-raw-started",
+			"is_newsletter": is_newsletter,
+			"has_raw_message": bool(raw_message),
+		}
 	)
 
 	try:
