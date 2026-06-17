@@ -317,10 +317,14 @@ const user = inject('$user') as UserResource
 
 const getDefaultFromEmail = () => {
 	const identityEmails = identities.data?.map((i: Identity) => i.email) ?? []
+	// The default outgoing email is now per-account; pick the active account's.
+	const defaultOutgoingEmail = user.data?.accounts?.find(
+		(a) => a.name === account,
+	)?.default_outgoing_email
 
 	return (
 		identityEmails.find((e) => e === mailDetails?.from_email) ??
-		identityEmails.find((e) => e === user.data.default_outgoing_email) ??
+		identityEmails.find((e) => e === defaultOutgoingEmail) ??
 		identityEmails[0] ??
 		user.data.name
 	)
