@@ -114,13 +114,17 @@ The Stalwart Mail Server acts as the backbone of Frappe Mail's infrastructure. B
 
 ##### Step 1: Configure Mail Settings
 
-**1.1 Set Root Domain Name**
+**1.1 Tweak (Optional)**
+
+- Tweak the Mail Settings as per your need.
+
+**1.2 Set Root Domain Name (Optional)**
 
 - Open **Mail Settings** and set the **Root Domain Name**.
-- This domain is used for DNS configurations such as the **root SPF record**.
+- This domain is used by DNS Record to manage the records.
 - For organizational use, set it to your company's domain.
 
-**1.2 Configure DNS Provider (Optional)**
+**1.3 Configure DNS Provider (Optional)**
 
 - If your DNS provider is supported, enable its integration in **Mail Settings**.
 - When enabled, DNS records for Mail Clusters and Mail Servers will be updated automatically.
@@ -146,7 +150,6 @@ This step walks you through creating a Mail Cluster and deploying one or more Ma
     - Blob: S3 or compatible storage
     - Full‑Text Search: ElasticSearch
     - In‑Memory: Redis
-- **Logs & Metrics:** Enable and configure **Prometheus** or **OpenTelemetry** if needed.
 
 ![Mail Cluster](docs/screenshots/cluster-details.png)
 
@@ -155,7 +158,6 @@ This step walks you through creating a Mail Cluster and deploying one or more Ma
 - Go to **Mail Server → New**.
 - Select the previously created Mail Cluster.
 - **Hostname:** FQDN of this specific server (or same as cluster for single‑server deployments).
-- **Node ID:** Sequential numbers (1, 2, 3...) for each server in the cluster.
 - Save the Mail Server.
 
 ![Mail Server](docs/screenshots/server-details.png)
@@ -177,45 +179,17 @@ When verified, extra actions become available:
 
 ![Mail Server SSH Tab](docs/screenshots/server-ssh.png)
 
-**2.4 Configure HTTPS / TLS (Production)**
+**2.4 Generate and Deploy Server Configuration**
 
-For production environments, **HTTPS/TLS** is strongly recommended.
+Whenever you make changes to a **Mail Cluster** or **Mail Server**, you must regenerate and deploy the stalwart with new configuration.
 
-**Option A: Use ACME (Recommended)**
-
-- Configure an **ACME Provider** in the Mail Server.
-- Ensure your domain's DNS records point to the server before proceeding.
-- Example: mail.example.com → A record → Server IP.
-
-![Mail Server ACME Provider](docs/screenshots/server-tls-acme.png)
-
-**Option B: Use Existing TLS Certificates**
-
-1. Copy your TLS certificate and private key to the server.
-2. Add a new entry in the **TLS Certificates** table with:
-   - Certificate Path
-   - Private Key Path
-   - Subject Alternative Names
-
-3. Ensure the Stalwart process has read permissions for both files.
-
-![Mail Server TLS Certificate](docs/screenshots/server-tls-cert.png)
-
-**2.5 Generate and Deploy Server Configuration**
-
-Whenever you make changes to a **Mail Cluster** or **Mail Server**, you must regenerate and deploy the server configuration.
-
-1. In the Mail Server document, click **Actions → Generate Config**.
-2. Deploy the updated configuration using one of the following options:
+1. In the Mail Server document, click **Bootstrap → Regenerate**.
+2. Deploy the updated server by:
    - **Actions → Install Stalwart**
-     - Installs Stalwart and always uses the latest generated configuration.
+     - Installs Stalwart and always uses the latest configuration.
        ![Actions > Install Stalwart](docs/screenshots/server-install-stalwart.png)
 
-   - **Server Config → Actions → Deploy**
-     - Deploys Stalwart using a specific configuration version.
-       ![Actions > Deploy](docs/screenshots/server-config-deploy.png)
-
-**2.6 Access the Stalwart Admin Panel**
+**2.5 Access the Stalwart Admin Panel**
 After installation completes:
 
 - Open the Stalwart Admin Panel in your browser.
@@ -259,19 +233,6 @@ Ensure Stalwart credentials are configured in either **Mail Settings** (recommen
 
 - Wait for DNS propagation and verify records from your provider or using DNS lookup tools.
 - Repeat the above process for each additional domain.
-
-##### Step 5: Adding Members (Admin Dashboard)
-
-- Go to **Dashboard → Members** and click **Add Member**.
-- Enter username, domain, role, and backup email.
-- Choose one of the following:
-  - **Send Invite:** sends an onboarding link to the backup email.
-  - **Add Member directly:** set name and password to create immediately.
-
-![Member](docs/screenshots/ui/member.png)
-
-Member invites are managed from **Dashboard → Invites**, where you can track pending, accepted, and expired invitations.
-
 
 ## APIs
 
