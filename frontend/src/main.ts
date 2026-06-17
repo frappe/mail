@@ -10,11 +10,31 @@ import router from '@/router'
 import { initSocket } from '@/socket'
 import translationPlugin from '@/translation'
 import dayjs from '@/utils/dayjs'
+import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 
 import FrappePushNotification from '../public/frappe-push-notification'
 
-setConfig('resourceFetcher', frappeRequest)
+// Centralised auth handling: any request that comes back unauthenticated signs the user
+// out and redirects to login, so they can't keep composing/acting against a dead session.
+setConfig('resourceFetcher', async (options: Parameters<typeof frappeRequest>[0]) => {
+	try {
+		return await frappeRequest(options)
+	} catch (error) {
+		// A dead session surfaces as AuthenticationError or (for non-guest methods)
+		// PermissionError "Login to access". If the session is actually gone, swallow the
+		// error so the resource doesn't also toast it — we've shown "signed out" and are
+		// redirecting to login. A genuine PermissionError for a logged-in user re-throws and
+		// surfaces normally. Never-settling promise → the resource's onSuccess/onError won't fire.
+		const excType = (error as { exc_type?: string })?.exc_type
+		if (
+			(excType === 'AuthenticationError' || excType === 'PermissionError') &&
+			sessionStore().handleSessionExpired()
+		)
+			return new Promise<never>(() => {})
+		throw error
+	}
+})
 
 const app = createApp(App)
 app.use(router)
