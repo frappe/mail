@@ -140,6 +140,16 @@
 							</template>
 						</template>
 
+						<Dropdown
+							v-if="!!selections.length && !['search', 'starred'].includes(mailbox)"
+							:options="moveToOptions"
+						>
+							<Button variant="ghost" :tooltip="__('Move To')">
+								<template #icon>
+									<component :is="FolderInput" class="icon" />
+								</template>
+							</Button>
+						</Dropdown>
 						<Dropdown v-if="showAddTo" :options="addToOptions">
 							<Button variant="ghost" :tooltip="__('Add To')">
 								<template #icon>
@@ -151,16 +161,6 @@
 							<Button variant="ghost" :tooltip="__('Remove From')">
 								<template #icon>
 									<component :is="FolderMinus" class="icon" />
-								</template>
-							</Button>
-						</Dropdown>
-						<Dropdown
-							v-if="!!selections.length && !['search', 'starred'].includes(mailbox)"
-							:options="moveToOptions"
-						>
-							<Button variant="ghost" :tooltip="__('Move To')">
-								<template #icon>
-									<component :is="FolderInput" class="icon" />
 								</template>
 							</Button>
 						</Dropdown>
@@ -761,28 +761,6 @@ const selectActions = computed((): SelectAction[] => [
 			),
 	},
 	{
-		label: __('Mark as Read (Shift+U)'),
-		onClick: () => handleSetSeen({ 1: selections.value }),
-		icon: MailOpen,
-		condition: () =>
-			selections.value.some(
-				(threadID) =>
-					threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
-						?.seen === 0,
-			),
-	},
-	{
-		label: __('Mark as Unread (U)'),
-		onClick: () => handleSetSeen({ 0: selections.value }),
-		icon: MailIcon,
-		condition: () =>
-			selections.value.some(
-				(threadID) =>
-					threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
-						?.seen === 1,
-			),
-	},
-	{
 		label: __('Archive Threads (E)'),
 		onClick: () =>
 			mailbox === mailboxIds.sent
@@ -825,6 +803,28 @@ const selectActions = computed((): SelectAction[] => [
 		onClick: () => junkOrDeleteThreads(selections.value, false),
 		icon: Trash2,
 		condition: () => mailbox === mailboxIds.trash,
+	},
+	{
+		label: __('Mark as Read (Shift+U)'),
+		onClick: () => handleSetSeen({ 1: selections.value }),
+		icon: MailOpen,
+		condition: () =>
+			selections.value.some(
+				(threadID) =>
+					threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+						?.seen === 0,
+			),
+	},
+	{
+		label: __('Mark as Unread (U)'),
+		onClick: () => handleSetSeen({ 0: selections.value }),
+		icon: MailIcon,
+		condition: () =>
+			selections.value.some(
+				(threadID) =>
+					threadsResource.value?.data?.find((t: Thread) => t.thread_id === threadID)
+						?.seen === 1,
+			),
 	},
 ])
 
