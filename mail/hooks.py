@@ -345,13 +345,6 @@ ignore_links_on_delete = [
 
 default_log_clearing_doctypes = {"Mail Queue": 3, "Spam Check Log": 7}
 
-fixtures = [
-	{
-		"dt": "Role",
-		"filters": [["role_name", "in", ["Mail Admin"]]],
-	},
-]
-
 add_to_apps_screen = [
 	{
 		"name": "mail",
