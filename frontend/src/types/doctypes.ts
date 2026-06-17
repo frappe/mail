@@ -35,7 +35,7 @@ export interface MailHeader extends ChildDocType {
 	value?: string
 }
 
-// Last updated: 2026-04-13 10:27:23.941932
+// Last updated: 2026-05-18 15:08:26.869368
 export interface MailAccountRequest extends DocType {
   /** Request Key: Data */
   request_key?: string;
@@ -58,7 +58,9 @@ export interface MailAccountRequest extends DocType {
   /** Expires At: Datetime */
   expires_at?: string;
   /** Roles: Small Text */
-  roles: string;
+  roles?: string;
+  /** Is Admin: Check */
+  is_admin: 0 | 1;
 }
 
 // Last updated: 2025-02-03 17:11:17.517836
@@ -97,7 +99,7 @@ export interface MailDomain extends DocType {
 	default_disk_quota?: number
 }
 
-// Last updated: 2026-04-27 09:25:58.236007
+// Last updated: 2026-06-08 22:01:00.877073
 export interface MailSettings extends DocType {
   /** Root Domain Name: Data */
   root_domain_name?: string;
@@ -114,7 +116,7 @@ export interface MailSettings extends DocType {
   /** Allow Signup: Check */
   allow_signup: 0 | 1;
   /** Signup Domains: Small Text */
-  signup_domains: string;
+  signup_domains?: string;
   /** Username: Data */
   dns_provider_username?: string;
   /** Zone ID: Data */
@@ -131,6 +133,82 @@ export interface MailSettings extends DocType {
   dns_provider_access_key?: string;
   /** Access Secret: Password */
   dns_provider_access_secret?: string;
+  /** Server URL: Data */
+  server_url?: string;
+  /** Username: Data */
+  username?: string;
+  /** Password: Password */
+  password?: string;
+  /** Ansible Play Timeout: Int */
+  ansible_play_timeout: number;
+  /** Mail Exchange Export Timeout: Int */
+  exchange_export_timeout: number;
+  /** Mail Exchange Import Timeout: Int */
+  exchange_import_timeout: number;
+  /** Fetch Lock Timeout: Int */
+  fetch_lock_timeout: number;
+  /** Lock Acquire Timeout: Int */
+  lock_acquire_timeout: number;
+  /** Lock Timeout: Int */
+  lock_timeout: number;
+  /** Scan Message Timeout: Int */
+  scan_message_timeout: number;
+  /** Server Deployment Timeout: Int */
+  server_deployment_timeout: number;
+  /** Process Pending Emails Timeout: Int */
+  process_pending_emails_timeout: number;
+  /** Server Job Timeout: Int */
+  server_job_timeout: number;
+  /** Stalwart CLI Command Timeout: Int */
+  stalwart_cli_command_timeout: number;
+  /** Default DNS TTL: Int */
+  default_dns_ttl: number;
+  /** Default Disk Quota (GB): Int */
+  default_disk_quota_gb: number;
+  /** Default Gravatar: Select */
+  default_gravatar: '404';
+  /** Stalwart CLI Version: Data */
+  stalwart_cli_version: string;
+  /** Stalwart Version: Data */
+  stalwart_version: string;
+  /** Storage Shard Count: Int */
+  storage_shard_count: number;
+  /** Push Log File Count: Int */
+  push_log_file_count: number;
+  /** Push Log Level: Select */
+  push_log_level: 'ERROR' | 'WARNING' | 'INFO' | 'DEBUG';
+  /** Push Log Max File Size: Int */
+  push_log_max_file_size: number;
+  /** Storage Log File Count: Int */
+  storage_log_file_count: number;
+  /** Storage Log Level: Select */
+  storage_log_level: 'ERROR' | 'WARNING' | 'INFO' | 'DEBUG';
+  /** Storage Log Max File Size: Int */
+  storage_log_max_file_size: number;
+  /** Exchange Max Export: Int */
+  exchange_max_export: number;
+  /** Exchange Max Import: Int */
+  exchange_max_import: number;
+  /** Exchange Export Batch Size: Int */
+  exchange_export_batch_size: number;
+  /** Max Email Sync: Int */
+  max_email_sync: number;
+  /** Max Message Payload Size (MB): Int */
+  max_message_payload_size_mb: number;
+  /** Max Push Notifications: Int */
+  max_push_notifications: number;
+  /** Process Pending Emails Batch Size: Int */
+  process_pending_emails_batch_size: number;
+  /** Process Pending Emails Max Batch Size: Int */
+  process_pending_emails_max_batch_size: number;
+  /** Host: Data */
+  spamd_host?: string;
+  /** Port: Int */
+  spamd_port?: number;
+  /** Scanning Mode: Select */
+  spamd_scanning_mode: 'Exclude Attachments' | 'Include Attachments' | 'Hybrid Approach';
+  /** Hybrid Scanning Threshold: Float */
+  spamd_hybrid_scanning_threshold?: number;
 }
 
 // Last updated: 2025-08-14 19:12:30.003138
@@ -297,42 +375,42 @@ export interface MailMessage extends DocType {
   user?: string;
 }
 
-// Last updated: 2025-01-15 11:46:42.917146
+// Last updated: 2026-04-15 19:56:45.317786
 export interface File extends DocType {
-	/** File Name: Data */
-	file_name?: string
-	/** Is Private: Check */
-	is_private: 0 | 1
-	/** Is Home Folder: Check */
-	is_home_folder: 0 | 1
-	/** Is Attachments Folder: Check */
-	is_attachments_folder: 0 | 1
-	/** File Size: Int */
-	file_size?: number
-	/** File URL: Code */
-	file_url?: string
-	/** Thumbnail URL: Small Text */
-	thumbnail_url?: string
-	/** Folder: Link (File) */
-	folder?: string
-	/** Is Folder: Check */
-	is_folder: 0 | 1
-	/** Attached To DocType: Link (DocType) */
-	attached_to_doctype?: string
-	/** Attached To Name: Data */
-	attached_to_name?: string
-	/** Attached To Field: Data */
-	attached_to_field?: string
-	/** old_parent: Data */
-	old_parent?: string
-	/** Content Hash: Data */
-	content_hash?: string
-	/** Uploaded To Dropbox: Check */
-	uploaded_to_dropbox: 0 | 1
-	/** Uploaded To Google Drive: Check */
-	uploaded_to_google_drive: 0 | 1
-	/** File Type: Data */
-	file_type?: string
+  /** File Name: Data */
+  file_name?: string;
+  /** Is Private: Check */
+  is_private: 0 | 1;
+  /** Is Home Folder: Check */
+  is_home_folder: 0 | 1;
+  /** Is Attachments Folder: Check */
+  is_attachments_folder: 0 | 1;
+  /** File Size: Int */
+  file_size?: number;
+  /** File URL: Code */
+  file_url?: string;
+  /** Thumbnail URL: Small Text */
+  thumbnail_url?: string;
+  /** Folder: Link (File) */
+  folder?: string;
+  /** Is Folder: Check */
+  is_folder: 0 | 1;
+  /** Attached To DocType: Link (DocType) */
+  attached_to_doctype?: string;
+  /** Attached To Name: Data */
+  attached_to_name?: string;
+  /** Attached To Field: Data */
+  attached_to_field?: string;
+  /** old_parent: Data */
+  old_parent?: string;
+  /** Content Hash: Data */
+  content_hash?: string;
+  /** Uploaded To Dropbox: Check */
+  uploaded_to_dropbox: 0 | 1;
+  /** Uploaded To Google Drive: Check */
+  uploaded_to_google_drive: 0 | 1;
+  /** File Type: Data */
+  file_type?: string;
 }
 
 // Last updated: 2025-08-14 22:57:14.397697
