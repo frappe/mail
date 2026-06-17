@@ -2,8 +2,6 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { createResource } from 'frappe-ui'
 
-import router from '@/router'
-
 import type { UserAccount, UserResource } from '@/types'
 
 export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
@@ -51,9 +49,7 @@ export const userStore = defineStore('mail-user', () => {
 			if (data?.is_mail_admin) domains.fetch()
 			resolveAccount(data?.accounts)
 		},
-		onError: (error) => {
-			if (error && error.exc_type === 'AuthenticationError') router.push('/login')
-		},
+		// Auth errors are handled centrally by the resource fetcher (see main.ts).
 		auto: true,
 	})
 
