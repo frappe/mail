@@ -253,7 +253,7 @@ def create_mail_import(
 	doc.operation = "Import"
 	doc.import_format = format
 	doc.import_file = file
-	if format in ["eml", "maildir"] and mailbox:
+	if format in ["eml", "maildir", "mbox"] and mailbox:
 		doc.import_metadata = json.dumps({"mailboxIds": {mailbox: True}, "keywords": {"$seen": seen}})
 	doc.insert()
 	doc.submit()
