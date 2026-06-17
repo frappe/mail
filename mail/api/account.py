@@ -135,7 +135,6 @@ def get_user_info() -> dict | None:
 			USER.user_type,
 			USER.username,
 			USER.api_key,
-			USER_SETTINGS.default_outgoing_email,
 			USER_SETTINGS.color_scheme,
 			USER_SETTINGS.group_messages_by,
 			USER_SETTINGS.show_reading_pane,
@@ -153,6 +152,23 @@ def get_user_info() -> dict | None:
 	data.is_system_manager = is_system_manager(user)
 	data.is_jmap_configured = is_jmap_configured(user)
 	data.accounts = frappe.get_all("User Account", filters={"user": user})
+
+	# Outgoing settings now live per-account on Account Settings; attach each account's
+	# default outgoing email (and its settings doc) so the compose UI can pick the
+	# default sender for the active account.
+	settings_by_account = {
+		s["account"]: s
+		for s in frappe.get_all(
+			"Account Settings",
+			filters={"user": user},
+			fields=["name", "account", "default_outgoing_email"],
+		)
+	}
+	for acc in data.accounts:
+		settings = settings_by_account.get(acc["name"])
+		acc["account_settings"] = settings["name"] if settings else None
+		acc["default_outgoing_email"] = settings["default_outgoing_email"] if settings else None
+
 	data.user_image = data.user_image or get_avatar_url(user)
 
 	return data

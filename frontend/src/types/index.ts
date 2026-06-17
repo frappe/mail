@@ -14,7 +14,6 @@ export interface User {
 	user_image: string | null
 	api_key: string | null
 	user_settings?: string
-	default_outgoing_email?: string
 	color_scheme?: COLOR_SCHEME
 	group_messages_by?: 'None' | 'Day' | 'Month'
 	show_reading_pane?: 0 | 1
@@ -25,7 +24,9 @@ export interface User {
 	is_jmap_configured: boolean
 
 	mailboxes: { id: string; name: string; role: string }[]
-	accounts: UserAccount[]
+	// `get_user_info` enriches each account with its per-account outgoing default and
+	// Account Settings doc name (the fields moved off User Settings).
+	accounts: (UserAccount & { default_outgoing_email?: string; account_settings?: string })[]
 }
 
 export interface UserResource {
