@@ -537,14 +537,27 @@ const openQuotedContent = () => {
 	mail.quoted_content = ''
 }
 
+const buildSignature = (email?: string) => {
+	const identity = getIdentity(email!)
+	return identity?.text_signature
+		? `<div><br></div><div><br></div>${identity.html_signature}`
+		: ''
+}
+
+const bodyText = (html: string) => {
+	const element = document.createElement('div')
+	element.innerHTML = html || ''
+	return element.textContent?.trim() ?? ''
+}
+
+// Swap the signature when the From identity changes — but only while the body is still the
+// auto-inserted signature (or empty), so a message the user has written isn't overwritten.
+// Compared by text so the editor's HTML normalization doesn't defeat the match.
 watch(
 	() => mail.from_email,
-	(val) => {
-		if (isBodyEmpty.value) {
-			const identity = getIdentity(val!)
-			mail.html_body = identity?.text_signature
-				? `<div><br></div><div><br></div>${identity.html_signature}`
-				: ''
+	(val, oldVal) => {
+		if (isBodyEmpty.value || bodyText(mail.html_body) === bodyText(buildSignature(oldVal))) {
+			mail.html_body = buildSignature(val)
 		}
 	},
 	{ immediate: true },
