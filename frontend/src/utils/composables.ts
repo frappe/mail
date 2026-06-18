@@ -2,6 +2,8 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 
 import { userStore } from '@/stores/user'
 
+import type { Identity } from '@/types'
+
 export const useScreenSize = () => {
 	const size = reactive({ width: window.innerWidth, height: window.innerHeight })
 
@@ -88,6 +90,33 @@ export const useUndo = () => {
 	}
 
 	return { setUndoAction, undo }
+}
+
+// Shared state for the "Block sender?" prompt shown after marking/moving mail to Junk. A single
+// <BlockSenderModal> (rendered in MailboxView) reacts to this, so any view can open it.
+const showBlockSender = ref(false)
+const sendersToBlock = ref<string[]>([])
+
+export const useBlockSender = () => {
+	const { identities, blockedAddresses } = userStore()
+
+	// Senders worth offering to block: drop the user's own identities and addresses already blocked.
+	const blockableSenders = (emails: (string | undefined)[]) => {
+		const own = new Set((identities.data ?? []).map((i: Identity) => i.email))
+		const blocked = new Set<string>(blockedAddresses.data ?? [])
+		return [...new Set(emails)].filter(
+			(e): e is string => !!e && !own.has(e) && !blocked.has(e),
+		)
+	}
+
+	const promptBlockSenders = (emails: (string | undefined)[]) => {
+		const senders = blockableSenders(emails)
+		if (!senders.length) return
+		sendersToBlock.value = senders
+		showBlockSender.value = true
+	}
+
+	return { showBlockSender, sendersToBlock, promptBlockSenders }
 }
 
 const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')

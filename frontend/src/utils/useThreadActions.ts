@@ -4,7 +4,7 @@ import { createResource, toast } from 'frappe-ui'
 
 import { FOLDER_ICON_COLOR_MAP } from '@/constants'
 import { getIcon, raisePromiseToast, raiseToast } from '@/utils'
-import { useUndo } from '@/utils/composables'
+import { useBlockSender, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
 import type { Mail, Thread } from '@/types'
@@ -52,6 +52,7 @@ export function useThreadActions(deps: {
 	const store = userStore()
 	const { mailboxes, mailboxIds } = store
 	const { setUndoAction, undo } = useUndo()
+	const { promptBlockSenders } = useBlockSender()
 
 	const threadMails = (threadIds: string[]): Mail[] => {
 		const items = (threadsResource.value.data ?? []).filter((t: Thread) =>
@@ -422,6 +423,10 @@ export function useThreadActions(deps: {
 		const selectedThreads = Object.values(threadIDs).flat()
 		if (!selectedThreads.length) return
 
+		// Moving to Junk is the same as Mark as Junk: no undo, offer to block the sender instead.
+		if (Object.keys(threadIDs).length === 1 && Object.keys(threadIDs)[0] === mailboxIds.junk)
+			return handleSetSpamStatus({ 1: selectedThreads })
+
 		const originOf = (tid: string): string | undefined =>
 			threadsResource.value.data?.find((t: Thread) => t.thread_id === tid)?.mailboxes[0]
 				?.mailbox_id
@@ -514,17 +519,22 @@ export function useThreadActions(deps: {
 		if (JSON.stringify(originalState) === JSON.stringify(threadIDs)) return
 
 		const spam = Object.keys(threadIDs)[0] === '1'
+		const mails = threadMails(selectedThreads)
 		// Snapshot exact state now (threads leave the list on success) so undo restores the original
 		// mailbox + junk, rather than set_spam_status's blanket move to Inbox.
-		const snapshot = threadMails(selectedThreads).map((m) => ({
+		const snapshot = mails.map((m) => ({
 			id: m.id,
 			mailbox_ids: m.mailboxes.map((mb) => mb.mailbox_id),
 			junk: m.junk,
 		}))
+		const senderEmails = mails.map((m) => m.from_email)
 		const ids = snapshot.map((m) => m.id)
 		const action = async () => {
 			await setMailsSpam.submit({ ids, spam })
 			handleSuccessAndRemoveFromList(threadIDs)
+			// After marking as Junk, offer to block the sender(s). Blocking then clears the undo set
+			// below (undoing the junk once the sender is blocked would be inconsistent).
+			if (spam) promptBlockSenders(senderEmails)
 		}
 
 		setUndoAction(() => {

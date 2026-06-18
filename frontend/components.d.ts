@@ -30,6 +30,7 @@ declare module 'vue' {
     AudioIcon: typeof import('./src/components/Icons/AudioIcon.vue')['default']
     AutomationSettings: typeof import('./src/components/Settings/AutomationSettings.vue')['default']
     BlockListSettings: typeof import('./src/components/Settings/BlockListSettings.vue')['default']
+    BlockSenderModal: typeof import('./src/components/Modals/BlockSenderModal.vue')['default']
     ChangePasswordModal: typeof import('./src/components/Modals/ChangePasswordModal.vue')['default']
     ComposeMailEditor: typeof import('./src/components/ComposeMailEditor.vue')['default']
     ComposeMailToolbar: typeof import('./src/components/ComposeMailToolbar.vue')['default']
