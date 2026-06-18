@@ -263,7 +263,6 @@ def serialize_mail(mail: dict) -> dict:
 		"from_email",
 		"subject",
 		"html_body",
-		"text_body",
 		"preview",
 		"received_at",
 		"draft",
@@ -275,8 +274,12 @@ def serialize_mail(mail: dict) -> dict:
 		"reply_to",
 	]
 
+	# text_body is only rendered as a fallback when html_body is empty (the UI renders
+	# `html_body || text_body`), so omit the redundant copy whenever there's HTML.
+	html = mail.get("html_body") or ""
 	return {
 		**{field: mail[field] for field in mail_fields},
+		"text_body": "" if html else mail.get("text_body", ""),
 		"attachments": serialize_attachments(mail.get("attachments", [])),
 	}
 
