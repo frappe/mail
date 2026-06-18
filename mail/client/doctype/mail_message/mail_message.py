@@ -1257,7 +1257,6 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 	"""Fetch changes from the server and remove MailMessage documents from the cache."""
 
 	ctx = ctx or {}
-
 	logger = get_push_logger()
 
 	current_state = get_sync_state(account, type="email")
@@ -1391,7 +1390,6 @@ def locked_fetch_changes(
 	"""Fetch changes for the specified account with a lock to prevent concurrent execution."""
 
 	ctx = ctx or {}
-
 	logger = get_push_logger()
 
 	try:
@@ -1406,7 +1404,6 @@ def enqueue_fetch_changes(account: str, email_state: str | None = None, ctx: dic
 	"""Enqueue the fetch_changes job for the specified account."""
 
 	ctx = ctx or {}
-
 	logger = get_push_logger()
 
 	logger.info({**ctx, "event": "enqueueing-fetch-changes"})
