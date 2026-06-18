@@ -21,7 +21,7 @@ from mail.storage.data_store import Entity
 if TYPE_CHECKING:
 	from mail.jmap.services.core import CoreService
 
-from mail.utils.user import is_system_manager
+from mail.utils.user import get_account_emails, is_system_manager
 from mail.utils.validation import has_permission_for_user
 
 
@@ -101,6 +101,24 @@ class AccountSettings(Document):
 		user, account_id = parse_account(self.account)
 		store = get_data_store(user, account_id)
 		return store.count(Entity.CONTACT_CARD)
+
+	def validate(self) -> None:
+		self.validate_default_outgoing_email()
+
+	def validate_default_outgoing_email(self) -> None:
+		"""Keep the default outgoing email valid: fall back to the account's first identity
+		when the chosen one isn't one of the account's identities."""
+
+		if not self.default_outgoing_email or frappe.flags.in_migrate:
+			return
+
+		try:
+			emails = get_account_emails(self.account)
+		except Exception:
+			return
+
+		if emails and self.default_outgoing_email not in emails:
+			self.default_outgoing_email = emails[0]
 
 	def before_insert(self) -> None:
 		self.user = parse_account(self.account)[0]
@@ -200,7 +218,42 @@ def sync_account_settings(user: str, accounts: dict[str, dict]) -> None:
 		settings = frappe.new_doc("Account Settings")
 		settings.user = user
 		settings.account = account
+		# Default the outgoing sender to the account's first identity.
+		emails = get_account_emails(account)
+		if emails:
+			settings.default_outgoing_email = emails[0]
 		settings.save(ignore_permissions=True)
+
+
+def backfill_default_outgoing_emails() -> None:
+	"""Resolve each account's default outgoing email against its identities.
+
+	Run as a background job (e.g. after the Outgoing-settings migration), where JMAP is
+	reachable — unlike during `bench migrate`. Keeps an existing default if it's one of
+	the account's identities, otherwise uses the account's first identity.
+	"""
+
+	for settings in frappe.get_all("Account Settings", fields=["name", "account", "default_outgoing_email"]):
+		try:
+			emails = get_account_emails(settings["account"])
+		except Exception:
+			continue
+
+		if not emails:
+			continue
+
+		current = settings["default_outgoing_email"]
+		resolved = current if current in emails else emails[0]
+		if resolved != current:
+			frappe.db.set_value(
+				"Account Settings",
+				settings["name"],
+				"default_outgoing_email",
+				resolved,
+				update_modified=False,
+			)
+
+	frappe.db.commit()
 
 
 def get_permission_query_condition(user: str | None = None) -> str:
