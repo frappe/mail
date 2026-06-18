@@ -114,6 +114,9 @@ def send(
 
 		return doc.name
 
+	except frappe.exceptions.ValidationError:
+		raise
+
 	except Exception:
 		logger.error({**ctx, "event": "send-failed", "error": frappe.get_traceback()})
 		frappe.throw(_("Failed to send email. Please check the error logs for details."))
