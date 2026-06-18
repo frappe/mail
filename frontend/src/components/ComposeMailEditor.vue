@@ -317,10 +317,14 @@ const user = inject('$user') as UserResource
 
 const getDefaultFromEmail = () => {
 	const identityEmails = identities.data?.map((i: Identity) => i.email) ?? []
+	// The default outgoing email is now per-account; pick the active account's.
+	const defaultOutgoingEmail = user.data?.accounts?.find(
+		(a) => a.name === account,
+	)?.default_outgoing_email
 
 	return (
 		identityEmails.find((e) => e === mailDetails?.from_email) ??
-		identityEmails.find((e) => e === user.data.default_outgoing_email) ??
+		identityEmails.find((e) => e === defaultOutgoingEmail) ??
 		identityEmails[0] ??
 		user.data.name
 	)
@@ -533,14 +537,27 @@ const openQuotedContent = () => {
 	mail.quoted_content = ''
 }
 
+const buildSignature = (email?: string) => {
+	const identity = getIdentity(email!)
+	return identity?.text_signature
+		? `<div><br></div><div><br></div>${identity.html_signature}`
+		: ''
+}
+
+const bodyText = (html: string) => {
+	const element = document.createElement('div')
+	element.innerHTML = html || ''
+	return element.textContent?.trim() ?? ''
+}
+
+// Swap the signature when the From identity changes — but only while the body is still the
+// auto-inserted signature (or empty), so a message the user has written isn't overwritten.
+// Compared by text so the editor's HTML normalization doesn't defeat the match.
 watch(
 	() => mail.from_email,
-	(val) => {
-		if (isBodyEmpty.value) {
-			const identity = getIdentity(val!)
-			mail.html_body = identity?.text_signature
-				? `<div><br></div><div><br></div>${identity.html_signature}`
-				: ''
+	(val, oldVal) => {
+		if (isBodyEmpty.value || bodyText(mail.html_body) === bodyText(buildSignature(oldVal))) {
+			mail.html_body = buildSignature(val)
 		}
 	},
 	{ immediate: true },

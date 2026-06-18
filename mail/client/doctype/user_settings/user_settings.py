@@ -12,7 +12,6 @@ from frappe.model.document import Document
 from mail.client.doctype.account_settings.account_settings import sync_account_settings
 from mail.jmap import get_jmap_session_manager
 from mail.jmap.connection import JMAPConnection, JMAPConnectionInfo
-from mail.jmap.services.mail.identity import IdentityService
 from mail.utils import get_config
 from mail.utils.dt import timestamp_to_datetime
 from mail.utils.user import is_system_manager
@@ -84,7 +83,7 @@ class UserSettings(Document):
 			frappe.delete_doc("Account Settings", settings, ignore_permissions=True, delete_permanently=True)
 
 	def validate_jmap_settings(self) -> None:
-		"""Validate the JMAP settings by connecting to the JMAP server and verifying the default outgoing email."""
+		"""Validate the JMAP settings by connecting to the JMAP server."""
 
 		if not self.username or self.flags.skip_jmap_validation:
 			return
@@ -92,31 +91,12 @@ class UserSettings(Document):
 		if not self.get_password("app_password"):
 			frappe.throw(_("App Password is required to validate JMAP settings."))
 
-		connection = self.connection
-		if not connection:
+		if not self.connection:
 			frappe.throw(
 				_(
 					"Unable to connect to the JMAP server with the provided username and app password. Please check your settings."
 				)
 			)
-
-		if self.default_outgoing_email:
-			personal_account_id = next(
-				(account_id for account_id, details in connection.accounts.items() if details["isPersonal"]),
-				None,
-			)
-
-			if not personal_account_id:
-				frappe.throw(_("No personal account found for the user on the JMAP server."))
-
-			identity_service = IdentityService(f"{self.user}:{personal_account_id}", connection)
-
-			if not identity_service.get_identity_id_by_email(self.default_outgoing_email):
-				frappe.throw(
-					_(
-						"Default Outgoing Email {0} is not found in the identities of the JMAP account."
-					).format(frappe.bold(self.default_outgoing_email))
-				)
 
 	@frappe.whitelist()
 	def clear_jmap_session(self) -> None:
