@@ -14,3 +14,4 @@ mail.patches.create_archive_mailbox
 mail.patches.configure_mail_settings
 mail.patches.configure_mail_cluster
 mail.patches.configure_mail_server
+mail.patches.migrate_data_store_to_lmdb
