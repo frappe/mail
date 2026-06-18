@@ -26,17 +26,8 @@ def get_data_store(user: str, account_id: str | None = None) -> DataStore:
 
 	base_path = _get_data_base_path()
 	key = f"{user}{DataStore.SEPARATOR}{account_id}" if account_id else user
-	shard_count = get_config("storage_shard_count")
 
-	return DataStore(
-		base_path=base_path,
-		key=key,
-		acquire_timeout=10,
-		lock_timeout=60,
-		max_retries=3,
-		retry_delay=0.1,
-		shard_count=shard_count,
-	)
+	return DataStore(base_path=base_path, key=key)
 
 
 @frappe.whitelist()
