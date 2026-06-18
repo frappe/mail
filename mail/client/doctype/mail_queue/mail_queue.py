@@ -358,9 +358,11 @@ class MailQueue(Document):
 			return
 
 		if self.newsletter:
-			if frappe.db.get_value("User Settings", {"user": self.user}, "destroy_newsletter_after_submit"):
+			if frappe.db.get_value(
+				"Account Settings", {"account": self.account}, "destroy_newsletter_after_submit"
+			):
 				self.destroy_after_submit = 1
-		elif frappe.db.get_value("User Settings", {"user": self.user}, "destroy_email_after_submit"):
+		elif frappe.db.get_value("Account Settings", {"account": self.account}, "destroy_email_after_submit"):
 			self.destroy_after_submit = 1
 
 	def validate_delivery_mode(self) -> None:
