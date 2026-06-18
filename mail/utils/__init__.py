@@ -63,6 +63,12 @@ CONFIG_KEYS = [
 	"storage_log_file_count",
 	"storage_log_level",
 	"storage_log_max_file_size",
+	"inbound_log_file_count",
+	"inbound_log_level",
+	"inbound_log_max_file_size",
+	"outbound_log_file_count",
+	"outbound_log_level",
+	"outbound_log_max_file_size",
 	# Limits
 	"exchange_max_export",
 	"exchange_max_import",
@@ -175,6 +181,36 @@ def get_push_logger() -> "Logger":
 	logger = frappe.logger("mail.push", allow_site=True, max_size=max_size, file_count=file_count)
 
 	log_level = config["push_log_level"].upper()
+	logger.setLevel(log_level)
+
+	return logger
+
+
+def get_outbound_logger() -> "Logger":
+	"""Returns a logger instance for outbound mail operations."""
+
+	config = get_config()
+
+	max_size = cint(config["outbound_log_max_file_size"])
+	file_count = cint(config["outbound_log_file_count"])
+	logger = frappe.logger("mail.outbound", allow_site=True, max_size=max_size, file_count=file_count)
+
+	log_level = config["outbound_log_level"].upper()
+	logger.setLevel(log_level)
+
+	return logger
+
+
+def get_inbound_logger() -> "Logger":
+	"""Returns a logger instance for inbound mail operations."""
+
+	config = get_config()
+
+	max_size = cint(config["inbound_log_max_file_size"])
+	file_count = cint(config["inbound_log_file_count"])
+	logger = frappe.logger("mail.inbound", allow_site=True, max_size=max_size, file_count=file_count)
+
+	log_level = config["inbound_log_level"].upper()
 	logger.setLevel(log_level)
 
 	return logger
