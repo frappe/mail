@@ -20,7 +20,6 @@ def push_notification() -> dict:
 	"""Handle JMAP Push Notification."""
 
 	logger = get_push_logger()
-
 	ctx = {
 		"req_id": random_string(10),
 		"ip": frappe.request.remote_addr,
