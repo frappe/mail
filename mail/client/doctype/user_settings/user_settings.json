@@ -13,11 +13,6 @@
   "column_break_uxkb",
   "username",
   "app_password",
-  "outgoing_section",
-  "default_outgoing_email",
-  "column_break_scmb",
-  "destroy_email_after_submit",
-  "destroy_newsletter_after_submit",
   "inbound_section",
   "skip_schedule_fetch_changes",
   "column_break_nqwp",
@@ -31,9 +26,7 @@
   "color_scheme",
   "column_break_cxak",
   "group_messages_by",
-  "show_reading_pane",
-  "contacts_section",
-  "create_contacts_after_email_submit"
+  "show_reading_pane"
  ],
  "fields": [
   {
@@ -71,36 +64,9 @@
    "no_copy": 1
   },
   {
-   "default": "0",
-   "description": "Automatically deletes the email from your mailbox after it is sent.",
-   "fieldname": "destroy_email_after_submit",
-   "fieldtype": "Check",
-   "label": "Destroy Email After Submit"
-  },
-  {
-   "default": "0",
-   "description": "Automatically delete newsletters after they are sent.",
-   "fieldname": "destroy_newsletter_after_submit",
-   "fieldtype": "Check",
-   "label": "Destroy Newsletter After Submit"
-  },
-  {
    "fieldname": "jmap_credentials_section",
    "fieldtype": "Section Break",
    "label": "JMAP Credentials"
-  },
-  {
-   "description": "Default email address used as the sender when composing new messages.",
-   "fieldname": "default_outgoing_email",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Default Email",
-   "options": "Email"
-  },
-  {
-   "fieldname": "column_break_scmb",
-   "fieldtype": "Column Break"
   },
   {
    "description": "Secondary email address used for account recovery and important notifications.",
@@ -127,12 +93,6 @@
   {
    "fieldname": "column_break_klzk",
    "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: doc.username",
-   "fieldname": "outgoing_section",
-   "fieldtype": "Section Break",
-   "label": "Outgoing"
   },
   {
    "fieldname": "ui_tab",
@@ -200,19 +160,6 @@
    "fieldtype": "Check",
    "label": "Skip Schedule Fetch Changes",
    "search_index": 1
-  },
-  {
-   "fieldname": "contacts_section",
-   "fieldtype": "Section Break",
-   "label": "Contacts"
-  },
-  {
-   "default": "0",
-   "depends_on": "eval: doc.username",
-   "description": "Automatically creates contact cards for new recipients after an email is sent.",
-   "fieldname": "create_contacts_after_email_submit",
-   "fieldtype": "Check",
-   "label": "Create Contacts After Email Submit"
   },
   {
    "fieldname": "session_state",

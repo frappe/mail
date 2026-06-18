@@ -2,8 +2,6 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { createResource } from 'frappe-ui'
 
-import router from '@/router'
-
 import type { UserAccount, UserResource } from '@/types'
 
 export type MailboxRole = 'inbox' | 'sent' | 'drafts' | 'trash' | 'junk' | 'archive' | 'important'
@@ -51,9 +49,7 @@ export const userStore = defineStore('mail-user', () => {
 			if (data?.is_mail_admin) domains.fetch()
 			resolveAccount(data?.accounts)
 		},
-		onError: (error) => {
-			if (error && error.exc_type === 'AuthenticationError') router.push('/login')
-		},
+		// Auth errors are handled centrally by the resource fetcher (see main.ts).
 		auto: true,
 	})
 
@@ -109,6 +105,21 @@ export const userStore = defineStore('mail-user', () => {
 
 	const domains = createResource({ url: 'mail.api.admin.get_enabled_domains' })
 
+	// Clear all user/account state so the next sign-in starts from a clean slate. Without
+	// resetting accountId, resolveAccount() would see the resolved account as unchanged and skip
+	// setAccount(), so the per-account resources (mailboxes, etc.) would never re-fetch until a
+	// full page reload.
+	const reset = () => {
+		accountId.value = ''
+		userResource.reset()
+		mailboxes.reset()
+		addressBooks.reset()
+		identities.reset()
+		blockedAddresses.reset()
+		sieveScripts.reset()
+		domains.reset()
+	}
+
 	return {
 		accountId,
 		account,
@@ -121,5 +132,6 @@ export const userStore = defineStore('mail-user', () => {
 		domains,
 		sieveScripts,
 		blockedAddresses,
+		reset,
 	}
 })

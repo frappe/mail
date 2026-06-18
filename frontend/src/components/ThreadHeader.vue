@@ -37,6 +37,13 @@
 					</Button>
 				</template>
 
+				<Dropdown :options="moveToOptions">
+					<Button variant="ghost" :tooltip="__('Move To')">
+						<template #icon>
+							<FolderInput class="icon" />
+						</template>
+					</Button>
+				</Dropdown>
 				<Dropdown v-if="showAddTo" :options="addToOptions">
 					<Button variant="ghost" :tooltip="__('Add To')">
 						<template #icon>
@@ -48,13 +55,6 @@
 					<Button variant="ghost" :tooltip="__('Remove From')">
 						<template #icon>
 							<FolderMinus class="icon" />
-						</template>
-					</Button>
-				</Dropdown>
-				<Dropdown :options="moveToOptions">
-					<Button variant="ghost" :tooltip="__('Move To')">
-						<template #icon>
-							<FolderInput class="icon" />
 						</template>
 					</Button>
 				</Dropdown>
@@ -153,10 +153,14 @@ const threadMailboxes = computed(() => {
 // Every mailbox the thread's mails touch (union), and whether any mail is in more than one — used by
 // Remove From, which is only offered when removing won't orphan a mail.
 const threadMailboxesUnion = computed(() => [
-	...new Set((thread ?? []).flatMap((mail: Mail) => mail.mailboxes.map((m) => m.mailbox_id))),
+	...new Set(
+		(thread ?? [])
+			.filter((mail: Mail) => mail.id)
+			.flatMap((mail: Mail) => mail.mailboxes.map((m) => m.mailbox_id)),
+	),
 ])
 const canRemoveFrom = computed(() =>
-	(thread ?? []).some((mail: Mail) => mail.mailboxes.length > 1),
+	(thread ?? []).some((mail: Mail) => mail.id && mail.mailboxes.length > 1),
 )
 
 const threadActions = computed((): Action[] => [
@@ -181,12 +185,6 @@ const threadActions = computed((): Action[] => [
 			),
 		icon: h(Star, { class: 'fill-ink-amber-2 text-ink-amber-2 stroke-ink-amber-2' }),
 		condition: () => thread.every((m) => m.flagged),
-	},
-	{
-		label: __('Mark as Unread (U)'),
-		onClick: () => emit('setSeen', false),
-		icon: MailIcon,
-		condition: () => true,
 	},
 	{
 		label: __('Archive Thread (E)'),
@@ -224,6 +222,12 @@ const threadActions = computed((): Action[] => [
 		onClick: () => emit('deleteThread'),
 		icon: Trash2,
 		condition: () => threadMailboxes.value.includes(mailboxIds.trash),
+	},
+	{
+		label: __('Mark as Unread (U)'),
+		onClick: () => emit('setSeen', false),
+		icon: MailIcon,
+		condition: () => true,
 	},
 ])
 

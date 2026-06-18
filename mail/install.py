@@ -6,9 +6,25 @@ from mail.stalwart.cli import StalwartCLI
 
 
 def after_install() -> None:
+	create_mail_admin_role()
 	add_rate_limits()
 	create_new_folder("Frappe Mail", "Home")
 	generate_jmap_push_keys()
+
+
+def create_mail_admin_role() -> None:
+	"""Create the Mail Admin role if missing.
+
+	Deliberately NOT shipped as a fixture: fixture sync deletes and re-inserts the role
+	on every `bench migrate`, and the fresh insert makes Frappe's Role.on_update see
+	desk_access as "changed". That re-evaluates user_type for every holder and clears the
+	sessions of any whose type flips — logging mail users out on every migrate.
+	"""
+
+	if not frappe.db.exists("Role", "Mail Admin"):
+		frappe.get_doc({"doctype": "Role", "role_name": "Mail Admin", "desk_access": 0}).insert(
+			ignore_permissions=True
+		)
 
 
 def after_migrate() -> None:

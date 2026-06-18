@@ -10,11 +10,25 @@ import router from '@/router'
 import { initSocket } from '@/socket'
 import translationPlugin from '@/translation'
 import dayjs from '@/utils/dayjs'
+import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
 
 import FrappePushNotification from '../public/frappe-push-notification'
 
-setConfig('resourceFetcher', frappeRequest)
+// Centralised auth handling: when a request comes back unauthenticated, sign the user out and
+// redirect to login so they can't keep acting against a dead session. The error is always
+// re-thrown afterwards, so the originating resource still reports it normally (no swallowing,
+// which previously left resources hanging and hid errors like a wrong-password login).
+setConfig('resourceFetcher', async (options: Parameters<typeof frappeRequest>[0]) => {
+	try {
+		return await frappeRequest(options)
+	} catch (error) {
+		const excType = (error as { exc_type?: string })?.exc_type
+		if (excType === 'AuthenticationError' || excType === 'PermissionError')
+			sessionStore().handleSessionExpired()
+		throw error
+	}
+})
 
 const app = createApp(App)
 app.use(router)
