@@ -79,6 +79,9 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		"exchange_max_import": 1_000,
 		"fetch_lock_timeout": 300,
 		"gravatar_default_avatar": "404",
+		"inbound_log_file_count": 10,
+		"inbound_log_level": "INFO",
+		"inbound_log_max_size": 5_000_000,
 		"lock_acquire_timeout": 0,
 		"lock_timeout": 10,
 		"max_accounts": 0,
@@ -88,6 +91,9 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		"max_lists": 0,
 		"max_message_payload_size": 25 * 1024 * 1024,  # 25 MB
 		"max_push_notifications": 5,
+		"outbound_log_file_count": 10,
+		"outbound_log_level": "INFO",
+		"outbound_log_max_size": 5_000_000,
 		"process_pending_emails_batch_size": 2_500,
 		"process_pending_emails_max_batch_size": 25_000,
 		"process_pending_emails_timeout": 1500,
@@ -155,6 +161,36 @@ def get_push_logger() -> "Logger":
 	logger = frappe.logger("mail.push", allow_site=True, max_size=max_size, file_count=file_count)
 
 	log_level = config["push_log_level"].upper()
+	logger.setLevel(log_level)
+
+	return logger
+
+
+def get_outbound_logger() -> "Logger":
+	"""Returns a logger instance for outbound mail operations."""
+
+	config = get_mail_config()
+
+	max_size = cint(config["outbound_log_max_size"])
+	file_count = cint(config["outbound_log_file_count"])
+	logger = frappe.logger("mail.outbound", allow_site=True, max_size=max_size, file_count=file_count)
+
+	log_level = config["outbound_log_level"].upper()
+	logger.setLevel(log_level)
+
+	return logger
+
+
+def get_inbound_logger() -> "Logger":
+	"""Returns a logger instance for inbound mail operations."""
+
+	config = get_mail_config()
+
+	max_size = cint(config["inbound_log_max_size"])
+	file_count = cint(config["inbound_log_file_count"])
+	logger = frappe.logger("mail.inbound", allow_site=True, max_size=max_size, file_count=file_count)
+
+	log_level = config["inbound_log_level"].upper()
 	logger.setLevel(log_level)
 
 	return logger
