@@ -6,7 +6,7 @@ import router from '@/router'
 import { userStore } from '@/stores/user'
 
 export const sessionStore = defineStore('mail-session', () => {
-	const { userResource, mailboxes } = userStore()
+	const { userResource, reset } = userStore()
 
 	const sessionUser = () => {
 		const cookies = new URLSearchParams(document.cookie.split('; ').join('&'))
@@ -25,6 +25,10 @@ export const sessionStore = defineStore('mail-session', () => {
 			throw new Error('Invalid email or password')
 		},
 		onSuccess: () => {
+			// Start from a clean slate: a prior session's account/resources may still be in memory
+			// (e.g. cookies cleared without a page reload). Without this, resolveAccount() would
+			// skip setAccount() and the mailboxes/account resources wouldn't load until a reload.
+			reset()
 			userResource.reload()
 			user.value = sessionUser()
 			login.reset()
@@ -37,8 +41,7 @@ export const sessionStore = defineStore('mail-session', () => {
 	const logout = createResource({
 		url: 'logout',
 		onSuccess() {
-			userResource.reset()
-			mailboxes.reset()
+			reset()
 			user.value = null
 			window.location.reload()
 		},
