@@ -29,7 +29,7 @@ from mail.client.doctype.mail_message.mail_message import (
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.client.doctype.mailbox.mailbox import add_mailbox, delete_mailboxes
 from mail.client.doctype.mailbox_settings.mailbox_settings import set_mailbox_settings
-from mail.jmap import get_email_service, get_mailbox_id_by_role
+from mail.jmap import get_email_service, get_mailbox_id_by_role, parse_account
 from mail.utils import convert_html_to_text, get_config
 from mail.utils.user import get_account_emails, is_jmap_configured
 from mail.utils.validation import has_permission_for_user
@@ -734,6 +734,7 @@ def delete_mailbox(account: str, id: str, name: str) -> None:
 def get_blocked_addresses(account: str) -> list[dict]:
 	"""Returns the list of blocked email addresses for the given account."""
 
+	has_permission_for_user(parse_account(account)[0])
 	return get_blocked_email_addresses(account)
 
 
@@ -749,6 +750,7 @@ def block_email_address(account: str, email: str) -> dict:
 def unblock_email_addresses(account: str, emails: list[str]) -> None:
 	"""Unblocks email addresses by deleting Blocked Email Address records."""
 
+	has_permission_for_user(parse_account(account)[0])
 	frappe.db.delete("Blocked Email Address", {"account": account, "email": ["in", emails]})
 
 
