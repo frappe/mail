@@ -24,14 +24,6 @@
   "stalwart_version",
   "stalwart_cli_version",
   "storage_shard_count",
-  "logs_section",
-  "push_log_file_count",
-  "push_log_level",
-  "push_log_max_file_size",
-  "column_break_ztzv",
-  "storage_log_file_count",
-  "storage_log_level",
-  "storage_log_max_file_size",
   "limits_section",
   "exchange_max_export",
   "exchange_max_import",
@@ -43,6 +35,22 @@
   "column_break_cazi",
   "process_pending_emails_batch_size",
   "process_pending_emails_max_batch_size",
+  "logs_section",
+  "push_log_file_count",
+  "push_log_level",
+  "push_log_max_file_size",
+  "column_break_ztzv",
+  "storage_log_file_count",
+  "storage_log_level",
+  "storage_log_max_file_size",
+  "column_break_pvju",
+  "inbound_log_file_count",
+  "inbound_log_level",
+  "inbound_log_max_file_size",
+  "column_break_jdrp",
+  "outbound_log_file_count",
+  "outbound_log_level",
+  "outbound_log_max_file_size",
   "timeouts_seconds_section",
   "column_break_rtlq",
   "ansible_play_timeout",
@@ -607,12 +615,64 @@
    "fieldname": "limits_section",
    "fieldtype": "Section Break",
    "label": "Limits"
+  },
+  {
+   "fieldname": "column_break_jdrp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "10",
+   "fieldname": "outbound_log_file_count",
+   "fieldtype": "Int",
+   "label": "Outbound Log File Count",
+   "reqd": 1
+  },
+  {
+   "default": "INFO",
+   "fieldname": "outbound_log_level",
+   "fieldtype": "Select",
+   "label": "Outbound Log Level",
+   "options": "ERROR\nWARNING\nINFO\nDEBUG",
+   "reqd": 1
+  },
+  {
+   "default": "5000000",
+   "fieldname": "outbound_log_max_file_size",
+   "fieldtype": "Int",
+   "label": "Outbound Log Max File Size",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_pvju",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "10",
+   "fieldname": "inbound_log_file_count",
+   "fieldtype": "Int",
+   "label": "Inbound Log File Count",
+   "reqd": 1
+  },
+  {
+   "default": "INFO",
+   "fieldname": "inbound_log_level",
+   "fieldtype": "Select",
+   "label": "Inbound Log Level",
+   "options": "ERROR\nWARNING\nINFO\nDEBUG",
+   "reqd": 1
+  },
+  {
+   "default": "5000000",
+   "fieldname": "inbound_log_max_file_size",
+   "fieldtype": "Int",
+   "label": "Inbound Log Max File Size",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-06-08 22:01:00.877073",
+ "modified": "2026-06-15 15:27:49.779589",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",
