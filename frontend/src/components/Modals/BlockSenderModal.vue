@@ -1,15 +1,14 @@
 <template>
 	<Dialog v-model="showBlockSender" :options="options">
 		<template v-if="sendersToBlock.length > 1" #body-content>
-			<div class="flex flex-col gap-3">
-				<label
+			<div class="flex flex-col gap-4">
+				<FormControl
 					v-for="email in sendersToBlock"
 					:key="email"
-					class="flex cursor-pointer items-center gap-2"
-				>
-					<Checkbox v-model="selected[email]" />
-					<span class="text-ink-gray-7 truncate text-base">{{ email }}</span>
-				</label>
+					v-model="selected[email]"
+					type="checkbox"
+					:label="email"
+				/>
 			</div>
 		</template>
 	</Dialog>
@@ -17,7 +16,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
-import { Checkbox, Dialog, createResource } from 'frappe-ui'
+import { Dialog, FormControl, createResource } from 'frappe-ui'
 
 import { raisePromiseToast } from '@/utils'
 import { useBlockSender, useUndo } from '@/utils/composables'
