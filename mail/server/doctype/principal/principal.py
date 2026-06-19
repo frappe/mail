@@ -23,6 +23,7 @@ from mail.utils import (
 	hash_password,
 	is_catch_all_address,
 	is_probable_hash,
+	log_error,
 	parse_filters,
 	parse_token,
 	snake_to_camel,
@@ -355,9 +356,9 @@ class Principal(Document):
 
 				backend.request("GET", RELOAD_ENDPOINT)
 			except Exception:
-				frappe.log_error(
-					title=f"Failed to create DKIM signature for domain {self.name}",
-					message=frappe.get_traceback(with_context=True),
+				log_error(
+					_("Failed to create DKIM signature for domain {0}").format(self.name),
+					frappe.get_traceback(with_context=True),
 				)
 
 	def _create_dkim_signature(
@@ -395,7 +396,7 @@ class Principal(Document):
 
 		if response.json().get("error"):
 			message = _("Failed to create DKIM signature for domain {0}").format(frappe.bold(self.name))
-			frappe.log_error(title=message, message=frappe.get_traceback(with_context=True))
+			log_error(message, frappe.get_traceback(with_context=True))
 
 			if raise_exception:
 				frappe.throw(message)
@@ -631,7 +632,7 @@ class Principal(Document):
 		response = backend.request("POST", SETTINGS_ENDPOINT, data=json.dumps(payload))
 		if response.json().get("error"):
 			message = _("Failed to delete DKIM signature for domain {0}").format(frappe.bold(self.name))
-			frappe.log_error(title=message, message=frappe.get_traceback(with_context=True))
+			log_error(message, frappe.get_traceback(with_context=True))
 
 			if raise_exception:
 				frappe.throw(message)

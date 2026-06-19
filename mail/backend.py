@@ -7,7 +7,7 @@ import requests
 from frappe import _
 
 from mail.jmap.connection import raise_for_status
-from mail.utils import get_mail_config
+from mail.utils import get_mail_config, log_error
 from mail.utils.validation import validate_mail_config
 
 
@@ -89,8 +89,8 @@ class MailBackendAPI:
 
 			return response
 		except Exception:
-			frappe.log_error(
-				title=_("Mail Backend Request Failed"), message=frappe.get_traceback(with_context=False)
+			log_error(
+				_("Mail Backend Request Failed"), frappe.get_traceback(with_context=False)
 			)
 
 			if response:

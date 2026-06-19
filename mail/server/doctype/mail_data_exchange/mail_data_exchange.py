@@ -27,6 +27,7 @@ from mail.utils import (
 	get_mail_config,
 	get_mbox_files,
 	get_stalwart_cli_path,
+	log_error,
 	reconnect_on_failure,
 	sanitize_cli_output,
 )
@@ -207,8 +208,8 @@ class MailDataExchange(Document):
 			try:
 				output = clean_import_output(output)
 			except Exception:
-				frappe.log_error(
-					title=_("Failed to clean import output"), message=frappe.get_traceback(with_context=True)
+				log_error(
+					_("Failed to clean import output"), frappe.get_traceback(with_context=True)
 				)
 
 			clear_sync_state(self.user, type="email")
