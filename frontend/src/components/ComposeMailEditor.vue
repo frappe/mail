@@ -219,6 +219,7 @@ import {
 	useTemplateRef,
 	watch,
 } from 'vue'
+import { useRouter } from 'vue-router'
 import { EditorContent } from '@tiptap/vue-3'
 import { watchDebounced } from '@vueuse/core'
 import {
@@ -275,7 +276,15 @@ const {
 
 const emit = defineEmits(['discardMail', 'reply', 'replyAll', 'forward', 'popOut'])
 
-const { account, identities } = userStore()
+const router = useRouter()
+const store = userStore()
+const { account, identities } = store
+
+const viewSentMessage = (threadID: string) =>
+	router.push({
+		name: 'Mail',
+		params: { accountId: store.accountId, mailbox: store.mailboxIds.sent, threadID },
+	})
 
 const getIdentity = (email: string) =>
 	identities.data?.find((identity: Identity) => identity.email === email)
@@ -413,10 +422,12 @@ const onMailUpdateSuccess = ({
 	id,
 	status,
 	error,
+	thread_id,
 }: {
 	id: string
 	status: string
 	error: string
+	thread_id?: string
 }) => {
 	if (id) mail.id = id
 	updateOriginalMail()
@@ -427,7 +438,14 @@ const onMailUpdateSuccess = ({
 	if (show.value) return
 
 	if (status === 'Drafted' && isSavingDraft.value) raiseToast(__('Draft saved.'))
-	else if (status === 'Submitted') raiseToast(__('Message sent.'))
+	else if (status === 'Submitted')
+		raiseToast(
+			__('Message sent.'),
+			'success',
+			thread_id
+				? { label: __('View'), onClick: () => viewSentMessage(thread_id) }
+				: undefined,
+		)
 }
 
 // Resources

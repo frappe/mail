@@ -54,8 +54,12 @@ export const formatBytes = (bytes: number) => {
 	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
 }
 
-export const raiseToast = (message: string, type = 'success') => {
-	if (type === 'success') return toast.success(message)
+export const raiseToast = (
+	message: string,
+	type = 'success',
+	action?: { label: string; onClick: () => void },
+) => {
+	if (type === 'success') return toast.success(message, action ? { action } : undefined)
 
 	const div = document.createElement('div')
 	div.innerHTML = message
