@@ -89,9 +89,7 @@ class MailBackendAPI:
 
 			return response
 		except Exception:
-			log_error(
-				_("Mail Backend Request Failed"), frappe.get_traceback(with_context=False)
-			)
+			log_error(_("Mail Backend Request Failed"), frappe.get_traceback(with_context=False))
 
 			if response:
 				frappe.throw(
