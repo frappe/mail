@@ -403,8 +403,8 @@ def execute_with_logging(
 		return func(*args, **kwargs)
 	except Exception:
 		log_error(
-			title=title,
-			message=frappe.get_traceback(with_context=with_context),
+			title,
+			frappe.get_traceback(with_context=with_context),
 		)
 		if user_message:
 			frappe.throw(title=title, msg=user_message)

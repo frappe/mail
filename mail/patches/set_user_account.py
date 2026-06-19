@@ -60,4 +60,4 @@ def execute() -> None:
 			).run()
 
 		except Exception as e:
-			log_error(message=str(e), title=f"Error while setting user account for {doctype}")
+			log_error(f"Error while setting user account for {doctype}", str(e))

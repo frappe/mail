@@ -861,7 +861,7 @@ def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size
 
 	except Exception:
 		log_error(
-			title="Failed - Enqueue Process Pending Emails", message=frappe.get_traceback(with_context=True)
+			"Failed - Enqueue Process Pending Emails", frappe.get_traceback(with_context=True)
 		)
 
 
