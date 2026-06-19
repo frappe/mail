@@ -55,25 +55,20 @@ export const sessionStore = defineStore('mail-session', () => {
 		onSuccess: (data) => (document.querySelector("link[rel='icon']").href = data.favicon),
 	})
 
-	// Called when a request fails with an auth/permission error. Returns true if the session
-	// is actually gone (so the caller can swallow the error and avoid a duplicate toast),
-	// false if the session is still alive — i.e. a genuine PermissionError that should surface
-	// normally. Frappe resets the user_id cookie to Guest on a dead session, so the cookie is
-	// the discriminator. Signs out + notifies + redirects once; later concurrent calls just
-	// report handled.
-	const handleSessionExpired = (): boolean => {
-		// Still logged in — this is a real permission error, not a logout.
-		if (sessionUser()) return false
+	// Called when a request fails with an auth/permission error: sign the user out (clear state,
+	// one toast, redirect to login) when their session is actually gone. No-op when still logged
+	// in (a genuine PermissionError that should surface) or when there was never a session in
+	// this tab (a failed login attempt — let the form show "wrong password"). Frappe resets the
+	// user_id cookie to Guest on a dead session, so the cookie is the discriminator. Idempotent:
+	// once user.value is cleared, concurrent calls return early, so the toast/redirect fire once.
+	const handleSessionExpired = (): void => {
+		if (sessionUser()) return
+		if (!user.value) return
 
-		if (user.value) {
-			user.value = null
-			userResource.reset()
-			mailboxes.reset()
-			raiseToast(__('You have been signed out. Please sign in again.'), 'error')
-			if (!router.currentRoute.value.meta?.isLogin) router.replace({ name: 'Login' })
-		}
-
-		return true
+		user.value = null
+		reset()
+		raiseToast(__('You have been signed out. Please sign in again.'), 'error')
+		if (!router.currentRoute.value.meta?.isLogin) router.replace({ name: 'Login' })
 	}
 
 	return { isLoggedIn, login, logout, branding, handleSessionExpired }
