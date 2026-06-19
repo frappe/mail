@@ -348,6 +348,7 @@
 
 	<Dialog v-model="showEmptyMailbox" :options="emptyMailboxOptions" />
 	<Dialog v-model="showJunkOrDeleteThreads" :options="junkOrDeleteThreadsOptions" />
+	<BlockSenderModal />
 	<ShortcutsModal v-model="showShortcuts" />
 </template>
 <script setup lang="ts">
@@ -394,6 +395,7 @@ import HeaderActions from '@/components/HeaderActions.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
 import MailListItem from '@/components/MailListItem.vue'
 import MailThread from '@/components/MailThread.vue'
+import BlockSenderModal from '@/components/Modals/BlockSenderModal.vue'
 import ShortcutsModal from '@/components/Modals/ShortcutsModal.vue'
 
 import type { COLOR_SCHEME, Thread, UserResource } from '@/types'
