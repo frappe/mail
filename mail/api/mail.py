@@ -746,6 +746,7 @@ def get_blocked_addresses(account: str) -> list[dict]:
 def block_email_address(account: str, email: str) -> dict:
 	"""Blocks an email address for the given account."""
 
+	has_permission_for_user(parse_account(account)[0])
 	doc = frappe.get_doc({"doctype": "Blocked Email Address", "account": account, "email": email})
 	doc.insert()
 
@@ -759,7 +760,7 @@ def block_email_addresses(account: str, emails: list[str]) -> None:
 	and the sieve script is regenerated once at the end since it is rebuilt from the full list.
 	"""
 
-	user = parse_account(account)[0]
+	user, account_id = parse_account(account)
 	has_permission_for_user(user)
 
 	already_blocked = set(get_blocked_email_addresses(account))
@@ -767,8 +768,15 @@ def block_email_addresses(account: str, emails: list[str]) -> None:
 	for email in dict.fromkeys(emails):  # de-duplicate while preserving order
 		if not email or email in already_blocked:
 			continue
+		# bulk_insert bypasses before_insert, so set account_id (the shared key) explicitly.
 		doc = frappe.get_doc(
-			{"doctype": "Blocked Email Address", "account": account, "email": email, "user": user}
+			{
+				"doctype": "Blocked Email Address",
+				"account": account,
+				"account_id": account_id,
+				"email": email,
+				"user": user,
+			}
 		)
 		doc.set_new_name()
 		docs.append(doc)
@@ -780,10 +788,20 @@ def block_email_addresses(account: str, emails: list[str]) -> None:
 
 @frappe.whitelist()
 def unblock_email_addresses(account: str, emails: list[str]) -> None:
-	"""Unblocks email addresses by deleting Blocked Email Address records."""
+	"""Unblocks email addresses by deleting Blocked Email Address records.
+
+	Scoped to the shared account_id (not the per-user handle), so a block added by any user on a
+	shared account can be removed. Regenerates the sieve script since the bulk delete bypasses the
+	doctype's after_delete hook.
+	"""
 
 	has_permission_for_user(parse_account(account)[0])
-	frappe.db.delete("Blocked Email Address", {"account": account, "email": ["in", emails]})
+	if not emails:
+		return
+
+	account_id = parse_account(account)[1]
+	frappe.db.delete("Blocked Email Address", {"account_id": account_id, "email": ["in", emails]})
+	update_sieve_script_for_blocked_emails(account)
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
