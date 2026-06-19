@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 from frappe.query_builder import Case
 
 from mail.utils import log_error
@@ -60,4 +61,7 @@ def execute() -> None:
 			).run()
 
 		except Exception as e:
-			log_error(f"Error while setting user account for {doctype}", str(e))
+			log_error(
+				_("Error while setting user account for {0}").format(doctype),
+				str(e),
+			)

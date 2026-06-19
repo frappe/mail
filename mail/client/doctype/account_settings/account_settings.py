@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from uuid import uuid7
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
@@ -294,6 +295,6 @@ def create_archive_mailbox(account: str) -> None:
 
 	except Exception:
 		log_error(
-			"Archive Mailbox Creation Error",
-			f"Failed to create archive mailbox for account {account}",
+			_("Archive Mailbox Creation Error"),
+			_("Failed to create archive mailbox for account {0}").format(account),
 		)
