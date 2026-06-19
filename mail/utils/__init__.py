@@ -913,3 +913,16 @@ def get_stalwart_version() -> str:
 	"""Returns the Stalwart version from configuration or default."""
 
 	return get_mail_config("stalwart_version")
+
+
+def log_error(title: str | None = None, message: str | None = None, **kwargs) -> None:
+	"""Logs an error, prefixing the title with "[Mail]" so Mail app errors can be filtered out.
+
+	Wraps `frappe.log_error` and should be used in place of it throughout the Mail app.
+	"""
+
+	prefix = "[Mail] "
+	if title and not title.startswith(prefix):
+		title = f"{prefix}{title}"
+
+	frappe.log_error(title=title, message=message, **kwargs)
