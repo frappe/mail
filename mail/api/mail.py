@@ -423,7 +423,7 @@ def create_mail(
 	if not save_as_draft and doc.status == "Submitted":
 		create_contacts_if_not_exists(account, doc.recipients)
 
-	return {"id": doc.id, "status": doc.status, "error": doc.error_message}
+	return {"id": doc.id, "status": doc.status, "error": doc.error_message, "thread_id": doc.thread_id}
 
 
 @frappe.whitelist()
@@ -496,7 +496,12 @@ def update_draft_mail(
 	if submit and new_doc.status == "Submitted":
 		create_contacts_if_not_exists(account, doc.recipients)
 
-	return {"id": new_doc.id, "status": new_doc.status, "error": new_doc.error_message}
+	return {
+		"id": new_doc.id,
+		"status": new_doc.status,
+		"error": new_doc.error_message,
+		"thread_id": new_doc.thread_id,
+	}
 
 
 @frappe.whitelist()
