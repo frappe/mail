@@ -61,6 +61,7 @@ declare module 'vue' {
     ImportSettings: typeof import('./src/components/Settings/ImportSettings.vue')['default']
     InformationField: typeof import('./src/components/InformationField.vue')['default']
     InstallPrompt: typeof import('./src/components/InstallPrompt.vue')['default']
+    LinkifiedText: typeof import('./src/components/LinkifiedText.vue')['default']
     ListCard: typeof import('./src/components/ListCard.vue')['default']
     LoginLayout: typeof import('./src/components/LoginLayout.vue')['default']
     MailActions: typeof import('./src/components/MailActions.vue')['default']

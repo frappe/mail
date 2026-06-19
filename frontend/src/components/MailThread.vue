@@ -254,11 +254,11 @@
 										v-if="hasHtmlContent(mail.html_body)"
 										:content="mail.html_body"
 									/>
-									<pre
+
+									<LinkifiedText
 										v-else
-										class="whitespace-pre-wrap break-words pt-4 font-sans text-base !leading-5 sm:text-sm"
-										>{{ mail.html_body || mail.text_body }}</pre
-									>
+										:text="mail.html_body || mail.text_body"
+									/>
 
 									<div
 										v-if="filteredAttachments(mail).length"
@@ -368,6 +368,7 @@ import AttachmentViewer from '@/components/AttachmentViewer.vue'
 import ComposeMailEditor from '@/components/ComposeMailEditor.vue'
 import EmailContent from '@/components/EmailContent.vue'
 import NoMails from '@/components/Icons/NoMails.vue'
+import LinkifiedText from '@/components/LinkifiedText.vue'
 import MailActions from '@/components/MailActions.vue'
 import MailDate from '@/components/MailDate.vue'
 import MailDetails from '@/components/MailDetails.vue'
