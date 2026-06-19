@@ -81,7 +81,7 @@
 			>
 				<h5
 					class="text-ink-gray-5 truncate text-sm !leading-[1.5]"
-					:class="{ italic: !mail.preview }"
+					:class="{ italic: !mail.preview, '!text-base': isFullWidth }"
 				>
 					{{ mail.preview || __('— No message body —') }}
 				</h5>
@@ -99,9 +99,14 @@
 				</div>
 			</div>
 			<div
-				v-if="attachments.length || mail.draft || ['starred', 'search'].includes(mailbox)"
+				v-if="
+					attachments.length ||
+					mail.draft ||
+					['starred', 'search'].includes(mailbox) ||
+					(isFullWidth && mailboxesToShow.length)
+				"
 				class="flex items-center"
-				:class="{ 'ml-auto min-w-fit': isFullWidth }"
+				:class="{ 'min-w-fit': isFullWidth }"
 			>
 				<Tooltip
 					v-for="(attachment, idx) in attachments.slice(0, 2)"

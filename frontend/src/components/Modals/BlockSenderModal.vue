@@ -11,7 +11,6 @@
 						type="checkbox"
 						:model-value="allSelected"
 						class="pointer-events-none"
-						size="md"
 					/>
 					<span class="text-ink-gray-7 text-sm font-medium">
 						{{ allSelected ? __('Deselect all') : __('Select all') }}
@@ -35,7 +34,6 @@
 							type="checkbox"
 							:model-value="selected[sender.email]"
 							class="pointer-events-none"
-							size="md"
 						/>
 						<div class="min-w-0 flex-1 space-y-0.5">
 							<div class="text-ink-gray-8 truncate text-sm font-medium">
