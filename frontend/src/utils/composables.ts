@@ -130,6 +130,21 @@ export const useBlockSender = () => {
 	return { showBlockSender, sendersToBlock, promptBlockSenders }
 }
 
+// Shared state for the Settings dialog, so any view can open it (optionally on a specific tab).
+// <SettingsModal> (rendered in AppSidebar) reacts to `showSettings`, and selects `settingsTab` by
+// label when it opens.
+const showSettings = ref(false)
+const settingsTab = ref('')
+
+export const useSettings = () => {
+	const openSettings = (tab = '') => {
+		settingsTab.value = tab
+		showSettings.value = true
+	}
+
+	return { showSettings, settingsTab, openSettings }
+}
+
 const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 const systemIsDark = ref(mediaQuery.matches)
 mediaQuery.addEventListener('change', () => (systemIsDark.value = mediaQuery.matches))

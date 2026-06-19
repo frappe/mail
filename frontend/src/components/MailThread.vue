@@ -215,15 +215,29 @@
 									<Alert
 										v-if="blockedAddresses.data.includes(mail.from_email)"
 										:title="__('This sender is blocked')"
-										:description="
-											__(
-												`{0} is currently on your block list. You won't receive new messages from this source until you unblock them.`,
-												[mail.from_name || mail.from_email],
-											)
-										"
 										class="mb-4"
 										:dismissable="false"
 									>
+										<template #description>
+											<p class="text-ink-gray-6 prose-sm">
+												{{
+													__('{0} is currently on your', [
+														mail.from_name || mail.from_email,
+													])
+												}}
+												<button
+													type="button"
+													class="hover:text-ink-gray-8 underline"
+													@click="openSettings(__('Block List'))"
+												>
+													{{ __('block list') }}</button
+												>{{
+													__(
+														". You won't receive new messages from this source until you unblock them.",
+													)
+												}}
+											</p>
+										</template>
 										<template #footer>
 											<div class="col-span-full">
 												<Button
@@ -347,7 +361,7 @@ import {
 	raiseToast,
 	shouldIgnoreKeypress,
 } from '@/utils'
-import { useScreenSize, useTheme } from '@/utils/composables'
+import { useScreenSize, useSettings, useTheme } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import AttachmentCapsule from '@/components/AttachmentCapsule.vue'
 import AttachmentViewer from '@/components/AttachmentViewer.vue'
@@ -389,6 +403,7 @@ const emit = defineEmits([
 ])
 
 const { isMobile } = useScreenSize()
+const { openSettings } = useSettings()
 const dayjs = inject('$dayjs')
 const user = inject('$user')
 const store = userStore()
