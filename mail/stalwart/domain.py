@@ -324,3 +324,55 @@ class DomainService(StalwartCLI):
 
 		if not response["success"]:
 			frappe.throw(title=_("Failed to delete domains"), msg=response["output"] or response["error"])
+
+
+class DkimSignatureService(StalwartCLI):
+	DEFAULT_FIELDS: ClassVar[list[str]] = ["id", "selector", "domainId", "stage"]
+
+	@classmethod
+	def _resolved_fields(cls, fields: list[str] | None) -> list[str]:
+		return fields if isinstance(fields, list) else cls.DEFAULT_FIELDS
+
+	@staticmethod
+	def _parse_query_output(output: str) -> list[dict]:
+		if not output:
+			return []
+
+		return [json.loads(signature) for signature in output.splitlines()]
+
+	def get_all_by_domain(self, domain_id: str, fields: list[str] | None = None) -> list[dict]:
+		"""Fetches all DKIM signatures associated with the given domain from the Stalwart server."""
+
+		fields = self._resolved_fields(fields)
+
+		commands = ["query", "DkimSignature", "--where", f"domainId={domain_id}"]
+
+		if fields:
+			commands.extend(["--fields", ",".join(fields)])
+
+		commands.append("--json")
+		response = self.run(commands)
+
+		if response["success"]:
+			return self._parse_query_output(response["output"])
+		else:
+			frappe.throw(
+				title=_("Failed to fetch DKIM signatures"), msg=response["output"] or response["error"]
+			)
+
+	def delete(self, ids: list[str]) -> None:
+		"""Deletes DKIM signatures with the specified IDs from the Stalwart server."""
+
+		if not ids:
+			frappe.throw(
+				title=_("No DKIM signature IDs provided"),
+				msg=_("No DKIM signature IDs provided for deletion."),
+			)
+
+		response = self.run(["delete", "DkimSignature", "--ids", ",".join(ids)])
+
+		if not response["success"]:
+			frappe.throw(
+				title=_("Failed to delete DKIM signatures"),
+				msg=response["output"] or response["error"],
+			)
