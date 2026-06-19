@@ -1044,10 +1044,19 @@ watch(
 	{ immediate: true },
 )
 
+// Periodically refresh the mailbox list (keeps sidebar counts current), then reload the open
+// mailbox's threads only when its thread count actually changed — so a quiet mailbox isn't reloaded
+// (and scroll-reset) every 30s.
+const pollForChanges = async () => {
+	const prevTotal = mailboxObj.value?.total_threads
+	await mailboxes.reload()
+	if (mailboxObj.value?.total_threads !== prevTotal) threadsResource.value.reload()
+}
+
 onMounted(() => {
 	window.addEventListener('keydown', handleKeyDown)
 	window.addEventListener('keyup', handleKeyUp)
-	reloadInterval.value = setInterval(() => threadsResource.value.reload(), 30000)
+	reloadInterval.value = setInterval(pollForChanges, 30000)
 
 	socket.on('new_mail_created', (updatedMailboxes: string[]) => {
 		if (updatedMailboxes.includes(mailbox)) threadsResource.value.reload()
