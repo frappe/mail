@@ -15,23 +15,17 @@ import { userStore } from '@/stores/user'
 
 import FrappePushNotification from '../public/frappe-push-notification'
 
-// Centralised auth handling: any request that comes back unauthenticated signs the user
-// out and redirects to login, so they can't keep composing/acting against a dead session.
+// Centralised auth handling: when a request comes back unauthenticated, sign the user out and
+// redirect to login so they can't keep acting against a dead session. The error is always
+// re-thrown afterwards, so the originating resource still reports it normally (no swallowing,
+// which previously left resources hanging and hid errors like a wrong-password login).
 setConfig('resourceFetcher', async (options: Parameters<typeof frappeRequest>[0]) => {
 	try {
 		return await frappeRequest(options)
 	} catch (error) {
-		// A dead session surfaces as AuthenticationError or (for non-guest methods)
-		// PermissionError "Login to access". If the session is actually gone, swallow the
-		// error so the resource doesn't also toast it — we've shown "signed out" and are
-		// redirecting to login. A genuine PermissionError for a logged-in user re-throws and
-		// surfaces normally. Never-settling promise → the resource's onSuccess/onError won't fire.
 		const excType = (error as { exc_type?: string })?.exc_type
-		if (
-			(excType === 'AuthenticationError' || excType === 'PermissionError') &&
+		if (excType === 'AuthenticationError' || excType === 'PermissionError')
 			sessionStore().handleSessionExpired()
-		)
-			return new Promise<never>(() => {})
 		throw error
 	}
 })
