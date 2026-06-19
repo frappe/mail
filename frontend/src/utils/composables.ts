@@ -94,25 +94,36 @@ export const useUndo = () => {
 
 // Shared state for the "Block sender?" prompt shown after marking/moving mail to Junk. A single
 // <BlockSenderModal> (rendered in MailboxView) reacts to this, so any view can open it.
+export interface BlockableSender {
+	name?: string
+	email: string
+}
+
 const showBlockSender = ref(false)
-const sendersToBlock = ref<string[]>([])
+const sendersToBlock = ref<BlockableSender[]>([])
 
 export const useBlockSender = () => {
 	const { identities, blockedAddresses } = userStore()
 
-	// Senders worth offering to block: drop the user's own identities and addresses already blocked.
-	const blockableSenders = (emails: (string | undefined)[]) => {
+	// Senders worth offering to block: drop the user's own identities and addresses already blocked,
+	// and de-duplicate by email (keeping the first occurrence's display name).
+	const blockableSenders = (senders: { name?: string; email?: string }[]) => {
 		const own = new Set((identities.data ?? []).map((i: Identity) => i.email))
 		const blocked = new Set<string>(blockedAddresses.data ?? [])
-		return [...new Set(emails)].filter(
-			(e): e is string => !!e && !own.has(e) && !blocked.has(e),
-		)
+		const seen = new Set<string>()
+		const result: BlockableSender[] = []
+		for (const { name, email } of senders) {
+			if (!email || own.has(email) || blocked.has(email) || seen.has(email)) continue
+			seen.add(email)
+			result.push({ name, email })
+		}
+		return result
 	}
 
-	const promptBlockSenders = (emails: (string | undefined)[]) => {
-		const senders = blockableSenders(emails)
-		if (!senders.length) return
-		sendersToBlock.value = senders
+	const promptBlockSenders = (senders: { name?: string; email?: string }[]) => {
+		const list = blockableSenders(senders)
+		if (!list.length) return
+		sendersToBlock.value = list
 		showBlockSender.value = true
 	}
 

@@ -257,7 +257,8 @@ const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
 			reloadMails(isUndo)
 			// After marking as Junk, offer to block the sender (not when re-junking via an undo of
 			// Mark as Not Junk). Blocking then clears the undo set below.
-			if (spam && !isUndo) promptBlockSenders([mail.from_email])
+			if (spam && !isUndo)
+				promptBlockSenders([{ name: mail.from_name, email: mail.from_email }])
 		})
 	const successMessage = spam ? __('Mail marked as Junk.') : __('Mail marked as Not Junk.')
 

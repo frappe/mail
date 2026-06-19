@@ -316,7 +316,6 @@ export function useThreadActions(deps: {
 	const junkOrDeleteThreadsOptions = computed(() => ({
 		title: junkOrDeleteTitle.value,
 		message: junkOrDeleteMessage.value,
-		icon: { name: 'alert-triangle', appearance: 'warning' },
 		actions: [
 			{
 				label: __('Confirm'),
@@ -527,14 +526,14 @@ export function useThreadActions(deps: {
 			mailbox_ids: m.mailboxes.map((mb) => mb.mailbox_id),
 			junk: m.junk,
 		}))
-		const senderEmails = mails.map((m) => m.from_email)
+		const senders = mails.map((m) => ({ name: m.from_name, email: m.from_email }))
 		const ids = snapshot.map((m) => m.id)
 		const action = async () => {
 			await setMailsSpam.submit({ ids, spam })
 			handleSuccessAndRemoveFromList(threadIDs)
 			// After marking as Junk, offer to block the sender(s). Blocking then clears the undo set
 			// below (undoing the junk once the sender is blocked would be inconsistent).
-			if (spam) promptBlockSenders(senderEmails)
+			if (spam) promptBlockSenders(senders)
 		}
 
 		setUndoAction(() => {
