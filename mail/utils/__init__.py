@@ -381,6 +381,19 @@ def reformat_pbkdf2_hash(passlib_hash: str, dklen: int | None = None) -> str:
 	return formatted_hash
 
 
+def log_error(title: str | None = None, message: str | None = None, **kwargs) -> None:
+	"""Logs an error, prefixing the title with "[Mail]" so Mail app errors can be filtered out.
+
+	Wraps `frappe.log_error` and should be used in place of it throughout the Mail app.
+	"""
+
+	prefix = "[Mail] "
+	if title and not title.startswith(prefix):
+		title = f"{prefix}{title}"
+
+	frappe.log_error(title=title, message=message, **kwargs)
+
+
 def execute_with_logging(
 	func: callable, title: str, user_message: str | None = None, with_context: bool = False, *args, **kwargs
 ) -> Any | None:
@@ -389,9 +402,9 @@ def execute_with_logging(
 	try:
 		return func(*args, **kwargs)
 	except Exception:
-		frappe.log_error(
-			title=title,
-			message=frappe.get_traceback(with_context=with_context),
+		log_error(
+			title,
+			frappe.get_traceback(with_context=with_context),
 		)
 		if user_message:
 			frappe.throw(title=title, msg=user_message)
