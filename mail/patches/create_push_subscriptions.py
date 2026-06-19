@@ -3,6 +3,7 @@ import time
 import frappe
 
 from mail.jmap import get_push_subscription_service
+from mail.utils import log_error
 
 
 def execute() -> None:
@@ -21,7 +22,7 @@ def execute() -> None:
 			ps.user = user
 			ps.insert(ignore_permissions=True)
 		except Exception as e:
-			frappe.log_error(
+			log_error(
 				title="Push Subscription Creation Failed",
 				message=f"Failed to create push subscription for user {user}: {e!s}",
 			)

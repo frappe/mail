@@ -34,6 +34,7 @@ from mail.utils import (
 	enqueue_job,
 	get_config,
 	get_push_logger,
+	log_error,
 	parse_filters,
 	user_context,
 )
@@ -785,7 +786,7 @@ def get_message_ids(
 			return [email["id"] for email in emails if not set(mailbox_id).isdisjoint(email["mailboxIds"])]
 
 	except Exception:
-		frappe.log_error(_("Failed to fetch message IDs."), frappe.get_traceback(with_context=True))
+		log_error(_("Failed to fetch message IDs."), frappe.get_traceback(with_context=True))
 		frappe.throw(_("Failed to fetch message IDs."))
 
 
@@ -802,7 +803,7 @@ def delete_messages(account: str, ids: list[str]) -> None:
 		service.delete(ids)
 		_remove_cached_messages(account, ids)
 	except Exception:
-		frappe.log_error(
+		log_error(
 			title=_("Failed to delete mail(s)"),
 			message=frappe.get_traceback(with_context=True),
 		)
@@ -830,7 +831,7 @@ def empty_mailbox(account: str, mailbox_id: str) -> None:
 			service.delete(ids)
 			_remove_cached_messages(account, ids)
 	except Exception:
-		frappe.log_error(
+		log_error(
 			title=_("Failed to empty mailbox"),
 			message=frappe.get_traceback(with_context=True),
 		)
@@ -851,7 +852,7 @@ def move_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> N
 		service.update(emails, replace_mailboxes=True)
 		_remove_cached_messages(account, ids)
 	except Exception:
-		frappe.log_error(
+		log_error(
 			title=_("Failed to move mail(s) to mailbox"),
 			message=frappe.get_traceback(with_context=True),
 		)
@@ -881,7 +882,7 @@ def set_messages_mailboxes(account: str, mails: list[dict]) -> None:
 		service.update(emails, replace_keywords=False, replace_mailboxes=True)
 		_remove_cached_messages(account, [mail["id"] for mail in mails])
 	except Exception:
-		frappe.log_error(
+		log_error(
 			title=_("Failed to restore mailbox membership for mail(s)"),
 			message=frappe.get_traceback(with_context=True),
 		)
@@ -902,7 +903,7 @@ def add_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> No
 		service.update(emails, replace_mailboxes=False)
 		_remove_cached_messages(account, ids)
 	except Exception:
-		frappe.log_error(
+		log_error(
 			title=_("Failed to add mail(s) to mailbox"),
 			message=frappe.get_traceback(with_context=True),
 		)
@@ -923,7 +924,7 @@ def remove_messages_from_mailbox(account: str, ids: list[str], mailbox_id: str) 
 		service.update(emails, replace_mailboxes=False)
 		_remove_cached_messages(account, ids)
 	except Exception:
-		frappe.log_error(
+		log_error(
 			title=_("Failed to remove mail(s) from mailbox"),
 			message=frappe.get_traceback(with_context=True),
 		)
@@ -958,7 +959,7 @@ def set_seen_status(account: str, ids: list[str], seen: bool = True) -> None:
 			_cache_messages(account, messages_to_cache)
 
 	except Exception:
-		frappe.log_error(
+		log_error(
 			title=_("Failed to set seen status for mail(s)"),
 			message=frappe.get_traceback(with_context=True),
 		)
@@ -993,7 +994,7 @@ def set_flagged_status(account: str, ids: list[str], flagged: bool = True) -> No
 			_cache_messages(account, messages_to_cache)
 
 	except Exception:
-		frappe.log_error(
+		log_error(
 			title=_("Failed to set flagged status for mail(s)"),
 			message=frappe.get_traceback(with_context=True),
 		)
@@ -1025,7 +1026,7 @@ def set_spam_status(account: str, ids: list[str], spam: bool = True) -> None:
 
 		_remove_cached_messages(account, ids)
 	except Exception:
-		frappe.log_error(
+		log_error(
 			title=_("Failed to set spam status for mail(s)"),
 			message=frappe.get_traceback(with_context=True),
 		)
@@ -1076,7 +1077,7 @@ def fetch_blobs(account: str, blobs: list[str] | list[tuple[str, str | None]]) -
 
 		return result
 	except Exception:
-		frappe.log_error(
+		log_error(
 			title=_("Failed to fetch blob(s)"),
 			message=frappe.get_traceback(with_context=True),
 		)
@@ -1378,7 +1379,7 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 
 	except Exception:
 		logger.error({**ctx, "event": "fetch-changes-failed"})
-		frappe.log_error(
+		log_error(
 			title=_("Failed to fetch changes"),
 			message=frappe.get_traceback(with_context=True),
 		)

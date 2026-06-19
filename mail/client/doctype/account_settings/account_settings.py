@@ -21,6 +21,7 @@ from mail.storage.data_store import Entity
 if TYPE_CHECKING:
 	from mail.jmap.services.core import CoreService
 
+from mail.utils import log_error
 from mail.utils.user import get_account_emails, is_system_manager
 from mail.utils.validation import has_permission_for_user
 
@@ -292,7 +293,7 @@ def create_archive_mailbox(account: str) -> None:
 		get_mailbox_id_by_role(account, "archive", create_if_not_exists=True)
 
 	except Exception:
-		frappe.log_error(
+		log_error(
 			message=f"Failed to create archive mailbox for account {account}",
 			title="Archive Mailbox Creation Error",
 		)
