@@ -294,6 +294,6 @@ def create_archive_mailbox(account: str) -> None:
 
 	except Exception:
 		log_error(
-			message=f"Failed to create archive mailbox for account {account}",
-			title="Archive Mailbox Creation Error",
+			"Archive Mailbox Creation Error",
+			f"Failed to create archive mailbox for account {account}",
 		)

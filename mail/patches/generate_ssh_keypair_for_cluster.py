@@ -11,5 +11,5 @@ def execute() -> None:
 			frappe.get_doc("Mail Cluster", cluster).generate_ssh_keypair(save=True)
 		except Exception:
 			log_error(
-				title=_("Failed to generate SSH keypair"), message=frappe.get_traceback(with_context=False)
+				_("Failed to generate SSH keypair"), frappe.get_traceback(with_context=False)
 			)

@@ -23,8 +23,8 @@ def execute() -> None:
 			ps.insert(ignore_permissions=True)
 		except Exception as e:
 			log_error(
-				title="Push Subscription Creation Failed",
-				message=f"Failed to create push subscription for user {user}: {e!s}",
+				"Push Subscription Creation Failed",
+				f"Failed to create push subscription for user {user}: {e!s}",
 			)
 
 		time.sleep(0.1)
