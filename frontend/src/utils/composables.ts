@@ -2,6 +2,8 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 
 import { userStore } from '@/stores/user'
 
+import type { Identity } from '@/types'
+
 export const useScreenSize = () => {
 	const size = reactive({ width: window.innerWidth, height: window.innerHeight })
 
@@ -88,6 +90,59 @@ export const useUndo = () => {
 	}
 
 	return { setUndoAction, undo }
+}
+
+// Shared state for the "Block sender?" prompt shown after marking/moving mail to Junk. A single
+// <BlockSenderModal> (rendered in MailboxView) reacts to this, so any view can open it.
+export interface BlockableSender {
+	name?: string
+	email: string
+}
+
+const showBlockSender = ref(false)
+const sendersToBlock = ref<BlockableSender[]>([])
+
+export const useBlockSender = () => {
+	const { identities, blockedAddresses } = userStore()
+
+	// Senders worth offering to block: drop the user's own identities and addresses already blocked,
+	// and de-duplicate by email (keeping the first occurrence's display name).
+	const blockableSenders = (senders: { name?: string; email?: string }[]) => {
+		const own = new Set((identities.data ?? []).map((i: Identity) => i.email))
+		const blocked = new Set<string>(blockedAddresses.data ?? [])
+		const seen = new Set<string>()
+		const result: BlockableSender[] = []
+		for (const { name, email } of senders) {
+			if (!email || own.has(email) || blocked.has(email) || seen.has(email)) continue
+			seen.add(email)
+			result.push({ name, email })
+		}
+		return result
+	}
+
+	const promptBlockSenders = (senders: { name?: string; email?: string }[]) => {
+		const list = blockableSenders(senders)
+		if (!list.length) return
+		sendersToBlock.value = list
+		showBlockSender.value = true
+	}
+
+	return { showBlockSender, sendersToBlock, promptBlockSenders }
+}
+
+// Shared state for the Settings dialog, so any view can open it (optionally on a specific tab).
+// <SettingsModal> (rendered in AppSidebar) reacts to `showSettings`, and selects `settingsTab` by
+// label when it opens.
+const showSettings = ref(false)
+const settingsTab = ref('')
+
+export const useSettings = () => {
+	const openSettings = (tab = '') => {
+		settingsTab.value = tab
+		showSettings.value = true
+	}
+
+	return { showSettings, settingsTab, openSettings }
 }
 
 const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')

@@ -38,7 +38,7 @@
 	</Dialog>
 </template>
 <script setup lang="ts">
-import { computed, inject, markRaw, ref } from 'vue'
+import { computed, inject, markRaw, ref, watch } from 'vue'
 import {
 	Ban,
 	Code,
@@ -55,6 +55,7 @@ import {
 } from 'lucide-vue-next'
 import { Button, Dialog } from 'frappe-ui'
 
+import { useSettings } from '@/utils/composables'
 import AccountSettings from '@/components/Settings/AccountSettings.vue'
 import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
 import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
@@ -69,6 +70,7 @@ import SignatureSettings from '@/components/Settings/SignatureSettings.vue'
 import VacationResponseSettings from '@/components/Settings/VacationResponseSettings.vue'
 
 const show = defineModel<boolean>()
+const { settingsTab } = useSettings()
 
 const user = inject('$user')
 
@@ -148,4 +150,12 @@ const tabs = computed(() => {
 	return allTabs.filter((tab) => tab.condition === undefined || tab.condition)
 })
 const activeTab = ref(tabs.value[0])
+
+// When opened via useSettings().openSettings('<label>'), jump to that tab.
+watch(show, (open) => {
+	if (!open || !settingsTab.value) return
+	const match = tabs.value.find((tab) => tab.label === settingsTab.value)
+	if (match) activeTab.value = match
+	settingsTab.value = ''
+})
 </script>
