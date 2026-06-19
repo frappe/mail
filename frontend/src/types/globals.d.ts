@@ -1,6 +1,6 @@
 export {}
 
-type TranslateFunction = (message: string, variables?: string[]) => string
+type TranslateFunction = (message: string, variables?: (string | number)[]) => string
 declare global {
 	const __: TranslateFunction
 }
