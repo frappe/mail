@@ -5,10 +5,11 @@ import frappe
 import pydenticon
 import requests
 from frappe import _
+from frappe.model.document import bulk_insert
 from frappe.utils import format_datetime, random_string
 
 from mail.api.contacts import create_contacts_if_not_exists
-from mail.api.sieve import update_sieve_script_for_mailbox
+from mail.api.sieve import update_sieve_script_for_blocked_emails, update_sieve_script_for_mailbox
 from mail.api.utils import get_avatar_url
 from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
 from mail.client.doctype.mail_message.mail_message import (
@@ -747,6 +748,34 @@ def block_email_address(account: str, email: str) -> dict:
 
 	doc = frappe.get_doc({"doctype": "Blocked Email Address", "account": account, "email": email})
 	doc.insert()
+
+
+@frappe.whitelist()
+def block_email_addresses(account: str, emails: list[str]) -> None:
+	"""Blocks multiple email addresses for the given account in a single request.
+
+	Inserts in one batched query via `bulk_insert` (no per-document hooks) instead of looping over
+	`doc.insert()`. Addresses already blocked are skipped, `ignore_duplicates` guards against races,
+	and the sieve script is regenerated once at the end since it is rebuilt from the full list.
+	"""
+
+	user = parse_account(account)[0]
+	has_permission_for_user(user)
+
+	already_blocked = set(get_blocked_email_addresses(account))
+	docs = []
+	for email in dict.fromkeys(emails):  # de-duplicate while preserving order
+		if not email or email in already_blocked:
+			continue
+		doc = frappe.get_doc(
+			{"doctype": "Blocked Email Address", "account": account, "email": email, "user": user}
+		)
+		doc.set_new_name()
+		docs.append(doc)
+
+	if docs:
+		bulk_insert("Blocked Email Address", docs, ignore_duplicates=True)
+		update_sieve_script_for_blocked_emails(account)
 
 
 @frappe.whitelist()
