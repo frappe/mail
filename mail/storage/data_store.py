@@ -68,6 +68,14 @@ class DataStore(BaseStore):
 	# busy, since an in-use environment is never force-closed.
 	MAX_CACHED_ENVS = 128
 
+	# Size of each environment's reader lock table. A reader slot is held per live process/thread
+	# that has the environment open, and is shared across every process via lock.mdb, so the
+	# default (126) is easily exhausted by many web + background workers on a hot account
+	# (MDB_READERS_FULL). The table is a sparse file (~one page on disk until slots are used), so
+	# a generous value is effectively free. Stale slots left by crashed/recycled workers are
+	# reclaimed via reader_check().
+	MAX_READERS = 2048
+
 	_ENVS: ClassVar[OrderedDict[str, _EnvEntry]] = OrderedDict()
 	_ENVS_GUARD: ClassVar[RLock] = RLock()
 
@@ -100,15 +108,38 @@ class DataStore(BaseStore):
 
 		self.logger.debug({**self.logger_context, "event": "opening-env", "path": self.path})
 
-		return lmdb.open(
+		env = lmdb.open(
 			self.path,
 			map_size=self.map_size,
 			subdir=True,
 			max_dbs=0,
+			max_readers=self.MAX_READERS,
 			readahead=False,
 			meminit=False,
 			writemap=False,
 		)
+
+		# Reclaim reader slots left behind by crashed or recycled workers. This runs whenever a
+		# worker opens the environment, keeping the shared reader table from filling up over time.
+		self._reader_check(env)
+		return env
+
+	def _reader_check(self, env: "lmdb.Environment") -> None:
+		"""Reclaim stale reader-lock-table slots (from dead processes/threads). Best-effort."""
+
+		try:
+			reclaimed = env.reader_check()
+			if reclaimed:
+				self.logger.info(
+					{
+						**self.logger_context,
+						"event": "reader-check",
+						"path": self.path,
+						"reclaimed": reclaimed,
+					}
+				)
+		except Exception:
+			self.logger.warning({**self.logger_context, "event": "reader-check-failed", "path": self.path})
 
 	def _acquire_env(self) -> _EnvEntry:
 		"""Return the cached environment for this path, opening it if needed, and mark it in use."""
@@ -187,10 +218,19 @@ class DataStore(BaseStore):
 
 		entry = self._acquire_env()
 		try:
-			with entry.env.begin(write=write, buffers=False) as txn:
+			with self._begin(entry.env, write) as txn:
 				yield txn
 		finally:
 			self._release_env()
+
+	def _begin(self, env: "lmdb.Environment", write: bool) -> Any:
+		"""Begin a transaction, reclaiming stale reader slots and retrying once on MDB_READERS_FULL."""
+
+		try:
+			return env.begin(write=write, buffers=False)
+		except lmdb.ReadersFullError:
+			self._reader_check(env)
+			return env.begin(write=write, buffers=False)
 
 	def _write(self, fn: Any) -> None:
 		"""Run a write callback in a transaction, growing the map and retrying on MapFullError."""
