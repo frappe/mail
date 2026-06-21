@@ -1,4 +1,7 @@
 import hashlib
+import io
+import os
+import zipfile
 from datetime import UTC, datetime
 
 import frappe
@@ -16,6 +19,7 @@ from mail.client.doctype.mail_message.mail_message import (
 	delete_messages,
 	empty_mailbox,
 	fetch_blob,
+	fetch_blobs,
 	fetch_thread,
 	fetch_threads,
 	move_messages_to_mailbox,
@@ -301,6 +305,46 @@ def fetch_attachment(account: str, blob_id: str) -> bytes:
 	"""Returns the content of an attachment."""
 
 	return fetch_blob(account, blob_id)
+
+
+@frappe.whitelist()
+def fetch_attachments_as_zip(account: str, attachments: list[dict] | str) -> bytes:
+	"""Returns the provided attachments bundled into a ZIP archive."""
+
+	if isinstance(attachments, str):
+		attachments = frappe.parse_json(attachments)
+
+	attachments = [a for a in (attachments or []) if a.get("blob_id")]
+	if not attachments:
+		frappe.throw(_("No attachments to download."))
+
+	blobs = [(a["blob_id"], a.get("filename")) for a in attachments]
+	contents = fetch_blobs(account, blobs)
+
+	buffer = io.BytesIO()
+	used_names = {}
+	with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+		for attachment in attachments:
+			content = contents.get(attachment["blob_id"])
+			if content is None:
+				continue
+
+			filename = _get_unique_filename(attachment.get("filename") or "attachment", used_names)
+			zf.writestr(filename, content)
+
+	return buffer.getvalue()
+
+
+def _get_unique_filename(filename: str, used_names: dict[str, int]) -> str:
+	"""Returns a unique filename, appending a counter to duplicates (e.g. "file (1).pdf")."""
+
+	if filename not in used_names:
+		used_names[filename] = 0
+		return filename
+
+	used_names[filename] += 1
+	name, ext = os.path.splitext(filename)
+	return f"{name} ({used_names[filename]}){ext}"
 
 
 @frappe.whitelist()
