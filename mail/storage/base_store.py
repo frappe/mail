@@ -5,7 +5,7 @@ from typing import ClassVar
 
 from frappe.utils import random_string
 
-from mail.utils import get_storage_logger
+from mail.utils.logger import get_storage_logger
 
 
 class BaseStore:
@@ -26,8 +26,8 @@ class BaseStore:
 		self.key = key
 		self.shard_count = max(1, shard_count)
 
-		self.logger = get_storage_logger()
 		self.logger_context = {"req_id": random_string(10), "key": self.key}
+		self.logger = get_storage_logger(self.logger_context)
 
 		self.path = self._get_storage_path()
 		os.makedirs(self.path, exist_ok=True)
@@ -53,7 +53,7 @@ class BaseStore:
 
 		path = path or self.path
 
-		self.logger.debug({**self.logger_context, "event": "acquiring-rlock", "path": path})
+		self.logger.debug("acquiring-rlock", path=path)
 
 		with self._PROCESS_LOCKS_GUARD:
 			lock = self._PROCESS_LOCKS.get(path)
@@ -61,7 +61,7 @@ class BaseStore:
 				lock = RLock()
 				self._PROCESS_LOCKS[path] = lock
 
-			self.logger.debug({**self.logger_context, "event": "rlock-acquired", "path": path})
+			self.logger.debug("rlock-acquired", path=path)
 			return lock
 
 	def _get_prefix(self) -> str:
