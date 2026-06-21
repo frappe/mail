@@ -93,6 +93,13 @@ class InboundLogger(EventLogger):
 	config_prefix = "inbound"
 
 
+class ExchangeLogger(EventLogger):
+	"""Structured event logger for mail import/export operations ("mail.exchange")."""
+
+	logger_name = "mail.exchange"
+	config_prefix = "exchange"
+
+
 def get_push_logger(ctx: dict | None = None) -> PushLogger:
 	"""Returns a structured event logger for mail push notifications.
 
@@ -131,3 +138,13 @@ def get_inbound_logger(ctx: dict | None = None) -> InboundLogger:
 	"""
 
 	return InboundLogger(ctx)
+
+
+def get_exchange_logger(ctx: dict | None = None) -> ExchangeLogger:
+	"""Returns a structured event logger for mail import/export operations.
+
+	The returned logger is bound to `ctx` (by reference); mutating that same
+	dict between log calls is reflected in subsequent records.
+	"""
+
+	return ExchangeLogger(ctx)

@@ -66,6 +66,9 @@ CONFIG_KEYS = [
 	"outbound_log_file_count",
 	"outbound_log_level",
 	"outbound_log_max_file_size",
+	"exchange_log_file_count",
+	"exchange_log_level",
+	"exchange_log_max_file_size",
 	# Limits
 	"exchange_max_export",
 	"exchange_max_import",
