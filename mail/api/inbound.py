@@ -12,7 +12,7 @@ from mail.client.doctype.mail_sync_history.mail_sync_history import get_mail_syn
 from mail.jmap import get_mailbox_id_by_role
 from mail.utils import get_mail_config
 from mail.utils.dt import convert_to_utc
-from mail.utils.logger.inbound import get_inbound_logger
+from mail.utils.logger import get_inbound_logger
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import get_user_personal_account
 
