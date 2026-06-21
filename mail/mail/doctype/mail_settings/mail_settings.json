@@ -51,6 +51,10 @@
   "outbound_log_file_count",
   "outbound_log_level",
   "outbound_log_max_file_size",
+  "column_break_exlg",
+  "exchange_log_file_count",
+  "exchange_log_level",
+  "exchange_log_max_file_size",
   "timeouts_seconds_section",
   "column_break_rtlq",
   "ansible_play_timeout",
@@ -666,6 +670,32 @@
    "fieldname": "inbound_log_max_file_size",
    "fieldtype": "Int",
    "label": "Inbound Log Max File Size",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_exlg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "10",
+   "fieldname": "exchange_log_file_count",
+   "fieldtype": "Int",
+   "label": "Exchange Log File Count",
+   "reqd": 1
+  },
+  {
+   "default": "INFO",
+   "fieldname": "exchange_log_level",
+   "fieldtype": "Select",
+   "label": "Exchange Log Level",
+   "options": "ERROR\nWARNING\nINFO\nDEBUG",
+   "reqd": 1
+  },
+  {
+   "default": "5000000",
+   "fieldname": "exchange_log_max_file_size",
+   "fieldtype": "Int",
+   "label": "Exchange Log Max File Size",
    "reqd": 1
   }
  ],
