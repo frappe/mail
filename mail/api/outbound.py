@@ -10,7 +10,8 @@ from werkzeug.utils import secure_filename
 
 from mail.api.auth import validate_user
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
-from mail.utils import get_config, get_messages_directory, get_outbound_logger
+from mail.utils import get_config, get_messages_directory
+from mail.utils.logger import get_outbound_logger
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import get_user_personal_account
 
@@ -20,13 +21,13 @@ from mail.utils.user import get_user_personal_account
 def upload_attachment() -> dict:
 	"""Upload an attachment to the Frappe Mail folder."""
 
-	logger = get_outbound_logger()
 	ctx = {
 		"req_id": random_string(10),
 		"ip": frappe.request.remote_addr,
 	}
+	logger = get_outbound_logger(ctx)
 
-	logger.debug({**ctx, "event": "upload-attachment-started"})
+	logger.debug("upload-attachment-started")
 	validate_user()
 
 	try:
@@ -55,7 +56,7 @@ def upload_attachment() -> dict:
 		raise
 
 	except Exception:
-		logger.error({**ctx, "event": "upload-attachment-failed", "error": frappe.get_traceback()})
+		logger.exception("upload-attachment-failed")
 		frappe.throw(_("Failed to upload attachment. Please check the error logs for details."))
 
 	frappe.throw(_("No file found in the request."), frappe.MandatoryError)
@@ -80,15 +81,13 @@ def send(
 ) -> str:
 	"""Send Mail."""
 
-	logger = get_outbound_logger()
 	ctx = {
 		"req_id": random_string(10),
 		"ip": frappe.request.remote_addr,
 	}
+	logger = get_outbound_logger(ctx)
 
-	logger.debug(
-		{**ctx, "event": "send-started", "is_newsletter": is_newsletter, "save_as_draft": save_as_draft}
-	)
+	logger.debug("send-started", is_newsletter=is_newsletter, save_as_draft=save_as_draft)
 	account = get_user_personal_account(frappe.session.user, raise_exception=True)
 
 	try:
@@ -118,7 +117,7 @@ def send(
 		raise
 
 	except Exception:
-		logger.error({**ctx, "event": "send-failed", "error": frappe.get_traceback()})
+		logger.exception("send-failed")
 		frappe.throw(_("Failed to send email. Please check the error logs for details."))
 
 
@@ -132,20 +131,13 @@ def send_raw(
 ) -> str:
 	"""Send raw email. Supports both single-shot and chunked upload."""
 
-	logger = get_outbound_logger()
 	ctx = {
 		"req_id": random_string(10),
 		"ip": frappe.request.remote_addr,
 	}
+	logger = get_outbound_logger(ctx)
 
-	logger.debug(
-		{
-			**ctx,
-			"event": "send-raw-started",
-			"is_newsletter": is_newsletter,
-			"has_raw_message": bool(raw_message),
-		}
-	)
+	logger.debug("send-raw-started", is_newsletter=is_newsletter, has_raw_message=bool(raw_message))
 
 	try:
 		chunk_index = frappe.form_dict.get("chunk_index")
@@ -175,7 +167,7 @@ def send_raw(
 		raise
 
 	except Exception:
-		logger.error({**ctx, "event": "send-raw-failed", "error": frappe.get_traceback()})
+		logger.exception("send-raw-failed")
 		frappe.throw(_("Failed to send raw email. Please check the error logs for details."))
 
 
