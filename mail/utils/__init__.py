@@ -13,7 +13,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from io import BytesIO
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 import bcrypt
 import frappe
@@ -25,9 +25,6 @@ from frappe.utils import cint, get_bench_path
 from markdown_it import MarkdownIt
 from MySQLdb import OperationalError
 from passlib.hash import sha512_crypt
-
-if TYPE_CHECKING:
-	from logging import Logger
 
 INVISIBLE_CHARS = (
 	r"[\u0000-\u001F\u007F-\u009F"  # ASCII control chars
@@ -154,51 +151,6 @@ def is_stalwart_configured(raise_exception: bool = False) -> bool:
 		frappe.throw(_("Stalwart server is not properly configured. Please check your Mail Settings."))
 
 	return False
-
-
-def get_storage_logger() -> "Logger":
-	"""Returns a logger instance for mail storage operations."""
-
-	config = get_config()
-
-	max_size = cint(config["storage_log_max_file_size"])
-	file_count = cint(config["storage_log_file_count"])
-	logger = frappe.logger("mail.storage", allow_site=True, max_size=max_size, file_count=file_count)
-
-	log_level = config["storage_log_level"].upper()
-	logger.setLevel(log_level)
-
-	return logger
-
-
-def get_outbound_logger() -> "Logger":
-	"""Returns a logger instance for outbound mail operations."""
-
-	config = get_config()
-
-	max_size = cint(config["outbound_log_max_file_size"])
-	file_count = cint(config["outbound_log_file_count"])
-	logger = frappe.logger("mail.outbound", allow_site=True, max_size=max_size, file_count=file_count)
-
-	log_level = config["outbound_log_level"].upper()
-	logger.setLevel(log_level)
-
-	return logger
-
-
-def get_inbound_logger() -> "Logger":
-	"""Returns a logger instance for inbound mail operations."""
-
-	config = get_config()
-
-	max_size = cint(config["inbound_log_max_file_size"])
-	file_count = cint(config["inbound_log_file_count"])
-	logger = frappe.logger("mail.inbound", allow_site=True, max_size=max_size, file_count=file_count)
-
-	log_level = config["inbound_log_level"].upper()
-	logger.setLevel(log_level)
-
-	return logger
 
 
 def is_probable_hash(s: str) -> bool:
