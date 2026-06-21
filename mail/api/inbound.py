@@ -10,8 +10,9 @@ from mail.api.auth import validate_user
 from mail.client.doctype.mail_message.mail_message import fetch_blobs, fetch_messages
 from mail.client.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
 from mail.jmap import get_mailbox_id_by_role
-from mail.utils import get_inbound_logger, get_mail_config
+from mail.utils import get_mail_config
 from mail.utils.dt import convert_to_utc
+from mail.utils.logger.inbound import get_inbound_logger
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import get_user_personal_account
 
@@ -24,13 +25,13 @@ if TYPE_CHECKING:
 def fetch_blob(blob_id: str, as_bytes: bool = False) -> str | bytes:
 	"""Fetches the blob for the given blob_id."""
 
-	logger = get_inbound_logger()
 	ctx = {
 		"req_id": random_string(10),
 		"ip": frappe.request.remote_addr,
 	}
+	logger = get_inbound_logger(ctx)
 
-	logger.debug({**ctx, "event": "fetch-blob-started", "blob_id": blob_id})
+	logger.debug("fetch-blob-started", blob_id=blob_id)
 
 	validate_user()
 
@@ -46,7 +47,7 @@ def fetch_blob(blob_id: str, as_bytes: bool = False) -> str | bytes:
 		raise
 
 	except Exception:
-		logger.error({**ctx, "event": "fetch-blob-failed", "error": frappe.get_traceback()})
+		logger.exception("fetch-blob-failed")
 		frappe.throw(_("Failed to fetch blob. Please check the error logs for details."))
 
 
@@ -57,21 +58,13 @@ def pull(
 ) -> dict[str, list[dict] | str]:
 	"""Returns the emails for the given mailbox."""
 
-	logger = get_inbound_logger()
 	ctx = {
 		"req_id": random_string(10),
 		"ip": frappe.request.remote_addr,
 	}
+	logger = get_inbound_logger(ctx)
 
-	logger.debug(
-		{
-			**ctx,
-			"event": "pull-started",
-			"mailbox": mailbox,
-			"limit": limit,
-			"last_received_at": last_received_at,
-		}
-	)
+	logger.debug("pull-started", mailbox=mailbox, limit=limit, last_received_at=last_received_at)
 
 	validate_user()
 	validate_max_sync_limit(limit)
@@ -93,7 +86,7 @@ def pull(
 		raise
 
 	except Exception:
-		logger.error({**ctx, "event": "pull-failed", "error": frappe.get_traceback()})
+		logger.exception("pull-failed")
 		frappe.throw(_("Failed to fetch emails. Please check the error logs for details."))
 
 
@@ -104,21 +97,13 @@ def pull_raw(
 ) -> dict[str, list[str] | str]:
 	"""Returns the raw emails for the given mailbox."""
 
-	logger = get_inbound_logger()
 	ctx = {
 		"req_id": random_string(10),
 		"ip": frappe.request.remote_addr,
 	}
+	logger = get_inbound_logger(ctx)
 
-	logger.debug(
-		{
-			**ctx,
-			"event": "pull-raw-started",
-			"mailbox": mailbox,
-			"limit": limit,
-			"last_received_at": last_received_at,
-		}
-	)
+	logger.debug("pull-raw-started", mailbox=mailbox, limit=limit, last_received_at=last_received_at)
 
 	validate_user()
 	validate_max_sync_limit(limit)
@@ -140,7 +125,7 @@ def pull_raw(
 		raise
 
 	except Exception:
-		logger.error({**ctx, "event": "pull-raw-failed", "error": frappe.get_traceback()})
+		logger.exception("pull-raw-failed")
 		frappe.throw(_("Failed to fetch raw emails. Please check the error logs for details."))
 
 
