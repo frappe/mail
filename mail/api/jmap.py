@@ -19,25 +19,25 @@ from mail.utils import get_push_logger
 def push_notification() -> dict:
 	"""Handle JMAP Push Notification."""
 
-	logger = get_push_logger()
 	ctx = {
 		"req_id": random_string(10),
 		"ip": frappe.request.remote_addr,
 	}
+	logger = get_push_logger(ctx)
 
 	try:
-		logger.info({**ctx, "event": "received"})
+		logger.debug("push-received")
 
 		user = frappe.request.args.get("user") or frappe.request.args.get("account")
 		if not user:
-			logger.error({**ctx, "event": "missing-user"})
+			logger.warning("missing-user")
 			return {"status": "error", "message": _("Missing user query parameter.")}
 
 		user = unquote(user)
 		ctx["user"] = user
 
 		if is_jmap_push_notifications_frozen(user):
-			logger.warning({**ctx, "event": "frozen"})
+			logger.warning("push-frozen")
 			return {
 				"status": "frozen",
 				"message": _("Push notifications are currently frozen for this user."),
@@ -47,26 +47,27 @@ def push_notification() -> dict:
 		content_encoding = frappe.request.headers.get("Content-Encoding", "")
 
 		if keys:
-			logger.debug({**ctx, "event": "encrypted-payload-expected"})
+			logger.debug("encrypted-payload-expected")
 
 			if content_encoding != "aes128gcm":
-				logger.error({**ctx, "encoding": content_encoding, "event": "invalid-content-encoding"})
+				logger.warning("invalid-content-encoding", encoding=content_encoding)
 				return {
 					"status": "error",
 					"message": _("Invalid Content-Encoding. Expected 'aes128gcm'."),
 				}
 
-			logger.debug({**ctx, "event": "decrypting-payload"})
+			logger.debug("decrypting-payload")
 			request_data = decrypt_jmap_push_payload(frappe.request.get_data())
 		else:
-			logger.debug({**ctx, "event": "using-plain-json-payload"})
+			logger.debug("using-plain-json-payload")
 			request_data = frappe.request.get_json()
 
 		event_type = request_data.get("@type")
-		logger.debug({**ctx, "type": event_type, "event": "push-type-received"})
+		ctx["type"] = event_type
+		logger.debug("push-type-received")
 
 		if event_type == "PushVerification":
-			logger.info({**ctx, "type": event_type, "event": "verifying-subscription"})
+			logger.info("verifying-subscription")
 
 			verify_push_subscription(
 				user,
@@ -74,11 +75,11 @@ def push_notification() -> dict:
 				request_data["verificationCode"],
 			)
 
-			logger.info({**ctx, "type": event_type, "event": "subscription-verified"})
+			logger.info("subscription-verified")
 			return {"status": "verified"}
 
 		elif event_type == "StateChange":
-			logger.debug({**ctx, "type": event_type, "event": "state-change-received"})
+			logger.debug("state-change-received")
 
 			for account_id, changes in request_data.get("changed", {}).items():
 				account = f"{user}:{account_id}"
@@ -86,60 +87,29 @@ def push_notification() -> dict:
 
 				for entity, state in changes.items():
 					if entity == "Email":
-						logger.info(
-							{
-								**ctx,
-								"type": event_type,
-								"entity": entity,
-								"state": state,
-								"event": "queueing-email-sync",
-							}
-						)
+						logger.debug("queueing-email-sync", entity=entity, state=state)
 						enqueue_fetch_changes(account, state, ctx=ctx)
 
 					elif entity == "Mailbox":
-						logger.info(
-							{
-								**ctx,
-								"type": event_type,
-								"entity": entity,
-								"state": state,
-								"event": "invalidating-mailbox-cache",
-							}
-						)
+						logger.debug("invalidating-mailbox-cache", entity=entity, state=state)
 						invalidate_jmap_mailboxes_cache(account)
 
 					elif entity == "Identity":
-						logger.info(
-							{
-								**ctx,
-								"type": event_type,
-								"entity": entity,
-								"state": state,
-								"event": "invalidating-identity-cache",
-							}
-						)
+						logger.debug("invalidating-identity-cache", entity=entity, state=state)
 						invalidate_jmap_identities_cache(account)
 
 					else:
-						logger.warning(
-							{
-								**ctx,
-								"type": event_type,
-								"entity": entity,
-								"event": "unhandled-state-change-entity",
-							}
-						)
+						logger.warning("unhandled-state-change-entity", entity=entity)
 
 				return {"status": "processed"}
 
 		else:
-			logger.error({**ctx, "type": event_type, "event": "unknown-push-type"})
+			logger.warning("unknown-push-type")
 			return {
 				"status": "error",
 				"message": _("Invalid Push Notification @type = {0}").format(event_type),
 			}
 
 	except Exception:
-		logger.exception({**ctx, "event": "failed-to-process", "traceback": frappe.get_traceback()})
+		logger.exception("failed-to-process", traceback=frappe.get_traceback())
 		return {"status": "error", "message": _("Failed to handle JMAP Push Notification.")}
