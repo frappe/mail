@@ -15,7 +15,10 @@ const jsonConfig = new URL(location.href).searchParams.get('config')
 
 // Firebase config initialization
 try {
-	const firebaseApp = initializeApp(JSON.parse(jsonConfig as string))
+	if (!jsonConfig || jsonConfig.length > 10000) {
+		throw new Error('Invalid or missing Firebase config')
+	}
+	const firebaseApp = initializeApp(JSON.parse(jsonConfig))
 	const messaging = getMessaging(firebaseApp)
 
 	const isChrome = () => navigator.userAgent.toLowerCase().includes('chrome')
