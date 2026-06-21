@@ -222,7 +222,7 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				label: __('See MIME Message'),
 				onClick: () => window.open(`/mail/mime-message/${mail.name}`, '_blank')?.focus(),
 				icon: Code,
-				condition: () => !mail.draft && !isMobile.value,
+				condition: () => !mail.draft,
 			},
 			{
 				label: __('View in Desk'),
