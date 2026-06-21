@@ -12,7 +12,7 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	verify_push_subscription,
 )
 from mail.jmap import invalidate_jmap_identities_cache, invalidate_jmap_mailboxes_cache
-from mail.utils import get_push_logger
+from mail.utils.logger.push import get_push_logger
 
 
 @frappe.whitelist(methods=["POST"], allow_guest=True)

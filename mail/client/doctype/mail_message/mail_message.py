@@ -33,7 +33,6 @@ from mail.storage.data_store import Entity
 from mail.utils import (
 	enqueue_job,
 	get_config,
-	get_push_logger,
 	log_error,
 	parse_filters,
 	user_context,
@@ -41,6 +40,7 @@ from mail.utils import (
 from mail.utils.dt import convert_to_utc, parse_iso_datetime, to_iso8601_z
 from mail.utils.email_parser import EmailParser
 from mail.utils.lock import acquire_lock, release_lock
+from mail.utils.logger.push import get_push_logger
 from mail.utils.user import get_account_emails, get_sync_state, update_sync_state
 from mail.utils.validation import has_permission_for_user
 
