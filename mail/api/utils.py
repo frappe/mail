@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from mail.utils import get_config
 
 
@@ -11,4 +13,4 @@ def get_avatar_url(email: str) -> str | None:
 	if not get_config("enable_gravatar"):
 		return None
 
-	return f"/api/method/mail.api.mail.get_avatar?email={email}"
+	return f"/api/method/mail.api.mail.get_avatar?email={quote(email, safe='')}"
