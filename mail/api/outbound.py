@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 from mail.api.auth import validate_user
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.utils import get_config, get_messages_directory
-from mail.utils.logger.outbound import get_outbound_logger
+from mail.utils.logger import get_outbound_logger
 from mail.utils.rate_limiter import dynamic_rate_limit
 from mail.utils.user import get_user_personal_account
 

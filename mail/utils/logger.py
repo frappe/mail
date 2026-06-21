@@ -63,3 +63,71 @@ class EventLogger:
 
 	def exception(self, event: str, **fields: Any) -> None:
 		self.logger.exception(self._record(event, fields))
+
+
+class PushLogger(EventLogger):
+	"""Structured event logger for mail push notifications ("mail.push")."""
+
+	logger_name = "mail.push"
+	config_prefix = "push"
+
+
+class StorageLogger(EventLogger):
+	"""Structured event logger for mail storage operations ("mail.storage")."""
+
+	logger_name = "mail.storage"
+	config_prefix = "storage"
+
+
+class OutboundLogger(EventLogger):
+	"""Structured event logger for outbound mail operations ("mail.outbound")."""
+
+	logger_name = "mail.outbound"
+	config_prefix = "outbound"
+
+
+class InboundLogger(EventLogger):
+	"""Structured event logger for inbound mail operations ("mail.inbound")."""
+
+	logger_name = "mail.inbound"
+	config_prefix = "inbound"
+
+
+def get_push_logger(ctx: dict | None = None) -> PushLogger:
+	"""Returns a structured event logger for mail push notifications.
+
+	The returned logger is bound to `ctx` (by reference); mutating that same
+	dict between log calls is reflected in subsequent records.
+	"""
+
+	return PushLogger(ctx)
+
+
+def get_storage_logger(ctx: dict | None = None) -> StorageLogger:
+	"""Returns a structured event logger for mail storage operations.
+
+	The returned logger is bound to `ctx` (by reference); mutating that same
+	dict between log calls is reflected in subsequent records.
+	"""
+
+	return StorageLogger(ctx)
+
+
+def get_outbound_logger(ctx: dict | None = None) -> OutboundLogger:
+	"""Returns a structured event logger for outbound mail operations.
+
+	The returned logger is bound to `ctx` (by reference); mutating that same
+	dict between log calls is reflected in subsequent records.
+	"""
+
+	return OutboundLogger(ctx)
+
+
+def get_inbound_logger(ctx: dict | None = None) -> InboundLogger:
+	"""Returns a structured event logger for inbound mail operations.
+
+	The returned logger is bound to `ctx` (by reference); mutating that same
+	dict between log calls is reflected in subsequent records.
+	"""
+
+	return InboundLogger(ctx)
