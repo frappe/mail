@@ -77,6 +77,7 @@ def send(
 	attachments: list[dict] | None = None,
 	is_newsletter: bool = False,
 	save_as_draft: bool = False,
+	priority: str | None = None,
 ) -> str:
 	"""Send Mail."""
 
@@ -106,6 +107,7 @@ def send(
 			text_body=text,
 			via_api=True,
 			newsletter=is_newsletter,
+			priority=priority,
 			in_reply_to=in_reply_to,
 			save_as_draft=save_as_draft,
 			destroy_after_submit=False,
@@ -129,6 +131,7 @@ def send_raw(
 	to: str | list[str],
 	raw_message: str | None = None,
 	is_newsletter: bool = False,
+	priority: str | None = None,
 ) -> str:
 	"""Send raw email. Supports both single-shot and chunked upload."""
 
@@ -154,7 +157,7 @@ def send_raw(
 
 		if chunk_index is not None and total_chunks is not None and upload_session:
 			return _handle_chunked_upload(
-				from_, to, is_newsletter, int(chunk_index), int(total_chunks), str(upload_session)
+				from_, to, is_newsletter, int(chunk_index), int(total_chunks), str(upload_session), priority
 			)
 
 		raw_message = raw_message or get_message_from_files()
@@ -169,7 +172,7 @@ def send_raw(
 				)
 			)
 
-		return _enqueue_mail(from_, to, raw_message, is_newsletter)
+		return _enqueue_mail(from_, to, raw_message, is_newsletter, priority)
 
 	except frappe.exceptions.ValidationError:
 		raise
@@ -214,7 +217,13 @@ def format_reply_to(reply_to: str | list[str] | None) -> list[dict]:
 
 
 def _handle_chunked_upload(
-	from_: str, to: str | list[str], is_newsletter: bool, chunk_index: int, total_chunks: int, session_id: str
+	from_: str,
+	to: str | list[str],
+	is_newsletter: bool,
+	chunk_index: int,
+	total_chunks: int,
+	session_id: str,
+	priority: str | None = None,
 ) -> str:
 	"""Handle chunked uploads for large emails."""
 
@@ -249,7 +258,7 @@ def _handle_chunked_upload(
 
 	os.remove(temp_path)
 
-	return _enqueue_mail(from_, to, raw_message, is_newsletter)
+	return _enqueue_mail(from_, to, raw_message, is_newsletter, priority)
 
 
 def _normalize_recipients(
@@ -277,7 +286,13 @@ def _get_max_message_payload_size() -> int:
 	return cint(get_mail_config("max_message_payload_size"))
 
 
-def _enqueue_mail(from_: str, to: str | list[str], raw_message: str, is_newsletter: bool = False) -> str:
+def _enqueue_mail(
+	from_: str,
+	to: str | list[str],
+	raw_message: str,
+	is_newsletter: bool = False,
+	priority: str | None = None,
+) -> str:
 	"""Enqueue mail in MailQueue."""
 
 	from_name, from_email = parseaddr(from_)
@@ -293,6 +308,7 @@ def _enqueue_mail(from_: str, to: str | list[str], raw_message: str, is_newslett
 		recipients=format_recipients(to),
 		via_api=True,
 		newsletter=is_newsletter,
+		priority=priority,
 		raw_message=raw_message,
 		delivery_mode="Batch" if is_newsletter else "Enqueue",
 	)
