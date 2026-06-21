@@ -37,23 +37,21 @@
   "process_pending_emails_max_batch_size",
   "logs_section",
   "push_log_file_count",
-  "push_log_level",
-  "push_log_max_file_size",
-  "column_break_ztzv",
   "storage_log_file_count",
-  "storage_log_level",
-  "storage_log_max_file_size",
-  "column_break_pvju",
   "inbound_log_file_count",
-  "inbound_log_level",
-  "inbound_log_max_file_size",
-  "column_break_jdrp",
   "outbound_log_file_count",
-  "outbound_log_level",
-  "outbound_log_max_file_size",
-  "column_break_exlg",
   "exchange_log_file_count",
+  "column_break_ztzv",
+  "push_log_level",
+  "storage_log_level",
+  "inbound_log_level",
+  "outbound_log_level",
   "exchange_log_level",
+  "column_break_pvju",
+  "push_log_max_file_size",
+  "storage_log_max_file_size",
+  "inbound_log_max_file_size",
+  "outbound_log_max_file_size",
   "exchange_log_max_file_size",
   "timeouts_seconds_section",
   "column_break_rtlq",
@@ -621,10 +619,6 @@
    "label": "Limits"
   },
   {
-   "fieldname": "column_break_jdrp",
-   "fieldtype": "Column Break"
-  },
-  {
    "default": "10",
    "fieldname": "outbound_log_file_count",
    "fieldtype": "Int",
@@ -671,10 +665,6 @@
    "fieldtype": "Int",
    "label": "Inbound Log Max File Size",
    "reqd": 1
-  },
-  {
-   "fieldname": "column_break_exlg",
-   "fieldtype": "Column Break"
   },
   {
    "default": "10",
