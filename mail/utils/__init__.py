@@ -151,21 +151,6 @@ def get_storage_logger() -> "Logger":
 	return logger
 
 
-def get_push_logger() -> "Logger":
-	"""Returns a logger instance for mail push notifications."""
-
-	config = get_mail_config()
-
-	max_size = cint(config["push_log_max_size"])
-	file_count = cint(config["push_log_file_count"])
-	logger = frappe.logger("mail.push", allow_site=True, max_size=max_size, file_count=file_count)
-
-	log_level = config["push_log_level"].upper()
-	logger.setLevel(log_level)
-
-	return logger
-
-
 def get_outbound_logger() -> "Logger":
 	"""Returns a logger instance for outbound mail operations."""
 
