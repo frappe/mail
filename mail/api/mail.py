@@ -663,18 +663,19 @@ def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 	avatar = frappe.cache.get_value(cache_key)
 
 	if not avatar:
-		# 2. Try Gravatar
-		default = get_config("default_gravatar")
-		try:
-			res = requests.get(
-				f"https://secure.gravatar.com/avatar/{email_hash}",
-				params={"d": default, "s": size},
-				timeout=3,
-			)
-			if res.ok:
-				avatar = res.content
-		except requests.RequestException:
-			pass
+		# 2. Try Gravatar (opt-in: avoids leaking emails to a third party when disabled)
+		if get_config("enable_gravatar"):
+			default = get_config("default_gravatar")
+			try:
+				res = requests.get(
+					f"https://secure.gravatar.com/avatar/{email_hash}",
+					params={"d": default, "s": size},
+					timeout=3,
+				)
+				if res.ok:
+					avatar = res.content
+			except requests.RequestException:
+				pass
 
 		# 3. Handle missing gravatar
 		if not avatar:

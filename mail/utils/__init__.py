@@ -49,6 +49,7 @@ CONFIG_KEYS = [
 	# Defaults
 	"default_dns_ttl",
 	"default_disk_quota_gb",
+	"enable_gravatar",
 	"default_gravatar",
 	"stalwart_version",
 	"stalwart_cli_version",

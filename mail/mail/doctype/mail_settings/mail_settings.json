@@ -19,6 +19,7 @@
   "defaults_section",
   "default_dns_ttl",
   "default_disk_quota_gb",
+  "enable_gravatar",
   "default_gravatar",
   "column_break_cuxv",
   "stalwart_version",
@@ -410,7 +411,15 @@
    "reqd": 1
   },
   {
+   "default": "0",
+   "description": "Use Gravatar for default user images. Gravatar is a third-party service; enabling this shares users' email addresses (hashed) with it. When disabled, initials are shown instead.",
+   "fieldname": "enable_gravatar",
+   "fieldtype": "Check",
+   "label": "Enable Gravatar"
+  },
+  {
    "default": "404",
+   "depends_on": "eval: doc.enable_gravatar",
    "fieldname": "default_gravatar",
    "fieldtype": "Select",
    "label": "Default Gravatar",
