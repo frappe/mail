@@ -72,6 +72,7 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		"default_dns_ttl": 3600,
 		"default_mail_quota": 1024**3,  # 1 GB
 		"enable_ed25519_dkim": False,
+		"enable_gravatar": False,
 		"exchange_export_batch_size": 500,
 		"exchange_export_timeout": 3600,
 		"exchange_import_timeout": 3600,
