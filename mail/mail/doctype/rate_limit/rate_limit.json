@@ -16,6 +16,7 @@
   "limit",
   "column_break_r3yj",
   "key_",
+  "value",
   "ip_based",
   "section_break_3oyv",
   "allowed_ips",
@@ -100,6 +101,15 @@
    "label": "Key"
   },
   {
+   "depends_on": "eval:doc.key_",
+   "description": "If set, this limit applies only to requests where the value of the above Key matches this. Enables per-value limits (e.g. a separate limit per email priority).",
+   "fieldname": "value",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Value"
+  },
+  {
    "fieldname": "column_break_mc1j",
    "fieldtype": "Column Break"
   },
@@ -128,7 +138,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-05-12 14:50:17.837100",
+ "modified": "2026-06-21 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Rate Limit",
