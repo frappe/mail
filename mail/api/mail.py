@@ -40,7 +40,7 @@ from mail.client.doctype.screened_email_address.screened_email_address import (
 	get_screened_email_addresses,
 )
 from mail.jmap import get_email_service, get_mailbox_id_by_role, parse_account
-from mail.utils import convert_html_to_text, get_config
+from mail.utils import convert_html_to_text, get_config, log_error
 from mail.utils.user import get_account_emails, is_jmap_configured
 from mail.utils.validation import has_permission_for_user
 
@@ -422,6 +422,7 @@ def create_mail(
 
 	if not save_as_draft and doc.status == "Submitted":
 		create_contacts_if_not_exists(account, doc.recipients)
+		auto_accept_recipients(account, doc.recipients)
 
 	return {"id": doc.id, "status": doc.status, "error": doc.error_message, "thread_id": doc.thread_id}
 
@@ -495,6 +496,7 @@ def update_draft_mail(
 
 	if submit and new_doc.status == "Submitted":
 		create_contacts_if_not_exists(account, doc.recipients)
+		auto_accept_recipients(account, doc.recipients)
 
 	return {
 		"id": new_doc.id,
@@ -874,6 +876,29 @@ def screen_email_addresses(
 
 	if changed:
 		update_sieve_script_for_screened_emails(account)
+
+
+def auto_accept_recipients(account: str, recipients: list) -> None:
+	"""When screening is enabled, allowlist the people you email so their replies reach the inbox.
+
+	Non-overriding, so it never un-rejects a sender you deliberately blocked. Failures are logged and
+	swallowed — auto-accept must never block sending.
+	"""
+
+	from mail.api.sieve import is_screening_enabled
+
+	try:
+		if not is_screening_enabled(account):
+			return
+
+		emails = list({r.email for r in recipients if getattr(r, "email", None)})
+		if emails:
+			screen_email_addresses(account, emails, action="Accepted", override=False)
+	except Exception:
+		log_error(
+			_("Screening Auto-Accept Error"),
+			_("Failed to auto-accept recipients for account {0}").format(account),
+		)
 
 
 @frappe.whitelist()
