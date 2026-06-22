@@ -32,6 +32,15 @@
 			class="!p-0"
 		/>
 
+		<h1>{{ __('Incoming') }}</h1>
+		<FormControl
+			v-model="accountSettings.doc.on_mark_as_junk"
+			type="select"
+			:label="__('When Marking as Junk')"
+			variant="outline"
+			:options="ON_MARK_AS_JUNK_OPTIONS"
+		/>
+
 		<template v-if="userSettings.doc">
 			<h1>{{ __('Recovery') }}</h1>
 			<FormControl
@@ -97,6 +106,14 @@ const destroyNewsletterAfterSubmit = computed({
 	set: (val: boolean) => (accountSettings.doc.destroy_newsletter_after_submit = val ? 1 : 0),
 })
 
+const ON_MARK_AS_JUNK_OPTIONS = [
+	{
+		label: __("Move the sender's future mail to Junk automatically"),
+		value: "Junk Sender's Mail",
+	},
+	{ label: __('Ask whether to block the sender'), value: 'Ask to Block Sender' },
+]
+
 const accountDirty = computed(
 	() => JSON.stringify(accountSettings.doc) !== JSON.stringify(accountSettings.originalDoc),
 )
@@ -110,10 +127,12 @@ const saving = computed(() => accountSettings.save.loading || userSettings.save.
 const save = async () => {
 	if (accountDirty.value) {
 		await accountSettings.save.submit()
-		// Sync the shared user data so compose picks up the new default without a page
-		// reload (ComposeMailEditor reads default_outgoing_email from user.data.accounts).
-		if (activeAccount)
+		// Sync the shared user data so compose picks up the new default and the junk flow picks up
+		// the "on mark as junk" choice without a page reload (both read from user.data.accounts).
+		if (activeAccount) {
 			activeAccount.default_outgoing_email = accountSettings.doc.default_outgoing_email
+			activeAccount.on_mark_as_junk = accountSettings.doc.on_mark_as_junk
+		}
 	}
 	if (userDirty.value) await userSettings.save.submit()
 	raiseToast(__('Account updated.'))

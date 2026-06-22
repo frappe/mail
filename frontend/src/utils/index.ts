@@ -82,9 +82,11 @@ export const raisePromiseToast = (
 	if (undoAction)
 		return toast.promise(action(), {
 			loading,
-			success,
+			success: {
+				message: success,
+				action: { label: __('Undo'), onClick: () => undoAction() },
+			},
 			error,
-			successAction: { label: __('Undo'), onClick: () => undoAction() },
 		})
 
 	toast.promise(action(), { loading, success, error })

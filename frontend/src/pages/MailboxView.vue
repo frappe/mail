@@ -1087,6 +1087,10 @@ const goToThread = (threadID: string) => {
 let pendingEdgeThread: { edge: 'first' | 'last'; action: 'open' | 'focus' } | null = null
 
 const crossPageByOffset = (offset: number, action: 'open' | 'focus') => {
+	// While a page transition is in flight (flag set until the new page loads), ignore further
+	// crossings — otherwise key auto-repeat at an edge keeps incrementing page.value and blows
+	// through many pages before the debounced reload fires.
+	if (pendingEdgeThread) return
 	if (offset > 0 && canGoNext.value) {
 		pendingEdgeThread = { edge: 'first', action }
 		goToPage(true)

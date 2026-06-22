@@ -4,8 +4,14 @@ import frappe
 from frappe import _
 
 from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
+from mail.client.doctype.junk_email_address.junk_email_address import get_junk_email_addresses
 from mail.client.doctype.sieve_script.sieve_script import SieveScript
-from mail.jmap import get_mailbox_id_by_name, get_mailbox_name_by_id, get_mailboxes
+from mail.jmap import (
+	get_mailbox_id_by_name,
+	get_mailbox_id_by_role,
+	get_mailbox_name_by_id,
+	get_mailboxes,
+)
 
 AUTOMATION_SCRIPT_NAME = "frappe_mail_automation"
 AUTOMATION_SCRIPT_REQUIRE = 'require ["fileinto", "imap4flags"];'
@@ -290,6 +296,69 @@ def update_sieve_script_for_blocked_emails(account: str) -> None:
 			f"# {block_name}",
 			condition_block,
 			"  discard;",
+			"  stop;",
+			"}",
+			"\n",
+		]
+	)
+
+	require_pattern = r"^(require\s+\[.*?\];\s*)+"
+	match = re.match(require_pattern, content, flags=re.DOTALL)
+
+	if match:
+		insert_pos = match.end()
+		content = content[:insert_pos] + "\n" + block_script + content[insert_pos:]
+	else:
+		content = block_script + content
+
+	doc.content = content.rstrip() + "\n"
+	doc.save()
+
+
+def get_junk_folder_path(account: str) -> str:
+	"""Return the folder path of the account's Junk mailbox (for sieve `fileinto`)."""
+
+	junk_id = get_mailbox_id_by_role(account, "junk", create_if_not_exists=True, raise_exception=True)
+	junk_name = get_mailbox_name_by_id(account, junk_id, raise_exception=True)
+	return get_mailbox_folder_path(account, junk_name, raise_exception=True)
+
+
+def update_sieve_script_for_junk_senders(account: str) -> None:
+	"""Update sieve script to file emails from the junk-sender list into the Junk folder.
+
+	Mirrors `update_sieve_script_for_blocked_emails` but files into Junk instead of discarding. A
+	sender is never in both lists at once (blocking removes the junk entry), so block/junk blocks
+	cannot both fire for the same sender.
+	"""
+
+	automation_script_name = get_automation_script_name(account)
+	doc = frappe.get_doc("Sieve Script", automation_script_name)
+	content = (doc.content or "").lstrip()
+
+	block_name = "Junk Senders"
+	content = remove_sieve_block(content, block_name)
+
+	junk_emails = get_junk_email_addresses(account)
+	conditions = [f'address :is "from" "{e.strip()}"' for e in junk_emails if e.strip()]
+
+	if not conditions:
+		doc.content = content.rstrip() + "\n"
+		doc.save()
+		return
+
+	junk_folder_path = get_junk_folder_path(account)
+
+	if len(conditions) == 1:
+		condition_block = f"if {conditions[0]} {{"
+	else:
+		joined = ",\n  ".join(conditions)
+		condition_block = f"if anyof (\n  {joined}\n) {{"
+
+	block_script = "\n".join(
+		[
+			f"# {block_name}",
+			condition_block,
+			f'  fileinto "{junk_folder_path}";',
 			"  stop;",
 			"}",
 			"\n",

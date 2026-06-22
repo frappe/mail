@@ -290,6 +290,7 @@ ignore_links_on_delete = [
 	# Client
 	"Account Settings",
 	"Blocked Email Address",
+	"Junk Email Address",
 	"Mail Exchange",
 	"Mail Queue",
 	"Mail Signature",
