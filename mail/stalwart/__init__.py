@@ -15,7 +15,7 @@ from mail.stalwart.account import (
 	UserRoles,
 )
 from mail.stalwart.app_password import AppPassword, AppPasswordService
-from mail.stalwart.domain import Domain, DomainService
+from mail.stalwart.domain import DkimSignatureService, Domain, DomainService
 from mail.stalwart.role import RoleService
 from mail.utils import get_config, is_stalwart_configured
 from mail.utils.dt import utcnow
@@ -131,6 +131,13 @@ def create_domain(name: str, description: str | None = None) -> str:
 
 def delete_domain(domain_id: str) -> None:
 	"""Deletes a domain from the Stalwart server by ID."""
+
+	# Stalwart refuses to delete a domain while DKIM signatures are still linked to it,
+	# so the linked DKIM signatures must be removed first.
+	dkim_service = DkimSignatureService()
+	dkim_signature_ids = [signature["id"] for signature in dkim_service.get_all_by_domain(domain_id)]
+	if dkim_signature_ids:
+		dkim_service.delete(dkim_signature_ids)
 
 	DomainService().delete([domain_id])
 	get_domain_by_name.clear_cache()

@@ -33,7 +33,7 @@ from mail.jmap import get_email_service, get_identities, get_jmap_connection, pa
 from mail.jmap.models import EmailAddress, EmailAttachment, EmailCreateModel, EmailHeader, EmailRecipient
 from mail.jmap.services.mail.email import EmailService
 from mail.jmap.services.mail.mailbox import MailboxService
-from mail.utils import get_config
+from mail.utils import get_config, log_error
 from mail.utils.dt import parsedate_to_datetime
 from mail.utils.user import is_administrator
 from mail.utils.validation import has_permission_for_user
@@ -106,6 +106,7 @@ class MailQueue(Document):
 		doc.id = kwargs.id
 		doc.via_api = cint(kwargs.via_api)
 		doc.newsletter = cint(kwargs.newsletter)
+		doc.priority = kwargs.priority
 		doc.sent_at = kwargs.sent_at
 		doc.in_reply_to = kwargs.in_reply_to
 		doc.in_reply_to_id = kwargs.in_reply_to_id
@@ -547,7 +548,7 @@ class MailQueue(Document):
 					self.in_reply_to_id = ids[0]
 			except Exception:
 				self.in_reply_to_id = None
-				frappe.log_error(_("Failed to fetch In Reply To ID"), frappe.get_traceback(with_context=True))
+				log_error(_("Failed to fetch In Reply To ID"), frappe.get_traceback(with_context=True))
 
 	@frappe.whitelist()
 	def retry(self) -> None:
@@ -860,9 +861,7 @@ def enqueue_process_pending_emails(batch_size: int | None = None, max_batch_size
 			enqueue_process_pending_emails(batch_size, max_batch_size)
 
 	except Exception:
-		frappe.log_error(
-			title="Failed - Enqueue Process Pending Emails", message=frappe.get_traceback(with_context=True)
-		)
+		log_error(_("Failed - Enqueue Process Pending Emails"), frappe.get_traceback(with_context=True))
 
 
 def get_permission_query_condition(user: str | None = None) -> str:

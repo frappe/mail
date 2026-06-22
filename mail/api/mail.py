@@ -1,4 +1,7 @@
 import hashlib
+import io
+import os
+import zipfile
 from datetime import UTC, datetime
 
 import frappe
@@ -9,14 +12,20 @@ from frappe.model.document import bulk_insert
 from frappe.utils import format_datetime, random_string
 
 from mail.api.contacts import create_contacts_if_not_exists
-from mail.api.sieve import update_sieve_script_for_blocked_emails, update_sieve_script_for_mailbox
+from mail.api.sieve import (
+	update_sieve_script_for_blocked_emails,
+	update_sieve_script_for_junk_senders,
+	update_sieve_script_for_mailbox,
+)
 from mail.api.utils import get_avatar_url
 from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
+from mail.client.doctype.junk_email_address.junk_email_address import get_junk_email_addresses
 from mail.client.doctype.mail_message.mail_message import (
 	add_messages_to_mailbox,
 	delete_messages,
 	empty_mailbox,
 	fetch_blob,
+	fetch_blobs,
 	fetch_thread,
 	fetch_threads,
 	move_messages_to_mailbox,
@@ -305,6 +314,46 @@ def fetch_attachment(account: str, blob_id: str) -> bytes:
 
 
 @frappe.whitelist()
+def fetch_attachments_as_zip(account: str, attachments: list[dict] | str) -> bytes:
+	"""Returns the provided attachments bundled into a ZIP archive."""
+
+	if isinstance(attachments, str):
+		attachments = frappe.parse_json(attachments)
+
+	attachments = [a for a in (attachments or []) if a.get("blob_id")]
+	if not attachments:
+		frappe.throw(_("No attachments to download."))
+
+	blobs = [(a["blob_id"], a.get("filename")) for a in attachments]
+	contents = fetch_blobs(account, blobs)
+
+	buffer = io.BytesIO()
+	used_names = {}
+	with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+		for attachment in attachments:
+			content = contents.get(attachment["blob_id"])
+			if content is None:
+				continue
+
+			filename = _get_unique_filename(attachment.get("filename") or "attachment", used_names)
+			zf.writestr(filename, content)
+
+	return buffer.getvalue()
+
+
+def _get_unique_filename(filename: str, used_names: dict[str, int]) -> str:
+	"""Returns a unique filename, appending a counter to duplicates (e.g. "file (1).pdf")."""
+
+	if filename not in used_names:
+		used_names[filename] = 0
+		return filename
+
+	used_names[filename] += 1
+	name, ext = os.path.splitext(filename)
+	return f"{name} ({used_names[filename]}){ext}"
+
+
+@frappe.whitelist()
 def fetch_mail_as_eml(name: str) -> bytes:
 	"""Returns the MIME message content of the mail as bytes for EML download."""
 
@@ -374,7 +423,7 @@ def create_mail(
 	if not save_as_draft and doc.status == "Submitted":
 		create_contacts_if_not_exists(account, doc.recipients)
 
-	return {"id": doc.id, "status": doc.status, "error": doc.error_message}
+	return {"id": doc.id, "status": doc.status, "error": doc.error_message, "thread_id": doc.thread_id}
 
 
 @frappe.whitelist()
@@ -447,7 +496,12 @@ def update_draft_mail(
 	if submit and new_doc.status == "Submitted":
 		create_contacts_if_not_exists(account, doc.recipients)
 
-	return {"id": new_doc.id, "status": new_doc.status, "error": new_doc.error_message}
+	return {
+		"id": new_doc.id,
+		"status": new_doc.status,
+		"error": new_doc.error_message,
+		"thread_id": new_doc.thread_id,
+	}
 
 
 @frappe.whitelist()
@@ -619,18 +673,19 @@ def get_avatar(email: str, size: int = 128, strict: bool = False) -> None:
 	avatar = frappe.cache.get_value(cache_key)
 
 	if not avatar:
-		# 2. Try Gravatar
-		default = get_config("default_gravatar")
-		try:
-			res = requests.get(
-				f"https://secure.gravatar.com/avatar/{email_hash}",
-				params={"d": default, "s": size},
-				timeout=3,
-			)
-			if res.ok:
-				avatar = res.content
-		except requests.RequestException:
-			pass
+		# 2. Try Gravatar (opt-in: avoids leaking emails to a third party when disabled)
+		if get_config("enable_gravatar"):
+			default = get_config("default_gravatar")
+			try:
+				res = requests.get(
+					f"https://secure.gravatar.com/avatar/{email_hash}",
+					params={"d": default, "s": size},
+					timeout=3,
+				)
+				if res.ok:
+					avatar = res.content
+			except requests.RequestException:
+				pass
 
 		# 3. Handle missing gravatar
 		if not avatar:
@@ -785,22 +840,85 @@ def block_email_addresses(account: str, emails: list[str]) -> None:
 		bulk_insert("Blocked Email Address", docs, ignore_duplicates=True)
 		update_sieve_script_for_blocked_emails(account)
 
+	# A hard block supersedes a soft junk rule for the same sender — drop any junk entries so the two
+	# sieve blocks can't both target one address.
+	remove_junk_senders(account, [doc.email for doc in docs])
+
+
+@frappe.whitelist()
+def junk_senders(account: str, emails: list[str]) -> None:
+	"""Routes future mail from the given senders into Junk for the account, in a single request.
+
+	The soft counterpart to `block_email_addresses`: instead of discarding, the generated sieve block
+	files matching mail into the Junk folder. Already-junked addresses are skipped and the sieve
+	script is regenerated once at the end.
+	"""
+
+	user = parse_account(account)[0]
+	has_permission_for_user(user)
+
+	already_junked = set(get_junk_email_addresses(account))
+	docs = []
+	for email in dict.fromkeys(emails):  # de-duplicate while preserving order
+		if not email or email in already_junked:
+			continue
+		doc = frappe.get_doc(
+			{"doctype": "Junk Email Address", "account": account, "email": email, "user": user}
+		)
+		doc.set_new_name()
+		docs.append(doc)
+
+	if docs:
+		bulk_insert("Junk Email Address", docs, ignore_duplicates=True)
+		update_sieve_script_for_junk_senders(account)
+
+
+@frappe.whitelist()
+def unjunk_senders(account: str, emails: list[str]) -> None:
+	"""Removes senders from the account's junk list (e.g. when a junk action is undone)."""
+
+	has_permission_for_user(parse_account(account)[0])
+	remove_junk_senders(account, emails)
+
+
+def remove_junk_senders(account: str, emails: list[str]) -> None:
+	"""Deletes Junk Email Address records and regenerates the junk sieve block."""
+
+	if not emails:
+		return
+
+	deleted = frappe.db.get_all(
+		"Junk Email Address", filters={"account": account, "email": ["in", emails]}, pluck="name"
+	)
+	if not deleted:
+		return
+
+	frappe.db.delete("Junk Email Address", {"name": ["in", deleted]})
+	update_sieve_script_for_junk_senders(account)
+
 
 @frappe.whitelist()
 def unblock_email_addresses(account: str, emails: list[str]) -> None:
-	"""Unblocks email addresses by deleting Blocked Email Address records.
+	"""Unblocks email addresses by deleting Blocked Email Address records and regenerating the sieve.
 
 	Scoped to the shared account_id (not the per-user handle), so a block added by any user on a
-	shared account can be removed. Regenerates the sieve script since the bulk delete bypasses the
-	doctype's after_delete hook.
+	shared account can be removed. `frappe.db.delete` bypasses the doctype's `after_delete` hook, so
+	the blocked-emails sieve block is rebuilt explicitly here (mirrors `remove_junk_senders`).
 	"""
 
 	has_permission_for_user(parse_account(account)[0])
+
 	if not emails:
 		return
 
 	account_id = parse_account(account)[1]
-	frappe.db.delete("Blocked Email Address", {"account_id": account_id, "email": ["in", emails]})
+	deleted = frappe.db.get_all(
+		"Blocked Email Address", filters={"account_id": account_id, "email": ["in", emails]}, pluck="name"
+	)
+	if not deleted:
+		return
+
+	frappe.db.delete("Blocked Email Address", {"name": ["in", deleted]})
 	update_sieve_script_for_blocked_emails(account)
 
 

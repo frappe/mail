@@ -81,7 +81,7 @@ const route = useRoute()
 const router = useRouter()
 const { account, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
 const { setUndoAction, undo } = useUndo()
-const { promptBlockSenders } = useBlockSender()
+const { promptBlockSenders, willJunkSenders } = useBlockSender()
 const user = inject('$user')
 
 const primaryActions = (mail: Mail): MailAction[] => [
@@ -222,7 +222,7 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				label: __('See MIME Message'),
 				onClick: () => window.open(`/mail/mime-message/${mail.name}`, '_blank')?.focus(),
 				icon: Code,
-				condition: () => !mail.draft && !isMobile.value,
+				condition: () => !mail.draft,
 			},
 			{
 				label: __('View in Desk'),
@@ -255,12 +255,19 @@ const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
 	const action = () =>
 		markAsSpam.submit({ spam }).then(() => {
 			reloadMails(isUndo)
-			// After marking as Junk, offer to block the sender (not when re-junking via an undo of
-			// Mark as Not Junk). Blocking then clears the undo set below.
+			// After marking as Junk, apply the account's "on mark as junk" behaviour (silently junk the
+			// sender's future mail, or prompt to block). Not on the undo of Mark as Not Junk.
 			if (spam && !isUndo)
 				promptBlockSenders([{ name: mail.from_name, email: mail.from_email }])
 		})
-	const successMessage = spam ? __('Mail marked as Junk.') : __('Mail marked as Not Junk.')
+	// When the account auto-junks the sender, surface that as the single toast for the whole action.
+	const autoJunk =
+		spam && !isUndo && willJunkSenders([{ name: mail.from_name, email: mail.from_email }])
+	const successMessage = autoJunk
+		? __('Mails from sender will go to Junk.')
+		: spam
+			? __('Mail marked as Junk.')
+			: __('Mail marked as Not Junk.')
 
 	if (isUndo) return raisePromiseToast(action, __('Undoing...'), successMessage)
 
@@ -355,14 +362,14 @@ const handleBlockAddress = (block: boolean, isUndo = false) => {
 		(block ? blockEmailAddress : unblockEmailAddress)
 			.submit()
 			.then(() => blockedAddresses.reload())
-	const successMessage = block ? __('Email address blocked.') : __('Email address unblocked.')
+	const successMessage = block ? __('Sender blocked.') : __('Sender unblocked.')
 
 	if (isUndo) return raisePromiseToast(action, __('Undoing...'), successMessage)
 
 	setUndoAction(() => handleBlockAddress(!block, true))
 	raisePromiseToast(
 		action,
-		block ? __('Blocking email address...') : __('Unblocking email address...'),
+		block ? __('Blocking sender...') : __('Unblocking sender...'),
 		successMessage,
 		undo,
 	)

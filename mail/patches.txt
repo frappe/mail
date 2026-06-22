@@ -1,6 +1,7 @@
 [pre_model_sync]
 execute:frappe.db.delete("Mail Cluster Store")
 mail.patches.capture_user_outgoing_settings
+mail.patches.rebuild_rate_limit_unique_constraint
 
 [post_model_sync]
 mail.patches.migrate_outgoing_settings_to_account
@@ -16,4 +17,5 @@ mail.patches.configure_mail_cluster
 mail.patches.configure_mail_server
 mail.patches.migrate_data_store_to_lmdb
 mail.patches.configure_inbound_outbound_log
+mail.patches.configure_exchange_log
 mail.patches.backfill_blocked_email_account_id

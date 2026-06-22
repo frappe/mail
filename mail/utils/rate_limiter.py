@@ -21,7 +21,14 @@ def dynamic_rate_limit() -> callable:
 				for rl in rate_limits:
 					if rl["ignore_in_developer_mode"] and frappe.conf.developer_mode:
 						continue
-					elif any(request_ip.startswith(prefix) for prefix in rl["allowed_ips"]):
+
+					# Value-scoped limits (e.g. per email priority) apply only when the
+					# request's key field matches the configured value. The counter is
+					# isolated per value via the `key` passed to `rate_limit` below.
+					if rl["value"] and frappe.form_dict.get(rl["key"]) != rl["value"]:
+						continue
+
+					if any(request_ip.startswith(prefix) for prefix in rl["allowed_ips"]):
 						continue
 					elif any(request_ip.startswith(prefix) for prefix in rl["blocked_ips"]):
 						frappe.throw(
