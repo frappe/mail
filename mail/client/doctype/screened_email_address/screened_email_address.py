@@ -27,10 +27,14 @@ class ScreenedEmailAddress(Document):
 	def validate(self) -> None:
 		self.validate_duplicate_email()
 
-	def after_insert(self) -> None:
+	def on_update(self) -> None:
 		from mail.api.sieve import update_sieve_script_for_screened_emails
 
-		update_sieve_script_for_screened_emails(self.account)
+		# Runs on both insert and save. `email`/`account` are set_only_once, so on an edit only the
+		# action can change; regenerate on insert (no prior doc) and whenever the action is changed
+		# (e.g. switching Spam <-> Reject in Desk), since that moves the sender between sieve blocks.
+		if self.has_value_changed("action"):
+			update_sieve_script_for_screened_emails(self.account)
 
 	def after_delete(self) -> None:
 		from mail.api.sieve import update_sieve_script_for_screened_emails
