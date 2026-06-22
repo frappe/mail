@@ -270,50 +270,58 @@ const mailboxItems = computed(
 	() =>
 		mailboxes.data
 			?.filter((mailbox: MailboxData) => mailbox.subscribed)
-			?.map((mailbox: MailboxData) => ({
-				label: mailbox._name,
-				icon: h(Icon, {
-					name: mailbox.id === store.screeningMailboxId ? 'scan-eye' : getIcon(mailbox),
-					class: FOLDER_ICON_COLOR_MAP[mailbox.color],
-				}),
-				to: {
-					name: 'Mailbox',
-					params: { accountId: store.accountId, mailbox: mailbox.id },
-				},
-				suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
-				activeFor: [mailbox.id],
-				menuOptions: [
-					{
-						label: __('Configure'),
-						icon: Settings,
-						onClick: () => {
-							selectedMailbox.value = mailbox
-							showFolderModal.value = true
-						},
-					},
-					{
-						label: __('Delete'),
-						theme: 'red',
-						icon: Trash2,
-						onClick: () => {
-							selectedMailbox.value = mailbox
-							showDeleteMailbox.value = true
-						},
-					},
-				],
-			})) || [],
+			?.map((mailbox: MailboxData) => {
+				// The Screening folder opens the dedicated Screener page, not the thread list.
+				const isScreener = mailbox.id === store.screeningMailboxId
+				return {
+					mailboxId: mailbox.id,
+					label: isScreener ? __('Screener') : mailbox._name,
+					icon: h(Icon, {
+						name: isScreener ? 'scan-eye' : getIcon(mailbox),
+						class: FOLDER_ICON_COLOR_MAP[mailbox.color],
+					}),
+					to: isScreener
+						? { name: 'Screener', params: { accountId: store.accountId } }
+						: {
+								name: 'Mailbox',
+								params: { accountId: store.accountId, mailbox: mailbox.id },
+							},
+					suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
+					activeFor: isScreener ? ['Screener'] : [mailbox.id],
+					menuOptions: isScreener
+						? undefined
+						: [
+								{
+									label: __('Configure'),
+									icon: Settings,
+									onClick: () => {
+										selectedMailbox.value = mailbox
+										showFolderModal.value = true
+									},
+								},
+								{
+									label: __('Delete'),
+									theme: 'red',
+									icon: Trash2,
+									onClick: () => {
+										selectedMailbox.value = mailbox
+										showDeleteMailbox.value = true
+									},
+								},
+							],
+				}
+			}) || [],
 )
 
 const sidebarItems = computed(() => {
 	if (route.meta.isDashboard) return dashboardItems
 
 	// Screening is a roleless folder but belongs with the default mailboxes, not the custom ones.
-	const isScreening = (item: { activeFor: string[] }) =>
-		!!store.screeningMailboxId && item.activeFor[0] === store.screeningMailboxId
+	const isScreening = (item: { mailboxId?: string }) =>
+		!!store.screeningMailboxId && item.mailboxId === store.screeningMailboxId
 
 	const defaultMailboxes = mailboxItems.value.filter(
-		(item) =>
-			mailboxes.data?.find((m) => m.id === item.activeFor[0])?.role || isScreening(item),
+		(item) => mailboxes.data?.find((m) => m.id === item.mailboxId)?.role || isScreening(item),
 	)
 	const starredItem = {
 		label: __('Starred'),
@@ -325,7 +333,7 @@ const sidebarItems = computed(() => {
 
 	const customMailboxes = mailboxItems.value.filter(
 		(item) =>
-			!mailboxes.data?.find((m) => m.id === item.activeFor[0])?.role && !isScreening(item),
+			!mailboxes.data?.find((m) => m.id === item.mailboxId)?.role && !isScreening(item),
 	)
 	const addMailboxItem = {
 		label: __('New Folder'),

@@ -13,6 +13,7 @@ from frappe.utils import format_datetime, random_string
 
 from mail.api.contacts import create_contacts_if_not_exists
 from mail.api.sieve import (
+	SCREENING_MAILBOX_NAME,
 	update_sieve_script_for_mailbox,
 	update_sieve_script_for_screened_emails,
 )
@@ -25,6 +26,7 @@ from mail.client.doctype.mail_message.mail_message import (
 	fetch_blobs,
 	fetch_thread,
 	fetch_threads,
+	get_messages,
 	move_messages_to_mailbox,
 	remove_messages_from_mailbox,
 	search_messages,
@@ -39,7 +41,12 @@ from mail.client.doctype.mailbox_settings.mailbox_settings import set_mailbox_se
 from mail.client.doctype.screened_email_address.screened_email_address import (
 	get_screened_email_addresses,
 )
-from mail.jmap import get_email_service, get_mailbox_id_by_role, parse_account
+from mail.jmap import (
+	get_email_service,
+	get_mailbox_id_by_name,
+	get_mailbox_id_by_role,
+	parse_account,
+)
 from mail.utils import convert_html_to_text, get_config, log_error
 from mail.utils.user import get_account_emails, is_jmap_configured
 from mail.utils.validation import has_permission_for_user
@@ -926,6 +933,123 @@ def unscreen_email_addresses(account: str, emails: list[str]) -> None:
 
 	frappe.db.delete("Screened Email Address", {"name": ["in", deleted]})
 	update_sieve_script_for_screened_emails(account)
+
+
+# --- Screener (the screening folder view) ---------------------------------------------------------
+
+# Hard cap on how many screening messages a single sweep touches, to bound JMAP work.
+SCREENING_FETCH_LIMIT = 500
+
+
+def _screening_message_ids(account: str, from_email: str | None = None) -> list[str]:
+	"""Return ids of Screening-folder messages, optionally only those from a given sender."""
+
+	screening_id = get_mailbox_id_by_name(account, SCREENING_MAILBOX_NAME)
+	if not screening_id:
+		return []
+
+	conditions = [{"inMailbox": screening_id}]
+	if from_email:
+		conditions.append({"from": from_email})
+	filter = conditions[0] if len(conditions) == 1 else {"operator": "AND", "conditions": conditions}
+
+	return get_email_service(account).query(filter, limit=SCREENING_FETCH_LIMIT).get("ids", [])
+
+
+@frappe.whitelist()
+def get_screening_senders(account: str) -> list[dict]:
+	"""Return one row per unique sender in the Screening folder, newest sender first.
+
+	The Screener groups by sender rather than by conversation: each row is the latest mail from that
+	sender, with a count of how many of their messages are waiting and how many are unread.
+	"""
+
+	has_permission_for_user(parse_account(account)[0])
+
+	screening_id = get_mailbox_id_by_name(account, SCREENING_MAILBOX_NAME)
+	if not screening_id:
+		return []
+
+	messages, _total = search_messages(
+		account,
+		{"inMailbox": screening_id},
+		position=0,
+		limit=SCREENING_FETCH_LIMIT,
+		sort=[{"property": "receivedAt", "isAscending": False}],
+	)
+
+	senders: dict[str, dict] = {}
+	for message in messages:  # newest first
+		email = (message.get("from_email") or "").lower()
+		if not email:
+			continue
+
+		sender = senders.get(email)
+		if not sender:
+			# The first (newest) message for this sender becomes the summary row.
+			senders[email] = {
+				"from_email": message["from_email"],
+				"from_name": message["from_name"],
+				"subject": message["subject"],
+				"preview": message["preview"],
+				"received_at": message["received_at"],
+				"count": 1,
+				"unread": 0 if message["seen"] else 1,
+			}
+		else:
+			sender["count"] += 1
+			if not message["seen"]:
+				sender["unread"] += 1
+
+	return list(senders.values())
+
+
+@frappe.whitelist()
+def get_screening_sender_mails(account: str, from_email: str) -> list[dict]:
+	"""Return all Screening-folder messages from a single sender, oldest to newest (with bodies)."""
+
+	has_permission_for_user(parse_account(account)[0])
+
+	ids = _screening_message_ids(account, from_email)
+	if not ids:
+		return []
+
+	mails = [serialize_mail(m) for m in get_messages(account, ids)]
+	mails.sort(key=lambda m: m["received_at"])
+	return add_user_images_to_emails(account, mails, is_thread=True)
+
+
+@frappe.whitelist()
+def allow_screening_senders(account: str, from_emails: list[str]) -> None:
+	"""Allow senders in: accept them (future mail reaches the inbox) and move their screened mail there."""
+
+	has_permission_for_user(parse_account(account)[0])
+	if not from_emails:
+		return
+
+	screen_email_addresses(account, from_emails, action="Accepted")
+
+	inbox_id = get_mailbox_id_by_role(account, "inbox", raise_exception=True)
+	for from_email in from_emails:
+		ids = _screening_message_ids(account, from_email)
+		if ids:
+			move_mails(account, ids, inbox_id, clear_junk=True)
+
+
+@frappe.whitelist()
+def screen_out_senders(account: str, from_emails: list[str]) -> None:
+	"""Screen senders out: mark them Spam (future mail to Junk) and move their screened mail to Junk."""
+
+	has_permission_for_user(parse_account(account)[0])
+	if not from_emails:
+		return
+
+	screen_email_addresses(account, from_emails, action="Spam")
+
+	for from_email in from_emails:
+		ids = _screening_message_ids(account, from_email)
+		if ids:
+			set_mails_spam_status(account, ids, spam=True)
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])

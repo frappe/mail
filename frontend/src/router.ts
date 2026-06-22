@@ -53,6 +53,12 @@ const routes = [
 		props: true,
 	},
 	{
+		path: '/account/:accountId/screener',
+		name: 'Screener',
+		component: () => import('@/pages/ScreenerView.vue'),
+		props: true,
+	},
+	{
 		path: '/account/:accountId/address-books/',
 		name: 'AddressBooks',
 		component: () => import('@/pages/AddressBooksView.vue'),

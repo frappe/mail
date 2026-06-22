@@ -16,6 +16,17 @@ export interface ScreenedAddress {
 	action: ScreeningAction
 }
 
+// A row in the Screener: one unique sender in the Screening folder, summarised by their latest mail.
+export interface ScreeningSender {
+	from_email: string
+	from_name: string
+	subject: string
+	preview: string
+	received_at: number
+	count: number
+	unread: number
+}
+
 export interface User {
 	name: string
 	email: string
