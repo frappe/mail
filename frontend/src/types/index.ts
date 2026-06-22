@@ -4,6 +4,9 @@ export * from './doctypes'
 
 export type COLOR_SCHEME = 'System Default' | 'Light Mode' | 'Dark Mode'
 
+// What happens to a sender when one of their messages is marked as Junk (Account Settings).
+export type OnMarkAsJunk = "Junk Sender's Mail" | 'Ask to Block Sender'
+
 export interface User {
 	name: string
 	email: string
@@ -26,7 +29,11 @@ export interface User {
 	mailboxes: { id: string; name: string; role: string }[]
 	// `get_user_info` enriches each account with its per-account outgoing default and
 	// Account Settings doc name (the fields moved off User Settings).
-	accounts: (UserAccount & { default_outgoing_email?: string; account_settings?: string })[]
+	accounts: (UserAccount & {
+		default_outgoing_email?: string
+		account_settings?: string
+		on_mark_as_junk?: OnMarkAsJunk
+	})[]
 }
 
 export interface UserResource {

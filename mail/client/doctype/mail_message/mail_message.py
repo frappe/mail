@@ -33,7 +33,6 @@ from mail.storage.data_store import Entity
 from mail.utils import (
 	enqueue_job,
 	get_config,
-	get_push_logger,
 	log_error,
 	parse_filters,
 	user_context,
@@ -41,6 +40,7 @@ from mail.utils import (
 from mail.utils.dt import convert_to_utc, parse_iso_datetime, to_iso8601_z
 from mail.utils.email_parser import EmailParser
 from mail.utils.lock import acquire_lock, release_lock
+from mail.utils.logger import get_push_logger
 from mail.utils.user import get_account_emails, get_sync_state, update_sync_state
 from mail.utils.validation import has_permission_for_user
 
@@ -1258,7 +1258,7 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 	"""Fetch changes from the server and remove MailMessage documents from the cache."""
 
 	ctx = ctx or {}
-	logger = get_push_logger()
+	logger = get_push_logger(ctx)
 
 	current_state = get_sync_state(account, type="email")
 
@@ -1266,17 +1266,17 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 	ctx["email_state"] = email_state
 
 	if not current_state:
-		logger.info({**ctx, "event": "initializing-email-sync-state"})
+		logger.info("initializing-email-sync-state")
 		return update_sync_state(account, type="email", state=email_state)
 
 	elif email_state == current_state:
-		logger.info({**ctx, "event": "email-state-unchanged"})
+		logger.debug("email-state-unchanged")
 		return
 
 	user, account_id = parse_account(account)
 
 	try:
-		logger.info({**ctx, "event": "fetching-changes-from-server"})
+		logger.debug("fetching-changes-from-server")
 
 		connection = get_jmap_connection(user)
 		email_service = EmailService(account, connection)
@@ -1285,11 +1285,11 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 		result = email_service.changes(current_state)
 
 		if created_ids := result["created"]:
-			logger.info({**ctx, "event": "new-messages-created", "count": len(created_ids)})
+			logger.info("new-messages-created", count=len(created_ids))
 
 			if messages := get_messages(account, ids=created_ids):
 				subscribed_mailboxes = set([m["id"] for m in mailbox_service.mailboxes if m["isSubscribed"]])
-				logger.debug({**ctx, "subscribed_mailboxes": subscribed_mailboxes})
+				logger.debug("resolved-subscribed-mailboxes", subscribed_mailboxes=subscribed_mailboxes)
 
 				disabled_mailboxes = set(
 					frappe.db.get_all(
@@ -1302,7 +1302,7 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 					for m in mailbox_service.mailboxes
 					if m["role"] in ["sent", "drafts", "junk", "trash"]
 				}
-				logger.debug({**ctx, "disabled_mailboxes_for_notification": disabled_mailboxes})
+				logger.debug("resolved-disabled-mailboxes", disabled_mailboxes=disabled_mailboxes)
 
 				notify_candidates = []
 				mailboxes_to_reload = set()
@@ -1327,17 +1327,17 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 					if is_candidate:
 						notify_candidates.append((mailbox_id, message))
 
-				logger.debug({**ctx, "notify_candidates_count": len(notify_candidates)})
+				logger.debug("computed-notify-candidates", notify_candidates_count=len(notify_candidates))
 
 				max_push_notifications = cint(get_config("max_push_notifications"))
 				recent_messages = notify_candidates[:max_push_notifications]
 
-				logger.debug({**ctx, "recent_notify_candidates_count": len(recent_messages)})
+				logger.debug("capped-notify-candidates", recent_notify_candidates_count=len(recent_messages))
 
 				pn = PushNotification("mail")
 
 				if pn.is_enabled():
-					logger.info({**ctx, "event": "sending-push-notifications", "count": len(recent_messages)})
+					logger.info("sending-push-notifications", count=len(recent_messages))
 
 					url = frappe.utils.get_url()
 					for mailbox_id, message in recent_messages:
@@ -1349,28 +1349,28 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 							f"{url}/assets/mail/frontend/manifest/manifest-icon-192.maskable.png",
 						)
 				else:
-					logger.info({**ctx, "event": "push-notifications-disabled"})
+					logger.debug("push-notifications-disabled")
 
 				if mailboxes_to_reload:
 					frappe.publish_realtime("new_mail_created", list(mailboxes_to_reload), user=user)
 
 		if updated_ids := result["updated"]:
-			logger.info({**ctx, "event": "messages-updated", "count": len(updated_ids)})
+			logger.info("messages-updated", count=len(updated_ids))
 			_remove_cached_messages(account, updated_ids)
 
 		if destroyed_ids := result["destroyed"]:
-			logger.info({**ctx, "event": "messages-deleted", "count": len(destroyed_ids)})
+			logger.info("messages-deleted", count=len(destroyed_ids))
 			_remove_cached_messages(account, destroyed_ids)
 
 		new_state = result["newState"]
 
 		ctx["new_state"] = new_state
-		logger.info({**ctx, "event": "updating-email-sync-state"})
+		logger.debug("updating-email-sync-state")
 
 		update_sync_state(account, type="email", state=new_state)
 
 		if result["hasMoreChanges"]:
-			logger.info({**ctx, "event": "more-changes-to-fetch"})
+			logger.debug("more-changes-to-fetch")
 			ctx.pop("current_state", None)
 			ctx.pop("email_state", None)
 			ctx.pop("new_state", None)
@@ -1378,7 +1378,7 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 			fetch_changes(account, ctx=ctx)
 
 	except Exception:
-		logger.error({**ctx, "event": "fetch-changes-failed"})
+		logger.error("fetch-changes-failed")
 		log_error(
 			_("Failed to fetch changes"),
 			frappe.get_traceback(with_context=True),
@@ -1391,13 +1391,13 @@ def locked_fetch_changes(
 	"""Fetch changes for the specified account with a lock to prevent concurrent execution."""
 
 	ctx = ctx or {}
-	logger = get_push_logger()
+	logger = get_push_logger(ctx)
 
 	try:
-		logger.info({**ctx, "event": "starting-fetch-changes"})
+		logger.debug("starting-fetch-changes")
 		fetch_changes(account, email_state, ctx=ctx)
 	finally:
-		logger.info({**ctx, "event": "releasing-fetch-changes-lock"})
+		logger.debug("releasing-fetch-changes-lock")
 		release_lock(f"fetch_changes:{account}", lock_id)
 
 
@@ -1405,22 +1405,22 @@ def enqueue_fetch_changes(account: str, email_state: str | None = None, ctx: dic
 	"""Enqueue the fetch_changes job for the specified account."""
 
 	ctx = ctx or {}
-	logger = get_push_logger()
+	logger = get_push_logger(ctx)
 
-	logger.info({**ctx, "event": "enqueueing-fetch-changes"})
+	logger.debug("enqueueing-fetch-changes")
 
 	lockname = f"fetch_changes:{account}"
 	fetch_lock_timeout = cint(get_config("fetch_lock_timeout"))
 	identifier = acquire_lock(lockname, acquire_timeout=0, lock_timeout=fetch_lock_timeout)
 
 	if not identifier:
-		logger.info({**ctx, "event": "fetch-changes-lock-not-acquired"})
+		logger.debug("fetch-changes-lock-not-acquired")
 		return
 
 	ctx["lock_id"] = identifier
 
 	with user_context("Administrator"):
-		logger.debug({**ctx, "event": "fetch-changes-lock-acquired"})
+		logger.debug("fetch-changes-lock-acquired")
 		enqueue_job(
 			locked_fetch_changes,
 			account=account,
@@ -1465,15 +1465,9 @@ def schedule_fetch_changes() -> None:
 		return
 
 	req_id = random_string(10)
-	logger = get_push_logger()
+	logger = get_push_logger({"req_id": req_id})
 
-	logger.info(
-		{
-			"req_id": req_id,
-			"event": "scheduling-fetch-changes",
-			"account_count": len(accounts),
-		}
-	)
+	logger.info("scheduling-fetch-changes", account_count=len(accounts))
 
 	for idx, account in enumerate(accounts, start=1):
 		ctx = {"req_id": f"{req_id}-{idx}", "account": account}

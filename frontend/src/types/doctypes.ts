@@ -165,6 +165,8 @@ export interface MailSettings extends DocType {
   default_dns_ttl: number;
   /** Default Disk Quota (GB): Int */
   default_disk_quota_gb: number;
+  /** Enable Gravatar: Check */
+  enable_gravatar: 0 | 1;
   /** Default Gravatar: Select */
   default_gravatar: '404';
   /** Stalwart CLI Version: Data */

@@ -106,6 +106,7 @@ class MailQueue(Document):
 		doc.id = kwargs.id
 		doc.via_api = cint(kwargs.via_api)
 		doc.newsletter = cint(kwargs.newsletter)
+		doc.priority = kwargs.priority
 		doc.sent_at = kwargs.sent_at
 		doc.in_reply_to = kwargs.in_reply_to
 		doc.in_reply_to_id = kwargs.in_reply_to_id
