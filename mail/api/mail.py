@@ -796,6 +796,7 @@ def get_blocked_addresses(account: str) -> list[dict]:
 def block_email_address(account: str, email: str) -> dict:
 	"""Blocks an email address for the given account."""
 
+	has_permission_for_user(parse_account(account)[0])
 	doc = frappe.get_doc({"doctype": "Blocked Email Address", "account": account, "email": email})
 	doc.insert()
 
@@ -809,7 +810,7 @@ def block_email_addresses(account: str, emails: list[str]) -> None:
 	and the sieve script is regenerated once at the end since it is rebuilt from the full list.
 	"""
 
-	user = parse_account(account)[0]
+	user, account_id = parse_account(account)
 	has_permission_for_user(user)
 
 	already_blocked = set(get_blocked_email_addresses(account))
@@ -817,8 +818,15 @@ def block_email_addresses(account: str, emails: list[str]) -> None:
 	for email in dict.fromkeys(emails):  # de-duplicate while preserving order
 		if not email or email in already_blocked:
 			continue
+		# bulk_insert bypasses before_insert, so set account_id (the shared key) explicitly.
 		doc = frappe.get_doc(
-			{"doctype": "Blocked Email Address", "account": account, "email": email, "user": user}
+			{
+				"doctype": "Blocked Email Address",
+				"account": account,
+				"account_id": account_id,
+				"email": email,
+				"user": user,
+			}
 		)
 		doc.set_new_name()
 		docs.append(doc)
@@ -888,8 +896,9 @@ def remove_junk_senders(account: str, emails: list[str]) -> None:
 def unblock_email_addresses(account: str, emails: list[str]) -> None:
 	"""Unblocks email addresses by deleting Blocked Email Address records and regenerating the sieve.
 
-	`frappe.db.delete` bypasses the doctype's `after_delete` hook, so the blocked-emails sieve block
-	is rebuilt explicitly here (mirrors `remove_junk_senders`).
+	Scoped to the shared account_id (not the per-user handle), so a block added by any user on a
+	shared account can be removed. `frappe.db.delete` bypasses the doctype's `after_delete` hook, so
+	the blocked-emails sieve block is rebuilt explicitly here (mirrors `remove_junk_senders`).
 	"""
 
 	has_permission_for_user(parse_account(account)[0])
@@ -897,8 +906,9 @@ def unblock_email_addresses(account: str, emails: list[str]) -> None:
 	if not emails:
 		return
 
+	account_id = parse_account(account)[1]
 	deleted = frappe.db.get_all(
-		"Blocked Email Address", filters={"account": account, "email": ["in", emails]}, pluck="name"
+		"Blocked Email Address", filters={"account_id": account_id, "email": ["in", emails]}, pluck="name"
 	)
 	if not deleted:
 		return

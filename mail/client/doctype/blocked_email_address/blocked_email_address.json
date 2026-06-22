@@ -7,6 +7,7 @@
   "section_break_gl6l",
   "user",
   "account",
+  "account_id",
   "column_break_20of",
   "email"
  ],
@@ -49,6 +50,16 @@
    "label": "Account",
    "no_copy": 1,
    "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "description": "The shared JMAP account id (without the user prefix). Blocks are scoped to this so a shared account's block list is the same for everyone with access.",
+   "fieldname": "account_id",
+   "fieldtype": "Data",
+   "label": "Account ID",
+   "no_copy": 1,
+   "read_only": 1,
    "search_index": 1,
    "set_only_once": 1
   }
