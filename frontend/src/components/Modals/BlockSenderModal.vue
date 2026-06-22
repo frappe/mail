@@ -52,16 +52,11 @@
 
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
-import { Dialog, FormControl, createResource } from 'frappe-ui'
+import { Dialog, FormControl } from 'frappe-ui'
 
-import { raisePromiseToast } from '@/utils'
-import { useBlockSender, useUndo } from '@/utils/composables'
-import { userStore } from '@/stores/user'
+import { useBlockSender } from '@/utils/composables'
 
-const store = userStore()
-const { blockedAddresses } = store
-const { showBlockSender, sendersToBlock } = useBlockSender()
-const { setUndoAction } = useUndo()
+const { showBlockSender, sendersToBlock, blockSenders } = useBlockSender()
 
 const isMultiple = computed(() => sendersToBlock.value.length > 1)
 
@@ -85,28 +80,12 @@ const toggleAll = () => {
 	sendersToBlock.value.forEach((sender) => (selected[sender.email] = next))
 }
 
-const blockEmailAddresses = createResource({
-	url: 'mail.api.mail.block_email_addresses',
-	makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
-	onSuccess: () => blockedAddresses.reload(),
-})
-
 const handleBlock = () => {
-	const emails = (
-		isMultiple.value
-			? sendersToBlock.value.filter((sender) => selected[sender.email])
-			: sendersToBlock.value
-	).map((sender) => sender.email)
+	const toBlock = isMultiple.value
+		? sendersToBlock.value.filter((sender) => selected[sender.email])
+		: sendersToBlock.value
 	showBlockSender.value = false
-	if (!emails.length) return
-
-	// Blocking supersedes the junk action's undo — clear it so a following Ctrl+Z is a no-op (the
-	// junk toast's own Undo button is dismissed by raisePromiseToast's toast.removeAll()).
-	setUndoAction(undefined)
-
-	const action = () => blockEmailAddresses.submit({ emails })
-	const success = emails.length === 1 ? __('Sender blocked.') : __('Senders blocked.')
-	raisePromiseToast(action, __('Blocking...'), success)
+	blockSenders(toBlock)
 }
 
 const options = computed(() => {

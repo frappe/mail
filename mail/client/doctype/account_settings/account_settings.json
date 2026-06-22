@@ -19,6 +19,8 @@
   "create_contacts_after_email_submit",
   "destroy_email_after_submit",
   "destroy_newsletter_after_submit",
+  "incoming_section",
+  "on_mark_as_junk",
   "cache_section",
   "has_cached_jmap_identities",
   "has_cached_jmap_mailboxes",
@@ -124,6 +126,19 @@
    "fieldname": "destroy_newsletter_after_submit",
    "fieldtype": "Check",
    "label": "Destroy Newsletter After Submit"
+  },
+  {
+   "fieldname": "incoming_section",
+   "fieldtype": "Section Break",
+   "label": "Incoming"
+  },
+  {
+   "default": "Junk Sender's Mail",
+   "description": "What to do with the sender when a message is marked as Junk. \"Junk Sender's Mail\" files their future mail into Junk; \"Ask to Block Sender\" prompts to block them outright.",
+   "fieldname": "on_mark_as_junk",
+   "fieldtype": "Select",
+   "label": "On Mark As Junk",
+   "options": "Junk Sender's Mail\nAsk to Block Sender"
   },
   {
    "depends_on": "eval: !doc.__islocal",

@@ -293,6 +293,7 @@ ignore_links_on_delete = [
 	"Mail Domain Request",
 	# Client
 	"Account Settings",
+	"Junk Email Address",
 	"Mail Exchange",
 	"Mail Queue",
 	"Mail Signature",
