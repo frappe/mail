@@ -161,7 +161,13 @@ def get_user_info() -> dict | None:
 		for s in frappe.get_all(
 			"Account Settings",
 			filters={"user": user},
-			fields=["name", "account", "default_outgoing_email", "on_mark_as_junk"],
+			fields=[
+				"name",
+				"account",
+				"default_outgoing_email",
+				"on_mark_as_junk",
+				"enable_screening",
+			],
 		)
 	}
 	for acc in data.accounts:
@@ -169,6 +175,7 @@ def get_user_info() -> dict | None:
 		acc["account_settings"] = settings["name"] if settings else None
 		acc["default_outgoing_email"] = settings["default_outgoing_email"] if settings else None
 		acc["on_mark_as_junk"] = settings["on_mark_as_junk"] if settings else "Junk Sender's Mail"
+		acc["enable_screening"] = bool(settings["enable_screening"]) if settings else False
 
 	data.user_image = data.user_image or get_avatar_url(user)
 

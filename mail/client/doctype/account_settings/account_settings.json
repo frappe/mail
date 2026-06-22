@@ -21,6 +21,7 @@
   "destroy_newsletter_after_submit",
   "incoming_section",
   "on_mark_as_junk",
+  "enable_screening",
   "cache_section",
   "has_cached_jmap_identities",
   "has_cached_jmap_mailboxes",
@@ -139,6 +140,13 @@
    "fieldtype": "Select",
    "label": "On Mark As Junk",
    "options": "Junk Sender's Mail\nAsk to Block Sender"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, mail from senders not on the Accepted list is filed into the Screening folder instead of the inbox (Hey-style screening). Only senders you accept reach the inbox.",
+   "fieldname": "enable_screening",
+   "fieldtype": "Check",
+   "label": "Enable Screening"
   },
   {
    "depends_on": "eval: !doc.__islocal",

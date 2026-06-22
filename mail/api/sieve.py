@@ -13,6 +13,7 @@ from mail.jmap import (
 	get_mailbox_name_by_id,
 	get_mailboxes,
 )
+from mail.utils.user import get_account_emails
 
 AUTOMATION_SCRIPT_NAME = "frappe_mail_automation"
 AUTOMATION_SCRIPT_REQUIRE = 'require ["fileinto", "imap4flags"];'
@@ -276,6 +277,65 @@ def get_junk_folder_path(account: str) -> str:
 	return get_mailbox_folder_path(account, junk_name, raise_exception=True)
 
 
+SCREENING_MAILBOX_NAME = "Screening"
+
+
+def get_screening_folder_path(account: str) -> str:
+	"""Return the folder path of the account's Screening mailbox, creating it if missing.
+
+	Screening is not a standard JMAP role, so it is a plain named mailbox looked up by name.
+	"""
+
+	from mail.client.doctype.mailbox.mailbox import add_mailbox
+
+	if not get_mailbox_id_by_name(account, SCREENING_MAILBOX_NAME):
+		add_mailbox(account, SCREENING_MAILBOX_NAME)
+
+	return get_mailbox_folder_path(account, SCREENING_MAILBOX_NAME, raise_exception=True)
+
+
+def is_screening_enabled(account: str) -> bool:
+	"""Whether Hey-style screening is enabled for the account (Account Settings.enable_screening)."""
+
+	return bool(frappe.db.get_value("Account Settings", {"account": account}, "enable_screening"))
+
+
+def build_screening_gate(account: str, accepted_emails: list[str]) -> str:
+	"""Build the screening gate: file mail from senders not on the accepted list into Screening.
+
+	The account's own identity emails are always trusted, so self-addressed and identity mail is
+	never screened. Placed after the Reject/Spam blocks, so those still take precedence; accepted
+	senders fall through to the mailbox automation rules and normal inbox delivery.
+	"""
+
+	screening_folder_path = get_screening_folder_path(account)
+
+	try:
+		own_emails = get_account_emails(account)
+	except Exception:
+		own_emails = []
+
+	trusted = list(dict.fromkeys(e.strip() for e in [*accepted_emails, *own_emails] if e and e.strip()))
+
+	if trusted:
+		joined = ",\n  ".join(f'"{e}"' for e in trusted)
+		condition_block = f'if not address :is "from" [\n  {joined}\n] {{'
+	else:
+		# Nothing trusted yet → screen everything (only reached after the Reject/Spam blocks).
+		condition_block = 'if exists "from" {'
+
+	return "\n".join(
+		[
+			"# Screening",
+			condition_block,
+			f'  fileinto "{screening_folder_path}";',
+			"  stop;",
+			"}",
+			"\n",
+		]
+	)
+
+
 def _build_screening_block(block_name: str, emails: list[str], action_lines: list[str]) -> str:
 	"""Build a labeled sieve block matching the given senders and running `action_lines`.
 
@@ -296,11 +356,13 @@ def _build_screening_block(block_name: str, emails: list[str], action_lines: lis
 
 
 def update_sieve_script_for_screened_emails(account: str) -> None:
-	"""Regenerate the screening sieve blocks (Reject + Spam) at the top of the automation script.
+	"""Regenerate the screening sieve blocks at the top of the automation script.
 
-	Both blocks are rebuilt from the Screened Email Address list in one pass: Reject senders are
-	discarded, Spam senders are filed into the Junk folder. A sender has at most one screening rule
-	(uniqueness is on the address), so the two blocks can never both fire for the same sender.
+	Rebuilt from the Screened Email Address list (+ Account Settings) in one pass, in precedence
+	order: Reject senders are discarded, Spam senders are filed into Junk, and — when screening is
+	enabled — mail from senders not on the Accepted list is filed into the Screening folder. A sender
+	has at most one screening rule (uniqueness is on the address), so the blocks never conflict, and
+	the Screening gate sits below Reject/Spam (which `stop`) but above the mailbox automation rules.
 	"""
 
 	automation_script_name = get_automation_script_name(account)
@@ -309,12 +371,13 @@ def update_sieve_script_for_screened_emails(account: str) -> None:
 
 	# Remove existing screening blocks, including the legacy block names from the pre-merge
 	# "Blocked Email Address" / "Junk Email Address" doctypes, so old scripts get cleaned up.
-	for name in ("Rejected Emails", "Spam Senders", "Blocked Emails", "Junk Senders"):
+	for name in ("Rejected Emails", "Spam Senders", "Screening", "Blocked Emails", "Junk Senders"):
 		content = remove_sieve_block(content, name)
 
 	screened = get_screened_email_addresses(account)
 	reject_emails = [s.email for s in screened if s.action == "Reject"]
 	spam_emails = [s.email for s in screened if s.action == "Spam"]
+	accepted_emails = [s.email for s in screened if s.action == "Accepted"]
 
 	blocks = []
 	# Reject is the more aggressive action, so its block comes first.
@@ -329,6 +392,10 @@ def update_sieve_script_for_screened_emails(account: str) -> None:
 		)
 		if spam_block:
 			blocks.append(spam_block)
+
+	# Screening gate goes last of the top blocks: after Reject/Spam, before the mailbox rules.
+	if is_screening_enabled(account):
+		blocks.append(build_screening_gate(account, accepted_emails))
 
 	if not blocks:
 		doc.content = content.rstrip() + "\n"

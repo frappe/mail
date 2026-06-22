@@ -799,25 +799,31 @@ def get_screened_addresses(account: str) -> list[dict]:
 
 @frappe.whitelist()
 def screen_email_address(account: str, email: str, action: str = "Reject") -> None:
-	"""Screens a single email address for the given account with the given action (Spam or Reject)."""
+	"""Screens a single email address for the given account with the given action.
+
+	`action` is Reject, Spam, or Accepted. Used by explicit user actions, so it overrides any
+	existing rule for the sender.
+	"""
 
 	screen_email_addresses(account, [email], action)
 
 
 @frappe.whitelist()
-def screen_email_addresses(account: str, emails: list[str], action: str = "Reject") -> None:
+def screen_email_addresses(
+	account: str, emails: list[str], action: str = "Reject", override: bool = True
+) -> None:
 	"""Screens multiple email addresses for the given account in a single request.
 
-	`action` is Reject (discard incoming mail silently) or Spam (file incoming mail into the Junk
-	folder). New addresses are inserted in one batched query via `bulk_insert` (no per-document
-	hooks); the sieve script is regenerated once at the end since it is rebuilt from the full list.
+	`action` is Reject (discard incoming mail silently), Spam (file into Junk), or Accepted (let it
+	reach the inbox; used by screening). New addresses are inserted in one batched query via
+	`bulk_insert` (no per-document hooks); the sieve script is regenerated once at the end.
 
-	A sender has at most one screening rule (uniqueness is on the address). Reject supersedes Spam:
-	screening an already-Spam address as Reject upgrades it, but screening an already-Reject address
-	as Spam never downgrades it.
+	A sender has at most one screening rule (uniqueness is on the address). `override` controls what
+	happens when a rule already exists: explicit user actions (default `True`) overwrite it, while
+	automated flows like auto-junk pass `override=False` so they never clobber a manual decision.
 	"""
 
-	if action not in ("Spam", "Reject"):
+	if action not in ("Spam", "Reject", "Accepted"):
 		frappe.throw(_("Invalid screening action: {0}").format(action))
 
 	user, account_id = parse_account(account)
@@ -841,10 +847,9 @@ def screen_email_addresses(account: str, emails: list[str], action: str = "Rejec
 	for email in emails:
 		row = existing.get(email)
 		if row:
-			# Reject supersedes Spam; never downgrade an existing rule.
-			if action == "Reject" and row.action != "Reject":
+			if override and row.action != action:
 				frappe.db.set_value(
-					"Screened Email Address", row.name, "action", "Reject", update_modified=False
+					"Screened Email Address", row.name, "action", action, update_modified=False
 				)
 				changed = True
 			continue

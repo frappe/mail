@@ -160,6 +160,8 @@ export const useBlockSender = () => {
 			account: store.account,
 			emails,
 			action: 'Spam',
+			// Auto-junk is an automated flow — never override a manual Block/Accept decision.
+			override: false,
 		}),
 		onSuccess: () => screenedAddresses.reload(),
 	})
