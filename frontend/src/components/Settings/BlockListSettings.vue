@@ -10,7 +10,16 @@
 			class="flex-1"
 			@keydown.enter="screenEmailAddress.submit()"
 		/>
-		<FormControl v-model="action" type="select" variant="outline" :options="ACTION_OPTIONS" />
+		<!-- FormControl forces `w-full` on selects, so constrain it with a fixed-width wrapper
+		instead of letting it claim the whole row and squeeze the email input. -->
+		<div class="w-44 shrink-0">
+			<FormControl
+				v-model="action"
+				type="select"
+				variant="outline"
+				:options="ACTION_OPTIONS"
+			/>
+		</div>
 		<Button
 			:label="__('Add')"
 			variant="solid"
