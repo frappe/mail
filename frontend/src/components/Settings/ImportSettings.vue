@@ -24,21 +24,20 @@
 			:options="markAsReadOptions"
 		/>
 	</template>
-	<FileUploader
-		:file-types="mailImport.format === 'eml' ? '.eml' : ['.zip', '.tgz', '.tar.gz']"
-		:upload-args="{ private: true }"
-		@success="(file) => (mailImport.file = file.file_url)"
-	>
-		<template #default="{ openFileSelector, uploading, progress }">
-			<Button
-				class="w-full"
-				:label="uploading ? __('Uploading ({0}%)', [progress]) : __('Upload File')"
-				:loading="uploading"
-				@click="openFileSelector"
-			/>
-			<p class="text-ink-gray-5 mt-2 flex text-sm">{{ fileUploadSubtitle }}</p>
-		</template>
-	</FileUploader>
+	<input
+		ref="fileInput"
+		type="file"
+		class="hidden"
+		:accept="acceptTypes"
+		@change="onFileSelected"
+	/>
+	<Button
+		class="w-full"
+		:label="uploading ? __('Uploading ({0}%)', [progress]) : __('Upload File')"
+		:loading="uploading"
+		@click="fileInput?.click()"
+	/>
+	<p class="text-ink-gray-5 mt-2 flex text-sm">{{ fileUploadSubtitle }}</p>
 
 	<Button
 		class="min-h-7"
@@ -58,9 +57,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, reactive, watch } from 'vue'
-import { Button, ErrorMessage, FileUploader, FormControl, createResource } from 'frappe-ui'
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
+import { Button, ErrorMessage, FormControl, createResource } from 'frappe-ui'
 
+import { raiseToast } from '@/utils'
+import { useChunkedUpload } from '@/utils/useChunkedUpload'
 import { userStore } from '@/stores/user'
 
 const { account, mailboxes } = userStore()
@@ -74,6 +75,26 @@ const mailImport = reactive({
 	mailbox: '',
 	seen: true,
 })
+
+const fileInput = ref<HTMLInputElement | null>(null)
+const { uploading, progress, upload } = useChunkedUpload()
+
+const acceptTypes = computed(() => (mailImport.format === 'eml' ? '.eml' : '.zip,.tgz,.tar.gz'))
+
+// Upload in chunks so large import archives aren't blocked by the web server's request-size limit.
+const onFileSelected = async (event: Event) => {
+	const input = event.target as HTMLInputElement
+	const file = input.files?.[0]
+	input.value = '' // let the same file be re-selected after an error
+	if (!file) return
+
+	try {
+		const uploaded = await upload(file, { private: true })
+		mailImport.file = uploaded.file_url
+	} catch (error) {
+		raiseToast((error as Error).message, 'error')
+	}
+}
 
 const mailboxOptions = computed(() =>
 	mailboxes.data.map((m: { id: string; _name: string }) => ({
