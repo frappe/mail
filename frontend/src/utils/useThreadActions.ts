@@ -52,7 +52,7 @@ export function useThreadActions(deps: {
 	const store = userStore()
 	const { mailboxes, mailboxIds } = store
 	const { setUndoAction, undo } = useUndo()
-	const { promptBlockSenders } = useBlockSender()
+	const { promptBlockSenders, willJunkSenders } = useBlockSender()
 
 	const threadMails = (threadIds: string[]): Mail[] => {
 		const items = (threadsResource.value.data ?? []).filter((t: Thread) =>
@@ -275,56 +275,45 @@ export function useThreadActions(deps: {
 	})
 
 	const showJunkOrDeleteThreads = ref(false)
-	const threadsToBeJunkedOrDeleted = ref<string[]>([])
-	const isJunkAction = ref(false)
+	const threadsToBeDeleted = ref<string[]>([])
 
+	// Marking as Junk is reversible (and may still prompt to block per the account setting), so it
+	// runs inline with no confirmation; only the destructive delete keeps a confirmation dialog.
 	const junkOrDeleteThreads = (threadIDs: string[], isJunk: boolean) => {
 		if (!threadIDs?.length) return
 
-		threadsToBeJunkedOrDeleted.value = threadIDs
-		isJunkAction.value = isJunk
+		if (isJunk) return handleSetSpamStatus({ 1: threadIDs })
+
+		threadsToBeDeleted.value = threadIDs
 		showJunkOrDeleteThreads.value = true
 	}
 
-	const junkOrDeleteThreadCount = computed(() => threadsToBeJunkedOrDeleted.value.length)
-
-	const junkOrDeleteTitle = computed(() => {
-		const count =
-			junkOrDeleteThreadCount.value === 1 ? '' : junkOrDeleteThreadCount.value.toString()
-		const noun = junkOrDeleteThreadCount.value > 1 ? __('Threads') : __('Thread')
-
-		return isJunkAction.value
-			? __('Mark {0} {1} as Junk', [count, noun])
-			: __('Delete {0} {1}', [count, noun])
-	})
-
-	const junkOrDeleteMessage = computed(() => {
-		const noun = junkOrDeleteThreadCount.value > 1 ? __('threads') : __('thread')
-
-		return isJunkAction.value
-			? __('Are you sure you want to mark the selected {0} as junk?', [noun])
-			: __('Are you sure you want to permanently delete the selected {0}?', [noun])
-	})
-
-	const handleJunkOrDelete = () => {
-		if (isJunkAction.value) handleSetSpamStatus({ 1: threadsToBeJunkedOrDeleted.value })
-		else handleDeleteThreads(threadsToBeJunkedOrDeleted.value)
-
+	const handleDeleteConfirmed = () => {
+		handleDeleteThreads(threadsToBeDeleted.value)
 		showJunkOrDeleteThreads.value = false
 	}
 
-	const junkOrDeleteThreadsOptions = computed(() => ({
-		title: junkOrDeleteTitle.value,
-		message: junkOrDeleteMessage.value,
-		actions: [
-			{
-				label: __('Confirm'),
-				variant: 'solid',
-				autofocus: true,
-				onClick: handleJunkOrDelete,
-			},
-		],
-	}))
+	const junkOrDeleteThreadsOptions = computed(() => {
+		const total = threadsToBeDeleted.value.length
+		const count = total === 1 ? '' : total.toString()
+		const noun = total > 1 ? __('Threads') : __('Thread')
+		const lowerNoun = total > 1 ? __('threads') : __('thread')
+
+		return {
+			title: __('Delete {0} {1}', [count, noun]),
+			message: __('Are you sure you want to permanently delete the selected {0}?', [
+				lowerNoun,
+			]),
+			actions: [
+				{
+					label: __('Confirm'),
+					variant: 'solid',
+					autofocus: true,
+					onClick: handleDeleteConfirmed,
+				},
+			],
+		}
+	})
 
 	const bulkDelete = createResource({
 		url: 'mail.client.doctype.mail_message.mail_message.bulk_delete',
@@ -531,8 +520,8 @@ export function useThreadActions(deps: {
 		const action = async () => {
 			await setMailsSpam.submit({ ids, spam })
 			handleSuccessAndRemoveFromList(threadIDs)
-			// After marking as Junk, offer to block the sender(s). Blocking then clears the undo set
-			// below (undoing the junk once the sender is blocked would be inconsistent).
+			// After marking as Junk, apply the account's "on mark as junk" behaviour (silently junk the
+			// sender's future mail, or prompt to block).
 			if (spam) promptBlockSenders(senders)
 		}
 
@@ -541,13 +530,21 @@ export function useThreadActions(deps: {
 				await setMailsMailboxes.submit({ mails: snapshot })
 				reloadThreads()
 			}
-			raisePromiseToast(undoAction, __('Undoing...'), __('Junk status restored.'))
+			// Undo flips the junk status back — name the resulting state, like the forward toast does.
+			const restored =
+				selectedThreads.length === 1
+					? __('Thread marked as {0}.', [spam ? __('Not Junk') : __('Junk')])
+					: __('Threads marked as {0}.', [spam ? __('Not Junk') : __('Junk')])
+			raisePromiseToast(undoAction, __('Undoing...'), restored)
 		})
 		const loading = spam ? __('Marking as Junk...') : __('Marking as Not Junk...')
+		// When the account auto-junks the sender, surface that as the single toast for the whole action.
 		const success =
-			selectedThreads.length === 1
-				? __('Thread marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
-				: __('Threads marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
+			spam && willJunkSenders(senders)
+				? __('Mails from sender will go to Junk.')
+				: selectedThreads.length === 1
+					? __('Thread marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
+					: __('Threads marked as {0}.', [spam ? __('Junk') : __('Not Junk')])
 
 		raisePromiseToast(action, loading, success, undo)
 	}
