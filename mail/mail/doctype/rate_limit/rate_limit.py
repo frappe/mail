@@ -11,6 +11,7 @@ class RateLimit(Document):
 	def validate(self) -> None:
 		self.validate_method_path()
 		self.validate_key_or_ip_based()
+		self.validate_value()
 		self.validate_methods()
 		self.validate_allowed_and_blocked_ips()
 
@@ -39,6 +40,14 @@ class RateLimit(Document):
 
 		if not self.key_ and not self.ip_based:
 			frappe.throw(_("Either key or IP flag is required."))
+
+	def validate_value(self) -> None:
+		"""Validate that a value-scoped limit also defines a key to read it from"""
+
+		if self.value and not self.key_:
+			frappe.throw(
+				_("{0} is required when {1} is set.").format(frappe.bold(_("Key")), frappe.bold(_("Value")))
+			)
 
 	def validate_methods(self) -> None:
 		"""Validate methods"""
@@ -76,6 +85,7 @@ def create_rate_limit(
 	limit: int = 5,
 	seconds: int = 86_400,
 	key: str | None = None,
+	value: str | None = None,
 	ip_based: bool = True,
 	methods: str = "ALL",
 	ignore_in_developer_mode: bool = True,
@@ -88,6 +98,7 @@ def create_rate_limit(
 	doc.method_path = method_path
 	doc.methods = methods
 	doc.key_ = key
+	doc.value = value
 	doc.limit = limit
 	doc.seconds = seconds
 	doc.ip_based = cint(ip_based)
@@ -104,6 +115,7 @@ def get_rate_limits(method_path: str) -> list:
 			.select(
 				RATE_LIMIT.ignore_in_developer_mode,
 				RATE_LIMIT.key_.as_("key"),
+				RATE_LIMIT.value,
 				RATE_LIMIT.limit,
 				RATE_LIMIT.seconds,
 				RATE_LIMIT.methods,
@@ -135,5 +147,7 @@ def get_rate_limits(method_path: str) -> list:
 
 def on_doctype_update() -> None:
 	frappe.db.add_unique(
-		"Rate Limit", ["method_path", "key_", "ip_based", "seconds"], constraint_name="unique_rate_limit"
+		"Rate Limit",
+		["method_path", "key_", "value", "ip_based", "seconds"],
+		constraint_name="unique_rate_limit",
 	)
