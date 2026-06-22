@@ -46,7 +46,7 @@ import { downloadUrlAsFile, raisePromiseToast, raiseToast } from '@/utils'
 import { useBlockSender, useScreenSize, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
-import type { ComposeMailData, Identity, Mail } from '@/types'
+import type { ComposeMailData, Identity, Mail, ScreenedAddress } from '@/types'
 
 const {
 	mailbox,
@@ -79,10 +79,16 @@ const emit = defineEmits(['setFlagged', 'syncUnseen'])
 const { isMobile } = useScreenSize()
 const route = useRoute()
 const router = useRouter()
-const { account, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
+const { account, mailboxes, mailboxIds, identities, screenedAddresses } = userStore()
 const { setUndoAction, undo } = useUndo()
 const { promptBlockSenders, willJunkSenders } = useBlockSender()
 const user = inject('$user')
+
+// A sender is "blocked" when screened with the Reject action (their mail is discarded).
+const isSenderBlocked = (email: string) =>
+	screenedAddresses.data?.some(
+		(a: ScreenedAddress) => a.email === email && a.action === 'Reject',
+	)
 
 const primaryActions = (mail: Mail): MailAction[] => [
 	{
@@ -199,13 +205,13 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				icon: Ban,
 				condition: () =>
 					!identities.data.some((i: Identity) => i.email === mail.from_email) &&
-					!blockedAddresses.data?.includes(mail.from_email),
+					!isSenderBlocked(mail.from_email),
 			},
 			{
 				label: __('Unblock Sender'),
 				onClick: () => handleBlockAddress(false),
 				icon: LockOpen,
-				condition: () => blockedAddresses.data?.includes(mail.from_email),
+				condition: () => isSenderBlocked(mail.from_email),
 			},
 		],
 	},
@@ -348,12 +354,12 @@ const handleMarkUnreadFromHere = () => {
 }
 
 const blockEmailAddress = createResource({
-	url: 'mail.api.mail.block_email_address',
-	makeParams: () => ({ account, email: mail.from_email }),
+	url: 'mail.api.mail.screen_email_address',
+	makeParams: () => ({ account, email: mail.from_email, action: 'Reject' }),
 })
 
 const unblockEmailAddress = createResource({
-	url: 'mail.api.mail.unblock_email_addresses',
+	url: 'mail.api.mail.unscreen_email_addresses',
 	makeParams: () => ({ account, emails: [mail.from_email] }),
 })
 
@@ -361,7 +367,7 @@ const handleBlockAddress = (block: boolean, isUndo = false) => {
 	const action = () =>
 		(block ? blockEmailAddress : unblockEmailAddress)
 			.submit()
-			.then(() => blockedAddresses.reload())
+			.then(() => screenedAddresses.reload())
 	const successMessage = block ? __('Sender blocked.') : __('Sender unblocked.')
 
 	if (isUndo) return raisePromiseToast(action, __('Undoing...'), successMessage)

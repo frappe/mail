@@ -1,7 +1,7 @@
 // Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Blocked Email Address', {
+frappe.ui.form.on('Screened Email Address', {
 	user(frm) {
 		if (frm.doc.user) {
 			frappe.call({

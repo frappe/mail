@@ -12,6 +12,11 @@ def execute() -> None:
 	(account_id, email) and fills account_id in, and drops the now-redundant per-handle index.
 	"""
 
+	# "Blocked Email Address" has since been merged into "Screened Email Address"; nothing to backfill
+	# on sites that never had it (e.g. fresh installs).
+	if not frappe.db.table_exists("Blocked Email Address"):
+		return
+
 	rows = frappe.get_all(
 		"Blocked Email Address",
 		fields=["name", "account", "email"],

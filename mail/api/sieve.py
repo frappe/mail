@@ -3,8 +3,9 @@ import re
 import frappe
 from frappe import _
 
-from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
-from mail.client.doctype.junk_email_address.junk_email_address import get_junk_email_addresses
+from mail.client.doctype.screened_email_address.screened_email_address import (
+	get_screened_email_addresses,
+)
 from mail.client.doctype.sieve_script.sieve_script import SieveScript
 from mail.jmap import (
 	get_mailbox_id_by_name,
@@ -267,54 +268,6 @@ def update_sieve_script_for_mailbox(
 	doc.save()
 
 
-def update_sieve_script_for_blocked_emails(account: str) -> None:
-	"""Update sieve script to block emails from blocked email list at the top."""
-
-	automation_script_name = get_automation_script_name(account)
-	doc = frappe.get_doc("Sieve Script", automation_script_name)
-	content = (doc.content or "").lstrip()
-
-	block_name = "Blocked Emails"
-	content = remove_sieve_block(content, block_name)
-
-	blocked_emails = get_blocked_email_addresses(account)
-	conditions = [f'address :is "from" "{e.strip()}"' for e in blocked_emails if e.strip()]
-
-	if not conditions:
-		doc.content = content.rstrip() + "\n"
-		doc.save()
-		return
-
-	if len(conditions) == 1:
-		condition_block = f"if {conditions[0]} {{"
-	else:
-		joined = ",\n  ".join(conditions)
-		condition_block = f"if anyof (\n  {joined}\n) {{"
-
-	block_script = "\n".join(
-		[
-			f"# {block_name}",
-			condition_block,
-			"  discard;",
-			"  stop;",
-			"}",
-			"\n",
-		]
-	)
-
-	require_pattern = r"^(require\s+\[.*?\];\s*)+"
-	match = re.match(require_pattern, content, flags=re.DOTALL)
-
-	if match:
-		insert_pos = match.end()
-		content = content[:insert_pos] + "\n" + block_script + content[insert_pos:]
-	else:
-		content = block_script + content
-
-	doc.content = content.rstrip() + "\n"
-	doc.save()
-
-
 def get_junk_folder_path(account: str) -> str:
 	"""Return the folder path of the account's Junk mailbox (for sieve `fileinto`)."""
 
@@ -323,30 +276,15 @@ def get_junk_folder_path(account: str) -> str:
 	return get_mailbox_folder_path(account, junk_name, raise_exception=True)
 
 
-def update_sieve_script_for_junk_senders(account: str) -> None:
-	"""Update sieve script to file emails from the junk-sender list into the Junk folder.
+def _build_screening_block(block_name: str, emails: list[str], action_lines: list[str]) -> str:
+	"""Build a labeled sieve block matching the given senders and running `action_lines`.
 
-	Mirrors `update_sieve_script_for_blocked_emails` but files into Junk instead of discarding. A
-	sender is never in both lists at once (blocking removes the junk entry), so block/junk blocks
-	cannot both fire for the same sender.
+	Returns an empty string when there are no senders to match.
 	"""
 
-	automation_script_name = get_automation_script_name(account)
-	doc = frappe.get_doc("Sieve Script", automation_script_name)
-	content = (doc.content or "").lstrip()
-
-	block_name = "Junk Senders"
-	content = remove_sieve_block(content, block_name)
-
-	junk_emails = get_junk_email_addresses(account)
-	conditions = [f'address :is "from" "{e.strip()}"' for e in junk_emails if e.strip()]
-
+	conditions = [f'address :is "from" "{e.strip()}"' for e in emails if e and e.strip()]
 	if not conditions:
-		doc.content = content.rstrip() + "\n"
-		doc.save()
-		return
-
-	junk_folder_path = get_junk_folder_path(account)
+		return ""
 
 	if len(conditions) == 1:
 		condition_block = f"if {conditions[0]} {{"
@@ -354,16 +292,50 @@ def update_sieve_script_for_junk_senders(account: str) -> None:
 		joined = ",\n  ".join(conditions)
 		condition_block = f"if anyof (\n  {joined}\n) {{"
 
-	block_script = "\n".join(
-		[
-			f"# {block_name}",
-			condition_block,
-			f'  fileinto "{junk_folder_path}";',
-			"  stop;",
-			"}",
-			"\n",
-		]
-	)
+	return "\n".join([f"# {block_name}", condition_block, *action_lines, "}", "\n"])
+
+
+def update_sieve_script_for_screened_emails(account: str) -> None:
+	"""Regenerate the screening sieve blocks (Reject + Spam) at the top of the automation script.
+
+	Both blocks are rebuilt from the Screened Email Address list in one pass: Reject senders are
+	discarded, Spam senders are filed into the Junk folder. A sender has at most one screening rule
+	(uniqueness is on the address), so the two blocks can never both fire for the same sender.
+	"""
+
+	automation_script_name = get_automation_script_name(account)
+	doc = frappe.get_doc("Sieve Script", automation_script_name)
+	content = (doc.content or "").lstrip()
+
+	# Remove existing screening blocks, including the legacy block names from the pre-merge
+	# "Blocked Email Address" / "Junk Email Address" doctypes, so old scripts get cleaned up.
+	for name in ("Rejected Emails", "Spam Senders", "Blocked Emails", "Junk Senders"):
+		content = remove_sieve_block(content, name)
+
+	screened = get_screened_email_addresses(account)
+	reject_emails = [s.email for s in screened if s.action == "Reject"]
+	spam_emails = [s.email for s in screened if s.action == "Spam"]
+
+	blocks = []
+	# Reject is the more aggressive action, so its block comes first.
+	reject_block = _build_screening_block("Rejected Emails", reject_emails, ["  discard;", "  stop;"])
+	if reject_block:
+		blocks.append(reject_block)
+
+	if spam_emails:
+		junk_folder_path = get_junk_folder_path(account)
+		spam_block = _build_screening_block(
+			"Spam Senders", spam_emails, [f'  fileinto "{junk_folder_path}";', "  stop;"]
+		)
+		if spam_block:
+			blocks.append(spam_block)
+
+	if not blocks:
+		doc.content = content.rstrip() + "\n"
+		doc.save()
+		return
+
+	block_script = "".join(blocks)
 
 	require_pattern = r"^(require\s+\[.*?\];\s*)+"
 	match = re.match(require_pattern, content, flags=re.DOTALL)

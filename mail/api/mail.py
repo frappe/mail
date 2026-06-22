@@ -13,13 +13,10 @@ from frappe.utils import format_datetime, random_string
 
 from mail.api.contacts import create_contacts_if_not_exists
 from mail.api.sieve import (
-	update_sieve_script_for_blocked_emails,
-	update_sieve_script_for_junk_senders,
 	update_sieve_script_for_mailbox,
+	update_sieve_script_for_screened_emails,
 )
 from mail.api.utils import get_avatar_url
-from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
-from mail.client.doctype.junk_email_address.junk_email_address import get_junk_email_addresses
 from mail.client.doctype.mail_message.mail_message import (
 	add_messages_to_mailbox,
 	delete_messages,
@@ -39,6 +36,9 @@ from mail.client.doctype.mail_message.mail_message import (
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.client.doctype.mailbox.mailbox import add_mailbox, delete_mailboxes
 from mail.client.doctype.mailbox_settings.mailbox_settings import set_mailbox_settings
+from mail.client.doctype.screened_email_address.screened_email_address import (
+	get_screened_email_addresses,
+)
 from mail.jmap import get_email_service, get_mailbox_id_by_role, parse_account
 from mail.utils import convert_html_to_text, get_config
 from mail.utils.user import get_account_emails, is_jmap_configured
@@ -790,120 +790,94 @@ def delete_mailbox(account: str, id: str, name: str) -> None:
 
 
 @frappe.whitelist()
-def get_blocked_addresses(account: str) -> list[dict]:
-	"""Returns the list of blocked email addresses for the given account."""
+def get_screened_addresses(account: str) -> list[dict]:
+	"""Returns the screened email addresses (each with its `action`) for the given account."""
 
 	has_permission_for_user(parse_account(account)[0])
-	return get_blocked_email_addresses(account)
+	return get_screened_email_addresses(account)
 
 
 @frappe.whitelist()
-def block_email_address(account: str, email: str) -> dict:
-	"""Blocks an email address for the given account."""
+def screen_email_address(account: str, email: str, action: str = "Reject") -> None:
+	"""Screens a single email address for the given account with the given action (Spam or Reject)."""
 
-	has_permission_for_user(parse_account(account)[0])
-	doc = frappe.get_doc({"doctype": "Blocked Email Address", "account": account, "email": email})
-	doc.insert()
+	screen_email_addresses(account, [email], action)
 
 
 @frappe.whitelist()
-def block_email_addresses(account: str, emails: list[str]) -> None:
-	"""Blocks multiple email addresses for the given account in a single request.
+def screen_email_addresses(account: str, emails: list[str], action: str = "Reject") -> None:
+	"""Screens multiple email addresses for the given account in a single request.
 
-	Inserts in one batched query via `bulk_insert` (no per-document hooks) instead of looping over
-	`doc.insert()`. Addresses already blocked are skipped, `ignore_duplicates` guards against races,
-	and the sieve script is regenerated once at the end since it is rebuilt from the full list.
+	`action` is Reject (discard incoming mail silently) or Spam (file incoming mail into the Junk
+	folder). New addresses are inserted in one batched query via `bulk_insert` (no per-document
+	hooks); the sieve script is regenerated once at the end since it is rebuilt from the full list.
+
+	A sender has at most one screening rule (uniqueness is on the address). Reject supersedes Spam:
+	screening an already-Spam address as Reject upgrades it, but screening an already-Reject address
+	as Spam never downgrades it.
 	"""
+
+	if action not in ("Spam", "Reject"):
+		frappe.throw(_("Invalid screening action: {0}").format(action))
 
 	user, account_id = parse_account(account)
 	has_permission_for_user(user)
 
-	already_blocked = set(get_blocked_email_addresses(account))
+	emails = [email for email in dict.fromkeys(emails) if email]  # de-duplicate, drop empties
+	if not emails:
+		return
+
+	existing = {
+		row.email: row
+		for row in frappe.db.get_all(
+			"Screened Email Address",
+			filters={"account_id": account_id, "email": ["in", emails]},
+			fields=["name", "email", "action"],
+		)
+	}
+
 	docs = []
-	for email in dict.fromkeys(emails):  # de-duplicate while preserving order
-		if not email or email in already_blocked:
+	changed = False
+	for email in emails:
+		row = existing.get(email)
+		if row:
+			# Reject supersedes Spam; never downgrade an existing rule.
+			if action == "Reject" and row.action != "Reject":
+				frappe.db.set_value(
+					"Screened Email Address", row.name, "action", "Reject", update_modified=False
+				)
+				changed = True
 			continue
-		# bulk_insert bypasses before_insert, so set account_id (the shared key) explicitly.
+
+		# bulk_insert bypasses before_insert, so set account_id (the shared key) and user explicitly.
 		doc = frappe.get_doc(
 			{
-				"doctype": "Blocked Email Address",
+				"doctype": "Screened Email Address",
 				"account": account,
 				"account_id": account_id,
 				"email": email,
 				"user": user,
+				"action": action,
 			}
 		)
 		doc.set_new_name()
 		docs.append(doc)
 
 	if docs:
-		bulk_insert("Blocked Email Address", docs, ignore_duplicates=True)
-		update_sieve_script_for_blocked_emails(account)
+		bulk_insert("Screened Email Address", docs, ignore_duplicates=True)
+		changed = True
 
-	# A hard block supersedes a soft junk rule for the same sender — drop any junk entries so the two
-	# sieve blocks can't both target one address.
-	remove_junk_senders(account, [doc.email for doc in docs])
-
-
-@frappe.whitelist()
-def junk_senders(account: str, emails: list[str]) -> None:
-	"""Routes future mail from the given senders into Junk for the account, in a single request.
-
-	The soft counterpart to `block_email_addresses`: instead of discarding, the generated sieve block
-	files matching mail into the Junk folder. Already-junked addresses are skipped and the sieve
-	script is regenerated once at the end.
-	"""
-
-	user = parse_account(account)[0]
-	has_permission_for_user(user)
-
-	already_junked = set(get_junk_email_addresses(account))
-	docs = []
-	for email in dict.fromkeys(emails):  # de-duplicate while preserving order
-		if not email or email in already_junked:
-			continue
-		doc = frappe.get_doc(
-			{"doctype": "Junk Email Address", "account": account, "email": email, "user": user}
-		)
-		doc.set_new_name()
-		docs.append(doc)
-
-	if docs:
-		bulk_insert("Junk Email Address", docs, ignore_duplicates=True)
-		update_sieve_script_for_junk_senders(account)
+	if changed:
+		update_sieve_script_for_screened_emails(account)
 
 
 @frappe.whitelist()
-def unjunk_senders(account: str, emails: list[str]) -> None:
-	"""Removes senders from the account's junk list (e.g. when a junk action is undone)."""
+def unscreen_email_addresses(account: str, emails: list[str]) -> None:
+	"""Removes screening rules by deleting Screened Email Address records and regenerating the sieve.
 
-	has_permission_for_user(parse_account(account)[0])
-	remove_junk_senders(account, emails)
-
-
-def remove_junk_senders(account: str, emails: list[str]) -> None:
-	"""Deletes Junk Email Address records and regenerates the junk sieve block."""
-
-	if not emails:
-		return
-
-	deleted = frappe.db.get_all(
-		"Junk Email Address", filters={"account": account, "email": ["in", emails]}, pluck="name"
-	)
-	if not deleted:
-		return
-
-	frappe.db.delete("Junk Email Address", {"name": ["in", deleted]})
-	update_sieve_script_for_junk_senders(account)
-
-
-@frappe.whitelist()
-def unblock_email_addresses(account: str, emails: list[str]) -> None:
-	"""Unblocks email addresses by deleting Blocked Email Address records and regenerating the sieve.
-
-	Scoped to the shared account_id (not the per-user handle), so a block added by any user on a
+	Scoped to the shared account_id (not the per-user handle), so a rule added by any user on a
 	shared account can be removed. `frappe.db.delete` bypasses the doctype's `after_delete` hook, so
-	the blocked-emails sieve block is rebuilt explicitly here (mirrors `remove_junk_senders`).
+	the screening sieve blocks are rebuilt explicitly here.
 	"""
 
 	has_permission_for_user(parse_account(account)[0])
@@ -913,13 +887,15 @@ def unblock_email_addresses(account: str, emails: list[str]) -> None:
 
 	account_id = parse_account(account)[1]
 	deleted = frappe.db.get_all(
-		"Blocked Email Address", filters={"account_id": account_id, "email": ["in", emails]}, pluck="name"
+		"Screened Email Address",
+		filters={"account_id": account_id, "email": ["in", emails]},
+		pluck="name",
 	)
 	if not deleted:
 		return
 
-	frappe.db.delete("Blocked Email Address", {"name": ["in", deleted]})
-	update_sieve_script_for_blocked_emails(account)
+	frappe.db.delete("Screened Email Address", {"name": ["in", deleted]})
+	update_sieve_script_for_screened_emails(account)
 
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])

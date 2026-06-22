@@ -7,6 +7,15 @@ export type COLOR_SCHEME = 'System Default' | 'Light Mode' | 'Dark Mode'
 // What happens to a sender when one of their messages is marked as Junk (Account Settings).
 export type OnMarkAsJunk = "Junk Sender's Mail" | 'Ask to Block Sender'
 
+// A screened sender: how their future mail is handled. 'Reject' discards it silently; 'Spam' files
+// it into the Spam (Junk) folder. (Doctype: Screened Email Address.)
+export type ScreeningAction = 'Reject' | 'Spam'
+
+export interface ScreenedAddress {
+	email: string
+	action: ScreeningAction
+}
+
 export interface User {
 	name: string
 	email: string

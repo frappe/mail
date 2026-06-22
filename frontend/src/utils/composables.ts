@@ -4,7 +4,7 @@ import { createResource } from 'frappe-ui'
 import { raisePromiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
-import type { Identity } from '@/types'
+import type { Identity, ScreenedAddress } from '@/types'
 
 export const useScreenSize = () => {
 	const size = reactive({ width: window.innerWidth, height: window.innerHeight })
@@ -116,7 +116,7 @@ const sendersToBlock = ref<BlockableSender[]>([])
 
 export const useBlockSender = () => {
 	const store = userStore()
-	const { userResource, identities, blockedAddresses } = store
+	const { userResource, identities, screenedAddresses } = store
 	const { setUndoAction, undo, prependUndoAction } = useUndo()
 
 	// Read account/accountId off the store at call time — destructuring would snapshot the unwrapped
@@ -125,11 +125,15 @@ export const useBlockSender = () => {
 		userResource.data?.accounts?.find((a) => a.id === store.accountId),
 	)
 
-	// Senders worth offering to block: drop the user's own identities and addresses already blocked,
-	// and de-duplicate by email (keeping the first occurrence's display name).
+	// Senders worth offering to block: drop the user's own identities and addresses already blocked
+	// (screened as Reject), and de-duplicate by email (keeping the first occurrence's display name).
 	const blockableSenders = (senders: { name?: string; email?: string }[]) => {
 		const own = new Set((identities.data ?? []).map((i: Identity) => i.email))
-		const blocked = new Set<string>(blockedAddresses.data ?? [])
+		const blocked = new Set<string>(
+			(screenedAddresses.data ?? [])
+				.filter((a: ScreenedAddress) => a.action === 'Reject')
+				.map((a: ScreenedAddress) => a.email),
+		)
 		const seen = new Set<string>()
 		const result: BlockableSender[] = []
 		for (const { name, email } of senders) {
@@ -141,25 +145,35 @@ export const useBlockSender = () => {
 	}
 
 	const blockResource = createResource({
-		url: 'mail.api.mail.block_email_addresses',
-		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
-		onSuccess: () => blockedAddresses.reload(),
+		url: 'mail.api.mail.screen_email_addresses',
+		makeParams: ({ emails }: { emails: string[] }) => ({
+			account: store.account,
+			emails,
+			action: 'Reject',
+		}),
+		onSuccess: () => screenedAddresses.reload(),
 	})
 
 	const junkResource = createResource({
-		url: 'mail.api.mail.junk_senders',
-		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
+		url: 'mail.api.mail.screen_email_addresses',
+		makeParams: ({ emails }: { emails: string[] }) => ({
+			account: store.account,
+			emails,
+			action: 'Spam',
+		}),
+		onSuccess: () => screenedAddresses.reload(),
 	})
 
 	const unjunkResource = createResource({
-		url: 'mail.api.mail.unjunk_senders',
+		url: 'mail.api.mail.unscreen_email_addresses',
 		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
+		onSuccess: () => screenedAddresses.reload(),
 	})
 
 	const unblockResource = createResource({
-		url: 'mail.api.mail.unblock_email_addresses',
+		url: 'mail.api.mail.unscreen_email_addresses',
 		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
-		onSuccess: () => blockedAddresses.reload(),
+		onSuccess: () => screenedAddresses.reload(),
 	})
 
 	// Block the senders chosen in the prompt ('Ask to Block Sender' confirm). Blocking becomes the new

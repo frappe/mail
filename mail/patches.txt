@@ -19,3 +19,4 @@ mail.patches.migrate_data_store_to_lmdb
 mail.patches.configure_inbound_outbound_log
 mail.patches.configure_exchange_log
 mail.patches.backfill_blocked_email_account_id
+mail.patches.migrate_to_screened_email_address

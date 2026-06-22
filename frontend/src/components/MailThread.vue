@@ -213,7 +213,7 @@
 
 								<div v-show="!isCollapsed(mail)">
 									<Alert
-										v-if="blockedAddresses.data.includes(mail.from_email)"
+										v-if="isSenderBlocked(mail.from_email)"
 										:title="__('This sender is blocked')"
 										class="mb-4"
 										:dismissable="false"
@@ -228,7 +228,7 @@
 												<button
 													type="button"
 													class="hover:text-ink-gray-8 underline"
-													@click="openSettings(__('Block List'))"
+													@click="openSettings(__('Screened Senders'))"
 												>
 													{{ __('block list') }}</button
 												>{{
@@ -402,7 +402,14 @@ import SendMail from '@/components/SendMail.vue'
 import ThreadDivider from '@/components/ThreadDivider.vue'
 import ThreadHeader from '@/components/ThreadHeader.vue'
 
-import type { Attachment, ComposeMailData, Identity, Mail, Mailbox } from '@/types'
+import type {
+	Attachment,
+	ComposeMailData,
+	Identity,
+	Mail,
+	Mailbox,
+	ScreenedAddress,
+} from '@/types'
 
 const { mailbox, threadID, threads, messages, canGoPrev, canGoNext } = defineProps<{
 	mailbox: string
@@ -433,8 +440,14 @@ const { openSettings } = useSettings()
 const dayjs = inject('$dayjs')
 const user = inject('$user')
 const store = userStore()
-const { mailboxes, mailboxIds, identities, blockedAddresses } = store
+const { mailboxes, mailboxIds, identities, screenedAddresses } = store
 const { dataTheme } = useTheme()
+
+// A sender is "blocked" when screened with the Reject action (their mail is discarded).
+const isSenderBlocked = (email: string) =>
+	screenedAddresses.data?.some(
+		(a: ScreenedAddress) => a.email === email && a.action === 'Reject',
+	)
 
 const route = useRoute()
 const router = useRouter()
@@ -686,11 +699,11 @@ watch(
 onMounted(() => loadThread())
 
 const unblockEmailAddress = createResource({
-	url: 'mail.api.mail.unblock_email_addresses',
+	url: 'mail.api.mail.unscreen_email_addresses',
 	makeParams: (email) => ({ account: store.account, emails: [email] }),
 	onSuccess: () => {
 		raiseToast(__('Sender unblocked.'))
-		blockedAddresses.reload()
+		screenedAddresses.reload()
 	},
 })
 

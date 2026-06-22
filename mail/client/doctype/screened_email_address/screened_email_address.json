@@ -1,6 +1,6 @@
 {
  "actions": [],
- "creation": "2026-04-21 11:54:31.220491",
+ "creation": "2026-06-22 12:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -8,6 +8,7 @@
   "user",
   "account",
   "account_id",
+  "action",
   "column_break_20of",
   "email"
  ],
@@ -54,7 +55,7 @@
    "set_only_once": 1
   },
   {
-   "description": "The shared JMAP account id (without the user prefix). Blocks are scoped to this so a shared account's block list is the same for everyone with access.",
+   "description": "The shared JMAP account id (without the user prefix). Screening rules are scoped to this so a shared account's list is the same for everyone with access.",
    "fieldname": "account_id",
    "fieldtype": "Data",
    "label": "Account ID",
@@ -62,15 +63,27 @@
    "read_only": 1,
    "search_index": 1,
    "set_only_once": 1
+  },
+  {
+   "default": "Reject",
+   "description": "Reject discards incoming mail from the sender silently. Spam files incoming mail into the Spam (Junk) folder.",
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Action",
+   "no_copy": 1,
+   "options": "Spam\nReject",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-06 14:54:42.253326",
+ "modified": "2026-06-22 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Client",
- "name": "Blocked Email Address",
+ "name": "Screened Email Address",
  "owner": "Administrator",
  "permissions": [
   {
