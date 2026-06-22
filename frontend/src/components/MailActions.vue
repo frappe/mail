@@ -79,7 +79,8 @@ const emit = defineEmits(['setFlagged', 'syncUnseen'])
 const { isMobile } = useScreenSize()
 const route = useRoute()
 const router = useRouter()
-const { account, mailboxes, mailboxIds, identities, screenedAddresses } = userStore()
+const store = userStore()
+const { account, mailboxes, mailboxIds, identities, screenedAddresses } = store
 const { setUndoAction, undo } = useUndo()
 const { promptBlockSenders, willJunkSenders } = useBlockSender()
 const user = inject('$user')
@@ -200,10 +201,23 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				condition: () => !mail.draft,
 			},
 			{
+				label: __('Accept Sender'),
+				onClick: () => handleScreenSender('Accepted'),
+				icon: CircleCheck,
+				condition: () => mailbox === store.screeningMailboxId,
+			},
+			{
+				label: __('Reject Sender'),
+				onClick: () => handleScreenSender('Reject'),
+				icon: Ban,
+				condition: () => mailbox === store.screeningMailboxId,
+			},
+			{
 				label: __('Block Sender'),
 				onClick: () => handleBlockAddress(true),
 				icon: Ban,
 				condition: () =>
+					mailbox !== store.screeningMailboxId &&
 					!identities.data.some((i: Identity) => i.email === mail.from_email) &&
 					!isSenderBlocked(mail.from_email),
 			},
@@ -211,7 +225,8 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				label: __('Unblock Sender'),
 				onClick: () => handleBlockAddress(false),
 				icon: LockOpen,
-				condition: () => isSenderBlocked(mail.from_email),
+				condition: () =>
+					mailbox !== store.screeningMailboxId && isSenderBlocked(mail.from_email),
 			},
 		],
 	},
@@ -351,6 +366,29 @@ const handleMarkUnreadFromHere = () => {
 		.filter((m: Mail) => !m.draft)
 		.map((m: Mail) => m.id)
 	if (ids.length) setMailsSeen.submit({ ids })
+}
+
+// Screening-folder decisions: accept the sender (let future mail in, move this one to Inbox) or
+// reject them (discard future mail, move this one to Trash). The sieve regenerates from the list.
+const screenSender = createResource({
+	url: 'mail.api.mail.screen_email_address',
+	makeParams: ({ action }: { action: string }) => ({ account, email: mail.from_email, action }),
+})
+
+const handleScreenSender = (action: 'Accepted' | 'Reject') => {
+	const accepted = action === 'Accepted'
+	const target = accepted ? mailboxIds.inbox : mailboxIds.trash
+	const run = async () => {
+		await screenSender.submit({ action })
+		screenedAddresses.reload()
+		await moveMail.submit(target)
+		reloadMails()
+	}
+	raisePromiseToast(
+		run,
+		accepted ? __('Accepting sender...') : __('Rejecting sender...'),
+		accepted ? __('Sender accepted.') : __('Sender rejected.'),
+	)
 }
 
 const blockEmailAddress = createResource({

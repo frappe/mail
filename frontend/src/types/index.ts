@@ -42,6 +42,7 @@ export interface User {
 		default_outgoing_email?: string
 		account_settings?: string
 		on_mark_as_junk?: OnMarkAsJunk
+		enable_screening?: boolean
 	})[]
 }
 

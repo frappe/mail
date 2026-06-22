@@ -40,6 +40,16 @@
 			variant="outline"
 			:options="ON_MARK_AS_JUNK_OPTIONS"
 		/>
+		<Switch
+			v-model="enableScreening"
+			:label="__('Screen New Senders')"
+			:description="
+				__(
+					'Mail from senders you have not accepted goes to the Screening folder instead of the inbox. Only accepted senders reach your inbox.',
+				)
+			"
+			class="!p-0"
+		/>
 
 		<template v-if="userSettings.doc">
 			<h1>{{ __('Recovery') }}</h1>
@@ -75,7 +85,7 @@ import { userStore } from '@/stores/user'
 import type { Identity } from '@/types'
 
 const user = inject('$user')
-const { account, identities } = userStore()
+const { account, identities, mailboxes } = userStore()
 
 // Outgoing settings now live on the active account's Account Settings; backup_email
 // (Recovery) is still per-user on User Settings.
@@ -106,6 +116,11 @@ const destroyNewsletterAfterSubmit = computed({
 	set: (val: boolean) => (accountSettings.doc.destroy_newsletter_after_submit = val ? 1 : 0),
 })
 
+const enableScreening = computed({
+	get: () => !!accountSettings.doc.enable_screening,
+	set: (val: boolean) => (accountSettings.doc.enable_screening = val ? 1 : 0),
+})
+
 const ON_MARK_AS_JUNK_OPTIONS = [
 	{
 		label: __("Move the sender's future mail to Junk automatically"),
@@ -126,13 +141,19 @@ const saving = computed(() => accountSettings.save.loading || userSettings.save.
 
 const save = async () => {
 	if (accountDirty.value) {
+		const screeningChanged =
+			!!accountSettings.doc.enable_screening !==
+			!!accountSettings.originalDoc?.enable_screening
 		await accountSettings.save.submit()
 		// Sync the shared user data so compose picks up the new default and the junk flow picks up
 		// the "on mark as junk" choice without a page reload (both read from user.data.accounts).
 		if (activeAccount) {
 			activeAccount.default_outgoing_email = accountSettings.doc.default_outgoing_email
 			activeAccount.on_mark_as_junk = accountSettings.doc.on_mark_as_junk
+			activeAccount.enable_screening = !!accountSettings.doc.enable_screening
 		}
+		// Enabling screening creates the Screening folder server-side; reload so it shows up.
+		if (screeningChanged) mailboxes.reload()
 	}
 	if (userDirty.value) await userSettings.save.submit()
 	raiseToast(__('Account updated.'))

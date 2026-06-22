@@ -79,6 +79,16 @@ export const userStore = defineStore('mail-user', () => {
 		return ids
 	})
 
+	// The Screening mailbox is a plain named folder (no JMAP role), created server-side as "Screening".
+	const SCREENING_MAILBOX_NAME = 'Screening'
+	const screeningMailboxId = computed(
+		() =>
+			mailboxes.data?.find(
+				(m: { role?: string; _name?: string }) =>
+					!m.role && m._name === SCREENING_MAILBOX_NAME,
+			)?.id || '',
+	)
+
 	const addressBooks = createResource({
 		url: 'mail.api.contacts.get_address_books',
 		makeParams: () => ({ account: account.value }),
@@ -129,6 +139,7 @@ export const userStore = defineStore('mail-user', () => {
 		userResource,
 		mailboxes,
 		mailboxIds,
+		screeningMailboxId,
 		addressBooks,
 		identities,
 		domains,

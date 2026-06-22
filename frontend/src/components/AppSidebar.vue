@@ -273,7 +273,7 @@ const mailboxItems = computed(
 			?.map((mailbox: MailboxData) => ({
 				label: mailbox._name,
 				icon: h(Icon, {
-					name: getIcon(mailbox),
+					name: mailbox.id === store.screeningMailboxId ? 'scan-eye' : getIcon(mailbox),
 					class: FOLDER_ICON_COLOR_MAP[mailbox.color],
 				}),
 				to: {
@@ -307,8 +307,13 @@ const mailboxItems = computed(
 const sidebarItems = computed(() => {
 	if (route.meta.isDashboard) return dashboardItems
 
+	// Screening is a roleless folder but belongs with the default mailboxes, not the custom ones.
+	const isScreening = (item: { activeFor: string[] }) =>
+		!!store.screeningMailboxId && item.activeFor[0] === store.screeningMailboxId
+
 	const defaultMailboxes = mailboxItems.value.filter(
-		(item) => mailboxes.data?.find((m) => m.id === item.activeFor[0])?.role,
+		(item) =>
+			mailboxes.data?.find((m) => m.id === item.activeFor[0])?.role || isScreening(item),
 	)
 	const starredItem = {
 		label: __('Starred'),
@@ -319,7 +324,8 @@ const sidebarItems = computed(() => {
 	const defaultItems = [...defaultMailboxes, starredItem]
 
 	const customMailboxes = mailboxItems.value.filter(
-		(item) => !mailboxes.data?.find((m) => m.id === item.activeFor[0])?.role,
+		(item) =>
+			!mailboxes.data?.find((m) => m.id === item.activeFor[0])?.role && !isScreening(item),
 	)
 	const addMailboxItem = {
 		label: __('New Folder'),
