@@ -82,6 +82,7 @@
   },
   {
    "default": "0",
+   "description": "Whether this account's JMAP identities are cached for your session.",
    "fieldname": "has_cached_jmap_identities",
    "fieldtype": "Check",
    "is_virtual": 1,
@@ -91,6 +92,7 @@
   },
   {
    "default": "0",
+   "description": "Whether this account's JMAP mailboxes are cached for your session.",
    "fieldname": "has_cached_jmap_mailboxes",
    "fieldtype": "Check",
    "is_virtual": 1,
@@ -103,6 +105,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Number of message blobs (bodies and attachments) cached for your session.",
    "fieldname": "total_cached_blobs",
    "fieldtype": "Int",
    "is_virtual": 1,
@@ -111,6 +114,7 @@
    "read_only": 1
   },
   {
+   "description": "Number of mail messages cached for your session.",
    "fieldname": "total_cached_mail_messages",
    "fieldtype": "Int",
    "is_virtual": 1,
@@ -119,6 +123,7 @@
    "read_only": 1
   },
   {
+   "description": "Number of contact cards cached for your session.",
    "fieldname": "total_cached_contact_cards",
    "fieldtype": "Int",
    "is_virtual": 1,
@@ -134,6 +139,7 @@
    "label": "Sieve"
   },
   {
+   "description": "ID of the Sieve script that was active before a vacation auto-reply was enabled; it is re-activated when the vacation response is turned off.",
    "fieldname": "last_active_sieve_script_id",
    "fieldtype": "Data",
    "label": "Last Active Sieve Script ID",
