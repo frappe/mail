@@ -1,7 +1,10 @@
 <template>
 	<div class="flex h-full flex-col">
-		<header class="flex items-center justify-between border-b px-5 py-2.5">
-			<Breadcrumbs :items="[{ label: __('Screener') }]" />
+		<header class="flex items-center justify-between border-b px-3 py-2.5 sm:px-5">
+			<div class="flex items-center space-x-2">
+				<Button v-if="isMobile" icon="menu" variant="ghost" @click="openSidebar" />
+				<Breadcrumbs :items="[{ label: __('Screener') }]" />
+			</div>
 			<HeaderActions @reload-mails="senders.reload()" />
 		</header>
 
@@ -69,7 +72,7 @@
 							/>
 							<div class="flex gap-5">
 								<button
-									class="text-ink-gray-5 font-medium hover:underline disabled:opacity-40"
+									class="screener-action text-ink-gray-5"
 									:disabled="!!busyKey"
 									@click="
 										screenOut(
@@ -81,7 +84,7 @@
 									{{ __('Block') }}
 								</button>
 								<button
-									class="text-ink-gray-8 font-medium hover:underline disabled:opacity-40"
+									class="screener-action text-ink-gray-8"
 									:disabled="!!busyKey"
 									@click="
 										allow([sender.from_email], `allow:${sender.from_email}`)
@@ -100,14 +103,17 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Breadcrumbs, createResource, usePageMeta } from 'frappe-ui'
+import { Breadcrumbs, Button, createResource, usePageMeta } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
+import { useScreenSize, useSidebar } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
 import MailDate from '@/components/MailDate.vue'
 
 const store = userStore()
+const { isMobile } = useScreenSize()
+const { openSidebar } = useSidebar()
 
 const senders = createResource({
 	url: 'mail.api.mail.get_screening_senders',
@@ -186,14 +192,17 @@ const screenOut = (fromEmails: string[], key: string) =>
 </script>
 
 <style scoped>
+/* Quiet text actions (Block / Allow) with an expanded hit area — the negative margin offsets the
+   padding so the larger click target doesn't shift the layout. */
+.screener-action {
+	@apply -m-2 p-2 font-medium hover:underline disabled:opacity-40;
+}
+
 /* Rows lift and fade as they leave the ledger. */
 .sc-leave-active {
-	transition:
-		opacity 0.22s ease,
-		transform 0.22s ease;
+	@apply transition-all duration-200 ease-out;
 }
 .sc-leave-to {
-	opacity: 0;
-	transform: translateY(-6px);
+	@apply -translate-y-1.5 opacity-0;
 }
 </style>
