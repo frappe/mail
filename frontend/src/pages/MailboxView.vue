@@ -410,7 +410,7 @@ const route = useRoute()
 const router = useRouter()
 const { isMobile } = useScreenSize()
 const { openSidebar } = useSidebar()
-const { undo } = useUndo()
+const { undo, setUndoAction } = useUndo()
 
 const socket = inject('$socket')
 const user = inject('$user') as UserResource
@@ -1039,6 +1039,8 @@ onUnmounted(() => {
 	window.removeEventListener('keydown', handleKeyDown)
 	window.removeEventListener('keyup', handleKeyUp)
 	if (reloadInterval.value) clearInterval(reloadInterval.value)
+	// Leaving the mailbox drops any pending undo so a lingering toast can't undo into another view.
+	setUndoAction(undefined)
 })
 
 const goToMailbox = () =>
