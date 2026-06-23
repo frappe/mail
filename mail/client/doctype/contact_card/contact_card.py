@@ -15,6 +15,7 @@ from mail.storage import get_data_store
 from mail.storage.data_store import Entity
 from mail.utils import parse_filters
 from mail.utils.dt import parse_iso_datetime
+from mail.utils.user import resolve_account_handle
 from mail.utils.validation import has_permission_for_user
 
 
@@ -227,7 +228,7 @@ def bulk_delete(names: str | list[str]) -> None:
 
 @frappe.whitelist()
 def add_contact_card(
-	account: str,
+	account_id: str,
 	address_book_ids: list[str],
 	full_name: str | None = None,
 	emails: list[dict] | None = None,
@@ -236,6 +237,8 @@ def add_contact_card(
 	kind: str | None = None,
 ) -> str:
 	"""Adds a contact card for the given account with the specified parameters."""
+
+	account = resolve_account_handle(account_id)
 
 	has_permission_for_user(parse_account(account)[0])
 
@@ -413,19 +416,23 @@ def contact_card_update_address_books(
 
 
 @frappe.whitelist()
-def contact_card_add_to_address_book(account: str, ids: list[str], address_book_id: str) -> None:
+def contact_card_add_to_address_book(account_id: str, ids: list[str], address_book_id: str) -> None:
 	"""Adds the provided contact cards to an address book."""
+
+	account = resolve_account_handle(account_id)
 
 	return contact_card_update_address_books(account, ids, add_address_book_id=address_book_id)
 
 
 @frappe.whitelist()
 def contact_card_remove_from_address_book(
-	account: str,
+	account_id: str,
 	ids: list[str],
 	address_book_id: str,
 ) -> None:
 	"""Removes the provided contact cards from an address book."""
+
+	account = resolve_account_handle(account_id)
 
 	return contact_card_update_address_books(account, ids, remove_address_book_id=address_book_id)
 
@@ -456,8 +463,10 @@ def contact_card_move_to_address_book(
 
 
 @frappe.whitelist()
-def delete_contact_cards(account: str, ids: list[str]) -> None:
+def delete_contact_cards(account_id: str, ids: list[str]) -> None:
 	"""Deletes contact cards for the given account by its IDs."""
+
+	account = resolve_account_handle(account_id)
 
 	has_permission_for_user(parse_account(account)[0])
 

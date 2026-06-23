@@ -59,7 +59,7 @@ export const userStore = defineStore('mail-user', () => {
 
 	const mailboxes = createResource({
 		url: 'mail.api.mail.get_mailboxes',
-		makeParams: () => ({ account: account.value }),
+		makeParams: () => ({ account_id: accountId.value }),
 		cache: ['mailboxes', accountId.value],
 	})
 
@@ -81,25 +81,25 @@ export const userStore = defineStore('mail-user', () => {
 
 	const addressBooks = createResource({
 		url: 'mail.api.contacts.get_address_books',
-		makeParams: () => ({ account: account.value }),
+		makeParams: () => ({ account_id: accountId.value }),
 		cache: ['addressBooks', accountId.value],
 	})
 
 	const identities = createResource({
 		url: 'mail.api.account.get_identities',
-		makeParams: () => ({ account: account.value }),
+		makeParams: () => ({ account_id: accountId.value }),
 		cache: ['identities', accountId.value],
 	})
 
 	const blockedAddresses = createResource({
 		url: 'mail.api.mail.get_blocked_addresses',
-		makeParams: () => ({ account: account.value }),
+		makeParams: () => ({ account_id: accountId.value }),
 		cache: ['blockedAddresses', accountId.value],
 	})
 
 	const sieveScripts = createResource({
 		url: 'mail.api.sieve.get_sieve_scripts',
-		makeParams: () => ({ account: account.value }),
+		makeParams: () => ({ account_id: accountId.value }),
 		cache: ['sieveScripts', accountId.value],
 	})
 

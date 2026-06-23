@@ -11,6 +11,7 @@ from frappe.utils import cint, today
 
 from mail.jmap import get_address_book_service, parse_account
 from mail.utils import parse_filters
+from mail.utils.user import resolve_account_handle
 from mail.utils.validation import has_permission_for_user
 
 
@@ -129,7 +130,7 @@ def bulk_delete(names: str | list[str]) -> None:
 
 @frappe.whitelist()
 def add_address_book(
-	account: str,
+	account_id: str,
 	name: str,
 	description: str | None = None,
 	sort_order: int = 0,
@@ -137,6 +138,8 @@ def add_address_book(
 	subscribed: bool = True,
 ) -> str:
 	"""Adds a address book for the given account with the specified parameters."""
+
+	account = resolve_account_handle(account_id)
 
 	has_permission_for_user(parse_account(account)[0])
 
@@ -216,8 +219,10 @@ def update_address_book(
 
 
 @frappe.whitelist()
-def delete_address_books(account: str, ids: list[str]) -> None:
+def delete_address_books(account_id: str, ids: list[str]) -> None:
 	"""Deletes address books for the given account and list of address book IDs."""
+
+	account = resolve_account_handle(account_id)
 
 	has_permission_for_user(parse_account(account)[0])
 

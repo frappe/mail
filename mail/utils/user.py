@@ -92,6 +92,35 @@ def get_user_account_ids(user: str) -> list[str]:
 	return list((session.get("accounts") or {}).keys())
 
 
+def get_session_account(account_id: str) -> str:
+	"""Rebuild the full ``user:account_id`` JMAP handle for the current session user.
+
+	The frontend sends only the bare ``account_id``; the user component of the handle is
+	always the logged-in user. Internal code keeps using the full handle as the canonical
+	account identifier, so API endpoints reconstruct it here at the boundary.
+	"""
+
+	if not account_id:
+		frappe.throw(_("Account ID is required."))
+
+	return f"{frappe.session.user}:{account_id}"
+
+
+def resolve_account_handle(account: str) -> str:
+	"""Resolve an account reference to a full ``user:account_id`` handle.
+
+	Accepts either a full ``user:account_id`` handle (passed positionally by internal
+	callers) or a bare ``account_id`` (sent by the frontend), so dual-use whitelisted
+	functions work in both contexts. Account IDs never contain a colon, so its presence
+	reliably distinguishes the two forms.
+	"""
+
+	if not account:
+		frappe.throw(_("Account is required."))
+
+	return account if ":" in account else f"{frappe.session.user}:{account}"
+
+
 def get_account_scoped_permission_query(
 	doctype: str, column: str = "account_id", user: str | None = None
 ) -> str:

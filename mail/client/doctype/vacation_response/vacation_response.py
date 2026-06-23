@@ -17,6 +17,7 @@ from mail.client.doctype.sieve_script.sieve_script import (
 from mail.jmap import get_vacation_response_service, parse_account
 from mail.utils import convert_html_to_text
 from mail.utils.dt import convert_to_utc
+from mail.utils.user import resolve_account_handle
 from mail.utils.validation import has_permission_for_user
 
 
@@ -74,8 +75,10 @@ class VacationResponse(Document):
 
 
 @frappe.whitelist()
-def get_vacation_response(account: str) -> dict:
+def get_vacation_response(account_id: str) -> dict:
 	"""Returns the vacation response settings for the given account."""
+
+	account = resolve_account_handle(account_id)
 
 	has_permission_for_user(parse_account(account)[0])
 
@@ -86,7 +89,7 @@ def get_vacation_response(account: str) -> dict:
 
 @frappe.whitelist()
 def update_vacation_response(
-	account: str,
+	account_id: str,
 	enabled: bool | int,
 	from_date: datetime | str | None = None,
 	to_date: datetime | str | None = None,
@@ -95,6 +98,8 @@ def update_vacation_response(
 	html_body: str | None = None,
 ) -> None:
 	"""Updates the vacation response settings for the given account."""
+
+	account = resolve_account_handle(account_id)
 
 	has_permission_for_user(parse_account(account)[0])
 

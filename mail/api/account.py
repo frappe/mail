@@ -13,7 +13,13 @@ from mail.client.doctype.identity.identity import fetch_identities
 from mail.mail.doctype.mail_settings.mail_settings import get_signup_domains
 from mail.utils import convert_html_to_text, user_context
 from mail.utils.rate_limiter import dynamic_rate_limit
-from mail.utils.user import has_user_settings, is_jmap_configured, is_mail_admin, is_system_manager
+from mail.utils.user import (
+	get_session_account,
+	has_user_settings,
+	is_jmap_configured,
+	is_mail_admin,
+	is_system_manager,
+)
 
 
 @frappe.whitelist(allow_guest=True)
@@ -241,13 +247,15 @@ def get_user_for_reset_password_key(key: str) -> str:
 
 @frappe.whitelist()
 def create_mail_import(
-	account: str,
+	account_id: str,
 	format: Literal["eml", "jmap", "mbox", "maildir", "maildir-nested"],
 	file: str,
 	mailbox: str | None = None,
 	seen: bool = False,
 ) -> None:
 	"""Creates mail exchange of operation import"""
+
+	account = get_session_account(account_id)
 
 	doc = frappe.new_doc("Mail Exchange")
 	doc.user = frappe.session.user
@@ -263,7 +271,7 @@ def create_mail_import(
 
 @frappe.whitelist()
 def create_mail_export(
-	account: str,
+	account_id: str,
 	format: Literal["jmap", "mbox", "maildir", "maildir-nested"],
 	archive_type: Literal[".zip", ".tgz", ".tar.gz"],
 	sort: Literal["Received At (ASC)", "Received At (DESC)"],
@@ -271,6 +279,8 @@ def create_mail_export(
 	filter: dict | None = None,
 ) -> None:
 	"""Creates mail exchange of operation export"""
+
+	account = get_session_account(account_id)
 
 	doc = frappe.new_doc("Mail Exchange")
 	doc.user = frappe.session.user
@@ -294,8 +304,10 @@ def is_push_notification_relay_enabled() -> bool:
 
 
 @frappe.whitelist()
-def get_quota(account: str) -> dict:
+def get_quota(account_id: str) -> dict:
 	"""Return quota usage for the user"""
+
+	account = get_session_account(account_id)
 
 	result = {
 		"disk_quota": 0,
@@ -318,8 +330,10 @@ def get_quota(account: str) -> dict:
 
 
 @frappe.whitelist()
-def get_identities(account: str) -> list[dict]:
+def get_identities(account_id: str) -> list[dict]:
 	"""Return the email identities for the user"""
+
+	account = get_session_account(account_id)
 
 	return fetch_identities(account, page=1, limit=100)
 
