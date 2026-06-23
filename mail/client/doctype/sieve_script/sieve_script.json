@@ -6,7 +6,7 @@
  "field_order": [
   "section_break_iw72",
   "user",
-  "account",
+  "account_id",
   "column_break_cesj",
   "active",
   "read_only",
@@ -108,14 +108,10 @@
    "set_only_once": 1
   },
   {
-   "description": "The account this script belongs to.",
-   "fieldname": "account",
+   "fieldname": "account_id",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Account",
-   "reqd": 1,
-   "set_only_once": 1
+   "label": "Account ID"
   },
   {
    "description": "The user this script belongs to.",

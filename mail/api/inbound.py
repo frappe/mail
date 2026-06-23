@@ -9,7 +9,7 @@ from frappe.utils import cint, convert_utc_to_system_timezone, create_batch, now
 from mail.api.auth import validate_user
 from mail.client.doctype.mail_message.mail_message import fetch_blobs, fetch_messages
 from mail.client.doctype.mail_sync_history.mail_sync_history import get_mail_sync_history
-from mail.jmap import get_mailbox_id_by_role
+from mail.jmap import get_mailbox_id_by_role, parse_account
 from mail.utils import get_mail_config
 from mail.utils.dt import convert_to_utc
 from mail.utils.logger import get_inbound_logger
@@ -158,7 +158,7 @@ def get_mails(
 ) -> dict[str, list[dict] | str]:
 	"""Returns the emails for the given mailbox."""
 
-	mailbox_id = get_mailbox_id_by_role(account, mailbox, raise_exception=True)
+	mailbox_id = get_mailbox_id_by_role(*parse_account(account), mailbox, raise_exception=True)
 
 	filter = {"inMailbox": mailbox_id}
 	if last_received_at:

@@ -7,18 +7,15 @@ import frappe
 from frappe.model.document import Document
 
 from mail.jmap import parse_account
+from mail.utils.user import get_account_scoped_permission_query, has_account_scoped_permission
 
 
 class BlockedEmailAddress(Document):
+	"""A blocked sender, shared per JMAP account ID — every user with access to the
+	account sees and manages the same block list."""
+
 	def autoname(self) -> None:
 		self.name = str(uuid7())
-
-	def before_insert(self) -> None:
-		# `account` is the "user:account_id" handle; `user` records who blocked, while `account_id`
-		# is the shared key so a group account's block list is the same for everyone with access.
-		user, account_id = parse_account(self.account)
-		self.user = user
-		self.account_id = account_id
 
 	def validate(self) -> None:
 		self.validate_duplicate_email()
@@ -26,18 +23,26 @@ class BlockedEmailAddress(Document):
 	def after_insert(self) -> None:
 		from mail.api.sieve import update_sieve_script_for_blocked_emails
 
-		update_sieve_script_for_blocked_emails(self.account)
+		update_sieve_script_for_blocked_emails(self._full_account())
 
 	def after_delete(self) -> None:
 		from mail.api.sieve import update_sieve_script_for_blocked_emails
 
-		update_sieve_script_for_blocked_emails(self.account)
+		update_sieve_script_for_blocked_emails(self._full_account())
+
+	def _full_account(self) -> str:
+		"""The `user:account_id` handle for the user acting on the shared list.
+
+		The blocked-emails sieve block lives on the account's server-side script, so
+		regenerating it needs a JMAP connection — use the acting user's handle (passed via
+		flags for API inserts, otherwise the session user, who must have access)."""
+
+		return self.flags.get("account") or f"{frappe.session.user}:{self.account_id}"
 
 	def validate_duplicate_email(self) -> None:
 		"""Validates that the same email address is not blocked multiple times for the same account.
 
-		Scoped to `account_id` (not the per-user `account` handle) so a shared account can't have the
-		same address blocked twice by different users.
+		Scoped to `account_id` so a shared account can't have the same address blocked twice.
 		"""
 
 		if frappe.db.exists(
@@ -57,6 +62,17 @@ def get_blocked_email_addresses(account: str) -> list[str]:
 
 	account_id = parse_account(account)[1]
 	return frappe.db.get_all("Blocked Email Address", filters={"account_id": account_id}, pluck="email")
+
+
+def get_permission_query_condition(user: str | None = None) -> str:
+	return get_account_scoped_permission_query("Blocked Email Address", user=user)
+
+
+def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
+	if doc.doctype != "Blocked Email Address":
+		return False
+
+	return has_account_scoped_permission(doc, user=user)
 
 
 def on_doctype_update() -> None:

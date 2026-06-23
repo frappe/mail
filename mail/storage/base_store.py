@@ -1,4 +1,3 @@
-import hashlib
 import os
 from threading import RLock
 from typing import ClassVar
@@ -10,7 +9,6 @@ from mail.utils.logger import get_storage_logger
 
 class BaseStore:
 	SEPARATOR: ClassVar[str] = ":"
-	SHARD_DIR_PREFIX: ClassVar[str] = "shard-"
 	_PROCESS_LOCKS: ClassVar[dict[str, RLock]] = {}
 	_PROCESS_LOCKS_GUARD: ClassVar[RLock] = RLock()
 
@@ -18,13 +16,11 @@ class BaseStore:
 		self,
 		base_path: str,
 		key: str,
-		shard_count: int = 1,
 	) -> None:
-		"""Initialize the storage with base path, key, and optional sharding parameters."""
+		"""Initialize the storage with the base path and key."""
 
 		self.base_path = base_path
 		self.key = key
-		self.shard_count = max(1, shard_count)
 
 		self.logger_context = {"req_id": random_string(10), "key": self.key}
 		self.logger = get_storage_logger(self.logger_context)
@@ -35,18 +31,9 @@ class BaseStore:
 		self._prefix = f"{self.key}{self.SEPARATOR}"
 
 	def _get_storage_path(self) -> str:
-		"""Return the shard path for this key, or the base path when sharding is disabled."""
+		"""Return the storage path for this store; subclasses scope it per key."""
 
-		if self.shard_count == 1:
-			return self.base_path
-
-		shard = self._get_shard_index()
-		return os.path.join(self.base_path, f"{self.SHARD_DIR_PREFIX}{shard:02d}")
-
-	def _get_shard_index(self) -> int:
-		"""Calculate the shard index for the current key based on its hash."""
-
-		return int(hashlib.sha256(self.key.encode()).hexdigest(), 16) % self.shard_count
+		return self.base_path
 
 	def _get_process_lock(self, path: str | None = None) -> RLock:
 		"""Return a process-local lock shared by all storage instances for the same path."""

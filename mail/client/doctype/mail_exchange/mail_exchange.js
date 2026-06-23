@@ -3,13 +3,14 @@
 
 frappe.ui.form.on('Mail Exchange', {
 	refresh(frm) {
+		frm.trigger('set_account_options')
 		if (!frm.doc.__islocal) {
 			frm.trigger('add_actions')
-			frm.trigger('set_account_options')
 		}
 	},
 
 	user(frm) {
+		frm.set_value('account_id', null)
 		frm.trigger('set_account_options')
 	},
 
@@ -25,20 +26,18 @@ frappe.ui.form.on('Mail Exchange', {
 	set_account_options(frm) {
 		if (frm.doc.user) {
 			frappe.call({
-				method: 'mail.jmap.get_user_accounts',
+				method: 'mail.jmap.get_user_account_ids',
 				args: {
 					user: frm.doc.user,
 				},
 				callback: (r) => {
-					if (r.message) {
-						frm.set_df_property('account', 'options', r.message)
-						frm.refresh_field('account')
-					}
+					frm.set_df_property('account_id', 'options', r.message || [])
+					frm.refresh_field('account_id')
 				},
 			})
 		} else {
-			frm.set_df_property('account', 'options', [])
-			frm.refresh_field('account')
+			frm.set_df_property('account_id', 'options', [])
+			frm.refresh_field('account_id')
 		}
 	},
 

@@ -163,8 +163,11 @@ permission_query_conditions = {
 	"Principal Settings": "mail.server.doctype.principal_settings.principal_settings.get_permission_query_condition",
 	# Client
 	"Account Settings": "mail.client.doctype.account_settings.account_settings.get_permission_query_condition",
+	"Blocked Email Address": "mail.client.doctype.blocked_email_address.blocked_email_address.get_permission_query_condition",
+	"Junk Email Address": "mail.client.doctype.junk_email_address.junk_email_address.get_permission_query_condition",
 	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.get_permission_query_condition",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
+	"Mail Sync History": "mail.client.doctype.mail_sync_history.mail_sync_history.get_permission_query_condition",
 	"Mailbox Settings": "mail.client.doctype.mailbox_settings.mailbox_settings.get_permission_query_condition",
 	"User Settings": "mail.client.doctype.user_settings.user_settings.get_permission_query_condition",
 }
@@ -179,13 +182,16 @@ has_permission = {
 	# Client
 	"Account Settings": "mail.client.doctype.account_settings.account_settings.has_permission",
 	"Address Book": "mail.client.doctype.address_book.address_book.has_permission",
+	"Blocked Email Address": "mail.client.doctype.blocked_email_address.blocked_email_address.has_permission",
 	"Calendar": "mail.client.doctype.calendar.calendar.has_permission",
 	"Calendar Event": "mail.client.doctype.calendar_event.calendar_event.has_permission",
 	"Contact Card": "mail.client.doctype.contact_card.contact_card.has_permission",
 	"Event Notification": "mail.client.doctype.event_notification.event_notification.has_permission",
 	"Identity": "mail.client.doctype.identity.identity.has_permission",
+	"Junk Email Address": "mail.client.doctype.junk_email_address.junk_email_address.has_permission",
 	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.has_permission",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.has_permission",
+	"Mail Sync History": "mail.client.doctype.mail_sync_history.mail_sync_history.has_permission",
 	"Mailbox": "mail.client.doctype.mailbox.mailbox.has_permission",
 	"Mailbox Settings": "mail.client.doctype.mailbox_settings.mailbox_settings.has_permission",
 	"Participant Identity": "mail.client.doctype.participant_identity.participant_identity.has_permission",

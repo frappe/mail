@@ -9,7 +9,7 @@ const store = userStore()
 
 export const fetchAttachment = createResource({
 	url: 'mail.api.mail.fetch_attachment',
-	makeParams: (blobID: string) => ({ account: store.account, blob_id: blobID }),
+	makeParams: (blobID: string) => ({ account_id: store.accountId, blob_id: blobID }),
 	onError: (error) => raiseToast(error.message, 'error'),
 	cache: ['attachment'],
 })
@@ -24,7 +24,7 @@ export const getAttachmentUrl = async (blobID: string, type?: string) => {
 export const fetchAttachmentsAsZip = createResource({
 	url: 'mail.api.mail.fetch_attachments_as_zip',
 	makeParams: (attachments: Attachment[]) => ({
-		account: store.account,
+		account_id: store.accountId,
 		attachments: JSON.stringify(
 			attachments.map((a) => ({ blob_id: a.blob_id, filename: a.filename })),
 		),

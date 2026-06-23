@@ -119,7 +119,7 @@ def add_participant_identity(account: str, name: str, email: str, default: bool 
 		"is_default": default,
 	}
 
-	service = get_participant_identity_service(account)
+	service = get_participant_identity_service(*parse_account(account))
 	response = service.create([participant_identity])
 
 	title = _("Participant Identity Creation Error")
@@ -137,7 +137,7 @@ def get_participant_identity(account: str, id: str) -> dict:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_participant_identity_service(account)
+	service = get_participant_identity_service(*parse_account(account))
 	if identities := service.get([id]):
 		return format_participant_identity(account, identities[0])
 
@@ -162,7 +162,7 @@ def update_participant_identity(account: str, id: str, name: str, email: str, de
 		"is_default": default,
 	}
 
-	service = get_participant_identity_service(account)
+	service = get_participant_identity_service(*parse_account(account))
 	response = service.update([participant_identity])
 
 	if not response.get("updated"):
@@ -179,7 +179,7 @@ def delete_participant_identities(account: str, ids: list[str]) -> None:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_participant_identity_service(account)
+	service = get_participant_identity_service(*parse_account(account))
 	response = service.delete(ids)
 
 	if response.get("notDestroyed"):
@@ -198,7 +198,7 @@ def fetch_participant_identities(account: str, page: int = 1, limit: int = 10) -
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_participant_identity_service(account)
+	service = get_participant_identity_service(*parse_account(account))
 	identities = service.get()
 	formatted_identities = [format_participant_identity(account, identity) for identity in identities]
 	frappe.cache.set_value(_get_total_cache_key(account), len(identities), expires_in_sec=600)

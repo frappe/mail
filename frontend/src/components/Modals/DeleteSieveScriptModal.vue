@@ -27,7 +27,7 @@ const store = userStore()
 
 const deleteScript = createResource({
 	url: 'mail.api.sieve.delete_sieve_script',
-	makeParams: () => ({ account: store.account, id: script.id }),
+	makeParams: () => ({ account_id: store.accountId, id: script.id }),
 	onSuccess: () => {
 		raiseToast(__('Sieve script deleted.'))
 		store.sieveScripts.reload()

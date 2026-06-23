@@ -82,7 +82,7 @@ export function useThreadActions(deps: {
 	const setSeen = createResource({
 		url: 'mail.api.mail.set_mails_seen',
 		makeParams: ({ ids, seen }: { ids: string[]; seen: boolean }) => ({
-			account: store.account,
+			account_id: store.accountId,
 			ids,
 			seen,
 		}),
@@ -92,7 +92,7 @@ export function useThreadActions(deps: {
 	const setFlagged = createResource({
 		url: 'mail.api.mail.set_flagged',
 		makeParams: ({ ids, flagged }: { ids: string[]; flagged: boolean }) => ({
-			account: store.account,
+			account_id: store.accountId,
 			ids,
 			flagged,
 		}),
@@ -116,7 +116,7 @@ export function useThreadActions(deps: {
 			ids: string[]
 			mailbox: string
 			clear_junk?: boolean
-		}) => ({ account: store.account, ids, mailbox: target, clear_junk }),
+		}) => ({ account_id: store.accountId, ids, mailbox: target, clear_junk }),
 	})
 
 	const moveToOptions = computed(() =>
@@ -132,7 +132,7 @@ export function useThreadActions(deps: {
 	const addMails = createResource({
 		url: 'mail.api.mail.add_mails_to_mailbox',
 		makeParams: ({ ids, mailbox_id }: { ids: string[]; mailbox_id: string }) => ({
-			account: store.account,
+			account_id: store.accountId,
 			ids,
 			mailbox_id,
 		}),
@@ -141,7 +141,7 @@ export function useThreadActions(deps: {
 	const removeMails = createResource({
 		url: 'mail.api.mail.remove_mails_from_mailbox',
 		makeParams: ({ ids, mailbox_id }: { ids: string[]; mailbox_id: string }) => ({
-			account: store.account,
+			account_id: store.accountId,
 			ids,
 			mailbox_id,
 		}),
@@ -151,7 +151,10 @@ export function useThreadActions(deps: {
 	type MailSnapshot = { id: string; mailbox_ids: string[]; junk: 0 | 1 }
 	const setMailsMailboxes = createResource({
 		url: 'mail.api.mail.set_mails_mailboxes',
-		makeParams: ({ mails }: { mails: MailSnapshot[] }) => ({ account: store.account, mails }),
+		makeParams: ({ mails }: { mails: MailSnapshot[] }) => ({
+			account_id: store.accountId,
+			mails,
+		}),
 	})
 
 	const showAddTo = computed(
@@ -268,7 +271,7 @@ export function useThreadActions(deps: {
 	const setMailsSpam = createResource({
 		url: 'mail.api.mail.set_mails_spam_status',
 		makeParams: ({ ids, spam }: { ids: string[]; spam: boolean }) => ({
-			account: store.account,
+			account_id: store.accountId,
 			ids,
 			spam,
 		}),

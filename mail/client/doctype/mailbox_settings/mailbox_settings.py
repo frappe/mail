@@ -8,19 +8,18 @@ from frappe import _
 from frappe.model.document import Document
 
 from mail.jmap import parse_account
-from mail.utils.user import is_system_manager
-from mail.utils.validation import has_permission_for_user
+from mail.utils.user import get_account_scoped_permission_query, has_account_scoped_permission
 
 
 class MailboxSettings(Document):
+	"""Per-mailbox settings, shared per JMAP account ID — every user with access to the
+	account sees the same mailbox icons, colors, and push-notification preferences."""
+
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
 	def validate(self) -> None:
 		self.validate_duplicate()
-
-	def before_insert(self) -> None:
-		self.user = parse_account(self.account)[0]
 
 	def validate_duplicate(self) -> None:
 		"""Checks for duplicate Mailbox Settings for the same account and mailbox ID."""
@@ -28,7 +27,7 @@ class MailboxSettings(Document):
 		existing = frappe.db.exists(
 			"Mailbox Settings",
 			{
-				"account": self.account,
+				"account_id": self.account_id,
 				"mailbox_id": self.mailbox_id,
 				"name": ["!=", self.name],
 			},
@@ -37,7 +36,7 @@ class MailboxSettings(Document):
 		if existing:
 			frappe.throw(
 				_("Mailbox Settings for account {0} with mailbox ID {1} already exists.").format(
-					frappe.bold(self.account), frappe.bold(self.mailbox_id)
+					frappe.bold(self.account_id), frappe.bold(self.mailbox_id)
 				),
 				title=_("Duplicate Mailbox Settings"),
 			)
@@ -59,7 +58,10 @@ def get_mailbox_settings(
 ) -> MailboxSettings | None:
 	"""Fetches the Mailbox Settings for a given account and mailbox ID."""
 
-	if settings := frappe.db.get_value("Mailbox Settings", {"account": account, "mailbox_id": mailbox_id}):
+	account_id = parse_account(account)[1]
+	if settings := frappe.db.get_value(
+		"Mailbox Settings", {"account_id": account_id, "mailbox_id": mailbox_id}
+	):
 		return frappe.get_doc("Mailbox Settings", settings)
 
 	if raise_exception:
@@ -77,7 +79,7 @@ def set_mailbox_settings(account: str, mailbox_id: str, **kwargs) -> None:
 
 	if not settings:
 		settings = frappe.new_doc("Mailbox Settings")
-		settings.account = account
+		settings.account_id = parse_account(account)[1]
 		settings.mailbox_id = mailbox_id
 		settings.insert()
 
@@ -96,24 +98,18 @@ def set_mailbox_settings(account: str, mailbox_id: str, **kwargs) -> None:
 
 
 def on_doctype_update() -> None:
+	# Mailbox settings are shared per account_id, so uniqueness is on (account_id, mailbox_id).
 	frappe.db.add_unique(
-		"Mailbox Settings", ["account", "mailbox_id"], constraint_name="unique_account_mailbox"
+		"Mailbox Settings", ["account_id", "mailbox_id"], constraint_name="unique_account_id_mailbox"
 	)
 
 
 def get_permission_query_condition(user: str | None = None) -> str:
-	user = user or frappe.session.user
-
-	if is_system_manager(user):
-		return ""
-
-	return f"(`tabMailbox Settings`.user = '{user}')"
+	return get_account_scoped_permission_query("Mailbox Settings", user=user)
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if doc.doctype != "Mailbox Settings":
 		return False
 
-	user = doc.user or parse_account(doc.account)[0]
-
-	return has_permission_for_user(user, raise_exception=False)
+	return has_account_scoped_permission(doc, user=user)
