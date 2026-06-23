@@ -1,7 +1,7 @@
-// Copyright (c) 2026, Frappe Technologies Pvt. Ltd. and contributors
+// Copyright (c) 2025, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
-frappe.listview_settings['Quota'] = {
+frappe.listview_settings['Vacation Response'] = {
 	refresh: (listview) => {
 		set_account_options(listview)
 	},
