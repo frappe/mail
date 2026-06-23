@@ -1,10 +1,10 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { createResource } from 'frappe-ui'
 
-import { raisePromiseToast } from '@/utils'
+import { raisePromiseToast, raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
-import type { Identity, ScreenedAddress } from '@/types'
+import type { COLOR_SCHEME, Identity, ScreenedAddress } from '@/types'
 
 export const useScreenSize = () => {
 	const size = reactive({ width: window.innerWidth, height: window.innerHeight })
@@ -249,6 +249,8 @@ const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 const systemIsDark = ref(mediaQuery.matches)
 mediaQuery.addEventListener('change', () => (systemIsDark.value = mediaQuery.matches))
 
+const COLOR_SCHEME_CYCLE = ['System Default', 'Light Mode', 'Dark Mode'] as const
+
 export const useTheme = () => {
 	const { userResource } = userStore()
 
@@ -258,5 +260,26 @@ export const useTheme = () => {
 		return colorScheme === 'Dark Mode' ? 'dark' : 'light'
 	})
 
-	return { dataTheme }
+	const updateColorScheme = createResource({
+		url: 'frappe.client.set_value',
+		makeParams: (color_scheme: COLOR_SCHEME) => ({
+			doctype: 'User Settings',
+			name: userResource.data?.user_settings,
+			fieldname: { color_scheme },
+		}),
+		onSuccess: (data: { color_scheme: COLOR_SCHEME }) => {
+			raiseToast(__('Color scheme updated to {0}.', [data.color_scheme]))
+			userResource.reload()
+		},
+	})
+
+	// Cycle System Default → Light → Dark. Bound to Cmd/Ctrl+Shift+L app-wide (see App.vue).
+	const cycleTheme = () => {
+		const current = userResource.data?.color_scheme
+		const idx = COLOR_SCHEME_CYCLE.indexOf(current as COLOR_SCHEME)
+		const next = COLOR_SCHEME_CYCLE[(idx + 1) % COLOR_SCHEME_CYCLE.length]
+		updateColorScheme.submit(next)
+	}
+
+	return { dataTheme, cycleTheme }
 }
