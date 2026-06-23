@@ -144,16 +144,16 @@
 							</div>
 						</div>
 
-						<MailThreadSkeleton v-if="senderMails.loading" />
+						<MailThreadSkeleton v-if="previewLoading" />
 						<MailThread
-							v-else-if="senderMails.data?.length"
+							v-else-if="previewMails?.length"
 							:key="openSender.from_email"
 							class="min-h-0 flex-1"
 							readonly
 							mailbox=""
 							:thread-i-d="openSender.from_email"
 							:threads="[]"
-							:messages="senderMails.data"
+							:messages="previewMails"
 						/>
 					</template>
 
@@ -189,7 +189,7 @@ import MailDate from '@/components/MailDate.vue'
 import MailThread from '@/components/MailThread.vue'
 import MailThreadSkeleton from '@/components/MailThreadSkeleton.vue'
 
-import type { MailboxData, ScreeningSender } from '@/types'
+import type { Mail, MailboxData, ScreeningSender } from '@/types'
 
 const store = userStore()
 const { isMobile } = useScreenSize()
@@ -204,10 +204,30 @@ const senderMails = createResource({
 	makeParams: () => ({ account: store.account, from_email: openSender.value?.from_email }),
 })
 
+// The preview reads `previewMails`, not the resource's `.data`: fast navigation fires several fetches
+// at once and the resource flips `loading` off on the first reply that lands, so an out-of-order reply
+// could otherwise leak the previous sender in (and the thread then appends the next one onto it). Each
+// fetch carries a token; only the most recent one is applied.
+const previewMails = ref<Mail[]>()
+const previewLoading = ref(false)
+let previewToken = 0
+
 const selectSender = (sender: ScreeningSender) => {
 	if (openSender.value?.from_email === sender.from_email) return
 	openSender.value = sender
-	senderMails.reload()
+
+	const token = ++previewToken
+	previewMails.value = undefined
+	previewLoading.value = true
+	;(senderMails.reload() as Promise<Mail[]>)
+		.then((mails) => {
+			if (token !== previewToken) return
+			previewMails.value = mails ?? []
+			previewLoading.value = false
+		})
+		.catch(() => {
+			if (token === previewToken) previewLoading.value = false
+		})
 }
 
 const closeSender = () => {
