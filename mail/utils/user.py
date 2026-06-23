@@ -92,6 +92,45 @@ def get_user_account_ids(user: str) -> list[str]:
 	return list((session.get("accounts") or {}).keys())
 
 
+def get_account_scoped_permission_query(
+	doctype: str, column: str = "account_id", user: str | None = None
+) -> str:
+	"""Permission query condition for doctypes shared by JMAP account.
+
+	Restricts non-admins to rows whose `column` (the bare JMAP account ID) is one of the
+	accounts the user has access to. `column="name"` is used by doctypes named directly by
+	the account ID (e.g. Account Settings).
+	"""
+
+	user = user or frappe.session.user
+
+	if is_system_manager(user):
+		return ""
+
+	account_ids = get_user_account_ids(user)
+	if not account_ids:
+		return "1=0"
+
+	ids = ", ".join(frappe.db.escape(account_id) for account_id in account_ids)
+	return f"(`tab{doctype}`.`{column}` in ({ids}))"
+
+
+def has_account_scoped_permission(doc, column: str = "account_id", user: str | None = None) -> bool:
+	"""Document-level permission for doctypes shared by JMAP account.
+
+	Grants access when the user is a System Manager or has JMAP access to the account the
+	document is scoped to.
+	"""
+
+	user = user or frappe.session.user
+
+	if is_system_manager(user):
+		return True
+
+	value = doc.name if column == "name" else doc.get(column)
+	return value in get_user_account_ids(user)
+
+
 def get_account_emails(account: str) -> list[str]:
 	"""Returns the list of email addresses associated with the account."""
 

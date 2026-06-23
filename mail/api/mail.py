@@ -802,7 +802,11 @@ def block_email_address(account: str, email: str) -> dict:
 	"""Blocks an email address for the given account."""
 
 	has_permission_for_user(parse_account(account)[0])
-	doc = frappe.get_doc({"doctype": "Blocked Email Address", "account": account, "email": email})
+	doc = frappe.get_doc(
+		{"doctype": "Blocked Email Address", "account_id": parse_account(account)[1], "email": email}
+	)
+	# Pass the full handle so after_insert can reach JMAP to regenerate the sieve block.
+	doc.flags.account = account
 	doc.insert()
 
 
@@ -823,14 +827,11 @@ def block_email_addresses(account: str, emails: list[str]) -> None:
 	for email in dict.fromkeys(emails):  # de-duplicate while preserving order
 		if not email or email in already_blocked:
 			continue
-		# bulk_insert bypasses before_insert, so set account_id (the shared key) explicitly.
 		doc = frappe.get_doc(
 			{
 				"doctype": "Blocked Email Address",
-				"account": account,
 				"account_id": account_id,
 				"email": email,
-				"user": user,
 			}
 		)
 		doc.set_new_name()
@@ -854,7 +855,7 @@ def junk_senders(account: str, emails: list[str]) -> None:
 	script is regenerated once at the end.
 	"""
 
-	user = parse_account(account)[0]
+	user, account_id = parse_account(account)
 	has_permission_for_user(user)
 
 	already_junked = set(get_junk_email_addresses(account))
@@ -862,9 +863,7 @@ def junk_senders(account: str, emails: list[str]) -> None:
 	for email in dict.fromkeys(emails):  # de-duplicate while preserving order
 		if not email or email in already_junked:
 			continue
-		doc = frappe.get_doc(
-			{"doctype": "Junk Email Address", "account": account, "email": email, "user": user}
-		)
+		doc = frappe.get_doc({"doctype": "Junk Email Address", "account_id": account_id, "email": email})
 		doc.set_new_name()
 		docs.append(doc)
 
@@ -887,8 +886,9 @@ def remove_junk_senders(account: str, emails: list[str]) -> None:
 	if not emails:
 		return
 
+	account_id = parse_account(account)[1]
 	deleted = frappe.db.get_all(
-		"Junk Email Address", filters={"account": account, "email": ["in", emails]}, pluck="name"
+		"Junk Email Address", filters={"account_id": account_id, "email": ["in", emails]}, pluck="name"
 	)
 	if not deleted:
 		return

@@ -22,7 +22,11 @@ if TYPE_CHECKING:
 	from mail.jmap.services.core import CoreService
 
 from mail.utils import log_error
-from mail.utils.user import get_account_emails, get_user_account_ids, is_system_manager
+from mail.utils.user import (
+	get_account_emails,
+	get_account_scoped_permission_query,
+	has_account_scoped_permission,
+)
 
 
 class AccountSettings(Document):
@@ -285,29 +289,15 @@ def backfill_default_outgoing_emails() -> None:
 
 
 def get_permission_query_condition(user: str | None = None) -> str:
-	user = user or frappe.session.user
-
-	if is_system_manager(user):
-		return ""
-
-	account_ids = get_user_account_ids(user)
-	if not account_ids:
-		return "1=0"
-
-	ids = ", ".join(frappe.db.escape(account_id) for account_id in account_ids)
-	return f"(`tabAccount Settings`.name in ({ids}))"
+	# Account Settings is named directly by the account ID, so scope on `name`.
+	return get_account_scoped_permission_query("Account Settings", column="name", user=user)
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if doc.doctype != "Account Settings":
 		return False
 
-	user = user or frappe.session.user
-
-	if is_system_manager(user):
-		return True
-
-	return doc.name in get_user_account_ids(user)
+	return has_account_scoped_permission(doc, column="name", user=user)
 
 
 def create_archive_mailbox(account: str) -> None:
