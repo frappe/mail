@@ -53,7 +53,6 @@ CONFIG_KEYS = [
 	"default_gravatar",
 	"stalwart_version",
 	"stalwart_cli_version",
-	"storage_shard_count",
 	# Logs
 	"push_log_file_count",
 	"push_log_level",

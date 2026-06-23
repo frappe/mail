@@ -26,3 +26,4 @@ mail.patches.backfill_mail_exchange_account_id
 mail.patches.backfill_mail_sync_history_account_id
 mail.patches.backfill_mail_queue_account_id
 mail.patches.clear_legacy_user_scoped_stores
+mail.patches.clear_legacy_blob_store_layout

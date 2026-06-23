@@ -94,7 +94,7 @@ class DataStore(BaseStore):
 		callers keep working; they no longer have any effect.
 		"""
 
-		super().__init__(base_path=base_path, key=key, shard_count=1)
+		super().__init__(base_path=base_path, key=key)
 
 		self.logger_context["store"] = "data"
 		self.map_size = map_size or self.DEFAULT_MAP_SIZE
