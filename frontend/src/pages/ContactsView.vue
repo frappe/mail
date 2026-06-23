@@ -77,7 +77,7 @@ const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
 	makeParams: () => ({
-		account: store.account,
+		account_id: store.accountId,
 		filter: { text: search.value },
 		limit: limit.value,
 	}),
@@ -95,7 +95,7 @@ const contacts = createResource({
 })
 
 watch(
-	() => store.account,
+	() => store.accountId,
 	() => contacts.reload(),
 )
 
@@ -115,7 +115,10 @@ const loadMoreContacts = useDebounceFn((e) => {
 
 const deleteContacts = createResource({
 	url: 'mail.client.doctype.contact_card.contact_card.delete_contact_cards',
-	makeParams: () => ({ account: store.account, ids: Array.from(listView.value?.selections) }),
+	makeParams: () => ({
+		account_id: store.accountId,
+		ids: Array.from(listView.value?.selections),
+	}),
 	onSuccess: () => {
 		contacts.reload()
 		showDeleteContacts.value = false

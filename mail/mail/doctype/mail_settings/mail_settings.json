@@ -24,7 +24,6 @@
   "column_break_cuxv",
   "stalwart_version",
   "stalwart_cli_version",
-  "storage_shard_count",
   "limits_section",
   "exchange_max_export",
   "exchange_max_import",
@@ -441,13 +440,6 @@
    "reqd": 1
   },
   {
-   "default": "8",
-   "fieldname": "storage_shard_count",
-   "fieldtype": "Int",
-   "label": "Storage Shard Count",
-   "reqd": 1
-  },
-  {
    "default": "10",
    "fieldname": "push_log_file_count",
    "fieldtype": "Int",
@@ -701,7 +693,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-06-15 15:27:49.779589",
+ "modified": "2026-06-23 17:16:11.209239",
  "modified_by": "Administrator",
  "module": "Mail",
  "name": "Mail Settings",

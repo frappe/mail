@@ -27,12 +27,12 @@ class CalendarEventService(CalendarsService):
 				calendar_ids = event.get("calendar_ids")
 				if not calendar_ids:
 					calendar_ids = [
-						CalendarService(self.account, self.connection).get_default(raise_exception=True)
+						CalendarService(self.account_id, self.connection).get_default(raise_exception=True)
 					]
 
 				organizer = event.get("organizer")
 				if not organizer:
-					organizer = ParticipantIdentityService(self.account, self.connection).get_default(
+					organizer = ParticipantIdentityService(self.account_id, self.connection).get_default(
 						raise_exception=True
 					)
 
@@ -104,7 +104,7 @@ class CalendarEventService(CalendarsService):
 				calendar_ids = event.get("calendar_ids")
 				if not calendar_ids:
 					calendar_ids = [
-						CalendarService(self.account, self.connection).get_default(raise_exception=True)
+						CalendarService(self.account_id, self.connection).get_default(raise_exception=True)
 					]
 
 				payload[event["id"]] = {

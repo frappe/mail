@@ -526,6 +526,15 @@ class MailExchange(Document):
 			"receivedAt": metadata.get("receivedAt"),
 		}
 
+	@property
+	def account(self) -> str:
+		"""The full `user:account_id` JMAP handle.
+
+		`user` provides the credentials used to authenticate with JMAP, while `account_id`
+		is the (shared) account being imported into or exported from."""
+
+		return f"{self.user}:{self.account_id}"
+
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -538,9 +547,6 @@ class MailExchange(Document):
 		elif self.operation == "Export":
 			self.validate_export()
 
-	def before_insert(self) -> None:
-		self.user = parse_account(self.account)[0]
-
 	def before_submit(self) -> None:
 		self.status = "Queued"
 		self.queued_at = now()
@@ -552,11 +558,21 @@ class MailExchange(Document):
 		self.status = "Cancelled"
 
 	def validate_account(self) -> None:
-		"""Validate the account."""
+		"""Validate that the selected user can authenticate and has access to the account."""
 
 		if not is_jmap_configured(self.user):
 			frappe.throw(
 				_("User {0} does not have JMAP settings configured.").format(frappe.bold(self.user)),
+				frappe.PermissionError,
+			)
+
+		from mail.jmap import get_user_account_ids
+
+		if self.account_id not in get_user_account_ids(self.user):
+			frappe.throw(
+				_("Account ID {0} is not accessible to user {1}.").format(
+					frappe.bold(self.account_id), frappe.bold(self.user)
+				),
 				frappe.PermissionError,
 			)
 
@@ -709,7 +725,7 @@ class MailExchange(Document):
 				extract_compressed_file(import_file, base_dir)
 			logger.debug("import-source-prepared", base_dir=base_dir)
 
-			service = get_email_service(self.account)
+			service = get_email_service(*parse_account(self.account))
 
 			mailbox_map = {}
 			if self.import_format == "maildir-nested":
@@ -756,7 +772,7 @@ class MailExchange(Document):
 
 		kwargs = {}
 		try:
-			service = get_email_service(self.account)
+			service = get_email_service(*parse_account(self.account))
 			total = service.query(self.export_filter_dict, limit=1)["total"]
 			limit = min(total, cint(self.export_limit or total))
 			logger.info("export-query-resolved", total=total, limit=limit, max_export=self.max_export)

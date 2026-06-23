@@ -49,11 +49,14 @@ class CoreService(CoreServiceHelper):
 
 	capabilities: ClassVar[list[str]] = ["urn:ietf:params:jmap:core"]
 
-	def __init__(self, account: str, connection: JMAPConnection) -> None:
-		"""Initializes the CoreService with the provided account and JMAP connection."""
+	def __init__(self, account_id: str, connection: JMAPConnection) -> None:
+		"""Initializes the CoreService with the provided account ID and JMAP connection.
 
-		self.account = account
-		self.account_id = parse_account(account)[1]
+		The connection carries the authenticated user; only the JMAP ``account_id`` is needed
+		to scope requests (and as the cache key, since account data is shared across the users
+		who have access to it)."""
+
+		self.account_id = account_id
 		self.connection = connection
 
 	def __post_init__(self) -> None:
@@ -64,16 +67,16 @@ class CoreService(CoreServiceHelper):
 
 	@classmethod
 	def invalidate_cache(
-		cls, account: str | None = None, key: Literal["identities", "mailboxes"] | None = None
+		cls, account_id: str | None = None, key: Literal["identities", "mailboxes"] | None = None
 	) -> None:
 		"""Invalidates the cache for a specific account and key, or for all accounts and keys if no parameters are provided."""
 
-		if account:
+		if account_id:
 			if key:
-				if account in cls._cache and key in cls._cache[account]:
-					del cls._cache[account][key]  # Remove the specific key from the account's cache
+				if account_id in cls._cache and key in cls._cache[account_id]:
+					del cls._cache[account_id][key]  # Remove the specific key from the account's cache
 			else:
-				cls._cache.pop(account, None)  # Remove the entire cache for the specified account
+				cls._cache.pop(account_id, None)  # Remove the entire cache for the specified account
 		else:
 			if key:
 				for account_cache in cls._cache.values():  # Remove the specific key from all account caches
@@ -96,12 +99,12 @@ class CoreService(CoreServiceHelper):
 	def cache(self) -> dict:
 		"""Returns the cache for the current account, creating a new cache entry if it does not exist."""
 
-		if self.account in self._cache:
-			return self._cache[self.account]
+		if self.account_id in self._cache:
+			return self._cache[self.account_id]
 
-		self._cache[self.account] = {}
+		self._cache[self.account_id] = {}
 
-		return self._cache[self.account]
+		return self._cache[self.account_id]
 
 	@property
 	def core(self) -> dict:
@@ -186,7 +189,7 @@ class CoreService(CoreServiceHelper):
 
 		from mail.jmap.services.mail.identity import IdentityService
 
-		identities = IdentityService(self.account, self.connection).get()
+		identities = IdentityService(self.account_id, self.connection).get()
 		self.cache["identities"] = identities
 
 		return identities
@@ -200,7 +203,7 @@ class CoreService(CoreServiceHelper):
 
 		from mail.jmap.services.mail.mailbox import MailboxService
 
-		mailboxes = MailboxService(self.account, self.connection).get()
+		mailboxes = MailboxService(self.account_id, self.connection).get()
 		self.cache["mailboxes"] = mailboxes
 
 		return mailboxes
@@ -211,7 +214,7 @@ class CoreService(CoreServiceHelper):
 
 		from mail.jmap.services.contacts.address_book import AddressBookService
 
-		return AddressBookService(self.account, self.connection).get()
+		return AddressBookService(self.account_id, self.connection).get()
 
 	@cached_property
 	def calendars(self) -> list[dict]:
@@ -219,7 +222,7 @@ class CoreService(CoreServiceHelper):
 
 		from mail.jmap.services.calendars.calendar import CalendarService
 
-		return CalendarService(self.account, self.connection).get()
+		return CalendarService(self.account_id, self.connection).get()
 
 	@cached_property
 	def participant_identities(self) -> list[dict]:
@@ -227,7 +230,7 @@ class CoreService(CoreServiceHelper):
 
 		from mail.jmap.services.calendars.participant_identity import ParticipantIdentityService
 
-		return ParticipantIdentityService(self.account, self.connection).get()
+		return ParticipantIdentityService(self.account_id, self.connection).get()
 
 	def validate_capabilities(self, required_capabilities: list[str], raise_exception: bool = False) -> bool:
 		"""Validates that the required capabilities are supported by the JMAP server."""

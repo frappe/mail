@@ -63,7 +63,7 @@ const router = useRouter()
 const defaultAddressBook = store.addressBooks.data.find((ab) => ab.default)?.id
 
 const defaultContact = {
-	account: store.account,
+	account_id: store.accountId,
 	address_book_ids: defaultAddressBook ? [defaultAddressBook] : [],
 	full_name: '',
 	kind: 'Individual',

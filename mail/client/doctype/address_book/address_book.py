@@ -11,10 +11,17 @@ from frappe.utils import cint, today
 
 from mail.jmap import get_address_book_service, parse_account
 from mail.utils import parse_filters
+from mail.utils.user import resolve_account_handle
 from mail.utils.validation import has_permission_for_user
 
 
 class AddressBook(Document):
+	@property
+	def account(self) -> str:
+		"""Full ``user:account_id`` JMAP handle, rebuilt from the selected user and account ID."""
+
+		return f"{self.user}:{self.account_id}"
+
 	def db_insert(self, *args, **kwargs) -> None:
 		self.id = add_address_book(
 			self.account,
@@ -52,6 +59,8 @@ class AddressBook(Document):
 		filters = parse_filters(filters)
 		id = filters.get("id")
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if not account:
 			frappe.msgprint(_("Please select an account to view address books."), alert=True)
@@ -73,6 +82,8 @@ class AddressBook(Document):
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if account:
 			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
@@ -119,7 +130,7 @@ def bulk_delete(names: str | list[str]) -> None:
 
 @frappe.whitelist()
 def add_address_book(
-	account: str,
+	account_id: str,
 	name: str,
 	description: str | None = None,
 	sort_order: int = 0,
@@ -127,6 +138,8 @@ def add_address_book(
 	subscribed: bool = True,
 ) -> str:
 	"""Adds a address book for the given account with the specified parameters."""
+
+	account = resolve_account_handle(account_id)
 
 	has_permission_for_user(parse_account(account)[0])
 
@@ -140,7 +153,7 @@ def add_address_book(
 		"is_subscribed": subscribed,
 	}
 
-	service = get_address_book_service(account)
+	service = get_address_book_service(*parse_account(account))
 	response = service.create([address_book])
 
 	title = _("Address Book Creation Error")
@@ -158,7 +171,7 @@ def get_address_book(account: str, id: str, raise_exception: bool = True) -> dic
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_address_book_service(account)
+	service = get_address_book_service(*parse_account(account))
 	if address_books := service.get([id]):
 		return format_address_book(account, address_books[0])
 
@@ -194,7 +207,7 @@ def update_address_book(
 		"is_subscribed": subscribed,
 	}
 
-	service = get_address_book_service(account)
+	service = get_address_book_service(*parse_account(account))
 	response = service.update([address_book])
 
 	title = _("Address Book Update Error")
@@ -206,12 +219,14 @@ def update_address_book(
 
 
 @frappe.whitelist()
-def delete_address_books(account: str, ids: list[str]) -> None:
+def delete_address_books(account_id: str, ids: list[str]) -> None:
 	"""Deletes address books for the given account and list of address book IDs."""
+
+	account = resolve_account_handle(account_id)
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_address_book_service(account)
+	service = get_address_book_service(*parse_account(account))
 	response = service.delete(ids, remove_contents=True)
 
 	if response.get("notDestroyed"):
@@ -230,7 +245,7 @@ def fetch_address_books(account: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_address_book_service(account)
+	service = get_address_book_service(*parse_account(account))
 	address_books = service.get()
 	formatted_address_books = [format_address_book(account, book) for book in address_books]
 	sorted_address_books = sorted(formatted_address_books, key=lambda x: x["sort_order"])
@@ -250,7 +265,8 @@ def format_address_book(account: str, address_book: dict) -> dict:
 
 	return {
 		"name": f"{account}|{address_book['id']}",
-		"account": account,
+		"account_id": parse_account(account)[1],
+		"user": parse_account(account)[0],
 		"id": address_book["id"],
 		"_name": address_book["name"],
 		"sort_order": sort_order,

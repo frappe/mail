@@ -111,7 +111,7 @@ def fetch_event_notifications(
 
 	notifications = []
 
-	service = get_calendar_event_notification_service(account)
+	service = get_calendar_event_notification_service(*parse_account(account))
 	data = service.query(filter, position, limit, sort)
 
 	ids = data.get("ids", [])
@@ -128,7 +128,7 @@ def get_event_notifications(account: str, ids: list[str]) -> list[dict]:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_calendar_event_notification_service(account)
+	service = get_calendar_event_notification_service(*parse_account(account))
 
 	notifications = {}
 	for notification in service.get(ids):
@@ -144,7 +144,7 @@ def delete_event_notifications(account: str, ids: list[str]) -> None:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_calendar_event_notification_service(account)
+	service = get_calendar_event_notification_service(*parse_account(account))
 	response = service.delete(ids)
 
 	if response.get("notDestroyed"):

@@ -4,11 +4,6 @@
 frappe.ui.form.on('Account Settings', {
 	refresh(frm) {
 		frm.trigger('add_actions')
-		frm.trigger('set_account_options')
-	},
-
-	user(frm) {
-		frm.trigger('set_account_options')
 	},
 
 	add_actions(frm) {
@@ -56,26 +51,6 @@ frappe.ui.form.on('Account Settings', {
 				__('Clear Cache'),
 			)
 		})
-	},
-
-	set_account_options(frm) {
-		if (frm.doc.user) {
-			frappe.call({
-				method: 'mail.jmap.get_user_accounts',
-				args: {
-					user: frm.doc.user,
-				},
-				callback: (r) => {
-					if (r.message) {
-						frm.set_df_property('account', 'options', r.message)
-						frm.refresh_field('account')
-					}
-				},
-			})
-		} else {
-			frm.set_df_property('account', 'options', [])
-			frm.refresh_field('account')
-		}
 	},
 
 	run_cache_clear_action(frm, action) {

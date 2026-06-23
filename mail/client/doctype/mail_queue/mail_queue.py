@@ -40,6 +40,15 @@ from mail.utils.validation import has_permission_for_user
 
 
 class MailQueue(Document):
+	@property
+	def account(self) -> str:
+		"""The full `user:account_id` JMAP handle.
+
+		`user` provides the credentials used to authenticate with JMAP, while `account_id`
+		is the account this message is sent from."""
+
+		return f"{self.user}:{self.account_id}"
+
 	@staticmethod
 	def clear_old_logs(days: int = 3) -> None:
 		MQ = frappe.qb.DocType("Mail Queue")
@@ -90,7 +99,9 @@ class MailQueue(Document):
 		kwargs = frappe._dict(kwargs)
 
 		doc = frappe.new_doc("Mail Queue")
-		doc.account = kwargs.account
+		# `account` is the "user:account_id" handle; store the credentials user and the bare
+		# account id separately (the full handle is exposed via the `account` property).
+		doc.user, doc.account_id = parse_account(kwargs.account)
 		doc.from_name = kwargs.from_name
 		doc.from_email = kwargs.from_email
 		doc.subject = kwargs.subject
@@ -150,7 +161,7 @@ class MailQueue(Document):
 		identity = {}
 
 		if self.from_email:
-			for i in get_identities(self.account):
+			for i in get_identities(*parse_account(self.account)):
 				if self.from_email.lower() == i.get("email").lower():
 					identity = i
 					break
@@ -267,9 +278,6 @@ class MailQueue(Document):
 			self.validate_in_reply_to()
 			self.validate_in_reply_to_id()
 
-	def before_insert(self) -> None:
-		self.user = parse_account(self.account)[0]
-
 	def after_insert(self) -> None:
 		if self.delivery_mode == "Immediate":
 			self._process()
@@ -358,12 +366,11 @@ class MailQueue(Document):
 		if self.save_as_draft or self.destroy_after_submit:
 			return
 
+		account_id = self.account_id
 		if self.newsletter:
-			if frappe.db.get_value(
-				"Account Settings", {"account": self.account}, "destroy_newsletter_after_submit"
-			):
+			if frappe.db.get_value("Account Settings", account_id, "destroy_newsletter_after_submit"):
 				self.destroy_after_submit = 1
-		elif frappe.db.get_value("Account Settings", {"account": self.account}, "destroy_email_after_submit"):
+		elif frappe.db.get_value("Account Settings", account_id, "destroy_email_after_submit"):
 			self.destroy_after_submit = 1
 
 	def validate_delivery_mode(self) -> None:
@@ -542,7 +549,7 @@ class MailQueue(Document):
 
 		if self.in_reply_to and not self.in_reply_to_id:
 			try:
-				service = get_email_service(self.account)
+				service = get_email_service(*parse_account(self.account))
 				result = service.query({"header": ["Message-ID", self.in_reply_to]})
 				if ids := result["ids"]:
 					self.in_reply_to_id = ids[0]
@@ -579,8 +586,8 @@ class MailQueue(Document):
 
 		try:
 			connection = get_jmap_connection(self.user)
-			email_service = EmailService(self.account, connection)
-			mailbox_service = MailboxService(self.account, connection)
+			email_service = EmailService(self.account_id, connection)
+			mailbox_service = MailboxService(self.account_id, connection)
 
 			draft_mailbox_id = mailbox_service.get_mailbox_id_by_role(
 				"drafts", create_if_not_exists=True, raise_exception=True
@@ -783,7 +790,7 @@ def process_pending_emails(mails: list[str]) -> None:
 	total_count = len(mails)
 
 	for mail in mails:
-		doc: "MailQueue" = frappe.get_doc("Mail Queue", mail)
+		doc: MailQueue = frappe.get_doc("Mail Queue", mail)
 		doc._process()
 
 		if doc.status in ["Failed", "Failed to Draft", "Failed to Submit"]:
@@ -877,6 +884,4 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if doc.doctype != "Mail Queue":
 		return False
 
-	user = doc.user or parse_account(doc.account)[0]
-
-	return has_permission_for_user(user, raise_exception=False)
+	return has_permission_for_user(doc.user, raise_exception=False)

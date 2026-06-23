@@ -142,23 +142,35 @@ export const useBlockSender = () => {
 
 	const blockResource = createResource({
 		url: 'mail.api.mail.block_email_addresses',
-		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
+		makeParams: ({ emails }: { emails: string[] }) => ({
+			account_id: store.accountId,
+			emails,
+		}),
 		onSuccess: () => blockedAddresses.reload(),
 	})
 
 	const junkResource = createResource({
 		url: 'mail.api.mail.junk_senders',
-		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
+		makeParams: ({ emails }: { emails: string[] }) => ({
+			account_id: store.accountId,
+			emails,
+		}),
 	})
 
 	const unjunkResource = createResource({
 		url: 'mail.api.mail.unjunk_senders',
-		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
+		makeParams: ({ emails }: { emails: string[] }) => ({
+			account_id: store.accountId,
+			emails,
+		}),
 	})
 
 	const unblockResource = createResource({
 		url: 'mail.api.mail.unblock_email_addresses',
-		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
+		makeParams: ({ emails }: { emails: string[] }) => ({
+			account_id: store.accountId,
+			emails,
+		}),
 		onSuccess: () => blockedAddresses.reload(),
 	})
 

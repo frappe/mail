@@ -94,7 +94,7 @@ import { Button, ErrorMessage, FormControl, Switch, createResource } from 'frapp
 import { getAttachmentOptions, getReadStatusOptions } from '@/constants'
 import { userStore } from '@/stores/user'
 
-const { account, mailboxes } = userStore()
+const { accountId, mailboxes } = userStore()
 
 const user = inject('$user')
 const socket = inject('$socket')
@@ -138,7 +138,7 @@ const createMailExport = createResource({
 				.map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
 				.filter(([, v]) => Boolean(v)),
 		)
-		return { account, ...mailExport, filter: cleanedFilter }
+		return { account_id: accountId, ...mailExport, filter: cleanedFilter }
 	},
 	onSuccess: () => ongoingExport.reload(),
 })
