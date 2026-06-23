@@ -161,7 +161,7 @@ class MailQueue(Document):
 		identity = {}
 
 		if self.from_email:
-			for i in get_identities(self.account):
+			for i in get_identities(*parse_account(self.account)):
 				if self.from_email.lower() == i.get("email").lower():
 					identity = i
 					break
@@ -549,7 +549,7 @@ class MailQueue(Document):
 
 		if self.in_reply_to and not self.in_reply_to_id:
 			try:
-				service = get_email_service(self.account)
+				service = get_email_service(*parse_account(self.account))
 				result = service.query({"header": ["Message-ID", self.in_reply_to]})
 				if ids := result["ids"]:
 					self.in_reply_to_id = ids[0]
@@ -586,8 +586,8 @@ class MailQueue(Document):
 
 		try:
 			connection = get_jmap_connection(self.user)
-			email_service = EmailService(self.account, connection)
-			mailbox_service = MailboxService(self.account, connection)
+			email_service = EmailService(self.account_id, connection)
+			mailbox_service = MailboxService(self.account_id, connection)
 
 			draft_mailbox_id = mailbox_service.get_mailbox_id_by_role(
 				"drafts", create_if_not_exists=True, raise_exception=True

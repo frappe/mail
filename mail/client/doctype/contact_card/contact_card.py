@@ -253,7 +253,7 @@ def add_contact_card(
 		"kind": kind or "individual",
 	}
 
-	service = get_contact_card_service(account)
+	service = get_contact_card_service(*parse_account(account))
 	response = service.create([contact_card])
 
 	title = _("Contact Card Creation Error")
@@ -271,7 +271,7 @@ def bulk_add_contact_cards(account: str, contact_cards: list[dict], raise_except
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_contact_card_service(account)
+	service = get_contact_card_service(*parse_account(account))
 
 	for card in contact_cards:
 		if not card.get("creation_id"):
@@ -299,7 +299,7 @@ def fetch_contact_cards(
 
 	contact_cards = []
 
-	service = get_contact_card_service(account)
+	service = get_contact_card_service(*parse_account(account))
 	data = service.query(filter, position, limit, sort)
 
 	ids = data.get("ids", [])
@@ -327,7 +327,7 @@ def get_contact_cards(account: str, ids: list[str]) -> list[dict]:
 			ids_to_fetch.append(id)
 
 	if ids_to_fetch:
-		service = get_contact_card_service(account)
+		service = get_contact_card_service(*parse_account(account))
 		cards = service.get(ids_to_fetch)
 		address_book_map = {ab["id"]: ab["name"] for ab in service.address_books}
 
@@ -368,7 +368,7 @@ def update_contact_card(
 		"kind": kind or "individual",
 	}
 
-	service = get_contact_card_service(account)
+	service = get_contact_card_service(*parse_account(account))
 	response = service.update([contact_card])
 
 	title = _("Contact Card Update Error")
@@ -400,7 +400,7 @@ def contact_card_update_address_books(
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_contact_card_service(account)
+	service = get_contact_card_service(*parse_account(account))
 	response = service.update_address_book_ids(
 		ids, add_address_book_id, remove_address_book_id, move_to_address_book_id
 	)
@@ -470,7 +470,7 @@ def delete_contact_cards(account_id: str, ids: list[str]) -> None:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_contact_card_service(account)
+	service = get_contact_card_service(*parse_account(account))
 	service.delete(ids)
 	_remove_cached_contact_cards(account, ids)
 

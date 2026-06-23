@@ -82,7 +82,7 @@ def get_vacation_response(account_id: str) -> dict:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_vacation_response_service(account)
+	service = get_vacation_response_service(*parse_account(account))
 	vc = service.get()
 	return format_vacation_response(account, vc)
 
@@ -115,7 +115,7 @@ def update_vacation_response(
 
 	current_active_sieve_script_id = get_active_sieve_script_id(account)
 
-	service = get_vacation_response_service(account)
+	service = get_vacation_response_service(*parse_account(account))
 	previous_vacation_response = service.get()
 	vacation_update_result = service.update(
 		{

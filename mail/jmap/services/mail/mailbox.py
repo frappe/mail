@@ -120,7 +120,7 @@ class MailboxService(MailService):
 			if raise_exception:
 				raise ValueError(f"Failed to create mailbox with role '{role}'")
 
-		self.invalidate_cache(self.account, key="mailboxes")
+		self.invalidate_cache(self.account_id, key="mailboxes")
 
 		return find_id(role)
 

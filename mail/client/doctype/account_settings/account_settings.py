@@ -59,7 +59,7 @@ class AccountSettings(Document):
 			return None
 
 		try:
-			return get_core_service(self.account)
+			return get_core_service(*parse_account(self.account))
 		except Exception:
 			frappe.msgprint(f"Error getting JMAP core service for account {self.name}")
 			return None
@@ -137,14 +137,14 @@ class AccountSettings(Document):
 		"""Clear all cached JMAP identities for the current account."""
 
 		if self.has_clear_cache_permission():
-			invalidate_jmap_identities_cache(self.account)
+			invalidate_jmap_identities_cache(parse_account(self.account)[1])
 
 	@frappe.whitelist()
 	def clear_cached_jmap_mailboxes(self) -> None:
 		"""Clear all cached JMAP mailboxes for the current account."""
 
 		if self.has_clear_cache_permission():
-			invalidate_jmap_mailboxes_cache(self.account)
+			invalidate_jmap_mailboxes_cache(parse_account(self.account)[1])
 
 	@frappe.whitelist()
 	def clear_cached_blobs(self) -> None:
@@ -292,7 +292,7 @@ def create_archive_mailbox(account: str) -> None:
 	"""Create the archive mailbox for the account if it does not already exist."""
 
 	try:
-		get_mailbox_id_by_role(account, "archive", create_if_not_exists=True)
+		get_mailbox_id_by_role(*parse_account(account), "archive", create_if_not_exists=True)
 
 	except Exception:
 		log_error(

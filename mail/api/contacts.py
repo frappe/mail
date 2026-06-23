@@ -108,7 +108,7 @@ def create_contacts_if_not_exists(account: str, recipients: list[dict] | str) ->
 	for email in new_emails:
 		contact_card = {
 			"account": account,
-			"address_book_ids": [get_default_address_book_id(account)],
+			"address_book_ids": [get_default_address_book_id(*parse_account(account))],
 			"full_name": extract_name_from_email(email),
 			"kind": "Individual",
 			"emails": [{"address": email, "type": "Personal"}],

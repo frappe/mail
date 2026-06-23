@@ -175,7 +175,7 @@ def add_identity(
 		"html_signature": html_signature,
 	}
 
-	service = get_identity_service(account)
+	service = get_identity_service(*parse_account(account))
 	response = service.create([identity])
 
 	title = _("Identity Creation Error")
@@ -193,7 +193,7 @@ def get_identity(account: str, id: str, raise_exception: bool = True) -> dict | 
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_identity_service(account)
+	service = get_identity_service(*parse_account(account))
 	if identities := service.get([id]):
 		return format_identity(account, identities[0])
 
@@ -227,7 +227,7 @@ def update_identity(
 		"html_signature": html_signature,
 	}
 
-	service = get_identity_service(account)
+	service = get_identity_service(*parse_account(account))
 	response = service.update([identity])
 
 	if not response.get("updated"):
@@ -244,7 +244,7 @@ def delete_identities(account: str, ids: list[str]) -> None:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_identity_service(account, ignore_permissions=True)
+	service = get_identity_service(*parse_account(account), ignore_permissions=True)
 	response = service.delete(ids)
 
 	if response.get("notDestroyed"):
@@ -271,7 +271,7 @@ def fetch_identities(account: str, page: int = 1, limit: int = 10) -> list:
 				)
 			)
 
-	service = get_identity_service(account, ignore_permissions=True)
+	service = get_identity_service(*parse_account(account), ignore_permissions=True)
 	identities = service.get()
 
 	formatted_identities = [format_identity(account, identity) for identity in identities]

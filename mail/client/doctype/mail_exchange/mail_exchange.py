@@ -35,7 +35,7 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
-from mail.jmap import get_email_service
+from mail.jmap import get_email_service, parse_account
 from mail.jmap.services.mail.email import EmailService
 from mail.utils import (
 	compress_directory,
@@ -725,7 +725,7 @@ class MailExchange(Document):
 				extract_compressed_file(import_file, base_dir)
 			logger.debug("import-source-prepared", base_dir=base_dir)
 
-			service = get_email_service(self.account)
+			service = get_email_service(*parse_account(self.account))
 
 			mailbox_map = {}
 			if self.import_format == "maildir-nested":
@@ -772,7 +772,7 @@ class MailExchange(Document):
 
 		kwargs = {}
 		try:
-			service = get_email_service(self.account)
+			service = get_email_service(*parse_account(self.account))
 			total = service.query(self.export_filter_dict, limit=1)["total"]
 			limit = min(total, cint(self.export_limit or total))
 			logger.info("export-query-resolved", total=total, limit=limit, max_export=self.max_export)

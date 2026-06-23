@@ -88,7 +88,7 @@ def get_quota(account: str, id: str, raise_exception: bool = True) -> dict | Non
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_quota_service(account)
+	service = get_quota_service(*parse_account(account))
 
 	if quotas := service.get([id]):
 		return format_quota(account, quotas[0])
@@ -106,7 +106,7 @@ def fetch_quotas(account: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_quota_service(account)
+	service = get_quota_service(*parse_account(account))
 	quotas = service.get()
 	formatted_quotas = [format_quota(account, quota) for quota in quotas]
 	frappe.cache.set_value(_get_total_cache_key(account), len(quotas), expires_in_sec=600)

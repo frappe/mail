@@ -118,7 +118,7 @@ class SieveScript(Document):
 			frappe.throw(_("Not allowed to create automation script."))
 
 		creation_id = str(uuid7())
-		service = get_sieve_script_service(account)
+		service = get_sieve_script_service(*parse_account(account))
 		sieve_script = {
 			"creation_id": creation_id,
 			"name": name,
@@ -149,7 +149,7 @@ class SieveScript(Document):
 
 		scripts = []
 
-		service = get_sieve_script_service(account)
+		service = get_sieve_script_service(*parse_account(account))
 		data = service.query(filter, position, limit)
 
 		ids = data.get("ids", [])
@@ -167,7 +167,7 @@ class SieveScript(Document):
 
 		sieve_scripts = {}
 
-		service = get_sieve_script_service(account)
+		service = get_sieve_script_service(*parse_account(account))
 		scripts = service.get(ids)
 
 		if download_content:
@@ -192,7 +192,7 @@ class SieveScript(Document):
 
 		has_permission_for_user(parse_account(account)[0])
 
-		service = get_sieve_script_service(account)
+		service = get_sieve_script_service(*parse_account(account))
 		response = service.validate(content)
 
 		if error := response.get("error"):
@@ -217,7 +217,7 @@ class SieveScript(Document):
 
 		has_permission_for_user(parse_account(account)[0])
 
-		service = get_sieve_script_service(account)
+		service = get_sieve_script_service(*parse_account(account))
 		scripts = service.get([id])
 
 		if not scripts:
@@ -244,7 +244,7 @@ class SieveScript(Document):
 
 		has_permission_for_user(parse_account(account)[0])
 
-		service = get_sieve_script_service(account)
+		service = get_sieve_script_service(*parse_account(account))
 		response = service.delete(ids)
 
 		if response.get("notDestroyed"):
@@ -301,7 +301,7 @@ def bulk_delete(names: str | list[str]) -> None:
 def get_active_sieve_script_id(account: str) -> str | None:
 	"""Returns the ID of the currently active sieve script for the given account, if any."""
 
-	service = get_sieve_script_service(account)
+	service = get_sieve_script_service(*parse_account(account))
 	query_result = service.query({"isActive": True})
 
 	if query_result.get("ids") and len(query_result["ids"]) > 0:

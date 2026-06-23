@@ -153,7 +153,7 @@ def add_address_book(
 		"is_subscribed": subscribed,
 	}
 
-	service = get_address_book_service(account)
+	service = get_address_book_service(*parse_account(account))
 	response = service.create([address_book])
 
 	title = _("Address Book Creation Error")
@@ -171,7 +171,7 @@ def get_address_book(account: str, id: str, raise_exception: bool = True) -> dic
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_address_book_service(account)
+	service = get_address_book_service(*parse_account(account))
 	if address_books := service.get([id]):
 		return format_address_book(account, address_books[0])
 
@@ -207,7 +207,7 @@ def update_address_book(
 		"is_subscribed": subscribed,
 	}
 
-	service = get_address_book_service(account)
+	service = get_address_book_service(*parse_account(account))
 	response = service.update([address_book])
 
 	title = _("Address Book Update Error")
@@ -226,7 +226,7 @@ def delete_address_books(account_id: str, ids: list[str]) -> None:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_address_book_service(account)
+	service = get_address_book_service(*parse_account(account))
 	response = service.delete(ids, remove_contents=True)
 
 	if response.get("notDestroyed"):
@@ -245,7 +245,7 @@ def fetch_address_books(account: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_address_book_service(account)
+	service = get_address_book_service(*parse_account(account))
 	address_books = service.get()
 	formatted_address_books = [format_address_book(account, book) for book in address_books]
 	sorted_address_books = sorted(formatted_address_books, key=lambda x: x["sort_order"])

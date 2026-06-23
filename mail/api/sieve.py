@@ -11,6 +11,7 @@ from mail.jmap import (
 	get_mailbox_id_by_role,
 	get_mailbox_name_by_id,
 	get_mailboxes,
+	parse_account,
 )
 from mail.utils.user import get_session_account
 
@@ -215,15 +216,15 @@ def extract_rules_from_script(content: str, mailbox_name: str) -> dict | None:
 def get_child_mailbox_names(account: str, parent_name: str) -> list[str]:
 	"""Return the names of all direct child mailboxes for the given parent."""
 
-	parent_id = get_mailbox_id_by_name(account, parent_name)
-	mailboxes = get_mailboxes(account)
+	parent_id = get_mailbox_id_by_name(*parse_account(account), parent_name)
+	mailboxes = get_mailboxes(*parse_account(account))
 	return [mailbox["_name"] for mailbox in mailboxes if mailbox.get("parent_id") == parent_id]
 
 
 def get_mailbox_folder_path(account: str, name: str, raise_exception: bool = False) -> str | None:
 	"""Return the full slash-separated folder path for a mailbox."""
 
-	mailboxes = {mailbox["_name"]: mailbox for mailbox in get_mailboxes(account)}
+	mailboxes = {mailbox["_name"]: mailbox for mailbox in get_mailboxes(*parse_account(account))}
 	if name not in mailboxes:
 		if raise_exception:
 			frappe.throw(_("Mailbox with name '{0}' not found.").format(name))
@@ -238,7 +239,7 @@ def get_mailbox_folder_path(account: str, name: str, raise_exception: bool = Fal
 		if not parent_id:
 			break
 
-		parent_name = get_mailbox_name_by_id(account, parent_id)
+		parent_name = get_mailbox_name_by_id(*parse_account(account), parent_id)
 		current = mailboxes.get(parent_name)
 		if current is None:
 			if raise_exception:
@@ -329,8 +330,10 @@ def update_sieve_script_for_blocked_emails(account: str) -> None:
 def get_junk_folder_path(account: str) -> str:
 	"""Return the folder path of the account's Junk mailbox (for sieve `fileinto`)."""
 
-	junk_id = get_mailbox_id_by_role(account, "junk", create_if_not_exists=True, raise_exception=True)
-	junk_name = get_mailbox_name_by_id(account, junk_id, raise_exception=True)
+	junk_id = get_mailbox_id_by_role(
+		*parse_account(account), "junk", create_if_not_exists=True, raise_exception=True
+	)
+	junk_name = get_mailbox_name_by_id(*parse_account(account), junk_id, raise_exception=True)
 	return get_mailbox_folder_path(account, junk_name, raise_exception=True)
 
 

@@ -255,11 +255,9 @@ def create_mail_import(
 ) -> None:
 	"""Creates mail exchange of operation import"""
 
-	account = get_session_account(account_id)
-
 	doc = frappe.new_doc("Mail Exchange")
 	doc.user = frappe.session.user
-	doc.account = account
+	doc.account_id = account_id
 	doc.operation = "Import"
 	doc.import_format = format
 	doc.import_file = file
@@ -280,11 +278,9 @@ def create_mail_export(
 ) -> None:
 	"""Creates mail exchange of operation export"""
 
-	account = get_session_account(account_id)
-
 	doc = frappe.new_doc("Mail Exchange")
 	doc.user = frappe.session.user
-	doc.account = account
+	doc.account_id = account_id
 	doc.operation = "Export"
 	doc.export_format = format
 	doc.export_archive_type = archive_type

@@ -137,7 +137,7 @@ def add_mailbox(
 		"is_subscribed": subscribed,
 	}
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	response = service.create([mailbox])
 
 	title = _("Mailbox Creation Error")
@@ -156,7 +156,7 @@ def get_mailbox(account: str, id: str, raise_exception: bool = False) -> dict | 
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	if mailboxes := service.get([id]):
 		return format_mailbox(account, mailboxes[0])
 
@@ -194,7 +194,7 @@ def update_mailbox(
 		"is_subscribed": subscribed,
 	}
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	response = service.update([mailbox])
 
 	if not response.get("updated"):
@@ -212,7 +212,7 @@ def delete_mailboxes(account: str, ids: list[str], remove_emails: bool = True) -
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	response = service.delete(ids, remove_emails=remove_emails)
 
 	if response.get("notDestroyed"):
@@ -231,7 +231,7 @@ def fetch_mailboxes(account: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	mailboxes = service.get()
 	formatted_mailboxes = [format_mailbox(account, mailbox) for mailbox in mailboxes]
 	sorted_mailboxes = sorted(
@@ -326,7 +326,7 @@ def update_mailbox_position(
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	mailboxes = sorted(
 		service.get(), key=lambda m: (m["sortOrder"], get_sort_order(m["role"]), m["name"], m["id"])
 	)

@@ -166,7 +166,7 @@ def get_account_emails(account: str) -> list[str]:
 	from mail.jmap import get_identities
 
 	emails = []
-	for identity in get_identities(account):
+	for identity in get_identities(*parse_account(account)):
 		emails.append(identity["email"])
 
 	return emails

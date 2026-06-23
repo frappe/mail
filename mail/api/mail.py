@@ -150,7 +150,9 @@ def add_user_images_to_emails(account: str, mails: list[dict], is_thread: bool =
 
 
 @frappe.whitelist()
-def get_threads(account_id: str, mailbox: str, limit: int, start: int = 0, filter_by: str | None = None) -> list:
+def get_threads(
+	account_id: str, mailbox: str, limit: int, start: int = 0, filter_by: str | None = None
+) -> list:
 	"""Returns a page of threads from the selected mailbox for the account."""
 
 	account = get_session_account(account_id)
@@ -159,8 +161,12 @@ def get_threads(account_id: str, mailbox: str, limit: int, start: int = 0, filte
 		conditions = [
 			{
 				"inMailboxOtherThan": [
-					get_mailbox_id_by_role(account, "junk", create_if_not_exists=True, raise_exception=True),
-					get_mailbox_id_by_role(account, "trash", create_if_not_exists=True, raise_exception=True),
+					get_mailbox_id_by_role(
+						*parse_account(account), "junk", create_if_not_exists=True, raise_exception=True
+					),
+					get_mailbox_id_by_role(
+						*parse_account(account), "trash", create_if_not_exists=True, raise_exception=True
+					),
 				]
 			},
 			{"someInThreadHaveKeyword": "$flagged"},
@@ -183,7 +189,7 @@ def get_threads(account_id: str, mailbox: str, limit: int, start: int = 0, filte
 
 	conversations = fetch_threads(account, filter, start, limit)
 
-	sent_mailbox = get_mailbox_id_by_role(account, "sent")
+	sent_mailbox = get_mailbox_id_by_role(*parse_account(account), "sent")
 
 	threads = []
 	for conversation in conversations.values():
@@ -760,7 +766,7 @@ def get_email_suggestions(account: str, query: str, limit: int = 5) -> list[str]
 		return []
 
 	has_permission_for_user(frappe.session.user)
-	service = get_email_service(account)
+	service = get_email_service(*parse_account(account))
 	return service.get_email_suggestions(query, limit)
 
 

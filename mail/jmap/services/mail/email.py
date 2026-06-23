@@ -29,7 +29,7 @@ class EmailService(MailService):
 		draft_calls, draft_refs = self._create(emails, call_id_gen)
 		method_calls.extend(draft_calls)
 
-		submission_service = EmailSubmissionService(self.account, self.connection)
+		submission_service = EmailSubmissionService(self.account_id, self.connection)
 		submission_calls = submission_service._create(emails, draft_refs, call_id_gen)
 		method_calls.extend(submission_calls)
 
@@ -357,7 +357,7 @@ class EmailService(MailService):
 		method_calls = []
 		draft_refs = {}
 
-		mailbox_service = MailboxService(self.account, self.connection)
+		mailbox_service = MailboxService(self.account_id, self.connection)
 		draft_mailbox_id = mailbox_service.get_mailbox_id_by_role(
 			"drafts", create_if_not_exists=True, raise_exception=True
 		)
