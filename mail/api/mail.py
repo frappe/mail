@@ -1014,7 +1014,11 @@ def get_screening_sender_mails(account: str, from_email: str) -> list[dict]:
 	if not ids:
 		return []
 
+	# The JMAP `from` filter is a tokenized text match, so it can also return other senders whose From
+	# header shares tokens. Keep only exact-address matches (mirrors how get_screening_senders groups).
+	target = from_email.lower()
 	mails = [serialize_mail(m) for m in get_messages(account, ids)]
+	mails = [m for m in mails if (m.get("from_email") or "").lower() == target]
 	mails.sort(key=lambda m: m["received_at"])
 	return add_user_images_to_emails(account, mails, is_thread=True)
 
