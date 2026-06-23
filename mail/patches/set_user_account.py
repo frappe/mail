@@ -5,13 +5,12 @@ from frappe.query_builder import Case
 from mail.utils import log_error
 from mail.utils.user import get_user_personal_account
 
-# Blocked Email Address was reshaped to be shared per account_id (its `user`/`account`
-# columns were dropped), so it is no longer backfilled here.
+# Blocked Email Address and Mailbox Settings were reshaped to be shared per account_id
+# (their `user`/`account` columns were dropped), so they are no longer backfilled here.
 DOCTYPES = [
 	"Mail Exchange",
 	"Mail Queue",
 	"Mail Sync History",
-	"Mailbox Settings",
 ]
 
 

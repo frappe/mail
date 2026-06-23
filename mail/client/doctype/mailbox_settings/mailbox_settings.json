@@ -5,8 +5,7 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_e10u",
-  "user",
-  "account",
+  "account_id",
   "column_break_zgrx",
   "mailbox_id",
   "section_break_qhyu",
@@ -19,6 +18,18 @@
   {
    "fieldname": "section_break_e10u",
    "fieldtype": "Section Break"
+  },
+  {
+   "description": "The shared JMAP account ID these mailbox settings belong to. They are the same for everyone with access to the account.",
+   "fieldname": "account_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account ID",
+   "no_copy": 1,
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
   },
   {
    "fieldname": "column_break_zgrx",
@@ -64,36 +75,12 @@
    "fieldtype": "Check",
    "label": "Disable Push Notification",
    "search_index": 1
-  },
-  {
-   "description": "The account to whom these mailbox settings apply.",
-   "fieldname": "account",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
-   "description": "The user to whom these mailbox settings apply.",
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "no_copy": 1,
-   "options": "User",
-   "search_index": 1,
-   "set_only_once": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-17 15:15:30.171327",
+ "modified": "2026-06-23 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox Settings",

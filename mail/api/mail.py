@@ -63,7 +63,10 @@ def get_mailboxes(account: str) -> list[dict]:
 
 	mailbox_settings = frappe.db.get_all(
 		"Mailbox Settings",
-		filters={"account": account, "mailbox_id": ["in", [m["id"] for m in mailboxes]]},
+		filters={
+			"account_id": parse_account(account)[1],
+			"mailbox_id": ["in", [m["id"] for m in mailboxes]],
+		},
 		fields=["mailbox_id", "icon", "color", "disable_push_notification"],
 	)
 
@@ -786,7 +789,7 @@ def delete_mailbox(account: str, id: str, name: str) -> None:
 
 	delete_mailboxes(account, [id])
 	update_sieve_script_for_mailbox(account, name)
-	frappe.db.delete("Mailbox Settings", {"account": account, "mailbox_id": id})
+	frappe.db.delete("Mailbox Settings", {"account_id": parse_account(account)[1], "mailbox_id": id})
 
 
 @frappe.whitelist()

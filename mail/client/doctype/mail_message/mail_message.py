@@ -1294,7 +1294,7 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 				disabled_mailboxes = set(
 					frappe.db.get_all(
 						"Mailbox Settings",
-						{"account": account, "disable_push_notification": 1},
+						{"account_id": account_id, "disable_push_notification": 1},
 						pluck="mailbox_id",
 					)
 				) | {
