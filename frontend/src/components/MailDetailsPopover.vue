@@ -2,7 +2,7 @@
 	<Popover>
 		<template #target="{ togglePopover }">
 			<ChevronDown
-				class="text-ink-gray-6 hover:bg-surface-gray-2 h-3.5 w-3.5 cursor-pointer rounded-sm"
+				class="text-ink-gray-5 hover:bg-surface-gray-2 h-3.5 w-3.5 cursor-pointer rounded-sm"
 				@click.stop="togglePopover()"
 			/>
 		</template>

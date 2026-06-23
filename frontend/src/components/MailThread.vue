@@ -148,14 +148,14 @@
 													v-if="mail.from_name && !isMobile"
 													class="text-ink-gray-5 truncate"
 												>
-													{{ `<${mail.from_email}>` }}
+													{{ mail.from_email }}
 												</span>
 												<template
 													v-if="!(isCollapsed(mail) || mail.draft)"
 												>
 													<ChevronDown
 														v-if="isMobile"
-														class="text-ink-gray-6 h-3.5 w-3.5 rounded-sm transition-transform duration-200"
+														class="text-ink-gray-5 h-3.5 w-3.5 rounded-sm transition-transform duration-200"
 														:class="{
 															'rotate-180':
 																showMailDetails === mail.name,
