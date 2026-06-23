@@ -277,7 +277,7 @@ const mailboxItems = computed(
 					mailboxId: mailbox.id,
 					label: isScreener ? __('Screener') : mailbox._name,
 					icon: h(Icon, {
-						name: isScreener ? 'scan-eye' : getIcon(mailbox),
+						name: isScreener ? 'eye' : getIcon(mailbox),
 						class: FOLDER_ICON_COLOR_MAP[mailbox.color],
 					}),
 					to: isScreener
@@ -316,12 +316,15 @@ const mailboxItems = computed(
 const sidebarItems = computed(() => {
 	if (route.meta.isDashboard) return dashboardItems
 
-	// Screening is a roleless folder but belongs with the default mailboxes, not the custom ones.
+	// Screening is a roleless folder; it gets its own nameless group pinned to the top of the
+	// sidebar, separate from the default and custom mailboxes.
 	const isScreening = (item: { mailboxId?: string }) =>
 		!!store.screeningMailboxId && item.mailboxId === store.screeningMailboxId
 
+	const screenerItem = mailboxItems.value.find((item) => isScreening(item))
+
 	const defaultMailboxes = mailboxItems.value.filter(
-		(item) => mailboxes.data?.find((m) => m.id === item.mailboxId)?.role || isScreening(item),
+		(item) => mailboxes.data?.find((m) => m.id === item.mailboxId)?.role,
 	)
 	const starredItem = {
 		label: __('Starred'),
@@ -360,11 +363,14 @@ const sidebarItems = computed(() => {
 		},
 	]
 
-	return [
+	const groups = [
 		{ label: __('Default'), items: defaultItems },
 		{ label: __('Custom'), items: customItems },
 		{ label: __('People'), items: contactsItems },
 	]
+	// Screener is its own nameless group, pinned first.
+	if (screenerItem) groups.unshift({ label: '', items: [screenerItem] })
+	return groups
 })
 
 // Shortcuts
