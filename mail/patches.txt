@@ -23,3 +23,4 @@ mail.patches.backfill_blocked_email_account_id
 mail.patches.backfill_junk_email_account_id
 mail.patches.backfill_mailbox_settings_account_id
 mail.patches.backfill_mail_exchange_account_id
+mail.patches.backfill_mail_sync_history_account_id
