@@ -250,7 +250,6 @@ def serialize_thread(messages: list[dict], thread_messages: list[dict], latest: 
 
 	thread_fields = [
 		"name",
-		"account",
 		"id",
 		"thread_id",
 		"mailboxes",
