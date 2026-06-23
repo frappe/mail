@@ -38,6 +38,7 @@
 						<div
 							v-for="sender in senders.data"
 							:key="sender.from_email"
+							:data-sender-email="sender.from_email"
 							class="sm:hover:bg-surface-gray-1 flex cursor-default select-none items-stretch gap-4 border-b px-5 py-2.5"
 							:class="{
 								'!bg-surface-blue-1': openSender?.from_email === sender.from_email,
@@ -197,11 +198,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { ChevronLeft } from 'lucide-vue-next'
 import { Breadcrumbs, Button, createResource, usePageMeta } from 'frappe-ui'
 
-import { raiseToast } from '@/utils'
+import { raiseToast, shouldIgnoreKeypress } from '@/utils'
 import { useScreenSize, useSidebar } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 import HeaderActions from '@/components/HeaderActions.vue'
@@ -209,7 +210,7 @@ import NoMails from '@/components/Icons/NoMails.vue'
 import MailDate from '@/components/MailDate.vue'
 import MailThread from '@/components/MailThread.vue'
 
-import type { ScreeningSender } from '@/types'
+import type { MailboxData, ScreeningSender } from '@/types'
 
 const store = userStore()
 const { isMobile } = useScreenSize()
@@ -238,6 +239,61 @@ const senders = createResource({
 	url: 'mail.api.mail.get_screening_senders',
 	makeParams: () => ({ account: store.account }),
 	auto: true,
+})
+
+// Once a mail is open, ↑/↓ (or k/j) step to the previous/next sender and Esc closes it. Else inert.
+const handleKeydown = (e: KeyboardEvent) => {
+	if (!openSender.value || shouldIgnoreKeypress(e)) return
+	const key = e.key.toLowerCase()
+
+	if (key === 'escape') {
+		e.preventDefault()
+		closeSender()
+		return
+	}
+
+	const offset =
+		key === 'arrowup' || key === 'k' ? -1 : key === 'arrowdown' || key === 'j' ? 1 : 0
+	if (!offset) return
+
+	e.preventDefault()
+	const list = senders.data ?? []
+	const cur = list.findIndex(
+		(s: ScreeningSender) => s.from_email === openSender.value!.from_email,
+	)
+	const next = list[cur + offset]
+	if (!next) return
+
+	selectSender(next)
+	nextTick(() =>
+		document
+			.querySelector(`[data-sender-email="${next.from_email}"]`)
+			?.scrollIntoView({ block: 'nearest' }),
+	)
+}
+
+// Poll the Screening folder's count and only refetch the (heavier) sender list when it changes — the
+// same cheap-count-then-reload approach the mailbox uses, so a quiet screener isn't reloaded every tick.
+const screeningCount = () =>
+	store.mailboxes.data?.find((m: MailboxData) => m.id === store.mailboxIds.screening)
+		?.total_threads
+
+const pollForChanges = async () => {
+	const prev = screeningCount()
+	await store.mailboxes.reload()
+	if (screeningCount() !== prev) senders.reload()
+}
+
+let pollInterval: ReturnType<typeof setInterval>
+
+onMounted(() => {
+	window.addEventListener('keydown', handleKeydown)
+	pollInterval = setInterval(pollForChanges, 30000)
+})
+
+onUnmounted(() => {
+	window.removeEventListener('keydown', handleKeydown)
+	clearInterval(pollInterval)
 })
 
 usePageMeta(() => {
