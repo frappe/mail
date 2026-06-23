@@ -47,6 +47,12 @@ from mail.utils.validation import has_permission_for_user
 
 class MailMessage(Document):
 	@property
+	def account(self) -> str:
+		"""Full ``user:account_id`` JMAP handle, rebuilt from the selected user and account ID."""
+
+		return f"{self.user}:{self.account_id}"
+
+	@property
 	def to(self) -> list[dict[str, str | None]]:
 		"""Returns the recipients in the To field."""
 
@@ -200,6 +206,8 @@ class MailMessage(Document):
 
 		id = filters.get("id")
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if not account:
 			frappe.msgprint(_("Please select an account to view messages."), alert=True)
@@ -269,6 +277,8 @@ class MailMessage(Document):
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if account:
 			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
@@ -1109,7 +1119,8 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 
 	sent_at = parse_iso_datetime(message["sentAt"])
 	formatted_message = {
-		"account": account,
+		"account_id": parse_account(account)[1],
+		"user": parse_account(account)[0],
 		"sent_at": sent_at,
 		"creation": sent_at,
 		"id": message["id"],

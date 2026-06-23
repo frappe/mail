@@ -6,7 +6,7 @@
  "field_order": [
   "section_break_i7qy",
   "user",
-  "account",
+  "account_id",
   "column_break_mzms",
   "resource_type",
   "section_break_onaw",
@@ -125,15 +125,12 @@
    "read_only": 1
   },
   {
-   "description": "The account this quota belongs to.",
-   "fieldname": "account",
-   "fieldtype": "Select",
-   "in_list_view": 1,
+   "fieldname": "account_id",
+   "fieldtype": "Data",
    "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "reqd": 1,
-   "set_only_once": 1
+   "label": "Account ID",
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "description": "The user this quota belongs to.",

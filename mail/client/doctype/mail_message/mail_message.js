@@ -22,26 +22,6 @@ frappe.ui.form.on('Mail Message', {
 		}
 	},
 
-	user(frm) {
-		if (frm.doc.user) {
-			frappe.call({
-				method: 'mail.jmap.get_user_accounts',
-				args: {
-					user: frm.doc.user,
-				},
-				callback: (r) => {
-					if (r.message) {
-						frm.set_df_property('account', 'options', r.message)
-						frm.refresh_field('account')
-					}
-				},
-			})
-		} else {
-			frm.set_df_property('account', 'options', [])
-			frm.refresh_field('account')
-		}
-	},
-
 	call_doc_method(frm, method, args, freeze_message, callback) {
 		frappe.call({
 			doc: frm.doc,
@@ -110,7 +90,7 @@ frappe.ui.form.on('Mail Message', {
 		frappe.call({
 			method: 'mail.jmap.get_mailboxes_for_account',
 			args: {
-				account: frm.doc.account,
+				account: `${frm.doc.user}:${frm.doc.account_id}`,
 			},
 			freeze: true,
 			freeze_message: __('Loading Mailboxes...'),

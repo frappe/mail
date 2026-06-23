@@ -17,6 +17,12 @@ from mail.utils.validation import has_permission_for_user
 
 class Identity(Document):
 	@property
+	def account(self) -> str:
+		"""Full ``user:account_id`` JMAP handle, rebuilt from the selected user and account ID."""
+
+		return f"{self.user}:{self.account_id}"
+
+	@property
 	def _bcc(self) -> list[dict]:
 		"""Returns the BCC list in the JMAP required format."""
 
@@ -72,6 +78,8 @@ class Identity(Document):
 		filters = parse_filters(filters)
 		id = filters.get("id")
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if not account:
 			frappe.msgprint(_("Please select an account to view identities."), alert=True)
@@ -93,6 +101,8 @@ class Identity(Document):
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if account:
 			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
@@ -286,7 +296,8 @@ def format_identity(account: str, identity: dict) -> dict:
 
 	return {
 		"name": f"{account}|{identity['id']}",
-		"account": account,
+		"account_id": parse_account(account)[1],
+		"user": parse_account(account)[0],
 		"id": identity["id"],
 		"_name": identity["name"],
 		"email": identity["email"].lower(),

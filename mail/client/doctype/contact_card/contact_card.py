@@ -20,6 +20,12 @@ from mail.utils.validation import has_permission_for_user
 
 class ContactCard(Document):
 	@property
+	def account(self) -> str:
+		"""Full ``user:account_id`` JMAP handle, rebuilt from the selected user and account ID."""
+
+		return f"{self.user}:{self.account_id}"
+
+	@property
 	def address_book_ids(self) -> list[str]:
 		"""Returns a list of address book IDs associated with this contact card."""
 
@@ -134,6 +140,8 @@ class ContactCard(Document):
 
 		id = filters.get("id")
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if not account:
 			frappe.msgprint(_("Please select an account to view contact cards."), alert=True)
@@ -171,6 +179,8 @@ class ContactCard(Document):
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if account:
 			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
@@ -569,7 +579,8 @@ def format_contact_card(account: str, address_book_map: dict, contact_card: dict
 
 	return {
 		"name": f"{account}|{contact_card['id']}",
-		"account": account,
+		"account_id": parse_account(account)[1],
+		"user": parse_account(account)[0],
 		"id": contact_card["id"],
 		"uid": contact_card.get("uid"),
 		"kind": contact_card.get("kind"),

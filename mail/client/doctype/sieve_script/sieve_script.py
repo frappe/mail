@@ -15,6 +15,12 @@ from mail.utils.validation import has_permission_for_user
 
 
 class SieveScript(Document):
+	@property
+	def account(self) -> str:
+		"""Full ``user:account_id`` JMAP handle, rebuilt from the selected user and account ID."""
+
+		return f"{self.user}:{self.account_id}"
+
 	def db_insert(self, *args, **kwargs) -> None:
 		self.id = SieveScript._add_sieve_script(self.account, self._name, self.content, bool(self.active))
 		self.name = f"{self.account}|{self.id}"
@@ -48,6 +54,8 @@ class SieveScript(Document):
 		filters = parse_filters(filters)
 		id = filters.get("id")
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if not account:
 			frappe.msgprint(_("Please select an account to view the Sieve Scripts."), alert=True)
@@ -78,6 +86,8 @@ class SieveScript(Document):
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if account:
 			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
@@ -343,7 +353,8 @@ def format_sieve_script(account: str, script: dict) -> dict:
 
 	return {
 		"name": f"{account}|{script['id']}",
-		"account": account,
+		"account_id": parse_account(account)[1],
+		"user": parse_account(account)[0],
 		"id": script["id"],
 		"_name": script["name"],
 		"active": cint(script["isActive"]),

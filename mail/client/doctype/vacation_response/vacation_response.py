@@ -21,13 +21,20 @@ from mail.utils.validation import has_permission_for_user
 
 
 class VacationResponse(Document):
+	@property
+	def account(self) -> str | None:
+		"""Full ``user:account_id`` JMAP handle, rebuilt from the selected user and account ID."""
+
+		if self.get("user") and self.get("account_id"):
+			return f"{self.user}:{self.account_id}"
+
+		return None
+
 	def db_insert(self, *args, **kwargs) -> None:
 		raise NotImplementedError
 
 	@frappe.whitelist()
 	def load_from_db(self) -> "VacationResponse":
-		self.account = self.get("account")
-
 		if not self.account:
 			frappe.msgprint(_("Please select an account to view vacation response details."), alert=True)
 			return super(Document, self).__init__({"creation": today(), "modified": today()})
@@ -134,7 +141,8 @@ def format_vacation_response(account, vc: dict) -> dict:
 	local_to_date = convert_utc_to_system_timezone(get_datetime(to_date)) if to_date else None
 
 	return {
-		"account": account,
+		"account_id": parse_account(account)[1],
+		"user": parse_account(account)[0],
 		"enabled": cint(vc.get("isEnabled")),
 		"from_date": local_from_date,
 		"to_date": local_to_date,

@@ -6,7 +6,7 @@
  "field_order": [
   "section_break_bvdc",
   "user",
-  "account",
+  "account_id",
   "column_break_ksnk",
   "enabled",
   "section_break_rrca",
@@ -83,12 +83,12 @@
    "label": "HTML"
   },
   {
-   "description": "The account this vacation response belongs to.",
-   "fieldname": "account",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Account",
-   "reqd": 1
+   "fieldname": "account_id",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Account ID",
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "description": "The user this vacation response belongs to.",
