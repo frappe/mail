@@ -214,8 +214,7 @@ def get_sync_state(account: str, type: Literal["email"]) -> str | None:
 
 	from mail.client.doctype.account_settings.account_settings import get_or_create_account_settings
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	value = store.get(Entity.STATE, f"{type}_current_state")
 
 	if not value:
@@ -228,12 +227,10 @@ def update_sync_state(account: str, type: Literal["email"], state: str) -> None:
 	"""Updates the Sync State for the given account and type.
 
 	The state (and its last-update timestamp, used to throttle scheduled syncs) lives in
-	the per (user, account) data store, since the Account Settings document is now shared
-	across every user of the account.
+	the per-account data store, shared across every user of the account.
 	"""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 
 	current_state = store.get(Entity.STATE, f"{type}_current_state")
 	store.set(Entity.STATE, f"{type}_previous_state", current_state)
@@ -245,8 +242,7 @@ def update_sync_state(account: str, type: Literal["email"], state: str) -> None:
 def clear_sync_state(account: str, type: Literal["email"]) -> None:
 	"""Clear the Sync State for the given account and type."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	store.delete(Entity.STATE, f"{type}_current_state")
 	store.delete(Entity.STATE, f"{type}_previous_state")
 	store.delete(Entity.STATE, f"{type}_state_last_update")

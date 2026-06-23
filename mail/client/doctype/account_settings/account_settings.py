@@ -88,25 +88,19 @@ class AccountSettings(Document):
 	def total_cached_blobs(self) -> int:
 		"""Get the total number of cached blobs for the account."""
 
-		user, account_id = parse_account(self.account)
-		store = get_blob_store(user, account_id)
-		return store.count()
+		return get_blob_store(self.name).count()
 
 	@property
 	def total_cached_mail_messages(self) -> int:
 		"""Get the total number of cached mail messages for the account."""
 
-		user, account_id = parse_account(self.account)
-		store = get_data_store(user, account_id)
-		return store.count(Entity.EMAIL)
+		return get_data_store(self.name).count(Entity.EMAIL)
 
 	@property
 	def total_cached_contact_cards(self) -> int:
 		"""Get the total number of cached contact cards for the account."""
 
-		user, account_id = parse_account(self.account)
-		store = get_data_store(user, account_id)
-		return store.count(Entity.CONTACT_CARD)
+		return get_data_store(self.name).count(Entity.CONTACT_CARD)
 
 	def validate(self) -> None:
 		self.validate_default_outgoing_email()
@@ -159,9 +153,7 @@ class AccountSettings(Document):
 		if not self.has_clear_cache_permission():
 			return
 
-		user, account_id = parse_account(self.account)
-		store = get_blob_store(user, account_id)
-		store.delete_all()
+		get_blob_store(self.name).delete_all()
 
 	@frappe.whitelist()
 	def clear_cached_mail_messages(self) -> None:
@@ -170,9 +162,7 @@ class AccountSettings(Document):
 		if not self.has_clear_cache_permission():
 			return
 
-		user, account_id = parse_account(self.account)
-		store = get_data_store(user, account_id)
-		store.delete_all(Entity.EMAIL)
+		get_data_store(self.name).delete_all(Entity.EMAIL)
 
 	@frappe.whitelist()
 	def clear_cached_contact_cards(self) -> None:
@@ -181,9 +171,7 @@ class AccountSettings(Document):
 		if not self.has_clear_cache_permission():
 			return
 
-		user, account_id = parse_account(self.account)
-		store = get_data_store(user, account_id)
-		store.delete_all(Entity.CONTACT_CARD)
+		get_data_store(self.name).delete_all(Entity.CONTACT_CARD)
 
 	def has_clear_cache_permission(self) -> bool:
 		"""Check if the session user has permission to clear cache."""

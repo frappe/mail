@@ -265,16 +265,14 @@ def get_websocket_service(
 def invalidate_jmap_identities_cache(account: str) -> None:
 	"""Invalidates the JMAP identities cache for the specified account."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	store.delete_all(Entity.IDENTITY)
 
 
 def invalidate_jmap_mailboxes_cache(account: str) -> None:
 	"""Invalidates the JMAP mailboxes cache for the specified account."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	store.delete_all(Entity.MAILBOX)
 
 

@@ -47,10 +47,11 @@ class _EnvEntry:
 
 
 class DataStore(BaseStore):
-	"""A key-value store backed by LMDB, with one environment per ``user:account`` key.
+	"""A key-value store backed by LMDB, with one environment per ``account`` key.
 
-	LMDB natively supports concurrent multi-process access: many readers run lock-free via
-	MVCC snapshots while a single writer briefly serializes on a robust mutex (and waits
+	The store is shared by every user with access to the account. LMDB natively supports
+	concurrent multi-process access: many readers run lock-free via MVCC snapshots while a
+	single writer briefly serializes on a robust mutex (and waits
 	rather than failing). Environments are kept open and shared per process, so there is no
 	per-operation open cost and no external locking layer.
 	"""
@@ -86,7 +87,7 @@ class DataStore(BaseStore):
 		map_size: int | None = None,
 		**_legacy: Any,
 	) -> None:
-		"""Initialize the store for the given base path and ``user:account`` key.
+		"""Initialize the store for the given base path and ``account`` key.
 
 		``**_legacy`` absorbs parameters from the previous RocksDB implementation
 		(acquire_timeout, lock_timeout, max_retries, retry_delay, shard_count) so existing

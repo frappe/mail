@@ -1217,40 +1217,35 @@ def _get_total_cache_key(account: str) -> str:
 def _get_cached_messages(account: str, ids: list[str]) -> dict[str, dict | None]:
 	"""Returns a dictionary of cached messages for the provided IDs."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	return store.get_many(Entity.EMAIL, subkeys=ids)
 
 
 def _cache_messages(account: str, messages: dict[str, dict]) -> None:
 	"""Store messages in cache with the message ID as the subkey."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	store.set_many(Entity.EMAIL, items=messages)
 
 
 def _remove_cached_messages(account: str, ids: list[str]) -> None:
 	"""Remove messages from cache for the provided IDs."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	store.delete_many(Entity.EMAIL, subkeys=ids)
 
 
 def _get_cached_blobs(account: str, blob_ids: list[str]) -> dict[str, bytes | None]:
 	"""Returns a dictionary of cached blobs for the provided blob IDs."""
 
-	user, account_id = parse_account(account)
-	store = get_blob_store(user, account_id)
+	store = get_blob_store(parse_account(account)[1])
 	return store.get_many(subkeys=blob_ids)
 
 
 def _cache_blobs(account: str, blobs: dict[str, bytes]) -> None:
 	"""Store blobs in cache with the blob ID as the subkey."""
 
-	user, account_id = parse_account(account)
-	store = get_blob_store(user, account_id)
+	store = get_blob_store(parse_account(account)[1])
 	store.set_many(items=blobs)
 
 
@@ -1469,7 +1464,7 @@ def schedule_fetch_changes() -> None:
 			continue
 
 		for account_id in account_ids:
-			store = get_data_store(user, account_id)
+			store = get_data_store(account_id)
 			last_update = store.get(Entity.STATE, "email_state_last_update")
 			if not last_update or get_datetime(last_update) < threshold:
 				accounts.append(f"{user}:{account_id}")

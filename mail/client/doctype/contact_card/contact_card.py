@@ -465,24 +465,21 @@ def _get_total_cache_key(account: str) -> str:
 def _get_cached_contact_cards(account: str, ids: list[str]) -> dict[str, dict | None]:
 	"""Returns a dictionary of cached contact cards for the given account and IDs."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	return store.get_many(Entity.CONTACT_CARD, subkeys=ids)
 
 
 def _cache_contact_cards(account: str, contact_cards: dict[str, dict]) -> None:
 	"""Caches contact cards for the given account."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	store.set_many(Entity.CONTACT_CARD, items=contact_cards)
 
 
 def _remove_cached_contact_cards(account: str, ids: list[str]) -> None:
 	"""Removes cached contact cards for the given account and IDs."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	store.delete_many(Entity.CONTACT_CARD, subkeys=ids)
 
 
