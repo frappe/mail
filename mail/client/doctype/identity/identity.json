@@ -112,11 +112,9 @@
   },
   {
    "fieldname": "account_id",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "in_standard_filter": 1,
-   "label": "Account ID",
-   "read_only": 1,
-   "search_index": 1
+   "label": "Account ID"
   },
   {
    "description": "The user this identity belongs to.",
