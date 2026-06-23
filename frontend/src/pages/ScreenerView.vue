@@ -34,7 +34,7 @@
 						{{ __('Nothing left to screen.') }}
 					</div>
 
-					<TransitionGroup v-else name="sc" tag="div">
+					<div v-else>
 						<div
 							v-for="sender in senders.data"
 							:key="sender.from_email"
@@ -83,32 +83,20 @@
 								<div class="flex gap-5">
 									<button
 										class="screener-action text-ink-gray-5"
-										:disabled="!!busyKey"
-										@click.stop="
-											screenOut(
-												[sender.from_email],
-												`screen:${sender.from_email}`,
-											)
-										"
+										@click.stop="screenOut([sender.from_email])"
 									>
 										{{ __('Block') }}
 									</button>
 									<button
 										class="screener-action text-ink-gray-8"
-										:disabled="!!busyKey"
-										@click.stop="
-											allow(
-												[sender.from_email],
-												`allow:${sender.from_email}`,
-											)
-										"
+										@click.stop="allow([sender.from_email])"
 									>
 										{{ __('Allow') }}
 									</button>
 								</div>
 							</div>
 						</div>
-					</TransitionGroup>
+					</div>
 				</div>
 			</div>
 
@@ -141,26 +129,12 @@
 							<Button
 								variant="outline"
 								:label="__('Block')"
-								:loading="busyKey === `screen:${openSender.from_email}`"
-								:disabled="!!busyKey"
-								@click="
-									screenOut(
-										[openSender.from_email],
-										`screen:${openSender.from_email}`,
-									)
-								"
+								@click="screenOut([openSender.from_email])"
 							/>
 							<Button
 								variant="solid"
 								:label="__('Allow')"
-								:loading="busyKey === `allow:${openSender.from_email}`"
-								:disabled="!!busyKey"
-								@click="
-									allow(
-										[openSender.from_email],
-										`allow:${openSender.from_email}`,
-									)
-								"
+								@click="allow([openSender.from_email])"
 							/>
 						</div>
 					</div>
@@ -308,10 +282,6 @@ const waitingLabel = computed(() => {
 		: __('{0} first-time senders waiting to be screened.', [String(n)])
 })
 
-// `busyKey` is `${action}:${email}` for the row being acted on; every action button is disabled
-// while one is in flight.
-const busyKey = ref('')
-
 const allowResource = createResource({
 	url: 'mail.api.mail.allow_screening_senders',
 	makeParams: ({ from_emails }: { from_emails: string[] }) => ({
@@ -328,44 +298,46 @@ const screenOutResource = createResource({
 	}),
 })
 
-const runAction = async (
-	resource: typeof allowResource,
-	fromEmails: string[],
-	key: string,
-	success: string,
-) => {
-	if (!fromEmails.length || busyKey.value) return
-	busyKey.value = key
+const runAction = async (resource: typeof allowResource, fromEmails: string[]) => {
+	if (!fromEmails.length) return
+
+	// When acting on the sender open in the detail view, line up the next one down so you can triage
+	// straight through — resolved before the optimistic removal.
+	const list = senders.data ?? []
+	const actingOnOpen = !!openSender.value && fromEmails.includes(openSender.value.from_email)
+	let nextSender: ScreeningSender | undefined
+	if (actingOnOpen) {
+		const idx = list.findIndex(
+			(s: ScreeningSender) => s.from_email === openSender.value!.from_email,
+		)
+		nextSender = list
+			.slice(idx + 1)
+			.find((s: ScreeningSender) => !fromEmails.includes(s.from_email))
+	}
+
+	// Optimistically drop the acted senders so the rows leave immediately and every other row stays
+	// interactive. The row leaving is the only success feedback (no toast); only failures are surfaced
+	// — with a resync to bring the rows back.
+	senders.data = list.filter((s: ScreeningSender) => !fromEmails.includes(s.from_email))
+
+	// Advance to the next sender (or close the preview if there's nothing below).
+	if (actingOnOpen) {
+		if (nextSender) selectSender(nextSender)
+		else closeSender()
+	}
+
 	try {
 		await resource.submit({ from_emails: fromEmails })
-		raiseToast(success)
-		// The open preview's sender may have just been allowed/blocked away — close it.
-		if (openSender.value && fromEmails.includes(openSender.value.from_email)) closeSender()
-		await senders.reload()
 		// Allowing/screening senders changes inbox/junk counts too.
 		store.mailboxes.reload()
 	} catch (error) {
+		senders.reload()
 		raiseToast((error as Error).message || __('Action failed.'), 'error')
-	} finally {
-		busyKey.value = ''
 	}
 }
 
-const allow = (fromEmails: string[], key: string) =>
-	runAction(
-		allowResource,
-		fromEmails,
-		key,
-		fromEmails.length === 1 ? __('Sender allowed.') : __('Senders allowed.'),
-	)
-
-const screenOut = (fromEmails: string[], key: string) =>
-	runAction(
-		screenOutResource,
-		fromEmails,
-		key,
-		fromEmails.length === 1 ? __('Sender blocked.') : __('Senders blocked.'),
-	)
+const allow = (fromEmails: string[]) => runAction(allowResource, fromEmails)
+const screenOut = (fromEmails: string[]) => runAction(screenOutResource, fromEmails)
 </script>
 
 <style scoped>
@@ -373,13 +345,5 @@ const screenOut = (fromEmails: string[], key: string) =>
    padding so the larger click target doesn't shift the layout. */
 .screener-action {
 	@apply -m-2 p-2 font-medium hover:underline disabled:opacity-40;
-}
-
-/* Rows lift and fade as they leave the ledger. */
-.sc-leave-active {
-	@apply transition-all duration-200 ease-out;
-}
-.sc-leave-to {
-	@apply -translate-y-1.5 opacity-0;
 }
 </style>
