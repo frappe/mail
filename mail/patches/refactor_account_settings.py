@@ -58,7 +58,6 @@ def execute() -> None:
 			row["name"],
 			account_id,
 			force=True,
-			ignore_permissions=True,
 			show_alert=False,
 		)
 
