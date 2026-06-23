@@ -78,10 +78,6 @@ class UserSettings(Document):
 		if connection := self.connection:
 			sync_account_settings(self.user, connection.accounts)
 
-	def after_delete(self) -> None:
-		for settings in frappe.db.get_all("Account Settings", filters={"user": self.user}, pluck="name"):
-			frappe.delete_doc("Account Settings", settings, ignore_permissions=True, delete_permanently=True)
-
 	def validate_jmap_settings(self) -> None:
 		"""Validate the JMAP settings by connecting to the JMAP server."""
 

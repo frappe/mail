@@ -1433,33 +1433,46 @@ def enqueue_fetch_changes(account: str, email_state: str | None = None, ctx: dic
 
 
 def schedule_fetch_changes() -> None:
-	"""Schedule fetch_changes for users who have email accounts configured and haven't had their email state updated in the last 3 hours."""
+	"""Schedule fetch_changes for every (user, account) whose email state hasn't been
+	updated in the last 3 hours.
+
+	Account Settings are now shared per account ID, so the set of accounts to sync is
+	derived from each JMAP-configured user's accounts, and the last-update timestamp is
+	read from that user's per-account data store."""
 
 	USER = frappe.qb.DocType("User")
 	USER_SETTINGS = frappe.qb.DocType("User Settings")
-	ACCOUNT_SETTINGS = frappe.qb.DocType("Account Settings")
 
-	threshold = add_to_date(now(), hours=-3)
+	threshold = get_datetime(add_to_date(now(), hours=-3))
 
-	accounts = (
-		frappe.qb.from_(ACCOUNT_SETTINGS)
+	users = (
+		frappe.qb.from_(USER_SETTINGS)
 		.join(USER)
-		.on(USER.name == ACCOUNT_SETTINGS.user)
-		.join(USER_SETTINGS)
-		.on(USER_SETTINGS.user == USER.name)
-		.select(ACCOUNT_SETTINGS.account)
-		.distinct()
+		.on(USER.name == USER_SETTINGS.user)
+		.select(USER_SETTINGS.user)
 		.where(
 			(USER.enabled == 1)
 			& (USER_SETTINGS.username != "")
 			& (USER_SETTINGS.username.isnotnull())
 			& (USER_SETTINGS.skip_schedule_fetch_changes == 0)
-			& (
-				ACCOUNT_SETTINGS.email_state_last_update.isnull()
-				| (ACCOUNT_SETTINGS.email_state_last_update < threshold)
-			)
 		)
-	).run(pluck="account")
+	).run(pluck="user")
+
+	if not users:
+		return
+
+	accounts = []
+	for user in users:
+		try:
+			account_ids = list(get_jmap_connection(user, ignore_permissions=True).accounts.keys())
+		except Exception:
+			continue
+
+		for account_id in account_ids:
+			store = get_data_store(user, account_id)
+			last_update = store.get(Entity.STATE, "email_state_last_update")
+			if not last_update or get_datetime(last_update) < threshold:
+				accounts.append(f"{user}:{account_id}")
 
 	if not accounts:
 		return

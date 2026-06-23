@@ -78,8 +78,10 @@ def get_address_book_contact_count(account: str, address_book: str) -> int:
 def create_contacts_if_not_exists(account: str, recipients: list[dict] | str) -> None:
 	"""Creates contacts for the given recipients if they do not exist."""
 
+	from mail.jmap import parse_account
+
 	if not frappe.db.get_value(
-		"Account Settings", {"account": account}, "create_contacts_after_email_submit"
+		"Account Settings", parse_account(account)[1], "create_contacts_after_email_submit"
 	):
 		return
 

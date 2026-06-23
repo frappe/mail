@@ -302,7 +302,7 @@ def activate_last_active_sieve_script(account: str) -> None:
 	"""Activates the last active sieve script for the given account, if any, and clears the last active sieve script setting."""
 
 	sieve_script_id = frappe.db.get_value(
-		"Account Settings", {"account": account}, "last_active_sieve_script_id"
+		"Account Settings", parse_account(account)[1], "last_active_sieve_script_id"
 	)
 	if not sieve_script_id:
 		return
@@ -325,9 +325,11 @@ def activate_last_active_sieve_script(account: str) -> None:
 def set_last_active_sieve_script_id(account: str, sieve_script_id: str | None = None) -> None:
 	"""Sets the given sieve script ID as the last active sieve script for the given account."""
 
+	from mail.client.doctype.account_settings.account_settings import get_or_create_account_settings
+
 	frappe.db.set_value(
 		"Account Settings",
-		{"account": account},
+		get_or_create_account_settings(account),
 		"last_active_sieve_script_id",
 		sieve_script_id,
 		update_modified=False,
