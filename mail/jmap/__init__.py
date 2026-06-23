@@ -400,6 +400,17 @@ def get_user_accounts(user: str) -> list[str]:
 
 
 @frappe.whitelist()
+def get_user_account_ids(user: str) -> list[str]:
+	"""Returns the JMAP account IDs the specified user has access to."""
+
+	has_permission_for_user(user)
+
+	from mail.client.doctype.user_account.user_account import fetch_user_accounts
+
+	return [a["id"] for a in fetch_user_accounts(user, limit=None)]
+
+
+@frappe.whitelist()
 def get_mailboxes_for_account(account: str) -> list[dict]:
 	"""Returns the list of mailboxes for the specified account."""
 
