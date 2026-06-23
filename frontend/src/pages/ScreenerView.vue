@@ -67,9 +67,9 @@
 								:in-list="true"
 								class="text-ink-gray-4 whitespace-nowrap pt-px text-xs tabular-nums"
 							/>
-							<div class="flex gap-[22px]">
+							<div class="flex gap-5">
 								<button
-									class="text-ink-gray-5 text-[13.5px] font-semibold hover:underline disabled:opacity-40"
+									class="text-ink-gray-5 font-medium hover:underline disabled:opacity-40"
 									:disabled="!!busyKey"
 									@click="
 										screenOut(
@@ -81,7 +81,7 @@
 									{{ __('Block') }}
 								</button>
 								<button
-									class="text-ink-gray-8 text-[13.5px] font-semibold hover:underline disabled:opacity-40"
+									class="text-ink-gray-8 font-medium hover:underline disabled:opacity-40"
 									:disabled="!!busyKey"
 									@click="
 										allow([sender.from_email], `allow:${sender.from_email}`)
@@ -123,8 +123,8 @@ usePageMeta(() => {
 const waitingLabel = computed(() => {
 	const n = senders.data?.length ?? 0
 	return n === 1
-		? __('1 first-time sender waiting to be screened')
-		: __('{0} first-time senders waiting to be screened', [String(n)])
+		? __('1 first-time sender waiting to be screened.')
+		: __('{0} first-time senders waiting to be screened.', [String(n)])
 })
 
 // `busyKey` is `${action}:${email}` for the row being acted on; every action button is disabled

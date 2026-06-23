@@ -49,7 +49,10 @@
 									</template>
 								</Button>
 							</Dropdown>
-							<span class="text-ink-gray-4 text-sm group-hover:hidden">
+							<span
+								class="text-ink-gray-4 text-sm"
+								:class="{ 'group-hover:hidden': item.menuOptions }"
+							>
 								{{ item.suffix }}
 							</span>
 						</div>
