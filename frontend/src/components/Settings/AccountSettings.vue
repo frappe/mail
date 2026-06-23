@@ -75,11 +75,11 @@ import { userStore } from '@/stores/user'
 import type { Identity } from '@/types'
 
 const user = inject('$user')
-const { account, identities } = userStore()
+const { accountId, identities } = userStore()
 
 // Outgoing settings now live on the active account's Account Settings; backup_email
 // (Recovery) is still per-user on User Settings.
-const activeAccount = user.data?.accounts?.find((a) => a.name === account)
+const activeAccount = user.data?.accounts?.find((a) => a.id === accountId)
 
 const accountSettings = createDocumentResource({
 	doctype: 'Account Settings',

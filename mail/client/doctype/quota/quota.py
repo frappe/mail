@@ -14,6 +14,12 @@ from mail.utils.validation import has_permission_for_user
 
 
 class Quota(Document):
+	@property
+	def account(self) -> str:
+		"""Full ``user:account_id`` JMAP handle, rebuilt from the selected user and account ID."""
+
+		return f"{self.user}:{self.account_id}"
+
 	def db_insert(self, *args, **kwargs) -> None:
 		raise NotImplementedError
 
@@ -33,6 +39,8 @@ class Quota(Document):
 		filters = parse_filters(filters)
 		id = filters.get("id")
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if not account:
 			frappe.msgprint(_("Please select an account to view quotas."), alert=True)
@@ -54,6 +62,8 @@ class Quota(Document):
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if account:
 			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
@@ -78,7 +88,7 @@ def get_quota(account: str, id: str, raise_exception: bool = True) -> dict | Non
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_quota_service(account)
+	service = get_quota_service(*parse_account(account))
 
 	if quotas := service.get([id]):
 		return format_quota(account, quotas[0])
@@ -96,7 +106,7 @@ def fetch_quotas(account: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_quota_service(account)
+	service = get_quota_service(*parse_account(account))
 	quotas = service.get()
 	formatted_quotas = [format_quota(account, quota) for quota in quotas]
 	frappe.cache.set_value(_get_total_cache_key(account), len(quotas), expires_in_sec=600)
@@ -112,7 +122,8 @@ def format_quota(account: str, quota: dict) -> dict:
 
 	return {
 		"name": f"{account}|{quota['id']}",
-		"account": account,
+		"account_id": parse_account(account)[1],
+		"user": parse_account(account)[0],
 		"id": quota["id"],
 		"_name": quota["name"],
 		"resource_type": quota["resourceType"],

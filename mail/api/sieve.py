@@ -11,37 +11,47 @@ from mail.jmap import (
 	get_mailbox_id_by_role,
 	get_mailbox_name_by_id,
 	get_mailboxes,
+	parse_account,
 )
+from mail.utils.user import get_session_account
 
 AUTOMATION_SCRIPT_NAME = "frappe_mail_automation"
 AUTOMATION_SCRIPT_REQUIRE = 'require ["fileinto", "imap4flags"];'
 
 
 @frappe.whitelist()
-def get_sieve_scripts(account: str) -> list[dict]:
+def get_sieve_scripts(account_id: str) -> list[dict]:
 	"""Return the sieve scripts for the account"""
+
+	account = get_session_account(account_id)
 
 	ids = [d["id"] for d in SieveScript._fetch_sieve_scripts(account)[0]]
 	return SieveScript._get_sieve_scripts(account, ids, True)
 
 
 @frappe.whitelist()
-def create_sieve_script(account: str, _name: str, content: str, active: bool) -> None:
+def create_sieve_script(account_id: str, _name: str, content: str, active: bool) -> None:
 	"""Create a sieve script for the account"""
+
+	account = get_session_account(account_id)
 
 	SieveScript._add_sieve_script(account, _name, content, active)
 
 
 @frappe.whitelist()
-def update_sieve_script(account: str, id: str, _name: str, content: str, active: bool = False) -> None:
+def update_sieve_script(account_id: str, id: str, _name: str, content: str, active: bool = False) -> None:
 	"""Update a sieve script for the account"""
+
+	account = get_session_account(account_id)
 
 	SieveScript._update_sieve_script(account, id, _name, content, active)
 
 
 @frappe.whitelist()
-def delete_sieve_script(account: str, id: str) -> None:
+def delete_sieve_script(account_id: str, id: str) -> None:
 	"""Delete a sieve script for the account"""
+
+	account = get_session_account(account_id)
 
 	SieveScript._delete_sieve_scripts(account, [id])
 
@@ -124,8 +134,10 @@ def remove_sieve_block(sieve_script: str, block_name: str) -> str:
 
 
 @frappe.whitelist()
-def create_automation_script(account: str, active: bool = False) -> str:
+def create_automation_script(account_id: str, active: bool = False) -> str:
 	"""Create the frappe_mail_automation sieve script for the account."""
+
+	account = get_session_account(account_id)
 
 	frappe.flags.allow_automation_script_creation = True
 	return SieveScript._add_sieve_script(
@@ -204,15 +216,15 @@ def extract_rules_from_script(content: str, mailbox_name: str) -> dict | None:
 def get_child_mailbox_names(account: str, parent_name: str) -> list[str]:
 	"""Return the names of all direct child mailboxes for the given parent."""
 
-	parent_id = get_mailbox_id_by_name(account, parent_name)
-	mailboxes = get_mailboxes(account)
+	parent_id = get_mailbox_id_by_name(*parse_account(account), parent_name)
+	mailboxes = get_mailboxes(*parse_account(account))
 	return [mailbox["_name"] for mailbox in mailboxes if mailbox.get("parent_id") == parent_id]
 
 
 def get_mailbox_folder_path(account: str, name: str, raise_exception: bool = False) -> str | None:
 	"""Return the full slash-separated folder path for a mailbox."""
 
-	mailboxes = {mailbox["_name"]: mailbox for mailbox in get_mailboxes(account)}
+	mailboxes = {mailbox["_name"]: mailbox for mailbox in get_mailboxes(*parse_account(account))}
 	if name not in mailboxes:
 		if raise_exception:
 			frappe.throw(_("Mailbox with name '{0}' not found.").format(name))
@@ -227,7 +239,7 @@ def get_mailbox_folder_path(account: str, name: str, raise_exception: bool = Fal
 		if not parent_id:
 			break
 
-		parent_name = get_mailbox_name_by_id(account, parent_id)
+		parent_name = get_mailbox_name_by_id(*parse_account(account), parent_id)
 		current = mailboxes.get(parent_name)
 		if current is None:
 			if raise_exception:
@@ -318,8 +330,10 @@ def update_sieve_script_for_blocked_emails(account: str) -> None:
 def get_junk_folder_path(account: str) -> str:
 	"""Return the folder path of the account's Junk mailbox (for sieve `fileinto`)."""
 
-	junk_id = get_mailbox_id_by_role(account, "junk", create_if_not_exists=True, raise_exception=True)
-	junk_name = get_mailbox_name_by_id(account, junk_id, raise_exception=True)
+	junk_id = get_mailbox_id_by_role(
+		*parse_account(account), "junk", create_if_not_exists=True, raise_exception=True
+	)
+	junk_name = get_mailbox_name_by_id(*parse_account(account), junk_id, raise_exception=True)
 	return get_mailbox_folder_path(account, junk_name, raise_exception=True)
 
 

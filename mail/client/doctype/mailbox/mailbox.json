@@ -6,7 +6,7 @@
  "field_order": [
   "section_break_nuoa",
   "user",
-  "account",
+  "account_id",
   "column_break_5a4x",
   "subscribed",
   "section_break_cbgf",
@@ -256,14 +256,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "The account this mailbox belongs to.",
-   "fieldname": "account",
+   "fieldname": "account_id",
    "fieldtype": "Select",
    "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "reqd": 1,
-   "set_only_once": 1
+   "label": "Account ID"
   },
   {
    "description": "The user this mailbox belongs to.",

@@ -110,7 +110,6 @@ def get_mail_config(key: str | None = None) -> dict[str, Any] | Any:
 		"storage_log_file_count": 10,
 		"storage_log_level": "INFO",
 		"storage_log_max_size": 5_000_000,
-		"storage_shard_count": 8,
 	}
 
 	config = frappe.conf.mail or {}

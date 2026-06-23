@@ -326,7 +326,7 @@ def add_calendar_event(
 		"use_default_alerts": use_default_alerts,
 	}
 
-	service = get_calendar_event_service(account)
+	service = get_calendar_event_service(*parse_account(account))
 	response = service.create([event], send_scheduling_messages=send_scheduling_messages)
 
 	title = _("Calendar Event Creation Error")
@@ -354,7 +354,7 @@ def fetch_calendar_events(
 
 	calendar_events = []
 
-	service = get_calendar_event_service(account)
+	service = get_calendar_event_service(*parse_account(account))
 	data = service.query(filter, position, limit, sort, time_zone, expand_recurrences)
 
 	ids = data.get("ids", [])
@@ -371,7 +371,7 @@ def get_calendar_events(account: str, ids: list[str]) -> list[dict]:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_calendar_event_service(account)
+	service = get_calendar_event_service(*parse_account(account))
 	calendar_map = {c["id"]: c["name"] for c in service.calendars}
 
 	events = {}
@@ -390,7 +390,7 @@ def get_master_events_by_uids(account: str, uids: list[str]) -> dict:
 
 	events = {}
 
-	service = get_calendar_event_service(account)
+	service = get_calendar_event_service(*parse_account(account))
 
 	if master_ids := service.get_master_ids(uids):
 		calendar_map = {c["id"]: c["name"] for c in service.calendars}
@@ -454,7 +454,7 @@ def update_calendar_event(
 		"use_default_alerts": use_default_alerts,
 	}
 
-	service = get_calendar_event_service(account)
+	service = get_calendar_event_service(*parse_account(account))
 	response = service.update([event], send_scheduling_messages=send_scheduling_messages)
 
 	title = _("Calendar Event Update Error")
@@ -477,7 +477,7 @@ def update_calendar_event_instance(
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_calendar_event_service(account)
+	service = get_calendar_event_service(*parse_account(account))
 	response = service.update_instance(
 		master_id, recurrence_id, patch, send_scheduling_messages=send_scheduling_messages
 	)
@@ -496,7 +496,7 @@ def delete_calendar_events(account: str, ids: list[str]) -> None:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_calendar_event_service(account)
+	service = get_calendar_event_service(*parse_account(account))
 	response = service.delete(ids)
 
 	if response.get("notDestroyed"):
@@ -518,7 +518,7 @@ def delete_calendar_event_instance(account: str, master_id: str, recurrence_id: 
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_calendar_event_service(account)
+	service = get_calendar_event_service(*parse_account(account))
 	response = service.delete_instance(master_id, recurrence_id)
 
 	title = _("Calendar Event Instance Deletion Error")
@@ -535,7 +535,7 @@ def parse_ics(account: str, ics_data: bytes | str) -> list[dict]:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_calendar_event_service(account)
+	service = get_calendar_event_service(*parse_account(account))
 	blob_id = service.upload_blob(ics_data, content_type="text/calendar; charset=utf-8").get("blobId")
 
 	if not blob_id:

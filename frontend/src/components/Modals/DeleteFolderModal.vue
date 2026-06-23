@@ -29,7 +29,7 @@ const store = userStore()
 
 const deleteFolder = createResource({
 	url: 'mail.api.mail.delete_mailbox',
-	makeParams: () => ({ account: store.account, id: mailbox.id, name: mailbox._name }),
+	makeParams: () => ({ account_id: store.accountId, id: mailbox.id, name: mailbox._name }),
 	onSuccess: () => {
 		raiseToast(__('Folder deleted.'))
 		show.value = false

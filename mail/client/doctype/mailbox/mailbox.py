@@ -19,6 +19,12 @@ REBALANCE_MAILBOX_WINDOW = 10
 
 
 class Mailbox(Document):
+	@property
+	def account(self) -> str:
+		"""Full ``user:account_id`` JMAP handle, rebuilt from the selected user and account ID."""
+
+		return f"{self.user}:{self.account_id}"
+
 	def db_insert(self, *args, **kwargs) -> None:
 		parent = self._parent.replace(f"{self.account}|", "") if self._parent else None
 		self.id = add_mailbox(
@@ -47,6 +53,8 @@ class Mailbox(Document):
 		filters = parse_filters(filters)
 		id = filters.get("id")
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if not account:
 			frappe.msgprint(_("Please select an account to view mailboxes."), alert=True)
@@ -68,6 +76,8 @@ class Mailbox(Document):
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if account:
 			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
@@ -127,7 +137,7 @@ def add_mailbox(
 		"is_subscribed": subscribed,
 	}
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	response = service.create([mailbox])
 
 	title = _("Mailbox Creation Error")
@@ -146,7 +156,7 @@ def get_mailbox(account: str, id: str, raise_exception: bool = False) -> dict | 
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	if mailboxes := service.get([id]):
 		return format_mailbox(account, mailboxes[0])
 
@@ -184,7 +194,7 @@ def update_mailbox(
 		"is_subscribed": subscribed,
 	}
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	response = service.update([mailbox])
 
 	if not response.get("updated"):
@@ -202,7 +212,7 @@ def delete_mailboxes(account: str, ids: list[str], remove_emails: bool = True) -
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	response = service.delete(ids, remove_emails=remove_emails)
 
 	if response.get("notDestroyed"):
@@ -221,7 +231,7 @@ def fetch_mailboxes(account: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	mailboxes = service.get()
 	formatted_mailboxes = [format_mailbox(account, mailbox) for mailbox in mailboxes]
 	sorted_mailboxes = sorted(
@@ -316,7 +326,7 @@ def update_mailbox_position(
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_mailbox_service(account)
+	service = get_mailbox_service(*parse_account(account))
 	mailboxes = sorted(
 		service.get(), key=lambda m: (m["sortOrder"], get_sort_order(m["role"]), m["name"], m["id"])
 	)
@@ -358,7 +368,8 @@ def format_mailbox(account: str, mailbox: dict) -> dict:
 
 	return {
 		"name": f"{account}|{mailbox['id']}",
-		"account": account,
+		"account_id": parse_account(account)[1],
+		"user": parse_account(account)[0],
 		"id": mailbox["id"],
 		"_name": mailbox["name"],
 		"_parent": _parent,

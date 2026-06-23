@@ -69,7 +69,7 @@ const rows = computed(() => blockedAddresses.data.map((address: string) => ({ na
 
 const blockEmailAddress = createResource({
 	url: 'mail.api.mail.block_email_address',
-	makeParams: () => ({ account: store.account, email: email.value }),
+	makeParams: () => ({ account_id: store.accountId, email: email.value }),
 	onSuccess: () => {
 		raiseToast(__('Email address blocked.'))
 		email.value = ''
@@ -80,7 +80,7 @@ const blockEmailAddress = createResource({
 const unblockEmailAddresses = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
 	makeParams: () => ({
-		account: store.account,
+		account_id: store.accountId,
 		emails: Array.from(listViewRef.value?.selections),
 	}),
 	onSuccess: () => {

@@ -259,7 +259,7 @@ const store = userStore()
 
 const contact = createDocumentResource({
 	doctype: 'Contact Card',
-	name: `${store.account}|${contactName}`,
+	name: `${store.user}:${store.accountId}|${contactName}`,
 	onError: () => router.replace({ name: 'Contacts', params: { accountId } }),
 	setValue: {
 		onSuccess: () => raiseToast(__('Contact updated.')),

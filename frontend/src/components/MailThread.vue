@@ -499,7 +499,7 @@ const thread = ref<Mail[]>([])
 
 const threadFallback = createResource({
 	url: 'mail.api.mail.get_thread',
-	makeParams: () => ({ account: store.account, thread_id: threadID }),
+	makeParams: () => ({ account_id: store.accountId, thread_id: threadID }),
 	onSuccess: (mails: Mail[]) => {
 		// Thread no longer exists (e.g. deleted) — bail to the mailbox instead of a blank page.
 		if (!mails?.length) {
@@ -687,7 +687,7 @@ onMounted(() => loadThread())
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
-	makeParams: (email) => ({ account: store.account, emails: [email] }),
+	makeParams: (email) => ({ account_id: store.accountId, emails: [email] }),
 	onSuccess: () => {
 		raiseToast(__('Sender unblocked.'))
 		blockedAddresses.reload()

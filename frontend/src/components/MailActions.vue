@@ -79,7 +79,7 @@ const emit = defineEmits(['setFlagged', 'syncUnseen'])
 const { isMobile } = useScreenSize()
 const route = useRoute()
 const router = useRouter()
-const { account, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
+const { accountId, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
 const { setUndoAction, undo } = useUndo()
 const { promptBlockSenders, willJunkSenders } = useBlockSender()
 const user = inject('$user')
@@ -248,7 +248,7 @@ const downloadEmail = createResource({
 
 const markAsSpam = createResource({
 	url: 'mail.api.mail.set_mails_spam_status',
-	makeParams: ({ spam }: { spam: boolean }) => ({ account, ids: [mail.id], spam }),
+	makeParams: ({ spam }: { spam: boolean }) => ({ account_id: accountId, ids: [mail.id], spam }),
 })
 
 const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
@@ -283,7 +283,7 @@ const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
 const moveMail = createResource({
 	url: 'mail.api.mail.move_mails',
 	makeParams: (mailbox: string) => ({
-		account,
+		account_id: accountId,
 		ids: [mail.id],
 		mailbox,
 		clear_junk: mail.junk === 1 && mailbox !== mailboxIds.junk,
@@ -325,7 +325,7 @@ const handleDeleteMail = () =>
 
 const setMailsSeen = createResource({
 	url: 'mail.api.mail.set_mails_seen',
-	makeParams: ({ ids }: { ids: string[] }) => ({ account, ids, seen: false }),
+	makeParams: ({ ids }: { ids: string[] }) => ({ account_id: accountId, ids, seen: false }),
 	onSuccess: (ids: string[]) => {
 		raiseToast(__('{0} marked as unread.', [ids.length === 1 ? __('Mail') : __('Mails')]))
 		router.push({
@@ -349,12 +349,12 @@ const handleMarkUnreadFromHere = () => {
 
 const blockEmailAddress = createResource({
 	url: 'mail.api.mail.block_email_address',
-	makeParams: () => ({ account, email: mail.from_email }),
+	makeParams: () => ({ account_id: accountId, email: mail.from_email }),
 })
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unblock_email_addresses',
-	makeParams: () => ({ account, emails: [mail.from_email] }),
+	makeParams: () => ({ account_id: accountId, emails: [mail.from_email] }),
 })
 
 const handleBlockAddress = (block: boolean, isUndo = false) => {

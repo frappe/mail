@@ -9,6 +9,9 @@ from mail.storage.base_store import BaseStore
 from mail.storage.data_store import DataStore, Entity, env_dirname
 
 SEPARATOR = BaseStore.SEPARATOR
+# The legacy RocksDB DataStore hash-sharded accounts into ``shard-NN`` directories. Sharding has
+# since been removed from the storage layer, so this one-time migration keeps its own constant.
+SHARD_DIR_PREFIX = "shard-"
 ENTITY_VALUES = {entity.value for entity in Entity}
 
 
@@ -32,7 +35,7 @@ def execute() -> None:
 	shard_dirs = sorted(
 		entry.path
 		for entry in os.scandir(base_path)
-		if entry.is_dir() and entry.name.startswith(BaseStore.SHARD_DIR_PREFIX)
+		if entry.is_dir() and entry.name.startswith(SHARD_DIR_PREFIX)
 	)
 	if not shard_dirs:
 		return

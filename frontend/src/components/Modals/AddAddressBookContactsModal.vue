@@ -67,7 +67,7 @@ const contacts = createResource({
 	url: 'mail.api.contacts.get_contact_cards',
 	auto: true,
 	makeParams: () => ({
-		account: store.account,
+		account_id: store.accountId,
 		filter: { text: search.value },
 		limit: limit.value,
 	}),

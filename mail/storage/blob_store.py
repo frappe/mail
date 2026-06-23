@@ -11,23 +11,31 @@ from mail.storage.base_store import BaseStore
 
 
 class BlobStore(BaseStore):
-	"""A simple blob storage backed by the local file system."""
+	"""A blob storage backed by the local file system.
+
+	Each account's blobs live in their own directory named by the account ID
+	(``<base_path>/<account_id>/``); files inside are named by their encoded blob key.
+	"""
 
 	def __init__(
 		self,
 		base_path: str,
 		key: str,
-		shard_count: int = 1,
 	) -> None:
-		"""Initialize the storage with base path, key, and optional sharding parameters."""
+		"""Initialize per-account blob storage rooted at ``<base_path>/<account_id>``."""
 
-		super().__init__(
-			base_path=base_path,
-			key=key,
-			shard_count=shard_count,
-		)
+		super().__init__(base_path=base_path, key=key)
 
 		self.logger_context["store"] = "blob"
+
+		# Blobs are isolated per account by directory, so the on-disk file name is just the
+		# (encoded) blob key — no account prefix is needed.
+		self._prefix = ""
+
+	def _get_storage_path(self) -> str:
+		"""Store an account's blobs in their own directory, named by the account ID."""
+
+		return os.path.join(self.base_path, self._encode_key(self.key))
 
 	def _is_within_storage_path(self, path: str) -> bool:
 		"""Return True when a path resolves within the configured storage directory."""
@@ -93,7 +101,10 @@ class BlobStore(BaseStore):
 		process_lock = self._get_process_lock(blob_path)
 
 		with process_lock:
-			fd, temp_path = tempfile.mkstemp(dir=self.path)
+			# Write the temp file in the base path (not the per-account directory) so it stays
+			# outside what scan/count/delete_all walk, while remaining on the same filesystem
+			# for an atomic os.replace into the account directory.
+			fd, temp_path = tempfile.mkstemp(dir=self.base_path)
 			try:
 				with os.fdopen(fd, "wb") as file:
 					file.write(blob)

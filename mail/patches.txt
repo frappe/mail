@@ -2,6 +2,7 @@
 mail.patches.rename_mail_principal_binding_to_principal_settings
 mail.patches.capture_user_outgoing_settings
 mail.patches.rebuild_rate_limit_unique_constraint
+mail.patches.refactor_account_settings
 
 [post_model_sync]
 mail.patches.migrate_outgoing_settings_to_account
@@ -17,3 +18,10 @@ mail.patches.set_user_account
 mail.patches.create_archive_mailbox
 mail.patches.migrate_data_store_to_lmdb
 mail.patches.backfill_blocked_email_account_id
+mail.patches.backfill_junk_email_account_id
+mail.patches.backfill_mailbox_settings_account_id
+mail.patches.backfill_mail_exchange_account_id
+mail.patches.backfill_mail_sync_history_account_id
+mail.patches.backfill_mail_queue_account_id
+mail.patches.clear_legacy_user_scoped_stores
+mail.patches.clear_legacy_blob_store_layout
