@@ -123,7 +123,7 @@
 									/>
 								</div>
 								<div
-									class="flex items-center space-x-3"
+									class="flex select-none items-center space-x-3"
 									:class="{
 										'cursor-pointer': mail !== thread[thread.length - 1],
 										'pb-6': mail.preview,
