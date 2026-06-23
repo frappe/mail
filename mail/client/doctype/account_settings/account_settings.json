@@ -32,6 +32,8 @@
    "description": "Default email address used as the sender when composing new messages.",
    "fieldname": "default_outgoing_email",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Default Email",
    "options": "Email"
   },
@@ -44,6 +46,7 @@
    "description": "Automatically creates contact cards for new recipients after an email is sent.",
    "fieldname": "create_contacts_after_email_submit",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Create Contacts After Email Submit"
   },
   {
@@ -51,6 +54,7 @@
    "description": "Automatically deletes the email from your mailbox after it is sent.",
    "fieldname": "destroy_email_after_submit",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Destroy Email After Submit"
   },
   {
@@ -58,6 +62,7 @@
    "description": "Automatically delete newsletters after they are sent.",
    "fieldname": "destroy_newsletter_after_submit",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Destroy Newsletter After Submit"
   },
   {
@@ -70,11 +75,12 @@
    "description": "What to do with the sender when a message is marked as Junk. \"Junk Sender's Mail\" files their future mail into Junk; \"Ask to Block Sender\" prompts to block them outright.",
    "fieldname": "on_mark_as_junk",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "On Mark As Junk",
    "options": "Junk Sender's Mail\nAsk to Block Sender"
   },
   {
-   "collapsible": 1,
    "depends_on": "eval: !doc.__islocal",
    "fieldname": "cache_section",
    "fieldtype": "Section Break",
@@ -142,6 +148,8 @@
    "description": "ID of the Sieve script that was active before a vacation auto-reply was enabled; it is re-activated when the vacation response is turned off.",
    "fieldname": "last_active_sieve_script_id",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Last Active Sieve Script ID",
    "no_copy": 1,
    "read_only": 1,
@@ -151,7 +159,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-23 00:00:00.000000",
+ "modified": "2026-06-23 10:10:53.961267",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Account Settings",
