@@ -275,7 +275,7 @@ const mailboxItems = computed(
 			?.filter((mailbox: MailboxData) => mailbox.subscribed)
 			?.map((mailbox: MailboxData) => {
 				// The Screening folder opens the dedicated Screener page, not the thread list.
-				const isScreener = mailbox.id === store.screeningMailboxId
+				const isScreener = mailbox.id === store.mailboxIds.screening
 				return {
 					mailboxId: mailbox.id,
 					label: isScreener ? __('Screener') : mailbox._name,
@@ -322,7 +322,7 @@ const sidebarItems = computed(() => {
 	// Screening is a roleless folder; it gets its own nameless group pinned to the top of the
 	// sidebar, separate from the default and custom mailboxes.
 	const isScreening = (item: { mailboxId?: string }) =>
-		!!store.screeningMailboxId && item.mailboxId === store.screeningMailboxId
+		!!store.mailboxIds.screening && item.mailboxId === store.mailboxIds.screening
 
 	const screenerItem = mailboxItems.value.find((item) => isScreening(item))
 
