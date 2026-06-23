@@ -3,11 +3,11 @@ import { Icon } from 'frappe-ui/icons'
 import { createResource, toast } from 'frappe-ui'
 
 import { FOLDER_ICON_COLOR_MAP } from '@/constants'
-import { getIcon, raisePromiseToast, raiseToast } from '@/utils'
+import { getIcon, getMailboxName, raisePromiseToast, raiseToast } from '@/utils'
 import { useBlockSender, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
-import type { Mail, Thread } from '@/types'
+import type { Mail, MailboxData, Thread } from '@/types'
 
 export type SetSeenParams = {
 	0?: string[]
@@ -123,7 +123,7 @@ export function useThreadActions(deps: {
 		mailboxes.data
 			?.filter((m) => ![mailbox.value, mailboxIds.sent, mailboxIds.drafts].includes(m.id))
 			.map((m) => ({
-				label: m._name,
+				label: getMailboxName(m),
 				icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
 				onClick: () => handleMoveThreads({ [m.id]: selections.value }),
 			})),
@@ -180,14 +180,16 @@ export function useThreadActions(deps: {
 				)
 			})
 			.map((m) => ({
-				label: m._name,
+				label: getMailboxName(m),
 				icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
 				onClick: () => handleAddThreadsToMailbox(m.id, selections.value),
 			})),
 	)
 
 	const handleAddThreadsToMailbox = (mailboxId: string, threadIds: string[], isUndo = false) => {
-		const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
+		const mailboxName = getMailboxName(
+			mailboxes.data?.find((m) => m.id === mailboxId) ?? ({} as MailboxData),
+		)
 		const action = async () => {
 			await addMails.submit({ ids: allMailIds(threadIds), mailbox_id: mailboxId })
 			reloadThreads()
@@ -221,7 +223,7 @@ export function useThreadActions(deps: {
 					![mailboxIds.sent, mailboxIds.drafts].includes(m.id),
 			)
 			.map((m) => ({
-				label: m._name,
+				label: getMailboxName(m),
 				icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
 				onClick: () => handleRemoveThreadsFromMailbox(m.id, selections.value),
 			}))
@@ -252,7 +254,9 @@ export function useThreadActions(deps: {
 			}
 		}
 
-		const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
+		const mailboxName = getMailboxName(
+			mailboxes.data?.find((m) => m.id === mailboxId) ?? ({} as MailboxData),
+		)
 		const success =
 			threadIdsToBeUpdated.length === 1
 				? __('Thread removed from {0}.', [mailboxName])
@@ -489,9 +493,9 @@ export function useThreadActions(deps: {
 			)
 		})
 
-		const moveToMailboxName = mailboxes.data?.find(
-			(m) => m.id === Object.keys(threadIDs)[0],
-		)?._name
+		const moveToMailboxName = getMailboxName(
+			mailboxes.data?.find((m) => m.id === Object.keys(threadIDs)[0]) ?? ({} as MailboxData),
+		)
 		const loading = __('Moving to {0}...', [moveToMailboxName])
 		const success =
 			selectedThreads.length === 1

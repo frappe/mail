@@ -1,3 +1,7 @@
+// The Screening mailbox is a plain named folder (no JMAP role), created server-side as "Screening";
+// it's surfaced to users as the "Screener".
+export const SCREENING_MAILBOX_NAME = 'Screening'
+
 export const getAttachmentOptions = () => [
 	{ label: __('All'), value: ' ' },
 	{ label: __('With Attachments'), value: 'true' },

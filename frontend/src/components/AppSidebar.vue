@@ -78,7 +78,7 @@ import { Check, Keyboard, User } from 'lucide-vue-next'
 import { Avatar, Button, Dropdown, Sidebar, SidebarItem, createResource } from 'frappe-ui'
 
 import { FOLDER_ICON_COLOR_MAP } from '@/constants'
-import { getIcon, toTitleCase } from '@/utils'
+import { getIcon, getMailboxName, toTitleCase } from '@/utils'
 import { useScreenSize, useSettings, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
@@ -278,9 +278,9 @@ const mailboxItems = computed(
 				const isScreener = mailbox.id === store.mailboxIds.screening
 				return {
 					mailboxId: mailbox.id,
-					label: isScreener ? __('Screener') : mailbox._name,
+					label: getMailboxName(mailbox),
 					icon: h(Icon, {
-						name: isScreener ? 'eye' : getIcon(mailbox),
+						name: getIcon(mailbox),
 						class: FOLDER_ICON_COLOR_MAP[mailbox.color],
 					}),
 					to: isScreener
