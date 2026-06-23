@@ -16,7 +16,6 @@ CONFIG_KEY_FIELD_MAP = {
 	"gravatar_default_avatar": "default_gravatar",
 	"stalwart_version": None,
 	"stalwart_cli_version": None,
-	"storage_shard_count": None,
 	# Logs
 	"push_log_file_count": None,
 	"push_log_level": None,

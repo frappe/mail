@@ -173,8 +173,6 @@ export interface MailSettings extends DocType {
   stalwart_cli_version: string;
   /** Stalwart Version: Data */
   stalwart_version: string;
-  /** Storage Shard Count: Int */
-  storage_shard_count: number;
   /** Push Log File Count: Int */
   push_log_file_count: number;
   /** Push Log Level: Select */
