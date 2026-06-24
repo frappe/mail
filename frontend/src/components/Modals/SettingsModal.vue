@@ -41,6 +41,8 @@
 import { computed, inject, markRaw, ref, watch } from 'vue'
 import {
 	Ban,
+	CalendarPlus,
+	CalendarRange,
 	Code,
 	Feather,
 	Fingerprint,
@@ -61,6 +63,8 @@ import AdvancedSettings from '@/components/Settings/AdvancedSettings.vue'
 import AppearanceSettings from '@/components/Settings/AppearanceSettings.vue'
 import AutomationSettings from '@/components/Settings/AutomationSettings.vue'
 import BlockListSettings from '@/components/Settings/BlockListSettings.vue'
+import CalendarExportSettings from '@/components/Settings/CalendarExportSettings.vue'
+import CalendarImportSettings from '@/components/Settings/CalendarImportSettings.vue'
 import ExportSettings from '@/components/Settings/ExportSettings.vue'
 import FolderSettings from '@/components/Settings/FolderSettings.vue'
 import IdentitySettings from '@/components/Settings/IdentitySettings.vue'
@@ -138,6 +142,18 @@ const tabs = computed(() => {
 			label: __('Export'),
 			icon: HardDriveUpload,
 			component: markRaw(ExportSettings),
+			condition: user.data.is_jmap_configured,
+		},
+		{
+			label: __('Calendar Import'),
+			icon: CalendarPlus,
+			component: markRaw(CalendarImportSettings),
+			condition: user.data.is_jmap_configured,
+		},
+		{
+			label: __('Calendar Export'),
+			icon: CalendarRange,
+			component: markRaw(CalendarExportSettings),
 			condition: user.data.is_jmap_configured,
 		},
 		{

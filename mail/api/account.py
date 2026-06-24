@@ -295,6 +295,71 @@ def create_mail_export(
 
 
 @frappe.whitelist()
+def create_calendar_import(
+	account_id: str,
+	format: Literal["ics", "jmap"],
+	file: str,
+	calendar: str | None = None,
+) -> None:
+	"""Creates calendar exchange of operation import"""
+
+	doc = frappe.new_doc("Calendar Exchange")
+	doc.user = frappe.session.user
+	doc.account_id = account_id
+	doc.operation = "Import"
+	doc.import_format = format
+	doc.import_file = file
+	if calendar:
+		doc.import_metadata = json.dumps({"calendarIds": {calendar: True}})
+	doc.insert()
+	doc.submit()
+
+
+@frappe.whitelist()
+def create_calendar_export(
+	account_id: str,
+	format: Literal["ics", "jmap"],
+	archive_type: Literal[".zip", ".tgz", ".tar.gz"],
+	sort: Literal["Start (ASC)", "Start (DESC)"],
+	limit: int | None = None,
+	filter: dict | None = None,
+) -> None:
+	"""Creates calendar exchange of operation export"""
+
+	doc = frappe.new_doc("Calendar Exchange")
+	doc.user = frappe.session.user
+	doc.account_id = account_id
+	doc.operation = "Export"
+	doc.export_format = format
+	doc.export_archive_type = archive_type
+	doc.export_sort = sort
+	doc.export_limit = limit
+	if filter:
+		filter = {k: v for k, v in filter.items() if v}
+		if normalized := normalize_calendar_filter(filter):
+			doc.export_filter = json.dumps(normalized)
+	doc.insert()
+	doc.submit()
+
+
+def normalize_calendar_filter(filter: dict) -> dict:
+	"""Normalize a calendar export filter into a JMAP CalendarEvent/query FilterCondition."""
+
+	from mail.utils.dt import convert_to_utc
+
+	normalized = {}
+	if title := filter.get("title"):
+		normalized["title"] = title
+	if in_calendar := filter.get("inCalendar"):
+		normalized["inCalendar"] = in_calendar
+	for key in ("after", "before"):
+		if value := filter.get(key):
+			normalized[key] = convert_to_utc(value, naive=True).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+	return normalized
+
+
+@frappe.whitelist()
 def is_push_notification_relay_enabled() -> bool:
 	return frappe.db.get_single_value("Push Notification Settings", "enable_push_notification_relay")
 
