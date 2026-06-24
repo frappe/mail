@@ -35,7 +35,7 @@ from mail.client.doctype.push_subscription.push_subscription import (
 	freeze_jmap_push_notifications,
 	unfreeze_jmap_push_notifications,
 )
-from mail.jmap import get_email_service, parse_account
+from mail.jmap import get_jmap_connection
 from mail.jmap.services.mail.email import EmailService
 from mail.utils import (
 	compress_directory,
@@ -526,15 +526,6 @@ class MailExchange(Document):
 			"receivedAt": metadata.get("receivedAt"),
 		}
 
-	@property
-	def account(self) -> str:
-		"""The full `user:account_id` JMAP handle.
-
-		`user` provides the credentials used to authenticate with JMAP, while `account_id`
-		is the (shared) account being imported into or exported from."""
-
-		return f"{self.user}:{self.account_id}"
-
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
@@ -633,7 +624,7 @@ class MailExchange(Document):
 				"exchange": self.name,
 				"operation": self.operation,
 				"user": self.user,
-				"account": self.account,
+				"account_id": self.account_id,
 			}
 		)
 
@@ -725,7 +716,7 @@ class MailExchange(Document):
 				extract_compressed_file(import_file, base_dir)
 			logger.debug("import-source-prepared", base_dir=base_dir)
 
-			service = get_email_service(*parse_account(self.account))
+			service = get_email_service(self.user, self.account_id)
 
 			mailbox_map = {}
 			if self.import_format == "maildir-nested":
@@ -742,7 +733,7 @@ class MailExchange(Document):
 				frappe.throw(_("Import limit exceeded."))
 
 			self._import_batches(service, base_dir, meta, logger)
-			clear_sync_state(self.account, type="email")
+			clear_sync_state(self.account_id, type="email")
 
 			logger.info("import-completed", emails=len(meta))
 			kwargs.update({"status": "Completed", "output": _("Import completed")})
@@ -772,7 +763,7 @@ class MailExchange(Document):
 
 		kwargs = {}
 		try:
-			service = get_email_service(*parse_account(self.account))
+			service = get_email_service(self.user, self.account_id)
 			total = service.query(self.export_filter_dict, limit=1)["total"]
 			limit = min(total, cint(self.export_limit or total))
 			logger.info("export-query-resolved", total=total, limit=limit, max_export=self.max_export)
@@ -1025,6 +1016,17 @@ def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 		return True
 
 	return doc.user == user
+
+
+def get_email_service(
+	user: str,
+	account_id: str,
+	ignore_permissions: bool = False,
+) -> EmailService:
+	"""Returns an instance of EmailService for handling email-related operations for the specified account."""
+
+	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, timeout=(60.0, 180.0))
+	return EmailService(account_id, connection)
 
 
 def extract_received_or_sent(msg: Message) -> datetime:
