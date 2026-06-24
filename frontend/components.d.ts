@@ -36,6 +36,8 @@ declare module 'vue' {
     AutomationSettings: typeof import('./src/components/Settings/AutomationSettings.vue')['default']
     BlockListSettings: typeof import('./src/components/Settings/BlockListSettings.vue')['default']
     BlockSenderModal: typeof import('./src/components/Modals/BlockSenderModal.vue')['default']
+    CalendarExportSettings: typeof import('./src/components/Settings/CalendarExportSettings.vue')['default']
+    CalendarImportSettings: typeof import('./src/components/Settings/CalendarImportSettings.vue')['default']
     ChangePasswordModal: typeof import('./src/components/Modals/ChangePasswordModal.vue')['default']
     ComposeMailEditor: typeof import('./src/components/ComposeMailEditor.vue')['default']
     ComposeMailToolbar: typeof import('./src/components/ComposeMailToolbar.vue')['default']

@@ -164,6 +164,7 @@ permission_query_conditions = {
 	# Client
 	"Account Settings": "mail.client.doctype.account_settings.account_settings.get_permission_query_condition",
 	"Blocked Email Address": "mail.client.doctype.blocked_email_address.blocked_email_address.get_permission_query_condition",
+	"Calendar Exchange": "mail.client.doctype.calendar_exchange.calendar_exchange.get_permission_query_condition",
 	"Junk Email Address": "mail.client.doctype.junk_email_address.junk_email_address.get_permission_query_condition",
 	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.get_permission_query_condition",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
@@ -185,6 +186,7 @@ has_permission = {
 	"Blocked Email Address": "mail.client.doctype.blocked_email_address.blocked_email_address.has_permission",
 	"Calendar": "mail.client.doctype.calendar.calendar.has_permission",
 	"Calendar Event": "mail.client.doctype.calendar_event.calendar_event.has_permission",
+	"Calendar Exchange": "mail.client.doctype.calendar_exchange.calendar_exchange.has_permission",
 	"Contact Card": "mail.client.doctype.contact_card.contact_card.has_permission",
 	"Event Notification": "mail.client.doctype.event_notification.event_notification.has_permission",
 	"Identity": "mail.client.doctype.identity.identity.has_permission",
@@ -237,6 +239,7 @@ scheduler_events = {
 	"daily": [
 		"mail.client.doctype.mail_exchange.mail_exchange.clean_import_export_directories",
 		"mail.server.doctype.mail_data_exchange.mail_data_exchange.clean_import_export_directories",
+		"mail.client.doctype.calendar_exchange.calendar_exchange.clean_calendar_import_export_directories",
 	],
 	# "daily_long": [
 	#     "mail.tasks.daily_long"
@@ -244,6 +247,7 @@ scheduler_events = {
 	"hourly": [
 		"mail.client.doctype.mail_exchange.mail_exchange.retry_stuck_mail_exchanges",
 		"mail.server.doctype.mail_data_exchange.mail_data_exchange.retry_stuck_data_exchanges",
+		"mail.client.doctype.calendar_exchange.calendar_exchange.retry_stuck_calendar_exchanges",
 	],
 	"hourly_long": [
 		"mail.client.doctype.mail_message.mail_message.schedule_fetch_changes",
@@ -299,6 +303,7 @@ ignore_links_on_delete = [
 	"Mail Domain Request",
 	# Client
 	"Account Settings",
+	"Calendar Exchange",
 	"Junk Email Address",
 	"Mail Exchange",
 	"Mail Queue",

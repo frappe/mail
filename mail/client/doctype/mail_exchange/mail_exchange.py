@@ -631,6 +631,7 @@ class MailExchange(Document):
 			{
 				"req_id": random_string(10),
 				"exchange": self.name,
+				"key": "mail",
 				"operation": self.operation,
 				"user": self.user,
 				"account": self.account,
@@ -1112,7 +1113,7 @@ def retry_stuck_mail_exchanges() -> None:
 		.select(ME.name)
 		.where(
 			(ME.status.isin(["Queued", "In Progress"]))
-			& (ME.queued_at <= get_datetime(add_to_date(now(), hours=-1)))
+			& (ME.queued_at <= get_datetime(add_to_date(now(), days=-1)))
 		)
 		.orderby(ME.queued_at, order=Order.asc)
 	).run(pluck="name")

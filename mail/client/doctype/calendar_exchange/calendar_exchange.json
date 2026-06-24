@@ -1,0 +1,318 @@
+{
+ "actions": [],
+ "creation": "2026-06-24 09:29:39.200543",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_r2c6",
+  "amended_from",
+  "section_break_vxtc",
+  "column_break_frsy",
+  "user",
+  "account_id",
+  "operation",
+  "import_format",
+  "import_metadata",
+  "import_file",
+  "export_format",
+  "export_archive_type",
+  "column_break_julx",
+  "status",
+  "retries",
+  "section_break_wrha",
+  "queued_at",
+  "started_at",
+  "completed_at",
+  "column_break_bnqr",
+  "started_after",
+  "duration",
+  "section_break_ovtu",
+  "column_break_emiw",
+  "export_filter",
+  "column_break_xxyr",
+  "export_sort",
+  "export_limit",
+  "deduplicate_export",
+  "section_break_flrw",
+  "output"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_r2c6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Calendar Exchange",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "section_break_vxtc",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "Draft",
+   "depends_on": "eval: !doc.__islocal",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft\nQueued\nIn Progress\nCompleted\nFailed\nCancelled",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.retries",
+   "fieldname": "retries",
+   "fieldtype": "Int",
+   "label": "Retries",
+   "no_copy": 1,
+   "non_negative": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_frsy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "operation",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Operation",
+   "options": "\nImport\nExport",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "jmap",
+   "depends_on": "eval: doc.operation == \"Export\"",
+   "fieldname": "export_format",
+   "fieldtype": "Select",
+   "label": "Format",
+   "mandatory_depends_on": "eval: doc.operation == \"Export\"",
+   "options": "jmap\nics"
+  },
+  {
+   "depends_on": "eval: doc.operation == \"Export\"",
+   "fieldname": "export_archive_type",
+   "fieldtype": "Select",
+   "label": "Archive Type",
+   "mandatory_depends_on": "eval: doc.operation == \"Export\"",
+   "options": ".zip\n.tgz\n.tar.gz"
+  },
+  {
+   "fieldname": "section_break_wrha",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "queued_at",
+   "fieldtype": "Datetime",
+   "label": "Queued At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed At",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_bnqr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.docstatus != 0",
+   "description": "Started At - Queued At",
+   "fieldname": "started_after",
+   "fieldtype": "Float",
+   "label": "Started After (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval: doc.docstatus != 0",
+   "fieldname": "duration",
+   "fieldtype": "Float",
+   "label": "Duration (Seconds)",
+   "no_copy": 1,
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "default": "ics",
+   "depends_on": "eval: doc.operation == \"Import\"",
+   "fieldname": "import_format",
+   "fieldtype": "Select",
+   "label": "Format",
+   "mandatory_depends_on": "eval: doc.operation == \"Import\"",
+   "options": "ics\njmap"
+  },
+  {
+   "depends_on": "eval: doc.operation == \"Import\"",
+   "description": "Supported: <code>.ics</code>, <code>.zip</code>, <code>.tgz</code>, <code>.tar.gz</code>",
+   "fieldname": "import_file",
+   "fieldtype": "Attach",
+   "label": "File",
+   "mandatory_depends_on": "eval: doc.operation == \"Import\"",
+   "no_copy": 1
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "eval: doc.docstatus == 0",
+   "fieldname": "section_break_ovtu",
+   "fieldtype": "Section Break",
+   "label": "Filters"
+  },
+  {
+   "default": "{}",
+   "depends_on": "eval: doc.operation == \"Export\"",
+   "fieldname": "export_filter",
+   "fieldtype": "JSON",
+   "label": "Filter"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: doc.operation == \"Export\"",
+   "fieldname": "export_limit",
+   "fieldtype": "Int",
+   "label": "Limit",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_xxyr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval: doc.operation == \"Export\"",
+   "fieldname": "export_sort",
+   "fieldtype": "Select",
+   "label": "Sort",
+   "options": "\nStart (ASC)\nStart (DESC)"
+  },
+  {
+   "fieldname": "column_break_emiw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_flrw",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "output",
+   "fieldtype": "Code",
+   "label": "Output",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "depends_on": "eval: doc.operation == \"Export\"",
+   "fieldname": "deduplicate_export",
+   "fieldtype": "Check",
+   "label": "Deduplicate by UID"
+  },
+  {
+   "depends_on": "eval: doc.operation == \"Import\"",
+   "description": "Optional. Target calendar to import events into. Example: <code>{\"calendarIds\": {\"a\": True}}</code>",
+   "fieldname": "import_metadata",
+   "fieldtype": "JSON",
+   "label": "Metadata"
+  },
+  {
+   "fieldname": "column_break_julx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The JMAP account ID to import into or export from. Populated from the accounts the selected user can access.",
+   "fieldname": "account_id",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account ID",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "The user whose JMAP credentials are used to authenticate the import/export.",
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "no_copy": 1,
+   "options": "User",
+   "reqd": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "max_attachments": 1,
+ "modified": "2026-06-24 12:18:05.735864",
+ "modified_by": "Administrator",
+ "module": "Client",
+ "name": "Calendar Exchange",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "Mail Admin",
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "role": "All",
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
