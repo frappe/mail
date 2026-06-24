@@ -220,7 +220,7 @@
 											v-if="!readonly && isSenderBlocked(mail.from_email)"
 											:title="__('This sender is blocked')"
 											class="mb-4"
-											:dismissable="false"
+											:dismissible="false"
 										>
 											<template #description>
 												<p class="text-ink-gray-6 prose-sm">

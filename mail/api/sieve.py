@@ -125,6 +125,29 @@ def remove_sieve_block(sieve_script: str, block_name: str) -> str:
 	return result
 
 
+def _extract_sieve_block(sieve_script: str, block_name: str) -> str | None:
+	"""Return a labeled Sieve block's text (with its `# {block_name}` header), or None if absent."""
+
+	pattern = rf"# {re.escape(block_name)}\n.*?stop;\n}}\n?"
+	match = re.search(pattern, sieve_script, flags=re.DOTALL)
+	return match.group(0) if match else None
+
+
+def _move_screening_gate_to_bottom(content: str) -> str:
+	"""Move the Screening gate block to the end of the script (no-op if there isn't one).
+
+	The gate matches `if not <trusted>`, so it's a catch-all fallback and must stay below every other
+	block — Reject, Spam, and the mailbox rules — including any appended after it.
+	"""
+
+	block = _extract_sieve_block(content, "Screening")
+	if not block:
+		return content
+
+	content = remove_sieve_block(content, "Screening")
+	return content.rstrip() + "\n\n" + block.rstrip() + "\n"
+
+
 @frappe.whitelist()
 def create_automation_script(account: str, active: bool = False) -> str:
 	"""Create the frappe_mail_automation sieve script for the account."""
@@ -266,6 +289,9 @@ def update_sieve_script_for_mailbox(
 			doc.content, f"Mailbox: {name}", rule_object_to_sieve(automation_rules, folder_path)
 		)
 
+	# Mailbox blocks are appended to the end, so push the Screening fallback back below them.
+	doc.content = _move_screening_gate_to_bottom(doc.content)
+
 	doc.save()
 
 
@@ -304,8 +330,9 @@ def build_screening_gate(account: str, accepted_emails: list[str]) -> str:
 	"""Build the screening gate: file mail from senders not on the accepted list into Screening.
 
 	The account's own identity emails are always trusted, so self-addressed and identity mail is
-	never screened. Placed after the Reject/Spam blocks, so those still take precedence; accepted
-	senders fall through to the mailbox automation rules and normal inbox delivery.
+	never screened. This block is the last in the script — the catch-all fallback after Reject, Spam,
+	and the mailbox automation rules — so trusted and folder-routed mail is handled before it, and only
+	mail from an unrecognised sender that nothing else matched falls into Screening.
 	"""
 
 	screening_folder_path = get_screening_folder_path(account)
@@ -356,13 +383,14 @@ def _build_screening_block(block_name: str, emails: list[str], action_lines: lis
 
 
 def update_sieve_script_for_screened_emails(account: str) -> None:
-	"""Regenerate the screening sieve blocks at the top of the automation script.
+	"""Regenerate the screening sieve blocks in the automation script.
 
-	Rebuilt from the Screened Email Address list (+ Account Settings) in one pass, in precedence
-	order: Reject senders are discarded, Spam senders are filed into Junk, and — when screening is
-	enabled — mail from senders not on the Accepted list is filed into the Screening folder. A sender
-	has at most one screening rule (uniqueness is on the address), so the blocks never conflict, and
-	the Screening gate sits below Reject/Spam (which `stop`) but above the mailbox automation rules.
+	Rebuilt from the Screened Email Address list (+ Account Settings) in one pass. Reject (discard) and
+	Spam (file to Junk) are the "screen out" group and go at the top, right after `require`, so they're
+	tested before any routing. The Screening gate (`if not <trusted>` → Screening) is a catch-all
+	fallback, so it's appended at the very bottom — below the mailbox automation rules — and only
+	reached once Reject, Spam, and every folder rule have been tested and didn't match. A sender has at
+	most one screening rule (uniqueness is on the address), so the blocks never conflict.
 	"""
 
 	automation_script_name = get_automation_script_name(account)
@@ -379,11 +407,11 @@ def update_sieve_script_for_screened_emails(account: str) -> None:
 	spam_emails = [s.email for s in screened if s.action == "Spam"]
 	accepted_emails = [s.email for s in screened if s.action == "Accepted"]
 
-	blocks = []
-	# Reject is the more aggressive action, so its block comes first.
+	# Reject is the more aggressive action, so its block comes first within the screen-out group.
+	top_blocks = []
 	reject_block = _build_screening_block("Rejected Emails", reject_emails, ["  discard;", "  stop;"])
 	if reject_block:
-		blocks.append(reject_block)
+		top_blocks.append(reject_block)
 
 	if spam_emails:
 		junk_folder_path = get_junk_folder_path(account)
@@ -395,27 +423,23 @@ def update_sieve_script_for_screened_emails(account: str) -> None:
 			['  addflag "$junk";', f'  fileinto "{junk_folder_path}";', "  stop;"],
 		)
 		if spam_block:
-			blocks.append(spam_block)
+			top_blocks.append(spam_block)
 
-	# Screening gate goes last of the top blocks: after Reject/Spam, before the mailbox rules.
+	# Insert Reject/Spam right after the require statement(s), above the mailbox rules.
+	if top_blocks:
+		block_script = "".join(top_blocks)
+		require_pattern = r"^(require\s+\[.*?\];\s*)+"
+		match = re.match(require_pattern, content, flags=re.DOTALL)
+		if match:
+			insert_pos = match.end()
+			content = content[:insert_pos] + "\n" + block_script + content[insert_pos:]
+		else:
+			content = block_script + content
+
+	# Append the Screening gate last — the catch-all fallback, below every mailbox rule.
 	if is_screening_enabled(account):
-		blocks.append(build_screening_gate(account, accepted_emails))
-
-	if not blocks:
-		doc.content = content.rstrip() + "\n"
-		doc.save()
-		return
-
-	block_script = "".join(blocks)
-
-	require_pattern = r"^(require\s+\[.*?\];\s*)+"
-	match = re.match(require_pattern, content, flags=re.DOTALL)
-
-	if match:
-		insert_pos = match.end()
-		content = content[:insert_pos] + "\n" + block_script + content[insert_pos:]
-	else:
-		content = block_script + content
+		gate = build_screening_gate(account, accepted_emails)
+		content = content.rstrip() + "\n\n" + gate.rstrip() + "\n"
 
 	doc.content = content.rstrip() + "\n"
 	doc.save()
