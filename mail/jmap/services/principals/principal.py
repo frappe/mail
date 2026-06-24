@@ -85,9 +85,9 @@ class PrincipalService(CalendarsService):
 			ids.extend(batch_ids)
 
 			if total is None:
-				total = query_response.get("total", 0)
+				total = query_response.get("total")
 
-			if len(batch_ids) < current_batch_size or len(ids) >= total:
+			if len(batch_ids) < current_batch_size or (total is not None and len(ids) >= total):
 				break
 
 			position += len(batch_ids)
