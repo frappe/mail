@@ -99,7 +99,7 @@ export interface MailDomain extends DocType {
 	default_disk_quota?: number
 }
 
-// Last updated: 2026-06-08 22:01:00.877073
+// Last updated: 2026-06-15 15:27:49.779589
 export interface MailSettings extends DocType {
   /** Root Domain Name: Data */
   root_domain_name?: string;
@@ -211,6 +211,24 @@ export interface MailSettings extends DocType {
   spamd_scanning_mode: 'Exclude Attachments' | 'Include Attachments' | 'Hybrid Approach';
   /** Hybrid Scanning Threshold: Float */
   spamd_hybrid_scanning_threshold?: number;
+  /** Outbound Log File Count: Int */
+  outbound_log_file_count: number;
+  /** Outbound Log Level: Select */
+  outbound_log_level: 'ERROR' | 'WARNING' | 'INFO' | 'DEBUG';
+  /** Outbound Log Max File Size: Int */
+  outbound_log_max_file_size: number;
+  /** Inbound Log File Count: Int */
+  inbound_log_file_count: number;
+  /** Inbound Log Level: Select */
+  inbound_log_level: 'ERROR' | 'WARNING' | 'INFO' | 'DEBUG';
+  /** Inbound Log Max File Size: Int */
+  inbound_log_max_file_size: number;
+  /** Exchange Log File Count: Int */
+  exchange_log_file_count: number;
+  /** Exchange Log Level: Select */
+  exchange_log_level: 'ERROR' | 'WARNING' | 'INFO' | 'DEBUG';
+  /** Exchange Log Max File Size: Int */
+  exchange_log_max_file_size: number;
 }
 
 // Last updated: 2025-08-14 19:12:30.003138
