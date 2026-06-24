@@ -38,7 +38,7 @@ from mail.utils import (
 	extract_compressed_file,
 	get_calendar_export_directory,
 	get_calendar_import_directory,
-	get_config,
+	get_mail_config,
 	reconnect_on_failure,
 )
 from mail.utils.logger import ExchangeLogger, get_exchange_logger
@@ -116,13 +116,13 @@ class CalendarExchange(Document):
 	def max_import(self) -> int:
 		"""Returns the maximum number of events allowed for import."""
 
-		return cint(get_config("exchange_max_import"))
+		return cint(get_mail_config("exchange_max_import"))
 
 	@property
 	def max_export(self) -> int:
 		"""Returns the maximum number of events allowed for export."""
 
-		return cint(get_config("exchange_max_export"))
+		return cint(get_mail_config("exchange_max_export"))
 
 	@property
 	def export_filter_dict(self) -> dict:
@@ -271,7 +271,7 @@ class CalendarExchange(Document):
 				self.name,
 				"_import",
 				queue="long",
-				timeout=cint(get_config("exchange_import_timeout")),
+				timeout=cint(get_mail_config("exchange_import_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
@@ -284,7 +284,7 @@ class CalendarExchange(Document):
 				self.name,
 				"_export",
 				queue="long",
-				timeout=cint(get_config("exchange_export_timeout")),
+				timeout=cint(get_mail_config("exchange_export_timeout")),
 				job_id=job_id,
 				deduplicate=True,
 				enqueue_after_commit=True,
