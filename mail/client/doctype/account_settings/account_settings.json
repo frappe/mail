@@ -4,18 +4,9 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "section_break_hpbp",
-  "user",
-  "column_break_kjbb",
-  "account",
-  "jmap_states_section",
-  "email_state_last_update",
-  "column_break_vftu",
-  "email_current_state",
-  "column_break_bkvs",
-  "email_previous_state",
   "outgoing_section",
   "default_outgoing_email",
+  "column_break_outgoing",
   "create_contacts_after_email_submit",
   "destroy_email_after_submit",
   "destroy_newsletter_after_submit",
@@ -31,72 +22,10 @@
   "total_cached_mail_messages",
   "total_cached_contact_cards",
   "sieve_section",
-  "last_active_sieve_script_id",
-  "column_break_jaxh"
+  "last_active_sieve_script_id"
  ],
  "fields": [
   {
-   "fieldname": "section_break_hpbp",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "account",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "email_previous_state",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "is_virtual": 1,
-   "label": "Previous State (Email)",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "email_current_state",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "is_virtual": 1,
-   "label": "Current State (Email)",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_vftu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "email_state_last_update",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "label": "State Last Update (Email)",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_kjbb",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "user",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "User",
-   "no_copy": 1,
-   "options": "User",
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
-   "depends_on": "eval: !doc.__islocal",
    "fieldname": "outgoing_section",
    "fieldtype": "Section Break",
    "label": "Outgoing"
@@ -105,14 +34,21 @@
    "description": "Default email address used as the sender when composing new messages.",
    "fieldname": "default_outgoing_email",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Default Email",
    "options": "Email"
+  },
+  {
+   "fieldname": "column_break_outgoing",
+   "fieldtype": "Column Break"
   },
   {
    "default": "0",
    "description": "Automatically creates contact cards for new recipients after an email is sent.",
    "fieldname": "create_contacts_after_email_submit",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Create Contacts After Email Submit"
   },
   {
@@ -120,6 +56,7 @@
    "description": "Automatically deletes the email from your mailbox after it is sent.",
    "fieldname": "destroy_email_after_submit",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Destroy Email After Submit"
   },
   {
@@ -127,6 +64,7 @@
    "description": "Automatically delete newsletters after they are sent.",
    "fieldname": "destroy_newsletter_after_submit",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Destroy Newsletter After Submit"
   },
   {
@@ -139,6 +77,8 @@
    "description": "What to do with the sender when a message is marked as Junk. \"Junk Sender's Mail\" files their future mail into Junk; \"Ask to Block Sender\" prompts to block them outright.",
    "fieldname": "on_mark_as_junk",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "On Mark As Junk",
    "options": "Junk Sender's Mail\nAsk to Block Sender"
   },
@@ -164,6 +104,7 @@
   },
   {
    "default": "0",
+   "description": "Whether this account's JMAP identities are cached for your session.",
    "fieldname": "has_cached_jmap_identities",
    "fieldtype": "Check",
    "is_virtual": 1,
@@ -173,6 +114,7 @@
   },
   {
    "default": "0",
+   "description": "Whether this account's JMAP mailboxes are cached for your session.",
    "fieldname": "has_cached_jmap_mailboxes",
    "fieldtype": "Check",
    "is_virtual": 1,
@@ -185,6 +127,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "Number of message blobs (bodies and attachments) cached for your session.",
    "fieldname": "total_cached_blobs",
    "fieldtype": "Int",
    "is_virtual": 1,
@@ -193,6 +136,7 @@
    "read_only": 1
   },
   {
+   "description": "Number of mail messages cached for your session.",
    "fieldname": "total_cached_mail_messages",
    "fieldtype": "Int",
    "is_virtual": 1,
@@ -201,6 +145,7 @@
    "read_only": 1
   },
   {
+   "description": "Number of contact cards cached for your session.",
    "fieldname": "total_cached_contact_cards",
    "fieldtype": "Int",
    "is_virtual": 1,
@@ -209,38 +154,28 @@
    "read_only": 1
   },
   {
+   "collapsible": 1,
    "depends_on": "eval: !doc.__islocal",
    "fieldname": "sieve_section",
    "fieldtype": "Section Break",
    "label": "Sieve"
   },
   {
+   "description": "ID of the Sieve script that was active before a vacation auto-reply was enabled; it is re-activated when the vacation response is turned off.",
    "fieldname": "last_active_sieve_script_id",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Last Active Sieve Script ID",
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
-  },
-  {
-   "fieldname": "column_break_jaxh",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval: !doc.__islocal",
-   "fieldname": "jmap_states_section",
-   "fieldtype": "Section Break",
-   "label": "JMAP States"
-  },
-  {
-   "fieldname": "column_break_bkvs",
-   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-30 11:13:57.163513",
+ "modified": "2026-06-23 10:10:53.961267",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Account Settings",

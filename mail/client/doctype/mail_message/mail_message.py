@@ -47,6 +47,12 @@ from mail.utils.validation import has_permission_for_user
 
 class MailMessage(Document):
 	@property
+	def account(self) -> str:
+		"""Full ``user:account_id`` JMAP handle, rebuilt from the selected user and account ID."""
+
+		return f"{self.user}:{self.account_id}"
+
+	@property
 	def to(self) -> list[dict[str, str | None]]:
 		"""Returns the recipients in the To field."""
 
@@ -200,6 +206,8 @@ class MailMessage(Document):
 
 		id = filters.get("id")
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if not account:
 			frappe.msgprint(_("Please select an account to view messages."), alert=True)
@@ -269,6 +277,8 @@ class MailMessage(Document):
 	def get_count(filters=None, **kwargs) -> int:
 		filters = parse_filters(filters)
 		account = filters.get("account")
+		if not account and filters.get("user") and filters.get("account_id"):
+			account = f"{filters['user']}:{filters['account_id']}"
 
 		if account:
 			if has_permission_for_user(parse_account(account)[0], raise_exception=False):
@@ -645,7 +655,7 @@ def fetch_messages(
 
 	messages = []
 
-	service = get_email_service(account)
+	service = get_email_service(*parse_account(account))
 	data = service.query(filter, position, limit, sort)
 
 	ids = data.get("ids", [])
@@ -668,7 +678,7 @@ def fetch_threads(
 	has_permission_for_user(parse_account(account)[0])
 
 	# Page of threads (each mapped to all of its email IDs across mailboxes).
-	service = get_email_service(account)
+	service = get_email_service(*parse_account(account))
 	thread_email_ids = service.query_thread(filter, position, limit, fetch_all=True)
 	if not thread_email_ids:
 		return {}
@@ -692,7 +702,7 @@ def fetch_thread(account: str, thread_id: str, sort: Literal["asc", "desc"] = "a
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_thread_service(account)
+	service = get_thread_service(*parse_account(account))
 	result = service.get([thread_id])
 	ids = result.get(thread_id, [])
 	messages = get_messages(account, ids=ids)
@@ -744,7 +754,7 @@ def get_messages(account: str, ids: list[str]) -> list[dict]:
 			ids_to_fetch.append(id)
 
 	if ids_to_fetch:
-		service = get_email_service(account)
+		service = get_email_service(*parse_account(account))
 		emails = service.get(ids_to_fetch)
 		mailbox_map = {mb["id"]: mb["name"] for mb in service.mailboxes}
 
@@ -771,14 +781,14 @@ def get_message_ids(
 	has_permission_for_user(parse_account(account)[0])
 
 	try:
-		thread_service = get_thread_service(account)
+		thread_service = get_thread_service(*parse_account(account))
 		result = thread_service.get(thread_ids)
 		ids = [id for _thread_id, ids in result.items() for id in ids]
 
 		if not mailbox_id:
 			return ids
 
-		email_service = get_email_service(account)
+		email_service = get_email_service(*parse_account(account))
 		emails = email_service.get(ids, properties=["id", "mailboxIds"])
 		if isinstance(mailbox_id, str):
 			return [email["id"] for email in emails if mailbox_id in email["mailboxIds"]]
@@ -799,7 +809,7 @@ def delete_messages(account: str, ids: list[str]) -> None:
 	has_permission_for_user(parse_account(account)[0])
 
 	try:
-		service = get_email_service(account)
+		service = get_email_service(*parse_account(account))
 		service.delete(ids)
 		_remove_cached_messages(account, ids)
 	except Exception:
@@ -819,7 +829,7 @@ def empty_mailbox(account: str, mailbox_id: str) -> None:
 	has_permission_for_user(parse_account(account)[0])
 
 	try:
-		service = get_email_service(account)
+		service = get_email_service(*parse_account(account))
 
 		while True:
 			result = service.query({"inMailbox": mailbox_id}, position=0, limit=service.max_objects_in_get)
@@ -848,7 +858,7 @@ def move_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> N
 
 	try:
 		emails = [{"id": id, "mailbox_ids": {mailbox_id: True}} for id in ids]
-		service = get_email_service(account)
+		service = get_email_service(*parse_account(account))
 		service.update(emails, replace_mailboxes=True)
 		_remove_cached_messages(account, ids)
 	except Exception:
@@ -878,7 +888,7 @@ def set_messages_mailboxes(account: str, mails: list[dict]) -> None:
 					"keywords": {"$junk": junk, "$notjunk": not junk},
 				}
 			)
-		service = get_email_service(account)
+		service = get_email_service(*parse_account(account))
 		service.update(emails, replace_keywords=False, replace_mailboxes=True)
 		_remove_cached_messages(account, [mail["id"] for mail in mails])
 	except Exception:
@@ -899,7 +909,7 @@ def add_messages_to_mailbox(account: str, ids: list[str], mailbox_id: str) -> No
 
 	try:
 		emails = [{"id": id, "mailbox_ids": {mailbox_id: True}} for id in ids]
-		service = get_email_service(account)
+		service = get_email_service(*parse_account(account))
 		service.update(emails, replace_mailboxes=False)
 		_remove_cached_messages(account, ids)
 	except Exception:
@@ -920,7 +930,7 @@ def remove_messages_from_mailbox(account: str, ids: list[str], mailbox_id: str) 
 
 	try:
 		emails = [{"id": id, "mailbox_ids": {mailbox_id: False}} for id in ids]
-		service = get_email_service(account)
+		service = get_email_service(*parse_account(account))
 		service.update(emails, replace_mailboxes=False)
 		_remove_cached_messages(account, ids)
 	except Exception:
@@ -941,7 +951,7 @@ def set_seen_status(account: str, ids: list[str], seen: bool = True) -> None:
 
 	try:
 		emails = [{"id": id, "keywords": {"$seen": seen}} for id in ids]
-		service = get_email_service(account)
+		service = get_email_service(*parse_account(account))
 		service.update(emails, replace_keywords=False)
 
 		messages_to_cache = {}
@@ -976,7 +986,7 @@ def set_flagged_status(account: str, ids: list[str], flagged: bool = True) -> No
 
 	try:
 		emails = [{"id": id, "keywords": {"$flagged": flagged}} for id in ids]
-		service = get_email_service(account)
+		service = get_email_service(*parse_account(account))
 		service.update(emails, replace_keywords=False)
 
 		messages_to_cache = {}
@@ -1007,13 +1017,13 @@ def set_spam_status(account: str, ids: list[str], spam: bool = True) -> None:
 	if not account or not ids:
 		frappe.throw(_("Account and Mail IDs are required."))
 
-	user = parse_account(account)[0]
+	user, account_id = parse_account(account)
 	has_permission_for_user(user)
 
 	try:
 		connection = get_jmap_connection(user)
-		email_service = EmailService(account, connection)
-		mailbox_service = MailboxService(account, connection)
+		email_service = EmailService(account_id, connection)
+		mailbox_service = MailboxService(account_id, connection)
 
 		mailbox_id = mailbox_service.get_mailbox_id_by_role(
 			"junk" if spam else "inbox", create_if_not_exists=True, raise_exception=True
@@ -1064,7 +1074,7 @@ def fetch_blobs(account: str, blobs: list[str] | list[tuple[str, str | None]]) -
 		return result
 
 	try:
-		service = get_email_service(account)
+		service = get_email_service(*parse_account(account))
 		fetched_blobs = service.download_blobs_concurrently(blobs_to_fetch)
 
 		blobs_to_cache = {}
@@ -1109,7 +1119,8 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 
 	sent_at = parse_iso_datetime(message["sentAt"])
 	formatted_message = {
-		"account": account,
+		"account_id": parse_account(account)[1],
+		"user": parse_account(account)[0],
 		"sent_at": sent_at,
 		"creation": sent_at,
 		"id": message["id"],
@@ -1193,7 +1204,7 @@ def format_message(account: str, mailbox_map: dict, message: dict) -> dict:
 
 	for attachment in formatted_message["attachments"]:
 		if blob_id := attachment["blob_id"]:
-			params = f"account={account}&blob_id={blob_id}"
+			params = f"account_id={parse_account(account)[1]}&blob_id={blob_id}"
 			if filename := attachment["filename"]:
 				params += f"&filename={quote(filename)}"
 			attachment["url"] = f"/api/method/mail.api.mail.get_attachment?{params}"
@@ -1217,40 +1228,35 @@ def _get_total_cache_key(account: str) -> str:
 def _get_cached_messages(account: str, ids: list[str]) -> dict[str, dict | None]:
 	"""Returns a dictionary of cached messages for the provided IDs."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	return store.get_many(Entity.EMAIL, subkeys=ids)
 
 
 def _cache_messages(account: str, messages: dict[str, dict]) -> None:
 	"""Store messages in cache with the message ID as the subkey."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	store.set_many(Entity.EMAIL, items=messages)
 
 
 def _remove_cached_messages(account: str, ids: list[str]) -> None:
 	"""Remove messages from cache for the provided IDs."""
 
-	user, account_id = parse_account(account)
-	store = get_data_store(user, account_id)
+	store = get_data_store(parse_account(account)[1])
 	store.delete_many(Entity.EMAIL, subkeys=ids)
 
 
 def _get_cached_blobs(account: str, blob_ids: list[str]) -> dict[str, bytes | None]:
 	"""Returns a dictionary of cached blobs for the provided blob IDs."""
 
-	user, account_id = parse_account(account)
-	store = get_blob_store(user, account_id)
+	store = get_blob_store(parse_account(account)[1])
 	return store.get_many(subkeys=blob_ids)
 
 
 def _cache_blobs(account: str, blobs: dict[str, bytes]) -> None:
 	"""Store blobs in cache with the blob ID as the subkey."""
 
-	user, account_id = parse_account(account)
-	store = get_blob_store(user, account_id)
+	store = get_blob_store(parse_account(account)[1])
 	store.set_many(items=blobs)
 
 
@@ -1279,8 +1285,8 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 		logger.debug("fetching-changes-from-server")
 
 		connection = get_jmap_connection(user)
-		email_service = EmailService(account, connection)
-		mailbox_service = MailboxService(account, connection)
+		email_service = EmailService(account_id, connection)
+		mailbox_service = MailboxService(account_id, connection)
 
 		result = email_service.changes(current_state)
 
@@ -1294,7 +1300,7 @@ def fetch_changes(account: str, email_state: str | None = None, ctx: dict | None
 				disabled_mailboxes = set(
 					frappe.db.get_all(
 						"Mailbox Settings",
-						{"account": account, "disable_push_notification": 1},
+						{"account_id": account_id, "disable_push_notification": 1},
 						pluck="mailbox_id",
 					)
 				) | {
@@ -1433,33 +1439,46 @@ def enqueue_fetch_changes(account: str, email_state: str | None = None, ctx: dic
 
 
 def schedule_fetch_changes() -> None:
-	"""Schedule fetch_changes for users who have email accounts configured and haven't had their email state updated in the last 3 hours."""
+	"""Schedule fetch_changes for every (user, account) whose email state hasn't been
+	updated in the last 3 hours.
+
+	Account Settings are now shared per account ID, so the set of accounts to sync is
+	derived from each JMAP-configured user's accounts, and the last-update timestamp is
+	read from that user's per-account data store."""
 
 	USER = frappe.qb.DocType("User")
 	USER_SETTINGS = frappe.qb.DocType("User Settings")
-	ACCOUNT_SETTINGS = frappe.qb.DocType("Account Settings")
 
-	threshold = add_to_date(now(), hours=-3)
+	threshold = get_datetime(add_to_date(now(), hours=-3))
 
-	accounts = (
-		frappe.qb.from_(ACCOUNT_SETTINGS)
+	users = (
+		frappe.qb.from_(USER_SETTINGS)
 		.join(USER)
-		.on(USER.name == ACCOUNT_SETTINGS.user)
-		.join(USER_SETTINGS)
-		.on(USER_SETTINGS.user == USER.name)
-		.select(ACCOUNT_SETTINGS.account)
-		.distinct()
+		.on(USER.name == USER_SETTINGS.user)
+		.select(USER_SETTINGS.user)
 		.where(
 			(USER.enabled == 1)
 			& (USER_SETTINGS.username != "")
 			& (USER_SETTINGS.username.isnotnull())
 			& (USER_SETTINGS.skip_schedule_fetch_changes == 0)
-			& (
-				ACCOUNT_SETTINGS.email_state_last_update.isnull()
-				| (ACCOUNT_SETTINGS.email_state_last_update < threshold)
-			)
 		)
-	).run(pluck="account")
+	).run(pluck="user")
+
+	if not users:
+		return
+
+	accounts = []
+	for user in users:
+		try:
+			account_ids = list(get_jmap_connection(user, ignore_permissions=True).accounts.keys())
+		except Exception:
+			continue
+
+		for account_id in account_ids:
+			store = get_data_store(account_id)
+			last_update = store.get(Entity.STATE, "email_state_last_update")
+			if not last_update or get_datetime(last_update) < threshold:
+				accounts.append(f"{user}:{account_id}")
 
 	if not accounts:
 		return

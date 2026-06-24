@@ -13,6 +13,12 @@ def execute() -> None:
 	each account's identities by a background job once migrate is done.
 	"""
 
+	# Account Settings was later reshaped to be shared per account ID, dropping the
+	# `user`/`account` columns (see refactor_account_settings). When those columns are
+	# gone there is nothing for this legacy patch to migrate.
+	if not frappe.db.has_column("Account Settings", "account"):
+		return
+
 	captured = frappe.cache.get_value(CACHE_KEY)
 	by_user = frappe.parse_json(captured) if captured else {}
 

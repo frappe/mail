@@ -9,7 +9,7 @@
   "phone",
   "section_break_04au",
   "user",
-  "account",
+  "account_id",
   "column_break_lrhc",
   "id",
   "uid",
@@ -162,15 +162,10 @@
    "set_only_once": 1
   },
   {
-   "description": "The account this contact card belongs to.",
-   "fieldname": "account",
+   "fieldname": "account_id",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "reqd": 1,
-   "set_only_once": 1
+   "label": "Account ID"
   },
   {
    "description": "The user this contact card belongs to.",

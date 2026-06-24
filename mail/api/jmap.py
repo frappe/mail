@@ -92,11 +92,11 @@ def push_notification() -> dict:
 
 					elif entity == "Mailbox":
 						logger.debug("invalidating-mailbox-cache", entity=entity, state=state)
-						invalidate_jmap_mailboxes_cache(account)
+						invalidate_jmap_mailboxes_cache(account_id)
 
 					elif entity == "Identity":
 						logger.debug("invalidating-identity-cache", entity=entity, state=state)
-						invalidate_jmap_identities_cache(account)
+						invalidate_jmap_identities_cache(account_id)
 
 					else:
 						logger.warning("unhandled-state-change-entity", entity=entity)

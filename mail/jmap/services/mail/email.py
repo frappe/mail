@@ -29,7 +29,7 @@ class EmailService(MailService):
 		draft_calls, draft_refs = self._create(emails, call_id_gen)
 		method_calls.extend(draft_calls)
 
-		submission_service = EmailSubmissionService(self.account, self.connection)
+		submission_service = EmailSubmissionService(self.account_id, self.connection)
 		submission_calls = submission_service._create(emails, draft_refs, call_id_gen)
 		method_calls.extend(submission_calls)
 
@@ -145,20 +145,25 @@ class EmailService(MailService):
 		sort = sort or [{"property": "receivedAt", "isAscending": False}]
 
 		while len(ids) < limit:
-			response = self._query(filter, position, batch_size, sort, calculate_total=total is None)
+			current_batch_size = min(batch_size, limit - len(ids))
 
-			if method_responses := response.get("methodResponses"):
-				query_response = method_responses[0][1]
+			response = self._query(filter, position, current_batch_size, sort, calculate_total=total is None)
 
-				ids.extend(query_response.get("ids", []))
+			method_responses = response.get("methodResponses")
+			if not method_responses:
+				break
 
-				if total is None:
-					total = query_response.get("total", 0)
+			query_response = method_responses[0][1]
+			batch_ids = query_response.get("ids", [])
+			ids.extend(batch_ids)
 
-				if not query_response.get("hasMoreItems", False):
-					break
+			if total is None:
+				total = query_response.get("total")
 
-				position += batch_size
+			if len(batch_ids) < current_batch_size or (total is not None and len(ids) >= total):
+				break
+
+			position += len(batch_ids)
 
 		return {"ids": ids[:limit], "total": total}
 
@@ -357,7 +362,7 @@ class EmailService(MailService):
 		method_calls = []
 		draft_refs = {}
 
-		mailbox_service = MailboxService(self.account, self.connection)
+		mailbox_service = MailboxService(self.account_id, self.connection)
 		draft_mailbox_id = mailbox_service.get_mailbox_id_by_role(
 			"drafts", create_if_not_exists=True, raise_exception=True
 		)

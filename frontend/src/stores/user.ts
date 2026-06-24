@@ -55,13 +55,13 @@ export const userStore = defineStore('mail-user', () => {
 		auto: true,
 	})
 
-	const account = computed(
-		() => userResource.data?.accounts?.find((a) => a.id === accountId.value)?.name,
-	)
+	// The logged-in user (the user component of every account handle is always the session user).
+	// Exposed so callers can rebuild a `user:account_id` virtual-doctype document name when needed.
+	const user = computed(() => userResource.data?.name)
 
 	const mailboxes = createResource({
 		url: 'mail.api.mail.get_mailboxes',
-		makeParams: () => ({ account: account.value }),
+		makeParams: () => ({ account_id: accountId.value }),
 		cache: ['mailboxes', accountId.value],
 	})
 
@@ -85,27 +85,27 @@ export const userStore = defineStore('mail-user', () => {
 
 	const addressBooks = createResource({
 		url: 'mail.api.contacts.get_address_books',
-		makeParams: () => ({ account: account.value }),
+		makeParams: () => ({ account_id: accountId.value }),
 		cache: ['addressBooks', accountId.value],
 	})
 
 	const identities = createResource({
 		url: 'mail.api.account.get_identities',
-		makeParams: () => ({ account: account.value }),
+		makeParams: () => ({ account_id: accountId.value }),
 		cache: ['identities', accountId.value],
 	})
 
 	// Screened senders for the account: each is `{ email, action }` where action is 'Reject'
-	// (discard incoming mail) or 'Spam' (file it into the Spam folder).
+	// (discard incoming mail), 'Spam' (file it into the Spam folder), or 'Accepted'.
 	const screenedAddresses = createResource({
 		url: 'mail.api.mail.get_screened_addresses',
-		makeParams: () => ({ account: account.value }),
+		makeParams: () => ({ account_id: accountId.value }),
 		cache: ['screenedAddresses', accountId.value],
 	})
 
 	const sieveScripts = createResource({
 		url: 'mail.api.sieve.get_sieve_scripts',
-		makeParams: () => ({ account: account.value }),
+		makeParams: () => ({ account_id: accountId.value }),
 		cache: ['sieveScripts', accountId.value],
 	})
 
@@ -128,7 +128,7 @@ export const userStore = defineStore('mail-user', () => {
 
 	return {
 		accountId,
-		account,
+		user,
 		resolveAccount,
 		userResource,
 		mailboxes,

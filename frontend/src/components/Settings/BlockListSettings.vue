@@ -110,7 +110,7 @@ const rows = computed(() =>
 
 const screenEmailAddress = createResource({
 	url: 'mail.api.mail.screen_email_address',
-	makeParams: () => ({ account: store.account, email: email.value, action: action.value }),
+	makeParams: () => ({ account_id: store.accountId, email: email.value, action: action.value }),
 	onSuccess: () => {
 		raiseToast(__('Sender screened.'))
 		email.value = ''
@@ -121,7 +121,7 @@ const screenEmailAddress = createResource({
 const unscreenEmailAddresses = createResource({
 	url: 'mail.api.mail.unscreen_email_addresses',
 	makeParams: () => ({
-		account: store.account,
+		account_id: store.accountId,
 		emails: Array.from(listViewRef.value?.selections),
 	}),
 	onSuccess: () => {

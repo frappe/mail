@@ -1,16 +1,15 @@
 import frappe
 from frappe.model.document import bulk_insert
 
-from mail.jmap import parse_account
-
 
 def execute() -> None:
 	"""Merge the legacy "Blocked Email Address" and "Junk Email Address" doctypes into the unified
 	"Screened Email Address" doctype, then drop the old doctypes.
 
 	A blocked address becomes a Reject rule (discard) and a junked address becomes a Spam rule (file
-	into Junk). Both are keyed on the shared `account_id`, and a sender has at most one rule, so a
-	Reject always supersedes a Spam for the same (account_id, email).
+	into Junk). All three doctypes are keyed on the shared `account_id` (the legacy ones were
+	backfilled earlier in this migration), and a sender has at most one rule, so a Reject always
+	supersedes a Spam for the same (account_id, email).
 
 	Inserted via `bulk_insert` (no per-document hooks), so the sieve scripts are not regenerated here:
 	the existing server-side sieve blocks already reflect the same addresses and actions, and the new
@@ -23,8 +22,8 @@ def execute() -> None:
 	seen: set[tuple[str, str]] = set()
 	docs = []
 
-	def add(user: str, account: str, account_id: str, email: str, action: str, creation) -> None:
-		if not email or not account or not account_id:
+	def add(account_id: str, email: str, action: str, creation) -> None:
+		if not email or not account_id:
 			return
 
 		key = (account_id, email)
@@ -35,8 +34,6 @@ def execute() -> None:
 		doc = frappe.get_doc(
 			{
 				"doctype": "Screened Email Address",
-				"user": user,
-				"account": account,
 				"account_id": account_id,
 				"email": email,
 				"action": action,
@@ -51,26 +48,18 @@ def execute() -> None:
 	if frappe.db.table_exists("Blocked Email Address"):
 		for row in frappe.get_all(
 			"Blocked Email Address",
-			fields=["user", "account", "account_id", "email", "creation"],
+			fields=["account_id", "email", "creation"],
 			order_by="creation asc",
 		):
-			try:
-				account_id = row.account_id or (parse_account(row.account)[1] if row.account else None)
-			except Exception:
-				continue  # skip malformed handles rather than abort the migration
-			add(row.user, row.account, account_id, row.email, "Reject", row.creation)
+			add(row.account_id, row.email, "Reject", row.creation)
 
 	if frappe.db.table_exists("Junk Email Address"):
 		for row in frappe.get_all(
 			"Junk Email Address",
-			fields=["user", "account", "email", "creation"],
+			fields=["account_id", "email", "creation"],
 			order_by="creation asc",
 		):
-			try:
-				account_id = parse_account(row.account)[1] if row.account else None
-			except Exception:
-				continue  # skip malformed handles rather than abort the migration
-			add(row.user, row.account, account_id, row.email, "Spam", row.creation)
+			add(row.account_id, row.email, "Spam", row.creation)
 
 	if docs:
 		bulk_insert("Screened Email Address", docs, ignore_duplicates=True)

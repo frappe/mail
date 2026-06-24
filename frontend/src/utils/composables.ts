@@ -147,7 +147,7 @@ export const useBlockSender = () => {
 	const blockResource = createResource({
 		url: 'mail.api.mail.screen_email_addresses',
 		makeParams: ({ emails }: { emails: string[] }) => ({
-			account: store.account,
+			account_id: store.accountId,
 			emails,
 			action: 'Reject',
 		}),
@@ -156,7 +156,10 @@ export const useBlockSender = () => {
 
 	const unscreenResource = createResource({
 		url: 'mail.api.mail.unscreen_email_addresses',
-		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
+		makeParams: ({ emails }: { emails: string[] }) => ({
+			account_id: store.accountId,
+			emails,
+		}),
 		onSuccess: () => screenedAddresses.reload(),
 	})
 

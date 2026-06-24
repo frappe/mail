@@ -9,7 +9,7 @@
   "section_break_vxtc",
   "column_break_frsy",
   "user",
-  "account",
+  "account_id",
   "operation",
   "import_format",
   "import_metadata",
@@ -247,21 +247,24 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "account",
+   "description": "The JMAP account ID to import into or export from. Populated from the accounts the selected user can access.",
+   "fieldname": "account_id",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Account",
+   "label": "Account ID",
    "reqd": 1,
    "search_index": 1
   },
   {
+   "description": "The user whose JMAP credentials are used to authenticate the import/export.",
    "fieldname": "user",
    "fieldtype": "Link",
    "in_standard_filter": 1,
    "label": "User",
    "no_copy": 1,
    "options": "User",
+   "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
   }

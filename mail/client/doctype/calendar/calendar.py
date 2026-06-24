@@ -151,7 +151,7 @@ def add_calendar(
 		"is_default": default,
 	}
 
-	service = get_calendar_service(account)
+	service = get_calendar_service(*parse_account(account))
 	response = service.create([calendar])
 
 	title = _("Calendar Creation Error")
@@ -169,7 +169,7 @@ def get_calendar(account: str, id: str) -> dict:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_calendar_service(account)
+	service = get_calendar_service(*parse_account(account))
 	if calendars := service.get([id]):
 		return format_calendar(account, calendars[0])
 
@@ -210,7 +210,7 @@ def update_calendar(
 		"is_default": default,
 	}
 
-	service = get_calendar_service(account)
+	service = get_calendar_service(*parse_account(account))
 	response = service.update([calendar])
 
 	title = _("Calendar Update Error")
@@ -227,7 +227,7 @@ def delete_calendars(account: str, ids: list[str], remove_events: bool = True) -
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_calendar_service(account)
+	service = get_calendar_service(*parse_account(account))
 	response = service.delete(ids, remove_events=remove_events)
 
 	if response.get("notDestroyed"):
@@ -246,7 +246,7 @@ def fetch_calendars(account: str, page: int = 1, limit: int = 10) -> list:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_calendar_service(account)
+	service = get_calendar_service(*parse_account(account))
 	calendars = service.get()
 	formatted_calendars = [format_calendar(account, calendar) for calendar in calendars]
 	frappe.cache.set_value(_get_total_cache_key(account), len(calendars), expires_in_sec=600)

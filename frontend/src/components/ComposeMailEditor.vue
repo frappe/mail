@@ -278,7 +278,7 @@ const emit = defineEmits(['discardMail', 'reply', 'replyAll', 'forward', 'popOut
 
 const router = useRouter()
 const store = userStore()
-const { account, identities } = store
+const { accountId, identities } = store
 
 const viewSentMessage = (threadID: string) =>
 	router.push({
@@ -328,7 +328,7 @@ const getDefaultFromEmail = () => {
 	const identityEmails = identities.data?.map((i: Identity) => i.email) ?? []
 	// The default outgoing email is now per-account; pick the active account's.
 	const defaultOutgoingEmail = user.data?.accounts?.find(
-		(a) => a.name === account,
+		(a) => a.id === accountId,
 	)?.default_outgoing_email
 
 	return (
@@ -453,7 +453,7 @@ const onMailUpdateSuccess = ({
 const createMail = createResource({
 	url: 'mail.api.mail.create_mail',
 	makeParams: ({ save_as_draft }: { save_as_draft: boolean }) => ({
-		account,
+		account_id: accountId,
 		...mail,
 		...processInlineImages(mail),
 		from_name: getIdentity(mail.from_email!)._name,
@@ -466,7 +466,7 @@ const createMail = createResource({
 const updateDraft = createResource({
 	url: 'mail.api.mail.update_draft_mail',
 	makeParams: ({ submit }: { submit: boolean }) => ({
-		account,
+		account_id: accountId,
 		...mail,
 		...processInlineImages(mail),
 		from_name: getIdentity(mail.from_email!)._name,
@@ -478,7 +478,7 @@ const updateDraft = createResource({
 
 const deleteMail = createResource({
 	url: 'mail.api.mail.delete_mail',
-	makeParams: () => ({ account, id: mail.id }),
+	makeParams: () => ({ account_id: accountId, id: mail.id }),
 	onSuccess: () => {
 		reloadMails()
 		raiseToast(__('Draft discarded.'))

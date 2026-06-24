@@ -96,6 +96,19 @@ const routes = [
 		props: true,
 	},
 	{
+		path: '/calendar-exchanges',
+		name: 'CalendarExchanges',
+		component: () => import('@/pages/CalendarExchangesView.vue'),
+		meta: { noLayout: true },
+	},
+	{
+		path: '/calendar-exchanges/:id',
+		name: 'CalendarExchange',
+		component: () => import('@/pages/CalendarExchangeView.vue'),
+		meta: { noLayout: true },
+		props: true,
+	},
+	{
 		path: '/mime-message/:id',
 		name: 'MimeMessage',
 		component: () => import('@/pages/MimeMessageView.vue'),

@@ -476,7 +476,7 @@ const isSenderBlocked = (email: string) =>
 // account's "Block Remote Images" setting withholds remote images (read-tracking pixels) until you opt in.
 const blockRemoteImagesEnabled = computed(
 	() =>
-		store.userResource?.data?.accounts?.find((a) => a.name === store.account)
+		store.userResource?.data?.accounts?.find((a) => a.id === store.accountId)
 			?.block_remote_images ?? true,
 )
 const isScreenedIn = (email: string) =>
@@ -554,7 +554,7 @@ const isLoading = computed(() => !!threadID && !thread.value.length)
 
 const threadFallback = createResource({
 	url: 'mail.api.mail.get_thread',
-	makeParams: () => ({ account: store.account, thread_id: threadID }),
+	makeParams: () => ({ account_id: store.accountId, thread_id: threadID }),
 	onSuccess: (mails: Mail[]) => {
 		// Thread no longer exists (e.g. deleted) — bail to the mailbox instead of a blank page.
 		if (!mails?.length) {
@@ -743,7 +743,7 @@ onMounted(() => loadThread())
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unscreen_email_addresses',
-	makeParams: (email) => ({ account: store.account, emails: [email] }),
+	makeParams: (email) => ({ account_id: store.accountId, emails: [email] }),
 	onSuccess: () => {
 		raiseToast(__('Sender unblocked.'))
 		screenedAddresses.reload()
@@ -754,7 +754,7 @@ const unblockEmailAddress = createResource({
 const trustSender = createResource({
 	url: 'mail.api.mail.screen_email_addresses',
 	makeParams: (email: string) => ({
-		account: store.account,
+		account_id: store.accountId,
 		emails: [email],
 		action: 'Accepted',
 	}),

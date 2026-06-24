@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 from typing import TYPE_CHECKING
-from uuid import uuid7
 
 import frappe
 from frappe import _
@@ -23,42 +22,47 @@ if TYPE_CHECKING:
 	from mail.jmap.services.core import CoreService
 
 from mail.utils import log_error
-from mail.utils.user import get_account_emails, is_system_manager
-from mail.utils.validation import has_permission_for_user
+from mail.utils.user import (
+	get_account_emails,
+	get_account_scoped_permission_query,
+	has_account_scoped_permission,
+)
 
 
 class AccountSettings(Document):
+	"""Per-account settings shared across every user that has JMAP access to the account.
+
+	The document is named by the bare JMAP account ID. Cache-related fields and actions
+	operate on the *session user's* local store for the account, since the cache is kept
+	per (user, account).
+	"""
+
 	def autoname(self) -> None:
-		self.name = str(uuid7())
+		# The account ID is supplied by `get_or_create_account_settings` via flags.
+		self.name = self.flags.account_id
+
+	@property
+	def account(self) -> str:
+		"""The full `user:account_id` for the relevant user.
+
+		Uses the creating user during insert (set via flags) and the session user
+		otherwise, so cache lookups reflect the user currently viewing the document.
+		"""
+
+		return self.flags.get("account") or f"{frappe.session.user}:{self.name}"
 
 	@property
 	def core_service(self) -> "CoreService" | None:
 		"""Return the JMAP core service for the account, or None if there is an error."""
 
-		if self.flags.in_delete or not self.account:
+		if self.flags.in_delete or not self.name:
 			return None
 
 		try:
-			return get_core_service(self.account)
+			return get_core_service(*parse_account(self.account))
 		except Exception:
-			frappe.msgprint(f"Error getting JMAP core service for account {self.account}")
+			frappe.msgprint(f"Error getting JMAP core service for account {self.name}")
 			return None
-
-	@property
-	def email_current_state(self) -> str:
-		"""Returns the current state of the email sync for the account, or an empty string if not set."""
-
-		user, account_id = parse_account(self.account)
-		store = get_data_store(user, account_id)
-		return store.get(Entity.STATE, "email_current_state") or ""
-
-	@property
-	def email_previous_state(self) -> str:
-		"""Returns the previous state of the email sync for the account, or an empty string if not set."""
-
-		user, account_id = parse_account(self.account)
-		store = get_data_store(user, account_id)
-		return store.get(Entity.STATE, "email_previous_state") or ""
 
 	@property
 	def has_cached_jmap_identities(self) -> int:
@@ -84,25 +88,19 @@ class AccountSettings(Document):
 	def total_cached_blobs(self) -> int:
 		"""Get the total number of cached blobs for the account."""
 
-		user, account_id = parse_account(self.account)
-		store = get_blob_store(user, account_id)
-		return store.count()
+		return get_blob_store(self.name).count()
 
 	@property
 	def total_cached_mail_messages(self) -> int:
 		"""Get the total number of cached mail messages for the account."""
 
-		user, account_id = parse_account(self.account)
-		store = get_data_store(user, account_id)
-		return store.count(Entity.EMAIL)
+		return get_data_store(self.name).count(Entity.EMAIL)
 
 	@property
 	def total_cached_contact_cards(self) -> int:
 		"""Get the total number of cached contact cards for the account."""
 
-		user, account_id = parse_account(self.account)
-		store = get_data_store(user, account_id)
-		return store.count(Entity.CONTACT_CARD)
+		return get_data_store(self.name).count(Entity.CONTACT_CARD)
 
 	def validate(self) -> None:
 		self.validate_default_outgoing_email()
@@ -122,9 +120,6 @@ class AccountSettings(Document):
 		if emails and self.default_outgoing_email not in emails:
 			self.default_outgoing_email = emails[0]
 
-	def before_insert(self) -> None:
-		self.user = parse_account(self.account)[0]
-
 	def after_insert(self) -> None:
 		create_archive_mailbox(self.account)
 
@@ -136,8 +131,11 @@ class AccountSettings(Document):
 
 		if self.has_value_changed("enable_screening"):
 			from mail.api.sieve import update_sieve_script_for_screened_emails
+			from mail.utils.user import get_session_account
 
-			update_sieve_script_for_screened_emails(self.account)
+			# Account Settings is named by the shared account_id; resolve it to the session user's
+			# account handle for the sieve regeneration.
+			update_sieve_script_for_screened_emails(get_session_account(self.name))
 
 	def after_delete(self) -> None:
 		"""Clear all caches related to the account when the settings are deleted."""
@@ -153,14 +151,14 @@ class AccountSettings(Document):
 		"""Clear all cached JMAP identities for the current account."""
 
 		if self.has_clear_cache_permission():
-			invalidate_jmap_identities_cache(self.account)
+			invalidate_jmap_identities_cache(parse_account(self.account)[1])
 
 	@frappe.whitelist()
 	def clear_cached_jmap_mailboxes(self) -> None:
 		"""Clear all cached JMAP mailboxes for the current account."""
 
 		if self.has_clear_cache_permission():
-			invalidate_jmap_mailboxes_cache(self.account)
+			invalidate_jmap_mailboxes_cache(parse_account(self.account)[1])
 
 	@frappe.whitelist()
 	def clear_cached_blobs(self) -> None:
@@ -169,9 +167,7 @@ class AccountSettings(Document):
 		if not self.has_clear_cache_permission():
 			return
 
-		user, account_id = parse_account(self.account)
-		store = get_blob_store(user, account_id)
-		store.delete_all()
+		get_blob_store(self.name).delete_all()
 
 	@frappe.whitelist()
 	def clear_cached_mail_messages(self) -> None:
@@ -180,9 +176,7 @@ class AccountSettings(Document):
 		if not self.has_clear_cache_permission():
 			return
 
-		user, account_id = parse_account(self.account)
-		store = get_data_store(user, account_id)
-		store.delete_all(Entity.EMAIL)
+		get_data_store(self.name).delete_all(Entity.EMAIL)
 
 	@frappe.whitelist()
 	def clear_cached_contact_cards(self) -> None:
@@ -191,14 +185,17 @@ class AccountSettings(Document):
 		if not self.has_clear_cache_permission():
 			return
 
-		user, account_id = parse_account(self.account)
-		store = get_data_store(user, account_id)
-		store.delete_all(Entity.CONTACT_CARD)
+		get_data_store(self.name).delete_all(Entity.CONTACT_CARD)
 
 	def has_clear_cache_permission(self) -> bool:
-		"""Check if the user has permission to clear cache."""
+		"""Check if the session user has permission to clear cache."""
 
-		return has_permission_for_user(self.user, raise_exception=True)
+		if has_permission(self, "write"):
+			return True
+
+		frappe.throw(
+			_("You do not have permission to clear the cache for this account."), frappe.PermissionError
+		)
 
 	def _db_set(
 		self,
@@ -212,30 +209,43 @@ class AccountSettings(Document):
 		self.db_set(kwargs, update_modified=update_modified, notify=notify, commit=commit)
 
 
-def sync_account_settings(user: str, accounts: dict[str, dict]) -> None:
-	"""Sync the Account Settings doctype with the current accounts of the user."""
+def get_or_create_account_settings(account: str) -> str:
+	"""Return the name of the (shared) Account Settings for the given `user:account_id`,
+	creating it if it does not already exist. The document is named by the account ID."""
 
-	existing_account_settings_map = {
-		s["account"]: s["name"]
-		for s in frappe.db.get_all("Account Settings", {"user": user}, ["name", "account"])
-	}
-	current_accounts = set([f"{user}:{account_id}" for account_id in accounts.keys()])
+	account_id = parse_account(account)[1]
 
-	accounts_to_delete = set(existing_account_settings_map.keys()) - current_accounts
-	accounts_to_add = current_accounts - set(existing_account_settings_map.keys())
+	if frappe.db.exists("Account Settings", account_id):
+		return account_id
 
-	for account in accounts_to_delete:
-		frappe.delete_doc("Account Settings", existing_account_settings_map[account], ignore_permissions=True)
+	settings = frappe.new_doc("Account Settings")
+	settings.flags.account_id = account_id
+	# Carry the full account so after_insert / validate can reach JMAP for this user.
+	settings.flags.account = account
 
-	for account in accounts_to_add:
-		settings = frappe.new_doc("Account Settings")
-		settings.user = user
-		settings.account = account
-		# Default the outgoing sender to the account's first identity.
+	# Default the outgoing sender to the account's first identity.
+	try:
 		emails = get_account_emails(account)
 		if emails:
 			settings.default_outgoing_email = emails[0]
-		settings.save(ignore_permissions=True)
+	except Exception:
+		pass
+
+	settings.flags.ignore_links = True
+	settings.insert(ignore_permissions=True)
+
+	return settings.name
+
+
+def sync_account_settings(user: str, accounts: dict[str, dict]) -> None:
+	"""Ensure a shared Account Settings document exists for each of the user's accounts.
+
+	Settings are shared by account ID across every user with access, so documents for
+	accounts the user can no longer see are intentionally left untouched.
+	"""
+
+	for account_id in accounts.keys():
+		get_or_create_account_settings(f"{user}:{account_id}")
 
 
 def backfill_default_outgoing_emails() -> None:
@@ -246,63 +256,57 @@ def backfill_default_outgoing_emails() -> None:
 	the account's identities, otherwise uses the account's first identity.
 	"""
 
-	for settings in frappe.get_all("Account Settings", fields=["name", "account", "default_outgoing_email"]):
+	from mail.jmap import get_jmap_connection
+
+	for user in frappe.get_all("User Settings", filters={"username": ["is", "set"]}, pluck="user"):
 		try:
-			emails = get_account_emails(settings["account"])
+			account_ids = list(get_jmap_connection(user, ignore_permissions=True).accounts.keys())
 		except Exception:
 			continue
 
-		if not emails:
-			continue
+		for account_id in account_ids:
+			if not frappe.db.exists("Account Settings", account_id):
+				continue
 
-		current = settings["default_outgoing_email"]
-		resolved = current if current in emails else emails[0]
-		if resolved != current:
-			frappe.db.set_value(
-				"Account Settings",
-				settings["name"],
-				"default_outgoing_email",
-				resolved,
-				update_modified=False,
-			)
+			try:
+				emails = get_account_emails(f"{user}:{account_id}")
+			except Exception:
+				continue
+
+			if not emails:
+				continue
+
+			current = frappe.db.get_value("Account Settings", account_id, "default_outgoing_email")
+			resolved = current if current in emails else emails[0]
+			if resolved != current:
+				frappe.db.set_value(
+					"Account Settings",
+					account_id,
+					"default_outgoing_email",
+					resolved,
+					update_modified=False,
+				)
 
 	frappe.db.commit()
 
 
 def get_permission_query_condition(user: str | None = None) -> str:
-	user = user or frappe.session.user
-
-	if is_system_manager(user):
-		return ""
-
-	return f"(`tabAccount Settings`.user = '{user}')"
+	# Account Settings is named directly by the account ID, so scope on `name`.
+	return get_account_scoped_permission_query("Account Settings", column="name", user=user)
 
 
 def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
 	if doc.doctype != "Account Settings":
 		return False
 
-	user = user or frappe.session.user
-
-	if is_system_manager(user):
-		return True
-
-	return doc.user == user
-
-
-def on_doctype_update() -> None:
-	frappe.db.add_unique(
-		"Account Settings",
-		["account"],
-		constraint_name="unique_account_settings",
-	)
+	return has_account_scoped_permission(doc, column="name", user=user)
 
 
 def create_archive_mailbox(account: str) -> None:
 	"""Create the archive mailbox for the account if it does not already exist."""
 
 	try:
-		get_mailbox_id_by_role(account, "archive", create_if_not_exists=True)
+		get_mailbox_id_by_role(*parse_account(account), "archive", create_if_not_exists=True)
 
 	except Exception:
 		log_error(

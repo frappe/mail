@@ -12,9 +12,12 @@ def execute() -> None:
 	(account_id, email) and fills account_id in, and drops the now-redundant per-handle index.
 	"""
 
-	# "Blocked Email Address" has since been merged into "Screened Email Address"; nothing to backfill
-	# on sites that never had it (e.g. fresh installs).
-	if not frappe.db.table_exists("Blocked Email Address"):
+	# "Blocked Email Address" has since been merged into "Screened Email Address", and the per-user
+	# `account` handle it read was dropped (the block list is keyed on account_id). Nothing to backfill
+	# once the table or that column is gone (fresh installs, or sites past the migration).
+	if not frappe.db.table_exists("Blocked Email Address") or not frappe.db.has_column(
+		"Blocked Email Address", "account"
+	):
 		return
 
 	rows = frappe.get_all(

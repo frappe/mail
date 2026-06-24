@@ -7,6 +7,11 @@ import frappe
 from frappe.model.document import Document
 
 from mail.jmap import parse_account
+from mail.utils.user import (
+	get_account_scoped_permission_query,
+	get_session_account,
+	has_account_scoped_permission,
+)
 
 # Screening actions: what happens to future mail from a screened sender.
 REJECT = "Reject"  # discard the incoming mail silently
@@ -17,29 +22,22 @@ class ScreenedEmailAddress(Document):
 	def autoname(self) -> None:
 		self.name = str(uuid7())
 
-	def before_insert(self) -> None:
-		# `account` is the "user:account_id" handle; `user` records who screened, while `account_id`
-		# is the shared key so a group account's screening list is the same for everyone with access.
-		user, account_id = parse_account(self.account)
-		self.user = user
-		self.account_id = account_id
-
 	def validate(self) -> None:
 		self.validate_duplicate_email()
 
 	def on_update(self) -> None:
 		from mail.api.sieve import update_sieve_script_for_screened_emails
 
-		# Runs on both insert and save. `email`/`account` are set_only_once, so on an edit only the
-		# action can change; regenerate on insert (no prior doc) and whenever the action is changed
-		# (e.g. switching Spam <-> Reject in Desk), since that moves the sender between sieve blocks.
+		# Runs on both insert and save. `email` is set_only_once, so on an edit only the action can
+		# change; regenerate on insert (no prior doc) and whenever the action is changed (e.g. switching
+		# Spam <-> Reject in Desk), since that moves the sender between sieve blocks.
 		if self.has_value_changed("action"):
-			update_sieve_script_for_screened_emails(self.account)
+			update_sieve_script_for_screened_emails(get_session_account(self.account_id))
 
 	def after_delete(self) -> None:
 		from mail.api.sieve import update_sieve_script_for_screened_emails
 
-		update_sieve_script_for_screened_emails(self.account)
+		update_sieve_script_for_screened_emails(get_session_account(self.account_id))
 
 	def validate_duplicate_email(self) -> None:
 		"""Validates that the same email address is not screened more than once for the same account.
@@ -71,6 +69,17 @@ def get_screened_email_addresses(account: str, action: str | None = None) -> lis
 		filters["action"] = action
 
 	return frappe.db.get_all("Screened Email Address", filters=filters, fields=["email", "action"])
+
+
+def get_permission_query_condition(user: str | None = None) -> str:
+	return get_account_scoped_permission_query("Screened Email Address", user=user)
+
+
+def has_permission(doc: Document, ptype: str, user: str | None = None) -> bool:
+	if doc.doctype != "Screened Email Address":
+		return False
+
+	return has_account_scoped_permission(doc, user=user)
 
 
 def on_doctype_update() -> None:

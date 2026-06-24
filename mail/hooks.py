@@ -158,8 +158,11 @@ after_migrate = "mail.install.after_migrate"
 permission_query_conditions = {
 	# Client
 	"Account Settings": "mail.client.doctype.account_settings.account_settings.get_permission_query_condition",
+	"Calendar Exchange": "mail.client.doctype.calendar_exchange.calendar_exchange.get_permission_query_condition",
+	"Screened Email Address": "mail.client.doctype.screened_email_address.screened_email_address.get_permission_query_condition",
 	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.get_permission_query_condition",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.get_permission_query_condition",
+	"Mail Sync History": "mail.client.doctype.mail_sync_history.mail_sync_history.get_permission_query_condition",
 	"Mailbox Settings": "mail.client.doctype.mailbox_settings.mailbox_settings.get_permission_query_condition",
 	"User Settings": "mail.client.doctype.user_settings.user_settings.get_permission_query_condition",
 }
@@ -170,11 +173,14 @@ has_permission = {
 	"Address Book": "mail.client.doctype.address_book.address_book.has_permission",
 	"Calendar": "mail.client.doctype.calendar.calendar.has_permission",
 	"Calendar Event": "mail.client.doctype.calendar_event.calendar_event.has_permission",
+	"Calendar Exchange": "mail.client.doctype.calendar_exchange.calendar_exchange.has_permission",
 	"Contact Card": "mail.client.doctype.contact_card.contact_card.has_permission",
 	"Event Notification": "mail.client.doctype.event_notification.event_notification.has_permission",
 	"Identity": "mail.client.doctype.identity.identity.has_permission",
 	"Mail Exchange": "mail.client.doctype.mail_exchange.mail_exchange.has_permission",
+	"Screened Email Address": "mail.client.doctype.screened_email_address.screened_email_address.has_permission",
 	"Mail Queue": "mail.client.doctype.mail_queue.mail_queue.has_permission",
+	"Mail Sync History": "mail.client.doctype.mail_sync_history.mail_sync_history.has_permission",
 	"Mailbox": "mail.client.doctype.mailbox.mailbox.has_permission",
 	"Mailbox Settings": "mail.client.doctype.mailbox_settings.mailbox_settings.has_permission",
 	"Participant Identity": "mail.client.doctype.participant_identity.participant_identity.has_permission",
@@ -226,12 +232,14 @@ scheduler_events = {
 	# ],
 	"daily": [
 		"mail.client.doctype.mail_exchange.mail_exchange.clean_import_export_directories",
+		"mail.client.doctype.calendar_exchange.calendar_exchange.clean_calendar_import_export_directories",
 	],
 	# "daily_long": [
 	#     "mail.tasks.daily_long"
 	# ],
 	"hourly": [
 		"mail.client.doctype.mail_exchange.mail_exchange.retry_stuck_mail_exchanges",
+		"mail.client.doctype.calendar_exchange.calendar_exchange.retry_stuck_calendar_exchanges",
 	],
 	"hourly_long": [
 		"mail.client.doctype.mail_message.mail_message.schedule_fetch_changes",
@@ -289,6 +297,7 @@ ignore_links_on_delete = [
 	"Server Deployment",
 	# Client
 	"Account Settings",
+	"Calendar Exchange",
 	"Screened Email Address",
 	"Mail Exchange",
 	"Mail Queue",

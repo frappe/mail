@@ -17,17 +17,25 @@ from mail.client.doctype.sieve_script.sieve_script import (
 from mail.jmap import get_vacation_response_service, parse_account
 from mail.utils import convert_html_to_text
 from mail.utils.dt import convert_to_utc
+from mail.utils.user import resolve_account_handle
 from mail.utils.validation import has_permission_for_user
 
 
 class VacationResponse(Document):
+	@property
+	def account(self) -> str | None:
+		"""Full ``user:account_id`` JMAP handle, rebuilt from the selected user and account ID."""
+
+		if self.get("user") and self.get("account_id"):
+			return f"{self.user}:{self.account_id}"
+
+		return None
+
 	def db_insert(self, *args, **kwargs) -> None:
 		raise NotImplementedError
 
 	@frappe.whitelist()
 	def load_from_db(self) -> "VacationResponse":
-		self.account = self.get("account")
-
 		if not self.account:
 			frappe.msgprint(_("Please select an account to view vacation response details."), alert=True)
 			return super(Document, self).__init__({"creation": today(), "modified": today()})
@@ -67,19 +75,21 @@ class VacationResponse(Document):
 
 
 @frappe.whitelist()
-def get_vacation_response(account: str) -> dict:
+def get_vacation_response(account_id: str) -> dict:
 	"""Returns the vacation response settings for the given account."""
+
+	account = resolve_account_handle(account_id)
 
 	has_permission_for_user(parse_account(account)[0])
 
-	service = get_vacation_response_service(account)
+	service = get_vacation_response_service(*parse_account(account))
 	vc = service.get()
 	return format_vacation_response(account, vc)
 
 
 @frappe.whitelist()
 def update_vacation_response(
-	account: str,
+	account_id: str,
 	enabled: bool | int,
 	from_date: datetime | str | None = None,
 	to_date: datetime | str | None = None,
@@ -88,6 +98,8 @@ def update_vacation_response(
 	html_body: str | None = None,
 ) -> None:
 	"""Updates the vacation response settings for the given account."""
+
+	account = resolve_account_handle(account_id)
 
 	has_permission_for_user(parse_account(account)[0])
 
@@ -103,7 +115,7 @@ def update_vacation_response(
 
 	current_active_sieve_script_id = get_active_sieve_script_id(account)
 
-	service = get_vacation_response_service(account)
+	service = get_vacation_response_service(*parse_account(account))
 	previous_vacation_response = service.get()
 	vacation_update_result = service.update(
 		{
@@ -134,7 +146,8 @@ def format_vacation_response(account, vc: dict) -> dict:
 	local_to_date = convert_utc_to_system_timezone(get_datetime(to_date)) if to_date else None
 
 	return {
-		"account": account,
+		"account_id": parse_account(account)[1],
+		"user": parse_account(account)[0],
 		"enabled": cint(vc.get("isEnabled")),
 		"from_date": local_from_date,
 		"to_date": local_to_date,

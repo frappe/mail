@@ -79,8 +79,7 @@ const emit = defineEmits(['setFlagged', 'syncUnseen'])
 const { isMobile } = useScreenSize()
 const route = useRoute()
 const router = useRouter()
-const store = userStore()
-const { account, mailboxes, mailboxIds, identities, screenedAddresses } = store
+const { accountId, mailboxes, mailboxIds, identities, screenedAddresses } = userStore()
 const { setUndoAction, undo } = useUndo()
 const { promptBlockSenders, willJunkSenders } = useBlockSender()
 const user = inject('$user')
@@ -204,20 +203,20 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				label: __('Accept Sender'),
 				onClick: () => handleScreenSender('Accepted'),
 				icon: CircleCheck,
-				condition: () => mailbox === store.mailboxIds.screening,
+				condition: () => mailbox === mailboxIds.screening,
 			},
 			{
 				label: __('Reject Sender'),
 				onClick: () => handleScreenSender('Reject'),
 				icon: Ban,
-				condition: () => mailbox === store.mailboxIds.screening,
+				condition: () => mailbox === mailboxIds.screening,
 			},
 			{
 				label: __('Block Sender'),
 				onClick: () => handleBlockAddress(true),
 				icon: Ban,
 				condition: () =>
-					mailbox !== store.mailboxIds.screening &&
+					mailbox !== mailboxIds.screening &&
 					!identities.data.some((i: Identity) => i.email === mail.from_email) &&
 					!isSenderBlocked(mail.from_email),
 			},
@@ -226,7 +225,7 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				onClick: () => handleBlockAddress(false),
 				icon: LockOpen,
 				condition: () =>
-					mailbox !== store.mailboxIds.screening && isSenderBlocked(mail.from_email),
+					mailbox !== mailboxIds.screening && isSenderBlocked(mail.from_email),
 			},
 		],
 	},
@@ -269,7 +268,7 @@ const downloadEmail = createResource({
 
 const markAsSpam = createResource({
 	url: 'mail.api.mail.set_mails_spam_status',
-	makeParams: ({ spam }: { spam: boolean }) => ({ account, ids: [mail.id], spam }),
+	makeParams: ({ spam }: { spam: boolean }) => ({ account_id: accountId, ids: [mail.id], spam }),
 })
 
 const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
@@ -304,7 +303,7 @@ const handleMarkAsSpam = (spam: boolean, isUndo = false) => {
 const moveMail = createResource({
 	url: 'mail.api.mail.move_mails',
 	makeParams: (mailbox: string) => ({
-		account,
+		account_id: accountId,
 		ids: [mail.id],
 		mailbox,
 		clear_junk: mail.junk === 1 && mailbox !== mailboxIds.junk,
@@ -346,7 +345,7 @@ const handleDeleteMail = () =>
 
 const setMailsSeen = createResource({
 	url: 'mail.api.mail.set_mails_seen',
-	makeParams: ({ ids }: { ids: string[] }) => ({ account, ids, seen: false }),
+	makeParams: ({ ids }: { ids: string[] }) => ({ account_id: accountId, ids, seen: false }),
 	onSuccess: (ids: string[]) => {
 		raiseToast(__('{0} marked as unread.', [ids.length === 1 ? __('Mail') : __('Mails')]))
 		router.push({
@@ -372,7 +371,11 @@ const handleMarkUnreadFromHere = () => {
 // reject them (discard future mail, move this one to Trash). The sieve regenerates from the list.
 const screenSender = createResource({
 	url: 'mail.api.mail.screen_email_address',
-	makeParams: ({ action }: { action: string }) => ({ account, email: mail.from_email, action }),
+	makeParams: ({ action }: { action: string }) => ({
+		account_id: accountId,
+		email: mail.from_email,
+		action,
+	}),
 })
 
 const handleScreenSender = (action: 'Accepted' | 'Reject') => {
@@ -393,12 +396,12 @@ const handleScreenSender = (action: 'Accepted' | 'Reject') => {
 
 const blockEmailAddress = createResource({
 	url: 'mail.api.mail.screen_email_address',
-	makeParams: () => ({ account, email: mail.from_email, action: 'Reject' }),
+	makeParams: () => ({ account_id: accountId, email: mail.from_email, action: 'Reject' }),
 })
 
 const unblockEmailAddress = createResource({
 	url: 'mail.api.mail.unscreen_email_addresses',
-	makeParams: () => ({ account, emails: [mail.from_email] }),
+	makeParams: () => ({ account_id: accountId, emails: [mail.from_email] }),
 })
 
 const handleBlockAddress = (block: boolean, isUndo = false) => {

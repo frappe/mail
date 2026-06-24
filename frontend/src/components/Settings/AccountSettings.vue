@@ -101,11 +101,11 @@ import { userStore } from '@/stores/user'
 import type { Identity, MailboxData } from '@/types'
 
 const user = inject('$user')
-const { account, identities, mailboxes, mailboxIds } = userStore()
+const { accountId, identities, mailboxes, mailboxIds } = userStore()
 
 // Outgoing settings now live on the active account's Account Settings; backup_email
 // (Recovery) is still per-user on User Settings.
-const activeAccount = user.data?.accounts?.find((a) => a.name === account)
+const activeAccount = user.data?.accounts?.find((a) => a.id === accountId)
 
 const accountSettings = createDocumentResource({
 	doctype: 'Account Settings',
@@ -164,7 +164,7 @@ const showMoveToInbox = ref(false)
 
 const moveScreeningToInbox = createResource({
 	url: 'mail.api.mail.move_screening_mails_to_inbox',
-	makeParams: () => ({ account }),
+	makeParams: () => ({ account_id: accountId }),
 	onSuccess: () => {
 		raiseToast(__('Unscreened messages moved to Inbox.'))
 		showMoveToInbox.value = false

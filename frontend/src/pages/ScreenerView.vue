@@ -232,7 +232,7 @@ watch(
 const openSender = ref<ScreeningSender | null>(null)
 const senderMails = createResource({
 	url: 'mail.api.mail.get_screening_sender_mails',
-	makeParams: () => ({ account: store.account, from_email: openSender.value?.from_email }),
+	makeParams: () => ({ account_id: store.accountId, from_email: openSender.value?.from_email }),
 })
 
 // The preview reads `previewMails`, not the resource's `.data`: fast navigation fires several fetches
@@ -267,7 +267,7 @@ const closeSender = () => {
 
 const senders = createResource({
 	url: 'mail.api.mail.get_screening_senders',
-	makeParams: () => ({ account: store.account }),
+	makeParams: () => ({ account_id: store.accountId }),
 	auto: true,
 })
 
@@ -339,7 +339,7 @@ const waitingLabel = computed(() => {
 const allowResource = createResource({
 	url: 'mail.api.mail.allow_screening_senders',
 	makeParams: ({ from_emails }: { from_emails: string[] }) => ({
-		account: store.account,
+		account_id: store.accountId,
 		from_emails,
 	}),
 })
@@ -347,7 +347,7 @@ const allowResource = createResource({
 const screenOutResource = createResource({
 	url: 'mail.api.mail.screen_out_senders',
 	makeParams: ({ from_emails }: { from_emails: string[] }) => ({
-		account: store.account,
+		account_id: store.accountId,
 		from_emails,
 	}),
 })
@@ -399,7 +399,7 @@ const showClearAll = ref(false)
 
 const clearAllResource = createResource({
 	url: 'mail.api.mail.move_screening_mails_to_inbox',
-	makeParams: () => ({ account: store.account }),
+	makeParams: () => ({ account_id: store.accountId }),
 	onSuccess: () => {
 		senders.data = []
 		closeSender()

@@ -27,12 +27,12 @@ class CalendarEventService(CalendarsService):
 				calendar_ids = event.get("calendar_ids")
 				if not calendar_ids:
 					calendar_ids = [
-						CalendarService(self.account, self.connection).get_default(raise_exception=True)
+						CalendarService(self.account_id, self.connection).get_default(raise_exception=True)
 					]
 
 				organizer = event.get("organizer")
 				if not organizer:
-					organizer = ParticipantIdentityService(self.account, self.connection).get_default(
+					organizer = ParticipantIdentityService(self.account_id, self.connection).get_default(
 						raise_exception=True
 					)
 
@@ -104,7 +104,7 @@ class CalendarEventService(CalendarsService):
 				calendar_ids = event.get("calendar_ids")
 				if not calendar_ids:
 					calendar_ids = [
-						CalendarService(self.account, self.connection).get_default(raise_exception=True)
+						CalendarService(self.account_id, self.connection).get_default(raise_exception=True)
 					]
 
 				payload[event["id"]] = {
@@ -184,28 +184,33 @@ class CalendarEventService(CalendarsService):
 		sort = sort or [{"property": "start", "isAscending": True}]
 
 		while len(ids) < limit:
+			current_batch_size = min(batch_size, limit - len(ids))
+
 			response = self._query(
 				filter,
 				position,
-				batch_size,
+				current_batch_size,
 				sort,
 				calculate_total=total is None,
 				timeZone=time_zone,
 				expandRecurrences=expand_recurrences,
 			)
 
-			if method_responses := response.get("methodResponses"):
-				query_response = method_responses[0][1]
+			method_responses = response.get("methodResponses")
+			if not method_responses:
+				break
 
-				ids.extend(query_response.get("ids", []))
+			query_response = method_responses[0][1]
+			batch_ids = query_response.get("ids", [])
+			ids.extend(batch_ids)
 
-				if total is None:
-					total = query_response.get("total", 0)
+			if total is None:
+				total = query_response.get("total")
 
-				if not query_response.get("hasMoreItems", False):
-					break
+			if len(batch_ids) < current_batch_size or (total is not None and len(ids) >= total):
+				break
 
-				position += batch_size
+			position += len(batch_ids)
 
 		return {"ids": ids[:limit], "total": total}
 

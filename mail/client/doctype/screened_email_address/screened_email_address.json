@@ -5,8 +5,6 @@
  "engine": "InnoDB",
  "field_order": [
   "section_break_gl6l",
-  "user",
-  "account",
   "account_id",
   "action",
   "column_break_20of",
@@ -18,13 +16,14 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "user",
-   "fieldtype": "Link",
+   "description": "The shared JMAP account ID this block belongs to. The block list is the same for everyone with access to the account.",
+   "fieldname": "account_id",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "User",
+   "label": "Account ID",
    "no_copy": 1,
-   "options": "User",
+   "reqd": 1,
    "search_index": 1,
    "set_only_once": 1
   },
@@ -33,6 +32,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "The email address whose mail is blocked (discarded) for the account.",
    "fieldname": "email",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -40,27 +40,6 @@
    "no_copy": 1,
    "options": "Email",
    "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
-   "fieldname": "account",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Account",
-   "no_copy": 1,
-   "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
-  },
-  {
-   "description": "The shared JMAP account id (without the user prefix). Screening rules are scoped to this so a shared account's list is the same for everyone with access.",
-   "fieldname": "account_id",
-   "fieldtype": "Data",
-   "label": "Account ID",
-   "no_copy": 1,
-   "read_only": 1,
    "search_index": 1,
    "set_only_once": 1
   },
@@ -80,7 +59,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-22 12:00:00.000000",
+ "modified": "2026-06-23 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Screened Email Address",

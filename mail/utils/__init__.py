@@ -53,7 +53,6 @@ CONFIG_KEYS = [
 	"default_gravatar",
 	"stalwart_version",
 	"stalwart_cli_version",
-	"storage_shard_count",
 	# Logs
 	"push_log_file_count",
 	"push_log_level",
@@ -844,6 +843,22 @@ def get_mail_export_directory() -> str:
 	"""Returns the path to the mail export directory for the current site."""
 
 	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "mail-exchange", "export")
+	os.makedirs(directory, exist_ok=True)
+	return directory
+
+
+def get_calendar_import_directory() -> str:
+	"""Returns the path to the calendar import directory for the current site."""
+
+	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "calendar-exchange", "import")
+	os.makedirs(directory, exist_ok=True)
+	return directory
+
+
+def get_calendar_export_directory() -> str:
+	"""Returns the path to the calendar export directory for the current site."""
+
+	directory = os.path.join(get_bench_path(), "sites", frappe.local.site, "calendar-exchange", "export")
 	os.makedirs(directory, exist_ok=True)
 	return directory
 

@@ -857,7 +857,7 @@ const syncDisplayedPage = () => {
 const searchResults = createResource({
 	url: 'mail.api.mail.search_mails',
 	makeParams: () => ({
-		account: store.account,
+		account_id: store.accountId,
 		filter: route.query,
 		limit: PAGE_LENGTH,
 		start: page.value * PAGE_LENGTH,
@@ -894,7 +894,7 @@ const isMailboxLoaded = ref(false)
 const threads = createResource({
 	url: 'mail.api.mail.get_threads',
 	makeParams: () => ({
-		account: store.account,
+		account_id: store.accountId,
 		mailbox,
 		limit: PAGE_LENGTH + 1,
 		start: page.value * PAGE_LENGTH,
@@ -1066,6 +1066,10 @@ onMounted(() => {
 	socket.on('mail_exchange_completed', (payload: { success: boolean; message: string }) =>
 		raiseToast(payload.message, payload.success ? 'success' : 'error'),
 	)
+
+	socket.on('calendar_exchange_completed', (payload: { success: boolean; message: string }) =>
+		raiseToast(payload.message, payload.success ? 'success' : 'error'),
+	)
 })
 
 onUnmounted(() => {
@@ -1181,7 +1185,7 @@ const showEmptyMailbox = ref(false)
 
 const emptyMailbox = createResource({
 	url: 'mail.api.mail.empty_user_mailbox',
-	makeParams: () => ({ account: store.account, mailbox }),
+	makeParams: () => ({ account_id: store.accountId, mailbox }),
 	onSuccess: () => {
 		threadsResource.value.data = []
 		raiseToast(__('{0} emptied.', [mailboxName.value]))
