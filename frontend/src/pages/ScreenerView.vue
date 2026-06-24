@@ -26,7 +26,7 @@
 				class="text-ink-gray-5 flex h-[calc(100dvh-6.1rem)] w-full flex-col items-center justify-center"
 			>
 				<NoMails class="text-ink-gray-2 mb-2 h-16 w-16" />
-				<p>{{ __('You have no first-time senders to screen.') }}</p>
+				<p>{{ __('You have no new senders to screen.') }}</p>
 			</div>
 
 			<template v-else>
@@ -303,8 +303,8 @@ usePageMeta(() => {
 const waitingLabel = computed(() => {
 	const n = senders.data?.length ?? 0
 	return n === 1
-		? __('1 first-time sender waiting to be screened.')
-		: __('{0} first-time senders waiting to be screened.', [String(n)])
+		? __('1 new sender is waiting to be screened.')
+		: __('{0} new senders are waiting to be screened.', [String(n)])
 })
 
 const allowResource = createResource({

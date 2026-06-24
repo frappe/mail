@@ -14,6 +14,14 @@
 		</div>
 		<HeaderActions @reload-mails="reloadThreads(true, ['drafts', 'sent'])" />
 	</header>
+
+	<!-- Unscreened-thread nudge on the inbox, mirroring the trash/junk info bar: shown while Hey-style
+	     screening is on and threads are waiting to be screened. -->
+	<div v-if="showScreenerBanner" class="space-x-1 border-b px-3 py-2.5 sm:px-5">
+		<span class="text-ink-gray-5">{{ screenerBannerLabel }}</span>
+		<Button :label="__('Review Now')" variant="ghost" @click="goToScreener" />
+	</div>
+
 	<div
 		v-if="
 			[mailboxIds.trash, mailboxIds.junk].includes(mailbox) &&
@@ -32,7 +40,7 @@
 	<div
 		class="relative flex"
 		:class="
-			[mailboxIds.trash, mailboxIds.junk].includes(mailbox)
+			[mailboxIds.trash, mailboxIds.junk].includes(mailbox) || showScreenerBanner
 				? 'h-[calc(100dvh-6.1rem)]'
 				: 'h-[calc(100dvh-3.05rem)]'
 		"
@@ -398,7 +406,7 @@ import MailThread from '@/components/MailThread.vue'
 import BlockSenderModal from '@/components/Modals/BlockSenderModal.vue'
 import ShortcutsModal from '@/components/Modals/ShortcutsModal.vue'
 
-import type { Thread, UserResource } from '@/types'
+import type { MailboxData, Thread, UserResource } from '@/types'
 
 const { accountId, mailbox, threadID } = defineProps<{
 	accountId: string
@@ -812,6 +820,31 @@ const hasMore = ref(false) // lookahead: an extra row was returned, so a next pa
 // Current mailbox's record (carries total_threads/unread_threads); used by the periodic poll to
 // detect count changes and by the tab title's unread badge.
 const mailboxObj = computed(() => mailboxes.data?.find((m) => m.id === mailbox))
+
+// ── Screener banner ─────────────────────────────────────────────────────────────────────────────
+// An info bar mirroring the trash/junk one, shown on the inbox while Hey-style screening is on and
+// unscreened threads are waiting. The count is the Screening folder's unread count, kept fresh by the
+// periodic mailbox poll below.
+const activeAccount = computed(() => user.data?.accounts?.find((a) => a.id === accountId))
+const screeningEnabled = computed(() => !!activeAccount.value?.enable_screening)
+const screenerCount = computed(
+	() =>
+		mailboxes.data?.find((m: MailboxData) => m.id === mailboxIds.screening)?.unread_threads ??
+		0,
+)
+const showScreenerBanner = computed(
+	() =>
+		mailbox === mailboxIds.inbox &&
+		screeningEnabled.value &&
+		screenerCount.value > 0 &&
+		(showReadingPane.value || !threadID),
+)
+const screenerBannerLabel = computed(() =>
+	screenerCount.value === 1
+		? __('1 new thread is waiting to be screened.')
+		: __('{0} new threads are waiting to be screened.', [String(screenerCount.value)]),
+)
+const goToScreener = () => router.push({ name: 'Screener', params: { accountId } })
 
 // Called once a page's data has loaded: reveal it (range + list update together) and scroll to top.
 // No-op for same-page reloads (e.g. the periodic refresh) so those don't yank the scroll position.
