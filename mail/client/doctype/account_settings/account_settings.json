@@ -12,15 +12,17 @@
   "destroy_newsletter_after_submit",
   "incoming_section",
   "on_mark_as_junk",
+  "column_break_fnnk",
   "enable_screening",
   "block_remote_images",
   "cache_section",
-  "has_cached_jmap_identities",
-  "has_cached_jmap_mailboxes",
   "column_break_brmt",
   "total_cached_blobs",
   "total_cached_mail_messages",
   "total_cached_contact_cards",
+  "column_break_bxpt",
+  "has_cached_jmap_identities",
+  "has_cached_jmap_mailboxes",
   "sieve_section",
   "last_active_sieve_script_id"
  ],
@@ -170,12 +172,46 @@
    "no_copy": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "column_break_fnnk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_bxpt",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2026-06-23 10:10:53.961267",
+ "links": [
+  {
+   "group": "Reference",
+   "link_doctype": "Mailbox Settings",
+   "link_fieldname": "account_id"
+  },
+  {
+   "group": "Reference",
+   "link_doctype": "Mail Sync History",
+   "link_fieldname": "account_id"
+  },
+  {
+   "group": "Reference",
+   "link_doctype": "Screened Email Address",
+   "link_fieldname": "account_id"
+  },
+  {
+   "group": "Exchange",
+   "link_doctype": "Mail Exchange",
+   "link_fieldname": "account_id"
+  },
+  {
+   "group": "Exchange",
+   "link_doctype": "Calendar Exchange",
+   "link_fieldname": "account_id"
+  }
+ ],
+ "modified": "2026-06-24 20:45:58.331960",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Account Settings",

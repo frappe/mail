@@ -52,6 +52,7 @@ from mail.utils.user import get_account_emails, get_session_account, is_jmap_con
 from mail.utils.validation import has_permission_for_user
 
 AVATAR_CACHE_TTL = 60 * 60 * 24
+SCREENING_FETCH_LIMIT = 500
 
 
 @frappe.whitelist()
@@ -1015,9 +1016,6 @@ def unscreen_email_addresses(account_id: str, emails: list[str]) -> None:
 
 # --- Screener (the screening folder view) ---------------------------------------------------------
 
-# Hard cap on how many screening messages a single sweep touches, to bound JMAP work.
-SCREENING_FETCH_LIMIT = 500
-
 
 def _screening_message_ids(account: str, from_email: str | None = None) -> list[str]:
 	"""Return ids of Screening-folder messages, optionally only those from a given sender."""
@@ -1031,9 +1029,9 @@ def _screening_message_ids(account: str, from_email: str | None = None) -> list[
 		conditions.append({"from": from_email})
 	filter = conditions[0] if len(conditions) == 1 else {"operator": "AND", "conditions": conditions}
 
-	return (
-		get_email_service(*parse_account(account)).query(filter, limit=SCREENING_FETCH_LIMIT).get("ids", [])
-	)
+	service = get_email_service(*parse_account(account))
+
+	return service.query(filter, limit=service.max_objects_in_get).get("ids", [])
 
 
 @frappe.whitelist()

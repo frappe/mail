@@ -16,6 +16,7 @@ from mail.jmap import (
 )
 from mail.utils.user import get_account_emails, get_session_account
 
+SCREENING_MAILBOX_NAME = "Screener"
 AUTOMATION_SCRIPT_NAME = "frappe_mail_automation"
 AUTOMATION_SCRIPT_REQUIRE = 'require ["fileinto", "imap4flags"];'
 
@@ -314,9 +315,6 @@ def get_junk_folder_path(account: str) -> str:
 	)
 	junk_name = get_mailbox_name_by_id(*parse_account(account), junk_id, raise_exception=True)
 	return get_mailbox_folder_path(account, junk_name, raise_exception=True)
-
-
-SCREENING_MAILBOX_NAME = "Screening"
 
 
 def get_screening_folder_path(account: str) -> str:
