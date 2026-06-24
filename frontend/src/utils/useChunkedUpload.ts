@@ -36,7 +36,7 @@ export function useChunkedUpload() {
 	const upload = (file: File, options: ChunkedUploadOptions = {}): Promise<UploadedFile> => {
 		const chunkSize = options.chunk_size || DEFAULT_CHUNK_SIZE
 		const totalChunks = Math.max(1, Math.ceil(file.size / chunkSize))
-		const endpoint = options.upload_endpoint || '/api/method/upload_file'
+		const endpoint = options.upload_endpoint || '/api/method/mail.api.mail.upload_file'
 
 		const buildFormData = (chunk: Blob, chunkIndex: number, chunkByteOffset: number) => {
 			const form = new FormData()
