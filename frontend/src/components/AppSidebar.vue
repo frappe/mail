@@ -316,6 +316,12 @@ const mailboxItems = computed(
 			}) || [],
 )
 
+const screeningEnabled = computed(
+	() =>
+		!!store.userResource?.data?.accounts?.find((a) => a.id === store.accountId)
+			?.enable_screening,
+)
+
 const sidebarItems = computed(() => {
 	if (route.meta.isDashboard) return dashboardItems
 
@@ -371,8 +377,9 @@ const sidebarItems = computed(() => {
 		{ label: __('Custom'), items: customItems },
 		{ label: __('People'), items: contactsItems },
 	]
-	// Screener is its own nameless group, pinned first.
-	if (screenerItem) groups.unshift({ label: '', items: [screenerItem] })
+	// Screener is its own nameless group, pinned first — only when screening is enabled.
+	if (screenerItem && screeningEnabled.value)
+		groups.unshift({ label: '', items: [screenerItem] })
 	return groups
 })
 

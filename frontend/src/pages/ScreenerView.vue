@@ -1,5 +1,5 @@
 <template>
-	<div class="flex h-full flex-col">
+	<div v-if="screeningEnabled" class="flex h-full flex-col">
 		<header class="flex items-center justify-between border-b px-3 py-2.5 sm:px-5">
 			<div class="flex items-center space-x-2">
 				<Button v-if="isMobile" icon="menu" variant="ghost" @click="openSidebar" />
@@ -176,7 +176,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ChevronLeft, LoaderCircle } from 'lucide-vue-next'
 import { Breadcrumbs, Button, createResource, usePageMeta } from 'frappe-ui'
 
@@ -192,10 +193,30 @@ import MailThreadSkeleton from '@/components/MailThreadSkeleton.vue'
 import type { Mail, MailboxData, ScreeningSender } from '@/types'
 
 const store = userStore()
+const router = useRouter()
 const { isMobile } = useScreenSize()
 const { openSidebar } = useSidebar()
 
 const showReadingPane = computed(() => !!store.userResource?.data?.show_reading_pane)
+
+// The Screener only exists when screening is enabled. If it's off, render nothing and send the user to
+// their inbox (the route is still reachable by URL even though the sidebar hides it).
+const screeningEnabled = computed(
+	() =>
+		!!store.userResource?.data?.accounts?.find((a) => a.id === store.accountId)
+			?.enable_screening,
+)
+watch(
+	() => [!!store.userResource?.data, screeningEnabled.value, store.mailboxIds.inbox] as const,
+	([ready, enabled, inboxId]) => {
+		if (ready && !enabled && inboxId)
+			router.replace({
+				name: 'Mailbox',
+				params: { accountId: store.accountId, mailbox: inboxId },
+			})
+	},
+	{ immediate: true },
+)
 
 // The sender whose mail is open in the read-only preview, and that sender's messages.
 const openSender = ref<ScreeningSender | null>(null)

@@ -414,7 +414,11 @@ def update_sieve_script_for_screened_emails(account: str) -> None:
 	if spam_emails:
 		junk_folder_path = get_junk_folder_path(account)
 		spam_block = _build_screening_block(
-			"Spam Senders", spam_emails, [f'  fileinto "{junk_folder_path}";', "  stop;"]
+			"Spam Senders",
+			spam_emails,
+			# Flag as junk ($junk keyword) as well as filing into Junk, so the mail is marked junk — not
+			# just located there — matching what marking a mail as junk does.
+			['  addflag "$junk";', f'  fileinto "{junk_folder_path}";', "  stop;"],
 		)
 		if spam_block:
 			blocks.append(spam_block)

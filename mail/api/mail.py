@@ -1059,6 +1059,20 @@ def allow_screening_senders(account: str, from_emails: list[str]) -> None:
 
 
 @frappe.whitelist()
+def move_screening_mails_to_inbox(account: str) -> None:
+	"""Move every Screening-folder message to the Inbox (offered when screening is turned off)."""
+
+	has_permission_for_user(parse_account(account)[0])
+
+	ids = _screening_message_ids(account)
+	if not ids:
+		return
+
+	inbox_id = get_mailbox_id_by_role(account, "inbox", raise_exception=True)
+	move_mails(account, ids, inbox_id, clear_junk=True)
+
+
+@frappe.whitelist()
 def screen_out_senders(account: str, from_emails: list[str]) -> None:
 	"""Screen senders out: mark them Spam (future mail to Junk) and move their screened mail to Junk."""
 
