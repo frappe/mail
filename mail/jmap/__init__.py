@@ -31,8 +31,7 @@ from mail.utils.validation import has_permission_for_user
 
 
 def get_jmap_connection(
-	user: str,
-	ignore_permissions: bool = False,
+	user: str, ignore_permissions: bool = False, timeout: tuple[float, float] = (30.0, 60.0)
 ) -> JMAPConnection:
 	"""Returns a JMAPConnection instance for the specified user, using the user's settings for connection details."""
 
@@ -62,7 +61,9 @@ def get_jmap_connection(
 		)
 
 	return JMAPConnection(
-		JMAPConnectionInfo(server_url, user_settings.username, user_settings.get_password("app_password")),
+		JMAPConnectionInfo(
+			server_url, user_settings.username, user_settings.get_password("app_password"), timeout
+		),
 		session_manager=get_jmap_session_manager(user),
 	)
 
