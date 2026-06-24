@@ -95,15 +95,16 @@ const calendars = createResource({
 	url: 'mail.client.doctype.calendar.calendar.fetch_calendars',
 	auto: true,
 	makeParams: () => ({ account: `${sessionUser}:${accountId}`, limit: 100 }),
+	onSuccess: (data: { id: string }[]) => {
+		if (!calendarImport.calendar && data?.length) calendarImport.calendar = data[0].id
+	},
 })
 
 const calendarOptions = computed(() =>
-	[{ label: __('Default'), value: '' }].concat(
-		(calendars.data || []).map((c: { id: string; _name: string }) => ({
-			label: c._name,
-			value: c.id,
-		})),
-	),
+	(calendars.data || []).map((c: { id: string; _name: string }) => ({
+		label: c._name,
+		value: c.id,
+	})),
 )
 
 const fileUploadSubtitle = computed(() => {
