@@ -622,6 +622,7 @@ class MailExchange(Document):
 			{
 				"req_id": random_string(10),
 				"exchange": self.name,
+				"key": "mail",
 				"operation": self.operation,
 				"user": self.user,
 				"account_id": self.account_id,
@@ -1060,7 +1061,7 @@ def get_email_service(
 	account_id: str,
 	ignore_permissions: bool = False,
 ) -> EmailService:
-	"""Returns an instance of EmailService for handling email-related operations for the specified account."""
+	"""Returns a EmailService configured with the longer exchange timeouts."""
 
 	connection = get_jmap_connection(user, ignore_permissions=ignore_permissions, timeout=(60.0, 180.0))
 	return EmailService(account_id, connection)
@@ -1114,7 +1115,7 @@ def retry_stuck_mail_exchanges() -> None:
 		.select(ME.name)
 		.where(
 			(ME.status.isin(["Queued", "In Progress"]))
-			& (ME.queued_at <= get_datetime(add_to_date(now(), hours=-1)))
+			& (ME.queued_at <= get_datetime(add_to_date(now(), days=-1)))
 		)
 		.orderby(ME.queued_at, order=Order.asc)
 	).run(pluck="name")
