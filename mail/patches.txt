@@ -20,3 +20,4 @@ mail.patches.configure_inbound_outbound_log
 mail.patches.configure_exchange_log
 mail.patches.backfill_blocked_email_account_id
 mail.patches.migrate_to_screened_email_address
+mail.patches.regenerate_screening_sieve_with_local_domains
