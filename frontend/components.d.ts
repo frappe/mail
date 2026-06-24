@@ -75,6 +75,8 @@ declare module 'vue' {
     MailDate: typeof import('./src/components/MailDate.vue')['default']
     MailDetails: typeof import('./src/components/MailDetails.vue')['default']
     MailDetailsPopover: typeof import('./src/components/MailDetailsPopover.vue')['default']
+    MailExportSettings: typeof import('./src/components/Settings/MailExportSettings.vue')['default']
+    MailImportSettings: typeof import('./src/components/Settings/MailImportSettings.vue')['default']
     MailListItem: typeof import('./src/components/MailListItem.vue')['default']
     MailListItemActions: typeof import('./src/components/MailListItemActions.vue')['default']
     MailLogo: typeof import('./src/components/Icons/MailLogo.vue')['default']

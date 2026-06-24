@@ -1,13 +1,13 @@
 <template>
 	<FormControl
-		v-model="calendarExport.format"
+		v-model="mailExport.format"
 		:label="__('Format')"
 		type="select"
 		variant="outline"
 		:options="FORMAT_OPTIONS"
 	/>
 	<FormControl
-		v-model="calendarExport.archive_type"
+		v-model="mailExport.archive_type"
 		:label="__('Archive Type')"
 		type="select"
 		variant="outline"
@@ -16,18 +16,17 @@
 	<Switch
 		v-model="customSelection"
 		:label="__('Custom Selection')"
-		:description="__('Apply filters to select specific events for export.')"
+		:description="__('Apply filters to select specific emails for export.')"
 		class="hover:!bg-surface-white !cursor-default !p-0"
 	/>
 	<template v-if="customSelection">
 		<FormControl
-			v-model="filter.inCalendar"
-			:label="__('Calendar')"
+			v-model="filter.inMailbox"
+			:label="__('Folder')"
 			type="select"
 			variant="outline"
-			:options="calendarOptions"
+			:options="mailboxOptions"
 		/>
-		<FormControl v-model="filter.title" type="text" variant="outline" :label="__('Title')" />
 		<FormControl
 			v-model="filter.after"
 			type="date"
@@ -41,15 +40,29 @@
 			:label="__('To Date')"
 		/>
 		<FormControl
-			v-model="calendarExport.limit"
-			:label="__('Max Number of Events')"
+			v-model="filter.hasAttachment"
+			type="select"
+			variant="outline"
+			:label="__('Attachments')"
+			:options="getAttachmentOptions()"
+		/>
+		<FormControl
+			v-model="filter.isRead"
+			type="select"
+			variant="outline"
+			:label="__('Read Status')"
+			:options="getReadStatusOptions()"
+		/>
+		<FormControl
+			v-model="mailExport.limit"
+			:label="__('Max Number of Emails')"
 			type="number"
 			variant="outline"
 			placeholder="1000"
 		/>
 		<FormControl
-			v-if="calendarExport.limit && calendarExport.limit > 0"
-			v-model="calendarExport.sort"
+			v-if="mailExport.limit && mailExport.limit > 0"
+			v-model="mailExport.sort"
 			:label="__('Start From')"
 			type="select"
 			variant="outline"
@@ -61,8 +74,8 @@
 		class="min-h-7"
 		:label="__('Create Export')"
 		:loading="ongoingExport.data?.name"
-		:disabled="ongoingExport.loading || ongoingExport.error || createCalendarExport.loading"
-		@click="createCalendarExport.submit()"
+		:disabled="ongoingExport.loading || ongoingExport.error || createMailExport.loading"
+		@click="createMailExport.submit()"
 	/>
 	<div class="!mt-3 space-x-1 text-base">
 		<span class="text-ink-gray-5">{{ exportSubtitle }}</span>
@@ -70,69 +83,61 @@
 			{{ exportLinkText }}
 		</a>
 	</div>
-	<ErrorMessage
-		v-if="createCalendarExport.error"
-		:message="createCalendarExport.error"
-		class="mb-2.5"
-	/>
+	<ErrorMessage v-if="createMailExport.error" :message="createMailExport.error" class="mb-2.5" />
 </template>
 
 <script setup lang="ts">
 import { computed, inject, onMounted, reactive, ref } from 'vue'
 import { Button, ErrorMessage, FormControl, Switch, createResource } from 'frappe-ui'
 
+import { getAttachmentOptions, getReadStatusOptions } from '@/constants'
 import { userStore } from '@/stores/user'
 
-const { accountId, user: sessionUser } = userStore()
+const { accountId, mailboxes } = userStore()
 
 const user = inject('$user')
 const socket = inject('$socket')
 
-const calendarExport = reactive({
+const mailExport = reactive({
 	format: 'jmap',
 	archive_type: '.zip',
-	sort: 'Start (ASC)',
+	sort: 'Received At (ASC)',
 	limit: undefined,
 })
 
 const customSelection = ref(false)
 
 const filter = reactive({
-	inCalendar: '',
-	title: '',
+	inMailbox: '',
 	after: '',
 	before: '',
+	hasAttachment: ' ',
+	isRead: ' ',
 })
 
-const calendars = createResource({
-	url: 'mail.client.doctype.calendar.calendar.fetch_calendars',
-	auto: true,
-	makeParams: () => ({ account: `${sessionUser}:${accountId}`, limit: 100 }),
-})
-
-const calendarOptions = computed(() =>
+const mailboxOptions = computed(() =>
 	[{ label: __(''), value: ' ' }].concat(
-		(calendars.data || []).map((c: { id: string; _name: string }) => ({
-			label: c._name,
-			value: c.id,
+		mailboxes.data.map((m: { id: string; _name: string }) => ({
+			label: m._name,
+			value: m.id,
 		})),
 	),
 )
 
 const sortOptions = computed(() => [
-	{ label: __('Oldest Events'), value: 'Start (ASC)' },
-	{ label: __('Newest Events'), value: 'Start (DESC)' },
+	{ label: __('Oldest Emails'), value: 'Received At (ASC)' },
+	{ label: __('Newest Emails'), value: 'Received At (DESC)' },
 ])
 
-const createCalendarExport = createResource({
-	url: 'mail.api.account.create_calendar_export',
+const createMailExport = createResource({
+	url: 'mail.api.account.create_mail_export',
 	makeParams: () => {
 		const cleanedFilter = Object.fromEntries(
 			Object.entries(filter)
 				.map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])
 				.filter(([, v]) => Boolean(v)),
 		)
-		return { account_id: accountId, ...calendarExport, filter: cleanedFilter }
+		return { account_id: accountId, ...mailExport, filter: cleanedFilter }
 	},
 	onSuccess: () => ongoingExport.reload(),
 })
@@ -141,7 +146,7 @@ const ongoingExport = createResource({
 	url: 'frappe.client.get_value',
 	auto: true,
 	makeParams: () => ({
-		doctype: 'Calendar Exchange',
+		doctype: 'Mail Exchange',
 		fieldname: 'name',
 		filters: {
 			user: user.data.name,
@@ -152,7 +157,7 @@ const ongoingExport = createResource({
 })
 
 onMounted(() =>
-	socket.on('calendar_exchange_completed', (payload: { action: 'Import' | 'Export' }) => {
+	socket.on('mail_exchange_completed', (payload: { action: 'Import' | 'Export' }) => {
 		if (payload.action === 'Export') ongoingExport.reload()
 	}),
 )
@@ -163,8 +168,8 @@ const exportSubtitle = computed(() => {
 })
 
 const exportHref = computed(() => {
-	if (ongoingExport.data?.name) return `/mail/calendar-exchanges/${ongoingExport.data.name}`
-	return '/mail/calendar-exchanges?operation=Export'
+	if (ongoingExport.data?.name) return `/mail/mail-exchanges/${ongoingExport.data.name}`
+	return '/mail/mail-exchanges?operation=Export'
 })
 
 const exportLinkText = computed(() => {
@@ -172,6 +177,6 @@ const exportLinkText = computed(() => {
 	return __('View history')
 })
 
-const FORMAT_OPTIONS = ['jmap', 'ics']
+const FORMAT_OPTIONS = ['jmap', 'mbox', 'maildir', 'maildir-nested']
 const ARCHIVE_TYPE_OPTIONS = ['.zip', '.tgz', '.tar.gz']
 </script>
