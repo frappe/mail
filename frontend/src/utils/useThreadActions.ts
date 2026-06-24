@@ -151,7 +151,13 @@ export function useThreadActions(deps: {
 	type MailSnapshot = { id: string; mailbox_ids: string[]; junk: 0 | 1 }
 	const setMailsMailboxes = createResource({
 		url: 'mail.api.mail.set_mails_mailboxes',
-		makeParams: ({ mails }: { mails: MailSnapshot[] }) => ({ account: store.account, mails }),
+		makeParams: ({
+			mails,
+			screen_action,
+		}: {
+			mails: MailSnapshot[]
+			screen_action?: string | null
+		}) => ({ account: store.account, mails, screen_action }),
 	})
 
 	const showAddTo = computed(
@@ -271,11 +277,15 @@ export function useThreadActions(deps: {
 
 	const setMailsSpam = createResource({
 		url: 'mail.api.mail.set_mails_spam_status',
-		makeParams: ({ ids, spam }: { ids: string[]; spam: boolean }) => ({
-			account: store.account,
+		makeParams: ({
 			ids,
 			spam,
-		}),
+			screen_action,
+		}: {
+			ids: string[]
+			spam: boolean
+			screen_action?: string | null
+		}) => ({ account: store.account, ids, spam, screen_action }),
 	})
 
 	const showJunkOrDeleteThreads = ref(false)
@@ -521,17 +531,25 @@ export function useThreadActions(deps: {
 		}))
 		const senders = mails.map((m) => ({ name: m.from_name, email: m.from_email }))
 		const ids = snapshot.map((m) => m.id)
+
+		// Screen the senders in the SAME call as the mail change (no second request, no undo race): Junk
+		// → Spam (unless the account prompts to block instead), Not Junk → Accept. Undo flips it, also in
+		// the same call as the mailbox restore.
+		const screenForward = spam ? (willJunkSenders(senders) ? 'Spam' : null) : 'Accepted'
+
 		const action = async () => {
-			await setMailsSpam.submit({ ids, spam })
+			await setMailsSpam.submit({ ids, spam, screen_action: screenForward })
 			handleSuccessAndRemoveFromList(threadIDs)
-			// After marking as Junk, apply the account's "on mark as junk" behaviour (silently junk the
-			// sender's future mail, or prompt to block).
-			if (spam) promptBlockSenders(senders)
+			// 'Ask to Block Sender' mode: junking still prompts to fully block the sender (Reject).
+			if (spam && !screenForward) promptBlockSenders(senders)
 		}
 
 		setUndoAction(() => {
 			const undoAction = async () => {
-				await setMailsMailboxes.submit({ mails: snapshot })
+				await setMailsMailboxes.submit({
+					mails: snapshot,
+					screen_action: screenForward ? (spam ? 'Accepted' : 'Spam') : null,
+				})
 				reloadThreads()
 			}
 			// Undo flips the junk status back — name the resulting state, like the forward toast does.
@@ -541,6 +559,7 @@ export function useThreadActions(deps: {
 					: __('Threads marked as {0}.', [spam ? __('Not Junk') : __('Junk')])
 			raisePromiseToast(undoAction, __('Undoing...'), restored)
 		})
+
 		const loading = spam ? __('Marking as Junk...') : __('Marking as Not Junk...')
 		// When the account auto-junks the sender, surface that as the single toast for the whole action.
 		const success =

@@ -603,18 +603,36 @@ def remove_mails_from_mailbox(account: str, ids: list[str], mailbox_id: str) -> 
 	remove_messages_from_mailbox(account, ids, mailbox_id)
 
 
+def _screen_senders(account: str, ids: list[str], action: str | None) -> None:
+	"""Screen the senders of the given mails with `action` (Spam/Accepted/Reject), in the same request as
+	the mail change — so marking junk/not-junk (and undoing it) updates the sender's rule atomically."""
+
+	if not action:
+		return
+
+	from_emails = [m["from_email"] for m in get_messages(account, ids) if m.get("from_email")]
+	if from_emails:
+		screen_email_addresses(account, from_emails, action=action)
+
+
 @frappe.whitelist()
-def set_mails_mailboxes(account: str, mails: list[dict]) -> None:
-	"""Restores each mail's exact mailbox membership and junk status (used to undo a move)."""
+def set_mails_mailboxes(account: str, mails: list[dict], screen_action: str | None = None) -> None:
+	"""Restores each mail's exact mailbox membership and junk status (used to undo a move), optionally
+	re-screening the senders with `screen_action` to reverse a junk/not-junk's screening on undo."""
 
 	set_messages_mailboxes(account, mails)
+	_screen_senders(account, [m["id"] for m in mails], screen_action)
 
 
 @frappe.whitelist()
-def set_mails_spam_status(account: str, ids: list[str], spam: bool) -> list[str]:
-	"""Sets spam status of the given mails."""
+def set_mails_spam_status(
+	account: str, ids: list[str], spam: bool, screen_action: str | None = None
+) -> list[str]:
+	"""Sets spam status of the given mails, optionally screening their senders with `screen_action`
+	(Spam on Junk, Accepted on Not Junk) in the same call."""
 
 	set_spam_status(account, ids, spam)
+	_screen_senders(account, ids, screen_action)
 
 	return ids
 

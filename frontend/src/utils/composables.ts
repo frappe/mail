@@ -117,7 +117,7 @@ const sendersToBlock = ref<BlockableSender[]>([])
 export const useBlockSender = () => {
 	const store = userStore()
 	const { userResource, identities, screenedAddresses } = store
-	const { setUndoAction, undo, prependUndoAction } = useUndo()
+	const { setUndoAction, undo } = useUndo()
 
 	// Read account/accountId off the store at call time — destructuring would snapshot the unwrapped
 	// values and miss account switches while a component stays mounted.
@@ -154,25 +154,7 @@ export const useBlockSender = () => {
 		onSuccess: () => screenedAddresses.reload(),
 	})
 
-	const junkResource = createResource({
-		url: 'mail.api.mail.screen_email_addresses',
-		makeParams: ({ emails }: { emails: string[] }) => ({
-			account: store.account,
-			emails,
-			action: 'Spam',
-			// Auto-junk is an automated flow — never override a manual Block/Accept decision.
-			override: false,
-		}),
-		onSuccess: () => screenedAddresses.reload(),
-	})
-
-	const unjunkResource = createResource({
-		url: 'mail.api.mail.unscreen_email_addresses',
-		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
-		onSuccess: () => screenedAddresses.reload(),
-	})
-
-	const unblockResource = createResource({
+	const unscreenResource = createResource({
 		url: 'mail.api.mail.unscreen_email_addresses',
 		makeParams: ({ emails }: { emails: string[] }) => ({ account: store.account, emails }),
 		onSuccess: () => screenedAddresses.reload(),
@@ -185,7 +167,7 @@ export const useBlockSender = () => {
 		if (!emails.length) return
 
 		setUndoAction(() => {
-			const undoAction = () => unblockResource.submit({ emails })
+			const undoAction = () => unscreenResource.submit({ emails })
 			const restored =
 				emails.length === 1 ? __('Sender unblocked.') : __('Senders unblocked.')
 			raisePromiseToast(undoAction, __('Undoing...'), restored)
@@ -196,35 +178,22 @@ export const useBlockSender = () => {
 		raisePromiseToast(action, __('Blocking...'), success, undo)
 	}
 
-	// File the senders' future mail into Junk (the default 'Junk Sender's Mail'). Side effect only — the
-	// caller renders the toast (see willJunkSenders) so the junk action shows a single toast, not two.
-	// Undoing the junk move also drops them from the junk list (composed onto that move's undo).
-	const junkSenders = (senders: BlockableSender[]) => {
-		const emails = senders.map((sender) => sender.email)
-		if (!emails.length) return
-
-		junkResource.submit({ emails })
-		prependUndoAction(() => unjunkResource.submit({ emails }))
-	}
-
 	// Whether marking these senders as junk will auto-file their future mail into Junk (vs prompting
 	// to block, or doing nothing when there's nothing blockable). Lets the caller show one accurate toast.
 	const willJunkSenders = (senders: { name?: string; email?: string }[]) =>
 		blockableSenders(senders).length > 0 &&
 		activeAccount.value?.on_mark_as_junk !== 'Ask to Block Sender'
 
-	// Apply the account's 'on mark as junk' behaviour to the senders of a just-junked message:
-	// 'Ask to Block Sender' opens the prompt; otherwise silently junk their future mail.
+	// Open the block prompt for the senders of a just-junked message, in 'Ask to Block Sender' mode. The
+	// default 'Junk Sender's Mail' screening now rides on the junk API call, so it's not handled here.
 	const promptBlockSenders = (senders: { name?: string; email?: string }[]) => {
+		if (activeAccount.value?.on_mark_as_junk !== 'Ask to Block Sender') return
+
 		const list = blockableSenders(senders)
 		if (!list.length) return
 
-		if (activeAccount.value?.on_mark_as_junk === 'Ask to Block Sender') {
-			sendersToBlock.value = list
-			showBlockSender.value = true
-			return
-		}
-		junkSenders(list)
+		sendersToBlock.value = list
+		showBlockSender.value = true
 	}
 
 	return { showBlockSender, sendersToBlock, willJunkSenders, promptBlockSenders, blockSenders }
