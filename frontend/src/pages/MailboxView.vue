@@ -1062,6 +1062,10 @@ onMounted(() => {
 	socket.on('mail_exchange_completed', (payload: { success: boolean; message: string }) =>
 		raiseToast(payload.message, payload.success ? 'success' : 'error'),
 	)
+
+	socket.on('calendar_exchange_completed', (payload: { success: boolean; message: string }) =>
+		raiseToast(payload.message, payload.success ? 'success' : 'error'),
+	)
 })
 
 onUnmounted(() => {
