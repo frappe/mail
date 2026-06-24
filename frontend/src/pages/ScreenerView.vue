@@ -37,8 +37,14 @@
 				>
 					<div class="pb-20">
 						<!-- Count bar — matches the mailbox "All Mails" toolbar height/style. -->
-						<div class="flex min-h-[49px] items-center border-b px-5">
+						<div class="flex min-h-[49px] items-center justify-between border-b px-5">
 							<span class="text-ink-gray-5 truncate">{{ waitingLabel }}</span>
+							<Button
+								:label="__('Clear All')"
+								variant="ghost"
+								class="-mr-2"
+								@click="showClearAll = true"
+							/>
 						</div>
 
 						<div
@@ -86,19 +92,17 @@
 									:in-list="true"
 									class="text-ink-gray-4 whitespace-nowrap pt-px text-xs tabular-nums"
 								/>
-								<div class="flex gap-5">
-									<button
-										class="screener-action text-ink-gray-5"
+								<div class="-mr-2 flex gap-2">
+									<Button
+										variant="outline"
+										:label="__('Block')"
 										@click.stop="screenOut([sender.from_email])"
-									>
-										{{ __('Block') }}
-									</button>
-									<button
-										class="screener-action text-ink-gray-8"
+									/>
+									<Button
+										variant="outline"
+										:label="__('Allow')"
 										@click.stop="allow([sender.from_email])"
-									>
-										{{ __('Allow') }}
-									</button>
+									/>
 								</div>
 							</div>
 						</div>
@@ -121,9 +125,13 @@
 							class="bg-surface-white sticky top-0 z-10 flex shrink-0 items-center justify-between gap-3 border-b p-2.5 sm:px-5"
 						>
 							<div class="flex min-w-0 items-center">
-								<Button variant="ghost" class="mr-2 shrink-0" @click="closeSender">
+								<Button
+									variant="ghost"
+									class="-ml-1.5 mr-2 shrink-0"
+									@click="closeSender"
+								>
 									<template #icon>
-										<ChevronLeft class="text-ink-gray-7 h-4 w-4" />
+										<ChevronLeft class="icon" />
 									</template>
 								</Button>
 								<h2 class="truncate font-semibold leading-5">
@@ -172,6 +180,8 @@
 				</div>
 			</template>
 		</div>
+
+		<Dialog v-model="showClearAll" :options="clearAllOptions" />
 	</div>
 </template>
 
@@ -179,7 +189,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ChevronLeft, LoaderCircle } from 'lucide-vue-next'
-import { Breadcrumbs, Button, createResource, usePageMeta } from 'frappe-ui'
+import { Breadcrumbs, Button, Dialog, createResource, usePageMeta } from 'frappe-ui'
 
 import { raiseToast, shouldIgnoreKeypress } from '@/utils'
 import { useScreenSize, useSidebar } from '@/utils/composables'
@@ -323,9 +333,7 @@ usePageMeta(() => {
 
 const waitingLabel = computed(() => {
 	const n = senders.data?.length ?? 0
-	return n === 1
-		? __('1 new sender is waiting to be screened.')
-		: __('{0} new senders are waiting to be screened.', [String(n)])
+	return n === 1 ? __('1 new sender.') : __('{0} new senders.', [String(n)])
 })
 
 const allowResource = createResource({
@@ -384,12 +392,35 @@ const runAction = async (resource: typeof allowResource, fromEmails: string[]) =
 
 const allow = (fromEmails: string[]) => runAction(allowResource, fromEmails)
 const screenOut = (fromEmails: string[]) => runAction(screenOutResource, fromEmails)
-</script>
 
-<style scoped>
-/* Quiet text actions (Block / Allow) with an expanded hit area — the negative margin offsets the
-   padding so the larger click target doesn't shift the layout. */
-.screener-action {
-	@apply -m-2 p-2 font-medium hover:underline disabled:opacity-40;
-}
-</style>
+// Clear All empties the queue without judging anyone: it moves all screened mail to the inbox but
+// creates no Block/Allow rule, so a mixed queue can't accidentally whitelist spam or block a real sender.
+const showClearAll = ref(false)
+
+const clearAllResource = createResource({
+	url: 'mail.api.mail.move_screening_mails_to_inbox',
+	makeParams: () => ({ account: store.account }),
+	onSuccess: () => {
+		senders.data = []
+		closeSender()
+		showClearAll.value = false
+		store.mailboxes.reload()
+		raiseToast(__('Unscreened messages moved to Inbox.'))
+	},
+})
+
+const clearAllOptions = computed(() => ({
+	title: __('Clear the Screener?'),
+	message: __(
+		'This will move current unscreened messages to your Inbox. Future emails from these senders will still go to the Screener.',
+	),
+	actions: [
+		{
+			label: __('Move to Inbox'),
+			variant: 'solid',
+			onClick: () => clearAllResource.submit(),
+			loading: clearAllResource.loading,
+		},
+	],
+}))
+</script>
