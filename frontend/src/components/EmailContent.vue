@@ -1,4 +1,22 @@
 <template>
+	<div
+		v-if="showImagesBanner"
+		class="text-ink-gray-6 mb-3 flex items-center gap-3 rounded border p-2.5 px-4"
+	>
+		<ImageOff class="h-4.5 w-4.5 stroke-1.5" />
+		<span class="text-ink-gray-8 min-w-0 flex-1"> {{ blockedLabel }} </span>
+		<Button
+			v-if="canTrust"
+			variant="ghost"
+			:label="__('Mark sender as trusted')"
+			@click="handleTrust"
+		/>
+		<Button
+			:label="imagesLoaded ? __('Hide images') : __('Load images')"
+			class="w-28"
+			@click="imagesLoaded = !imagesLoaded"
+		/>
+	</div>
 	<div v-if="!isIframeReady" class="animate-pulse space-y-2 py-4">
 		<div
 			v-for="i in 5"
@@ -23,14 +41,44 @@ import iframeResizerChildScript from '@iframe-resizer/child/index.umd.js?raw'
 // eslint-disable-next-line import/no-unresolved
 import IframeResizer from '@iframe-resizer/vue/sfc'
 import DOMPurify from 'dompurify'
+import { ImageOff } from 'lucide-vue-next'
+import { Button } from 'frappe-ui'
 
+import { blockRemoteImages, countRemoteImages, hasRemoteImages } from '@/utils'
 import { useTheme } from '@/utils/composables'
 
-const { content } = defineProps<{ content: string }>()
+const {
+	content,
+	blockImages = false,
+	canTrust = true,
+} = defineProps<{ content: string; blockImages?: boolean; canTrust?: boolean }>()
+const emit = defineEmits<{ trust: [] }>()
 
 const { dataTheme } = useTheme()
 
 const isIframeReady = ref(false)
+
+// Remote images are withheld until the reader opts in (per message), so a sender can't use them to track
+// when their mail was opened.
+const imagesLoaded = ref(false)
+// Trusting dismisses the banner instantly (and reveals images) without waiting for the sender's accept to
+// round-trip — otherwise the bar lingers and its Load/Hide label flips before it disappears.
+const trusted = ref(false)
+const effectiveBlock = computed(() => blockImages && !imagesLoaded.value && !trusted.value)
+// The banner stays while images are blockable (so you can re-hide after loading), but goes once trusted.
+const showImagesBanner = computed(() => blockImages && !trusted.value && hasRemoteImages(content))
+const blockedLabel = computed(() => {
+	const n = countRemoteImages(content)
+	return n === 1
+		? __('1 image hidden to protect your privacy.')
+		: __('{0} images hidden to protect your privacy.', [String(n)])
+})
+
+// Trusting reveals images and dismisses the banner now; the parent accepts the sender for future mail.
+const handleTrust = () => {
+	trusted.value = true
+	emit('trust')
+}
 
 // Listen for keyboard events from iframe
 const handleMessage = (event: MessageEvent) => {
@@ -70,7 +118,9 @@ const srcdoc = computed(() => {
 			&middot;&middot;&middot;
 		</button>
 	`
-	const transformedContent = DOMPurify.sanitize(content, DOMPURIFY_CONFIG)
+	let sanitized = DOMPurify.sanitize(content, DOMPURIFY_CONFIG)
+	if (effectiveBlock.value) sanitized = blockRemoteImages(sanitized)
+	const transformedContent = sanitized
 		.replace(
 			/<div\s+([^>]*)\bclass="([^"]*)"\s*([^>]*)>([\s\S]*?)<\/div>/gi,
 			(match, beforeAttrs, classValue, afterAttrs, innerHtml) => {
@@ -129,6 +179,10 @@ const srcdoc = computed(() => {
 					width: 0 !important;
 					height: 0 !important;
 					overflow: hidden !important;
+				}
+
+				img[data-blocked-image] {
+					display: none !important;
 				}
 
 				pre, code {

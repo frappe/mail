@@ -243,6 +243,29 @@ export const convertHtmlToText = (html: string) => {
 
 export const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
 
+// Whether the HTML has remote images (http/https). cid: (inline attachments) and data: URIs are part of
+// the message, so they don't count — only externally-hosted images, which can phone home as read receipts.
+export const hasRemoteImages = (html?: string) =>
+	!!html && /<img\b[^>]*\bsrc\s*=\s*["']?https?:\/\//i.test(html)
+
+export const countRemoteImages = (html?: string) =>
+	html ? (html.match(/<img\b[^>]*\bsrc\s*=\s*["']?https?:\/\//gi) || []).length : 0
+
+// Neutralize remote images so the browser never requests them: stash the src on data-blocked-src and tag
+// the element so the renderer can hide it. Inline (cid:) and data: images are left to load as normal.
+export const blockRemoteImages = (html: string) =>
+	html.replace(/<img\b[^>]*>/gi, (tag) => {
+		const match = tag.match(/\bsrc\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i)
+		const src = match ? (match[2] ?? match[3] ?? match[4] ?? '') : ''
+		if (!/^https?:\/\//i.test(src)) return tag
+		return tag
+			.replace(
+				/\bsrc\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/i,
+				`data-blocked-src="${src.replace(/"/g, '&quot;')}"`,
+			)
+			.replace(/<img\b/i, '<img data-blocked-image')
+	})
+
 export const getFileIcon = (type?: string) => {
 	if (!type) return Paperclip
 	if (type?.startsWith('image/')) return ImageIcon

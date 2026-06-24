@@ -92,7 +92,7 @@ const ACTION_OPTIONS = [
 	{ label: __('Block'), value: 'Reject' },
 	{ label: __('Move to Junk'), value: 'Spam' },
 ]
-const ACTION_LABELS: Record<ScreeningAction, string> = {
+const ACTION_LABELS: Partial<Record<ScreeningAction, string>> = {
 	Reject: __('Block'),
 	Spam: __('Move to Junk'),
 }

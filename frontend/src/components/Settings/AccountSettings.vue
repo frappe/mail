@@ -50,6 +50,12 @@
 			variant="outline"
 			:options="ON_MARK_AS_JUNK_OPTIONS"
 		/>
+		<Switch
+			v-model="blockRemoteImages"
+			:label="__('Block Remote Images')"
+			:description="__(`Don't load remote images from untrusted sources by default.`)"
+			class="!p-0"
+		/>
 
 		<template v-if="userSettings.doc">
 			<h1>{{ __('Recovery') }}</h1>
@@ -131,6 +137,11 @@ const enableScreening = computed({
 	set: (val: boolean) => (accountSettings.doc.enable_screening = val ? 1 : 0),
 })
 
+const blockRemoteImages = computed({
+	get: () => !!accountSettings.doc.block_remote_images,
+	set: (val: boolean) => (accountSettings.doc.block_remote_images = val ? 1 : 0),
+})
+
 const ON_MARK_AS_JUNK_OPTIONS = [
 	{
 		label: __("Move the sender's future emails to Junk automatically"),
@@ -194,6 +205,7 @@ const save = async () => {
 			activeAccount.default_outgoing_email = accountSettings.doc.default_outgoing_email
 			activeAccount.on_mark_as_junk = accountSettings.doc.on_mark_as_junk
 			activeAccount.enable_screening = !!accountSettings.doc.enable_screening
+			activeAccount.block_remote_images = !!accountSettings.doc.block_remote_images
 		}
 		// Enabling screening creates the Screening folder server-side; reload so it shows up.
 		if (screeningChanged) mailboxes.reload()

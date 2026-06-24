@@ -8,8 +8,8 @@ export type COLOR_SCHEME = 'System Default' | 'Light Mode' | 'Dark Mode'
 export type OnMarkAsJunk = "Junk Sender's Mail" | 'Ask to Block Sender'
 
 // A screened sender: how their future mail is handled. 'Reject' discards it silently; 'Spam' files
-// it into the Spam (Junk) folder. (Doctype: Screened Email Address.)
-export type ScreeningAction = 'Reject' | 'Spam'
+// it into the Spam (Junk) folder; 'Accepted' lets it reach the inbox. (Doctype: Screened Email Address.)
+export type ScreeningAction = 'Reject' | 'Spam' | 'Accepted'
 
 export interface ScreenedAddress {
 	email: string
@@ -54,6 +54,7 @@ export interface User {
 		account_settings?: string
 		on_mark_as_junk?: OnMarkAsJunk
 		enable_screening?: boolean
+		block_remote_images?: boolean
 	})[]
 }
 

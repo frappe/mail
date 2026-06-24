@@ -167,6 +167,7 @@ def get_user_info() -> dict | None:
 				"default_outgoing_email",
 				"on_mark_as_junk",
 				"enable_screening",
+				"block_remote_images",
 			],
 		)
 	}
@@ -176,6 +177,7 @@ def get_user_info() -> dict | None:
 		acc["default_outgoing_email"] = settings["default_outgoing_email"] if settings else None
 		acc["on_mark_as_junk"] = settings["on_mark_as_junk"] if settings else "Junk Sender's Mail"
 		acc["enable_screening"] = bool(settings["enable_screening"]) if settings else False
+		acc["block_remote_images"] = bool(settings["block_remote_images"]) if settings else True
 
 	data.user_image = data.user_image or get_avatar_url(user)
 
