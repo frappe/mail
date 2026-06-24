@@ -268,10 +268,10 @@ def update_sync_state(account: str, type: Literal["email"], state: str) -> None:
 
 
 @reconnect_on_failure()
-def clear_sync_state(account: str, type: Literal["email"]) -> None:
-	"""Clear the Sync State for the given account and type."""
+def clear_sync_state(account_id: str, type: Literal["email"]) -> None:
+	"""Clear the Sync State for the given account ID and type."""
 
-	store = get_data_store(parse_account(account)[1])
+	store = get_data_store(account_id)
 	store.delete(Entity.STATE, f"{type}_current_state")
 	store.delete(Entity.STATE, f"{type}_previous_state")
 	store.delete(Entity.STATE, f"{type}_state_last_update")
