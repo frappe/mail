@@ -1,19 +1,28 @@
 <template>
 	<FormControl
-		v-model="calendarImport.format"
+		v-model="mailImport.format"
 		:label="__('Format')"
 		type="select"
 		variant="outline"
 		:options="FORMAT_OPTIONS"
 		required
 	/>
-	<FormControl
-		v-model="calendarImport.calendar"
-		:label="__('Calendar')"
-		type="select"
-		variant="outline"
-		:options="calendarOptions"
-	/>
+	<template v-if="['eml', 'mbox', 'maildir'].includes(mailImport.format)">
+		<FormControl
+			v-model="mailImport.mailbox"
+			:label="__('Folder')"
+			type="select"
+			variant="outline"
+			:options="mailboxOptions"
+		/>
+		<FormControl
+			v-model="mailImport.seen"
+			:label="__('Mark as Read')"
+			type="select"
+			variant="outline"
+			:options="markAsReadOptions"
+		/>
+	</template>
 	<input
 		ref="fileInput"
 		type="file"
@@ -34,8 +43,8 @@
 		:label="__('Create Import')"
 		variant="solid"
 		:loading="ongoingImport.data?.name"
-		:disabled="ongoingImport.loading || ongoingImport.error || !calendarImport.file"
-		@click="createCalendarImport.submit()"
+		:disabled="ongoingImport.loading || ongoingImport.error || !mailImport.file"
+		@click="createMailImport.submit()"
 	/>
 	<div class="!mt-3 space-x-1 text-base">
 		<span class="text-ink-gray-5">{{ importSubtitle }}</span>
@@ -43,38 +52,33 @@
 			{{ importLinkText }}
 		</a>
 	</div>
-	<ErrorMessage
-		v-if="createCalendarImport.error"
-		:message="createCalendarImport.error"
-		class="mb-2.5"
-	/>
+	<ErrorMessage v-if="createMailImport.error" :message="createMailImport.error" class="mb-2.5" />
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, reactive, ref } from 'vue'
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
 import { Button, ErrorMessage, FormControl, createResource } from 'frappe-ui'
 
 import { raiseToast } from '@/utils'
 import { useChunkedUpload } from '@/utils/useChunkedUpload'
 import { userStore } from '@/stores/user'
 
-const { accountId, user: sessionUser } = userStore()
+const { accountId, mailboxes } = userStore()
 
 const user = inject('$user')
 const socket = inject('$socket')
 
-const calendarImport = reactive({
-	format: 'ics',
+const mailImport = reactive({
+	format: 'eml',
 	file: '',
-	calendar: '',
+	mailbox: '',
+	seen: true,
 })
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const { uploading, progress, upload } = useChunkedUpload()
 
-const acceptTypes = computed(() =>
-	calendarImport.format === 'ics' ? '.ics' : '.zip,.tgz,.tar.gz',
-)
+const acceptTypes = computed(() => (mailImport.format === 'eml' ? '.eml' : '.zip,.tgz,.tar.gz'))
 
 // Upload in chunks so large import archives aren't blocked by the web server's request-size limit.
 const onFileSelected = async (event: Event) => {
@@ -85,36 +89,43 @@ const onFileSelected = async (event: Event) => {
 
 	try {
 		const uploaded = await upload(file, { private: true })
-		calendarImport.file = uploaded.file_url
+		mailImport.file = uploaded.file_url
 	} catch (error) {
 		raiseToast((error as Error).message, 'error')
 	}
 }
 
-const calendars = createResource({
-	url: 'mail.client.doctype.calendar.calendar.fetch_calendars',
-	auto: true,
-	makeParams: () => ({ account: `${sessionUser}:${accountId}`, limit: 100 }),
-})
-
-const calendarOptions = computed(() =>
-	[{ label: __('Default'), value: '' }].concat(
-		(calendars.data || []).map((c: { id: string; _name: string }) => ({
-			label: c._name,
-			value: c.id,
-		})),
-	),
+const mailboxOptions = computed(() =>
+	mailboxes.data.map((m: { id: string; _name: string }) => ({
+		label: m._name,
+		value: m.id,
+	})),
 )
 
+const markAsReadOptions = computed(() => [
+	{ label: __('Yes'), value: true },
+	{ label: __('No'), value: false },
+])
+
 const fileUploadSubtitle = computed(() => {
-	if (calendarImport.file) return __('File uploaded: {0}', [calendarImport.file])
-	if (calendarImport.format === 'ics') return __('Supported file format: .ics')
+	if (mailImport.file) return __('File uploaded: {0}', [mailImport.file])
+	if (mailImport.format === 'eml') return __('Supported file format: .eml')
 	return __('Supported file formats: .zip, .tar, .tgz')
 })
 
-const createCalendarImport = createResource({
-	url: 'mail.api.account.create_calendar_import',
-	makeParams: () => ({ account_id: accountId, ...calendarImport }),
+watch(
+	mailboxOptions,
+	(options) => {
+		if (options.length > 0 && !mailImport.mailbox) {
+			mailImport.mailbox = options[0].value
+		}
+	},
+	{ immediate: true },
+)
+
+const createMailImport = createResource({
+	url: 'mail.api.account.create_mail_import',
+	makeParams: () => ({ account_id: accountId, ...mailImport }),
 	onSuccess: () => ongoingImport.reload(),
 })
 
@@ -122,7 +133,7 @@ const ongoingImport = createResource({
 	url: 'frappe.client.get_value',
 	auto: true,
 	makeParams: () => ({
-		doctype: 'Calendar Exchange',
+		doctype: 'Mail Exchange',
 		fieldname: 'name',
 		filters: {
 			user: user.data.name,
@@ -133,7 +144,7 @@ const ongoingImport = createResource({
 })
 
 onMounted(() =>
-	socket.on('calendar_exchange_completed', (payload: { action: 'Import' | 'Export' }) => {
+	socket.on('mail_exchange_completed', (payload: { action: 'Import' | 'Export' }) => {
 		if (payload.action === 'Import') ongoingImport.reload()
 	}),
 )
@@ -144,8 +155,8 @@ const importSubtitle = computed(() => {
 })
 
 const importHref = computed(() => {
-	if (ongoingImport.data?.name) return `/mail/calendar-exchanges/${ongoingImport.data.name}`
-	return '/mail/calendar-exchanges?operation=Import'
+	if (ongoingImport.data?.name) return `/mail/mail-exchanges/${ongoingImport.data.name}`
+	return '/mail/mail-exchanges?operation=Import'
 })
 
 const importLinkText = computed(() => {
@@ -153,5 +164,5 @@ const importLinkText = computed(() => {
 	return __('View history')
 })
 
-const FORMAT_OPTIONS = ['ics', 'jmap']
+const FORMAT_OPTIONS = ['eml', 'jmap', 'mbox', 'maildir', 'maildir-nested']
 </script>
