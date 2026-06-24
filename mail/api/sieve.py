@@ -300,25 +300,12 @@ def is_screening_enabled(account: str) -> bool:
 	return bool(frappe.db.get_value("Account Settings", {"account": account}, "enable_screening"))
 
 
-def get_local_domains() -> list[str]:
-	"""Domains hosted on this server. Mail from any sender at one of these bypasses the screener,
-	since fellow tenants on the same server are treated as trusted (never first-time senders)."""
-
-	from mail.api.admin import get_enabled_domains
-
-	try:
-		return get_enabled_domains()
-	except Exception:
-		return []
-
-
 def build_screening_gate(account: str, accepted_emails: list[str]) -> str:
 	"""Build the screening gate: file mail from senders not on the accepted list into Screening.
 
-	The account's own identity emails and any sender from a domain hosted on this server are always
-	trusted, so self-addressed, identity, and same-server mail is never screened. Placed after the
-	Reject/Spam blocks, so those still take precedence; accepted senders fall through to the mailbox
-	automation rules and normal inbox delivery.
+	The account's own identity emails are always trusted, so self-addressed and identity mail is
+	never screened. Placed after the Reject/Spam blocks, so those still take precedence; accepted
+	senders fall through to the mailbox automation rules and normal inbox delivery.
 	"""
 
 	screening_folder_path = get_screening_folder_path(account)
@@ -329,26 +316,13 @@ def build_screening_gate(account: str, accepted_emails: list[str]) -> str:
 		own_emails = []
 
 	trusted = list(dict.fromkeys(e.strip() for e in [*accepted_emails, *own_emails] if e and e.strip()))
-	local_domains = list(dict.fromkeys(d.strip() for d in get_local_domains() if d and d.strip()))
 
-	# Senders that skip the screener: explicitly accepted/own addresses, plus anyone sending from a
-	# domain hosted on this server (`address :domain` matches the From address's domain part).
-	bypass_tests = []
 	if trusted:
-		joined = ",\n    ".join(f'"{e}"' for e in trusted)
-		bypass_tests.append(f'address :is "from" [\n    {joined}\n  ]')
-	if local_domains:
-		joined = ",\n    ".join(f'"{d}"' for d in local_domains)
-		bypass_tests.append(f'address :domain :is "from" [\n    {joined}\n  ]')
-
-	if not bypass_tests:
+		joined = ",\n  ".join(f'"{e}"' for e in trusted)
+		condition_block = f'if not address :is "from" [\n  {joined}\n] {{'
+	else:
 		# Nothing trusted yet → screen everything (only reached after the Reject/Spam blocks).
 		condition_block = 'if exists "from" {'
-	elif len(bypass_tests) == 1:
-		condition_block = f"if not {bypass_tests[0]} {{"
-	else:
-		joined_tests = ",\n  ".join(bypass_tests)
-		condition_block = f"if not anyof(\n  {joined_tests}\n) {{"
 
 	return "\n".join(
 		[
@@ -445,25 +419,3 @@ def update_sieve_script_for_screened_emails(account: str) -> None:
 
 	doc.content = content.rstrip() + "\n"
 	doc.save()
-
-
-def regenerate_screening_sieve_for_all_accounts() -> None:
-	"""Rebuild the screening sieve blocks for every account that has screening enabled.
-
-	Used after a server-wide change to the trusted set — e.g. a hosted domain added or removed, which
-	shifts the local-domain bypass for everyone — and as a one-off backfill. Does JMAP round-trips, so
-	run it as a background job (not inline during `bench migrate`, where JMAP is unreachable). Each
-	account is independent, so a failure on one is logged and the rest still run.
-	"""
-
-	from mail.utils import log_error
-
-	accounts = frappe.get_all("Account Settings", filters={"enable_screening": 1}, pluck="account")
-	for account in accounts:
-		try:
-			update_sieve_script_for_screened_emails(account)
-		except Exception:
-			log_error(
-				_("Screening Sieve Regeneration Error"),
-				_("Failed to regenerate the screening sieve for account {0}").format(account),
-			)

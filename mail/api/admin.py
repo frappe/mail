@@ -31,21 +31,6 @@ def _get_stalwart_domain(domain_id: str) -> dict:
 	return domain
 
 
-def _refresh_screening_sieve() -> None:
-	"""Enqueue a rebuild of every screening-enabled account's sieve after the hosted-domain set changes.
-
-	Runs in a background job (JMAP round-trips per account) once the request commits.
-	"""
-
-	from mail.api.sieve import regenerate_screening_sieve_for_all_accounts
-
-	frappe.enqueue(
-		regenerate_screening_sieve_for_all_accounts,
-		queue="long",
-		enqueue_after_commit=True,
-	)
-
-
 @frappe.whitelist()
 @dynamic_rate_limit()
 def add_domain(name: str, description: str | None = None) -> str:
@@ -61,9 +46,6 @@ def add_domain(name: str, description: str | None = None) -> str:
 		user_message=_("An error occurred while adding the domain, check error logs for more details."),
 		with_context=False,
 	)
-	# The new domain joins the local-domain screening bypass, so refresh every screening-enabled
-	# account's sieve. create_stalwart_domain already cleared the domains cache, so the job reads fresh.
-	_refresh_screening_sieve()
 	return domain_id
 
 
@@ -191,9 +173,6 @@ def delete_domain(domain_id: str) -> None:
 		user_message=_("An error occurred while deleting the domain, check error logs for more details."),
 		with_context=False,
 	)
-	# The removed domain leaves the local-domain screening bypass, so refresh every screening-enabled
-	# account's sieve. delete_stalwart_domain already cleared the domains cache, so the job reads fresh.
-	_refresh_screening_sieve()
 
 
 @frappe.whitelist()
