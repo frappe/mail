@@ -143,7 +143,7 @@
    "options": "Junk Sender's Mail\nAsk to Block Sender"
   },
   {
-   "default": "1",
+   "default": "0",
    "description": "When enabled, mail from senders not on the Accepted list is filed into the Screening folder instead of the inbox (Hey-style screening). Only senders you accept reach the inbox.",
    "fieldname": "enable_screening",
    "fieldtype": "Check",

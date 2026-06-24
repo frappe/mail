@@ -8,11 +8,11 @@
 		<Button
 			v-if="canTrust"
 			variant="ghost"
-			:label="__('Mark sender as trusted')"
+			:label="__('Mark Sender as Trusted')"
 			@click="handleTrust"
 		/>
 		<Button
-			:label="imagesLoaded ? __('Hide images') : __('Load images')"
+			:label="imagesLoaded ? __('Hide Images') : __('Load Images')"
 			class="w-28"
 			@click="imagesLoaded = !imagesLoaded"
 		/>
@@ -44,7 +44,7 @@ import DOMPurify from 'dompurify'
 import { ImageOff } from 'lucide-vue-next'
 import { Button } from 'frappe-ui'
 
-import { blockRemoteImages, countRemoteImages, hasRemoteImages } from '@/utils'
+import { analyzeRemoteAssets, blockRemoteAssets } from '@/utils'
 import { useTheme } from '@/utils/composables'
 
 const {
@@ -65,13 +65,17 @@ const imagesLoaded = ref(false)
 // round-trip — otherwise the bar lingers and its Load/Hide label flips before it disappears.
 const trusted = ref(false)
 const effectiveBlock = computed(() => blockImages && !imagesLoaded.value && !trusted.value)
+const remoteAssets = computed(() => analyzeRemoteAssets(content))
 // The banner stays while images are blockable (so you can re-hide after loading), but goes once trusted.
-const showImagesBanner = computed(() => blockImages && !trusted.value && hasRemoteImages(content))
+const showImagesBanner = computed(
+	() => blockImages && !trusted.value && remoteAssets.value.hasRemote,
+)
 const blockedLabel = computed(() => {
-	const n = countRemoteImages(content)
+	const n = remoteAssets.value.images
+	if (n === 0) return __('Remote content hidden to protect your privacy.')
 	return n === 1
-		? __('1 image hidden to protect your privacy.')
-		: __('{0} images hidden to protect your privacy.', [String(n)])
+		? __('1 remote image hidden to protect your privacy.')
+		: __('{0} remote images hidden to protect your privacy.', [String(n)])
 })
 
 // Trusting reveals images and dismisses the banner now; the parent accepts the sender for future mail.
@@ -99,41 +103,36 @@ const handleMessage = (event: MessageEvent) => {
 onMounted(() => window.addEventListener('message', handleMessage))
 onUnmounted(() => window.removeEventListener('message', handleMessage))
 
-const srcdoc = computed(() => {
-	const collapseButton = `
-		<button
-			style="
-			background: ${colors.value.button};
-			color: ${colors.value.text};
-			padding: 0.5px 6px;
-			border-radius: 8px;
-			cursor: pointer;
-			transition: background 0.2s;
-			margin: 12px 0;
-			"
-			onmouseover="this.style.background='${colors.value.buttonHover}'"
-			onmouseout="this.style.background='${colors.value.button}'"
-			onclick="this.nextElementSibling.classList.toggle('quote-hidden');"
-		>
-			&middot;&middot;&middot;
-		</button>
-	`
-	let sanitized = DOMPurify.sanitize(content, DOMPURIFY_CONFIG)
-	if (effectiveBlock.value) sanitized = blockRemoteImages(sanitized)
-	const transformedContent = sanitized
-		.replace(
-			/<div\s+([^>]*)\bclass="([^"]*)"\s*([^>]*)>([\s\S]*?)<\/div>/gi,
-			(match, beforeAttrs, classValue, afterAttrs, innerHtml) => {
-				// Check if this div has gmail_quote or frappe_mail_quote class
-				if (/\b(gmail_quote|frappe_mail_quote)\b/.test(classValue)) {
-					const allAttrs = `${beforeAttrs} ${afterAttrs}`.trim()
-					const attrString = allAttrs ? ` ${allAttrs}` : ''
-					return `${collapseButton}<div class="quote-hidden ${classValue}"${attrString}>${innerHtml}</div>`
-				}
-				return match
-			},
+// Collapse each top-level quoted reply (gmail_quote / frappe_mail_quote) behind a "···" toggle. Done on
+// the DOM, not regex: a quote with nested divs is wrapped as one unit, instead of the old regex stopping
+// at the first </div> and collapsing the wrong region.
+const collapseQuotes = (html: string) => {
+	const doc = new DOMParser().parseFromString(html, 'text/html')
+	doc.querySelectorAll('.gmail_quote, .frappe_mail_quote').forEach((quote) => {
+		// Only the outermost quote gets a toggle — hiding it hides any quotes nested inside.
+		if (quote.parentElement?.closest('.gmail_quote, .frappe_mail_quote')) return
+		quote.classList.add('quote-hidden')
+		const button = doc.createElement('button')
+		button.textContent = '···'
+		button.setAttribute(
+			'style',
+			`background:${colors.value.button};color:${colors.value.text};padding:0.5px 6px;border-radius:8px;cursor:pointer;transition:background .2s;margin:12px 0;`,
 		)
-		.replace(/<([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>/g, '<b>&lt;$1&gt;</b>')
+		button.setAttribute('onmouseover', `this.style.background='${colors.value.buttonHover}'`)
+		button.setAttribute('onmouseout', `this.style.background='${colors.value.button}'`)
+		button.setAttribute('onclick', "this.nextElementSibling.classList.toggle('quote-hidden');")
+		quote.parentNode?.insertBefore(button, quote)
+	})
+	return doc.documentElement.outerHTML
+}
+
+const srcdoc = computed(() => {
+	let sanitized = DOMPurify.sanitize(content, DOMPURIFY_CONFIG)
+	if (effectiveBlock.value) sanitized = blockRemoteAssets(sanitized)
+	const transformedContent = collapseQuotes(sanitized).replace(
+		/<([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>/g,
+		'<b>&lt;$1&gt;</b>',
+	)
 
 	/* eslint-disable no-useless-escape */
 	return `

@@ -243,28 +243,68 @@ export const convertHtmlToText = (html: string) => {
 
 export const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
 
-// Whether the HTML has remote images (http/https). cid: (inline attachments) and data: URIs are part of
-// the message, so they don't count — only externally-hosted images, which can phone home as read receipts.
-export const hasRemoteImages = (html?: string) =>
-	!!html && /<img\b[^>]*\bsrc\s*=\s*["']?https?:\/\//i.test(html)
+// An externally-hosted reference (http/https or protocol-relative //). cid: (inline attachments) and
+// data: URIs are part of the message, so they're never remote.
+const REMOTE_URL = /^\s*(?:https?:)?\/\//i
+const REMOTE_CSS_URL = /url\(\s*['"]?(?:https?:)?\/\//i
 
-export const countRemoteImages = (html?: string) =>
-	html ? (html.match(/<img\b[^>]*\bsrc\s*=\s*["']?https?:\/\//gi) || []).length : 0
+// Inspect the HTML for externally-hosted assets via the DOM (one parse): counts remote <img>, and flags
+// whether any remote asset is present at all — a remote <img>, or a remote url(...) in an inline style or
+// <style> block (background images, fonts). Used to decide the "images blocked" banner and its count.
+export const analyzeRemoteAssets = (html?: string): { images: number; hasRemote: boolean } => {
+	if (!html) return { images: 0, hasRemote: false }
 
-// Neutralize remote images so the browser never requests them: stash the src on data-blocked-src and tag
-// the element so the renderer can hide it. Inline (cid:) and data: images are left to load as normal.
-export const blockRemoteImages = (html: string) =>
-	html.replace(/<img\b[^>]*>/gi, (tag) => {
-		const match = tag.match(/\bsrc\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i)
-		const src = match ? (match[2] ?? match[3] ?? match[4] ?? '') : ''
-		if (!/^https?:\/\//i.test(src)) return tag
-		return tag
-			.replace(
-				/\bsrc\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/i,
-				`data-blocked-src="${src.replace(/"/g, '&quot;')}"`,
-			)
-			.replace(/<img\b/i, '<img data-blocked-image')
+	const doc = new DOMParser().parseFromString(html, 'text/html')
+
+	const images = Array.from(doc.querySelectorAll('img')).filter((img) =>
+		REMOTE_URL.test(img.getAttribute('src') || ''),
+	).length
+
+	const hasRemoteCss =
+		Array.from(doc.querySelectorAll('[style]')).some((el) =>
+			REMOTE_CSS_URL.test(el.getAttribute('style') || ''),
+		) ||
+		Array.from(doc.querySelectorAll('style')).some((el) =>
+			REMOTE_CSS_URL.test(el.textContent || ''),
+		)
+
+	return { images, hasRemote: images > 0 || hasRemoteCss }
+}
+
+// Blank remote url(...) in a CSS string. Regex here is unavoidable — there's no DOM API to rewrite a
+// url() inside a style string without pulling in the full CSSOM.
+const blankRemoteCssUrls = (css: string) =>
+	css.replace(/url\(\s*(['"]?)(?:https?:)?\/\/[^'")]*\1\s*\)/gi, 'url()')
+
+// Neutralize remote assets so the browser never requests them. Parses the (already-sanitized) HTML into a
+// DOM and edits it there — robust against markup/attribute quirks regex would trip on: each remote <img>
+// has its src stashed on data-blocked-src (and is tagged for hiding), and remote url(...) in inline styles
+// and <style> blocks is blanked. Inline (cid:) and data: assets are left to load as normal.
+export const blockRemoteAssets = (html: string) => {
+	const doc = new DOMParser().parseFromString(html, 'text/html')
+
+	doc.querySelectorAll('img').forEach((img) => {
+		const src = img.getAttribute('src') || ''
+		if (!REMOTE_URL.test(src)) return
+		img.setAttribute('data-blocked-src', src)
+		img.removeAttribute('src')
+		img.setAttribute('data-blocked-image', '')
 	})
+
+	doc.querySelectorAll('[style]').forEach((el) => {
+		const style = el.getAttribute('style') || ''
+		const cleaned = blankRemoteCssUrls(style)
+		if (cleaned !== style) el.setAttribute('style', cleaned)
+	})
+
+	doc.querySelectorAll('style').forEach((styleEl) => {
+		const css = styleEl.textContent || ''
+		const cleaned = blankRemoteCssUrls(css)
+		if (cleaned !== css) styleEl.textContent = cleaned
+	})
+
+	return doc.documentElement.outerHTML
+}
 
 export const getFileIcon = (type?: string) => {
 	if (!type) return Paperclip
