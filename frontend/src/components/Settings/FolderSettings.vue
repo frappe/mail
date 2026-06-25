@@ -3,9 +3,9 @@
 		<h1>{{ __('Folders') }}</h1>
 		<Button icon-left="plus" :label="__('New')" @click="editMailbox()" />
 	</div>
-	<div v-if="mailboxes?.data?.length">
+	<div v-if="managedMailboxes.length">
 		<div
-			v-for="mailbox in mailboxes?.data"
+			v-for="mailbox in managedMailboxes"
 			:key="mailbox.name"
 			class="hover:bg-surface-gray-1 -mx-2 flex cursor-pointer items-center justify-between rounded px-3 py-1"
 			@click="editMailbox(mailbox)"
@@ -44,12 +44,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Icon } from 'frappe-ui/icons'
 import { Ellipsis, Eye, EyeOff, Settings, Trash2 } from 'lucide-vue-next'
 import { Button, Dropdown, createResource } from 'frappe-ui'
 
-import { FOLDER_ICON_COLOR_MAP } from '@/constants'
+import { FOLDER_ICON_COLOR_MAP, SCREENER_MAILBOX_NAME } from '@/constants'
 import { getIcon, raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 import DeleteFolderModal from '@/components/Modals/DeleteFolderModal.vue'
@@ -58,6 +58,12 @@ import FolderModal from '@/components/Modals/FolderModal.vue'
 import type { MailboxData } from '@/types'
 
 const { mailboxes } = userStore()
+
+// The Screener is a system folder driven by the screening flow, not a user-configurable folder — keep
+// it out of the management list so it can't be renamed, deleted, or given a folder icon/color here.
+const managedMailboxes = computed(
+	() => mailboxes?.data?.filter((m: MailboxData) => m._name !== SCREENER_MAILBOX_NAME) ?? [],
+)
 
 const showFolderModal = ref(false)
 const selectedMailbox = ref<MailboxData>()

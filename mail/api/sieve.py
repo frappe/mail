@@ -18,7 +18,7 @@ from mail.jmap import (
 )
 from mail.utils.user import get_account_emails, get_session_account
 
-SCREENING_MAILBOX_NAME = "Screener"
+SCREENER_MAILBOX_NAME = "Screener"
 AUTOMATION_SCRIPT_NAME = "frappe_mail_automation"
 AUTOMATION_SCRIPT_REQUIRE = 'require ["fileinto", "imap4flags"];'
 
@@ -197,9 +197,7 @@ def backfill_mailbox_automation_rules() -> None:
 		for account_id in account_ids:
 			account = f"{user}:{account_id}"
 			try:
-				scripts = SieveScript._fetch_sieve_scripts(
-					account, filter={"name": AUTOMATION_SCRIPT_NAME}
-				)
+				scripts = SieveScript._fetch_sieve_scripts(account, filter={"name": AUTOMATION_SCRIPT_NAME})
 				if not (scripts and scripts[0]):
 					continue
 
@@ -214,9 +212,7 @@ def backfill_mailbox_automation_rules() -> None:
 					continue
 
 				try:
-					set_mailbox_settings(
-						account, mailbox["id"], **automation_rules_to_settings(rules)
-					)
+					set_mailbox_settings(account, mailbox["id"], **automation_rules_to_settings(rules))
 				except Exception:
 					continue
 
@@ -409,11 +405,11 @@ def get_screening_folder_path(account: str) -> str:
 	# worker may already have created the Screener. Refresh from the server before deciding to create,
 	# so we never try to recreate an existing mailbox (which JMAP rejects with "already exists").
 	CoreService.invalidate_cache(account_id, key="mailboxes")
-	if not get_mailbox_id_by_name(user, account_id, SCREENING_MAILBOX_NAME):
-		add_mailbox(account, SCREENING_MAILBOX_NAME)
+	if not get_mailbox_id_by_name(user, account_id, SCREENER_MAILBOX_NAME):
+		add_mailbox(account, SCREENER_MAILBOX_NAME)
 		CoreService.invalidate_cache(account_id, key="mailboxes")
 
-	return get_mailbox_folder_path(account, SCREENING_MAILBOX_NAME, raise_exception=True)
+	return get_mailbox_folder_path(account, SCREENER_MAILBOX_NAME, raise_exception=True)
 
 
 def is_screening_enabled(account: str) -> bool:

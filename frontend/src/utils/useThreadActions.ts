@@ -121,7 +121,15 @@ export function useThreadActions(deps: {
 
 	const moveToOptions = computed(() =>
 		mailboxes.data
-			?.filter((m) => ![mailbox.value, mailboxIds.sent, mailboxIds.drafts].includes(m.id))
+			?.filter(
+				(m) =>
+					![
+						mailbox.value,
+						mailboxIds.sent,
+						mailboxIds.drafts,
+						mailboxIds.screener,
+					].includes(m.id),
+			)
 			.map((m) => ({
 				label: getMailboxName(m),
 				icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
@@ -176,7 +184,11 @@ export function useThreadActions(deps: {
 
 	const addToOptions = computed(() =>
 		mailboxes.data
-			?.filter((m) => !m.role || ['inbox', 'archive'].includes(m.role))
+			?.filter(
+				(m) =>
+					(!m.role || ['inbox', 'archive'].includes(m.role)) &&
+					m.id !== mailboxIds.screener,
+			)
 			.filter((m) => {
 				const selected = threadsResource.value.data?.filter((t: Thread) =>
 					selections.value.includes(t.thread_id),

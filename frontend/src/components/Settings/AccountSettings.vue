@@ -196,7 +196,7 @@ const save = async () => {
 		askMoveToInbox =
 			screeningChanged &&
 			!accountSettings.doc.enable_screening &&
-			(mailboxes.data?.find((m: MailboxData) => m.id === mailboxIds.screening)
+			(mailboxes.data?.find((m: MailboxData) => m.id === mailboxIds.screener)
 				?.total_threads ?? 0) > 0
 		await accountSettings.save.submit()
 		// Sync the shared user data so compose picks up the new default and the junk flow picks up
