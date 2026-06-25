@@ -123,7 +123,7 @@ const tabs = computed(() => {
 			condition: user.data.is_jmap_configure,
 		},
 		{
-			label: __('Block List'),
+			label: __('Screened Senders'),
 			icon: Ban,
 			component: markRaw(BlockListSettings),
 			condition: user.data.is_jmap_configured,

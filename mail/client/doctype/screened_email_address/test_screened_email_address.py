@@ -11,9 +11,9 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-class IntegrationTestJunkEmailAddress(IntegrationTestCase):
+class IntegrationTestScreenedEmailAddress(IntegrationTestCase):
 	"""
-	Integration tests for JunkEmailAddress.
+	Integration tests for ScreenedEmailAddress.
 	Use this class for testing interactions between multiple components.
 	"""
 

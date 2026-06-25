@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio'
 import { File, Paperclip } from 'lucide-vue-next'
 import { toast } from 'frappe-ui'
 
-import { FOLDER_ICON_MAP } from '@/constants'
+import { FOLDER_ICON_MAP, SCREENING_MAILBOX_NAME } from '@/constants'
 import dayjs from '@/utils/dayjs'
 import AudioIcon from '@/components/Icons/AudioIcon.vue'
 import ImageIcon from '@/components/Icons/ImageIcon.vue'
@@ -243,6 +243,69 @@ export const convertHtmlToText = (html: string) => {
 
 export const isEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
 
+// An externally-hosted reference (http/https or protocol-relative //). cid: (inline attachments) and
+// data: URIs are part of the message, so they're never remote.
+const REMOTE_URL = /^\s*(?:https?:)?\/\//i
+const REMOTE_CSS_URL = /url\(\s*['"]?(?:https?:)?\/\//i
+
+// Inspect the HTML for externally-hosted assets via the DOM (one parse): counts remote <img>, and flags
+// whether any remote asset is present at all — a remote <img>, or a remote url(...) in an inline style or
+// <style> block (background images, fonts). Used to decide the "images blocked" banner and its count.
+export const analyzeRemoteAssets = (html?: string): { images: number; hasRemote: boolean } => {
+	if (!html) return { images: 0, hasRemote: false }
+
+	const doc = new DOMParser().parseFromString(html, 'text/html')
+
+	const images = Array.from(doc.querySelectorAll('img')).filter((img) =>
+		REMOTE_URL.test(img.getAttribute('src') || ''),
+	).length
+
+	const hasRemoteCss =
+		Array.from(doc.querySelectorAll('[style]')).some((el) =>
+			REMOTE_CSS_URL.test(el.getAttribute('style') || ''),
+		) ||
+		Array.from(doc.querySelectorAll('style')).some((el) =>
+			REMOTE_CSS_URL.test(el.textContent || ''),
+		)
+
+	return { images, hasRemote: images > 0 || hasRemoteCss }
+}
+
+// Blank remote url(...) in a CSS string. Regex here is unavoidable — there's no DOM API to rewrite a
+// url() inside a style string without pulling in the full CSSOM.
+const blankRemoteCssUrls = (css: string) =>
+	css.replace(/url\(\s*(['"]?)(?:https?:)?\/\/[^'")]*\1\s*\)/gi, 'url()')
+
+// Neutralize remote assets so the browser never requests them. Parses the (already-sanitized) HTML into a
+// DOM and edits it there — robust against markup/attribute quirks regex would trip on: each remote <img>
+// has its src stashed on data-blocked-src (and is tagged for hiding), and remote url(...) in inline styles
+// and <style> blocks is blanked. Inline (cid:) and data: assets are left to load as normal.
+export const blockRemoteAssets = (html: string) => {
+	const doc = new DOMParser().parseFromString(html, 'text/html')
+
+	doc.querySelectorAll('img').forEach((img) => {
+		const src = img.getAttribute('src') || ''
+		if (!REMOTE_URL.test(src)) return
+		img.setAttribute('data-blocked-src', src)
+		img.removeAttribute('src')
+		img.setAttribute('data-blocked-image', '')
+	})
+
+	doc.querySelectorAll('[style]').forEach((el) => {
+		const style = el.getAttribute('style') || ''
+		const cleaned = blankRemoteCssUrls(style)
+		if (cleaned !== style) el.setAttribute('style', cleaned)
+	})
+
+	doc.querySelectorAll('style').forEach((styleEl) => {
+		const css = styleEl.textContent || ''
+		const cleaned = blankRemoteCssUrls(css)
+		if (cleaned !== css) styleEl.textContent = cleaned
+	})
+
+	return doc.documentElement.outerHTML
+}
+
 export const getFileIcon = (type?: string) => {
 	if (!type) return Paperclip
 	if (type?.startsWith('image/')) return ImageIcon
@@ -321,8 +384,13 @@ export const hasHtmlContent = (content: string | null | undefined): boolean => {
 export const getIcon = (mailbox: MailboxData) => {
 	if (mailbox.icon) return mailbox.icon
 	if (mailbox.role && mailbox.role in FOLDER_ICON_MAP) return FOLDER_ICON_MAP[mailbox.role]
+	if (mailbox._name === SCREENING_MAILBOX_NAME) return 'eye'
 	return 'folder'
 }
+
+// The Screening folder is surfaced to users as the "Screener".
+export const getMailboxName = (mailbox: MailboxData) =>
+	mailbox._name === SCREENING_MAILBOX_NAME ? __('Screener') : mailbox._name
 
 export const downloadUrlAsFile = (url: string, filename: string) => {
 	const link = document.createElement('a')

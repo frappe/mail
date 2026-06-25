@@ -1,12 +1,12 @@
 <template>
-	<div class="bg-surface-white sticky top-0 flex items-center border-b p-2.5 sm:px-5">
+	<div class="bg-surface-white sticky top-0 flex items-center border-b py-2.5 sm:px-3.5">
 		<Button
 			variant="ghost"
 			class="mr-2 shrink-0"
 			@click="$router.push({ name: 'Mailbox', params: { mailbox }, query: route.query })"
 		>
 			<template #icon>
-				<ChevronLeft class="text-ink-gray-7 icon" />
+				<ChevronLeft class="icon" />
 			</template>
 		</Button>
 		<template v-if="thread?.length">
@@ -109,7 +109,7 @@ import {
 import { Button, Dropdown, Tooltip } from 'frappe-ui'
 
 import { FOLDER_ICON_COLOR_MAP } from '@/constants'
-import { getIcon } from '@/utils'
+import { getIcon, getMailboxName } from '@/utils'
 import { useScreenSize } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
@@ -270,7 +270,7 @@ const getMailboxOption = (
 	mailbox: MailboxData,
 	emitName: 'moveThread' | 'addThreadToMailbox' | 'removeThreadFromMailbox',
 ) => ({
-	label: mailbox._name,
+	label: getMailboxName(mailbox),
 	icon: h(Icon, { name: getIcon(mailbox), class: FOLDER_ICON_COLOR_MAP[mailbox.color!] }),
 	onClick: () => emit(emitName, mailbox.id),
 })

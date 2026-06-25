@@ -3,11 +3,11 @@ import { Icon } from 'frappe-ui/icons'
 import { createResource, toast } from 'frappe-ui'
 
 import { FOLDER_ICON_COLOR_MAP } from '@/constants'
-import { getIcon, raisePromiseToast, raiseToast } from '@/utils'
+import { getIcon, getMailboxName, raisePromiseToast, raiseToast } from '@/utils'
 import { useBlockSender, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
-import type { Mail, Thread } from '@/types'
+import type { Mail, MailboxData, Thread } from '@/types'
 
 export type SetSeenParams = {
 	0?: string[]
@@ -123,7 +123,7 @@ export function useThreadActions(deps: {
 		mailboxes.data
 			?.filter((m) => ![mailbox.value, mailboxIds.sent, mailboxIds.drafts].includes(m.id))
 			.map((m) => ({
-				label: m._name,
+				label: getMailboxName(m),
 				icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
 				onClick: () => handleMoveThreads({ [m.id]: selections.value }),
 			})),
@@ -151,10 +151,13 @@ export function useThreadActions(deps: {
 	type MailSnapshot = { id: string; mailbox_ids: string[]; junk: 0 | 1 }
 	const setMailsMailboxes = createResource({
 		url: 'mail.api.mail.set_mails_mailboxes',
-		makeParams: ({ mails }: { mails: MailSnapshot[] }) => ({
-			account_id: store.accountId,
+		makeParams: ({
 			mails,
-		}),
+			screen_action,
+		}: {
+			mails: MailSnapshot[]
+			screen_action?: string | null
+		}) => ({ account_id: store.accountId, mails, screen_action }),
 	})
 
 	const showAddTo = computed(
@@ -183,14 +186,16 @@ export function useThreadActions(deps: {
 				)
 			})
 			.map((m) => ({
-				label: m._name,
+				label: getMailboxName(m),
 				icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
 				onClick: () => handleAddThreadsToMailbox(m.id, selections.value),
 			})),
 	)
 
 	const handleAddThreadsToMailbox = (mailboxId: string, threadIds: string[], isUndo = false) => {
-		const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
+		const mailboxName = getMailboxName(
+			mailboxes.data?.find((m) => m.id === mailboxId) ?? ({} as MailboxData),
+		)
 		const action = async () => {
 			await addMails.submit({ ids: allMailIds(threadIds), mailbox_id: mailboxId })
 			reloadThreads()
@@ -224,7 +229,7 @@ export function useThreadActions(deps: {
 					![mailboxIds.sent, mailboxIds.drafts].includes(m.id),
 			)
 			.map((m) => ({
-				label: m._name,
+				label: getMailboxName(m),
 				icon: h(Icon, { name: getIcon(m), class: FOLDER_ICON_COLOR_MAP[m.color] }),
 				onClick: () => handleRemoveThreadsFromMailbox(m.id, selections.value),
 			}))
@@ -255,7 +260,9 @@ export function useThreadActions(deps: {
 			}
 		}
 
-		const mailboxName = mailboxes.data?.find((m) => m.id === mailboxId)?._name
+		const mailboxName = getMailboxName(
+			mailboxes.data?.find((m) => m.id === mailboxId) ?? ({} as MailboxData),
+		)
 		const success =
 			threadIdsToBeUpdated.length === 1
 				? __('Thread removed from {0}.', [mailboxName])
@@ -270,11 +277,15 @@ export function useThreadActions(deps: {
 
 	const setMailsSpam = createResource({
 		url: 'mail.api.mail.set_mails_spam_status',
-		makeParams: ({ ids, spam }: { ids: string[]; spam: boolean }) => ({
-			account_id: store.accountId,
+		makeParams: ({
 			ids,
 			spam,
-		}),
+			screen_action,
+		}: {
+			ids: string[]
+			spam: boolean
+			screen_action?: string | null
+		}) => ({ account_id: store.accountId, ids, spam, screen_action }),
 	})
 
 	const showJunkOrDeleteThreads = ref(false)
@@ -492,9 +503,9 @@ export function useThreadActions(deps: {
 			)
 		})
 
-		const moveToMailboxName = mailboxes.data?.find(
-			(m) => m.id === Object.keys(threadIDs)[0],
-		)?._name
+		const moveToMailboxName = getMailboxName(
+			mailboxes.data?.find((m) => m.id === Object.keys(threadIDs)[0]) ?? ({} as MailboxData),
+		)
 		const loading = __('Moving to {0}...', [moveToMailboxName])
 		const success =
 			selectedThreads.length === 1
@@ -520,17 +531,25 @@ export function useThreadActions(deps: {
 		}))
 		const senders = mails.map((m) => ({ name: m.from_name, email: m.from_email }))
 		const ids = snapshot.map((m) => m.id)
+
+		// Screen the senders in the SAME call as the mail change (no second request, no undo race): Junk
+		// → Spam (unless the account prompts to block instead), Not Junk → Accept. Undo flips it, also in
+		// the same call as the mailbox restore.
+		const screenForward = spam ? (willJunkSenders(senders) ? 'Spam' : null) : 'Accepted'
+
 		const action = async () => {
-			await setMailsSpam.submit({ ids, spam })
+			await setMailsSpam.submit({ ids, spam, screen_action: screenForward })
 			handleSuccessAndRemoveFromList(threadIDs)
-			// After marking as Junk, apply the account's "on mark as junk" behaviour (silently junk the
-			// sender's future mail, or prompt to block).
-			if (spam) promptBlockSenders(senders)
+			// 'Ask to Block Sender' mode: junking still prompts to fully block the sender (Reject).
+			if (spam && !screenForward) promptBlockSenders(senders)
 		}
 
 		setUndoAction(() => {
 			const undoAction = async () => {
-				await setMailsMailboxes.submit({ mails: snapshot })
+				await setMailsMailboxes.submit({
+					mails: snapshot,
+					screen_action: screenForward ? (spam ? 'Accepted' : 'Spam') : null,
+				})
 				reloadThreads()
 			}
 			// Undo flips the junk status back — name the resulting state, like the forward toast does.
@@ -540,6 +559,7 @@ export function useThreadActions(deps: {
 					: __('Threads marked as {0}.', [spam ? __('Not Junk') : __('Junk')])
 			raisePromiseToast(undoAction, __('Undoing...'), restored)
 		})
+
 		const loading = spam ? __('Marking as Junk...') : __('Marking as Not Junk...')
 		// When the account auto-junks the sender, surface that as the single toast for the whole action.
 		const success =

@@ -286,9 +286,17 @@ watch(show, (val) => {
 	folder.disable_push_notification = original.disable_push_notification =
 		isNotificationsDisabled.value ? true : !!mailbox.disable_push_notification
 
-	if (parsedAutomationRules.value) {
-		Object.assign(automationRules, parsedAutomationRules.value)
-		Object.assign(originalAutomationRules, parsedAutomationRules.value)
+	// Rules come from the Mailbox Settings backup (mailbox.automation_rules), so they survive even if
+	// the sieve script was deleted by a third-party client.
+	if (mailbox.automation_rules) {
+		Object.assign(automationRules, {
+			...DEFAULT_AUTOMATION_RULES,
+			...mailbox.automation_rules,
+		})
+		Object.assign(originalAutomationRules, {
+			...DEFAULT_AUTOMATION_RULES,
+			...mailbox.automation_rules,
+		})
 	}
 })
 
@@ -311,53 +319,6 @@ const DEFAULT_AUTOMATION_RULES = {
 
 const automationRules = reactive({ ...DEFAULT_AUTOMATION_RULES })
 const originalAutomationRules = reactive({ ...DEFAULT_AUTOMATION_RULES })
-
-const parsedAutomationRules = computed(() => {
-	if (isNew.value || !automationScript.value || !original.name) return null
-
-	const content = automationScript.value.content
-
-	const commentPattern = `# Mailbox: ${original.name}\n`
-	const commentIndex = content.indexOf(commentPattern)
-
-	if (commentIndex === -1) return null
-
-	// Extract the block (from comment to closing brace)
-	const blockStart = commentIndex
-	const blockEnd = content.indexOf('\n}', blockStart)
-
-	if (blockEnd === -1) return null
-
-	const block = content.substring(blockStart, blockEnd + 2)
-
-	const rules = { ...DEFAULT_AUTOMATION_RULES }
-
-	// Parse emails_from
-	const emailsMatch = block.match(/address :matches "from" \[(.*?)\]/)
-	if (emailsMatch)
-		rules.emails_from = emailsMatch[1]
-			.split(',')
-			.map((email: string) => email.trim().replace(/"/g, ''))
-			.join(', ')
-
-	// Parse subject_contains
-	const subjectMatch = block.match(/header :contains "subject" \[(.*?)\]/)
-	if (subjectMatch)
-		rules.subject_contains = subjectMatch[1]
-			.split(',')
-			.map((keyword: string) => keyword.trim().replace(/"/g, ''))
-			.join(', ')
-
-	// Parse match_if (anyof vs allof)
-	if (block.includes('allof')) rules.match_if = 'all'
-	else if (block.includes('anyof')) rules.match_if = 'any'
-
-	// Parse flags
-	rules.mark_as_read = block.includes('addflag "\\\\Seen"')
-	rules.add_star = block.includes('addflag "\\\\Flagged"')
-
-	return rules
-})
 
 const isDefaultAutomation = computed(
 	() => JSON.stringify(automationRules) === JSON.stringify(DEFAULT_AUTOMATION_RULES),

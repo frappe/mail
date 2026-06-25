@@ -1,45 +1,64 @@
 <template>
-	<h1>{{ __('Block List') }}</h1>
+	<!-- A single h-full flex column gives the ListView a bounded flex parent so it fills the panel and
+	scrolls within itself, instead of taking a small intrinsic height with empty space below. -->
+	<div class="flex min-h-0 flex-1 flex-col gap-5">
+		<h1>{{ __('Screened Senders') }}</h1>
 
-	<div class="flex gap-4">
-		<FormControl
-			v-model="email"
-			type="text"
-			variant="outline"
-			:placeholder="__('Enter email address')"
-			class="flex-1"
-			@keydown.enter="blockEmailAddress.submit()"
-		/>
-		<Button
-			:label="__('Block')"
-			variant="solid"
-			:loading="blockEmailAddress.loading"
-			:disabled="!isEmail(email) || blockedAddresses.data.includes(email)"
-			@click="blockEmailAddress.submit()"
-		/>
+		<div class="flex gap-4">
+			<FormControl
+				v-model="email"
+				type="text"
+				variant="outline"
+				:placeholder="__('Enter email address')"
+				class="flex-1"
+				@keydown.enter="screenEmailAddress.submit()"
+			/>
+			<!-- FormControl forces `w-full` on selects, so constrain it with a fixed-width wrapper
+			instead of letting it claim the whole row and squeeze the email input. -->
+			<div class="w-36 shrink-0">
+				<FormControl
+					v-model="action"
+					type="select"
+					variant="outline"
+					:options="ACTION_OPTIONS"
+				/>
+			</div>
+			<Button
+				:label="__('Add')"
+				variant="solid"
+				:loading="screenEmailAddress.loading"
+				:disabled="!isEmail(email) || isAlreadyScreened"
+				@click="screenEmailAddress.submit()"
+			/>
+		</div>
+
+		<ListView
+			v-if="rows.length"
+			ref="listView"
+			class="min-h-0 flex-1"
+			:columns="COLUMNS"
+			:rows="rows"
+			row-key="email"
+		>
+			<ListHeader />
+			<ListRows />
+			<ListSelectBanner>
+				<template #actions>
+					<Button
+						variant="ghost"
+						:label="__('Remove')"
+						@click="showRemoveModal = true"
+					/>
+				</template>
+			</ListSelectBanner>
+		</ListView>
+		<div v-else class="text-ink-gray-6 flex flex-col space-y-2 text-sm">
+			<p class="text-base font-medium">{{ __('No screened senders.') }}</p>
+			<p>{{ MESSAGE }}</p>
+		</div>
+
+		<Dialog v-model="showRemoveModal" :options="removeModalOptions" />
 	</div>
-
-	<ListView
-		v-if="blockedAddresses.data.length"
-		ref="listView"
-		:columns="COLUMNS"
-		:rows="rows"
-		row-key="name"
-	>
-		<ListHeader />
-		<ListRows />
-		<ListSelectBanner>
-			<template #actions>
-				<Button variant="ghost" :label="__('Unblock')" @click="showUnblockModal = true" />
-			</template>
-		</ListSelectBanner>
-	</ListView>
-	<div v-else class="text-ink-gray-6 flex flex-col space-y-2 text-sm">
-		<p class="text-base font-medium">{{ __('No blocked email addresses.') }}</p>
-		<p>{{ MESSAGE }}</p>
-	</div>
-
-	<Dialog v-model="showUnblockModal" :options="unblockModalOptions" />
 </template>
 
 <script setup lang="ts">
@@ -58,55 +77,85 @@ import {
 import { isEmail, raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
+import type { ScreenedAddress, ScreeningAction } from '@/types'
+
 const store = userStore()
-const { blockedAddresses } = store
+const { screenedAddresses } = store
 
 const email = ref('')
+const action = ref<ScreeningAction>('Reject')
 const listViewRef = useTemplateRef('listView')
-const showUnblockModal = ref(false)
+const showRemoveModal = ref(false)
 
-const rows = computed(() => blockedAddresses.data.map((address: string) => ({ name: address })))
+// 'Accepted' lets the sender's mail reach the inbox; 'Reject' discards it silently; 'Spam' files it
+// into the Spam folder.
+const ACTION_OPTIONS = [
+	{ label: __('Accept'), value: 'Accepted' },
+	{ label: __('Block'), value: 'Reject' },
+	{ label: __('Move to Junk'), value: 'Spam' },
+]
+const ACTION_LABELS: Partial<Record<ScreeningAction, string>> = {
+	Accepted: __('Accept'),
+	Reject: __('Block'),
+	Spam: __('Move to Junk'),
+}
 
-const blockEmailAddress = createResource({
-	url: 'mail.api.mail.block_email_address',
-	makeParams: () => ({ account_id: store.accountId, email: email.value }),
+const isAlreadyScreened = computed(() =>
+	(screenedAddresses.data ?? []).some((a: ScreenedAddress) => a.email === email.value),
+)
+
+const rows = computed(() =>
+	(screenedAddresses.data ?? []).map((a: ScreenedAddress) => ({
+		email: a.email,
+		action: ACTION_LABELS[a.action] ?? a.action,
+	})),
+)
+
+const screenEmailAddress = createResource({
+	url: 'mail.api.mail.screen_email_address',
+	makeParams: () => ({ account_id: store.accountId, email: email.value, action: action.value }),
 	onSuccess: () => {
-		raiseToast(__('Email address blocked.'))
+		raiseToast(__('Sender screened.'))
 		email.value = ''
-		blockedAddresses.reload()
+		screenedAddresses.reload()
 	},
 })
 
-const unblockEmailAddresses = createResource({
-	url: 'mail.api.mail.unblock_email_addresses',
+const unscreenEmailAddresses = createResource({
+	url: 'mail.api.mail.unscreen_email_addresses',
 	makeParams: () => ({
 		account_id: store.accountId,
 		emails: Array.from(listViewRef.value?.selections),
 	}),
 	onSuccess: () => {
-		raiseToast(__('Email addresses unblocked.'))
-		showUnblockModal.value = false
+		raiseToast(__('Senders removed.'))
+		showRemoveModal.value = false
 		listViewRef.value?.toggleAllRows()
-		blockedAddresses.reload()
+		screenedAddresses.reload()
 	},
 })
 
-const unblockModalOptions = computed(() => ({
-	title: __('Unblock Email Addresses'),
-	message: __('Are you sure you want to unblock the selected email addresses?'),
+const removeModalOptions = computed(() => ({
+	title: __('Remove Screened Senders'),
+	message: __('Are you sure you want to remove the selected senders from your screened list?'),
 	actions: [
 		{
 			label: __('Confirm'),
 			variant: 'solid',
-			onClick: () => unblockEmailAddresses.submit(),
-			loading: unblockEmailAddresses.loading,
+			onClick: () => unscreenEmailAddresses.submit(),
+			loading: unscreenEmailAddresses.loading,
 		},
 	],
 }))
 
-const COLUMNS = [{ label: __('Email Address'), key: 'name' }]
+// `fr` units (numbers) so the columns share the row width instead of overflowing (percentages plus the
+// checkbox column would exceed 100% and add a horizontal scrollbar).
+const COLUMNS = [
+	{ label: __('Email Address'), key: 'email', width: 4 },
+	{ label: __('Action'), key: 'action', width: 1 },
+]
 
 const MESSAGE = __(
-	'Block specific addresses to prevent their messages from appearing in your inbox.',
+	'Screen specific senders to either reject their messages or send them straight to Spam.',
 )
 </script>

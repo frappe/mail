@@ -1,7 +1,18 @@
 <template>
 	<div class="flex items-center justify-between">
 		<h1>{{ __('Sieve Scripts') }}</h1>
-		<Button icon-left="plus" :label="__('New')" @click="addScript" />
+		<div class="flex items-center gap-2">
+			<Button
+				icon-left="refresh-cw"
+				:label="__('Rebuild Automation')"
+				:loading="rebuildAutomation.loading"
+				:tooltip="
+					__('Regenerate the folder automation script from your saved mailbox rules.')
+				"
+				@click="rebuildAutomation.submit()"
+			/>
+			<Button icon-left="plus" :label="__('New')" @click="addScript" />
+		</div>
 	</div>
 
 	<div v-if="filteredScripts.length">
@@ -59,8 +70,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Ellipsis } from 'lucide-vue-next'
-import { Badge, Button, Dropdown } from 'frappe-ui'
+import { Badge, Button, Dropdown, createResource } from 'frappe-ui'
 
+import { raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 import DeleteSieveScriptModal from '@/components/Modals/DeleteSieveScriptModal.vue'
 import SetSieveScriptStateModal from '@/components/Modals/SetSieveScriptStateModal.vue'
@@ -68,7 +80,18 @@ import SieveScriptModal from '@/components/Modals/SieveScriptModal.vue'
 
 import type { SieveScript } from '@/types'
 
-const { sieveScripts } = userStore()
+const store = userStore()
+const { sieveScripts } = store
+
+const rebuildAutomation = createResource({
+	url: 'mail.api.sieve.rebuild_automation_script_for_account',
+	makeParams: () => ({ account_id: store.accountId }),
+	onSuccess: () => {
+		raiseToast(__('Folder automation rebuilt from your saved rules.'))
+		sieveScripts.reload()
+	},
+	onError: (error) => raiseToast(error.messages?.[0] || error.message, 'error'),
+})
 
 const showSieveScript = ref(false)
 const selectedScript = ref<SieveScript>()

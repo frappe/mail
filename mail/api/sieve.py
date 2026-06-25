@@ -1,10 +1,13 @@
 import re
+from contextlib import contextmanager
 
 import frappe
 from frappe import _
 
-from mail.client.doctype.blocked_email_address.blocked_email_address import get_blocked_email_addresses
-from mail.client.doctype.junk_email_address.junk_email_address import get_junk_email_addresses
+from mail.client.doctype.mailbox_settings.mailbox_settings import get_mailbox_automation_rules
+from mail.client.doctype.screened_email_address.screened_email_address import (
+	get_screened_email_addresses,
+)
 from mail.client.doctype.sieve_script.sieve_script import SieveScript
 from mail.jmap import (
 	get_mailbox_id_by_name,
@@ -13,8 +16,9 @@ from mail.jmap import (
 	get_mailboxes,
 	parse_account,
 )
-from mail.utils.user import get_session_account
+from mail.utils.user import get_account_emails, get_session_account
 
+SCREENING_MAILBOX_NAME = "Screener"
 AUTOMATION_SCRIPT_NAME = "frappe_mail_automation"
 AUTOMATION_SCRIPT_REQUIRE = 'require ["fileinto", "imap4flags"];'
 
@@ -134,36 +138,85 @@ def remove_sieve_block(sieve_script: str, block_name: str) -> str:
 
 
 @frappe.whitelist()
-def create_automation_script(account_id: str, active: bool = False) -> str:
-	"""Create the frappe_mail_automation sieve script for the account."""
+def create_automation_script(account_id: str, active: bool = False) -> None:
+	"""Create (and optionally activate) the frappe_mail_automation sieve script for the account.
 
-	account = get_session_account(account_id)
+	Backs the "Enable Folder Automation" action. Delegates to `build_automation_sieve`, which creates
+	the script if it doesn't exist and regenerates all four sections from their persistent backups
+	(Mailbox Settings + Screened Email Address).
+	"""
 
-	frappe.flags.allow_automation_script_creation = True
-	return SieveScript._add_sieve_script(
-		account=account,
-		name=AUTOMATION_SCRIPT_NAME,
-		content=AUTOMATION_SCRIPT_REQUIRE,
-		active=active,
-	)
+	build_automation_sieve(get_session_account(account_id), activate=active)
 
 
 def get_automation_script_name(account: str) -> str:
-	"""Returns the name of the frappe_mail_automation sieve script for the account, creating it if it doesn't exist."""
+	"""Return the name of the frappe_mail_automation sieve script, creating an empty one if missing.
+
+	Only ensures the script exists (with a bare `require` statement); regenerating the automation
+	blocks is `build_automation_sieve`'s job. Keeping creation free of any rebuild avoids re-entrancy,
+	since the rebuild itself calls this to resolve the script it writes to.
+	"""
 
 	scripts = SieveScript._fetch_sieve_scripts(account, filter={"name": AUTOMATION_SCRIPT_NAME})
 	if scripts and scripts[0]:
 		return scripts[0][0]["name"]
 
-	script_name = create_automation_script(account)
+	frappe.flags.allow_automation_script_creation = True
+	script_id = SieveScript._add_sieve_script(account, AUTOMATION_SCRIPT_NAME, AUTOMATION_SCRIPT_REQUIRE)
 
-	return f"{account}|{script_name}"
+	return f"{account}|{script_id}"
 
 
 def append_sieve_block(script: str, block_name: str, sieve_block: str) -> str:
 	"""Append a labeled Sieve filter block to the script."""
 
 	return script.rstrip() + "\n" + f"\n# {block_name}{sieve_block}"
+
+
+def backfill_mailbox_automation_rules() -> None:
+	"""Backfill the Mailbox Settings automation backup from existing frappe_mail_automation scripts.
+
+	Before the Mailbox Settings automation fields existed, folder rules lived only in the sieve script.
+	Run as a background job (JMAP isn't reachable during `bench migrate`) so existing rules are captured
+	into Mailbox Settings before a rebuild — which regenerates the script *from* Mailbox Settings —
+	could drop them. Idempotent: re-running just rewrites the same backup.
+	"""
+
+	from mail.client.doctype.mailbox_settings.mailbox_settings import (
+		automation_rules_to_settings,
+		set_mailbox_settings,
+	)
+	from mail.jmap import get_jmap_connection
+
+	for user in frappe.get_all("User Settings", filters={"username": ["is", "set"]}, pluck="user"):
+		try:
+			account_ids = list(get_jmap_connection(user, ignore_permissions=True).accounts.keys())
+		except Exception:
+			continue
+
+		for account_id in account_ids:
+			account = f"{user}:{account_id}"
+			try:
+				scripts = SieveScript._fetch_sieve_scripts(account, filter={"name": AUTOMATION_SCRIPT_NAME})
+				if not (scripts and scripts[0]):
+					continue
+
+				script = SieveScript._get_sieve_scripts(account, [scripts[0][0]["id"]], True)
+				content = script[0]["content"] if script else ""
+			except Exception:
+				continue
+
+			for mailbox in get_mailboxes(*parse_account(account)):
+				rules = extract_rules_from_script(content, mailbox["_name"])
+				if not rules or not (rules["emails_from"] or rules["subject_contains"]):
+					continue
+
+				try:
+					set_mailbox_settings(account, mailbox["id"], **automation_rules_to_settings(rules))
+				except Exception:
+					continue
+
+	frappe.db.commit()
 
 
 def extract_rules_from_script(content: str, mailbox_name: str) -> dict | None:
@@ -213,14 +266,6 @@ def extract_rules_from_script(content: str, mailbox_name: str) -> dict | None:
 	return rules
 
 
-def get_child_mailbox_names(account: str, parent_name: str) -> list[str]:
-	"""Return the names of all direct child mailboxes for the given parent."""
-
-	parent_id = get_mailbox_id_by_name(*parse_account(account), parent_name)
-	mailboxes = get_mailboxes(*parse_account(account))
-	return [mailbox["_name"] for mailbox in mailboxes if mailbox.get("parent_id") == parent_id]
-
-
 def get_mailbox_folder_path(account: str, name: str, raise_exception: bool = False) -> str | None:
 	"""Return the full slash-separated folder path for a mailbox."""
 
@@ -249,82 +294,90 @@ def get_mailbox_folder_path(account: str, name: str, raise_exception: bool = Fal
 	return "/".join(reversed(path_parts))
 
 
-def update_sieve_script_for_mailbox(
-	account: str, name: str, automation_rules: dict | None = None, old_name: str | None = None
-) -> None:
-	"""Update the automation Sieve script for a mailbox and its direct children."""
+@contextmanager
+def pause_automation_sieve_build():
+	"""Suppress the automatic `build_automation_sieve` triggered by Mailbox Settings / Screened Email
+	Address document hooks, so a caller doing several writes rebuilds the script once at the end
+	instead of after every write.
 
-	automation_script_name = get_automation_script_name(account)
-	doc = frappe.get_doc("Sieve Script", automation_script_name)
+	Use it around bulk writes, then call `build_automation_sieve` yourself once::
 
-	for child_name in set(get_child_mailbox_names(account, name)):
-		child_block_name = f"Mailbox: {child_name}"
-		child_rules = extract_rules_from_script(doc.content, child_name)
-		doc.content = remove_sieve_block(doc.content, child_block_name)
+	    with pause_automation_sieve_build():
+	            ...several saves...
+	    build_automation_sieve(account)
+	"""
 
-		if child_rules:
-			child_folder_path = get_mailbox_folder_path(account, child_name, raise_exception=True)
-			doc.content = append_sieve_block(
-				doc.content, child_block_name, rule_object_to_sieve(child_rules, child_folder_path)
-			)
-
-	doc.content = remove_sieve_block(doc.content, f"Mailbox: {old_name or name}")
-
-	if automation_rules:
-		folder_path = get_mailbox_folder_path(account, name, raise_exception=True)
-		doc.content = append_sieve_block(
-			doc.content, f"Mailbox: {name}", rule_object_to_sieve(automation_rules, folder_path)
-		)
-
-	doc.save()
+	previous = frappe.flags.get("skip_automation_sieve_build")
+	frappe.flags.skip_automation_sieve_build = True
+	try:
+		yield
+	finally:
+		frappe.flags.skip_automation_sieve_build = previous
 
 
-def update_sieve_script_for_blocked_emails(account: str) -> None:
-	"""Update sieve script to block emails from blocked email list at the top."""
+def maybe_build_automation_sieve(account: str) -> None:
+	"""Build the automation sieve from a document hook unless a caller paused builds for a bulk write."""
 
-	automation_script_name = get_automation_script_name(account)
-	doc = frappe.get_doc("Sieve Script", automation_script_name)
-	content = (doc.content or "").lstrip()
-
-	block_name = "Blocked Emails"
-	content = remove_sieve_block(content, block_name)
-
-	blocked_emails = get_blocked_email_addresses(account)
-	conditions = [f'address :is "from" "{e.strip()}"' for e in blocked_emails if e.strip()]
-
-	if not conditions:
-		doc.content = content.rstrip() + "\n"
-		doc.save()
+	if frappe.flags.get("skip_automation_sieve_build"):
 		return
 
-	if len(conditions) == 1:
-		condition_block = f"if {conditions[0]} {{"
-	else:
-		joined = ",\n  ".join(conditions)
-		condition_block = f"if anyof (\n  {joined}\n) {{"
+	build_automation_sieve(account)
 
-	block_script = "\n".join(
-		[
-			f"# {block_name}",
-			condition_block,
-			"  discard;",
-			"  stop;",
-			"}",
-			"\n",
-		]
-	)
 
-	require_pattern = r"^(require\s+\[.*?\];\s*)+"
-	match = re.match(require_pattern, content, flags=re.DOTALL)
+def build_automation_sieve(account: str, activate: bool = False) -> None:
+	"""Build the entire frappe_mail_automation sieve script from its sources of truth.
 
-	if match:
-		insert_pos = match.end()
-		content = content[:insert_pos] + "\n" + block_script + content[insert_pos:]
-	else:
-		content = block_script + content
+	This is the single entry point for (re)generating the automation script. It:
+	  1. Ensures the frappe_mail_automation script exists, creating an empty one if a third-party
+	     client deleted it.
+	  2. Regenerates all four managed sections, in precedence order — Reject → Mailbox → Spam →
+	     Screening — from their persistent backups: the per-mailbox rules in Mailbox Settings (Mailbox
+	     section) and the Reject/Spam/Screening rules in Screened Email Address plus Account Settings.
+	  3. Activates the script when `activate` is set (the "Enable Folder Automation" action); otherwise
+	     its current active state is preserved.
 
-	doc.content = content.rstrip() + "\n"
+	Building from the backups rather than mutating the existing script makes it idempotent and recovers
+	the script after a third-party client deletes or mangles it.
+	"""
+
+	doc = frappe.get_doc("Sieve Script", get_automation_script_name(account))
+	doc.content = _build_automation_content(account)
+	if activate:
+		doc.active = True
 	doc.save()
+
+
+def _build_automation_content(account: str) -> str:
+	"""Generate the full frappe_mail_automation script content from the persistent backups."""
+
+	content = AUTOMATION_SCRIPT_REQUIRE + "\n"
+
+	# Mailbox section: one block per mailbox that has automation rules in Mailbox Settings.
+	for mailbox in get_mailboxes(*parse_account(account)):
+		rules = get_mailbox_automation_rules(account, mailbox["id"])
+		if not rules:
+			continue
+
+		folder_path = get_mailbox_folder_path(account, mailbox["_name"], raise_exception=True)
+		block = rule_object_to_sieve(rules, folder_path)
+		if block:
+			content = append_sieve_block(content, f"Mailbox: {mailbox['_name']}", block)
+
+	# Reject / Spam / Screening sections, layered on top of the mailbox rules.
+	content = _apply_screening_blocks(account, content)
+
+	return content.rstrip() + "\n"
+
+
+@frappe.whitelist()
+def rebuild_automation_script_for_account(account_id: str) -> None:
+	"""Rebuild the frappe_mail_automation script from its backups for the session account.
+
+	Backs the manual "Rebuild Automation" action, for when the script was deleted or edited by a
+	third-party client.
+	"""
+
+	build_automation_sieve(get_session_account(account_id))
 
 
 def get_junk_folder_path(account: str) -> str:
@@ -337,30 +390,80 @@ def get_junk_folder_path(account: str) -> str:
 	return get_mailbox_folder_path(account, junk_name, raise_exception=True)
 
 
-def update_sieve_script_for_junk_senders(account: str) -> None:
-	"""Update sieve script to file emails from the junk-sender list into the Junk folder.
+def get_screening_folder_path(account: str) -> str:
+	"""Return the folder path of the account's Screening mailbox, creating it if missing.
 
-	Mirrors `update_sieve_script_for_blocked_emails` but files into Junk instead of discarding. A
-	sender is never in both lists at once (blocking removes the junk entry), so block/junk blocks
-	cannot both fire for the same sender.
+	Screening is not a standard JMAP role, so it is a plain named mailbox looked up by name.
 	"""
 
-	automation_script_name = get_automation_script_name(account)
-	doc = frappe.get_doc("Sieve Script", automation_script_name)
-	content = (doc.content or "").lstrip()
+	from mail.client.doctype.mailbox.mailbox import add_mailbox
+	from mail.jmap.services.core import CoreService
 
-	block_name = "Junk Senders"
-	content = remove_sieve_block(content, block_name)
+	user, account_id = parse_account(account)
 
-	junk_emails = get_junk_email_addresses(account)
-	conditions = [f'address :is "from" "{e.strip()}"' for e in junk_emails if e.strip()]
+	# The mailbox list lives in a per-process TTL cache, so a negative lookup can be stale — another
+	# worker may already have created the Screener. Refresh from the server before deciding to create,
+	# so we never try to recreate an existing mailbox (which JMAP rejects with "already exists").
+	CoreService.invalidate_cache(account_id, key="mailboxes")
+	if not get_mailbox_id_by_name(user, account_id, SCREENING_MAILBOX_NAME):
+		add_mailbox(account, SCREENING_MAILBOX_NAME)
+		CoreService.invalidate_cache(account_id, key="mailboxes")
 
+	return get_mailbox_folder_path(account, SCREENING_MAILBOX_NAME, raise_exception=True)
+
+
+def is_screening_enabled(account: str) -> bool:
+	"""Whether Hey-style screening is enabled for the account (Account Settings.enable_screening)."""
+
+	return bool(frappe.db.get_value("Account Settings", parse_account(account)[1], "enable_screening"))
+
+
+def build_screening_gate(account: str, accepted_emails: list[str]) -> str:
+	"""Build the screening gate: file mail from senders not on the accepted list into Screening.
+
+	The account's own identity emails are always trusted, so self-addressed and identity mail is
+	never screened. This block is the last in the script — the catch-all fallback after Reject, Spam,
+	and the mailbox automation rules — so trusted and folder-routed mail is handled before it, and only
+	mail from an unrecognised sender that nothing else matched falls into Screening.
+	"""
+
+	screening_folder_path = get_screening_folder_path(account)
+
+	try:
+		own_emails = get_account_emails(account)
+	except Exception:
+		own_emails = []
+
+	trusted = list(dict.fromkeys(e.strip() for e in [*accepted_emails, *own_emails] if e and e.strip()))
+
+	if trusted:
+		joined = ",\n  ".join(f'"{e}"' for e in trusted)
+		condition_block = f'if not address :is "from" [\n  {joined}\n] {{'
+	else:
+		# Nothing trusted yet → screen everything (only reached after the Reject/Spam blocks).
+		condition_block = 'if exists "from" {'
+
+	return "\n".join(
+		[
+			"# Screening",
+			condition_block,
+			f'  fileinto "{screening_folder_path}";',
+			"  stop;",
+			"}",
+			"\n",
+		]
+	)
+
+
+def _build_screening_block(block_name: str, emails: list[str], action_lines: list[str]) -> str:
+	"""Build a labeled sieve block matching the given senders and running `action_lines`.
+
+	Returns an empty string when there are no senders to match.
+	"""
+
+	conditions = [f'address :is "from" "{e.strip()}"' for e in emails if e and e.strip()]
 	if not conditions:
-		doc.content = content.rstrip() + "\n"
-		doc.save()
-		return
-
-	junk_folder_path = get_junk_folder_path(account)
+		return ""
 
 	if len(conditions) == 1:
 		condition_block = f"if {conditions[0]} {{"
@@ -368,25 +471,62 @@ def update_sieve_script_for_junk_senders(account: str) -> None:
 		joined = ",\n  ".join(conditions)
 		condition_block = f"if anyof (\n  {joined}\n) {{"
 
-	block_script = "\n".join(
-		[
-			f"# {block_name}",
-			condition_block,
-			f'  fileinto "{junk_folder_path}";',
-			"  stop;",
-			"}",
-			"\n",
-		]
-	)
+	return "\n".join([f"# {block_name}", condition_block, *action_lines, "}", "\n"])
 
-	require_pattern = r"^(require\s+\[.*?\];\s*)+"
-	match = re.match(require_pattern, content, flags=re.DOTALL)
 
-	if match:
-		insert_pos = match.end()
-		content = content[:insert_pos] + "\n" + block_script + content[insert_pos:]
-	else:
-		content = block_script + content
+def _apply_screening_blocks(account: str, content: str) -> str:
+	"""Layer the Reject/Spam/Screening sieve blocks onto `content` and return the result.
 
-	doc.content = content.rstrip() + "\n"
-	doc.save()
+	Rebuilt from the Screened Email Address list (+ Account Settings) in one pass. The blocks are
+	ordered by precedence: Reject (discard) sits at the very top, right after `require`, so it wins
+	outright. The mailbox automation rules come next, so an explicit folder rule can still route mail.
+	Spam (file to Junk) and the Screening gate (`if not <trusted>` → Screening) are fallbacks below the
+	mailbox rules — Spam first, then the catch-all Screening gate at the very bottom. The final order is
+	Reject → Mailbox → Spam → Screening. A sender has at most one screening rule (uniqueness is on the
+	address), so the blocks never conflict.
+	"""
+
+	content = (content or "").lstrip()
+
+	# Remove any existing screening blocks, including the legacy block names from the pre-merge
+	# "Blocked Email Address" / "Junk Email Address" doctypes, so old scripts get cleaned up.
+	for name in ("Rejected Emails", "Spam Senders", "Screening", "Blocked Emails", "Junk Senders"):
+		content = remove_sieve_block(content, name)
+
+	screened = get_screened_email_addresses(account)
+	reject_emails = [s.email for s in screened if s.action == "Reject"]
+	spam_emails = [s.email for s in screened if s.action == "Spam"]
+	accepted_emails = [s.email for s in screened if s.action == "Accepted"]
+
+	# Reject is the most aggressive action and must win outright, so it sits at the very top — right
+	# after the require statement(s), above the mailbox rules.
+	reject_block = _build_screening_block("Rejected Emails", reject_emails, ["  discard;", "  stop;"])
+	if reject_block:
+		require_pattern = r"^(require\s+\[.*?\];\s*)+"
+		match = re.match(require_pattern, content, flags=re.DOTALL)
+		if match:
+			insert_pos = match.end()
+			content = content[:insert_pos] + "\n" + reject_block + content[insert_pos:]
+		else:
+			content = reject_block + content
+
+	# Spam goes below the mailbox rules (so an explicit folder rule can still claim the mail) but above
+	# the Screening gate.
+	if spam_emails:
+		junk_folder_path = get_junk_folder_path(account)
+		spam_block = _build_screening_block(
+			"Spam Senders",
+			spam_emails,
+			# Flag as junk ($junk keyword) as well as filing into Junk, so the mail is marked junk — not
+			# just located there — matching what marking a mail as junk does.
+			['  addflag "$junk";', f'  fileinto "{junk_folder_path}";', "  stop;"],
+		)
+		if spam_block:
+			content = content.rstrip() + "\n\n" + spam_block.rstrip() + "\n"
+
+	# Append the Screening gate last — the catch-all fallback, below every other block.
+	if is_screening_enabled(account):
+		gate = build_screening_gate(account, accepted_emails)
+		content = content.rstrip() + "\n\n" + gate.rstrip() + "\n"
+
+	return content.rstrip() + "\n"

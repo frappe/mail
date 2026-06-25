@@ -1,4 +1,18 @@
 <template>
+	<div
+		v-if="showImagesBanner"
+		class="text-ink-gray-6 mb-3 flex items-center gap-3 rounded border p-2.5 px-4"
+	>
+		<ImageOff class="h-4.5 w-4.5 stroke-1.5" />
+		<span class="text-ink-gray-8 min-w-0 flex-1"> {{ blockedLabel }} </span>
+		<Button
+			v-if="canTrust"
+			variant="ghost"
+			:label="__('Mark Sender as Trusted')"
+			@click="handleTrust"
+		/>
+		<Button :label="__('Load Images')" class="w-28" @click="imagesLoaded = true" />
+	</div>
 	<div v-if="!isIframeReady" class="animate-pulse space-y-2 py-4">
 		<div
 			v-for="i in 5"
@@ -23,14 +37,49 @@ import iframeResizerChildScript from '@iframe-resizer/child/index.umd.js?raw'
 // eslint-disable-next-line import/no-unresolved
 import IframeResizer from '@iframe-resizer/vue/sfc'
 import DOMPurify from 'dompurify'
+import { ImageOff } from 'lucide-vue-next'
+import { Button } from 'frappe-ui'
 
+import { analyzeRemoteAssets, blockRemoteAssets } from '@/utils'
 import { useTheme } from '@/utils/composables'
 
-const { content } = defineProps<{ content: string }>()
+const {
+	content,
+	blockImages = false,
+	canTrust = true,
+} = defineProps<{ content: string; blockImages?: boolean; canTrust?: boolean }>()
+const emit = defineEmits<{ trust: [] }>()
 
 const { dataTheme } = useTheme()
 
 const isIframeReady = ref(false)
+
+// Remote images are withheld until the reader opts in (per message), so a sender can't use them to track
+// when their mail was opened.
+const imagesLoaded = ref(false)
+// Trusting dismisses the banner instantly (and reveals images) without waiting for the sender's accept to
+// round-trip — otherwise the bar lingers before it disappears.
+const trusted = ref(false)
+const effectiveBlock = computed(() => blockImages && !imagesLoaded.value && !trusted.value)
+const remoteAssets = computed(() => analyzeRemoteAssets(content))
+// The banner is dismissed once the reader loads the images (or trusts the sender) — there's nothing
+// left to act on after that.
+const showImagesBanner = computed(
+	() => blockImages && !imagesLoaded.value && !trusted.value && remoteAssets.value.hasRemote,
+)
+const blockedLabel = computed(() => {
+	const n = remoteAssets.value.images
+	if (n === 0) return __('Remote content hidden to protect your privacy.')
+	return n === 1
+		? __('1 remote image hidden to protect your privacy.')
+		: __('{0} remote images hidden to protect your privacy.', [String(n)])
+})
+
+// Trusting reveals images and dismisses the banner now; the parent accepts the sender for future mail.
+const handleTrust = () => {
+	trusted.value = true
+	emit('trust')
+}
 
 // Listen for keyboard events from iframe
 const handleMessage = (event: MessageEvent) => {
@@ -51,39 +100,36 @@ const handleMessage = (event: MessageEvent) => {
 onMounted(() => window.addEventListener('message', handleMessage))
 onUnmounted(() => window.removeEventListener('message', handleMessage))
 
-const srcdoc = computed(() => {
-	const collapseButton = `
-		<button
-			style="
-			background: ${colors.value.button};
-			color: ${colors.value.text};
-			padding: 0.5px 6px;
-			border-radius: 8px;
-			cursor: pointer;
-			transition: background 0.2s;
-			margin: 12px 0;
-			"
-			onmouseover="this.style.background='${colors.value.buttonHover}'"
-			onmouseout="this.style.background='${colors.value.button}'"
-			onclick="this.nextElementSibling.classList.toggle('quote-hidden');"
-		>
-			&middot;&middot;&middot;
-		</button>
-	`
-	const transformedContent = DOMPurify.sanitize(content, DOMPURIFY_CONFIG)
-		.replace(
-			/<div\s+([^>]*)\bclass="([^"]*)"\s*([^>]*)>([\s\S]*?)<\/div>/gi,
-			(match, beforeAttrs, classValue, afterAttrs, innerHtml) => {
-				// Check if this div has gmail_quote or frappe_mail_quote class
-				if (/\b(gmail_quote|frappe_mail_quote)\b/.test(classValue)) {
-					const allAttrs = `${beforeAttrs} ${afterAttrs}`.trim()
-					const attrString = allAttrs ? ` ${allAttrs}` : ''
-					return `${collapseButton}<div class="quote-hidden ${classValue}"${attrString}>${innerHtml}</div>`
-				}
-				return match
-			},
+// Collapse each top-level quoted reply (gmail_quote / frappe_mail_quote) behind a "···" toggle. Done on
+// the DOM, not regex: a quote with nested divs is wrapped as one unit, instead of the old regex stopping
+// at the first </div> and collapsing the wrong region.
+const collapseQuotes = (html: string) => {
+	const doc = new DOMParser().parseFromString(html, 'text/html')
+	doc.querySelectorAll('.gmail_quote, .frappe_mail_quote').forEach((quote) => {
+		// Only the outermost quote gets a toggle — hiding it hides any quotes nested inside.
+		if (quote.parentElement?.closest('.gmail_quote, .frappe_mail_quote')) return
+		quote.classList.add('quote-hidden')
+		const button = doc.createElement('button')
+		button.textContent = '···'
+		button.setAttribute(
+			'style',
+			`background:${colors.value.button};color:${colors.value.text};padding:0.5px 6px;border-radius:8px;cursor:pointer;transition:background .2s;margin:12px 0;`,
 		)
-		.replace(/<([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>/g, '<b>&lt;$1&gt;</b>')
+		button.setAttribute('onmouseover', `this.style.background='${colors.value.buttonHover}'`)
+		button.setAttribute('onmouseout', `this.style.background='${colors.value.button}'`)
+		button.setAttribute('onclick', "this.nextElementSibling.classList.toggle('quote-hidden');")
+		quote.parentNode?.insertBefore(button, quote)
+	})
+	return doc.documentElement.outerHTML
+}
+
+const srcdoc = computed(() => {
+	let sanitized = DOMPurify.sanitize(content, DOMPURIFY_CONFIG)
+	if (effectiveBlock.value) sanitized = blockRemoteAssets(sanitized)
+	const transformedContent = collapseQuotes(sanitized).replace(
+		/<([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>/g,
+		'<b>&lt;$1&gt;</b>',
+	)
 
 	/* eslint-disable no-useless-escape */
 	return `
@@ -129,6 +175,10 @@ const srcdoc = computed(() => {
 					width: 0 !important;
 					height: 0 !important;
 					overflow: hidden !important;
+				}
+
+				img[data-blocked-image] {
+					display: none !important;
 				}
 
 				pre, code {
