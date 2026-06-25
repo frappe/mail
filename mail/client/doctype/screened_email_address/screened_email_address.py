@@ -26,18 +26,19 @@ class ScreenedEmailAddress(Document):
 		self.validate_duplicate_email()
 
 	def on_update(self) -> None:
-		from mail.api.sieve import update_sieve_script_for_screened_emails
+		from mail.api.sieve import maybe_build_automation_sieve
 
 		# Runs on both insert and save. `email` is set_only_once, so on an edit only the action can
 		# change; regenerate on insert (no prior doc) and whenever the action is changed (e.g. switching
-		# Spam <-> Reject in Desk), since that moves the sender between sieve blocks.
+		# Spam <-> Reject in Desk), since that moves the sender between sieve blocks. Skipped when a
+		# caller paused builds for a bulk write (it rebuilds once at the end instead).
 		if self.has_value_changed("action"):
-			update_sieve_script_for_screened_emails(get_session_account(self.account_id))
+			maybe_build_automation_sieve(get_session_account(self.account_id))
 
 	def after_delete(self) -> None:
-		from mail.api.sieve import update_sieve_script_for_screened_emails
+		from mail.api.sieve import maybe_build_automation_sieve
 
-		update_sieve_script_for_screened_emails(get_session_account(self.account_id))
+		maybe_build_automation_sieve(get_session_account(self.account_id))
 
 	def validate_duplicate_email(self) -> None:
 		"""Validates that the same email address is not screened more than once for the same account.

@@ -14,8 +14,8 @@ from frappe.utils import format_datetime, random_string
 from mail.api.contacts import create_contacts_if_not_exists
 from mail.api.sieve import (
 	SCREENING_MAILBOX_NAME,
+	build_automation_sieve,
 	update_sieve_script_for_mailbox,
-	update_sieve_script_for_screened_emails,
 )
 from mail.api.utils import get_avatar_url
 from mail.client.doctype.mail_message.mail_message import (
@@ -989,7 +989,7 @@ def _screen_email_addresses(
 		changed = True
 
 	if changed:
-		update_sieve_script_for_screened_emails(account)
+		build_automation_sieve(account)
 
 
 def auto_accept_recipients(account: str, recipients: list) -> None:
@@ -1041,7 +1041,7 @@ def unscreen_email_addresses(account_id: str, emails: list[str]) -> None:
 		return
 
 	frappe.db.delete("Screened Email Address", {"name": ["in", deleted]})
-	update_sieve_script_for_screened_emails(account)
+	build_automation_sieve(account)
 
 
 # --- Screener (the screening folder view) ---------------------------------------------------------

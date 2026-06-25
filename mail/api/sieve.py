@@ -536,12 +536,6 @@ def _apply_screening_blocks(account: str, content: str) -> str:
 	return content.rstrip() + "\n"
 
 
-def update_sieve_script_for_screened_emails(account: str) -> None:
-	"""Deprecated shim — use `build_automation_sieve`. Kept until all callers are migrated."""
-
-	build_automation_sieve(account)
-
-
 def update_sieve_script_for_mailbox(account: str, name: str | None = None, old_name: str | None = None) -> None:
 	"""Deprecated shim — use `build_automation_sieve`. Kept until all callers are migrated."""
 

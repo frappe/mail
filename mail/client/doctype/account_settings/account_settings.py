@@ -130,12 +130,12 @@ class AccountSettings(Document):
 			return
 
 		if self.has_value_changed("enable_screening"):
-			from mail.api.sieve import update_sieve_script_for_screened_emails
+			from mail.api.sieve import build_automation_sieve
 			from mail.utils.user import get_session_account
 
 			# Account Settings is named by the shared account_id; resolve it to the session user's
 			# account handle for the sieve regeneration.
-			update_sieve_script_for_screened_emails(get_session_account(self.name))
+			build_automation_sieve(get_session_account(self.name))
 
 	def after_delete(self) -> None:
 		"""Clear all caches related to the account when the settings are deleted."""
