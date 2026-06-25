@@ -11,11 +11,7 @@
 			:label="__('Mark Sender as Trusted')"
 			@click="handleTrust"
 		/>
-		<Button
-			:label="imagesLoaded ? __('Hide Images') : __('Load Images')"
-			class="w-28"
-			@click="imagesLoaded = !imagesLoaded"
-		/>
+		<Button :label="__('Load Images')" class="w-28" @click="imagesLoaded = true" />
 	</div>
 	<div v-if="!isIframeReady" class="animate-pulse space-y-2 py-4">
 		<div
@@ -62,13 +58,14 @@ const isIframeReady = ref(false)
 // when their mail was opened.
 const imagesLoaded = ref(false)
 // Trusting dismisses the banner instantly (and reveals images) without waiting for the sender's accept to
-// round-trip — otherwise the bar lingers and its Load/Hide label flips before it disappears.
+// round-trip — otherwise the bar lingers before it disappears.
 const trusted = ref(false)
 const effectiveBlock = computed(() => blockImages && !imagesLoaded.value && !trusted.value)
 const remoteAssets = computed(() => analyzeRemoteAssets(content))
-// The banner stays while images are blockable (so you can re-hide after loading), but goes once trusted.
+// The banner is dismissed once the reader loads the images (or trusts the sender) — there's nothing
+// left to act on after that.
 const showImagesBanner = computed(
-	() => blockImages && !trusted.value && remoteAssets.value.hasRemote,
+	() => blockImages && !imagesLoaded.value && !trusted.value && remoteAssets.value.hasRemote,
 )
 const blockedLabel = computed(() => {
 	const n = remoteAssets.value.images
