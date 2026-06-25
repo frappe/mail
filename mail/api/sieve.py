@@ -197,9 +197,7 @@ def backfill_mailbox_automation_rules() -> None:
 		for account_id in account_ids:
 			account = f"{user}:{account_id}"
 			try:
-				scripts = SieveScript._fetch_sieve_scripts(
-					account, filter={"name": AUTOMATION_SCRIPT_NAME}
-				)
+				scripts = SieveScript._fetch_sieve_scripts(account, filter={"name": AUTOMATION_SCRIPT_NAME})
 				if not (scripts and scripts[0]):
 					continue
 
@@ -214,9 +212,7 @@ def backfill_mailbox_automation_rules() -> None:
 					continue
 
 				try:
-					set_mailbox_settings(
-						account, mailbox["id"], **automation_rules_to_settings(rules)
-					)
+					set_mailbox_settings(account, mailbox["id"], **automation_rules_to_settings(rules))
 				except Exception:
 					continue
 
