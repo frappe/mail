@@ -87,12 +87,15 @@ const action = ref<ScreeningAction>('Reject')
 const listViewRef = useTemplateRef('listView')
 const showRemoveModal = ref(false)
 
-// 'Reject' discards the sender's future mail silently; 'Spam' files it into the Spam folder.
+// 'Accepted' lets the sender's mail reach the inbox; 'Reject' discards it silently; 'Spam' files it
+// into the Spam folder.
 const ACTION_OPTIONS = [
+	{ label: __('Accept'), value: 'Accepted' },
 	{ label: __('Block'), value: 'Reject' },
 	{ label: __('Move to Junk'), value: 'Spam' },
 ]
 const ACTION_LABELS: Partial<Record<ScreeningAction, string>> = {
+	Accepted: __('Accept'),
 	Reject: __('Block'),
 	Spam: __('Move to Junk'),
 }
