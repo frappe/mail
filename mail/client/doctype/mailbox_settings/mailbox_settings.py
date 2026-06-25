@@ -72,6 +72,44 @@ def get_mailbox_settings(
 		)
 
 
+def get_mailbox_automation_rules(account: str, mailbox_id: str) -> dict | None:
+	"""Return the persisted automation rules for a mailbox as a rule dict, or None if it has none.
+
+	This is the backup that the frappe_mail_automation Sieve script is generated from, so the script
+	can be rebuilt even if a third-party client deletes it. A mailbox is considered to have no
+	automation when neither a sender nor a subject condition is set.
+	"""
+
+	settings = get_mailbox_settings(account, mailbox_id, raise_exception=False)
+	if not settings or not (settings.emails_from or settings.subject_contains):
+		return None
+
+	return {
+		"emails_from": settings.emails_from or "",
+		"subject_contains": settings.subject_contains or "",
+		"match_if": settings.match_if or "any",
+		"mark_as_read": bool(settings.mark_as_read),
+		"add_star": bool(settings.add_star),
+	}
+
+
+def automation_rules_to_settings(rules: dict | None) -> dict:
+	"""Flatten a rule dict (or None) into the Mailbox Settings automation fields.
+
+	A falsy `rules` clears the fields, so removing a mailbox's automation in the UI also clears its
+	backup.
+	"""
+
+	rules = rules or {}
+	return {
+		"emails_from": rules.get("emails_from") or "",
+		"subject_contains": rules.get("subject_contains") or "",
+		"match_if": rules.get("match_if") or "any",
+		"mark_as_read": 1 if rules.get("mark_as_read") else 0,
+		"add_star": 1 if rules.get("add_star") else 0,
+	}
+
+
 def set_mailbox_settings(account: str, mailbox_id: str, **kwargs) -> None:
 	"""Sets the Mailbox Settings for a given account and mailbox ID. Creates a new document if it doesn't exist."""
 
