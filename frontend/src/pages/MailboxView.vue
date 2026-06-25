@@ -829,7 +829,7 @@ const activeAccount = computed(() => user.data?.accounts?.find((a) => a.id === a
 const screeningEnabled = computed(() => !!activeAccount.value?.enable_screening)
 const screenerCount = computed(
 	() =>
-		mailboxes.data?.find((m: MailboxData) => m.id === mailboxIds.screening)?.unread_threads ??
+		mailboxes.data?.find((m: MailboxData) => m.id === mailboxIds.screener)?.unread_threads ??
 		0,
 )
 const showScreenerBanner = computed(

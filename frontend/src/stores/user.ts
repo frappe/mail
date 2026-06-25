@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { createResource } from 'frappe-ui'
 
-import { SCREENING_MAILBOX_NAME } from '@/constants'
+import { SCREENER_MAILBOX_NAME } from '@/constants'
 
 import type { UserAccount, UserResource } from '@/types'
 
@@ -66,7 +66,7 @@ export const userStore = defineStore('mail-user', () => {
 	})
 
 	const mailboxIds = computed(() => {
-		const ids: Record<MailboxRole | 'screening', string> = {
+		const ids: Record<MailboxRole | 'screener', string> = {
 			inbox: '',
 			sent: '',
 			drafts: '',
@@ -74,11 +74,11 @@ export const userStore = defineStore('mail-user', () => {
 			junk: '',
 			archive: '',
 			important: '',
-			screening: '',
+			screener: '',
 		}
 		mailboxes.data?.forEach((m: { role?: MailboxRole; _name?: string; id: string }) => {
 			if (m.role) ids[m.role] = m.id
-			else if (m._name === SCREENING_MAILBOX_NAME) ids.screening = m.id
+			else if (m._name === SCREENER_MAILBOX_NAME) ids.screener = m.id
 		})
 		return ids
 	})

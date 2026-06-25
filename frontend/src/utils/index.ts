@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio'
 import { File, Paperclip } from 'lucide-vue-next'
 import { toast } from 'frappe-ui'
 
-import { FOLDER_ICON_MAP, SCREENING_MAILBOX_NAME } from '@/constants'
+import { FOLDER_ICON_MAP, SCREENER_MAILBOX_NAME } from '@/constants'
 import dayjs from '@/utils/dayjs'
 import AudioIcon from '@/components/Icons/AudioIcon.vue'
 import ImageIcon from '@/components/Icons/ImageIcon.vue'
@@ -382,15 +382,17 @@ export const hasHtmlContent = (content: string | null | undefined): boolean => {
 }
 
 export const getIcon = (mailbox: MailboxData) => {
+	// The Screener is a system folder: its 'eye' icon is authoritative and can't be overridden by a
+	// stray Mailbox Settings icon (it must never render as a generic folder).
+	if (mailbox._name === SCREENER_MAILBOX_NAME) return 'eye'
 	if (mailbox.icon) return mailbox.icon
 	if (mailbox.role && mailbox.role in FOLDER_ICON_MAP) return FOLDER_ICON_MAP[mailbox.role]
-	if (mailbox._name === SCREENING_MAILBOX_NAME) return 'eye'
 	return 'folder'
 }
 
 // The Screening folder is surfaced to users as the "Screener".
 export const getMailboxName = (mailbox: MailboxData) =>
-	mailbox._name === SCREENING_MAILBOX_NAME ? __('Screener') : mailbox._name
+	mailbox._name === SCREENER_MAILBOX_NAME ? __('Screener') : mailbox._name
 
 export const downloadUrlAsFile = (url: string, filename: string) => {
 	const link = document.createElement('a')
