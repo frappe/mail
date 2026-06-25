@@ -377,15 +377,31 @@ const flushScreening = () => {
 
 	// Chain onto the previous flush so requests never overlap (overlapping rebuilds are the bug).
 	flushChain = flushChain.then(async () => {
-		try {
-			if (allowEmails.length) await allowResource.submit({ from_emails: allowEmails })
-			if (screenOutEmails.length)
+		// Submit each action independently so one failing doesn't skip the other — a burst can mix
+		// allow and screen-out across different senders, and all were already optimistically removed.
+		let submitted = false
+		let firstError: unknown
+		if (allowEmails.length) {
+			try {
+				await allowResource.submit({ from_emails: allowEmails })
+				submitted = true
+			} catch (error) {
+				firstError ??= error
+			}
+		}
+		if (screenOutEmails.length) {
+			try {
 				await screenOutResource.submit({ from_emails: screenOutEmails })
-			// Allowing/screening senders changes inbox/junk counts too.
-			store.mailboxes.reload()
-		} catch (error) {
+				submitted = true
+			} catch (error) {
+				firstError ??= error
+			}
+		}
+		// Allowing/screening senders changes inbox/junk counts too.
+		if (submitted) store.mailboxes.reload()
+		if (firstError) {
 			senders.reload()
-			raiseToast((error as Error).message || __('Action failed.'), 'error')
+			raiseToast((firstError as Error).message || __('Action failed.'), 'error')
 		}
 	})
 }
