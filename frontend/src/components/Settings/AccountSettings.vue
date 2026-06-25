@@ -43,18 +43,18 @@
 			"
 			class="!p-0"
 		/>
+		<Switch
+			v-model="blockRemoteImages"
+			:label="__('Block Remote Images')"
+			:description="__(`Don't load remote images from untrusted sources by default.`)"
+			class="!p-0"
+		/>
 		<FormControl
 			v-model="accountSettings.doc.on_mark_as_junk"
 			type="select"
 			:label="__('When Marking as Junk')"
 			variant="outline"
 			:options="ON_MARK_AS_JUNK_OPTIONS"
-		/>
-		<Switch
-			v-model="blockRemoteImages"
-			:label="__('Block Remote Images')"
-			:description="__(`Don't load remote images from untrusted sources by default.`)"
-			class="!p-0"
 		/>
 
 		<template v-if="userSettings.doc">
