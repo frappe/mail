@@ -1,10 +1,10 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { createResource } from 'frappe-ui'
 
-import { raisePromiseToast } from '@/utils'
+import { raisePromiseToast, raiseToast } from '@/utils'
 import { userStore } from '@/stores/user'
 
-import type { Identity } from '@/types'
+import type { COLOR_SCHEME, Identity, ScreenedAddress } from '@/types'
 
 export const useScreenSize = () => {
 	const size = reactive({ width: window.innerWidth, height: window.innerHeight })
@@ -116,8 +116,8 @@ const sendersToBlock = ref<BlockableSender[]>([])
 
 export const useBlockSender = () => {
 	const store = userStore()
-	const { userResource, identities, blockedAddresses } = store
-	const { setUndoAction, undo, prependUndoAction } = useUndo()
+	const { userResource, identities, screenedAddresses } = store
+	const { setUndoAction, undo } = useUndo()
 
 	// Read account/accountId off the store at call time — destructuring would snapshot the unwrapped
 	// values and miss account switches while a component stays mounted.
@@ -125,11 +125,15 @@ export const useBlockSender = () => {
 		userResource.data?.accounts?.find((a) => a.id === store.accountId),
 	)
 
-	// Senders worth offering to block: drop the user's own identities and addresses already blocked,
-	// and de-duplicate by email (keeping the first occurrence's display name).
+	// Senders worth offering to block: drop the user's own identities and addresses already blocked
+	// (screened as Reject), and de-duplicate by email (keeping the first occurrence's display name).
 	const blockableSenders = (senders: { name?: string; email?: string }[]) => {
 		const own = new Set((identities.data ?? []).map((i: Identity) => i.email))
-		const blocked = new Set<string>(blockedAddresses.data ?? [])
+		const blocked = new Set<string>(
+			(screenedAddresses.data ?? [])
+				.filter((a: ScreenedAddress) => a.action === 'Reject')
+				.map((a: ScreenedAddress) => a.email),
+		)
 		const seen = new Set<string>()
 		const result: BlockableSender[] = []
 		for (const { name, email } of senders) {
@@ -141,37 +145,22 @@ export const useBlockSender = () => {
 	}
 
 	const blockResource = createResource({
-		url: 'mail.api.mail.block_email_addresses',
+		url: 'mail.api.mail.screen_email_addresses',
 		makeParams: ({ emails }: { emails: string[] }) => ({
 			account_id: store.accountId,
 			emails,
+			action: 'Reject',
 		}),
-		onSuccess: () => blockedAddresses.reload(),
+		onSuccess: () => screenedAddresses.reload(),
 	})
 
-	const junkResource = createResource({
-		url: 'mail.api.mail.junk_senders',
+	const unscreenResource = createResource({
+		url: 'mail.api.mail.unscreen_email_addresses',
 		makeParams: ({ emails }: { emails: string[] }) => ({
 			account_id: store.accountId,
 			emails,
 		}),
-	})
-
-	const unjunkResource = createResource({
-		url: 'mail.api.mail.unjunk_senders',
-		makeParams: ({ emails }: { emails: string[] }) => ({
-			account_id: store.accountId,
-			emails,
-		}),
-	})
-
-	const unblockResource = createResource({
-		url: 'mail.api.mail.unblock_email_addresses',
-		makeParams: ({ emails }: { emails: string[] }) => ({
-			account_id: store.accountId,
-			emails,
-		}),
-		onSuccess: () => blockedAddresses.reload(),
+		onSuccess: () => screenedAddresses.reload(),
 	})
 
 	// Block the senders chosen in the prompt ('Ask to Block Sender' confirm). Blocking becomes the new
@@ -181,7 +170,7 @@ export const useBlockSender = () => {
 		if (!emails.length) return
 
 		setUndoAction(() => {
-			const undoAction = () => unblockResource.submit({ emails })
+			const undoAction = () => unscreenResource.submit({ emails })
 			const restored =
 				emails.length === 1 ? __('Sender unblocked.') : __('Senders unblocked.')
 			raisePromiseToast(undoAction, __('Undoing...'), restored)
@@ -192,35 +181,22 @@ export const useBlockSender = () => {
 		raisePromiseToast(action, __('Blocking...'), success, undo)
 	}
 
-	// File the senders' future mail into Junk (the default 'Junk Sender's Mail'). Side effect only — the
-	// caller renders the toast (see willJunkSenders) so the junk action shows a single toast, not two.
-	// Undoing the junk move also drops them from the junk list (composed onto that move's undo).
-	const junkSenders = (senders: BlockableSender[]) => {
-		const emails = senders.map((sender) => sender.email)
-		if (!emails.length) return
-
-		junkResource.submit({ emails })
-		prependUndoAction(() => unjunkResource.submit({ emails }))
-	}
-
 	// Whether marking these senders as junk will auto-file their future mail into Junk (vs prompting
 	// to block, or doing nothing when there's nothing blockable). Lets the caller show one accurate toast.
 	const willJunkSenders = (senders: { name?: string; email?: string }[]) =>
 		blockableSenders(senders).length > 0 &&
 		activeAccount.value?.on_mark_as_junk !== 'Ask to Block Sender'
 
-	// Apply the account's 'on mark as junk' behaviour to the senders of a just-junked message:
-	// 'Ask to Block Sender' opens the prompt; otherwise silently junk their future mail.
+	// Open the block prompt for the senders of a just-junked message, in 'Ask to Block Sender' mode. The
+	// default 'Junk Sender's Mail' screening now rides on the junk API call, so it's not handled here.
 	const promptBlockSenders = (senders: { name?: string; email?: string }[]) => {
+		if (activeAccount.value?.on_mark_as_junk !== 'Ask to Block Sender') return
+
 		const list = blockableSenders(senders)
 		if (!list.length) return
 
-		if (activeAccount.value?.on_mark_as_junk === 'Ask to Block Sender') {
-			sendersToBlock.value = list
-			showBlockSender.value = true
-			return
-		}
-		junkSenders(list)
+		sendersToBlock.value = list
+		showBlockSender.value = true
 	}
 
 	return { showBlockSender, sendersToBlock, willJunkSenders, promptBlockSenders, blockSenders }
@@ -245,6 +221,8 @@ const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 const systemIsDark = ref(mediaQuery.matches)
 mediaQuery.addEventListener('change', () => (systemIsDark.value = mediaQuery.matches))
 
+const COLOR_SCHEME_CYCLE = ['System Default', 'Light Mode', 'Dark Mode'] as const
+
 export const useTheme = () => {
 	const { userResource } = userStore()
 
@@ -254,5 +232,26 @@ export const useTheme = () => {
 		return colorScheme === 'Dark Mode' ? 'dark' : 'light'
 	})
 
-	return { dataTheme }
+	const updateColorScheme = createResource({
+		url: 'frappe.client.set_value',
+		makeParams: (color_scheme: COLOR_SCHEME) => ({
+			doctype: 'User Settings',
+			name: userResource.data?.user_settings,
+			fieldname: { color_scheme },
+		}),
+		onSuccess: (data: { color_scheme: COLOR_SCHEME }) => {
+			raiseToast(__('Color scheme updated to {0}.', [data.color_scheme]))
+			userResource.reload()
+		},
+	})
+
+	// Cycle System Default → Light → Dark. Bound to Cmd/Ctrl+Shift+L app-wide (see App.vue).
+	const cycleTheme = () => {
+		const current = userResource.data?.color_scheme
+		const idx = COLOR_SCHEME_CYCLE.indexOf(current as COLOR_SCHEME)
+		const next = COLOR_SCHEME_CYCLE[(idx + 1) % COLOR_SCHEME_CYCLE.length]
+		updateColorScheme.submit(next)
+	}
+
+	return { dataTheme, cycleTheme }
 }

@@ -12,7 +12,14 @@
   "icon",
   "color",
   "column_break_mbnv",
-  "disable_push_notification"
+  "disable_push_notification",
+  "automation_section",
+  "emails_from",
+  "subject_contains",
+  "match_if",
+  "column_break_auto",
+  "mark_as_read",
+  "add_star"
  ],
  "fields": [
   {
@@ -75,12 +82,56 @@
    "fieldtype": "Check",
    "label": "Disable Push Notification",
    "search_index": 1
+  },
+  {
+   "description": "Automation rules for this mailbox. Kept as the source of truth so the frappe_mail_automation Sieve script can be regenerated even if it is deleted by a third-party client.",
+   "fieldname": "automation_section",
+   "fieldtype": "Section Break",
+   "label": "Automation"
+  },
+  {
+   "description": "Comma-separated sender addresses (wildcards allowed, e.g. *@example.io). Emails from these addresses are moved to this mailbox.",
+   "fieldname": "emails_from",
+   "fieldtype": "Small Text",
+   "label": "Emails From"
+  },
+  {
+   "description": "Comma-separated keywords. Emails with these keywords in the subject are moved to this mailbox.",
+   "fieldname": "subject_contains",
+   "fieldtype": "Small Text",
+   "label": "Subject Contains"
+  },
+  {
+   "default": "any",
+   "description": "Whether either (any) or both (all) of the conditions above must match. Only relevant when both conditions are set.",
+   "fieldname": "match_if",
+   "fieldtype": "Select",
+   "label": "Match If",
+   "options": "any\nall"
+  },
+  {
+   "fieldname": "column_break_auto",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Automatically mark emails as read when they are moved to this mailbox.",
+   "fieldname": "mark_as_read",
+   "fieldtype": "Check",
+   "label": "Mark as Read"
+  },
+  {
+   "default": "0",
+   "description": "Automatically star emails when they are moved to this mailbox.",
+   "fieldname": "add_star",
+   "fieldtype": "Check",
+   "label": "Add Star"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-06-23 00:00:00.000000",
+ "modified": "2026-06-25 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Client",
  "name": "Mailbox Settings",
