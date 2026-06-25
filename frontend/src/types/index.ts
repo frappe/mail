@@ -172,6 +172,15 @@ export interface MailboxData {
 	icon?: string
 	color?: 'Blue' | 'Green' | 'Amber' | 'Red' | 'Purple'
 	disable_push_notification?: 0 | 1
+	automation_rules?: AutomationRules | null
+}
+
+export interface AutomationRules {
+	emails_from: string
+	subject_contains: string
+	match_if: 'any' | 'all'
+	mark_as_read: boolean
+	add_star: boolean
 }
 
 export interface NotificationPayload {
