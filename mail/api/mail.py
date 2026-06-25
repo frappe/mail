@@ -1022,6 +1022,7 @@ def _screening_message_ids(account: str, from_email: str | None = None) -> list[
 
 	screening_id = get_mailbox_id_by_name(*parse_account(account), SCREENING_MAILBOX_NAME)
 	if not screening_id:
+		add_mailbox(account, SCREENING_MAILBOX_NAME)
 		return []
 
 	conditions = [{"inMailbox": screening_id}]
@@ -1048,6 +1049,7 @@ def get_screening_senders(account_id: str) -> list[dict]:
 
 	screening_id = get_mailbox_id_by_name(*parse_account(account), SCREENING_MAILBOX_NAME)
 	if not screening_id:
+		add_mailbox(account, SCREENING_MAILBOX_NAME)
 		return []
 
 	messages, _total = search_messages(
