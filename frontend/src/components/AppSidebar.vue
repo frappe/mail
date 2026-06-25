@@ -49,7 +49,10 @@
 									</template>
 								</Button>
 							</Dropdown>
-							<span class="text-ink-gray-4 text-sm group-hover:hidden">
+							<span
+								class="text-ink-gray-4 text-sm"
+								:class="{ 'group-hover:hidden': item.menuOptions }"
+							>
 								{{ item.suffix }}
 							</span>
 						</div>
@@ -75,7 +78,7 @@ import { Check, Keyboard, User } from 'lucide-vue-next'
 import { Avatar, Button, Dropdown, Sidebar, SidebarItem, createResource } from 'frappe-ui'
 
 import { FOLDER_ICON_COLOR_MAP } from '@/constants'
-import { getIcon, toTitleCase } from '@/utils'
+import { getIcon, getMailboxName, toTitleCase } from '@/utils'
 import { useScreenSize, useSettings, useSidebar } from '@/utils/composables'
 import { sessionStore } from '@/stores/session'
 import { userStore } from '@/stores/user'
@@ -270,45 +273,67 @@ const mailboxItems = computed(
 	() =>
 		mailboxes.data
 			?.filter((mailbox: MailboxData) => mailbox.subscribed)
-			?.map((mailbox: MailboxData) => ({
-				label: mailbox._name,
-				icon: h(Icon, {
-					name: getIcon(mailbox),
-					class: FOLDER_ICON_COLOR_MAP[mailbox.color],
-				}),
-				to: {
-					name: 'Mailbox',
-					params: { accountId: store.accountId, mailbox: mailbox.id },
-				},
-				suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
-				activeFor: [mailbox.id],
-				menuOptions: [
-					{
-						label: __('Configure'),
-						icon: Settings,
-						onClick: () => {
-							selectedMailbox.value = mailbox
-							showFolderModal.value = true
-						},
-					},
-					{
-						label: __('Delete'),
-						theme: 'red',
-						icon: Trash2,
-						onClick: () => {
-							selectedMailbox.value = mailbox
-							showDeleteMailbox.value = true
-						},
-					},
-				],
-			})) || [],
+			?.map((mailbox: MailboxData) => {
+				// The Screening folder opens the dedicated Screener page, not the thread list.
+				const isScreener = mailbox.id === store.mailboxIds.screening
+				return {
+					mailboxId: mailbox.id,
+					label: getMailboxName(mailbox),
+					icon: h(Icon, {
+						name: getIcon(mailbox),
+						class: FOLDER_ICON_COLOR_MAP[mailbox.color],
+					}),
+					to: isScreener
+						? { name: 'Screener', params: { accountId: store.accountId } }
+						: {
+								name: 'Mailbox',
+								params: { accountId: store.accountId, mailbox: mailbox.id },
+							},
+					suffix: mailbox.unread_threads ? String(mailbox.unread_threads) : '',
+					activeFor: isScreener ? ['Screener'] : [mailbox.id],
+					menuOptions: isScreener
+						? undefined
+						: [
+								{
+									label: __('Configure'),
+									icon: Settings,
+									onClick: () => {
+										selectedMailbox.value = mailbox
+										showFolderModal.value = true
+									},
+								},
+								{
+									label: __('Delete'),
+									theme: 'red',
+									icon: Trash2,
+									onClick: () => {
+										selectedMailbox.value = mailbox
+										showDeleteMailbox.value = true
+									},
+								},
+							],
+				}
+			}) || [],
+)
+
+const screeningEnabled = computed(
+	() =>
+		!!store.userResource?.data?.accounts?.find((a) => a.id === store.accountId)
+			?.enable_screening,
 )
 
 const sidebarItems = computed(() => {
 	if (route.meta.isDashboard) return dashboardItems
 
+	// Screening is a roleless folder; it gets its own nameless group pinned to the top of the
+	// sidebar, separate from the default and custom mailboxes.
+	const isScreening = (item: { mailboxId?: string }) =>
+		!!store.mailboxIds.screening && item.mailboxId === store.mailboxIds.screening
+
+	const screenerItem = mailboxItems.value.find((item) => isScreening(item))
+
 	const defaultMailboxes = mailboxItems.value.filter(
-		(item) => mailboxes.data?.find((m) => m.id === item.activeFor[0])?.role,
+		(item) => mailboxes.data?.find((m) => m.id === item.mailboxId)?.role,
 	)
 	const starredItem = {
 		label: __('Starred'),
@@ -319,7 +344,8 @@ const sidebarItems = computed(() => {
 	const defaultItems = [...defaultMailboxes, starredItem]
 
 	const customMailboxes = mailboxItems.value.filter(
-		(item) => !mailboxes.data?.find((m) => m.id === item.activeFor[0])?.role,
+		(item) =>
+			!mailboxes.data?.find((m) => m.id === item.mailboxId)?.role && !isScreening(item),
 	)
 	const addMailboxItem = {
 		label: __('New Folder'),
@@ -346,11 +372,15 @@ const sidebarItems = computed(() => {
 		},
 	]
 
-	return [
+	const groups = [
 		{ label: __('Default'), items: defaultItems },
 		{ label: __('Custom'), items: customItems },
 		{ label: __('People'), items: contactsItems },
 	]
+	// Screener is its own nameless group, pinned first — only when screening is enabled.
+	if (screenerItem && screeningEnabled.value)
+		groups.unshift({ label: '', items: [screenerItem] })
+	return groups
 })
 
 // Shortcuts

@@ -76,6 +76,7 @@ declare module 'vue' {
     MailListItemActions: typeof import('./src/components/MailListItemActions.vue')['default']
     MailLogo: typeof import('./src/components/Icons/MailLogo.vue')['default']
     MailThread: typeof import('./src/components/MailThread.vue')['default']
+    MailThreadSkeleton: typeof import('./src/components/MailThreadSkeleton.vue')['default']
     NoMails: typeof import('./src/components/Icons/NoMails.vue')['default']
     PDFIcon: typeof import('./src/components/Icons/PDFIcon.vue')['default']
     ProfileSettings: typeof import('./src/components/Settings/ProfileSettings.vue')['default']

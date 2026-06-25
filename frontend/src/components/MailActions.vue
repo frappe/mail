@@ -46,7 +46,7 @@ import { downloadUrlAsFile, raisePromiseToast, raiseToast } from '@/utils'
 import { useBlockSender, useScreenSize, useUndo } from '@/utils/composables'
 import { userStore } from '@/stores/user'
 
-import type { ComposeMailData, Identity, Mail } from '@/types'
+import type { ComposeMailData, Identity, Mail, ScreenedAddress } from '@/types'
 
 const {
 	mailbox,
@@ -79,10 +79,16 @@ const emit = defineEmits(['setFlagged', 'syncUnseen'])
 const { isMobile } = useScreenSize()
 const route = useRoute()
 const router = useRouter()
-const { accountId, mailboxes, mailboxIds, identities, blockedAddresses } = userStore()
+const { accountId, mailboxes, mailboxIds, identities, screenedAddresses } = userStore()
 const { setUndoAction, undo } = useUndo()
 const { promptBlockSenders, willJunkSenders } = useBlockSender()
 const user = inject('$user')
+
+// A sender is "blocked" when screened with the Reject action (their mail is discarded).
+const isSenderBlocked = (email: string) =>
+	screenedAddresses.data?.some(
+		(a: ScreenedAddress) => a.email === email && a.action === 'Reject',
+	)
 
 const primaryActions = (mail: Mail): MailAction[] => [
 	{
@@ -194,18 +200,32 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				condition: () => !mail.draft,
 			},
 			{
+				label: __('Accept Sender'),
+				onClick: () => handleScreenSender('Accepted'),
+				icon: CircleCheck,
+				condition: () => mailbox === mailboxIds.screening,
+			},
+			{
+				label: __('Reject Sender'),
+				onClick: () => handleScreenSender('Reject'),
+				icon: Ban,
+				condition: () => mailbox === mailboxIds.screening,
+			},
+			{
 				label: __('Block Sender'),
 				onClick: () => handleBlockAddress(true),
 				icon: Ban,
 				condition: () =>
+					mailbox !== mailboxIds.screening &&
 					!identities.data.some((i: Identity) => i.email === mail.from_email) &&
-					!blockedAddresses.data?.includes(mail.from_email),
+					!isSenderBlocked(mail.from_email),
 			},
 			{
 				label: __('Unblock Sender'),
 				onClick: () => handleBlockAddress(false),
 				icon: LockOpen,
-				condition: () => blockedAddresses.data?.includes(mail.from_email),
+				condition: () =>
+					mailbox !== mailboxIds.screening && isSenderBlocked(mail.from_email),
 			},
 		],
 	},
@@ -347,13 +367,40 @@ const handleMarkUnreadFromHere = () => {
 	if (ids.length) setMailsSeen.submit({ ids })
 }
 
+// Screening-folder decisions: accept the sender (let future mail in, move this one to Inbox) or
+// reject them (discard future mail, move this one to Trash). The sieve regenerates from the list.
+const screenSender = createResource({
+	url: 'mail.api.mail.screen_email_address',
+	makeParams: ({ action }: { action: string }) => ({
+		account_id: accountId,
+		email: mail.from_email,
+		action,
+	}),
+})
+
+const handleScreenSender = (action: 'Accepted' | 'Reject') => {
+	const accepted = action === 'Accepted'
+	const target = accepted ? mailboxIds.inbox : mailboxIds.trash
+	const run = async () => {
+		await screenSender.submit({ action })
+		screenedAddresses.reload()
+		await moveMail.submit(target)
+		reloadMails()
+	}
+	raisePromiseToast(
+		run,
+		accepted ? __('Accepting sender...') : __('Rejecting sender...'),
+		accepted ? __('Sender accepted.') : __('Sender rejected.'),
+	)
+}
+
 const blockEmailAddress = createResource({
-	url: 'mail.api.mail.block_email_address',
-	makeParams: () => ({ account_id: accountId, email: mail.from_email }),
+	url: 'mail.api.mail.screen_email_address',
+	makeParams: () => ({ account_id: accountId, email: mail.from_email, action: 'Reject' }),
 })
 
 const unblockEmailAddress = createResource({
-	url: 'mail.api.mail.unblock_email_addresses',
+	url: 'mail.api.mail.unscreen_email_addresses',
 	makeParams: () => ({ account_id: accountId, emails: [mail.from_email] }),
 })
 
@@ -361,7 +408,7 @@ const handleBlockAddress = (block: boolean, isUndo = false) => {
 	const action = () =>
 		(block ? blockEmailAddress : unblockEmailAddress)
 			.submit()
-			.then(() => blockedAddresses.reload())
+			.then(() => screenedAddresses.reload())
 	const successMessage = block ? __('Sender blocked.') : __('Sender unblocked.')
 
 	if (isUndo) return raisePromiseToast(action, __('Undoing...'), successMessage)

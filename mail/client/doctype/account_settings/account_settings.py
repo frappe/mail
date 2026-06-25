@@ -123,6 +123,20 @@ class AccountSettings(Document):
 	def after_insert(self) -> None:
 		create_archive_mailbox(self.account)
 
+	def on_update(self) -> None:
+		# Toggling screening changes the automation sieve's screening gate, so regenerate it. Skipped
+		# during migrate (no JMAP round-trips) and only when the flag actually changed.
+		if frappe.flags.in_migrate:
+			return
+
+		if self.has_value_changed("enable_screening"):
+			from mail.api.sieve import build_automation_sieve
+			from mail.utils.user import get_session_account
+
+			# Account Settings is named by the shared account_id; resolve it to the session user's
+			# account handle for the sieve regeneration.
+			build_automation_sieve(get_session_account(self.name))
+
 	def after_delete(self) -> None:
 		"""Clear all caches related to the account when the settings are deleted."""
 

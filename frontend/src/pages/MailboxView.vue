@@ -14,6 +14,14 @@
 		</div>
 		<HeaderActions @reload-mails="reloadThreads(true, ['drafts', 'sent'])" />
 	</header>
+
+	<!-- Unscreened-thread nudge on the inbox, mirroring the trash/junk info bar: shown while Hey-style
+	     screening is on and threads are waiting to be screened. -->
+	<div v-if="showScreenerBanner" class="space-x-1 border-b px-3 py-2.5 sm:px-5">
+		<span class="text-ink-gray-5">{{ screenerBannerLabel }}</span>
+		<Button :label="__('Review Now')" variant="ghost" @click="goToScreener" />
+	</div>
+
 	<div
 		v-if="
 			[mailboxIds.trash, mailboxIds.junk].includes(mailbox) &&
@@ -32,7 +40,7 @@
 	<div
 		class="relative flex"
 		:class="
-			[mailboxIds.trash, mailboxIds.junk].includes(mailbox)
+			[mailboxIds.trash, mailboxIds.junk].includes(mailbox) || showScreenerBanner
 				? 'h-[calc(100dvh-6.1rem)]'
 				: 'h-[calc(100dvh-3.05rem)]'
 		"
@@ -398,7 +406,7 @@ import MailThread from '@/components/MailThread.vue'
 import BlockSenderModal from '@/components/Modals/BlockSenderModal.vue'
 import ShortcutsModal from '@/components/Modals/ShortcutsModal.vue'
 
-import type { COLOR_SCHEME, Thread, UserResource } from '@/types'
+import type { MailboxData, Thread, UserResource } from '@/types'
 
 const { accountId, mailbox, threadID } = defineProps<{
 	accountId: string
@@ -410,7 +418,7 @@ const route = useRoute()
 const router = useRouter()
 const { isMobile } = useScreenSize()
 const { openSidebar } = useSidebar()
-const { undo } = useUndo()
+const { undo, setUndoAction } = useUndo()
 
 const socket = inject('$socket')
 const user = inject('$user') as UserResource
@@ -550,13 +558,6 @@ const handleKeyDown = (e: KeyboardEvent) => {
 	isShiftPressed.value = e.shiftKey
 	const key = e.key.toLowerCase()
 
-	// Handle Ctrl/Cmd+Shift+L (Cycle Theme)
-	if ((e.metaKey || e.ctrlKey) && e.shiftKey && key === 'l' && !shouldIgnoreKeypress(e, true)) {
-		e.preventDefault()
-		isGPressed.value = false
-		return cycleTheme()
-	}
-
 	// Handle Ctrl/Cmd+A (Select All)
 	if ((e.metaKey || e.ctrlKey) && key === 'a' && !shouldIgnoreKeypress(e, true)) {
 		e.preventDefault()
@@ -627,28 +628,6 @@ const handleShowShortcuts = (e: KeyboardEvent) => {
 	e.preventDefault()
 	showShortcuts.value = true
 }
-
-const COLOR_SCHEME_CYCLE = ['System Default', 'Light Mode', 'Dark Mode'] as const
-
-const cycleTheme = () => {
-	const current = user.data.color_scheme
-	const idx = COLOR_SCHEME_CYCLE.indexOf(current as COLOR_SCHEME)
-	const next = COLOR_SCHEME_CYCLE[(idx + 1) % COLOR_SCHEME_CYCLE.length]
-	updateColorScheme.submit(next)
-}
-
-const updateColorScheme = createResource({
-	url: 'frappe.client.set_value',
-	makeParams: (color_scheme: COLOR_SCHEME) => ({
-		doctype: 'User Settings',
-		name: user.data.user_settings,
-		fieldname: { color_scheme },
-	}),
-	onSuccess: (data) => {
-		raiseToast(__('Color scheme updated to {0}.', [data.color_scheme]))
-		user.reload()
-	},
-})
 
 const handleEnter = (e: KeyboardEvent) => {
 	e.preventDefault()
@@ -841,6 +820,31 @@ const hasMore = ref(false) // lookahead: an extra row was returned, so a next pa
 // Current mailbox's record (carries total_threads/unread_threads); used by the periodic poll to
 // detect count changes and by the tab title's unread badge.
 const mailboxObj = computed(() => mailboxes.data?.find((m) => m.id === mailbox))
+
+// ── Screener banner ─────────────────────────────────────────────────────────────────────────────
+// An info bar mirroring the trash/junk one, shown on the inbox while Hey-style screening is on and
+// unscreened threads are waiting. The count is the Screening folder's unread count, kept fresh by the
+// periodic mailbox poll below.
+const activeAccount = computed(() => user.data?.accounts?.find((a) => a.id === accountId))
+const screeningEnabled = computed(() => !!activeAccount.value?.enable_screening)
+const screenerCount = computed(
+	() =>
+		mailboxes.data?.find((m: MailboxData) => m.id === mailboxIds.screening)?.unread_threads ??
+		0,
+)
+const showScreenerBanner = computed(
+	() =>
+		mailbox === mailboxIds.inbox &&
+		screeningEnabled.value &&
+		screenerCount.value > 0 &&
+		(showReadingPane.value || !threadID),
+)
+const screenerBannerLabel = computed(() =>
+	screenerCount.value === 1
+		? __('1 new thread is waiting to be screened.')
+		: __('{0} new threads are waiting to be screened.', [String(screenerCount.value)]),
+)
+const goToScreener = () => router.push({ name: 'Screener', params: { accountId } })
 
 // Called once a page's data has loaded: reveal it (range + list update together) and scroll to top.
 // No-op for same-page reloads (e.g. the periodic refresh) so those don't yank the scroll position.
@@ -1072,6 +1076,8 @@ onUnmounted(() => {
 	window.removeEventListener('keydown', handleKeyDown)
 	window.removeEventListener('keyup', handleKeyUp)
 	if (reloadInterval.value) clearInterval(reloadInterval.value)
+	// Leaving the mailbox drops any pending undo so a lingering toast can't undo into another view.
+	setUndoAction(undefined)
 })
 
 const goToMailbox = () =>

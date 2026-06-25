@@ -27,3 +27,5 @@ mail.patches.backfill_mail_sync_history_account_id
 mail.patches.backfill_mail_queue_account_id
 mail.patches.clear_legacy_user_scoped_stores
 mail.patches.clear_legacy_blob_store_layout
+mail.patches.migrate_to_screened_email_address
+mail.patches.backfill_mailbox_automation_rules
