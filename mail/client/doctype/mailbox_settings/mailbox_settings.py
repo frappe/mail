@@ -10,6 +10,10 @@ from frappe.model.document import Document
 from mail.jmap import parse_account
 from mail.utils.user import get_account_scoped_permission_query, has_account_scoped_permission
 
+# Fields that feed the Mailbox section of the frappe_mail_automation sieve script; a change to any of
+# them regenerates the script.
+AUTOMATION_FIELDS = ("emails_from", "subject_contains", "match_if", "mark_as_read", "add_star")
+
 
 class MailboxSettings(Document):
 	"""Per-mailbox settings, shared per JMAP account ID — every user with access to the
@@ -20,6 +24,20 @@ class MailboxSettings(Document):
 
 	def validate(self) -> None:
 		self.validate_duplicate()
+
+	def on_update(self) -> None:
+		# Regenerate the automation sieve when a folder's automation rules change through the document
+		# lifecycle (e.g. a save from Desk). The high-volume API path writes via db_set — which bypasses
+		# this hook — and rebuilds explicitly once after its structural writes. Skipped during migrate
+		# (no JMAP round-trips) and when a caller paused builds for a bulk write.
+		if frappe.flags.in_migrate or frappe.flags.get("skip_automation_sieve_build"):
+			return
+
+		if any(self.has_value_changed(field) for field in AUTOMATION_FIELDS):
+			from mail.api.sieve import maybe_build_automation_sieve
+			from mail.utils.user import get_session_account
+
+			maybe_build_automation_sieve(get_session_account(self.account_id))
 
 	def validate_duplicate(self) -> None:
 		"""Checks for duplicate Mailbox Settings for the same account and mailbox ID."""

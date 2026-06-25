@@ -15,7 +15,7 @@ from mail.api.contacts import create_contacts_if_not_exists
 from mail.api.sieve import (
 	SCREENING_MAILBOX_NAME,
 	build_automation_sieve,
-	update_sieve_script_for_mailbox,
+	pause_automation_sieve_build,
 )
 from mail.api.utils import get_avatar_url
 from mail.client.doctype.mail_message.mail_message import (
@@ -838,19 +838,20 @@ def create_mailbox(
 
 	account = get_session_account(account_id)
 
-	mailbox_id = add_mailbox(account, name, None, parent)
+	# Create the mailbox and persist its automation rules to Mailbox Settings (the backup the sieve is
+	# generated from) without firing a per-write rebuild, then build the script once from the backups.
+	with pause_automation_sieve_build():
+		mailbox_id = add_mailbox(account, name, None, parent)
+		set_mailbox_settings(
+			account,
+			mailbox_id,
+			icon=icon,
+			color=color,
+			disable_push_notification=disable_push_notification,
+			**automation_rules_to_settings(automation_rules),
+		)
 
-	# Persist the automation rules on Mailbox Settings first; the sieve block is generated from there.
-	set_mailbox_settings(
-		account,
-		mailbox_id,
-		icon=icon,
-		color=color,
-		disable_push_notification=disable_push_notification,
-		**automation_rules_to_settings(automation_rules),
-	)
-
-	update_sieve_script_for_mailbox(account, name)
+	build_automation_sieve(account)
 
 
 @frappe.whitelist()
@@ -870,20 +871,23 @@ def update_mailbox(
 
 	account = get_session_account(account_id)
 
-	# Persist the automation rules on Mailbox Settings first; the sieve block is generated from there.
-	set_mailbox_settings(
-		account,
-		id,
-		_name=name,
-		role=role,
-		parent=parent,
-		icon=icon,
-		color=color,
-		disable_push_notification=disable_push_notification,
-		**automation_rules_to_settings(automation_rules),
-	)
+	# Persist the automation rules and any rename/move to Mailbox Settings (the backup the sieve is
+	# generated from) without firing a per-write rebuild, then build the script once — after the rename
+	# lands — so the regenerated folder paths are correct.
+	with pause_automation_sieve_build():
+		set_mailbox_settings(
+			account,
+			id,
+			_name=name,
+			role=role,
+			parent=parent,
+			icon=icon,
+			color=color,
+			disable_push_notification=disable_push_notification,
+			**automation_rules_to_settings(automation_rules),
+		)
 
-	update_sieve_script_for_mailbox(account, name, old_name)
+	build_automation_sieve(account)
 
 
 @frappe.whitelist()
@@ -893,8 +897,8 @@ def delete_mailbox(account_id: str, id: str, name: str) -> None:
 	account = get_session_account(account_id)
 
 	delete_mailboxes(account, [id])
-	update_sieve_script_for_mailbox(account, name)
 	frappe.db.delete("Mailbox Settings", {"account_id": parse_account(account)[1], "mailbox_id": id})
+	build_automation_sieve(account)
 
 
 @frappe.whitelist()
