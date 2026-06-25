@@ -142,7 +142,8 @@ def add_mailbox(
 
 	title = _("Mailbox Creation Error")
 	if response.get("created"):
-		service.invalidate_cache(account, key="mailboxes")
+		# Cache is keyed by the bare account_id, so invalidate with that — not the full handle.
+		service.invalidate_cache(service.account_id, key="mailboxes")
 		return response["created"][creation_id]["id"]
 	elif response.get("notCreated"):
 		frappe.throw(_(response["notCreated"][creation_id]["description"]), title=title)
@@ -203,7 +204,8 @@ def update_mailbox(
 		else:
 			frappe.throw(_(response["description"]), title=title)
 
-	service.invalidate_cache(account, key="mailboxes")
+	# Cache is keyed by the bare account_id, so invalidate with that — not the full handle.
+	service.invalidate_cache(service.account_id, key="mailboxes")
 
 
 @frappe.whitelist()
@@ -223,6 +225,9 @@ def delete_mailboxes(account: str, ids: list[str], remove_emails: bool = True) -
 			_("Mailbox Deletion Error(s):<br>{0}").format("<br>".join(error_messages)),
 			title=_("Mailbox Deletion Error"),
 		)
+
+	# Drop the stale list so later lookups (e.g. sieve regeneration) don't see the deleted mailbox.
+	service.invalidate_cache(service.account_id, key="mailboxes")
 
 
 @frappe.whitelist()

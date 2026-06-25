@@ -454,9 +454,17 @@ def get_screening_folder_path(account: str) -> str:
 	"""
 
 	from mail.client.doctype.mailbox.mailbox import add_mailbox
+	from mail.jmap.services.core import CoreService
 
-	if not get_mailbox_id_by_name(*parse_account(account), SCREENING_MAILBOX_NAME):
+	user, account_id = parse_account(account)
+
+	# The mailbox list lives in a per-process TTL cache, so a negative lookup can be stale — another
+	# worker may already have created the Screener. Refresh from the server before deciding to create,
+	# so we never try to recreate an existing mailbox (which JMAP rejects with "already exists").
+	CoreService.invalidate_cache(account_id, key="mailboxes")
+	if not get_mailbox_id_by_name(user, account_id, SCREENING_MAILBOX_NAME):
 		add_mailbox(account, SCREENING_MAILBOX_NAME)
+		CoreService.invalidate_cache(account_id, key="mailboxes")
 
 	return get_mailbox_folder_path(account, SCREENING_MAILBOX_NAME, raise_exception=True)
 
