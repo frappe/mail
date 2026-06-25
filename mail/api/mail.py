@@ -13,7 +13,7 @@ from frappe.utils import format_datetime, random_string
 
 from mail.api.contacts import create_contacts_if_not_exists
 from mail.api.sieve import (
-	SCREENING_MAILBOX_NAME,
+	SCREENER_MAILBOX_NAME,
 	build_automation_sieve,
 	pause_automation_sieve_build,
 )
@@ -1054,9 +1054,9 @@ def unscreen_email_addresses(account_id: str, emails: list[str]) -> None:
 def _screening_message_ids(account: str, from_email: str | None = None) -> list[str]:
 	"""Return ids of Screening-folder messages, optionally only those from a given sender."""
 
-	screening_id = get_mailbox_id_by_name(*parse_account(account), SCREENING_MAILBOX_NAME)
+	screening_id = get_mailbox_id_by_name(*parse_account(account), SCREENER_MAILBOX_NAME)
 	if not screening_id:
-		add_mailbox(account, SCREENING_MAILBOX_NAME)
+		add_mailbox(account, SCREENER_MAILBOX_NAME)
 		return []
 
 	conditions = [{"inMailbox": screening_id}]
@@ -1081,9 +1081,9 @@ def get_screening_senders(account_id: str) -> list[dict]:
 
 	has_permission_for_user(parse_account(account)[0])
 
-	screening_id = get_mailbox_id_by_name(*parse_account(account), SCREENING_MAILBOX_NAME)
+	screening_id = get_mailbox_id_by_name(*parse_account(account), SCREENER_MAILBOX_NAME)
 	if not screening_id:
-		add_mailbox(account, SCREENING_MAILBOX_NAME)
+		add_mailbox(account, SCREENER_MAILBOX_NAME)
 		return []
 
 	messages, _total = search_messages(

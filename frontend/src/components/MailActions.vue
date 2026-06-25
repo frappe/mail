@@ -203,20 +203,20 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				label: __('Accept Sender'),
 				onClick: () => handleScreenSender('Accepted'),
 				icon: CircleCheck,
-				condition: () => mailbox === mailboxIds.screening,
+				condition: () => mailbox === mailboxIds.screener,
 			},
 			{
 				label: __('Reject Sender'),
 				onClick: () => handleScreenSender('Reject'),
 				icon: Ban,
-				condition: () => mailbox === mailboxIds.screening,
+				condition: () => mailbox === mailboxIds.screener,
 			},
 			{
 				label: __('Block Sender'),
 				onClick: () => handleBlockAddress(true),
 				icon: Ban,
 				condition: () =>
-					mailbox !== mailboxIds.screening &&
+					mailbox !== mailboxIds.screener &&
 					!identities.data.some((i: Identity) => i.email === mail.from_email) &&
 					!isSenderBlocked(mail.from_email),
 			},
@@ -225,7 +225,7 @@ const moreActions = (mail: Mail): GroupedAction[] => [
 				onClick: () => handleBlockAddress(false),
 				icon: LockOpen,
 				condition: () =>
-					mailbox !== mailboxIds.screening && isSenderBlocked(mail.from_email),
+					mailbox !== mailboxIds.screener && isSenderBlocked(mail.from_email),
 			},
 		],
 	},

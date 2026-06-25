@@ -1,6 +1,6 @@
-// The Screening mailbox is a plain named folder (no JMAP role), created server-side as "Screening";
+// The Screening mailbox is a plain named folder (no JMAP role), created server-side as "Screener";
 // it's surfaced to users as the "Screener".
-export const SCREENING_MAILBOX_NAME = 'Screener'
+export const SCREENER_MAILBOX_NAME = 'Screener'
 
 export const getAttachmentOptions = () => [
 	{ label: __('All'), value: ' ' },

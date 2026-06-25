@@ -305,7 +305,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 // Poll the Screening folder's count and only refetch the (heavier) sender list when it changes — the
 // same cheap-count-then-reload approach the mailbox uses, so a quiet screener isn't reloaded every tick.
 const screeningCount = () =>
-	store.mailboxes.data?.find((m: MailboxData) => m.id === store.mailboxIds.screening)
+	store.mailboxes.data?.find((m: MailboxData) => m.id === store.mailboxIds.screener)
 		?.total_threads
 
 const pollForChanges = async () => {
@@ -324,6 +324,11 @@ onMounted(() => {
 onUnmounted(() => {
 	window.removeEventListener('keydown', handleKeydown)
 	clearInterval(pollInterval)
+	// Don't strand a queued batch on navigation — the acted rows were already removed optimistically.
+	if (flushTimer) {
+		clearTimeout(flushTimer)
+		flushScreening()
+	}
 })
 
 usePageMeta(() => {
@@ -352,7 +357,65 @@ const screenOutResource = createResource({
 	}),
 })
 
-const runAction = async (resource: typeof allowResource, fromEmails: string[]) => {
+// Block/Allow clicks are coalesced and flushed as one batched request per action. Triaging senders in
+// quick succession otherwise fires a request per click, and each rebuilds the shared automation sieve —
+// the concurrent rebuilds race on that single script and throw CannotChangeConstantError. The backend
+// already accepts a list, so we just accumulate the burst and submit it once. A sender's latest action
+// wins if both buttons are hit before the flush.
+const SCREEN_FLUSH_DELAY = 500
+const pending = { allow: new Set<string>(), screenOut: new Set<string>() }
+let flushTimer: ReturnType<typeof setTimeout> | null = null
+let flushChain: Promise<void> = Promise.resolve()
+
+const flushScreening = () => {
+	flushTimer = null
+	const allowEmails = [...pending.allow]
+	const screenOutEmails = [...pending.screenOut]
+	pending.allow.clear()
+	pending.screenOut.clear()
+	if (!allowEmails.length && !screenOutEmails.length) return
+
+	// Chain onto the previous flush so requests never overlap (overlapping rebuilds are the bug).
+	flushChain = flushChain.then(async () => {
+		// Submit each action independently so one failing doesn't skip the other — a burst can mix
+		// allow and screen-out across different senders, and all were already optimistically removed.
+		let submitted = false
+		let firstError: unknown
+		if (allowEmails.length) {
+			try {
+				await allowResource.submit({ from_emails: allowEmails })
+				submitted = true
+			} catch (error) {
+				firstError ??= error
+			}
+		}
+		if (screenOutEmails.length) {
+			try {
+				await screenOutResource.submit({ from_emails: screenOutEmails })
+				submitted = true
+			} catch (error) {
+				firstError ??= error
+			}
+		}
+		// Allowing/screening senders changes inbox/junk counts too.
+		if (submitted) store.mailboxes.reload()
+		if (firstError) {
+			senders.reload()
+			raiseToast((firstError as Error).message || __('Action failed.'), 'error')
+		}
+	})
+}
+
+const queueScreening = (action: 'allow' | 'screenOut', fromEmails: string[]) => {
+	const other = action === 'allow' ? pending.screenOut : pending.allow
+	for (const email of fromEmails) {
+		other.delete(email)
+		pending[action].add(email)
+	}
+	if (!flushTimer) flushTimer = setTimeout(flushScreening, SCREEN_FLUSH_DELAY)
+}
+
+const runAction = (action: 'allow' | 'screenOut', fromEmails: string[]) => {
 	if (!fromEmails.length) return
 
 	// When acting on the sender open in the detail view, line up the next one down so you can triage
@@ -380,18 +443,11 @@ const runAction = async (resource: typeof allowResource, fromEmails: string[]) =
 		else closeSender()
 	}
 
-	try {
-		await resource.submit({ from_emails: fromEmails })
-		// Allowing/screening senders changes inbox/junk counts too.
-		store.mailboxes.reload()
-	} catch (error) {
-		senders.reload()
-		raiseToast((error as Error).message || __('Action failed.'), 'error')
-	}
+	queueScreening(action, fromEmails)
 }
 
-const allow = (fromEmails: string[]) => runAction(allowResource, fromEmails)
-const screenOut = (fromEmails: string[]) => runAction(screenOutResource, fromEmails)
+const allow = (fromEmails: string[]) => runAction('allow', fromEmails)
+const screenOut = (fromEmails: string[]) => runAction('screenOut', fromEmails)
 
 // Clear All empties the queue without judging anyone: it moves all screened mail to the inbox but
 // creates no Block/Allow rule, so a mixed queue can't accidentally whitelist spam or block a real sender.
