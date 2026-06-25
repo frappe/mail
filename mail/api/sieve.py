@@ -340,7 +340,7 @@ def get_screening_folder_path(account: str) -> str:
 def is_screening_enabled(account: str) -> bool:
 	"""Whether Hey-style screening is enabled for the account (Account Settings.enable_screening)."""
 
-	return bool(frappe.db.get_value("Account Settings", {"account": account}, "enable_screening"))
+	return bool(frappe.db.get_value("Account Settings", parse_account(account)[1], "enable_screening"))
 
 
 def build_screening_gate(account: str, accepted_emails: list[str]) -> str:
