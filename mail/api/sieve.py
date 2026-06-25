@@ -180,7 +180,9 @@ def get_automation_script_name(account: str) -> str:
 	if scripts and scripts[0]:
 		return scripts[0][0]["name"]
 
-	script_name = create_automation_script(account)
+	# `create_automation_script` takes the bare account_id (it reconstructs the session handle
+	# itself); pass the full `account` handle through and it would get double-prefixed.
+	script_name = create_automation_script(parse_account(account)[1])
 
 	return f"{account}|{script_name}"
 
