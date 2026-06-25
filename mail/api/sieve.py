@@ -3,6 +3,7 @@ import re
 import frappe
 from frappe import _
 
+from mail.client.doctype.mailbox_settings.mailbox_settings import get_mailbox_automation_rules
 from mail.client.doctype.screened_email_address.screened_email_address import (
 	get_screened_email_addresses,
 )
@@ -164,17 +165,27 @@ def _move_fallback_blocks_to_bottom(content: str) -> str:
 
 @frappe.whitelist()
 def create_automation_script(account_id: str, active: bool = False) -> str:
-	"""Create the frappe_mail_automation sieve script for the account."""
+	"""Create the frappe_mail_automation sieve script for the account.
+
+	A freshly created script is empty, so restore the automation blocks from their persistent backups
+	(Mailbox Settings + Screened Email Address) — this is what recovers the rules when a third-party
+	client has deleted the script. Skipped while a rebuild is already in progress to avoid re-entrancy.
+	"""
 
 	account = get_session_account(account_id)
 
 	frappe.flags.allow_automation_script_creation = True
-	return SieveScript._add_sieve_script(
+	script_id = SieveScript._add_sieve_script(
 		account=account,
 		name=AUTOMATION_SCRIPT_NAME,
 		content=AUTOMATION_SCRIPT_REQUIRE,
 		active=active,
 	)
+
+	if not frappe.flags.get("in_automation_rebuild"):
+		rebuild_automation_script(account)
+
+	return script_id
 
 
 def get_automation_script_name(account: str) -> str:
@@ -195,6 +206,56 @@ def append_sieve_block(script: str, block_name: str, sieve_block: str) -> str:
 	"""Append a labeled Sieve filter block to the script."""
 
 	return script.rstrip() + "\n" + f"\n# {block_name}{sieve_block}"
+
+
+def backfill_mailbox_automation_rules() -> None:
+	"""Backfill the Mailbox Settings automation backup from existing frappe_mail_automation scripts.
+
+	Before the Mailbox Settings automation fields existed, folder rules lived only in the sieve script.
+	Run as a background job (JMAP isn't reachable during `bench migrate`) so existing rules are captured
+	into Mailbox Settings before a rebuild — which regenerates the script *from* Mailbox Settings —
+	could drop them. Idempotent: re-running just rewrites the same backup.
+	"""
+
+	from mail.client.doctype.mailbox_settings.mailbox_settings import (
+		automation_rules_to_settings,
+		set_mailbox_settings,
+	)
+	from mail.jmap import get_jmap_connection
+
+	for user in frappe.get_all("User Settings", filters={"username": ["is", "set"]}, pluck="user"):
+		try:
+			account_ids = list(get_jmap_connection(user, ignore_permissions=True).accounts.keys())
+		except Exception:
+			continue
+
+		for account_id in account_ids:
+			account = f"{user}:{account_id}"
+			try:
+				scripts = SieveScript._fetch_sieve_scripts(
+					account, filter={"name": AUTOMATION_SCRIPT_NAME}
+				)
+				if not (scripts and scripts[0]):
+					continue
+
+				script = SieveScript._get_sieve_scripts(account, [scripts[0][0]["id"]], True)
+				content = script[0]["content"] if script else ""
+			except Exception:
+				continue
+
+			for mailbox in get_mailboxes(*parse_account(account)):
+				rules = extract_rules_from_script(content, mailbox["_name"])
+				if not rules or not (rules["emails_from"] or rules["subject_contains"]):
+					continue
+
+				try:
+					set_mailbox_settings(
+						account, mailbox["id"], **automation_rules_to_settings(rules)
+					)
+				except Exception:
+					continue
+
+	frappe.db.commit()
 
 
 def extract_rules_from_script(content: str, mailbox_name: str) -> dict | None:
@@ -280,19 +341,37 @@ def get_mailbox_folder_path(account: str, name: str, raise_exception: bool = Fal
 	return "/".join(reversed(path_parts))
 
 
-def update_sieve_script_for_mailbox(
-	account: str, name: str, automation_rules: dict | None = None, old_name: str | None = None
-) -> None:
-	"""Update the automation Sieve script for a mailbox and its direct children."""
+def _mailbox_automation_rules_by_name(account: str, name: str) -> dict | None:
+	"""Resolve a mailbox name to its persisted automation rules (Mailbox Settings backup).
+
+	Returns None when the mailbox no longer exists (e.g. just deleted) or has no rules, so the caller
+	simply leaves the block removed.
+	"""
+
+	mailbox_id = get_mailbox_id_by_name(*parse_account(account), name)
+	if not mailbox_id:
+		return None
+
+	return get_mailbox_automation_rules(account, mailbox_id)
+
+
+def update_sieve_script_for_mailbox(account: str, name: str, old_name: str | None = None) -> None:
+	"""Regenerate the automation Sieve block for a mailbox and its direct children from the persisted
+	Mailbox Settings rules.
+
+	The rules are read from Mailbox Settings (the source of truth), not parsed back out of the script,
+	so the block always reflects the backup. Children are rebuilt too because a parent rename changes
+	their folder paths.
+	"""
 
 	automation_script_name = get_automation_script_name(account)
 	doc = frappe.get_doc("Sieve Script", automation_script_name)
 
 	for child_name in set(get_child_mailbox_names(account, name)):
 		child_block_name = f"Mailbox: {child_name}"
-		child_rules = extract_rules_from_script(doc.content, child_name)
 		doc.content = remove_sieve_block(doc.content, child_block_name)
 
+		child_rules = _mailbox_automation_rules_by_name(account, child_name)
 		if child_rules:
 			child_folder_path = get_mailbox_folder_path(account, child_name, raise_exception=True)
 			doc.content = append_sieve_block(
@@ -301,16 +380,61 @@ def update_sieve_script_for_mailbox(
 
 	doc.content = remove_sieve_block(doc.content, f"Mailbox: {old_name or name}")
 
-	if automation_rules:
+	rules = _mailbox_automation_rules_by_name(account, name)
+	if rules:
 		folder_path = get_mailbox_folder_path(account, name, raise_exception=True)
 		doc.content = append_sieve_block(
-			doc.content, f"Mailbox: {name}", rule_object_to_sieve(automation_rules, folder_path)
+			doc.content, f"Mailbox: {name}", rule_object_to_sieve(rules, folder_path)
 		)
 
 	# Mailbox blocks are appended to the end, so push the Spam and Screening fallbacks back below them.
 	doc.content = _move_fallback_blocks_to_bottom(doc.content)
 
 	doc.save()
+
+
+def rebuild_automation_script(account: str) -> None:
+	"""Rebuild the whole frappe_mail_automation script from the persistent backups.
+
+	Every managed block is regenerated from its source of truth — the per-mailbox rules in Mailbox
+	Settings and the Reject/Spam/Screening rules in Screened Email Address — so the script can be
+	recovered after a third-party client deletes or mangles it. The final block order matches normal
+	generation: Reject → Mailbox → Spam → Screening.
+	"""
+
+	frappe.flags.in_automation_rebuild = True
+	try:
+		doc = frappe.get_doc("Sieve Script", get_automation_script_name(account))
+
+		content = AUTOMATION_SCRIPT_REQUIRE + "\n"
+		for mailbox in get_mailboxes(*parse_account(account)):
+			rules = get_mailbox_automation_rules(account, mailbox["id"])
+			if not rules:
+				continue
+
+			folder_path = get_mailbox_folder_path(account, mailbox["_name"], raise_exception=True)
+			block = rule_object_to_sieve(rules, folder_path)
+			if block:
+				content = append_sieve_block(content, f"Mailbox: {mailbox['_name']}", block)
+
+		doc.content = content.rstrip() + "\n"
+		doc.save()
+	finally:
+		frappe.flags.in_automation_rebuild = False
+
+	# Layer the Reject/Spam/Screening blocks on top of the rebuilt mailbox rules.
+	update_sieve_script_for_screened_emails(account)
+
+
+@frappe.whitelist()
+def rebuild_automation_script_for_account(account_id: str) -> None:
+	"""Rebuild the frappe_mail_automation script from its backups for the session account.
+
+	Backs the manual "Rebuild Automation" action, for when the script was deleted or edited by a
+	third-party client.
+	"""
+
+	rebuild_automation_script(get_session_account(account_id))
 
 
 def get_junk_folder_path(account: str) -> str:

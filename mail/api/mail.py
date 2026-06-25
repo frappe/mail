@@ -37,7 +37,10 @@ from mail.client.doctype.mail_message.mail_message import (
 )
 from mail.client.doctype.mail_queue.mail_queue import MailQueue
 from mail.client.doctype.mailbox.mailbox import add_mailbox, delete_mailboxes
-from mail.client.doctype.mailbox_settings.mailbox_settings import set_mailbox_settings
+from mail.client.doctype.mailbox_settings.mailbox_settings import (
+	automation_rules_to_settings,
+	set_mailbox_settings,
+)
 from mail.client.doctype.screened_email_address.screened_email_address import (
 	get_screened_email_addresses,
 )
@@ -77,7 +80,17 @@ def get_mailboxes(account_id: str) -> list[dict]:
 			"account_id": parse_account(account)[1],
 			"mailbox_id": ["in", [m["id"] for m in mailboxes]],
 		},
-		fields=["mailbox_id", "icon", "color", "disable_push_notification"],
+		fields=[
+			"mailbox_id",
+			"icon",
+			"color",
+			"disable_push_notification",
+			"emails_from",
+			"subject_contains",
+			"match_if",
+			"mark_as_read",
+			"add_star",
+		],
 	)
 
 	settings_map = {
@@ -85,6 +98,19 @@ def get_mailboxes(account_id: str) -> list[dict]:
 			"icon": s.icon,
 			"color": s.color,
 			"disable_push_notification": s.disable_push_notification,
+			# The automation rules backup, surfaced so the UI reads it instead of parsing the sieve.
+			# None when the mailbox has no automation, so the UI shows defaults.
+			"automation_rules": (
+				{
+					"emails_from": s.emails_from or "",
+					"subject_contains": s.subject_contains or "",
+					"match_if": s.match_if or "any",
+					"mark_as_read": bool(s.mark_as_read),
+					"add_star": bool(s.add_star),
+				}
+				if (s.emails_from or s.subject_contains)
+				else None
+			),
 		}
 		for s in mailbox_settings
 	}
@@ -814,15 +840,17 @@ def create_mailbox(
 
 	mailbox_id = add_mailbox(account, name, None, parent)
 
+	# Persist the automation rules on Mailbox Settings first; the sieve block is generated from there.
 	set_mailbox_settings(
 		account,
 		mailbox_id,
 		icon=icon,
 		color=color,
 		disable_push_notification=disable_push_notification,
+		**automation_rules_to_settings(automation_rules),
 	)
 
-	update_sieve_script_for_mailbox(account, name, automation_rules)
+	update_sieve_script_for_mailbox(account, name)
 
 
 @frappe.whitelist()
@@ -842,6 +870,7 @@ def update_mailbox(
 
 	account = get_session_account(account_id)
 
+	# Persist the automation rules on Mailbox Settings first; the sieve block is generated from there.
 	set_mailbox_settings(
 		account,
 		id,
@@ -851,9 +880,10 @@ def update_mailbox(
 		icon=icon,
 		color=color,
 		disable_push_notification=disable_push_notification,
+		**automation_rules_to_settings(automation_rules),
 	)
 
-	update_sieve_script_for_mailbox(account, name, automation_rules, old_name)
+	update_sieve_script_for_mailbox(account, name, old_name)
 
 
 @frappe.whitelist()
