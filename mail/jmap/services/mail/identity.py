@@ -7,6 +7,11 @@ class IdentityService(MailService):
 	"""Service for handling identity-related functionality based on the JMAP server capabilities."""
 
 	type: ClassVar[str] = "Identity"
+	capabilities: ClassVar[list[str]] = [
+		"urn:ietf:params:jmap:core",
+		"urn:ietf:params:jmap:mail",
+		"urn:ietf:params:jmap:submission",
+	]
 
 	def create(self, identities: list[dict]) -> dict:
 		"""Public method to create identities, handling batching if the number of identities exceeds the server's maximum allowed in a single 'set' call."""
