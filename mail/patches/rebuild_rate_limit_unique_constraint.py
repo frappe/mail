@@ -8,10 +8,16 @@ def execute() -> None:
 	table = "tabRate Limit"
 	constraint = "unique_rate_limit"
 
-	exists = frappe.db.sql(
-		"""select CONSTRAINT_NAME from information_schema.TABLE_CONSTRAINTS
-		where table_name = %s and constraint_type = 'UNIQUE' and CONSTRAINT_NAME = %s""",
-		(table, constraint),
+	constraints = frappe.qb.Schema("information_schema").table_constraints
+	exists = (
+		frappe.qb.from_(constraints)
+		.select(constraints.constraint_name)
+		.where(
+			(constraints.table_name == table)
+			& (constraints.constraint_type == "UNIQUE")
+			& (constraints.constraint_name == constraint)
+		)
+		.run()
 	)
 	if exists:
 		frappe.db.sql_ddl(f"alter table `{table}` drop index `{constraint}`")

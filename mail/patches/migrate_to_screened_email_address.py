@@ -16,19 +16,26 @@ def _legacy_rows(doctype: str) -> list[dict]:
 	if not frappe.db.table_exists(doctype):
 		return []
 
-	# Read the table directly: the doctypes no longer ship, so their meta may already be gone.
+	# Query the table directly: the doctypes no longer ship, so their meta may already be gone.
+	table = frappe.qb.DocType(doctype)
+
 	if frappe.db.has_column(doctype, "account_id"):
-		return frappe.db.sql(
-			f"select `account_id`, `email`, `creation` from `tab{doctype}` order by `creation` asc",
-			as_dict=True,
+		return (
+			frappe.qb.from_(table)
+			.select(table.account_id, table.email, table.creation)
+			.orderby(table.creation)
+			.run(as_dict=True)
 		)
 
 	if not frappe.db.has_column(doctype, "account"):
 		return []
 
 	rows = []
-	for row in frappe.db.sql(
-		f"select `account`, `email`, `creation` from `tab{doctype}` order by `creation` asc", as_dict=True
+	for row in (
+		frappe.qb.from_(table)
+		.select(table.account, table.email, table.creation)
+		.orderby(table.creation)
+		.run(as_dict=True)
 	):
 		try:
 			account_id = parse_account(row.account)[1]
