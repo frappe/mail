@@ -1,28 +1,51 @@
 import frappe
 
 from mail.client.doctype.account_settings.account_settings import backfill_default_outgoing_emails
-from mail.patches.capture_user_outgoing_settings import CACHE_KEY
+
+OUTGOING_FIELDS = (
+	"default_outgoing_email",
+	"create_contacts_after_email_submit",
+	"destroy_email_after_submit",
+	"destroy_newsletter_after_submit",
+)
 
 
 def execute() -> None:
-	"""Apply the captured per-user Outgoing settings onto each Account Settings.
+	"""Copy the legacy per-user Outgoing settings onto each Account Settings.
 
-	The three toggles and the old default_outgoing_email are copied verbatim to every
-	account the user owns (JMAP isn't reliably reachable during `bench migrate`, so we
-	can't resolve identities here). The per-account default is then finalised against
-	each account's identities by a background job once migrate is done.
+	The fields moved from User Settings (per user) to Account Settings (per account ID).
+	This has to run post_model_sync — the columns only land on Account Settings during
+	model sync. Schema sync never drops columns, so the legacy ones are still readable
+	here (User Settings' Outgoing fields and Account Settings' `user`) even though they
+	are gone from the doctype meta; the query builder references them by column name.
+
+	The values are copied verbatim — JMAP isn't reliably reachable during `bench migrate`,
+	so identities can't be resolved here. The per-account default outgoing email is
+	finalised against each account's identities by a background job once migrate is done.
 	"""
 
-	# Account Settings was later reshaped to be shared per account ID, dropping the
-	# `user`/`account` columns (see refactor_account_settings). When those columns are
-	# gone there is nothing for this legacy patch to migrate.
-	if not frappe.db.has_column("Account Settings", "account"):
+	if frappe.db.has_column("User Settings", "default_outgoing_email") and frappe.db.has_column(
+		"Account Settings", "user"
+	):
+		_copy_outgoing_settings()
+
+	# Resolve each account's default outgoing email against its identities once migrate
+	# is done — JMAP returns nothing while the migrate process is running.
+	frappe.enqueue(backfill_default_outgoing_emails, queue="long", enqueue_after_commit=True)
+
+
+def _copy_outgoing_settings() -> None:
+	US = frappe.qb.DocType("User Settings")
+	by_user = {
+		row["user"]: row
+		for row in (frappe.qb.from_(US).select(US.user, *(US[f] for f in OUTGOING_FIELDS)).run(as_dict=True))
+	}
+
+	if not by_user:
 		return
 
-	captured = frappe.cache.get_value(CACHE_KEY)
-	by_user = frappe.parse_json(captured) if captured else {}
-
-	for settings in frappe.get_all("Account Settings", fields=["name", "account", "user"]):
+	AS = frappe.qb.DocType("Account Settings")
+	for settings in frappe.qb.from_(AS).select(AS.name, AS.user).run(as_dict=True):
 		old = by_user.get(settings["user"])
 		if not old:
 			continue
@@ -38,10 +61,3 @@ def execute() -> None:
 			},
 			update_modified=False,
 		)
-
-	if captured:
-		frappe.cache.delete_value(CACHE_KEY)
-
-	# Resolve each account's default outgoing email against its identities once migrate
-	# is done — JMAP returns nothing while the migrate process is running.
-	frappe.enqueue(backfill_default_outgoing_emails, queue="long", enqueue_after_commit=True)
