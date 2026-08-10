@@ -12,8 +12,16 @@ def execute() -> None:
 	(account_id, email) and fills account_id in, and drops the now-redundant per-handle index.
 	"""
 
-	if not frappe.db.has_column("Junk Email Address", "account"):
-		# Fresh install (or already migrated) — nothing to backfill.
+	# "Junk Email Address" has since been merged into "Screened Email Address" and the doctype was
+	# dropped, so model sync no longer touches the legacy table. Nothing to backfill when the table is
+	# gone (fresh installs, or sites past the migration), when the `account` handle this reads is gone,
+	# or when the table predates `account_id` and so never got the column — `migrate_to_screened_
+	# email_address` derives the account_id from the handle itself in that case.
+	if (
+		not frappe.db.table_exists("Junk Email Address")
+		or not frappe.db.has_column("Junk Email Address", "account")
+		or not frappe.db.has_column("Junk Email Address", "account_id")
+	):
 		return
 
 	rows = frappe.get_all(
