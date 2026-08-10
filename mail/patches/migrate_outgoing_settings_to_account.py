@@ -38,9 +38,7 @@ def _copy_outgoing_settings() -> None:
 	US = frappe.qb.DocType("User Settings")
 	by_user = {
 		row["user"]: row
-		for row in (
-			frappe.qb.from_(US).select(US.user, *(US[f] for f in OUTGOING_FIELDS)).run(as_dict=True)
-		)
+		for row in (frappe.qb.from_(US).select(US.user, *(US[f] for f in OUTGOING_FIELDS)).run(as_dict=True))
 	}
 
 	if not by_user:
